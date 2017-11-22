@@ -110,74 +110,74 @@ def thermalblock_demo(args):
     )
 
     print('Discretize ...')
-    discretization, _ = discretize_stationary_cg(problem, diameter=1. / args['--grid'])
+    d, _ = discretize_stationary_cg(problem, diameter=1. / args['--grid'])
 
     if args['--list-vector-array']:
         from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
-        discretization = convert_to_numpy_list_vector_array(discretization)
+        d = convert_to_numpy_list_vector_array(d)
 
     if args['--cache-region'] != 'none':
-        discretization.enable_caching(args['--cache-region'])
+        d.enable_caching(args['--cache-region'])
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = ()
         legend = ()
-        for mu in discretization.parameter_space.sample_randomly(2):
+        for mu in d.parameter_space.sample_randomly(2):
             print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
             sys.stdout.flush()
-            Us = Us + (discretization.solve(mu),)
+            Us = Us + (d.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
-        discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
+        d.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
 
     print('RB generation ...')
 
-    product = discretization.h1_0_semi_product if args['--product'] == 'h1' else None
+    product = d.h1_0_semi_product if args['--product'] == 'h1' else None
     coercivity_estimator = ExpressionParameterFunctional('min([diffusion[0], diffusion[1]**2])',
-                                                         discretization.parameter_type)
-    reductors = {'residual_basis': CoerciveRBReductor(discretization, product=product,
+                                                         d.parameter_type)
+    reductors = {'residual_basis': CoerciveRBReductor(d, product=product,
                                                       coercivity_estimator=coercivity_estimator),
-                 'traditional': SimpleCoerciveRBReductor(discretization, product=product,
+                 'traditional': SimpleCoerciveRBReductor(d, product=product,
                                                          coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
     greedy_data = adaptive_greedy(
-        discretization, reductor,
+        d, reductor,
         validation_mus=args['--validation-mus'],
         rho=args['--rho'],
         gamma=args['--gamma'],
         theta=args['--theta'],
         use_estimator=not args['--without-estimator'],
-        error_norm=discretization.h1_0_semi_norm,
+        error_norm=d.h1_0_semi_norm,
         max_extensions=args['RBSIZE'],
         visualize=args['--visualize-refinement']
     )
 
-    rb_discretization = greedy_data['reduced_discretization']
+    rd = greedy_data['rd']
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
         with open(args['--pickle'] + '_reduced', 'wb') as f:
-            dump(rb_discretization, f)
+            dump(rd, f)
         print('Writing detailed discretization and reductor to file {} ...'.format(args['--pickle'] + '_detailed'))
         with open(args['--pickle'] + '_detailed', 'wb') as f:
-            dump((discretization, reductor), f)
+            dump((d, reductor), f)
 
     print('\nSearching for maximum error on random snapshots ...')
 
-    results = reduction_error_analysis(rb_discretization,
-                                       discretization=discretization,
+    results = reduction_error_analysis(rd,
+                                       d=d,
                                        reductor=reductor,
                                        estimator=True,
-                                       error_norms=(discretization.h1_0_semi_norm,),
+                                       error_norms=(d.h1_0_semi_norm,),
                                        condition=True,
                                        test_mus=args['--test'],
                                        basis_sizes=25 if args['--plot-error-sequence'] else 1,
                                        plot=True,
                                        pool=pool)
 
-    real_rb_size = rb_discretization.solution_space.dim
+    real_rb_size = rd.solution_space.dim
 
     print('''
 *** RESULTS ***
@@ -203,10 +203,10 @@ Greedy basis generation:
         plt.show(results['figure'])
     if args['--plot-err']:
         mumax = results['max_error_mus'][0, -1]
-        U = discretization.solve(mumax)
-        URB = reductor.reconstruct(rb_discretization.solve(mumax))
-        discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                                 title='Maximum Error Solution', separate_colorbars=True, block=True)
+        U = d.solve(mumax)
+        URB = reductor.reconstruct(rd.solve(mumax))
+        d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                    title='Maximum Error Solution', separate_colorbars=True, block=True)
 
 
 if __name__ == '__main__':

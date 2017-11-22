@@ -81,13 +81,13 @@ class CoerciveRBEstimator(ImmutableInterface):
         self.residual_range_dims = residual_range_dims
         self.coercivity_estimator = coercivity_estimator
 
-    def estimate(self, U, mu, discretization):
+    def estimate(self, U, mu, d):
         est = self.residual.apply(U, mu=mu).l2_norm()
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
         return est
 
-    def restricted_to_subbasis(self, dim, discretization):
+    def restricted_to_subbasis(self, dim, d):
         if self.residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
@@ -235,8 +235,7 @@ class SimpleCoerciveRBEstimator(ImmutableInterface):
         self.coercivity_estimator = coercivity_estimator
         self.norm = induced_norm(estimator_matrix)
 
-    def estimate(self, U, mu, discretization):
-        d = discretization
+    def estimate(self, U, mu, d):
         if len(U) > 1:
             raise NotImplementedError
         if not d.rhs.parametric:
@@ -257,8 +256,7 @@ class SimpleCoerciveRBEstimator(ImmutableInterface):
 
         return est
 
-    def restricted_to_subbasis(self, dim, discretization):
-        d = discretization
+    def restricted_to_subbasis(self, dim, d):
         cr = 1 if not d.rhs.parametric else len(d.rhs.operators)
         co = 1 if not d.operator.parametric else len(d.operator.operators)
         old_dim = d.operator.source.dim

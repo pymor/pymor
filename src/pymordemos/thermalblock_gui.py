@@ -152,7 +152,7 @@ class SimBase(object):
         self.first = True
         self.problem = thermal_block_problem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']),
                                              parameter_range=(PARAM_MIN, PARAM_MAX))
-        self.discretization, pack = discretize_stationary_cg(self.problem, diameter=1. / args['--grid'])
+        self.d, pack = discretize_stationary_cg(self.problem, diameter=1. / args['--grid'])
         self.grid = pack['grid']
 
 
@@ -164,20 +164,20 @@ class ReducedSim(SimBase):
 
     def _first(self):
         args = self.args
-        product = self.discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+        product = self.d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
         reductor = CoerciveRBReductor(product=product)
 
-        greedy_data = greedy(self.discretization, reductor,
-                             self.discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                             use_estimator=True, error_norm=self.discretization.h1_0_semi_norm,
+        greedy_data = greedy(self.d, reductor,
+                             self.d.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                             use_estimator=True, error_norm=self.d.h1_0_semi_norm,
                              max_extensions=args['RBSIZE'])
-        self.rb_discretization, self.reductor = greedy_data['reduced_discretization'], reductor
+        self.rd, self.reductor = greedy_data['rd'], reductor
         self.first = False
 
     def solve(self, mu):
         if self.first:
             self._first()
-        return self.reductor.reconstruct(self.rb_discretization.solve(mu))
+        return self.reductor.reconstruct(self.rd.solve(mu))
 
 
 # noinspection PyShadowingNames
@@ -185,10 +185,10 @@ class DetailedSim(SimBase):
 
     def __init__(self, args):
         super().__init__(args)
-        self.discretization.disable_caching()
+        self.d.disable_caching()
 
     def solve(self, mu):
-        return self.discretization.solve(mu)
+        return self.d.solve(mu)
 
 
 if __name__ == '__main__':
