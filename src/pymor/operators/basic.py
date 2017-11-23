@@ -81,9 +81,9 @@ class OperatorBase(OperatorInterface):
 
     def apply_transpose(self, V, mu=None):
         if self.linear:
-            raise LinAlgError('Operator not linear.')
+            raise NotImplementedError
         else:
-            raise ValueError('Trying to apply transpose of nonlinear operator.')
+            raise LinAlgError('Operator not linear.')
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
