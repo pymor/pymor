@@ -143,18 +143,22 @@ class ProjectRules(RuleTable):
 
     @match_class(Concatenation)
     def action_Concatenation(self, op, range_basis, source_basis, product=None):
-        if source_basis is not None and op.first.linear and not op.first.parametric:
-            V = op.first.apply(source_basis)
-            return self.apply(op.second, range_basis, V, product=product)
-        elif range_basis is not None and op.second.linear and not op.second.parametric:
+        if len(op.operators) == 1:
+            return self.apply(op.operators[0], range_basis, source_basis, product=product)
+
+        last, first = op.operators[0], op.operators[-1]
+        if source_basis is not None and first.linear and not first.parametric:
+            V = first.apply(source_basis)
+            return self.apply(op.with_(operators=op.operators[:-1]), range_basis, V, product=product)
+        elif range_basis is not None and last.linear and not last.parametric:
             if product:
                 range_basis = product.apply(range_basis)
-            V = op.second.apply_transpose(range_basis)
-            return self.apply(op.first, V, source_basis)
+            V = last.apply_transpose(range_basis)
+            return self.apply(op.with_(operators=op.operators[1:]), V, source_basis)
         else:
-            projected_first = self.apply(op.first, None, source_basis, product=None)
-            projected_second = self.apply(op.second, range_basis, None, product=product)
-            return Concatenation(projected_second, projected_first, name=op.name)
+            projected_first = self.apply(first, None, source_basis, product=None)
+            projected_last = self.apply(last, range_basis, None, product=product)
+            return Concatenation((projected_last,) + op.operators[1:-1] + (projected_first,), name=op.name)
 
     @match_class(AdjointOperator)
     def action_AdjointOperator(self, op, range_basis, source_basis, product=None):
