@@ -7,8 +7,11 @@ from numbers import Number
 import pytest
 import numpy as np
 
-from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.basic import almost_equal, project_array, relative_error
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.operators.constructions import induced_norm
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair)
@@ -169,3 +172,25 @@ def test_almost_equal_wrong_ind(compatible_vector_array_pair):
             c1, c2 = v1.copy(), v2.copy()
             with pytest.raises(Exception):
                 almost_equal(c1[ind], c2[ind], norm=n)
+
+
+def test_project_array():
+    np.random.seed(123)
+    U = NumpyVectorSpace.from_data(np.random.random((2, 10)))
+    basis = NumpyVectorSpace.from_data(np.random.random((3, 10)))
+    U_p = project_array(U, basis, orthonormal=False)
+    onb = gram_schmidt(basis)
+    U_p2 = project_array(U, onb, orthonormal=True)
+    assert np.all(relative_error(U_p, U_p2) < 1e-10)
+
+
+def test_project_array_with_product():
+    np.random.seed(123)
+    U = NumpyVectorSpace.from_data(np.random.random((1, 10)))
+    basis = NumpyVectorSpace.from_data(np.random.random((3, 10)))
+    product = np.random.random((10, 10))
+    product = NumpyMatrixOperator(product.T.dot(product))
+    U_p = project_array(U, basis, product=product, orthonormal=False)
+    onb = gram_schmidt(basis, product=product)
+    U_p2 = project_array(U, onb, product=product, orthonormal=True)
+    assert np.all(relative_error(U_p, U_p2, product) < 1e-10)
