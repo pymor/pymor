@@ -241,9 +241,12 @@ class CollectOperatorRangeRules(RuleTable):
 
     @match_class(Concatenation)
     def action_Concatenation(self, op):
-        firstrange = op.first.range.empty()
-        type(self)(self.source, firstrange, self.extends).apply(op.first)
-        type(self)(firstrange, self.image, self.extends).apply(op.second)
+        if len(op.operators) == 1:
+            self.apply(op.operators[0])
+        else:
+            firstrange = op.operators[-1].range.empty()
+            type(self)(self.source, firstrange, self.extends).apply(op.operators[-1])
+            type(self)(firstrange, self.image, self.extends).apply(op.with_(operators=op.operators[:-1]))
 
 
 class CollectVectorRangeRules(RuleTable):
@@ -267,6 +270,9 @@ class CollectVectorRangeRules(RuleTable):
 
     @match_class(Concatenation)
     def action_Concatenation(self, op):
-        firstrange = op.first.range.empty()
-        type(self)(firstrange).apply(op.first)
-        CollectOperatorRangeRules(firstrange, self.image, False).apply(op.second)
+        if len(op.operators) == 1:
+            self.apply(op.operators[0])
+        else:
+            firstrange = op.operators[-1].range.empty()
+            self.apply(op.first, firstrange)
+            CollectOperatorRangeRules(firstrange, image, False).apply(op.with_(operators=op.operators[:-1]))

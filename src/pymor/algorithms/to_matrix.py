@@ -117,12 +117,13 @@ class ToMatrixRules(RuleTable):
 
     @match_class(Concatenation)
     def action_Concatenation(self, op):
-        first = self.apply(op.first)
-        second = self.apply(op.second)
-        if self.format is None and not sps.issparse(second) and sps.issparse(first):
-            return first.T.dot(second.T).T
-        else:
-            return second.dot(first)
+        mats = [self.apply(o) for o in op.operators]
+        while len(mats) > 1:
+            if self.format is None and not sps.issparse(mats[-2]) and sps.issparse(mats[-1]):
+                mats = mats[:-2] + [mats[-1].T.dot(mats[-2].T).T]
+            else:
+                mats = mats[:-2] + [mats[-2].dot(mats[-1])]
+        return mats[0]
 
     @match_class(IdentityOperator)
     def action_IdentityOperator(self, op):

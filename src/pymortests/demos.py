@@ -103,14 +103,17 @@ def _skip_if_no_solver(param):
                 pytest.skip('skipped test due to missing ' + solver)
 
 
+def _demo_ids(demo_args):
+    return ["{}:'{}'".format(a,' '.join((str(s) for s in b))).replace('pymordemos.','') for a,b in demo_args]
 
-@pytest.fixture(params=DEMO_ARGS)
+
+@pytest.fixture(params=DEMO_ARGS, ids=_demo_ids(DEMO_ARGS))
 def demo_args(request):
     _skip_if_no_solver(request.param)
     return request.param
 
 
-@pytest.fixture(params=THERMALBLOCK_ARGS)
+@pytest.fixture(params=THERMALBLOCK_ARGS, ids=_demo_ids(THERMALBLOCK_ARGS))
 def thermalblock_args(request):
     _skip_if_no_solver(request.param)
     return request.param

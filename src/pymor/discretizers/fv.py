@@ -67,7 +67,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     Returns
     -------
-    discretization
+    d
         The |Discretization| that has been generated.
     data
         Dictionary with the following entries:
@@ -173,7 +173,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     # rhs
     if len(F_coefficients) == 0:
-        F = ZeroOperator(L.range, NumpyVectorSpace(1))
+        F = ZeroOperator(NumpyVectorSpace(1), L.range)
     elif len(F_coefficients) == 1 and F_coefficients[0] == 1.:
         F = F[0]
     else:
@@ -191,16 +191,16 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    discretization = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
-                                              parameter_space=parameter_space, name='{}_FV'.format(p.name))
+    d = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
+                                 parameter_space=parameter_space, name='{}_FV'.format(p.name))
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
     if preassemble:
-        data['unassembled_discretization'] = discretization
-        discretization = preassemble_(discretization)
+        data['unassembled_discretization'] = d
+        d = preassemble_(d)
 
-    return discretization, data
+    return d, data
 
 
 def discretize_instationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
@@ -257,7 +257,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     Returns
     -------
-    discretization
+    d
         The |Discretization| that has been generated.
     data
         Dictionary with the following entries:
@@ -302,13 +302,13 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     rhs = None if isinstance(d.rhs, ZeroOperator) else d.rhs
 
-    discretization = InstationaryDiscretization(operator=d.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
-                                                products=d.products, time_stepper=time_stepper,
-                                                parameter_space=p.parameter_space, visualizer=d.visualizer,
-                                                num_values=num_values, name='{}_FV'.format(p.name))
+    d = InstationaryDiscretization(operator=d.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
+                                   products=d.products, time_stepper=time_stepper,
+                                   parameter_space=p.parameter_space, visualizer=d.visualizer,
+                                   num_values=num_values, name='{}_FV'.format(p.name))
 
     if preassemble:
-        data['unassembled_discretization'] = discretization
-        discretization = preassemble_(discretization)
+        data['unassembled_d'] = d
+        d = preassemble_(d)
 
-    return discretization, data
+    return d, data

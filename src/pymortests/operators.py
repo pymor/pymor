@@ -7,7 +7,7 @@ import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
-from pymor.core.exceptions import InversionError
+from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseTransposeOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
@@ -139,7 +139,7 @@ def test_apply_transpose(operator_with_arrays):
         return
     try:
         U = op.apply_transpose(V, mu=mu)
-    except NotImplementedError:
+    except (NotImplementedError, LinAlgError):
         return
     assert U in op.source
     assert len(V) == len(U)
@@ -193,7 +193,7 @@ def test_apply_inverse_transpose(operator_with_arrays):
             continue
         try:
             V = op.apply_inverse_transpose(U[ind], mu=mu)
-        except InversionError:
+        except (InversionError, LinAlgError):
             return
         assert V in op.range
         assert len(V) == U.len_ind(ind)
@@ -280,13 +280,13 @@ def test_restricted(operator_with_arrays):
         return
     np.random.seed(4711 + U.dim)
     for num in [0, 1, 3, 7]:
-        components = np.random.randint(0, op.range.dim, num)
+        dofs = np.random.randint(0, op.range.dim, num)
         try:
-            rop, source_dofs = op.restricted(components)
+            rop, source_dofs = op.restricted(dofs)
         except NotImplementedError:
             return
-        op_U = rop.range.make_array(op.apply(U, mu=mu).components(components))
-        rop_U = rop.apply(rop.source.make_array(U.components(source_dofs)), mu=mu)
+        op_U = rop.range.make_array(op.apply(U, mu=mu).dofs(dofs))
+        rop_U = rop.apply(rop.source.make_array(U.dofs(source_dofs)), mu=mu)
         assert np.all(almost_equal(op_U, rop_U))
 
 
@@ -311,7 +311,7 @@ def test_InverseOperator(operator_with_arrays):
         try:
             assert np.all(almost_equal(inv.apply_inverse_transpose(V, mu=mu), op.apply_transpose(V, mu=mu),
                                        rtol=rtol, atol=atol))
-        except (InversionError, NotImplementedError):
+        except (InversionError, LinAlgError, NotImplementedError):
             pass
 
 
@@ -324,20 +324,20 @@ def test_InverseTransposeOperator(operator_with_arrays):
     try:
         assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu),
                                    rtol=rtol, atol=atol))
-    except (InversionError, NotImplementedError):
+    except (InversionError, LinAlgError, NotImplementedError):
         pass
     try:
         assert np.all(almost_equal(inv.apply_inverse(V, mu=mu), op.apply_transpose(V, mu=mu),
                                    rtol=rtol, atol=atol))
-    except (InversionError, NotImplementedError):
+    except (InversionError, LinAlgError, NotImplementedError):
         pass
     try:
         assert np.all(almost_equal(inv.apply_transpose(V, mu=mu), op.apply_inverse(V, mu=mu),
                                    rtol=rtol, atol=atol))
-    except (InversionError, NotImplementedError):
+    except (InversionError, LinAlgError, NotImplementedError):
         pass
     try:
         assert np.all(almost_equal(inv.apply_inverse_transpose(U, mu=mu), op.apply(U, mu=mu),
                                    rtol=rtol, atol=atol))
-    except (InversionError, NotImplementedError):
+    except (InversionError, LinAlgError, NotImplementedError):
         pass

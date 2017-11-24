@@ -230,6 +230,17 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
+    def inner(self, other, product=None):
+        """Inner products w.r.t. given product |Operator|.
+
+        Equivalent to `self.dot(other)` if `product` is None,
+        else equivalent to `product.apply2(self, other)`.
+        """
+        if product is None:
+            return self.dot(other)
+        else:
+            return product.apply2(self, other)
+
     @abstractmethod
     def pairwise_dot(self, other):
         """Returns the pairwise inner products between |VectorArray| elements.
@@ -247,6 +258,17 @@ class VectorArrayInterface(BasicInterface):
 
         """
         pass
+
+    def pairwise_inner(self, other, product=None):
+        """Pairwise inner products w.r.t. given product |Operator|.
+
+        Equivalent to `self.pairwise_dot(other)` if `product` is None,
+        else equivalent to `product.pairwise_apply2(self, other)`.
+        """
+        if product is None:
+            return self.pairwise_dot(other)
+        else:
+            return product.pairwise_apply2(self, other)
 
     @abstractmethod
     def lincomb(self, coefficients):
@@ -271,6 +293,28 @@ class VectorArrayInterface(BasicInterface):
             result[0] = ∑ self[j] * coefficients[j].
         """
         pass
+
+    def norm(self, product=None):
+        """Norm w.r.t. given inner product |Operator|.
+
+        Equivalent to `self.l2_norm()` if `product` is None,
+        else equivalent to `np.sqrt(product.pairwise_apply2(self, self))`.
+        """
+        if product is None:
+            return self.l2_norm()
+        else:
+            return np.sqrt(product.pairwise_apply2(self, self))
+
+    def norm2(self, product=None):
+        """Squared norm w.r.t. given inner product |Operator|.
+
+        Equivalent to `self.l2_norm2()` if `product` is None,
+        else equivalent to `product.pairwise_apply2(self, self)`.
+        """
+        if product is None:
+            return self.l2_norm2()
+        else:
+            return product.pairwise_apply2(self, self)
 
     @abstractmethod
     def l1_norm(self):
@@ -320,40 +364,39 @@ class VectorArrayInterface(BasicInterface):
             return max_val
 
     @abstractmethod
-    def components(self, component_indices):
-        """Extract components of the vectors contained in the array.
+    def dofs(self, dof_indices):
+        """Extract DOFs of the vectors contained in the array.
 
         Parameters
         ----------
-        component_indices
-            List or 1D |NumPy array| of indices of the vector components that are to
-            be returned.
+        dof_indices
+            List or 1D |NumPy array| of indices of the DOFs that are to be returned.
 
         Returns
         -------
-        A |NumPy array| `result` such that `result[i, j]` is the `component_indices[j]`-th
-        component of the `i`-th vector of the array.
+        A |NumPy array| `result` such that `result[i, j]` is the `dof_indices[j]`-th
+        DOF of the `i`-th vector of the array.
         """
         pass
 
     @abstractmethod
     def amax(self):
-        """The maximum absolute value of the vectors contained in the array.
+        """The maximum absolute value of the DOFs contained in the array.
 
         Returns
         -------
         max_ind
-            |NumPy array| containing for each vector an index at which the maximum is
+            |NumPy array| containing for each vector a DOF index at which the maximum is
             attained.
         max_val
             |NumPy array| containing for each vector the maximum absolute value of its
-            components.
+            DOFs.
         """
         pass
 
-    def gramian(self):
-        """Shorthand for `self.dot(self)`."""
-        return self.dot(self)
+    def gramian(self, product=None):
+        """Shorthand for `self.inner(self, product)`."""
+        return self.inner(self, product)
 
     def __add__(self, other):
         """The pairwise sum of two |VectorArrays|."""

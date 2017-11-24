@@ -88,16 +88,13 @@ class ProjectRules(RuleTable):
                           op.source)
             new_range = (NumpyVectorSpace(len(range_basis), op.range.id) if range_basis is not None else
                          op.range)
-            return ZeroOperator(new_source, new_range, name=op.name)
+            return ZeroOperator(new_range, new_source, name=op.name)
 
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op):
         range_basis, source_basis, product = self.range_basis, self.source_basis, self.product
         if range_basis is not None:
-            if product:
-                projected_value = NumpyVectorSpace.make_array(product.apply2(range_basis, op._value).T, op.range.id)
-            else:
-                projected_value = NumpyVectorSpace.make_array(range_basis.dot(op._value).T, op.range.id)
+            projected_value = NumpyVectorSpace.make_array(range_basis.inner(op._value, product).T, op.range.id)
         else:
             projected_value = op._value
         if source_basis is None:
@@ -154,19 +151,24 @@ class ProjectRules(RuleTable):
 
     @match_class(Concatenation)
     def action_Concatenation(self, op):
+        if len(op.operators) == 1:
+            return self.apply(op.operators[0])
+
         range_basis, source_basis, product = self.range_basis, self.source_basis, self.product
-        if source_basis is not None and op.first.linear and not op.first.parametric:
-            V = op.first.apply(source_basis)
-            return type(self)(range_basis, V, product).apply(op.second)
-        elif range_basis is not None and op.second.linear and not op.second.parametric:
+        last, first = op.operators[0], op.operators[-1]
+
+        if source_basis is not None and first.linear and not first.parametric:
+            V = first.apply(source_basis)
+            return type(self)(range_basis, V, product).apply(op.with_(operators=op.operators[:-1]))
+        elif range_basis is not None and last.linear and not last.parametric:
             if product:
                 range_basis = product.apply(range_basis)
-            V = op.second.apply_transpose(range_basis)
-            return type(self)(V, source_basis, None).apply(op.first)
+            V = last.apply_transpose(range_basis)
+            return type(self)(V, source_basis, None).apply(op.with_(operators=op.operators[1:]))
         else:
-            projected_first = type(self)(None, source_basis, None).apply(op.first)
-            projected_second = type(self)(range_basis, None, product).apply(op.second)
-            return Concatenation(projected_second, projected_first, name=op.name)
+            projected_first = type(self)(None, source_basis, product=None).apply(first)
+            projected_last = type(self)(range_basis, None, product=product).apply(last)
+            return Concatenation((projected_last,) + op.operators[1:-1] + (projected_first,), name=op.name)
 
     @match_class(AdjointOperator)
     def action_AdjointOperator(self, op):
@@ -190,23 +192,19 @@ class ProjectRules(RuleTable):
     def action_EmpiricalInterpolatedOperator(self, op):
         range_basis, source_basis, product = self.range_basis, self.source_basis, self.product
         if len(op.interpolation_dofs) == 0:
-            return self.apply(ZeroOperator(op.source, op.range, op.name))
+            return self.apply(ZeroOperator(op.range, op.source, op.name))
         elif not hasattr(op, 'restricted_operator') or source_basis is None:
             raise RuleNotMatchingError('Has no restricted operator or source_basis is None')
         else:
             if range_basis is not None:
-                if product is None:
-                    projected_collateral_basis = NumpyVectorSpace.make_array(op.collateral_basis.dot(range_basis),
-                                                                             op.range.id)
-                else:
-                    projected_collateral_basis = NumpyVectorSpace.make_array(product.apply2(op.collateral_basis,
-                                                                                            range_basis),
-                                                                             op.range.id)
+                projected_collateral_basis = NumpyVectorSpace.make_array(op.collateral_basis.inner(range_basis,
+                                                                                                   product),
+                                                                         op.range.id)
             else:
                 projected_collateral_basis = op.collateral_basis
 
             return ProjectedEmpiciralInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
-                                                          NumpyVectorSpace.make_array(source_basis.components(op.source_dofs)),
+                                                          NumpyVectorSpace.make_array(source_basis.dofs(op.source_dofs)),
                                                           projected_collateral_basis, op.triangular,
                                                           op.source.id, None, op.name)
 

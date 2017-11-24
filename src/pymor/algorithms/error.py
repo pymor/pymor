@@ -13,7 +13,7 @@ from pymor.discretizations.basic import StationaryDiscretization
 from pymor.parallel.dummy import dummy_pool
 
 
-def reduction_error_analysis(reduced_discretization, discretization, reductor,
+def reduction_error_analysis(rd, d, reductor,
                              test_mus=10, basis_sizes=0, random_seed=None,
                              estimator=True, condition=False, error_norms=(), error_norm_names=None,
                              estimator_norm_index=0, custom=(),
@@ -26,16 +26,16 @@ def reduction_error_analysis(reduced_discretization, discretization, reductor,
 
     Parameters
     ----------
-    reduced_discretization
+    rd
         The reduced |Discretization|.
-    discretization
+    d
         The high-dimensional |Discretization|.
     reductor
-        The reductor which has created `reduced_discretization`.
+        The reductor which has created `rd`.
     test_mus
         Either a list of |Parameters| to compute the errors for, or
         the number of parameters which are sampled randomly from
-        `parameter_space` (if given) or `reduced_discretization.parameter_space`.
+        `parameter_space` (if given) or `rd.parameter_space`.
     basis_sizes
         Either a list of reduced basis dimensions to consider, or
         the number of dimensions (which are then selected equidistantly,
@@ -46,13 +46,13 @@ def reduction_error_analysis(reduced_discretization, discretization, reductor,
         If `test_mus` is a number, use this value as random seed
         for drawing the |Parameters|.
     estimator
-        If `True` evaluate the error estimator of `reduced_discretization`
+        If `True` evaluate the error estimator of `rd`
         on the test |Parameters|.
     condition
         If `True`, compute the condition of the reduced system matrix
         for the given test |Parameters| (can only be specified if
-        `rb_discretization` is an instance of |StationaryDiscretization|
-        and `rb_discretization.operator` is linear).
+        `rd` is an instance of |StationaryDiscretization|
+        and `rd.operator` is linear).
     error_norms
         List of norms in which to compute the model reduction error.
     error_norm_names
@@ -66,8 +66,7 @@ def reduction_error_analysis(reduced_discretization, discretization, reductor,
         List of custom functions which are evaluated for each test |Parameter|
         and basis size. The functions must have the signature ::
 
-            def custom_value(reduced_discretization, discretization=d,
-                             reductor, mu, dim):
+            def custom_value(rd, d, reductor, mu, dim):
                 pass
 
     plot
@@ -163,10 +162,10 @@ def reduction_error_analysis(reduced_discretization, discretization, reductor,
                                  (Only present when `plot` is `True`.)
     """
 
-    assert not error_norms or (discretization and reductor)
+    assert not error_norms or (d and reductor)
     assert error_norm_names is None or len(error_norm_names) == len(error_norms)
     assert not condition \
-        or isinstance(reduced_discretization, StationaryDiscretization) and reduced_discretization.operator.linear
+        or isinstance(rd, StationaryDiscretization) and rd.operator.linear
 
     logger = getLogger('pymor.algorithms.error')
     if pool is None or pool is dummy_pool:
@@ -176,10 +175,8 @@ def reduction_error_analysis(reduced_discretization, discretization, reductor,
 
     tic = time.time()
 
-    d, rd = discretization, reduced_discretization
-
     if isinstance(test_mus, Number):
-        test_mus = reduced_discretization.parameter_space.sample_randomly(test_mus, seed=random_seed)
+        test_mus = rd.parameter_space.sample_randomly(test_mus, seed=random_seed)
     if isinstance(basis_sizes, Number):
         if basis_sizes == 1:
             basis_sizes = [rd.solution_space.dim]
@@ -356,8 +353,8 @@ def _compute_errors(mu, d, reductor, estimator, error_norms, condition, custom, 
         if condition:
             conditions[i_N] = np.linalg.cond(rd.operator.assemble(mu)._matrix) if N > 0 else 0.
         for i_custom, cust in enumerate(custom):
-            c = cust(reduced_discretization=rd,
-                     discretization=d,
+            c = cust(rd=rd,
+                     d=d,
                      reductor=reductor,
                      mu=mu,
                      dim=N)

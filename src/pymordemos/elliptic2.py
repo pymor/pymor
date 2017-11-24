@@ -52,15 +52,15 @@ def elliptic2_demo(args):
 
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    discretization, data = discretizer(problem, diameter=1. / args['N'])
+    d, data = discretizer(problem, diameter=1. / args['N'])
     print(data['grid'])
     print()
 
     print('Solve ...')
-    U = discretization.solution_space.empty()
-    for mu in discretization.parameter_space.sample_uniformly(10):
-        U.append(discretization.solve(mu))
-    discretization.visualize(U, title='Solution for diffusionl in [0.1, 1]')
+    U = d.solution_space.empty()
+    for mu in d.parameter_space.sample_uniformly(10):
+        U.append(d.solve(mu))
+    d.visualize(U, title='Solution for diffusionl in [0.1, 1]')
 
 
 if __name__ == '__main__':

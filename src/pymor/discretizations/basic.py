@@ -102,7 +102,7 @@ class DiscretizationBase(DiscretizationInterface):
 
     def estimate(self, U, mu=None):
         if self.estimator is not None:
-            return self.estimator.estimate(U, mu=mu, discretization=self)
+            return self.estimator.estimate(U, mu=mu, d=self)
         else:
             raise NotImplementedError('Discretization has no estimator.')
 
@@ -132,12 +132,12 @@ class StationaryDiscretization(DiscretizationBase):
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, discretization)` method. If `estimator` is
+        an `estimate(U, mu, d)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
         discretization which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
-        a `visualize(U, discretization, ...)` method. If `visualizer`
+        a `visualize(U, d, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
         to the discretization which forwards its arguments to the
         visualizer's `visualize` method.
@@ -235,12 +235,12 @@ class InstationaryDiscretization(DiscretizationBase):
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, discretization)` method. If `estimator` is
+        an `estimate(U, mu, d)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
         discretization which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
-        a `visualize(U, discretization, ...)` method. If `visualizer`
+        a `visualize(U, d, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
         to the discretization which forwards its arguments to the
         visualizer's `visualize` method.

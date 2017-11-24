@@ -247,12 +247,12 @@ obtain. ``greedy_data`` is a dictionary containing various data that has
 been generated during the run of the algorithm:
 
 >>> print(greedy_data.keys())
-dict_keys(['reduced_discretization', 'max_errs', 'extensions', 'max_err_mus', 'time'])
+dict_keys(['rd', 'max_errs', 'extensions', 'max_err_mus', 'time'])
 
-The most important items is ``'reduced_discretization'`` which holds the
-reduced |Discretization| obtained from applying our reductor with the final reduced basis.
+The most important items is ``'rd'`` which holds the reduced |Discretization|
+obtained from applying our reductor with the final reduced basis.
 
->>> rd = greedy_data['reduced_discretization']
+>>> rd = greedy_data['rd']
 
 All vectors in pyMOR are stored in so called |VectorArrays|. For example
 the solution ``U`` computed above is given as a |VectorArray| of length 1.
@@ -270,7 +270,7 @@ the H1-product. For this we use the :meth:`~pymor.operators.interfaces.OperatorI
 method:
 
 >>> import numpy as np
->>> gram_matrix = d.h1_product.apply2(reductor.RB, reductor.RB)
+>>> gram_matrix = RB.gramian(d.h1_product)
 >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
 5.86218898944e-14
 
@@ -297,7 +297,7 @@ Finally we compute the reduction error and display the reduced solution along wi
 the detailed solution and the error:
 
 >>> ERR = U - U_red
->>> print(d.h1_norm(ERR))
+>>> print(ERR.norm(d.h1_product))
 [ 0.00944595]
 >>> d.visualize((U, U_red, ERR),
 ...             legend=('Detailed', 'Reduced', 'Error'),

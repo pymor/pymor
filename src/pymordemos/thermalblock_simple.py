@@ -247,7 +247,7 @@ def reduce_greedy(d, reductor, snapshots, basis_size):
                          max_extensions=basis_size,
                          pool=pool)
 
-    return greedy_data['reduced_discretization']
+    return greedy_data['rd']
 
 
 def reduce_adaptive_greedy(d, reductor, validation_mus, basis_size):
@@ -259,7 +259,7 @@ def reduce_adaptive_greedy(d, reductor, validation_mus, basis_size):
                                   max_extensions=basis_size,
                                   pool=pool)
 
-    return greedy_data['reduced_discretization']
+    return greedy_data['rd']
 
 
 def reduce_pod(d, reductor, snapshots, basis_size):
@@ -325,7 +325,7 @@ def main():
 
     # evaluate the reduction error
     ##############################
-    results = reduction_error_analysis(rd, discretization=d, reductor=reductor, estimator=True,
+    results = reduction_error_analysis(rd, d=d, reductor=reductor, estimator=True,
                                        error_norms=[d.h1_0_semi_norm], condition=True,
                                        test_mus=TEST, random_seed=999, plot=True)
 

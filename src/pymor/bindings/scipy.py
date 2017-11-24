@@ -30,7 +30,7 @@ def solver_options(bicgstab_tol=1e-15,
                    bicgstab_maxiter=None,
                    spilu_drop_tol=1e-4,
                    spilu_fill_factor=10,
-                   spilu_drop_rule='basic,area',
+                   spilu_drop_rule=None,
                    spilu_permc_spec='COLAMD',
                    spsolve_permc_spec='COLAMD',
                    spsolve_keep_factorization=True,
@@ -175,13 +175,16 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
     |VectorArray| of the solution vectors.
     """
 
-    assert isinstance(op, NumpyMatrixOperator)
-    # TODO Use to_matrix(op) after sparse format issue has been resolved.
     assert V in op.range
+
+    if isinstance(op, NumpyMatrixOperator):
+        matrix = op._matrix
+    else:
+        from pymor.algorithms.to_matrix import to_matrix
+        matrix = to_matrix(op)
 
     options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
 
-    matrix = op._matrix
     V = V.data
     promoted_type = np.promote_types(matrix.dtype, V.dtype)
     R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
@@ -196,13 +199,13 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'scipy_bicgstab_spilu':
-        # workaround for https://github.com/pymor/pymor/issues/171
-        try:
+        if Version(scipy.version.version) >= Version('0.19'):
             ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
                         drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
-        except TypeError as t:
-            logger = getLogger('pymor.operators.numpy._apply_inverse')
-            logger.error("ignoring drop_rule in ilu factorization")
+        else:
+            if options['spilu_drop_rule']:
+                logger = getLogger('pymor.operators.numpy._apply_inverse')
+                logger.error("ignoring drop_rule in ilu factorization due to old SciPy")
             ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
                         permc_spec=options['spilu_permc_spec'])
         precond = LinearOperator(matrix.shape, ilu.solve)
@@ -232,7 +235,8 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                 elif options['keep_factorization']:
                     # the matrix is always converted to the promoted type.
                     # if matrix.dtype == promoted_type, this is a no_op
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                                                permc_spec=options['permc_spec'])
                     matrix.factorizationdtype = promoted_type
                     R = matrix.factorization.solve(V.T).T
                 else:
@@ -245,12 +249,14 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                     for i, VV in enumerate(V):
                         R[i] = matrix.factorization.solve(VV).astype(promoted_type, copy=False)
                 elif options['keep_factorization']:
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                                                permc_spec=options['permc_spec'])
                     matrix.factorizationdtype = promoted_type
                     for i, VV in enumerate(V):
                         R[i] = matrix.factorization.solve(VV)
                 elif len(V) > 1:
-                    factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                                         permc_spec=options['permc_spec'])
                     for i, VV in enumerate(V):
                         R[i] = factorization.solve(VV)
                 else:

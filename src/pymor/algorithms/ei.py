@@ -123,7 +123,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         if new_dof in interpolation_dofs:
             logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
             break
-        new_dof_value = new_vec.components([new_dof])[0, 0]
+        new_dof_value = new_vec.dofs([new_dof])[0, 0]
         if new_dof_value == 0.:
             logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'
                         .format(new_dof))
@@ -134,13 +134,13 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         max_errs.append(max_err)
 
         # update U and ERR
-        new_dof_values = U.components([new_dof])
+        new_dof_values = U.dofs([new_dof])
         U.axpy(-new_dof_values[:, 0], new_vec)
         errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
 
-    interpolation_matrix = collateral_basis.components(interpolation_dofs).T
+    interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
     triangularity_errors = np.abs(interpolation_matrix - np.tril(interpolation_matrix))
     for d in range(1, len(interpolation_matrix) + 1):
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
@@ -203,7 +203,7 @@ def deim(U, modes=None, error_norm=None, product=None):
 
         if len(interpolation_dofs) > 0:
             coefficients = np.linalg.solve(interpolation_matrix,
-                                           collateral_basis[i].components(interpolation_dofs).T).T
+                                           collateral_basis[i].dofs(interpolation_dofs).T).T
             U_interpolated = collateral_basis[:len(interpolation_dofs)].lincomb(coefficients)
             ERR = collateral_basis[i].copy()
             ERR -= U_interpolated
@@ -222,7 +222,7 @@ def deim(U, modes=None, error_norm=None, product=None):
             break
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
-        interpolation_matrix = collateral_basis[:len(interpolation_dofs)].components(interpolation_dofs).T
+        interpolation_matrix = collateral_basis[:len(interpolation_dofs)].dofs(interpolation_dofs).T
         errs.append(err)
 
         logger.info('')
@@ -237,7 +237,7 @@ def deim(U, modes=None, error_norm=None, product=None):
     return interpolation_dofs, collateral_basis, data
 
 
-def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
+def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
                           atol=None, rtol=None, max_interpolation_dofs=None, pool=dummy_pool):
     """Empirical operator interpolation using the EI-Greedy algorithm.
 
@@ -253,7 +253,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     Parameters
     ----------
-    discretization
+    d
         The |Discretization| whose |Operators| will be interpolated.
     operator_names
         List of keys in the `operators` dict of the discretization. The corresponding
@@ -273,7 +273,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     Returns
     -------
-    ei_discretization
+    ei_d
         |Discretization| with |Operators| given by `operator_names` replaced by
         |EmpiricalInterpolatedOperators|.
     data
@@ -289,17 +289,17 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:
-        operators = [discretization.operators[operator_name] for operator_name in operator_names]
+        operators = [d.operators[operator_name] for operator_name in operator_names]
         with logger.block('Computing operator evaluations on solution snapshots ...'):
             if pool:
                 logger.info('Using pool of {} workers for parallel evaluation'.format(len(pool)))
-                evaluations = rom.manage(pool.push(discretization.solution_space.empty()))
+                evaluations = rom.manage(pool.push(d.solution_space.empty()))
                 pool.map(_interpolate_operators_build_evaluations, parameter_sample,
-                         d=discretization, operators=operators, evaluations=evaluations)
+                         d=d, operators=operators, evaluations=evaluations)
             else:
                 evaluations = operators[0].range.empty()
                 for mu in parameter_sample:
-                    U = discretization.solve(mu)
+                    U = d.solve(mu)
                     for op in operators:
                         evaluations.append(op.apply(U, mu=mu))
 
@@ -310,12 +310,12 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
                     for name, operator in zip(operator_names, operators)}
-    operators_dict = discretization.operators.copy()
+    operators_dict = d.operators.copy()
     operators_dict.update(ei_operators)
-    ei_discretization = discretization.with_(operators=operators_dict, name='{}_ei'.format(discretization.name))
+    ei_d = d.with_(operators=operators_dict, name='{}_ei'.format(d.name))
 
     data.update({'dofs': dofs, 'basis': basis})
-    return ei_discretization, data
+    return ei_d, data
 
 
 def _interpolate_operators_build_evaluations(mu, d=None, operators=None, evaluations=None):
@@ -369,7 +369,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             if new_dof in interpolation_dofs:
                 logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
                 break
-            new_dof_value = new_vec.components([new_dof])[0, 0]
+            new_dof_value = new_vec.dofs([new_dof])[0, 0]
             if new_dof_value == 0.:
                 logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'
                             .format(new_dof))
@@ -383,7 +383,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             max_err_ind = np.argmax(errs)
             max_err = errs[max_err_ind]
 
-    interpolation_matrix = collateral_basis.components(interpolation_dofs).T
+    interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
     triangularity_errors = np.abs(interpolation_matrix - np.tril(interpolation_matrix))
     for d in range(1, len(interpolation_matrix) + 1):
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
@@ -420,7 +420,7 @@ def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
     U = data['U']
     error_norm = data['error_norm']
 
-    new_dof_values = U.components([new_dof])
+    new_dof_values = U.dofs([new_dof])
     U.axpy(-new_dof_values[:, 0], new_vec)
 
     errs = U.l2_norm() if error_norm is None else error_norm(U)
