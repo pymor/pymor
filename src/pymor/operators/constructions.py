@@ -127,8 +127,11 @@ class LincombOperator(OperatorBase):
         if op:
             return op
         else:
-            return LincombOperator(operators, coefficients, solver_options=self.solver_options,
-                                   name=self.name + '_assembled')
+            if self.parametric or operators != self.operators:
+                return LincombOperator(operators, coefficients, solver_options=self.solver_options,
+                                       name=self.name + '_assembled')
+            else:
+                return self  # avoid infinite recursion
 
     def jacobian(self, U, mu=None):
         if self.linear:
