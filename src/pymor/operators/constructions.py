@@ -168,24 +168,22 @@ class Concatenation(OperatorBase):
 
     Parameters
     ----------
-    second
-        The |Operator| which is applied as second operator.
-    first
-        The |Operator| which is applied as first operator.
+    operators
+        Tuple  of |Operators| to concatenate. `operators[-1]`
+        is the first applied operator, `operators[0]` is the last
+        applied operator.
     name
         Name of the operator.
     """
 
-    def __init__(self, second, first, solver_options=None, name=None):
-        assert isinstance(second, OperatorInterface)
-        assert isinstance(first, OperatorInterface)
-        assert first.range == second.source
-        self.first = first
-        self.second = second
-        self.build_parameter_type(second, first)
-        self.source = first.source
-        self.range = second.range
-        self.linear = second.linear and first.linear
+    def __init__(self, operators, solver_options=None, name=None):
+        assert all(isinstance(op, OperatorInterface) for op in operators)
+        assert all(operators[i].source == operators[i+1].range for i in range(len(operators)-1))
+        self.operators = tuple(operators)
+        self.build_parameter_type(*operators)
+        self.source = operators[-1].source
+        self.range = operators[0].range
+        self.linear = all(op.linear for op in operators)
         self.solver_options = solver_options
         self.name = name
 
@@ -193,33 +191,36 @@ class Concatenation(OperatorBase):
     def T(self):
         options = {'inverse': self.solver_options.get('inverse_transpose'),
                    'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
-        return type(self)(self.first.T, self.second.T, solver_options=options,
+        return type(self)(tuple(op.T for op in self.operators[::-1]), solver_options=options,
                           name=self.name + '_transposed')
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
-        return self.second.apply(self.first.apply(U, mu=mu), mu=mu)
+        for op in self.operators[::-1]:
+            U = op.apply(U, mu=mu)
+        return U
 
     def apply_transpose(self, V, mu=None):
         mu = self.parse_parameter(mu)
-        return self.first.apply_transpose(self.second.apply_transpose(V, mu=mu), mu=mu)
+        for op in self.operators:
+            V = op.apply_transpose(V, mu=mu)
+        return V
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
-        V = self.first.apply(U, mu=mu)
+        Us = [U]
+        for op in self.operators[:0:-1]:
+            Us.append(op.apply(Us[-1], mu=mu))
         options = self.solver_options.get('jacobian') if self.solver_options else None
-        return Concatenation(self.second.jacobian(V, mu=mu), self.first.jacobian(U, mu=mu),
+        return Concatenation(tuple(op.jacobian(U, mu=mu) for op, U in zip(self.operators, Us[::-1])),
                              solver_options=options, name=self.name + '_jacobian')
 
     def restricted(self, dofs):
-        restricted_second, second_source_dofs = self.second.restricted(dofs)
-        restricted_first, first_source_dofs = self.first.restricted(second_source_dofs)
-        if isinstance(restricted_second, IdentityOperator):
-            return restricted_first, first_source_dofs
-        elif isinstance(restricted_first, IdentityOperator):
-            return restricted_second, first_source_dofs
-        else:
-            return Concatenation(restricted_second, restricted_first), first_source_dofs
+        restricted_ops = []
+        for op in self.operators:
+            rop, dofs = op.restricted(dofs)
+            restricted_ops.append(rop)
+        return Concatenation(restricted_ops), dofs
 
 
 class ComponentProjection(OperatorBase):

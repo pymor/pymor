@@ -256,7 +256,7 @@ class NonlinearAdvectionOperator(OperatorBase):
                         name='{}_restricted'.format(self.name))
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.range)
-        return Concatenation(proj, op), sub_grid.parent_indices(0)
+        return Concatenation([proj, op]), sub_grid.parent_indices(0)
 
     def _fetch_grid_data(self):
         # pre-fetch all grid-associated data to avoid searching the cache for each operator application

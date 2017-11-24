@@ -137,7 +137,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                 J = NumpyMatrixOperator(J.data.T, range_id=self.range.id)
             else:
                 J = VectorArrayOperator(J)
-            return Concatenation(J, ComponentProjection(self.source_dofs, self.source),
+            return Concatenation([J, ComponentProjection(self.source_dofs, self.source)],
                                  solver_options=options, name=self.name + '_jacobian')
 
 

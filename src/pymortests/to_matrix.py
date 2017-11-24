@@ -146,22 +146,22 @@ def test_to_matrix_Concatenation():
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
-    Cop = Concatenation(Aop, Bop)
+    Cop = Concatenation([Aop, Bop])
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(B)
-    Cop = Concatenation(Aop, Bop)
+    Cop = Concatenation([Aop, Bop])
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = Concatenation(Aop, Bop)
+    Cop = Concatenation([Aop, Bop])
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = Concatenation(Aop, Bop)
+    Cop = Concatenation([Aop, Bop])
     assert_type_and_allclose(A, Aop, 'sparse')
 
 
@@ -183,22 +183,22 @@ def test_to_matrix_LincombOperator():
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
-    Cop = LincombOperator([Aop, Concatenation(Bop, Bop.T)], [a, b])
+    Cop = LincombOperator([Aop, Concatenation([Bop, Bop.T])], [a, b])
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(B)
-    Cop = LincombOperator([Aop, Concatenation(Bop, Bop.T)], [a, b])
+    Cop = LincombOperator([Aop, Concatenation([Bop, Bop.T])], [a, b])
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = LincombOperator([Aop, Concatenation(Bop, Bop.T)], [a, b])
+    Cop = LincombOperator([Aop, Concatenation([Bop, Bop.T])], [a, b])
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = LincombOperator([Aop, Concatenation(Bop, Bop.T)], [a, b])
+    Cop = LincombOperator([Aop, Concatenation([Bop, Bop.T])], [a, b])
     assert_type_and_allclose(C, Cop, 'sparse')
 
 
