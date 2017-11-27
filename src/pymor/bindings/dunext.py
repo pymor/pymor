@@ -48,9 +48,9 @@ if config.HAVE_DUNEXT:
         def sup_norm(self):
             return self.impl.sup_norm()
 
-        def components(self, component_indices):
+        def dofs(self, dof_indices):
             impl = self.impl
-            return np.array([impl[i] for i in component_indices])
+            return np.array([impl[i] for i in dof_indices])
 
         def amax(self):
             _amax = self.impl.amax()
