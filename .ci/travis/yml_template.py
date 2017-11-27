@@ -56,6 +56,7 @@ jobs:
 {%- endfor %}
 
   - stage: deploy
+    if: type IS push
     script: ./.ci/travis/deploy.bash
     # overwrite other global/matrix settings
     before_script: true
