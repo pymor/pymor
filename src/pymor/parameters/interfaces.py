@@ -42,7 +42,8 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
 
     def __mul__(self, other):
         from pymor.parameters.functionals import ProductParameterFunctional
-        assert isinstance(other, (Number, ParameterFunctionalInterface))
+        if not isinstance(other, (Number, ParameterFunctionalInterface)):
+            return NotImplemented
         return ProductParameterFunctional([self, other])
 
     __rmul__ = __mul__
