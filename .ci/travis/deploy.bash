@@ -7,12 +7,14 @@ REPODIR=${HOME}/wheels
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
+sed -i -e 's;style\ \=\ pep440;style\ \=\ ci_wheel_builder;g' setup.cfg
+
 rm -rf ~/.ssh
-ls -l ${PYMOR_ROOT}/.ci/travis/wheels.deploy.key.rsa.enc
 
 ./.ci/travis/init_sshkey.bash "${encrypted_a599472c800f_key}" "${encrypted_a599472c800f_iv}" \
     ${PYMOR_ROOT}/.ci/travis/wheels.deploy.key
 
+set -x
 mkdir -p ${BUILDER_WHEELHOUSE}
 git clone git@github.com:pymor/wheels.pymor.org ${REPODIR}
 for py in 2.7 3.5 3.6 ; do
