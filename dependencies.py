@@ -13,7 +13,7 @@ def _pyside(rev, marker=True):
     return '{}'.format(_PYSIDE[rev])
 
 _QT_COMMENT = 'solution visualization for builtin discretizations'
-_PYTEST = 'pytest>=3.2'
+_PYTEST = 'pytest>=3.3'
 tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker']
 install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'docopt', 'Qt.py', 'packaging']
 setup_requires = ['pytest-runner>=2.9', 'cython>=0.20.1', 'numpy>=1.8.1', 'packaging']
@@ -36,7 +36,6 @@ doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'python-coveralls', 'pytest-travis-fold']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
-                'pytest-capturelog': 'pytest_capturelog',
                 'pytest-instafail': 'pytest_instafail',
                 'pytest-xdist': 'xdist',
                 'pytest-cov': 'pytest_cov',
