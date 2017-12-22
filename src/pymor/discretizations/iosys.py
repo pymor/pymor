@@ -241,7 +241,7 @@ class LTISystem(InputOutputSystem):
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
-        D = D or ZeroOperator(B.source, C.range)
+        D = D or ZeroOperator(C.range, B.source)
         E = E or IdentityOperator(A.source)
 
         assert A.linear and A.source == A.range and A.source.id == 'STATE'
@@ -819,7 +819,7 @@ class SecondOrderSystem(InputOutputSystem):
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
-        Cv = Cv or ZeroOperator(Cp.source, Cp.range)
+        Cv = Cv or ZeroOperator(Cp.range, Cp.source)
 
         assert M.linear and M.source == M.range and M.source.id == 'STATE'
         assert D.linear and D.source == D.range == M.source
@@ -918,7 +918,7 @@ class SecondOrderSystem(InputOutputSystem):
                                           [self.K * (-1), self.D * (-1)]],
                                          source_id='STATE',
                                          range_id='STATE'),
-                         B=BlockOperator.vstack((ZeroOperator(self.B.source, self.B.range),
+                         B=BlockOperator.vstack((ZeroOperator(self.B.range, self.B.source),
                                                  self.B),
                                                 source_id='INPUT',
                                                 range_id='STATE'),
