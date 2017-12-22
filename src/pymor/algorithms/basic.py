@@ -6,6 +6,7 @@
 """Module containing some basic but generic linear algebra algorithms."""
 
 import numpy as np
+import scipy
 
 from pymor.core.defaults import defaults
 from pymor.operators.constructions import induced_norm
@@ -67,3 +68,37 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
     ERR_norm = norm(X)
 
     return ERR_norm <= atol + V_norm * rtol
+
+
+def relative_error(U, V, product=None):
+    """Compute error between U and V relative to norm of U."""
+    return (U - V).norm(product) / U.norm(product)
+
+
+def project_array(U, basis, product=None, orthonormal=True):
+    """Orthogonal projection of |VectorArray| onto subspace.
+
+    Parameters
+    ----------
+    U
+        The |VectorArray| to project.
+    basis
+        |VectorArray| of basis vectors for the subspace onto which
+        to project.
+    product
+        Inner product |Operator| w.r.t. which to project.
+    orthonormal
+        If `True`, the vectors in `basis` are assumed to be orthonormal
+        w.r.t. `product`.
+
+    Returns
+    -------
+    The projected |VectorArray|.
+    """
+    if orthonormal:
+        return basis.lincomb(U.inner(basis, product))
+    else:
+        gramian = basis.gramian(product)
+        rhs = basis.inner(U, product)
+        coeffs = scipy.linalg.solve(gramian, rhs, sym_pos=True, overwrite_a=True, overwrite_b=True).T
+        return basis.lincomb(coeffs)

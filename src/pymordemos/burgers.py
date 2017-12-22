@@ -74,7 +74,7 @@ def burgers_demo(args):
     print('Discretize ...')
     if args['--grid-type'] == 'rect':
         args['--grid'] *= 1. / m.sqrt(2)
-    discretization, data = discretize_instationary_fv(
+    d, data = discretize_instationary_fv(
         problem,
         diameter=1. / args['--grid'],
         grid_type=RectGrid if args['--grid-type'] == 'rect' else TriaGrid,
@@ -82,17 +82,17 @@ def burgers_demo(args):
         lxf_lambda=args['--lxf-lambda'],
         nt=args['--nt']
     )
-    print(discretization.operator.grid)
+    print(d.operator.grid)
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
+    print('The parameter type is {}'.format(d.parameter_type))
 
     mu = args['EXP']
     print('Solving for exponent = {} ... '.format(mu))
     sys.stdout.flush()
     tic = time.time()
-    U = discretization.solve(mu)
+    U = d.solve(mu)
     print('Solving took {}s'.format(time.time() - tic))
-    discretization.visualize(U)
+    d.visualize(U)
 
 if __name__ == '__main__':
     # parse arguments

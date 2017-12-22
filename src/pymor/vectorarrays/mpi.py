@@ -92,8 +92,8 @@ class MPIVectorArray(VectorArrayInterface):
     def l2_norm2(self):
         return mpi.call(mpi.method_call, self.obj_id, 'l2_norm2')
 
-    def components(self, component_indices):
-        return mpi.call(mpi.method_call, self.obj_id, 'components', component_indices)
+    def dofs(self, dof_indices):
+        return mpi.call(mpi.method_call, self.obj_id, 'dofs', dof_indices)
 
     def amax(self):
         return mpi.call(mpi.method_call, self.obj_id, 'amax')
@@ -244,7 +244,7 @@ class MPIVectorArrayNoComm(MPIVectorArray):
     def l2_norm2(self):
         raise NotImplementedError
 
-    def components(self, component_indices):
+    def dofs(self, dof_indices):
         raise NotImplementedError
 
     def amax(self):
@@ -291,12 +291,12 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
     def l2_norm2(self):
         return mpi.call(_MPIVectorArrayAutoComm_l2_norm2, self.obj_id)
 
-    def components(self, component_indices):
+    def dofs(self, dof_indices):
         offsets = getattr(self, '_offsets', None)
         if offsets is None:
             offsets = self.space._get_dims()[1]
-        component_indices = np.array(component_indices)
-        return mpi.call(_MPIVectorArrayAutoComm_components, self.obj_id, offsets, component_indices)
+        dof_indices = np.array(dof_indices)
+        return mpi.call(_MPIVectorArrayAutoComm_dofs, self.obj_id, offsets, dof_indices)
 
     def amax(self):
         offsets = getattr(self, '_offsets', None)
@@ -389,13 +389,13 @@ def _MPIVectorArrayAutoComm_l2_norm2(self):
         return np.sum(results, axis=0)
 
 
-def _MPIVectorArrayAutoComm_components(self, offsets, component_indices):
+def _MPIVectorArrayAutoComm_dofs(self, offsets, dof_indices):
     self = mpi.get_object(self)
     offset = offsets[mpi.rank]
     dim = self.dim
-    my_indices = np.logical_and(component_indices >= offset, component_indices < offset + dim)
-    local_results = np.zeros((len(self), len(component_indices)))
-    local_results[:, my_indices] = self.components(component_indices[my_indices] - offset)
+    my_indices = np.logical_and(dof_indices >= offset, dof_indices < offset + dim)
+    local_results = np.zeros((len(self), len(dof_indices)))
+    local_results[:, my_indices] = self.dofs(dof_indices[my_indices] - offset)
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)

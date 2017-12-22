@@ -51,7 +51,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     Returns
     -------
-    discretization
+    d
         The |Discretization| that has been generated.
     data
         Dictionary with the following entries:
@@ -164,16 +164,16 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    discretization = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
-                                              parameter_space=parameter_space, name='{}_CG'.format(p.name))
+    d  = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
+                                  parameter_space=parameter_space, name='{}_CG'.format(p.name))
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
     if preassemble:
-        data['unassembled_discretization'] = discretization
-        discretization = preassemble_(discretization)
+        data['unassembled_d'] = d
+        d = preassemble_(d)
 
-    return discretization, data
+    return d, data
 
 
 def discretize_instationary_cg(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
@@ -215,7 +215,7 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     Returns
     -------
-    discretization
+    d
         The |Discretization| that has been generated.
     data
         Dictionary with the following entries:
@@ -250,13 +250,13 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     mass = d.l2_0_product
 
-    discretization = InstationaryDiscretization(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
-                                                products=d.products, time_stepper=time_stepper,
-                                                parameter_space=p.parameter_space, visualizer=d.visualizer,
-                                                num_values=num_values, name='{}_CG'.format(p.name))
+    d = InstationaryDiscretization(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
+                                   products=d.products, time_stepper=time_stepper,
+                                   parameter_space=p.parameter_space, visualizer=d.visualizer,
+                                   num_values=num_values, name='{}_CG'.format(p.name))
 
     if preassemble:
-        data['unassembled_discretization'] = discretization
-        discretization = preassemble_(discretization)
+        data['unassembled_d'] = d
+        d = preassemble_(d)
 
-    return discretization, data
+    return d, data

@@ -19,10 +19,8 @@ NumPy/SciPy scientific computing stack are provided for getting started
 quickly.
 
 [Latest Docs]
-[Release Docs]
 [DOI]
 [Build Status]
-[Coverage Status]
 
 
 License

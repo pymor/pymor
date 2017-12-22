@@ -100,7 +100,7 @@ class GenericRBReductor(BasicInterface):
         projected_products = {k: project_operator(op) for k, op in rd.products.items()}
 
         if rd.estimator:
-            estimator = rd.estimator.restricted_to_subbasis(dim, discretization=rd)
+            estimator = rd.estimator.restricted_to_subbasis(dim, d=rd)
         else:
             estimator = None
 

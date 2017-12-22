@@ -3,7 +3,7 @@
 # Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-_PYSIDE = {'2.7': 'https://pymor.github.io/wheels/PySide-1.2.2-cp27-none-linux_x86_64.whl',
+_PYSIDE = {'2.7': 'https://pymor.github.io/wheels/PySide-1.2.4-cp27-none-linux_x86_64.whl',
            '3.3': 'https://pymor.github.io/wheels/PySide-1.2.2-cp33-cp33m-linux_x86_64.whl',
            '3.4': 'https://pymor.github.io/wheels/PySide-1.2.4-cp34-cp34m-linux_x86_64.whl'}
 
@@ -13,10 +13,10 @@ def _pyside(rev, marker=True):
     return '{}'.format(_PYSIDE[rev])
 
 _QT_COMMENT = 'solution visualization for builtin discretizations'
-_PYTEST = 'pytest>=3.2'
+_PYTEST = 'pytest>=3.3'
 tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker']
-install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'docopt', 'Qt.py>=1.0.0b3']
-setup_requires = ['pytest-runner>=2.9', 'cython>=0.20.1', 'numpy>=1.8.1']
+install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'docopt', 'Qt.py', 'packaging']
+setup_requires = ['pytest-runner>=2.9', 'cython>=0.20.1', 'numpy>=1.8.1', 'packaging']
 install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'ipyparallel': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',
@@ -37,7 +37,6 @@ doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'python-coveralls', 'pytest-travis-fold']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
-                'pytest-capturelog': 'pytest_capturelog',
                 'pytest-instafail': 'pytest_instafail',
                 'pytest-xdist': 'xdist',
                 'pytest-cov': 'pytest_cov',
@@ -48,7 +47,7 @@ import_names = {'ipython': 'IPython',
                 _pyside('3.3', marker=False): 'PySide',
                 _pyside('2.7', marker=False): 'PySide',
                 'pyside': 'PySide'}
-
+needs_extra_compile_setup = ['mpi4py']
 
 def strip_markers(name):
     for m in ';<>=':
@@ -72,9 +71,11 @@ def extras():
             name = import_names[name]
         return name
 
-    def _candidates():
+    def _candidates(blacklist):
         # skip those which aren't needed in our current environment (py ver, platform)
         for pkg in set(itertools.chain(doc_requires, tests_require, install_suggests.keys())):
+            if pkg in blacklist:
+                continue
             try:
                 marker = next(pkg_resources.parse_requirements(pkg)).marker
                 if marker is None or marker.evaluate():
@@ -91,26 +92,11 @@ def extras():
                 except pkg_resources.RequirementParseError:
                     continue
 
-    full = [_ex(f) for f in _candidates()]
     return {
-        'full':  full,
+        'full-nompi': [_ex(f) for f in _candidates(blacklist=needs_extra_compile_setup)],
+        'full': [_ex(f) for f in _candidates(blacklist=[])],
         'travis':  travis_requires,
     }
-
-
-def missing(names):
-    for name in names:
-        stripped_name = strip_markers(name)
-        try:
-            __import__(stripped_name)
-        except ImportError:
-            if stripped_name in import_names:
-                try:
-                    __import__(import_names[stripped_name])
-                except ImportError:
-                    yield name, import_names[stripped_name]
-            else:
-                yield name, stripped_name
 
 
 if __name__ == '__main__':

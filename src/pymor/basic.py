@@ -8,7 +8,7 @@ You can use ``from pymor.basic import *`` in interactive session
 to have the most important parts of pyMOR directly available.
 """
 
-from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.basic import almost_equal, relative_error, project_array
 from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
@@ -24,6 +24,7 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
+from pymor.analyticalproblems.text import text_problem
 
 from pymor.core.cache import clear_caches, enable_caching, disable_caching
 from pymor.core.defaults import print_defaults, write_defaults_to_file, load_defaults_from_file, set_defaults

@@ -30,6 +30,10 @@ class InversionError(Exception):
     """Is raised if an operator inversion algorithm fails."""
 
 
+class LinAlgError(Exception):
+    """Is raised if a linear algebra operation fails."""
+
+
 class NewtonError(Exception):
     """Is raised if the Newton algorithm fails to converge."""
 

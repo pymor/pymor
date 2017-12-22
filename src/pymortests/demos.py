@@ -62,6 +62,7 @@ THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 10, 10]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 10, 10]),
     ('thermalblock_simple', ['ngsolve', 'greedy', 2, 10, 10]),
+    ('thermalblock_simple', ['pymor-text', 'adaptive_greedy', -1, 3, 3]),
 )
 
 THERMALBLOCK_GUI_ARGS = (
@@ -102,14 +103,17 @@ def _skip_if_no_solver(param):
                 pytest.skip('skipped test due to missing ' + solver)
 
 
+def _demo_ids(demo_args):
+    return ["{}:'{}'".format(a,' '.join((str(s) for s in b))).replace('pymordemos.','') for a,b in demo_args]
 
-@pytest.fixture(params=DEMO_ARGS)
+
+@pytest.fixture(params=DEMO_ARGS, ids=_demo_ids(DEMO_ARGS))
 def demo_args(request):
     _skip_if_no_solver(request.param)
     return request.param
 
 
-@pytest.fixture(params=THERMALBLOCK_ARGS)
+@pytest.fixture(params=THERMALBLOCK_ARGS, ids=_demo_ids(THERMALBLOCK_ARGS))
 def thermalblock_args(request):
     _skip_if_no_solver(request.param)
     return request.param

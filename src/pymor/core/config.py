@@ -15,19 +15,20 @@ def _can_import(module):
 
 def _get_fenics_version():
     import dolfin as df
-    version = list(map(int, df.__version__.split('.')))
-    if version[:2] != [1, 6]:
-        import warnings
-        warnings.warn('FEniCS support has only been tested with dolfin 1.6.')
-    return version
+    return df.__version__
 
 
 def is_windows_platform():
     return sys.platform == 'win32' or sys.platform == 'cygwin'
 
 
+def _get_matplotib_version():
+    import matplotlib
     if is_windows_platform():
         matplotlib.use('Qt4Agg')
+    return matplotlib.__version__
+
+
 def _get_ipython_version():
     try:
         import ipyparallel
@@ -59,7 +60,7 @@ _PACKAGES = {
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYTHON': _get_ipython_version,
-    'MATPLOTLIB': lambda: import_module('matplotlib').__version__,
+    'MATPLOTLIB': _get_matplotib_version,
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: bool(import_module('ngsolve')),

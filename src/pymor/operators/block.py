@@ -53,7 +53,7 @@ class BlockOperator(OperatorBase):
         # turn Nones to ZeroOperators
         for (i, j) in np.ndindex(blocks.shape):
             if blocks[i, j] is None:
-                self._blocks[i, j] = ZeroOperator(source_types[j], range_types[i])
+                self._blocks[i, j] = ZeroOperator(range_types[i], source_types[j])
 
         self.source = BlockVectorSpace(source_types, id_=source_id)
         self.range = BlockVectorSpace(range_types, id_=range_id)

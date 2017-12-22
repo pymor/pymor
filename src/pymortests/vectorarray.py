@@ -667,52 +667,52 @@ def test_sup_norm(vector_array):
         assert np.allclose(c[ind].sup_norm(), 0)
 
 
-def test_components(vector_array):
+def test_dofs(vector_array):
     v = vector_array
     np.random.seed(len(v) + 24 + v.dim)
     for ind in valid_inds(v):
         c = v.copy()
-        comp = c[ind].components(np.array([], dtype=np.int))
-        assert isinstance(comp, np.ndarray)
-        assert comp.shape == (v.len_ind(ind), 0)
+        dofs = c[ind].dofs(np.array([], dtype=np.int))
+        assert isinstance(dofs, np.ndarray)
+        assert dofs.shape == (v.len_ind(ind), 0)
 
         c = v.copy()
-        comp = c[ind].components([])
-        assert isinstance(comp, np.ndarray)
-        assert comp.shape == (v.len_ind(ind), 0)
+        dofs = c[ind].dofs([])
+        assert isinstance(dofs, np.ndarray)
+        assert dofs.shape == (v.len_ind(ind), 0)
 
         if v.dim > 0:
             for count in (1, 5, 10):
                 c_ind = np.random.randint(0, v.dim, count)
                 c = v.copy()
-                comp = c[ind].components(c_ind)
-                assert comp.shape == (v.len_ind(ind), count)
+                dofs = c[ind].dofs(c_ind)
+                assert dofs.shape == (v.len_ind(ind), count)
                 c = v.copy()
-                comp2 = c[ind].components(list(c_ind))
-                assert np.all(comp == comp2)
+                dofs2 = c[ind].dofs(list(c_ind))
+                assert np.all(dofs == dofs2)
                 c = v.copy()
                 c.scal(3.)
-                comp2 = c[ind].components(c_ind)
-                assert np.allclose(comp * 3, comp2)
+                dofs2 = c[ind].dofs(c_ind)
+                assert np.allclose(dofs * 3, dofs2)
                 c = v.copy()
-                comp2 = c[ind].components(np.hstack((c_ind, c_ind)))
-                assert np.all(comp2 == np.hstack((comp, comp)))
+                dofs2 = c[ind].dofs(np.hstack((c_ind, c_ind)))
+                assert np.all(dofs2 == np.hstack((dofs, dofs)))
                 if hasattr(v, 'data'):
-                    assert np.all(comp == indexed(v.data, ind)[:, c_ind])
+                    assert np.all(dofs == indexed(v.data, ind)[:, c_ind])
 
 
-def test_components_wrong_component_indices(vector_array):
+def test_components_wrong_dof_indices(vector_array):
     v = vector_array
     np.random.seed(len(v) + 24 + v.dim)
     for ind in valid_inds(v):
         with pytest.raises(Exception):
-            v[ind].components(None)
+            v[ind].dofs(None)
         with pytest.raises(Exception):
-            v[ind].components(1)
+            v[ind].dofs(1)
         with pytest.raises(Exception):
-            v[ind].components(np.array([-1]))
+            v[ind].dofs(np.array([-1]))
         with pytest.raises(Exception):
-            v[ind].components(np.array([v.dim]))
+            v[ind].dofs(np.array([v.dim]))
 
 
 def test_amax(vector_array):
@@ -723,7 +723,7 @@ def test_amax(vector_array):
         max_inds, max_vals = v[ind].amax()
         assert np.allclose(np.abs(max_vals), v[ind].sup_norm())
         for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals):
-            assert np.allclose(max_val, v[[i]].components([max_ind]))
+            assert np.allclose(max_val, v[[i]].dofs([max_ind]))
 
 
 # def test_amax_zero_dim(zero_dimensional_vector_space):

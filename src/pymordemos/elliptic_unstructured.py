@@ -50,21 +50,21 @@ def elliptic_gmsh_demo(args):
 
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    discretization, data = discretizer(analytical_problem=problem, diameter=args['CLSCALE'])
+    d, data = discretizer(analytical_problem=problem, diameter=args['CLSCALE'])
     grid = data['grid']
     print(grid)
     print()
 
     print('Solve ...')
-    U = discretization.solve()
+    U = d.solve()
 
     solution = ExpressionFunction('(lambda r, phi: r**(pi/angle) * sin(phi * pi/angle))(*polar(x))', 2, (),
                                   {}, {'angle': args['ANGLE']})
     U_ref = U.space.make_array(solution(grid.centers(0)) if args['--fv'] else solution(grid.centers(2)))
 
-    discretization.visualize((U, U_ref, U-U_ref),
-                             legend=('Solution', 'Analytical solution (circular boundary)', 'Error'),
-                             separate_colorbars=True)
+    d.visualize((U, U_ref, U-U_ref),
+                legend=('Solution', 'Analytical solution (circular boundary)', 'Error'),
+                separate_colorbars=True)
 
 
 if __name__ == '__main__':

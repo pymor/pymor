@@ -55,8 +55,8 @@ if config.HAVE_NGSOLVE:
         def l2_norm2(self):
             return self.impl.vec.Norm() ** 2
 
-        def components(self, component_indices):
-            return self.data[component_indices]
+        def dofs(self, dof_indices):
+            return self.data[dof_indices]
 
         def amax(self):
             A = np.abs(self.data)
@@ -167,7 +167,7 @@ if config.HAVE_NGSOLVE:
             self.fespace = fespace
             self.space = NGSolveVectorSpace(fespace)
 
-        def visualize(self, U, discretization, legend=None, separate_colorbars=True, block=True):
+        def visualize(self, U, d, legend=None, separate_colorbars=True, block=True):
             """Visualize the provided data."""
             if isinstance(U, VectorArrayInterface):
                 U = (U,)

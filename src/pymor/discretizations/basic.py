@@ -102,7 +102,7 @@ class DiscretizationBase(DiscretizationInterface):
 
     def estimate(self, U, mu=None):
         if self.estimator is not None:
-            return self.estimator.estimate(U, mu=mu, discretization=self)
+            return self.estimator.estimate(U, mu=mu, d=self)
         else:
             raise NotImplementedError('Discretization has no estimator.')
 
@@ -132,12 +132,12 @@ class StationaryDiscretization(DiscretizationBase):
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, discretization)` method. If `estimator` is
+        an `estimate(U, mu, d)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
         discretization which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
-        a `visualize(U, discretization, ...)` method. If `visualizer`
+        a `visualize(U, d, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
         to the discretization which forwards its arguments to the
         visualizer's `visualize` method.
@@ -169,6 +169,16 @@ class StationaryDiscretization(DiscretizationBase):
                          cache_region=cache_region, name=name)
         self.solution_space = self.operator.source
         self.parameter_space = parameter_space
+
+    def as_generic_type(self):
+        if type(self) is StationaryDiscretization:
+            return self
+        operators = {k: o for k, o in self.operators.items() if not k in self.special_operators}
+        return StationaryDiscretization(
+            self.operator, self.rhs, self.products, operators,
+            self.parameter_space, self.estimator, self.visualizer, self.cache_region, self.name
+        )
+
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -225,12 +235,12 @@ class InstationaryDiscretization(DiscretizationBase):
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, discretization)` method. If `estimator` is
+        an `estimate(U, mu, d)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
         discretization which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
-        a `visualize(U, discretization, ...)` method. If `visualizer`
+        a `visualize(U, d, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
         to the discretization which forwards its arguments to the
         visualizer's `visualize` method.
@@ -286,6 +296,17 @@ class InstationaryDiscretization(DiscretizationBase):
         self.parameter_space = parameter_space
         if hasattr(time_stepper, 'nt'):
             self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}
+
+    def as_generic_type(self):
+        if type(self) is StationaryDiscretization:
+            return self
+        operators = {k: o for k, o in self.operators.items() if not k in self.special_operators}
+        return InstationaryDiscretization(
+            self.T, self.initial_data, self.operator, self.rhs, self.mass, self.time_stepper, self.num_values,
+            self.products, operators, self.parameter_space, self.estimator, self.visualizer,
+            self.cache_region, self.name
+        )
+
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments

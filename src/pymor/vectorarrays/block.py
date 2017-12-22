@@ -126,18 +126,18 @@ class BlockVectorArray(VectorArrayInterface):
     def sup_norm(self):
         return np.max(np.array([block.sup_norm() for block in self._blocks]), axis=0)
 
-    def components(self, component_indices):
-        component_indices = np.array(component_indices)
-        if not len(component_indices):
+    def dofs(self, dof_indices):
+        dof_indices = np.array(dof_indices)
+        if not len(dof_indices):
             return np.zeros((len(self), 0))
 
         self._compute_bins()
-        block_inds = np.digitize(component_indices, self._bins) - 1
-        component_indices -= self._bins[block_inds]
+        block_inds = np.digitize(dof_indices, self._bins) - 1
+        dof_indices -= self._bins[block_inds]
         block_inds = self._bin_map[block_inds]
         blocks = self._blocks
-        return np.array([blocks[bi].components([ci])[:, 0]
-                         for bi, ci in zip(block_inds, component_indices)]).T
+        return np.array([blocks[bi].dofs([ci])[:, 0]
+                         for bi, ci in zip(block_inds, dof_indices)]).T
 
     def amax(self):
         self._compute_bins()
@@ -205,6 +205,14 @@ class BlockVectorSpace(VectorSpaceInterface):
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
         return BlockVectorArray(obj, self)
+
+    def make_block_diagonal_array(self, obj):
+        assert len(obj) == len(self.subspaces)
+        assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
+        U = self.empty(reserve=sum(len(UU) for UU in obj))
+        for i, UU in enumerate(obj):
+            U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))
+        return U
 
     def from_data(self, data):
         if data.ndim == 1:

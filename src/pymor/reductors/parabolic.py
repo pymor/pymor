@@ -52,7 +52,7 @@ class ParabolicRBReductor(GenericRBReductor):
 
     Parameters
     ----------
-    discretization
+    d
         The |InstationaryDiscretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
@@ -61,7 +61,7 @@ class ParabolicRBReductor(GenericRBReductor):
         RB must be to be orthonomrmal w.r.t. this product!
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
-        for the coercivity constant of `discretization.operator` w.r.t. `product`.
+        for the coercivity constant of `d.operator` w.r.t. `product`.
     """
     def __init__(self, d, RB=None, product=None, coercivity_estimator=None):
         assert isinstance(d.time_stepper, ImplicitEulerTimeStepper)
@@ -114,8 +114,8 @@ class ParabolicRBEstimator(ImmutableInterface):
         self.initial_residual_range_dims = initial_residual_range_dims
         self.coercivity_estimator = coercivity_estimator
 
-    def estimate(self, U, mu, discretization, return_error_sequence=False):
-        dt = discretization.T / discretization.time_stepper.nt
+    def estimate(self, U, mu, d, return_error_sequence=False):
+        dt = d.T / d.time_stepper.nt
         C = self.coercivity_estimator(mu) if self.coercivity_estimator else 1.
 
         est = np.empty(len(U))
@@ -127,7 +127,7 @@ class ParabolicRBEstimator(ImmutableInterface):
 
         return est if return_error_sequence else est[-1]
 
-    def restricted_to_subbasis(self, dim, discretization):
+    def restricted_to_subbasis(self, dim, d):
         if self.residual_range_dims and self.initial_residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)

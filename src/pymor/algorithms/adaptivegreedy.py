@@ -16,7 +16,7 @@ from pymor.parameters.base import Parameter
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-def adaptive_greedy(discretization, reductor, parameter_space=None,
+def adaptive_greedy(d, reductor, parameter_space=None,
                     use_estimator=True, error_norm=None,
                     target_error=None, max_extensions=None,
                     validation_mus=0, rho=1.1, gamma=0.2, theta=0.,
@@ -41,13 +41,13 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
 
     Parameters
     ----------
-    discretization
+    d
         See :func:`~pymor.algorithms.greedy.greedy`.
     reductor
         See :func:`~pymor.algorithms.greedy.greedy`.
     parameter_space
         The |ParameterSpace| for which to compute the reduced model. If `None`,
-        the parameter space of the `discretization` is used.
+        the parameter space of `d` is used.
     use_estimator
         See :func:`~pymor.algorithms.greedy.greedy`.
     error_norm
@@ -88,7 +88,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     -------
     Dict with the following fields:
 
-        :reduced_discretization: The reduced |Discretization| obtained for the
+        :rd:                     The reduced |Discretization| obtained for the
                                  computed basis.
         :extensions:             Number of greedy iterations.
         :max_errs:               Sequence of maximum errors during the greedy run.
@@ -122,14 +122,11 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     with RemoteObjectManager() as rom:
         # Push everything we need during the greedy search to the workers.
         if not use_estimator:
-            rom.manage(pool.push(discretization))
+            rom.manage(pool.push(d))
             if error_norm:
                 rom.manage(pool.push(error_norm))
 
         tic = time.time()
-
-        # initial setup for main loop
-        d = discretization
 
         # setup training and validation sets
         parameter_space = parameter_space or d.parameter_space
@@ -273,7 +270,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
 
     tictoc = time.time() - tic
     logger.info('Greedy search took {} seconds'.format(tictoc))
-    return {'reduced_discretization': rd,
+    return {'rd': rd,
             'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'max_val_errs': max_val_errs, 'max_val_err_mus': max_val_err_mus,
             'refinements': refinements, 'training_set_sizes': training_set_sizes,

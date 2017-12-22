@@ -216,29 +216,29 @@ class NumpyVectorArray(VectorArrayInterface):
             _, max_val = self.amax(_ind=_ind)
             return max_val
 
-    def components(self, component_indices, *, _ind=None):
+    def dofs(self, dof_indices, *, _ind=None):
         if _ind is None:
             _ind = slice(0, self._len)
-        assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
-            or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
-                and (len(component_indices) == 0 or np.min(component_indices) >= 0))
+        assert isinstance(dof_indices, list) and (len(dof_indices) == 0 or min(dof_indices) >= 0) \
+            or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
+                and (len(dof_indices) == 0 or np.min(dof_indices) >= 0))
         # NumPy 1.9 is quite permissive when indexing arrays of size 0, so we have to add the
         # following check:
         assert self._len > 0 \
-            or (isinstance(component_indices, list)
-                and (len(component_indices) == 0 or max(component_indices) < self.dim)) \
-            or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
-                and (len(component_indices) == 0 or np.max(component_indices) < self.dim))
+            or (isinstance(dof_indices, list)
+                and (len(dof_indices) == 0 or max(dof_indices) < self.dim)) \
+            or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
+                and (len(dof_indices) == 0 or np.max(dof_indices) < self.dim))
 
         if NUMPY_INDEX_QUIRK and (self._len == 0 or self.dim == 0):
-            assert isinstance(component_indices, list) \
-                and (len(component_indices) == 0 or max(component_indices) < self.dim) \
-                or isinstance(component_indices, np.ndarray) \
-                and component_indices.ndim == 1 \
-                and (len(component_indices) == 0 or np.max(component_indices) < self.dim)
-            return np.zeros((self.len_ind(_ind), len(component_indices)))
+            assert isinstance(dof_indices, list) \
+                and (len(dof_indices) == 0 or max(dof_indices) < self.dim) \
+                or isinstance(dof_indices, np.ndarray) \
+                and dof_indices.ndim == 1 \
+                and (len(dof_indices) == 0 or np.max(dof_indices) < self.dim)
+            return np.zeros((self.len_ind(_ind), len(dof_indices)))
 
-        return self._array[:, component_indices][_ind, :]
+        return self._array[:, dof_indices][_ind, :]
 
     def amax(self, *, _ind=None):
         if _ind is None:
@@ -479,8 +479,8 @@ class NumpyVectorArrayView(NumpyVectorArray):
     def sup_norm(self):
         return self.base.sup_norm(_ind=self.ind)
 
-    def components(self, component_indices):
-        return self.base.components(component_indices, _ind=self.ind)
+    def dofs(self, dof_indices):
+        return self.base.dofs(dof_indices, _ind=self.ind)
 
     def amax(self):
         return self.base.amax(_ind=self.ind)

@@ -80,7 +80,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             except NotImplementedError:
                 self.logger.warning('Operator has no "restricted" method. The full operator will be evaluated.')
                 self.operator = operator
-            interpolation_matrix = collateral_basis.components(interpolation_dofs).T
+            interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
             self.interpolation_matrix = interpolation_matrix
             self.collateral_basis = collateral_basis.copy()
 
@@ -90,10 +90,10 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             return self.range.zeros(len(U))
 
         if hasattr(self, 'restricted_operator'):
-            U_components = NumpyVectorSpace.make_array(U.components(self.source_dofs))
-            AU = self.restricted_operator.apply(U_components, mu=mu)
+            U_dofs = NumpyVectorSpace.make_array(U.dofs(self.source_dofs))
+            AU = self.restricted_operator.apply(U_dofs, mu=mu)
         else:
-            AU = NumpyVectorSpace.make_array(self.operator.apply(U, mu=mu).components(self.interpolation_dofs))
+            AU = NumpyVectorSpace.make_array(self.operator.apply(U, mu=mu).dofs(self.interpolation_dofs))
         try:
             if self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
@@ -114,15 +114,15 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                                            source_id=self.source.id, range_id=self.range.id,
                                            name=self.name + '_jacobian')
             else:
-                return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
+                return ZeroOperator(self.range, self.source, name=self.name + '_jacobian')
         elif hasattr(self, 'operator'):
             return EmpiricalInterpolatedOperator(self.operator.jacobian(U, mu=mu), self.interpolation_dofs,
                                                  self.collateral_basis, self.triangular,
                                                  solver_options=options, name=self.name + '_jacobian')
         else:
             restricted_source = self.restricted_operator.source
-            U_components = restricted_source.make_array(U.components(self.source_dofs))
-            JU = self.restricted_operator.jacobian(U_components, mu=mu) \
+            U_dofs = restricted_source.make_array(U.dofs(self.source_dofs))
+            JU = self.restricted_operator.jacobian(U_dofs, mu=mu) \
                                          .apply(restricted_source.make_array(np.eye(len(self.source_dofs))))
             try:
                 if self.triangular:
@@ -137,7 +137,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                 J = NumpyMatrixOperator(J.data.T, range_id=self.range.id)
             else:
                 J = VectorArrayOperator(J)
-            return Concatenation(J, ComponentProjection(self.source_dofs, self.source),
+            return Concatenation([J, ComponentProjection(self.source_dofs, self.source)],
                                  solver_options=options, name=self.name + '_jacobian')
 
 
@@ -161,8 +161,8 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
-        U_components = self.source_basis_dofs.lincomb(U.data)
-        AU = self.restricted_operator.apply(U_components, mu=mu)
+        U_dofs = self.source_basis_dofs.lincomb(U.data)
+        AU = self.restricted_operator.apply(U_dofs, mu=mu)
         try:
             if self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
@@ -183,8 +183,8 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
                                        source_id=self.source.id, range_id=self.range.id,
                                        name=self.name + '_jacobian')
 
-        U_components = self.source_basis_dofs.lincomb(U.data[0])
-        J = self.restricted_operator.jacobian(U_components, mu=mu).apply(self.source_basis_dofs)
+        U_dofs = self.source_basis_dofs.lincomb(U.data[0])
+        J = self.restricted_operator.jacobian(U_dofs, mu=mu).apply(self.source_basis_dofs)
         try:
             if self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, J.data.T,

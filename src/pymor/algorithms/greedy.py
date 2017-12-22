@@ -12,7 +12,7 @@ from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.manager import RemoteObjectManager
 
 
-def greedy(discretization, reductor, samples, use_estimator=True, error_norm=None,
+def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
            atol=None, rtol=None, max_extensions=None, extension_params=None, pool=None):
     """Greedy basis generation algorithm.
 
@@ -26,7 +26,7 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
 
     Parameters
     ----------
-    discretization
+    d
         The |Discretization| to reduce.
     reductor
         Reductor for reducing the given |Discretization|. This has to be a
@@ -38,9 +38,9 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
     samples
         The set of |Parameter| samples on which to perform the greedy search.
     use_estimator
-        If `True`, use `reduced_discretization.estimate()` to estimate the
-        errors on the sample set. Otherwise `discretization.solve()` is
-        called to compute the exact model reduction error.
+        If `True`, use `rd.estimate()` to estimate the errors on the
+        sample set. Otherwise `d.solve()` is called to compute the exact
+        model reduction error.
     error_norm
         If `use_estimator == False`, use this function to calculate the
         norm of the error. If `None`, the Euclidean norm is used.
@@ -62,7 +62,7 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
     -------
     Dict with the following fields:
 
-        :reduced_discretization: The reduced |Discretization| obtained for the
+        :rd:                     The reduced |Discretization| obtained for the
                                  computed basis.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.
@@ -86,7 +86,7 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
         # Push everything we need during the greedy search to the workers.
         # Distribute the training set evenly among the workes.
         if not use_estimator:
-            rom.manage(pool.push(discretization))
+            rom.manage(pool.push(d))
             if error_norm:
                 rom.manage(pool.push(error_norm))
         samples = rom.manage(pool.scatter_list(samples))
@@ -102,7 +102,7 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
 
             if sample_count == 0:
                 logger.info('There is nothing else to do for empty samples.')
-                return {'reduced_discretization': rd,
+                return {'rd': rd,
                         'max_errs': [], 'max_err_mus': [], 'extensions': 0,
                         'time': time.time() - tic}
 
@@ -111,7 +111,7 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
                     errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=None, reductor=None,
                                                        samples=samples, error_norm=None)))
                 else:
-                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=discretization, reductor=reductor,
+                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=d, reductor=reductor,
                                                        samples=samples, error_norm=error_norm)))
             max_err_ind = np.argmax(errors)
             max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
@@ -129,7 +129,7 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
                 break
 
             with logger.block('Computing solution snapshot for mu = {} ...'.format(max_err_mu)):
-                U = discretization.solve(max_err_mu)
+                U = d.solve(max_err_mu)
             with logger.block('Extending basis with solution snapshot ...'):
                 try:
                     reductor.extend_basis(U, copy_U=False, **extension_params)
@@ -148,7 +148,7 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
 
         tictoc = time.time() - tic
         logger.info('Greedy search took {} seconds'.format(tictoc))
-        return {'reduced_discretization': rd,
+        return {'rd': rd,
                 'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
                 'time': tictoc}
 
