@@ -428,7 +428,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     def __sub__(self, other):
-        return self * (- other)
+        return self + (- other)
 
     @abstractmethod
     def __mul__(self, other):
