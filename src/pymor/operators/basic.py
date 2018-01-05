@@ -57,7 +57,7 @@ class OperatorBase(OperatorInterface):
     def __sub__(self, other):
         assert isinstance(other, OperatorInterface)
         from pymor.operators.constructions import LincombOperator
-        return LincombOperator([self, other], [1, -1])
+        return LincombOperator([self, other], [1., -1.])
 
     def __add__(self, other):
         assert isinstance(other, OperatorInterface)
