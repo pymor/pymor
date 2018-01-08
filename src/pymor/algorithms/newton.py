@@ -30,8 +30,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     rhs
         |VectorArray| of length 1 containing the vector `V`.
     initial_guess
-        If `None`, a |VectorArray| of length 1 containing an initial guess for the solution
-        `U`.
+        If not `None`, a |VectorArray| of length 1 containing an initial guess for the
+        solution `U`.
     mu
         The |Parameter| for which to solve the equation.
     error_norm
