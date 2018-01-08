@@ -120,7 +120,7 @@ class LincombOperator(OperatorBase):
         return R
 
     def assemble(self, mu=None):
-        operators = [op.assemble(mu) for op in self.operators]
+        operators = tuple(op.assemble(mu) for op in self.operators)
         coefficients = self.evaluate_coefficients(mu)
         op = operators[0].assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
                                            name=self.name + '_assembled')
