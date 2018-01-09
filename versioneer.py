@@ -1258,6 +1258,26 @@ def render_pep440(pieces):
     return rendered
 
 
+def render_ci_wheel_builder(pieces):
+    """Build up non-release wheel version, pep440 compliant"
+
+    Our goal: EPOCH!BUILD_NUMBER+TAG.DISTANCE.gHEX
+
+    Exceptions:
+    1: no tags. git_describe was just HEX. 0+untagged.DISTANCE.gHEX[.dirty]
+    """
+    ci_build = str(os.environ.get('TRAVIS_BUILD_ID', 1))
+    if pieces["closest-tag"]:
+        rendered = '999!{}+{}'.format(ci_build, pieces["closest-tag"])
+        if pieces["distance"] or pieces["dirty"]:
+            rendered += ".%d.g%s" % (pieces["distance"], pieces["short"])
+    else:
+        # exception #1
+        rendered = "0+untagged.%d.g%s" % (pieces["distance"],
+                                          pieces["short"])
+    return rendered
+
+
 def render_pep440_pre(pieces):
     """TAG[.post.devDISTANCE] -- No -dirty.
 
@@ -1387,6 +1407,8 @@ def render(pieces, style):
         rendered = render_git_describe(pieces)
     elif style == "git-describe-long":
         rendered = render_git_describe_long(pieces)
+    elif style == "ci_wheel_builder":
+        rendered = render_ci_wheel_builder(pieces)
     else:
         raise ValueError("unknown style '%s'" % style)
 

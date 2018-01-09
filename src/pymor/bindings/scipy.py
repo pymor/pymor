@@ -235,7 +235,8 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                 elif options['keep_factorization']:
                     # the matrix is always converted to the promoted type.
                     # if matrix.dtype == promoted_type, this is a no_op
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                                                permc_spec=options['permc_spec'])
                     matrix.factorizationdtype = promoted_type
                     R = matrix.factorization.solve(V.T).T
                 else:
@@ -248,12 +249,14 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                     for i, VV in enumerate(V):
                         R[i] = matrix.factorization.solve(VV).astype(promoted_type, copy=False)
                 elif options['keep_factorization']:
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                                                permc_spec=options['permc_spec'])
                     matrix.factorizationdtype = promoted_type
                     for i, VV in enumerate(V):
                         R[i] = matrix.factorization.solve(VV)
                 elif len(V) > 1:
-                    factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                                         permc_spec=options['permc_spec'])
                     for i, VV in enumerate(V):
                         R[i] = factorization.solve(VV)
                 else:

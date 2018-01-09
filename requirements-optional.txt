@@ -3,8 +3,8 @@
 PyQt5 ; python_version >= "3.5"
 docker
 envparse
-https://pymor.github.io/wheels/PySide-1.2.2-cp27-none-linux_x86_64.whl ; python_version == "2.7" and "linux" in sys_platform
 https://pymor.github.io/wheels/PySide-1.2.2-cp33-cp33m-linux_x86_64.whl ; python_version == "3.3" and "linux" in sys_platform
+https://pymor.github.io/wheels/PySide-1.2.4-cp27-none-linux_x86_64.whl ; python_version == "2.7" and "linux" in sys_platform
 https://pymor.github.io/wheels/PySide-1.2.4-cp34-cp34m-linux_x86_64.whl ; python_version == "3.4" and "linux" in sys_platform
 ipyparallel
 ipython>=3.0
@@ -17,4 +17,4 @@ pyevtk>=1.1
 pyopengl
 pyside; python_version < "3.5" and "linux" not in sys_platform
 pytest-cov
-pytest>=3.2
+pytest>=3.3
