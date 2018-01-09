@@ -308,7 +308,7 @@ class IdentityOperator(OperatorBase):
             assert all(op.source == operators[0].source for op in operators)
             return IdentityOperator(operators[0].source, name=name) * sum(coefficients)
         else:
-            return operators[1].assemble_lincomb(operators[1:] + [operators[0]],
+            return operators[1].assemble_lincomb(operators[1:] + (operators[0],),
                                                  coefficients[1:] + [coefficients[0]],
                                                  solver_options=solver_options, name=name)
 
