@@ -35,7 +35,8 @@ class GenericBTReductor(GenericPGReductor):
 
     def _compute_sv_U_V(self):
         """Returns singular values and vectors."""
-        raise NotImplementedError()
+        U, sv, Vh = spla.svd(self.d.E.apply2(self.of, self.cf))
+        self.sv, self.sU, self.sV = sv, U.T, Vh
 
     def _compute_error_bounds(self):
         """Returns error bounds for all possible reduced orders."""
@@ -125,14 +126,10 @@ class BTReductor(GenericBTReductor):
     """
     def __init__(self, d):
         super().__init__(d)
-        self.typ = 'lyap'
 
     def _compute_gramians(self):
-        self.cf = self.d.gramian(self.typ, 'cf')
-        self.of = self.d.gramian(self.typ, 'of')
-
-    def _compute_sv_U_V(self):
-        self.sv, self.sU, self.sV = self.d.sv_U_V(self.typ)
+        self.cf = self.d.gramian('cf')
+        self.of = self.d.gramian('of')
 
     def _compute_error_bounds(self):
         self.bounds = 2 * self.sv[:0:-1].cumsum()[::-1]
@@ -184,10 +181,6 @@ class LQGBTReductor(GenericBTReductor):
 
         self.cf = self._ricc_solver()(A, E=E, B=B, C=C, trans=True)
         self.of = self._ricc_solver()(A, E=E, B=B, C=C, trans=False)
-
-    def _compute_sv_U_V(self):
-        U, sv, Vh = spla.svd(self.d.E.apply2(self.of, self.cf))
-        self.sv, self.sU, self.sV = sv, U.T, Vh
 
     def _compute_error_bounds(self):
         self.bounds = 2 * (self.sv[:0:-1] / np.sqrt(1 + self.sv[:0:-1] ** 2)).cumsum()[::-1]
@@ -243,10 +236,6 @@ class BRBTReductor(GenericBTReductor):
 
         self.cf = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(C.range) * (-self.gamma ** 2), trans=True)
         self.of = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(B.source) * (-self.gamma ** 2), trans=False)
-
-    def _compute_sv_U_V(self):
-        U, sv, Vh = spla.svd(self.d.E.apply2(self.of, self.cf))
-        self.sv, self.sU, self.sV = sv, U.T, Vh
 
     def _compute_error_bounds(self):
         self.bounds = 2 * self.sv[:0:-1].cumsum()[::-1]

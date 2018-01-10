@@ -541,39 +541,14 @@ class LTISystem(InputOutputSystem):
             raise NotImplementedError
         return partial(solve_lyap_impl, options=options)
 
-    @defaults('default_solver_backend', qualname='pymor.discretizations.iosys.LTISystem._ricc_solver')
-    def _ricc_solver(self, default_solver_backend=_DEFAULT_ME_SOLVER_BACKEND):
-        options = self.solver_options.get('ricc') if self.solver_options else None
-        if options:
-            solver = options if isinstance(options, str) else options['type']
-            backend = solver.split('_')[0]
-        else:
-            backend = default_solver_backend
-        if backend == 'scipy':
-            from pymor.bindings.scipy import solve_ricc as solve_ricc_impl
-        elif backend == 'slycot':
-            from pymor.bindings.slycot import solve_ricc as solve_ricc_impl
-        elif backend == 'pymess':
-            from pymor.bindings.pymess import solve_ricc as solve_ricc_impl
-        else:
-            raise NotImplementedError
-        return partial(solve_ricc_impl, options=options)
-
     @cached
-    def gramian(self, typ, subtyp):
+    def gramian(self, typ):
         """Compute a Gramian.
 
         Parameters
         ----------
         typ
             The type of the Gramian:
-
-            - `'lyap'`: Lyapunov Gramian,
-            - `'lqg'`: LQG Gramian,
-            - `('br', gamma)`: Bounded Real Gramian with parameter
-              gamma.
-        subtyp
-            The subtype of the Gramian:
 
             - `'cf'`: controllability Gramian factor,
             - `'of'`: observability Gramian factor.
@@ -582,8 +557,7 @@ class LTISystem(InputOutputSystem):
         -------
         Gramian factor as a |VectorArray| from `self.A.source`.
         """
-        assert isinstance(typ, (str, tuple))
-        assert isinstance(subtyp, str)
+        assert isinstance(typ, str)
 
         if not self.cont_time:
             raise NotImplementedError
@@ -593,57 +567,64 @@ class LTISystem(InputOutputSystem):
         C = self.C
         E = self.E if not isinstance(self.E, IdentityOperator) else None
 
-        if typ == 'lyap':
-            if subtyp == 'cf':
-                return self._lyap_solver()(A, E, B, trans=False)
-            elif subtyp == 'of':
-                return self._lyap_solver()(A, E, C, trans=True)
-            else:
-                raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lyap' type.")
-        elif typ == 'lqg':
-            if subtyp == 'cf':
-                return self._ricc_solver()(A, E=E, B=B, C=C, trans=True)
-            elif subtyp == 'of':
-                return self._ricc_solver()(A, E=E, B=B, C=C, trans=False)
-            else:
-                raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lqg' type.")
-        elif isinstance(typ, tuple) and typ[0] == 'br':
-            assert isinstance(typ[1], float)
-            assert typ[1] > 0
-            c = 1 / np.sqrt(typ[1])
-            if subtyp == 'cf':
-                return self._ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(C.range) * (-1), trans=True)
-            elif subtyp == 'of':
-                return self._ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(B.source) * (-1), trans=False)
-            else:
-                raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for ('br', gamma) type.")
+        if typ == 'cf':
+            return self._lyap_solver()(A, E, B, trans=False)
+        elif typ == 'of':
+            return self._lyap_solver()(A, E, C, trans=True)
         else:
-            raise NotImplementedError("Only 'lyap', 'lqg', and ('br', gamma) types are available.")
+            raise NotImplementedError("Only 'cf' and 'of' types are possible.")
 
     @cached
-    def sv_U_V(self, typ):
-        """Compute singular values and vectors.
-
-        Parameters
-        ----------
-        typ
-            The type of the Gramian (see
-            :func:`~pymor.discretizations.iosys.LTISystem.gramian`).
+    def _sv_U_V(self):
+        """Compute Hankel singular values and vectors.
 
         Returns
         -------
-        sv
+        hsv
             One-dimensional |NumPy array| of singular values.
         Uh
             |NumPy array| of left singluar vectors.
         Vh
             |NumPy array| of right singluar vectors.
         """
-        cf = self.gramian(typ, 'cf')
-        of = self.gramian(typ, 'of')
+        cf = self.gramian('cf')
+        of = self.gramian('of')
 
-        U, sv, Vh = spla.svd(self.E.apply2(of, cf))
-        return sv, U.T, Vh
+        U, hsv, Vh = spla.svd(self.E.apply2(of, cf))
+        return hsv, U.T, Vh
+
+    @property
+    def hsv(self):
+        """Hankel singular values.
+
+        Returns
+        -------
+        sv
+            One-dimensional |NumPy array| of singular values.
+        """
+        return self._sv_U_V()[0]
+
+    @property
+    def hsU(self):
+        """Left Hankel singular vectors.
+
+        Returns
+        -------
+        Uh
+            |NumPy array| of left singluar vectors.
+        """
+        return self._sv_U_V()[1]
+
+    @property
+    def hsV(self):
+        """Right Hankel singular vectors.
+
+        Returns
+        -------
+        Vh
+            |NumPy array| of right singluar vectors.
+        """
+        return self._sv_U_V()[2]
 
     @cached
     def norm(self, name='H2'):
@@ -667,10 +648,10 @@ class LTISystem(InputOutputSystem):
         if name == 'H2':
             B, C = self.B, self.C
             if self.m <= self.p:
-                cf = self.gramian('lyap', 'cf')
+                cf = self.gramian('cf')
                 return np.sqrt(C.apply(cf).l2_norm2().sum())
             else:
-                of = self.gramian('lyap', 'of')
+                of = self.gramian('of')
                 return np.sqrt(B.apply_transpose(of).l2_norm2().sum())
         elif name == 'Hinf_fpeak':
             from slycot import ab13dd
@@ -685,7 +666,7 @@ class LTISystem(InputOutputSystem):
         elif name == 'Hinf':
             return self.norm('Hinf_fpeak')[0]
         elif name == 'Hankel':
-            return self.sv_U_V('lyap')[0][0]
+            return self.hsv[0]
         else:
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
