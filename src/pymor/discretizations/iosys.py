@@ -575,7 +575,7 @@ class LTISystem(InputOutputSystem):
             raise NotImplementedError("Only 'cf' and 'of' types are possible.")
 
     @cached
-    def _sv_U_V(self):
+    def _hsv_U_V(self):
         """Compute Hankel singular values and vectors.
 
         Returns
@@ -602,7 +602,7 @@ class LTISystem(InputOutputSystem):
         sv
             One-dimensional |NumPy array| of singular values.
         """
-        return self._sv_U_V()[0]
+        return self._hsv_U_V()[0]
 
     @property
     def hsU(self):
@@ -613,7 +613,7 @@ class LTISystem(InputOutputSystem):
         Uh
             |NumPy array| of left singluar vectors.
         """
-        return self._sv_U_V()[1]
+        return self._hsv_U_V()[1]
 
     @property
     def hsV(self):
@@ -624,7 +624,7 @@ class LTISystem(InputOutputSystem):
         Vh
             |NumPy array| of right singluar vectors.
         """
-        return self._sv_U_V()[2]
+        return self._hsv_U_V()[2]
 
     @cached
     def norm(self, name='H2'):
