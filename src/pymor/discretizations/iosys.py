@@ -593,7 +593,6 @@ class LTISystem(InputOutputSystem):
         U, hsv, Vh = spla.svd(self.E.apply2(of, cf))
         return hsv, U.T, Vh
 
-    @property
     def hsv(self):
         """Hankel singular values.
 
@@ -604,7 +603,6 @@ class LTISystem(InputOutputSystem):
         """
         return self._hsv_U_V()[0]
 
-    @property
     def hsU(self):
         """Left Hankel singular vectors.
 
@@ -615,7 +613,6 @@ class LTISystem(InputOutputSystem):
         """
         return self._hsv_U_V()[1]
 
-    @property
     def hsV(self):
         """Right Hankel singular vectors.
 

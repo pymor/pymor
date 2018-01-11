@@ -75,7 +75,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Hankel singular values
-    hsv = lti.hsv
+    hsv = lti.hsv()
     fig, ax = plt.subplots()
     ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
     ax.set_title('Hankel singular values')
