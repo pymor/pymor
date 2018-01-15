@@ -2,9 +2,16 @@
 # Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from functools import partial
+
 import numpy as np
+import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.core.config import config
+from pymor.core.defaults import defaults
+from pymor.discretizations.iosys import _DEFAULT_ME_SOLVER_BACKEND
+from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 
 
@@ -24,12 +31,12 @@ class GenericBTReductor(GenericPGReductor):
 
     def _compute_gramians(self):
         """Returns low-rank factors of Gramians."""
-        self.cf = self.d.gramian(self.typ, 'cf')
-        self.of = self.d.gramian(self.typ, 'of')
+        raise NotImplementedError()
 
     def _compute_sv_U_V(self):
         """Returns singular values and vectors."""
-        self.sv, self.sU, self.sV = self.d.sv_U_V(self.typ)
+        U, sv, Vh = spla.svd(self.d.E.apply2(self.of, self.cf))
+        self.sv, self.sU, self.sV = sv, U.T, Vh
 
     def _compute_error_bounds(self):
         """Returns error bounds for all possible reduced orders."""
@@ -77,7 +84,7 @@ class GenericBTReductor(GenericPGReductor):
             r = r_tol if r is None else min([r, r_tol])
 
         if r > min([len(self.cf), len(self.of)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.'
                              ' Try reducing the tolerance in the low-rank matrix equation solver.')
 
         # compute projection matrices and find the reduced model
@@ -119,7 +126,10 @@ class BTReductor(GenericBTReductor):
     """
     def __init__(self, d):
         super().__init__(d)
-        self.typ = 'lyap'
+
+    def _compute_gramians(self):
+        self.cf = self.d.gramian('cf')
+        self.of = self.d.gramian('of')
 
     def _compute_error_bounds(self):
         self.bounds = 2 * self.sv[:0:-1].cumsum()[::-1]
@@ -141,12 +151,42 @@ class LQGBTReductor(GenericBTReductor):
     d
         The system which is to be reduced.
     """
-    def __init__(self, d):
+    def __init__(self, d, solver_options=None):
         super().__init__(d)
-        self.typ = 'lqg'
+        self.solver_options = solver_options
+
+    @defaults('default_solver_backend', qualname='pymor.reductors.bt.LQGBTReductor._ricc_solver')
+    def _ricc_solver(self, default_solver_backend=_DEFAULT_ME_SOLVER_BACKEND):
+        options = self.solver_options.get('ricc') if self.solver_options else None
+        if options:
+            solver = options if isinstance(options, str) else options['type']
+            backend = solver.split('_')[0]
+        else:
+            backend = default_solver_backend
+        if backend == 'scipy':
+            from pymor.bindings.scipy import solve_ricc as solve_ricc_impl
+        elif backend == 'slycot':
+            from pymor.bindings.slycot import solve_ricc as solve_ricc_impl
+        elif backend == 'pymess':
+            from pymor.bindings.pymess import solve_ricc as solve_ricc_impl
+        else:
+            raise NotImplementedError
+        return partial(solve_ricc_impl, options=options)
+
+    def _compute_gramians(self):
+        A = self.d.A
+        B = self.d.B
+        C = self.d.C
+        E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
+
+        self.cf = self._ricc_solver()(A, E=E, B=B, C=C, trans=True)
+        self.of = self._ricc_solver()(A, E=E, B=B, C=C, trans=False)
 
     def _compute_error_bounds(self):
         self.bounds = 2 * (self.sv[:0:-1] / np.sqrt(1 + self.sv[:0:-1] ** 2)).cumsum()[::-1]
+
+
+_DEFAULT_BR_SOLVER_BACKEND = 'slycot' if config.HAVE_SLYCOT else 'scipy'
 
 
 class BRBTReductor(GenericBTReductor):
@@ -165,10 +205,37 @@ class BRBTReductor(GenericBTReductor):
     gamma
         Upper bound for the :math:`\mathcal{H}_\infty`-norm.
     """
-    def __init__(self, d, gamma):
+    def __init__(self, d, gamma, solver_options=None):
         super().__init__(d)
-        self.typ = ('br', gamma)
         self.gamma = gamma
+        self.solver_options = solver_options
 
-    def _compute_error_bounds(self, sv):
-        self.bounds = 2 * self.gamma * self.sv[:0:-1].cumsum()[::-1]
+    @defaults('default_solver_backend', qualname='pymor.reductors.bt.BRBTReductor._ricc_solver')
+    def _ricc_solver(self, default_solver_backend=_DEFAULT_BR_SOLVER_BACKEND):
+        options = self.solver_options.get('ricc') if self.solver_options else None
+        if options:
+            solver = options if isinstance(options, str) else options['type']
+            backend = solver.split('_')[0]
+        else:
+            backend = default_solver_backend
+        if backend == 'scipy':
+            from pymor.bindings.scipy import solve_ricc as solve_ricc_impl
+        elif backend == 'slycot':
+            from pymor.bindings.slycot import solve_ricc as solve_ricc_impl
+        elif backend == 'pymess':
+            from pymor.bindings.pymess import solve_ricc as solve_ricc_impl
+        else:
+            raise NotImplementedError
+        return partial(solve_ricc_impl, options=options)
+
+    def _compute_gramians(self):
+        A = self.d.A
+        B = self.d.B
+        C = self.d.C
+        E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
+
+        self.cf = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(C.range) * (-self.gamma ** 2), trans=True)
+        self.of = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(B.source) * (-self.gamma ** 2), trans=False)
+
+    def _compute_error_bounds(self):
+        self.bounds = 2 * self.sv[:0:-1].cumsum()[::-1]
