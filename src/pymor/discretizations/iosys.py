@@ -197,6 +197,8 @@ class LTISystem(InputOutputSystem):
         The |Operator| E or `None` (then E is assumed to be identity).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    solver_options
+        The |solver_options| to use to solve the Lyapunov equations.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
@@ -754,6 +756,8 @@ class SecondOrderSystem(InputOutputSystem):
         The |Operator| Cv or `None` (then Cv is assumed to be zero).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    solver_options
+        The |solver_options| to use to solve the Lyapunov equations.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
@@ -796,7 +800,7 @@ class SecondOrderSystem(InputOutputSystem):
     special_operators = frozenset({'M', 'D', 'K', 'B', 'Cp', 'Cv'})
 
     def __init__(self, M, D, K, B, Cp, Cv=None, cont_time=True,
-                 estimator=None, visualizer=None,
+                 solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
         Cv = Cv or ZeroOperator(Cp.range, Cp.source)
@@ -814,7 +818,9 @@ class SecondOrderSystem(InputOutputSystem):
                          cache_region=cache_region, name=name,
                          M=M, D=D, K=K, B=B, Cp=Cp, Cv=Cv)
 
+        self.solution_space = M.source
         self.n = M.source.dim
+        self.solver_options = solver_options
 
     @classmethod
     def from_matrices(cls, M, D, K, B, Cp, Cv=None, cont_time=True):
@@ -860,6 +866,7 @@ class SecondOrderSystem(InputOutputSystem):
 
         return cls(M, D, K, B, Cp, Cv, cont_time=cont_time)
 
+    @cached
     def to_lti(self):
         r"""Return a first order representation.
 
@@ -908,9 +915,8 @@ class SecondOrderSystem(InputOutputSystem):
                          E=BlockDiagonalOperator((IdentityOperator(self.M.source), self.M),
                                                  source_id='STATE',
                                                  range_id='STATE'),
-                         cont_time=self.cont_time,
-                         cache_region=self.cache_region,
-                         name=self.name + '_first_order')
+                         cont_time=self.cont_time, cache_region=self.cache_region, solver_options=self.solver_options,
+                         estimator=None, visualizer=None, name=self.name + '_first_order')
 
     def eval_tf(self, s):
         """Evaluate the transfer function.
@@ -995,6 +1001,36 @@ class SecondOrderSystem(InputOutputSystem):
                                                  Cv.as_source_array() * s.conj())))).to_numpy().conj()
         return dtfs
 
+    @cached
+    def gramian(self, typ):
+        """Compute a second-order Gramian.
+
+        Parameters
+        ----------
+        typ
+            The type of the Gramian:
+
+            - `'pcf'`: position controllability Gramian factor,
+            - `'vcf'`: velocity controllability Gramian factor,
+            - `'pof'`: position observability Gramian factor,
+            - `'vof'`: velocity observability Gramian factor.
+
+        Returns
+        -------
+        Gramian factor as a |VectorArray| from `self.M.source`.
+        """
+        if typ == 'pcf':
+            return self.to_lti().gramian('cf').block(0)
+        elif typ == 'vcf':
+            return self.to_lti().gramian('cf').block(1)
+        elif typ == 'pof':
+            return self.to_lti().gramian('of').block(0)
+        elif typ == 'vof':
+            return self.to_lti().gramian('of').block(1)
+        else:
+            raise NotImplementedError("Only 'pcf', 'vcf', 'pof', and 'vof' types are possible.")
+
+    @cached
     def norm(self, name='H2'):
         """Compute a system norm."""
         return self.to_lti().norm(name=name)
