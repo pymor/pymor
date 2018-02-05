@@ -112,7 +112,7 @@ class TF_IRKAReductor(BasicInterface):
     def __init__(self, d):
         self.d = d
 
-    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, force_sigma_in_rhp=False,
+    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, dist_num=1, force_sigma_in_rhp=False,
                conv_crit='rel_sigma_change'):
         """Reduce using TF-IRKA.
 
@@ -140,6 +140,10 @@ class TF_IRKAReductor(BasicInterface):
             Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
+        dist_num
+            Number of past iterations to compare the current iteration.
+            Larger number can avoid occasional cyclic behaviour of
+            TF-IRKA.
         force_sigma_in_rhp
             If 'False`, new interpolation are reflections of reduced
             order model's poles. Otherwise, they are always in the right
@@ -205,19 +209,34 @@ class TF_IRKAReductor(BasicInterface):
 
             # compute convergence criterion
             if conv_crit == 'rel_sigma_change':
-                self.dist.append(spla.norm((self.sigmas[-2] - self.sigmas[-1]) / self.sigmas[-2], ord=np.inf))
+                dist = spla.norm((self.sigmas[-2] - self.sigmas[-1]) / self.sigmas[-2], ord=np.inf)
+                for i in range(2, min(dist_num + 1, len(self.sigmas))):
+                    dist2 = spla.norm((self.sigmas[-i - 1] - self.sigmas[-1]) / self.sigmas[-i - 1], ord=np.inf)
+                    dist = min(dist, dist2)
+                self.dist.append(dist)
             elif conv_crit == 'rel_H2_dist':
                 if it == 0:
-                    rd_new = rd
+                    rd_list = (dist_num + 1) * [None]
+                    rd_list[0] = rd
                     self.dist.append(np.inf)
                 else:
-                    rd_old = rd_new
-                    rd_new = rd
-                    rd_diff = rd_old - rd_new
+                    for i in range(1, dist_num + 1):
+                        rd_list[-i] = rd_list[-i - 1]
+                    rd_list[0] = rd
+                    rd_diff = rd_list[1] - rd_list[0]
                     try:
-                        rel_H2_dist = rd_diff.norm() / rd_old.norm()
+                        rel_H2_dist = rd_diff.norm() / rd_list[1].norm()
                     except:
                         rel_H2_dist = np.inf
+                    for i in range(2, dist_num + 1):
+                        if rd_list[i] is None:
+                            break
+                        rd_diff2 = rd_list[i] - rd_list[0]
+                        try:
+                            rel_H2_dist2 = rd_diff2.norm() / rd_list[i].norm()
+                        except:
+                            rel_H2_dist2 = np.inf
+                        rel_H2_dist = min(rel_H2_dist, rel_H2_dist2)
                     self.dist.append(rel_H2_dist)
 
             logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))

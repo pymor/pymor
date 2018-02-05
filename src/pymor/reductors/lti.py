@@ -26,7 +26,7 @@ class IRKAReductor(GenericPGReductor):
     def __init__(self, d):
         self.d = d
 
-    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, force_sigma_in_rhp=False,
+    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, dist_num=1, force_sigma_in_rhp=False,
                projection='orth', use_arnoldi=False, conv_crit='rel_sigma_change', compute_errors=False):
         r"""Reduce using IRKA.
 
@@ -65,6 +65,9 @@ class IRKAReductor(GenericPGReductor):
             Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
+        dist_num
+            Number of past iterations to compare the current iteration.
+            Larger number can avoid occasional cyclic behaviour of IRKA.
         force_sigma_in_rhp
             If 'False`, new interpolation are reflections of reduced
             order model's poles. Otherwise, they are always in the right
@@ -87,8 +90,8 @@ class IRKAReductor(GenericPGReductor):
                   points
                 - `'subspace_sin'`: maximum of sines of Petrov-Galerkin
                   subspaces
-                - `'rel_H2_dist'`: relative H_2 distance of reduced
-                  order models
+                - `'rel_H2_dist'`: relative :math:`\mathcal{H}_2`
+                  distance of reduced order models
         compute_errors
             Should the relative :math:`\mathcal{H}_2`-errors of
             intermediate reduced order models be computed.
@@ -109,6 +112,7 @@ class IRKAReductor(GenericPGReductor):
         assert sigma is None or len(sigma) == r
         assert b is None or b in d.B.source and len(b) == r
         assert c is None or c in d.C.range and len(c) == r
+        assert dist_num >= 1
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
@@ -164,32 +168,62 @@ class IRKAReductor(GenericPGReductor):
 
             # compute convergence criterion
             if conv_crit == 'rel_sigma_change':
-                self.dist.append(spla.norm((self.sigmas[-2] - self.sigmas[-1]) / self.sigmas[-2], ord=np.inf))
+                dist = spla.norm((self.sigmas[-2] - self.sigmas[-1]) / self.sigmas[-2], ord=np.inf)
+                for i in range(2, min(dist_num + 1, len(self.sigmas))):
+                    dist2 = spla.norm((self.sigmas[-i - 1] - self.sigmas[-1]) / self.sigmas[-i - 1], ord=np.inf)
+                    dist = min(dist, dist2)
+                self.dist.append(dist)
             elif conv_crit == 'subspace_sin':
                 if it == 0:
-                    V_new = interp_reductor.V.data.T
-                    W_new = interp_reductor.W.data.T
+                    V_list = (dist_num + 1) * [None]
+                    W_list = (dist_num + 1) * [None]
+                    V_list[0] = interp_reductor.V
+                    W_list[0] = interp_reductor.W
                     self.dist.append(1)
                 else:
-                    V_old = V_new
-                    W_old = W_new
-                    V_new = interp_reductor.V.data.T
-                    W_new = interp_reductor.W.data.T
-                    sinV = spla.norm(V_new - V_old.dot(V_old.T.dot(V_new)), ord=2)
-                    sinW = spla.norm(W_new - W_old.dot(W_old.T.dot(W_new)), ord=2)
-                    self.dist.append(np.max([sinV, sinW]))
+                    for i in range(1, dist_num + 1):
+                        V_list[-i] = V_list[-i - 1]
+                        W_list[-i] = W_list[-i - 1]
+                    V_list[0] = interp_reductor.V
+                    W_list[0] = interp_reductor.W
+                    # TODO: replace with SVD when it becomes possible
+                    sinV = np.sqrt(np.max(spla.eigh((V_list[0] -
+                                                     V_list[1].lincomb(V_list[0].inner(V_list[1]))).gramian())[0]))
+                    sinW = np.sqrt(np.max(spla.eigh((W_list[0] -
+                                                     W_list[1].lincomb(W_list[0].inner(W_list[1]))).gramian())[0]))
+                    dist = max(sinV, sinW)
+                    for i in range(2, dist_num + 1):
+                        if V_list[i] is None:
+                            break
+                        sinV = np.sqrt(np.max(spla.eigh((V_list[0] -
+                                                        V_list[i].lincomb(V_list[0].inner(V_list[i]))).gramian())[0]))
+                        sinW = np.sqrt(np.max(spla.eigh((W_list[0] -
+                                                        W_list[i].lincomb(W_list[0].inner(W_list[i]))).gramian())[0]))
+                        dist = min(dist, max(sinV, sinW))
+                    self.dist.append(dist)
             elif conv_crit == 'rel_H2_dist':
                 if it == 0:
-                    rd_new = rd
+                    rd_list = (dist_num + 1) * [None]
+                    rd_list[0] = rd
                     self.dist.append(np.inf)
                 else:
-                    rd_old = rd_new
-                    rd_new = rd
-                    rd_diff = rd_old - rd_new
+                    for i in range(1, dist_num + 1):
+                        rd_list[-i] = rd_list[-i - 1]
+                    rd_list[0] = rd
+                    rd_diff = rd_list[1] - rd_list[0]
                     try:
-                        rel_H2_dist = rd_diff.norm() / rd_old.norm()
+                        rel_H2_dist = rd_diff.norm() / rd_list[1].norm()
                     except:
                         rel_H2_dist = np.inf
+                    for i in range(2, dist_num + 1):
+                        if rd_list[i] is None:
+                            break
+                        rd_diff2 = rd_list[i] - rd_list[0]
+                        try:
+                            rel_H2_dist2 = rd_diff2.norm() / rd_list[i].norm()
+                        except:
+                            rel_H2_dist2 = np.inf
+                        rel_H2_dist = min(rel_H2_dist, rel_H2_dist2)
                     self.dist.append(rel_H2_dist)
 
             if compute_errors:
@@ -231,7 +265,8 @@ class TSIAReductor(GenericPGReductor):
     def __init__(self, d):
         self.d = d
 
-    def reduce(self, rd0, tol=1e-4, maxit=100, projection='orth', conv_crit='rel_sigma_change', compute_errors=False):
+    def reduce(self, rd0, tol=1e-4, maxit=100, dist_num=1, projection='orth', conv_crit='rel_sigma_change',
+               compute_errors=False):
         """Reduce using TSIA.
 
         In exact arithmetic, TSIA is equivalent to IRKA (under some
@@ -256,6 +291,9 @@ class TSIAReductor(GenericPGReductor):
             Tolerance for the convergence criterion.
         maxit
             Maximum number of iterations.
+        dist_num
+            Number of past iterations to compare the current iteration.
+            Larger number can avoid occasional cyclic behaviour of TSIA.
         projection
             Projection method:
 
@@ -270,8 +308,8 @@ class TSIAReductor(GenericPGReductor):
                   points
                 - `'subspace_sin'`: maximum of sines of Petrov-Galerkin
                   subspaces
-                - `'rel_H2_dist'`: relative H_2 distance of reduced
-                  order models
+                - `'rel_H2_dist'`: relative :math:`\mathcal{H}_2`
+                  distance of reduced order models
         compute_errors
             Should the relative :math:`\mathcal{H}_2`-errors of
             intermediate reduced order models be computed.
@@ -288,6 +326,7 @@ class TSIAReductor(GenericPGReductor):
         d = self.d
         r = rd0.n
         assert 0 < r < d.n
+        assert dist_num >= 1
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
@@ -315,7 +354,8 @@ class TSIAReductor(GenericPGReductor):
             self.use_default = ['E']
 
         if conv_crit == 'rel_sigma_change':
-            sigma = rd0.poles()
+            sigma_list = (dist_num + 1) * [None]
+            sigma_list[0] = rd0.poles()
         self.dist = []
         self.errors = [] if compute_errors else None
         # main loop
@@ -333,34 +373,73 @@ class TSIAReductor(GenericPGReductor):
 
             # compute convergence criterion
             if conv_crit == 'rel_sigma_change':
-                sigma_old, sigma = sigma, rd.poles()
+                for i in range(1, dist_num + 1):
+                    sigma_list[-i] = sigma_list[-i - 1]
+                sigma_list[0] = rd.poles()
                 try:
-                    self.dist.append(spla.norm((sigma_old - sigma) / sigma_old, ord=np.inf))
+                    dist = spla.norm((sigma_list[1] - sigma_list[0]) / sigma_list[1], ord=np.inf)
                 except:
-                    self.dist.append(np.nan)
+                    dist = np.inf
+                for i in range(2, dist_num + 1):
+                    if sigma_list[i] is None:
+                        break
+                    try:
+                        dist2 = spla.norm((sigma_list[i] - sigma_list[0]) / sigma_list[i], ord=np.inf)
+                    except:
+                        dist2 = np.inf
+                    dist = min(dist, dist2)
+                self.dist.append(dist)
             elif conv_crit == 'subspace_sin':
                 if it == 0:
-                    V_new = self.V.data.T
-                    W_new = self.W.data.T
+                    V_list = (dist_num + 1) * [None]
+                    W_list = (dist_num + 1) * [None]
+                    V_list[0] = self.V
+                    W_list[0] = self.W
                     self.dist.append(1)
-                if it > 0:
-                    V_old, V_new = V_new, self.V.data.T
-                    W_old, W_new = W_new, self.W.data.T
-                    sinV = spla.norm(V_new - V_old.dot(V_old.T.dot(V_new)), ord=2)
-                    sinW = spla.norm(W_new - W_old.dot(W_old.T.dot(W_new)), ord=2)
-                    self.dist.append(np.max([sinV, sinW]))
+                else:
+                    for i in range(1, dist_num + 1):
+                        V_list[-i] = V_list[-i - 1]
+                        W_list[-i] = W_list[-i - 1]
+                    V_list[0] = self.V
+                    W_list[0] = self.W
+                    # TODO: replace with SVD when it becomes possible
+                    sinV = np.sqrt(np.max(spla.eigh((V_list[0] -
+                                                     V_list[1].lincomb(V_list[0].inner(V_list[1]))).gramian())[0]))
+                    sinW = np.sqrt(np.max(spla.eigh((W_list[0] -
+                                                     W_list[1].lincomb(W_list[0].inner(W_list[1]))).gramian())[0]))
+                    dist = max(sinV, sinW)
+                    for i in range(2, dist_num + 1):
+                        if V_list[i] is None:
+                            break
+                        sinV = np.sqrt(np.max(spla.eigh((V_list[0] -
+                                                        V_list[i].lincomb(V_list[0].inner(V_list[i]))).gramian()[0])))
+                        sinW = np.sqrt(np.max(spla.eigh((W_list[0] -
+                                                        W_list[i].lincomb(W_list[0].inner(W_list[i]))).gramian()[0])))
+                        dist = min(dist, max(sinV, sinW))
+                    self.dist.append(dist)
             elif conv_crit == 'rel_H2_dist':
                 if it == 0:
-                    rd_new = rd
+                    rd_list = (dist_num + 1) * [None]
+                    rd_list[0] = rd
                     self.dist.append(np.inf)
                 else:
-                    rd_old = rd_new
-                    rd_new = rd
-                    rd_diff = rd_old - rd_new
+                    for i in range(1, dist_num + 1):
+                        rd_list[-i] = rd_list[-i - 1]
+                    rd_list[0] = rd
+                    rd_diff = rd_list[1] - rd_list[0]
                     try:
-                        rel_H2_dist = rd_diff.norm() / rd_old.norm()
+                        rel_H2_dist = rd_diff.norm() / rd_list[1].norm()
                     except:
                         rel_H2_dist = np.inf
+                    for i in range(2, dist_num + 1):
+                        if rd_list[i] is None:
+                            break
+                        rd_diff2 = rd_list[i] - rd_list[0]
+                        try:
+                            rel_H2_dist2 = rd_diff2.norm() / rd_list[i].norm()
+                        except:
+                            rel_H2_dist2 = np.inf
+                        rel_H2_dist = min(rel_H2_dist, rel_H2_dist2)
                     self.dist.append(rel_H2_dist)
 
             if compute_errors:
