@@ -42,7 +42,7 @@ class GenericBTReductor(GenericPGReductor):
         """Returns error bounds for all possible reduced orders."""
         raise NotImplementedError()
 
-    def reduce(self, r=None, tol=None, method='sr'):
+    def reduce(self, r=None, tol=None, projection='sr'):
         """Generic Balanced Truncation.
 
         Parameters
@@ -52,7 +52,7 @@ class GenericBTReductor(GenericPGReductor):
             if `tol` is specified.
         tol
             Tolerance for the error bound if `r` is `None`.
-        method
+        projection
             Projection method used:
 
                 - `'sr'`: square root method (default, since standard in
@@ -72,7 +72,7 @@ class GenericBTReductor(GenericPGReductor):
         """
         assert r is not None or tol is not None
         assert r is None or 0 < r < self.d.n
-        assert method in ('sr', 'bfsr', 'biorth')
+        assert projection in ('sr', 'bfsr', 'biorth')
 
         self._compute_gramians()
         self._compute_sv_U_V()
@@ -90,18 +90,18 @@ class GenericBTReductor(GenericPGReductor):
         # compute projection matrices and find the reduced model
         self.V = self.cf.lincomb(self.sV[:r])
         self.W = self.of.lincomb(self.sU[:r])
-        if method == 'sr':
+        if projection == 'sr':
             alpha = 1 / np.sqrt(self.sv[:r])
             self.V.scal(alpha)
             self.W.scal(alpha)
             self.use_default = ['E']
             rd = super().reduce()
-        elif method == 'bfsr':
+        elif projection == 'bfsr':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
             self.use_default = None
             rd = super().reduce()
-        elif method == 'biorth':
+        elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.E)
             self.use_default = ['E']
             rd = super().reduce()

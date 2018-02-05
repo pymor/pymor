@@ -27,7 +27,7 @@ class IRKAReductor(GenericPGReductor):
         self.d = d
 
     def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, force_sigma_in_rhp=False,
-               method='orth', use_arnoldi=False, conv_crit='rel_sigma_change', compute_errors=False):
+               projection='orth', use_arnoldi=False, conv_crit='rel_sigma_change', compute_errors=False):
         r"""Reduce using IRKA.
 
         .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie,
@@ -69,8 +69,8 @@ class IRKAReductor(GenericPGReductor):
             If 'False`, new interpolation are reflections of reduced
             order model's poles. Otherwise, they are always in the right
             half-plane.
-        method
-            Method of projection:
+        projection
+            Projection method:
 
                 - `'orth'`: projection matrices are orthogonalized with
                     respect to the Euclidean inner product
@@ -109,7 +109,7 @@ class IRKAReductor(GenericPGReductor):
         assert sigma is None or len(sigma) == r
         assert b is None or b in d.B.source and len(b) == r
         assert c is None or c in d.C.range and len(c) == r
-        assert method in ('orth', 'biorth')
+        assert projection in ('orth', 'biorth')
         assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
         logger = getLogger('pymor.reductors.lti.IRKAReductor.reduce')
@@ -140,7 +140,7 @@ class IRKAReductor(GenericPGReductor):
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
-            rd = interp_reductor.reduce(sigma, b, c, method=method, use_arnoldi=use_arnoldi)
+            rd = interp_reductor.reduce(sigma, b, c, projection=projection, use_arnoldi=use_arnoldi)
 
             if compute_errors:
                 err = d - rd
@@ -210,7 +210,7 @@ class IRKAReductor(GenericPGReductor):
                 break
 
         # final reduced order model
-        rd = interp_reductor.reduce(sigma, b, c, method=method, use_arnoldi=use_arnoldi)
+        rd = interp_reductor.reduce(sigma, b, c, projection=projection, use_arnoldi=use_arnoldi)
         self.V = interp_reductor.V
         self.W = interp_reductor.W
 
@@ -231,8 +231,7 @@ class TSIAReductor(GenericPGReductor):
     def __init__(self, d):
         self.d = d
 
-    def reduce(self, rd0, tol=1e-4, maxit=100, method='orth', conv_crit='rel_sigma_change',
-               compute_errors=False):
+    def reduce(self, rd0, tol=1e-4, maxit=100, projection='orth', conv_crit='rel_sigma_change', compute_errors=False):
         """Reduce using TSIA.
 
         In exact arithmetic, TSIA is equivalent to IRKA (under some
@@ -257,8 +256,8 @@ class TSIAReductor(GenericPGReductor):
             Tolerance for the convergence criterion.
         maxit
             Maximum number of iterations.
-        method
-            Method of projection:
+        projection
+            Projection method:
 
                 - `'orth'`: projection matrices are orthogonalized with
                     respect to the Euclidean inner product
@@ -289,7 +288,7 @@ class TSIAReductor(GenericPGReductor):
         d = self.d
         r = rd0.n
         assert 0 < r < d.n
-        assert method in ('orth', 'biorth')
+        assert projection in ('orth', 'biorth')
         assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
         logger = getLogger('pymor.reductors.lti.TSIAReductor.reduce')
@@ -307,11 +306,11 @@ class TSIAReductor(GenericPGReductor):
                                           E=d.E, Er=rd0.E,
                                           B=d.B, Br=rd0.B,
                                           C=d.C, Cr=rd0.C)
-        if method == 'orth':
+        if projection == 'orth':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
             self.use_default = None
-        elif method == 'biorth':
+        elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=d.E)
             self.use_default = ['E']
 
@@ -374,10 +373,10 @@ class TSIAReductor(GenericPGReductor):
                                               E=d.E, Er=rd.E,
                                               B=d.B, Br=rd.B,
                                               C=d.C, Cr=rd.C)
-            if method == 'orth':
+            if projection == 'orth':
                 self.V = gram_schmidt(self.V, atol=0, rtol=0)
                 self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            elif method == 'biorth':
+            elif projection == 'biorth':
                 self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=d.E)
 
             # check convergence criterion

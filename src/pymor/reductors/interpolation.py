@@ -48,7 +48,7 @@ class GenericBHIReductor(GenericPGReductor):
     def _K_apply_inverse_transpose(self, s, V):
         raise NotImplementedError()
 
-    def reduce(self, sigma, b, c, method='orth'):
+    def reduce(self, sigma, b, c, projection='orth'):
         """Bitangential Hermite interpolation.
 
         Parameters
@@ -62,8 +62,8 @@ class GenericBHIReductor(GenericPGReductor):
         c
             Left tangential directions, |VectorArray| of length `r` from
             `self._C_range`.
-        method
-            Method of projection:
+        projection
+            Projection method:
 
                 - `'orth'`: projection matrices are orthogonalized with
                     respect to the Euclidean inner product
@@ -78,7 +78,7 @@ class GenericBHIReductor(GenericPGReductor):
         r = len(sigma)
         assert b in self._B_source and len(b) == r
         assert c in self._C_range and len(c) == r
-        assert method in ('orth', 'biorth')
+        assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
         b.scal(1 / b.l2_norm())
@@ -105,11 +105,11 @@ class GenericBHIReductor(GenericPGReductor):
                 self.W.append(w.real)
                 self.W.append(w.imag)
 
-        if method == 'orth':
+        if projection == 'orth':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
             self.use_default = None
-        elif method == 'biorth':
+        elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
             self.use_default = self._use_default
 
@@ -150,7 +150,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         sEmA = LincombOperator((self.d.E, self.d.A), (s, -1))
         return sEmA.apply_inverse_transpose(V)
 
-    def reduce(self, sigma, b, c, method='orth', use_arnoldi=False):
+    def reduce(self, sigma, b, c, projection='orth', use_arnoldi=False):
         """Bitangential Hermite interpolation.
 
         Parameters
@@ -164,8 +164,8 @@ class LTI_BHIReductor(GenericBHIReductor):
         c
             Left tangential directions, |VectorArray| of length `r` from
             `self._C_range`.
-        method
-            Method of projection:
+        projection
+            Projection method:
 
                 - `'orth'`: projection matrices are orthogonalized with
                     respect to the Euclidean inner product
@@ -184,7 +184,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         if use_arnoldi and self.d.m == 1 and self.d.p == 1:
             return self.reduce_arnoldi(sigma, b, c)
         else:
-            return super().reduce(sigma, b, c, method=method)
+            return super().reduce(sigma, b, c, projection=projection)
 
     def reduce_arnoldi(self, sigma, b, c):
         """Bitangential Hermite interpolation for SISO |LTISystems|.
