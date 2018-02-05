@@ -590,7 +590,7 @@ class LTISystem(InputOutputSystem):
         cf = self.gramian('cf')
         of = self.gramian('of')
 
-        U, hsv, Vh = spla.svd(self.E.apply2(of, cf))
+        U, hsv, Vh = spla.svd(self.E.apply2(of, cf), lapack_driver='gesvd')
         return hsv, U.T, Vh
 
     def hsv(self):

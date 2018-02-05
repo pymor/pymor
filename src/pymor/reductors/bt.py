@@ -35,7 +35,7 @@ class GenericBTReductor(GenericPGReductor):
 
     def _compute_sv_U_V(self):
         """Returns singular values and vectors."""
-        U, sv, Vh = spla.svd(self.d.E.apply2(self.of, self.cf))
+        U, sv, Vh = spla.svd(self.d.E.apply2(self.of, self.cf), lapack_driver='gesvd')
         self.sv, self.sU, self.sV = sv, U.T, Vh
 
     def _compute_error_bounds(self):
