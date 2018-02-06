@@ -49,12 +49,6 @@ jobs:
   - stage: test
     env: PYTEST_MARKER="NUMPY" DOCKER_TAG="3.6"
   - stage: test
-    env: PYTEST_MARKER="None" DOCKER_TAG="2.7"
-  - stage: test
-    env: PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="2.7"
-  - stage: test
-    env: PYTEST_MARKER="MPI" DOCKER_TAG="2.7"
-  - stage: test
     env: PYTEST_MARKER="None" DOCKER_TAG="3.5"
   - stage: test
     env: PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.5"

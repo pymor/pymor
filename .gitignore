@@ -59,5 +59,4 @@ htmlcov/
 coverage.xml
 libpeerconnection.log
 .cache
-3to2.conversion.ok
 test_timings.csv

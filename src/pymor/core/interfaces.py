@@ -39,7 +39,7 @@ functionality:
        Each attempt to change one of its attributes raises an exception. Private
        attributes (of the form `_name`) are exempted from this rule.
     2. A unique _`state id` for the instance can be calculated by calling
-       :meth:`~ImmutableInterface.generate_sid` and is then stored as the object's 
+       :meth:`~ImmutableInterface.generate_sid` and is then stored as the object's
        `sid` attribute.
        The state id is obtained by deterministically serializing the object's state
        and then computing a checksum of the resulting byte stream.
@@ -79,7 +79,7 @@ import uuid
 
 import numpy as np
 
-from pymor.core import backports, logger
+from pymor.core import logger
 from pymor.core.config import config
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
@@ -261,14 +261,8 @@ class BasicInterface(object, metaclass=UberMeta):
 
 abstractmethod = abc.abstractmethod
 abstractproperty = abc.abstractproperty
-
-if config.PY2:
-    # backport path for issue5867
-    abstractclassmethod = backports.abstractclassmethod
-    abstractstaticmethod = backports.abstractstaticmethod
-else:
-    abstractclassmethod = abc.abstractclassmethod
-    abstractstaticmethod = abc.abstractstaticmethod
+abstractclassmethod = abc.abstractclassmethod
+abstractstaticmethod = abc.abstractstaticmethod
 
 
 class classinstancemethod:
