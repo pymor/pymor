@@ -107,38 +107,16 @@ Defaults
             new_docstring += '\n'.join(textwrap.wrap(', '.join(args), 80)) + '\n(see :mod:`pymor.core.defaults`)'
             func.__doc__ = new_docstring
 
-        if config.PY2:
-            defaults = func.__defaults__
-            if not defaults:
-                raise ValueError('Wrapped function has no optional arguments at all!')
-            defaults = list(defaults)
-            # note getargspec here isn't actually deprecated since this branch is py2 only
-            argspec = inspect.getargspec(func)
-            argnames = argspec.args
-
-            if not set(args) <= set(argnames):
-                raise ValueError('Decorated function has no arguments named: ' +
-                                 ', '.join(set(args) - set(argnames)))
-
-            if not set(args) <= set(argnames[-len(defaults):]):
-                raise ValueError('Decorated function has no defaults for arguments named: ' +
-                                 ', '.join(set(args) - set(argnames[-len(defaults):])))
-
-            defaultsdict = {}
-            for n, v in zip(argnames[-len(defaults):], defaults):
-                if n in args:
-                    defaultsdict[n] = v
-        else:
-            params = OrderedDict(inspect.signature(func).parameters)
-            argnames = tuple(params.keys())
-            defaultsdict = {}
-            for n in args:
-                p = params.get(n, None)
-                if p is None:
-                    raise ValueError("Decorated function has no argument '{}'".format(n))
-                if p.default is p.empty:
-                    raise ValueError("Decorated function has no default for argument '{}'".format(n))
-                defaultsdict[n] = p.default
+        params = OrderedDict(inspect.signature(func).parameters)
+        argnames = tuple(params.keys())
+        defaultsdict = {}
+        for n in args:
+            p = params.get(n, None)
+            if p is None:
+                raise ValueError("Decorated function has no argument '{}'".format(n))
+            if p.default is p.empty:
+                raise ValueError("Decorated function has no default for argument '{}'".format(n))
+            defaultsdict[n] = p.default
 
         path = qualname or (func.__module__ + '.' + getattr(func, '__qualname__', func.__name__))
         if path in self.registered_functions:
@@ -161,15 +139,11 @@ methods of classes!'''.format(path))
         self._update_function_signature(func)
 
     def _update_function_signature(self, func):
-        if config.PY2:
-            func.__defaults__ = tuple(func.defaultsdict.get(n, v)
-                                      for n, v in zip(func.argnames[-len(func.__defaults__):], func.__defaults__))
-        else:
-            sig = inspect.signature(func)
-            params = OrderedDict(sig.parameters)
-            for n, v in func.defaultsdict.items():
-                params[n] = params[n].replace(default=v)
-            func.__signature__ = sig.replace(parameters=params.values())
+        sig = inspect.signature(func)
+        params = OrderedDict(sig.parameters)
+        for n, v in func.defaultsdict.items():
+            params[n] = params[n].replace(default=v)
+        func.__signature__ = sig.replace(parameters=params.values())
 
     def update(self, defaults, type='user'):
         if hasattr(self, '_sid'):
@@ -293,16 +267,6 @@ def defaults(*args, sid_ignore=(), qualname=None):
             wrapper_kwargs = {k: v if v is not None else func.defaultsdict.get(k, None) for k, v in wrapper_kwargs.items()}
             wrapper_kwargs = dict(func.defaultsdict, **wrapper_kwargs)
             return func(**wrapper_kwargs)
-
-        # On Python 2 we have to add the __wrapped__ attribute to the wrapper
-        # manually to help IPython find the right source code location
-        if config.PY2:
-            wrapper.__wrapped__ = func
-
-        if config.PY2 and int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1:
-            # On Python 2 we have to disable the defaults decorator in order
-            # to produce correct function signatures in the API docs
-            return func
 
         return wrapper
 

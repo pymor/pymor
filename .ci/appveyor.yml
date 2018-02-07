@@ -3,32 +3,6 @@ environment:
     # Pre-installed Python versions, which Appveyor may upgrade to
     # a later point release.
     # See: http://www.appveyor.com/docs/installed-software#python
-
-    # building pymor extensions fails on 2.7 currently
-    #- PYTHON_VERSION: "2.7" # currently 2.7.11
-      #PYTHON_ARCH: "32"
-      #CONDA: "C:\\Miniconda"
-      #MARKER: "not grid"
-
-    #- PYTHON_VERSION: "2.7" # currently 2.7.11
-      #PYTHON_ARCH: "32"
-      #CONDA: "C:\\Miniconda"
-      #MARKER: "grid"
-
-    - PYTHON_VERSION: "3.4" # currently 3.4.3
-      PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda3"
-      MARKER: "not grid"
-      QT_API: "pyqt5"
-      ALLOW_FAIL: true
-
-    - PYTHON_VERSION: "3.4" # currently 3.4.3
-      PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda3"
-      MARKER: "grid"
-      QT_API: "pyqt5"
-      ALLOW_FAIL: true
-
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"

@@ -390,21 +390,11 @@ class CacheableInterface(ImmutableInterface):
         if _caching_disabled or self.cache_region is None:
             return method(*args, **kwargs)
 
-        if config.PY2:
-            # note getargspec here isn't actually deprecated since this branch is py2 only
-            argspec = inspect.getargspec(method)
-            if argspec.varargs is not None:
-                raise NotImplementedError
-            argnames = argspec.args[1:]  # first argument is self
-            defaults = method.__defaults__
-            if defaults:
-                defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
-        else:
-            params = inspect.signature(method).parameters
-            if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
-                raise NotImplementedError
-            argnames = list(params.keys())[1:]  # first argument is self
-            defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
+        params = inspect.signature(method).parameters
+        if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
+            raise NotImplementedError
+        argnames = list(params.keys())[1:]  # first argument is self
+        defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
         return self._cached_method_call(method, False, argnames, defaults, args, kwargs)
 
     def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
@@ -446,29 +436,16 @@ class CacheableInterface(ImmutableInterface):
 def cached(function):
     """Decorator to make a method of `CacheableInterface` actually cached."""
 
-    if config.PY2:
-        # note getargspec here isn't actually deprecated since this branch is py2 only
-        argspec = inspect.getargspec(function)
-        if argspec.varargs is not None:
-            raise NotImplementedError
-        argnames = argnames = argspec.args[1:]  # first argument is self
-        defaults = function.__defaults__
-        if defaults:
-            defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
-    else:
-        params = inspect.signature(function).parameters
-        if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
-            raise NotImplementedError
-        argnames = list(params.keys())[1:]  # first argument is self
-        defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
+    params = inspect.signature(function).parameters
+    if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
+        raise NotImplementedError
+    argnames = list(params.keys())[1:]  # first argument is self
+    defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
 
     @functools.wraps(function)
     def wrapper(self, *args, **kwargs):
         if _caching_disabled or self.cache_region is None:
             return function(self, *args, **kwargs)
         return self._cached_method_call(function, True, argnames, defaults, args, kwargs)
-
-    if config.PY2:
-        wrapper.__wrapped__ = function
 
     return wrapper
