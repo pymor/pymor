@@ -60,12 +60,6 @@ jobs:
     env: PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.6"
   - stage: test
     env: PYTEST_MARKER="MPI" DOCKER_TAG="3.6"
-  - stage: test
-    env: PYTEST_MARKER="None" DOCKER_TAG="3.7-rc"
-  - stage: test
-    env: PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.7-rc"
-  - stage: test
-    env: PYTEST_MARKER="MPI" DOCKER_TAG="3.7-rc"
 
   - stage: deploy
     if: type IS push
