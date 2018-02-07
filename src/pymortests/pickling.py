@@ -77,13 +77,9 @@ def assert_is_equal(first, second):
             for k, u in first.items():
                 _assert_is_equal(u, second.get(k))
         elif isinstance(first, FunctionType):
-            if config.PY2:
-                for k in ['__closure__', '__code__', '__dict__', '__doc__', '__name__']:
-                    _assert_is_equal(getattr(first, k), getattr(second, k))
-            else:
-                for k in ['__closure__', '__code__', '__dict__', '__doc__', '__name__',
-                          '__qualname__', '__kwdefaults__', '__annotations__']:
-                    _assert_is_equal(getattr(first, k), getattr(second, k))
+            for k in ['__closure__', '__code__', '__dict__', '__doc__', '__name__',
+                      '__qualname__', '__kwdefaults__', '__annotations__']:
+                _assert_is_equal(getattr(first, k), getattr(second, k))
         elif isinstance(first, MethodType):
             _assert_is_equal(first.__func__, second.__func__)
             _assert_is_equal(first.__self__, second.__self__)

@@ -14,9 +14,7 @@ import sys
 
 from sphinx.util.inspect import safe_getattr
 
-PY2 = sys.version_info.major == 2
-
-STRING_TYPE = basestring if PY2 else str
+STRING_TYPE = str
 
 INCLUDE_SPECIAL_WITH_DOC = False
 INCLUDE_PRIVATE_WITH_DOC = False

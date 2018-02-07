@@ -69,8 +69,6 @@ _PACKAGES = {
 class Config:
 
     def __init__(self):
-        self.PY2 = sys.version_info.major == 2
-        self.PY3 = sys.version_info.major == 3
         self.PYTHON_VERSION = '{}.{}.{}'.format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
 
     @property
@@ -104,10 +102,7 @@ class Config:
         return getattr(self, name)
 
     def __dir__(self, old=False):
-        if self.PY2:
-            keys = set(dir(type(self))).union(self.__dict__.keys())
-        else:
-            keys = set(super().__dir__())
+        keys = set(super().__dir__())
         keys.update('HAVE_' + package for package in _PACKAGES)
         keys.update(package + '_VERSION' for package in _PACKAGES)
         return list(keys)

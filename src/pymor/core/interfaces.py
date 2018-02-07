@@ -155,27 +155,18 @@ class UberMeta(abc.ABCMeta):
 
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
 
-        if config.PY2:
-            try:
-                # note getargspec here isn't actually deprecated since this branch is py2 only
-                args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
-                assert args[0] == 'self'
-                c._init_arguments = tuple(args[1:])
-            except TypeError:       # happens when no one declares an __init__ method and object is reached
-                c._init_arguments = ()
-        else:
-            # getargspec is deprecated and does not work with keyword only args
-            init_sig = inspect.signature(c.__init__)
-            init_args = []
-            for arg, description in init_sig.parameters.items():
-                if arg == 'self':
-                    continue
-                if description.kind == description.POSITIONAL_ONLY:
-                    raise TypeError('It should not be possible that {}.__init__ has POSITIONAL_ONLY arguments'.
-                                    format(c))
-                if description.kind in (description.POSITIONAL_OR_KEYWORD, description.KEYWORD_ONLY):
-                    init_args.append(arg)
-            c._init_arguments = tuple(init_args)
+        # getargspec is deprecated and does not work with keyword only args
+        init_sig = inspect.signature(c.__init__)
+        init_args = []
+        for arg, description in init_sig.parameters.items():
+            if arg == 'self':
+                continue
+            if description.kind == description.POSITIONAL_ONLY:
+                raise TypeError('It should not be possible that {}.__init__ has POSITIONAL_ONLY arguments'.
+                                format(c))
+            if description.kind in (description.POSITIONAL_OR_KEYWORD, description.KEYWORD_ONLY):
+                init_args.append(arg)
+        c._init_arguments = tuple(init_args)
 
         return c
 
@@ -309,16 +300,8 @@ class ImmutableMeta(UberMeta):
         # set __signature__ attribute on newly created class c to ensure that
         # inspect.signature(c) returns the signature of its __init__ arguments and not
         # the signature of ImmutableMeta.__call__
-        if config.PY3:
-            sig = inspect.signature(c.__init__)
-            c.__signature__ = sig.replace(parameters=tuple(sig.parameters.values())[1:])
-        else:
-            try:
-                from IPython.utils.signatures import signature
-                sig = signature(c.__init__)
-                c.__signature__ = sig.replace(parameters=tuple(sig.parameters.values())[1:])
-            except ImportError:
-                pass
+        sig = inspect.signature(c.__init__)
+        c.__signature__ = sig.replace(parameters=tuple(sig.parameters.values())[1:])
         return c
 
     def _call(self, *args, **kwargs):
@@ -485,11 +468,7 @@ def generate_sid(obj, debug=False):
 
 # Helper classes for generate_sid
 
-if config.PY2:
-    import __builtin__
-    STRING_TYPES = (str, __builtin__.unicode)
-else:
-    STRING_TYPES = (str, bytes)
+STRING_TYPES = (str, bytes)
 
 
 class _SIDGenerator(object):

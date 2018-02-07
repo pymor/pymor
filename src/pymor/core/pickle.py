@@ -77,10 +77,7 @@ def _generate_opcode_old(code_object):
     HAVE_ARGUMENT = opcode.HAVE_ARGUMENT
     EXTENDED_ARG = opcode.EXTENDED_ARG
 
-    if config.PY2:
-        codebytes = bytearray(code_object.co_code)
-    else:
-        codebytes = code_object.co_code
+    codebytes = code_object.co_code
     extended_arg = 0
     i = 0
     n = len(codebytes)
@@ -169,20 +166,13 @@ def dumps_function(function):
     # note that global names in function.func_code can also refer to builtins ...
     globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.__code__) if k in func_globals}
 
-    if config.PY2:
-        return dumps((function.__name__, code, globals_, function.__defaults__, closure, function.__dict__,
-                      function.__doc__))
-    else:
-        return dumps((function.__name__, code, globals_, function.__defaults__, closure, function.__dict__,
-                      function.__doc__, function.__qualname__, function.__kwdefaults__, function.__annotations__))
+    return dumps((function.__name__, code, globals_, function.__defaults__, closure, function.__dict__,
+                  function.__doc__, function.__qualname__, function.__kwdefaults__, function.__annotations__))
 
 
 def loads_function(s):
     '''Restores a function serialized with :func:`dumps_function`.'''
-    if config.PY2:
-        name, code, globals_, defaults, closure, func_dict, doc = loads(s)
-    else:
-        name, code, globals_, defaults, closure, func_dict, doc, qualname, kwdefaults, annotations = loads(s)
+    name, code, globals_, defaults, closure, func_dict, doc, qualname, kwdefaults, annotations = loads(s)
     code = marshal.loads(code)
     for k, v in globals_.items():
         if isinstance(v, Module):
@@ -196,10 +186,9 @@ def loads_function(s):
     r = FunctionType(code, globals_, name, defaults, closure)
     r.__dict__ = func_dict
     r.__doc__ = doc
-    if not config.PY2:
-        r.__qualname__ = qualname
-        r.__kwdefaults__ = kwdefaults
-        r.__annotations__ = annotations
+    r.__qualname__ = qualname
+    r.__kwdefaults__ = kwdefaults
+    r.__annotations__ = annotations
     return r
 
 

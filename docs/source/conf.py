@@ -5,8 +5,6 @@
 
 import sys, os, re
 
-PY2 = sys.version_info.major == 2
-
 os.environ['PYMOR_WITH_SPHINX'] = '1'
 
 # Fix documentation generation for readthedocs.org
