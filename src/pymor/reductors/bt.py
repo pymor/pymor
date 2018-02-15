@@ -10,7 +10,7 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.discretizations.iosys import _DEFAULT_ME_SOLVER_BACKEND
+from pymor.discretizations.iosys import _DEFAULT_ME_SOLVER_BACKEND, LTISystem
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 
@@ -24,21 +24,22 @@ class GenericBTReductor(GenericPGReductor):
         The system which is to be reduced.
     """
     def __init__(self, d):
+        assert isinstance(d, LTISystem)
         self.d = d
         self.V = None
         self.W = None
-        self.typ = None
 
-    def _compute_gramians(self):
+    def gramians(self):
         """Returns low-rank factors of Gramians."""
         raise NotImplementedError()
 
-    def _compute_sv_U_V(self):
+    def sv_U_V(self):
         """Returns singular values and vectors."""
-        U, sv, Vh = spla.svd(self.d.E.apply2(self.of, self.cf), lapack_driver='gesvd')
-        self.sv, self.sU, self.sV = sv, U.T, Vh
+        cf, of = self.gramians()
+        U, sv, Vh = spla.svd(self.d.E.apply2(of, cf), lapack_driver='gesvd')
+        return sv, U.T, Vh
 
-    def _compute_error_bounds(self):
+    def error_bounds(self):
         """Returns error bounds for all possible reduced orders."""
         raise NotImplementedError()
 
@@ -74,37 +75,36 @@ class GenericBTReductor(GenericPGReductor):
         assert r is None or 0 < r < self.d.n
         assert projection in ('sr', 'bfsr', 'biorth')
 
-        self._compute_gramians()
-        self._compute_sv_U_V()
+        cf, of = self.gramians()
+        sv, sU, sV = self.sv_U_V()
 
         # find reduced order if tol is specified
         if tol is not None:
-            self._compute_error_bounds()
-            r_tol = np.argmax(self.bounds <= tol) + 1
+            error_bounds = self.error_bounds()
+            r_tol = np.argmax(error_bounds <= tol) + 1
             r = r_tol if r is None else min([r, r_tol])
 
-        if r > min([len(self.cf), len(self.of)]):
+        if r > min([len(cf), len(of)]):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.'
                              ' Try reducing the tolerance in the low-rank matrix equation solver.')
 
         # compute projection matrices and find the reduced model
-        self.V = self.cf.lincomb(self.sV[:r])
-        self.W = self.of.lincomb(self.sU[:r])
+        self.V = cf.lincomb(sV[:r])
+        self.W = of.lincomb(sU[:r])
         if projection == 'sr':
-            alpha = 1 / np.sqrt(self.sv[:r])
+            alpha = 1 / np.sqrt(sv[:r])
             self.V.scal(alpha)
             self.W.scal(alpha)
-            self.use_default = ['E']
-            rd = super().reduce()
+            self.biorthogonal_product = 'E'
         elif projection == 'bfsr':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.use_default = None
-            rd = super().reduce()
+            self.biorthogonal_product = None
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.E)
-            self.use_default = ['E']
-            rd = super().reduce()
+            self.biorthogonal_product = 'E'
+
+        rd = super().reduce()
 
         return rd
 
@@ -124,15 +124,12 @@ class BTReductor(GenericBTReductor):
     d
         The system which is to be reduced.
     """
-    def __init__(self, d):
-        super().__init__(d)
+    def gramians(self):
+        return self.d.gramian('cf'), self.d.gramian('of')
 
-    def _compute_gramians(self):
-        self.cf = self.d.gramian('cf')
-        self.of = self.d.gramian('of')
-
-    def _compute_error_bounds(self):
-        self.bounds = 2 * self.sv[:0:-1].cumsum()[::-1]
+    def error_bounds(self):
+        sv = self.sv_U_V()[0]
+        return 2 * sv[:0:-1].cumsum()[::-1]
 
 
 class LQGBTReductor(GenericBTReductor):
@@ -173,17 +170,20 @@ class LQGBTReductor(GenericBTReductor):
             raise NotImplementedError
         return partial(solve_ricc_impl, options=options)
 
-    def _compute_gramians(self):
+    def gramians(self):
         A = self.d.A
         B = self.d.B
         C = self.d.C
         E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
 
-        self.cf = self._ricc_solver()(A, E=E, B=B, C=C, trans=True)
-        self.of = self._ricc_solver()(A, E=E, B=B, C=C, trans=False)
+        cf = self._ricc_solver()(A, E=E, B=B, C=C, trans=True)
+        of = self._ricc_solver()(A, E=E, B=B, C=C, trans=False)
 
-    def _compute_error_bounds(self):
-        self.bounds = 2 * (self.sv[:0:-1] / np.sqrt(1 + self.sv[:0:-1] ** 2)).cumsum()[::-1]
+        return cf, of
+
+    def error_bounds(self):
+        sv = self.sv_U_V()[0]
+        return 2 * (sv[:0:-1] / np.sqrt(1 + sv[:0:-1] ** 2)).cumsum()[::-1]
 
 
 _DEFAULT_BR_SOLVER_BACKEND = 'slycot' if config.HAVE_SLYCOT else 'scipy'
@@ -228,14 +228,17 @@ class BRBTReductor(GenericBTReductor):
             raise NotImplementedError
         return partial(solve_ricc_impl, options=options)
 
-    def _compute_gramians(self):
+    def gramians(self):
         A = self.d.A
         B = self.d.B
         C = self.d.C
         E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
 
-        self.cf = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(C.range) * (-self.gamma ** 2), trans=True)
-        self.of = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(B.source) * (-self.gamma ** 2), trans=False)
+        cf = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(C.range) * (-self.gamma ** 2), trans=True)
+        of = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(B.source) * (-self.gamma ** 2), trans=False)
 
-    def _compute_error_bounds(self):
-        self.bounds = 2 * self.sv[:0:-1].cumsum()[::-1]
+        return cf, of
+
+    def error_bounds(self):
+        sv = self.sv_U_V()[0]
+        return 2 * sv[:0:-1].cumsum()[::-1]

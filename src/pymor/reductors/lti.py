@@ -348,10 +348,10 @@ class TSIAReductor(GenericPGReductor):
         if projection == 'orth':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.use_default = None
+            self.biorthogonal_product = None
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=d.E)
-            self.use_default = ['E']
+            self.biorthogonal_product = 'E'
 
         if conv_crit == 'rel_sigma_change':
             sigma_list = (dist_num + 1) * [None]

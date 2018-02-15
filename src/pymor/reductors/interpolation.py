@@ -34,7 +34,7 @@ class GenericBHIReductor(GenericPGReductor):
         self._C_range = None
         self._K_source = None
         self._product = None
-        self._use_default = None
+        self._biorthogonal_product = None
 
     def _B_apply(self, s, V):
         raise NotImplementedError()
@@ -108,10 +108,10 @@ class GenericBHIReductor(GenericPGReductor):
         if projection == 'orth':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.use_default = None
+            self.biorthogonal_product = None
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
-            self.use_default = self._use_default
+            self.biorthogonal_product = self._biorthogonal_product
 
         rd = super().reduce()
         return rd
@@ -134,7 +134,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         self._C_range = d.C.range
         self._K_source = d.A.source
         self._product = d.E
-        self._use_default = ['E']
+        self._biorthogonal_product = 'E'
 
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
@@ -214,7 +214,7 @@ class LTI_BHIReductor(GenericBHIReductor):
 
         self.V = arnoldi(d.A, d.E, d.B, sigma)
         self.W = arnoldi(d.A, d.E, d.C, sigma, trans=True)
-        self.use_default = None
+        self.biorthogonal_product = None
 
         rd = super(GenericBHIReductor, self).reduce()
         return rd
@@ -234,7 +234,7 @@ class SO_BHIReductor(GenericBHIReductor):
         self._C_range = d.C.range
         self._K_source = d.K.source
         self._product = d.M
-        self._use_default = ['M']
+        self._biorthogonal_product = 'M'
 
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
@@ -265,7 +265,7 @@ class DelayBHIReductor(GenericBHIReductor):
         self._C_range = d.C.range
         self._K_source = d.A.source
         self._product = d.E
-        self._use_default = ['E']
+        self._biorthogonal_product = 'E'
 
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
