@@ -570,9 +570,10 @@ class VectorArrayOperator(OperatorBase):
         return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-
         transposed = operators[0].transposed
-        if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed for op in operators):
+        if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed and
+                   op.source == operators[0].source and op.range == operators[0].range
+                   for op in operators):
             return None
         assert not solver_options
 
@@ -582,19 +583,19 @@ class VectorArrayOperator(OperatorBase):
             array = operators[0]._array * coefficients[0]
         for op, c in zip(operators[1:], coefficients[1:]):
             array.axpy(c, op._array)
-        return VectorArrayOperator(array, transposed=transposed, name=name)
+        return VectorArrayOperator(array, transposed=transposed, space_id=operators[0].space_id, name=name)
 
     def as_range_array(self, mu=None):
         if not self.transposed:
             return self._array.copy()
         else:
-            super().as_range_array(mu)
+            return super().as_range_array(mu)
 
     def as_source_array(self, mu=None):
         if self.transposed:
             return self._array.copy()
         else:
-            super().as_source_array(mu)
+            return super().as_source_array(mu)
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
