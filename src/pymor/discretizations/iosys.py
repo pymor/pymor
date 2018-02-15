@@ -246,11 +246,21 @@ class LTISystem(InputOutputSystem):
         D = D or ZeroOperator(C.range, B.source)
         E = E or IdentityOperator(A.source)
 
-        assert A.linear and A.source == A.range and A.source.id == 'STATE'
-        assert B.linear and B.range == A.source and B.source.id == 'INPUT'
-        assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
-        assert D.linear and D.source == B.source and D.range == C.range
-        assert E.linear and E.source == E.range == A.source
+        assert A.linear
+        assert A.source == A.range
+        assert A.source.id == 'STATE'
+        assert B.linear
+        assert B.range == A.source
+        assert B.source.id == 'INPUT'
+        assert C.linear
+        assert C.source == A.range
+        assert C.range.id == 'OUTPUT'
+        assert D.linear
+        assert D.source == B.source
+        assert D.range == C.range
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == A.source
         assert cont_time in (True, False)
         assert solver_options is None or solver_options.keys() <= {'lyap', 'ricc'}
 
