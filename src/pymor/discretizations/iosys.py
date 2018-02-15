@@ -925,6 +925,17 @@ class SecondOrderSystem(InputOutputSystem):
                          cont_time=self.cont_time, cache_region=self.cache_region, solver_options=self.solver_options,
                          estimator=None, visualizer=None, name=self.name + '_first_order')
 
+    @cached
+    def poles(self, force_dense=False):
+        """Compute system poles.
+
+        Parameters
+        ----------
+        force_dense
+            Should `to_matrix` with `format='dense'` be used.
+        """
+        return self.to_lti().poles(force_dense=force_dense)
+
     def eval_tf(self, s):
         """Evaluate the transfer function.
 
