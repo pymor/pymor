@@ -1048,6 +1048,42 @@ class SecondOrderSystem(InputOutputSystem):
         else:
             raise NotImplementedError("Only 'pcf', 'vcf', 'pof', and 'vof' types are possible.")
 
+    def psv(self):
+        """Position singular values.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of singular values.
+        """
+        return spla.svdvals(self.gramian('pof').inner(self.gramian('pcf')))
+
+    def vsv(self):
+        """Velocity singular values.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of singular values.
+        """
+        return spla.svdvals(self.gramian('vof').inner(self.gramian('vcf'), product=self.M))
+
+    def pvsv(self):
+        """Position-velocity singular values.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of singular values.
+        """
+        return spla.svdvals(self.gramian('vof').inner(self.gramian('pcf'), product=self.M))
+
+    def vpsv(self):
+        """Velocity-position singular values.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of singular values.
+        """
+        return spla.svdvals(self.gramian('pof').inner(self.gramian('vcf')))
+
     @cached
     def norm(self, name='H2'):
         """Compute a system norm."""
