@@ -10,6 +10,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.logger import getLogger
+from pymor.discretizations.iosys import LTISystem
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import LTI_BHIReductor
@@ -24,6 +25,7 @@ class IRKAReductor(GenericPGReductor):
         |LTISystem|.
     """
     def __init__(self, d):
+        assert isinstance(d, LTISystem)
         self.d = d
 
     def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, dist_num=1, force_sigma_in_rhp=False,
@@ -166,6 +168,14 @@ class IRKAReductor(GenericPGReductor):
                 sigma *= -1
             self.sigmas.append(sigma)
 
+            # new tangential directions
+            Y = rd.B.range.make_array(Y.conj().T)
+            X = rd.C.source.make_array(X.T)
+            b = rd.B.apply_transpose(Y)
+            c = rd.C.apply(X)
+            self.R.append(b)
+            self.L.append(c)
+
             # compute convergence criterion
             if conv_crit == 'rel_sigma_change':
                 dist = spla.norm((self.sigmas[-2] - self.sigmas[-1]) / self.sigmas[-2], ord=np.inf)
@@ -187,18 +197,18 @@ class IRKAReductor(GenericPGReductor):
                     V_list[0] = interp_reductor.V
                     W_list[0] = interp_reductor.W
                     # TODO: replace with SVD when it becomes possible
-                    sinV = np.sqrt(np.max(spla.eigh((V_list[0] -
-                                                     V_list[1].lincomb(V_list[0].inner(V_list[1]))).gramian())[0]))
-                    sinW = np.sqrt(np.max(spla.eigh((W_list[0] -
-                                                     W_list[1].lincomb(W_list[0].inner(W_list[1]))).gramian())[0]))
+                    sinV = np.sqrt(np.max(spla.eigvalsh((V_list[0] -
+                                                         V_list[1].lincomb(V_list[0].inner(V_list[1]))).gramian())))
+                    sinW = np.sqrt(np.max(spla.eigvalsh((W_list[0] -
+                                                         W_list[1].lincomb(W_list[0].inner(W_list[1]))).gramian())))
                     dist = max(sinV, sinW)
                     for i in range(2, dist_num + 1):
                         if V_list[i] is None:
                             break
-                        sinV = np.sqrt(np.max(spla.eigh((V_list[0] -
-                                                        V_list[i].lincomb(V_list[0].inner(V_list[i]))).gramian())[0]))
-                        sinW = np.sqrt(np.max(spla.eigh((W_list[0] -
-                                                        W_list[i].lincomb(W_list[0].inner(W_list[i]))).gramian())[0]))
+                        sinV = np.sqrt(np.max(spla.eigvalsh((V_list[0] -
+                                                             V_list[i].lincomb(V_list[0].inner(V_list[i]))).gramian())))
+                        sinW = np.sqrt(np.max(spla.eigvalsh((W_list[0] -
+                                                             W_list[i].lincomb(W_list[0].inner(W_list[i]))).gramian())))
                         dist = min(dist, max(sinV, sinW))
                     self.dist.append(dist)
             elif conv_crit == 'rel_H2_dist':
@@ -231,14 +241,6 @@ class IRKAReductor(GenericPGReductor):
             else:
                 logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
 
-            # new tangential directions
-            Y = rd.B.range.make_array(Y.conj().T)
-            X = rd.C.source.make_array(X.T)
-            b = rd.B.apply_transpose(Y)
-            c = rd.C.apply(X)
-            self.R.append(b)
-            self.L.append(c)
-
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:
                 break
@@ -263,6 +265,7 @@ class TSIAReductor(GenericPGReductor):
         |LTISystem|.
     """
     def __init__(self, d):
+        assert isinstance(d, LTISystem)
         self.d = d
 
     def reduce(self, rd0, tol=1e-4, maxit=100, dist_num=1, projection='orth', conv_crit='rel_sigma_change',
@@ -403,18 +406,18 @@ class TSIAReductor(GenericPGReductor):
                     V_list[0] = self.V
                     W_list[0] = self.W
                     # TODO: replace with SVD when it becomes possible
-                    sinV = np.sqrt(np.max(spla.eigh((V_list[0] -
-                                                     V_list[1].lincomb(V_list[0].inner(V_list[1]))).gramian())[0]))
-                    sinW = np.sqrt(np.max(spla.eigh((W_list[0] -
-                                                     W_list[1].lincomb(W_list[0].inner(W_list[1]))).gramian())[0]))
+                    sinV = np.sqrt(np.max(spla.eigvalsh((V_list[0] -
+                                                         V_list[1].lincomb(V_list[0].inner(V_list[1]))).gramian())))
+                    sinW = np.sqrt(np.max(spla.eigvalsh((W_list[0] -
+                                                         W_list[1].lincomb(W_list[0].inner(W_list[1]))).gramian())))
                     dist = max(sinV, sinW)
                     for i in range(2, dist_num + 1):
                         if V_list[i] is None:
                             break
-                        sinV = np.sqrt(np.max(spla.eigh((V_list[0] -
-                                                        V_list[i].lincomb(V_list[0].inner(V_list[i]))).gramian()[0])))
-                        sinW = np.sqrt(np.max(spla.eigh((W_list[0] -
-                                                        W_list[i].lincomb(W_list[0].inner(W_list[i]))).gramian()[0])))
+                        sinV = np.sqrt(np.max(spla.eigvalsh((V_list[0] -
+                                                             V_list[i].lincomb(V_list[0].inner(V_list[i]))).gramian())))
+                        sinW = np.sqrt(np.max(spla.eigvalsh((W_list[0] -
+                                                             W_list[i].lincomb(W_list[0].inner(W_list[i]))).gramian())))
                         dist = min(dist, max(sinV, sinW))
                     self.dist.append(dist)
             elif conv_crit == 'rel_H2_dist':

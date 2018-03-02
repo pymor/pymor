@@ -433,30 +433,30 @@ class ShiftedSecondOrderOperator(BlockOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V_blocks = [self.a * U.block(0) + self.b * U.block(1),
-                    -self.b * self.K.apply(U.block(0), mu=mu) +
-                    self.a * self.M.apply(U.block(1), mu=mu) -
-                    self.b * self.D.apply(U.block(1), mu=mu)]
+        V_blocks = [U.block(0) * self.a + U.block(1) * self.b,
+                    self.K.apply(U.block(0), mu=mu) * (-self.b) +
+                    self.M.apply(U.block(1), mu=mu) * self.a -
+                    self.D.apply(U.block(1), mu=mu) * self.b]
         return self.range.make_array(V_blocks)
 
     def apply_transpose(self, V, mu=None):
         assert V in self.range
-        U_blocks = [self.a * V.block(0) - self.b * self.K.apply_transpose(V.block(1), mu=mu),
-                    self.b * V.block(0) +
-                    self.a * self.M.apply_transpose(V.block(1), mu=mu) -
-                    self.b * self.D.apply_transpose(V.block(1), mu=mu)]
+        U_blocks = [V.block(0) * self.a - self.K.apply_transpose(V.block(1), mu=mu) * self.b,
+                    V.block(0) * self.b +
+                    self.M.apply_transpose(V.block(1), mu=mu) * self.a -
+                    self.D.apply_transpose(V.block(1), mu=mu) * self.b]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        aMmbDV0 = self.a * self.M.apply(V.block(0), mu=mu) - self.b * self.D.apply(V.block(0), mu=mu)
+        aMmbDV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.D.apply(V.block(0), mu=mu) * self.b
         KV0 = self.K.apply(V.block(0), mu=mu)
         a2MmabDpb2K = LincombOperator([self.M, self.D, self.K], [self.a ** 2, -self.a * self.b, self.b ** 2])
         a2MmabDpb2KiV1 = a2MmabDpb2K.apply_inverse(V.block(1), mu=mu, least_squares=least_squares)
         U_blocks = [a2MmabDpb2K.apply_inverse(aMmbDV0, mu=mu, least_squares=least_squares) -
-                    self.b * a2MmabDpb2KiV1,
-                    self.b * a2MmabDpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) +
-                    self.a * a2MmabDpb2KiV1]
+                    a2MmabDpb2KiV1 * self.b,
+                    a2MmabDpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) * self.b +
+                    a2MmabDpb2KiV1 * self.a]
         return self.source.make_array(U_blocks)
 
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
@@ -464,10 +464,10 @@ class ShiftedSecondOrderOperator(BlockOperator):
         a2MmabDpb2K = LincombOperator([self.M, self.D, self.K], [self.a ** 2, -self.a * self.b, self.b ** 2])
         a2MmabDpb2KitU0 = a2MmabDpb2K.apply_inverse_transpose(U.block(0), mu=mu, least_squares=least_squares)
         a2MmabDpb2KitU1 = a2MmabDpb2K.apply_inverse_transpose(U.block(1), mu=mu, least_squares=least_squares)
-        V_blocks = [self.a * self.M.apply_transpose(a2MmabDpb2KitU0, mu=mu) -
-                    self.b * self.D.apply_transpose(a2MmabDpb2KitU0, mu=mu) +
-                    self.b * self.K.apply_transpose(a2MmabDpb2KitU1, mu=mu),
-                    -self.b * a2MmabDpb2KitU0 + self.a * a2MmabDpb2KitU1]
+        V_blocks = [self.M.apply_transpose(a2MmabDpb2KitU0, mu=mu) * self.a -
+                    self.D.apply_transpose(a2MmabDpb2KitU0, mu=mu) * self.b +
+                    self.K.apply_transpose(a2MmabDpb2KitU1, mu=mu) * self.b,
+                    -a2MmabDpb2KitU0 * self.b + a2MmabDpb2KitU1 * self.a]
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):

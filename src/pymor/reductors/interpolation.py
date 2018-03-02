@@ -6,6 +6,7 @@ import numpy as np
 
 from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.discretizations.iosys import LTISystem, SecondOrderSystem, LinearDelaySystem
 from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import GenericPGReductor
 
@@ -129,6 +130,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         |LTISystem|.
     """
     def __init__(self, d):
+        assert isinstance(d, LTISystem)
         self.d = d
         self._B_source = d.B.source
         self._C_range = d.C.range
@@ -229,9 +231,10 @@ class SO_BHIReductor(GenericBHIReductor):
         :class:`~pymor.discretizations.iosys.SecondOrderSystem`.
     """
     def __init__(self, d):
+        assert isinstance(d, SecondOrderSystem)
         self.d = d
         self._B_source = d.B.source
-        self._C_range = d.C.range
+        self._C_range = d.Cp.range
         self._K_source = d.K.source
         self._product = d.M
         self._biorthogonal_product = 'M'
@@ -240,7 +243,9 @@ class SO_BHIReductor(GenericBHIReductor):
         return self.d.B.apply(V)
 
     def _C_apply_transpose(self, s, V):
-        return self.d.C.apply_transpose(V)
+        x = self.d.Cp.apply_transpose(V)
+        y = self.d.Cv.apply_transpose(V)
+        return x + y * s
 
     def _K_apply_inverse(self, s, V):
         s2MpsDpK = LincombOperator((self.d.M, self.d.D, self.d.K), (s ** 2, s, 1))
@@ -260,6 +265,7 @@ class DelayBHIReductor(GenericBHIReductor):
         :class:`~pymor.discretizations.iosys.LinearDelaySystem`.
     """
     def __init__(self, d):
+        assert isinstance(d, LinearDelaySystem)
         self.d = d
         self._B_source = d.B.source
         self._C_range = d.C.range
