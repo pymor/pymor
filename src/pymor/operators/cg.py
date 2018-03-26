@@ -109,7 +109,9 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
             else:
                 F = -self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
                 q, w = line.quadrature(order=self.order)
-                SF = np.squeeze(np.array([1 - q, q]))
+                # remove last dimension of q, as line coordinates are one dimensional
+                q = q[:,0]
+                SF = np.array([1 - q, q])
                 SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
                 SF_I = g.subentities(1, 2)[NI].ravel()
                 I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
@@ -124,7 +126,9 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
                 xref = g.quadrature_points(1, order=self.order)[RI]
                 F = (self.robin_data[0](xref, mu=mu) * self.robin_data[1](xref, mu=mu))
                 q, w = line.quadrature(order=self.order)
-                SF = np.squeeze(np.array([1 - q, q]))
+                # remove last dimension of q, as line coordinates are one dimensional
+                q = q[:, 0]
+                SF = np.array([1 - q, q])
                 SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[RI], w).ravel()
                 SF_I = g.subentities(1, 2)[RI].ravel()
                 I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
@@ -225,7 +229,9 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
             NI = bi.neumann_boundaries(1)
             F = -self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
             q, w = line.quadrature(order=self.order)
-            SF = np.squeeze(np.array([1 - q, q]))
+            # remove last dimension of q, as line coordinates are one dimensional
+            q = q[:, 0]
+            SF = np.array([1 - q, q])
             SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
             SF_I = g.subentities(1, 2)[NI].ravel()
             I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
@@ -235,7 +241,9 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
             xref = g.quadrature_points(1, order=self.order)[RI]
             F = self.robin_data[0](xref, mu=mu) * self.robin_data[1](xref, mu=mu)
             q, w = line.quadrature(order=self.order)
-            SF = np.squeeze(np.array([1 - q, q]))
+            # remove last dimension of q, as line coordinates are one dimensional
+            q = q[:, 0]
+            SF = np.array([1 - q, q])
             SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[RI], w).ravel()
             SF_I = g.subentities(1, 2)[RI].ravel()
             I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
@@ -999,7 +1007,9 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
 
             # robin_c(robin-index, quadraturepoint-index)
             q, w = line.quadrature(order=self.order)
-            SF = np.squeeze(np.array([1 - q, q]))
+            # remove last dimension of q, as line coordinates are one dimensional
+            q = q[:, 0]
+            SF = np.array([1 - q, q])
             SF_INTS = np.einsum('ep,pi,pj,e,p->eij', robin_c, SF, SF, g.integration_elements(1)[RI], w).ravel()
             SF_I0 = np.repeat(g.subentities(1, g.dim)[RI], 2).ravel()
             SF_I1 = np.tile(g.subentities(1, g.dim)[RI], [1, 2]).ravel()
