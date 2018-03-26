@@ -355,7 +355,7 @@ class TSIAReductor(GenericPGReductor):
 
         if conv_crit == 'rel_sigma_change':
             sigma_list = (dist_num + 1) * [None]
-            sigma_list[0] = rd0.poles()
+            sigma_list[0] = rd0.poles(force_dense=True)
         self.dist = []
         self.errors = [] if compute_errors else None
         # main loop
@@ -375,7 +375,7 @@ class TSIAReductor(GenericPGReductor):
             if conv_crit == 'rel_sigma_change':
                 for i in range(1, dist_num + 1):
                     sigma_list[-i] = sigma_list[-i - 1]
-                sigma_list[0] = rd.poles()
+                sigma_list[0] = rd.poles(force_dense=True)
                 try:
                     dist = spla.norm((sigma_list[1] - sigma_list[0]) / sigma_list[1], ord=np.inf)
                 except:
