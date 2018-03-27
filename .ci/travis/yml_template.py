@@ -42,7 +42,7 @@ script:
 
 # runs independent of 'script' failure/success
 after_script:
-    - ${DOCKER_RUN} /src/.ci/travis/after_script.bash
+    -  'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then ${DOCKER_RUN} /src/.ci/travis/after_script.bash; fi'
 
 jobs:
   include:
