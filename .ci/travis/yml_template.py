@@ -54,8 +54,8 @@ jobs:
 {%- endfor %}
 
   - stage: deploy
-    if: type IS push
-    script: ./.ci/travis/deploy.bash
+    if: type IS push # this seems to be ignored
+    script: 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then ./.ci/travis/deploy.bash ; fi'
     # overwrite other global/matrix settings
     before_script: true
     after_script: true
