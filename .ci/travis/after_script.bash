@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# exit early if the var is not and should not be available
+if [ x"${encrypted_aaee34775583_key}" == x ] ; then
+    exit $([ "${TRAVIS_REPO_SLUG}" != "pymor/pymor" ])
+fi
+
 set -e
 set -u
 
