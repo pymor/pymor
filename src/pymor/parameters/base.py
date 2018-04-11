@@ -34,6 +34,7 @@ of numbers of the right length). Moreover, when given a |Parameter|,
 |ParameterType|.
 """
 
+from collections import OrderedDict
 from numbers import Number
 
 import numpy as np
@@ -43,7 +44,7 @@ from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.pprint import format_array
 
 
-class ParameterType(dict):
+class ParameterType(OrderedDict):
     """Class representing a parameter type.
 
     A parameter type is simply a dictionary with strings as keys and tuples of
@@ -76,14 +77,11 @@ class ParameterType(dict):
                 if not isinstance(v, tuple):
                     assert isinstance(v, Number)
                     t[k] = () if v == 0 else (v,)
-        # calling dict.__init__ breaks multiple inheritance but is faster than
-        # the super() call
-        dict.__init__(self, t)
+        super().__init__(sorted(t.items()))
+        self.clear = self.__setitem__ = self.__delitem__ = self.pop = self.popitem = self.update = self._is_immutable
 
     def _is_immutable(*args, **kwargs):
         raise ValueError('ParameterTypes cannot be modified')
-
-    clear = __setitem__ = __delitem__ = pop = popitem = update = _is_immutable
 
     def copy(self):
         return ParameterType(self)
@@ -92,7 +90,7 @@ class ParameterType(dict):
         raise NotImplementedError
 
     def __str__(self):
-        return '{' + ', '.join('{}: {}'.format(k, self[k]) for k in sorted(self.keys())) + '}'
+        return str(dict(self))
 
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
@@ -108,6 +106,9 @@ class ParameterType(dict):
 
     def __reduce__(self):
         return (ParameterType, (dict(self),))
+
+    def __hash__(self):
+        return hash(self.sid)
 
 
 class Parameter(dict):
