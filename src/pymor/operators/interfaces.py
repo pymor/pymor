@@ -443,8 +443,5 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """Concatenation of two operators."""
         pass
 
-    def __rmatmul__(self, other):
-        return self * other
-
     def __neg__(self):
         return self * (-1.)

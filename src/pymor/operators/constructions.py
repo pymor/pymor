@@ -164,20 +164,32 @@ class LincombOperator(OperatorBase):
         return self._as_array(True, mu)
 
     def __add__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
         if self.name != 'LincombOperator':
             if isinstance(other, LincombOperator) and other.name == 'LincombOperator':
-                return LincombOperator((self,) + other.operators,
-                                       (1.,) + other.coefficients)
+                operators, coefficients = (self,) + other.operators, (1.,) + other.coefficients
             else:
-                return LincombOperator((self, other), (1., 1.))
+                operators, coefficients = (self, other), (1., 1.)
         elif isinstance(other, LincombOperator) and other.name == 'LincombOperator':
-            return LincombOperator(self.operators + other.operators,
-                                   self.coefficients + other.coefficients,
-                                   solver_options=self.solver_options)
+            operators, coefficients = self.operators + other.operators, self.coefficients + other.coefficients
         else:
-            return LincombOperator(self.operators + (other,),
-                                   self.coefficients + (1.,),
-                                   solver_options=self.solver_options)
+            operators, coefficients = self.operators + (other,), self.coefficients + (1.,)
+
+        return LincombOperator(operators, coefficients, solver_options=self.solver_options)
+
+    def __radd__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        # note that 'other' can never be a LincombOperator
+        if self.name != 'LincombOperator':
+            operators, coefficients = (other, self), (1., 1.)
+        else:
+            operators, coefficients = (other,) + self.operators, (1.,) + self.coefficients
+
+        return LincombOperator(operators, coefficients, solver_options=other.solver_options)
 
     def __mul__(self, other):
         assert isinstance(other, (Number, ParameterFunctionalInterface))
@@ -247,6 +259,9 @@ class Concatenation(OperatorBase):
         return Concatenation(restricted_ops), dofs
 
     def __matmul__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
         if self.name != 'Concatenation':
             if isinstance(other, Concatenation) and other.name == 'Concatenation':
                 operators = (self,) + other.operators
@@ -260,6 +275,10 @@ class Concatenation(OperatorBase):
         return Concatenation(operators, solver_options=self.solver_options)
 
     def __rmatmul__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        # note that 'other' can never be a Concatenation
         if self.name != 'Concatenation':
             operators = (other, self)
         else:

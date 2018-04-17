@@ -60,20 +60,23 @@ class OperatorBase(OperatorInterface):
         return LincombOperator([self, other], [1., -1.])
 
     def __add__(self, other):
-        assert isinstance(other, OperatorInterface)
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
         from pymor.operators.constructions import LincombOperator
         if isinstance(other, LincombOperator):
-            return other + self
+            return NotImplemented
         else:
             return LincombOperator([self, other], [1., 1.])
 
     def __mul__(self, other):
-        assert isinstance(other, (Number, ParameterFunctionalInterface))
+        if not isinstance(other, (Number, ParameterFunctionalInterface)):
+            return NotImplemented
         from pymor.operators.constructions import LincombOperator
         return LincombOperator([self], [other])
 
     def __matmul__(self, other):
-        assert isinstance(other, OperatorInterface)
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
         from pymor.operators.constructions import Concatenation
         if isinstance(other, Concatenation):
             return NotImplemented
