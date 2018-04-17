@@ -10,6 +10,7 @@ import numpy as np
 from pymor.algorithms import genericsolvers
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.interfaces import OperatorInterface
+from pymor.parameters.interfaces import ParameterFunctionalInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -54,25 +55,33 @@ class OperatorBase(OperatorInterface):
             return self
 
     def __sub__(self, other):
-        if isinstance(other, Number):
-            assert other == 0.
-            return self
+        assert isinstance(other, OperatorInterface)
         from pymor.operators.constructions import LincombOperator
-        return LincombOperator([self, other], [1, -1])
+        return LincombOperator([self, other], [1., -1.])
 
     def __add__(self, other):
-        if isinstance(other, Number):
-            assert other == 0.
-            return self
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
         from pymor.operators.constructions import LincombOperator
-        return LincombOperator([self, other], [1, 1])
-
-    __radd__ = __add__
+        if isinstance(other, LincombOperator):
+            return NotImplemented
+        else:
+            return LincombOperator([self, other], [1., 1.])
 
     def __mul__(self, other):
-        assert isinstance(other, Number)
+        if not isinstance(other, (Number, ParameterFunctionalInterface)):
+            return NotImplemented
         from pymor.operators.constructions import LincombOperator
         return LincombOperator([self], [other])
+
+    def __matmul__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+        from pymor.operators.constructions import Concatenation
+        if isinstance(other, Concatenation):
+            return NotImplemented
+        else:
+            return Concatenation((self, other))
 
     def __str__(self):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(

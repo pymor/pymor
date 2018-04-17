@@ -7,6 +7,7 @@
 
 from functools import reduce
 from itertools import chain
+from numbers import Number
 
 import numpy as np
 
@@ -162,6 +163,41 @@ class LincombOperator(OperatorBase):
     def as_source_array(self, mu=None):
         return self._as_array(True, mu)
 
+    def __add__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        if self.name != 'LincombOperator':
+            if isinstance(other, LincombOperator) and other.name == 'LincombOperator':
+                operators, coefficients = (self,) + other.operators, (1.,) + other.coefficients
+            else:
+                operators, coefficients = (self, other), (1., 1.)
+        elif isinstance(other, LincombOperator) and other.name == 'LincombOperator':
+            operators, coefficients = self.operators + other.operators, self.coefficients + other.coefficients
+        else:
+            operators, coefficients = self.operators + (other,), self.coefficients + (1.,)
+
+        return LincombOperator(operators, coefficients, solver_options=self.solver_options)
+
+    def __radd__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        # note that 'other' can never be a LincombOperator
+        if self.name != 'LincombOperator':
+            operators, coefficients = (other, self), (1., 1.)
+        else:
+            operators, coefficients = (other,) + self.operators, (1.,) + self.coefficients
+
+        return LincombOperator(operators, coefficients, solver_options=other.solver_options)
+
+    def __mul__(self, other):
+        assert isinstance(other, (Number, ParameterFunctionalInterface))
+        if self.name != 'LincombOperator':
+            return LincombOperator((self,), (other,))
+        else:
+            return self.with_(coefficients=tuple(c * other for c in self.coefficients))
+
 
 class Concatenation(OperatorBase):
     """|Operator| representing the concatenation of two |Operators|.
@@ -221,6 +257,34 @@ class Concatenation(OperatorBase):
             rop, dofs = op.restricted(dofs)
             restricted_ops.append(rop)
         return Concatenation(restricted_ops), dofs
+
+    def __matmul__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        if self.name != 'Concatenation':
+            if isinstance(other, Concatenation) and other.name == 'Concatenation':
+                operators = (self,) + other.operators
+            else:
+                operators = (self, other)
+        elif isinstance(other, Concatenation) and other.name == 'Concatenation':
+            operators = self.operators + other.operators
+        else:
+            operators = self.operators + (other,)
+
+        return Concatenation(operators, solver_options=self.solver_options)
+
+    def __rmatmul__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        # note that 'other' can never be a Concatenation
+        if self.name != 'Concatenation':
+            operators = (other, self)
+        else:
+            operators = (other,) + self.operators
+
+        return Concatenation(operators, solver_options=other.solver_options)
 
 
 class ComponentProjection(OperatorBase):
