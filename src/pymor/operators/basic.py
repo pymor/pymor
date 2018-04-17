@@ -72,6 +72,14 @@ class OperatorBase(OperatorInterface):
         from pymor.operators.constructions import LincombOperator
         return LincombOperator([self], [other])
 
+    def __matmul__(self, other):
+        assert isinstance(other, OperatorInterface)
+        from pymor.operators.constructions import Concatenation
+        if isinstance(other, Concatenation):
+            return NotImplemented
+        else:
+            return Concatenation((self, other))
+
     def __str__(self):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
             self.name, self.source.dim, self.range.dim, self.parameter_type,

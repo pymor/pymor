@@ -246,6 +246,27 @@ class Concatenation(OperatorBase):
             restricted_ops.append(rop)
         return Concatenation(restricted_ops), dofs
 
+    def __matmul__(self, other):
+        if self.name != 'Concatenation':
+            if isinstance(other, Concatenation) and other.name == 'Concatenation':
+                operators = (self,) + other.operators
+            else:
+                operators = (self, other)
+        elif isinstance(other, Concatenation) and other.name == 'Concatenation':
+            operators = self.operators + other.operators
+        else:
+            operators = self.operators + (other,)
+
+        return Concatenation(operators, solver_options=self.solver_options)
+
+    def __rmatmul__(self, other):
+        if self.name != 'Concatenation':
+            operators = (other, self)
+        else:
+            operators = (other,) + self.operators
+
+        return Concatenation(operators, solver_options=other.solver_options)
+
 
 class ComponentProjection(OperatorBase):
     """|Operator| representing the projection of a |VectorArray| on some of its components.
