@@ -270,7 +270,7 @@ class ProjectToSubbasisRules(RuleTable):
     @match_class(NumpyMatrixOperator)
     def action_NumpyMatrixOperator(self, op):
         # copy instead of just slicing the matrix to ensure contiguous memory
-        return NumpyMatrixOperator(op._matrix[:self.dim_range, :self.dim_source].copy(),
+        return NumpyMatrixOperator(op.matrix[:self.dim_range, :self.dim_source].copy(),
                                    source_id=op.source.id,
                                    range_id=op.range.id,
                                    solver_options=op.solver_options,

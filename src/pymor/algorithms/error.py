@@ -351,7 +351,7 @@ def _compute_errors(mu, d, reductor, estimator, error_norms, condition, custom, 
                 e = e[0] if hasattr(e, '__len__') else e
                 errors[i_norm, i_N] = e
         if condition:
-            conditions[i_N] = np.linalg.cond(rd.operator.assemble(mu)._matrix) if N > 0 else 0.
+            conditions[i_N] = np.linalg.cond(rd.operator.assemble(mu).matrix) if N > 0 else 0.
         for i_custom, cust in enumerate(custom):
             c = cust(rd=rd,
                      d=d,

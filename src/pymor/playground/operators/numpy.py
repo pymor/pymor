@@ -37,7 +37,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
             V = super().apply(U, mu=mu)
             return self.range.from_data(V.data)
 
-        V = [self._matrix.dot(v._array) for v in U._list]
+        V = [self.matrix.dot(v._array) for v in U._list]
 
         if self.functional:
             return self.range.make_array(np.array(V)) if len(V) > 0 else self.range.empty()
@@ -57,7 +57,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
             else:
                 raise InversionError
 
-        op = NumpyMatrixOperator(self._matrix, solver_options=self.solver_options)
+        op = NumpyMatrixOperator(self.matrix, solver_options=self.solver_options)
 
         return self.source.make_array([op.apply_inverse(NumpyVectorSpace.make_array(v._array),
                                                         least_squares=least_squares).data.ravel()
@@ -65,16 +65,16 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
 
     def as_range_array(self, mu=None):
         assert not self.sparse
-        return self.range.make_array(list(self._matrix.T.copy()))
+        return self.range.make_array(list(self.matrix.T.copy()))
 
     def as_source_array(self, mu=None):
         assert not self.sparse
-        return self.source.make_array(list(self._matrix.copy()))
+        return self.source.make_array(list(self.matrix.copy()))
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         lincomb = super().assemble_lincomb(operators, coefficients)
         if lincomb is None:
             return None
         else:
-            return NumpyListVectorArrayMatrixOperator(lincomb._matrix, source_id=self.source.id, range_id=self.range.id,
+            return NumpyListVectorArrayMatrixOperator(lincomb.matrix, source_id=self.source.id, range_id=self.range.id,
                                                       solver_options=solver_options, name=name)
