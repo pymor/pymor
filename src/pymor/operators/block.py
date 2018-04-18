@@ -228,13 +228,9 @@ class BlockDiagonalOperator(BlockOperator):
         assert operators[0] is self
 
         # return ShiftedSecondOrderOperator if possible
-        if (len(operators) == 2 and self.num_source_blocks == 2 and self.num_range_blocks == 2 and
-                isinstance(self._blocks[0, 0], IdentityOperator) and isinstance(operators[1], SecondOrderOperator)):
-            return ShiftedSecondOrderOperator(self._blocks[1, 1],
-                                              operators[1].D,
-                                              operators[1].K,
-                                              coefficients[0],
-                                              coefficients[1])
+        if len(operators) == 2 and isinstance(operators[1], SecondOrderOperator):
+            return operators[1].assemble_lincomb(operators[::-1], coefficients[::-1],
+                                                 solver_options=solver_options, name=name)
 
         # return BlockOperator if not all operators are BlockDiagonalOperators
         if not all(isinstance(op, self.__class__) for op in operators):
