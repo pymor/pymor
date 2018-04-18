@@ -227,8 +227,8 @@ class BlockDiagonalOperator(BlockOperator):
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self
 
-        # return ShiftedSecondOrderOperator if possible
-        if len(operators) == 2 and isinstance(operators[1], SecondOrderOperator):
+        # return ShiftedSecondOrderSystemOperator if possible
+        if len(operators) == 2 and isinstance(operators[1], SecondOrderSystemOperator):
             return operators[1].assemble_lincomb(operators[::-1], coefficients[::-1],
                                                  solver_options=solver_options, name=name)
 
@@ -255,7 +255,7 @@ class BlockDiagonalOperator(BlockOperator):
             return self.__class__(blocks)
 
 
-class SecondOrderOperator(BlockOperator):
+class SecondOrderSystemOperator(BlockOperator):
     """BlockOperator appearing in SecondOrderSystem.to_lti().
 
     This represents a block operator
@@ -340,11 +340,11 @@ class SecondOrderOperator(BlockOperator):
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self
 
-        # return ShiftedSecondOrderOperator if possible
+        # return ShiftedSecondOrderSystemOperator if possible
         if (len(operators) == 2 and isinstance(operators[1], BlockDiagonalOperator) and
                 operators[1].num_source_blocks == 2 and operators[1].num_range_blocks == 2 and
                 isinstance(operators[1]._blocks[0, 0], IdentityOperator)):
-            return ShiftedSecondOrderOperator(operators[1]._blocks[1, 1],
+            return ShiftedSecondOrderSystemOperator(operators[1]._blocks[1, 1],
                                               self.D,
                                               self.K,
                                               coefficients[1],
@@ -369,7 +369,7 @@ class SecondOrderOperator(BlockOperator):
             return BlockOperator(blocks)
 
 
-class ShiftedSecondOrderOperator(BlockOperator):
+class ShiftedSecondOrderSystemOperator(BlockOperator):
     """BlockOperator appearing in second-order systems.
 
     This represents a block operator

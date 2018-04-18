@@ -15,7 +15,7 @@ from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.discretizations.basic import DiscretizationBase
-from pymor.operators.block import BlockOperator, BlockDiagonalOperator, SecondOrderOperator
+from pymor.operators.block import BlockOperator, BlockDiagonalOperator, SecondOrderSystemOperator
 from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
@@ -911,7 +911,7 @@ class SecondOrderSystem(InputOutputSystem):
         lti
             |LTISystem| equivalent to the second order system.
         """
-        return LTISystem(A=SecondOrderOperator(self.D, self.K),
+        return LTISystem(A=SecondOrderSystemOperator(self.D, self.K),
                          B=BlockOperator.vstack((ZeroOperator(self.B.range, self.B.source),
                                                  self.B),
                                                 source_id='INPUT',
