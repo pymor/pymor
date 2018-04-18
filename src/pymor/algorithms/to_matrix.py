@@ -51,17 +51,17 @@ class ToMatrixRules(RuleTable):
     def action_NumpyMatrixOperator(self, op):
         format = self.format
         if format is None:
-            return op._matrix
+            return op.matrix
         elif format == 'dense':
             if not op.sparse:
-                return op._matrix
+                return op.matrix
             else:
-                return op._matrix.toarray()
+                return op.matrix.toarray()
         else:
             if not op.sparse:
-                return getattr(sps, format + '_matrix')(op._matrix)
+                return getattr(sps, format + '_matrix')(op.matrix)
             else:
-                return op._matrix.asformat(format)
+                return op.matrix.asformat(format)
 
     @match_class(BlockOperator)
     def action_BlockOperator(self, op):

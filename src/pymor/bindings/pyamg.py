@@ -181,7 +181,7 @@ if config.HAVE_PYAMG:
         assert V in op.range
 
         if isinstance(op, NumpyMatrixOperator):
-            matrix = op._matrix
+            matrix = op.matrix
         else:
             from pymor.algorithms.to_matrix import to_matrix
             matrix = to_matrix(op)

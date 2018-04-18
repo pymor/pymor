@@ -139,8 +139,8 @@ def discretize_stationary_from_disk(parameter_file):
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
         op = NumpyMatrixOperator.from_file(path, source_id='STATE')
-        assert isinstance(op._matrix, np.ndarray)
-        op = op.with_(matrix=op._matrix.reshape((1, -1)))
+        assert isinstance(op.matrix, np.ndarray)
+        op = op.with_(matrix=op.matrix.reshape((1, -1)))
         rhs_operators.append(op)
         rhs_functionals.append(parameter_functional)
 
@@ -277,8 +277,8 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
         op = NumpyMatrixOperator.from_file(path, source_id='STATE')
-        assert isinstance(op._matrix, np.ndarray)
-        op = op.with_(matrix=op._matrix.reshape((1, -1)))
+        assert isinstance(op.matrix, np.ndarray)
+        op = op.with_(matrix=op.matrix.reshape((1, -1)))
         rhs_operators.append(op)
         rhs_functionals.append(parameter_functional)
 
@@ -293,8 +293,8 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         u_0 = config.items('initial-solution')
         path = os.path.join(base_path, u_0[0][1])
         op = NumpyMatrixOperator.from_file(path, range_id='STATE')
-        assert isinstance(op._matrix, np.ndarray)
-        u0 = op.with_(matrix=op._matrix.reshape((-1, 1)))
+        assert isinstance(op.matrix, np.ndarray)
+        u0 = op.with_(matrix=op.matrix.reshape((-1, 1)))
 
     # get products if given
     if 'products' in config.sections():

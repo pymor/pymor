@@ -178,7 +178,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
     assert V in op.range
 
     if isinstance(op, NumpyMatrixOperator):
-        matrix = op._matrix
+        matrix = op.matrix
     else:
         from pymor.algorithms.to_matrix import to_matrix
         matrix = to_matrix(op)
