@@ -89,16 +89,17 @@ class SubGridBoundaryInfo(BoundaryInfoInterface):
         for codim in range(1, subgrid.dim + 1):
             parent_indices = subgrid.parent_indices(codim)[subgrid.boundaries(codim)]
             new_boundaries = np.where(np.logical_not(grid.boundary_mask(codim)[parent_indices]))
+            new_boundaries_sg_indices = subgrid.boundaries(codim)[new_boundaries]
             if len(new_boundaries) > 0:
                 has_new_boundaries = True
             m = {}
             for t in boundary_types:
                 m[t] = grid_boundary_info.mask(t, codim)[subgrid.parent_indices(codim)]
                 if t == new_boundary_type:
-                    m[t][new_boundaries] = True
+                    m[t][new_boundaries_sg_indices] = True
             if new_boundary_type is not None and new_boundary_type not in boundary_types:
                 m[new_boundary_type] = np.zeros(subgrid.size(codim), dtype=np.bool)
-                m[new_boundary_type][new_boundaries] = True
+                m[new_boundary_type][new_boundaries_sg_indices] = True
             masks.append(m)
         self.__masks = masks
 
