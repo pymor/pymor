@@ -148,6 +148,34 @@ class LincombOperator(OperatorBase):
         else:
             return jac
 
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        if len(self.operators) == 1:
+            if self.coefficients[0] == 0.:
+                if least_squares:
+                    return self.source.zeros(len(V))
+                else:
+                    raise InversionError
+            else:
+                U = self.operators[0].apply_inverse(V, mu=mu, least_squares=least_squares)
+                U *= (1. / self.coefficients[0])
+                return U
+        else:
+            return super().apply_inverse(V, mu=mu, least_squares=least_squares)
+
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        if len(self.operators) == 1:
+            if self.coefficients[0] == 0.:
+                if least_squares:
+                    return self.range.zeros(len(U))
+                else:
+                    raise InversionError
+            else:
+                V = self.operators[0].apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+                V *= (1. / self.coefficients[0])
+                return V
+        else:
+            return super().apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+
     def _as_array(self, source, mu):
         coefficients = np.array(self.evaluate_coefficients(mu))
         arrays = [op.as_source_array(mu) if source else op.as_range_array(mu) for op in self.operators]
