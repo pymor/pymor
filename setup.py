@@ -77,59 +77,9 @@ def _numpy_monkey():
     build_src.build_src.generate_a_pyrex_source = generate_a_pyrex_source
 
 
-# When building under python 2.7, run refactorings from lib3to2
-class build_py27(_build_py):
-    def __init__(self, *args, **kwargs):
-        _build_py.__init__(self, *args, **kwargs)
-        checkpoint_fn = os.path.join(os.path.dirname(__file__), '3to2.conversion.ok')
-        if os.path.exists(checkpoint_fn):
-            return
-        import logging
-        from lib2to3 import refactor
-        import lib3to2.main
-        import lib3to2.fixes
-        rt_logger = logging.getLogger("RefactoringTool")
-        rt_logger.addHandler(logging.StreamHandler())
-        try:
-            fixers = refactor.get_fixers_from_package('lib3to2.fixes')
-        except OSError:
-            # fallback for .egg installs
-            fixers = ['lib3to2.fixes.fix_{}'.format(s) for s in ('absimport', 'annotations', 'bitlength', 'bool',
-                'bytes', 'classdecorator', 'collections', 'dctsetcomp', 'division', 'except', 'features',
-                'fullargspec', 'funcattrs', 'getcwd', 'imports', 'imports2', 'input', 'int', 'intern', 'itertools',
-                'kwargs', 'memoryview', 'metaclass', 'methodattrs', 'newstyle', 'next', 'numliterals', 'open', 'print',
-                'printfunction', 'raise', 'range', 'reduce', 'setliteral', 'str', 'super', 'throw', 'unittest',
-                'unpacking', 'with')]
-
-        for fix in ('fix_except', 'fix_int', 'fix_print', 'fix_str', 'fix_throw',
-                'fix_unittest', 'fix_absimport', 'fix_dctsetcomp', 'fix_setliteral', 'fix_with', 'fix_open'):
-            fixers.remove('lib3to2.fixes.{}'.format(fix))
-        fixers.append('fix_pymor_futures')
-        print(fixers)
-        self.rtool = lib3to2.main.StdoutRefactoringTool(
-            fixers,
-            None,
-            [],
-            True,
-            False
-        )
-        self.rtool.refactor_dir('src', write=True)
-        self.rtool.refactor_dir('docs', write=True)
-        open(checkpoint_fn, 'wt').write('converted')
-
 
 cmdclass = versioneer.get_cmdclass()
-if sys.version_info[0] < 3:
-    setup_requires.insert(0, '3to2')
-    # cmdclass allows you to override the distutils commands that are
-    # run through 'python setup.py somecmd'. Under python 2.7 replace
-    # the 'build_py' with a custom subclass (build_py27) that invokes
-    # 3to2 refactoring on each python file as its copied to the build
-    # directory.
-    cmdclass['build_py'] = build_py27
-    pprint.pprint(cmdclass)
 
-# (Under python3 no commands are replaced, so the default command classes are used.)
 
 
 def _testdatafiles():
@@ -212,9 +162,8 @@ def setup_package():
         extras_require = dependencies.extras(),
         classifiers=['Development Status :: 4 - Beta',
                      'License :: OSI Approved :: BSD License',
-                     'Programming Language :: Python :: 2.7',
-                     'Programming Language :: Python :: 3.4',
                      'Programming Language :: Python :: 3.5',
+                     'Programming Language :: Python :: 3.6',
                      'Intended Audience :: Science/Research',
                      'Topic :: Scientific/Engineering :: Mathematics',
                      'Topic :: Scientific/Engineering :: Visualization'],

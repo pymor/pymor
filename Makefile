@@ -60,6 +60,3 @@ doc:
 	./3to2.sh src/
 	./3to2.sh docs/
 	python setup.py build_ext -i
-
-debian_packages:
-	python3 debian/make_packages.py -v $(shell cd src ; python3 -c 'import pymor;print(pymor.__version__)') $(shell git rev-parse HEAD)

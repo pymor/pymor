@@ -7,6 +7,7 @@
 
 from functools import reduce
 from itertools import chain
+from numbers import Number
 
 import numpy as np
 
@@ -120,7 +121,7 @@ class LincombOperator(OperatorBase):
         return R
 
     def assemble(self, mu=None):
-        operators = [op.assemble(mu) for op in self.operators]
+        operators = tuple(op.assemble(mu) for op in self.operators)
         coefficients = self.evaluate_coefficients(mu)
         op = operators[0].assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
                                            name=self.name + '_assembled')
@@ -147,6 +148,34 @@ class LincombOperator(OperatorBase):
         else:
             return jac
 
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        if len(self.operators) == 1:
+            if self.coefficients[0] == 0.:
+                if least_squares:
+                    return self.source.zeros(len(V))
+                else:
+                    raise InversionError
+            else:
+                U = self.operators[0].apply_inverse(V, mu=mu, least_squares=least_squares)
+                U *= (1. / self.coefficients[0])
+                return U
+        else:
+            return super().apply_inverse(V, mu=mu, least_squares=least_squares)
+
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        if len(self.operators) == 1:
+            if self.coefficients[0] == 0.:
+                if least_squares:
+                    return self.range.zeros(len(U))
+                else:
+                    raise InversionError
+            else:
+                V = self.operators[0].apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+                V *= (1. / self.coefficients[0])
+                return V
+        else:
+            return super().apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+
     def _as_array(self, source, mu):
         coefficients = np.array(self.evaluate_coefficients(mu))
         arrays = [op.as_source_array(mu) if source else op.as_range_array(mu) for op in self.operators]
@@ -161,6 +190,41 @@ class LincombOperator(OperatorBase):
 
     def as_source_array(self, mu=None):
         return self._as_array(True, mu)
+
+    def __add__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        if self.name != 'LincombOperator':
+            if isinstance(other, LincombOperator) and other.name == 'LincombOperator':
+                operators, coefficients = (self,) + other.operators, (1.,) + other.coefficients
+            else:
+                operators, coefficients = (self, other), (1., 1.)
+        elif isinstance(other, LincombOperator) and other.name == 'LincombOperator':
+            operators, coefficients = self.operators + other.operators, self.coefficients + other.coefficients
+        else:
+            operators, coefficients = self.operators + (other,), self.coefficients + (1.,)
+
+        return LincombOperator(operators, coefficients, solver_options=self.solver_options)
+
+    def __radd__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        # note that 'other' can never be a LincombOperator
+        if self.name != 'LincombOperator':
+            operators, coefficients = (other, self), (1., 1.)
+        else:
+            operators, coefficients = (other,) + self.operators, (1.,) + self.coefficients
+
+        return LincombOperator(operators, coefficients, solver_options=other.solver_options)
+
+    def __mul__(self, other):
+        assert isinstance(other, (Number, ParameterFunctionalInterface))
+        if self.name != 'LincombOperator':
+            return LincombOperator((self,), (other,))
+        else:
+            return self.with_(coefficients=tuple(c * other for c in self.coefficients))
 
 
 class Concatenation(OperatorBase):
@@ -221,6 +285,34 @@ class Concatenation(OperatorBase):
             rop, dofs = op.restricted(dofs)
             restricted_ops.append(rop)
         return Concatenation(restricted_ops), dofs
+
+    def __matmul__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        if self.name != 'Concatenation':
+            if isinstance(other, Concatenation) and other.name == 'Concatenation':
+                operators = (self,) + other.operators
+            else:
+                operators = (self, other)
+        elif isinstance(other, Concatenation) and other.name == 'Concatenation':
+            operators = self.operators + other.operators
+        else:
+            operators = self.operators + (other,)
+
+        return Concatenation(operators, solver_options=self.solver_options)
+
+    def __rmatmul__(self, other):
+        if not isinstance(other, OperatorInterface):
+            return NotImplemented
+
+        # note that 'other' can never be a Concatenation
+        if self.name != 'Concatenation':
+            operators = (other, self)
+        else:
+            operators = (other,) + self.operators
+
+        return Concatenation(operators, solver_options=other.solver_options)
 
 
 class ComponentProjection(OperatorBase):
@@ -308,7 +400,7 @@ class IdentityOperator(OperatorBase):
             assert all(op.source == operators[0].source for op in operators)
             return IdentityOperator(operators[0].source, name=name) * sum(coefficients)
         else:
-            return operators[1].assemble_lincomb(operators[1:] + [operators[0]],
+            return operators[1].assemble_lincomb(operators[1:] + (operators[0],),
                                                  coefficients[1:] + [coefficients[0]],
                                                  solver_options=solver_options, name=name)
 
@@ -478,9 +570,10 @@ class VectorArrayOperator(OperatorBase):
         return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-
         transposed = operators[0].transposed
-        if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed for op in operators):
+        if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed and
+                   op.source == operators[0].source and op.range == operators[0].range
+                   for op in operators):
             return None
         assert not solver_options
 
@@ -490,19 +583,19 @@ class VectorArrayOperator(OperatorBase):
             array = operators[0]._array * coefficients[0]
         for op, c in zip(operators[1:], coefficients[1:]):
             array.axpy(c, op._array)
-        return VectorArrayOperator(array, transposed=transposed, name=name)
+        return VectorArrayOperator(array, transposed=transposed, space_id=operators[0].space_id, name=name)
 
     def as_range_array(self, mu=None):
         if not self.transposed:
             return self._array.copy()
         else:
-            super().as_range_array(mu)
+            return super().as_range_array(mu)
 
     def as_source_array(self, mu=None):
         if self.transposed:
             return self._array.copy()
         else:
-            super().as_source_array(mu)
+            return super().as_source_array(mu)
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)

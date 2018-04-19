@@ -10,8 +10,8 @@ import scipy.sparse as sps
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
-from pymor.operators.constructions import (AdjointOperator, Concatenation, ComponentProjection, IdentityOperator,
-                                           LincombOperator, VectorArrayOperator, ZeroOperator)
+from pymor.operators.constructions import (AdjointOperator, ComponentProjection, IdentityOperator, VectorArrayOperator,
+                                           ZeroOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -146,22 +146,22 @@ def test_to_matrix_Concatenation():
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
-    Cop = Concatenation([Aop, Bop])
+    Cop = Aop @ Bop
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(B)
-    Cop = Concatenation([Aop, Bop])
+    Cop = Aop @ Bop
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = Concatenation([Aop, Bop])
+    Cop = Aop @ Bop
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = Concatenation([Aop, Bop])
+    Cop = Aop @ Bop
     assert_type_and_allclose(A, Aop, 'sparse')
 
 
@@ -183,22 +183,22 @@ def test_to_matrix_LincombOperator():
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
-    Cop = LincombOperator([Aop, Concatenation([Bop, Bop.T])], [a, b])
+    Cop = Aop * a + (Bop @ Bop.T) * b
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(B)
-    Cop = LincombOperator([Aop, Concatenation([Bop, Bop.T])], [a, b])
+    Cop = Aop * a + (Bop @ Bop.T) * b
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = LincombOperator([Aop, Concatenation([Bop, Bop.T])], [a, b])
+    Cop = Aop * a + (Bop @ Bop.T) * b
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = LincombOperator([Aop, Concatenation([Bop, Bop.T])], [a, b])
+    Cop = Aop * a + (Bop @ Bop.T) * b
     assert_type_and_allclose(C, Cop, 'sparse')
 
 

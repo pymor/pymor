@@ -2,6 +2,8 @@
 # Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from numbers import Number
+
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.parameters.base import Parametric
 
@@ -37,3 +39,11 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
 
     def __call__(self, mu=None):
         return self.evaluate(mu)
+
+    def __mul__(self, other):
+        from pymor.parameters.functionals import ProductParameterFunctional
+        if not isinstance(other, (Number, ParameterFunctionalInterface)):
+            return NotImplemented
+        return ProductParameterFunctional([self, other])
+
+    __rmul__ = __mul__

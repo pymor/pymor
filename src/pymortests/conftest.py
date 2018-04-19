@@ -6,12 +6,6 @@ import pytest
 import time
 from csv import DictWriter
 
-try:
-    take_time = time.process_time
-except AttributeError:
-    # py < 2.7 fallback
-    take_time = time.time
-
 
 class ExecutionTimeCSV:
 
@@ -30,13 +24,13 @@ class ExecutionTimeCSV:
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
-        started = take_time()
+        started = time.process_time()
         yield
         self._elapsed_times[item.name] = started
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
-        stopped = take_time()
+        stopped = time.process_time()
         yield
         self._elapsed_times[item.name] = str(stopped - self._elapsed_times[item.name])
 

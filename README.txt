@@ -73,27 +73,6 @@ publication:
     SIAM J. Sci. Comput., 38(5), pp. S194-S216
 
 
-Distribution Packages
-
-Packages for Ubuntu are available via our
-PPA:
-
-    sudo apt-add-repository ppa:pymor/stable
-    sudo apt-get update
-    sudo apt-get install python-pymor
-
-Daily snapshots are available via the
-pymor/daily PPA.
-
-Demo applications and documentation are packaged separately:
-
-    sudo apt-get install python-pymor-demos
-    sudo apt-get install python-pymor-doc
-
-The latter makes a pymor-demo script available, which can be used to run
-all installed demos.
-
-
 Installation via pip
 
 pyMOR can also easily be installed via the pip

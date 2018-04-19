@@ -96,7 +96,7 @@ def thermalblock_assemble_factory(xblocks, yblocks, diameter, seed):
 def thermalblock_concatenation_factory(xblocks, yblocks, diameter, seed):
     from pymor.operators.constructions import Concatenation
     op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
-    op = Concatenation([sp, op])
+    op = sp @ op
     return op, mu, U, V, sp, rp
 
 
@@ -361,7 +361,7 @@ def unpicklable_misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.numpy import NumpyGenericOperator
         op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, n)
-        mat = op._matrix
+        mat = op.matrix
         op2 = NumpyGenericOperator(mapping=lambda U: mat.dot(U.T).T, transpose_mapping=lambda U: mat.T.dot(U.T).T,
                                    dim_source=100, dim_range=20, linear=True)
         return op2, _, U, V, sp, rp

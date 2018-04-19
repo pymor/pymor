@@ -263,6 +263,6 @@ class SimpleCoerciveRBEstimator(ImmutableInterface):
 
         indices = np.concatenate((np.arange(cr),
                                  ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() + cr))
-        matrix = self.estimator_matrix._matrix[indices, :][:, indices]
+        matrix = self.estimator_matrix.matrix[indices, :][:, indices]
 
         return SimpleCoerciveRBEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator)

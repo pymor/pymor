@@ -15,7 +15,7 @@ from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.grids.subgrid import SubGrid
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import Concatenation, ComponentProjection
+from pymor.operators.constructions import ComponentProjection
 from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import Parametric
 from pymor.tools.inplace import iadd_masked, isub_masked
@@ -256,7 +256,7 @@ class NonlinearAdvectionOperator(OperatorBase):
                         name='{}_restricted'.format(self.name))
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.range)
-        return Concatenation([proj, op]), sub_grid.parent_indices(0)
+        return proj @ op, sub_grid.parent_indices(0)
 
     def _fetch_grid_data(self):
         # pre-fetch all grid-associated data to avoid searching the cache for each operator application

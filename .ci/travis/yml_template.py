@@ -34,17 +34,15 @@ before_script:
     - export IMAGE="pymor/testing:${DOCKER_TAG}"
     - docker pull ${IMAGE}
     - export ENV_FILE=${HOME}/env
-    - printenv | \grep TRAVIS > ${ENV_FILE}
-    - printenv | \grep PYTEST_MARKER >> ${ENV_FILE}
-    - printenv | \grep encrypted >> ${ENV_FILE}
+    - python3 ./.ci/travis/make_env_file.py
     - export DOCKER_RUN="docker run --privileged -e LOCAL_USER_ID=$(id -u) --env-file ${ENV_FILE} -v ${TRAVIS_BUILD_DIR}:/src ${IMAGE}"
 
 script:
-        - ${DOCKER_RUN} /src/.ci/travis/script.bash
+    - ${DOCKER_RUN} /src/.ci/travis/script.bash
 
 # runs independent of 'script' failure/success
 after_script:
-        - ${DOCKER_RUN} /src/.ci/travis/after_script.bash
+    -  'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then ${DOCKER_RUN} /src/.ci/travis/after_script.bash; fi'
 
 jobs:
   include:
@@ -56,8 +54,8 @@ jobs:
 {%- endfor %}
 
   - stage: deploy
-    if: type IS push
-    script: ./.ci/travis/deploy.bash
+    if: type IS push # this seems to be ignored
+    script: 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then ./.ci/travis/deploy.bash ; fi'
     # overwrite other global/matrix settings
     before_script: true
     after_script: true
@@ -72,7 +70,7 @@ import jinja2
 import sys
 from itertools import product
 tpl = jinja2.Template(tpl)
-pythons = ['2.7', '3.5', '3.6']
+pythons = ['3.5', '3.6', ]
 marker = [None, "PIP_ONLY", "MPI"]
 with open(os.path.join(os.path.dirname(__file__), 'travis.yml'), 'wt') as yml:
     matrix = product(pythons, marker)

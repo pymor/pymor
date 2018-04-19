@@ -169,7 +169,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
             The |Parameter| to assemble the to be exported matrix for.
         """
         assert output_format in {'matlab', 'matrixmarket'}
-        matrix = self.assemble(mu)._matrix
+        matrix = self.assemble(mu).matrix
         matrix_name = matrix_name or self.name
         if output_format is 'matlab':
             savemat(filename, {matrix_name: matrix})
@@ -196,7 +196,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.range = NumpyVectorSpace(matrix.shape[0], range_id)
         self.solver_options = solver_options
         self.name = name
-        self._matrix = matrix
+        self.matrix = matrix
         self.source_id = source_id
         self.range_id = range_id
         self.sparse = issparse(matrix)
@@ -212,7 +212,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def T(self):
         options = {'inverse': self.solver_options.get('inverse_transpose'),
                    'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
-        return self.with_(matrix=self._matrix.T, source_id=self.range_id, range_id=self.source_id,
+        return self.with_(matrix=self.matrix.T, source_id=self.range_id, range_id=self.source_id,
                           solver_options=options, name=self.name + '_transposed')
 
     def _assemble(self, mu=None):
@@ -222,18 +222,18 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return self
 
     def as_range_array(self, mu=None):
-        return self.range.make_array(self._matrix.T.copy())
+        return self.range.make_array(self.matrix.T.copy())
 
     def as_source_array(self, mu=None):
-        return self.source.make_array(self._matrix.copy())
+        return self.source.make_array(self.matrix.copy())
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.make_array(self._matrix.dot(U.data.T).T)
+        return self.range.make_array(self.matrix.dot(U.data.T).T)
 
     def apply_transpose(self, V, mu=None):
         assert V in self.range
-        return self.source.make_array(self._matrix.T.dot(V.data.T).T)
+        return self.source.make_array(self.matrix.T.dot(V.data.T).T)
 
     @defaults('check_finite', 'default_sparse_solver_backend',
               qualname='pymor.operators.numpy.NumpyMatrixOperator.apply_inverse')
@@ -309,13 +309,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    R, _, _, _ = np.linalg.lstsq(self._matrix, V.data.T)
+                    R, _, _, _ = np.linalg.lstsq(self.matrix, V.data.T)
                 except np.linalg.LinAlgError as e:
                     raise InversionError('{}: {}'.format(str(type(e)), str(e)))
                 R = R.T
             else:
                 try:
-                    R = np.linalg.solve(self._matrix, V.data.T).T
+                    R = np.linalg.solve(self.matrix, V.data.T).T
                 except np.linalg.LinAlgError as e:
                     raise InversionError('{}: {}'.format(str(type(e)), str(e)))
 
@@ -327,7 +327,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         options = {'inverse': self.solver_options.get('inverse_transpose') if self.solver_options else None}
-        transpose_op = NumpyMatrixOperator(self._matrix.T, source_id=self.range.id, range_id=self.source.id,
+        transpose_op = NumpyMatrixOperator(self.matrix.T, source_id=self.range.id, range_id=self.source.id,
                                            solver_options=options)
         return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
@@ -336,14 +336,14 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             return None
 
         common_mat_dtype = reduce(np.promote_types,
-                                  (op._matrix.dtype for op in operators if hasattr(op, '_matrix')))
+                                  (op.matrix.dtype for op in operators if hasattr(op, 'matrix')))
         common_coef_dtype = reduce(np.promote_types, (type(c) for c in coefficients))
         common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
 
         if coefficients[0] == 1:
-            matrix = operators[0]._matrix.astype(common_dtype)
+            matrix = operators[0].matrix.astype(common_dtype)
         else:
-            matrix = operators[0]._matrix * coefficients[0]
+            matrix = operators[0].matrix * coefficients[0]
             if matrix.dtype != common_dtype:
                 matrix = matrix.astype(common_dtype)
 
@@ -362,25 +362,25 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     matrix += (np.eye(matrix.shape[0]) * c)
             elif c == 1:
                 try:
-                    matrix += op._matrix
+                    matrix += op.matrix
                 except NotImplementedError:
-                    matrix = matrix + op._matrix
+                    matrix = matrix + op.matrix
             elif c == -1:
                 try:
-                    matrix -= op._matrix
+                    matrix -= op.matrix
                 except NotImplementedError:
-                    matrix = matrix - op._matrix
+                    matrix = matrix - op.matrix
             else:
                 try:
-                    matrix += (op._matrix * c)
+                    matrix += (op.matrix * c)
                 except NotImplementedError:
-                    matrix = matrix + (op._matrix * c)
+                    matrix = matrix + (op.matrix * c)
         return NumpyMatrixOperator(matrix,
                                    source_id=self.source.id,
                                    range_id=self.range.id,
                                    solver_options=solver_options)
 
     def __getstate__(self):
-        if hasattr(self._matrix, 'factorization'):  # remove unplicklable SuperLU factorization
-            del self._matrix.factorization
+        if hasattr(self.matrix, 'factorization'):  # remove unplicklable SuperLU factorization
+            del self.matrix.factorization
         return self.__dict__
