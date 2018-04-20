@@ -438,9 +438,9 @@ class LTISystem(InputOutputSystem):
                 raise TypeError('Expected E to be NumpyMatrixOperator with dense matrix or IdentityOperator. '
                                 'Set force_dense=True to convert it to a dense matrix.')
             if isinstance(self.E, IdentityOperator):
-                return spla.eigvals(self.A._matrix)
+                return spla.eigvals(self.A.matrix)
             else:
-                return spla.eigvals(self.A._matrix, self.E._matrix)
+                return spla.eigvals(self.A.matrix, self.E.matrix)
         else:
             A = to_matrix(self.A, format='dense')
             E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')

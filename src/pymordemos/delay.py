@@ -54,10 +54,10 @@ if __name__ == '__main__':
     ax.set_xlabel(r'$\omega$')
 
     # step response
-    E = rom.E._matrix
-    A = rom.A._matrix
-    B = rom.B._matrix
-    C = rom.C._matrix
+    E = rom.E.matrix
+    A = rom.A.matrix
+    B = rom.B.matrix
+    C = rom.C.matrix
 
     nt = 1000
     t = np.linspace(0, 4, nt)
@@ -84,10 +84,10 @@ if __name__ == '__main__':
     rom_ss = interp_reductor.reduce(sigma_ss, b_ss, c_ss)
 
     # step response
-    E_ss = rom_ss.E._matrix
-    A_ss = rom_ss.A._matrix
-    B_ss = rom_ss.B._matrix
-    C_ss = rom_ss.C._matrix
+    E_ss = rom_ss.E.matrix
+    A_ss = rom_ss.A.matrix
+    B_ss = rom_ss.B.matrix
+    C_ss = rom_ss.C.matrix
 
     x_ss_old = np.zeros(rom_ss.n)
     y_ss = np.zeros(nt)

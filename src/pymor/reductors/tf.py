@@ -242,8 +242,8 @@ class TF_IRKAReductor(BasicInterface):
             logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
 
             # new tangential directions
-            b = rd.B._matrix.T.dot(Y.conj())
-            c = rd.C._matrix.dot(X)
+            b = rd.B.matrix.T.dot(Y.conj())
+            c = rd.C.matrix.dot(X)
             self.R.append(b)
             self.L.append(c)
 
