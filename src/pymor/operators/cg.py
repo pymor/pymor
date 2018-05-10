@@ -71,7 +71,10 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.order = order
         self.solver_options = solver_options
         self.name = name
-        self.build_parameter_type(function, dirichlet_data, neumann_data, robin_data[0], robin_data[1])
+	if robin_data is not None:
+        	self.build_parameter_type(function, dirichlet_data, neumann_data, robin_data[0], robin_data[1])
+	else:
+		self.build_parameter_type(function, dirichlet_data, neumann_data)
 
     def _assemble(self, mu=None):
         g = self.grid
