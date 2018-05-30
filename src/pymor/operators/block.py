@@ -447,7 +447,8 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         assert V in self.range
         aMmbDV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.D.apply(V.block(0), mu=mu) * self.b
         KV0 = self.K.apply(V.block(0), mu=mu)
-        a2MmabDpb2K = LincombOperator([self.M, self.D, self.K], [self.a ** 2, -self.a * self.b, self.b ** 2])
+        a2MmabDpb2K = LincombOperator([self.M, self.D, self.K],
+                                      [self.a ** 2, -self.a * self.b, self.b ** 2]).assemble(mu=mu)
         a2MmabDpb2KiV1 = a2MmabDpb2K.apply_inverse(V.block(1), mu=mu, least_squares=least_squares)
         U_blocks = [a2MmabDpb2K.apply_inverse(aMmbDV0, mu=mu, least_squares=least_squares) -
                     a2MmabDpb2KiV1 * self.b,
@@ -457,7 +458,8 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
 
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         assert U in self.source
-        a2MmabDpb2K = LincombOperator([self.M, self.D, self.K], [self.a ** 2, -self.a * self.b, self.b ** 2])
+        a2MmabDpb2K = LincombOperator([self.M, self.D, self.K],
+                                      [self.a ** 2, -self.a * self.b, self.b ** 2]).assemble(mu=mu)
         a2MmabDpb2KitU0 = a2MmabDpb2K.apply_inverse_transpose(U.block(0), mu=mu, least_squares=least_squares)
         a2MmabDpb2KitU1 = a2MmabDpb2K.apply_inverse_transpose(U.block(1), mu=mu, least_squares=least_squares)
         V_blocks = [self.M.apply_transpose(a2MmabDpb2KitU0, mu=mu) * self.a -
