@@ -109,11 +109,11 @@ def test_dot():
     x = NumpyVectorSpace.from_data(np.array([1 + 1j]))
     y = NumpyVectorSpace.from_data(np.array([1 - 1j]))
     z = x.dot(y)
-    assert z[0, 0] == 2j
+    assert z[0, 0] == -2j
 
 
 def test_pairwise_dot():
     x = NumpyVectorSpace.from_data(np.array([1 + 1j]))
     y = NumpyVectorSpace.from_data(np.array([1 - 1j]))
     z = x.pairwise_dot(y)
-    assert z == 2j
+    assert z == -2j
