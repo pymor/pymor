@@ -121,7 +121,7 @@ class LincombOperator(OperatorBase):
         return R
 
     def assemble(self, mu=None):
-        operators = tuple(op.assemble(mu) for op in self.operators)
+        operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
         op = operators[0].assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
                                            name=self.name + '_assembled')
@@ -400,7 +400,7 @@ class IdentityOperator(OperatorBase):
             assert all(op.source == operators[0].source for op in operators)
             return IdentityOperator(operators[0].source, name=name) * sum(coefficients)
         else:
-            return operators[1].assemble_lincomb(operators[1:] + (operators[0],),
+            return operators[1].assemble_lincomb(operators[1:] + [operators[0]],
                                                  coefficients[1:] + [coefficients[0]],
                                                  solver_options=solver_options, name=name)
 
