@@ -17,8 +17,8 @@ import pytest
 
 n_list = [200, 300]
 m_list = [1, 2]
-me_solver_list = ['scipy', 'slycot', 'pymess_lyap', 'pymess_lradi']
-me_solver_E_list = ['slycot', 'pymess_lyap', 'pymess_lradi']
+me_solver_list = ['scipy', 'slycot', 'pymess_lyap', 'pymess_lradi', 'lradi']
+me_solver_E_list = ['slycot', 'pymess_lyap', 'pymess_lradi', 'lradi']
 
 
 def fro_norm(A):
@@ -65,6 +65,8 @@ def _get_solve_lyap(me_solver):
         if not config.HAVE_PYMESS:
             pytest.skip('pymess not available')
         from pymor.bindings.pymess import solve_lyap
+    elif me_solver == 'lradi':
+        from pymor.algorithms.lyapunov import solve_lyap
     return solve_lyap
 
 
