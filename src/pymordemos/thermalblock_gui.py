@@ -164,8 +164,8 @@ class ReducedSim(SimBase):
 
     def _first(self):
         args = self.args
-        product = self.d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-        reductor = CoerciveRBReductor(product=product)
+        product = self.d.h1_0_semi_product if args['--product'] == 'h1' else None
+        reductor = CoerciveRBReductor(self.d, product=product)
 
         greedy_data = greedy(self.d, reductor,
                              self.d.parameter_space.sample_uniformly(args['SNAPSHOTS']),
