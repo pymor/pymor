@@ -19,7 +19,7 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'pillow': 'image library used for bitmap data functions',
                     'psutil': 'Process management abstractions used for gui'}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
-travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'python-coveralls', 'pytest-travis-fold']
+travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'codecov', 'pytest-travis-fold']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
                 'pytest-instafail': 'pytest_instafail',
