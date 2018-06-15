@@ -9,8 +9,8 @@ coverage:
 
   # https://docs.codecov.io/docs/commit-status
   status:
-    project: yes
-    patch: yes
+    project: no
+    patch: no
     changes: no
 
 parsers:
