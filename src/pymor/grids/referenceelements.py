@@ -50,6 +50,7 @@ class Point(ReferenceElementInterface):
         else:
             raise NotImplementedError('quadrature_type must be "default" or "gauss"')
 
+
 point = Point()
 
 
@@ -107,6 +108,7 @@ class Line(ReferenceElementInterface):
             return P[:, np.newaxis], W
         else:
             raise NotImplementedError('quadrature_type must be "default" or "gauss"')
+
 
 line = Line()
 

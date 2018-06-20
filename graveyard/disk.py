@@ -19,9 +19,13 @@ from pymor.vectorarrays.list import ListVectorArray
 
 
 _registered_paths = set()
+
+
 def cleanup():
     for path in _registered_paths:
         shutil.rmtree(path)
+
+
 atexit.register(cleanup)
 
 

@@ -17,7 +17,6 @@ if config.HAVE_NGSOLVE:
     from pymor.vectorarrays.numpy import NumpyVectorSpace
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
-
     class NGSolveVector(CopyOnWriteVector):
         """Wraps a NGSolve BaseVector to make it usable with ListVectorArray."""
 
@@ -66,7 +65,6 @@ if config.HAVE_NGSOLVE:
             max_val = A[max_ind]
             return max_ind, max_val
 
-
     class NGSolveVectorSpace(ListVectorSpace):
 
         def __init__(self, V, id_='STATE'):
@@ -101,7 +99,6 @@ if config.HAVE_NGSOLVE:
 
         def make_vector(self, obj):
             return NGSolveVector(obj)
-
 
     class NGSolveMatrixOperator(OperatorBase):
         """Wraps a NGSolve matrix as an |Operator|."""
@@ -158,8 +155,6 @@ if config.HAVE_NGSOLVE:
         def as_vector(self, copy=True):
             vec = self.matrix.AsVector().FV().NumPy()
             return NumpyVectorSpace.make_array(vec.copy() if copy else vec)
-
-
 
     class NGSolveVisualizer(ImmutableInterface):
         """Visualize an NGSolve grid function."""

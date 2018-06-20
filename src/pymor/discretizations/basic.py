@@ -190,7 +190,6 @@ class StationaryDiscretization(DiscretizationBase):
             self.parameter_space, self.estimator, self.visualizer, self.cache_region, self.name
         )
 
-
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
 
