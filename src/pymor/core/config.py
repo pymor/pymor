@@ -5,6 +5,7 @@
 from importlib import import_module
 import sys
 
+
 def _can_import(module):
     try:
         import_module(module)

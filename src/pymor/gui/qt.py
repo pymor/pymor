@@ -29,7 +29,6 @@ if config.HAVE_QT:
                               QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
     from Qt.QtCore import Qt, QCoreApplication, QTimer, Slot
 
-
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
 

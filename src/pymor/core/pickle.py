@@ -40,7 +40,6 @@ if platform.python_implementation() == 'CPython':
         pickler.persistent_id = _function_pickling_handler
         pickler.dump(obj)
 
-
     def dumps(obj, protocol=None):
         file = IOtype()
         pickler = pickle.Pickler(file, protocol=PROTOCOL)
@@ -48,12 +47,10 @@ if platform.python_implementation() == 'CPython':
         pickler.dump(obj)
         return file.getvalue()
 
-
     def load(file):
         unpickler = pickle.Unpickler(file)
         unpickler.persistent_load = _function_unpickling_handler
         return unpickler.load()
-
 
     def loads(str):
         file = IOtype(str)
@@ -73,6 +70,8 @@ def _generate_opcode(code_object):
     import dis
     for ins in dis.get_instructions(code_object):
         yield (ins.opcode, ins.arg)
+
+
 
 
 def _global_names(code_object):
