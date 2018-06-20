@@ -8,6 +8,8 @@ You can use ``from pymor.basic import *`` in interactive session
 to have the most important parts of pyMOR directly available.
 """
 
+# flake8: noqa
+
 from pymor.algorithms.basic import almost_equal, relative_error, project_array
 from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
 from pymor.algorithms.error import reduction_error_analysis

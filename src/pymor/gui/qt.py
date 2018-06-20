@@ -12,9 +12,6 @@ import math as m
 import numpy as np
 
 import multiprocessing
-import os
-import signal
-import sys
 
 from pymor.core.config import config
 from pymor.core.config import is_windows_platform
