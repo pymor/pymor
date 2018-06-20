@@ -23,8 +23,8 @@ except ImportError:
     import pickle as pickle
 from io import BytesIO as IOtype
 import sys
+import platform
 
-from pymor.core.config import config
 
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
@@ -33,7 +33,6 @@ PROTOCOL = pickle.HIGHEST_PROTOCOL
 
 # on CPython provide pickling methods which use
 # dumps_function in case pickling of a function fails
-import platform
 if platform.python_implementation() == 'CPython':
 
     def dump(obj, file, protocol=None):

@@ -10,7 +10,7 @@ from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.basic import ProjectedOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation, ConstantOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           VectorArrayOperator, IdentityOperator)
+                                           IdentityOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator

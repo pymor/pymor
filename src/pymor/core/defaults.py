@@ -67,11 +67,9 @@ from collections import defaultdict, OrderedDict
 import functools
 import importlib
 import inspect
-import os
 import pkgutil
 import textwrap
 
-from pymor.core.config import config
 from pymor.tools.table import format_table
 
 

@@ -80,7 +80,6 @@ import uuid
 import numpy as np
 
 from pymor.core import logger
-from pymor.core.config import config
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1

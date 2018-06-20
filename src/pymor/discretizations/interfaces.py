@@ -2,7 +2,7 @@
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.cache import CacheableInterface, cached
+from pymor.core.cache import CacheableInterface
 from pymor.core.interfaces import abstractmethod
 from pymor.parameters.base import Parametric
 

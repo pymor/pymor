@@ -10,7 +10,6 @@ from collections import deque, defaultdict, OrderedDict
 from types import MethodType, FunctionType
 import re
 import functools
-import sys
 
 from sphinx.util.inspect import safe_getattr
 
