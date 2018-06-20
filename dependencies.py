@@ -3,7 +3,7 @@
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-_PYTEST = 'pytest>=3.3'
+_PYTEST = 'pytest>=3.5'
 
 def _pymess(rev, major, minor, marker=True):
     url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
@@ -14,7 +14,7 @@ def _pymess(rev, major, minor, marker=True):
         return '{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'.format(url=url, major=major, minor=minor)
     return url
 
-tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker', 'pytest-flake8']
+tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker', 'pytest-flake8', 'pytest-docstyle']
 install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'docopt', 'Qt.py', 'packaging']
 setup_requires = ['pytest-runner>=2.9', 'cython>=0.20.1', 'numpy>=1.8.1', 'packaging']
 install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
