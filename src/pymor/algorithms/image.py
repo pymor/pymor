@@ -236,7 +236,7 @@ class CollectOperatorRangeRules(RuleTable):
 
     @match_class(EmpiricalInterpolatedOperator)
     def action_EmpiricalInterpolatedOperator(self, op):
-        if hasattr(op, 'collateral_basis') and not extends:
+        if hasattr(op, 'collateral_basis') and not self.extends:
             self.image.append(op.collateral_basis)
 
     @match_class(Concatenation)
