@@ -132,9 +132,9 @@ def parse_docstring(docstring):
 
     def consume_contiguous():
         lines = []
-        while (line_iter.has_next()
-               and line_iter.peek()
-               and not is_section_header()):
+        while (line_iter.has_next() and
+               line_iter.peek() and
+               not is_section_header()):
             lines.append(next(line_iter))
         return lines
 
@@ -163,9 +163,9 @@ def parse_docstring(docstring):
 
     def is_section_break():
         line1, line2 = line_iter.peek(2)
-        return (not line_iter.has_next()
-                or is_section_header()
-                or ['', ''] == [line1, line2])
+        return (not line_iter.has_next() or
+                is_section_header() or
+                ['', ''] == [line1, line2])
 
     if isinstance(docstring, STRING_TYPE):
         docstring = dedent(docstring.splitlines())
