@@ -294,8 +294,8 @@ class ImmutableMeta(UberMeta):
 
         c = UberMeta.__new__(cls, classname, bases, classdict)
 
-        c._implements_reduce = ('__reduce__' in classdict or '__reduce_ex__' in classdict
-                                or any(getattr(base, '_implements_reduce', False) for base in bases))
+        c._implements_reduce = ('__reduce__' in classdict or '__reduce_ex__' in classdict or
+                                any(getattr(base, '_implements_reduce', False) for base in bases))
 
         # set __signature__ attribute on newly created class c to ensure that
         # inspect.signature(c) returns the signature of its __init__ arguments and not
@@ -369,7 +369,6 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
             return object.__setattr__(self, key, value)
         else:
             raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
-
 
     def generate_sid(self, debug=False):
         """Generate a unique |state id| for the given object.
@@ -592,8 +591,8 @@ class _SIDGenerator(object):
                                      + '(object {} of type {})'.format(obj, t.__name__))
 
         if type(rv) is not tuple or not (2 <= len(rv) <= 5):
-            raise SIDGenerationError('__reduce__ return value malformed '
-                                     + '(object {} of type {})'.format(obj, t.__name__))
+            raise SIDGenerationError('__reduce__ return value malformed ' +
+                                     '(object {} of type {})'.format(obj, t.__name__))
 
         rv = rv + (None,) * (5 - len(rv))
         func, args, state, listitems, dictitems = rv
