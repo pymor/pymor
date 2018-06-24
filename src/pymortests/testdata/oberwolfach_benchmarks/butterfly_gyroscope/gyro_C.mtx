@@ -1,0 +1,19 @@
+%%MatrixMarket matrix coordinate pattern general
+%-------------------------------------------------------------------------------
+% UF Sparse Matrix Collection, Tim Davis
+% http://www.cise.ufl.edu/research/sparse/matrices/Oberwolfach/gyro
+% name: Oberwolfach/gyro : C matrix
+%-------------------------------------------------------------------------------
+12 17361 12
+4 3295
+5 3296
+6 3297
+1 4147
+2 4148
+3 4149
+10 9463
+11 9464
+12 9465
+7 12334
+8 12335
+9 12336

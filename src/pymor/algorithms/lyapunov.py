@@ -66,7 +66,7 @@ def solve_lyap(A, E, B, trans=False, options=None):
 def lradi(A, E, B, trans=False, options=None):
     logger = getLogger('pymor.algorithms.lyapunov.lradi')
 
-    shift_options = options['shifts'][options['use_shifts']]
+    shift_options = options['shift_options'][options['shifts']]
 
     if shift_options['type'] == 'projection_shifts':
         init_shifts = projection_shifts_init
@@ -81,11 +81,11 @@ def lradi(A, E, B, trans=False, options=None):
         Z = A.range.empty(reserve=B.range.dim * options['maxiter'])
         W = B.as_source_array()
         shifts = init_shifts(A, E, W)
+        size_shift = shifts.size
         j = 0
         j_shift = 0
-        size_shift = shifts.size
         Btol = np.linalg.norm(W.gramian(), ord=2) * options['tol']
-        # using for loop instead of while -> for loop won't allow j += 2
+        # using for loop instead of while not working -> for loop won't allow j += 2
         while(np.linalg.norm(W.gramian(), ord=2) > Btol and j < options['maxiter']):
             logger.info("Residual at step {}: {}".format(j, np.linalg.norm(W.gramian(), ord=2)))
             if shifts[j_shift].imag == 0:
@@ -114,11 +114,11 @@ def lradi(A, E, B, trans=False, options=None):
         Z = A.source.empty(reserve=B.source.dim * options['maxiter'])
         W = B.as_range_array()
         shifts = init_shifts(A, E, W)
+        size_shift = shifts.size
         j = 0
         j_shift = 0
-        size_shift = shifts.size
         Btol = np.linalg.norm(W.gramian(), ord=2) * options['tol']
-        # using for loop instead of while -> for loop won't allow j += 2
+        # using for loop instead of while not working -> for loop won't allow j += 2
         while(np.linalg.norm(W.gramian(), ord=2) > Btol and j < options['maxiter']):
             logger.info("Residual at step {}: {}".format(j, np.linalg.norm(W.gramian(), ord=2)))
             if shifts[j_shift].imag == 0:
@@ -163,9 +163,9 @@ def projection_shifts(A, E, Z, W, prev_shifts, j, shift_options):
     if prev_shifts[L-u].imag < 0:
         u = u + 1
     d = L - u
-    if d < 1:
-        u = L - 1
-        d = 1
+    if d < 0:
+        u = L
+        d = 0
     Z = Z[(j - u) * r:j * r]
     B = np.zeros((u, u))
     G = np.zeros((u, 1))
@@ -175,7 +175,6 @@ def projection_shifts(A, E, Z, W, prev_shifts, j, shift_options):
     iC = iC[iC >= d]  # remove unnecessary shifts
     iR = iR[iR >= d]
     i = 0
-
     # use pymor vectorarray instead of numpy arrays? what about spla.kron, and spla.svd?
     while i < u:
         rS = iR[iR < d + i]
@@ -232,9 +231,9 @@ def lyap_solver_options(lradi_tol=1e-10,
     return {'lradi': {'type': 'lradi',
                       'tol': lradi_tol,
                       'maxiter': lradi_maxiter,
-                      'use_shifts': lradi_shifts,
-                      'shifts': {'projection_shifts': {'type': 'projection_shifts',
-                                                       'z_columns': projection_shifts_z_columns}}}}
+                      'shifts': lradi_shifts,
+                      'shift_options': {'projection_shifts': {'type': 'projection_shifts',
+                                                              'z_columns': projection_shifts_z_columns}}}}
 
 
 def _solve_lyap_check_args(A, E, B, trans=False):

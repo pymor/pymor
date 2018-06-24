@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os
 import numpy as np
 import scipy as sp
 import scipy.sparse as sps
@@ -12,6 +13,9 @@ from scipy import stats
 from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
 
+from pymor.operators.constructions import LincombOperator
+
+from pymor.discretizations import iosys
 import pytest
 
 
@@ -262,3 +266,60 @@ def test_ogf_sparse_E(n, p, me_solver):
 
     assert len(Zva) <= n
     assert relative_residual(A, E, C, Z, trans=True) < 1e-10
+
+
+@pytest.mark.parametrize('me_solver', me_solver_E_list)
+def test_rail_20k(me_solver):
+    dirname = os.path.dirname(__file__)
+    Aop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/steel_profile/rail_20209/rail_20209_c60A.mtx'))
+    Bop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/steel_profile/rail_20209/rail_20209_c60B.mtx'))
+    Eop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/steel_profile/rail_20209/rail_20209_c60E.mtx'))
+
+    solve_lyap = _get_solve_lyap(me_solver)
+    Zva = solve_lyap(Aop, Eop, Bop, options={'type': me_solver})
+
+    assert len(Zva) <= 20209
+
+
+@pytest.mark.parametrize('me_solver', me_solver_E_list)
+def test_rail_79k(me_solver):
+    dirname = os.path.dirname(__file__)
+    Aop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/steel_profile/rail_79841/rail_79841_c60A.mtx'))
+    Bop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/steel_profile/rail_79841/rail_79841_c60B.mtx'))
+    Eop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/steel_profile/rail_79841/rail_79841_c60E.mtx'))
+
+    solve_lyap = _get_solve_lyap(me_solver)
+    Zva = solve_lyap(Aop, Eop, Bop, options={'type': me_solver})
+
+    assert len(Zva) <= 79841
+
+
+@pytest.mark.parametrize('me_solver', me_solver_E_list)
+def test_gyro(me_solver, alpha=0, beta=1e-5):
+    dirname = os.path.dirname(__file__)
+    Mop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/butterfly_gyroscope/gyro_M.mtx'),
+        source_id='STATE', range_id='STATE')
+    Kop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/butterfly_gyroscope/gyro_K.mtx'),
+        source_id='STATE', range_id='STATE')
+    Bop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/butterfly_gyroscope/gyro_B.mtx'),
+        source_id='INPUT', range_id='STATE')
+    Cop = NumpyMatrixOperator.from_file(
+        os.path.join(dirname, 'testdata/oberwolfach_benchmarks/butterfly_gyroscope/gyro_C.mtx'),
+        source_id='STATE', range_id='OUTPUT')
+    Eop = LincombOperator([Mop, Kop], [alpha, beta])
+    sos = iosys.SecondOrderSystem(Mop, Eop, Kop, Bop, Cop)
+    fos = sos.to_lti()
+
+    solve_lyap = _get_solve_lyap(me_solver)
+    Zva = solve_lyap(fos.A, fos.E, fos.B, options={'type': me_solver})
+
+    assert len(Zva) <= 34722
