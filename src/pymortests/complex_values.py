@@ -22,16 +22,16 @@ def test_complex():
     Cva = NumpyVectorSpace.from_data(C)
 
     # assemble_lincomb
-    assert not np.iscomplexobj(Aop.assemble_lincomb((Iop, Bop), (1, 1)).matrix)
-    assert not np.iscomplexobj(Aop.assemble_lincomb((Aop, Bop), (1, 1)).matrix)
-    assert np.iscomplexobj(Aop.assemble_lincomb((Aop, Bop), (1 + 0j, 1 + 0j)).matrix)
-    assert np.iscomplexobj(Aop.assemble_lincomb((Aop, Bop), (1j, 1)).matrix)
-    assert np.iscomplexobj(Aop.assemble_lincomb((Bop, Aop), (1, 1j)).matrix)
+    assert not np.iscomplexobj(Aop.assemble_lincomb([Iop, Bop], [1, 1]).matrix)
+    assert not np.iscomplexobj(Aop.assemble_lincomb([Aop, Bop], [1, 1]).matrix)
+    assert np.iscomplexobj(Aop.assemble_lincomb([Aop, Bop], [1 + 0j, 1 + 0j]).matrix)
+    assert np.iscomplexobj(Aop.assemble_lincomb([Aop, Bop], [1j, 1]).matrix)
+    assert np.iscomplexobj(Aop.assemble_lincomb([Bop, Aop], [1, 1j]).matrix)
 
     # apply_inverse
     assert not np.iscomplexobj(Aop.apply_inverse(Cva).data)
     assert np.iscomplexobj((Aop * 1j).apply_inverse(Cva).data)
-    assert np.iscomplexobj(Aop.assemble_lincomb((Aop, Bop), (1, 1j)).apply_inverse(Cva).data)
+    assert np.iscomplexobj(Aop.assemble_lincomb([Aop, Bop], [1, 1j]).apply_inverse(Cva).data)
     assert np.iscomplexobj(Aop.apply_inverse(Cva * 1j).data)
 
     # append

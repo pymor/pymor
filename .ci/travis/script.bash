@@ -14,12 +14,8 @@ sudo pip install -r requirements.txt
 sudo pip install -r requirements-travis.txt
 sudo pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
-function try_coveralls {
-    if [ "x${COVERALLS_TOKEN}" == "x" ] ; then
-        echo "Skipping coveralls submission due to missing token"
-    else
-        COVERALLS_REPO_TOKEN=${COVERALLS_TOKEN} coveralls
-    fi
+function coverage_submit {
+    codecov
 }
 
 #allow xdist to work by fixing parametrization order
@@ -48,7 +44,7 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     popd
     xvfb-run -a py.test -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
 
-    try_coveralls
+    coverage_submit
 elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
 
@@ -58,9 +54,10 @@ elif [ "${PYTEST_MARKER}" == "NUMPY" ] ; then
     # there seems to be no way of really overwriting -p no:warnings from setup.cfg
     sed -i -e 's/\-p\ no\:warnings//g' setup.cfg
     xvfb-run -a py.test -W once::DeprecationWarning -W once::PendingDeprecationWarning -r sxX --junitxml=test_results_${PYMOR_VERSION}.xml
+    coverage_submit
 else
     # this runs in pytest in a fake, auto numbered, X Server
     xvfb-run -a py.test -r sxX --junitxml=test_results.xml
-    try_coveralls
+    coverage_submit
 fi
 
