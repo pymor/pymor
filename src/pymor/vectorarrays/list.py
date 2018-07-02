@@ -403,7 +403,7 @@ class ListVectorSpace(VectorSpaceInterface):
     def make_vector(self, obj):
         pass
 
-    def vector_from_data(self, data):
+    def vector_from_numpy(self, data):
         raise NotImplementedError
 
     @classmethod
@@ -434,7 +434,7 @@ class ListVectorSpace(VectorSpaceInterface):
 
     @from_numpy.instancemethod
     def from_numpy(self, data):
-        return ListVectorArray([self.vector_from_data(v) for v in data], self)
+        return ListVectorArray([self.vector_from_numpy(v) for v in data], self)
 
 
 class NumpyListVectorSpace(ListVectorSpace):
@@ -462,7 +462,7 @@ class NumpyListVectorSpace(ListVectorSpace):
         assert obj.ndim == 1 and len(obj) == self.dim
         return NumpyVector(obj)
 
-    def vector_from_data(self, data):
+    def vector_from_numpy(self, data):
         return self.make_vector(data)
 
 
