@@ -34,10 +34,10 @@ if config.HAVE_NGSOLVE:
             self.impl = new_impl
 
         def to_numpy(self, ensure_copy=False):
-            result = self.impl.vec.FV().NumPy()
             if ensure_copy:
-                result = result.copy()
-            return result
+                return self.impl.vec.FV().NumPy().copy()
+            self._copy_data_if_needed()
+            return self.impl.vec.FV().NumPy()
 
         def _scal(self, alpha):
             self.impl.vec.data = float(alpha) * self.impl.vec

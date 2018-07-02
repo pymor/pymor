@@ -620,7 +620,8 @@ class VectorSpaceInterface(ImmutableInterface):
         Parameters
         ----------
         data
-            |NumPy| array.
+            |NumPy| array of shape `(len, dim)` where `len` is the
+            number of vectors and `dim` their dimension.
 
         Returns
         -------

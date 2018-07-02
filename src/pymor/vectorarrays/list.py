@@ -160,6 +160,7 @@ class NumpyVector(CopyOnWriteVector):
         if ensure_copy:
             return self._array.copy()
         else:
+            self._copy_data_if_needed()
             return self._array
 
     @property
