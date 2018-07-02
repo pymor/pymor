@@ -21,7 +21,7 @@ def _newton(order, **kwargs):
 @pytest.mark.parametrize("order", list(range(1, 8)))
 def test_newton(order):
     U, _ = _newton(order, atol=1e-15)
-    assert float_cmp(U.data, 0.0)
+    assert float_cmp(U.to_numpy(), 0.0)
 
 
 def test_newton_fail():

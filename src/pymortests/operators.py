@@ -33,7 +33,7 @@ def test_selection_op():
     )
     x = np.linspace(-1., 1., num=3)
     vx = p1.source.make_array(x[:, np.newaxis])
-    assert np.allclose(p1.apply(vx,mu=0).data, s1.apply(vx,mu=0).data)
+    assert np.allclose(p1.apply(vx,mu=0).to_numpy(), s1.apply(vx,mu=0).to_numpy())
 
     s2 = SelectionOperator(
         operators=[p1,p1,p1,p1],
@@ -58,9 +58,9 @@ def test_lincomb_op():
     p0 = p1 - p1
     x = np.linspace(-1., 1., num=3)
     vx = p1.source.make_array((x[:, np.newaxis]))
-    assert np.allclose(p0.apply(vx).data, [0.])
-    assert np.allclose(p12.apply(vx).data, (x * x + x)[:, np.newaxis])
-    assert np.allclose((p1 * 2.).apply(vx).data, (x * 2.)[:, np.newaxis])
+    assert np.allclose(p0.apply(vx).to_numpy(), [0.])
+    assert np.allclose(p12.apply(vx).to_numpy(), (x * x + x)[:, np.newaxis])
+    assert np.allclose((p1 * 2.).apply(vx).to_numpy(), (x * 2.)[:, np.newaxis])
     assert almost_equal(p2.jacobian(vx).apply(vx), p1.apply(vx) * 2.).all()
     assert almost_equal(p0.jacobian(vx).apply(vx), vx * 0.).all()
     with pytest.raises(TypeError):

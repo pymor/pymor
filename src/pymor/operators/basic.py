@@ -215,7 +215,7 @@ class ProjectedOperator(OperatorBase):
                 V = self.operator.apply(U, mu=mu)
                 return self.range.make_array(self.product.apply2(V, self.range_basis))
         else:
-            UU = self.source_basis.lincomb(U.data)
+            UU = self.source_basis.lincomb(U.to_numpy())
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
             elif self.product is None:
@@ -232,7 +232,7 @@ class ProjectedOperator(OperatorBase):
         if self.source_basis is None:
             J = self.operator.jacobian(U, mu=mu)
         else:
-            J = self.operator.jacobian(self.source_basis.lincomb(U.data), mu=mu)
+            J = self.operator.jacobian(self.source_basis.lincomb(U.to_numpy()), mu=mu)
         from pymor.algorithms.projection import project
         pop = project(J, range_basis=self.range_basis, source_basis=self.source_basis,
                       product=self.product, name=self.name + '_jacobian')
@@ -256,7 +256,7 @@ class ProjectedOperator(OperatorBase):
     def apply_transpose(self, V, mu=None):
         assert V in self.range
         if self.range_basis is not None:
-            V = self.range_basis.lincomb(V.data)
+            V = self.range_basis.lincomb(V.to_numpy())
         U = self.operator.apply_transpose(V, mu)
         if self.source_basis is not None:
             U = self.source.make_array(U.dot(self.source_basis))

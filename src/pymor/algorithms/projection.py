@@ -116,7 +116,7 @@ class ProjectRules(RuleTable):
                     raise RuleNotMatchingError('apply_transpose not implemented')
                 if isinstance(op.source, NumpyVectorSpace):
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(V.data,
+                    return NumpyMatrixOperator(V.to_numpy(),
                                                source_id=op.source.id,
                                                range_id=op.range.id,
                                                name=op.name)
@@ -128,7 +128,7 @@ class ProjectRules(RuleTable):
                 V = op.apply(source_basis)
                 if isinstance(op.range, NumpyVectorSpace):
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(V.data.T,
+                    return NumpyMatrixOperator(V.to_numpy().T,
                                                source_id=op.source.id,
                                                range_id=op.range.id,
                                                name=op.name)
@@ -280,7 +280,7 @@ class ProjectToSubbasisRules(RuleTable):
     def action_ConstantOperator(self, op):
         dim_range, dim_source = self.dim_range, self.dim_srouce
         source = op.source if dim_source is None else NumpyVectorSpace(dim_source, op.source.id)
-        value = op._value if dim_range is None else NumpyVectorSpace(op._value.data[:, :dim_range], op.range.id)
+        value = op._value if dim_range is None else NumpyVectorSpace(op._value.to_numpy()[:, :dim_range], op.range.id)
         return ConstantOperator(value, source, name=op.name)
 
     @match_class(ProjectedEmpiciralInterpolatedOperator)
@@ -291,11 +291,11 @@ class ProjectToSubbasisRules(RuleTable):
         restricted_operator = op.restricted_operator
 
         old_pcb = op.projected_collateral_basis
-        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.data[:, :self.dim_range],
+        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.to_numpy()[:, :self.dim_range],
                                                                  old_pcb.space.id)
 
         old_sbd = op.source_basis_dofs
-        source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.data[:self.dim_source])
+        source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.to_numpy()[:self.dim_source])
 
         return ProjectedEmpiciralInterpolatedOperator(restricted_operator, op.interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, op.triangular,

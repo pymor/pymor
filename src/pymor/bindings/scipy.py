@@ -185,7 +185,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
 
     options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
 
-    V = V.data
+    V = V.to_numpy()
     promoted_type = np.promote_types(matrix.dtype, V.dtype)
     R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
 

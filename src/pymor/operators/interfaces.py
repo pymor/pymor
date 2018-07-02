@@ -246,7 +246,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         `mu` a |VectorArray| `V` in the operator's :attr:`~OperatorInterface.range`,
         such that ::
 
-            V.lincomb(U.data) == self.apply(U, mu)
+            V.lincomb(U.to_numpy()) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 

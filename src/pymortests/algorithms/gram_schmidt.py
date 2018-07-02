@@ -55,7 +55,7 @@ def test_gram_schmidt_biorth(vector_array):
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
     assert np.allclose(A2.dot(A1), np.eye(len(A1)))
-    c = np.linalg.cond(A1.data) * np.linalg.cond(A2.data)
+    c = np.linalg.cond(A1.to_numpy()) * np.linalg.cond(A2.to_numpy())
     assert np.all(almost_equal(U1, A1.lincomb(U1.dot(A2)), rtol=c * 1e-14))
     assert np.all(almost_equal(U2, A2.lincomb(U2.dot(A1)), rtol=c * 1e-14))
 
@@ -83,7 +83,7 @@ def test_gram_schmidt_biorth_with_product(operator_with_arrays_and_products):
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
     assert np.allclose(p.apply2(A2, A1), np.eye(len(A1)))
-    c = np.linalg.cond(A1.data) * np.linalg.cond(p.apply(A2).data)
+    c = np.linalg.cond(A1.to_numpy()) * np.linalg.cond(p.apply(A2).to_numpy())
     assert np.all(almost_equal(U1, A1.lincomb(p.apply2(U1, A2)), rtol=c * 1e-14))
     assert np.all(almost_equal(U2, A2.lincomb(p.apply2(U2, A1)), rtol=c * 1e-14))
 

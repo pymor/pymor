@@ -188,7 +188,7 @@ if config.HAVE_PYAMG:
 
         options = _parse_options(options, solver_options(), default_solver, None, least_squares)
 
-        V = V.data
+        V = V.to_numpy()
         promoted_type = np.promote_types(matrix.dtype, V.dtype)
         R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
 

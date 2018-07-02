@@ -67,7 +67,7 @@ def assert_is_equal(first, second):
             if isinstance(ne, bool):
                 return not ne
             else:
-                assert not np.any(ne.data)
+                assert not np.any(ne.to_numpy())
         elif isinstance(first, (list, tuple)):
             assert len(first) == len(second)
             for u, v in zip(first, second):

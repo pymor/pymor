@@ -226,8 +226,7 @@ class ListVectorArray(VectorArrayInterface):
         self._list = vectors
         self.space = space
 
-    @property
-    def data(self):
+    def to_numpy(self, ensure_copy=False):
         if len(self._list) > 0:
             if not hasattr(self._list[0], 'data'):
                 raise NotImplementedError('{} does not have a data attribute'.format(self._list[0]))

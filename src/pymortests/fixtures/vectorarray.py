@@ -33,7 +33,7 @@ def numpy_list_vector_array_factory(length, dim, seed):
 
 def block_vector_array_factory(length, dims, seed):
     return BlockVectorSpace([NumpyVectorSpace(dim) for dim in dims]).from_data(
-        numpy_vector_array_factory(length, sum(dims), seed).data
+        numpy_vector_array_factory(length, sum(dims), seed).to_numpy()
     )
 
 if config.HAVE_FENICS:

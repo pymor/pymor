@@ -118,7 +118,7 @@ class ResidualReductor(BasicInterface):
             else:
                 return u
         else:
-            return self.residual_range[:u.dim].lincomb(u.data)
+            return self.residual_range[:u.dim].lincomb(u.to_numpy())
 
 
 class ResidualOperator(OperatorBase):
@@ -271,7 +271,7 @@ class ImplicitEulerResidualReductor(BasicInterface):
             else:
                 return u
         else:
-            return self.residual_range[:u.dim].lincomb(u.data)
+            return self.residual_range[:u.dim].lincomb(u.to_numpy())
 
 
 class ImplicitEulerResidualOperator(OperatorBase):

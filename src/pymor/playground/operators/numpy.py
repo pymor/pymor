@@ -35,7 +35,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
 
         if self.vector:
             V = super().apply(U, mu=mu)
-            return self.range.from_data(V.data)
+            return self.range.from_data(V.to_numpy)
 
         V = [self.matrix.dot(v._array) for v in U._list]
 
@@ -60,7 +60,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         op = NumpyMatrixOperator(self.matrix, solver_options=self.solver_options)
 
         return self.source.make_array([op.apply_inverse(NumpyVectorSpace.make_array(v._array),
-                                                        least_squares=least_squares).data.ravel()
+                                                        least_squares=least_squares).to_numpy().ravel()
                                        for v in V._list])
 
     def as_range_array(self, mu=None):

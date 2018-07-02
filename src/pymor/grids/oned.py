@@ -106,6 +106,6 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
         assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
         U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
                   u if isinstance(u, NumpyVectorArray) else
-                  NumpyVectorSpace.make_array(u.data)
+                  NumpyVectorSpace.make_array(u.to_numpy())
                   for u in U)
         visualize_matplotlib_1d(self, U, codim=codim, **kwargs)

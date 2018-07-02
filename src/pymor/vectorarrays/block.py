@@ -27,9 +27,8 @@ class BlockVectorArray(VectorArrayInterface):
         self.space = space
         assert self._blocks_are_valid()
 
-    @property
-    def data(self):
-        return np.hstack([block.data for block in self._blocks])
+    def to_numpy(self, ensure_copy=False):
+        return np.hstack([block.to_numpy() for block in self._blocks])
 
     @property
     def real(self):

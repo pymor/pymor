@@ -4,13 +4,12 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
-import sys
 
 from packaging.version import Version
 import numpy as np
 
-from pymor.core.config import config
 from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
+from pymor.tools.deprecated import Deprecated
 
 
 _INDEXTYPES = (Number,) if Version(np.__version__) >= Version('1.9') else (Number, np.intp)
@@ -119,6 +118,22 @@ class VectorArrayInterface(BasicInterface):
     def __delitem__(self, ind):
         """Remove vectors from the array."""
         pass
+
+    def to_numpy(ensure_copy=False):
+        """Return (len(self), self.dim) NumPy Array with the data stored in the array.
+
+        Parameters
+        ----------
+        ensure_copy
+            If `False` modifying the returned |NumPy array| might alter the original
+            |VectorArray|. If `True` always a copy of the array data is made.
+        """
+        raise NotImplementedError
+
+    @property
+    @Deprecated('to_numpy')
+    def data(self):
+        return self.to_numpy()
 
     @abstractmethod
     def append(self, other, remove_from_other=False):

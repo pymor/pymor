@@ -102,7 +102,7 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
         raise NotImplementedError
 
     subentities, coordinates, entity_map = flatten_grid(grid)
-    data = data.data if codim == 0 else data.data[:, entity_map].copy()
+    data = data.to_numpy() if codim == 0 else data.to_numpy()[:, entity_map].copy()
     x, y, z = coordinates[:, 0].copy(), coordinates[:, 1].copy(), np.zeros(coordinates[:, 1].size)
     _write_vtu_series(grid, coordinates=(x, y, z), connectivity=subentities, data=data,
                       filename_base=filename_base, last_step=last_step, is_cell_data=(codim == 0))

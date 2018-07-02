@@ -34,19 +34,22 @@ class NumpyVectorArray(VectorArrayInterface):
         self._refcount = [1]
         self._len = len(array)
 
-    @property
-    def data(self):
+    def to_numpy(self, ensure_copy=False):
+        if ensure_copy:
+            return self._array[:self._len].copy()
         if self._refcount[0] > 1:
+            # While changing the returned NumPy array may change the data of `self`,
+            # it should not change the data of other arrays.
             self._deep_copy()
         return self._array[:self._len]
 
     @property
     def real(self):
-        return NumpyVectorArray(self.data.real.copy(), self.space)
+        return NumpyVectorArray(self.to_numpy().real.copy(), self.space)
 
     @property
     def imag(self):
-        return NumpyVectorArray(self.data.imag.copy(), self.space)
+        return NumpyVectorArray(self.to_numpy().imag.copy(), self.space)
 
     def __len__(self):
         return self._len
@@ -92,7 +95,7 @@ class NumpyVectorArray(VectorArrayInterface):
         if self._refcount[0] > 1:
             self._deep_copy()
 
-        other_array = other.data
+        other_array = other.to_numpy()
         len_other = len(other_array)
         if len_other == 0:
             return
@@ -396,7 +399,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
         elif issparse(array):
             array = array.toarray()
         elif hasattr(array, 'data'):
-            array = array.data
+            array = array.to_numpy()
         else:
             array = np.array(array, ndmin=2)
         if array.ndim != 2:
@@ -427,9 +430,11 @@ class NumpyVectorArrayView(NumpyVectorArray):
         self.ind = array.normalize_ind(ind)
         self.space = array.space
 
-    @property
-    def data(self):
-        return self.base.data[self.ind]
+    def to_numpy(self, ensure_copy=False):
+        result = self.base.to_numpy()[self.ind]
+        if ensure_copy and not result.flags['OWNDATA']:
+            result = result.copy()
+        return result
 
     def __len__(self):
         return self.base.len_ind(self.ind)
@@ -547,5 +552,4 @@ class NumpyVectorArrayView(NumpyVectorArray):
         return
 
     def __repr__(self):
-        return 'NumpyVectorArrayView({}, {})'.format(self.data, self.space)
-
+        return 'NumpyVectorArrayView({}, {})'.format(self.to_numpy(), self.space)

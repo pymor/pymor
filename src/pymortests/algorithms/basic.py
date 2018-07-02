@@ -22,8 +22,8 @@ from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invali
 def test_almost_equal(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     if hasattr(v1, 'data'):
-        dv1 = v1.data
-        dv2 = v2.data
+        dv1 = v1.to_numpy()
+        dv2 = v2.to_numpy()
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)):
             for n, o in [('sup', np.inf), ('l1', 1), ('l2', 2)]:
