@@ -180,13 +180,13 @@ def test_zeros(vector_array):
             pass
 
 
-def test_from_data(vector_array):
+def test_from_numpy(vector_array):
     try:
         d = vector_array.to_numpy()
     except NotImplementedError:
         return
     try:
-        v = vector_array.space.from_data(d)
+        v = vector_array.space.from_numpy(d)
         assert np.allclose(d, v.to_numpy())
     except NotImplementedError:
         pass

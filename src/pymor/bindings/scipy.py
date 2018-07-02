@@ -305,7 +305,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
         if not np.isfinite(np.sum(R)):
             raise InversionError('Result contains non-finite values')
 
-    return op.source.from_data(R)
+    return op.source.from_numpy(R)
 
 
 # unfortunately, this is necessary, as scipy does not

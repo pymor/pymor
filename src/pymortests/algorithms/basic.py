@@ -176,8 +176,8 @@ def test_almost_equal_wrong_ind(compatible_vector_array_pair):
 
 def test_project_array():
     np.random.seed(123)
-    U = NumpyVectorSpace.from_data(np.random.random((2, 10)))
-    basis = NumpyVectorSpace.from_data(np.random.random((3, 10)))
+    U = NumpyVectorSpace.from_numpy(np.random.random((2, 10)))
+    basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))
     U_p = project_array(U, basis, orthonormal=False)
     onb = gram_schmidt(basis)
     U_p2 = project_array(U, onb, orthonormal=True)
@@ -186,8 +186,8 @@ def test_project_array():
 
 def test_project_array_with_product():
     np.random.seed(123)
-    U = NumpyVectorSpace.from_data(np.random.random((1, 10)))
-    basis = NumpyVectorSpace.from_data(np.random.random((3, 10)))
+    U = NumpyVectorSpace.from_numpy(np.random.random((1, 10)))
+    basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))
     product = np.random.random((10, 10))
     product = NumpyMatrixOperator(product.T.dot(product))
     U_p = project_array(U, basis, product=product, orthonormal=False)

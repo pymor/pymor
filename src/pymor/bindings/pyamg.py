@@ -244,4 +244,4 @@ if config.HAVE_PYAMG:
             if not np.isfinite(np.sum(R)):
                 raise InversionError('Result contains non-finite values')
 
-        return op.source.from_data(R)
+        return op.source.from_numpy(R)

@@ -429,11 +429,11 @@ class ListVectorSpace(VectorSpaceInterface):
         return ListVectorArray([self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
-    def from_data(cls, data, id_=None):
-        return cls.space_from_dim(data.shape[1], id_=id_).from_data(data)
+    def from_numpy(cls, data, id_=None):
+        return cls.space_from_dim(data.shape[1], id_=id_).from_numpy(data)
 
-    @from_data.instancemethod
-    def from_data(self, data):
+    @from_numpy.instancemethod
+    def from_numpy(self, data):
         return ListVectorArray([self.vector_from_data(v) for v in data], self)
 
 

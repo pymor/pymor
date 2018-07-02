@@ -50,8 +50,8 @@ def test_apply():
     v1 = np.random.randn(3)
     v2 = np.random.randn(4)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_data(v1)
-    v2va = NumpyVectorSpace.from_data(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply(vva)
@@ -76,8 +76,8 @@ def test_apply_transpose():
     v1 = np.random.randn(2)
     v2 = np.random.randn(5)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_data(v1)
-    v2va = NumpyVectorSpace.from_data(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply_transpose(vva)
@@ -109,8 +109,8 @@ def test_blk_diag_apply_inverse():
     v1 = np.random.randn(2)
     v2 = np.random.randn(3)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_data(v1)
-    v2va = NumpyVectorSpace.from_data(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse(vva)
@@ -131,8 +131,8 @@ def test_blk_diag_apply_inverse_transpose():
     v1 = np.random.randn(2)
     v2 = np.random.randn(3)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_data(v1)
-    v2va = NumpyVectorSpace.from_data(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse_transpose(vva)

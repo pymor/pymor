@@ -365,11 +365,11 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_data(cls, data, id_=None):
+    def from_numpy(cls, data, id_=None):
         return cls._array_factory(data, id_=id_)
 
-    @from_data.instancemethod
-    def from_data(self, data):
+    @from_numpy.instancemethod
+    def from_numpy(self, data):
         return self._array_factory(data, space=self)
 
     @classinstancemethod

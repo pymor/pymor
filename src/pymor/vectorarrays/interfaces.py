@@ -535,7 +535,7 @@ class VectorSpaceInterface(ImmutableInterface):
     |VectorArray| from given raw data of the underlying linear algebra
     backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
     Some vector spaces can create new |VectorArrays| from a given
-    |Numpy array| via the :meth:`~VectorSpaceInterface.from_data`
+    |Numpy array| via the :meth:`~VectorSpaceInterface.from_numpy`
     method.
 
     Each vector space has a string :attr:`~VectorSpaceInterface.id`
@@ -611,7 +611,7 @@ class VectorSpaceInterface(ImmutableInterface):
         """
         return self.zeros(0, reserve=reserve)
 
-    def from_data(self, data):
+    def from_numpy(self, data):
         """Create a |VectorArray| from a |NumPy array|
 
         Note that this method will not be supported by all vector
@@ -627,6 +627,10 @@ class VectorSpaceInterface(ImmutableInterface):
         A |VectorArray| with `data` as data.
         """
         raise NotImplementedError
+
+    @Deprecated('from_numpy')
+    def from_data(self, data):
+        return self.from_numpy(data)
 
     def __eq__(self, other):
         return other is self

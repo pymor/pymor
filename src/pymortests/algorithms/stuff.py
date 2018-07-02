@@ -13,8 +13,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 def _newton(order, **kwargs):
     mop = MonomOperator(order)
-    rhs = NumpyVectorSpace.from_data([0.0])
-    guess = NumpyVectorSpace.from_data([1.0])
+    rhs = NumpyVectorSpace.from_numpy([0.0])
+    guess = NumpyVectorSpace.from_numpy([1.0])
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 

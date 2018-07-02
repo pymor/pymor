@@ -35,7 +35,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
 
         if self.vector:
             V = super().apply(U, mu=mu)
-            return self.range.from_data(V.to_numpy)
+            return self.range.from_numpy(V.to_numpy)
 
         V = [self.matrix.dot(v._array) for v in U._list]
 

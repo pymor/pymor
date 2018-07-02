@@ -142,10 +142,10 @@ class OperatorBase(OperatorInterface):
             return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def as_range_array(self, mu=None):
-        return self.apply(self.source.from_data(np.eye(self.source.dim)), mu=mu)
+        return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
 
     def as_source_array(self, mu=None):
-        return self.apply_transpose(self.range.from_data(np.eye(self.range.dim)), mu=mu)
+        return self.apply_transpose(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
 
 class ProjectedOperator(OperatorBase):
