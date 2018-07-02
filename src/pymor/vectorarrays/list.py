@@ -156,9 +156,11 @@ class NumpyVector(CopyOnWriteVector):
     def from_instance(cls, instance):
         return cls(instance._array)
 
-    @property
-    def data(self):
-        return self._array
+    def to_numpy(self, ensure_copy=False):
+        if ensure_copy:
+            return self._array.copy()
+        else:
+            return self._array
 
     @property
     def dim(self):
@@ -228,9 +230,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def to_numpy(self, ensure_copy=False):
         if len(self._list) > 0:
-            if not hasattr(self._list[0], 'data'):
-                raise NotImplementedError('{} does not have a data attribute'.format(self._list[0]))
-            return np.array([v.data for v in self._list])
+            return np.array([v.to_numpy() for v in self._list])
         else:
             return np.empty((0, self.dim))
 

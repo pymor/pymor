@@ -33,9 +33,11 @@ if config.HAVE_NGSOLVE:
             new_impl.vec.data = self.impl.vec
             self.impl = new_impl
 
-        @property
-        def data(self):
-            return self.impl.vec.FV().NumPy()
+        def to_numpy(self, ensure_copy=False):
+            result = self.impl.vec.FV().NumPy()
+            if ensure_copy:
+                result = result.copy()
+            return result
 
         def _scal(self, alpha):
             self.impl.vec.data = float(alpha) * self.impl.vec
@@ -47,7 +49,7 @@ if config.HAVE_NGSOLVE:
             return self.impl.vec.InnerProduct(other.impl.vec)
 
         def l1_norm(self):
-            return np.linalg.norm(self.data, ord=1)
+            return np.linalg.norm(self.to_numpy(), ord=1)
 
         def l2_norm(self):
             return self.impl.vec.Norm()
@@ -56,10 +58,10 @@ if config.HAVE_NGSOLVE:
             return self.impl.vec.Norm() ** 2
 
         def dofs(self, dof_indices):
-            return self.data[dof_indices]
+            return self.to_numpy()[dof_indices]
 
         def amax(self):
-            A = np.abs(self.data)
+            A = np.abs(self.to_numpy())
             max_ind = np.argmax(A)
             max_val = A[max_ind]
             return max_ind, max_val

@@ -97,7 +97,7 @@ if config.HAVE_NGSOLVE:
         U = NGSOLVE_spaces[dim].zeros(length)
         np.random.seed(seed)
         for v, a in zip(U._list, np.random.random((length, dim))):
-            v.data[:] = a
+            v.to_numpy()[:] = a
         return U
 
 
