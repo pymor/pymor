@@ -56,15 +56,6 @@ class VectorArrayInterface(BasicInterface):
 
     Attributes
     ----------
-    data
-        Implementors can provide a `data` property which returns a |NumPy array| of
-        shape `(len(v), v.dim)` containing the data stored in the array. Access should
-        be assumed to be slow and is mainly intended for debugging / visualization
-        purposes or to once transfer data to pyMOR and further process it using NumPy.
-        In the case of |NumpyVectorArray|, an actual view of the internally used
-        |NumPy array| is returned, so changing it, will alter the |VectorArray|.
-        Thus, you cannot assume to own the data returned to you, in general.
-
     dim
         The dimension of the vectors in the array.
     is_view
