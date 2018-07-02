@@ -453,6 +453,10 @@ class VectorArrayInterface(BasicInterface):
         result.scal(-1)
         return result
 
+    def conj(self):
+        """Complex conjugation."""
+        return self.copy()
+
     def check_ind(self, ind):
         """Check if `ind` is an admissable list of indices in the sense of the class documentation."""
         l = len(self)

@@ -39,6 +39,9 @@ class BlockVectorArray(VectorArrayInterface):
     def imag(self):
         return BlockVectorArray([block.imag for block in self._blocks], self.space)
 
+    def conj(self):
+        return BlockVectorArray([block.conj() for block in self._blocks], self.space)
+
     def block(self, ind):
         """
         Returns a copy of each block (no slicing).
