@@ -119,7 +119,7 @@ class VectorArrayInterface(BasicInterface):
         """Remove vectors from the array."""
         pass
 
-    def to_numpy(ensure_copy=False):
+    def to_numpy(self, ensure_copy=False):
         """Return (len(self), self.dim) NumPy Array with the data stored in the array.
 
         Parameters
