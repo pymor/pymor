@@ -44,6 +44,11 @@ class NumpyVectorArray(VectorArrayInterface):
         return self._array[:self._len]
 
     @property
+    def _data(self):
+        """Return NumPy Array view on data for hacking / interactive use."""
+        return self.to_numpy()
+
+    @property
     def real(self):
         return NumpyVectorArray(self.to_numpy().real.copy(), self.space)
 

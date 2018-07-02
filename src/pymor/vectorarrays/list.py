@@ -235,6 +235,11 @@ class ListVectorArray(VectorArrayInterface):
         else:
             return np.empty((0, self.dim))
 
+    @property
+    def _data(self):
+        """Return list of NumPy Array views on vector data for hacking / interactive use."""
+        return ListVectorArrayNumpyView(self)
+
     def __len__(self):
         return len(self._list)
 
@@ -508,3 +513,18 @@ class ListVectorArrayView(ListVectorArray):
 
     def __str__(self):
         return 'ListVectorArrayView of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self.dim)
+
+
+class ListVectorArrayNumpyView:
+
+    def __init__(self, array):
+        self.array = array
+
+    def __len__(self):
+        return len(self.array)
+
+    def __getitem__(self, i):
+        return self.array._list[i].to_numpy()
+
+    def __repr__(self):
+        return '[' + ',\n '.join(repr(v) for v in self) + ']'
