@@ -161,10 +161,8 @@ class NumpyVectorArray(VectorArrayInterface):
         A = self._array[_ind]
         B = other.base._array[other.ind] if other.is_view else other._array[:other._len]
 
-        if B.dtype in _complex_dtypes:
-            return A.dot(B.conj().T)
-        else:
-            return A.dot(B.T)
+        # .conj() is a no-op on non-complex data types
+        return A.conj().dot(B.T)
 
     def pairwise_dot(self, other, *, _ind=None):
         if _ind is None:
@@ -176,10 +174,8 @@ class NumpyVectorArray(VectorArrayInterface):
 
         assert len(A) == len(B)
 
-        if B.dtype in _complex_dtypes:
-            return np.sum(A * B.conj(), axis=1)
-        else:
-            return np.sum(A * B, axis=1)
+        # .conj() is a no-op on non-complex data types
+        return np.sum(A.conj() * B, axis=1)
 
     def lincomb(self, coefficients, *, _ind=None):
         if _ind is None:
@@ -553,5 +549,3 @@ class NumpyVectorArrayView(NumpyVectorArray):
     def __repr__(self):
         return 'NumpyVectorArrayView({}, {})'.format(self.data, self.space)
 
-
-_complex_dtypes = (np.complex64, np.complex128)

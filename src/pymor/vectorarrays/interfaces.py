@@ -216,6 +216,14 @@ class VectorArrayInterface(BasicInterface):
     def dot(self, other):
         """Returns the inner products between |VectorArray| elements.
 
+        In the case of complex numbers, this is antilinear in the
+        first argument, i.e. in 'self'.
+        Complex conjugation is done in the first argument because
+        most numerical software in the community handles it this way:
+        Numpy, DUNE, FEniCS, Eigen, Matlab and BLAS do complex conjugation
+        in the first argument, only PetSc and deal.ii do complex
+        conjugation in the second argument.
+
         Parameters
         ----------
         other
