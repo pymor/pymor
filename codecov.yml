@@ -24,6 +24,6 @@ parsers:
 # https://docs.codecov.io/docs/pull-request-comments
 # https://docs.codecov.io/docs/graphs
 comment:
-  layout: "header, reach, diff, "
+  layout: "header, files "
   behavior: once
   require_changes: yes
