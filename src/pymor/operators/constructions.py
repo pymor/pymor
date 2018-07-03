@@ -556,12 +556,12 @@ class VectorArrayOperator(OperatorBase):
         if not self.transposed:
             return self._array.lincomb(U.to_numpy())
         else:
-            return self.range.make_array(U.dot(self._array))
+            return self.range.make_array(U.conj().dot(self._array))
 
     def apply_transpose(self, V, mu=None):
         assert V in self.range
         if not self.transposed:
-            return self.source.make_array(self._array.dot(V).T)
+            return self.source.make_array(self._array.conj().dot(V).T)
         else:
             return self._array.lincomb(V.to_numpy())
 
