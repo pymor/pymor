@@ -370,12 +370,12 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data, id_=None):
-        return cls._array_factory(data, id_=id_)
+    def from_numpy(cls, data, id_=None, ensure_copy=False):
+        return cls._array_factory(data.copy() if ensure_copy else data, id_=id_)
 
     @from_numpy.instancemethod
-    def from_numpy(self, data):
-        return self._array_factory(data, space=self)
+    def from_numpy(self, data, ensure_copy=False):
+        return self._array_factory(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
     def from_file(cls, path, key=None, single_vector=False, transpose=False, id_=None):

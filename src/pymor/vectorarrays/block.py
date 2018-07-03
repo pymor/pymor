@@ -213,11 +213,11 @@ class BlockVectorSpace(VectorSpaceInterface):
             U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))
         return U
 
-    def from_numpy(self, data):
+    def from_numpy(self, data, ensure_copy=False):
         if data.ndim == 1:
             data = data.reshape(1, -1)
         data_ind = np.cumsum([0] + [subspace.dim for subspace in self.subspaces])
-        return BlockVectorArray([subspace.from_numpy(data[:, data_ind[i]:data_ind[i + 1]])
+        return BlockVectorArray([subspace.from_numpy(data[:, data_ind[i]:data_ind[i + 1]], ensure_copy=ensure_copy)
                                  for i, subspace in enumerate(self.subspaces)], self)
 
 

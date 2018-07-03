@@ -409,7 +409,7 @@ class ListVectorSpace(VectorSpaceInterface):
     def make_vector(self, obj):
         pass
 
-    def vector_from_numpy(self, data):
+    def vector_from_numpy(self, data, ensure_copy=False):
         raise NotImplementedError
 
     @classmethod
@@ -435,12 +435,12 @@ class ListVectorSpace(VectorSpaceInterface):
         return ListVectorArray([self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
-    def from_numpy(cls, data, id_=None):
-        return cls.space_from_dim(data.shape[1], id_=id_).from_numpy(data)
+    def from_numpy(cls, data, id_=None, ensure_copy=False):
+        return cls.space_from_dim(data.shape[1], id_=id_).from_numpy(data, ensure_copy=ensure_copy)
 
     @from_numpy.instancemethod
-    def from_numpy(self, data):
-        return ListVectorArray([self.vector_from_numpy(v) for v in data], self)
+    def from_numpy(self, data, ensure_copy=False):
+        return ListVectorArray([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
 
 
 class NumpyListVectorSpace(ListVectorSpace):
@@ -468,8 +468,8 @@ class NumpyListVectorSpace(ListVectorSpace):
         assert obj.ndim == 1 and len(obj) == self.dim
         return NumpyVector(obj)
 
-    def vector_from_numpy(self, data):
-        return self.make_vector(data)
+    def vector_from_numpy(self, data, ensure_copy=False):
+        return self.make_vector(data.copy() if ensure_copy else data)
 
 
 class ListVectorArrayView(ListVectorArray):

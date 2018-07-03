@@ -611,7 +611,7 @@ class VectorSpaceInterface(ImmutableInterface):
         """
         return self.zeros(0, reserve=reserve)
 
-    def from_numpy(self, data):
+    def from_numpy(self, data, ensure_copy=False):
         """Create a |VectorArray| from a |NumPy array|
 
         Note that this method will not be supported by all vector
@@ -622,6 +622,9 @@ class VectorSpaceInterface(ImmutableInterface):
         data
             |NumPy| array of shape `(len, dim)` where `len` is the
             number of vectors and `dim` their dimension.
+        ensure_copy
+            If `False` modifying the returned |VectorArray| might alter the original
+            |NumPy array|. If `True` always a copy of the array data is made.
 
         Returns
         -------
