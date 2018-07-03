@@ -403,8 +403,6 @@ class NumpyVectorSpace(VectorSpaceInterface):
             pass
         elif issparse(array):
             array = array.toarray()
-        elif hasattr(array, 'data'):
-            array = array.to_numpy()
         else:
             array = np.array(array, ndmin=2)
         if array.ndim != 2:
