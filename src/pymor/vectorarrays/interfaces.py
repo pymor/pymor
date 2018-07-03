@@ -453,6 +453,14 @@ class VectorArrayInterface(BasicInterface):
         result.scal(-1)
         return result
 
+    def real(self):
+        """Real part."""
+        return self.copy()
+
+    def imag(self):
+        """Imaginary part."""
+        return self.zeros(len(self))
+
     def conj(self):
         """Complex conjugation."""
         return self.copy()
