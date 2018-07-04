@@ -108,7 +108,7 @@ if config.HAVE_PYMESS:
             eqn = LyapunovEquation(opts, A, E, B)
             Z, status = pymess.lradi(eqn, opts)
 
-        Z = A.source.from_data(np.array(Z).T)
+        Z = A.source.from_numpy(np.array(Z).T)
 
         return Z
 
@@ -222,7 +222,7 @@ if config.HAVE_PYMESS:
             eqn = RiccatiEquation(opts, A, E, B, C)
             Z, status = pymess.lrnm(eqn, opts)
 
-        Z = A.source.from_data(np.array(Z).T)
+        Z = A.source.from_numpy(np.array(Z).T)
 
         return Z
 
@@ -269,7 +269,7 @@ if config.HAVE_PYMESS:
             self.p = []
 
         def ax_apply(self, op, y):
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
             else:
@@ -280,7 +280,7 @@ if config.HAVE_PYMESS:
             if self.e is None:
                 return y
 
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply(y)
             else:
@@ -288,7 +288,7 @@ if config.HAVE_PYMESS:
             return np.matrix(x.to_numpy()).T
 
         def ainv_apply(self, op, y):
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply_inverse(y)
             else:
@@ -299,7 +299,7 @@ if config.HAVE_PYMESS:
             if self.e is None:
                 return y
 
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply_inverse(y)
             else:
@@ -307,7 +307,7 @@ if config.HAVE_PYMESS:
             return np.matrix(x.to_numpy()).T
 
         def apex_apply(self, op, p, idx_p, y):
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
                 if self.e is None:
@@ -323,7 +323,7 @@ if config.HAVE_PYMESS:
             return np.matrix(x.to_numpy()).T
 
         def apeinv_apply(self, op, p, idx_p, y):
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             e = IdentityOperator(self.a.source) if self.e is None else self.e
 
             if p.imag == 0:
@@ -385,7 +385,7 @@ if config.HAVE_PYMESS:
             self.p = []
 
         def ax_apply(self, op, y):
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
             else:
@@ -396,7 +396,7 @@ if config.HAVE_PYMESS:
             if self.e is None:
                 return y
 
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply(y)
             else:
@@ -404,7 +404,7 @@ if config.HAVE_PYMESS:
             return np.matrix(x.to_numpy()).T
 
         def ainv_apply(self, op, y):
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply_inverse(y)
             else:
@@ -415,7 +415,7 @@ if config.HAVE_PYMESS:
             if self.e is None:
                 return y
 
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply_inverse(y)
             else:
@@ -423,7 +423,7 @@ if config.HAVE_PYMESS:
             return np.matrix(x.to_numpy()).T
 
         def apex_apply(self, op, p, idx_p, y):
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
                 if self.e is None:
@@ -439,7 +439,7 @@ if config.HAVE_PYMESS:
             return np.matrix(x.to_numpy()).T
 
         def apeinv_apply(self, op, p, idx_p, y):
-            y = self.a.source.from_data(np.array(y).T)
+            y = self.a.source.from_numpy(np.array(y).T)
             e = IdentityOperator(self.a.source) if self.e is None else self.e
 
             if p.imag == 0:

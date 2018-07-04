@@ -387,7 +387,7 @@ def solve_lyap(A, E, B, trans=False, options=None):
         X = spla.solve_continuous_lyapunov(A_mat.T, -B_mat.T.dot(B_mat))
 
     Z = cholp(X, copy=False)
-    Z = A.source.from_data(np.array(Z).T)
+    Z = A.source.from_numpy(np.array(Z).T)
 
     return Z
 
@@ -495,7 +495,7 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
         X = spla.solve_continuous_are(A_mat.T, C_mat.T, Q_mat, R_mat)
 
     Z = cholp(X, copy=False)
-    Z = A.source.from_data(np.array(Z).T)
+    Z = A.source.from_numpy(np.array(Z).T)
 
     return Z
 

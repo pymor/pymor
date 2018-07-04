@@ -99,7 +99,7 @@ if config.HAVE_SLYCOT:
         from pymor.bindings.scipy import cholp
         Z = cholp(X, copy=False)
 
-        Z = A.source.from_data(np.array(Z).T)
+        Z = A.source.from_numpy(np.array(Z).T)
 
         return Z
 
@@ -243,6 +243,6 @@ if config.HAVE_SLYCOT:
 
         from pymor.bindings.scipy import cholp
         Z = cholp(X, copy=False)
-        Z = A.source.from_data(np.array(Z).T)
+        Z = A.source.from_numpy(np.array(Z).T)
 
         return Z
