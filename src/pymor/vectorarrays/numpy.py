@@ -57,9 +57,9 @@ class NumpyVectorArray(VectorArrayInterface):
         return NumpyVectorArray(self.to_numpy().imag.copy(), self.space)
 
     def conj(self):
-        if np.isrealobj(self.data):
+        if np.isrealobj(self.to_numpy()):
             return self.copy()
-        return NumpyVectorArray(np.conj(self.data), self.space)
+        return NumpyVectorArray(np.conj(self.to_numpy()), self.space)
 
     def __len__(self):
         return self._len
