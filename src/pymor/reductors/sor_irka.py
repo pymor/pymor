@@ -125,9 +125,9 @@ class SOR_IRKAReductor(GenericPGReductor):
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
         if b is None:
-            b = d.B.source.from_data(np.ones((r, d.m)))
+            b = d.B.source.from_numpy(np.ones((r, d.m)))
         if c is None:
-            c = d.Cp.range.from_data(np.ones((r, d.p)))
+            c = d.Cp.range.from_numpy(np.ones((r, d.p)))
 
         if compute_errors:
             logger.info('iter | conv. criterion | rel. H_2-error')
