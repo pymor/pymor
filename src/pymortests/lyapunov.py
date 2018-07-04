@@ -82,7 +82,7 @@ def test_cgf_dense(n, m, me_solver):
     solve_lyap = _get_solve_lyap(me_solver)
 
     Zva = solve_lyap(Aop, None, Bop, options={'type': me_solver})
-    Z = Zva.data.T
+    Z = Zva.to_numpy().T
 
     assert len(Zva) <= n
     assert relative_residual(A, None, B, Z) < 1e-10
@@ -110,7 +110,7 @@ def test_cgf_dense_E(n, m, me_solver):
     solve_lyap = _get_solve_lyap(me_solver)
 
     Zva = solve_lyap(Aop, Eop, Bop, options={'type': me_solver})
-    Z = Zva.data.T
+    Z = Zva.to_numpy().T
 
     assert len(Zva) <= n
     assert relative_residual(A, E, B, Z) < 1e-10
@@ -131,7 +131,7 @@ def test_cgf_sparse(n, m, me_solver):
     solve_lyap = _get_solve_lyap(me_solver)
 
     Zva = solve_lyap(Aop, None, Bop, options={'type': me_solver})
-    Z = Zva.data.T
+    Z = Zva.to_numpy().T
 
     assert len(Zva) <= n
     assert relative_residual(A, None, B, Z) < 1e-10
@@ -159,7 +159,7 @@ def test_cgf_sparse_E(n, m, me_solver):
     solve_lyap = _get_solve_lyap(me_solver)
 
     Zva = solve_lyap(Aop, Eop, Bop, options={'type': me_solver})
-    Z = Zva.data.T
+    Z = Zva.to_numpy().T
 
     assert len(Zva) <= n
     assert relative_residual(A, E, B, Z) < 1e-10
@@ -179,7 +179,7 @@ def test_ogf_dense(n, p, me_solver):
     solve_lyap = _get_solve_lyap(me_solver)
 
     Zva = solve_lyap(Aop, None, Cop, trans=True, options={'type': me_solver})
-    Z = Zva.data.T
+    Z = Zva.to_numpy().T
 
     assert len(Zva) <= n
     assert relative_residual(A, None, C, Z, trans=True) < 1e-10
@@ -207,7 +207,7 @@ def test_ogf_dense_E(n, p, me_solver):
     solve_lyap = _get_solve_lyap(me_solver)
 
     Zva = solve_lyap(Aop, Eop, Cop, trans=True, options={'type': me_solver})
-    Z = Zva.data.T
+    Z = Zva.to_numpy().T
 
     assert len(Zva) <= n
     assert relative_residual(A, E, C, Z, trans=True) < 1e-10
@@ -228,7 +228,7 @@ def test_ogf_sparse(n, p, me_solver):
     solve_lyap = _get_solve_lyap(me_solver)
 
     Zva = solve_lyap(Aop, None, Cop, trans=True, options={'type': me_solver})
-    Z = Zva.data.T
+    Z = Zva.to_numpy().T
 
     assert len(Zva) <= n
     assert relative_residual(A, None, C, Z, trans=True) < 1e-10
@@ -256,7 +256,7 @@ def test_ogf_sparse_E(n, p, me_solver):
     solve_lyap = _get_solve_lyap(me_solver)
 
     Zva = solve_lyap(Aop, Eop, Cop, trans=True, options={'type': me_solver})
-    Z = Zva.data.T
+    Z = Zva.to_numpy().T
 
     assert len(Zva) <= n
     assert relative_residual(A, E, C, Z, trans=True) < 1e-10

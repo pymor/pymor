@@ -68,9 +68,9 @@ def test_scipy(n, m, p):
 
     assert len(Z) <= n
 
-    ATX = A.T.dot(Z.data.T).dot(Z.data)
-    ZTB = Z.data.dot(B)
-    XB = Z.data.T.dot(ZTB)
+    ATX = A.T.dot(Z.to_numpy().T).dot(Z.to_numpy())
+    ZTB = Z.to_numpy().dot(B)
+    XB = Z.to_numpy().T.dot(ZTB)
     RinvBTXT = spla.solve(R, XB.T)
     CTC = C.T.dot(C)
     assert fro_norm(ATX + ATX.T - XB.dot(RinvBTXT) + CTC) / fro_norm(CTC) < 1e-10
@@ -97,9 +97,9 @@ def test_scipy_trans(n, m, p):
 
     assert len(Z) <= n
 
-    AX = A.dot(Z.data.T).dot(Z.data)
-    ZTCT = Z.data.dot(C.T)
-    XCT = Z.data.T.dot(ZTCT)
+    AX = A.dot(Z.to_numpy().T).dot(Z.to_numpy())
+    ZTCT = Z.to_numpy().dot(C.T)
+    XCT = Z.to_numpy().T.dot(ZTCT)
     RinvCXT = spla.solve(R, XCT.T)
     BBT = B.dot(B.T)
     assert fro_norm(AX + AX.T - XCT.dot(RinvCXT) + BBT) / fro_norm(BBT) < 1e-10
@@ -125,8 +125,8 @@ def test_pymess(n, m, p, me_solver):
 
     assert len(Z) <= n
 
-    ATX = A.T.dot(Z.data.T).dot(Z.data)
-    XB = Z.data.T.dot(Z.data.dot(B))
+    ATX = A.T.dot(Z.to_numpy().T).dot(Z.to_numpy())
+    XB = Z.to_numpy().T.dot(Z.to_numpy().dot(B))
     CTC = C.T.dot(C)
     assert fro_norm(ATX + ATX.T - XB.dot(XB.T) + CTC) / fro_norm(CTC) < 1e-10
 
@@ -151,8 +151,8 @@ def test_pymess_trans(n, m, p, me_solver):
 
     assert len(Z) <= n
 
-    AX = A.dot(Z.data.T).dot(Z.data)
-    XCT = Z.data.T.dot(Z.data.dot(C.T))
+    AX = A.dot(Z.to_numpy().T).dot(Z.to_numpy())
+    XCT = Z.to_numpy().T.dot(Z.to_numpy().dot(C.T))
     BBT = B.dot(B.T)
     assert fro_norm(AX + AX.T - XCT.dot(XCT.T) + BBT) / fro_norm(BBT) < 1e-10
 
@@ -178,11 +178,11 @@ def test_pymess_E(n, m, p, me_solver):
 
     assert len(Z) <= n
 
-    ATZ = A.T.dot(Z.data.T)
-    ZTE = E.T.dot(Z.data.T).T
+    ATZ = A.T.dot(Z.to_numpy().T)
+    ZTE = E.T.dot(Z.to_numpy().T).T
     ATXE = ATZ.dot(ZTE)
-    ZTB = Z.data.dot(B)
-    ETXB = E.T.dot(Z.data.T).dot(ZTB)
+    ZTB = Z.to_numpy().dot(B)
+    ETXB = E.T.dot(Z.to_numpy().T).dot(ZTB)
     CTC = C.T.dot(C)
     assert fro_norm(ATXE + ATXE.T - ETXB.dot(ETXB.T) + CTC) / fro_norm(CTC) < 1e-10
 
@@ -208,11 +208,11 @@ def test_pymess_E_trans(n, m, p, me_solver):
 
     assert len(Z) <= n
 
-    AZ = A.dot(Z.data.T)
-    ZTET = E.dot(Z.data.T).T
+    AZ = A.dot(Z.to_numpy().T)
+    ZTET = E.dot(Z.to_numpy().T).T
     AXET = AZ.dot(ZTET)
-    ZTCT = Z.data.dot(C.T)
-    EXCT = E.dot(Z.data.T).dot(ZTCT)
+    ZTCT = Z.to_numpy().dot(C.T)
+    EXCT = E.dot(Z.to_numpy().T).dot(ZTCT)
     BBT = B.dot(B.T)
     assert fro_norm(AXET + AXET.T - EXCT.dot(EXCT.T) + BBT) / fro_norm(BBT) < 1e-10
 
@@ -236,8 +236,8 @@ def test_slycot(n, m, p):
 
     assert len(Z) <= n
 
-    ATX = A.T.dot(Z.data.T).dot(Z.data)
-    XB = Z.data.T.dot(Z.data.dot(B))
+    ATX = A.T.dot(Z.to_numpy().T).dot(Z.to_numpy())
+    XB = Z.to_numpy().T.dot(Z.to_numpy().dot(B))
     CTC = C.T.dot(C)
     assert fro_norm(ATX + ATX.T - XB.dot(XB.T) + CTC) / fro_norm(CTC) < 1e-8
 
@@ -261,8 +261,8 @@ def test_slycot_trans(n, m, p):
 
     assert len(Z) <= n
 
-    AX = A.dot(Z.data.T).dot(Z.data)
-    XCT = Z.data.T.dot(Z.data.dot(C.T))
+    AX = A.dot(Z.to_numpy().T).dot(Z.to_numpy())
+    XCT = Z.to_numpy().T.dot(Z.to_numpy().dot(C.T))
     BBT = B.dot(B.T)
     assert fro_norm(AX + AX.T - XCT.dot(XCT.T) + BBT) / fro_norm(BBT) < 1e-8
 
@@ -287,11 +287,11 @@ def test_slycot_E(n, m, p):
 
     assert len(Z) <= n
 
-    ATZ = A.T.dot(Z.data.T)
-    ZTE = E.T.dot(Z.data.T).T
+    ATZ = A.T.dot(Z.to_numpy().T)
+    ZTE = E.T.dot(Z.to_numpy().T).T
     ATXE = ATZ.dot(ZTE)
-    ZTB = Z.data.dot(B)
-    ETXB = E.T.dot(Z.data.T).dot(ZTB)
+    ZTB = Z.to_numpy().dot(B)
+    ETXB = E.T.dot(Z.to_numpy().T).dot(ZTB)
     CTC = C.T.dot(C)
     assert fro_norm(ATXE + ATXE.T - ETXB.dot(ETXB.T) + CTC) / fro_norm(CTC) < 1e-8
 
@@ -316,10 +316,10 @@ def test_slycot_E_trans(n, m, p):
 
     assert len(Z) <= n
 
-    AZ = A.dot(Z.data.T)
-    ZTET = E.dot(Z.data.T).T
+    AZ = A.dot(Z.to_numpy().T)
+    ZTET = E.dot(Z.to_numpy().T).T
     AXET = AZ.dot(ZTET)
-    ZTCT = Z.data.dot(C.T)
-    EXCT = E.dot(Z.data.T).dot(ZTCT)
+    ZTCT = Z.to_numpy().dot(C.T)
+    EXCT = E.dot(Z.to_numpy().T).dot(ZTCT)
     BBT = B.dot(B.T)
     assert fro_norm(AXET + AXET.T - EXCT.dot(EXCT.T) + BBT) / fro_norm(BBT) < 1e-8

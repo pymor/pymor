@@ -207,7 +207,7 @@ class GenericPGReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.V[:u.dim].lincomb(u.data)
+        return self.V[:u.dim].lincomb(u.to_numpy())
 
     def extend_source_basis(self, U, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
         """Extend range basis by new vectors.
