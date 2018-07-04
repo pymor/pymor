@@ -22,8 +22,8 @@ from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invali
 def test_almost_equal(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     if hasattr(v1, 'data'):
-        dv1 = v1.data
-        dv2 = v2.data
+        dv1 = v1.to_numpy()
+        dv2 = v2.to_numpy()
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)):
             for n, o in [('sup', np.inf), ('l1', 1), ('l2', 2)]:
@@ -176,8 +176,8 @@ def test_almost_equal_wrong_ind(compatible_vector_array_pair):
 
 def test_project_array():
     np.random.seed(123)
-    U = NumpyVectorSpace.from_data(np.random.random((2, 10)))
-    basis = NumpyVectorSpace.from_data(np.random.random((3, 10)))
+    U = NumpyVectorSpace.from_numpy(np.random.random((2, 10)))
+    basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))
     U_p = project_array(U, basis, orthonormal=False)
     onb = gram_schmidt(basis)
     U_p2 = project_array(U, onb, orthonormal=True)
@@ -186,8 +186,8 @@ def test_project_array():
 
 def test_project_array_with_product():
     np.random.seed(123)
-    U = NumpyVectorSpace.from_data(np.random.random((1, 10)))
-    basis = NumpyVectorSpace.from_data(np.random.random((3, 10)))
+    U = NumpyVectorSpace.from_numpy(np.random.random((1, 10)))
+    basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))
     product = np.random.random((10, 10))
     product = NumpyMatrixOperator(product.T.dot(product))
     U_p = project_array(U, basis, product=product, orthonormal=False)

@@ -554,7 +554,7 @@ class VectorArrayOperator(OperatorBase):
     def apply(self, U, mu=None):
         assert U in self.source
         if not self.transposed:
-            return self._array.lincomb(U.data)
+            return self._array.lincomb(U.to_numpy())
         else:
             return self.range.make_array(U.dot(self._array))
 
@@ -563,7 +563,7 @@ class VectorArrayOperator(OperatorBase):
         if not self.transposed:
             return self.source.make_array(self._array.dot(V).T)
         else:
-            return self._array.lincomb(V.data)
+            return self._array.lincomb(V.to_numpy())
 
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         transpose_op = VectorArrayOperator(self._array, transposed=not self.transposed)

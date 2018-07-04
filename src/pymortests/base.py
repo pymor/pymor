@@ -90,13 +90,13 @@ class MonomOperator(OperatorBase):
         self.linear = order == 1
 
     def apply(self, U, mu=None):
-        return self.source.make_array(self.monom(U.data))
+        return self.source.make_array(self.monom(U.to_numpy()))
 
     def jacobian(self, U, mu=None):
         return MonomOperator(self.order - 1, self.derivative)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
-        return self.range.make_array(1. / V.data)
+        return self.range.make_array(1. / V.to_numpy())
 
 
 def check_results(test_name, params, results, *args):

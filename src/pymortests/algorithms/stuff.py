@@ -13,15 +13,15 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 def _newton(order, **kwargs):
     mop = MonomOperator(order)
-    rhs = NumpyVectorSpace.from_data([0.0])
-    guess = NumpyVectorSpace.from_data([1.0])
+    rhs = NumpyVectorSpace.from_numpy([0.0])
+    guess = NumpyVectorSpace.from_numpy([1.0])
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 
 @pytest.mark.parametrize("order", list(range(1, 8)))
 def test_newton(order):
     U, _ = _newton(order, atol=1e-15)
-    assert float_cmp(U.data, 0.0)
+    assert float_cmp(U.to_numpy(), 0.0)
 
 
 def test_newton_fail():

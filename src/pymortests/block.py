@@ -50,12 +50,12 @@ def test_apply():
     v1 = np.random.randn(3)
     v2 = np.random.randn(4)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_data(v1)
-    v2va = NumpyVectorSpace.from_data(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply(vva)
-    w = np.hstack((wva.block(0).data, wva.block(1).data))
+    w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
     assert np.allclose(A.dot(v), w)
 
 
@@ -76,12 +76,12 @@ def test_apply_transpose():
     v1 = np.random.randn(2)
     v2 = np.random.randn(5)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_data(v1)
-    v2va = NumpyVectorSpace.from_data(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply_transpose(vva)
-    w = np.hstack((wva.block(0).data, wva.block(1).data))
+    w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
     assert np.allclose(A.T.dot(v), w)
 
 
@@ -109,12 +109,12 @@ def test_blk_diag_apply_inverse():
     v1 = np.random.randn(2)
     v2 = np.random.randn(3)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_data(v1)
-    v2va = NumpyVectorSpace.from_data(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse(vva)
-    w = np.hstack((wva.block(0).data, wva.block(1).data))
+    w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
     assert np.allclose(spla.solve(C, v), w)
 
 
@@ -131,10 +131,10 @@ def test_blk_diag_apply_inverse_transpose():
     v1 = np.random.randn(2)
     v2 = np.random.randn(3)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_data(v1)
-    v2va = NumpyVectorSpace.from_data(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse_transpose(vva)
-    w = np.hstack((wva.block(0).data, wva.block(1).data))
+    w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
     assert np.allclose(spla.solve(C.T, v), w)

@@ -80,15 +80,15 @@ class NumpyGenericOperator(OperatorBase):
         assert U in self.source
         if self.parametric:
             mu = self.parse_parameter(mu)
-            return self.range.make_array(self._mapping(U.data, mu=mu))
+            return self.range.make_array(self._mapping(U.to_numpy(), mu=mu))
         else:
-            return self.range.make_array(self._mapping(U.data))
+            return self.range.make_array(self._mapping(U.to_numpy()))
 
     def apply_transpose(self, V, mu=None):
         if self._transpose_mapping is None:
             raise ValueError('NumpyGenericOperator: transpose mapping was not defined.')
         assert V in self.range
-        V = V.data
+        V = V.to_numpy()
         if self.parametric:
             mu = self.parse_parameter(mu)
             return self.source.make_array(self._transpose_mapping(V, mu=mu))
@@ -229,11 +229,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.make_array(self.matrix.dot(U.data.T).T)
+        return self.range.make_array(self.matrix.dot(U.to_numpy().T).T)
 
     def apply_transpose(self, V, mu=None):
         assert V in self.range
-        return self.source.make_array(self.matrix.T.dot(V.data.T).T)
+        return self.source.make_array(self.matrix.T.dot(V.to_numpy().T).T)
 
     @defaults('check_finite', 'default_sparse_solver_backend',
               qualname='pymor.operators.numpy.NumpyMatrixOperator.apply_inverse')
@@ -309,13 +309,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    R, _, _, _ = np.linalg.lstsq(self.matrix, V.data.T)
+                    R, _, _, _ = np.linalg.lstsq(self.matrix, V.to_numpy().T)
                 except np.linalg.LinAlgError as e:
                     raise InversionError('{}: {}'.format(str(type(e)), str(e)))
                 R = R.T
             else:
                 try:
-                    R = np.linalg.solve(self.matrix, V.data.T).T
+                    R = np.linalg.solve(self.matrix, V.to_numpy().T).T
                 except np.linalg.LinAlgError as e:
                     raise InversionError('{}: {}'.format(str(type(e)), str(e)))
 
