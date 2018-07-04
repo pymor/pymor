@@ -156,9 +156,12 @@ class NumpyVector(CopyOnWriteVector):
     def from_instance(cls, instance):
         return cls(instance._array)
 
-    @property
-    def data(self):
-        return self._array
+    def to_numpy(self, ensure_copy=False):
+        if ensure_copy:
+            return self._array.copy()
+        else:
+            self._copy_data_if_needed()
+            return self._array
 
     @property
     def dim(self):
@@ -226,14 +229,16 @@ class ListVectorArray(VectorArrayInterface):
         self._list = vectors
         self.space = space
 
-    @property
-    def data(self):
+    def to_numpy(self, ensure_copy=False):
         if len(self._list) > 0:
-            if not hasattr(self._list[0], 'data'):
-                raise NotImplementedError('{} does not have a data attribute'.format(self._list[0]))
-            return np.array([v.data for v in self._list])
+            return np.array([v.to_numpy() for v in self._list])
         else:
             return np.empty((0, self.dim))
+
+    @property
+    def _data(self):
+        """Return list of NumPy Array views on vector data for hacking / interactive use."""
+        return ListVectorArrayNumpyView(self)
 
     def __len__(self):
         return len(self._list)
@@ -404,7 +409,7 @@ class ListVectorSpace(VectorSpaceInterface):
     def make_vector(self, obj):
         pass
 
-    def vector_from_data(self, data):
+    def vector_from_numpy(self, data, ensure_copy=False):
         raise NotImplementedError
 
     @classmethod
@@ -430,12 +435,12 @@ class ListVectorSpace(VectorSpaceInterface):
         return ListVectorArray([self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
-    def from_data(cls, data, id_=None):
-        return cls.space_from_dim(data.shape[1], id_=id_).from_data(data)
+    def from_numpy(cls, data, id_=None, ensure_copy=False):
+        return cls.space_from_dim(data.shape[1], id_=id_).from_numpy(data, ensure_copy=ensure_copy)
 
-    @from_data.instancemethod
-    def from_data(self, data):
-        return ListVectorArray([self.vector_from_data(v) for v in data], self)
+    @from_numpy.instancemethod
+    def from_numpy(self, data, ensure_copy=False):
+        return ListVectorArray([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
 
 
 class NumpyListVectorSpace(ListVectorSpace):
@@ -463,8 +468,8 @@ class NumpyListVectorSpace(ListVectorSpace):
         assert obj.ndim == 1 and len(obj) == self.dim
         return NumpyVector(obj)
 
-    def vector_from_data(self, data):
-        return self.make_vector(data)
+    def vector_from_numpy(self, data, ensure_copy=False):
+        return self.make_vector(data.copy() if ensure_copy else data)
 
 
 class ListVectorArrayView(ListVectorArray):
@@ -508,3 +513,18 @@ class ListVectorArrayView(ListVectorArray):
 
     def __str__(self):
         return 'ListVectorArrayView of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self.dim)
+
+
+class ListVectorArrayNumpyView:
+
+    def __init__(self, array):
+        self.array = array
+
+    def __len__(self):
+        return len(self.array)
+
+    def __getitem__(self, i):
+        return self.array._list[i].to_numpy()
+
+    def __repr__(self):
+        return '[' + ',\n '.join(repr(v) for v in self) + ']'

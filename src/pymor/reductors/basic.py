@@ -111,7 +111,7 @@ class GenericRBReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.RB[:u.dim].lincomb(u.data)
+        return self.RB[:u.dim].lincomb(u.to_numpy())
 
     def extend_basis(self, U, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
         """Extend basis by new vectors.

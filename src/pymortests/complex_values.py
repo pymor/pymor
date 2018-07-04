@@ -19,7 +19,7 @@ def test_complex():
     Iop = NumpyMatrixOperator(I)
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
-    Cva = NumpyVectorSpace.from_data(C)
+    Cva = NumpyVectorSpace.from_numpy(C)
 
     # assemble_lincomb
     assert not np.iscomplexobj(Aop.assemble_lincomb([Iop, Bop], [1, 1]).matrix)
@@ -29,10 +29,10 @@ def test_complex():
     assert np.iscomplexobj(Aop.assemble_lincomb([Bop, Aop], [1, 1j]).matrix)
 
     # apply_inverse
-    assert not np.iscomplexobj(Aop.apply_inverse(Cva).data)
-    assert np.iscomplexobj((Aop * 1j).apply_inverse(Cva).data)
-    assert np.iscomplexobj(Aop.assemble_lincomb([Aop, Bop], [1, 1j]).apply_inverse(Cva).data)
-    assert np.iscomplexobj(Aop.apply_inverse(Cva * 1j).data)
+    assert not np.iscomplexobj(Aop.apply_inverse(Cva).to_numpy())
+    assert np.iscomplexobj((Aop * 1j).apply_inverse(Cva).to_numpy())
+    assert np.iscomplexobj(Aop.assemble_lincomb([Aop, Bop], [1, 1j]).apply_inverse(Cva).to_numpy())
+    assert np.iscomplexobj(Aop.apply_inverse(Cva * 1j).to_numpy())
 
     # append
     for rsrv in (0, 10):
@@ -40,34 +40,34 @@ def test_complex():
             va = NumpyVectorSpace(5).empty(reserve=rsrv)
             va.append(Cva)
             D = np.random.randn(1, 5) + 1j * np.random.randn(1, 5)
-            Dva = NumpyVectorSpace.from_data(D)
+            Dva = NumpyVectorSpace.from_numpy(D)
 
-            assert not np.iscomplexobj(va.data)
-            assert np.iscomplexobj(Dva.data)
+            assert not np.iscomplexobj(va.to_numpy())
+            assert np.iscomplexobj(Dva.to_numpy())
             va.append(Dva[o_ind])
-            assert np.iscomplexobj(va.data)
+            assert np.iscomplexobj(va.to_numpy())
 
     # scal
-    assert not np.iscomplexobj(Cva.data)
-    assert np.iscomplexobj((Cva * 1j).data)
-    assert np.iscomplexobj((Cva * (1 + 0j)).data)
+    assert not np.iscomplexobj(Cva.to_numpy())
+    assert np.iscomplexobj((Cva * 1j).to_numpy())
+    assert np.iscomplexobj((Cva * (1 + 0j)).to_numpy())
 
     # axpy
-    assert not np.iscomplexobj(Cva.data)
+    assert not np.iscomplexobj(Cva.to_numpy())
     Cva[0].axpy(1, Dva)
-    assert np.iscomplexobj(Cva.data)
+    assert np.iscomplexobj(Cva.to_numpy())
 
-    Cva = NumpyVectorSpace.from_data(C)
-    assert not np.iscomplexobj(Cva.data)
+    Cva = NumpyVectorSpace.from_numpy(C)
+    assert not np.iscomplexobj(Cva.to_numpy())
     Cva[0].axpy(1j, Dva)
-    assert np.iscomplexobj(Cva.data)
+    assert np.iscomplexobj(Cva.to_numpy())
 
 
 def test_real_imag():
     A = np.array([[1 + 2j, 3 + 4j],
                   [5 + 6j, 7 + 8j],
                   [9 + 10j, 11 + 12j]])
-    Ava = NumpyVectorSpace.from_data(A)
+    Ava = NumpyVectorSpace.from_numpy(A)
     Bva = Ava.real
     Cva = Ava.imag
 
@@ -75,45 +75,45 @@ def test_real_imag():
     for i in range(3):
         for j in range(2):
             k += 1
-            assert Bva.data[i, j] == k
+            assert Bva.to_numpy()[i, j] == k
             k += 1
-            assert Cva.data[i, j] == k
+            assert Cva.to_numpy()[i, j] == k
 
 
 def test_scal():
     v = np.array([[1, 2, 3],
                   [4, 5, 6]], dtype=float)
-    v = NumpyVectorSpace.from_data(v)
+    v = NumpyVectorSpace.from_numpy(v)
     v.scal(1j)
 
     k = 0
     for i in range(2):
         for j in range(3):
             k += 1
-            assert v.data[i, j] == k * 1j
+            assert v.to_numpy()[i, j] == k * 1j
 
 
 def test_axpy():
-    x = NumpyVectorSpace.from_data(np.array([1.]))
-    y = NumpyVectorSpace.from_data(np.array([1.]))
+    x = NumpyVectorSpace.from_numpy(np.array([1.]))
+    y = NumpyVectorSpace.from_numpy(np.array([1.]))
     y.axpy(1 + 1j, x)
-    assert y.data[0, 0] == 2 + 1j
+    assert y.to_numpy()[0, 0] == 2 + 1j
 
-    x = NumpyVectorSpace.from_data(np.array([1 + 1j]))
-    y = NumpyVectorSpace.from_data(np.array([1.]))
+    x = NumpyVectorSpace.from_numpy(np.array([1 + 1j]))
+    y = NumpyVectorSpace.from_numpy(np.array([1.]))
     y.axpy(-1, x)
-    assert y.data[0, 0] == -1j
+    assert y.to_numpy()[0, 0] == -1j
 
 
 def test_dot():
-    x = NumpyVectorSpace.from_data(np.array([1 + 1j]))
-    y = NumpyVectorSpace.from_data(np.array([1 - 1j]))
+    x = NumpyVectorSpace.from_numpy(np.array([1 + 1j]))
+    y = NumpyVectorSpace.from_numpy(np.array([1 - 1j]))
     z = x.dot(y)
     assert z[0, 0] == -2j
 
 
 def test_pairwise_dot():
-    x = NumpyVectorSpace.from_data(np.array([1 + 1j]))
-    y = NumpyVectorSpace.from_data(np.array([1 - 1j]))
+    x = NumpyVectorSpace.from_numpy(np.array([1 + 1j]))
+    y = NumpyVectorSpace.from_numpy(np.array([1 - 1j]))
     z = x.pairwise_dot(y)
     assert z == -2j

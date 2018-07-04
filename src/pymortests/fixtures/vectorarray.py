@@ -23,17 +23,17 @@ def random_integers(count, seed):
 
 def numpy_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
-    return NumpyVectorSpace.from_data(np.random.random((length, dim)))
+    return NumpyVectorSpace.from_numpy(np.random.random((length, dim)))
 
 
 def numpy_list_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
-    return NumpyListVectorSpace.from_data(np.random.random((length, dim)))
+    return NumpyListVectorSpace.from_numpy(np.random.random((length, dim)))
 
 
 def block_vector_array_factory(length, dims, seed):
-    return BlockVectorSpace([NumpyVectorSpace(dim) for dim in dims]).from_data(
-        numpy_vector_array_factory(length, sum(dims), seed).data
+    return BlockVectorSpace([NumpyVectorSpace(dim) for dim in dims]).from_numpy(
+        numpy_vector_array_factory(length, sum(dims), seed).to_numpy()
     )
 
 if config.HAVE_FENICS:
@@ -97,7 +97,7 @@ if config.HAVE_NGSOLVE:
         U = NGSOLVE_spaces[dim].zeros(length)
         np.random.seed(seed)
         for v, a in zip(U._list, np.random.random((length, dim))):
-            v.data[:] = a
+            v.to_numpy()[:] = a
         return U
 
 

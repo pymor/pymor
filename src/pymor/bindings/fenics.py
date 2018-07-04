@@ -30,9 +30,8 @@ if config.HAVE_FENICS:
         def _copy_data(self):
             self.impl = self.impl.copy()
 
-        @property
-        def data(self):
-            return self.impl.array()  # WARNING: This creates a copy!
+        def to_numpy(self, ensure_copy=False):
+            return self.impl.array()  # This always creates a copy!
 
         def _scal(self, alpha):
             self.impl *= alpha

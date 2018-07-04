@@ -4,13 +4,12 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
-import sys
 
 from packaging.version import Version
 import numpy as np
 
-from pymor.core.config import config
 from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
+from pymor.tools.deprecated import Deprecated
 
 
 _INDEXTYPES = (Number,) if Version(np.__version__) >= Version('1.9') else (Number, np.intp)
@@ -56,15 +55,6 @@ class VectorArrayInterface(BasicInterface):
 
     Attributes
     ----------
-    data
-        Implementors can provide a `data` property which returns a |NumPy array| of
-        shape `(len(v), v.dim)` containing the data stored in the array. Access should
-        be assumed to be slow and is mainly intended for debugging / visualization
-        purposes or to once transfer data to pyMOR and further process it using NumPy.
-        In the case of |NumpyVectorArray|, an actual view of the internally used
-        |NumPy array| is returned, so changing it, will alter the |VectorArray|.
-        Thus, you cannot assume to own the data returned to you, in general.
-
     dim
         The dimension of the vectors in the array.
     is_view
@@ -128,6 +118,22 @@ class VectorArrayInterface(BasicInterface):
     def __delitem__(self, ind):
         """Remove vectors from the array."""
         pass
+
+    def to_numpy(self, ensure_copy=False):
+        """Return (len(self), self.dim) NumPy Array with the data stored in the array.
+
+        Parameters
+        ----------
+        ensure_copy
+            If `False` modifying the returned |NumPy array| might alter the original
+            |VectorArray|. If `True` always a copy of the array data is made.
+        """
+        raise NotImplementedError
+
+    @property
+    @Deprecated('to_numpy')
+    def data(self):
+        return self.to_numpy()
 
     @abstractmethod
     def append(self, other, remove_from_other=False):
@@ -541,7 +547,7 @@ class VectorSpaceInterface(ImmutableInterface):
     |VectorArray| from given raw data of the underlying linear algebra
     backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
     Some vector spaces can create new |VectorArrays| from a given
-    |Numpy array| via the :meth:`~VectorSpaceInterface.from_data`
+    |Numpy array| via the :meth:`~VectorSpaceInterface.from_numpy`
     method.
 
     Each vector space has a string :attr:`~VectorSpaceInterface.id`
@@ -617,7 +623,7 @@ class VectorSpaceInterface(ImmutableInterface):
         """
         return self.zeros(0, reserve=reserve)
 
-    def from_data(self, data):
+    def from_numpy(self, data, ensure_copy=False):
         """Create a |VectorArray| from a |NumPy array|
 
         Note that this method will not be supported by all vector
@@ -626,13 +632,21 @@ class VectorSpaceInterface(ImmutableInterface):
         Parameters
         ----------
         data
-            |NumPy| array.
+            |NumPy| array of shape `(len, dim)` where `len` is the
+            number of vectors and `dim` their dimension.
+        ensure_copy
+            If `False` modifying the returned |VectorArray| might alter the original
+            |NumPy array|. If `True` always a copy of the array data is made.
 
         Returns
         -------
         A |VectorArray| with `data` as data.
         """
         raise NotImplementedError
+
+    @Deprecated('from_numpy')
+    def from_data(self, data):
+        return self.from_numpy(data)
 
     def __eq__(self, other):
         return other is self

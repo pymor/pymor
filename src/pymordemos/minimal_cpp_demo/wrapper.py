@@ -20,9 +20,11 @@ class WrappedVector(CopyOnWriteVector):
     def from_instance(cls, instance):
         return cls(instance._impl)
 
-    @property
-    def data(self):
-        return np.frombuffer(self._impl.data(), dtype=np.float)
+    def to_numpy(self, ensure_copy=False):
+        result = np.frombuffer(self._impl.data(), dtype=np.float)
+        if ensure_copy:
+            result = result.copy()
+        return result
 
     def _copy_data(self):
         self._impl = Vector(self._impl)

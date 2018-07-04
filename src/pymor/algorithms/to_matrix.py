@@ -144,7 +144,7 @@ class ToMatrixRules(RuleTable):
     @match_class(VectorArrayOperator)
     def action_VectorArrayOperator(self, op):
         format = self.format
-        res = op._array.data if op.transposed else op._array.data.T
+        res = op._array.to_numpy() if op.transposed else op._array.to_numpy().T
         if format is not None and format != 'dense':
             res = getattr(sps, format + '_matrix')(res)
         return res

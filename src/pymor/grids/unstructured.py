@@ -91,7 +91,7 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
         U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
                   u if isinstance(u, NumpyVectorArray) else
-                  NumpyVectorSpace.make_array(u.data)
+                  NumpyVectorSpace.make_array(u.to_numpy())
                   for u in U)
         bounding_box = kwargs.pop('bounding_box', self.domain)
         visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
