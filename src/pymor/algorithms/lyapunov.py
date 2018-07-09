@@ -37,13 +37,6 @@ def solve_lyap(A, E, B, trans=False, options=None):
     .. math::
         A^T X E + E^T X A + B^T B = 0.
 
-    See Algorithm 4.3 in [PK16]_.
-
-    .. [PK16]  P. Kürschner,
-               Efficient Low-Rank Solution of Large-Scale Matrix Equations,
-               Shaker Verlag Aachen, available from
-               http://pubman.mpdl.mpg.de/pubman/, 2016.
-
     Parameters
     ----------
     A
@@ -96,6 +89,32 @@ def lyap_solver_options(lradi_tol=1e-10,
 
 
 def lradi(A, E, B, trans=False, options=None):
+    """Find a factor of the solution of a Lyapunov equation using the
+    low-rank adi iteration as described in Algorithm 4.3 in [PK16]_.
+
+    .. [PK16]  P. Kürschner,
+               Efficient Low-Rank Solution of Large-Scale Matrix Equations,
+               Shaker Verlag Aachen, available from
+               http://pubman.mpdl.mpg.de/pubman/, 2016.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A.
+    E
+        The |Operator| E or `None`.
+    B
+        The |Operator| B.
+    trans
+        If the dual equation needs to be solved.
+    options
+        The |solver_options| to use (see :func:`lyap_solver_options`).
+
+    Returns
+    -------
+    Z
+        Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
+    """
     logger = getLogger('pymor.algorithms.lyapunov.lradi')
 
     shift_options = options['shift_options'][options['shifts']]
@@ -154,6 +173,32 @@ def lradi(A, E, B, trans=False, options=None):
 
 
 def projection_shifts_init(A, E, B, shift_options):
+    """Find starting shift parameters for low-rank adi iteration using
+    Galerkin projection on spaces spanned by LR-ADI iterates.
+
+    See [PK16]_, pp. 92-95.
+
+    .. [PK16]  P. Kürschner,
+               Efficient Low-Rank Solution of Large-Scale Matrix Equations,
+               Shaker Verlag Aachen, available from
+               http://pubman.mpdl.mpg.de/pubman/, 2016.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A from the corresponding lyapunov equation.
+    E
+        The |Operator| E from the corresponding lyapunov equation or `None`.
+    B
+        The |VectorArray| B from the corresponding lyapunov equation.
+    shift_options
+        The |shift_options| to use (see :func:`lyap_solver_options`).
+
+    Returns
+    -------
+    shifts
+        A |NumPy array| containing a set of stable shift parameters.
+    """
     for i in range(0, shift_options['init_maxiter']):
         Q = gram_schmidt(B, atol=0, rtol=0)
         shifts = spla.eigvals(A.apply2(Q, Q), b=E.apply2(Q, Q))
@@ -170,6 +215,36 @@ def projection_shifts_init(A, E, B, shift_options):
 
 
 def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
+    """Find further shift parameters for low-rank adi iteration using
+    Galerkin projection on spaces spanned by LR-ADI iterates.
+
+    See [PK16]_, pp. 92-95.
+
+    .. [PK16]  P. Kürschner,
+               Efficient Low-Rank Solution of Large-Scale Matrix Equations,
+               Shaker Verlag Aachen, available from
+               http://pubman.mpdl.mpg.de/pubman/, 2016.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A from the corresponding lyapunov equation.
+    E
+        The |Operator| E from the corresponding lyapunov equation or `None`.
+    Z
+        A |VectorArray| representing the currently computed low-rank solution factor.
+    W
+        A |VectorArray| representing the currently computed low-rank residual factor.
+    prev_shifts
+        A |NumPy array| containing the set of all previously used shift parameters.
+    shift_options
+        The |shift_options| to use (see :func:`lyap_solver_options`).
+
+    Returns
+    -------
+    shifts
+        A |NumPy array| containing a set of stable shift parameters.
+    """
     u = shift_options['z_columns']
     L = prev_shifts.size
     r = len(W)
@@ -218,11 +293,11 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
 
         s, v = spla.svd(Vu.gramian(), full_matrices=False)[1:3]
         P = v.T.dot(np.diag(1. / np.sqrt(s)))
-        Q = Vu.data.T.dot(P)
+        Q = Vu.to_numpy().T.dot(P)
 
-        E_V = E.apply(Vu).data.T
+        E_V = E.apply(Vu).to_numpy().T
         T = Q.T.dot(E_V)
-        Ap = Q.T.dot(W.data.T).dot(G.T).dot(P) + T.dot(B.dot(P))
+        Ap = Q.T.dot(W.to_numpy().T).dot(G.T).dot(P) + T.dot(B.dot(P))
         Ep = T.dot(P)
     else:
         Q = gram_schmidt(Vu, atol=0, rtol=0)
