@@ -52,11 +52,11 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         at the same time.
     """
 
-    assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
+    assert isinstance(U, VectorArrayInterface) \
         or (isinstance(U, tuple) and
-            all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U) and
+            all(isinstance(u, VectorArrayInterface) for u in U) and
             all(len(u) == len(U[0]) for u in U))
-    U = (U.to_numpy().astype(np.float64, copy=False),) if hasattr(U, 'data') else \
+    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArrayInterface) else \
         tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
 
     if not config.HAVE_MATPLOTLIB:

@@ -78,9 +78,9 @@ class PatchVisualizer(BasicInterface):
             The number of columns in the visualizer GUI in case multiple plots are displayed
             at the same time.
         """
-        assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
+        assert isinstance(U, VectorArrayInterface) \
             or (isinstance(U, tuple) and
-                all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U) and
+                all(isinstance(u, VectorArrayInterface) for u in U) and
                 all(len(u) == len(U[0]) for u in U))
         if filename:
             if not isinstance(U, tuple):
