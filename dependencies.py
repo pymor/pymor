@@ -18,7 +18,7 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'pillow': 'image library used for bitmap data functions',
                     'psutil': 'Process management abstractions used for gui',
-                    'slycot>=0.3.1': 'python wrapper for the SLICOT control and systems library'}
+                    'slycot==0.3.1': 'python wrapper for the SLICOT control and systems library'}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'codecov', 'pytest-travis-fold']
 import_names = {'ipython': 'IPython',
