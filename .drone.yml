@@ -1,0 +1,8 @@
+
+pipeline:
+  build:
+    image: pymor/testing:3.6
+    #tags: ${DRONE_BRANCH/\//_}
+    commands:
+      - export PYTEST_MARKER="NUMPY" DOCKER_TAG="3.6"
+      - .ci/travis/script.bash
