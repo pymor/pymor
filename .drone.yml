@@ -4,10 +4,15 @@ pipeline:
     image: pymor/testing:${PY}
     #tags: ${DRONE_BRANCH/\//_}
     commands:
-      - export PYTEST_MARKER="NUMPY" DOCKER_TAG="${PY}"
+      - export PYTEST_MARKER="${MARKER}" DOCKER_TAG="${PY}"
       - .ci/travis/script.bash
 
 matrix:
   PY:
     - 3.6
     - 3.7
+  MARKER:
+    - NUMPY
+    - None
+    - MPI
+    - PIP_ONLY
