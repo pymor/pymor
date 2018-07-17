@@ -4,6 +4,13 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 _PYTEST = 'pytest>=3.3'
+
+def _pymess(rev, major, minor, marker=True):
+    url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}mu-manylinux1_x86_64.whl'.format(rev=rev, major=major, minor=minor)
+    if marker:
+        return '{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'.format(url=url, major=major, minor=minor)
+    return url
+
 tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker']
 install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'docopt', 'Qt.py', 'packaging']
 setup_requires = ['pytest-runner>=2.9', 'cython>=0.20.1', 'numpy>=1.8.1', 'packaging']
@@ -15,6 +22,8 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'mpi4py': 'required for pymor.tools.mpi and pymor.parallel.mpi',
                     'pyevtk>=1.1': 'writing vtk output',
                     _PYTEST: 'testing framework required to execute unit tests',
+                    _pymess('1.0.0', 3, 5): 'Python bindings for M.E.S.S. (Matrix Equation Sparse Solver)',
+                    _pymess('1.0.0', 3, 6): 'Python bindings for M.E.S.S. (Matrix Equation Sparse Solver)',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'pillow': 'image library used for bitmap data functions',
                     'psutil': 'Process management abstractions used for gui'}
@@ -27,6 +36,8 @@ import_names = {'ipython': 'IPython',
                 'pytest-cov': 'pytest_cov',
                 'pytest-flakes': 'pytest_flakes',
                 'pytest-pep8': 'pytest_pep8',
+                _pymess('1.0.0', 3, 5, False): 'pymess',
+                _pymess('1.0.0', 3, 6, False): 'pymess',
                 'pyopengl': 'OpenGL'}
 needs_extra_compile_setup = ['mpi4py']
 
