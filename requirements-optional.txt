@@ -3,6 +3,8 @@
 PyQt5
 docker
 envparse
+https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/1.0.0/pymess-1.0.0-cp35-cp35mu-manylinux1_x86_64.whl ; python_version == "3.5" and "linux" in sys_platform
+https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/1.0.0/pymess-1.0.0-cp36-cp36mu-manylinux1_x86_64.whl ; python_version == "3.6" and "linux" in sys_platform
 ipyparallel
 ipython>=3.0
 matplotlib
