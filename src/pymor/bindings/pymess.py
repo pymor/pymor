@@ -11,7 +11,8 @@ if config.HAVE_PYMESS:
 
     from pymor.algorithms.genericsolvers import _parse_options
     from pymor.algorithms.to_matrix import to_matrix
-    from pymor.bindings.scipy import _solve_lyap_check_args, _solve_ricc_check_args
+    from pymor.bindings.scipy import _solve_ricc_check_args
+    from pymor.algorithms.lyapunov import _solve_lyap_check_args
     from pymor.core.defaults import defaults
     from pymor.operators.constructions import IdentityOperator, LincombOperator
 

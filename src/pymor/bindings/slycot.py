@@ -10,7 +10,8 @@ if config.HAVE_SLYCOT:
 
     from pymor.algorithms.genericsolvers import _parse_options
     from pymor.algorithms.to_matrix import to_matrix
-    from pymor.bindings.scipy import _solve_lyap_check_args, _solve_ricc_check_args
+    from pymor.bindings.scipy import _solve_ricc_check_args
+    from pymor.algorithms.lyapunov import _solve_lyap_check_args
 
     def lyap_solver_options():
         """Returns available Lyapunov equation solvers with default |solver_options| for the Slycot backend.

@@ -64,7 +64,7 @@ def solve_lyap(A, E, B, trans=False, options=None):
 
 
 def lyap_solver_options(lradi_tol=1e-10,
-                        lradi_maxiter=100,
+                        lradi_maxiter=500,
                         lradi_shifts='projection_shifts',
                         projection_shifts_z_columns=1,
                         projection_shifts_init_maxiter=20,
@@ -138,10 +138,11 @@ def lradi(A, E, B, trans=False, options=None):
     shifts = init_shifts(A, E, W, shift_options)
     size_shift = shifts.size
     res = np.linalg.norm(W.gramian(), ord=2)
+    init_res = res
     Btol = res * options['tol']
 
     while(res > Btol and j < options['maxiter']):
-        logger.info("Residual at step {}: {}".format(j, res))
+        logger.info("Relative residual at step {}: {:.5e}".format(j, res/init_res))
         if shifts[j].imag == 0:
             AaE = LincombOperator([A, E], [1, shifts[j].real])
             if trans:
@@ -186,11 +187,11 @@ def projection_shifts_init(A, E, B, shift_options):
     Parameters
     ----------
     A
-        The |Operator| A from the corresponding lyapunov equation.
+        The |Operator| A from the corresponding Lyapunov equation.
     E
-        The |Operator| E from the corresponding lyapunov equation or `None`.
+        The |Operator| E from the corresponding Lyapunov equation.
     B
-        The |VectorArray| B from the corresponding lyapunov equation.
+        The |VectorArray| B from the corresponding Lyapunov equation.
     shift_options
         The |shift_options| to use (see :func:`lyap_solver_options`).
 
@@ -201,8 +202,8 @@ def projection_shifts_init(A, E, B, shift_options):
     """
     for i in range(0, shift_options['init_maxiter']):
         Q = gram_schmidt(B, atol=0, rtol=0)
-        shifts = spla.eigvals(A.apply2(Q, Q), b=E.apply2(Q, Q))
-        shifts[np.real(shifts) > 0] = -shifts[np.real(shifts) > 0]
+        shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
+        shifts = shifts[np.real(shifts) < 0]
         if shifts.size == 0:
             # use random subspace instead of span{B} (with same dimensions)
             if shift_options['init_seed'] is not None:
@@ -228,9 +229,9 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
     Parameters
     ----------
     A
-        The |Operator| A from the corresponding lyapunov equation.
+        The |Operator| A from the corresponding Lyapunov equation.
     E
-        The |Operator| E from the corresponding lyapunov equation or `None`.
+        The |Operator| E from the corresponding Lyapunov equation.
     Z
         A |VectorArray| representing the currently computed low-rank solution factor.
     W
@@ -252,10 +253,10 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
     if d < 0:
         u = L
         d = 0
-    if prev_shifts[L-u].imag < 0:
+    if prev_shifts[-u].imag < 0:
         u = u + 1
 
-    Vu = Z[(L - u) * r:L * r]  # last u matrices V added to solution factor Z
+    Vu = Z[-u * r:]  # last u matrices V added to solution factor Z
 
     if shift_options['implicit_subspace']:
         B = np.zeros((u, u))
@@ -304,8 +305,8 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
         Ap = A.apply2(Q, Q)
         Ep = E.apply2(Q, Q)
 
-    shifts = spla.eigvals(Ap, b=Ep)
-    shifts[np.real(shifts) > 0] = -shifts[np.real(shifts) > 0]
+    shifts = spla.eigvals(Ap, Ep)
+    shifts = shifts[np.real(shifts) < 0]
     if shifts.size == 0:
         return np.concatenate((prev_shifts, prev_shifts))
     else:
