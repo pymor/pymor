@@ -5,7 +5,7 @@ pipeline:
     #tags: ${DRONE_BRANCH/\//_}
     commands:
       - export PYTEST_MARKER="${MARKER}" DOCKER_TAG="${PY}"
-      - .ci/travis/script.bash
+      - .ci/drone/script.bash
 
 matrix:
   PY:
