@@ -88,7 +88,7 @@ if config.HAVE_SLYCOT:
             U = np.zeros((n, n))
             X, scale, _, _, _ = slycot.sb03md(n, C, A_mat, U, dico, trana=trana)
         else:
-            job = 'X'
+            job = 'B'
             fact = 'N'
             Q = np.zeros((n, n))
             Z = np.zeros((n, n))
