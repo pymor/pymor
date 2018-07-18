@@ -9,6 +9,7 @@ from packaging.version import Version
 import scipy.version
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 
+from pymor.algorithms.lyapunov import _solve_lyap_check_args
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.config import config
@@ -390,14 +391,6 @@ def solve_lyap(A, E, B, trans=False, options=None):
     Z = A.source.from_numpy(np.array(Z).T)
 
     return Z
-
-
-def _solve_lyap_check_args(A, E, B, trans=False):
-    assert isinstance(A, OperatorInterface) and A.linear
-    assert A.source == A.range
-    assert isinstance(B, OperatorInterface) and B.linear
-    assert not trans and B.range == A.source or trans and B.source == A.source
-    assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
 
 
 def ricc_solver_options():

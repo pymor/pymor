@@ -537,6 +537,8 @@ class LTISystem(InputOutputSystem):
             from pymor.bindings.slycot import solve_lyap as solve_lyap_impl
         elif backend == 'pymess':
             from pymor.bindings.pymess import solve_lyap as solve_lyap_impl
+        elif backend == 'lradi':
+            from pymor.algorithms.lyapunov import solve_lyap as solve_lyap_impl
         else:
             raise NotImplementedError
         return partial(solve_lyap_impl, options=options)
