@@ -295,8 +295,6 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
     """
 
     assert alg in ('ei_greedy', 'deim')
-    if alg == 'deim' and pool is not dummy_pool:
-        raise NotImplementedError
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:
         operators = [d.operators[operator_name] for operator_name in operator_names]
@@ -319,6 +317,13 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
                                               max_interpolation_dofs=max_interpolation_dofs,
                                               copy=False, pool=pool)
         elif alg == 'deim':
+            if alg == 'deim' and pool is not dummy_pool:
+                logger.warn('DEIM algorithm not parallel. Collecting operator evaluations.')
+                evaluations = pool.apply(_identity, x=evaluations)
+                evs = evaluations[0]
+                for e in evaluations[1:]:
+                    evs.append(e, remove_from_other=True)
+                evaluations = evs
             with logger.block('Executing DEIM algorithm:'):
                 dofs, basis, data = deim(evaluations, modes=max_interpolation_dofs,
                                          atol=atol, rtol=rtol, pod_options=pod_options, product=product)
@@ -443,3 +448,7 @@ def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
     errs = U.l2_norm() if error_norm is None else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
     return errs[max_err_ind]
+
+
+def _identity(x):
+    return x
