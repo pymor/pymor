@@ -1,4 +1,6 @@
-
+workspace:
+    base: /src
+    path: .
 pipeline:
   build:
     image: pymor/testing:${PY}
