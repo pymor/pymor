@@ -238,15 +238,17 @@ def deim(U, modes=None, error_norm=None, product=None):
 
 
 def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
-                          atol=None, rtol=None, max_interpolation_dofs=None, pool=dummy_pool):
-    """Empirical operator interpolation using the EI-Greedy algorithm.
+                          atol=None, rtol=None, max_interpolation_dofs=None,
+                          alg='ei_greedy', pool=dummy_pool):
+    """Empirical operator interpolation using the EI-Greedy/DEIM algorithm.
 
-    This is a convenience method to facilitate the use of :func:`ei_greedy`. Given
-    a |Discretization|, names of |Operators|, and a sample of |Parameters|, first the operators
-    are evaluated on the solution snapshots of the discretization for the provided parameters.
-    These evaluations are then used as input for :func:`ei_greedy`. Finally the resulting
-    interpolation data is used to create |EmpiricalInterpolatedOperators| and a new
-    discretization with the interpolated operators is returned.
+    This is a convenience method to facilitate the use of :func:`ei_greedy` or :func:`deim`.
+    Given a |Discretization|, names of |Operators|, and a sample of |Parameters|, first
+    the operators are evaluated on the solution snapshots of the discretization for the
+    provided parameters. These evaluations are then used as input for
+    :func:`ei_greedy`/:func:`deim`.  Finally the resulting interpolation data is used to
+    create |EmpiricalInterpolatedOperators| and a new discretization with the interpolated
+    operators is returned.
 
     Note that this implementation creates *one* common collateral basis for all specified
     operators, which might not be what you want.
@@ -268,6 +270,8 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
         See :func:`ei_greedy`.
     max_interpolation_dofs
         See :func:`ei_greedy`.
+    alg
+        Either `ei_greedy` or `deim`.
     pool
         If not `None`, the |WorkerPool| to use for parallelization.
 
@@ -287,6 +291,9 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
                                     be near zero).
     """
 
+    assert alg in ('ei_greedy', 'deim')
+    if alg == 'deim' and pool is not dummy_pool:
+        raise NotImplementedError
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:
         operators = [d.operators[operator_name] for operator_name in operator_names]
@@ -303,12 +310,19 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
                     for op in operators:
                         evaluations.append(op.apply(U, mu=mu))
 
-        with logger.block('Performing EI-Greedy:'):
-            dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
-                                          max_interpolation_dofs=max_interpolation_dofs,
-                                          copy=False, pool=pool)
+        if alg == 'ei_greedy':
+            with logger.block('Performing EI-Greedy:'):
+                dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
+                                              max_interpolation_dofs=max_interpolation_dofs,
+                                              copy=False, pool=pool)
+        elif alg == 'deim':
+            with logger.block('Executing DEIM algorithm:'):
+                dofs, basis, data = deim(evaluations, error_norm=error_norm,
+                                         modes=max_interpolation_dofs)
+        else:
+            assert False
 
-    ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
+    ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=(alg == 'ei_greedy'))
                     for name, operator in zip(operator_names, operators)}
     operators_dict = d.operators.copy()
     operators_dict.update(ei_operators)
