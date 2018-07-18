@@ -154,7 +154,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     return interpolation_dofs, collateral_basis, data
 
 
-def deim(U, modes=None, error_norm=None, product=None):
+def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
     """Generate data for empirical interpolation using DEIM algorithm.
 
     Given a |VectorArray| `U`, this method generates a collateral basis and
@@ -170,11 +170,14 @@ def deim(U, modes=None, error_norm=None, product=None):
         A |VectorArray| of vectors to interpolate.
     modes
         Dimension of the collateral basis i.e. number of POD modes of the vectors in `U`.
-    error_norm
-        Norm w.r.t. which to calculate the interpolation error. If `None`, the Euclidean norm
-        is used.
+    atol
+        Absolute POD tolerance.
+    rtol
+        Relative POD tolerance.
     product
         Inner product |Operator| used for the POD.
+    pod_options
+        Dictionary of additional options to pass to the :func:`~pymor.algorithms.pod.pod` algorithm.
 
     Returns
     -------
@@ -185,7 +188,7 @@ def deim(U, modes=None, error_norm=None, product=None):
     data
         Dict containing the following fields:
 
-            :errors: Sequence of maximum approximation errors during greedy search.
+            :svals: POD singular values.
     """
 
     assert isinstance(U, VectorArrayInterface)
@@ -193,13 +196,13 @@ def deim(U, modes=None, error_norm=None, product=None):
     logger = getLogger('pymor.algorithms.ei.deim')
     logger.info('Generating Interpolation Data ...')
 
-    collateral_basis = pod(U, modes, product=product)[0]
+    collateral_basis, svals = pod(U, modes=modes, atol=atol, rtol=rtol, product=product, **pod_options)
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     interpolation_matrix = np.zeros((0, 0))
-    errs = []
 
     for i in range(len(collateral_basis)):
+        logger.info('Choosing interpolation point for basis vector {}.'.format(i))
 
         if len(interpolation_dofs) > 0:
             coefficients = np.linalg.solve(interpolation_matrix,
@@ -210,10 +213,6 @@ def deim(U, modes=None, error_norm=None, product=None):
         else:
             ERR = collateral_basis[i].copy()
 
-        err = np.max(ERR.l2_norm() if error_norm is None else error_norm(ERR))
-
-        logger.info('Interpolation error for basis vector {}: {}'.format(i, err))
-
         # compute new interpolation dof and collateral basis vector
         new_dof = ERR.amax()[0][0]
 
@@ -223,23 +222,20 @@ def deim(U, modes=None, error_norm=None, product=None):
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
         interpolation_matrix = collateral_basis[:len(interpolation_dofs)].dofs(interpolation_dofs).T
-        errs.append(err)
-
-        logger.info('')
 
     if len(interpolation_dofs) < len(collateral_basis):
         del collateral_basis[len(interpolation_dofs):len(collateral_basis)]
 
     logger.info('Finished.')
 
-    data = {'errors': errs}
+    data = {'svals': svals}
 
     return interpolation_dofs, collateral_basis, data
 
 
 def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
-                          atol=None, rtol=None, max_interpolation_dofs=None,
-                          alg='ei_greedy', pool=dummy_pool):
+                          product=None, atol=None, rtol=None, max_interpolation_dofs=None,
+                          pod_options={}, alg='ei_greedy', pool=dummy_pool):
     """Empirical operator interpolation using the EI-Greedy/DEIM algorithm.
 
     This is a convenience method to facilitate the use of :func:`ei_greedy` or :func:`deim`.
@@ -264,12 +260,19 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
         A list of |Parameters| for which solution snapshots are calculated.
     error_norm
         See :func:`ei_greedy`.
+        Has no effect if `alg == 'deim'`.
+    product
+        Inner product for POD computation in :func:`deim`.
+        Has no effect if `alg == 'ei_greedy'`.
     atol
         See :func:`ei_greedy`.
     rtol
         See :func:`ei_greedy`.
     max_interpolation_dofs
         See :func:`ei_greedy`.
+    pod_options
+        Further options for :func:`~pymor.algorithms.pod.pod` algorithm.
+        Has no effect if `alg == 'ei_greedy'`.
     alg
         Either `ei_greedy` or `deim`.
     pool
@@ -317,8 +320,8 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
                                               copy=False, pool=pool)
         elif alg == 'deim':
             with logger.block('Executing DEIM algorithm:'):
-                dofs, basis, data = deim(evaluations, error_norm=error_norm,
-                                         modes=max_interpolation_dofs)
+                dofs, basis, data = deim(evaluations, modes=max_interpolation_dofs,
+                                         atol=atol, rtol=rtol, pod_options=pod_options, product=product)
         else:
             assert False
 
