@@ -268,10 +268,32 @@ def test_jacobian(operator_with_arrays):
 
 
 def test_assemble(operator_with_arrays):
-    op, mu, _, _ = operator_with_arrays
+    op, mu, U, V = operator_with_arrays
     aop = op.assemble(mu=mu)
     assert op.source == aop.source
     assert op.range == aop.range
+    assert np.all(almost_equal(aop.apply(U), op.apply(U, mu=mu)))
+
+    try:
+        ATV = op.apply_transpose(V, mu=mu)
+    except (NotImplementedError, LinAlgError):
+        ATV = None
+    if ATV is not None:
+        assert np.all(almost_equal(aop.apply_transpose(V), ATV))
+
+    try:
+        AIV = op.apply_inverse(V, mu=mu)
+    except InversionError:
+        AIV = None
+    if AIV is not None:
+        assert np.all(almost_equal(aop.apply_inverse(V), AIV))
+
+    try:
+        AITU = op.apply_inverse_transpose(U, mu=mu)
+    except (InversionError, LinAlgError):
+        AITU = None
+    if AITU is not None:
+        assert np.all(almost_equal(aop.apply_inverse_transpose(U), AITU))
 
 
 def test_restricted(operator_with_arrays):
