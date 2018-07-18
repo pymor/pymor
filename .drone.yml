@@ -8,6 +8,7 @@ pipeline:
     commands:
       - export PYTEST_MARKER="${MARKER}" DOCKER_TAG="${PY}"
       - .ci/drone/script.bash
+    secrets: [ pymor_codecov_token ]
 
 matrix:
   PY:
