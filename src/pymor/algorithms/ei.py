@@ -154,7 +154,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     return interpolation_dofs, collateral_basis, data
 
 
-def deim(U, modes=None, error_norm=None, product=None):
+def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
     """Generate data for empirical interpolation using DEIM algorithm.
 
     Given a |VectorArray| `U`, this method generates a collateral basis and
@@ -170,11 +170,14 @@ def deim(U, modes=None, error_norm=None, product=None):
         A |VectorArray| of vectors to interpolate.
     modes
         Dimension of the collateral basis i.e. number of POD modes of the vectors in `U`.
-    error_norm
-        Norm w.r.t. which to calculate the interpolation error. If `None`, the Euclidean norm
-        is used.
+    atol
+        Absolute POD tolerance.
+    rtol
+        Relative POD tolerance.
     product
         Inner product |Operator| used for the POD.
+    pod_options
+        Dictionary of additional options to pass to the :func:`~pymor.algorithms.pod.pod` algorithm.
 
     Returns
     -------
@@ -185,7 +188,7 @@ def deim(U, modes=None, error_norm=None, product=None):
     data
         Dict containing the following fields:
 
-            :errors: Sequence of maximum approximation errors during greedy search.
+            :svals: POD singular values.
     """
 
     assert isinstance(U, VectorArrayInterface)
@@ -193,13 +196,13 @@ def deim(U, modes=None, error_norm=None, product=None):
     logger = getLogger('pymor.algorithms.ei.deim')
     logger.info('Generating Interpolation Data ...')
 
-    collateral_basis = pod(U, modes, product=product)[0]
+    collateral_basis, svals = pod(U, modes=modes, atol=atol, rtol=rtol, product=product, **pod_options)
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     interpolation_matrix = np.zeros((0, 0))
-    errs = []
 
     for i in range(len(collateral_basis)):
+        logger.info('Choosing interpolation point for basis vector {}.'.format(i))
 
         if len(interpolation_dofs) > 0:
             coefficients = np.linalg.solve(interpolation_matrix,
@@ -210,10 +213,6 @@ def deim(U, modes=None, error_norm=None, product=None):
         else:
             ERR = collateral_basis[i].copy()
 
-        err = np.max(ERR.l2_norm() if error_norm is None else error_norm(ERR))
-
-        logger.info('Interpolation error for basis vector {}: {}'.format(i, err))
-
         # compute new interpolation dof and collateral basis vector
         new_dof = ERR.amax()[0][0]
 
@@ -223,30 +222,29 @@ def deim(U, modes=None, error_norm=None, product=None):
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
         interpolation_matrix = collateral_basis[:len(interpolation_dofs)].dofs(interpolation_dofs).T
-        errs.append(err)
-
-        logger.info('')
 
     if len(interpolation_dofs) < len(collateral_basis):
         del collateral_basis[len(interpolation_dofs):len(collateral_basis)]
 
     logger.info('Finished.')
 
-    data = {'errors': errs}
+    data = {'svals': svals}
 
     return interpolation_dofs, collateral_basis, data
 
 
 def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
-                          atol=None, rtol=None, max_interpolation_dofs=None, pool=dummy_pool):
-    """Empirical operator interpolation using the EI-Greedy algorithm.
+                          product=None, atol=None, rtol=None, max_interpolation_dofs=None,
+                          pod_options={}, alg='ei_greedy', pool=dummy_pool):
+    """Empirical operator interpolation using the EI-Greedy/DEIM algorithm.
 
-    This is a convenience method to facilitate the use of :func:`ei_greedy`. Given
-    a |Discretization|, names of |Operators|, and a sample of |Parameters|, first the operators
-    are evaluated on the solution snapshots of the discretization for the provided parameters.
-    These evaluations are then used as input for :func:`ei_greedy`. Finally the resulting
-    interpolation data is used to create |EmpiricalInterpolatedOperators| and a new
-    discretization with the interpolated operators is returned.
+    This is a convenience method to facilitate the use of :func:`ei_greedy` or :func:`deim`.
+    Given a |Discretization|, names of |Operators|, and a sample of |Parameters|, first
+    the operators are evaluated on the solution snapshots of the discretization for the
+    provided parameters. These evaluations are then used as input for
+    :func:`ei_greedy`/:func:`deim`.  Finally the resulting interpolation data is used to
+    create |EmpiricalInterpolatedOperators| and a new discretization with the interpolated
+    operators is returned.
 
     Note that this implementation creates *one* common collateral basis for all specified
     operators, which might not be what you want.
@@ -262,12 +260,21 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
         A list of |Parameters| for which solution snapshots are calculated.
     error_norm
         See :func:`ei_greedy`.
+        Has no effect if `alg == 'deim'`.
+    product
+        Inner product for POD computation in :func:`deim`.
+        Has no effect if `alg == 'ei_greedy'`.
     atol
         See :func:`ei_greedy`.
     rtol
         See :func:`ei_greedy`.
     max_interpolation_dofs
         See :func:`ei_greedy`.
+    pod_options
+        Further options for :func:`~pymor.algorithms.pod.pod` algorithm.
+        Has no effect if `alg == 'ei_greedy'`.
+    alg
+        Either `ei_greedy` or `deim`.
     pool
         If not `None`, the |WorkerPool| to use for parallelization.
 
@@ -287,6 +294,7 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
                                     be near zero).
     """
 
+    assert alg in ('ei_greedy', 'deim')
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:
         operators = [d.operators[operator_name] for operator_name in operator_names]
@@ -303,12 +311,26 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
                     for op in operators:
                         evaluations.append(op.apply(U, mu=mu))
 
-        with logger.block('Performing EI-Greedy:'):
-            dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
-                                          max_interpolation_dofs=max_interpolation_dofs,
-                                          copy=False, pool=pool)
+        if alg == 'ei_greedy':
+            with logger.block('Performing EI-Greedy:'):
+                dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
+                                              max_interpolation_dofs=max_interpolation_dofs,
+                                              copy=False, pool=pool)
+        elif alg == 'deim':
+            if alg == 'deim' and pool is not dummy_pool:
+                logger.warn('DEIM algorithm not parallel. Collecting operator evaluations.')
+                evaluations = pool.apply(_identity, x=evaluations)
+                evs = evaluations[0]
+                for e in evaluations[1:]:
+                    evs.append(e, remove_from_other=True)
+                evaluations = evs
+            with logger.block('Executing DEIM algorithm:'):
+                dofs, basis, data = deim(evaluations, modes=max_interpolation_dofs,
+                                         atol=atol, rtol=rtol, pod_options=pod_options, product=product)
+        else:
+            assert False
 
-    ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
+    ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=(alg == 'ei_greedy'))
                     for name, operator in zip(operator_names, operators)}
     operators_dict = d.operators.copy()
     operators_dict.update(ei_operators)
@@ -426,3 +448,7 @@ def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
     errs = U.l2_norm() if error_norm is None else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
     return errs[max_err_ind]
+
+
+def _identity(x):
+    return x

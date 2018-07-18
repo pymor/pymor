@@ -32,6 +32,9 @@ Options:
                                   (NONE, MEMORY, DISK, PERSISTENT)
                                   [default: DISK]
 
+  --ei-alg=ALG                    Interpolation algorithm to use (EI_GREEDY, DEIM)
+                                  [default: EI_GREEDY].
+
   --grid=NI                       Use grid with (2*NI)*NI elements [default: 60].
 
   --grid-type=TYPE                Type of grid to use (rect, tria) [default: rect].
@@ -96,6 +99,8 @@ from pymor.reductors.basic import GenericRBReductor
 def main(args):
     args = docopt(__doc__, args)
     args['--cache-region'] = args['--cache-region'].lower()
+    args['--ei-alg'] = args['--ei-alg'].lower()
+    assert args['--ei-alg'] in ('ei_greedy', 'deim')
     args['--grid'] = int(args['--grid'])
     args['--grid-type'] = args['--grid-type'].lower()
     assert args['--grid-type'] in ('rect', 'tria')
@@ -156,8 +161,9 @@ def main(args):
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
     ei_d, ei_data = interpolate_operators(d, ['operator'],
                                           d.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
-                                          error_norm=d.l2_norm,
+                                          error_norm=d.l2_norm, product=d.l2_product,
                                           max_interpolation_dofs=args['EISIZE'],
+                                          alg=args['--ei-alg'],
                                           pool=pool)
 
     if args['--plot-ei-err']:
