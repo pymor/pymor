@@ -161,7 +161,7 @@ def main(args):
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
     ei_d, ei_data = interpolate_operators(d, ['operator'],
                                           d.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
-                                          error_norm=d.l2_norm,
+                                          error_norm=d.l2_norm, product=d.l2_product,
                                           max_interpolation_dofs=args['EISIZE'],
                                           alg=args['--ei-alg'],
                                           pool=pool)
