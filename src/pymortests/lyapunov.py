@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os
+
 import numpy as np
 import scipy as sp
 import scipy.sparse as sps
@@ -58,11 +60,11 @@ def _get_solve_lyap(me_solver):
     if me_solver == 'scipy':
         from pymor.bindings.scipy import solve_lyap
     elif me_solver == 'slycot':
-        if not config.HAVE_SLYCOT:
+        if not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_SLYCOT:
             pytest.skip('slycot not available')
         from pymor.bindings.slycot import solve_lyap
     elif me_solver.startswith('pymess'):
-        if not config.HAVE_PYMESS:
+        if not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_PYMESS:
             pytest.skip('pymess not available')
         from pymor.bindings.pymess import solve_lyap
     elif me_solver == 'lradi':

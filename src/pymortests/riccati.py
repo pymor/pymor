@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os
+
 import numpy as np
 import scipy.linalg as spla
 import scipy.sparse as sps
@@ -105,7 +107,7 @@ def test_scipy_trans(n, m, p):
     assert fro_norm(AX + AX.T - XCT.dot(RinvCXT) + BBT) / fro_norm(BBT) < 1e-10
 
 
-@pytest.mark.skipif(not config.HAVE_PYMESS, reason='pymess not available')
+@pytest.mark.skipif(not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_PYMESS, reason='pymess not available')
 @pytest.mark.parametrize('n', n_list_big)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
@@ -131,7 +133,7 @@ def test_pymess(n, m, p, me_solver):
     assert fro_norm(ATX + ATX.T - XB.dot(XB.T) + CTC) / fro_norm(CTC) < 1e-10
 
 
-@pytest.mark.skipif(not config.HAVE_PYMESS, reason='pymess not available')
+@pytest.mark.skipif(not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_PYMESS, reason='pymess not available')
 @pytest.mark.parametrize('n', n_list_big)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
@@ -157,7 +159,7 @@ def test_pymess_trans(n, m, p, me_solver):
     assert fro_norm(AX + AX.T - XCT.dot(XCT.T) + BBT) / fro_norm(BBT) < 1e-10
 
 
-@pytest.mark.skipif(not config.HAVE_PYMESS, reason='pymess not available')
+@pytest.mark.skipif(not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_PYMESS, reason='pymess not available')
 @pytest.mark.parametrize('n', n_list_big)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
@@ -187,7 +189,7 @@ def test_pymess_E(n, m, p, me_solver):
     assert fro_norm(ATXE + ATXE.T - ETXB.dot(ETXB.T) + CTC) / fro_norm(CTC) < 1e-10
 
 
-@pytest.mark.skipif(not config.HAVE_PYMESS, reason='pymess not available')
+@pytest.mark.skipif(not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_PYMESS, reason='pymess not available')
 @pytest.mark.parametrize('n', n_list_big)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
@@ -217,7 +219,7 @@ def test_pymess_E_trans(n, m, p, me_solver):
     assert fro_norm(AXET + AXET.T - EXCT.dot(EXCT.T) + BBT) / fro_norm(BBT) < 1e-10
 
 
-@pytest.mark.skipif(not config.HAVE_SLYCOT, reason='slycot not available')
+@pytest.mark.skipif(not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_SLYCOT, reason='slycot not available')
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
@@ -242,7 +244,7 @@ def test_slycot(n, m, p):
     assert fro_norm(ATX + ATX.T - XB.dot(XB.T) + CTC) / fro_norm(CTC) < 1e-8
 
 
-@pytest.mark.skipif(not config.HAVE_SLYCOT, reason='slycot not available')
+@pytest.mark.skipif(not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_SLYCOT, reason='slycot not available')
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
@@ -267,7 +269,7 @@ def test_slycot_trans(n, m, p):
     assert fro_norm(AX + AX.T - XCT.dot(XCT.T) + BBT) / fro_norm(BBT) < 1e-8
 
 
-@pytest.mark.skipif(not config.HAVE_SLYCOT, reason='slycot not available')
+@pytest.mark.skipif(not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_SLYCOT, reason='slycot not available')
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
@@ -296,7 +298,7 @@ def test_slycot_E(n, m, p):
     assert fro_norm(ATXE + ATXE.T - ETXB.dot(ETXB.T) + CTC) / fro_norm(CTC) < 1e-8
 
 
-@pytest.mark.skipif(not config.HAVE_SLYCOT, reason='slycot not available')
+@pytest.mark.skipif(not os.environ.get('DOCKER_NGSOLVE', False) and not config.HAVE_SLYCOT, reason='slycot not available')
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
