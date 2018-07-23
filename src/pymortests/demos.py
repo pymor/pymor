@@ -95,7 +95,7 @@ def _skip_if_no_solver(param):
     _, args = param
     from pymor.core.config import config
     # for this combo ngsolve is sure to be in the docker image
-    must_have_ngsolve = os.environ.get('DOCKER_NGSOLVE', False)
+    must_have_ngsolve = os.environ.get('PYMOR_DOCKER', False)
     for solver in ['fenics', 'ngsolve']:
         needs_solver = len([f for f in args if solver in str(f)]) > 0
         has_solver = getattr(config, 'HAVE_' + solver.upper())

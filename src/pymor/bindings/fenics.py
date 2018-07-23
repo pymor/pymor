@@ -31,7 +31,9 @@ if config.HAVE_FENICS:
             self.impl = self.impl.copy()
 
         def to_numpy(self, ensure_copy=False):
-            return self.impl.array()  # This always creates a copy!
+            if ensure_copy:
+                return self.impl.copy().get_local()
+            return self.impl.get_local()
 
         def _scal(self, alpha):
             self.impl *= alpha
@@ -65,10 +67,10 @@ if config.HAVE_FENICS:
             assert np.max(dof_indices) < self.impl.size()
             x = df.Vector()
             self.impl.gather(x, dof_indices)
-            return x.array()
+            return x.get_local()
 
         def amax(self):
-            A = np.abs(self.impl.array())
+            A = np.abs(self.impl.get_local())
             # there seems to be no way in the interface to compute amax without making a copy.
             # also, we need to check how things behave in the MPI parallel case.
             max_ind = np.argmax(A)
