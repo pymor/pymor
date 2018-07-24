@@ -4,6 +4,7 @@ workspace:
 pipeline:
   build:
     image: pymor/testing:${PY}
+    pull: true
     #tags: ${DRONE_BRANCH/\//_}
     commands:
       - export PYTEST_MARKER="${MARKER}" DOCKER_TAG="${PY}"
