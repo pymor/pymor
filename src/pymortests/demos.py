@@ -94,13 +94,11 @@ def _run_module(module, args):
 def _skip_if_no_solver(param):
     _, args = param
     from pymor.core.config import config
-    # for this combo ngsolve is sure to be in the docker image
-    must_have_ngsolve = os.environ.get('PYMOR_DOCKER', False)
     for solver in ['fenics', 'ngsolve']:
         needs_solver = len([f for f in args if solver in str(f)]) > 0
         has_solver = getattr(config, 'HAVE_' + solver.upper())
         if needs_solver and not has_solver:
-            if solver != 'ngsolve' or not must_have_ngsolve:
+            if not os.environ.get('PYMOR_DOCKER', False):
                 pytest.skip('skipped test due to missing ' + solver)
 
 
