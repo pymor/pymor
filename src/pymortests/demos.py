@@ -98,7 +98,7 @@ def _skip_if_no_solver(param):
         needs_solver = len([f for f in args if solver in str(f)]) > 0
         has_solver = getattr(config, 'HAVE_' + solver.upper())
         if needs_solver and not has_solver:
-            if not os.environ.get('PYMOR_DOCKER', False):
+            if not os.environ.get('DOCKER_PYMOR', False):
                 pytest.skip('skipped test due to missing ' + solver)
 
 
