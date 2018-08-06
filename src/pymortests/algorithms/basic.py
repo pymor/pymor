@@ -21,16 +21,18 @@ from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invali
 
 def test_almost_equal(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if hasattr(v1, 'data'):
+    try:
         dv1 = v1.to_numpy()
         dv2 = v2.to_numpy()
+    except NotImplementedError:
+        dv1 = dv2 = None
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)):
             for n, o in [('sup', np.inf), ('l1', 1), ('l2', 2)]:
                 r = almost_equal(v1[ind1], v2[ind2], norm=n)
                 assert isinstance(r, np.ndarray)
                 assert r.shape == (v1.len_ind(ind1),)
-                if hasattr(v1, 'data'):
+                if dv1 is not None:
                     if dv2.shape[1] == 0:
                         continue
                     assert np.all(r == (np.linalg.norm(indexed(dv1, ind1) - indexed(dv2, ind2), ord=o, axis=1)

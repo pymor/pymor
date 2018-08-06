@@ -71,6 +71,7 @@ THERMALBLOCK_GUI_ARGS = (
 
 BURGERS_EI_ARGS = (
     ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--ei-alg=deim']),
 )
 
 PARABOLIC_MOR_ARGS = (
@@ -98,13 +99,11 @@ def _run_module(module, args):
 def _skip_if_no_solver(param):
     demo, args = param
     from pymor.core.config import config
-    # for this combo ngsolve is sure to be in the docker image
-    must_have_ngsolve = os.environ.get('DOCKER_NGSOLVE', False)
     for solver in ['fenics', 'ngsolve']:
         needs_solver = len([f for f in args if solver in str(f)]) > 0
         has_solver = getattr(config, 'HAVE_' + solver.upper())
         if needs_solver and not has_solver:
-            if solver != 'ngsolve' or not must_have_ngsolve:
+            if not os.environ.get('DOCKER_PYMOR', False):
                 pytest.skip('skipped test due to missing ' + solver)
     if demo == 'heat' and not config.HAVE_SLYCOT:
         pytest.skip('skipped test due to missing slycot')

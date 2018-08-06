@@ -70,7 +70,7 @@ def _write_vtu_series(grid, coordinates, connectivity, data, filename_base, last
             _appendDataToFile(w, cellData=None, pointData={"Data": vtk_data})
 
         w.save()
-        group.addFile(filepath=fn, sim_time=i)
+        group.addFile(filepath=fn + '.vtu', sim_time=i)
     group.save()
 
 

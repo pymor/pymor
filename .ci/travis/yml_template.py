@@ -33,6 +33,7 @@ stages:
 before_script:
     - export IMAGE="pymor/testing:${DOCKER_TAG}"
     - docker pull ${IMAGE}
+    - docker inspect ${IMAGE}
     - export ENV_FILE=${HOME}/env
     - python3 ./.ci/travis/make_env_file.py
     - export DOCKER_RUN="docker run --privileged -e LOCAL_USER_ID=$(id -u) --env-file ${ENV_FILE} -v ${TRAVIS_BUILD_DIR}:/src ${IMAGE}"
@@ -70,7 +71,7 @@ import jinja2
 import sys
 from itertools import product
 tpl = jinja2.Template(tpl)
-pythons = ['3.5', '3.6', ]
+pythons = ['3.5', '3.6', '3.7']
 marker = [None, "PIP_ONLY", "MPI"]
 with open(os.path.join(os.path.dirname(__file__), 'travis.yml'), 'wt') as yml:
     matrix = product(pythons, marker)

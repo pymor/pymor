@@ -31,6 +31,7 @@ stages:
 before_script:
     - export IMAGE="pymor/testing:${DOCKER_TAG}"
     - docker pull ${IMAGE}
+    - docker inspect ${IMAGE}
     - export ENV_FILE=${HOME}/env
     - python3 ./.ci/travis/make_env_file.py
     - export DOCKER_RUN="docker run --privileged -e LOCAL_USER_ID=$(id -u) --env-file ${ENV_FILE} -v ${TRAVIS_BUILD_DIR}:/src ${IMAGE}"
@@ -58,6 +59,12 @@ jobs:
     env: PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.6"
   - stage: test
     env: PYTEST_MARKER="MPI" DOCKER_TAG="3.6"
+  - stage: test
+    env: PYTEST_MARKER="None" DOCKER_TAG="3.7"
+  - stage: test
+    env: PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.7"
+  - stage: test
+    env: PYTEST_MARKER="MPI" DOCKER_TAG="3.7"
 
   - stage: deploy
     if: type IS push # this seems to be ignored
