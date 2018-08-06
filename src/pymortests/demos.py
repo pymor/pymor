@@ -105,7 +105,7 @@ def _skip_if_no_solver(param):
         if needs_solver and not has_solver:
             if not os.environ.get('DOCKER_PYMOR', False):
                 pytest.skip('skipped test due to missing ' + solver)
-    if demo == 'heat' and not config.HAVE_SLYCOT:
+    if demo == 'heat' and not os.environ.get('DOCKER_PYMOR', False) and not config.HAVE_SLYCOT:
         pytest.skip('skipped test due to missing slycot')
 
 
