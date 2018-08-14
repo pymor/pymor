@@ -6,7 +6,7 @@
 import numpy as np
 
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import ZeroOperator
+from pymor.operators.constructions import LincombOperator, IdentityOperator, ZeroOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.block import BlockVectorSpace
 
@@ -225,10 +225,18 @@ class BlockDiagonalOperator(BlockOperator):
             return self.__class__(blocks)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        assert operators[0] is self
+
+        # return ShiftedSecondOrderSystemOperator if possible
+        if len(operators) == 2 and isinstance(operators[1], SecondOrderSystemOperator):
+            return operators[1].assemble_lincomb(operators[::-1], coefficients[::-1],
+                                                 solver_options=solver_options, name=name)
+
+        # return BlockOperator if not all operators are BlockDiagonalOperators
         if not all(isinstance(op, self.__class__) for op in operators):
             return super().assemble_lincomb(operators, coefficients, solver_options=solver_options, name=name)
 
-        assert operators[0] is self
+        # return BlockDiagonalOperator
         blocks = np.empty((self.num_source_blocks,), dtype=object)
         if len(operators) > 1:
             for i in range(self.num_source_blocks):
@@ -245,3 +253,245 @@ class BlockDiagonalOperator(BlockOperator):
             for i in range(self.num_source_blocks):
                 blocks[i] = self._blocks[i, i] * c
             return self.__class__(blocks)
+
+
+class SecondOrderSystemOperator(BlockOperator):
+    """BlockOperator appearing in SecondOrderSystem.to_lti().
+
+    This represents a block operator
+
+    .. math::
+        \mathcal{A} =
+        \begin{bmatrix}
+            0 & I \\
+            -K & -D
+        \end{bmatrix},
+
+    which satisfies
+
+    .. math::
+        \mathcal{A}^T
+        &=
+        \begin{bmatrix}
+            0 & -K^T \\
+            I & -D^T
+        \end{bmatrix}, \\
+        \mathcal{A}^{-1}
+        &=
+        \begin{bmatrix}
+            -K^{-1} D & -K^{-1} \\
+            I & 0
+        \end{bmatrix}, \\
+        \mathcal{A}^{-T}
+        &=
+        \begin{bmatrix}
+            -D^T K^{-T} & I \\
+            -K^{-T} & 0
+        \end{bmatrix}.
+
+    Parameters
+    ----------
+    D
+        |Operator|.
+    K
+        |Operator|.
+    """
+
+    def __init__(self, D, K):
+        super().__init__([[None, IdentityOperator(D.source)],
+                          [K * (-1), D * (-1)]])
+        self.D = D
+        self.K = K
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        V_blocks = [U.block(1),
+                    -self.K.apply(U.block(0), mu=mu) - self.D.apply(U.block(1), mu=mu)]
+        return self.range.make_array(V_blocks)
+
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
+        U_blocks = [-self.K.apply_transpose(V.block(1), mu=mu),
+                    V.block(0) - self.D.apply_transpose(V.block(1), mu=mu)]
+        return self.source.make_array(U_blocks)
+
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        assert V in self.range
+        U_blocks = [-self.K.apply_inverse(self.D.apply(V.block(0), mu=mu) + V.block(1), mu=mu,
+                                          least_squares=least_squares),
+                    V.block(0)]
+        return self.source.make_array(U_blocks)
+
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        assert U in self.source
+        KitU0 = self.K.apply_inverse_transpose(U.block(0), mu=mu, least_squares=least_squares)
+        V_blocks = [-self.D.apply_transpose(KitU0, mu=mu) + U.block(1),
+                    -KitU0]
+        return self.range.make_array(V_blocks)
+
+    def assemble(self, mu=None):
+        D = self.D.assemble(mu)
+        K = self.K.assemble(mu)
+        if D == self.D and K == self.K:
+            return self
+        else:
+            return self.__class__(D, K)
+
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        assert operators[0] is self
+
+        # return ShiftedSecondOrderSystemOperator if possible
+        if (len(operators) == 2 and isinstance(operators[1], BlockDiagonalOperator) and
+                operators[1].num_source_blocks == 2 and operators[1].num_range_blocks == 2 and
+                isinstance(operators[1]._blocks[0, 0], IdentityOperator)):
+            return ShiftedSecondOrderSystemOperator(operators[1]._blocks[1, 1],
+                                              self.D,
+                                              self.K,
+                                              coefficients[1],
+                                              coefficients[0])
+
+        # return BlockOperator
+        blocks = np.empty(self._blocks.shape, dtype=object)
+        if len(operators) > 1:
+            for (i, j) in np.ndindex(self._blocks.shape):
+                operators_ij = [op._blocks[i, j] for op in operators]
+                blocks[i, j] = operators_ij[0].assemble_lincomb(operators_ij, coefficients,
+                                                                solver_options=solver_options, name=name)
+                if blocks[i, j] is None:
+                    return None
+            return BlockOperator(blocks)
+        else:
+            c = coefficients[0]
+            if c == 1:
+                return self
+            for (i, j) in np.ndindex(self._blocks.shape):
+                blocks[i, j] = self._blocks[i, j] * c
+            return BlockOperator(blocks)
+
+
+class ShiftedSecondOrderSystemOperator(BlockOperator):
+    """BlockOperator appearing in second-order systems.
+
+    This represents a block operator
+
+    .. math::
+        a \mathcal{E} + b \mathcal{A} =
+        \begin{bmatrix}
+            a I & b I \\
+            -b K & a M - b D
+        \end{bmatrix},
+
+    which satisfies
+
+    .. math::
+        (a \mathcal{E} + b \mathcal{A})^T
+        &=
+        \begin{bmatrix}
+            a I & -b K^T \\
+            b I & a M^T - b D^T
+        \end{bmatrix}, \\
+        (a \mathcal{E} + b \mathcal{A})^{-1}
+        &=
+        \begin{bmatrix}
+            (a^2 M - a b D + b^2 K)^{-1} (a M - b D)
+            & -b (a^2 M - a b D + b^2 K)^{-1} \\
+            b (a^2 M - a b D + b^2 K)^{-1} K
+            & a (a^2 M - a b D + b^2 K)^{-1}
+        \end{bmatrix}, \\
+        (a \mathcal{E} + b \mathcal{A})^{-T}
+        &=
+        \begin{bmatrix}
+            (a M - b D)^T (a^2 M - a b D + b^2 K)^{-T}
+            & b K^T (a^2 M - a b D + b^2 K)^{-T} \\
+            -b (a^2 M - a b D + b^2 K)^{-T} & a (a^2 M - a b D + b^2 K)^{-T}
+        \end{bmatrix}.
+
+    Parameters
+    ----------
+    M
+        |Operator|.
+    D
+        |Operator|.
+    K
+        |Operator|.
+    p
+        Complex number.
+    """
+
+    def __init__(self, M, D, K, a, b):
+        super().__init__([[IdentityOperator(M.source) * a, IdentityOperator(M.source) * b],
+                          [K * (-b), LincombOperator([M, D], [a, -b])]])
+        self.M = M
+        self.D = D
+        self.K = K
+        self.a = a
+        self.b = b
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        V_blocks = [U.block(0) * self.a + U.block(1) * self.b,
+                    self.K.apply(U.block(0), mu=mu) * (-self.b) +
+                    self.M.apply(U.block(1), mu=mu) * self.a -
+                    self.D.apply(U.block(1), mu=mu) * self.b]
+        return self.range.make_array(V_blocks)
+
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
+        U_blocks = [V.block(0) * self.a - self.K.apply_transpose(V.block(1), mu=mu) * self.b,
+                    V.block(0) * self.b +
+                    self.M.apply_transpose(V.block(1), mu=mu) * self.a -
+                    self.D.apply_transpose(V.block(1), mu=mu) * self.b]
+        return self.source.make_array(U_blocks)
+
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        assert V in self.range
+        aMmbDV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.D.apply(V.block(0), mu=mu) * self.b
+        KV0 = self.K.apply(V.block(0), mu=mu)
+        a2MmabDpb2K = LincombOperator([self.M, self.D, self.K],
+                                      [self.a ** 2, -self.a * self.b, self.b ** 2]).assemble(mu=mu)
+        a2MmabDpb2KiV1 = a2MmabDpb2K.apply_inverse(V.block(1), mu=mu, least_squares=least_squares)
+        U_blocks = [a2MmabDpb2K.apply_inverse(aMmbDV0, mu=mu, least_squares=least_squares) -
+                    a2MmabDpb2KiV1 * self.b,
+                    a2MmabDpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) * self.b +
+                    a2MmabDpb2KiV1 * self.a]
+        return self.source.make_array(U_blocks)
+
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        assert U in self.source
+        a2MmabDpb2K = LincombOperator([self.M, self.D, self.K],
+                                      [self.a ** 2, -self.a * self.b, self.b ** 2]).assemble(mu=mu)
+        a2MmabDpb2KitU0 = a2MmabDpb2K.apply_inverse_transpose(U.block(0), mu=mu, least_squares=least_squares)
+        a2MmabDpb2KitU1 = a2MmabDpb2K.apply_inverse_transpose(U.block(1), mu=mu, least_squares=least_squares)
+        V_blocks = [self.M.apply_transpose(a2MmabDpb2KitU0, mu=mu) * self.a -
+                    self.D.apply_transpose(a2MmabDpb2KitU0, mu=mu) * self.b +
+                    self.K.apply_transpose(a2MmabDpb2KitU1, mu=mu) * self.b,
+                    -a2MmabDpb2KitU0 * self.b + a2MmabDpb2KitU1 * self.a]
+        return self.range.make_array(V_blocks)
+
+    def assemble(self, mu=None):
+        M = self.M.assemble(mu)
+        D = self.D.assemble(mu)
+        K = self.K.assemble(mu)
+        if M == self.M and D == self.D and K == self.K:
+            return self
+        else:
+            return self.__class__(M, D, K, self.a, self.b)
+
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        assert operators[0] is self
+        blocks = np.empty(self._blocks.shape, dtype=object)
+        if len(operators) > 1:
+            for (i, j) in np.ndindex(self._blocks.shape):
+                operators_ij = [op._blocks[i, j] for op in operators]
+                blocks[i, j] = operators_ij[0].assemble_lincomb(operators_ij, coefficients,
+                                                                solver_options=solver_options, name=name)
+                if blocks[i, j] is None:
+                    return None
+            return BlockOperator(blocks)
+        else:
+            c = coefficients[0]
+            if c == 1:
+                return self
+            for (i, j) in np.ndindex(self._blocks.shape):
+                blocks[i, j] = self._blocks[i, j] * c
+            return BlockOperator(blocks)

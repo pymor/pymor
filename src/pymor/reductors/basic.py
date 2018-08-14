@@ -10,6 +10,8 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.exceptions import ExtensionError
 from pymor.core.interfaces import BasicInterface
+from pymor.operators.constructions import IdentityOperator
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericRBReductor(BasicInterface):
@@ -170,17 +172,17 @@ class GenericPGReductor(BasicInterface):
         |VectorArray| containing the right projection matrix.
     W
         |VectorArray| containing the left projection matrix.
-    use_default
-        Iterable of keys of |Operators| that should not be projected,
-        but a default value in `d.with_` is to be used.
+    biorthogonal_product
+        Key of the operator in d.operators() used as the product to
+        biorthogonalize V and W.
     """
 
-    def __init__(self, d, V, W, use_default=None):
+    def __init__(self, d, V, W, biorthogonal_product=None):
         assert V in d.solution_space
         self.d = d
         self.V = V
         self.W = W
-        self.use_default = use_default
+        self.biorthogonal_product = biorthogonal_product
         self._last_rd = None
 
     def reduce(self):
@@ -191,12 +193,19 @@ class GenericPGReductor(BasicInterface):
         The reduced |Discretization|.
         """
         d, V, W = self.d, self.V, self.W
-        use_default = self.use_default or []
+        biorthogonal_product = self.biorthogonal_product
 
-        projected_ops = {k: project(op,
-                                    range_basis=W if W in op.range else None,
-                                    source_basis=V if V in op.source else None) if op and k not in use_default else None
-                         for k, op in d.operators.items()}
+        def project_operator(k, op):
+            if not op:
+                return None
+            if k == biorthogonal_product:
+                return IdentityOperator(NumpyVectorSpace(len(V), id_='STATE'))
+            else:
+                return project(op,
+                               range_basis=W if W in op.range else None,
+                               source_basis=V if V in op.source else None)
+
+        projected_ops = {k: project_operator(k, op) for k, op in d.operators.items()}
 
         rd = d.with_(operators=projected_ops,
                      visualizer=None, estimator=None,

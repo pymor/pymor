@@ -6,6 +6,7 @@ import numpy as np
 
 from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.discretizations.iosys import LTISystem, SecondOrderSystem, LinearDelaySystem
 from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import GenericPGReductor
 
@@ -34,7 +35,7 @@ class GenericBHIReductor(GenericPGReductor):
         self._C_range = None
         self._K_source = None
         self._product = None
-        self._use_default = None
+        self._biorthogonal_product = None
 
     def _B_apply(self, s, V):
         raise NotImplementedError()
@@ -108,10 +109,10 @@ class GenericBHIReductor(GenericPGReductor):
         if projection == 'orth':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.use_default = None
+            self.biorthogonal_product = None
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
-            self.use_default = self._use_default
+            self.biorthogonal_product = self._biorthogonal_product
 
         rd = super().reduce()
         return rd
@@ -129,12 +130,13 @@ class LTI_BHIReductor(GenericBHIReductor):
         |LTISystem|.
     """
     def __init__(self, d):
+        assert isinstance(d, LTISystem)
         self.d = d
         self._B_source = d.B.source
         self._C_range = d.C.range
         self._K_source = d.A.source
         self._product = d.E
-        self._use_default = ['E']
+        self._biorthogonal_product = 'E'
 
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
@@ -214,7 +216,7 @@ class LTI_BHIReductor(GenericBHIReductor):
 
         self.V = arnoldi(d.A, d.E, d.B, sigma)
         self.W = arnoldi(d.A, d.E, d.C, sigma, trans=True)
-        self.use_default = None
+        self.biorthogonal_product = None
 
         rd = super(GenericBHIReductor, self).reduce()
         return rd
@@ -229,18 +231,21 @@ class SO_BHIReductor(GenericBHIReductor):
         :class:`~pymor.discretizations.iosys.SecondOrderSystem`.
     """
     def __init__(self, d):
+        assert isinstance(d, SecondOrderSystem)
         self.d = d
         self._B_source = d.B.source
-        self._C_range = d.C.range
+        self._C_range = d.Cp.range
         self._K_source = d.K.source
         self._product = d.M
-        self._use_default = ['M']
+        self._biorthogonal_product = 'M'
 
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
 
     def _C_apply_transpose(self, s, V):
-        return self.d.C.apply_transpose(V)
+        x = self.d.Cp.apply_transpose(V)
+        y = self.d.Cv.apply_transpose(V)
+        return x + y * s
 
     def _K_apply_inverse(self, s, V):
         s2MpsDpK = LincombOperator((self.d.M, self.d.D, self.d.K), (s ** 2, s, 1))
@@ -260,12 +265,13 @@ class DelayBHIReductor(GenericBHIReductor):
         :class:`~pymor.discretizations.iosys.LinearDelaySystem`.
     """
     def __init__(self, d):
+        assert isinstance(d, LinearDelaySystem)
         self.d = d
         self._B_source = d.B.source
         self._C_range = d.C.range
         self._K_source = d.A.source
         self._product = d.E
-        self._use_default = ['E']
+        self._biorthogonal_product = 'E'
 
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
