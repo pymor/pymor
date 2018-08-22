@@ -97,8 +97,8 @@ if config.HAVE_SLYCOT:
             _, _, _, _, X, scale, _, _, _, _, _ = slycot.sg03ad(dico, job, fact, trana, uplo, n, A_mat, E_mat,
                                                                 Q, Z, X)
 
-        from pymor.bindings.scipy import cholp
-        Z = cholp(X, copy=False)
+        from pymor.bindings.scipy import chol
+        Z = chol(X, copy=False)
 
         Z = A.source.from_numpy(np.array(Z).T)
 
@@ -242,8 +242,8 @@ if config.HAVE_SLYCOT:
             if iwarn == 1:
                 print('slycot.sg02ad warning: solution may be inaccurate.')
 
-        from pymor.bindings.scipy import cholp
-        Z = cholp(X, copy=False)
+        from pymor.bindings.scipy import chol
+        Z = chol(X, copy=False)
         Z = A.source.from_numpy(np.array(Z).T)
 
         return Z
