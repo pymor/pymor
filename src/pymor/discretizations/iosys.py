@@ -638,7 +638,7 @@ class LTISystem(InputOutputSystem):
         return self._hsv_U_V()[2]
 
     @cached
-    def norm(self, name='H2'):
+    def norm(self, name='H2', ab13dd_equilibrate=False):
         r"""Compute a norm of the |LTISystem|.
 
         Parameters
@@ -651,6 +651,9 @@ class LTISystem(InputOutputSystem):
             - `'Hinf_fpeak'`: :math:`\mathcal{H}_\infty`-norm
                 and the maximizing frequency,
             - `'Hankel'`: Hankel norm (maximal singular value).
+
+        ab13dd_equilibrate
+            If `ab13dd` should use equilibration.
 
         Returns
         -------
@@ -668,7 +671,7 @@ class LTISystem(InputOutputSystem):
             from slycot import ab13dd
             dico = 'C' if self.cont_time else 'D'
             jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
-            equil = 'S'
+            equil = 'S' if ab13dd_equilibrate else 'N'
             jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
             A, B, C, D, E = map(lambda op: to_matrix(op, format='dense'),
                                 (self.A, self.B, self.C, self.D, self.E))
