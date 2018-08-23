@@ -28,6 +28,9 @@ class GenericBTReductor(GenericPGReductor):
         self.d = d
         self.V = None
         self.W = None
+        self.sv = None
+        self.sU = None
+        self.sV = None
 
     def gramians(self):
         """Returns low-rank factors of Gramians."""
@@ -35,9 +38,13 @@ class GenericBTReductor(GenericPGReductor):
 
     def sv_U_V(self):
         """Returns singular values and vectors."""
-        cf, of = self.gramians()
-        U, sv, Vh = spla.svd(self.d.E.apply2(of, cf), lapack_driver='gesvd')
-        return sv, U.T, Vh
+        if self.sv is None or self.sU is None or self.sV is None:
+            cf, of = self.gramians()
+            U, sv, Vh = spla.svd(self.d.E.apply2(of, cf), lapack_driver='gesvd')
+            self.sv = sv
+            self.sU = U.T
+            self.sV = Vh
+        return self.sv, self.sU, self.sV
 
     def error_bounds(self):
         """Returns error bounds for all possible reduced orders."""
