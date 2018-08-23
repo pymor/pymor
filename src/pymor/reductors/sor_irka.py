@@ -6,8 +6,6 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
-from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.logger import getLogger
 from pymor.discretizations.iosys import SecondOrderSystem

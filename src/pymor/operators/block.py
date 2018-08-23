@@ -264,7 +264,7 @@ class SecondOrderSystemOperator(BlockOperator):
         \mathcal{A} =
         \begin{bmatrix}
             0 & I \\
-            -K & -D
+            -K & -E
         \end{bmatrix},
 
     which satisfies
@@ -274,50 +274,50 @@ class SecondOrderSystemOperator(BlockOperator):
         &=
         \begin{bmatrix}
             0 & -K^T \\
-            I & -D^T
+            I & -E^T
         \end{bmatrix}, \\
         \mathcal{A}^{-1}
         &=
         \begin{bmatrix}
-            -K^{-1} D & -K^{-1} \\
+            -K^{-1} E & -K^{-1} \\
             I & 0
         \end{bmatrix}, \\
         \mathcal{A}^{-T}
         &=
         \begin{bmatrix}
-            -D^T K^{-T} & I \\
+            -E^T K^{-T} & I \\
             -K^{-T} & 0
         \end{bmatrix}.
 
     Parameters
     ----------
-    D
+    E
         |Operator|.
     K
         |Operator|.
     """
 
-    def __init__(self, D, K):
-        super().__init__([[None, IdentityOperator(D.source)],
-                          [K * (-1), D * (-1)]])
-        self.D = D
+    def __init__(self, E, K):
+        super().__init__([[None, IdentityOperator(E.source)],
+                          [K * (-1), E * (-1)]])
+        self.E = E
         self.K = K
 
     def apply(self, U, mu=None):
         assert U in self.source
         V_blocks = [U.block(1),
-                    -self.K.apply(U.block(0), mu=mu) - self.D.apply(U.block(1), mu=mu)]
+                    -self.K.apply(U.block(0), mu=mu) - self.E.apply(U.block(1), mu=mu)]
         return self.range.make_array(V_blocks)
 
     def apply_transpose(self, V, mu=None):
         assert V in self.range
         U_blocks = [-self.K.apply_transpose(V.block(1), mu=mu),
-                    V.block(0) - self.D.apply_transpose(V.block(1), mu=mu)]
+                    V.block(0) - self.E.apply_transpose(V.block(1), mu=mu)]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        U_blocks = [-self.K.apply_inverse(self.D.apply(V.block(0), mu=mu) + V.block(1), mu=mu,
+        U_blocks = [-self.K.apply_inverse(self.E.apply(V.block(0), mu=mu) + V.block(1), mu=mu,
                                           least_squares=least_squares),
                     V.block(0)]
         return self.source.make_array(U_blocks)
@@ -325,17 +325,17 @@ class SecondOrderSystemOperator(BlockOperator):
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         assert U in self.source
         KitU0 = self.K.apply_inverse_transpose(U.block(0), mu=mu, least_squares=least_squares)
-        V_blocks = [-self.D.apply_transpose(KitU0, mu=mu) + U.block(1),
+        V_blocks = [-self.E.apply_transpose(KitU0, mu=mu) + U.block(1),
                     -KitU0]
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):
-        D = self.D.assemble(mu)
+        E = self.E.assemble(mu)
         K = self.K.assemble(mu)
-        if D == self.D and K == self.K:
+        if E == self.E and K == self.K:
             return self
         else:
-            return self.__class__(D, K)
+            return self.__class__(E, K)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self
@@ -345,10 +345,10 @@ class SecondOrderSystemOperator(BlockOperator):
                 operators[1].num_source_blocks == 2 and operators[1].num_range_blocks == 2 and
                 isinstance(operators[1]._blocks[0, 0], IdentityOperator)):
             return ShiftedSecondOrderSystemOperator(operators[1]._blocks[1, 1],
-                                              self.D,
-                                              self.K,
-                                              coefficients[1],
-                                              coefficients[0])
+                                                    self.E,
+                                                    self.K,
+                                                    coefficients[1],
+                                                    coefficients[0])
 
         # return BlockOperator
         blocks = np.empty(self._blocks.shape, dtype=object)
@@ -378,7 +378,7 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         a \mathcal{E} + b \mathcal{A} =
         \begin{bmatrix}
             a I & b I \\
-            -b K & a M - b D
+            -b K & a M - b E
         \end{bmatrix},
 
     which satisfies
@@ -388,29 +388,29 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         &=
         \begin{bmatrix}
             a I & -b K^T \\
-            b I & a M^T - b D^T
+            b I & a M^T - b E^T
         \end{bmatrix}, \\
         (a \mathcal{E} + b \mathcal{A})^{-1}
         &=
         \begin{bmatrix}
-            (a^2 M - a b D + b^2 K)^{-1} (a M - b D)
-            & -b (a^2 M - a b D + b^2 K)^{-1} \\
-            b (a^2 M - a b D + b^2 K)^{-1} K
-            & a (a^2 M - a b D + b^2 K)^{-1}
+            (a^2 M - a b E + b^2 K)^{-1} (a M - b E)
+            & -b (a^2 M - a b E + b^2 K)^{-1} \\
+            b (a^2 M - a b E + b^2 K)^{-1} K
+            & a (a^2 M - a b E + b^2 K)^{-1}
         \end{bmatrix}, \\
         (a \mathcal{E} + b \mathcal{A})^{-T}
         &=
         \begin{bmatrix}
-            (a M - b D)^T (a^2 M - a b D + b^2 K)^{-T}
-            & b K^T (a^2 M - a b D + b^2 K)^{-T} \\
-            -b (a^2 M - a b D + b^2 K)^{-T} & a (a^2 M - a b D + b^2 K)^{-T}
+            (a M - b E)^T (a^2 M - a b E + b^2 K)^{-T}
+            & b K^T (a^2 M - a b E + b^2 K)^{-T} \\
+            -b (a^2 M - a b E + b^2 K)^{-T} & a (a^2 M - a b E + b^2 K)^{-T}
         \end{bmatrix}.
 
     Parameters
     ----------
     M
         |Operator|.
-    D
+    E
         |Operator|.
     K
         |Operator|.
@@ -418,11 +418,11 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         Complex number.
     """
 
-    def __init__(self, M, D, K, a, b):
+    def __init__(self, M, E, K, a, b):
         super().__init__([[IdentityOperator(M.source) * a, IdentityOperator(M.source) * b],
-                          [K * (-b), LincombOperator([M, D], [a, -b])]])
+                          [K * (-b), LincombOperator([M, E], [a, -b])]])
         self.M = M
-        self.D = D
+        self.E = E
         self.K = K
         self.a = a
         self.b = b
@@ -432,7 +432,7 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         V_blocks = [U.block(0) * self.a + U.block(1) * self.b,
                     self.K.apply(U.block(0), mu=mu) * (-self.b) +
                     self.M.apply(U.block(1), mu=mu) * self.a -
-                    self.D.apply(U.block(1), mu=mu) * self.b]
+                    self.E.apply(U.block(1), mu=mu) * self.b]
         return self.range.make_array(V_blocks)
 
     def apply_transpose(self, V, mu=None):
@@ -440,42 +440,42 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         U_blocks = [V.block(0) * self.a - self.K.apply_transpose(V.block(1), mu=mu) * self.b,
                     V.block(0) * self.b +
                     self.M.apply_transpose(V.block(1), mu=mu) * self.a -
-                    self.D.apply_transpose(V.block(1), mu=mu) * self.b]
+                    self.E.apply_transpose(V.block(1), mu=mu) * self.b]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        aMmbDV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.D.apply(V.block(0), mu=mu) * self.b
+        aMmbEV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.E.apply(V.block(0), mu=mu) * self.b
         KV0 = self.K.apply(V.block(0), mu=mu)
-        a2MmabDpb2K = LincombOperator([self.M, self.D, self.K],
+        a2MmabEpb2K = LincombOperator([self.M, self.E, self.K],
                                       [self.a ** 2, -self.a * self.b, self.b ** 2]).assemble(mu=mu)
-        a2MmabDpb2KiV1 = a2MmabDpb2K.apply_inverse(V.block(1), mu=mu, least_squares=least_squares)
-        U_blocks = [a2MmabDpb2K.apply_inverse(aMmbDV0, mu=mu, least_squares=least_squares) -
-                    a2MmabDpb2KiV1 * self.b,
-                    a2MmabDpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) * self.b +
-                    a2MmabDpb2KiV1 * self.a]
+        a2MmabEpb2KiV1 = a2MmabEpb2K.apply_inverse(V.block(1), mu=mu, least_squares=least_squares)
+        U_blocks = [a2MmabEpb2K.apply_inverse(aMmbEV0, mu=mu, least_squares=least_squares) -
+                    a2MmabEpb2KiV1 * self.b,
+                    a2MmabEpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) * self.b +
+                    a2MmabEpb2KiV1 * self.a]
         return self.source.make_array(U_blocks)
 
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         assert U in self.source
-        a2MmabDpb2K = LincombOperator([self.M, self.D, self.K],
+        a2MmabEpb2K = LincombOperator([self.M, self.E, self.K],
                                       [self.a ** 2, -self.a * self.b, self.b ** 2]).assemble(mu=mu)
-        a2MmabDpb2KitU0 = a2MmabDpb2K.apply_inverse_transpose(U.block(0), mu=mu, least_squares=least_squares)
-        a2MmabDpb2KitU1 = a2MmabDpb2K.apply_inverse_transpose(U.block(1), mu=mu, least_squares=least_squares)
-        V_blocks = [self.M.apply_transpose(a2MmabDpb2KitU0, mu=mu) * self.a -
-                    self.D.apply_transpose(a2MmabDpb2KitU0, mu=mu) * self.b +
-                    self.K.apply_transpose(a2MmabDpb2KitU1, mu=mu) * self.b,
-                    -a2MmabDpb2KitU0 * self.b + a2MmabDpb2KitU1 * self.a]
+        a2MmabEpb2KitU0 = a2MmabEpb2K.apply_inverse_transpose(U.block(0), mu=mu, least_squares=least_squares)
+        a2MmabEpb2KitU1 = a2MmabEpb2K.apply_inverse_transpose(U.block(1), mu=mu, least_squares=least_squares)
+        V_blocks = [self.M.apply_transpose(a2MmabEpb2KitU0, mu=mu) * self.a -
+                    self.E.apply_transpose(a2MmabEpb2KitU0, mu=mu) * self.b +
+                    self.K.apply_transpose(a2MmabEpb2KitU1, mu=mu) * self.b,
+                    -a2MmabEpb2KitU0 * self.b + a2MmabEpb2KitU1 * self.a]
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):
         M = self.M.assemble(mu)
-        D = self.D.assemble(mu)
+        E = self.E.assemble(mu)
         K = self.K.assemble(mu)
-        if M == self.M and D == self.D and K == self.K:
+        if M == self.M and E == self.E and K == self.K:
             return self
         else:
-            return self.__class__(M, D, K, self.a, self.b)
+            return self.__class__(M, E, K, self.a, self.b)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self

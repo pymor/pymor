@@ -520,7 +520,7 @@ class SOBTReductor():
             W1TV1invW1TV2 = self.W1.inner(self.V2)
             projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r, id_='STATE'))}
 
-        projected_ops.update({'D': project(self.d.D,
+        projected_ops.update({'E': project(self.d.E,
                                            range_basis=self.W2,
                                            source_basis=self.V2),
                               'K': project(self.d.K,

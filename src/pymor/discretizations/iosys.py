@@ -741,24 +741,24 @@ class SecondOrderSystem(InputOutputSystem):
     This class describes input-output systems given by
 
     .. math::
-        M x''(t) + D x'(t) + K x(t) &= B u(t) \\
-                               y(t) &= C_p x(t) + C_v x'(t)
+        M x''(t) + E x'(t) + K x(t) &= B u(t) \\
+                               y(t) &= C_p x(t) + C_v x'(t) + D u(t)
 
     if continuous-time, or
 
     .. math::
-        M x(k + 2) + D x(k + 1) + K x(k) &= B u(k) \\
-                                    y(k) &= C_p x(k) + C_v x(k + 1)
+        M x(k + 2) + E x(k + 1) + K x(k) &= B u(k) \\
+                                    y(k) &= C_p x(k) + C_v x(k + 1) + D u(k)
 
-    if discrete-time, where :math:`M`, :math:`D`, :math:`K`, :math:`B`,
-    :math:`C_p`, and :math:`C_v` are linear operators.
+    if discrete-time, where :math:`M`, :math:`E`, :math:`K`, :math:`B`,
+    :math:`C_p`, :math:`C_v`, and :math:`D` are linear operators.
 
     Parameters
     ----------
     M
         The |Operator| M.
-    D
-        The |Operator| D.
+    E
+        The |Operator| E.
     K
         The |Operator| K.
     B
@@ -767,6 +767,8 @@ class SecondOrderSystem(InputOutputSystem):
         The |Operator| Cp.
     Cv
         The |Operator| Cv or `None` (then Cv is assumed to be zero).
+    D
+        The |Operator| D.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     solver_options
@@ -795,8 +797,8 @@ class SecondOrderSystem(InputOutputSystem):
         The order of the system (equal to M.source.dim).
     M
         The |Operator| M.
-    D
-        The |Operator| D.
+    E
+        The |Operator| E.
     K
         The |Operator| K.
     B
@@ -805,46 +807,50 @@ class SecondOrderSystem(InputOutputSystem):
         The |Operator| Cp.
     Cv
         The |Operator| Cv.
+    D
+        The |Operator| D.
     operators
         Dictionary of all |Operators| contained in the discretization.
     """
     linear = True
 
-    special_operators = frozenset({'M', 'D', 'K', 'B', 'Cp', 'Cv'})
+    special_operators = frozenset({'M', 'E', 'K', 'B', 'Cp', 'Cv', 'D'})
 
-    def __init__(self, M, D, K, B, Cp, Cv=None, cont_time=True,
+    def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
         Cv = Cv or ZeroOperator(Cp.range, Cp.source)
+        D = D or ZeroOperator(Cp.range, B.source)
 
         assert M.linear and M.source == M.range and M.source.id == 'STATE'
-        assert D.linear and D.source == D.range == M.source
+        assert E.linear and E.source == E.range == M.source
         assert K.linear and K.source == K.range == M.source
         assert B.linear and B.range == M.source and B.source.id == 'INPUT'
         assert Cp.linear and Cp.source == M.range and Cp.range.id == 'OUTPUT'
         assert Cv.linear and Cv.source == M.range and Cv.range == Cp.range
+        assert D.linear and D.source == B.source and D.range == Cp.range
         assert cont_time in (True, False)
 
         super().__init__(B.source.dim, Cp.range.dim, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
-                         M=M, D=D, K=K, B=B, Cp=Cp, Cv=Cv)
+                         M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
 
         self.solution_space = M.source
         self.n = M.source.dim
         self.solver_options = solver_options
 
     @classmethod
-    def from_matrices(cls, M, D, K, B, Cp, Cv=None, cont_time=True):
+    def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True):
         """Create a second order system from matrices.
 
         Parameters
         ----------
         M
             The |NumPy array| or |SciPy spmatrix| M.
-        D
-            The |NumPy array| or |SciPy spmatrix| D.
+        E
+            The |NumPy array| or |SciPy spmatrix| E.
         K
             The |NumPy array| or |SciPy spmatrix| K.
         B
@@ -854,30 +860,36 @@ class SecondOrderSystem(InputOutputSystem):
         Cv
             The |NumPy array| or |SciPy spmatrix| Cv or `None` (then Cv
             is assumed to be zero).
+        D
+            The |NumPy array| or |SciPy spmatrix| D or `None` (then D
+            is assumed to be zero).
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
 
         Returns
         -------
         lti
-            The |LTISystem| with operators A, B, C, D, and E.
+            The SecondOrderSystem with operators M, E, K, B, Cp, Cv, and D.
         """
         assert isinstance(M, (np.ndarray, sps.spmatrix))
-        assert isinstance(D, (np.ndarray, sps.spmatrix))
+        assert isinstance(E, (np.ndarray, sps.spmatrix))
         assert isinstance(K, (np.ndarray, sps.spmatrix))
         assert isinstance(B, (np.ndarray, sps.spmatrix))
         assert isinstance(Cp, (np.ndarray, sps.spmatrix))
         assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix))
+        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
 
         M = NumpyMatrixOperator(M, source_id='STATE', range_id='STATE')
-        D = NumpyMatrixOperator(D, source_id='STATE', range_id='STATE')
+        E = NumpyMatrixOperator(E, source_id='STATE', range_id='STATE')
         K = NumpyMatrixOperator(K, source_id='STATE', range_id='STATE')
         B = NumpyMatrixOperator(B, source_id='INPUT', range_id='STATE')
         Cp = NumpyMatrixOperator(Cp, source_id='STATE', range_id='OUTPUT')
         if Cv is not None:
             Cv = NumpyMatrixOperator(Cv, source_id='STATE', range_id='OUTPUT')
+        if D is not None:
+            D = NumpyMatrixOperator(D, source_id='INPUT', range_id='OUTPUT')
 
-        return cls(M, D, K, B, Cp, Cv, cont_time=cont_time)
+        return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time)
 
     @cached
     def to_lti(self):
@@ -893,7 +905,7 @@ class SecondOrderSystem(InputOutputSystem):
             x'(t) & =
             \begin{bmatrix}
                 0 & I \\
-                -K & -D
+                -K & -E
             \end{bmatrix}
             x(t) +
             \begin{bmatrix}
@@ -905,7 +917,7 @@ class SecondOrderSystem(InputOutputSystem):
             \begin{bmatrix}
                 C_p & C_v
             \end{bmatrix}
-            x(t)
+            x(t) + D u(t)
 
         is returned.
 
@@ -914,7 +926,7 @@ class SecondOrderSystem(InputOutputSystem):
         lti
             |LTISystem| equivalent to the second order system.
         """
-        return LTISystem(A=SecondOrderSystemOperator(self.D, self.K),
+        return LTISystem(A=SecondOrderSystemOperator(self.E, self.K),
                          B=BlockOperator.vstack((ZeroOperator(self.B.range, self.B.source),
                                                  self.B),
                                                 source_id='INPUT',
@@ -922,6 +934,9 @@ class SecondOrderSystem(InputOutputSystem):
                          C=BlockOperator.hstack((self.Cp, self.Cv),
                                                 source_id='STATE',
                                                 range_id='OUTPUT'),
+                         D=BlockOperator([[self.D]],
+                                         source_id='INPUT',
+                                         range_id='OUTPUT') if not isinstance(self.D, ZeroOperator) else None,
                          E=BlockDiagonalOperator((IdentityOperator(self.M.source), self.M),
                                                  source_id='STATE',
                                                  range_id='STATE'),
@@ -945,7 +960,7 @@ class SecondOrderSystem(InputOutputSystem):
         The transfer function at :math:`s` is
 
         .. math::
-            (C_p + s C_v) (s^2 M + s D + K)^{-1} B.
+            (C_p + s C_v) (s^2 M + s E + K)^{-1} B + D.
 
         .. note::
             We assume that either the number of inputs or the number of
@@ -963,28 +978,34 @@ class SecondOrderSystem(InputOutputSystem):
             |NumPy array| of shape `(self.p, self.m)`.
         """
         M = self.M
-        D = self.D
+        E = self.E
         K = self.K
         B = self.B
         Cp = self.Cp
         Cv = self.Cv
+        D = self.D
 
-        s2MpsDpK = LincombOperator((M, D, K), (s ** 2, s, 1))
+        s2MpsEpK = LincombOperator((M, E, K), (s ** 2, s, 1))
         if self.m <= self.p:
             CppsCv = LincombOperator((Cp, Cv), (1, s))
-            tfs = CppsCv.apply(s2MpsDpK.apply_inverse(B.as_range_array())).to_numpy().T
+            tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T
         else:
-            tfs = B.apply_transpose(s2MpsDpK.apply_inverse_transpose(Cp.as_source_array() +
+            tfs = B.apply_transpose(s2MpsEpK.apply_inverse_transpose(Cp.as_source_array() +
                                                                      Cv.as_source_array() * s.conj())).to_numpy().conj()
+        if not isinstance(D, ZeroOperator):
+            if self.m <= self.p:
+                tfs += D.as_range_array().to_numpy().T
+            else:
+                tfs += D.as_source_array().to_numpy()
         return tfs
 
     def eval_dtf(self, s):
         """Evaluate the derivative of the transfer function.
 
         .. math::
-            s C_v (s^2 M + s D + K)^{-1} B
-            - (C_p + s C_v) (s^2 M + s D + K)^{-1} (2 s M + D)
-                (s^2 M + s D + K)^{-1} B.
+            s C_v (s^2 M + s E + K)^{-1} B
+            - (C_p + s C_v) (s^2 M + s E + K)^{-1} (2 s M + E)
+                (s^2 M + s E + K)^{-1} B.
 
         .. note::
             We assume that either the number of inputs or the number of
@@ -1002,23 +1023,23 @@ class SecondOrderSystem(InputOutputSystem):
             number `s`, |NumPy array| of shape `(self.p, self.m)`.
         """
         M = self.M
-        D = self.D
+        E = self.E
         K = self.K
         B = self.B
         Cp = self.Cp
         Cv = self.Cv
 
-        s2MpsDpK = LincombOperator((M, D, K), (s ** 2, s, 1))
-        sM2pD = LincombOperator((M, D), (2 * s, 1))
+        s2MpsEpK = LincombOperator((M, E, K), (s ** 2, s, 1))
+        sM2pE = LincombOperator((M, E), (2 * s, 1))
         if self.m <= self.p:
-            dtfs = Cv.apply(s2MpsDpK.apply_inverse(B.as_range_array())).to_numpy().T * s
+            dtfs = Cv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T * s
             CppsCv = LincombOperator((Cp, Cv), (1, s))
-            dtfs -= CppsCv.apply(s2MpsDpK.apply_inverse(sM2pD.apply(s2MpsDpK.apply_inverse(
+            dtfs -= CppsCv.apply(s2MpsEpK.apply_inverse(sM2pE.apply(s2MpsEpK.apply_inverse(
                 B.as_range_array())))).to_numpy().T
         else:
-            dtfs = B.apply_transpose(s2MpsDpK.apply_inverse_transpose(Cv.as_source_array())).to_numpy().conj() * s
-            dtfs -= B.apply_transpose(s2MpsDpK.apply_inverse_transpose(sM2pD.apply_transpose(
-                s2MpsDpK.apply_inverse_transpose(Cp.as_source_array() +
+            dtfs = B.apply_transpose(s2MpsEpK.apply_inverse_transpose(Cv.as_source_array())).to_numpy().conj() * s
+            dtfs -= B.apply_transpose(s2MpsEpK.apply_inverse_transpose(sM2pE.apply_transpose(
+                s2MpsEpK.apply_inverse_transpose(Cp.as_source_array() +
                                                  Cv.as_source_array() * s.conj())))).to_numpy().conj()
         return dtfs
 
@@ -1088,7 +1109,7 @@ class SecondOrderSystem(InputOutputSystem):
         return spla.svdvals(self.gramian('pof').inner(self.gramian('vcf')))
 
     @cached
-    def norm(self, name='H2'):
+    def norm(self, name='H2', ab13dd_equilibrate=False):
         """Compute a system norm."""
         return self.to_lti().norm(name=name)
 

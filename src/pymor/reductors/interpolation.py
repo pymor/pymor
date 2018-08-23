@@ -248,12 +248,12 @@ class SO_BHIReductor(GenericBHIReductor):
         return x + y * s
 
     def _K_apply_inverse(self, s, V):
-        s2MpsDpK = LincombOperator((self.d.M, self.d.D, self.d.K), (s ** 2, s, 1))
-        return s2MpsDpK.apply_inverse(V)
+        s2MpsEpK = LincombOperator((self.d.M, self.d.E, self.d.K), (s ** 2, s, 1))
+        return s2MpsEpK.apply_inverse(V)
 
     def _K_apply_inverse_transpose(self, s, V):
-        s2MpsDpK = LincombOperator((self.d.M, self.d.D, self.d.K), (s ** 2, s, 1))
-        return s2MpsDpK.apply_inverse_transpose(V)
+        s2MpsEpK = LincombOperator((self.d.M, self.d.E, self.d.K), (s ** 2, s, 1))
+        return s2MpsEpK.apply_inverse_transpose(V)
 
 
 class DelayBHIReductor(GenericBHIReductor):
