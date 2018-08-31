@@ -1,6 +1,7 @@
 workspace:
     base: /src
     path: .
+
 pipeline:
   build:
     image: pymor/testing:${PY}
@@ -10,6 +11,13 @@ pipeline:
       - export PYTEST_MARKER="${MARKER}" DOCKER_TAG="${PY}"
       - .ci/drone/script.bash
     secrets: [ pymor_codecov_token ]
+  notify:
+    image: drillster/drone-email
+    host: mail.milk.pm
+    from: drone@pymor.org
+    when:
+      status: [ changed, failure ]
+    secrets:  [ email_username, email_password ]
 
 matrix:
   PY:
