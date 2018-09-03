@@ -147,25 +147,25 @@ class BlockOperator(OperatorBase):
                 blocks[i, j] = self._blocks[i, j] * c
             return self.__class__(blocks)
 
-    def as_range_array(self):
+    def as_range_array(self, mu=None):
 
         def process_row(row, space):
             R = space.empty()
             for op in row:
                 if op is not None:
-                    R.append(op.as_range_array())
+                    R.append(op.as_range_array(mu))
             return R
 
         blocks = [process_row(row, space) for row, space in zip(self._blocks, self.range.subspaces)]
         return self.range.make_array(blocks)
 
-    def as_source_array(self):
+    def as_source_array(self, mu=None):
 
         def process_col(col, space):
             R = space.empty()
             for op in col:
                 if op is not None:
-                    R.append(op.as_source_array())
+                    R.append(op.as_source_array(mu))
             return R
 
         blocks = [process_col(col, space) for col, space in zip(self._blocks.T, self.source.subspaces)]
