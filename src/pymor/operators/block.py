@@ -256,7 +256,7 @@ class BlockDiagonalOperator(BlockOperator):
 
 
 class SecondOrderSystemOperator(BlockOperator):
-    """BlockOperator appearing in SecondOrderSystem.to_lti().
+    r"""BlockOperator appearing in SecondOrderSystem.to_lti().
 
     This represents a block operator
 
@@ -370,7 +370,7 @@ class SecondOrderSystemOperator(BlockOperator):
 
 
 class ShiftedSecondOrderSystemOperator(BlockOperator):
-    """BlockOperator appearing in second-order systems.
+    r"""BlockOperator appearing in second-order systems.
 
     This represents a block operator
 
@@ -414,8 +414,8 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         |Operator|.
     K
         |Operator|.
-    p
-        Complex number.
+    a, b
+        Complex numbers.
     """
 
     def __init__(self, M, E, K, a, b):
