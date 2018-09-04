@@ -122,10 +122,10 @@ if config.HAVE_NGSOLVE:
                 self.matrix.Mult(u.impl.vec, r.impl.vec)
             return R
 
-        def apply_transpose(self, V, mu=None):
+        def apply_adjoint(self, V, mu=None):
             assert V in self.range
             U = self.source.zeros(len(V))
-            mat = self.matrix.Transpose()
+            mat = self.matrix.Transpose()  # untested in complex case
             for v, u in zip(V._list, U._list):
                 mat.Mult(v.impl.vec, u.impl.vec)
             return U

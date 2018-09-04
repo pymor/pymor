@@ -86,7 +86,7 @@ class ResidualReductor(BasicInterface):
             with self.logger.block('Estimating residual range ...'):
                 try:
                     self.residual_range, self.residual_range_dims = \
-                        estimate_image_hierarchical([self.operator], [self.rhs.T if rhs_is_functional else self.rhs],
+                        estimate_image_hierarchical([self.operator], [self.rhs.H if rhs_is_functional else self.rhs],
                                                     self.RB,
                                                     (self.residual_range, self.residual_range_dims),
                                                     orthonormalize=True, product=self.product,
@@ -241,7 +241,7 @@ class ImplicitEulerResidualReductor(BasicInterface):
             with self.logger.block('Estimating residual range ...'):
                 try:
                     self.residual_range, self.residual_range_dims = \
-                        estimate_image_hierarchical([self.operator, self.mass], [self.functional.T],
+                        estimate_image_hierarchical([self.operator, self.mass], [self.functional.H],
                                                     self.RB,
                                                     (self.residual_range, self.residual_range_dims),
                                                     orthonormalize=True, product=self.product,

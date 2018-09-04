@@ -147,11 +147,11 @@ if config.HAVE_FENICS:
                 self.matrix.mult(u.impl, r.impl)
             return R
 
-        def apply_transpose(self, V, mu=None):
+        def apply_adjoint(self, V, mu=None):
             assert V in self.range
             U = self.source.zeros(len(V))
             for v, u in zip(V._list, U._list):
-                self.matrix.transpmult(v.impl, u.impl)
+                self.matrix.transpmult(v.impl, u.impl)  # there are no complex numbers in FEniCS
             return U
 
         def apply_inverse(self, V, mu=None, least_squares=False):

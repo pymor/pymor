@@ -83,7 +83,7 @@ class ToMatrixRules(RuleTable):
     @match_class(AdjointOperator)
     def action_AdjointOperator(self, op):
         format = self.format
-        res = self.apply(op.operator).T
+        res = self.apply(op.operator).T.conj()
         if op.range_product is not None:
             range_product = self.apply(op.range_product)
             if format is None and not sps.issparse(res) and sps.issparse(range_product):
@@ -144,7 +144,7 @@ class ToMatrixRules(RuleTable):
     @match_class(VectorArrayOperator)
     def action_VectorArrayOperator(self, op):
         format = self.format
-        res = op._array.to_numpy() if op.transposed else op._array.to_numpy().T
+        res = op._array.conj().to_numpy() if op.adjoint else op._array.to_numpy().T
         if format is not None and format != 'dense':
             res = getattr(sps, format + '_matrix')(res)
         return res

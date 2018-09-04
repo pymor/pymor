@@ -37,7 +37,7 @@ class PreAssembleRules(RuleTable):
         if new_operator is op.operator:
             return op
         elif not (op.source_product or op.range_product):
-            return new_operator.T
+            return new_operator.H
         else:
             return op.with_(operator=new_operator)
 

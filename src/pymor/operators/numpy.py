@@ -42,34 +42,34 @@ class NumpyGenericOperator(OperatorBase):
 
         If `parameter_type` is not `None`, the function has to have the signature
         `mapping(U, mu)`.
-    transpose_mapping
-        The transpsoe function to wrap. If `parameter_type` is `None`, the function is of
-        the form `transpose_mapping(U)` and is expected to be vectorized. In particular::
+    adjoint_mapping
+        The adjoint function to wrap. If `parameter_type` is `None`, the function is of
+        the form `adjoint_mapping(U)` and is expected to be vectorized. In particular::
 
-            transpose_mapping(U).shape == U.shape[:-1] + (dim_source,).
+            adjoint_mapping(U).shape == U.shape[:-1] + (dim_source,).
 
         If `parameter_type` is not `None`, the function has to have the signature
-        `transpose_mapping(U, mu)`.
+        `adjoint_mapping(U, mu)`.
     dim_source
         Dimension of the operator's source.
     dim_range
         Dimension of the operator's range.
     linear
-        Set to `True` if the provided `mapping` and `transpose_mapping` are linear.
+        Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
     parameter_type
         The |ParameterType| of the |Parameters| the mapping accepts.
     name
         Name of the operator.
     """
 
-    def __init__(self, mapping, transpose_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
+    def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
                  source_id=None, range_id=None, solver_options=None, name=None):
         self.source = NumpyVectorSpace(dim_source, source_id)
         self.range = NumpyVectorSpace(dim_range, range_id)
         self.solver_options = solver_options
         self.name = name
         self._mapping = mapping
-        self._transpose_mapping = transpose_mapping
+        self._adjoint_mapping = adjoint_mapping
         self.linear = linear
         if parameter_type is not None:
             self.build_parameter_type(parameter_type)
@@ -84,16 +84,16 @@ class NumpyGenericOperator(OperatorBase):
         else:
             return self.range.make_array(self._mapping(U.to_numpy()))
 
-    def apply_transpose(self, V, mu=None):
-        if self._transpose_mapping is None:
-            raise ValueError('NumpyGenericOperator: transpose mapping was not defined.')
+    def apply_adjoint(self, V, mu=None):
+        if self._adjoint_mapping is None:
+            raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
         assert V in self.range
         V = V.to_numpy()
         if self.parametric:
             mu = self.parse_parameter(mu)
-            return self.source.make_array(self._transpose_mapping(V, mu=mu))
+            return self.source.make_array(self._adjoint_mapping(V, mu=mu))
         else:
-            return self.source.make_array(self._transpose_mapping(V))
+            return self.source.make_array(self._adjoint_mapping(V))
 
 
 class NumpyMatrixBasedOperator(OperatorBase):
@@ -110,11 +110,11 @@ class NumpyMatrixBasedOperator(OperatorBase):
     sparse = None
 
     @property
-    def T(self):
+    def H(self):
         if not self.parametric:
             return self.assemble().T
         else:
-            return super().T
+            return super().H
 
     @abstractmethod
     def _assemble(self, mu=None):
@@ -140,8 +140,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def apply(self, U, mu=None):
         return self.assemble(mu).apply(U)
 
-    def apply_transpose(self, V, mu=None):
-        return self.assemble(mu).apply_transpose(V)
+    def apply_adjoint(self, V, mu=None):
+        return self.assemble(mu).apply_adjoint(V)
 
     def as_range_array(self, mu=None):
         return self.assemble(mu).as_range_array()
@@ -209,11 +209,17 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                    name=name or key or path)
 
     @property
-    def T(self):
-        options = {'inverse': self.solver_options.get('inverse_transpose'),
-                   'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
-        return self.with_(matrix=self.matrix.T, source_id=self.range_id, range_id=self.source_id,
-                          solver_options=options, name=self.name + '_transposed')
+    def H(self):
+        options = {'inverse': self.solver_options.get('inverse_adjoint'),
+                   'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
+        if self.sparse:
+            adjoint_matrix = self.matrix.transpose(copy=False).conj(copy=False)
+        elif np.isrealobj(self.matrix):
+            adjoint_matrix = self.matrix.T
+        else:
+            adjoint_matrix = self.matrix.T.conj()
+        return self.with_(matrix=adjoint_matrix, source_id=self.range_id, range_id=self.source_id,
+                          solver_options=options, name=self.name + '_adjoint')
 
     def _assemble(self, mu=None):
         pass
@@ -231,9 +237,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert U in self.source
         return self.range.make_array(self.matrix.dot(U.to_numpy().T).T)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        return self.source.make_array(self.matrix.T.dot(V.to_numpy().T).T)
+        return self.H.apply(V, mu=mu)
 
     @defaults('check_finite', 'default_sparse_solver_backend',
               qualname='pymor.operators.numpy.NumpyMatrixOperator.apply_inverse')
@@ -325,11 +331,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
             return self.source.make_array(R)
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
-        options = {'inverse': self.solver_options.get('inverse_transpose') if self.solver_options else None}
-        transpose_op = NumpyMatrixOperator(self.matrix.T, source_id=self.range.id, range_id=self.source.id,
-                                           solver_options=options)
-        return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+        return self.H.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if not all(isinstance(op, (NumpyMatrixOperator, ZeroOperator, IdentityOperator)) for op in operators):
