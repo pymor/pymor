@@ -114,14 +114,15 @@ class StationaryDiscretization(DiscretizationBase):
 
         L(u(μ), μ) = F(μ)
 
-    with a linear functional F and a (possibly non-linear) operator L.
+    with a vector-like right-hand side F and a (possibly non-linear) operator L.
 
     Parameters
     ----------
     operator
         The |Operator| L.
     rhs
-        The |Functional| F.
+        The vector F. Either a |VectorArray| of length 1 or a vector-like
+        |Operator|.
     products
         A dict of inner product |Operators| defined on the discrete space the
         problem is posed on. For each product a corresponding norm
@@ -151,7 +152,7 @@ class StationaryDiscretization(DiscretizationBase):
     operator
         The |Operator| L. The same as `operators['operator']`.
     rhs
-        The |Functional| F. The same as `operators['rhs']`.
+        The right-hand side F. The same as `operators['rhs']`.
     operators
         Dict of all |Operators| appearing in the discretization.
     """
@@ -160,8 +161,13 @@ class StationaryDiscretization(DiscretizationBase):
 
     def __init__(self, operator, rhs, products=None, operators=None,
                  parameter_space=None, estimator=None, visualizer=None, cache_region=None, name=None):
-        assert operator.source == operator.range == rhs.source
-        assert rhs.source == operator.source and rhs.range.is_scalar and rhs.linear
+
+        if isinstance(rhs, VectorArrayInterface):
+            assert rhs in operator.range
+            rhs = VectorOperator(rhs, name='rhs')
+
+        assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
+
         super().__init__(operator=operator, rhs=rhs,
                          operators=operators,
                          products=products,
@@ -187,7 +193,7 @@ class StationaryDiscretization(DiscretizationBase):
         if not self.logging_disabled:
             self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
-        return self.operator.apply_inverse(self.rhs.as_source_array(mu), mu=mu)
+        return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
 
 class InstationaryDiscretization(DiscretizationBase):
@@ -199,7 +205,7 @@ class InstationaryDiscretization(DiscretizationBase):
                                 u(0, μ) = u_0(μ)
 
     for t in [0,T], where L is a (possibly non-linear) time-dependent
-    |Operator|, F is a time-dependent linear |Functional|, and u_0 the
+    |Operator|, F is a time-dependent vector-like |Operator|, and u_0 the
     initial data. The mass |Operator| M is assumed to be linear,
     time-independent and |Parameter|-independent.
 
@@ -216,7 +222,7 @@ class InstationaryDiscretization(DiscretizationBase):
     operator
         The |Operator| L.
     rhs
-        The |Functional| F.
+        The right-hand side F.
     mass
         The mass |Operator| `M`. If `None`, the identity is assumed.
     time_stepper
@@ -259,7 +265,7 @@ class InstationaryDiscretization(DiscretizationBase):
     operator
         The |Operator| L. The same as `operators['operator']`.
     rhs
-        The |Functional| F. The same as `operators['rhs']`.
+        The right-hand side F. The same as `operators['rhs']`.
     mass
         The mass operator M. The same as `operators['mass']`.
     time_stepper
@@ -274,14 +280,18 @@ class InstationaryDiscretization(DiscretizationBase):
                  products=None, operators=None, parameter_space=None, estimator=None, visualizer=None,
                  cache_region=None, name=None):
 
+        if isinstance(rhs, VectorArrayInterface):
+            assert rhs in operator.range
+            rhs = VectorOperator(rhs, name='rhs')
         if isinstance(initial_data, VectorArrayInterface):
+            assert initial_data in operator.source
             initial_data = VectorOperator(initial_data, name='initial_data')
 
         assert isinstance(time_stepper, TimeStepperInterface)
         assert initial_data.source.is_scalar
-        assert operator.source == operator.range == initial_data.range
+        assert operator.source == initial_data.range
         assert rhs is None \
-            or rhs.linear and rhs.source == operator.source and rhs.range.is_scalar
+            or rhs.linear and rhs.range == operator.range and rhs.source.is_scalar
         assert mass is None \
             or mass.linear and mass.source == mass.range == operator.source
 
@@ -306,7 +316,6 @@ class InstationaryDiscretization(DiscretizationBase):
             self.products, operators, self.parameter_space, self.estimator, self.visualizer,
             self.cache_region, self.name
         )
-
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments

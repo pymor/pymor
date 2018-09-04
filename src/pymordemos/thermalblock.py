@@ -332,7 +332,7 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
 
     # generic pyMOR classes
     from pymor.discretizations.basic import StationaryDiscretization
-    from pymor.operators.constructions import LincombOperator, VectorFunctional
+    from pymor.operators.constructions import LincombOperator, VectorOperator
     from pymor.parameters.functionals import ProjectionParameterFunctional
     from pymor.parameters.spaces import CubicParameterSpace
 
@@ -348,7 +348,7 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     # wrap operators
     ops = [FenicsMatrixOperator(mat0, V, V)] + [FenicsMatrixOperator(m, V, V) for m in mats]
     op = LincombOperator(ops, (1.,) + parameter_functionals)
-    rhs = VectorFunctional(FenicsVectorSpace(V).make_array([F]))
+    rhs = VectorOperator(FenicsVectorSpace(V).make_array([F]))
     h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
     l2_product = FenicsMatrixOperator(l2_mat, V, V, name='l2')
 

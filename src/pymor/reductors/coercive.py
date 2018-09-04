@@ -54,7 +54,7 @@ class CoerciveRBReductor(GenericRBReductor):
                          product=product)
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
-                                                  product=product)
+                                                  product=product, riesz_representatives=True)
 
     def _reduce(self):
         with self.logger.block('RB projection ...'):
@@ -176,12 +176,12 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         elif not d.rhs.parametric:
             R_R = space.empty(reserve=1)
             RR_R = space.empty(reserve=1)
-            append_vector(d.rhs.as_source_array(), R_R, RR_R)
+            append_vector(d.rhs.as_range_array(), R_R, RR_R)
         else:
             R_R = space.empty(reserve=len(d.rhs.operators))
             RR_R = space.empty(reserve=len(d.rhs.operators))
             for op in d.rhs.operators:
-                append_vector(op.as_source_array(), R_R, RR_R)
+                append_vector(op.as_range_array(), R_R, RR_R)
 
         if len(RB) == 0:
             R_Os = [space.empty()]
