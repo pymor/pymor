@@ -231,7 +231,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return self.range.make_array(self.matrix.T.copy())
 
     def as_source_array(self, mu=None):
-        return self.source.make_array(self.matrix.copy())
+        return self.source.make_array(self.matrix.copy()).conj()
 
     def apply(self, U, mu=None):
         assert U in self.source
