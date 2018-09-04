@@ -842,7 +842,8 @@ class SecondOrderSystem(InputOutputSystem):
         self.solver_options = solver_options
 
     @classmethod
-    def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True):
+    def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
+                      solver_options=None, cache_region='memory', name=None):
         """Create a second order system from matrices.
 
         Parameters
@@ -889,7 +890,8 @@ class SecondOrderSystem(InputOutputSystem):
         if D is not None:
             D = NumpyMatrixOperator(D, source_id='INPUT', range_id='OUTPUT')
 
-        return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time)
+        return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
+                   solver_options=solver_options, cache_region=cache_region, name=name)
 
     @cached
     def to_lti(self):
