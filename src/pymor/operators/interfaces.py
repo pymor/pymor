@@ -87,6 +87,9 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
             op.apply2(V, U) = V^T*M*U.
 
+        In the case of complex numbers, note that `apply2` is anti-linear in the
+        first variable by definition of `dot`.
+
         Parameters
         ----------
         V
@@ -137,7 +140,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
             op.apply_adjoint(V, mu).dot(U) == V.dot(op.apply(U, mu))
 
         Thus, when `op` is represented by a matrix `M`, `apply_adjoint` is
-        given by left-multplication of `M` with `V`.
+        given by left-multplication of (the complex conjugate of) `M` with `V`.
 
         Parameters
         ----------

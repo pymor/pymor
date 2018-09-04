@@ -116,6 +116,11 @@ class StationaryDiscretization(DiscretizationBase):
 
     with a vector-like right-hand side F and a (possibly non-linear) operator L.
 
+    Note that even when solving a variational formulation where F is a
+    functional and not a vector, F has to be specified as a vector-like
+    |Operator| (mapping scalars to vectors). This ensures that in the complex
+    case both L and F are anti-linear in the test variable.
+
     Parameters
     ----------
     operator
