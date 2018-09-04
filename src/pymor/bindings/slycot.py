@@ -232,6 +232,8 @@ if config.HAVE_SLYCOT:
                 elif R is None:
                     C_mat = C_mat.T
                     R_mat = np.eye(m)
+                else:
+                    C_mat = C_mat.T
                 if Q is None:
                     Q_mat = B_mat.T
                 L_mat = np.empty((n, m))

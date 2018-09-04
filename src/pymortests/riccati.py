@@ -223,18 +223,26 @@ def test_pymess_E_trans(n, m, p, me_solver):
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
-def test_slycot(n, m, p):
+@pytest.mark.parametrize('with_R', [False, True])
+def test_slycot(n, m, p, with_R):
     np.random.seed(0)
     A = diff_conv_1d_fd(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
+    if with_R:
+        R = np.eye(m)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
+    if with_R:
+        Rop = NumpyMatrixOperator(R)
 
     from pymor.bindings.slycot import solve_ricc
-    Z = solve_ricc(Aop, B=Bop, C=Cop)
+    if not with_R:
+        Z = solve_ricc(Aop, B=Bop, C=Cop)
+    else:
+        Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop)
 
     assert len(Z) <= n
 
@@ -248,18 +256,26 @@ def test_slycot(n, m, p):
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
-def test_slycot_trans(n, m, p):
+@pytest.mark.parametrize('with_R', [False, True])
+def test_slycot_trans(n, m, p, with_R):
     np.random.seed(0)
     A = diff_conv_1d_fd(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
+    if with_R:
+        R = np.eye(p)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
+    if with_R:
+        Rop = NumpyMatrixOperator(R)
 
     from pymor.bindings.slycot import solve_ricc
-    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True)
+    if not with_R:
+        Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True)
+    else:
+        Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop, trans=True)
 
     assert len(Z) <= n
 
@@ -273,19 +289,27 @@ def test_slycot_trans(n, m, p):
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
-def test_slycot_E(n, m, p):
+@pytest.mark.parametrize('with_R', [False, True])
+def test_slycot_E(n, m, p, with_R):
     np.random.seed(0)
     A, E = diff_conv_1d_fem(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
+    if with_R:
+        R = np.eye(m)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
+    if with_R:
+        Rop = NumpyMatrixOperator(R)
 
     from pymor.bindings.slycot import solve_ricc
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop)
+    if not with_R:
+        Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop)
+    else:
+        Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, R=Rop)
 
     assert len(Z) <= n
 
@@ -302,19 +326,27 @@ def test_slycot_E(n, m, p):
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
-def test_slycot_E_trans(n, m, p):
+@pytest.mark.parametrize('with_R', [False, True])
+def test_slycot_E_trans(n, m, p, with_R):
     np.random.seed(0)
     A, E = diff_conv_1d_fem(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
+    if with_R:
+        R = np.eye(p)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
+    if with_R:
+        Rop = NumpyMatrixOperator(R)
 
     from pymor.bindings.slycot import solve_ricc
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True)
+    if not with_R:
+        Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True)
+    else:
+        Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, R=Rop, trans=True)
 
     assert len(Z) <= n
 
