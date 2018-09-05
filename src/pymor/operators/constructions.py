@@ -577,12 +577,15 @@ class VectorArrayOperator(OperatorBase):
             return None
         assert not solver_options
 
+        if adjoint:
+            coefficients = np.conj(coefficients)
+
         if coefficients[0] == 1:
             array = operators[0]._array.copy()
         else:
-            array = operators[0]._array * np.conj(coefficients[0])
+            array = operators[0]._array * coefficients[0]
         for op, c in zip(operators[1:], coefficients[1:]):
-            array.axpy(np.conj(c), op._array)
+            array.axpy(c, op._array)
         return VectorArrayOperator(array, adjoint=adjoint, space_id=operators[0].space_id, name=name)
 
     def as_range_array(self, mu=None):
