@@ -274,7 +274,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         `mu` a |VectorArray| `V` in the operator's :attr:`~OperatorInterface.source`,
         such that ::
 
-            self.range.make_array(V.dot(U)) == self.apply(U, mu)
+            self.range.make_array(V.dot(U).T) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 
