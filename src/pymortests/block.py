@@ -59,7 +59,7 @@ def test_apply():
     assert np.allclose(A.dot(v), w)
 
 
-def test_apply_transpose():
+def test_apply_adjoint():
     np.random.seed(0)
 
     A11 = np.random.randn(2, 3)
@@ -80,7 +80,7 @@ def test_apply_transpose():
     v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
-    wva = Aop.apply_transpose(vva)
+    wva = Aop.apply_adjoint(vva)
     w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
     assert np.allclose(A.T.dot(v), w)
 
@@ -118,7 +118,7 @@ def test_blk_diag_apply_inverse():
     assert np.allclose(spla.solve(C, v), w)
 
 
-def test_blk_diag_apply_inverse_transpose():
+def test_blk_diag_apply_inverse_adjoint():
     np.random.seed(0)
 
     A = np.random.randn(2, 2)
@@ -135,6 +135,6 @@ def test_blk_diag_apply_inverse_transpose():
     v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
-    wva = Cop.apply_inverse_transpose(vva)
+    wva = Cop.apply_inverse_adjoint(vva)
     w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
     assert np.allclose(spla.solve(C.T, v), w)

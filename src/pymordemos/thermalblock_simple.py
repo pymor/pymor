@@ -123,7 +123,7 @@ def _discretize_fenics():
     # wrap operators
     ops = [FenicsMatrixOperator(mat0, V, V)] + [FenicsMatrixOperator(m, V, V) for m in mats]
     op = LincombOperator(ops, [1.] + parameter_functionals)
-    rhs = VectorFunctional(FenicsVectorSpace(V).make_array([F]))
+    rhs = VectorOperator(FenicsVectorSpace(V).make_array([F]))
     h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
 
     # build discretization
@@ -202,7 +202,7 @@ def discretize_ngsolve():
 
     F = space.zeros()
     F._list[0].impl.vec.data = f.vec
-    F = VectorFunctional(F)
+    F = VectorOperator(F)
 
     return StationaryDiscretization(op, F, visualizer=NGSolveVisualizer(mesh, V),
                                     products={'h1_0_semi': h1_0_op},

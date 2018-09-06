@@ -73,7 +73,7 @@ class ParabolicRBReductor(GenericRBReductor):
             d.operator,
             d.mass,
             d.T / d.time_stepper.nt,
-            functional=d.rhs,
+            rhs=d.rhs,
             product=product
         )
 
@@ -81,7 +81,8 @@ class ParabolicRBReductor(GenericRBReductor):
             self.RB,
             IdentityOperator(d.solution_space),
             d.initial_data,
-            product=d.l2_product
+            product=d.l2_product,
+            riesz_representatives=False
         )
 
     def _reduce(self):

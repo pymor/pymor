@@ -45,7 +45,7 @@ def discretize_stationary_from_disk(parameter_file):
     Here, `L_1.mat`, `L_2.mat`, ..., `F_1.mat`, `F_2.mat`, ... are files
     containing matrices `L_1`, `L_2`, ... and vectors `F_1.mat`, `F_2.mat`, ...
     which correspond to the affine components of the operator and right-hand
-    side functional.  The respective coefficient functionals, are given via the
+    side.  The respective coefficient functionals, are given via the
     string expressions `l_1(...)`, `l_2(...)`, ..., `f_1(...)` in the
     (scalar-valued) |Parameter| components `w_1`, ..., `w_n`. The allowed lower
     and upper bounds `a_i, b_i` for the component `μ_i` are specified in the
@@ -138,9 +138,9 @@ def discretize_stationary_from_disk(parameter_file):
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        op = NumpyMatrixOperator.from_file(path, source_id='STATE')
+        op = NumpyMatrixOperator.from_file(path, range_id='STATE')
         assert isinstance(op.matrix, np.ndarray)
-        op = op.with_(matrix=op.matrix.reshape((1, -1)))
+        op = op.with_(matrix=op.matrix.reshape((-1, 1)))
         rhs_operators.append(op)
         rhs_functionals.append(parameter_functional)
 
@@ -276,9 +276,9 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        op = NumpyMatrixOperator.from_file(path, source_id='STATE')
+        op = NumpyMatrixOperator.from_file(path, range_id='STATE')
         assert isinstance(op.matrix, np.ndarray)
-        op = op.with_(matrix=op.matrix.reshape((1, -1)))
+        op = op.with_(matrix=op.matrix.reshape((-1, 1)))
         rhs_operators.append(op)
         rhs_functionals.append(parameter_functional)
 

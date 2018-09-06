@@ -53,7 +53,7 @@ class TimeStepperInterface(ImmutableInterface):
             The |Operator| A.
         rhs
             The right-hand side F (either |VectorArray| of length 1 or |Operator| with
-            `range.dim == 1`). If `None`, zero right-hand side is assumed.
+            `source.dim == 1`). If `None`, zero right-hand side is assumed.
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
@@ -131,11 +131,11 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     if F is None:
         F_time_dep = False
     elif isinstance(F, OperatorInterface):
-        assert F.range.dim == 1
-        assert F.source == A.range
+        assert F.source.dim == 1
+        assert F.range == A.range
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
-            dt_F = F.as_vector(mu, space=A.source) * dt
+            dt_F = F.as_vector(mu, space=A.range) * dt
     else:
         assert len(F) == 1
         assert F in A.range
@@ -171,7 +171,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
         mu['_t'] = t
         rhs = M.apply(U)
         if F_time_dep:
-            dt_F = F.as_vector(mu, space=A.source) * dt
+            dt_F = F.as_vector(mu, space=A.range) * dt
         if F:
             rhs += dt_F
         U = M_dt_A.apply_inverse(rhs, mu=mu)
@@ -188,14 +188,14 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     num_values = num_values or nt + 1
 
     if isinstance(F, OperatorInterface):
-        assert F.range.dim == 1
-        assert F.source == A.source
+        assert F.source.dim == 1
+        assert F.range == A.range
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
-            F_ass = F.as_vector(mu, space=A.source)
+            F_ass = F.as_vector(mu, space=A.range)
     elif isinstance(F, VectorArrayInterface):
         assert len(F) == 1
-        assert F in A.source
+        assert F in A.range
         F_time_dep = False
         F_ass = F
 
@@ -226,7 +226,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
             t += dt
             mu['_t'] = t
             if F_time_dep:
-                F_ass = F.as_vector(mu, space=A.source)
+                F_ass = F.as_vector(mu, space=A.range)
             U.axpy(dt, F_ass - A.apply(U, mu=mu))
             while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)

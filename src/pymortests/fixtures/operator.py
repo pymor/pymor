@@ -118,11 +118,11 @@ def thermalblock_constant_factory(xblocks, yblocks, diameter, seed):
     return ConstantOperator(V[0], U.space), None, U, V, sp, rp
 
 
-def thermalblock_vectorarray_factory(transposed, xblocks, yblocks, diameter, seed):
+def thermalblock_vectorarray_factory(adjoint, xblocks, yblocks, diameter, seed):
     from pymor.operators.constructions import VectorArrayOperator
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
-    op = VectorArrayOperator(U, transposed)
-    if transposed:
+    op = VectorArrayOperator(U, adjoint)
+    if adjoint:
         U = V
         V = op.range.make_array(np.random.random((7, op.range.dim)))
         sp = rp
@@ -362,7 +362,7 @@ def unpicklable_misc_operator_with_arrays_and_products_factory(n):
         from pymor.operators.numpy import NumpyGenericOperator
         op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, n)
         mat = op.matrix
-        op2 = NumpyGenericOperator(mapping=lambda U: mat.dot(U.T).T, transpose_mapping=lambda U: mat.T.dot(U.T).T,
+        op2 = NumpyGenericOperator(mapping=lambda U: mat.dot(U.T).T, adjoint_mapping=lambda U: mat.T.dot(U.T).T,
                                    dim_source=100, dim_range=20, linear=True)
         return op2, _, U, V, sp, rp
     else:
