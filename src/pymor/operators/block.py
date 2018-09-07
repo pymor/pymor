@@ -63,9 +63,8 @@ class BlockOperator(OperatorBase):
         self.build_parameter_type(*self._operators())
 
     @property
-    def T(self):
-        return type(self)(np.vectorize(lambda op: op.T if op else None)(self._blocks.T),
-                          source_id=self.range.id, range_id=self.source.id)
+    def H(self):
+        return type(self)(np.vectorize(lambda op: op.H if op else None)(self._blocks.T))
 
     @classmethod
     def hstack(cls, operators, source_id='STATE', range_id='STATE'):
@@ -104,12 +103,12 @@ class BlockOperator(OperatorBase):
 
         return self.range.make_array(V_blocks)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
 
         U_blocks = [None for j in range(self.num_source_blocks)]
         for (i, j), op in np.ndenumerate(self._blocks):
-            Uj = op.apply_transpose(V.block(i), mu=mu)
+            Uj = op.apply_adjoint(V.block(i), mu=mu)
             if U_blocks[j] is None:
                 U_blocks[j] = Uj
             else:
@@ -195,9 +194,9 @@ class BlockDiagonalOperator(BlockOperator):
         V_blocks = [self._blocks[i, i].apply(U.block(i), mu=mu) for i in range(self.num_range_blocks)]
         return self.range.make_array(V_blocks)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [self._blocks[i, i].apply_transpose(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
+        U_blocks = [self._blocks[i, i].apply_adjoint(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
@@ -206,9 +205,9 @@ class BlockDiagonalOperator(BlockOperator):
                     for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
-        V_blocks = [self._blocks[i, i].apply_inverse_transpose(U.block(i), mu=mu, least_squares=least_squares)
+        V_blocks = [self._blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
         return self.range.make_array(V_blocks)
 

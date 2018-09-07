@@ -111,9 +111,9 @@ class ProjectRules(RuleTable):
                 return op
             else:
                 try:
-                    V = op.apply_transpose(product.apply(range_basis) if product else range_basis)
+                    V = op.apply_adjoint(product.apply(range_basis) if product else range_basis)
                 except NotImplementedError:
-                    raise RuleNotMatchingError('apply_transpose not implemented')
+                    raise RuleNotMatchingError('apply_adjoint not implemented')
                 if isinstance(op.source, NumpyVectorSpace):
                     from pymor.operators.numpy import NumpyMatrixOperator
                     return NumpyMatrixOperator(V.to_numpy(),
@@ -122,7 +122,7 @@ class ProjectRules(RuleTable):
                                                name=op.name)
                 else:
                     from pymor.operators.constructions import VectorArrayOperator
-                    return VectorArrayOperator(V, transposed=True, space_id=op.range.id, name=op.name)
+                    return VectorArrayOperator(V, adjoint=True, space_id=op.range.id, name=op.name)
         else:
             if range_basis is None:
                 V = op.apply(source_basis)
@@ -134,7 +134,7 @@ class ProjectRules(RuleTable):
                                                name=op.name)
                 else:
                     from pymor.operators.constructions import VectorArrayOperator
-                    return VectorArrayOperator(V, transposed=False, space_id=op.source.id, name=op.name)
+                    return VectorArrayOperator(V, adjoint=False, space_id=op.source.id, name=op.name)
             elif product is None:
                 from pymor.operators.numpy import NumpyMatrixOperator
                 return NumpyMatrixOperator(op.apply2(range_basis, source_basis),
@@ -163,7 +163,7 @@ class ProjectRules(RuleTable):
         elif range_basis is not None and last.linear and not last.parametric:
             if product:
                 range_basis = product.apply(range_basis)
-            V = last.apply_transpose(range_basis)
+            V = last.apply_adjoint(range_basis)
             return type(self)(V, source_basis, None).apply(op.with_(operators=op.operators[1:]))
         else:
             projected_first = type(self)(None, source_basis, product=None).apply(first)

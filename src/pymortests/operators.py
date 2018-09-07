@@ -8,7 +8,7 @@ import pytest
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
 from pymor.core.exceptions import InversionError, LinAlgError
-from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseTransposeOperator
+from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseAdjointOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorArray
@@ -133,42 +133,42 @@ def test_pairwise_apply2(operator_with_arrays):
         assert np.allclose(M, M2)
 
 
-def test_apply_transpose(operator_with_arrays):
+def test_apply_adjoint(operator_with_arrays):
     op, mu, _, V = operator_with_arrays
     if not op.linear:
         return
     try:
-        U = op.apply_transpose(V, mu=mu)
+        U = op.apply_adjoint(V, mu=mu)
     except (NotImplementedError, LinAlgError):
         return
     assert U in op.source
     assert len(V) == len(U)
     for ind in list(valid_inds(V, 3)) + [[]]:
-        Uind = op.apply_transpose(V[ind], mu=mu)
+        Uind = op.apply_adjoint(V[ind], mu=mu)
         assert np.all(almost_equal(Uind, U[ind]))
-        assert np.all(almost_equal(Uind, op.apply_transpose(V[ind], mu=mu)))
+        assert np.all(almost_equal(Uind, op.apply_adjoint(V[ind], mu=mu)))
 
 
-def test_apply_transpose_2(operator_with_arrays):
+def test_apply_adjoint_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     if not op.linear:
         return
     try:
-        ATV = op.apply_transpose(V, mu=mu)
+        ATV = op.apply_adjoint(V, mu=mu)
     except NotImplementedError:
         return
     assert np.allclose(V.dot(op.apply(U, mu=mu)), ATV.dot(U))
 
 
-def test_T(operator_with_arrays):
+def test_H(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     if not op.linear:
         return
     try:
-        op.T.apply(V, mu=mu)
+        op.H.apply(V, mu=mu)
     except NotImplementedError:
         return
-    assert np.allclose(V.dot(op.apply(U, mu=mu)), op.T.apply(V, mu=mu).dot(U))
+    assert np.allclose(V.dot(op.apply(U, mu=mu)), op.H.apply(V, mu=mu).dot(U))
 
 
 def test_apply_inverse(operator_with_arrays):
@@ -184,7 +184,7 @@ def test_apply_inverse(operator_with_arrays):
         assert np.all(almost_equal(VV, V[ind], atol=1e-10, rtol=1e-3))
 
 
-def test_apply_inverse_transpose(operator_with_arrays):
+def test_apply_inverse_adjoint(operator_with_arrays):
     op, mu, U, _ = operator_with_arrays
     if not op.linear:
         return
@@ -192,12 +192,12 @@ def test_apply_inverse_transpose(operator_with_arrays):
         if len(U[ind]) == 0:
             continue
         try:
-            V = op.apply_inverse_transpose(U[ind], mu=mu)
+            V = op.apply_inverse_adjoint(U[ind], mu=mu)
         except (InversionError, LinAlgError):
             return
         assert V in op.range
         assert len(V) == U.len_ind(ind)
-        UU = op.apply_transpose(V, mu=mu)
+        UU = op.apply_adjoint(V, mu=mu)
         assert np.all(almost_equal(UU, U[ind], atol=1e-10, rtol=1e-3))
 
 
@@ -275,11 +275,11 @@ def test_assemble(operator_with_arrays):
     assert np.all(almost_equal(aop.apply(U), op.apply(U, mu=mu)))
 
     try:
-        ATV = op.apply_transpose(V, mu=mu)
+        ATV = op.apply_adjoint(V, mu=mu)
     except (NotImplementedError, LinAlgError):
         ATV = None
     if ATV is not None:
-        assert np.all(almost_equal(aop.apply_transpose(V), ATV))
+        assert np.all(almost_equal(aop.apply_adjoint(V), ATV))
 
     try:
         AIV = op.apply_inverse(V, mu=mu)
@@ -289,11 +289,11 @@ def test_assemble(operator_with_arrays):
         assert np.all(almost_equal(aop.apply_inverse(V), AIV))
 
     try:
-        AITU = op.apply_inverse_transpose(U, mu=mu)
+        AITU = op.apply_inverse_adjoint(U, mu=mu)
     except (InversionError, LinAlgError):
         AITU = None
     if AITU is not None:
-        assert np.all(almost_equal(aop.apply_inverse_transpose(U), AITU))
+        assert np.all(almost_equal(aop.apply_inverse_adjoint(U), AITU))
 
 
 def test_restricted(operator_with_arrays):
@@ -326,40 +326,40 @@ def test_InverseOperator(operator_with_arrays):
         pass
     if op.linear:
         try:
-            assert np.all(almost_equal(inv.apply_transpose(U, mu=mu), op.apply_inverse_transpose(U, mu=mu),
+            assert np.all(almost_equal(inv.apply_adjoint(U, mu=mu), op.apply_inverse_adjoint(U, mu=mu),
                                        rtol=rtol, atol=atol))
         except (InversionError, NotImplementedError):
             pass
         try:
-            assert np.all(almost_equal(inv.apply_inverse_transpose(V, mu=mu), op.apply_transpose(V, mu=mu),
+            assert np.all(almost_equal(inv.apply_inverse_adjoint(V, mu=mu), op.apply_adjoint(V, mu=mu),
                                        rtol=rtol, atol=atol))
         except (InversionError, LinAlgError, NotImplementedError):
             pass
 
 
-def test_InverseTransposeOperator(operator_with_arrays):
+def test_InverseAdjointOperator(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     if not op.linear:
         return
-    inv = InverseTransposeOperator(op)
+    inv = InverseAdjointOperator(op)
     rtol = atol = 1e-12
     try:
-        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu),
+        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_adjoint(U, mu=mu),
                                    rtol=rtol, atol=atol))
     except (InversionError, LinAlgError, NotImplementedError):
         pass
     try:
-        assert np.all(almost_equal(inv.apply_inverse(V, mu=mu), op.apply_transpose(V, mu=mu),
+        assert np.all(almost_equal(inv.apply_inverse(V, mu=mu), op.apply_adjoint(V, mu=mu),
                                    rtol=rtol, atol=atol))
     except (InversionError, LinAlgError, NotImplementedError):
         pass
     try:
-        assert np.all(almost_equal(inv.apply_transpose(V, mu=mu), op.apply_inverse(V, mu=mu),
+        assert np.all(almost_equal(inv.apply_adjoint(V, mu=mu), op.apply_inverse(V, mu=mu),
                                    rtol=rtol, atol=atol))
     except (InversionError, LinAlgError, NotImplementedError):
         pass
     try:
-        assert np.all(almost_equal(inv.apply_inverse_transpose(U, mu=mu), op.apply(U, mu=mu),
+        assert np.all(almost_equal(inv.apply_inverse_adjoint(U, mu=mu), op.apply(U, mu=mu),
                                    rtol=rtol, atol=atol))
     except (InversionError, LinAlgError, NotImplementedError):
         pass

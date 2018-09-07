@@ -661,13 +661,13 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         The name of the functional.
     """
 
-    range = NumpyVectorSpace(1)
+    source = NumpyVectorSpace(1)
     sparse = False
 
     def __init__(self, grid, function=None, boundary_info=None, dirichlet_data=None, diffusion_function=None,
                  diffusion_constant=None, neumann_data=None, order=1, name=None):
         assert function is None or function.shape_range == ()
-        self.source = FVVectorSpace(grid)
+        self.range = FVVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -725,7 +725,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
 
         F_INTS /= g.volumes(0)
 
-        return F_INTS.reshape((1, -1))
+        return F_INTS.reshape((-1, 1))
 
 
 class DiffusionOperator(NumpyMatrixBasedOperator):

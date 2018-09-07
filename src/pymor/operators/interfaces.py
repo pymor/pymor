@@ -26,8 +26,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         :'inverse':           solver options used for
                               :meth:`~OperatorInterface.apply_inverse`
-        :'inverse_transpose': solver options used for
-                              :meth:`~OperatorInterface.apply_inverse_transpose`
+        :'inverse_adjoint':   solver options used for
+                              :meth:`~OperatorInterface.apply_inverse_adjoint`
         :'jacobian':          solver options for the operators returned
                               by :meth:`~OperatorInterface.jacobian`
                               (has no effect for linear operators)
@@ -46,10 +46,10 @@ class OperatorInterface(ImmutableInterface, Parametric):
         The source |VectorSpace|.
     range
         The range |VectorSpace|.
-    T
-        The transpose operator, i.e. ::
+    H
+        The adjoint operator, i.e. ::
 
-            self.T.apply(V, mu) == self.apply_transpose(V, mu)
+            self.H.apply(V, mu) == self.apply_adjoint(V, mu)
 
         for all V, mu.
     """
@@ -57,7 +57,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
     solver_options = None
 
     @property
-    def T(self):
+    def H(self):
         from pymor.operators.constructions import AdjointOperator
         return AdjointOperator(self)
 
@@ -86,6 +86,9 @@ class OperatorInterface(ImmutableInterface, Parametric):
         M, then `apply2` is given as::
 
             op.apply2(V, U) = V^T*M*U.
+
+        In the case of complex numbers, note that `apply2` is anti-linear in the
+        first variable by definition of `dot`.
 
         Parameters
         ----------
@@ -127,28 +130,28 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_transpose(self, V, mu=None):
-        """Apply the transpose operator.
+    def apply_adjoint(self, V, mu=None):
+        """Apply the adjoint operator.
 
         For any given linear |Operator| `op`, |Parameter| `mu` and
         |VectorArrays| `U`, `V` in the :attr:`~OperatorInterface.source`
         resp. :attr:`~OperatorInterface.range` we have::
 
-            op.apply_transpose(V, mu).dot(U) == V.dot(op.apply(U, mu))
+            op.apply_adjoint(V, mu).dot(U) == V.dot(op.apply(U, mu))
 
-        Thus, when `op` is represented by a matrix `M`, `apply_transpose` is
-        given by left-multplication of `M` with `V`.
+        Thus, when `op` is represented by a matrix `M`, `apply_adjoint` is
+        given by left-multplication of (the complex conjugate of) `M` with `V`.
 
         Parameters
         ----------
         V
-            |VectorArray| of vectors to which the transpose operator is applied.
+            |VectorArray| of vectors to which the adjoint operator is applied.
         mu
-            The |Parameter| for which to apply the transpose operator.
+            The |Parameter| for which to apply the adjoint operator.
 
         Returns
         -------
-        |VectorArray| of the transpose operator evaluations.
+        |VectorArray| of the adjoint operator evaluations.
         """
         pass
 
@@ -187,15 +190,15 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
-        """Apply the inverse transpose operator.
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+        """Apply the inverse adjoint operator.
 
         Parameters
         ----------
         U
-            |VectorArray| of vectors to which the inverse transpose operator is applied.
+            |VectorArray| of vectors to which the inverse adjoint operator is applied.
         mu
-            The |Parameter| for which to evaluate the inverse transpose operator.
+            The |Parameter| for which to evaluate the inverse adjoint operator.
         least_squares
             If `True`, solve the least squares problem::
 
@@ -211,7 +214,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         Returns
         -------
-        |VectorArray| of the inverse transpose operator evaluations.
+        |VectorArray| of the inverse adjoint operator evaluations.
 
         Raises
         ------
@@ -271,7 +274,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         `mu` a |VectorArray| `V` in the operator's :attr:`~OperatorInterface.source`,
         such that ::
 
-            self.range.make_array(V.dot(U)) == self.apply(U, mu)
+            self.range.make_array(V.dot(U).T) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 

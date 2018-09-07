@@ -120,8 +120,8 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
 
     As a result, the vectors in the returned `image` |VectorArray| will
     be ordered by the `domain` vector they correspond to (starting with
-    vectors which correspond to the `functionals` and to |Operators| for
-    which the image is estimated independently from `domain`).
+    vectors which correspond to the elements of `vectors` and to |Operators|
+    for which the image is estimated independently from `domain`).
 
     This function also returns an `image_dims` list, such that the first
     `image_dims[i+1]` vectors of `image` correspond to the first `i`

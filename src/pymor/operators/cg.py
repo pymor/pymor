@@ -55,13 +55,13 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     """
 
     sparse = False
-    range = NumpyVectorSpace(1)
+    source = NumpyVectorSpace(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
                  order=2, solver_options=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == ()
-        self.source = CGVectorSpace(grid)
+        self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -143,7 +143,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
             else:
                 I[DI] = 0
 
-        return I.reshape((1, -1))
+        return I.reshape((-1, 1))
 
 
 class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
@@ -183,13 +183,13 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     """
 
     sparse = False
-    range = NumpyVectorSpace(1)
+    source = NumpyVectorSpace(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
                  order=2, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == ()
-        self.source = CGVectorSpace(grid)
+        self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -261,7 +261,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
             else:
                 I[DI] = 0
 
-        return I.reshape((1, -1))
+        return I.reshape((-1, 1))
 
 
 class L2ProductP1(NumpyMatrixBasedOperator):

@@ -57,11 +57,11 @@ class LincombOperator(OperatorBase):
                                          (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
 
     @property
-    def T(self):
-        options = {'inverse': self.solver_options.get('inverse_transpose'),
-                   'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
-        return self.with_(operators=[op.T for op in self.operators], solver_options=options,
-                          name=self.name + '_transposed')
+    def H(self):
+        options = {'inverse': self.solver_options.get('inverse_adjoint'),
+                   'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
+        return self.with_(operators=[op.H for op in self.operators], solver_options=options,
+                          name=self.name + '_adjoint')
 
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients for a given |Parameter|.
@@ -112,12 +112,12 @@ class LincombOperator(OperatorBase):
             R += c * v
         return R
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply_transpose(V, mu=mu)
+        R = self.operators[0].apply_adjoint(V, mu=mu)
         R.scal(coeffs[0])
         for op, c in zip(self.operators[1:], coeffs[1:]):
-            R.axpy(c, op.apply_transpose(V, mu=mu))
+            R.axpy(c, op.apply_adjoint(V, mu=mu))
         return R
 
     def assemble(self, mu=None):
@@ -162,7 +162,7 @@ class LincombOperator(OperatorBase):
         else:
             return super().apply_inverse(V, mu=mu, least_squares=least_squares)
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         if len(self.operators) == 1:
             if self.coefficients[0] == 0.:
                 if least_squares:
@@ -170,11 +170,11 @@ class LincombOperator(OperatorBase):
                 else:
                     raise InversionError
             else:
-                V = self.operators[0].apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+                V = self.operators[0].apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
                 V *= (1. / self.coefficients[0])
                 return V
         else:
-            return super().apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+            return super().apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
 
     def _as_array(self, source, mu):
         coefficients = np.array(self.evaluate_coefficients(mu))
@@ -252,11 +252,11 @@ class Concatenation(OperatorBase):
         self.name = name
 
     @property
-    def T(self):
-        options = {'inverse': self.solver_options.get('inverse_transpose'),
-                   'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
-        return type(self)(tuple(op.T for op in self.operators[::-1]), solver_options=options,
-                          name=self.name + '_transposed')
+    def H(self):
+        options = {'inverse': self.solver_options.get('inverse_adjoint'),
+                   'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
+        return type(self)(tuple(op.H for op in self.operators[::-1]), solver_options=options,
+                          name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -264,10 +264,10 @@ class Concatenation(OperatorBase):
             U = op.apply(U, mu=mu)
         return U
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         mu = self.parse_parameter(mu)
         for op in self.operators:
-            V = op.apply_transpose(V, mu=mu)
+            V = op.apply_adjoint(V, mu=mu)
         return V
 
     def jacobian(self, U, mu=None):
@@ -371,14 +371,14 @@ class IdentityOperator(OperatorBase):
         self.name = name
 
     @property
-    def T(self):
+    def H(self):
         return self
 
     def apply(self, U, mu=None):
         assert U in self.source
         return U.copy()
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
         return V.copy()
 
@@ -386,7 +386,7 @@ class IdentityOperator(OperatorBase):
         assert V in self.range
         return V.copy()
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
         return U.copy()
 
@@ -476,14 +476,14 @@ class ZeroOperator(OperatorBase):
         self.name = name
 
     @property
-    def T(self):
-        return type(self)(self.source, self.range, name=self.name + '_transposed')
+    def H(self):
+        return type(self)(self.source, self.range, name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         assert U in self.source
         return self.range.zeros(len(U))
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
         return self.source.zeros(len(V))
 
@@ -493,7 +493,7 @@ class ZeroOperator(OperatorBase):
             raise InversionError
         return self.source.zeros(len(V))
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
         if not least_squares:
             raise InversionError
@@ -515,11 +515,11 @@ class ZeroOperator(OperatorBase):
 class VectorArrayOperator(OperatorBase):
     """Wraps a |VectorArray| as an |Operator|.
 
-    If `transposed` is `False`, the operator maps from `NumpyVectorSpace(len(array))`
+    If `adjoint` is `False`, the operator maps from `NumpyVectorSpace(len(array))`
     to `array.space` by forming linear combinations of the vectors in the array
     with given coefficient arrays.
 
-    If `transposed == True`, the operator maps from `array.space` to
+    If `adjoint == True`, the operator maps from `array.space` to
     `NumpyVectorSpace(len(array))` by forming the inner products of the argument
     with the vectors in the given array.
 
@@ -527,7 +527,7 @@ class VectorArrayOperator(OperatorBase):
     ----------
     array
         The |VectorArray| which is to be treated as an operator.
-    transposed
+    adjoint
         See description above.
     name
         The name of the operator.
@@ -535,47 +535,50 @@ class VectorArrayOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, array, transposed=False, space_id=None, name=None):
+    def __init__(self, array, adjoint=False, space_id=None, name=None):
         self._array = array.copy()
-        if transposed:
+        if adjoint:
             self.source = array.space
             self.range = NumpyVectorSpace(len(array), space_id)
         else:
             self.source = NumpyVectorSpace(len(array), space_id)
             self.range = array.space
-        self.transposed = transposed
+        self.adjoint = adjoint
         self.space_id = space_id
         self.name = name
 
     @property
-    def T(self):
-        return VectorArrayOperator(self._array, not self.transposed, self.space_id, self.name + '_transposed')
+    def H(self):
+        return VectorArrayOperator(self._array, not self.adjoint, self.space_id, self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         assert U in self.source
-        if not self.transposed:
+        if not self.adjoint:
             return self._array.lincomb(U.to_numpy())
         else:
-            return self.range.make_array(U.dot(self._array))
+            return self.range.make_array(self._array.dot(U).T)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        if not self.transposed:
+        if not self.adjoint:
             return self.source.make_array(self._array.dot(V).T)
         else:
             return self._array.lincomb(V.to_numpy())
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
-        transpose_op = VectorArrayOperator(self._array, transposed=not self.transposed)
-        return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+        adjoint_op = VectorArrayOperator(self._array, adjoint=not self.adjoint)
+        return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-        transposed = operators[0].transposed
-        if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed and
+        adjoint = operators[0].adjoint
+        if not all(isinstance(op, VectorArrayOperator) and op.adjoint == adjoint and
                    op.source == operators[0].source and op.range == operators[0].range
                    for op in operators):
             return None
         assert not solver_options
+
+        if adjoint:
+            coefficients = np.conj(coefficients)
 
         if coefficients[0] == 1:
             array = operators[0]._array.copy()
@@ -583,23 +586,23 @@ class VectorArrayOperator(OperatorBase):
             array = operators[0]._array * coefficients[0]
         for op, c in zip(operators[1:], coefficients[1:]):
             array.axpy(c, op._array)
-        return VectorArrayOperator(array, transposed=transposed, space_id=operators[0].space_id, name=name)
+        return VectorArrayOperator(array, adjoint=adjoint, space_id=operators[0].space_id, name=name)
 
     def as_range_array(self, mu=None):
-        if not self.transposed:
+        if not self.adjoint:
             return self._array.copy()
         else:
             return super().as_range_array(mu)
 
     def as_source_array(self, mu=None):
-        if self.transposed:
+        if self.adjoint:
             return self._array.copy()
         else:
             return super().as_source_array(mu)
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        if not self.transposed:
+        if not self.adjoint:
             restricted_value = NumpyVectorSpace.make_array(self._array.dofs(dofs))
             return VectorArrayOperator(restricted_value, False), np.arange(self.source.dim, dtype=np.int32)
         else:
@@ -633,7 +636,7 @@ class VectorOperator(VectorArrayOperator):
     def __init__(self, vector, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        super().__init__(vector, transposed=False, name=name)
+        super().__init__(vector, adjoint=False, name=name)
 
 
 class VectorFunctional(VectorArrayOperator):
@@ -673,9 +676,9 @@ class VectorFunctional(VectorArrayOperator):
         assert len(vector) == 1
         assert product is None or isinstance(product, OperatorInterface) and vector in product.source
         if product is None:
-            super().__init__(vector, transposed=True, name=name)
+            super().__init__(vector, adjoint=True, name=name)
         else:
-            super().__init__(product.apply(vector), transposed=True, name=name)
+            super().__init__(product.apply(vector), adjoint=True, name=name)
 
 
 class ProxyOperator(OperatorBase):
@@ -701,20 +704,20 @@ class ProxyOperator(OperatorBase):
         self.build_parameter_type(operator)
 
     @property
-    def T(self):
-        return self.with_(operator=self.operator.T, name=self.name + '_transposed')
+    def H(self):
+        return self.with_(operator=self.operator.H, name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=mu)
 
-    def apply_transpose(self, V, mu=None):
-        return self.operator.apply_transpose(V, mu=mu)
+    def apply_adjoint(self, V, mu=None):
+        return self.operator.apply_adjoint(V, mu=mu)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         return self.operator.apply_inverse(V, mu=mu, least_squares=least_squares)
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
-        return self.operator.apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+        return self.operator.apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
 
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=mu)
@@ -746,14 +749,14 @@ class FixedParameterOperator(ProxyOperator):
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=self.mu)
 
-    def apply_transpose(self, V, mu=None):
-        return self.operator.apply_transpose(V, mu=self.mu)
+    def apply_adjoint(self, V, mu=None):
+        return self.operator.apply_adjoint(V, mu=self.mu)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         return self.operator.apply_inverse(V, mu=self.mu, least_squares=least_squares)
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
-        return self.operator.apply_inverse_transpose(U, mu=self.mu, least_squares=least_squares)
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+        return self.operator.apply_inverse_adjoint(U, mu=self.mu, least_squares=least_squares)
 
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=self.mu)
@@ -802,33 +805,33 @@ class InverseOperator(OperatorBase):
         self.name = name or operator.name + '_inverse'
 
     @property
-    def T(self):
-        return InverseTransposeOperator(self.operator)
+    def H(self):
+        return InverseAdjointOperator(self.operator)
 
     def apply(self, U, mu=None):
         assert U in self.source
         return self.operator.apply_inverse(U, mu=mu)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        return self.operator.apply_inverse_transpose(V, mu=mu)
+        return self.operator.apply_inverse_adjoint(V, mu=mu)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
         return self.operator.apply(V, mu=mu)
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
-        return self.operator.apply_transpose(U, mu=mu)
+        return self.operator.apply_adjoint(U, mu=mu)
 
 
-class InverseTransposeOperator(OperatorBase):
-    """Represents the inverse transpose of a given |Operator|.
+class InverseAdjointOperator(OperatorBase):
+    """Represents the inverse adjoint of a given |Operator|.
 
     Parameters
     ----------
     operator
-        The |Operator| of which the inverse transpose is formed.
+        The |Operator| of which the inverse adjoint is formed.
     name
         If not `None`, name of the operator.
     """
@@ -842,25 +845,25 @@ class InverseTransposeOperator(OperatorBase):
         self.source = operator.source
         self.range = operator.range
         self.operator = operator
-        self.name = name or operator.name + '_inverse_transpose'
+        self.name = name or operator.name + '_inverse_adjoint'
 
     @property
-    def T(self):
+    def H(self):
         return InverseOperator(self.operator)
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.operator.apply_inverse_transpose(U, mu=mu)
+        return self.operator.apply_inverse_adjoint(U, mu=mu)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
         return self.operator.apply_inverse(V, mu=mu)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        return self.operator.apply_transpose(V, mu=mu)
+        return self.operator.apply_adjoint(V, mu=mu)
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
         return self.operator.apply(U, mu=mu)
 
@@ -875,11 +878,11 @@ class AdjointOperator(OperatorBase):
     where `( , )_s` and `( , )_r` denote the inner products on the source
     and range space of `op`. If two products are given by `P_s` and `P_r`, then::
 
-        op^*(v) = P_s^(-1) o op.T o P_r,
+        op^*(v) = P_s^(-1) o op.H o P_r,
 
     Thus, if `( , )_s` and `( , )_r` are the Euclidean inner products,
     `op^*v` is simply given by applycation of the
-    :attr:transpose <pymor.operators.interface.OperatorInterface.T>`
+    :attr:adjoint <pymor.operators.interface.OperatorInterface.H>`
     |Operator|.
 
     Parameters
@@ -923,25 +926,25 @@ class AdjointOperator(OperatorBase):
         self.solver_options = solver_options
 
     @property
-    def T(self):
+    def H(self):
         if not self.source_product and not self.range_product:
             return self.operator
         else:
-            options = {'inverse': self.solver_options.get('inverse_transpose'),
-                       'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
-            return AdjointOperator(self.operator.T, source_product=self.range_product,
+            options = {'inverse': self.solver_options.get('inverse_adjoint'),
+                       'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
+            return AdjointOperator(self.operator.H, source_product=self.range_product,
                                    range_product=self.source_product, solver_options=options)
 
     def apply(self, U, mu=None):
         assert U in self.source
         if self.range_product:
             U = self.range_product.apply(U)
-        V = self.operator.apply_transpose(U, mu=mu)
+        V = self.operator.apply_adjoint(U, mu=mu)
         if self.source_product:
             V = self.source_product.apply_inverse(V)
         return V
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if self.source_product:
             V = self.source_product.apply_inverse(V)
@@ -957,14 +960,14 @@ class AdjointOperator(OperatorBase):
         assert V in self.range
         if self.source_product:
             V = self.source_product(V)
-        U = self.operator.apply_inverse_transpose(V, mu=mu, least_squares=least_squares)
+        U = self.operator.apply_inverse_adjoint(V, mu=mu, least_squares=least_squares)
         if self.range_product:
             U = self.range_product.apply_inverse(U)
         return U
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         if not self.with_apply_inverse:
-            return super().apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+            return super().apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
 
         assert U in self.source
         if self.range_product:
@@ -1020,9 +1023,9 @@ class SelectionOperator(OperatorBase):
         self.parameter_functional = parameter_functional
 
     @property
-    def T(self):
-        return self.with_(operators=[op.T for op in self.operators],
-                          name=self.name + '_transposed')
+    def H(self):
+        return self.with_(operators=[op.H for op in self.operators],
+                          name=self.name + '_adjoint')
 
     def _get_operator_number(self, mu):
         value = self.parameter_functional.evaluate(mu)
@@ -1041,10 +1044,10 @@ class SelectionOperator(OperatorBase):
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].apply(U, mu=mu)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         mu = self.parse_parameter(mu)
         op = self.operators[self._get_operator_number(mu)]
-        return op.apply_transpose(V, mu=mu)
+        return op.apply_adjoint(V, mu=mu)
 
     def as_range_array(self, mu=None):
         mu = self.parse_parameter(mu)

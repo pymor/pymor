@@ -183,22 +183,22 @@ def test_to_matrix_LincombOperator():
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
-    Cop = Aop * a + (Bop @ Bop.T) * b
+    Cop = Aop * a + (Bop @ Bop.H) * b
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(B)
-    Cop = Aop * a + (Bop @ Bop.T) * b
+    Cop = Aop * a + (Bop @ Bop.H) * b
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = Aop * a + (Bop @ Bop.T) * b
+    Cop = Aop * a + (Bop @ Bop.H) * b
     assert_type_and_allclose(C, Cop, 'dense')
 
     Aop = NumpyMatrixOperator(sps.csc_matrix(A))
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
-    Cop = Aop * a + (Bop @ Bop.T) * b
+    Cop = Aop * a + (Bop @ Bop.H) * b
     assert_type_and_allclose(C, Cop, 'sparse')
 
 
@@ -210,7 +210,7 @@ def test_to_matrix_VectorArrayOperator():
     Vop = VectorArrayOperator(Vva)
     assert_type_and_allclose(V, Vop, 'dense')
 
-    Vop = VectorArrayOperator(Vva, transposed=True)
+    Vop = VectorArrayOperator(Vva, adjoint=True)
     assert_type_and_allclose(V.T, Vop, 'dense')
 
 

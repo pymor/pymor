@@ -164,7 +164,7 @@ def _discretize_fenics():
                                   100. - 1.,
                                   ExpressionParameterFunctional('top - 1.', {'top': 0})]),
 
-        rhs=VectorFunctional(FenicsVectorSpace(V).make_array([f])),
+        rhs=VectorOperator(FenicsVectorSpace(V).make_array([f])),
 
         mass=FenicsMatrixOperator(l2_0_mat, V, V, name='l2'),
 

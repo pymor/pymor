@@ -88,7 +88,7 @@ class OperatorBase(OperatorInterface):
             self.name, self.source.dim, self.range.dim, self.parameter_type,
             self.__class__.__name__)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         if self.linear:
             raise NotImplementedError
         else:
@@ -127,25 +127,25 @@ class OperatorBase(OperatorInterface):
                     raise InversionError(e)
             return R
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
         if not self.linear:
             raise LinAlgError('Operator not linear.')
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse_transpose(U, least_squares=least_squares)
+            return assembled_op.apply_inverse_adjoint(U, least_squares=least_squares)
         else:
             # use generic solver for the transpose operator
             from pymor.operators.constructions import AdjointOperator
-            options = {'inverse': self.solver_options.get('inverse_transpose') if self.solver_options else None}
-            transpose_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
-            return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
+            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
+            adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
+            return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def as_range_array(self, mu=None):
         return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
 
     def as_source_array(self, mu=None):
-        return self.apply_transpose(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
+        return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
 
 class ProjectedOperator(OperatorBase):
@@ -196,13 +196,13 @@ class ProjectedOperator(OperatorBase):
         self.product = product
 
     @property
-    def T(self):
+    def H(self):
         if self.product:
-            return super().T
+            return super().H
         else:
-            options = {'inverse': self.solver_options.get('inverse_transpose'),
-                       'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
-            return ProjectedOperator(self.operator.T, self.source_basis, self.range_basis, solver_options=options)
+            options = {'inverse': self.solver_options.get('inverse_adjoint'),
+                       'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
+            return ProjectedOperator(self.operator.H, self.source_basis, self.range_basis, solver_options=options)
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -253,11 +253,11 @@ class ProjectedOperator(OperatorBase):
             pop = pop.with_(solver_options=self.solver_options)
         return pop
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if self.range_basis is not None:
             V = self.range_basis.lincomb(V.to_numpy())
-        U = self.operator.apply_transpose(V, mu)
+        U = self.operator.apply_adjoint(V, mu)
         if self.source_basis is not None:
             U = self.source.make_array(U.dot(self.source_basis))
         return U
