@@ -135,7 +135,7 @@ class OperatorBase(OperatorInterface):
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
             return assembled_op.apply_inverse_adjoint(U, least_squares=least_squares)
         else:
-            # use generic solver for the transpose operator
+            # use generic solver for the adjoint operator
             from pymor.operators.constructions import AdjointOperator
             options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
             adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
