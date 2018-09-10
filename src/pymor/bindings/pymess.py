@@ -274,7 +274,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
             else:
-                x = self.a.apply_transpose(y)
+                x = self.a.apply_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def ex_apply(self, op, y):
@@ -285,7 +285,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply(y)
             else:
-                x = self.e.apply_transpose(y)
+                x = self.e.apply_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def ainv_apply(self, op, y):
@@ -293,7 +293,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply_inverse(y)
             else:
-                x = self.a.apply_inverse_transpose(y)
+                x = self.a.apply_inverse_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def einv_apply(self, op, y):
@@ -304,7 +304,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply_inverse(y)
             else:
-                x = self.e.apply_inverse_transpose(y)
+                x = self.e.apply_inverse_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def apex_apply(self, op, p, idx_p, y):
@@ -316,11 +316,11 @@ if config.HAVE_PYMESS:
                 else:
                     x += p * self.e.apply(y)
             else:
-                x = self.a.apply_transpose(y)
+                x = self.a.apply_adjoint(y)
                 if self.e is None:
                     x += p.conjugate() * y
                 else:
-                    x += p.conjugate() * self.e.apply_transpose(y)
+                    x += p.conjugate() * self.e.apply_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def apeinv_apply(self, op, p, idx_p, y):
@@ -335,7 +335,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = ape.apply_inverse(y)
             else:
-                x = ape.apply_inverse_transpose(y)
+                x = ape.apply_inverse_adjoint(y.conj()).conj()
             return np.matrix(x.to_numpy()).T
 
         def parameter(self, arp_p, arp_m, B=None, K=None):
@@ -390,7 +390,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
             else:
-                x = self.a.apply_transpose(y)
+                x = self.a.apply_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def ex_apply(self, op, y):
@@ -401,7 +401,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply(y)
             else:
-                x = self.e.apply_transpose(y)
+                x = self.e.apply_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def ainv_apply(self, op, y):
@@ -409,7 +409,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply_inverse(y)
             else:
-                x = self.a.apply_inverse_transpose(y)
+                x = self.a.apply_inverse_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def einv_apply(self, op, y):
@@ -420,7 +420,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply_inverse(y)
             else:
-                x = self.e.apply_inverse_transpose(y)
+                x = self.e.apply_inverse_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def apex_apply(self, op, p, idx_p, y):
@@ -432,11 +432,11 @@ if config.HAVE_PYMESS:
                 else:
                     x += p * self.e.apply(y)
             else:
-                x = self.a.apply_transpose(y)
+                x = self.a.apply_adjoint(y)
                 if self.e is None:
                     x += p.conjugate() * y
                 else:
-                    x += p.conjugate() * self.e.apply_transpose(y)
+                    x += p.conjugate() * self.e.apply_adjoint(y)
             return np.matrix(x.to_numpy()).T
 
         def apeinv_apply(self, op, p, idx_p, y):
@@ -451,7 +451,7 @@ if config.HAVE_PYMESS:
             if op == pymess.MESS_OP_NONE:
                 x = ape.apply_inverse(y)
             else:
-                x = ape.apply_inverse_transpose(y)
+                x = ape.apply_inverse_adjoint(y.conj()).conj()
             return np.matrix(x.to_numpy()).T
 
         def parameter(self, arp_p, arp_m, B=None, K=None):

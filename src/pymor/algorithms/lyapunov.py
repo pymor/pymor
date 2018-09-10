@@ -90,7 +90,7 @@ def lyap_solver_options(lradi_tol=1e-10,
 
 def lradi(A, E, B, trans=False, options=None):
     """Find a factor of the solution of a Lyapunov equation using the
-    low-rank adi iteration as described in Algorithm 4.3 in [PK16]_.
+    low-rank ADI iteration as described in Algorithm 4.3 in [PK16]_.
 
     .. [PK16]  P. Kürschner,
                Efficient Low-Rank Solution of Large-Scale Matrix Equations,
@@ -127,12 +127,12 @@ def lradi(A, E, B, trans=False, options=None):
     if E is None:
         E = IdentityOperator(A.source)
 
-    if trans:
-        Z = A.range.empty(reserve=B.range.dim * options['maxiter'])
-        W = B.as_source_array()
-    else:
+    if not trans:
         Z = A.source.empty(reserve=B.source.dim * options['maxiter'])
         W = B.as_range_array()
+    else:
+        Z = A.range.empty(reserve=B.range.dim * options['maxiter'])
+        W = B.as_source_array()
 
     j = 0
     shifts = init_shifts(A, E, W, shift_options)
@@ -141,30 +141,30 @@ def lradi(A, E, B, trans=False, options=None):
     init_res = res
     Btol = res * options['tol']
 
-    while(res > Btol and j < options['maxiter']):
-        logger.info("Relative residual at step {}: {:.5e}".format(j, res/init_res))
+    while res > Btol and j < options['maxiter']:
+        logger.info("Relative residual at step {}: {:.5e}".format(j, res / init_res))
         if shifts[j].imag == 0:
             AaE = LincombOperator([A, E], [1, shifts[j].real])
-            if trans:
-                V = AaE.apply_inverse_transpose(W)
-                W -= E.apply_transpose(V)*2*shifts[j].real
-            else:
+            if not trans:
                 V = AaE.apply_inverse(W)
-                W -= E.apply(V)*2*shifts[j].real
-            Z.append(V*np.sqrt(-2*shifts[j].real))
+                W -= E.apply(V) * (2 * shifts[j].real)
+            else:
+                V = AaE.apply_inverse_adjoint(W)
+                W -= E.apply_adjoint(V) * (2 * shifts[j].real)
+            Z.append(V * np.sqrt(-2 * shifts[j].real))
             j += 1
         else:
             AaE = LincombOperator([A, E], [1, shifts[j]])
-            g = 2*np.sqrt(-shifts[j].real)
-            d = shifts[j].real/shifts[j].imag
-            if trans:
-                V = AaE.apply_inverse_transpose(W)
-                W += E.apply_transpose(V.real + V.imag*d)*g**2
-            else:
+            g = 2 * np.sqrt(-shifts[j].real)
+            d = shifts[j].real / shifts[j].imag
+            if not trans:
                 V = AaE.apply_inverse(W)
-                W += E.apply(V.real + V.imag*d)*g**2
-            Z.append((V.real + V.imag*d)*g)
-            Z.append(V.imag*g*np.sqrt(d**2+1))
+                W += E.apply(V.real + V.imag * d) * g**2
+            else:
+                V = AaE.apply_inverse_adjoint(W).conj()
+                W += E.apply_adjoint(V.real + V.imag * d) * g**2
+            Z.append((V.real + V.imag * d) * g)
+            Z.append(V.imag * (g * np.sqrt(d**2 + 1)))
             j += 2
         if j >= size_shift:
             shifts = iteration_shifts(A, E, Z, W, shifts, shift_options)
@@ -174,7 +174,7 @@ def lradi(A, E, B, trans=False, options=None):
 
 
 def projection_shifts_init(A, E, B, shift_options):
-    """Find starting shift parameters for low-rank adi iteration using
+    """Find starting shift parameters for low-rank ADI iteration using
     Galerkin projection on spaces spanned by LR-ADI iterates.
 
     See [PK16]_, pp. 92-95.
@@ -200,7 +200,7 @@ def projection_shifts_init(A, E, B, shift_options):
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-    for i in range(0, shift_options['init_maxiter']):
+    for i in range(shift_options['init_maxiter']):
         Q = gram_schmidt(B, atol=0, rtol=0)
         shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
         shifts = shifts[np.real(shifts) < 0]
@@ -212,11 +212,11 @@ def projection_shifts_init(A, E, B, shift_options):
             B = B.space.make_array(np.random.rand(len(B), B.space.dim))
         else:
             return shifts
-    raise RuntimeError('Could not generate initial shifts for low-rank adi iteration.')
+    raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')
 
 
 def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
-    """Find further shift parameters for low-rank adi iteration using
+    """Find further shift parameters for low-rank ADI iteration using
     Galerkin projection on spaces spanned by LR-ADI iterates.
 
     See [PK16]_, pp. 92-95.

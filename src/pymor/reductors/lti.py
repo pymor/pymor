@@ -171,7 +171,7 @@ class IRKAReductor(GenericPGReductor):
             # new tangential directions
             Y = rd.B.range.make_array(Y.conj().T)
             X = rd.C.source.make_array(X.T)
-            b = rd.B.apply_transpose(Y)
+            b = rd.B.apply_adjoint(Y)
             c = rd.C.apply(X)
             self.R.append(b)
             self.L.append(c)

@@ -491,7 +491,7 @@ class LTISystem(InputOutputSystem):
         if self.m <= self.p:
             tfs = C.apply(sEmA.apply_inverse(B.as_range_array())).to_numpy().T
         else:
-            tfs = B.apply_transpose(sEmA.apply_inverse_transpose(C.as_source_array())).to_numpy().conj()
+            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
         if not isinstance(D, ZeroOperator):
             if self.m <= self.p:
                 tfs += D.as_range_array().to_numpy().T
@@ -531,7 +531,7 @@ class LTISystem(InputOutputSystem):
         if self.m <= self.p:
             dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.as_range_array())))).to_numpy().T
         else:
-            dtfs = B.apply_transpose(sEmA.apply_inverse_transpose(E.apply_transpose(sEmA.apply_inverse_transpose(
+            dtfs = -B.apply_adjoint(sEmA.apply_inverse_adjoint(E.apply_adjoint(sEmA.apply_inverse_adjoint(
                 C.as_source_array())))).to_numpy().conj()
         return dtfs
 
@@ -666,7 +666,7 @@ class LTISystem(InputOutputSystem):
                 return np.sqrt(C.apply(cf).l2_norm2().sum())
             else:
                 of = self.gramian('of')
-                return np.sqrt(B.apply_transpose(of).l2_norm2().sum())
+                return np.sqrt(B.apply_adjoint(of).l2_norm2().sum())
         elif name == 'Hinf_fpeak':
             from slycot import ab13dd
             dico = 'C' if self.cont_time else 'D'
@@ -992,8 +992,8 @@ class SecondOrderSystem(InputOutputSystem):
             CppsCv = LincombOperator((Cp, Cv), (1, s))
             tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T
         else:
-            tfs = B.apply_transpose(s2MpsEpK.apply_inverse_transpose(Cp.as_source_array() +
-                                                                     Cv.as_source_array() * s.conj())).to_numpy().conj()
+            tfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(
+                Cp.as_source_array() + Cv.as_source_array() * s.conjugate())).to_numpy().conj()
         if not isinstance(D, ZeroOperator):
             if self.m <= self.p:
                 tfs += D.as_range_array().to_numpy().T
@@ -1039,10 +1039,10 @@ class SecondOrderSystem(InputOutputSystem):
             dtfs -= CppsCv.apply(s2MpsEpK.apply_inverse(sM2pE.apply(s2MpsEpK.apply_inverse(
                 B.as_range_array())))).to_numpy().T
         else:
-            dtfs = B.apply_transpose(s2MpsEpK.apply_inverse_transpose(Cv.as_source_array())).to_numpy().conj() * s
-            dtfs -= B.apply_transpose(s2MpsEpK.apply_inverse_transpose(sM2pE.apply_transpose(
-                s2MpsEpK.apply_inverse_transpose(Cp.as_source_array() +
-                                                 Cv.as_source_array() * s.conj())))).to_numpy().conj()
+            dtfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(Cv.as_source_array())).to_numpy().conj() * s
+            dtfs -= B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(sM2pE.apply_adjoint(
+                s2MpsEpK.apply_inverse_adjoint(Cp.as_source_array() +
+                                               Cv.as_source_array() * s.conjugate())))).to_numpy().conj()
         return dtfs
 
     @cached
@@ -1251,7 +1251,7 @@ class LinearDelaySystem(InputOutputSystem):
         if self.m <= self.p:
             tfs = C.apply(middle.apply_inverse(B.as_range_array())).to_numpy().T
         else:
-            tfs = B.apply_transpose(middle.apply_inverse_transpose(C.as_source_array())).to_numpy().conj()
+            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
         return tfs
 
     def eval_dtf(self, s):
@@ -1289,13 +1289,13 @@ class LinearDelaySystem(InputOutputSystem):
         C = self.C
 
         left_and_right = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
-        middle = LincombOperator((E,) + Ad, (s,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
+        middle = LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
         if self.m <= self.p:
-            dtfs = C.apply(left_and_right.apply_inverse(middle.apply(left_and_right.apply_inverse(
+            dtfs = -C.apply(left_and_right.apply_inverse(middle.apply(left_and_right.apply_inverse(
                 B.as_range_array())))).to_numpy().T
         else:
-            dtfs = B.apply_transpose(left_and_right.apply_inverse_transpose(middle.apply_transpose(
-                left_and_right.apply_inverse_transpose(C.as_source_array())))).to_numpy().conj()
+            dtfs = -B.apply_adjoint(left_and_right.apply_inverse_adjoint(middle.apply_adjoint(
+                left_and_right.apply_inverse_adjoint(C.as_source_array())))).to_numpy().conj()
         return dtfs
 
 

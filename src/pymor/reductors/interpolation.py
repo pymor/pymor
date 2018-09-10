@@ -40,13 +40,13 @@ class GenericBHIReductor(GenericPGReductor):
     def _B_apply(self, s, V):
         raise NotImplementedError()
 
-    def _C_apply_transpose(self, s, V):
+    def _C_apply_adjoint(self, s, V):
         raise NotImplementedError()
 
     def _K_apply_inverse(self, s, V):
         raise NotImplementedError()
 
-    def _K_apply_inverse_transpose(self, s, V):
+    def _K_apply_inverse_adjoint(self, s, V):
         raise NotImplementedError()
 
     def reduce(self, sigma, b, c, projection='orth'):
@@ -93,16 +93,16 @@ class GenericBHIReductor(GenericPGReductor):
                 Bb = self._B_apply(sigma[i].real, b.real[i])
                 self.V.append(self._K_apply_inverse(sigma[i].real, Bb))
 
-                CTc = self._C_apply_transpose(sigma[i].real, c.real[i])
-                self.W.append(self._K_apply_inverse_transpose(sigma[i].real, CTc))
+                CTc = self._C_apply_adjoint(sigma[i].real, c.real[i])
+                self.W.append(self._K_apply_inverse_adjoint(sigma[i].real, CTc))
             elif sigma[i].imag > 0:
                 Bb = self._B_apply(sigma[i], b[i])
                 v = self._K_apply_inverse(sigma[i], Bb)
                 self.V.append(v.real)
                 self.V.append(v.imag)
 
-                CTc = self._C_apply_transpose(sigma[i], c[i])
-                w = self._K_apply_inverse_transpose(sigma[i], CTc)
+                CTc = self._C_apply_adjoint(sigma[i], c[i].conj())
+                w = self._K_apply_inverse_adjoint(sigma[i], CTc)
                 self.W.append(w.real)
                 self.W.append(w.imag)
 
@@ -141,16 +141,16 @@ class LTI_BHIReductor(GenericBHIReductor):
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
 
-    def _C_apply_transpose(self, s, V):
-        return self.d.C.apply_transpose(V)
+    def _C_apply_adjoint(self, s, V):
+        return self.d.C.apply_adjoint(V)
 
     def _K_apply_inverse(self, s, V):
         sEmA = LincombOperator((self.d.E, self.d.A), (s, -1))
         return sEmA.apply_inverse(V)
 
-    def _K_apply_inverse_transpose(self, s, V):
+    def _K_apply_inverse_adjoint(self, s, V):
         sEmA = LincombOperator((self.d.E, self.d.A), (s, -1))
-        return sEmA.apply_inverse_transpose(V)
+        return sEmA.apply_inverse_adjoint(V)
 
     def reduce(self, sigma, b, c, projection='orth', use_arnoldi=False):
         """Bitangential Hermite interpolation.
@@ -242,18 +242,18 @@ class SO_BHIReductor(GenericBHIReductor):
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
 
-    def _C_apply_transpose(self, s, V):
-        x = self.d.Cp.apply_transpose(V)
-        y = self.d.Cv.apply_transpose(V)
-        return x + y * s
+    def _C_apply_adjoint(self, s, V):
+        x = self.d.Cp.apply_adjoint(V)
+        y = self.d.Cv.apply_adjoint(V)
+        return x + y * s.conjugate()
 
     def _K_apply_inverse(self, s, V):
         s2MpsEpK = LincombOperator((self.d.M, self.d.E, self.d.K), (s ** 2, s, 1))
         return s2MpsEpK.apply_inverse(V)
 
-    def _K_apply_inverse_transpose(self, s, V):
+    def _K_apply_inverse_adjoint(self, s, V):
         s2MpsEpK = LincombOperator((self.d.M, self.d.E, self.d.K), (s ** 2, s, 1))
-        return s2MpsEpK.apply_inverse_transpose(V)
+        return s2MpsEpK.apply_inverse_adjoint(V)
 
 
 class DelayBHIReductor(GenericBHIReductor):
@@ -276,15 +276,15 @@ class DelayBHIReductor(GenericBHIReductor):
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
 
-    def _C_apply_transpose(self, s, V):
-        return self.d.C.apply_transpose(V)
+    def _C_apply_adjoint(self, s, V):
+        return self.d.C.apply_adjoint(V)
 
     def _K_apply_inverse(self, s, V):
         Ks = LincombOperator((self.d.E, self.d.A) + self.d.Ad,
                              (s, -1) + tuple(-np.exp(-taui * s) for taui in self.d.tau))
         return Ks.apply_inverse(V)
 
-    def _K_apply_inverse_transpose(self, s, V):
+    def _K_apply_inverse_adjoint(self, s, V):
         Ks = LincombOperator((self.d.E, self.d.A) + self.d.Ad,
                              (s, -1) + tuple(-np.exp(-taui * s) for taui in self.d.tau))
-        return Ks.apply_inverse_transpose(V)
+        return Ks.apply_inverse_adjoint(V)

@@ -173,7 +173,7 @@ class SOR_IRKAReductor(GenericPGReductor):
             # new tangential directions
             Y = rd_r.B.range.make_array(Y.conj().T)
             X = rd_r.C.source.make_array(X.T)
-            b = rd_r.B.apply_transpose(Y).block(0)
+            b = rd_r.B.apply_adjoint(Y).block(0)
             c = rd_r.C.apply(X).block(0)
             self.R.append(b)
             self.L.append(c)

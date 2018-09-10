@@ -71,7 +71,7 @@ def arnoldi(A, E, b, sigma, trans=False):
             if not trans:
                 v = sEmA.apply_inverse(v)
             else:
-                v = sEmA.apply_inverse_transpose(v)
+                v = sEmA.apply_inverse_adjoint(v)
 
             V.append(v)
             V = gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 1, copy=False)
@@ -82,7 +82,7 @@ def arnoldi(A, E, b, sigma, trans=False):
             if not trans:
                 v = sEmA.apply_inverse(v)
             else:
-                v = sEmA.apply_inverse_transpose(v)
+                v = sEmA.apply_inverse_adjoint(v)
 
             V.append(v.real)
             V.append(v.imag)

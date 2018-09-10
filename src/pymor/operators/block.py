@@ -269,11 +269,11 @@ class SecondOrderSystemOperator(BlockOperator):
     which satisfies
 
     .. math::
-        \mathcal{A}^T
+        \mathcal{A}^H
         &=
         \begin{bmatrix}
-            0 & -K^T \\
-            I & -E^T
+            0 & -K^H \\
+            I & -E^H
         \end{bmatrix}, \\
         \mathcal{A}^{-1}
         &=
@@ -281,11 +281,11 @@ class SecondOrderSystemOperator(BlockOperator):
             -K^{-1} E & -K^{-1} \\
             I & 0
         \end{bmatrix}, \\
-        \mathcal{A}^{-T}
+        \mathcal{A}^{-H}
         &=
         \begin{bmatrix}
-            -E^T K^{-T} & I \\
-            -K^{-T} & 0
+            -E^H K^{-H} & I \\
+            -K^{-H} & 0
         \end{bmatrix}.
 
     Parameters
@@ -308,10 +308,10 @@ class SecondOrderSystemOperator(BlockOperator):
                     -self.K.apply(U.block(0), mu=mu) - self.E.apply(U.block(1), mu=mu)]
         return self.range.make_array(V_blocks)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [-self.K.apply_transpose(V.block(1), mu=mu),
-                    V.block(0) - self.E.apply_transpose(V.block(1), mu=mu)]
+        U_blocks = [-self.K.apply_adjoint(V.block(1), mu=mu),
+                    V.block(0) - self.E.apply_adjoint(V.block(1), mu=mu)]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
@@ -321,10 +321,10 @@ class SecondOrderSystemOperator(BlockOperator):
                     V.block(0)]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
-        KitU0 = self.K.apply_inverse_transpose(U.block(0), mu=mu, least_squares=least_squares)
-        V_blocks = [-self.E.apply_transpose(KitU0, mu=mu) + U.block(1),
+        KitU0 = self.K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
+        V_blocks = [-self.E.apply_adjoint(KitU0, mu=mu) + U.block(1),
                     -KitU0]
         return self.range.make_array(V_blocks)
 
@@ -383,11 +383,11 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
     which satisfies
 
     .. math::
-        (a \mathcal{E} + b \mathcal{A})^T
+        (a \mathcal{E} + b \mathcal{A})^H
         &=
         \begin{bmatrix}
-            a I & -b K^T \\
-            b I & a M^T - b E^T
+            \overline{a} I & -\overline{b} K^H \\
+            \overline{b} I & \overline{a} M^H - \overline{b} E^H
         \end{bmatrix}, \\
         (a \mathcal{E} + b \mathcal{A})^{-1}
         &=
@@ -397,12 +397,13 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
             b (a^2 M - a b E + b^2 K)^{-1} K
             & a (a^2 M - a b E + b^2 K)^{-1}
         \end{bmatrix}, \\
-        (a \mathcal{E} + b \mathcal{A})^{-T}
+        (a \mathcal{E} + b \mathcal{A})^{-H}
         &=
         \begin{bmatrix}
-            (a M - b E)^T (a^2 M - a b E + b^2 K)^{-T}
-            & b K^T (a^2 M - a b E + b^2 K)^{-T} \\
-            -b (a^2 M - a b E + b^2 K)^{-T} & a (a^2 M - a b E + b^2 K)^{-T}
+            (a M - b E)^H (a^2 M - a b E + b^2 K)^{-H}
+            & \overline{b} K^H (a^2 M - a b E + b^2 K)^{-H} \\
+            -\overline{b} (a^2 M - a b E + b^2 K)^{-H}
+            & \overline{a} (a^2 M - a b E + b^2 K)^{-H}
         \end{bmatrix}.
 
     Parameters
@@ -434,12 +435,13 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
                     self.E.apply(U.block(1), mu=mu) * self.b]
         return self.range.make_array(V_blocks)
 
-    def apply_transpose(self, V, mu=None):
+    def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [V.block(0) * self.a - self.K.apply_transpose(V.block(1), mu=mu) * self.b,
-                    V.block(0) * self.b +
-                    self.M.apply_transpose(V.block(1), mu=mu) * self.a -
-                    self.E.apply_transpose(V.block(1), mu=mu) * self.b]
+        U_blocks = [V.block(0) * self.a.conjugate() -
+                    self.K.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate(),
+                    V.block(0) * self.b.conjugate() +
+                    self.M.apply_adjoint(V.block(1), mu=mu) * self.a.conjugate() -
+                    self.E.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate()]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
@@ -455,16 +457,16 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
                     a2MmabEpb2KiV1 * self.a]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
         a2MmabEpb2K = LincombOperator([self.M, self.E, self.K],
                                       [self.a ** 2, -self.a * self.b, self.b ** 2]).assemble(mu=mu)
-        a2MmabEpb2KitU0 = a2MmabEpb2K.apply_inverse_transpose(U.block(0), mu=mu, least_squares=least_squares)
-        a2MmabEpb2KitU1 = a2MmabEpb2K.apply_inverse_transpose(U.block(1), mu=mu, least_squares=least_squares)
-        V_blocks = [self.M.apply_transpose(a2MmabEpb2KitU0, mu=mu) * self.a -
-                    self.E.apply_transpose(a2MmabEpb2KitU0, mu=mu) * self.b +
-                    self.K.apply_transpose(a2MmabEpb2KitU1, mu=mu) * self.b,
-                    -a2MmabEpb2KitU0 * self.b + a2MmabEpb2KitU1 * self.a]
+        a2MmabEpb2KitU0 = a2MmabEpb2K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
+        a2MmabEpb2KitU1 = a2MmabEpb2K.apply_inverse_adjoint(U.block(1), mu=mu, least_squares=least_squares)
+        V_blocks = [self.M.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.a.conjugate() -
+                    self.E.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.b.conjugate() +
+                    self.K.apply_adjoint(a2MmabEpb2KitU1, mu=mu) * self.b.conjugate(),
+                    -a2MmabEpb2KitU0 * self.b.conjugate() + a2MmabEpb2KitU1 * self.a.conjugate()]
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):
