@@ -899,10 +899,10 @@ class AdjointOperator(OperatorBase):
         If not `None`, name of the operator.
     with_apply_inverse
         If `True`, provide own :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse`
-        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_transpose`
+        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_adjoint`
         implementations by calling these methods on the given `operator`.
         (Is set to `False` in the default implementation of
-        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_transpose`.)
+        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_adjoint`.)
     solver_options
         When `with_apply_inverse` is `False`, the |solver_options| to use for
         the `apply_inverse` default implementation.
