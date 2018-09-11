@@ -32,7 +32,7 @@ class SOBTpReductor(GenericPGReductor):
         self.V = None
         self.W = None
 
-    def reduce(self, r, projection='sr'):
+    def reduce(self, r, projection='bfsr'):
         """Reduce using SOBTp.
 
         Parameters
@@ -42,12 +42,11 @@ class SOBTpReductor(GenericPGReductor):
         projection
             Projection method used:
 
-                - `'sr'`: square root method (default, since standard in
-                    literature)
-                - `'bfsr'`: balancing-free square root method (avoids
-                    scaling by singular values and orthogonalizes the
-                    projection matrices, which might make it more
-                    accurate than the square root method)
+                - `'sr'`: square root method
+                - `'bfsr'`: balancing-free square root method (default,
+                    since it avoids scaling by singular values and
+                    orthogonalizes the projection matrices, which might
+                    make it more accurate than the square root method)
                 - `'biorth'`: like the balancing-free square root
                     method, except it biorthogonalizes the projection
                     matrices
@@ -118,7 +117,7 @@ class SOBTvReductor(GenericPGReductor):
         self.V = None
         self.W = None
 
-    def reduce(self, r, projection='sr'):
+    def reduce(self, r, projection='bfsr'):
         """Reduce using SOBTv.
 
         Parameters
@@ -128,12 +127,11 @@ class SOBTvReductor(GenericPGReductor):
         projection
             Projection method used:
 
-                - `'sr'`: square root method (default, since standard in
-                    literature)
-                - `'bfsr'`: balancing-free square root method (avoids
-                    scaling by singular values and orthogonalizes the
-                    projection matrices, which might make it more
-                    accurate than the square root method)
+                - `'sr'`: square root method
+                - `'bfsr'`: balancing-free square root method (default,
+                    since it avoids scaling by singular values and
+                    orthogonalizes the projection matrices, which might
+                    make it more accurate than the square root method)
                 - `'biorth'`: like the balancing-free square root
                     method, except it biorthogonalizes the projection
                     matrices
@@ -201,7 +199,7 @@ class SOBTpvReductor(GenericPGReductor):
         self.V = None
         self.W = None
 
-    def reduce(self, r, projection='sr'):
+    def reduce(self, r, projection='bfsr'):
         """Reduce using SOBTpv.
 
         Parameters
@@ -211,12 +209,11 @@ class SOBTpvReductor(GenericPGReductor):
         projection
             Projection method used:
 
-                - `'sr'`: square root method (default, since standard in
-                    literature)
-                - `'bfsr'`: balancing-free square root method (avoids
-                    scaling by singular values and orthogonalizes the
-                    projection matrices, which might make it more
-                    accurate than the square root method)
+                - `'sr'`: square root method
+                - `'bfsr'`: balancing-free square root method (default,
+                    since it avoids scaling by singular values and
+                    orthogonalizes the projection matrices, which might
+                    make it more accurate than the square root method)
                 - `'biorth'`: like the balancing-free square root
                     method, except it biorthogonalizes the projection
                     matrices
@@ -284,7 +281,7 @@ class SOBTvpReductor(GenericPGReductor):
         self.V = None
         self.W = None
 
-    def reduce(self, r, projection='sr'):
+    def reduce(self, r, projection='bfsr'):
         """Reduce using SOBTvp.
 
         Parameters
@@ -294,12 +291,11 @@ class SOBTvpReductor(GenericPGReductor):
         projection
             Projection method used:
 
-                - `'sr'`: square root method (default, since standard in
-                    literature)
-                - `'bfsr'`: balancing-free square root method (avoids
-                    scaling by singular values and orthogonalizes the
-                    projection matrices, which might make it more
-                    accurate than the square root method)
+                - `'sr'`: square root method
+                - `'bfsr'`: balancing-free square root method (default,
+                    since it avoids scaling by singular values and
+                    orthogonalizes the projection matrices, which might
+                    make it more accurate than the square root method)
                 - `'biorth'`: like the balancing-free square root
                     method, except it biorthogonalizes the projection
                     matrices
@@ -369,7 +365,7 @@ class SOBTfvReductor(GenericPGReductor):
         self.V = None
         self.W = None
 
-    def reduce(self, r, projection='sr'):
+    def reduce(self, r, projection='bfsr'):
         """Reduce using SOBTfv.
 
         Parameters
@@ -379,12 +375,11 @@ class SOBTfvReductor(GenericPGReductor):
         projection
             Projection method used:
 
-                - `'sr'`: square root method (default, since standard in
-                    literature)
-                - `'bfsr'`: balancing-free square root method (avoids
-                    scaling by singular values and orthogonalizes the
-                    projection matrices, which might make it more
-                    accurate than the square root method)
+                - `'sr'`: square root method
+                - `'bfsr'`: balancing-free square root method (default,
+                    since it avoids scaling by singular values and
+                    orthogonalizes the projection matrices, which might
+                    make it more accurate than the square root method)
                 - `'biorth'`: like the balancing-free square root
                     method, except it biorthogonalizes the projection
                     matrices
@@ -455,7 +450,7 @@ class SOBTReductor():
         self.V2 = None
         self.W2 = None
 
-    def reduce(self, r, projection='sr'):
+    def reduce(self, r, projection='bfsr'):
         """Reduce using SOBT.
 
         Parameters
@@ -466,8 +461,13 @@ class SOBTReductor():
             Projection method used:
 
                 - `'sr'`: square root method
-                - `'bfsr'`: balancing-free square root method
-                - `'biorth'`: biorthogonalization
+                - `'bfsr'`: balancing-free square root method (default,
+                    since it avoids scaling by singular values and
+                    orthogonalizes the projection matrices, which might
+                    make it more accurate than the square root method)
+                - `'biorth'`: like the balancing-free square root
+                    method, except it biorthogonalizes the projection
+                    matrices
 
         Returns
         -------

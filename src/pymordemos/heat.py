@@ -20,8 +20,6 @@ Discretization of the PDE:
 where :math:`u(t)` is the input and :math:`y(t)` is the output.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 import scipy.sparse as sps
 import matplotlib.pyplot as plt
@@ -89,8 +87,6 @@ if __name__ == '__main__':
     r = 5
     reductor = BTReductor(lti)
     rom_bt = reductor.reduce(r, tol=1e-5)
-    print('H_2-norm of the BT ROM:       {}'.format(rom_bt.norm()))
-    print('H_inf-norm of the BT ROM:     {}'.format(rom_bt.norm('Hinf')))
     err_bt = lti - rom_bt
     print('H_2-error for the BT ROM:     {}'.format(err_bt.norm()))
     print('H_inf-error for the BT ROM:   {}'.format(err_bt.norm('Hinf')))
@@ -118,8 +114,6 @@ if __name__ == '__main__':
     ax.set_title('Distances between shifts in IRKA iterations')
     plt.show()
 
-    print('H_2-norm of the IRKA ROM:     {}'.format(rom_irka.norm()))
-    print('H_inf-norm of the IRKA ROM:   {}'.format(rom_irka.norm('Hinf')))
     err_irka = lti - rom_irka
     print('H_2-error for the IRKA ROM:   {}'.format(err_irka.norm()))
     print('H_inf-error for the IRKA ROM: {}'.format(err_irka.norm('Hinf')))

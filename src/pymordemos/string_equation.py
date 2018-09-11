@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-# coding: utf-8
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """String equation example"""
-
-from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import scipy.sparse as sps
@@ -85,7 +82,7 @@ if __name__ == '__main__':
     # Position Second-Order Balanced Truncation (SOBTp)
     r = 10
     sobtp_reductor = SOBTpReductor(so_sys)
-    rom_sobtp = sobtp_reductor.reduce(r, projection='bfsr')
+    rom_sobtp = sobtp_reductor.reduce(r)
 
     poles_rom_sobtp = rom_sobtp.poles(force_dense=True)
     fig, ax = plt.subplots()
@@ -108,7 +105,7 @@ if __name__ == '__main__':
     # Velocity Second-Order Balanced Truncation (SOBTv)
     r = 10
     sobtv_reductor = SOBTvReductor(so_sys)
-    rom_sobtv = sobtv_reductor.reduce(r, projection='bfsr')
+    rom_sobtv = sobtv_reductor.reduce(r)
 
     poles_rom_sobtv = rom_sobtv.poles(force_dense=True)
     fig, ax = plt.subplots()
@@ -131,7 +128,7 @@ if __name__ == '__main__':
     # Position-Velocity Second-Order Balanced Truncation (SOBTpv)
     r = 10
     sobtpv_reductor = SOBTpvReductor(so_sys)
-    rom_sobtpv = sobtpv_reductor.reduce(r, projection='bfsr')
+    rom_sobtpv = sobtpv_reductor.reduce(r)
 
     poles_rom_sobtpv = rom_sobtpv.poles(force_dense=True)
     fig, ax = plt.subplots()
@@ -154,7 +151,7 @@ if __name__ == '__main__':
     # Velocity-Position Second-Order Balanced Truncation (SOBTvp)
     r = 10
     sobtvp_reductor = SOBTvpReductor(so_sys)
-    rom_sobtvp = sobtvp_reductor.reduce(r, projection='bfsr')
+    rom_sobtvp = sobtvp_reductor.reduce(r)
 
     poles_rom_sobtvp = rom_sobtvp.poles(force_dense=True)
     fig, ax = plt.subplots()
@@ -177,7 +174,7 @@ if __name__ == '__main__':
     # Free-Velocity Second-Order Balanced Truncation (SOBTfv)
     r = 10
     sobtfv_reductor = SOBTfvReductor(so_sys)
-    rom_sobtfv = sobtfv_reductor.reduce(r, projection='sr')
+    rom_sobtfv = sobtfv_reductor.reduce(r)
 
     poles_rom_sobtfv = rom_sobtfv.poles(force_dense=True)
     fig, ax = plt.subplots()
@@ -200,7 +197,7 @@ if __name__ == '__main__':
     # Second-Order Balanced Truncation (SOBT)
     r = 10
     sobt_reductor = SOBTReductor(so_sys)
-    rom_sobt = sobt_reductor.reduce(r, projection='bfsr')
+    rom_sobt = sobt_reductor.reduce(r)
 
     poles_rom_sobt = rom_sobt.poles(force_dense=True)
     fig, ax = plt.subplots()
@@ -223,7 +220,7 @@ if __name__ == '__main__':
     # Balanced Truncation (BT)
     r = 10
     bt_reductor = BTReductor(so_sys.to_lti())
-    rom_bt = bt_reductor.reduce(r, projection='bfsr')
+    rom_bt = bt_reductor.reduce(r)
 
     poles_rom_bt = rom_bt.poles(force_dense=True)
     fig, ax = plt.subplots()
@@ -246,7 +243,7 @@ if __name__ == '__main__':
     # Iterative Rational Krylov Algorithm (IRKA)
     r = 10
     irka_reductor = IRKAReductor(so_sys.to_lti())
-    rom_irka = irka_reductor.reduce(r, dist_num=10, conv_crit='rel_H2_dist')
+    rom_irka = irka_reductor.reduce(r, dist_num=2, conv_crit='rel_H2_dist')
 
     fig, ax = plt.subplots()
     ax.semilogy(irka_reductor.dist, '.-')
@@ -274,7 +271,7 @@ if __name__ == '__main__':
     # Second-Order Iterative Rational Krylov Algorithm (SOR-IRKA)
     r = 10
     sor_irka_reductor = SOR_IRKAReductor(so_sys)
-    rom_sor_irka = sor_irka_reductor.reduce(r, dist_num=2, maxit=5, conv_crit='rel_H2_dist')
+    rom_sor_irka = sor_irka_reductor.reduce(r, dist_num=2, maxit=5)
 
     fig, ax = plt.subplots()
     ax.semilogy(sor_irka_reductor.dist, '.-')

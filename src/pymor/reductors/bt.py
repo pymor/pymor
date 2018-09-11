@@ -50,7 +50,7 @@ class GenericBTReductor(GenericPGReductor):
         """Returns error bounds for all possible reduced orders."""
         raise NotImplementedError()
 
-    def reduce(self, r=None, tol=None, projection='sr'):
+    def reduce(self, r=None, tol=None, projection='bfsr'):
         """Generic Balanced Truncation.
 
         Parameters
@@ -63,12 +63,11 @@ class GenericBTReductor(GenericPGReductor):
         projection
             Projection method used:
 
-                - `'sr'`: square root method (default, since standard in
-                    literature)
-                - `'bfsr'`: balancing-free square root method (avoids
-                    scaling by singular values and orthogonalizes the
-                    projection matrices, which might make it more
-                    accurate than the square root method)
+                - `'sr'`: square root method
+                - `'bfsr'`: balancing-free square root method (default,
+                    since it avoids scaling by singular values and
+                    orthogonalizes the projection matrices, which might
+                    make it more accurate than the square root method)
                 - `'biorth'`: like the balancing-free square root
                     method, except it biorthogonalizes the projection
                     matrices

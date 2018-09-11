@@ -8,8 +8,6 @@
 Cascade of delay and integrator
 """
 
-from __future__ import print_function, division, absolute_import
-
 import numpy as np
 import scipy.linalg as spla
 import matplotlib.pyplot as plt
