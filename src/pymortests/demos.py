@@ -82,7 +82,8 @@ PARABOLIC_MOR_ARGS = (
 
 SYS_MOR_ARGS = (
     ('heat', []),
-    ('delay', [])
+    ('delay', []),
+    ('string_equation', [])
 )
 
 DEMO_ARGS = (DISCRETIZATION_ARGS +
