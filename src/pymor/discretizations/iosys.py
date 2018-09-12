@@ -273,7 +273,8 @@ class LTISystem(InputOutputSystem):
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
-                      solver_options=None, cache_region='memory', name=None):
+                      solver_options=None, estimator=None, visualizer=None,
+                      cache_region='memory', name=None):
         """Create |LTISystem| from matrices.
 
         Parameters
@@ -292,6 +293,25 @@ class LTISystem(InputOutputSystem):
             assumed to be identity).
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
+        solver_options
+            The |solver_options| to use to solve the Lyapunov equations.
+        estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate(U, mu, discretization)` method. If `estimator` is
+            not `None`, an `estimate(U, mu)` method is added to the
+            discretization which will call
+            `estimator.estimate(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with
+            a `visualize(U, discretization, ...)` method. If `visualizer`
+            is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the discretization which forwards its arguments to the
+            visualizer's `visualize` method.
+        cache_region
+            `None` or name of the cache region to use. See
+            :mod:`pymor.core.cache`.
+        name
+            Name of the system.
 
         Returns
         -------
@@ -313,11 +333,13 @@ class LTISystem(InputOutputSystem):
             E = NumpyMatrixOperator(E, source_id='STATE', range_id='STATE')
 
         return cls(A, B, C, D, E, cont_time=cont_time,
-                   solver_options=solver_options, cache_region=cache_region, name=name)
+                   solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                   cache_region=cache_region, name=name)
 
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True,
-                   solver_options=None, cache_region='memory', name=None):
+                   solver_options=None, estimator=None, visualizer=None,
+                   cache_region='memory', name=None):
         """Create |LTISystem| from matrices stored in separate files.
 
         Parameters
@@ -336,6 +358,25 @@ class LTISystem(InputOutputSystem):
             E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
+        solver_options
+            The |solver_options| to use to solve the Lyapunov equations.
+        estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate(U, mu, discretization)` method. If `estimator` is
+            not `None`, an `estimate(U, mu)` method is added to the
+            discretization which will call
+            `estimator.estimate(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with
+            a `visualize(U, discretization, ...)` method. If `visualizer`
+            is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the discretization which forwards its arguments to the
+            visualizer's `visualize` method.
+        cache_region
+            `None` or name of the cache region to use. See
+            :mod:`pymor.core.cache`.
+        name
+            Name of the system.
 
         Returns
         -------
@@ -351,11 +392,13 @@ class LTISystem(InputOutputSystem):
         E = load_matrix(E_file) if E_file is not None else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 solver_options=solver_options, cache_region=cache_region, name=name)
+                                 solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                                 cache_region=cache_region, name=name)
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True,
-                      solver_options=None, cache_region='memory', name=None):
+                      solver_options=None, estimator=None, visualizer=None,
+                      cache_region='memory', name=None):
         """Create |LTISystem| from matrices stored in a .mat file.
 
         Parameters
@@ -365,6 +408,25 @@ class LTISystem(InputOutputSystem):
             be included) containing A, B, C, and optionally D and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
+        solver_options
+            The |solver_options| to use to solve the Lyapunov equations.
+        estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate(U, mu, discretization)` method. If `estimator` is
+            not `None`, an `estimate(U, mu)` method is added to the
+            discretization which will call
+            `estimator.estimate(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with
+            a `visualize(U, discretization, ...)` method. If `visualizer`
+            is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the discretization which forwards its arguments to the
+            visualizer's `visualize` method.
+        cache_region
+            `None` or name of the cache region to use. See
+            :mod:`pymor.core.cache`.
+        name
+            Name of the system.
 
         Returns
         -------
@@ -383,11 +445,13 @@ class LTISystem(InputOutputSystem):
         E = mat_dict['E'] if 'E' in mat_dict else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 solver_options=solver_options, cache_region=cache_region, name=name)
+                                 solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                                 cache_region=cache_region, name=name)
 
     @classmethod
     def from_abcde_files(cls, files_basename, cont_time=True,
-                         solver_options=None, cache_region='memory', name=None):
+                         solver_options=None, estimator=None, visualizer=None,
+                         cache_region='memory', name=None):
         """Create |LTISystem| from matrices stored in a .[ABCDE] files.
 
         Parameters
@@ -397,6 +461,25 @@ class LTISystem(InputOutputSystem):
             and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
+        solver_options
+            The |solver_options| to use to solve the Lyapunov equations.
+        estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate(U, mu, discretization)` method. If `estimator` is
+            not `None`, an `estimate(U, mu)` method is added to the
+            discretization which will call
+            `estimator.estimate(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with
+            a `visualize(U, discretization, ...)` method. If `visualizer`
+            is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the discretization which forwards its arguments to the
+            visualizer's `visualize` method.
+        cache_region
+            `None` or name of the cache region to use. See
+            :mod:`pymor.core.cache`.
+        name
+            Name of the system.
 
         Returns
         -------
@@ -413,7 +496,8 @@ class LTISystem(InputOutputSystem):
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 solver_options=solver_options, cache_region=cache_region, name=name)
+                                 solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                                 cache_region=cache_region, name=name)
 
     def __mul__(self, other):
         """Multiply (cascade) two |LTISystems|."""
@@ -841,7 +925,8 @@ class SecondOrderSystem(InputOutputSystem):
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
-                      solver_options=None, cache_region='memory', name=None):
+                      solver_options=None, estimator=None, visualizer=None,
+                      cache_region='memory', name=None):
         """Create a second order system from matrices.
 
         Parameters
@@ -864,6 +949,25 @@ class SecondOrderSystem(InputOutputSystem):
             is assumed to be zero).
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
+        solver_options
+            The |solver_options| to use to solve the Lyapunov equations.
+        estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate(U, mu, discretization)` method. If `estimator` is
+            not `None`, an `estimate(U, mu)` method is added to the
+            discretization which will call
+            `estimator.estimate(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with
+            a `visualize(U, discretization, ...)` method. If `visualizer`
+            is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the discretization which forwards its arguments to the
+            visualizer's `visualize` method.
+        cache_region
+            `None` or name of the cache region to use. See
+            :mod:`pymor.core.cache`.
+        name
+            Name of the system.
 
         Returns
         -------
@@ -889,7 +993,8 @@ class SecondOrderSystem(InputOutputSystem):
             D = NumpyMatrixOperator(D, source_id='INPUT', range_id='OUTPUT')
 
         return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
-                   solver_options=solver_options, cache_region=cache_region, name=name)
+                   solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                   cache_region=cache_region, name=name)
 
     @cached
     def to_lti(self):
@@ -940,8 +1045,9 @@ class SecondOrderSystem(InputOutputSystem):
                          E=BlockDiagonalOperator((IdentityOperator(self.M.source), self.M),
                                                  source_id='STATE',
                                                  range_id='STATE'),
-                         cont_time=self.cont_time, cache_region=self.cache_region, solver_options=self.solver_options,
-                         estimator=None, visualizer=None, name=self.name + '_first_order')
+                         cont_time=self.cont_time,
+                         solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
+                         cache_region=self.cache_region, name=self.name + '_first_order')
 
     @cached
     def poles(self, force_dense=False):
@@ -1488,7 +1594,9 @@ class BilinearSystem(InputOutputSystem):
 
     linear = False
 
-    def __init__(self, A, N, B, C, E=None, cont_time=True, cache_region='memory', name=None):
+    def __init__(self, A, N, B, C, E=None, cont_time=True,
+                 estimator=None, visualizer=None,
+                 cache_region='memory', name=None):
 
         E = E or IdentityOperator(A.source)
 
@@ -1500,7 +1608,9 @@ class BilinearSystem(InputOutputSystem):
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
-        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time,
+                         estimator=estimator, visualizer=visualizer,
+                         cache_region=cache_region, name=name,
                          A=A, N=N, B=B, C=C, E=E)
 
         self.solution_space = A.source
