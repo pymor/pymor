@@ -720,51 +720,72 @@ class LTISystem(InputOutputSystem):
         return self._hsv_U_V()[2]
 
     @cached
-    def norm(self, name='H2', ab13dd_equilibrate=False):
-        r"""Compute a norm of the |LTISystem|.
+    def h2_norm(self):
+        """Compute the H2-norm of the |LTISystem|."""
+        if not self.cont_time:
+            raise NotImplementedError()
+        if self.m <= self.p:
+            cf = self.gramian('cf')
+            return np.sqrt(self.C.apply(cf).l2_norm2().sum())
+        else:
+            of = self.gramian('of')
+            return np.sqrt(self.B.apply_adjoint(of).l2_norm2().sum())
+
+    @cached
+    def hinf_norm(self, force_dense=False, return_fpeak=False, ab13dd_equilibrate=False):
+        """Compute the H_infinity-norm of the |LTISystem|.
 
         Parameters
         ----------
-        name
-            The name of the norm:
-
-            - `'H2'`: :math:`\mathcal{H}_2`-norm,
-            - `'Hinf'`: :math:`\mathcal{H}_\infty`-norm,
-            - `'Hinf_fpeak'`: :math:`\mathcal{H}_\infty`-norm
-                and the maximizing frequency,
-            - `'Hankel'`: Hankel norm (maximal singular value).
-
+        force_dense
+            Should dense matrix computation be forced.
+        return_fpeak
+            Should the frequency at which the maximum is achieved should
+            be returned.
         ab13dd_equilibrate
-            If `ab13dd` should use equilibration.
+            Should `slycot.ab13dd` use equilibration.
 
         Returns
         -------
-        System norm.
+        norm
+            H_infinity-norm.
+        fpeak
+            Frequency at which the maximum is achieved.
         """
-        if name == 'H2':
-            B, C = self.B, self.C
-            if self.m <= self.p:
-                cf = self.gramian('cf')
-                return np.sqrt(C.apply(cf).l2_norm2().sum())
-            else:
-                of = self.gramian('of')
-                return np.sqrt(B.apply_adjoint(of).l2_norm2().sum())
-        elif name == 'Hinf_fpeak':
-            from slycot import ab13dd
-            dico = 'C' if self.cont_time else 'D'
-            jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
-            equil = 'S' if ab13dd_equilibrate else 'N'
-            jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
-            A, B, C, D, E = map(lambda op: to_matrix(op, format='dense'),
-                                (self.A, self.B, self.C, self.D, self.E))
-            Hinf, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
-            return Hinf, fpeak
-        elif name == 'Hinf':
-            return self.norm('Hinf_fpeak')[0]
-        elif name == 'Hankel':
-            return self.hsv[0]
+        if not force_dense:
+            for op_name in ['A', 'B', 'C']:
+                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and
+                        not getattr(self, op_name).sparse):
+                    raise TypeError('Expected ' + op_name +
+                                    ' to be NumpyMatrixOperator with dense matrix (force_dense == False).')
+            if not ((isinstance(self.D, NumpyMatrixOperator) and
+                     not self.D.sparse) or
+                    isinstance(self.D, ZeroOperator)):
+                raise TypeError('Expected D to be NumpyMatrixOperator with dense matrix or ZeroOperator '
+                                '(force_dense == False).')
+            if not ((isinstance(self.E, NumpyMatrixOperator) and
+                     not self.E.sparse) or
+                    isinstance(self.E, IdentityOperator)):
+                raise TypeError('Expected E to be NumpyMatrixOperator with dense matrix or IdentityOperator '
+                                '(force_dense == False).')
+
+        from slycot import ab13dd
+        dico = 'C' if self.cont_time else 'D'
+        jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
+        equil = 'S' if ab13dd_equilibrate else 'N'
+        jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
+        A, B, C, D, E = map(lambda op: to_matrix(op, format='dense'),
+                            (self.A, self.B, self.C, self.D, self.E))
+        norm, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
+
+        if return_fpeak:
+            return norm, fpeak
         else:
-            raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
+            return norm
+
+    def hankel_norm(self):
+        """Compute the Hankel-norm of the |LTISystem|."""
+        return self.hsv()[0]
 
 
 class TransferFunction(InputOutputSystem):
@@ -1215,9 +1236,51 @@ class SecondOrderSystem(InputOutputSystem):
         return spla.svdvals(self.gramian('pof').inner(self.gramian('vcf')))
 
     @cached
-    def norm(self, name='H2', ab13dd_equilibrate=False):
-        """Compute a system norm."""
-        return self.to_lti().norm(name=name)
+    def h2_norm(self):
+        """Compute the H2-norm."""
+        return self.to_lti().h2_norm()
+
+    @cached
+    def hinf_norm(self, force_dense=False, return_fpeak=False, ab13dd_equilibrate=False):
+        """Compute the H_infinity-norm.
+
+        Parameters
+        ----------
+        force_dense
+            Should dense matrix computation be forced.
+        return_fpeak
+            Should the frequency at which the maximum is achieved should
+            be returned.
+        ab13dd_equilibrate
+            Should `slycot.ab13dd` use equilibration.
+
+        Returns
+        -------
+        norm
+            H_infinity-norm.
+        fpeak
+            Frequency at which the maximum is achieved.
+        """
+        if not force_dense:
+            for op_name in ['M', 'E', 'K', 'B', 'Cp']:
+                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator)
+                        and not getattr(self, op_name).sparse):
+                    raise TypeError('Expected ' + op_name +
+                                    ' to be NumpyMatrixOperator with dense matrix (force_dense == False).')
+            if not ((isinstance(self.Cv, NumpyMatrixOperator)
+                     and not self.Cv.sparse) or
+                    isinstance(self.Cv, ZeroOperator)):
+                raise TypeError('Expected Cv to be NumpyMatrixOperator with dense matrix or ZeroOperator '
+                                '(force_dense == False).')
+
+        return self.to_lti().hinf_norm(force_dense=True,
+                                       return_fpeak=return_fpeak,
+                                       ab13dd_equilibrate=ab13dd_equilibrate)
+
+    @cached
+    def hankel_norm(self):
+        """Compute the Hankel-norm."""
+        return self.to_lti().hankel_norm()
 
 
 class LinearDelaySystem(InputOutputSystem):

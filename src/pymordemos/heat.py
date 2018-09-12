@@ -80,16 +80,18 @@ if __name__ == '__main__':
     plt.show()
 
     # Norms of the system
-    print('H_2-norm of the full model:   {}'.format(lti.norm()))
-    print('H_inf-norm of the full model: {}'.format(lti.norm('Hinf')))
+    print('H_2-norm of the full model:    {:e}'.format(lti.h2_norm()))
+    print('H_inf-norm of the full model:  {:e}'.format(lti.hinf_norm(force_dense=True)))
+    print('Hankel-norm of the full model: {:e}'.format(lti.hankel_norm()))
 
     # Balanced Truncation
     r = 5
     reductor = BTReductor(lti)
     rom_bt = reductor.reduce(r, tol=1e-5)
     err_bt = lti - rom_bt
-    print('H_2-error for the BT ROM:     {}'.format(err_bt.norm()))
-    print('H_inf-error for the BT ROM:   {}'.format(err_bt.norm('Hinf')))
+    print('H_2-error for the BT ROM:    {:e}'.format(err_bt.h2_norm()))
+    print('H_inf-error for the BT ROM:  {:e}'.format(err_bt.hinf_norm(force_dense=True)))
+    print('Hankel-error for the BT ROM: {:e}'.format(err_bt.hankel_norm()))
 
     # Bode plot of the full and BT reduced model
     fig, ax = LTISystem.mag_plot((lti, rom_bt), w=w)
@@ -115,8 +117,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_irka = lti - rom_irka
-    print('H_2-error for the IRKA ROM:   {}'.format(err_irka.norm()))
-    print('H_inf-error for the IRKA ROM: {}'.format(err_irka.norm('Hinf')))
+    print('H_2-error for the IRKA ROM:    {:e}'.format(err_irka.h2_norm()))
+    print('H_inf-error for the IRKA ROM:  {:e}'.format(err_irka.hinf_norm(force_dense=True)))
+    print('Hankel-error for the IRKA ROM: {:e}'.format(err_irka.hankel_norm()))
 
     # Bode plot of the full and IRKA reduced model
     fig, ax = LTISystem.mag_plot((lti, rom_irka), w=w)

@@ -151,7 +151,7 @@ class IRKAReductor(GenericPGReductor):
             if compute_errors:
                 err = d - rd
                 try:
-                    rel_H2_err = err.norm() / d.norm()
+                    rel_H2_err = err.h2_norm() / d.h2_norm()
                 except:
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
@@ -222,7 +222,7 @@ class IRKAReductor(GenericPGReductor):
                     rd_list[0] = rd
                     rd_diff = rd_list[1] - rd_list[0]
                     try:
-                        rel_H2_dist = rd_diff.norm() / rd_list[1].norm()
+                        rel_H2_dist = rd_diff.h2_norm() / rd_list[1].h2_norm()
                     except:
                         rel_H2_dist = np.inf
                     for i in range(2, dist_num + 1):
@@ -230,7 +230,7 @@ class IRKAReductor(GenericPGReductor):
                             break
                         rd_diff2 = rd_list[i] - rd_list[0]
                         try:
-                            rel_H2_dist2 = rd_diff2.norm() / rd_list[i].norm()
+                            rel_H2_dist2 = rd_diff2.h2_norm() / rd_list[i].h2_norm()
                         except:
                             rel_H2_dist2 = np.inf
                         rel_H2_dist = min(rel_H2_dist, rel_H2_dist2)
@@ -369,7 +369,7 @@ class TSIAReductor(GenericPGReductor):
             if compute_errors:
                 err = d - rd
                 try:
-                    rel_H2_err = err.norm() / d.norm()
+                    rel_H2_err = err.h2_norm() / d.h2_norm()
                 except:
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
@@ -431,7 +431,7 @@ class TSIAReductor(GenericPGReductor):
                     rd_list[0] = rd
                     rd_diff = rd_list[1] - rd_list[0]
                     try:
-                        rel_H2_dist = rd_diff.norm() / rd_list[1].norm()
+                        rel_H2_dist = rd_diff.h2_norm() / rd_list[1].h2_norm()
                     except:
                         rel_H2_dist = np.inf
                     for i in range(2, dist_num + 1):
@@ -439,7 +439,7 @@ class TSIAReductor(GenericPGReductor):
                             break
                         rd_diff2 = rd_list[i] - rd_list[0]
                         try:
-                            rel_H2_dist2 = rd_diff2.norm() / rd_list[i].norm()
+                            rel_H2_dist2 = rd_diff2.h2_norm() / rd_list[i].h2_norm()
                         except:
                             rel_H2_dist2 = np.inf
                         rel_H2_dist = min(rel_H2_dist, rel_H2_dist2)
