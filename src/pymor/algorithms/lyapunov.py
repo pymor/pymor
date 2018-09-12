@@ -142,7 +142,6 @@ def lradi(A, E, B, trans=False, options=None):
     Btol = res * options['tol']
 
     while res > Btol and j < options['maxiter']:
-        logger.info("Relative residual at step {}: {:.5e}".format(j, res / init_res))
         if shifts[j].imag == 0:
             AaE = LincombOperator([A, E], [1, shifts[j].real])
             if not trans:
@@ -170,6 +169,12 @@ def lradi(A, E, B, trans=False, options=None):
             shifts = iteration_shifts(A, E, Z, W, shifts, shift_options)
             size_shift = shifts.size
         res = np.linalg.norm(W.gramian(), ord=2)
+        logger.info("Relative residual at step {}: {:.5e}".format(j, res / init_res))
+
+    if res > Btol:
+        logger.warning('Prescribed relative residual tolerance was not achieved ({:e} > {:e}) after '
+                       '{} ADI steps.'.format(res / init_res, options['tol'], options['maxiter']))
+
     return Z
 
 
