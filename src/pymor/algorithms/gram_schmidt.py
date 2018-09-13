@@ -122,11 +122,6 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
 
     See Algorithm 1 in [BKS11]_.
 
-    .. [BKS11]  P. Benner, M. Köhler, J. Saak,
-                Sparse-Dense Sylvester Equations in :math:`\mathcal{H}_2`-Model Order Reduction,
-                Max Planck Institute Magdeburg Preprint, available from http://www.mpi-magdeburg.mpg.de/preprints/,
-                2011.
-
     Parameters
     ----------
     V, W

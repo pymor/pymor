@@ -184,11 +184,6 @@ def projection_shifts_init(A, E, B, shift_options):
 
     See [PK16]_, pp. 92-95.
 
-    .. [PK16]  P. Kürschner,
-               Efficient Low-Rank Solution of Large-Scale Matrix Equations,
-               Shaker Verlag Aachen, available from
-               http://pubman.mpdl.mpg.de/pubman/, 2016.
-
     Parameters
     ----------
     A
@@ -198,7 +193,7 @@ def projection_shifts_init(A, E, B, shift_options):
     B
         The |VectorArray| B from the corresponding Lyapunov equation.
     shift_options
-        The |shift_options| to use (see :func:`lyap_solver_options`).
+        The shift options to use (see :func:`lyap_solver_options`).
 
     Returns
     -------
@@ -226,11 +221,6 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
 
     See [PK16]_, pp. 92-95.
 
-    .. [PK16]  P. Kürschner,
-               Efficient Low-Rank Solution of Large-Scale Matrix Equations,
-               Shaker Verlag Aachen, available from
-               http://pubman.mpdl.mpg.de/pubman/, 2016.
-
     Parameters
     ----------
     A
@@ -244,7 +234,7 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
     prev_shifts
         A |NumPy array| containing the set of all previously used shift parameters.
     shift_options
-        The |shift_options| to use (see :func:`lyap_solver_options`).
+        The shift options to use (see :func:`lyap_solver_options`).
 
     Returns
     -------

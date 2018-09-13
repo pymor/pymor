@@ -32,6 +32,8 @@ class IRKAReductor(GenericPGReductor):
                projection='orth', use_arnoldi=False, conv_crit='rel_sigma_change', compute_errors=False):
         r"""Reduce using IRKA.
 
+        See [GAB08]_ (Algorithm 4.1) and [ABG10]_ (Algorithm 1).
+
         .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie,
                 :math:`\mathcal{H}_2` model reduction for large-scale
                 linear dynamical systems,
@@ -271,12 +273,20 @@ class TSIAReductor(GenericPGReductor):
                compute_errors=False):
         """Reduce using TSIA.
 
+        See [XZ11]_ (Algorithm 1) and [BKS11]_.
+
         In exact arithmetic, TSIA is equivalent to IRKA (under some
         assumptions on the poles of the reduced model). The main
         difference in implementation is that TSIA computes the Schur
         decomposition of the reduced matrices, while IRKA computes the
         eigenvalue decomposition. Therefore, TSIA might behave better
         for non-normal reduced matrices.
+
+        .. [XZ11] Y. Xu and T. Zeng, Optimal :math:`\mathcal{H}_2` Model
+                  Reduction for Large Scale MIMO Systems via Tangential
+                  Interpolation,
+                  International Journal of Numerical Analysis and
+                  Modeling, vol. 8, no. 1, pp. 174-188, 2011
 
         .. [BKS11] P. Benner, M. Köhler, J. Saak, Sparse-Dense Sylvester
                    Equations in :math:`\mathcal{H}_2`-Model Order
@@ -475,7 +485,9 @@ class TSIAReductor(GenericPGReductor):
 class TF_IRKAReductor(BasicInterface):
     """Realization-independent IRKA reductor.
 
-    .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent
+    See [BG12]_.
+
+    .. [BG12] C. A. Beattie, S. Gugercin, Realization-independent
               H2-approximation,
               Proceedings of the 51st IEEE Conference on Decision and
               Control, 2012.

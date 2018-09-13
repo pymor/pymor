@@ -16,6 +16,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class SOBTpReductor(GenericPGReductor):
     """Second-Order Balanced Truncation position reductor.
 
+    See [RS08]_.
+
     .. [RS08] T. Reis and T. Stykel,
               Balanced truncation model reduction of second-order
               systems,
@@ -101,10 +103,7 @@ class SOBTpReductor(GenericPGReductor):
 class SOBTvReductor(GenericPGReductor):
     """Second-Order Balanced Truncation velocity reductor.
 
-    .. [RS08] T. Reis and T. Stykel,
-              Balanced truncation model reduction of second-order
-              systems,
-              Math. Comput. Model. Dyn. Syst., 2008, 14(5), 391-406
+    See [RS08]_.
 
     Parameters
     ----------
@@ -183,10 +182,7 @@ class SOBTvReductor(GenericPGReductor):
 class SOBTpvReductor(GenericPGReductor):
     """Second-Order Balanced Truncation position-velocity reductor.
 
-    .. [RS08] T. Reis and T. Stykel,
-              Balanced truncation model reduction of second-order
-              systems,
-              Math. Comput. Model. Dyn. Syst., 2008, 14(5), 391-406
+    See [RS08]_.
 
     Parameters
     ----------
@@ -265,10 +261,7 @@ class SOBTpvReductor(GenericPGReductor):
 class SOBTvpReductor(GenericPGReductor):
     """Second-Order Balanced Truncation velocity-position reductor.
 
-    .. [RS08] T. Reis and T. Stykel,
-              Balanced truncation model reduction of second-order
-              systems,
-              Math. Comput. Model. Dyn. Syst., 2008, 14(5), 391-406
+    See [RS08]_.
 
     Parameters
     ----------
@@ -348,6 +341,8 @@ class SOBTvpReductor(GenericPGReductor):
 
 class SOBTfvReductor(GenericPGReductor):
     """Free-velocity Second-Order Balanced Truncation reductor.
+
+    See [MS96]_.
 
     .. [MS96] D. G. Meyer and S. Srinivasan,
               Balancing and model reduction for second-order form linear
@@ -429,7 +424,7 @@ class SOBTfvReductor(GenericPGReductor):
 class SOBTReductor():
     """Second-Order Balanced Truncation reductor.
 
-        - SOBT [CLVV06]_
+    See [CLVV06]_.
 
     .. [CLVV06] Y. Chahlaoui, D. Lemonnier, A. Vandendorpe, P. Van
                 Dooren,

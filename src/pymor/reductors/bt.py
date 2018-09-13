@@ -120,6 +120,8 @@ class GenericBTReductor(GenericPGReductor):
 class BTReductor(GenericBTReductor):
     """Standard (Lyapunov) Balanced Truncation reductor.
 
+    See Section 7.3 in [A05]_.
+
     .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical
              Systems,
              SIAM, 2005.
@@ -140,9 +142,8 @@ class BTReductor(GenericBTReductor):
 class LQGBTReductor(GenericBTReductor):
     r"""Linear Quadratic Gaussian (LQG) Balanced Truncation reductor.
 
-    .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical
-             Systems,
-             SIAM, 2005.
+    See Section 3 in [MG91]_.
+
     .. [MG91] D. Mustafa, K. Glover, Controller Reduction by
               :math:`\mathcal{H}_\infty`-Balanced Truncation,
               IEEE Transactions on Automatic Control, 36(6), 668-682,
@@ -196,6 +197,8 @@ _DEFAULT_BR_SOLVER_BACKEND = 'slycot' if config.HAVE_SLYCOT else 'scipy'
 
 class BRBTReductor(GenericBTReductor):
     """Bounded Real (BR) Balanced Truncation reductor.
+
+    See [A05]_ (Section 7.5.3) and [OJ88]_.
 
     .. [OJ88] P. C. Opdenacker, E. A. Jonckheere, A Contraction Mapping
               Preserving Balanced Reduction Scheme and Its Infinity Norm

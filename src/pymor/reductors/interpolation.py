@@ -295,6 +295,8 @@ class DelayBHIReductor(GenericBHIReductor):
 class TFInterpReductor(BasicInterface):
     """Loewner bitangential Hermite interpolation reductor.
 
+    See [BG12]_.
+
     Parameters
     ----------
     d
