@@ -378,7 +378,7 @@ def solve_lyap(A, E, B, trans=False, options=None):
     assert options['type'] == 'scipy'
 
     if E is not None:
-        raise NotImplementedError()
+        raise NotImplementedError
     import scipy.linalg as spla
     A_mat = to_matrix(A, format='dense')
     B_mat = to_matrix(B, format='dense')
@@ -464,7 +464,7 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
     assert options['type'] == 'scipy'
 
     if E is not None or G is not None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     import scipy.linalg as spla
     A_mat = to_matrix(A, format='dense')

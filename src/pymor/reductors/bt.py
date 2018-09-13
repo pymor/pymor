@@ -10,7 +10,7 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.discretizations.iosys import _DEFAULT_ME_SOLVER_BACKEND, LTISystem
+from pymor.discretizations.iosys import _is_like_identity_operator, _DEFAULT_ME_SOLVER_BACKEND, LTISystem
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 
@@ -34,7 +34,7 @@ class GenericBTReductor(GenericPGReductor):
 
     def gramians(self):
         """Returns low-rank factors of Gramians."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def sv_U_V(self):
         """Returns singular values and vectors."""
@@ -48,7 +48,7 @@ class GenericBTReductor(GenericPGReductor):
 
     def error_bounds(self):
         """Returns error bounds for all possible reduced orders."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def reduce(self, r=None, tol=None, projection='bfsr'):
         """Generic Balanced Truncation.
@@ -180,7 +180,7 @@ class LQGBTReductor(GenericBTReductor):
         A = self.d.A
         B = self.d.B
         C = self.d.C
-        E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
+        E = self.d.E if not _is_like_identity_operator(self.d.E) else None
 
         cf = self._ricc_solver()(A, E=E, B=B, C=C, trans=True)
         of = self._ricc_solver()(A, E=E, B=B, C=C, trans=False)
@@ -240,7 +240,7 @@ class BRBTReductor(GenericBTReductor):
         A = self.d.A
         B = self.d.B
         C = self.d.C
-        E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
+        E = self.d.E if not _is_like_identity_operator(self.d.E) else None
 
         cf = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(C.range) * (-self.gamma ** 2), trans=True)
         of = self._ricc_solver()(A, E=E, B=B, C=C, R=IdentityOperator(B.source) * (-self.gamma ** 2), trans=False)

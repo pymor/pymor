@@ -18,6 +18,26 @@ from pymor.operators.constructions import Concatenation, IdentityOperator, Linco
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
+def _is_like_zero_operator(operator):
+    """Checks if the operator is like a ZeroOperator."""
+    if isinstance(operator, ZeroOperator):
+        return True
+    if (isinstance(operator, BlockOperator) and
+            all(_is_like_zero_operator(op) for op in operator._operators())):
+        return True
+    return False
+
+
+def _is_like_identity_operator(operator):
+    """Checks if the operator is like an IdentityOperator."""
+    if isinstance(operator, IdentityOperator):
+        return True
+    if (isinstance(operator, BlockDiagonalOperator) and
+            all(_is_like_identity_operator(op) for op in operator._blocks.diagonal())):
+        return True
+    return False
+
+
 class InputOutputSystem(DiscretizationBase):
     """Base class for input-output systems."""
 
@@ -95,20 +115,20 @@ class InputOutputSystem(DiscretizationBase):
         return np.dstack([self.eval_tf(1j * wi) for wi in w])
 
     @classmethod
-    def mag_plot(cls, sys_list, plot_style_list=None, w=None, ord=None, dB=False, Hz=False):
+    def mag_plot(cls, sys_list, w, plot_style_list=None, ord=None, dB=False, Hz=False):
         """Draw the magnitude Bode plot.
 
         Parameters
         ----------
         sys_list
             A single system or a list of systems.
+        w
+            Frequencies at which to evaluate the transfer function(s).
         plot_style_list
             A string or a list of strings of the same length as
             `sys_list`.
 
             If `None`, matplotlib defaults are used.
-        w
-            Frequencies at which to evaluate the transfer function(s).
         ord
             The order of the norm used to compute the magnitude (the
             default is the Frobenius norm).
@@ -147,14 +167,8 @@ class InputOutputSystem(DiscretizationBase):
             else:
                 ax.loglog(freq, mag, style)
         ax.set_title('Magnitude Bode Plot')
-        if Hz:
-            ax.set_xlabel('Frequency (Hz)')
-        else:
-            ax.set_xlabel('Frequency (rad/s)')
-        if dB:
-            ax.set_ylabel('Magnitude (dB)')
-        else:
-            ax.set_ylabel('Magnitude')
+        ax.set_xlabel('Frequency{}'.format(' (Hz)' if Hz else ' (rad/s)'))
+        ax.set_ylabel('Magnitude{}'.format(' (dB)' if dB else ''))
         return fig, ax
 
 
@@ -232,8 +246,6 @@ class LTISystem(InputOutputSystem):
     operators
         Dict of all |Operators| appearing in the discretization.
     """
-
-    linear = True
 
     special_operators = frozenset({'A', 'B', 'C', 'D', 'E'})
 
@@ -521,24 +533,19 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         force_dense
-            Should `to_matrix` with `format='dense'` be used.
+            Should dense matrix computations be forced.
         """
         if not force_dense:
             if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
-                raise TypeError('Expected A to be NumpyMatrixOperator with dense matrix. '
-                                'Set force_dense=True to convert it to a dense matrix.')
+                raise TypeError('Expected A to be NumpyMatrixOperator with dense matrix (force_dense == False).')
             if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
-                    isinstance(self.E, IdentityOperator)):
-                raise TypeError('Expected E to be NumpyMatrixOperator with dense matrix or IdentityOperator. '
-                                'Set force_dense=True to convert it to a dense matrix.')
-            if isinstance(self.E, IdentityOperator):
-                return spla.eigvals(self.A.matrix)
-            else:
-                return spla.eigvals(self.A.matrix, self.E.matrix)
-        else:
-            A = to_matrix(self.A, format='dense')
-            E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
-            return spla.eigvals(A, E)
+                    _is_like_identity_operator(self.E)):
+                raise TypeError('Expected E to be NumpyMatrixOperator with dense matrix or IdentityOperator'
+                                '(force_dense == False).')
+
+        A = to_matrix(self.A, format='dense')
+        E = None if _is_like_identity_operator(self.E) else to_matrix(self.E, format='dense')
+        return spla.eigvals(A, E)
 
     def eval_tf(self, s):
         """Evaluate the transfer function.
@@ -574,11 +581,8 @@ class LTISystem(InputOutputSystem):
             tfs = C.apply(sEmA.apply_inverse(B.as_range_array())).to_numpy().T
         else:
             tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
-        if not isinstance(D, ZeroOperator):
-            if self.m <= self.p:
-                tfs += D.as_range_array().to_numpy().T
-            else:
-                tfs += D.as_source_array().to_numpy()
+        if not _is_like_zero_operator(D):
+            tfs += to_matrix(D, format='dense')
         return tfs
 
     def eval_dtf(self, s):
@@ -661,7 +665,7 @@ class LTISystem(InputOutputSystem):
         A = self.A
         B = self.B
         C = self.C
-        E = self.E if not isinstance(self.E, IdentityOperator) else None
+        E = self.E if not _is_like_identity_operator(self.E) else None
 
         if typ == 'cf':
             return self._lyap_solver()(A, E, B, trans=False)
@@ -723,7 +727,7 @@ class LTISystem(InputOutputSystem):
     def h2_norm(self):
         """Compute the H2-norm of the |LTISystem|."""
         if not self.cont_time:
-            raise NotImplementedError()
+            raise NotImplementedError
         if self.m <= self.p:
             cf = self.gramian('cf')
             return np.sqrt(self.C.apply(cf).l2_norm2().sum())
@@ -760,20 +764,20 @@ class LTISystem(InputOutputSystem):
                                     ' to be NumpyMatrixOperator with dense matrix (force_dense == False).')
             if not ((isinstance(self.D, NumpyMatrixOperator) and
                      not self.D.sparse) or
-                    isinstance(self.D, ZeroOperator)):
+                    _is_like_zero_operator(self.D)):
                 raise TypeError('Expected D to be NumpyMatrixOperator with dense matrix or ZeroOperator '
                                 '(force_dense == False).')
             if not ((isinstance(self.E, NumpyMatrixOperator) and
                      not self.E.sparse) or
-                    isinstance(self.E, IdentityOperator)):
+                    _is_like_identity_operator(self.E)):
                 raise TypeError('Expected E to be NumpyMatrixOperator with dense matrix or IdentityOperator '
                                 '(force_dense == False).')
 
         from slycot import ab13dd
         dico = 'C' if self.cont_time else 'D'
-        jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
+        jobe = 'I' if _is_like_identity_operator(self.E) else 'G'
         equil = 'S' if ab13dd_equilibrate else 'N'
-        jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
+        jobd = 'Z' if _is_like_zero_operator(self.D) else 'D'
         A, B, C, D, E = map(lambda op: to_matrix(op, format='dense'),
                             (self.A, self.B, self.C, self.D, self.E))
         norm, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
@@ -822,7 +826,6 @@ class TransferFunction(InputOutputSystem):
     dtf
         The complex derivative of the transfer function.
     """
-    linear = True
 
     def __init__(self, m, p, H, dH, cont_time=True, cache_region='memory', name=None):
         assert cont_time in (True, False)
@@ -871,7 +874,7 @@ class SecondOrderSystem(InputOutputSystem):
     Cv
         The |Operator| Cv or `None` (then Cv is assumed to be zero).
     D
-        The |Operator| D.
+        The |Operator| D or `None` (then D is assumed to be zero).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     solver_options
@@ -915,7 +918,6 @@ class SecondOrderSystem(InputOutputSystem):
     operators
         Dictionary of all |Operators| contained in the discretization.
     """
-    linear = True
 
     special_operators = frozenset({'M', 'E', 'K', 'B', 'Cp', 'Cv', 'D'})
 
@@ -1062,7 +1064,7 @@ class SecondOrderSystem(InputOutputSystem):
                                                 range_id='OUTPUT'),
                          D=BlockOperator([[self.D]],
                                          source_id='INPUT',
-                                         range_id='OUTPUT') if not isinstance(self.D, ZeroOperator) else None,
+                                         range_id='OUTPUT') if not _is_like_zero_operator(self.D) else None,
                          E=BlockDiagonalOperator((IdentityOperator(self.M.source), self.M),
                                                  source_id='STATE',
                                                  range_id='STATE'),
@@ -1119,11 +1121,8 @@ class SecondOrderSystem(InputOutputSystem):
         else:
             tfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(
                 Cp.as_source_array() + Cv.as_source_array() * s.conjugate())).to_numpy().conj()
-        if not isinstance(D, ZeroOperator):
-            if self.m <= self.p:
-                tfs += D.as_range_array().to_numpy().T
-            else:
-                tfs += D.as_source_array().to_numpy()
+        if not _is_like_zero_operator(D):
+            tfs += to_matrix(D, format='dense')
         return tfs
 
     def eval_dtf(self, s):
@@ -1263,13 +1262,13 @@ class SecondOrderSystem(InputOutputSystem):
         """
         if not force_dense:
             for op_name in ['M', 'E', 'K', 'B', 'Cp']:
-                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator)
-                        and not getattr(self, op_name).sparse):
+                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and
+                        not getattr(self, op_name).sparse):
                     raise TypeError('Expected ' + op_name +
                                     ' to be NumpyMatrixOperator with dense matrix (force_dense == False).')
-            if not ((isinstance(self.Cv, NumpyMatrixOperator)
-                     and not self.Cv.sparse) or
-                    isinstance(self.Cv, ZeroOperator)):
+            if not ((isinstance(self.Cv, NumpyMatrixOperator) and
+                     not self.Cv.sparse) or
+                    _is_like_zero_operator(self.Cv)):
                 raise TypeError('Expected Cv to be NumpyMatrixOperator with dense matrix or ZeroOperator '
                                 '(force_dense == False).')
 
@@ -1292,7 +1291,7 @@ class LinearDelaySystem(InputOutputSystem):
         E x'(t)
         & = A x(t) + \sum_{i = 1}^q{A_i x(t - \tau_i)} + B u(t) \\
         y(t)
-        & = C x(t)
+        & = C x(t) + D u(t)
 
     if continuous-time, or
 
@@ -1300,15 +1299,13 @@ class LinearDelaySystem(InputOutputSystem):
         E x(k + 1)
         & = A x(k) + \sum_{i = 1}^q{A_i x(k - \tau_i)} + B u(k) \\
         y(k)
-        &= C x(k)
+        &= C x(k) + D u(k)
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`,
-    :math:`B`, and :math:`C` are linear operators.
+    :math:`B`, :math:`C`, and :math:`D` are linear operators.
 
     Parameters
     ----------
-    E
-        The |Operator| E or `None` (then E is assumed to be identity).
     A
         The |Operator| A.
     Ad
@@ -1319,6 +1316,10 @@ class LinearDelaySystem(InputOutputSystem):
         The |Operator| B.
     C
         The |Operator| C.
+    D
+        The |Operator| D or `None` (then D is assumed to be zero).
+    E
+        The |Operator| E or `None` (then E is assumed to be identity).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     estimator
@@ -1345,8 +1346,8 @@ class LinearDelaySystem(InputOutputSystem):
         The order of the system (equal to A.source.dim).
     q
         The number of delay terms.
-    E
-        The |Operator| E.
+    tau
+        The tuple of delay times.
     A
         The |Operator| A.
     Ad
@@ -1355,15 +1356,21 @@ class LinearDelaySystem(InputOutputSystem):
         The |Operator| B.
     C
         The |Operator| C.
+    D
+        The |Operator| D.
+    E
+        The |Operator| E.
     operators
         Dict of all |Operators| appearing in the discretization.
     """
-    linear = True
-    special_operators = frozenset({'A', 'Ad', 'B', 'C', 'E'})
 
-    def __init__(self, A, Ad, tau, B, C, E=None, cont_time=True,
-                 estimator=None, visualizer=None, cache_region='memory', name=None):
+    special_operators = frozenset({'A', 'Ad', 'B', 'C', 'D', 'E'})
 
+    def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True,
+                 estimator=None, visualizer=None,
+                 cache_region='memory', name=None):
+
+        D = D or ZeroOperator(C.range, B.source)
         E = E or IdentityOperator(A.source)
 
         assert A.linear and A.source == A.range and A.source.id == 'STATE'
@@ -1372,13 +1379,15 @@ class LinearDelaySystem(InputOutputSystem):
         assert isinstance(tau, tuple) and len(tau) == len(Ad) and all(taui > 0 for taui in tau)
         assert B.linear and B.range == A.source and B.source.id == 'INPUT'
         assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert D.linear and D.source == B.source and D.range == C.range
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
         super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
-                         A=A, Ad=Ad, B=B, C=C, E=E)
+                         A=A, Ad=Ad, B=B, C=C, D=D, E=E)
+
         self.solution_space = A.source
         self.tau = tau
         self.n = A.source.dim
@@ -1391,7 +1400,7 @@ class LinearDelaySystem(InputOutputSystem):
 
         .. math::
             C \left(s E - A
-                - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
+                - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B + D.
 
         .. note::
             We assume that either the number of inputs or the number of
@@ -1408,17 +1417,20 @@ class LinearDelaySystem(InputOutputSystem):
             Transfer function evaluated at the complex number `s`,
             |NumPy array| of shape `(self.p, self.m)`.
         """
-        E = self.E
         A = self.A
         Ad = self.Ad
         B = self.B
         C = self.C
+        D = self.D
+        E = self.E
 
         middle = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
         if self.m <= self.p:
             tfs = C.apply(middle.apply_inverse(B.as_range_array())).to_numpy().T
         else:
             tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
+        if not _is_like_zero_operator(D):
+            tfs += to_matrix(D, format='dense')
         return tfs
 
     def eval_dtf(self, s):
@@ -1449,11 +1461,11 @@ class LinearDelaySystem(InputOutputSystem):
             Derivative of transfer function evaluated at the complex
             number `s`, |NumPy array| of shape `(self.p, self.m)`.
         """
-        E = self.E
         A = self.A
         Ad = self.Ad
         B = self.B
         C = self.C
+        E = self.E
 
         left_and_right = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
         middle = LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
@@ -1478,7 +1490,7 @@ class LinearStochasticSystem(InputOutputSystem):
             + \sum_{i = 1}^q{A_i x(t) \mathrm{d}\omega_i(t)}
             + B u(t) \mathrm{d}t \\
         y(t)
-        & = C x(t)
+        & = C x(t) + D u(t)
 
     if continuous-time, or
 
@@ -1489,16 +1501,14 @@ class LinearStochasticSystem(InputOutputSystem):
             + \sum_{i = 1}^q{A_i x(k) \omega_i(k)}
             + B u(k) \\
         y(k)
-        & = C x(k)
+        & = C x(k) + D u(t)
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`,
-    :math:`B`, and :math:`C` are linear operators and :math:`\omega_i`
-    are stochastic processes.
+    :math:`B`, :math:`C`, and :math:`D` are linear operators and
+    :math:`\omega_i` are stochastic processes.
 
     Parameters
     ----------
-    E
-        The |Operator| E or `None` (then E is assumed to be identity).
     A
         The |Operator| A.
     As
@@ -1507,6 +1517,10 @@ class LinearStochasticSystem(InputOutputSystem):
         The |Operator| B.
     C
         The |Operator| C.
+    D
+        The |Operator| D or `None` (then D is assumed to be zero).
+    E
+        The |Operator| E or `None` (then E is assumed to be identity).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     estimator
@@ -1533,8 +1547,6 @@ class LinearStochasticSystem(InputOutputSystem):
         The order of the system (equal to A.source.dim).
     q
         The number of stochastic processes.
-    E
-        The |Operator| E.
     A
         The |Operator| A.
     As
@@ -1543,37 +1555,40 @@ class LinearStochasticSystem(InputOutputSystem):
         The |Operator| B.
     C
         The |Operator| C.
+    D
+        The |Operator| D.
+    E
+        The |Operator| E.
     operators
         Dictionary of all |Operators| contained in the discretization.
     """
 
-    linear = True
-    special_operators = frozenset({'A', 'As', 'B', 'C', 'E'})
+    special_operators = frozenset({'A', 'As', 'B', 'C', 'D', 'E'})
 
-    def __init__(self, A, As, tau, B, C, E=None, cont_time=True,
+    def __init__(self, A, As, B, C, D=None, E=None, cont_time=True,
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
+        D = D or ZeroOperator(C.range, B.source)
         E = E or IdentityOperator(A.source)
 
         assert A.linear and A.source == A.range and A.source == 'STATE'
         assert isinstance(As, tuple) and len(As) > 0
         assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in As)
-        assert isinstance(tau, tuple) and len(tau) == len(As) and all(taui > 0 for taui in tau)
         assert B.linear and B.range == A.source and B.source.id == 'INPUT'
         assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert D.linear and D.source == B.source and D.range == C.range
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
         super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
-                         A=A, As=As, B=B, C=C, E=E)
+                         A=A, As=As, B=B, C=C, D=D, E=E)
 
         self.solution_space = A.source
         self.n = A.source.dim
         self.q = len(As)
-        self.tau = tau
 
 
 class BilinearSystem(InputOutputSystem):
@@ -1588,7 +1603,7 @@ class BilinearSystem(InputOutputSystem):
             + \sum_{i = 1}^m{N_i x(t) u_i(t)}
             + B u(t) \\
         y(t)
-        & = C x(t)
+        & = C x(t) + D u(t)
 
     if continuous-time, or
 
@@ -1599,16 +1614,14 @@ class BilinearSystem(InputOutputSystem):
             + \sum_{i = 1}^m{N_i x(k) u_i(k)}
             + B u(k) \\
         y(k)
-        & = C x(k)
+        & = C x(k) + D u(t)
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`N_i`,
-    :math:`B`, and :math:`C` are linear operators and :math:`m` is the
-    number of inputs.
+    :math:`B`, :math:`C`, and :math:`D` are linear operators and
+    :math:`m` is the number of inputs.
 
     Parameters
     ----------
-    E
-        The |Operator| E or `None` (then E is assumed to be identity).
     A
         The |Operator| A.
     N
@@ -1617,6 +1630,10 @@ class BilinearSystem(InputOutputSystem):
         The |Operator| B.
     C
         The |Operator| C.
+    D
+        The |Operator| D or `None` (then D is assumed to be zero).
+    E
+        The |Operator| E or `None` (then E is assumed to be identity).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     estimator
@@ -1641,8 +1658,6 @@ class BilinearSystem(InputOutputSystem):
     ----------
     n
         The order of the system (equal to A.source.dim).
-    E
-        The |Operator| E.
     A
         The |Operator| A.
     N
@@ -1651,16 +1666,21 @@ class BilinearSystem(InputOutputSystem):
         The |Operator| B.
     C
         The |Operator| C.
+    D
+        The |Operator| D.
+    E
+        The |Operator| E.
     operators
         Dictionary of all |Operators| contained in the discretization.
     """
 
-    linear = False
+    special_operators = frozenset({'A', 'N', 'B', 'C', 'D', 'E'})
 
-    def __init__(self, A, N, B, C, E=None, cont_time=True,
+    def __init__(self, A, N, B, C, D, E=None, cont_time=True,
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
+        D = D or ZeroOperator(C.range, B.source)
         E = E or IdentityOperator(A.source)
 
         assert A.linear and A.source == A.range and A.source.id == 'STATE'
@@ -1668,13 +1688,15 @@ class BilinearSystem(InputOutputSystem):
         assert isinstance(N, tuple) and len(N) == B.source.dim
         assert all(Ni.linear and Ni.source == Ni.range == A.source for Ni in N)
         assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert D.linear and D.source == B.source and D.range == C.range
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
         super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
-                         A=A, N=N, B=B, C=C, E=E)
+                         A=A, N=N, B=B, C=C, D=D, E=E)
 
         self.solution_space = A.source
         self.n = A.source.dim
+        self.linear = False

@@ -197,7 +197,7 @@ if config.HAVE_PYMESS:
 
         if options['type'] == 'pymess_care':
             if Q is not None or R is not None or G is not None:
-                raise NotImplementedError()
+                raise NotImplementedError
             A_mat = to_matrix(A, format='dense') if A.source.dim < 1000 else to_matrix(A)
             if E is not None:
                 E_mat = to_matrix(E, format='dense') if A.source.dim < 1000 else to_matrix(E)
@@ -214,7 +214,7 @@ if config.HAVE_PYMESS:
                     Z = pymess.care(A_mat.T, E_mat.T, C_mat.T, B_mat.T)
         elif options['type'] == 'pymess_lrnm':
             if Q is not None or R is not None or G is not None:
-                raise NotImplementedError()
+                raise NotImplementedError
             opts = options['opts']
             if not trans:
                 opts.type = pymess.MESS_OP_TRANSPOSE

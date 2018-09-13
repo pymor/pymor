@@ -7,7 +7,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.discretizations.iosys import SecondOrderSystem
+from pymor.discretizations.iosys import _is_like_identity_operator, SecondOrderSystem
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import SO_BHIReductor
@@ -158,7 +158,7 @@ class SOR_IRKAReductor(GenericPGReductor):
                 rd_r = irka_reductor.reduce(r, **irka_options)
 
             # new interpolation points
-            if isinstance(rd_r.E, IdentityOperator):
+            if _is_like_identity_operator(rd_r.E):
                 sigma, Y, X = spla.eig(to_matrix(rd_r.A, format='dense'), left=True, right=True)
             else:
                 sigma, Y, X = spla.eig(to_matrix(rd_r.A, format='dense'), to_matrix(rd_r.E, format='dense'),

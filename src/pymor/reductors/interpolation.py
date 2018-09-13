@@ -40,16 +40,16 @@ class GenericBHIReductor(GenericPGReductor):
         self._biorthogonal_product = None
 
     def _B_apply(self, s, V):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _C_apply_adjoint(self, s, V):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _K_apply_inverse(self, s, V):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _K_apply_inverse_adjoint(self, s, V):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def reduce(self, sigma, b, c, projection='orth'):
         """Bitangential Hermite interpolation.
