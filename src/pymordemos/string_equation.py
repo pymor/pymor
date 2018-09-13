@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import SecondOrderSystem
 from pymor.reductors.bt import BTReductor
-from pymor.reductors.lti import IRKAReductor
+from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor,
                                   SOBTfvReductor, SOBTReductor)
 from pymor.reductors.sor_irka import SOR_IRKAReductor

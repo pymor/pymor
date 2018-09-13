@@ -7,12 +7,11 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.logger import getLogger
 from pymor.discretizations.iosys import SecondOrderSystem
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import SO_BHIReductor
-from pymor.reductors.lti import IRKAReductor
+from pymor.reductors.h2 import IRKAReductor
 
 
 class SOR_IRKAReductor(GenericPGReductor):
@@ -115,8 +114,7 @@ class SOR_IRKAReductor(GenericPGReductor):
         if not irka_options:
             irka_options = {}
 
-        logger = getLogger('pymor.reductors.sor_irka.SOR_IRKAReductor.reduce')
-        logger.info('Starting SOR-IRKA')
+        self.logger.info('Starting SOR-IRKA')
 
         # basic choice for initial interpolation points and tangential
         # directions
@@ -128,11 +126,11 @@ class SOR_IRKAReductor(GenericPGReductor):
             c = d.Cp.range.from_numpy(np.ones((r, d.p)))
 
         if compute_errors:
-            logger.info('iter | conv. criterion | rel. H_2-error')
-            logger.info('-----+-----------------+----------------')
+            self.logger.info('iter | conv. criterion | rel. H_2-error')
+            self.logger.info('-----+-----------------+----------------')
         else:
-            logger.info('iter | conv. criterion')
-            logger.info('-----+----------------')
+            self.logger.info('iter | conv. criterion')
+            self.logger.info('-----+----------------')
 
         self.dist = []
         self.sigmas = [np.array(sigma)]
@@ -154,7 +152,7 @@ class SOR_IRKAReductor(GenericPGReductor):
                 self.errors.append(rel_H2_err)
 
             # reduction to a system with r poles
-            with logger.block('Intermediate reduction ...'):
+            with self.logger.block('Intermediate reduction ...'):
                 irka_reductor = IRKAReductor(rd.to_lti())
                 rd_r = irka_reductor.reduce(r, **irka_options)
 
@@ -239,9 +237,9 @@ class SOR_IRKAReductor(GenericPGReductor):
                     self.dist.append(rel_H2_dist)
 
             if compute_errors:
-                logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
+                self.logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
             else:
-                logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+                self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:

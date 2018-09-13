@@ -13,7 +13,8 @@ import scipy.linalg as spla
 import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import TransferFunction
-from pymor.reductors.tf import TFInterpReductor, TF_IRKAReductor
+from pymor.reductors.interpolation import TFInterpReductor
+from pymor.reductors.h2 import TF_IRKAReductor
 
 if __name__ == '__main__':
     tau = 0.1

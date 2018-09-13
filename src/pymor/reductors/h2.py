@@ -9,11 +9,11 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.logger import getLogger
+from pymor.core.interfaces import BasicInterface
 from pymor.discretizations.iosys import LTISystem
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
-from pymor.reductors.interpolation import LTI_BHIReductor
+from pymor.reductors.interpolation import LTI_BHIReductor, TFInterpReductor
 
 
 class IRKAReductor(GenericPGReductor):
@@ -118,8 +118,7 @@ class IRKAReductor(GenericPGReductor):
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
-        logger = getLogger('pymor.reductors.lti.IRKAReductor.reduce')
-        logger.info('Starting IRKA')
+        self.logger.info('Starting IRKA')
 
         # basic choice for initial interpolation points and tangential
         # directions
@@ -131,11 +130,11 @@ class IRKAReductor(GenericPGReductor):
             c = d.C.range.from_numpy(np.ones((r, d.p)))
 
         if compute_errors:
-            logger.info('iter | conv. criterion | rel. H_2-error')
-            logger.info('-----+-----------------+----------------')
+            self.logger.info('iter | conv. criterion | rel. H_2-error')
+            self.logger.info('-----+-----------------+----------------')
         else:
-            logger.info('iter | conv. criterion')
-            logger.info('-----+----------------')
+            self.logger.info('iter | conv. criterion')
+            self.logger.info('-----+----------------')
 
         self.dist = []
         self.sigmas = [np.array(sigma)]
@@ -237,9 +236,9 @@ class IRKAReductor(GenericPGReductor):
                     self.dist.append(rel_H2_dist)
 
             if compute_errors:
-                logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
+                self.logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
             else:
-                logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+                self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:
@@ -333,15 +332,14 @@ class TSIAReductor(GenericPGReductor):
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
-        logger = getLogger('pymor.reductors.lti.TSIAReductor.reduce')
-        logger.info('Starting TSIA')
+        self.logger.info('Starting TSIA')
 
         if compute_errors:
-            logger.info('iter | conv. criterion | rel. H_2-error')
-            logger.info('-----+-----------------+----------------')
+            self.logger.info('iter | conv. criterion | rel. H_2-error')
+            self.logger.info('-----+-----------------+----------------')
         else:
-            logger.info('iter | conv. criterion')
-            logger.info('-----+----------------')
+            self.logger.info('iter | conv. criterion')
+            self.logger.info('-----+----------------')
 
         # find initial projection matrices
         self.V, self.W = solve_sylv_schur(d.A, rd0.A,
@@ -446,9 +444,9 @@ class TSIAReductor(GenericPGReductor):
                     self.dist.append(rel_H2_dist)
 
             if compute_errors:
-                logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
+                self.logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
             else:
-                logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+                self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
 
             # new projection matrices
             self.V, self.W = solve_sylv_schur(d.A, rd.A,
@@ -472,3 +470,163 @@ class TSIAReductor(GenericPGReductor):
 
     extend_source_basis = None
     extend_range_basis = None
+
+
+class TF_IRKAReductor(BasicInterface):
+    """Realization-independent IRKA reductor.
+
+    .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent
+              H2-approximation,
+              Proceedings of the 51st IEEE Conference on Decision and
+              Control, 2012.
+
+    Parameters
+    ----------
+    d
+        Discretization with `eval_tf` and `eval_dtf` methods.
+    """
+    def __init__(self, d):
+        self.d = d
+
+    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, dist_num=1, force_sigma_in_rhp=False,
+               conv_crit='rel_sigma_change'):
+        """Reduce using TF-IRKA.
+
+        Parameters
+        ----------
+        r
+            Order of the reduced order model.
+        sigma
+            Initial interpolation points (closed under conjugation),
+            list of length `r`.
+
+            If `None`, interpolation points are log-spaced between 0.1
+            and 10.
+        b
+            Initial right tangential directions, |NumPy array| of shape
+            `(d.m, r)`.
+
+            If `None`, `b` is chosen with all ones.
+        c
+            Initial left tangential directions, |NumPy array| of shape
+            `(d.p, r)`.
+
+            If `None`, `c` is chosen with all ones.
+        tol
+            Tolerance for the largest change in interpolation points.
+        maxit
+            Maximum number of iterations.
+        dist_num
+            Number of past iterations to compare the current iteration.
+            Larger number can avoid occasional cyclic behaviour of
+            TF-IRKA.
+        force_sigma_in_rhp
+            If 'False`, new interpolation are reflections of reduced
+            order model's poles. Otherwise, they are always in the right
+            half-plane.
+        conv_crit
+            Convergence criterion:
+
+                - `'rel_sigma_change'`: relative change in interpolation
+                  points
+                - `'rel_H2_dist'`: relative H_2 distance of reduced
+                  order models
+
+        Returns
+        -------
+        rd
+            Reduced |LTISystem| model.
+        """
+        d = self.d
+        if not d.cont_time:
+            raise NotImplementedError
+        assert r > 0
+        assert sigma is None or len(sigma) == r
+        assert b is None or isinstance(b, np.ndarray) and b.shape == (d.m, r)
+        assert c is None or isinstance(c, np.ndarray) and c.shape == (d.p, r)
+        assert conv_crit in ('rel_sigma_change', 'rel_H2_dist')
+
+        self.logger.info('Starting TF-IRKA')
+
+        # basic choice for initial interpolation points and tangential
+        # directions
+        if sigma is None:
+            sigma = np.logspace(-1, 1, r)
+        if b is None:
+            b = np.ones((d.m, r))
+        if c is None:
+            c = np.ones((d.p, r))
+
+        self.logger.info('iter | conv. criterion')
+        self.logger.info('-----+----------------')
+
+        self.dist = []
+        self.sigmas = [np.array(sigma)]
+        self.R = [b]
+        self.L = [c]
+        interp_reductor = TFInterpReductor(d)
+        # main loop
+        for it in range(maxit):
+            # interpolatory reduced order model
+            rd = interp_reductor.reduce(sigma, b, c)
+
+            # new interpolation points
+            if isinstance(rd.E, IdentityOperator):
+                sigma, Y, X = spla.eig(to_matrix(rd.A, format='dense'), left=True, right=True)
+            else:
+                sigma, Y, X = spla.eig(to_matrix(rd.A, format='dense'), to_matrix(rd.E, format='dense'),
+                                       left=True, right=True)
+            if force_sigma_in_rhp:
+                sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
+            else:
+                sigma *= -1
+            self.sigmas.append(sigma)
+
+            # compute convergence criterion
+            if conv_crit == 'rel_sigma_change':
+                dist = spla.norm((self.sigmas[-2] - self.sigmas[-1]) / self.sigmas[-2], ord=np.inf)
+                for i in range(2, min(dist_num + 1, len(self.sigmas))):
+                    dist2 = spla.norm((self.sigmas[-i - 1] - self.sigmas[-1]) / self.sigmas[-i - 1], ord=np.inf)
+                    dist = min(dist, dist2)
+                self.dist.append(dist)
+            elif conv_crit == 'rel_H2_dist':
+                if it == 0:
+                    rd_list = (dist_num + 1) * [None]
+                    rd_list[0] = rd
+                    self.dist.append(np.inf)
+                else:
+                    for i in range(1, dist_num + 1):
+                        rd_list[-i] = rd_list[-i - 1]
+                    rd_list[0] = rd
+                    rd_diff = rd_list[1] - rd_list[0]
+                    try:
+                        rel_H2_dist = rd_diff.h2_norm() / rd_list[1].h2_norm()
+                    except:
+                        rel_H2_dist = np.inf
+                    for i in range(2, dist_num + 1):
+                        if rd_list[i] is None:
+                            break
+                        rd_diff2 = rd_list[i] - rd_list[0]
+                        try:
+                            rel_H2_dist2 = rd_diff2.h2_norm() / rd_list[i].h2_norm()
+                        except:
+                            rel_H2_dist2 = np.inf
+                        rel_H2_dist = min(rel_H2_dist, rel_H2_dist2)
+                    self.dist.append(rel_H2_dist)
+
+            self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+
+            # new tangential directions
+            b = rd.B.matrix.T.dot(Y.conj())
+            c = rd.C.matrix.dot(X)
+            self.R.append(b)
+            self.L.append(c)
+
+            # check if convergence criterion is satisfied
+            if self.dist[-1] < tol:
+                break
+
+        # final reduced order model
+        rd = interp_reductor.reduce(sigma, b, c)
+
+        return rd

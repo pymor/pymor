@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import LTISystem
 from pymor.reductors.bt import BTReductor
-from pymor.reductors.lti import IRKAReductor
+from pymor.reductors.h2 import IRKAReductor
 
 import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)

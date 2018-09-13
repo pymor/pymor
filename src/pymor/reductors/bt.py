@@ -91,8 +91,7 @@ class GenericBTReductor(GenericPGReductor):
             r = r_tol if r is None else min([r, r_tol])
 
         if r > min([len(cf), len(of)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.'
-                             ' Try reducing the tolerance in the low-rank matrix equation solver.')
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # compute projection matrices and find the reduced model
         self.V = cf.lincomb(sV[:r])

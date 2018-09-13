@@ -3,9 +3,11 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import scipy.linalg as spla
 
 from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.core.interfaces import BasicInterface
 from pymor.discretizations.iosys import LTISystem, SecondOrderSystem, LinearDelaySystem
 from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import GenericPGReductor
@@ -288,3 +290,85 @@ class DelayBHIReductor(GenericBHIReductor):
         Ks = LincombOperator((self.d.E, self.d.A) + self.d.Ad,
                              (s, -1) + tuple(-np.exp(-taui * s) for taui in self.d.tau))
         return Ks.apply_inverse_adjoint(V)
+
+
+class TFInterpReductor(BasicInterface):
+    """Loewner bitangential Hermite interpolation reductor.
+
+    Parameters
+    ----------
+    d
+        Discretization with `eval_tf` and `eval_dtf` methods.
+    """
+    def __init__(self, d):
+        self.d = d
+
+    def reduce(self, sigma, b, c):
+        """Realization-independent tangential Hermite interpolation.
+
+        Parameters
+        ----------
+        sigma
+            Interpolation points (closed under conjugation), list of
+            length `r`.
+        b
+            Right tangential directions, |NumPy array| of shape
+            `(d.m, r)`.
+        c
+            Left tangential directions, |NumPy array| of shape
+            `(d.p, r)`.
+
+        Returns
+        -------
+        lti
+            |LTISystem| interpolating the transfer function of `d`.
+        """
+        d = self.d
+        r = len(sigma)
+        assert isinstance(b, np.ndarray) and b.shape == (d.m, r)
+        assert isinstance(c, np.ndarray) and c.shape == (d.p, r)
+
+        # rescale tangential directions (to avoid overflow or underflow)
+        for i in range(r):
+            b[:, i] /= spla.norm(b[:, i])
+            c[:, i] /= spla.norm(c[:, i])
+
+        # matrices of the interpolatory LTI system
+        Er = np.empty((r, r), dtype=complex)
+        Ar = np.empty((r, r), dtype=complex)
+        Br = np.empty((r, d.m), dtype=complex)
+        Cr = np.empty((d.p, r), dtype=complex)
+
+        Hs = [d.eval_tf(s) for s in sigma]
+        dHs = [d.eval_dtf(s) for s in sigma]
+
+        for i in range(r):
+            for j in range(r):
+                if i != j:
+                    Er[i, j] = -c[:, i].dot((Hs[i] - Hs[j]).dot(b[:, j])) / (sigma[i] - sigma[j])
+                    Ar[i, j] = -c[:, i].dot((sigma[i] * Hs[i] - sigma[j] * Hs[j])).dot(b[:, j]) / (sigma[i] - sigma[j])
+                else:
+                    Er[i, i] = -c[:, i].dot(dHs[i].dot(b[:, i]))
+                    Ar[i, i] = -c[:, i].dot((Hs[i] + sigma[i] * dHs[i]).dot(b[:, i]))
+            Br[i, :] = Hs[i].T.dot(c[:, i])
+            Cr[:, i] = Hs[i].dot(b[:, i])
+
+        # transform the system to have real matrices
+        T = np.zeros((r, r), dtype=complex)
+        for i in range(r):
+            if sigma[i].imag == 0:
+                T[i, i] = 1
+            else:
+                indices = np.nonzero(np.isclose(sigma[i + 1:], sigma[i].conjugate()))[0]
+                if len(indices) > 0:
+                    j = i + 1 + indices[0]
+                    T[i, i] = 1
+                    T[i, j] = 1
+                    T[j, i] = -1j
+                    T[j, j] = 1j
+        Er = (T.dot(Er).dot(T.conj().T)).real
+        Ar = (T.dot(Ar).dot(T.conj().T)).real
+        Br = (T.dot(Br)).real
+        Cr = (Cr.dot(T.conj().T)).real
+
+        return LTISystem.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=d.cont_time)
