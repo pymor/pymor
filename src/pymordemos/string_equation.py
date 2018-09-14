@@ -251,7 +251,7 @@ if __name__ == '__main__':
     # Iterative Rational Krylov Algorithm (IRKA)
     r = 10
     irka_reductor = IRKAReductor(so_sys.to_lti())
-    rom_irka = irka_reductor.reduce(r, dist_num=2, conv_crit='rel_H2_dist')
+    rom_irka = irka_reductor.reduce(r, num_prev=2, conv_crit='h2')
 
     fig, ax = plt.subplots()
     ax.semilogy(irka_reductor.dist, '.-')
@@ -280,7 +280,7 @@ if __name__ == '__main__':
     # Second-Order Iterative Rational Krylov Algorithm (SOR-IRKA)
     r = 10
     sor_irka_reductor = SOR_IRKAReductor(so_sys)
-    rom_sor_irka = sor_irka_reductor.reduce(r, dist_num=2, maxit=5)
+    rom_sor_irka = sor_irka_reductor.reduce(r, num_prev=2, maxit=5)
 
     fig, ax = plt.subplots()
     ax.semilogy(sor_irka_reductor.dist, '.-')

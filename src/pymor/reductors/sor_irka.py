@@ -4,14 +4,11 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import scipy.linalg as spla
 
-from pymor.algorithms.to_matrix import to_matrix
-from pymor.discretizations.iosys import _is_like_identity_operator, SecondOrderSystem
-from pymor.operators.constructions import IdentityOperator
+from pymor.discretizations.iosys import SecondOrderSystem
 from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import SO_BHIReductor
-from pymor.reductors.h2 import IRKAReductor
+from pymor.reductors.h2 import IRKAReductor, _poles_and_tangential_directions, _convergence_criterion
 
 
 class SOR_IRKAReductor(GenericPGReductor):
@@ -26,8 +23,8 @@ class SOR_IRKAReductor(GenericPGReductor):
         assert isinstance(d, SecondOrderSystem)
         self.d = d
 
-    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, dist_num=1, force_sigma_in_rhp=False,
-               projection='orth', use_arnoldi=False, conv_crit='rel_sigma_change', compute_errors=False,
+    def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
+               projection='orth', use_arnoldi=False, conv_crit='sigma', compute_errors=False,
                irka_options=None):
         """Reduce using SOR-IRKA.
 
@@ -44,48 +41,61 @@ class SOR_IRKAReductor(GenericPGReductor):
         r
             Order of the reduced order model.
         sigma
-            Initial interpolation points (closed under conjugation),
-            list of length `r`.
+            Initial interpolation points (closed under conjugation).
 
             If `None`, interpolation points are log-spaced between 0.1
-            and 10.
+            and 10. If `sigma` is an `int`, it is used as a seed to
+            generate it randomly. Otherwise, it needs to be a
+            one-dimensional array-like of length `r`.
+
+            `sigma` and `rd0` cannot be both not `None`.
         b
-            Initial right tangential directions, |VectorArray| of length
-            `r` from `d.B.source`.
+            Initial right tangential directions.
 
-            If `None`, `b` is chosen with all ones.
+            If `None`, if is chosen as all ones. If `b` is an `int`, it
+            is used as a seed to generate it randomly. Otherwise, it
+            needs to be a |VectorArray| of length `r` from `d.B.source`.
+
+            `b` and `rd0` cannot be both not `None`.
         c
-            Initial left tangential directions, |VectorArray| of length
-            `r` from `d.C.range`.
+            Initial left tangential directions.
 
-            If `None`, `c` is chosen with all ones.
+            If `None`, if is chosen as all ones. If `c` is an `int`, it
+            is used as a seed to generate it randomly. Otherwise, it
+            needs to be a |VectorArray| of length `r` from `d.Cp.range`.
+
+            `c` and `rd0` cannot be both not `None`.
+        rd0
+            Initial reduced order model.
+
+            If `None`, then `sigma`, `b`, and `c` are used. Otherwise,
+            it needs to be an |LTISystem| of order `r` and it is used to
+            construct `sigma`, `b`, and `c`.
         tol
-            Tolerance for the largest change in interpolation points.
+            Tolerance for the convergence criterion.
         maxit
             Maximum number of iterations.
-        dist_num
-            Number of past iterations to compare the current iteration.
-            Larger number can avoid occasional cyclic behaviour of IRKA.
+        num_prev
+            Number of previous iterations to compare the current
+            iteration to. Larger number can avoid occasional cyclic
+            behavior of IRKA.
         force_sigma_in_rhp
-            If 'False`, new interpolation are reflections of reduced
-            order model's poles. Otherwise, they are always in the right
-            half-plane.
+            If `False`, new interpolation are reflections of the current
+            reduced order model's poles. Otherwise, only the poles in
+            the left half-plane are reflected.
         projection
             Projection method:
 
                 - `'orth'`: projection matrices are orthogonalized with
                     respect to the Euclidean inner product
                 - `'biorth'`: projection matrices are biorthogolized
-                    with respect to the M product
+                    with respect to the E product
         conv_crit
             Convergence criterion:
 
-                - `'rel_sigma_change'`: relative change in interpolation
-                  points
-                - `'subspace_sin'`: maximum of sines of Petrov-Galerkin
-                  subspaces
-                - `'rel_H2_dist'`: relative :math:`\mathcal{H}_2`
-                  distance of reduced order models
+                - `'sigma'`: relative change in interpolation points
+                - `'h2'`: relative :math:`\mathcal{H}_2` distance of
+                    reduced order models
         compute_errors
             Should the relative :math:`\mathcal{H}_2`-errors of
             intermediate reduced order models be computed.
@@ -105,33 +115,56 @@ class SOR_IRKAReductor(GenericPGReductor):
         if not d.cont_time:
             raise NotImplementedError
         assert 0 < r < d.n
-        assert sigma is None or len(sigma) == r
-        assert b is None or b in d.B.source and len(b) == r
-        assert c is None or c in d.C.range and len(c) == r
-        assert dist_num >= 1
+        assert isinstance(num_prev, int) and num_prev >= 1
         assert projection in ('orth', 'biorth')
-        assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
+        assert conv_crit in ('sigma', 'h2')
         assert irka_options is None or isinstance(irka_options, dict)
         if not irka_options:
             irka_options = {}
 
-        self.logger.info('Starting SOR-IRKA')
-
-        # basic choice for initial interpolation points and tangential
-        # directions
-        if sigma is None:
-            sigma = np.logspace(-1, 1, r)
-        if b is None:
-            b = d.B.source.from_numpy(np.ones((r, d.m)))
-        if c is None:
-            c = d.Cp.range.from_numpy(np.ones((r, d.p)))
-
-        if compute_errors:
-            self.logger.info('iter | conv. criterion | rel. H_2-error')
-            self.logger.info('-----+-----------------+----------------')
+        # initial interpolation points and tangential directions
+        assert sigma is None or isinstance(sigma, int) or len(sigma) == r
+        assert b is None or isinstance(b, int) or b in d.B.source and len(b) == r
+        assert c is None or isinstance(c, int) or c in d.Cp.range and len(c) == r
+        assert (rd0 is None or
+                isinstance(rd0, SecondOrderSystem) and
+                rd0.n == r and rd0.B.source == d.B.source and rd0.Cp.range == d.Cp.range)
+        assert sigma is None or rd0 is None
+        assert b is None or rd0 is None
+        assert c is None or rd0 is None
+        if rd0 is not None:
+            with self.logger.block('Intermediate reduction ...'):
+                irka_reductor = IRKAReductor(rd0.to_lti())
+                rd_r = irka_reductor.reduce(r, **irka_options)
+            poles, b, c = _poles_and_tangential_directions(rd_r)
+            b = b.block(0)
+            c = c.block(0)
+            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
         else:
+            if sigma is None:
+                sigma = np.logspace(-1, 1, r)
+            elif isinstance(sigma, int):
+                np.random.seed(sigma)
+                sigma = np.abs(np.random.randn(r))
+            if b is None:
+                b = d.B.source.from_numpy(np.ones((r, d.m)))
+            elif isinstance(b, int):
+                np.random.seed(b)
+                b = d.B.source.from_numpy(np.random.randn(r, d.m))
+            if c is None:
+                c = d.Cp.range.from_numpy(np.ones((r, d.p)))
+            elif isinstance(c, int):
+                np.random.seed(c)
+                c = d.Cp.range.from_numpy(np.random.randn(r, d.p))
+
+        # begin logging
+        self.logger.info('Starting SOR-IRKA')
+        if not compute_errors:
             self.logger.info('iter | conv. criterion')
             self.logger.info('-----+----------------')
+        else:
+            self.logger.info('iter | conv. criterion | rel. H_2-error')
+            self.logger.info('-----+-----------------+----------------')
 
         self.dist = []
         self.sigmas = [np.array(sigma)]
@@ -144,103 +177,47 @@ class SOR_IRKAReductor(GenericPGReductor):
             # interpolatory reduced order model
             rd = interp_reductor.reduce(sigma, b, c, projection=projection)
 
-            if compute_errors:
-                err = d - rd
-                try:
-                    rel_H2_err = err.h2_norm() / d.h2_norm()
-                except:
-                    rel_H2_err = np.inf
-                self.errors.append(rel_H2_err)
-
             # reduction to a system with r poles
             with self.logger.block('Intermediate reduction ...'):
                 irka_reductor = IRKAReductor(rd.to_lti())
                 rd_r = irka_reductor.reduce(r, **irka_options)
 
-            # new interpolation points
-            if _is_like_identity_operator(rd_r.E):
-                sigma, Y, X = spla.eig(to_matrix(rd_r.A, format='dense'), left=True, right=True)
-            else:
-                sigma, Y, X = spla.eig(to_matrix(rd_r.A, format='dense'), to_matrix(rd_r.E, format='dense'),
-                                       left=True, right=True)
-            if force_sigma_in_rhp:
-                sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
-            else:
-                sigma *= -1
+            # new interpolation points and tangential directions
+            poles, b, c = _poles_and_tangential_directions(rd_r)
+            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
+            b = b.block(0)
+            c = c.block(0)
             self.sigmas.append(sigma)
-
-            # new tangential directions
-            Y = rd_r.B.range.make_array(Y.conj().T)
-            X = rd_r.C.source.make_array(X.T)
-            b = rd_r.B.apply_adjoint(Y).block(0)
-            c = rd_r.C.apply(X).block(0)
             self.R.append(b)
             self.L.append(c)
 
             # compute convergence criterion
-            if conv_crit == 'rel_sigma_change':
-                dist = spla.norm((self.sigmas[-2] - self.sigmas[-1]) / self.sigmas[-2], ord=np.inf)
-                for i in range(2, min(dist_num + 1, len(self.sigmas))):
-                    dist2 = spla.norm((self.sigmas[-i - 1] - self.sigmas[-1]) / self.sigmas[-i - 1], ord=np.inf)
-                    dist = min(dist, dist2)
+            if conv_crit == 'sigma':
+                dist = _convergence_criterion(self.sigmas[:-num_prev-2:-1], conv_crit)
                 self.dist.append(dist)
-            elif conv_crit == 'subspace_sin':
+            elif conv_crit == 'h2':
                 if it == 0:
-                    V_list = (dist_num + 1) * [None]
-                    W_list = (dist_num + 1) * [None]
-                    V_list[0] = interp_reductor.V
-                    W_list[0] = interp_reductor.W
-                    self.dist.append(1)
-                else:
-                    for i in range(1, dist_num + 1):
-                        V_list[-i] = V_list[-i - 1]
-                        W_list[-i] = W_list[-i - 1]
-                    V_list[0] = interp_reductor.V
-                    W_list[0] = interp_reductor.W
-                    # TODO: replace with SVD when it becomes possible
-                    sinV = np.sqrt(np.max(spla.eigvalsh((V_list[0] -
-                                                         V_list[1].lincomb(V_list[0].inner(V_list[1]))).gramian())))
-                    sinW = np.sqrt(np.max(spla.eigvalsh((W_list[0] -
-                                                         W_list[1].lincomb(W_list[0].inner(W_list[1]))).gramian())))
-                    dist = max(sinV, sinW)
-                    for i in range(2, dist_num + 1):
-                        if V_list[i] is None:
-                            break
-                        sinV = np.sqrt(np.max(spla.eigvalsh((V_list[0] -
-                                                             V_list[i].lincomb(V_list[0].inner(V_list[i]))).gramian())))
-                        sinW = np.sqrt(np.max(spla.eigvalsh((W_list[0] -
-                                                             W_list[i].lincomb(W_list[0].inner(W_list[i]))).gramian())))
-                        dist = min(dist, max(sinV, sinW))
-                    self.dist.append(dist)
-            elif conv_crit == 'rel_H2_dist':
-                if it == 0:
-                    rd_list = (dist_num + 1) * [None]
+                    rd_list = (num_prev + 1) * [None]
                     rd_list[0] = rd
                     self.dist.append(np.inf)
                 else:
-                    for i in range(1, dist_num + 1):
-                        rd_list[-i] = rd_list[-i - 1]
+                    rd_list[1:] = rd_list[:-1]
                     rd_list[0] = rd
-                    rd_diff = rd_list[1] - rd_list[0]
-                    try:
-                        rel_H2_dist = rd_diff.h2_norm() / rd_list[1].h2_norm()
-                    except:
-                        rel_H2_dist = np.inf
-                    for i in range(2, dist_num + 1):
-                        if rd_list[i] is None:
-                            break
-                        rd_diff2 = rd_list[i] - rd_list[0]
-                        try:
-                            rel_H2_dist2 = rd_diff2.h2_norm() / rd_list[i].h2_norm()
-                        except:
-                            rel_H2_dist2 = np.inf
-                        rel_H2_dist = min(rel_H2_dist, rel_H2_dist2)
-                    self.dist.append(rel_H2_dist)
+                    dist = _convergence_criterion(rd_list, conv_crit)
+                    self.dist.append(dist)
 
-            if compute_errors:
-                self.logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
-            else:
+            # report convergence
+            if not compute_errors:
                 self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+            else:
+                if np.max(rd.poles(force_dense=True).real) < 0:
+                    err = d - rd
+                    rel_H2_err = err.h2_norm() / d.h2_norm()
+                else:
+                    rel_H2_err = np.inf
+                self.errors.append(rel_H2_err)
+
+                self.logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:

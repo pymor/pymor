@@ -37,7 +37,7 @@ if __name__ == '__main__':
     tol = 1e-3
     maxit = 1000
     tf_irka_reductor = TF_IRKAReductor(tf)
-    rom = tf_irka_reductor.reduce(r, sigma, b, c, tol, maxit)
+    rom = tf_irka_reductor.reduce(r, sigma, b, c, tol=tol, maxit=maxit)
 
     sigmas = tf_irka_reductor.sigmas
     fig, ax = plt.subplots()
