@@ -581,7 +581,7 @@ def _convergence_criterion(data, conv_crit):
             return np.inf
         dist_list = [np.inf]
         for rd_old in data[1:]:
-            if np.max(rd_old.poles(force_dense=True).real) < 0:
+            if rd_old is not None and np.max(rd_old.poles(force_dense=True).real) < 0:
                 rd_diff = rd_old - rd
                 dist_list.append(rd_diff.h2_norm() / rd_old.h2_norm())
         return min(dist_list)
