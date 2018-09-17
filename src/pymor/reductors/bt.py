@@ -88,9 +88,9 @@ class GenericBTReductor(GenericPGReductor):
         if tol is not None:
             error_bounds = self.error_bounds()
             r_tol = np.argmax(error_bounds <= tol) + 1
-            r = r_tol if r is None else min([r, r_tol])
+            r = r_tol if r is None else min(r, r_tol)
 
-        if r > min([len(cf), len(of)]):
+        if r > min(len(cf), len(of)):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # compute projection matrices and find the reduced model

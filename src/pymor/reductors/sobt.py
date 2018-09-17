@@ -7,14 +7,15 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.projection import project
+from pymor.core.interfaces import BasicInterface
 from pymor.discretizations.iosys import SecondOrderSystem
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class SOBTpReductor(GenericPGReductor):
-    """Second-Order Balanced Truncation position reductor.
+class GenericSOBTpvReductor(GenericPGReductor):
+    """Generic Second-Order Balanced Truncation position/velocity reductor.
 
     See [RS08]_.
 
@@ -33,6 +34,14 @@ class SOBTpReductor(GenericPGReductor):
         self.d = d
         self.V = None
         self.W = None
+
+    def gramians(self):
+        """Returns gramians."""
+        raise NotImplementedError
+
+    def projection_matrices_and_singular_values(self, r, gramians):
+        """Returns projection matrices and singular values."""
+        raise NotImplementedError
 
     def reduce(self, r, projection='bfsr'):
         """Reduce using SOBTp.
@@ -62,25 +71,15 @@ class SOBTpReductor(GenericPGReductor):
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
-        pcf = self.d.gramian('pcf')
-        pof = self.d.gramian('pof')
-        vcf = self.d.gramian('vcf')
-        vof = self.d.gramian('vof')
+        gramians = self.gramians()
 
-        if r > min([len(pcf), len(pof), len(vcf), len(vof)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.'
-                             ' Try reducing the tolerance in the low-rank matrix equation solver.')
-
-        # find necessary SVDs
-        _, sp, Vp = spla.svd(pof.inner(pcf))
-        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.d.M))
-        Uv = Uv.T
+        if r > min(len(g) for g in gramians):
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # compute projection matrices and find the reduced model
-        self.V = pcf.lincomb(Vp[:r])
-        self.W = vof.lincomb(Uv[:r])
+        self.V, self.W, singular_values = self.projection_matrices_and_singular_values(r, gramians)
         if projection == 'sr':
-            alpha = 1 / np.sqrt(sp[:r])
+            alpha = 1 / np.sqrt(singular_values[:r])
             self.V.scal(alpha)
             self.W.scal(alpha)
             self.biorthogonal_product = None
@@ -100,7 +99,32 @@ class SOBTpReductor(GenericPGReductor):
     extend_range_basis = None
 
 
-class SOBTvReductor(GenericPGReductor):
+class SOBTpReductor(GenericSOBTpvReductor):
+    """Second-Order Balanced Truncation position reductor.
+
+    See [RS08]_.
+
+    Parameters
+    ----------
+    d
+        The system which is to be reduced.
+    """
+    def gramians(self):
+        pcf = self.d.gramian('pcf')
+        pof = self.d.gramian('pof')
+        vcf = self.d.gramian('vcf')
+        vof = self.d.gramian('vof')
+        return pcf, pof, vcf, vof
+
+    def projection_matrices_and_singular_values(self, r, gramians):
+        pcf, pof, vcf, vof = gramians
+        _, sp, Vp = spla.svd(pof.inner(pcf))
+        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.d.M))
+        Uv = Uv.T
+        return pcf.lincomb(Vp[:r]), vof.lincomb(Uv[:r]), sp
+
+
+class SOBTvReductor(GenericSOBTpvReductor):
     """Second-Order Balanced Truncation velocity reductor.
 
     See [RS08]_.
@@ -110,76 +134,19 @@ class SOBTvReductor(GenericPGReductor):
     d
         The system which is to be reduced.
     """
-    def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
-        self.d = d
-        self.V = None
-        self.W = None
-
-    def reduce(self, r, projection='bfsr'):
-        """Reduce using SOBTv.
-
-        Parameters
-        ----------
-        r
-            Order of the reduced model.
-        projection
-            Projection method used:
-
-                - `'sr'`: square root method
-                - `'bfsr'`: balancing-free square root method (default,
-                    since it avoids scaling by singular values and
-                    orthogonalizes the projection matrices, which might
-                    make it more accurate than the square root method)
-                - `'biorth'`: like the balancing-free square root
-                    method, except it biorthogonalizes the projection
-                    matrices
-
-        Returns
-        -------
-        rd
-            Reduced system.
-        """
-        assert 0 < r < self.d.n
-        assert projection in ('sr', 'bfsr', 'biorth')
-
-        # compute all necessary Gramian factors
+    def gramians(self):
         vcf = self.d.gramian('vcf')
         vof = self.d.gramian('vof')
+        return vcf, vof
 
-        if r > min([len(vcf), len(vof)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.'
-                             ' Try reducing the tolerance in the low-rank matrix equation solver.')
-
-        # find necessary SVDs
+    def projection_matrices_and_singular_values(self, r, gramians):
+        vcf, vof = gramians
         Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.d.M))
         Uv = Uv.T
-
-        # compute projection matrices and find the reduced model
-        self.V = vcf.lincomb(Vv[:r])
-        self.W = vof.lincomb(Uv[:r])
-        if projection == 'sr':
-            alpha = 1 / np.sqrt(sv[:r])
-            self.V.scal(alpha)
-            self.W.scal(alpha)
-            self.biorthogonal_product = 'M'
-        elif projection == 'bfsr':
-            self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.biorthogonal_product = None
-        elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.M)
-            self.biorthogonal_product = 'M'
-
-        rd = super().reduce()
-
-        return rd
-
-    extend_source_basis = None
-    extend_range_basis = None
+        return vcf.lincomb(Vv[:r]), vof.lincomb(Uv[:r]), sv
 
 
-class SOBTpvReductor(GenericPGReductor):
+class SOBTpvReductor(GenericSOBTpvReductor):
     """Second-Order Balanced Truncation position-velocity reductor.
 
     See [RS08]_.
@@ -189,76 +156,19 @@ class SOBTpvReductor(GenericPGReductor):
     d
         The system which is to be reduced.
     """
-    def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
-        self.d = d
-        self.V = None
-        self.W = None
-
-    def reduce(self, r, projection='bfsr'):
-        """Reduce using SOBTpv.
-
-        Parameters
-        ----------
-        r
-            Order of the reduced model.
-        projection
-            Projection method used:
-
-                - `'sr'`: square root method
-                - `'bfsr'`: balancing-free square root method (default,
-                    since it avoids scaling by singular values and
-                    orthogonalizes the projection matrices, which might
-                    make it more accurate than the square root method)
-                - `'biorth'`: like the balancing-free square root
-                    method, except it biorthogonalizes the projection
-                    matrices
-
-        Returns
-        -------
-        rd
-            Reduced system.
-        """
-        assert 0 < r < self.d.n
-        assert projection in ('sr', 'bfsr', 'biorth')
-
-        # compute all necessary Gramian factors
+    def gramians(self):
         pcf = self.d.gramian('pcf')
         vof = self.d.gramian('vof')
+        return pcf, vof
 
-        if r > min([len(pcf), len(vof)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.'
-                             ' Try reducing the tolerance in the low-rank matrix equation solver.')
-
-        # find necessary SVDs
+    def projection_matrices_and_singular_values(self, r, gramians):
+        pcf, vof = gramians
         Upv, spv, Vpv = spla.svd(vof.inner(pcf, product=self.d.M))
         Upv = Upv.T
-
-        # compute projection matrices and find the reduced model
-        self.V = pcf.lincomb(Vpv[:r])
-        self.W = vof.lincomb(Upv[:r])
-        if projection == 'sr':
-            alpha = 1 / np.sqrt(spv[:r])
-            self.V.scal(alpha)
-            self.W.scal(alpha)
-            self.biorthogonal_product = 'M'
-        elif projection == 'bfsr':
-            self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.biorthogonal_product = None
-        elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.M)
-            self.biorthogonal_product = 'M'
-
-        rd = super().reduce()
-
-        return rd
-
-    extend_source_basis = None
-    extend_range_basis = None
+        return pcf.lincomb(Vpv[:r]), vof.lincomb(Upv[:r]), spv
 
 
-class SOBTvpReductor(GenericPGReductor):
+class SOBTvpReductor(GenericSOBTpvReductor):
     """Second-Order Balanced Truncation velocity-position reductor.
 
     See [RS08]_.
@@ -268,75 +178,18 @@ class SOBTvpReductor(GenericPGReductor):
     d
         The system which is to be reduced.
     """
-    def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
-        self.d = d
-        self.V = None
-        self.W = None
-
-    def reduce(self, r, projection='bfsr'):
-        """Reduce using SOBTvp.
-
-        Parameters
-        ----------
-        r
-            Order of the reduced model.
-        projection
-            Projection method used:
-
-                - `'sr'`: square root method
-                - `'bfsr'`: balancing-free square root method (default,
-                    since it avoids scaling by singular values and
-                    orthogonalizes the projection matrices, which might
-                    make it more accurate than the square root method)
-                - `'biorth'`: like the balancing-free square root
-                    method, except it biorthogonalizes the projection
-                    matrices
-
-        Returns
-        -------
-        rd
-            Reduced system.
-        """
-        assert 0 < r < self.d.n
-        assert projection in ('sr', 'bfsr', 'biorth')
-
-        # compute all necessary Gramian factors
+    def gramians(self):
         pof = self.d.gramian('pof')
         vcf = self.d.gramian('vcf')
         vof = self.d.gramian('vof')
+        return pof, vcf, vof
 
-        if r > min([len(pof), len(vcf), len(vof)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.'
-                             ' Try reducing the tolerance in the low-rank matrix equation solver.')
-
-        # find necessary SVDs
+    def projection_matrices_and_singular_values(self, r, gramians):
+        pof, vcf, vof = gramians
         Uv, _, _ = spla.svd(vof.inner(vcf, product=self.d.M))
         Uv = Uv.T
         _, svp, Vvp = spla.svd(pof.inner(vcf))
-
-        # compute projection matrices and find the reduced model
-        self.V = vcf.lincomb(Vvp[:r])
-        self.W = vof.lincomb(Uv[:r])
-        if projection == 'sr':
-            alpha = 1 / np.sqrt(svp[:r])
-            self.V.scal(alpha)
-            self.W.scal(alpha)
-            self.biorthogonal_product = None
-        elif projection == 'bfsr':
-            self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.biorthogonal_product = None
-        elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.M)
-            self.biorthogonal_product = 'M'
-
-        rd = super().reduce()
-
-        return rd
-
-    extend_source_basis = None
-    extend_range_basis = None
+        return vcf.lincomb(Vvp[:r]), vof.lincomb(Uv[:r]), svp
 
 
 class SOBTfvReductor(GenericPGReductor):
@@ -391,9 +244,8 @@ class SOBTfvReductor(GenericPGReductor):
         pcf = self.d.gramian('pcf')
         pof = self.d.gramian('pof')
 
-        if r > min([len(pcf), len(pof)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.'
-                             ' Try reducing the tolerance in the low-rank matrix equation solver.')
+        if r > min(len(pcf), len(pof)):
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # find necessary SVDs
         _, sp, Vp = spla.svd(pof.inner(pcf))
@@ -421,7 +273,7 @@ class SOBTfvReductor(GenericPGReductor):
     extend_range_basis = None
 
 
-class SOBTReductor():
+class SOBTReductor(BasicInterface):
     """Second-Order Balanced Truncation reductor.
 
     See [CLVV06]_.
@@ -478,9 +330,8 @@ class SOBTReductor():
         vcf = self.d.gramian('vcf')
         vof = self.d.gramian('vof')
 
-        if r > min([len(pcf), len(pof), len(vcf), len(vof)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.'
-                             ' Try reducing the tolerance in the low-rank matrix equation solver.')
+        if r > min(len(pcf), len(pof), len(vcf), len(vof)):
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # find necessary SVDs
         Up, sp, Vp = spla.svd(pof.inner(pcf))
