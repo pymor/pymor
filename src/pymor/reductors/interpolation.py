@@ -84,8 +84,14 @@ class GenericBHIReductor(GenericPGReductor):
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
-        b.scal(1 / b.l2_norm())
-        c.scal(1 / c.l2_norm())
+        if b.dim > 1:
+            b.scal(1 / b.l2_norm())
+        else:
+            b = self._B_source.from_numpy(np.ones((r, 1)))
+        if c.dim > 1:
+            c.scal(1 / c.l2_norm())
+        else:
+            c = self._C_range.from_numpy(np.ones((r, 1)))
 
         # compute projection matrices
         self.V = self._K_source.empty(reserve=r)
@@ -331,9 +337,16 @@ class TFInterpReductor(BasicInterface):
         assert isinstance(c, np.ndarray) and c.shape == (d.p, r)
 
         # rescale tangential directions (to avoid overflow or underflow)
-        for i in range(r):
-            b[:, i] /= spla.norm(b[:, i])
-            c[:, i] /= spla.norm(c[:, i])
+        if b.shape[0] > 1:
+            for i in range(r):
+                b[:, i] /= spla.norm(b[:, i])
+        else:
+            b = np.ones((1, r))
+        if c.shape[0] > 1:
+            for i in range(r):
+                c[:, i] /= spla.norm(c[:, i])
+        else:
+            c = np.ones((1, r))
 
         # matrices of the interpolatory LTI system
         Er = np.empty((r, r), dtype=complex)
