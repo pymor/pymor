@@ -2,7 +2,7 @@
 #   Edit and Re-run .ci/travis/yml_template.py instead       #
 
 
-sudo: false
+sudo: required
 dist: trusty
 language: python
 services: docker
