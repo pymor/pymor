@@ -24,7 +24,7 @@ PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
 RESULT_FN=test_results.xml
 PY_VER=$(python -c 'import platform;print(platform.python_version())')
 
-if [ "${PYTEST_MARKER}" == "None" ] ; then
+if [ "${PYMOR_PYTEST_MARKER}" == "None" ] ; then
 
     git clone  ${TESTLOGS_URL}  ${LOGS_DIR}
     cd ${LOGS_DIR}

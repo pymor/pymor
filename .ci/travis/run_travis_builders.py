@@ -14,7 +14,7 @@ def _run_config(tm, clone_dir, commit):
     image = 'pymor/testing:{}'.format(tag)
     client = docker.from_env(version='auto')
     client.images.pull(image)
-    env = { 'PYTEST_MARKER': marker,
+    env = { 'PYMOR_PYTEST_MARKER': marker,
         'TRAVIS_REPO_SLUG':'pymor/pymor',
         'TRAVIS_PULL_REQUEST': 'false',
         'TRAVIS_COMMIT': commit,

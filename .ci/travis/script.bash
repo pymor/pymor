@@ -22,7 +22,7 @@ function coverage_submit {
 export PYTHONHASHSEED=0
 
 python setup.py build_ext -i
-if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
+if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
     # this fails on PRs, so skip it
     if [[ "${TRAVIS_PULL_REQUEST}" == "false" ]] ; then
@@ -48,10 +48,10 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     xvfb-run -a py.test -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
 
     coverage_submit
-elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
+elif [ "${PYMOR_PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
 
-elif [ "${PYTEST_MARKER}" == "NUMPY" ] ; then
+elif [ "${PYMOR_PYTEST_MARKER}" == "NUMPY" ] ; then
     sudo pip uninstall -y numpy
     sudo pip install git+https://github.com/numpy/numpy@master
     # there seems to be no way of really overwriting -p no:warnings from setup.cfg

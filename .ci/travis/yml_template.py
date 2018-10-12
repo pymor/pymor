@@ -48,10 +48,10 @@ after_script:
 jobs:
   include:
   - stage: test
-    env: PYTEST_MARKER="NUMPY" DOCKER_TAG="3.6"
+    env: PYMOR_PYTEST_MARKER="NUMPY" DOCKER_TAG="3.6"
 {%- for py, m in matrix %}
   - stage: test
-    env: PYTEST_MARKER="{{m}}" DOCKER_TAG="{{py}}"
+    env: PYMOR_PYTEST_MARKER="{{m}}" DOCKER_TAG="{{py}}"
 {%- endfor %}
 
   - stage: deploy
