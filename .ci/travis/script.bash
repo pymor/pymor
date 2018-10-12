@@ -26,6 +26,9 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
     # this fails on PRs, so skip it
     if [[ "${TRAVIS_PULL_REQUEST}" == "false" ]] ; then
+      sudo pip uninstall -y -r requirements.txt
+      sudo pip uninstall -y -r requirements-travis.txt
+      sudo pip uninstall -y -r requirements-optional.txt || echo "Some optional modules failed to uninstall"
       sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
       sudo pip uninstall -y pymor
       sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}#egg=pymor[full]
