@@ -29,7 +29,7 @@ test:
 	python setup.py test
 
 dockerrun:
-	docker run --rm -it -v $(shell pwd):/src -e PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) pymor/testing:$(PYMOR_DOCKER_TAG) bash
+	docker run --rm -it -v $(shell pwd):/src -e PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) pymor/testing:$(PYMOR_DOCKER_TAG) bash
 
 dockertest:
 	PYMOR_DOCKER_TAG=$(PYMOR_DOCKER_TAG) PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) ./.ci/travis/run_travis_builders.py
@@ -38,7 +38,7 @@ dockertestfull:
 	./.ci/travis/run_travis_builders.py
 
 fasttest:
-	PYTEST_MARKER="not slow" python setup.py test
+	PYMOR_PYTEST_MARKER="not slow" python setup.py test
 
 full-test:
 	@echo
