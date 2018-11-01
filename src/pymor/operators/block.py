@@ -128,6 +128,9 @@ class BlockOperator(OperatorBase):
             return self.__class__(blocks)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        if not all(isinstance(op, BlockOperator) for op in operators):
+            return None
+
         assert operators[0] is self
         blocks = np.empty(self._blocks.shape, dtype=object)
         if len(operators) > 1:
