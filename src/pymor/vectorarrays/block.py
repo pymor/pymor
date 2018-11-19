@@ -98,7 +98,7 @@ class BlockVectorArray(VectorArrayInterface):
         common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
         ret = np.zeros(dots[0].shape, dtype=common_dtype)
         for dot in dots:
-            ret = ret + dot
+            ret += dot
         return ret
 
     def pairwise_dot(self, other):
@@ -109,7 +109,7 @@ class BlockVectorArray(VectorArrayInterface):
         common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
         ret = np.zeros(dots[0].shape, dtype=common_dtype)
         for dot in dots:
-            ret = ret + dot
+            ret += dot
         return ret
 
     def lincomb(self, coefficients):
