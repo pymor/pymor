@@ -206,7 +206,7 @@ class IRKAReductor(GenericPGReductor):
             if not compute_errors:
                 self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
             else:
-                if np.max(rd.poles(force_dense=True).real) < 0:
+                if np.max(rd.poles().real) < 0:
                     err = d - rd
                     rel_H2_err = err.h2_norm() / d.h2_norm()
                 else:
@@ -328,7 +328,7 @@ class TSIAReductor(GenericPGReductor):
         self._projection_matrices(rd0, projection)
 
         data = (num_prev + 1) * [None]
-        data[0] = rd0.poles(force_dense=True) if conv_crit == 'sigma' else rd0
+        data[0] = rd0.poles() if conv_crit == 'sigma' else rd0
         self.dist = []
         self.errors = [] if compute_errors else None
         # main loop
@@ -338,7 +338,7 @@ class TSIAReductor(GenericPGReductor):
 
             # compute convergence criterion
             data[1:] = data[:-1]
-            data[0] = rd.poles(force_dense=True) if conv_crit == 'sigma' else rd
+            data[0] = rd.poles() if conv_crit == 'sigma' else rd
             dist = _convergence_criterion(data, conv_crit)
             self.dist.append(dist)
 
@@ -346,7 +346,7 @@ class TSIAReductor(GenericPGReductor):
             if not compute_errors:
                 self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
             else:
-                if np.max(rd.poles(force_dense=True).real) < 0:
+                if np.max(rd.poles().real) < 0:
                     err = d - rd
                     rel_H2_err = err.h2_norm() / d.h2_norm()
                 else:
@@ -577,11 +577,11 @@ def _convergence_criterion(data, conv_crit):
         return min(dist_list)
     elif conv_crit == 'h2':
         rd = data[0]
-        if np.max(rd.poles(force_dense=True).real) >= 0:
+        if np.max(rd.poles().real) >= 0:
             return np.inf
         dist_list = [np.inf]
         for rd_old in data[1:]:
-            if rd_old is not None and np.max(rd_old.poles(force_dense=True).real) < 0:
+            if rd_old is not None and np.max(rd_old.poles().real) < 0:
                 rd_diff = rd_old - rd
                 dist_list.append(rd_diff.h2_norm() / rd_old.h2_norm())
         return min(dist_list)

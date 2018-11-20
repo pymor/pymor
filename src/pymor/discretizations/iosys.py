@@ -527,24 +527,16 @@ class LTISystem(InputOutputSystem):
         return self.__class__(A, B, C, D, E, cont_time=self.cont_time)
 
     @cached
-    def poles(self, force_dense=False):
-        """Compute system poles.
-
-        Parameters
-        ----------
-        force_dense
-            Should dense matrix computations be forced.
-        """
-        if not force_dense:
-            if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
-                raise TypeError('Expected A to be NumpyMatrixOperator with dense matrix (force_dense == False).')
-            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
-                    _is_like_identity_operator(self.E)):
-                raise TypeError('Expected E to be NumpyMatrixOperator with dense matrix or IdentityOperator'
-                                '(force_dense == False).')
-
+    def poles(self):
+        """Compute system poles."""
+        if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
+            self.logger.warn('Converting operator A to a NumPy array.')
         A = to_matrix(self.A, format='dense')
+
+        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or _is_like_identity_operator(self.E)):
+            self.logger.warn('Converting operator E to a NumPy array.')
         E = None if _is_like_identity_operator(self.E) else to_matrix(self.E, format='dense')
+
         return spla.eigvals(A, E)
 
     def eval_tf(self, s):
@@ -736,13 +728,11 @@ class LTISystem(InputOutputSystem):
             return np.sqrt(self.B.apply_adjoint(of).l2_norm2().sum())
 
     @cached
-    def hinf_norm(self, force_dense=False, return_fpeak=False, ab13dd_equilibrate=False):
+    def hinf_norm(self, return_fpeak=False, ab13dd_equilibrate=False):
         """Compute the H_infinity-norm of the |LTISystem|.
 
         Parameters
         ----------
-        force_dense
-            Should dense matrix computation be forced.
         return_fpeak
             Should the frequency at which the maximum is achieved should
             be returned.
@@ -756,22 +746,13 @@ class LTISystem(InputOutputSystem):
         fpeak
             Frequency at which the maximum is achieved.
         """
-        if not force_dense:
-            for op_name in ['A', 'B', 'C']:
-                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and
-                        not getattr(self, op_name).sparse):
-                    raise TypeError('Expected ' + op_name +
-                                    ' to be NumpyMatrixOperator with dense matrix (force_dense == False).')
-            if not ((isinstance(self.D, NumpyMatrixOperator) and
-                     not self.D.sparse) or
-                    _is_like_zero_operator(self.D)):
-                raise TypeError('Expected D to be NumpyMatrixOperator with dense matrix or ZeroOperator '
-                                '(force_dense == False).')
-            if not ((isinstance(self.E, NumpyMatrixOperator) and
-                     not self.E.sparse) or
-                    _is_like_identity_operator(self.E)):
-                raise TypeError('Expected E to be NumpyMatrixOperator with dense matrix or IdentityOperator '
-                                '(force_dense == False).')
+        for op_name in ['A', 'B', 'C']:
+            if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and not getattr(self, op_name).sparse):
+                self.logger.warn('Converting operator ' + op_name + ' to a NumPy array.')
+        if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse) or _is_like_zero_operator(self.D)):
+            self.logger.warn('Converting operator D to a NumPy array.')
+        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or _is_like_identity_operator(self.E)):
+            self.logger.warn('Converting operator E to a NumPy array.')
 
         from slycot import ab13dd
         dico = 'C' if self.cont_time else 'D'
@@ -1073,15 +1054,9 @@ class SecondOrderSystem(InputOutputSystem):
                          cache_region=self.cache_region, name=self.name + '_first_order')
 
     @cached
-    def poles(self, force_dense=False):
-        """Compute system poles.
-
-        Parameters
-        ----------
-        force_dense
-            Should `to_matrix` with `format='dense'` be used.
-        """
-        return self.to_lti().poles(force_dense=force_dense)
+    def poles(self):
+        """Compute system poles."""
+        return self.to_lti().poles()
 
     def eval_tf(self, s):
         """Evaluate the transfer function.
@@ -1240,13 +1215,11 @@ class SecondOrderSystem(InputOutputSystem):
         return self.to_lti().h2_norm()
 
     @cached
-    def hinf_norm(self, force_dense=False, return_fpeak=False, ab13dd_equilibrate=False):
+    def hinf_norm(self, return_fpeak=False, ab13dd_equilibrate=False):
         """Compute the H_infinity-norm.
 
         Parameters
         ----------
-        force_dense
-            Should dense matrix computation be forced.
         return_fpeak
             Should the frequency at which the maximum is achieved should
             be returned.
@@ -1260,20 +1233,7 @@ class SecondOrderSystem(InputOutputSystem):
         fpeak
             Frequency at which the maximum is achieved.
         """
-        if not force_dense:
-            for op_name in ['M', 'E', 'K', 'B', 'Cp']:
-                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and
-                        not getattr(self, op_name).sparse):
-                    raise TypeError('Expected ' + op_name +
-                                    ' to be NumpyMatrixOperator with dense matrix (force_dense == False).')
-            if not ((isinstance(self.Cv, NumpyMatrixOperator) and
-                     not self.Cv.sparse) or
-                    _is_like_zero_operator(self.Cv)):
-                raise TypeError('Expected Cv to be NumpyMatrixOperator with dense matrix or ZeroOperator '
-                                '(force_dense == False).')
-
-        return self.to_lti().hinf_norm(force_dense=True,
-                                       return_fpeak=return_fpeak,
+        return self.to_lti().hinf_norm(return_fpeak=return_fpeak,
                                        ab13dd_equilibrate=ab13dd_equilibrate)
 
     @cached

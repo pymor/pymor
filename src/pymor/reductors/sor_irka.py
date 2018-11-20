@@ -210,7 +210,7 @@ class SOR_IRKAReductor(GenericPGReductor):
             if not compute_errors:
                 self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
             else:
-                if np.max(rd.poles(force_dense=True).real) < 0:
+                if np.max(rd.poles().real) < 0:
                     err = d - rd
                     rel_H2_err = err.h2_norm() / d.h2_norm()
                 else:
