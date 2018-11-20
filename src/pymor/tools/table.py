@@ -2,13 +2,8 @@
 # Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-try:
-    from itertools import zip_longest
-except ImportError:  # zip_longest does not seem to be handled by 3to2
-    from itertools import izip_longest as zip_longest
-
+from itertools import zip_longest
 from textwrap import wrap
-
 import numpy as np
 
 
