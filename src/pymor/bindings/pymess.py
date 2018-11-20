@@ -16,6 +16,8 @@ if config.HAVE_PYMESS:
     from pymor.core.defaults import defaults
     from pymor.operators.constructions import IdentityOperator, LincombOperator
 
+    PYMESS_MIN_SPARSE_SIZE = 1000
+
     def lyap_solver_options():
         """Returns available Lyapunov equation solvers with default |solver_options| for the pymess backend.
 
@@ -81,15 +83,15 @@ if config.HAVE_PYMESS:
         options = _parse_options(options, lyap_solver_options(), default_solver, None, False)
 
         if options['type'] == 'pymess':
-            if A.source.dim >= 1000:
+            if A.source.dim >= PYMESS_MIN_SPARSE_SIZE:
                 options = dict(options, type='pymess_lradi')  # do not modify original dict!
             else:
                 options = dict(options, type='pymess_lyap')  # do not modify original dict!
 
         if options['type'] == 'pymess_lyap':
-            A_mat = to_matrix(A, format='dense') if A.source.dim < 1000 else to_matrix(A)
+            A_mat = to_matrix(A, format='dense') if A.source.dim < PYMESS_MIN_SPARSE_SIZE else to_matrix(A)
             if E is not None:
-                E_mat = to_matrix(E, format='dense') if A.source.dim < 1000 else to_matrix(E)
+                E_mat = to_matrix(E, format='dense') if A.source.dim < PYMESS_MIN_SPARSE_SIZE else to_matrix(E)
             else:
                 E_mat = None
             B_mat = to_matrix(B, format='dense')
@@ -190,7 +192,7 @@ if config.HAVE_PYMESS:
         options = _parse_options(options, ricc_solver_options(), default_solver, None, False)
 
         if options['type'] == 'pymess':
-            if A.source.dim >= 1000:
+            if A.source.dim >= PYMESS_MIN_SPARSE_SIZE:
                 options = dict(options, type='pymess_lrnm')  # do not modify original dict!
             else:
                 options = dict(options, type='pymess_care')  # do not modify original dict!
@@ -198,9 +200,9 @@ if config.HAVE_PYMESS:
         if options['type'] == 'pymess_care':
             if Q is not None or R is not None or G is not None:
                 raise NotImplementedError
-            A_mat = to_matrix(A, format='dense') if A.source.dim < 1000 else to_matrix(A)
+            A_mat = to_matrix(A, format='dense') if A.source.dim < PYMESS_MIN_SPARSE_SIZE else to_matrix(A)
             if E is not None:
-                E_mat = to_matrix(E, format='dense') if A.source.dim < 1000 else to_matrix(E)
+                E_mat = to_matrix(E, format='dense') if A.source.dim < PYMESS_MIN_SPARSE_SIZE else to_matrix(E)
             else:
                 E_mat = None
             B_mat = to_matrix(B, format='dense') if B else None
