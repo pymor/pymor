@@ -56,7 +56,3 @@ full-test:
 doc:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
 
-3to2:
-	./3to2.sh src/
-	./3to2.sh docs/
-	python setup.py build_ext -i
