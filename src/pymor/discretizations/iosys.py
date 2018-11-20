@@ -621,7 +621,7 @@ class LTISystem(InputOutputSystem):
                 C.as_source_array())))).to_numpy().conj()
         return dtfs
 
-    @defaults('default_solver_backend', qualname='pymor.discretizations.iosys.LTISystem._lyap_solver')
+    @defaults('default_solver_backend')
     def _lyap_solver(self, default_solver_backend=_DEFAULT_ME_SOLVER_BACKEND):
         options = self.solver_options.get('lyap') if self.solver_options else None
         if options:
