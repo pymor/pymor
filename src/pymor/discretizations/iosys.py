@@ -107,12 +107,12 @@ class InputOutputSystem(DiscretizationBase):
         -------
         tfw
             Transfer function values at frequencies in `w`,
-            |NumPy array| of shape `(self.p, self.m, len(w))`.
+            |NumPy array| of shape `(len(w), self.p, self.m)`.
         """
         if not self.cont_time:
             raise NotImplementedError
 
-        return np.dstack([self.eval_tf(1j * wi) for wi in w])
+        return np.stack([self.eval_tf(1j * wi) for wi in w])
 
     @classmethod
     def mag_plot(cls, sys_list, w, plot_style_list=None, ord=None, dB=False, Hz=False):
@@ -159,7 +159,7 @@ class InputOutputSystem(DiscretizationBase):
         for i, sys in enumerate(sys_list):
             tfw = sys.bode(w)
             freq = w / (2 * np.pi) if Hz else w
-            mag = spla.norm(tfw, ord=ord, axis=(0, 1))
+            mag = spla.norm(tfw, ord=ord, axis=(1, 2))
             style = '' if plot_style_list is None else plot_style_list[i]
             if dB:
                 mag = 20 * np.log2(mag)

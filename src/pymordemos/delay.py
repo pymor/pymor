@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     tfw_rom = rom.bode(w)
     fig, ax = plt.subplots()
-    ax.loglog(w, np.abs(tfw[0, 0, :]), w, np.abs(tfw_rom[0, 0, :]))
+    ax.loglog(w, np.abs(tfw[:, 0, 0]), w, np.abs(tfw_rom[:, 0, 0]))
     ax.set_title('Magnitude Bode plots of the full and reduced model')
     ax.set_xlabel(r'$\omega$')
 
