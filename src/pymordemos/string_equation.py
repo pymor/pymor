@@ -57,7 +57,8 @@ if __name__ == '__main__':
     plt.show()
 
     w = np.logspace(-1, 3, 1000)
-    fig, ax = SecondOrderSystem.mag_plot(so_sys, w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the full model')
     plt.show()
 
@@ -96,11 +97,14 @@ if __name__ == '__main__':
     print('H_inf-error for the SOBTp ROM:  {:e}'.format(err_sobtp.hinf_norm()))
     print('Hankel-error for the SOBTp ROM: {:e}'.format(err_sobtp.hankel_norm()))
 
-    fig, ax = SecondOrderSystem.mag_plot((so_sys, rom_sobtp), w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
+    rom_sobtp.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and SOBTp reduced model')
     plt.show()
 
-    fig, ax = SecondOrderSystem.mag_plot(err_sobtp, w=w)
+    fig, ax = plt.subplots()
+    err_sobtp.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the SOBTp error system')
     plt.show()
 
@@ -120,11 +124,14 @@ if __name__ == '__main__':
     print('H_inf-error for the SOBTv ROM:  {:e}'.format(err_sobtv.hinf_norm()))
     print('Hankel-error for the SOBTv ROM: {:e}'.format(err_sobtv.hankel_norm()))
 
-    fig, ax = SecondOrderSystem.mag_plot((so_sys, rom_sobtv), w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
+    rom_sobtv.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and SOBTv reduced model')
     plt.show()
 
-    fig, ax = SecondOrderSystem.mag_plot(err_sobtv, w=w)
+    fig, ax = plt.subplots()
+    err_sobtv.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the SOBTv error system')
     plt.show()
 
@@ -144,11 +151,14 @@ if __name__ == '__main__':
     print('H_inf-error for the SOBTpv ROM:  {:e}'.format(err_sobtpv.hinf_norm()))
     print('Hankel-error for the SOBTpv ROM: {:e}'.format(err_sobtpv.hankel_norm()))
 
-    fig, ax = SecondOrderSystem.mag_plot((so_sys, rom_sobtpv), w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
+    rom_sobtpv.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and SOBTpv reduced model')
     plt.show()
 
-    fig, ax = SecondOrderSystem.mag_plot(err_sobtpv, w=w)
+    fig, ax = plt.subplots()
+    err_sobtpv.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the SOBTpv error system')
     plt.show()
 
@@ -168,11 +178,14 @@ if __name__ == '__main__':
     print('H_inf-error for the SOBTvp ROM:  {:e}'.format(err_sobtvp.hinf_norm()))
     print('Hankel-error for the SOBTvp ROM: {:e}'.format(err_sobtvp.hankel_norm()))
 
-    fig, ax = SecondOrderSystem.mag_plot((so_sys, rom_sobtvp), w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
+    rom_sobtvp.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and SOBTvp reduced model')
     plt.show()
 
-    fig, ax = SecondOrderSystem.mag_plot(err_sobtvp, w=w)
+    fig, ax = plt.subplots()
+    err_sobtvp.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the SOBTvp error system')
     plt.show()
 
@@ -192,11 +205,14 @@ if __name__ == '__main__':
     print('H_inf-error for the SOBTfv ROM:  {:e}'.format(err_sobtfv.hinf_norm()))
     print('Hankel-error for the SOBTfv ROM: {:e}'.format(err_sobtfv.hankel_norm()))
 
-    fig, ax = SecondOrderSystem.mag_plot((so_sys, rom_sobtfv), w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
+    rom_sobtfv.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and SOBTfv reduced model')
     plt.show()
 
-    fig, ax = SecondOrderSystem.mag_plot(err_sobtfv, w=w)
+    fig, ax = plt.subplots()
+    err_sobtfv.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the SOBTfv error system')
     plt.show()
 
@@ -216,11 +232,14 @@ if __name__ == '__main__':
     print('H_inf-error for the SOBT ROM:  {:e}'.format(err_sobt.hinf_norm()))
     print('Hankel-error for the SOBT ROM: {:e}'.format(err_sobt.hankel_norm()))
 
-    fig, ax = SecondOrderSystem.mag_plot((so_sys, rom_sobt), w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
+    rom_sobt.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and SOBT reduced model')
     plt.show()
 
-    fig, ax = SecondOrderSystem.mag_plot(err_sobt, w=w)
+    fig, ax = plt.subplots()
+    err_sobt.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the SOBT error system')
     plt.show()
 
@@ -240,11 +259,14 @@ if __name__ == '__main__':
     print('H_inf-error for the BT ROM:  {:e}'.format(err_bt.hinf_norm()))
     print('Hankel-error for the BT ROM: {:e}'.format(err_bt.hankel_norm()))
 
-    fig, ax = SecondOrderSystem.mag_plot((so_sys, rom_bt), w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
+    rom_bt.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and BT reduced model')
     plt.show()
 
-    fig, ax = SecondOrderSystem.mag_plot(err_bt, w=w)
+    fig, ax = plt.subplots()
+    err_bt.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the BT error system')
     plt.show()
 
@@ -269,11 +291,14 @@ if __name__ == '__main__':
     print('H_inf-error for the IRKA ROM:  {:e}'.format(err_irka.hinf_norm()))
     print('Hankel-error for the IRKA ROM: {:e}'.format(err_irka.hankel_norm()))
 
-    fig, ax = SecondOrderSystem.mag_plot((so_sys, rom_irka), w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
+    rom_irka.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and IRKA reduced model')
     plt.show()
 
-    fig, ax = SecondOrderSystem.mag_plot(err_irka, w=w)
+    fig, ax = plt.subplots()
+    err_irka.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the IRKA error system')
     plt.show()
 
@@ -298,10 +323,13 @@ if __name__ == '__main__':
     print('H_inf-error for the SOR-IRKA ROM:  {:e}'.format(err_sor_irka.hinf_norm()))
     print('Hankel-error for the SOR-IRKA ROM: {:e}'.format(err_sor_irka.hankel_norm()))
 
-    fig, ax = SecondOrderSystem.mag_plot((so_sys, rom_sor_irka), w=w)
+    fig, ax = plt.subplots()
+    so_sys.mag_plot(w, ax=ax)
+    rom_sor_irka.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and SOR-IRKA reduced model')
     plt.show()
 
-    fig, ax = SecondOrderSystem.mag_plot(err_sor_irka, w=w)
+    fig, ax = plt.subplots()
+    err_sor_irka.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the SOR-IRKA error system')
     plt.show()

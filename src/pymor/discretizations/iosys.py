@@ -101,7 +101,8 @@ class InputOutputSystem(DiscretizationBase):
         Parameters
         ----------
         w
-            Frequencies at which to compute the transfer function.
+            Angular frequencies at which to compute the transfer
+            function.
 
         Returns
         -------
@@ -114,62 +115,50 @@ class InputOutputSystem(DiscretizationBase):
 
         return np.stack([self.eval_tf(1j * wi) for wi in w])
 
-    @classmethod
-    def mag_plot(cls, sys_list, w, plot_style_list=None, ord=None, dB=False, Hz=False):
+    def mag_plot(self, w, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
         """Draw the magnitude Bode plot.
 
         Parameters
         ----------
-        sys_list
-            A single system or a list of systems.
         w
-            Frequencies at which to evaluate the transfer function(s).
-        plot_style_list
-            A string or a list of strings of the same length as
-            `sys_list`.
-
-            If `None`, matplotlib defaults are used.
+            Angular frequencies at which to evaluate the transfer
+            function.
+        ax
+            Axis to which to plot.
+            If not given, `matplotlib.pyplot.gca` is used.
         ord
             The order of the norm used to compute the magnitude (the
             default is the Frobenius norm).
-        dB
-            Should the magnitude be in dB on the plot.
         Hz
             Should the frequency be in Hz on the plot.
+        dB
+            Should the magnitude be in dB on the plot.
+        mpl_kwargs
+            Keyword arguments used in the matplotlib plot function.
 
         Returns
         -------
-        fig
-            Matplotlib figure.
-        ax
-            Matplotlib axes.
+        out
+            List of matplotlib artists added.
         """
-        assert isinstance(sys_list, InputOutputSystem) or all(isinstance(sys, InputOutputSystem) for sys in sys_list)
-        if isinstance(sys_list, InputOutputSystem):
-            sys_list = (sys_list,)
+        if ax is None:
+            import matplotlib.pyplot as plt
+            ax = plt.gca()
 
-        assert (plot_style_list is None or isinstance(plot_style_list, str) and len(sys_list) == 1 or
-                all(isinstance(plot_style, str) for plot_style in plot_style_list) and
-                len(sys_list) == len(plot_style_list))
-        if isinstance(plot_style_list, str):
-            plot_style_list = (plot_style_list,)
+        freq = w / (2 * np.pi) if Hz else w
+        mag = spla.norm(self.bode(w), ord=ord, axis=(1, 2))
+        if dB:
+            out = ax.semilogx(freq, 20 * np.log2(mag), **mpl_kwargs)
+        else:
+            out = ax.loglog(freq, mag, **mpl_kwargs)
 
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots()
-        for i, sys in enumerate(sys_list):
-            tfw = sys.bode(w)
-            freq = w / (2 * np.pi) if Hz else w
-            mag = spla.norm(tfw, ord=ord, axis=(1, 2))
-            style = '' if plot_style_list is None else plot_style_list[i]
-            if dB:
-                mag = 20 * np.log2(mag)
-                ax.semilogx(freq, mag, style)
-            else:
-                ax.loglog(freq, mag, style)
         ax.set_title('Magnitude Bode Plot')
-        ax.set_xlabel('Frequency{}'.format(' (Hz)' if Hz else ' (rad/s)'))
-        ax.set_ylabel('Magnitude{}'.format(' (dB)' if dB else ''))
-        return fig, ax
+        freq_unit = ' (Hz)' if Hz else ' (rad/s)'
+        ax.set_xlabel('Frequency' + freq_unit)
+        mag_unit = ' (dB)' if dB else ''
+        ax.set_ylabel('Magnitude' + mag_unit)
+
+        return out
 
 
 _DEFAULT_ME_SOLVER_BACKEND = 'pymess' if config.HAVE_PYMESS else \

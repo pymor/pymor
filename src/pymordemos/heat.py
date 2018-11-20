@@ -68,7 +68,8 @@ if __name__ == '__main__':
 
     # Bode plot of the full model
     w = np.logspace(-2, 3, 100)
-    fig, ax = LTISystem.mag_plot(lti, w=w)
+    fig, ax = plt.subplots()
+    lti.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the full model')
     plt.show()
 
@@ -94,12 +95,15 @@ if __name__ == '__main__':
     print('Hankel-error for the BT ROM: {:e}'.format(err_bt.hankel_norm()))
 
     # Bode plot of the full and BT reduced model
-    fig, ax = LTISystem.mag_plot((lti, rom_bt), w=w)
+    fig, ax = plt.subplots()
+    lti.mag_plot(w, ax=ax)
+    rom_bt.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and BT reduced model')
     plt.show()
 
     # Bode plot of the BT error system
-    fig, ax = LTISystem.mag_plot(err_bt, w=w)
+    fig, ax = plt.subplots()
+    err_bt.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the BT error system')
     plt.show()
 
@@ -122,11 +126,14 @@ if __name__ == '__main__':
     print('Hankel-error for the IRKA ROM: {:e}'.format(err_irka.hankel_norm()))
 
     # Bode plot of the full and IRKA reduced model
-    fig, ax = LTISystem.mag_plot((lti, rom_irka), w=w)
+    fig, ax = plt.subplots()
+    lti.mag_plot(w, ax=ax)
+    rom_irka.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Bode plot of the full and IRKA reduced model')
     plt.show()
 
     # Bode plot of the IRKA error system
-    fig, ax = LTISystem.mag_plot(err_irka, w=w)
+    fig, ax = plt.subplots()
+    err_irka.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the IRKA error system')
     plt.show()

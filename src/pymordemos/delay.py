@@ -28,7 +28,6 @@ if __name__ == '__main__':
     tf = TransferFunction(1, 1, H, dH)
 
     w = np.logspace(-1, 3, 1000)
-    tfw = tf.bode(w)
 
     r = 10
     sigma = np.logspace(-2, 2, r)
@@ -46,11 +45,10 @@ if __name__ == '__main__':
     ax.set_xlabel('Re')
     ax.set_ylabel('Im')
 
-    tfw_rom = rom.bode(w)
     fig, ax = plt.subplots()
-    ax.loglog(w, np.abs(tfw[:, 0, 0]), w, np.abs(tfw_rom[:, 0, 0]))
+    tf.mag_plot(w, ax=ax)
+    rom.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Magnitude Bode plots of the full and reduced model')
-    ax.set_xlabel(r'$\omega$')
 
     # step response
     E = rom.E.matrix
@@ -70,7 +68,7 @@ if __name__ == '__main__':
 
     step_response = np.piecewise(t, [t < 1, t >= 1], [0, 1]) * (1 - np.exp(-(t - 1) / tau))
     fig, ax = plt.subplots()
-    ax.plot(t, step_response, 'b-', t, y, 'r-')
+    ax.plot(t, step_response, '-', t, y, '--')
     ax.set_title('Step responses of the full and reduced model')
     ax.set_xlabel(r'$t$')
     plt.show()
@@ -97,7 +95,7 @@ if __name__ == '__main__':
         y_ss[i] = C_ss.dot(x_ss_new)[0]
 
     fig, ax = plt.subplots()
-    ax.plot(t, step_response, 'b-', t, y_ss, 'r-')
+    ax.plot(t, step_response, '-', t, y_ss, '--')
     ax.set_title('Step responses of the full and reduced model 2')
     ax.set_xlabel(r'$t$')
     plt.show()
