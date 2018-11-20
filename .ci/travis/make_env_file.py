@@ -5,7 +5,7 @@ from os.path import expanduser
 from shlex import quote
 home = expanduser("~")
 
-prefixes = os.environ.get('ENV_PREFIXES', 'TRAVIS CI encrypt TOKEN TESTS').split(' ')
+prefixes = os.environ.get('ENV_PREFIXES', 'TRAVIS CI encrypt PYMOR TOKEN TESTS').split(' ')
 blacklist = ['TRAVIS_COMMIT_MESSAGE']
 env_file = os.environ.get('ENV_FILE', os.path.join(home, 'env'))
 with open(env_file, 'wt') as env:
