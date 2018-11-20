@@ -26,8 +26,9 @@ if config.HAVE_SLYCOT:
     def solve_lyap(A, E, B, trans=False, options=None):
         """Find a factor of the solution of a Lyapunov equation.
 
-        Returns factor :math:`Z` such that :math:`Z Z^T` is approximately
-        the solution :math:`X` of a Lyapunov equation (if E is `None`).
+        Returns factor :math:`Z` such that :math:`Z Z^T` is
+        approximately the solution :math:`X` of a Lyapunov equation (if
+        E is `None`).
 
         .. math::
             A X + X A^T + B B^T = 0
@@ -37,7 +38,7 @@ if config.HAVE_SLYCOT:
         .. math::
             A X E^T + E X A^T + B B^T = 0.
 
-        If trans is `True`, then solve (if E is `None`)
+        If trans is `True`, then it solves (if E is `None`)
 
         .. math::
             A^T X + X A + B^T B = 0
@@ -46,6 +47,12 @@ if config.HAVE_SLYCOT:
 
         .. math::
             A^T X E + E^T X A + B^T B = 0.
+
+        This uses the `slycot` package, in particular its interfaces to
+        SLICOT functions `SB03MD` (for the standard Lyapunov equations)
+        and `SG03AD` (for the generalized Lyapunov equations).
+        These methods are only applicable to medium-sized dense
+        problems and need access to the matrix data of all operators.
 
         Parameters
         ----------
@@ -58,7 +65,8 @@ if config.HAVE_SLYCOT:
         trans
             If the dual equation needs to be solved.
         options
-            The |solver_options| to use (see :func:`lyap_solver_options`).
+            The |solver_options| to use (see
+            :func:`lyap_solver_options`).
 
         Returns
         -------
@@ -117,24 +125,31 @@ if config.HAVE_SLYCOT:
     def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None, trans=False, options=None):
         """Find a factor of the solution of a Riccati equation
 
-        Returns factor :math:`Z` such that :math:`Z Z^T` is approximately the
-        solution :math:`X` of a Riccati equation
+        Returns factor :math:`Z` such that :math:`Z Z^T` is
+        approximately the solution :math:`X` of a Riccati equation
 
         .. math::
             A^T X E + E^T X A - E^T X B R^{-1} B^T X E + Q = 0.
 
         If E in `None`, it is taken to be the identity matrix.
-        Q can instead be given as C^T * C. In this case, Q needs to be `None`, and
-        C not `None`.
-        B * R^{-1} B^T can instead be given by G. In this case, B and R need to be
-        `None`, and G not `None`.
-        If R and G are `None`, then R is taken to be the identity matrix.
+        Q can instead be given as C^T * C. In this case, Q needs to be
+        `None`, and C not `None`.
+        B * R^{-1} B^T can instead be given by G. In this case, B and R
+        need to be `None`, and G not `None`.
+        If R and G are `None`, then R is taken to be the identity
+        matrix.
         If trans is `True`, then the dual Riccati equation is solved
 
         .. math::
             A X E^T + E X A^T - E X C^T R^{-1} C X E^T + Q = 0,
 
         where Q can be replaced by B * B^T and C^T * R^{-1} * C by G.
+
+        This uses the `slycot` package, in particular its interfaces to
+        SLICOT functions `SB02MD` (for the standard Riccati equations)
+        and `SG02AD` (for the generalized Riccati equations).
+        These methods are only applicable to medium-sized dense
+        problems and need access to the matrix data of all operators.
 
         Parameters
         ----------
@@ -150,16 +165,13 @@ if config.HAVE_SLYCOT:
             The |Operator| C or `None`.
         R
             The |Operator| R or `None`.
-        D
-            The |Operator| D or `None`.
         G
             The |Operator| G or `None`.
-        L
-            The |Operator| L or `None`.
         trans
             If the dual equation needs to be solved.
         options
-            The |solver_options| to use (see :func:`ricc_solver_options`).
+            The |solver_options| to use (see
+            :func:`ricc_solver_options`).
 
         Returns
         -------

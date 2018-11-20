@@ -345,7 +345,7 @@ def solve_lyap(A, E, B, trans=False, options=None):
     .. math::
         A X E^T + E X A^T + B B^T = 0.
 
-    If trans is `True`, then solve (if E is `None`)
+    If trans is `True`, then it solves (if E is `None`)
 
     .. math::
         A^T X + X A + B^T B = 0
@@ -354,6 +354,11 @@ def solve_lyap(A, E, B, trans=False, options=None):
 
     .. math::
         A^T X E + E^T X A + B^T B = 0.
+
+    This uses the `scipy.linalg.spla.solve_continuous_lyapunov` method.
+    It is only applicable to the standard Lyapunov equation (E = I).
+    Furthermore, it can only solve medium-sized dense problems and
+    assumes access to the matrix data of all operators.
 
     Parameters
     ----------
@@ -371,7 +376,8 @@ def solve_lyap(A, E, B, trans=False, options=None):
     Returns
     -------
     Z
-        Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
+        Low-rank factor of the Lyapunov equation solution, |VectorArray|
+        from `A.source`.
     """
     _solve_lyap_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_solver_options(), 'scipy', None, False)
@@ -408,17 +414,17 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
                trans=False, options=None):
     """Find a factor of the solution of a Riccati equation using solve_continuous_are.
 
-    Returns factor :math:`Z` such that :math:`Z Z^T` is approximately the
-    solution :math:`X` of a Riccati equation
+    Returns factor :math:`Z` such that :math:`Z Z^T` is approximately
+    the solution :math:`X` of a Riccati equation
 
     .. math::
         A^T X E + E^T X A - E^T X B R^{-1} B^T X E + Q = 0.
 
     If E in `None`, it is taken to be the identity matrix.
-    Q can instead be given as C^T * C. In this case, Q needs to be `None`, and
-    C not `None`.
-    B * R^{-1} B^T can instead be given by G. In this case, B and R need to be
-    `None`, and G not `None`.
+    Q can instead be given as C^T * C. In this case, Q needs to be
+    `None`, and C not `None`.
+    B * R^{-1} B^T can instead be given by G. In this case, B and R need
+    to be `None`, and G not `None`.
     If R and G are `None`, then R is taken to be the identity matrix.
     If trans is `True`, then the dual Riccati equation is solved
 
@@ -426,6 +432,11 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
         A X E^T + E X A^T - E X C^T R^{-1} C X E^T + Q = 0,
 
     where Q can be replaced by B * B^T and C^T * R^{-1} * C by G.
+
+    This uses the `scipy.linalg.spla.solve_continuous_are` method.
+    Generalized Riccati equation is not supported.
+    It can only solve medium-sized dense problems and assumes access to
+    the matrix data of all operators.
 
     Parameters
     ----------
@@ -441,12 +452,8 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
         The |Operator| C or `None`.
     R
         The |Operator| R or `None`.
-    D
-        The |Operator| D or `None`.
     G
         The |Operator| G or `None`.
-    L
-        The |Operator| L or `None`.
     trans
         If the dual equation needs to be solved.
     options
