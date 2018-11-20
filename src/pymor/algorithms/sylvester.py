@@ -32,18 +32,26 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         Real |Operator|.
     Ar
         Real |Operator|.
+        It is converted into a |NumPy array| using
+        :func:`~pymor.algorithms.to_matrix.to_matrix`.
     E
         Real |Operator| or `None` (then assumed to be the identity).
     Er
         Real |Operator| or `None` (then assumed to be the identity).
+        It is converted into a |NumPy array| using
+        :func:`~pymor.algorithms.to_matrix.to_matrix`.
     B
         Real |Operator| or `None`.
     Br
         Real |Operator| or `None`.
+        It is converted into a |VectorArray| using
+        `Br.as_source_array()`.
     C
         Real |Operator| or `None`.
     Cr
         Real |Operator| or `None`.
+        It is converted into a |VectorArray| using
+        `Cr.as_range_array()`.
 
     Returns
     -------
