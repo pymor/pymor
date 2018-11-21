@@ -33,12 +33,6 @@ def adaptive_greedy(d, reductor, parameter_space=None,
     set and the validation set is larger than `rho`, the training set
     is refined using standard grid refinement techniques.
 
-    .. [HDO11] Haasdonk, B.; Dihlmann, M. & Ohlberger, M.,
-               A training set and multiple bases generation approach for
-               parameterized model reduction based on adaptive grids in
-               parameter space,
-               Math. Comput. Model. Dyn. Syst., 2011, 17, 423-442
-
     Parameters
     ----------
     d

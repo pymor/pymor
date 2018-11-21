@@ -21,11 +21,6 @@ class CoerciveRBReductor(GenericRBReductor):
     :class:`~pymor.reductors.residual.ResidualReductor` for improved numerical stability
     [BEOR14]_.
 
-    .. [BEOR14] A. Buhr, C. Engwer, M. Ohlberger, S. Rave, A Numerically Stable A
-                Posteriori Error Estimator for Reduced Basis Approximations of Elliptic
-                Equations, Proceedings of the 11th World Congress on Computational
-                Mechanics, 2014.
-
     Parameters
     ----------
     d

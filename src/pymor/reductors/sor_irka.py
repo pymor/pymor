@@ -31,11 +31,6 @@ class SOR_IRKAReductor(GenericPGReductor):
         It uses IRKA as the intermediate reductor, to reduce from 2r poles to r.
         See Section 5.3.2 in [W12]_.
 
-        .. [W12] S. Wyatt,
-                 Issues in Interpolatory Model Reduction: Inexact Solves,
-                 Second Order Systems and DAEs,
-                 PhD thesis, Virginia Tech, 2012
-
         Parameters
         ----------
         r

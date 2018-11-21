@@ -19,11 +19,6 @@ class GenericSOBTpvReductor(GenericPGReductor):
 
     See [RS08]_.
 
-    .. [RS08] T. Reis and T. Stykel,
-              Balanced truncation model reduction of second-order
-              systems,
-              Math. Comput. Model. Dyn. Syst., 2008, 14(5), 391-406
-
     Parameters
     ----------
     d
@@ -197,11 +192,6 @@ class SOBTfvReductor(GenericPGReductor):
 
     See [MS96]_.
 
-    .. [MS96] D. G. Meyer and S. Srinivasan,
-              Balancing and model reduction for second-order form linear
-              systems,
-              IEEE Trans. Automat. Control, 1996, 41, 1632–1644
-
     Parameters
     ----------
     d
@@ -277,12 +267,6 @@ class SOBTReductor(BasicInterface):
     """Second-Order Balanced Truncation reductor.
 
     See [CLVV06]_.
-
-    .. [CLVV06] Y. Chahlaoui, D. Lemonnier, A. Vandendorpe, P. Van
-                Dooren,
-                Second-order balanced truncation,
-                Linear Algebra and its Applications, 2006, 415(2–3),
-                373-384
 
     Parameters
     ----------

@@ -33,18 +33,6 @@ class IRKAReductor(GenericPGReductor):
 
         See [GAB08]_ (Algorithm 4.1) and [ABG10]_ (Algorithm 1).
 
-        .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie,
-                :math:`\mathcal{H}_2` model reduction for large-scale
-                linear dynamical systems,
-                SIAM Journal on Matrix Analysis and Applications, 30(2),
-                609-638, 2008.
-
-        .. [ABG10] A. C. Antoulas, C. A. Beattie, S. Gugercin,
-                Interpolatory model reduction of large-scale dynamical
-                systems,
-                Efficient Modeling and Control of Large-Scale Systems,
-                Springer-Verlag, 2010.
-
         Parameters
         ----------
         r
@@ -255,19 +243,6 @@ class TSIAReductor(GenericPGReductor):
         eigenvalue decomposition. Therefore, TSIA might behave better
         for non-normal reduced matrices.
 
-        .. [XZ11] Y. Xu and T. Zeng, Optimal :math:`\mathcal{H}_2` Model
-                  Reduction for Large Scale MIMO Systems via Tangential
-                  Interpolation,
-                  International Journal of Numerical Analysis and
-                  Modeling, vol. 8, no. 1, pp. 174-188, 2011
-
-        .. [BKS11] P. Benner, M. Köhler, J. Saak, Sparse-Dense Sylvester
-                   Equations in :math:`\mathcal{H}_2`-Model Order
-                   Reduction,
-                   Max Planck Institute Magdeburg Preprint, available
-                   from http://www.mpi-magdeburg.mpg.de/preprints/,
-                   2011.
-
         Parameters
         ----------
         rd0
@@ -387,11 +362,6 @@ class TF_IRKAReductor(BasicInterface):
     """Realization-independent IRKA reductor.
 
     See [BG12]_.
-
-    .. [BG12] C. A. Beattie, S. Gugercin, Realization-independent
-              H2-approximation,
-              Proceedings of the 51st IEEE Conference on Decision and
-              Control, 2012.
 
     Parameters
     ----------
