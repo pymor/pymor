@@ -192,6 +192,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
+        try:
+            matrix.setflags(write=False)  # make numpy arrays read-only
+        except AttributeError:
+            pass
         self.source = NumpyVectorSpace(matrix.shape[1], source_id)
         self.range = NumpyVectorSpace(matrix.shape[0], range_id)
         self.solver_options = solver_options
