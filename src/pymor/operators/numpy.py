@@ -245,8 +245,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert V in self.range
         return self.H.apply(V, mu=mu)
 
-    @defaults('check_finite', 'default_sparse_solver_backend',
-              qualname='pymor.operators.numpy.NumpyMatrixOperator.apply_inverse')
+    @defaults('check_finite', 'default_sparse_solver_backend')
     def apply_inverse(self, V, mu=None, least_squares=False, check_finite=True,
                       default_sparse_solver_backend='scipy'):
         """Apply the inverse operator.

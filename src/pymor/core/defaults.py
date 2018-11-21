@@ -95,7 +95,7 @@ class DefaultContainer(object):
         self._data = defaultdict(dict)
         self.registered_functions = set()
 
-    def _add_defaults_for_function(self, func, args, sid_ignore, qualname):
+    def _add_defaults_for_function(self, func, args, sid_ignore):
 
         if func.__doc__ is not None:
             new_docstring = inspect.cleandoc(func.__doc__)
@@ -118,11 +118,9 @@ Defaults
                 raise ValueError("Decorated function has no default for argument '{}'".format(n))
             defaultsdict[n] = p.default
 
-        path = qualname or (func.__module__ + '.' + getattr(func, '__qualname__', func.__name__))
+        path = func.__module__ + '.' + getattr(func, '__qualname__', func.__name__)
         if path in self.registered_functions:
-            raise ValueError('''Function with name {} already registered for default values!
-For Python 2 compatibility, please supply the '_qualname' parameter when decorating
-methods of classes!'''.format(path))
+            raise ValueError('Function with name {} already registered for default values!'.format(path))
         self.registered_functions.add(path)
         for k, v in defaultsdict.items():
             self._data[path + '.' + k]['func'] = func
@@ -214,7 +212,7 @@ methods of classes!'''.format(path))
 _default_container = DefaultContainer()
 
 
-def defaults(*args, sid_ignore=(), qualname=None):
+def defaults(*args, sid_ignore=()):
     """Function decorator for marking function arguments as user-configurable defaults.
 
     If a function decorated with :func:`defaults` is called, the values of the marked
@@ -242,10 +240,6 @@ def defaults(*args, sid_ignore=(), qualname=None):
         |state id| calculation (because they do not affect the outcome of any
         computation). Such defaults will typically be IO related. Use with
         extreme caution!
-    qualname
-        If a method of a class is decorated, the fully qualified name of the
-        method has to be provided, as this name cannot be derived at decoration
-        time in Python 2.
     """
     assert all(isinstance(arg, str) for arg in args)
 
@@ -255,7 +249,7 @@ def defaults(*args, sid_ignore=(), qualname=None):
             return func
 
         global _default_container
-        _default_container._add_defaults_for_function(func, args=args, sid_ignore=sid_ignore, qualname=qualname)
+        _default_container._add_defaults_for_function(func, args=args, sid_ignore=sid_ignore)
 
         @functools.wraps(func, updated=())  # ensure that __signature__ is not copied
         def wrapper(*wrapper_args, **wrapper_kwargs):
