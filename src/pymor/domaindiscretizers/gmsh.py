@@ -144,7 +144,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             for ll_id, ll in zip(line_loop_ids, line_loops):
                 geo_file.write('Line Loop('+str(ll_id)+')'+' = '+str(ll).replace('[', '{').replace(']', '}')+';\n')
 
-            # set this here explicitly to workaround a 3to2 fixer issue for range
+            # set this here explicitly for string conversion to make sense
             line_loop_ids = list(line_loop_ids)
             # create the surface defined by line loops, starting with the exterior and then the holes.
             geo_file.write('Plane Surface(' + str(line_loop_ids[0]+1) + ')' + ' = '

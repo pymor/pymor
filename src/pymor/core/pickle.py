@@ -70,44 +70,11 @@ else:
     loads = pickle.loads
 
 
-# The following method is a slightly modified version of
-# a recipe from the "Python Cookbook", 3rd edition.
-
-def _generate_opcode_old(code_object):
-    HAVE_ARGUMENT = opcode.HAVE_ARGUMENT
-    EXTENDED_ARG = opcode.EXTENDED_ARG
-
-    codebytes = code_object.co_code
-    extended_arg = 0
-    i = 0
-    n = len(codebytes)
-    while i < n:
-        op = codebytes[i]
-        i += 1
-        if op >= HAVE_ARGUMENT:
-            oparg = codebytes[i] + codebytes[i + 1] * 256 + extended_arg
-            extended_arg = 0
-            i += 2
-            if op == EXTENDED_ARG:
-                extended_arg = oparg * 65536
-                continue
-        else:
-            oparg = None
-        yield (op, oparg)
-
-
-def _generate_opcode_new(code_object):
+def _generate_opcode(code_object):
     import dis
     for ins in dis.get_instructions(code_object):
         yield (ins.opcode, ins.arg)
 
-if (sys.version_info.major, sys.version_info.minor) < (3, 4):
-    # cleverer dispatch via 'yield from' at runtime will
-    # not work due to it missing from < 3.4 and not being
-    # transformed by 3to2
-    _generate_opcode = _generate_opcode_old
-else:
-    _generate_opcode = _generate_opcode_new
 
 def _global_names(code_object):
     '''Return all names in code_object.co_names which are used in a LOAD_GLOBAL statement.'''
