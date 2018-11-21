@@ -7,7 +7,7 @@ import scipy.linalg as spla
 import numpy as np
 
 from pymor.operators.interfaces import OperatorInterface
-from pymor.operators.constructions import IdentityOperator, LincombOperator
+from pymor.operators.constructions import IdentityOperator
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
 from pymor.algorithms.genericsolvers import _parse_options
@@ -143,7 +143,7 @@ def lradi(A, E, B, trans=False, options=None):
 
     while res > Btol and j < options['maxiter']:
         if shifts[j].imag == 0:
-            AaE = LincombOperator([A, E], [1, shifts[j].real])
+            AaE = A + shifts[j].real * E
             if not trans:
                 V = AaE.apply_inverse(W)
                 W -= E.apply(V) * (2 * shifts[j].real)
@@ -153,7 +153,7 @@ def lradi(A, E, B, trans=False, options=None):
             Z.append(V * np.sqrt(-2 * shifts[j].real))
             j += 1
         else:
-            AaE = LincombOperator([A, E], [1, shifts[j]])
+            AaE = A + shifts[j] * E
             g = 2 * np.sqrt(-shifts[j].real)
             d = shifts[j].real / shifts[j].imag
             if not trans:

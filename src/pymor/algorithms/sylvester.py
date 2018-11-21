@@ -7,7 +7,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.interfaces import OperatorInterface
-from pymor.operators.constructions import IdentityOperator, LincombOperator
+from pymor.operators.constructions import IdentityOperator
 
 
 def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
@@ -122,7 +122,7 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
                     rhs -= A.apply(V.lincomb(TEr[i, :i:-1].conjugate()))
                 rhs -= E.apply(V.lincomb(TAr[i, :i:-1].conjugate()))
             TErii = 1 if Er is None else TEr[i, i]
-            eAaE = LincombOperator([A, E], [TErii.conjugate(), TAr[i, i].conjugate()])
+            eAaE = TErii.conjugate() * A + TAr[i, i].conjugate() * E
             V.append(eAaE.apply_inverse(rhs))
 
         V = V.lincomb(Z.conjugate()[:, ::-1])
@@ -141,7 +141,7 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
                     rhs -= A.apply_adjoint(W.lincomb(TEr[:i, i]))
                 rhs -= E.apply_adjoint(W.lincomb(TAr[:i, i]))
             TErii = 1 if Er is None else TEr[i, i]
-            eAaE = LincombOperator([A, E], [TErii.conjugate(), TAr[i, i].conjugate()])
+            eAaE = TErii.conjugate() * A + TAr[i, i].conjugate() * E
             W.append(eAaE.apply_inverse_adjoint(rhs))
 
         W = W.lincomb(Q.conjugate())

@@ -3,7 +3,6 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.operators.constructions import LincombOperator
 
 
 def arnoldi(A, E, b, sigma, trans=False):
@@ -66,7 +65,7 @@ def arnoldi(A, E, b, sigma, trans=False):
 
     for i in range(r):
         if sigma[i].imag == 0:
-            sEmA = LincombOperator((E, A), (sigma[i].real, -1))
+            sEmA = sigma[i].real * E - A
 
             if not trans:
                 v = sEmA.apply_inverse(v)
@@ -77,7 +76,7 @@ def arnoldi(A, E, b, sigma, trans=False):
             V = gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 1, copy=False)
             v = V[-1]
         elif sigma[i].imag > 0:
-            sEmA = LincombOperator((E, A), (sigma[i], -1))
+            sEmA = sigma[i] * E - A
 
             if not trans:
                 v = sEmA.apply_inverse(v)

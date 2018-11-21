@@ -14,7 +14,7 @@ if config.HAVE_PYMESS:
     from pymor.bindings.scipy import _solve_ricc_check_args
     from pymor.algorithms.lyapunov import _solve_lyap_check_args
     from pymor.core.defaults import defaults
-    from pymor.operators.constructions import IdentityOperator, LincombOperator
+    from pymor.operators.constructions import IdentityOperator
 
     PYMESS_MIN_SPARSE_SIZE = 1000
 
@@ -174,7 +174,7 @@ if config.HAVE_PYMESS:
 
         This uses the `pymess` package, in particular its `care` and
         `lrnm` methods.
-        Operators Q, R, and G are not supported, 
+        Operators Q, R, and G are not supported,
         Both methods can be used for large-scale problems.
         The restrictions are:
 
@@ -359,9 +359,9 @@ if config.HAVE_PYMESS:
             e = IdentityOperator(self.a.source) if self.e is None else self.e
 
             if p.imag == 0:
-                ape = LincombOperator((self.a, e), (1, p.real))
+                ape = self.a + p.real * e
             else:
-                ape = LincombOperator((self.a, e), (1, p))
+                ape = self.a + p * e
 
             if op == pymess.MESS_OP_NONE:
                 x = ape.apply_inverse(y)
@@ -475,9 +475,9 @@ if config.HAVE_PYMESS:
             e = IdentityOperator(self.a.source) if self.e is None else self.e
 
             if p.imag == 0:
-                ape = LincombOperator((self.a, e), (1, p.real))
+                ape = self.a + p.real * e
             else:
-                ape = LincombOperator((self.a, e), (1, p))
+                ape = self.a + p * e
 
             if op == pymess.MESS_OP_NONE:
                 x = ape.apply_inverse(y)

@@ -557,7 +557,7 @@ class LTISystem(InputOutputSystem):
         D = self.D
         E = self.E
 
-        sEmA = LincombOperator((E, A), (s, -1))
+        sEmA = s * E - A
         if self.m <= self.p:
             tfs = C.apply(sEmA.apply_inverse(B.as_range_array())).to_numpy().T
         else:
@@ -594,7 +594,7 @@ class LTISystem(InputOutputSystem):
         C = self.C
         E = self.E
 
-        sEmA = LincombOperator((E, A), (s, -1))
+        sEmA = (s * E - A).assemble()
         if self.m <= self.p:
             dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.as_range_array())))).to_numpy().T
         else:
@@ -1078,9 +1078,9 @@ class SecondOrderSystem(InputOutputSystem):
         Cv = self.Cv
         D = self.D
 
-        s2MpsEpK = LincombOperator((M, E, K), (s ** 2, s, 1))
+        s2MpsEpK = s**2 * M + s * E + K
         if self.m <= self.p:
-            CppsCv = LincombOperator((Cp, Cv), (1, s))
+            CppsCv = Cp + s * Cv
             tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T
         else:
             tfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(
@@ -1119,11 +1119,11 @@ class SecondOrderSystem(InputOutputSystem):
         Cp = self.Cp
         Cv = self.Cv
 
-        s2MpsEpK = LincombOperator((M, E, K), (s ** 2, s, 1))
-        sM2pE = LincombOperator((M, E), (2 * s, 1))
+        s2MpsEpK = (s**2 * M + s * E + K).assemble()
+        sM2pE = 2 * s * M + E
         if self.m <= self.p:
             dtfs = Cv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T * s
-            CppsCv = LincombOperator((Cp, Cv), (1, s))
+            CppsCv = Cp + s * Cv
             dtfs -= CppsCv.apply(s2MpsEpK.apply_inverse(sM2pE.apply(s2MpsEpK.apply_inverse(
                 B.as_range_array())))).to_numpy().T
         else:
@@ -1416,7 +1416,8 @@ class LinearDelaySystem(InputOutputSystem):
         C = self.C
         E = self.E
 
-        left_and_right = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
+        left_and_right = LincombOperator((E, A) + Ad,
+                                         (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)).assemble()
         middle = LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
         if self.m <= self.p:
             dtfs = -C.apply(left_and_right.apply_inverse(middle.apply(left_and_right.apply_inverse(
