@@ -212,7 +212,11 @@ class ProjectRules(RuleTable):
     def action_AffineOperator(self, op):
         return self.apply(op.affine_shift + op.linear_part)
 
-    @match_class(LincombOperator, SelectionOperator)
+    @match_class(LincombOperator)
+    def action_recurse(self, op):
+        return self.replace_children(op).with_(solver_options=None)
+
+    @match_class(SelectionOperator)
     def action_recurse(self, op):
         return self.replace_children(op)
 
