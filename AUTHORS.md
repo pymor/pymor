@@ -10,6 +10,10 @@
 
 ## pyMOR 0.5
 
+* Linus Balicki, linus.balicki@ovgu.de
+    * low-rank ADI method using projection shifts for Lyapunov equations in
+      algorithms.lyapunov
+
 * Julia Brunken, julia.brunken@uni-muenster.de
     * support for advection, reaction terms and Robin boundary data
       in ParabolicProblem

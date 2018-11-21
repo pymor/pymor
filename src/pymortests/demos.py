@@ -80,9 +80,15 @@ PARABOLIC_MOR_ARGS = (
     ('parabolic_mor', ['fenics', 'adaptive_greedy', 2, 3, 1]),
 )
 
+SYS_MOR_ARGS = (
+    ('heat', []),
+    ('delay', []),
+    ('string_equation', [])
+)
+
 DEMO_ARGS = (DISCRETIZATION_ARGS +
              THERMALBLOCK_ARGS + THERMALBLOCK_ADAPTIVE_ARGS + THERMALBLOCK_SIMPLE_ARGS + THERMALBLOCK_GUI_ARGS +
-             BURGERS_EI_ARGS + PARABOLIC_MOR_ARGS)
+             BURGERS_EI_ARGS + PARABOLIC_MOR_ARGS + SYS_MOR_ARGS)
 DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]
 
 
@@ -92,7 +98,7 @@ def _run_module(module, args):
 
 
 def _skip_if_no_solver(param):
-    _, args = param
+    demo, args = param
     from pymor.core.config import config
     for solver in ['fenics', 'ngsolve']:
         needs_solver = len([f for f in args if solver in str(f)]) > 0
@@ -100,6 +106,8 @@ def _skip_if_no_solver(param):
         if needs_solver and not has_solver:
             if not os.environ.get('DOCKER_PYMOR', False):
                 pytest.skip('skipped test due to missing ' + solver)
+    if demo == 'heat' and not os.environ.get('DOCKER_PYMOR', False) and not config.HAVE_SLYCOT:
+        pytest.skip('skipped test due to missing slycot')
 
 
 def _demo_ids(demo_args):

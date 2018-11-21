@@ -104,6 +104,9 @@ common = '''
 .. |Parameters| replace:: :class:`Parameters <pymor.parameters.base.Parameter>`
 .. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
 
+.. |LTISystem| replace:: :class:`~pymor.discretizations.iosys.LTISystem`
+.. |LTISystems| replace:: :class:`LTISystems <pymor.discretizations.iosys.LTISystem>`
+
 .. |NumPy| replace:: :mod:`NumPy <numpy>`
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`
 .. |NumPy arrays| replace:: :class:`NumPy arrays <numpy.ndarray>`

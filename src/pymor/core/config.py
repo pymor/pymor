@@ -38,6 +38,16 @@ def _get_ipython_version():
         return getattr(IPython.parallel, '__version__', True)
 
 
+def _get_slycot_version():
+    from slycot.version import version
+    if list(map(int, version.split('.'))) < [0, 3, 1]:
+        import warnings
+        warnings.warn('Slycot support disabled (version 0.3.1 or higher required).')
+        return False
+    else:
+        return version
+
+
 def _get_qt_version():
     import Qt
     return Qt.__binding__ + ' ' + Qt.__binding_version__
@@ -56,12 +66,14 @@ _PACKAGES = {
     'NGSOLVE': lambda: bool(import_module('ngsolve')),
     'NUMPY': lambda: import_module('numpy').__version__,
     'PYAMG': lambda: import_module('pyamg.version').full_version,
+    'PYMESS': lambda: bool(import_module('pymess')),
     'PYTEST': lambda: import_module('pytest').__version__,
     'PYVTK': lambda: _can_import('evtk') or _can_import('pyevtk'),
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(import_module('Qt.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
+    'SLYCOT': lambda: _get_slycot_version(),
     'SPHINX': lambda: import_module('sphinx').__version__,
 }
 

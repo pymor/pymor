@@ -26,3 +26,5 @@ recursive-include docs Makefile
 include *.md
 include *.py
 include versioneer.py
+
+recursive-include notebooks *.ipynb

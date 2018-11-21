@@ -354,6 +354,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             if type(op) is ZeroOperator:
                 continue
             elif type(op) is IdentityOperator:
+                if c.imag == 0:
+                    c = c.real
                 if operators[0].sparse:
                     try:
                         matrix += (scipy.sparse.eye(matrix.shape[0]) * c)
