@@ -191,33 +191,48 @@ class LincombOperator(OperatorBase):
     def as_source_array(self, mu=None):
         return self._as_array(True, mu)
 
-    def __add__(self, other):
+    def _add_sub(self, other, sign):
         if not isinstance(other, OperatorInterface):
             return NotImplemented
 
         if self.name != 'LincombOperator':
             if isinstance(other, LincombOperator) and other.name == 'LincombOperator':
-                operators, coefficients = (self,) + other.operators, (1.,) + other.coefficients
+                operators = (self,) + other.operators
+                coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
             else:
-                operators, coefficients = (self, other), (1., 1.)
+                operators, coefficients = (self, other), (1., sign)
         elif isinstance(other, LincombOperator) and other.name == 'LincombOperator':
-            operators, coefficients = self.operators + other.operators, self.coefficients + other.coefficients
+            operators = self.operators + other.operators
+            coefficients = self.coefficients + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
         else:
-            operators, coefficients = self.operators + (other,), self.coefficients + (1.,)
+            operators, coefficients = self.operators + (other,), self.coefficients + (sign,)
 
         return LincombOperator(operators, coefficients, solver_options=self.solver_options)
 
-    def __radd__(self, other):
+    def _radd_sub(self, other, sign):
         if not isinstance(other, OperatorInterface):
             return NotImplemented
 
         # note that 'other' can never be a LincombOperator
         if self.name != 'LincombOperator':
-            operators, coefficients = (other, self), (1., 1.)
+            operators, coefficients = (other, self), (1., sign)
         else:
-            operators, coefficients = (other,) + self.operators, (1.,) + self.coefficients
+            operators = (other,) + self.operators
+            coefficients = (1.,) + (self.coefficients if sign == 1. else tuple(-c for c in self.coefficients))
 
         return LincombOperator(operators, coefficients, solver_options=other.solver_options)
+
+    def __add__(self, other):
+        return self._add_sub(other, 1.)
+
+    def __sub__(self, other):
+        return self._add_sub(other, -1.)
+
+    def __radd__(self, other):
+        return self._radd_sub(other, 1.)
+
+    def __rsub__(self, other):
+        return self._radd_sub(other, -1.)
 
     def __mul__(self, other):
         assert isinstance(other, (Number, ParameterFunctionalInterface))
