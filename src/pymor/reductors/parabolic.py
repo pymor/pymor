@@ -43,13 +43,6 @@ class ParabolicRBReductor(GenericRBReductor):
         energy product. If not, the projection of the initial values will be
         computed incorrectly.
 
-    .. [GP05]   M. A. Grepl, A. T. Patera, A Posteriori Error Bounds For Reduced-Basis
-                Approximations Of Parametrized Parabolic Partial Differential Equations,
-                M2AN 39(1), 157-181, 2005.
-    .. [HO08]   B. Haasdonk, M. Ohlberger, Reduced basis method for finite volume
-                approximations of parametrized evolution equations,
-                M2AN 42(2), 277-302, 2008.
-
     Parameters
     ----------
     d

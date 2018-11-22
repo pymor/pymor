@@ -22,10 +22,6 @@ class GenericBHIReductor(GenericPGReductor):
     only up to the first derivative. Hence, interpolation points are
     assumed to be pairwise distinct.
 
-    .. [BG09] C. A. Beattie, S. Gugercin, Interpolatory projection
-              methods for structure-preserving model reduction,
-              Systems & Control Letters 58, 2009
-
     Parameters
     ----------
     d

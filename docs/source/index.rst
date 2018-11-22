@@ -17,6 +17,7 @@ computing stack are provided for getting started quickly.
     technical_overview
     environment
     release_notes
+    bibliography
 
 API Documentation
 *****************

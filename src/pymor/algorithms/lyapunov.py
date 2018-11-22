@@ -92,11 +92,6 @@ def lradi(A, E, B, trans=False, options=None):
     """Find a factor of the solution of a Lyapunov equation using the
     low-rank ADI iteration as described in Algorithm 4.3 in [PK16]_.
 
-    .. [PK16]  P. Kürschner,
-               Efficient Low-Rank Solution of Large-Scale Matrix Equations,
-               Shaker Verlag Aachen, available from
-               http://pubman.mpdl.mpg.de/pubman/, 2016.
-
     Parameters
     ----------
     A
