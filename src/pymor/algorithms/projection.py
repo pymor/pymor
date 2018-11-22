@@ -282,7 +282,7 @@ class ProjectToSubbasisRules(RuleTable):
 
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op):
-        dim_range, dim_source = self.dim_range, self.dim_srouce
+        dim_range, dim_source = self.dim_range, self.dim_source
         source = op.source if dim_source is None else NumpyVectorSpace(dim_source, op.source.id)
         value = op._value if dim_range is None else NumpyVectorSpace(op._value.to_numpy()[:, :dim_range], op.range.id)
         return ConstantOperator(value, source, name=op.name)
@@ -307,7 +307,7 @@ class ProjectToSubbasisRules(RuleTable):
 
     @match_class(ProjectedOperator)
     def action_ProjectedOperator(self, op):
-        dim_range, dim_source = self.dim_range, self.dim_srouce
+        dim_range, dim_source = self.dim_range, self.dim_source
         source_basis = op.source_basis if dim_source is None \
             else op.source_basis[:dim_source]
         range_basis = op.range_basis if dim_range is None \
