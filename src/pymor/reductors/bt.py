@@ -158,7 +158,7 @@ class LQGBTReductor(GenericBTReductor):
         super().__init__(d)
         self.solver_options = solver_options
 
-    @defaults('default_solver_backend', qualname='pymor.reductors.bt.LQGBTReductor._ricc_solver')
+    @defaults('default_solver_backend')
     def _ricc_solver(self, default_solver_backend=_DEFAULT_ME_SOLVER_BACKEND):
         options = self.solver_options.get('ricc') if self.solver_options else None
         if options:
@@ -218,7 +218,7 @@ class BRBTReductor(GenericBTReductor):
         self.gamma = gamma
         self.solver_options = solver_options
 
-    @defaults('default_solver_backend', qualname='pymor.reductors.bt.BRBTReductor._ricc_solver')
+    @defaults('default_solver_backend')
     def _ricc_solver(self, default_solver_backend=_DEFAULT_BR_SOLVER_BACKEND):
         options = self.solver_options.get('ricc') if self.solver_options else None
         if options:
