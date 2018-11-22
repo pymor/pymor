@@ -25,7 +25,7 @@ quickly.
 
 License
 
-Copyright 2013-2017 pyMOR developers and contributors. All rights
+Copyright 2013-2018 pyMOR developers and contributors. All rights
 reserved.
 
 Redistribution and use in source and binary forms, with or without
