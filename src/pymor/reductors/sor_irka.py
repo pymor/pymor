@@ -132,8 +132,6 @@ class SOR_IRKAReductor(GenericPGReductor):
                 irka_reductor = IRKAReductor(rd0.to_lti())
                 rd_r = irka_reductor.reduce(r, **irka_options)
             poles, b, c = _poles_and_tangential_directions(rd_r)
-            b = b.block(0)
-            c = c.block(0)
             sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
         else:
             if sigma is None:
@@ -180,8 +178,6 @@ class SOR_IRKAReductor(GenericPGReductor):
             # new interpolation points and tangential directions
             poles, b, c = _poles_and_tangential_directions(rd_r)
             sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
-            b = b.block(0)
-            c = c.block(0)
             self.sigmas.append(sigma)
             self.R.append(b)
             self.L.append(c)

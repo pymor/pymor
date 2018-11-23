@@ -13,7 +13,8 @@ from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.discretizations.basic import DiscretizationBase
-from pymor.operators.block import BlockOperator, BlockDiagonalOperator, SecondOrderSystemOperator
+from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
+                                   SecondOrderSystemOperator)
 from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
@@ -58,18 +59,20 @@ class InputOutputSystem(DiscretizationBase):
         def add_operator(op, other_op):
             if op.source.id == 'INPUT':
                 if op.range.id == 'OUTPUT':
-                    return BlockOperator([[(op + other_op).assemble()]], source_id=op.source.id, range_id=op.range.id)
+                    return (op + other_op).assemble()
                 elif op.range.id == 'STATE':
-                    return BlockOperator.vstack((op, other_op), source_id=op.source.id, range_id=op.range.id)
+                    return BlockColumnOperator([op, other_op], range_id='STATE')
+                else:
+                    raise NotImplementedError
+            elif op.source.id == 'STATE':
+                if op.range.id == 'OUTPUT':
+                    return BlockRowOperator([op, other_op], source_id='STATE')
+                elif op.range.id == 'STATE':
+                    return BlockDiagonalOperator([op, other_op], source_id='STATE', range_id='STATE')
                 else:
                     raise NotImplementedError
             else:
-                if op.range.id == 'OUTPUT':
-                    return BlockOperator.hstack((op, other_op), source_id=op.source.id, range_id=op.range.id)
-                elif op.range.id == 'STATE':
-                    return BlockDiagonalOperator((op, other_op), source_id=op.source.id, range_id=op.range.id)
-                else:
-                    raise NotImplementedError
+                raise NotImplementedError
 
         new_operators = {k: add_operator(self.operators[k], other.operators[k]) for k in self.operators}
 
@@ -506,10 +509,8 @@ class LTISystem(InputOutputSystem):
 
         A = BlockOperator([[self.A, Concatenation(self.B, other.C)],
                            [None, other.A]])
-        B = BlockOperator.vstack((Concatenation(self.B, other.D),
-                                  other.B))
-        C = BlockOperator.hstack((self.C,
-                                  Concatenation(self.D, other.C)))
+        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B])
+        C = BlockRowOperator([self.C, Concatenation(self.D, other.C)])
         D = Concatenation(self.D, other.D)
         E = BlockDiagonalOperator((self.E, other.E))
 
@@ -1025,19 +1026,11 @@ class SecondOrderSystem(InputOutputSystem):
             |LTISystem| equivalent to the second order system.
         """
         return LTISystem(A=SecondOrderSystemOperator(self.E, self.K),
-                         B=BlockOperator.vstack((ZeroOperator(self.B.range, self.B.source),
-                                                 self.B),
-                                                source_id='INPUT',
-                                                range_id='STATE'),
-                         C=BlockOperator.hstack((self.Cp, self.Cv),
-                                                source_id='STATE',
-                                                range_id='OUTPUT'),
-                         D=BlockOperator([[self.D]],
-                                         source_id='INPUT',
-                                         range_id='OUTPUT') if not _is_like_zero_operator(self.D) else None,
-                         E=BlockDiagonalOperator((IdentityOperator(self.M.source), self.M),
-                                                 source_id='STATE',
-                                                 range_id='STATE'),
+                         B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B], range_id='STATE'),
+                         C=BlockRowOperator([self.Cp, self.Cv], source_id='STATE'),
+                         D=self.D,
+                         E=BlockDiagonalOperator([IdentityOperator(self.M.source), self.M],
+                                                 source_id='STATE', range_id='STATE'),
                          cont_time=self.cont_time,
                          solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
                          cache_region=self.cache_region, name=self.name + '_first_order')
