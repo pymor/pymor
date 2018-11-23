@@ -6,7 +6,7 @@
 import numpy as np
 
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import LincombOperator, IdentityOperator, ZeroOperator
+from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.block import BlockVectorSpace
 
@@ -429,7 +429,7 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
 
     def __init__(self, M, E, K, a, b):
         super().__init__([[IdentityOperator(M.source) * a, IdentityOperator(M.source) * b],
-                          [K * (-b), LincombOperator([M, E], [a, -b])]])
+                          [((-b) * K).assemble(), (a * M - b * E).assemble()]])
         self.M = M
         self.E = E
         self.K = K
@@ -457,8 +457,7 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         assert V in self.range
         aMmbEV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.E.apply(V.block(0), mu=mu) * self.b
         KV0 = self.K.apply(V.block(0), mu=mu)
-        a2MmabEpb2K = LincombOperator([self.M, self.E, self.K],
-                                      [self.a ** 2, -self.a * self.b, self.b ** 2]).assemble(mu=mu)
+        a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
         a2MmabEpb2KiV1 = a2MmabEpb2K.apply_inverse(V.block(1), mu=mu, least_squares=least_squares)
         U_blocks = [a2MmabEpb2K.apply_inverse(aMmbEV0, mu=mu, least_squares=least_squares) -
                     a2MmabEpb2KiV1 * self.b,
@@ -468,8 +467,7 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
-        a2MmabEpb2K = LincombOperator([self.M, self.E, self.K],
-                                      [self.a ** 2, -self.a * self.b, self.b ** 2]).assemble(mu=mu)
+        a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
         a2MmabEpb2KitU0 = a2MmabEpb2K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
         a2MmabEpb2KitU1 = a2MmabEpb2K.apply_inverse_adjoint(U.block(1), mu=mu, least_squares=least_squares)
         V_blocks = [self.M.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.a.conjugate() -

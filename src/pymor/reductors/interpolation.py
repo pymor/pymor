@@ -149,11 +149,11 @@ class LTI_BHIReductor(GenericBHIReductor):
         return self.d.C.apply_adjoint(V)
 
     def _K_apply_inverse(self, s, V):
-        sEmA = LincombOperator((self.d.E, self.d.A), (s, -1))
+        sEmA = s * self.d.E - self.d.A
         return sEmA.apply_inverse(V)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        sEmA = LincombOperator((self.d.E, self.d.A), (s, -1))
+        sEmA = s * self.d.E - self.d.A
         return sEmA.apply_inverse_adjoint(V)
 
     def reduce(self, sigma, b, c, projection='orth', use_arnoldi=False):
@@ -252,11 +252,11 @@ class SO_BHIReductor(GenericBHIReductor):
         return x + y * s.conjugate()
 
     def _K_apply_inverse(self, s, V):
-        s2MpsEpK = LincombOperator((self.d.M, self.d.E, self.d.K), (s ** 2, s, 1))
+        s2MpsEpK = s**2 * self.d.M + s * self.d.E + self.d.K
         return s2MpsEpK.apply_inverse(V)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        s2MpsEpK = LincombOperator((self.d.M, self.d.E, self.d.K), (s ** 2, s, 1))
+        s2MpsEpK = s**2 * self.d.M + s * self.d.E + self.d.K
         return s2MpsEpK.apply_inverse_adjoint(V)
 
 
