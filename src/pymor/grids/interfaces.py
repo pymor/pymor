@@ -365,22 +365,17 @@ class BoundaryInfoInterface(CacheableInterface):
         return self.mask('robin', codim)
 
     @cached
-    def _dirichlet_boundaries(self, codim):
-        return np.where(self.dirichlet_mask(codim))[0].astype('int32')
+    def _boundaries(self, boundary_type, codim):
+        return np.where(self.mask(boundary_type, codim))[0].astype('int32')
+
+    def boundaries(self, boundary_type, codim):
+        return self._boundaries(boundary_type, codim)
 
     def dirichlet_boundaries(self, codim):
-        return self._dirichlet_boundaries(codim)
-
-    @cached
-    def _neumann_boundaries(self, codim):
-        return np.where(self.neumann_mask(codim))[0].astype('int32')
+        return self._boundaries('dirichlet', codim)
 
     def neumann_boundaries(self, codim):
-        return self._neumann_boundaries(codim)
-
-    @cached
-    def _robin_boundaries(self, codim):
-        return np.where(self.robin_mask(codim))[0].astype('int32')
+        return self._boundaries('neumann', codim)
 
     def robin_boundaries(self, codim):
-        return self._robin_boundaries(codim)
+        return self._boundaries('robin', codim)

@@ -18,7 +18,8 @@ from pymor.operators.cg import (DiffusionOperatorP1, DiffusionOperatorQ1,
                                 AdvectionOperatorP1, AdvectionOperatorQ1,
                                 L2ProductP1, L2ProductQ1,
                                 L2ProductFunctionalP1, L2ProductFunctionalQ1,
-                                RobinBoundaryOperator, InterpolationOperator)
+                                BoundaryL2ProductFunctionalP1, BoundaryL2ProductFunctionalQ1,
+                                BoundaryDirichletFunctional, RobinBoundaryOperator, InterpolationOperator)
 from pymor.operators.constructions import LincombOperator
 
 
@@ -87,12 +88,14 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         DiffusionOperator = DiffusionOperatorQ1
         AdvectionOperator = AdvectionOperatorQ1
         ReactionOperator  = L2ProductQ1
-        Functional = L2ProductFunctionalQ1
+        L2Functional = L2ProductFunctionalQ1
+        BoundaryL2Functional = BoundaryL2ProductFunctionalQ1
     else:
         DiffusionOperator = DiffusionOperatorP1
         AdvectionOperator = AdvectionOperatorP1
         ReactionOperator  = L2ProductP1
-        Functional = L2ProductFunctionalP1
+        L2Functional = L2ProductFunctionalP1
+        BoundaryL2Functional = BoundaryL2ProductFunctionalP1
 
     Li = [DiffusionOperator(grid, boundary_info, diffusion_constant=0, name='boundary_part')]
     coefficients = [1.]
@@ -139,8 +142,20 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
 
+    # right-hand side
     rhs = p.rhs or ConstantFunction(0., dim_domain=p.domain.dim)
-    F = Functional(grid, rhs, boundary_info, dirichlet_data=p.dirichlet_data, neumann_data=p.neumann_data)
+    F = L2Functional(grid, rhs, dirichlet_clear_dofs=True, boundary_info=boundary_info)
+
+    if p.neumann_data is not None and boundary_info.has_neumann:
+        F += BoundaryL2Functional(grid, -p.neumann_data, boundary_info=boundary_info,
+                                  boundary_type='neumann', dirichlet_clear_dofs=True)
+
+    if p.robin_data is not None and boundary_info.has_robin:
+        F += BoundaryL2Functional(grid, p.robin_data[0] * p.robin_data[1], boundary_info=boundary_info,
+                                  boundary_type='robin', dirichlet_clear_dofs=True)
+
+    if p.dirichlet_data is not None and boundary_info.has_dirichlet:
+        F += BoundaryDirichletFunctional(grid, p.dirichlet_data, boundary_info)
 
     if grid.reference_element in (triangle, square):
         visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)
