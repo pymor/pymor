@@ -290,7 +290,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 10
+num_misc_operators = 12
 
 
 def misc_operator_with_arrays_and_products_factory(n):
@@ -349,6 +349,28 @@ def misc_operator_with_arrays_and_products_factory(n):
         rp = BlockDiagonalOperator([rp0, rp1])
         U = op.source.make_array([U0, U1])
         V = op.range.make_array([V0, V1])
+        return op, None, U, V, sp, rp
+    elif n == 10:
+        from pymor.operators.block import BlockDiagonalOperator, BlockColumnOperator
+        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
+        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
+        op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op = BlockColumnOperator([op2, op1])
+        sp = sp1
+        rp = BlockDiagonalOperator([rp0, rp1])
+        U = U1
+        V = op.range.make_array([V0, V1])
+        return op, None, U, V, sp, rp
+    elif n == 11:
+        from pymor.operators.block import BlockDiagonalOperator, BlockRowOperator
+        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
+        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
+        op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op = BlockRowOperator([op0, op2])
+        sp = BlockDiagonalOperator([sp0, sp1])
+        rp = rp0
+        U = op.source.make_array([U0, U1])
+        V = V0
         return op, None, U, V, sp, rp
     else:
         assert False
