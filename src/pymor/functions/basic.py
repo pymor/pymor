@@ -43,8 +43,11 @@ class FunctionBase(FunctionInterface):
     def __mul__(self, other):
         """Returns a new :class:`LincombFunction` representing the product of a function by a scalar.
         """
-        assert isinstance(other, Number)
-        return LincombFunction([self], [other])
+        if isinstance(other, (Number, ParameterFunctionalInterface)):
+            return LincombFunction([self], [other])
+        if isinstance(other, FunctionInterface):
+            return ProductFunction([self, other])
+        return NotImplemented
 
     __rmul__ = __mul__
 
@@ -245,3 +248,34 @@ class LincombFunction(FunctionBase):
         mu = self.parse_parameter(mu)
         coeffs = self.evaluate_coefficients(mu)
         return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))
+
+
+class ProductFunction(FunctionBase):
+    """A |Function| representing a product of |Functions|.
+
+    Parameters
+    ----------
+    functions
+        List of |Functions| whose product is formed.
+    name
+        Name of the function.
+
+    Attributes
+    ----------
+    functions
+    """
+
+    def __init__(self, functions, name=None):
+        assert len(functions) > 0
+        assert all(isinstance(f, FunctionInterface) for f in functions)
+        assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
+        assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
+        self.dim_domain = functions[0].dim_domain
+        self.shape_range = functions[0].shape_range
+        self.functions = functions
+        self.name = name
+        self.build_parameter_type(*functions)
+
+    def evaluate(self, x, mu=None):
+        mu = self.parse_parameter(mu)
+        return np.prod([f(x, mu) for f in self.functions], axis=0)
