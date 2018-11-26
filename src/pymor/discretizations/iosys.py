@@ -17,26 +17,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
                                    SecondOrderSystemOperator)
 from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-
-
-def _is_like_zero_operator(operator):
-    """Checks if the operator is like a ZeroOperator."""
-    if isinstance(operator, ZeroOperator):
-        return True
-    if (isinstance(operator, BlockOperator) and
-            all(_is_like_zero_operator(op) for op in operator._operators())):
-        return True
-    return False
-
-
-def _is_like_identity_operator(operator):
-    """Checks if the operator is like an IdentityOperator."""
-    if isinstance(operator, IdentityOperator):
-        return True
-    if (isinstance(operator, BlockDiagonalOperator) and
-            all(_is_like_identity_operator(op) for op in operator._blocks.diagonal())):
-        return True
-    return False
+from pymor.vectorarrays.block import BlockVectorSpace
 
 
 class InputOutputSystem(DiscretizationBase):
@@ -68,7 +49,10 @@ class InputOutputSystem(DiscretizationBase):
                 if op.range.id == 'OUTPUT':
                     return BlockRowOperator([op, other_op], source_id='STATE')
                 elif op.range.id == 'STATE':
-                    return BlockDiagonalOperator([op, other_op], source_id='STATE', range_id='STATE')
+                    if isinstance(op, IdentityOperator) and isinstance(other_op, IdentityOperator):
+                        return IdentityOperator(BlockVectorSpace([op.source, other_op.source], 'STATE'))
+                    else:
+                        return BlockDiagonalOperator([op, other_op], source_id='STATE', range_id='STATE')
                 else:
                     raise NotImplementedError
             else:
@@ -523,9 +507,9 @@ class LTISystem(InputOutputSystem):
             self.logger.warn('Converting operator A to a NumPy array.')
         A = to_matrix(self.A, format='dense')
 
-        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or _is_like_identity_operator(self.E)):
+        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or isinstance(self.E, IdentityOperator)):
             self.logger.warn('Converting operator E to a NumPy array.')
-        E = None if _is_like_identity_operator(self.E) else to_matrix(self.E, format='dense')
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
 
         return spla.eigvals(A, E)
 
@@ -563,7 +547,7 @@ class LTISystem(InputOutputSystem):
             tfs = C.apply(sEmA.apply_inverse(B.as_range_array())).to_numpy().T
         else:
             tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
-        if not _is_like_zero_operator(D):
+        if not isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 
@@ -647,7 +631,7 @@ class LTISystem(InputOutputSystem):
         A = self.A
         B = self.B
         C = self.C
-        E = self.E if not _is_like_identity_operator(self.E) else None
+        E = self.E if not isinstance(self.E, IdentityOperator) else None
 
         if typ == 'cf':
             return self._lyap_solver()(A, E, B, trans=False)
@@ -739,16 +723,16 @@ class LTISystem(InputOutputSystem):
         for op_name in ['A', 'B', 'C']:
             if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and not getattr(self, op_name).sparse):
                 self.logger.warn('Converting operator ' + op_name + ' to a NumPy array.')
-        if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse) or _is_like_zero_operator(self.D)):
+        if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse) or isinstance(self.D, ZeroOperator)):
             self.logger.warn('Converting operator D to a NumPy array.')
-        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or _is_like_identity_operator(self.E)):
+        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or isinstance(self.E, IdentityOperator)):
             self.logger.warn('Converting operator E to a NumPy array.')
 
         from slycot import ab13dd
         dico = 'C' if self.cont_time else 'D'
-        jobe = 'I' if _is_like_identity_operator(self.E) else 'G'
+        jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
         equil = 'S' if ab13dd_equilibrate else 'N'
-        jobd = 'Z' if _is_like_zero_operator(self.D) else 'D'
+        jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
         A, B, C, D, E = map(lambda op: to_matrix(op, format='dense'),
                             (self.A, self.B, self.C, self.D, self.E))
         norm, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
@@ -1029,8 +1013,8 @@ class SecondOrderSystem(InputOutputSystem):
                          B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B], range_id='STATE'),
                          C=BlockRowOperator([self.Cp, self.Cv], source_id='STATE'),
                          D=self.D,
-                         E=BlockDiagonalOperator([IdentityOperator(self.M.source), self.M],
-                                                 source_id='STATE', range_id='STATE'),
+                         E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source], 'STATE')) if isinstance(self.M, IdentityOperator) else
+                            BlockDiagonalOperator([IdentityOperator(self.M.source), self.M], source_id='STATE', range_id='STATE')),
                          cont_time=self.cont_time,
                          solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
                          cache_region=self.cache_region, name=self.name + '_first_order')
@@ -1078,7 +1062,7 @@ class SecondOrderSystem(InputOutputSystem):
         else:
             tfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(
                 Cp.as_source_array() + Cv.as_source_array() * s.conjugate())).to_numpy().conj()
-        if not _is_like_zero_operator(D):
+        if isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 
@@ -1371,7 +1355,7 @@ class LinearDelaySystem(InputOutputSystem):
             tfs = C.apply(middle.apply_inverse(B.as_range_array())).to_numpy().T
         else:
             tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
-        if not _is_like_zero_operator(D):
+        if isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 

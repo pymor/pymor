@@ -10,7 +10,8 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import _is_like_identity_operator, LTISystem
+from pymor.discretizations.iosys import LTISystem
+from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import LTI_BHIReductor, TFInterpReductor
 
@@ -525,7 +526,7 @@ class TF_IRKAReductor(BasicInterface):
 
 def _poles_and_tangential_directions(rd):
     """Compute the poles and tangential directions of a reduced order model."""
-    if _is_like_identity_operator(rd.E):
+    if isinstance(rd.E, IdentityOperator):
         poles, Y, X = spla.eig(to_matrix(rd.A, format='dense'),
                                left=True, right=True)
     else:
