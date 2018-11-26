@@ -177,9 +177,19 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 'h1_0_semi': h1_0_semi_product,
                 'l2_0': l2_0_product}
 
+    # assemble additionals functionals
+    if p.functionals:
+        if any(v[0] not in ('l2', 'l2_boundary') for v in p.functionals.values()):
+            raise NotImplementedError
+        functionals = {k + '_functional': (L2Functional(grid, v[1], dirichlet_clear_dofs=False).H if v[0] == 'l2' else
+                                           BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
+                       for k, v in p.functionals.items()}
+    else:
+        functionals = None
+
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    d  = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
+    d  = StationaryDiscretization(L, F, operators=functionals, products=products, visualizer=visualizer,
                                   parameter_space=parameter_space, name='{}_CG'.format(p.name))
 
     data = {'grid': grid, 'boundary_info': boundary_info}
