@@ -11,28 +11,6 @@ from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def test_hstack():
-    np.random.seed(0)
-    A = np.random.randn(2, 3)
-    B = np.random.randn(2, 4)
-    Aop = NumpyMatrixOperator(A)
-    Bop = NumpyMatrixOperator(B)
-    Cop = BlockOperator.hstack((Aop, Bop))
-    assert Cop.source.dim == 7
-    assert Cop.range.dim == 2
-
-
-def test_vstack():
-    np.random.seed(0)
-    A = np.random.randn(2, 3)
-    B = np.random.randn(4, 3)
-    Aop = NumpyMatrixOperator(A)
-    Bop = NumpyMatrixOperator(B)
-    Cop = BlockOperator.vstack((Aop, Bop))
-    assert Cop.source.dim == 3
-    assert Cop.range.dim == 6
-
-
 def test_apply():
     np.random.seed(0)
 

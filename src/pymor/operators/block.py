@@ -11,17 +11,7 @@ from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
-class BlockOperator(OperatorBase):
-    """A matrix of arbitrary |Operators|.
-
-    This operator can be :meth:`applied <pymor.operators.interfaces.OperatorInterface.apply>`
-    to a compatible :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>`.
-
-    Parameters
-    ----------
-    blocks
-        Two-dimensional array-like where each entry is an |Operator| or `None`.
-    """
+class BlockOperatorBase(OperatorBase):
 
     def _operators(self):
         """Iterator over operators."""
@@ -30,7 +20,15 @@ class BlockOperator(OperatorBase):
 
     def __init__(self, blocks, source_id='STATE', range_id='STATE'):
         blocks = np.array(blocks)
-        assert isinstance(blocks, np.ndarray) and blocks.ndim == 2
+        assert 1 <= blocks.ndim <= 2
+        if self.blocked_source and self.blocked_range:
+            assert blocks.ndim == 2
+        elif self.blocked_source:
+            if blocks.ndim == 1:
+                blocks.shape = (1, len(blocks))
+        else:
+            if blocks.ndim == 1:
+                blocks.shape = (len(blocks), 1)
         self._blocks = blocks
         assert all(isinstance(op, OperatorInterface) or op is None for op in self._operators())
 
@@ -40,83 +38,57 @@ class BlockOperator(OperatorBase):
         assert all(any(blocks[i, j] is not None for i in range(blocks.shape[0]))
                    for j in range(blocks.shape[1]))
 
-        # find source/range types for every column/row
-        source_types = [None for j in range(blocks.shape[1])]
-        range_types = [None for i in range(blocks.shape[0])]
+        # find source/range spaces for every column/row
+        source_spaces = [None for j in range(blocks.shape[1])]
+        range_spaces = [None for i in range(blocks.shape[0])]
         for (i, j), op in np.ndenumerate(blocks):
             if op is not None:
-                assert source_types[j] is None or op.source == source_types[j]
-                source_types[j] = op.source
-                assert range_types[i] is None or op.range == range_types[i]
-                range_types[i] = op.range
+                assert source_spaces[j] is None or op.source == source_spaces[j]
+                source_spaces[j] = op.source
+                assert range_spaces[i] is None or op.range == range_spaces[i]
+                range_spaces[i] = op.range
 
         # turn Nones to ZeroOperators
         for (i, j) in np.ndindex(blocks.shape):
             if blocks[i, j] is None:
-                self._blocks[i, j] = ZeroOperator(range_types[i], source_types[j])
+                self._blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
-        self.source = BlockVectorSpace(source_types, id_=source_id)
-        self.range = BlockVectorSpace(range_types, id_=range_id)
-        self.num_source_blocks = len(source_types)
-        self.num_range_blocks = len(range_types)
+        self.source = BlockVectorSpace(source_spaces, id_=source_id) if self.blocked_source else source_spaces[0]
+        self.range = BlockVectorSpace(range_spaces, id_=range_id) if self.blocked_range else range_spaces[0]
+        self.num_source_blocks = len(source_spaces)
+        self.num_range_blocks = len(range_spaces)
         self.linear = all(op.linear for op in self._operators())
         self.build_parameter_type(*self._operators())
 
     @property
     def H(self):
-        return type(self)(np.vectorize(lambda op: op.H if op else None)(self._blocks.T))
-
-    @classmethod
-    def hstack(cls, operators, source_id='STATE', range_id='STATE'):
-        """Horizontal stacking of |Operators|.
-
-        Parameters
-        ----------
-        operators
-            An iterable where each item is an |Operator| or `None`.
-        """
-        blocks = np.array([[op for op in operators]])
-        return cls(blocks, source_id=source_id, range_id=range_id)
-
-    @classmethod
-    def vstack(cls, operators, source_id='STATE', range_id='STATE'):
-        """Vertical stacking of |Operators|.
-
-        Parameters
-        ----------
-        operators
-            An iterable where each item is an |Operator| or `None`.
-        """
-        blocks = np.array([[op] for op in operators])
-        return cls(blocks, source_id=source_id, range_id=range_id)
+        return self.adjoint_type(np.vectorize(lambda op: op.H if op else None)(self._blocks.T))
 
     def apply(self, U, mu=None):
         assert U in self.source
 
         V_blocks = [None for i in range(self.num_range_blocks)]
         for (i, j), op in np.ndenumerate(self._blocks):
-            Vi = op.apply(U.block(j), mu=mu)
+            Vi = op.apply(U.block(j) if self.blocked_source else U, mu=mu)
             if V_blocks[i] is None:
                 V_blocks[i] = Vi
             else:
                 V_blocks[i] += Vi
 
-        return self.range.make_array(V_blocks)
+        return self.range.make_array(V_blocks) if self.blocked_range else V_blocks[0]
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
 
         U_blocks = [None for j in range(self.num_source_blocks)]
         for (i, j), op in np.ndenumerate(self._blocks):
-            Uj = op.apply_adjoint(V.block(i), mu=mu)
+            Uj = op.apply_adjoint(V.block(i) if self.blocked_range else V, mu=mu)
             if U_blocks[j] is None:
                 U_blocks[j] = Uj
             else:
                 U_blocks[j] += Uj
 
-        U = self.source.make_array(U_blocks)
-
-        return U
+        return self.source.make_array(U_blocks) if self.blocked_source else U_blocks[0]
 
     def assemble(self, mu=None):
         blocks = np.empty(self._blocks.shape, dtype=object)
@@ -128,7 +100,7 @@ class BlockOperator(OperatorBase):
             return self.__class__(blocks)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-        if not all(isinstance(op, BlockOperator) for op in operators):
+        if not all(isinstance(op, BlockOperatorBase) for op in operators):
             return None
 
         assert operators[0] is self
@@ -159,7 +131,7 @@ class BlockOperator(OperatorBase):
             return R
 
         blocks = [process_row(row, space) for row, space in zip(self._blocks, self.range.subspaces)]
-        return self.range.make_array(blocks)
+        return self.range.make_array(blocks) if self.blocked_range else blocks[0]
 
     def as_source_array(self, mu=None):
 
@@ -171,7 +143,60 @@ class BlockOperator(OperatorBase):
             return R
 
         blocks = [process_col(col, space) for col, space in zip(self._blocks.T, self.source.subspaces)]
-        return self.source.make_array(blocks)
+        return self.source.make_array(blocks) if self.blocked_source else blocks[0]
+
+
+class BlockOperator(BlockOperatorBase):
+    """A matrix of arbitrary |Operators|.
+
+    This operator can be :meth:`applied <pymor.operators.interfaces.OperatorInterface.apply>`
+    to a compatible :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>`.
+
+    Parameters
+    ----------
+    blocks
+        Two-dimensional array-like where each entry is an |Operator| or `None`.
+    """
+
+    blocked_source = True
+    blocked_range = True
+
+
+class BlockRowOperator(BlockOperatorBase):
+    """A row vector of arbitrary |Operators|."""
+    blocked_source = True
+    blocked_range = False
+
+
+class BlockColumnOperator(BlockOperatorBase):
+    """A column vector of arbitrary |Operators|."""
+    blocked_source = False
+    blocked_range = True
+
+
+BlockOperator.adjoint_type = BlockOperator
+BlockRowOperator.adjoint_type = BlockColumnOperator
+BlockColumnOperator.adjoint_type = BlockRowOperator
+
+
+class BlockProjectionOperator(BlockRowOperator):
+
+    def __init__(self, block_space, component, source_id='STATE'):
+        assert isinstance(block_space, BlockVectorSpace)
+        assert 0 <= component < len(block_space.subspaces)
+        blocks = [ZeroOperator(space, space) if i != component else IdentityOperator(space)
+                  for i, space in enumerate(block_space.subspaces)]
+        super().__init__(blocks, source_id=source_id)
+
+
+class BlockEmbeddingOperator(BlockColumnOperator):
+
+    def __init__(self, block_space, component, range_id='STATE'):
+        assert isinstance(block_space, BlockVectorSpace)
+        assert 0 <= component < len(block_space.subspaces)
+        blocks = [ZeroOperator(space, space) if i != component else IdentityOperator(space)
+                  for i, space in enumerate(block_space.subspaces)]
+        super().__init__(blocks, range_id=range_id)
 
 
 class BlockDiagonalOperator(BlockOperator):
