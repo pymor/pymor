@@ -112,7 +112,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
     @property
     def H(self):
         if not self.parametric:
-            return self.assemble().T
+            return self.assemble().H
         else:
             return super().H
 
