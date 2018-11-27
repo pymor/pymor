@@ -99,7 +99,18 @@ class BlockOperatorBase(OperatorBase):
         else:
             return self.__class__(blocks)
 
+    def _assemble_lincomb_preprocess_operators(self, operators):
+        return [
+            BlockDiagonalOperator([IdentityOperator(s) for s in op.source.subspaces],
+                                  source_id=op.source.id, range_id=op.range.id) if isinstance(op, IdentityOperator) else
+            op
+            for op in operators if not isinstance(op, ZeroOperator)
+        ]
+
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+
+        operators = self._assemble_lincomb_preprocess_operators(operators)
+
         if not all(isinstance(op, BlockOperatorBase) for op in operators):
             return None
 
@@ -252,6 +263,9 @@ class BlockDiagonalOperator(BlockOperator):
             return self.__class__(blocks)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+
+        operators = self._assemble_lincomb_preprocess_operators(operators)
+
         if not all(isinstance(op, BlockOperator) for op in operators):
             return None
 
@@ -368,6 +382,9 @@ class SecondOrderSystemOperator(BlockOperator):
             return self.__class__(E, K)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+
+        operators = self._assemble_lincomb_preprocess_operators(operators)
+
         if not all(isinstance(op, BlockOperator) for op in operators):
             return None
 
@@ -511,6 +528,9 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
             return self.__class__(M, E, K, self.a, self.b)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+
+        operators = self._assemble_lincomb_preprocess_operators(operators)
+
         if not all(isinstance(op, BlockOperator) for op in operators):
             return None
 
