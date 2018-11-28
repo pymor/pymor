@@ -32,6 +32,7 @@ from pymor.core.logger import set_log_levels, getLogger
 from pymor.core.pickle import dump, dumps, load, loads
 
 from pymor.discretizations.basic import StationaryDiscretization, InstationaryDiscretization
+from pymor.discretizations.iosys import LTISystem, SecondOrderSystem, TransferFunction
 
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
 from pymor.domaindescriptions.polygonal import DiscDomain, CircularSectorDomain, PolygonalDomain
@@ -65,8 +66,14 @@ from pymor.parameters.functionals import (ProjectionParameterFunctional, Generic
 from pymor.parameters.spaces import CubicParameterSpace
 
 from pymor.reductors.basic import GenericRBReductor
+from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
+from pymor.reductors.h2 import IRKAReductor, TSIAReductor, TF_IRKAReductor
+from pymor.reductors.interpolation import LTI_BHIReductor, SO_BHIReductor, TFInterpReductor
 from pymor.reductors.parabolic import ParabolicRBReductor
+from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor, SOBTfvReductor,
+                                  SOBTReductor)
+from pymor.reductors.sor_irka import SOR_IRKAReductor
 
 from pymor.tools.random import new_random_state
 
