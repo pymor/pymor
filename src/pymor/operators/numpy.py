@@ -269,8 +269,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             will choose a least squares solver by default which may be
             undesirable.
         check_finite
-            Test if solution only containes finite values.
-        default_solver
+            Test if solution only contains finite values.
+        default_sparse_solver_backend
             Default sparse solver backend to use (scipy, pyamg, generic).
 
         Returns

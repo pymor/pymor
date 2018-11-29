@@ -154,7 +154,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                   default_solver='scipy_spsolve', default_least_squares_solver='scipy_least_squares_lsmr'):
     """Solve linear equation system.
 
-    Applies the inverse of `op` to the vectors in `rhs` using PyAMG.
+    Applies the inverse of `op` to the vectors in `rhs` using SciPy.
 
     Parameters
     ----------
@@ -165,7 +165,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
     options
         The |solver_options| to use (see :func:`solver_options`).
     check_finite
-        Test if solution only containes finite values.
+        Test if solution only contains finite values.
     default_solver
         Default solver to use (scipy_spsolve, scipy_bicgstab, scipy_bicgstab_spilu,
         scipy_lgmres, scipy_least_squares_lsmr, scipy_least_squares_lsqr).
