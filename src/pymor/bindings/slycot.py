@@ -7,52 +7,41 @@ from pymor.core.config import config
 
 if config.HAVE_SLYCOT:
     import numpy as np
+    import slycot
 
     from pymor.algorithms.genericsolvers import _parse_options
+    from pymor.algorithms.lyapunov import _solve_lyap_check_args, chol
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
-    from pymor.algorithms.lyapunov import _solve_lyap_check_args
+    from pymor.core.logger import getLogger
 
-    def lyap_solver_options():
-        """Returns available Lyapunov equation solvers with default |solver_options| for the Slycot backend.
+    def _solve_check(dtype, solver, sep, ferr):
+        if ferr > np.sqrt(np.finfo(dtype).eps):
+            logger = getLogger(solver)
+            logger.warning('Estimated forward relative error bound is large (ferr={:e}, sep={:e}). '
+                           'Result may not be accurate.'.format(ferr, sep))
+
+    def lyap_lrcf_solver_options():
+        """Returns available Lyapunov equation solvers with default solver options for the slycot backend.
 
         Returns
         -------
-        A dict of available solvers with default |solver_options|.
+        A dict of available solvers with default solver options.
         """
 
-        return {'slycot': {'type': 'slycot'}}
+        return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
-    def solve_lyap(A, E, B, trans=False, options=None):
-        """Find a factor of the solution of a Lyapunov equation.
+    def solve_lyap_lrcf(A, E, B, trans=False, options=None):
+        """Compute an approximate low-rank solution of a Lyapunov equation.
 
-        Returns factor :math:`Z` such that :math:`Z Z^T` is
-        approximately the solution :math:`X` of a Lyapunov equation (if
-        E is `None`).
+        See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
+        general description.
 
-        .. math::
-            A X + X A^T + B B^T = 0
-
-        or generalized Lyapunov equation
-
-        .. math::
-            A X E^T + E X A^T + B B^T = 0.
-
-        If trans is `True`, then it solves (if E is `None`)
-
-        .. math::
-            A^T X + X A + B^T B = 0
-
-        or
-
-        .. math::
-            A^T X E + E^T X A + B^T B = 0.
-
-        This uses the `slycot` package, in particular its interfaces to
-        SLICOT functions `SB03MD` (for the standard Lyapunov equations)
-        and `SG03AD` (for the generalized Lyapunov equations).
-        These methods are only applicable to medium-sized dense
-        problems and need access to the matrix data of all operators.
+        This function uses `slycot.sb03md` (if `E is None`) and
+        `slycot.sg03ad` (if `E is not None`), which are dense solvers
+        based on the Bartels-Stewart algorithm.
+        Therefore, we assume A, E, and B can be converted to |NumPy
+        arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix`.
 
         Parameters
         ----------
@@ -63,54 +52,106 @@ if config.HAVE_SLYCOT:
         B
             The |Operator| B.
         trans
-            If the dual equation needs to be solved.
+            Whether the first |Operator| in the Lyapunov equation is
+            transposed.
         options
-            The |solver_options| to use (see
-            :func:`lyap_solver_options`).
+            The solver options to use (see
+            :func:`lyap_lrcf_solver_options`).
 
         Returns
         -------
         Z
-            Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
+            Low-rank Cholesky factor of the Lyapunov equation solution,
+            |VectorArray| from `A.source`.
         """
+
         _solve_lyap_check_args(A, E, B, trans)
-        options = _parse_options(options, lyap_solver_options(), 'slycot', None, False)
-        assert options['type'] == 'slycot'
+        options = _parse_options(options, lyap_lrcf_solver_options(), 'slycot_bartels-stewart', None, False)
 
-        import slycot
-        A_mat = to_matrix(A, format='dense')
-        if E is not None:
-            E_mat = to_matrix(E, format='dense')
-        B_mat = to_matrix(B, format='dense')
-
-        n = A_mat.shape[0]
-        if not trans:
-            C = -B_mat.dot(B_mat.T)
-            trana = 'T'
+        if options['type'] == 'slycot_bartels-stewart':
+            X = solve_lyap_dense(A, E, B, trans=trans)
+            Z = chol(X)
         else:
-            C = -B_mat.T.dot(B_mat)
-            trana = 'N'
-        dico = 'C'
-
-        if E is None:
-            U = np.zeros((n, n))
-            X, scale, _, _, _ = slycot.sb03md(n, C, A_mat, U, dico, trana=trana)
-        else:
-            job = 'B'
-            fact = 'N'
-            Q = np.zeros((n, n))
-            Z = np.zeros((n, n))
-            uplo = 'L'
-            X = C
-            _, _, _, _, X, scale, _, _, _, _, _ = slycot.sg03ad(dico, job, fact, trana, uplo, n, A_mat, E_mat,
-                                                                Q, Z, X)
-
-        from pymor.bindings.scipy import chol
-        Z = chol(X, copy=False)
-
+            raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
         Z = A.source.from_numpy(np.array(Z).T)
-
         return Z
+
+    def lyap_dense_solver_options():
+        """Returns available Lyapunov equation solvers with default solver options for the Slycot backend.
+
+        Returns
+        -------
+        A dict of available solvers with default solver options.
+        """
+
+        return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
+
+    def solve_lyap_dense(A, E, B, trans=False, options=None):
+        """Compute the solution of a Lyapunov equation.
+
+        See :func:`pymor.algorithms.lyapunov.solve_lyap_dense` for a
+        general description.
+
+        This function uses `slycot.sb03md` (if `E is None`) and
+        `slycot.sg03ad` (if `E is not None`), which are based on the
+        Bartels-Stewart algorithm.
+
+        Parameters
+        ----------
+        A
+            The |Operator| A.
+        E
+            The |Operator| E or `None`.
+        B
+            The |Operator| B.
+        trans
+            Whether the first |Operator| in the Lyapunov equation is
+            transposed.
+        options
+            The solver options to use (see
+            :func:`lyap_dense_solver_options`).
+
+        Returns
+        -------
+        X
+            Lyapunov equation solution as a |NumPy array|.
+        """
+
+        _solve_lyap_check_args(A, E, B, trans)
+        options = _parse_options(options, lyap_dense_solver_options(), 'slycot_bartels-stewart', None, False)
+
+        if options['type'] == 'slycot_bartels-stewart':
+            A = to_matrix(A, format='dense')
+            n = A.shape[0]
+            if E is not None:
+                E = to_matrix(E, format='dense')
+            B = to_matrix(B, format='dense')
+            if not trans:
+                C = -B.dot(B.T)
+                trana = 'T'
+            else:
+                C = -B.T.dot(B)
+                trana = 'N'
+            dico = 'C'
+            job = 'B'
+            if E is None:
+                U = np.zeros((n, n))
+                X, scale, sep, ferr, _ = slycot.sb03md(n, C, A, U, dico, job=job, trana=trana)
+                _solve_check(A.dtype, 'slycot.sb03md', sep, ferr)
+            else:
+                fact = 'N'
+                uplo = 'L'
+                Q = np.zeros((n, n))
+                Z = np.zeros((n, n))
+                _, _, _, _, X, scale, sep, ferr, _, _, _ = slycot.sg03ad(dico, job, fact, trana, uplo,
+                                                                         n, A, E,
+                                                                         Q, Z, C)
+                _solve_check(A.dtype, 'slycot.sg03ad', sep, ferr)
+            X /= scale
+        else:
+            raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
+
+        return X
 
     def ricc_solver_options():
         """Returns available Riccati equation solvers with default |solver_options| for the SciPy backend.
@@ -183,7 +224,6 @@ if config.HAVE_SLYCOT:
         options = _parse_options(options, ricc_solver_options(), 'slycot', None, False)
         assert options['type'] == 'slycot'
 
-        import slycot
         A_mat = to_matrix(A, format='dense')
         B_mat = to_matrix(B, format='dense') if B else None
         C_mat = to_matrix(C, format='dense') if C else None
@@ -256,8 +296,7 @@ if config.HAVE_SLYCOT:
             if iwarn == 1:
                 print('slycot.sg02ad warning: solution may be inaccurate.')
 
-        from pymor.bindings.scipy import chol
-        Z = chol(X, copy=False)
+        Z = chol(X)
         Z = A.source.from_numpy(np.array(Z).T)
 
         return Z

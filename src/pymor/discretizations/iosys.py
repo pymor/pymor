@@ -210,7 +210,7 @@ class LTISystem(InputStateOutputSystem):
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     solver_options
-        The |solver_options| to use to solve the Lyapunov equations.
+        The solver options to use to solve the Lyapunov equations.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
@@ -303,7 +303,7 @@ class LTISystem(InputStateOutputSystem):
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         solver_options
-            The |solver_options| to use to solve the Lyapunov equations.
+            The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
             an `estimate(U, mu, discretization)` method. If `estimator` is
@@ -368,7 +368,7 @@ class LTISystem(InputStateOutputSystem):
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         solver_options
-            The |solver_options| to use to solve the Lyapunov equations.
+            The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
             an `estimate(U, mu, discretization)` method. If `estimator` is
@@ -418,7 +418,7 @@ class LTISystem(InputStateOutputSystem):
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         solver_options
-            The |solver_options| to use to solve the Lyapunov equations.
+            The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
             an `estimate(U, mu, discretization)` method. If `estimator` is
@@ -471,7 +471,7 @@ class LTISystem(InputStateOutputSystem):
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         solver_options
-            The |solver_options| to use to solve the Lyapunov equations.
+            The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
             an `estimate(U, mu, discretization)` method. If `estimator` is
@@ -856,7 +856,7 @@ class SecondOrderSystem(InputStateOutputSystem):
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     solver_options
-        The |solver_options| to use to solve the Lyapunov equations.
+        The solver options to use to solve the Lyapunov equations.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
@@ -951,7 +951,7 @@ class SecondOrderSystem(InputStateOutputSystem):
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         solver_options
-            The |solver_options| to use to solve the Lyapunov equations.
+            The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
             an `estimate(U, mu, discretization)` method. If `estimator` is

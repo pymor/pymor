@@ -6,75 +6,41 @@
 import scipy.linalg as spla
 import numpy as np
 
-from pymor.operators.interfaces import OperatorInterface
-from pymor.operators.constructions import IdentityOperator
+from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
-from pymor.algorithms.genericsolvers import _parse_options
+from pymor.operators.constructions import IdentityOperator
 
 
-def solve_lyap(A, E, B, trans=False, options=None):
-    """Find a factor of the solution of a Lyapunov equation.
-
-    Returns factor :math:`Z` such that :math:`Z Z^T` is approximately
-    the solution :math:`X` of a Lyapunov equation (if E is `None`).
-
-    .. math::
-        A X + X A^T + B B^T = 0
-
-    or generalized Lyapunov equation
-
-    .. math::
-        A X E^T + E X A^T + B B^T = 0.
-
-    If trans is `True`, then solve (if E is `None`)
-
-    .. math::
-        A^T X + X A + B^T B = 0
-
-    or
-
-    .. math::
-        A^T X E + E^T X A + B^T B = 0.
+def lyap_lrcf_solver_options(lradi_tol=1e-10,
+                             lradi_maxiter=500,
+                             lradi_shifts='projection_shifts',
+                             projection_shifts_z_columns=1,
+                             projection_shifts_init_maxiter=20,
+                             projection_shifts_init_seed=None,
+                             projection_shifts_implicit_subspace=True):
+    """Returns available Lyapunov equation solvers with default solver options.
 
     Parameters
     ----------
-    A
-        The |Operator| A.
-    E
-        The |Operator| E or `None`.
-    B
-        The |Operator| B.
-    trans
-        If the dual equation needs to be solved.
-    options
-        The |solver_options| to use (see :func:`lyap_solver_options`).
+    lradi_tol
+        See :func:`solve_lyap_lrcf`.
+    lradi_maxiter
+        See :func:`solve_lyap_lrcf`.
+    lradi_shifts
+        See :func:`solve_lyap_lrcf`.
+    projection_shifts_z_columns
+        See :func:`projection_shifts`.
+    projection_shifts_init_maxiter
+        See :func:`projection_shifts_init`.
+    projection_shifts_init_seed
+        See :func:`projection_shifts_init`.
+    projection_shifts_implicit_subspace
+        See :func:`projection_shifts`.
 
     Returns
     -------
-    Z
-        Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
-    """
-    _solve_lyap_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_solver_options(), 'lradi', None, False)
-    if options['type'] == 'lradi':
-        return lradi(A, E, B, trans, options)
-    else:
-        raise ValueError('Unknown solver type')
-
-
-def lyap_solver_options(lradi_tol=1e-10,
-                        lradi_maxiter=500,
-                        lradi_shifts='projection_shifts',
-                        projection_shifts_z_columns=1,
-                        projection_shifts_init_maxiter=20,
-                        projection_shifts_init_seed=None,
-                        projection_shifts_implicit_subspace=True):
-    """Returns available Lyapunov equation solvers with default |solver_options|.
-
-    Returns
-    -------
-    A dict of available solvers with default |solver_options|.
+    A dict of available solvers with default solver options.
     """
     return {'lradi': {'type': 'lradi',
                       'tol': lradi_tol,
@@ -88,9 +54,19 @@ def lyap_solver_options(lradi_tol=1e-10,
                                              'implicit_subspace': projection_shifts_implicit_subspace}}}}
 
 
-def lradi(A, E, B, trans=False, options=None):
-    """Find a factor of the solution of a Lyapunov equation using the
-    low-rank ADI iteration as described in Algorithm 4.3 in [PK16]_.
+def solve_lyap_lrcf(A, E, B, trans=False, options=None):
+    """Compute an approximate low-rank solution of a Lyapunov equation.
+
+    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
+    general description.
+
+    This function uses the low-rank ADI iteration as described in
+    Algorithm 4.3 in [PK16]_.
+    We assume `B.as_range_array` (`B.as_source_array`) to work if trans
+    is `False` (`True`).
+    Additionally, in :func:`projection_shifts_init` we assume
+    `A.source.from_numpy` to be implemented if projecting (A, E) with B
+    does not give stable eigenvalues.
 
     Parameters
     ----------
@@ -101,23 +77,26 @@ def lradi(A, E, B, trans=False, options=None):
     B
         The |Operator| B.
     trans
-        If the dual equation needs to be solved.
+        Whether the first |Operator| in the Lyapunov equation is
+        transposed.
     options
-        The |solver_options| to use (see :func:`lyap_solver_options`).
+        The solver options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
     Z
-        Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
+        Low-rank Cholesky factor of the Lyapunov equation solution,
+        |VectorArray| from `A.source`.
     """
-    logger = getLogger('pymor.algorithms.lyapunov.lradi')
+    logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')
 
+    options = _parse_options(options, lyap_lrcf_solver_options(), 'lradi', None, False)
     shift_options = options['shift_options'][options['shifts']]
     if shift_options['type'] == 'projection_shifts':
         init_shifts = projection_shifts_init
         iteration_shifts = projection_shifts
     else:
-        raise ValueError('Unknown lradi shift strategy')
+        raise ValueError('Unknown lradi shift strategy.')
 
     if E is None:
         E = IdentityOperator(A.source)
@@ -198,13 +177,13 @@ def projection_shifts_init(A, E, B, shift_options):
     for i in range(shift_options['init_maxiter']):
         Q = gram_schmidt(B, atol=0, rtol=0)
         shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
-        shifts = shifts[np.real(shifts) < 0]
+        shifts = shifts[shifts.real < 0]
         if shifts.size == 0:
             # use random subspace instead of span{B} (with same dimensions)
             if shift_options['init_seed'] is not None:
                 np.random.seed(shift_options['init_seed'])
                 np.random.seed(np.random.random() + i)
-            B = B.space.make_array(np.random.rand(len(B), B.space.dim))
+            B = B.space.from_numpy(np.random.randn(len(B), B.space.dim))
         else:
             return shifts
     raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')
@@ -223,11 +202,14 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
     E
         The |Operator| E from the corresponding Lyapunov equation.
     Z
-        A |VectorArray| representing the currently computed low-rank solution factor.
+        A |VectorArray| representing the currently computed low-rank
+        solution factor.
     W
-        A |VectorArray| representing the currently computed low-rank residual factor.
+        A |VectorArray| representing the currently computed low-rank
+        residual factor.
     prev_shifts
-        A |NumPy array| containing the set of all previously used shift parameters.
+        A |NumPy array| containing the set of all previously used shift
+        parameters.
     shift_options
         The shift options to use (see :func:`lyap_solver_options`).
 
@@ -284,11 +266,10 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
 
         s, v = spla.svd(Vu.gramian(), full_matrices=False)[1:3]
         P = v.T.dot(np.diag(1. / np.sqrt(s)))
-        Q = Vu.to_numpy().T.dot(P)
+        Q = Vu.lincomb(P.T)
 
-        E_V = E.apply(Vu).to_numpy().T
-        T = Q.T.dot(E_V)
-        Ap = Q.T.dot(W.to_numpy().T).dot(G.T).dot(P) + T.dot(B.dot(P))
+        T = E.apply2(Q, Vu)
+        Ap = Q.dot(W).dot(G.T).dot(P) + T.dot(B.dot(P))
         Ep = T.dot(P)
     else:
         Q = gram_schmidt(Vu, atol=0, rtol=0)
@@ -296,16 +277,8 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
         Ep = E.apply2(Q, Q)
 
     shifts = spla.eigvals(Ap, Ep)
-    shifts = shifts[np.real(shifts) < 0]
+    shifts = shifts[shifts.real < 0]
     if shifts.size == 0:
         return np.concatenate((prev_shifts, prev_shifts))
     else:
         return np.concatenate((prev_shifts, shifts))
-
-
-def _solve_lyap_check_args(A, E, B, trans=False):
-    assert isinstance(A, OperatorInterface) and A.linear
-    assert A.source == A.range
-    assert isinstance(B, OperatorInterface) and B.linear
-    assert not trans and B.range == A.source or trans and B.source == A.source
-    assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source

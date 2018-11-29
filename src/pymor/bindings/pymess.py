@@ -10,67 +10,56 @@ if config.HAVE_PYMESS:
     import pymess
 
     from pymor.algorithms.genericsolvers import _parse_options
+    from pymor.algorithms.lyapunov import MAT_EQN_SPARSE_MIN_SIZE, _solve_lyap_check_args, chol
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
-    from pymor.algorithms.lyapunov import _solve_lyap_check_args
     from pymor.core.defaults import defaults
     from pymor.operators.constructions import IdentityOperator
 
-    PYMESS_MIN_SPARSE_SIZE = 1000
+    def lyap_lrcf_solver_options(lradi_opts=None):
+        """Returns available Lyapunov equation solvers with default solver options for the pymess backend.
 
-    def lyap_solver_options():
-        """Returns available Lyapunov equation solvers with default |solver_options| for the pymess backend.
+        Parameters
+        ----------
+        lradi_opts
+            Options for `pymess.lradi` (see `pymess.Options()`).
 
         Returns
         -------
-        A dict of available solvers with default |solver_options|.
+        A dict of available solvers with default solver options.
         """
-        opts = pymess.Options()
-        opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
 
-        return {'pymess':       {'type': 'pymess',
-                                 'opts': opts},
-                'pymess_lyap':  {'type': 'pymess_lyap'},
+        if lradi_opts is None:
+            lradi_opts = pymess.Options()
+            lradi_opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
+
+        return {'pymess_glyap': {'type': 'pymess_glyap'},
                 'pymess_lradi': {'type': 'pymess_lradi',
-                                 'opts': opts}}
+                                 'opts': lradi_opts}}
 
-    @defaults('default_solver')
-    def solve_lyap(A, E, B, trans=False, options=None, default_solver='pymess'):
-        """Find a factor of the solution of a Lyapunov equation.
+    def solve_lyap_lrcf(A, E, B, trans=False, options=None):
+        """Compute an approximate low-rank solution of a Lyapunov equation.
 
-        Returns factor :math:`Z` such that :math:`Z Z^T` is
-        approximately the solution :math:`X` of a Lyapunov equation (if
-        E is `None`).
+        See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
+        general description.
 
-        .. math::
-            A X + X A^T + B B^T = 0
+        This function uses `pymess`, in particular its `glyap` and
+        `lradi` methods:
 
-        or a generalized Lyapunov equation
+        - `glyap` is a dense solver and expects
+          :func:`~pymor.algorithms.to_matrix.to_matrix` to work for A,
+          E, and B,
+        - `lradi` is a sparse solver and expects
+          :func:`~pymor.algorithms.to_matrix.to_matrix` to work for B
+          and
+          :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`
+          and
+          :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`
+          to be implemented for `A.source`.
 
-        .. math::
-            A X E^T + E X A^T + B B^T = 0.
-
-        If trans is `True`, then it solves (if E is `None`)
-
-        .. math::
-            A^T X + X A + B^T B = 0
-
-        or
-
-        .. math::
-            A^T X E + E^T X A + B^T B = 0.
-
-        This uses the `pymess` package, in particular its `lyap` and
-        `lradi` methods.
-        Both methods can be used for large-scale problems.
-        The restrictions are:
-
-            - `lyap` needs access to all matrix data, i.e., it expects
-              :func:`~pymor.algorithms.to_matrix.to_matrix` to work for
-              A, E, and B,
-            - `lradi` needs access to the data of the operator B, i.e.,
-              it expects :func:`~pymor.algorithms.to_matrix.to_matrix`
-              to work for B.
+        If the solver is not specified using the options argument,
+        `glyap` is used for small problems (smaller than
+        `MAT_EQN_SPARSE_MIN_SIZE`) and `lradi` for large problems.
 
         Parameters
         ----------
@@ -81,55 +70,98 @@ if config.HAVE_PYMESS:
         B
             The |Operator| B.
         trans
-            If the dual equation needs to be solved.
+            Whether the first |Operator| in the Lyapunov equation is
+            transposed.
         options
-            The |solver_options| to use (see
-            :func:`lyap_solver_options`).
-        default_solver
-            The solver to use when no `options` are specified
-            (`'pymess'`, `'pymess_lyap'`, or `'pymess_lradi'`).
+            The solver options to use (see
+            :func:`lyap_lrcf_solver_options`).
 
         Returns
         -------
         Z
-            Low-rank factor of the Lyapunov equation solution,
+            Low-rank Cholesky factor of the Lyapunov equation solution,
             |VectorArray| from `A.source`.
         """
+
         _solve_lyap_check_args(A, E, B, trans)
-        options = _parse_options(options, lyap_solver_options(), default_solver, None, False)
+        default_solver = 'pymess_lradi' if A.source.dim >= MAT_EQN_SPARSE_MIN_SIZE else 'pymess_glyap'
+        options = _parse_options(options, lyap_lrcf_solver_options(), default_solver, None, False)
 
-        if options['type'] == 'pymess':
-            if A.source.dim >= PYMESS_MIN_SPARSE_SIZE:
-                options = dict(options, type='pymess_lradi')  # do not modify original dict!
-            else:
-                options = dict(options, type='pymess_lyap')  # do not modify original dict!
-
-        if options['type'] == 'pymess_lyap':
-            A_mat = to_matrix(A, format='dense') if A.source.dim < PYMESS_MIN_SPARSE_SIZE else to_matrix(A)
-            if E is not None:
-                E_mat = to_matrix(E, format='dense') if A.source.dim < PYMESS_MIN_SPARSE_SIZE else to_matrix(E)
-            else:
-                E_mat = None
-            B_mat = to_matrix(B, format='dense')
-            if not trans:
-                Z = pymess.lyap(A_mat, E_mat, B_mat)
-            else:
-                if E is None:
-                    Z = pymess.lyap(A_mat.T, None, B_mat.T)
-                else:
-                    Z = pymess.lyap(A_mat.T, E_mat.T, B_mat.T)
+        if options['type'] == 'pymess_glyap':
+            X = solve_lyap_dense(A, E, B, trans=trans)
+            Z = chol(X)
         elif options['type'] == 'pymess_lradi':
             opts = options['opts']
-            if trans:
-                opts.type = pymess.MESS_OP_TRANSPOSE
-            else:
+            if not trans:
                 opts.type = pymess.MESS_OP_NONE
+            else:
+                opts.type = pymess.MESS_OP_TRANSPOSE
             eqn = LyapunovEquation(opts, A, E, B)
             Z, status = pymess.lradi(eqn, opts)
+        else:
+            raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
 
         Z = A.source.from_numpy(np.array(Z).T)
-
         return Z
+
+    def lyap_dense_solver_options():
+        """Returns available Lyapunov equation solvers with default solver options for the pymess backend.
+
+        Returns
+        -------
+        A dict of available solvers with default solver options.
+        """
+
+        return {'pymess_glyap': {'type': 'pymess_glyap'}}
+
+    def solve_lyap_dense(A, E, B, trans=False, options=None):
+        """Compute the solution of a Lyapunov equation.
+
+        See :func:`pymor.algorithms.lyapunov.solve_lyap_dense` for a
+        general description.
+
+        This function uses `pymess.glyap`.
+
+        Parameters
+        ----------
+        A
+            The |Operator| A.
+        E
+            The |Operator| E or `None`.
+        B
+            The |Operator| B.
+        trans
+            Whether the first |Operator| in the Lyapunov equation is
+            transposed.
+        options
+            The solver options to use (see
+            :func:`lyap_dense_solver_options`).
+
+        Returns
+        -------
+        X
+            Lyapunov equation solution as a |NumPy array|.
+        """
+
+        _solve_lyap_check_args(A, E, B, trans)
+        options = _parse_options(options, lyap_lrcf_solver_options(), 'pymess_glyap', None, False)
+
+        if options['type'] == 'pymess_glyap':
+            A = to_matrix(A, format='dense')
+            if E is not None:
+                E = to_matrix(E, format='dense')
+            B = to_matrix(B, format='dense')
+            if not trans:
+                Y = B.dot(B.T)
+                op = pymess.MESS_OP_NONE
+            else:
+                Y = B.T.dot(B)
+                op = pymess.MESS_OP_TRANSPOSE
+            X = pymess.glyap(A, E, Y, op=op)[0]
+        else:
+            raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
+
+        return X
 
     def ricc_solver_options():
         """Returns available Riccati equation solvers with default |solver_options| for the pymess backend.
@@ -221,7 +253,7 @@ if config.HAVE_PYMESS:
         options = _parse_options(options, ricc_solver_options(), default_solver, None, False)
 
         if options['type'] == 'pymess':
-            if A.source.dim >= PYMESS_MIN_SPARSE_SIZE:
+            if A.source.dim >= MAT_EQN_SPARSE_MIN_SIZE:
                 options = dict(options, type='pymess_lrnm')  # do not modify original dict!
             else:
                 options = dict(options, type='pymess_care')  # do not modify original dict!
@@ -229,9 +261,9 @@ if config.HAVE_PYMESS:
         if options['type'] == 'pymess_care':
             if Q is not None or R is not None or G is not None:
                 raise NotImplementedError
-            A_mat = to_matrix(A, format='dense') if A.source.dim < PYMESS_MIN_SPARSE_SIZE else to_matrix(A)
+            A_mat = to_matrix(A, format='dense') if A.source.dim < MAT_EQN_SPARSE_MIN_SIZE else to_matrix(A)
             if E is not None:
-                E_mat = to_matrix(E, format='dense') if A.source.dim < PYMESS_MIN_SPARSE_SIZE else to_matrix(E)
+                E_mat = to_matrix(E, format='dense') if A.source.dim < MAT_EQN_SPARSE_MIN_SIZE else to_matrix(E)
             else:
                 E_mat = None
             B_mat = to_matrix(B, format='dense') if B else None

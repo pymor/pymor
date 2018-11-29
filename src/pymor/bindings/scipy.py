@@ -7,9 +7,10 @@
 import numpy as np
 from packaging.version import Version
 import scipy.version
+from scipy.linalg import solve, solve_continuous_lyapunov, solve_continuous_are
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 
-from pymor.algorithms.lyapunov import _solve_lyap_check_args
+from pymor.algorithms.lyapunov import _solve_lyap_check_args, chol
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.config import config
@@ -320,45 +321,31 @@ def matrix_astype_nocopy(matrix, dtype):
         return matrix.astype(dtype)
 
 
-def lyap_solver_options():
-    """Returns available Lyapunov equation solvers with default |solver_options| for the SciPy backend.
+def lyap_lrcf_solver_options():
+    """Returns available Lyapunov equation solvers with default solver options for the SciPy backend.
 
     Returns
     -------
-    A dict of available solvers with default |solver_options|.
+    A dict of available solvers with default solver options.
     """
 
     return {'scipy': {'type': 'scipy'}}
 
 
-def solve_lyap(A, E, B, trans=False, options=None):
-    """Find a factor of the solution of a Lyapunov equation.
+def solve_lyap_lrcf(A, E, B, trans=False, options=None):
+    """Compute an approximate low-rank solution of a Lyapunov equation.
 
-    Returns factor :math:`Z` such that :math:`Z Z^T` is approximately
-    the solution :math:`X` of a Lyapunov equation (if E is `None`).
+    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a general
+    description.
 
-    .. math::
-        A X + X A^T + B B^T = 0
+    This function uses `scipy.linalg.solve_continuous_lyapunov`, which
+    is a dense solver for Lyapunov equations with E=I.
+    Therefore, we assume A, E, and B can be converted to |NumPy arrays|
+    using :func:`~pymor.algorithms.to_matrix.to_matrix`.
 
-    or generalized Lyapunov equation
-
-    .. math::
-        A X E^T + E X A^T + B B^T = 0.
-
-    If trans is `True`, then it solves (if E is `None`)
-
-    .. math::
-        A^T X + X A + B^T B = 0
-
-    or
-
-    .. math::
-        A^T X E + E^T X A + B^T B = 0.
-
-    This uses the `scipy.linalg.spla.solve_continuous_lyapunov` method.
-    It is only applicable to the standard Lyapunov equation (E = I).
-    Furthermore, it can only solve medium-sized dense problems and
-    assumes access to the matrix data of all operators.
+    .. note::
+        If E is not `None`, the problem will be reduced to a standard
+        continuous-time algebraic Lyapunov equation by inverting E.
 
     Parameters
     ----------
@@ -369,34 +356,94 @@ def solve_lyap(A, E, B, trans=False, options=None):
     B
         The |Operator| B.
     trans
-        If the dual equation needs to be solved.
+        Whether the first |Operator| in the Lyapunov equation is
+        transposed.
     options
-        The |solver_options| to use (see :func:`lyap_solver_options`).
+        The solver options to use (see
+        :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
     Z
-        Low-rank factor of the Lyapunov equation solution, |VectorArray|
-        from `A.source`.
+        Low-rank Cholesky factor of the Lyapunov equation solution,
+        |VectorArray| from `A.source`.
     """
+
     _solve_lyap_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_solver_options(), 'scipy', None, False)
-    assert options['type'] == 'scipy'
+    options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
 
-    if E is not None:
-        raise NotImplementedError
-    import scipy.linalg as spla
-    A_mat = to_matrix(A, format='dense')
-    B_mat = to_matrix(B, format='dense')
-    if not trans:
-        X = spla.solve_continuous_lyapunov(A_mat, -B_mat.dot(B_mat.T))
-    else:
-        X = spla.solve_continuous_lyapunov(A_mat.T, -B_mat.T.dot(B_mat))
-
-    Z = chol(X, copy=False)
+    X = solve_lyap_dense(A, E, B, trans=trans, options=options)
+    Z = chol(X)
     Z = A.source.from_numpy(np.array(Z).T)
-
     return Z
+
+
+def lyap_dense_solver_options():
+    """Return available dense Lyapunov equation solvers with default solver options for the SciPy backend.
+
+    Returns
+    -------
+    A dict of available solvers with default solver options.
+    """
+
+    return {'scipy': {'type': 'scipy'}}
+
+
+def solve_lyap_dense(A, E, B, trans=False, options=None):
+    """Compute the solution of a Lyapunov equation.
+
+    See :func:`pymor.algorithms.lyapunov.solve_lyap_dense` for a
+    general description.
+
+    This function uses `scipy.linalg.solve_continuous_lyapunov`, which
+    is a dense solver for Lyapunov equations with E=I.
+
+    .. note::
+        If E is not `None`, the problem will be reduced to a standard
+        continuous-time algebraic Lyapunov equation by inverting E.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A.
+    E
+        The |Operator| E or `None`.
+    B
+        The |Operator| B.
+    trans
+        Whether the first |Operator| in the Lyapunov equation is
+        transposed.
+    options
+        The solver options to use (see
+        :func:`lyap_dense_solver_options`).
+
+    Returns
+    -------
+    X
+        Lyapunov equation solution as a |NumPy array|.
+    """
+
+    _solve_lyap_check_args(A, E, B, trans)
+    options = _parse_options(options, lyap_dense_solver_options(), 'scipy', None, False)
+
+    if options['type'] == 'scipy':
+        A = to_matrix(A, format='dense')
+        B = to_matrix(B, format='dense')
+        if E is not None:
+            E = to_matrix(E, format='dense')
+            if not trans:
+                A = solve(E, A)
+                B = solve(E, B)
+            else:
+                A = solve(E.T, A.T).T
+                B = solve(E.T, B.T).T
+        if trans:
+            A = A.T
+            B = B.T
+        X = solve_continuous_lyapunov(A, -B.dot(B.T))
+    else:
+        raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
+    return X
 
 
 def ricc_solver_options():
@@ -433,7 +480,7 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
 
     where Q can be replaced by B * B^T and C^T * R^{-1} * C by G.
 
-    This uses the `scipy.linalg.spla.solve_continuous_are` method.
+    This uses the `scipy.linalg.solve_continuous_are` method.
     Generalized Riccati equation is not supported.
     It can only solve medium-sized dense problems and assumes access to
     the matrix data of all operators.
@@ -473,7 +520,6 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
     if E is not None or G is not None:
         raise NotImplementedError
 
-    import scipy.linalg as spla
     A_mat = to_matrix(A, format='dense')
     B_mat = to_matrix(B, format='dense') if B else None
     C_mat = to_matrix(C, format='dense') if C else None
@@ -488,13 +534,13 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
     if not trans:
         if Q is None:
             Q_mat = C_mat.T.dot(C_mat)
-        X = spla.solve_continuous_are(A_mat, B_mat, Q_mat, R_mat)
+        X = solve_continuous_are(A_mat, B_mat, Q_mat, R_mat)
     else:
         if Q is None:
             Q_mat = B_mat.dot(B_mat.T)
-        X = spla.solve_continuous_are(A_mat.T, C_mat.T, Q_mat, R_mat)
+        X = solve_continuous_are(A_mat.T, C_mat.T, Q_mat, R_mat)
 
-    Z = chol(X, copy=False)
+    Z = chol(X)
     Z = A.source.from_numpy(np.array(Z).T)
 
     return Z
@@ -543,34 +589,3 @@ def _solve_ricc_check_args(A, E, B, Q, C, R, G, trans):
             if R is not None:
                 assert isinstance(R, OperatorInterface) and R.linear
                 assert R.source == R.range == C.range
-
-
-def chol(A, copy=True):
-    """Cholesky decomposition.
-
-    .. note::
-        This implementation uses SVD to compute the Cholesky factor (can
-        be used for singular matrices).
-
-    Parameters
-    ----------
-    A
-        Symmetric positive semidefinite matrix as |NumPy array|.
-    copy
-        Should A be copied.
-
-    Returns
-    -------
-    L
-        Cholesky factor of A (in the sense that L * L^T approximates A).
-    """
-    assert isinstance(A, np.ndarray)
-    assert A.shape[0] == A.shape[1]
-
-    if copy:
-        A = A.copy()
-
-    import scipy.linalg as spla
-    U, s, _ = spla.svd(A, lapack_driver='gesvd')
-    L = U.dot(np.diag(np.sqrt(s)))
-    return L
