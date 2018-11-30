@@ -5,6 +5,7 @@ cd "${PYMOR_ROOT}"
 
 # any failure here should fail the whole test
 set -e
+sudo pip install -U pip
 
 # check if requirements files are up-to-date
 ./dependencies.py && git diff --exit-code requirements*
