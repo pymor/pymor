@@ -41,7 +41,7 @@ class PatchVisualizer(BasicInterface):
             import sys
             if 'matplotlib' in sys.modules:
                 matplotlib = sys.modules['matplotlib']
-                if hasattr(matplotlib, 'backends') and matplotlib.backends.backend == 'nbAgg':
+                if matplotlib.get_backend() == 'nbAgg':
                     backend = 'jupyter'
         self.backend = backend
         self.block = block
