@@ -42,6 +42,7 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     rstcheck README.txt
 
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
+    sudo pip install check-manifest
     check-manifest -p python ${PWD}
     pushd ${SDIST_DIR}
     sudo pip install $(ls ${SDIST_DIR})
