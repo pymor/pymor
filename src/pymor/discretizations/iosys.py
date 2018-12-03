@@ -25,7 +25,8 @@ class InputOutputSystem(DiscretizationBase):
 
     def __init__(self, input_space, output_space, state_space=None, cont_time=True, cache_region='memory', name=None, **kwargs):
         # ensure that state_space can be distinguished from input and output space
-        assert state_space is None or (state_space != input_space and state_space != output_space)
+        # ensure that ids are different to make sure that also reduced spaces can be differentiated
+        assert state_space is None or (state_space.id != input_space.id and state_space.id != output_space.id)
         self.input_space = input_space
         self.output_space = output_space
         self.state_space = state_space
