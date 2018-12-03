@@ -199,7 +199,7 @@ class GenericPGReductor(BasicInterface):
             if not op:
                 return None
             if k == biorthogonal_product:
-                return IdentityOperator(NumpyVectorSpace(len(V), id_='STATE'))
+                return IdentityOperator(NumpyVectorSpace(len(V), V.space.id))
             else:
                 return project(op,
                                range_basis=W if W in op.range else None,

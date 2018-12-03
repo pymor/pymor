@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from pymor.discretizations.iosys import TransferFunction
 from pymor.reductors.interpolation import TFInterpReductor
 from pymor.reductors.h2 import TF_IRKAReductor
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if __name__ == '__main__':
     tau = 0.1
@@ -25,7 +26,7 @@ if __name__ == '__main__':
     def dH(s):
         return np.array([[-(tau * s + tau + 1) * np.exp(-s) / (tau * s + 1) ** 2]])
 
-    tf = TransferFunction(1, 1, H, dH)
+    tf = TransferFunction(NumpyVectorSpace(1, 'INPUT'), NumpyVectorSpace(1, 'OUTPUT'), H, dH)
 
     w = np.logspace(-1, 3, 1000)
 
