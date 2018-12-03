@@ -2,6 +2,7 @@
 
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
+WAIT="${PYMOR_ROOT}/.ci/travis/travis_wait_new.bash"
 
 # any failure here should fail the whole test
 set -e
@@ -49,7 +50,8 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     pushd ${SDIST_DIR}
     sudo pip install $(ls ${SDIST_DIR})
     popd
-    xvfb-run -a py.test -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
+    # without the WAIT travis terminates the tests after 10 min w/o output
+    ${WAIT} 30 xvfb-run -a py.test -s -r sxX --pyargs pymortests -c .ci/installed_pytest.ini |& grep -v 'pymess/lrnm.py:82: PendingDeprecationWarning'
 
     coverage_submit
 elif [ "${PYMOR_PYTEST_MARKER}" == "MPI" ] ; then
