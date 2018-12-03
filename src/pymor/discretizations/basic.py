@@ -340,3 +340,35 @@ class InstationaryDiscretization(DiscretizationBase):
         U0 = self.initial_data.as_range_array(mu)
         return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                        initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
+
+    def to_lti(self, output='output_functional'):
+        """Convert discretization to |LTISystem|.
+
+        This method interprets the given discretization as an |LTISystem|
+        in the following way:
+
+            - self.operator        -> A
+            self.rhs               -> B
+            self.operators[output] -> C
+            None                   -> D
+            self.mass              -> E
+
+        Parameters
+        ----------
+        output
+            Key in `self.operators` to use as output functional.
+        """
+        A = - self.operator
+        B = self.rhs
+        C = self.operators[output]
+        E = self.mass
+
+        if not all(op.linear for op in [A, B, C, E]):
+            raise ValueError('Operators not linear.')
+        if A.source.id == B.source.id:
+            raise ValueError('State space must have different id than input space.')
+        if A.source.id == C.range.id:
+            raise ValueError('State space must have different id than output space.')
+
+        from pymor.discretizations.iosys import LTISystem
+        return LTISystem(A, B, C, E=E, visualizer=self.visualizer)
