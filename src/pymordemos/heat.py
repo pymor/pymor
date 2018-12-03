@@ -24,7 +24,7 @@ import numpy as np
 import scipy.sparse as sps
 import matplotlib.pyplot as plt
 
-from pymor.discretizations.iosys import LTISystem
+from pymor.basic import *
 from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
 
@@ -35,25 +35,24 @@ if __name__ == '__main__':
     # dimension of the system
     n = 100
 
-    # assemble A, B, and C
-    A = sps.diags([n * [-2 * (n - 1) ** 2],
-                   (n - 1) * [(n - 1) ** 2],
-                   (n - 1) * [(n - 1) ** 2]],
-                  [0, -1, 1],
-                  format='csc')
-    A[0, 0] = -2 * n * (n - 1)
-    A[0, 1] *= 2
-    A[-1, -1] = -2 * n * (n - 1)
-    A[-1, -2] *= 2
+    p = InstationaryProblem(
+        StationaryProblem(
+            domain=LineDomain([0.,1.], left='robin', right='robin'),
+            diffusion=ConstantFunction(1., 1),
+            robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[...,0] < 0.5) * 1.', 1)),
+            functionals={'output': ('l2_boundary', ExpressionFunction('(x[...,0] > 0.5) * 1.', 1))}
+        ),
+        ConstantFunction(0., 1),
+        T=3.
+    )
 
-    B = np.zeros((n, 1))
-    B[0, 0] = 2 * (n - 1)
+    d, _ = discretize_instationary_cg(p, diameter=1/(n-1), nt=100)
 
-    C = np.zeros((1, n))
-    C[0, n - 1] = 1
+    U = d.solve()
+    print(U[-1].to_numpy().ravel())
+    d.visualize(d.solve())
 
-    # LTI system
-    lti = LTISystem.from_matrices(A, B, C)
+    lti = d.to_lti()
 
     print('n = {}'.format(lti.n))
     print('m = {}'.format(lti.m))
