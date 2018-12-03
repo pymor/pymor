@@ -6,6 +6,7 @@
 import numpy as np
 
 from pymor.core.interfaces import ImmutableInterface
+from pymor.tools.frozendict import FrozenDict
 
 
 class StationaryProblem(ImmutableInterface):
@@ -45,6 +46,16 @@ class StationaryProblem(ImmutableInterface):
         |Function| providing the Neumann boundary values.
     robin_data
         Tuple of two |Functions| providing the Robin parameter and boundary values.
+    functionals
+        `Dict` of additional functionals to assemble. Each value must be a tuple
+        of the form `(functional_type, data)` where `functional_type` is a string
+        defining the type of functional to assemble and `data` is a |Function| holding
+        the corresponding coefficient function. Currently implemented `functional_types`
+        are:
+
+            :l2:            Evaluate the l2-product with the given data function.
+            :l2_boundary:   Evaluate the l2-product with the given data function
+                            on the boundary.
     parameter_space
         |ParameterSpace| for the problem.
     name
@@ -64,13 +75,14 @@ class StationaryProblem(ImmutableInterface):
     dirichlet_data
     neumann_data
     robin_data
+    functionals
     """
 
     def __init__(self, domain,
                  rhs=None, diffusion=None,
                  advection=None, nonlinear_advection=None, nonlinear_advection_derivative=None,
                  reaction=None, nonlinear_reaction=None, nonlinear_reaction_derivative=None,
-                 dirichlet_data=None, neumann_data=None, robin_data=None,
+                 dirichlet_data=None, neumann_data=None, robin_data=None, functionals=None,
                  parameter_space=None, name=None):
 
         assert rhs is None \
@@ -97,6 +109,9 @@ class StationaryProblem(ImmutableInterface):
         assert robin_data is None \
             or (isinstance(robin_data, tuple) and len(robin_data) == 2 and
                 np.all([f.dim_domain == domain.dim and f.shape_range == () for f in robin_data]))
+        assert functionals is None \
+            or all(isinstance(v, tuple) and len(v) == 2 and v[0] in ('l2', 'l2_boundary') and
+                   v[1].dim_domain == domain.dim and v[1].shape_range == () for v in functionals.values())
 
         self.domain = domain
         self.rhs = rhs
@@ -110,5 +125,6 @@ class StationaryProblem(ImmutableInterface):
         self.dirichlet_data = dirichlet_data
         self.neumann_data = neumann_data
         self.robin_data = robin_data
+        self.functionals = FrozenDict(functionals) if functionals is not None else None
         self.parameter_space = parameter_space
         self.name = name

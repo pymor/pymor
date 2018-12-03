@@ -52,8 +52,6 @@ def test_lincomb_function():
                 assert np.allclose(mul(x), [0.0])
         with pytest.raises(AssertionError):
             zero + ConstantFunction(dim_domain=steps + 1)
-        with pytest.raises(AssertionError):
-            zero * ConstantFunction(dim_domain=steps)
     with pytest.raises(AssertionError):
         ConstantFunction(dim_domain=0)
 

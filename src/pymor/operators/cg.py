@@ -21,11 +21,6 @@ def CGVectorSpace(grid, id_='STATE'):
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     """Linear finite element |Functional| representing the inner product with an L2-|Function|.
 
-    Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
-    in which case the DOFs corresponding to Dirichlet boundaries are set to the values
-    provided by `dirichlet_data`. Neumann boundaries are handled by providing a
-    `neumann_data` function, Robin boundaries by providing a `robin_data` tuple.
-
     The current implementation works in one and two dimensions, but can be trivially
     extended to arbitrary dimensions.
 
@@ -35,19 +30,11 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         |Grid| for which to assemble the functional.
     function
         The |Function| with which to take the inner product.
+    dirichlet_clear_dofs
+        If `True`, set dirichlet boundary DOFs to zero.
     boundary_info
-        |BoundaryInfo| determining the Dirichlet and Neumann boundaries or `None`.
-        If `None`, no boundary treatment is performed.
-    dirichlet_data
-        |Function| providing the Dirichlet boundary values. If `None`,
-        constant-zero boundary is assumed.
-    neumann_data
-        |Function| providing the Neumann boundary values. If `None`,
-        constant-zero is assumed.
-    robin_data
-        Tuple of two |Functions| providing the Robin parameter and boundary values, see
-        :class:`RobinBoundaryOperator`.  If `None`, constant-zero for both functions is
-        assumed.
+        |BoundaryInfo| determining the Dirichlet boundaries in case
+        `dirichlet_clear_dofs` is set to `True`.
     order
         Order of the Gauss quadrature to use for numerical integration.
     name
@@ -57,24 +44,18 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
-                 order=2, solver_options=None, name=None):
+    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, order=2, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == ()
+        assert not dirichlet_clear_dofs or boundary_info
         self.range = CGVectorSpace(grid)
         self.grid = grid
-        self.boundary_info = boundary_info
         self.function = function
-        self.dirichlet_data = dirichlet_data
-        self.neumann_data = neumann_data
-        self.robin_data = robin_data
+        self.dirichlet_clear_dofs = dirichlet_clear_dofs
+        self.boundary_info = boundary_info
         self.order = order
-        self.solver_options = solver_options
         self.name = name
-        if robin_data is not None:
-            self.build_parameter_type(function, dirichlet_data, neumann_data, robin_data[0], robin_data[1])
-        else:
-            self.build_parameter_type(function, dirichlet_data, neumann_data)
+        self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -104,58 +85,15 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         SF_I = g.subentities(0, g.dim).ravel()
         I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
 
-        # neumann boundary treatment
-        if bi is not None and bi.has_neumann and self.neumann_data is not None:
-            NI = bi.neumann_boundaries(1)
-            if g.dim == 1:
-                I[NI] -= self.neumann_data(g.centers(1)[NI])
-            else:
-                F = -self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
-                q, w = line.quadrature(order=self.order)
-                # remove last dimension of q, as line coordinates are one dimensional
-                q = q[:,0]
-                SF = np.array([1 - q, q])
-                SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
-                SF_I = g.subentities(1, 2)[NI].ravel()
-                I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
-
-        # robin boundary treatment
-        if bi is not None and bi.has_robin and self.robin_data is not None:
-            RI = bi.robin_boundaries(1)
-            if g.dim == 1:
-                xref = g.centers(1)[RI]
-                I[RI] += (self.robin_data[0](xref) * self.robin_data[1](xref))
-            else:
-                xref = g.quadrature_points(1, order=self.order)[RI]
-                F = (self.robin_data[0](xref, mu=mu) * self.robin_data[1](xref, mu=mu))
-                q, w = line.quadrature(order=self.order)
-                # remove last dimension of q, as line coordinates are one dimensional
-                q = q[:, 0]
-                SF = np.array([1 - q, q])
-                SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[RI], w).ravel()
-                SF_I = g.subentities(1, 2)[RI].ravel()
-                I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
-
-        if bi is not None and bi.has_dirichlet:
+        if self.dirichlet_clear_dofs and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
-            if self.dirichlet_data is not None:
-                I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], mu=mu)
-            else:
-                I[DI] = 0
+            I[DI] = 0
 
         return I.reshape((-1, 1))
 
 
-class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
-    """Bilinear finite element |Functional| representing the inner product with an L2-|Function|.
-
-    Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
-    in which case the DOFs corresponding to Dirichlet boundaries are set to the values
-    provided by `dirichlet_data`. Neumann boundaries are handled by providing a
-    `neumann_data` function, Robin boundaries by providing a `robin_data` tuple.
-
-    The current implementation works in two dimensions, but can be trivially
-    extended to arbitrary dimensions.
+class BoundaryL2ProductFunctionalP1(NumpyMatrixBasedOperator):
+    """Linear finite element |Functional| representing the inner product with an L2-|Function| on the boundary.
 
     Parameters
     ----------
@@ -163,19 +101,14 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         |Grid| for which to assemble the functional.
     function
         The |Function| with which to take the inner product.
+    boundary_type
+        The type of domain boundary (e.g. 'neumann') on which to assemble the functional.
+        If `None` the functional is assembled over the whole boundary.
+    dirichlet_clear_dofs
+        If `True`, set dirichlet boundary DOFs to zero.
     boundary_info
-        |BoundaryInfo| determining the Dirichlet boundaries or `None`.
-        If `None`, no boundary treatment is performed.
-    dirichlet_data
-        |Function| providing the Dirichlet boundary values. If `None`,
-        constant-zero boundary is assumed.
-    neumann_data
-        |Function| providing the Neumann boundary values. If `None`,
-        constant-zero is assumed.
-    robin_data
-        Tuple of two |Functions| providing the Robin parameter and boundary values, see
-        :class:`RobinBoundaryOperator`.  If `None`, constant-zero for both functions
-        is assumed.
+        If `boundary_type` is specified or `dirichlet_clear_dofs` is `True`, the
+        |BoundaryInfo| determining which boundary entity belongs to which physical boundary.
     order
         Order of the Gauss quadrature to use for numerical integration.
     name
@@ -185,23 +118,119 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
+    def __init__(self, grid, function, boundary_type=None, dirichlet_clear_dofs=False, boundary_info=None,
                  order=2, name=None):
-        assert grid.reference_element(0) in {square}
+        assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == ()
+        assert not (boundary_type or dirichlet_clear_dofs) or boundary_info
         self.range = CGVectorSpace(grid)
         self.grid = grid
-        self.boundary_info = boundary_info
         self.function = function
-        self.dirichlet_data = dirichlet_data
-        self.neumann_data = neumann_data
-        self.robin_data = robin_data
+        self.boundary_type = boundary_type
+        self.dirichlet_clear_dofs = dirichlet_clear_dofs
+        self.boundary_info = boundary_info
         self.order = order
         self.name = name
-        if robin_data is not None:
-            self.build_parameter_type(function, dirichlet_data, neumann_data, robin_data[0], robin_data[1])
+        self.build_parameter_type(function)
+
+    def _assemble(self, mu=None):
+        g = self.grid
+        bi = self.boundary_info
+
+        NI = bi.boundaries(self.boundary_type, 1) if self.boundary_type else g.boundaries(1)
+        if g.dim == 1:
+            I = np.zeros(self.range.dim)
+            I[NI] = self.function(g.centers(1)[NI])
         else:
-            self.build_parameter_type(function, dirichlet_data, neumann_data)
+            F = self.function(g.quadrature_points(1, order=self.order)[NI], mu=mu)
+            q, w = line.quadrature(order=self.order)
+            # remove last dimension of q, as line coordinates are one dimensional
+            q = q[:, 0]
+            SF = np.array([1 - q, q])
+            SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
+            SF_I = g.subentities(1, 2)[NI].ravel()
+            I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
+
+        if self.dirichlet_clear_dofs and bi.has_dirichlet:
+            DI = bi.dirichlet_boundaries(g.dim)
+            I[DI] = 0
+
+        return I.reshape((-1, 1))
+
+
+class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
+    """Linear finite element |Functional| for enforcing Dirichlet boundary values.
+
+    Parameters
+    ----------
+    grid
+        |Grid| for which to assemble the functional.
+    dirichlet_data
+        |Function| providing the Dirichlet boundary values.
+    boundary_info
+        |BoundaryInfo| determining the Dirichlet boundaries.
+    name
+        The name of the functional.
+    """
+
+    sparse = False
+    source = NumpyVectorSpace(1)
+
+    def __init__(self, grid, dirichlet_data, boundary_info, name=None):
+        assert grid.reference_element(0) in {line, triangle, square}
+        self.range = CGVectorSpace(grid)
+        self.grid = grid
+        self.dirichlet_data = dirichlet_data
+        self.boundary_info = boundary_info
+        self.name = name
+        self.build_parameter_type(dirichlet_data)
+
+    def _assemble(self, mu=None):
+        g = self.grid
+        bi = self.boundary_info
+
+        I = np.zeros(self.range.dim)
+        DI = bi.dirichlet_boundaries(g.dim)
+        I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], mu=mu)
+
+        return I.reshape((-1, 1))
+
+
+class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
+    """Bilinear finite element |Functional| representing the inner product with an L2-|Function|.
+
+    Parameters
+    ----------
+    grid
+        |Grid| for which to assemble the functional.
+    function
+        The |Function| with which to take the inner product.
+    dirichlet_clear_dofs
+        If `True`, set dirichlet boundary DOFs to zero.
+    boundary_info
+        |BoundaryInfo| determining the Dirichlet boundaries in case
+        `dirichlet_clear_dofs` is set to `True`.
+    order
+        Order of the Gauss quadrature to use for numerical integration.
+    name
+        The name of the functional.
+    """
+
+    sparse = False
+    source = NumpyVectorSpace(1)
+
+    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, order=2, name=None):
+        assert grid.reference_element(0) in {square}
+        assert function.shape_range == ()
+        assert not dirichlet_clear_dofs or boundary_info
+        self.range = CGVectorSpace(grid)
+        self.grid = grid
+        self.function = function
+        self.dirichlet_clear_dofs = dirichlet_clear_dofs
+        self.boundary_info = boundary_info
+        self.order = order
+        self.name = name
+        self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -230,36 +259,71 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         SF_I = g.subentities(0, g.dim).ravel()
         I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
 
-        # neumann boundary treatment
-        if bi is not None and bi.has_neumann and self.neumann_data is not None:
-            NI = bi.neumann_boundaries(1)
-            F = -self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
-            q, w = line.quadrature(order=self.order)
-            # remove last dimension of q, as line coordinates are one dimensional
-            q = q[:, 0]
-            SF = np.array([1 - q, q])
-            SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
-            SF_I = g.subentities(1, 2)[NI].ravel()
-            I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
-
-        if bi is not None and bi.has_robin and self.robin_data is not None:
-            RI = bi.robin_boundaries(1)
-            xref = g.quadrature_points(1, order=self.order)[RI]
-            F = self.robin_data[0](xref, mu=mu) * self.robin_data[1](xref, mu=mu)
-            q, w = line.quadrature(order=self.order)
-            # remove last dimension of q, as line coordinates are one dimensional
-            q = q[:, 0]
-            SF = np.array([1 - q, q])
-            SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[RI], w).ravel()
-            SF_I = g.subentities(1, 2)[RI].ravel()
-            I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
-
-        if bi is not None and bi.has_dirichlet:
+        if self.dirichlet_clear_dofs and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
-            if self.dirichlet_data is not None:
-                I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], mu=mu)
-            else:
-                I[DI] = 0
+            I[DI] = 0
+
+        return I.reshape((-1, 1))
+
+
+class BoundaryL2ProductFunctionalQ1(NumpyMatrixBasedOperator):
+    """Bilinear finite element |Functional| representing the inner product with an L2-|Function| on the boundary.
+
+    Parameters
+    ----------
+    grid
+        |Grid| for which to assemble the functional.
+    function
+        The |Function| with which to take the inner product.
+    boundary_type
+        The type of domain boundary (e.g. 'neumann') on which to assemble the functional.
+        If `None` the functional is assembled over the whole boundary.
+    dirichlet_clear_dofs
+        If `True`, set dirichlet boundary DOFs to zero.
+    boundary_info
+        If `boundary_type` is specified or `dirichlet_clear_dofs` is `True`, the
+        |BoundaryInfo| determining which boundary entity belongs to which physical boundary.
+    order
+        Order of the Gauss quadrature to use for numerical integration.
+    name
+        The name of the functional.
+    """
+
+    sparse = False
+    source = NumpyVectorSpace(1)
+
+    def __init__(self, grid, function, boundary_type=None, dirichlet_clear_dofs=False, boundary_info=None,
+                 order=2, name=None):
+        assert grid.reference_element(0) in {square}
+        assert function.shape_range == ()
+        assert not (boundary_type or dirichlet_clear_dofs) or boundary_info
+        self.range = CGVectorSpace(grid)
+        self.grid = grid
+        self.function = function
+        self.boundary_type = boundary_type
+        self.dirichlet_clear_dofs = dirichlet_clear_dofs
+        self.boundary_info = boundary_info
+        self.order = order
+        self.name = name
+        self.build_parameter_type(function)
+
+    def _assemble(self, mu=None):
+        g = self.grid
+        bi = self.boundary_info
+
+        NI = bi.neumann_boundaries(1)
+        F = self.function(g.quadrature_points(1, order=self.order)[NI], mu=mu)
+        q, w = line.quadrature(order=self.order)
+        # remove last dimension of q, as line coordinates are one dimensional
+        q = q[:, 0]
+        SF = np.array([1 - q, q])
+        SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
+        SF_I = g.subentities(1, 2)[NI].ravel()
+        I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
+
+        if self.dirichlet_clear_dofs and bi.has_dirichlet:
+            DI = bi.dirichlet_boundaries(g.dim)
+            I[DI] = 0
 
         return I.reshape((-1, 1))
 
