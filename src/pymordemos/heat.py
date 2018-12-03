@@ -21,12 +21,9 @@ where :math:`u(t)` is the input and :math:`y(t)` is the output.
 """
 
 import numpy as np
-import scipy.sparse as sps
 import matplotlib.pyplot as plt
 
 from pymor.basic import *
-from pymor.reductors.bt import BTReductor
-from pymor.reductors.h2 import IRKAReductor
 
 import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
