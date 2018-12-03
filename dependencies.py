@@ -40,7 +40,8 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'psutil': 'Process management abstractions used for gui',
                     'slycot>=0.3.3': 'python wrapper for the SLICOT control and systems library'}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
-travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'codecov', 'pytest-travis-fold']
+travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'python-coveralls', 'pytest-travis-fold',
+                   'readme_renderer', 'rstcheck', 'codecov']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
                 'pytest-instafail': 'pytest_instafail',
