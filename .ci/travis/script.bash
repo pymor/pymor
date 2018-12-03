@@ -34,10 +34,12 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
       sudo pip uninstall -y pymor
       sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}#egg=pymor[full]
       sudo pip uninstall -y pymor
+      sudo pip install -r requirements.txt
+      sudo pip install -r requirements-travis.txt
+      sudo pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
     fi
 
     # README sanity
-    sudo pip install readme_renderer rstcheck
     python setup.py check -r -s
     rstcheck README.txt
 

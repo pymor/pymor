@@ -5,3 +5,6 @@ codecov
 pytest-cov
 pytest-travis-fold
 pytest-xdist
+python-coveralls
+readme_renderer
+rstcheck
