@@ -83,7 +83,6 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             figure = Figure(dpi=dpi)
             if not separate_plots:
                 axes = figure.gca()
-                axes.hold(True)
             self.codim = codim
             lines = ()
             centers = grid.centers(1)
