@@ -3,7 +3,7 @@
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-r"""1D heat equation demo
+r"""2D heat equation demo
 
 Discretization of the PDE:
 
@@ -11,10 +11,13 @@ Discretization of the PDE:
     :nowrap:
 
     \begin{align*}
-        \partial_t z(x, t) &= \partial_{xx} z(x, t), & 0 < x < 1,\ t > 0 \\
-        \partial_x z(0, t) &= z(0, t) - u(t), & t > 0 \\
-        \partial_x z(1, t) &= -z(1, t), & t > 0 \\
-        y(t) &= z(1, t), & t > 0
+        \partial_t z(x, y, t) &= \Delta z(x, y, t),      & 0 < x, y < 1,\ t > 0 \\
+        -\nabla z(0, y, t) \cdot n &= z(0, y, t) - u(t), & 0 < y < 1, t > 0 \\
+        -\nabla z(1, y, t) \cdot n &= z(1, y, t),        & 0 < y < 1, t > 0 \\
+        -\nabla z(0, x, t) \cdot n &= z(0, x, t),        & 0 < x < 1, t > 0 \\
+        -\nabla z(1, x, t) \cdot n &= z(1, x, t),        & 0 < x < 1, t > 0 \\
+        z(x, y, 0) &= 0                                  & 0 < x, y < 1 \\
+        y(t) &= \int_0^1 z(1, y, t) dy,                  & t > 0 \\
     \end{align*}
 
 where :math:`u(t)` is the input and :math:`y(t)` is the output.
@@ -29,24 +32,19 @@ import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
 
 if __name__ == '__main__':
-    # dimension of the system
-    n = 100
-
     p = InstationaryProblem(
         StationaryProblem(
-            domain=LineDomain([0.,1.], left='robin', right='robin'),
-            diffusion=ConstantFunction(1., 1),
-            robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[...,0] < 0.5) * 1.', 1)),
-            functionals={'output': ('l2_boundary', ExpressionFunction('(x[...,0] > 0.5) * 1.', 1))}
+            domain=RectDomain([[0.,0.], [1.,1.]], left='robin', right='robin', top='robin', bottom='robin'),
+            diffusion=ConstantFunction(1., 2),
+            robin_data=(ConstantFunction(1., 2), ExpressionFunction('(x[...,0] < 1e-10) * 1.', 2)),
+            functionals={'output': ('l2_boundary', ExpressionFunction('(x[...,0] > (1 - 1e-10)) * 1.', 2))}
         ),
-        ConstantFunction(0., 1),
-        T=3.
+        ConstantFunction(0., 2),
+        T=1.
     )
 
-    d, _ = discretize_instationary_cg(p, diameter=1/(n-1), nt=100)
+    d, _ = discretize_instationary_cg(p, diameter=1/10, nt=100)
 
-    U = d.solve()
-    print(U[-1].to_numpy().ravel())
     d.visualize(d.solve())
 
     lti = d.to_lti()
