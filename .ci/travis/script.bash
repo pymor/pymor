@@ -41,11 +41,10 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     fi
 
     # README sanity
-    python setup.py check -r -s
     rstcheck README.txt
 
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
-    sudo pip install check-manifest
+    twine check ${SDIST_DIR}/*
     check-manifest -p python ${PWD}
     pushd ${SDIST_DIR}
     sudo pip install $(ls ${SDIST_DIR})

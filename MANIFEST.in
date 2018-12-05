@@ -28,3 +28,6 @@ include *.py
 include versioneer.py
 
 recursive-include notebooks *.ipynb
+
+include MANIFEST.in
+include README.rst

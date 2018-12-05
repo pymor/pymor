@@ -6,5 +6,6 @@ pytest-cov
 pytest-travis-fold
 pytest-xdist
 python-coveralls
-readme_renderer
+readme_renderer[md]
 rstcheck
+twine
