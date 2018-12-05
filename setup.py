@@ -116,6 +116,9 @@ def _setup(**kwargs):
     if not hasattr(Cython.Distutils.build_ext, 'fcompiler'):
         Cython.Distutils.build_ext.fcompiler = None
     cmdclass.update({'build_ext': Cython.Distutils.build_ext})
+    # setuptools sdist command my to include some files apparently (https://github.com/numpy/numpy/pull/7131)
+    from distutils.command.sdist import sdist
+    cmdclass.update({'sdist': sdist})
     from numpy import get_include
     include_dirs = [get_include()]
     ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=include_dirs),
