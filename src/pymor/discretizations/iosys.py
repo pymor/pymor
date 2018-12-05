@@ -23,13 +23,9 @@ from pymor.vectorarrays.block import BlockVectorSpace
 class InputOutputSystem(DiscretizationBase):
     """Base class for input-output systems."""
 
-    def __init__(self, input_space, output_space, state_space=None, cont_time=True, cache_region='memory', name=None, **kwargs):
-        # ensure that state_space can be distinguished from input and output space
-        # ensure that ids are different to make sure that also reduced spaces can be differentiated
-        assert state_space is None or (state_space.id != input_space.id and state_space.id != output_space.id)
+    def __init__(self, input_space, output_space, cont_time=True, cache_region='memory', name=None, **kwargs):
         self.input_space = input_space
         self.output_space = output_space
-        self.state_space = state_space
         super().__init__(cache_region=cache_region, name=name, **kwargs)
         self.cont_time = cont_time
 
@@ -41,56 +37,8 @@ class InputOutputSystem(DiscretizationBase):
     def p(self):
         return self.output_space.dim
 
-    @property
-    def n(self):
-        if self.state_space is None:
-            raise AttributeError('System has no state space')
-        return self.state_space.dim
-
     def _solve(self, mu=None):
         raise NotImplementedError
-
-    def __add__(self, other):
-        """Add two input-state-output systems."""
-        assert type(self) == type(other)
-        assert self.cont_time == other.cont_time
-
-        def add_operator(op, other_op):
-            if op.source == self.input_space:
-                if op.range == self.output_space:
-                    return (op + other_op).assemble()
-                elif op.range == self.state_space:
-                    return BlockColumnOperator([op, other_op], range_id=self.state_space.id)
-                else:
-                    raise NotImplementedError
-            elif op.source == self.state_space:
-                if op.range == self.output_space:
-                    return BlockRowOperator([op, other_op], source_id=self.state_space.id)
-                elif op.range == self.state_space:
-                    if isinstance(op, IdentityOperator) and isinstance(other_op, IdentityOperator):
-                        return IdentityOperator(BlockVectorSpace([op.source, other_op.source], self.state_space.id))
-                    else:
-                        return BlockDiagonalOperator([op, other_op], source_id=self.state_space.id,
-                                                     range_id=self.state_space.id)
-                else:
-                    raise NotImplementedError
-            else:
-                raise NotImplementedError
-
-        new_operators = {k: add_operator(self.operators[k], other.operators[k]) for k in self.operators}
-
-        return self.with_(operators=new_operators, cont_time=self.cont_time)
-
-    def __neg__(self):
-        """Negate input-state-output system."""
-        new_operators = {k: (op * (-1)).assemble() if op.range == self.output_space else op
-                         for k, op in self.operators.items()}
-
-        return self.with_(operators=new_operators)
-
-    def __sub__(self, other):
-        """Subtract two input-state-output system."""
-        return self + (-other)
 
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function."""
@@ -167,12 +115,69 @@ class InputOutputSystem(DiscretizationBase):
         return out
 
 
+class InputStateOutputSystem(InputOutputSystem):
+    """Base class for input-output systems with state space."""
+
+    def __init__(self, input_space, state_space, output_space, cont_time=True, cache_region='memory', name=None, **kwargs):
+        # ensure that state_space can be distinguished from input and output space
+        # ensure that ids are different to make sure that also reduced spaces can be differentiated
+        assert state_space.id != input_space.id and state_space.id != output_space.id
+        super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name, **kwargs)
+        self.state_space = state_space
+
+    @property
+    def n(self):
+        return self.state_space.dim
+
+    def __add__(self, other):
+        """Add two input-state-output systems."""
+        assert type(self) == type(other)
+        assert self.cont_time == other.cont_time
+
+        def add_operator(op, other_op):
+            if op.source == self.input_space:
+                if op.range == self.output_space:
+                    return (op + other_op).assemble()
+                elif op.range == self.state_space:
+                    return BlockColumnOperator([op, other_op], range_id=self.state_space.id)
+                else:
+                    raise NotImplementedError
+            elif op.source == self.state_space:
+                if op.range == self.output_space:
+                    return BlockRowOperator([op, other_op], source_id=self.state_space.id)
+                elif op.range == self.state_space:
+                    if isinstance(op, IdentityOperator) and isinstance(other_op, IdentityOperator):
+                        return IdentityOperator(BlockVectorSpace([op.source, other_op.source], self.state_space.id))
+                    else:
+                        return BlockDiagonalOperator([op, other_op], source_id=self.state_space.id,
+                                                     range_id=self.state_space.id)
+                else:
+                    raise NotImplementedError
+            else:
+                raise NotImplementedError
+
+        new_operators = {k: add_operator(self.operators[k], other.operators[k]) for k in self.operators}
+
+        return self.with_(operators=new_operators, cont_time=self.cont_time)
+
+    def __neg__(self):
+        """Negate input-state-output system."""
+        new_operators = {k: (op * (-1)).assemble() if op.range == self.output_space else op
+                         for k, op in self.operators.items()}
+
+        return self.with_(operators=new_operators)
+
+    def __sub__(self, other):
+        """Subtract two input-state-output system."""
+        return self + (-other)
+
+
 _DEFAULT_ME_SOLVER_BACKEND = 'pymess' if config.HAVE_PYMESS else \
                              'slycot' if config.HAVE_SLYCOT else \
                              'scipy'
 
 
-class LTISystem(InputOutputSystem):
+class LTISystem(InputStateOutputSystem):
     r"""Class for linear time-invariant systems.
 
     This class describes input-state-output systems given by
@@ -266,7 +271,7 @@ class LTISystem(InputOutputSystem):
         assert cont_time in (True, False)
         assert solver_options is None or solver_options.keys() <= {'lyap', 'ricc'}
 
-        super().__init__(B.source, C.range, state_space=A.source, cont_time=cont_time,
+        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
                          A=A, B=B, C=C, D=D, E=E)
@@ -813,7 +818,7 @@ class TransferFunction(InputOutputSystem):
         return self.dtf(s)
 
 
-class SecondOrderSystem(InputOutputSystem):
+class SecondOrderSystem(InputStateOutputSystem):
     r"""Class for linear second order systems.
 
     This class describes input-output systems given by
@@ -909,7 +914,7 @@ class SecondOrderSystem(InputOutputSystem):
         assert D.linear and D.source == B.source and D.range == Cp.range
         assert cont_time in (True, False)
 
-        super().__init__(B.source, Cp.range, state_space=M.source, cont_time=cont_time,
+        super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
                          M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
@@ -1226,7 +1231,7 @@ class SecondOrderSystem(InputOutputSystem):
         return self.to_lti().hankel_norm()
 
 
-class LinearDelaySystem(InputOutputSystem):
+class LinearDelaySystem(InputStateOutputSystem):
     r"""Class for linear delay systems.
 
     This class describes input-state-output systems given by
@@ -1327,7 +1332,7 @@ class LinearDelaySystem(InputOutputSystem):
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
-        super().__init__(B.source, C.range, state_space=A.source, cont_time=cont_time,
+        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
                          A=A, Ad=Ad, B=B, C=C, D=D, E=E)
@@ -1422,7 +1427,7 @@ class LinearDelaySystem(InputOutputSystem):
         return dtfs
 
 
-class LinearStochasticSystem(InputOutputSystem):
+class LinearStochasticSystem(InputStateOutputSystem):
     r"""Class for linear stochastic systems.
 
     This class describes input-state-output systems given by
@@ -1525,7 +1530,7 @@ class LinearStochasticSystem(InputOutputSystem):
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
-        super().__init__(B.source, C.range, state_space=A.source, cont_time=cont_time,
+        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
                          A=A, As=As, B=B, C=C, D=D, E=E)
@@ -1534,7 +1539,7 @@ class LinearStochasticSystem(InputOutputSystem):
         self.q = len(As)
 
 
-class BilinearSystem(InputOutputSystem):
+class BilinearSystem(InputStateOutputSystem):
     r"""Class for bilinear systems.
 
     This class describes input-output systems given by
