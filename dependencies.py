@@ -6,17 +6,10 @@
 _PYTEST = 'pytest>=3.3'
 
 def _pymess(rev, major, minor, marker=True):
-    try:
-        # direct urls are only supported with newer pip and when not installing pymor from pypi
-        import pip
-        from distutils.version import StrictVersion
-        pref = 'pymess@' if StrictVersion(pip.__version__) >= StrictVersion('18.1') else ''
-    except:
-        pref = ''
-    url = '{pref}https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
+    url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
     # tmp workaround till next release
-    url = '{pref}https://pymor.github.io/wheels/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
-    url = url.format(rev=rev, major=major, minor=minor, pref=pref)
+    url = 'https://pymor.github.io/wheels/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
+    url = url.format(rev=rev, major=major, minor=minor)
     if marker:
         return '{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'.format(url=url, major=major, minor=minor)
     return url
@@ -32,9 +25,6 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'mpi4py': 'required for pymor.tools.mpi and pymor.parallel.mpi',
                     'pyevtk>=1.1': 'writing vtk output',
                     _PYTEST: 'testing framework required to execute unit tests',
-                    _pymess('1.0.0', 3, 5): 'Python bindings for M.E.S.S. (Matrix Equation Sparse Solver)',
-                    _pymess('1.0.0', 3, 6): 'Python bindings for M.E.S.S. (Matrix Equation Sparse Solver)',
-                    _pymess('1.0.0', 3, 7): 'Python bindings for M.E.S.S. (Matrix Equation Sparse Solver)',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'pillow': 'image library used for bitmap data functions',
                     'psutil': 'Process management abstractions used for gui',
@@ -54,6 +44,7 @@ import_names = {'ipython': 'IPython',
                 _pymess('1.0.0', 3, 7, False): 'pymess',
                 'pyopengl': 'OpenGL'}
 needs_extra_compile_setup = ['mpi4py']
+optional_requirements_file_only = [_pymess('1.0.0', 3, 5),_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7)]
 
 
 def strip_markers(name):
@@ -118,7 +109,8 @@ if __name__ == '__main__':
     with open(os.path.join(os.path.dirname(__file__), 'requirements-optional.txt'), 'wt') as req:
         req.write(note+'\n')
         req.write('-r requirements.txt\n')
-        for module in sorted(set(itertools.chain(tests_require, install_suggests.keys()))):
+        for module in sorted(set(itertools.chain(tests_require, optional_requirements_file_only,
+                                                 install_suggests.keys()))):
             req.write(module+'\n')
     with open(os.path.join(os.path.dirname(__file__), 'requirements-rtd.txt'), 'wt') as req:
         rtd = '''# This file is sourced by readthedocs.org to install missing dependencies.

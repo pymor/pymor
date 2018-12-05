@@ -3,6 +3,9 @@
 PyQt5
 docker
 envparse
+https://pymor.github.io/wheels/pymess-1.0.0-cp35-cp35m-manylinux1_x86_64.whl ; python_version == "3.5" and "linux" in sys_platform
+https://pymor.github.io/wheels/pymess-1.0.0-cp36-cp36m-manylinux1_x86_64.whl ; python_version == "3.6" and "linux" in sys_platform
+https://pymor.github.io/wheels/pymess-1.0.0-cp37-cp37m-manylinux1_x86_64.whl ; python_version == "3.7" and "linux" in sys_platform
 ipyparallel
 ipython>=3.0
 matplotlib
@@ -11,9 +14,6 @@ pillow
 psutil
 pyamg
 pyevtk>=1.1
-pymess@https://pymor.github.io/wheels/pymess-1.0.0-cp35-cp35m-manylinux1_x86_64.whl ; python_version == "3.5" and "linux" in sys_platform
-pymess@https://pymor.github.io/wheels/pymess-1.0.0-cp36-cp36m-manylinux1_x86_64.whl ; python_version == "3.6" and "linux" in sys_platform
-pymess@https://pymor.github.io/wheels/pymess-1.0.0-cp37-cp37m-manylinux1_x86_64.whl ; python_version == "3.7" and "linux" in sys_platform
 pyopengl
 pytest-cov
 pytest>=3.3
