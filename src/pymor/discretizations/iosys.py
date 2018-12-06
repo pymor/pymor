@@ -281,6 +281,7 @@ class LTISystem(InputStateOutputSystem):
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
+                      input_id='INPUT', state_id='STATE', output_id='OUTPUT',
                       solver_options=None, estimator=None, visualizer=None,
                       cache_region='memory', name=None):
         """Create |LTISystem| from matrices.
@@ -332,13 +333,13 @@ class LTISystem(InputStateOutputSystem):
         assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
         assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
 
-        A = NumpyMatrixOperator(A, source_id='STATE', range_id='STATE')
-        B = NumpyMatrixOperator(B, source_id='INPUT', range_id='STATE')
-        C = NumpyMatrixOperator(C, source_id='STATE', range_id='OUTPUT')
+        A = NumpyMatrixOperator(A, source_id=state_id, range_id=state_id)
+        B = NumpyMatrixOperator(B, source_id=input_id, range_id=state_id)
+        C = NumpyMatrixOperator(C, source_id=state_id, range_id=output_id)
         if D is not None:
-            D = NumpyMatrixOperator(D, source_id='INPUT', range_id='OUTPUT')
+            D = NumpyMatrixOperator(D, source_id=input_id, range_id=output_id)
         if E is not None:
-            E = NumpyMatrixOperator(E, source_id='STATE', range_id='STATE')
+            E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
 
         return cls(A, B, C, D, E, cont_time=cont_time,
                    solver_options=solver_options, estimator=estimator, visualizer=visualizer,
@@ -924,6 +925,7 @@ class SecondOrderSystem(InputStateOutputSystem):
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
+                      input_id='INPUT', state_id='STATE', output_id='OUTPUT',
                       solver_options=None, estimator=None, visualizer=None,
                       cache_region='memory', name=None):
         """Create a second order system from matrices.
@@ -981,15 +983,15 @@ class SecondOrderSystem(InputStateOutputSystem):
         assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix))
         assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
 
-        M = NumpyMatrixOperator(M, source_id='STATE', range_id='STATE')
-        E = NumpyMatrixOperator(E, source_id='STATE', range_id='STATE')
-        K = NumpyMatrixOperator(K, source_id='STATE', range_id='STATE')
-        B = NumpyMatrixOperator(B, source_id='INPUT', range_id='STATE')
-        Cp = NumpyMatrixOperator(Cp, source_id='STATE', range_id='OUTPUT')
+        M = NumpyMatrixOperator(M, source_id=state_id, range_id=state_id)
+        E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
+        K = NumpyMatrixOperator(K, source_id=state_id, range_id=state_id)
+        B = NumpyMatrixOperator(B, source_id=input_id, range_id=state_id)
+        Cp = NumpyMatrixOperator(Cp, source_id=state_id, range_id=output_id)
         if Cv is not None:
-            Cv = NumpyMatrixOperator(Cv, source_id='STATE', range_id='OUTPUT')
+            Cv = NumpyMatrixOperator(Cv, source_id=state_id, range_id=output_id)
         if D is not None:
-            D = NumpyMatrixOperator(D, source_id='INPUT', range_id='OUTPUT')
+            D = NumpyMatrixOperator(D, source_id=input_id, range_id=output_id)
 
         return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
                    solver_options=solver_options, estimator=estimator, visualizer=visualizer,
