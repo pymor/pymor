@@ -276,8 +276,11 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
     mass = d.l2_0_product
 
     d = InstationaryDiscretization(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
-                                   products=d.products, time_stepper=time_stepper,
-                                   parameter_space=p.parameter_space, visualizer=d.visualizer,
+                                   products=d.products,
+                                   operators={k: v for k, v in d.operators.items() if not k in {'operator', 'rhs'}},
+                                   time_stepper=time_stepper,
+                                   parameter_space=p.parameter_space,
+                                   visualizer=d.visualizer,
                                    num_values=num_values, name='{}_CG'.format(p.name))
 
     if preassemble:

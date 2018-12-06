@@ -23,55 +23,22 @@ from pymor.vectorarrays.block import BlockVectorSpace
 class InputOutputSystem(DiscretizationBase):
     """Base class for input-output systems."""
 
-    def __init__(self, m, p, cont_time=True, cache_region='memory', name=None, **kwargs):
-        self.m = m
-        self.p = p
+    def __init__(self, input_space, output_space, cont_time=True, cache_region='memory', name=None, **kwargs):
+        self.input_space = input_space
+        self.output_space = output_space
         super().__init__(cache_region=cache_region, name=name, **kwargs)
         self.cont_time = cont_time
 
+    @property
+    def m(self):
+        return self.input_space.dim
+
+    @property
+    def p(self):
+        return self.output_space.dim
+
     def _solve(self, mu=None):
         raise NotImplementedError
-
-    def __add__(self, other):
-        """Add two input-state-output systems."""
-        assert type(self) == type(other)
-        assert self.cont_time == other.cont_time
-
-        def add_operator(op, other_op):
-            if op.source.id == 'INPUT':
-                if op.range.id == 'OUTPUT':
-                    return (op + other_op).assemble()
-                elif op.range.id == 'STATE':
-                    return BlockColumnOperator([op, other_op], range_id='STATE')
-                else:
-                    raise NotImplementedError
-            elif op.source.id == 'STATE':
-                if op.range.id == 'OUTPUT':
-                    return BlockRowOperator([op, other_op], source_id='STATE')
-                elif op.range.id == 'STATE':
-                    if isinstance(op, IdentityOperator) and isinstance(other_op, IdentityOperator):
-                        return IdentityOperator(BlockVectorSpace([op.source, other_op.source], 'STATE'))
-                    else:
-                        return BlockDiagonalOperator([op, other_op], source_id='STATE', range_id='STATE')
-                else:
-                    raise NotImplementedError
-            else:
-                raise NotImplementedError
-
-        new_operators = {k: add_operator(self.operators[k], other.operators[k]) for k in self.operators}
-
-        return self.with_(operators=new_operators, cont_time=self.cont_time)
-
-    def __neg__(self):
-        """Negate input-state-output system."""
-        new_operators = {k: (op * (-1)).assemble() if op.range.id == 'OUTPUT' else op
-                         for k, op in self.operators.items()}
-
-        return self.with_(operators=new_operators)
-
-    def __sub__(self, other):
-        """Subtract two input-state-output system."""
-        return self + (-other)
 
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function."""
@@ -148,12 +115,69 @@ class InputOutputSystem(DiscretizationBase):
         return out
 
 
+class InputStateOutputSystem(InputOutputSystem):
+    """Base class for input-output systems with state space."""
+
+    def __init__(self, input_space, state_space, output_space, cont_time=True, cache_region='memory', name=None, **kwargs):
+        # ensure that state_space can be distinguished from input and output space
+        # ensure that ids are different to make sure that also reduced spaces can be differentiated
+        assert state_space.id != input_space.id and state_space.id != output_space.id
+        super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name, **kwargs)
+        self.state_space = state_space
+
+    @property
+    def n(self):
+        return self.state_space.dim
+
+    def __add__(self, other):
+        """Add two input-state-output systems."""
+        assert type(self) == type(other)
+        assert self.cont_time == other.cont_time
+
+        def add_operator(op, other_op):
+            if op.source == self.input_space:
+                if op.range == self.output_space:
+                    return (op + other_op).assemble()
+                elif op.range == self.state_space:
+                    return BlockColumnOperator([op, other_op], range_id=self.state_space.id)
+                else:
+                    raise NotImplementedError
+            elif op.source == self.state_space:
+                if op.range == self.output_space:
+                    return BlockRowOperator([op, other_op], source_id=self.state_space.id)
+                elif op.range == self.state_space:
+                    if isinstance(op, IdentityOperator) and isinstance(other_op, IdentityOperator):
+                        return IdentityOperator(BlockVectorSpace([op.source, other_op.source], self.state_space.id))
+                    else:
+                        return BlockDiagonalOperator([op, other_op], source_id=self.state_space.id,
+                                                     range_id=self.state_space.id)
+                else:
+                    raise NotImplementedError
+            else:
+                raise NotImplementedError
+
+        new_operators = {k: add_operator(self.operators[k], other.operators[k]) for k in self.operators}
+
+        return self.with_(operators=new_operators, cont_time=self.cont_time)
+
+    def __neg__(self):
+        """Negate input-state-output system."""
+        new_operators = {k: (op * (-1)).assemble() if op.range == self.output_space else op
+                         for k, op in self.operators.items()}
+
+        return self.with_(operators=new_operators)
+
+    def __sub__(self, other):
+        """Subtract two input-state-output system."""
+        return self + (-other)
+
+
 _DEFAULT_ME_SOLVER_BACKEND = 'pymess' if config.HAVE_PYMESS else \
                              'slycot' if config.HAVE_SLYCOT else \
                              'scipy'
 
 
-class LTISystem(InputOutputSystem):
+class LTISystem(InputStateOutputSystem):
     r"""Class for linear time-invariant systems.
 
     This class describes input-state-output systems given by
@@ -234,13 +258,10 @@ class LTISystem(InputOutputSystem):
 
         assert A.linear
         assert A.source == A.range
-        assert A.source.id == 'STATE'
         assert B.linear
         assert B.range == A.source
-        assert B.source.id == 'INPUT'
         assert C.linear
         assert C.source == A.range
-        assert C.range.id == 'OUTPUT'
         assert D.linear
         assert D.source == B.source
         assert D.range == C.range
@@ -250,13 +271,12 @@ class LTISystem(InputOutputSystem):
         assert cont_time in (True, False)
         assert solver_options is None or solver_options.keys() <= {'lyap', 'ricc'}
 
-        super().__init__(B.source.dim, C.range.dim, cont_time=cont_time,
+        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
                          A=A, B=B, C=C, D=D, E=E)
 
         self.solution_space = A.source
-        self.n = A.source.dim
         self.solver_options = solver_options
 
     @classmethod
@@ -755,10 +775,12 @@ class TransferFunction(InputOutputSystem):
 
     Parameters
     ----------
-    m
-        The number of inputs.
-    p
-        The number of outputs.
+    input_space
+        The input |VectorSpace|. Typically `NumpyVectorSpace(m, 'INPUT')` where
+        m is the number of inputs.
+    output_space
+        The output |VectorSapce|. Typically `NumpyVectorSpace(p, 'OUTPUT')` where
+        p is the number of outputs.
     H
         The transfer function defined at least on the open right complex
         half-plane.
@@ -782,12 +804,12 @@ class TransferFunction(InputOutputSystem):
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, m, p, H, dH, cont_time=True, cache_region='memory', name=None):
+    def __init__(self, input_space, output_space, H, dH, cont_time=True, cache_region='memory', name=None):
         assert cont_time in (True, False)
 
         self.tf = H
         self.dtf = dH
-        super().__init__(m=m, p=p, cont_time=cont_time, cache_region=cache_region, name=name)
+        super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name)
 
     def eval_tf(self, s):
         return self.tf(s)
@@ -796,7 +818,7 @@ class TransferFunction(InputOutputSystem):
         return self.dtf(s)
 
 
-class SecondOrderSystem(InputOutputSystem):
+class SecondOrderSystem(InputStateOutputSystem):
     r"""Class for linear second order systems.
 
     This class describes input-output systems given by
@@ -883,22 +905,21 @@ class SecondOrderSystem(InputOutputSystem):
         Cv = Cv or ZeroOperator(Cp.range, Cp.source)
         D = D or ZeroOperator(Cp.range, B.source)
 
-        assert M.linear and M.source == M.range and M.source.id == 'STATE'
+        assert M.linear and M.source == M.range
         assert E.linear and E.source == E.range == M.source
         assert K.linear and K.source == K.range == M.source
-        assert B.linear and B.range == M.source and B.source.id == 'INPUT'
-        assert Cp.linear and Cp.source == M.range and Cp.range.id == 'OUTPUT'
+        assert B.linear and B.range == M.source
+        assert Cp.linear and Cp.source == M.range
         assert Cv.linear and Cv.source == M.range and Cv.range == Cp.range
         assert D.linear and D.source == B.source and D.range == Cp.range
         assert cont_time in (True, False)
 
-        super().__init__(B.source.dim, Cp.range.dim, cont_time=cont_time,
+        super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
                          M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
 
         self.solution_space = M.source
-        self.n = M.source.dim
         self.solver_options = solver_options
 
     @classmethod
@@ -1009,12 +1030,14 @@ class SecondOrderSystem(InputOutputSystem):
         lti
             |LTISystem| equivalent to the second order system.
         """
+        state_id = self.state_space.id
         return LTISystem(A=SecondOrderSystemOperator(self.E, self.K),
-                         B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B], range_id='STATE'),
-                         C=BlockRowOperator([self.Cp, self.Cv], source_id='STATE'),
+                         B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B], range_id=state_id),
+                         C=BlockRowOperator([self.Cp, self.Cv], source_id=state_id),
                          D=self.D,
-                         E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source], 'STATE')) if isinstance(self.M, IdentityOperator) else
-                            BlockDiagonalOperator([IdentityOperator(self.M.source), self.M], source_id='STATE', range_id='STATE')),
+                         E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source], state_id)) if isinstance(self.M, IdentityOperator) else
+                            BlockDiagonalOperator([IdentityOperator(self.M.source), self.M],
+                                                  source_id=state_id, range_id=state_id)),
                          cont_time=self.cont_time,
                          solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
                          cache_region=self.cache_region, name=self.name + '_first_order')
@@ -1208,7 +1231,7 @@ class SecondOrderSystem(InputOutputSystem):
         return self.to_lti().hankel_norm()
 
 
-class LinearDelaySystem(InputOutputSystem):
+class LinearDelaySystem(InputStateOutputSystem):
     r"""Class for linear delay systems.
 
     This class describes input-state-output systems given by
@@ -1299,24 +1322,23 @@ class LinearDelaySystem(InputOutputSystem):
         D = D or ZeroOperator(C.range, B.source)
         E = E or IdentityOperator(A.source)
 
-        assert A.linear and A.source == A.range and A.source.id == 'STATE'
+        assert A.linear and A.source == A.range
         assert isinstance(Ad, tuple) and len(Ad) > 0
         assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in Ad)
         assert isinstance(tau, tuple) and len(tau) == len(Ad) and all(taui > 0 for taui in tau)
-        assert B.linear and B.range == A.source and B.source.id == 'INPUT'
-        assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert B.linear and B.range == A.source
+        assert C.linear and C.source == A.range
         assert D.linear and D.source == B.source and D.range == C.range
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
-        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time,
+        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
                          A=A, Ad=Ad, B=B, C=C, D=D, E=E)
 
         self.solution_space = A.source
         self.tau = tau
-        self.n = A.source.dim
         self.q = len(Ad)
 
     def eval_tf(self, s):
@@ -1405,7 +1427,7 @@ class LinearDelaySystem(InputOutputSystem):
         return dtfs
 
 
-class LinearStochasticSystem(InputOutputSystem):
+class LinearStochasticSystem(InputStateOutputSystem):
     r"""Class for linear stochastic systems.
 
     This class describes input-state-output systems given by
@@ -1499,26 +1521,25 @@ class LinearStochasticSystem(InputOutputSystem):
         D = D or ZeroOperator(C.range, B.source)
         E = E or IdentityOperator(A.source)
 
-        assert A.linear and A.source == A.range and A.source == 'STATE'
+        assert A.linear and A.source == A.range
         assert isinstance(As, tuple) and len(As) > 0
         assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in As)
-        assert B.linear and B.range == A.source and B.source.id == 'INPUT'
-        assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert B.linear and B.range == A.source
+        assert C.linear and C.source == A.range
         assert D.linear and D.source == B.source and D.range == C.range
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
-        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time,
+        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
                          A=A, As=As, B=B, C=C, D=D, E=E)
 
         self.solution_space = A.source
-        self.n = A.source.dim
         self.q = len(As)
 
 
-class BilinearSystem(InputOutputSystem):
+class BilinearSystem(InputStateOutputSystem):
     r"""Class for bilinear systems.
 
     This class describes input-output systems given by
@@ -1610,20 +1631,19 @@ class BilinearSystem(InputOutputSystem):
         D = D or ZeroOperator(C.range, B.source)
         E = E or IdentityOperator(A.source)
 
-        assert A.linear and A.source == A.range and A.source.id == 'STATE'
-        assert B.linear and B.range == A.source and B.source.id == 'INPUT'
+        assert A.linear and A.source == A.range
+        assert B.linear and B.range == A.source
         assert isinstance(N, tuple) and len(N) == B.source.dim
         assert all(Ni.linear and Ni.source == Ni.range == A.source for Ni in N)
-        assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert C.linear and C.source == A.range
         assert D.linear and D.source == B.source and D.range == C.range
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
-        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time,
+        super().__init__(B.source, C.range, state_space=A.source, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name,
                          A=A, N=N, B=B, C=C, D=D, E=E)
 
         self.solution_space = A.source
-        self.n = A.source.dim
         self.linear = False
