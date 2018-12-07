@@ -44,6 +44,16 @@ from docopt import docopt
 from pymor.core.pickle import load
 
 
+def _bins(start, stop, steps=100):
+    ''' numpy has a quirk in unreleased master where logspace
+    might sometimes not return a 1d array
+    '''
+    bins = np.logspace(np.log10(start), np.log10(stop), steps)
+    if bins.shape == (steps,1):
+        bins = bins[:,0]
+    return bins
+
+
 def analyze_pickle_histogram(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
@@ -117,9 +127,9 @@ def analyze_pickle_histogram(args):
         axScatter.scatter(errs, ests)
 
         # plot histograms
-        x_hist, x_bin_edges = np.histogram(errs, bins=np.logspace(np.log10(total_min), np.log10(total_max), 100))
+        x_hist, x_bin_edges = np.histogram(errs, bins=_bins(total_min, total_max))
         axHistx.bar(x_bin_edges[1:], x_hist, width=x_bin_edges[:-1] - x_bin_edges[1:], color='blue')
-        y_hist, y_bin_edges = np.histogram(ests, bins=np.logspace(np.log10(total_min), np.log10(total_max), 100))
+        y_hist, y_bin_edges = np.histogram(ests, bins=_bins(total_min, total_max))
         axHisty.barh(y_bin_edges[1:], y_hist, height=y_bin_edges[:-1] - y_bin_edges[1:], color='blue')
         axHistx.set_xscale('log')
         axHisty.set_yscale('log')
@@ -137,7 +147,7 @@ def analyze_pickle_histogram(args):
         total_min = min(ests) * 0.9
         total_max = max(ests) * 1.1
 
-        hist, bin_edges = np.histogram(ests, bins=np.logspace(np.log10(total_min), np.log10(total_max), 100))
+        hist, bin_edges = np.histogram(ests, bins=_bins(total_min, total_max))
         plt.bar(bin_edges[1:], hist, width=bin_edges[:-1] - bin_edges[1:], color='blue')
         plt.xlim([total_min, total_max])
         plt.xscale('log')
@@ -150,7 +160,7 @@ def analyze_pickle_histogram(args):
         total_min = min(ests) * 0.9
         total_max = max(ests) * 1.1
 
-        hist, bin_edges = np.histogram(errs, bins=np.logspace(np.log10(total_min), np.log10(total_max), 100))
+        hist, bin_edges = np.histogram(errs, bins=_bins(total_min, total_max))
         plt.bar(bin_edges[1:], hist, width=bin_edges[:-1] - bin_edges[1:], color='blue')
         plt.xlim([total_min, total_max])
         plt.xscale('log')
