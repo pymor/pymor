@@ -26,9 +26,4 @@ if __name__ == '__main__':
             pass
     mpi.call(monkey_dolfin)
 
-    def disable_ngsolve():
-        from pymor.core.config import config
-        config.HAVE_NGSOLVE = False
-    mpi.call(disable_ngsolve)
-
     runpy.run_module('pymortests.demos', init_globals=None, run_name='__main__', alter_sys=True)
