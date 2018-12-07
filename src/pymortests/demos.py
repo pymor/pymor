@@ -87,7 +87,9 @@ SYS_MOR_ARGS = (
 )
 
 HAPOD_ARGS = (
-    ('hapod', [1e-2, 10, 100]),
+    ('hapod', ['--snap=3', 1e-2, 10, 100]),
+    ('hapod', ['--snap=3', '--threads=2', 1e-2, 10, 100]),
+    ('hapod', ['--snap=3', '--procs=2', 1e-2, 10, 100]),
 )
 
 DEMO_ARGS = (DISCRETIZATION_ARGS +
