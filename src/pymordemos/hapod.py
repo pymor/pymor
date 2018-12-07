@@ -7,7 +7,7 @@
 Demonstrates compression of snapshot data with the HAPOD algorithm from [HLR18].
 
 Usage:
-  hapod.py [-h] [--grid=NI] [--nt=COUNT] [--omega=OMEGA] [--snap=SNAP] TOL DIST INC
+  hapod.py [options] TOL DIST INC
 
 
 Arguments:
@@ -25,9 +25,14 @@ Options:
 
   --omega=OMEGA          Parameter omega from HAPOD algorithm [default: 0.9].
 
+  --procs=PROCS          Number of processes to use for parallelization [default: 0].
+
   --snap=SNAP            Number of snapshot trajectories to compute [default: 20].
+
+  --threads=THREADS      Number of threads to use for parallelization [default: 0].
 """
 
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from time import time
 
 from docopt import docopt
@@ -45,13 +50,19 @@ def hapod_demo(args):
     args['--grid'] = int(args['--grid'])
     args['--nt'] = int(args['--nt'])
     args['--omega'] = float(args['--omega'])
+    args['--procs'] = int(args['--procs'])
     args['--snap'] = int(args['--snap'])
+    args['--threads'] = int(args['--threads'])
     args['TOL'] = float(args['TOL'])
     args['DIST'] = int(args['DIST'])
     args['INC'] = int(args['INC'])
+    assert args['--procs'] == 0 or args['--threads'] == 0
 
     tol = args['TOL']
     omega = args['--omega']
+    executor = ProcessPoolExecutor(args['--procs']) if args['--procs'] > 0 else \
+        ThreadPoolExecutor(args['--threads']) if args['--threads'] > 0 else \
+        None
 
     p = burgers_problem_2d()
     d, data = discretize_instationary_fv(p, grid_type=RectGrid, diameter=np.sqrt(2)/args['--grid'], nt=args['--nt'])
@@ -65,7 +76,7 @@ def hapod_demo(args):
     pod_time = time() - tic
 
     tic = time()
-    dist_modes = dist_vectorarray_hapod(args['DIST'], U, tol, omega, product=d.l2_product)[0]
+    dist_modes = dist_vectorarray_hapod(args['DIST'], U, tol, omega, product=d.l2_product, executor=executor)[0]
     dist_time = time() - tic
 
     tic = time()
