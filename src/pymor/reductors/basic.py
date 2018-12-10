@@ -88,7 +88,9 @@ class GenericRBReductor(BasicInterface):
             inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
 
         def project_operator(k, op):
-            if k in self.vector_ranged_operators:
+            if op is self.product and self.basis_is_orthonormal:
+                return IdentityOperator(NumpyVectorSpace(len(RB), RB.space.id), name=op.name)
+            elif k in self.vector_ranged_operators:
                 assert RB in op.range
                 pop = project(op, range_basis=RB, source_basis=RB if RB in op.source else None, product=self.product)
                 if not self.basis_is_orthonormal:
