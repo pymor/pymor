@@ -259,61 +259,8 @@ if config.HAVE_PYMESS:
         default_solver = 'pymess_lrnm' if A.source.dim >= MAT_EQN_SPARSE_MIN_SIZE else 'pymess_dense_nm_gmpcare'
         options = _parse_options(options, ricc_lrcf_solver_options(), default_solver, None, False)
 
-        A_source = A.source
         if options['type'] == 'pymess_dense_nm_gmpcare':
-            A = to_matrix(A, format='dense')
-            E = to_matrix(E, format='dense') if E else None
-            B = to_matrix(B, format='dense') if B else None
-            C = to_matrix(C, format='dense') if C else None
-            R = to_matrix(R, format='dense') if R else None
-            S = to_matrix(S, format='dense') if S else None
-            if not trans:
-                Q = B.dot(B.T)
-                if R is None:
-                    G = C.T.dot(C)
-                    if S is not None:
-                        A -= S.dot(C)
-                        Q -= S.dot(S.T)
-                else:
-                    import scipy.linalg as spla
-                    RinvC = spla.solve(R, C)
-                    G = C.T.dot(RinvC)
-                    if S is not None:
-                        A -= S.dot(RinvC)
-                        Q -= S.dot(spla.solve(R, S.T))
-                pymess_trans = pymess.MESS_OP_NONE
-            else:
-                Q = C.T.dot(C)
-                if R is None:
-                    G = B.dot(B.T)
-                    if S is not None:
-                        A -= B.dot(S.T)
-                        Q -= S.dot(S.T)
-                else:
-                    import scipy.linalg as spla
-                    RinvBT = spla.solve(R, B.T)
-                    G = B.dot(RinvBT)
-                    if S is not None:
-                        A -= RinvBT.T.dot(S.T)
-                        Q -= S.dot(spla.solve(R, S.T))
-                pymess_trans = pymess.MESS_OP_TRANSPOSE
-            X, absres, relres = pymess.dense_nm_gmpare(None,
-                                                       A, E, Q, G,
-                                                       plus=False, trans=pymess_trans,
-                                                       linesearch=options['linesearch'],
-                                                       maxit=options['maxit'],
-                                                       absres_tol=options['absres_tol'],
-                                                       relres_tol=options['relres_tol'],
-                                                       nrm=options['nrm'])
-            if absres > options['absres_tol']:
-                logger = getLogger('pymess.dense_nm_gmpcare')
-                logger.warning('Desired absolute residual tolerance was not achieved '
-                               '({:e} > {:e}).'.format(absres, options['absres_tol']))
-            if relres > options['relres_tol']:
-                logger = getLogger('pymess.dense_nm_gmpcare')
-                logger.warning('Desired relative residual tolerance was not achieved '
-                               '({:e} > {:e}).'.format(relres, options['relres_tol']))
-
+            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options, plus=False)
             Z = chol(X)
         elif options['type'] == 'pymess_lrnm':
             if R is not None and S is not None:
@@ -354,9 +301,164 @@ if config.HAVE_PYMESS:
         else:
             raise ValueError('Unexpected Riccati equation solver ({}).'.format(options['type']))
 
-        Z = A_source.from_numpy(np.array(Z).T)
+        Z = A.source.from_numpy(np.array(Z).T)
 
         return Z
+
+    def pos_ricc_lrcf_solver_options(dense_nm_gmpcare_linesearch=False,
+                                     dense_nm_gmpcare_maxit=50,
+                                     dense_nm_gmpcare_absres_tol=1e-11,
+                                     dense_nm_gmpcare_relres_tol=1e-12,
+                                     dense_nm_gmpcare_nrm=0):
+        """Returns available positive Riccati equation solvers with default solver options for the pymess backend.
+
+        Parameters
+        ----------
+        dense_nm_gmpcare_linesearch
+            See `pymess.dense_nm_gmpcare`.
+        dense_nm_gmpcare_maxit
+            See `pymess.dense_nm_gmpcare`.
+        dense_nm_gmpcare_absres_tol
+            See `pymess.dense_nm_gmpcare`.
+        dense_nm_gmpcare_relres_tol
+            See `pymess.dense_nm_gmpcare`.
+        dense_nm_gmpcare_nrm
+            See `pymess.dense_nm_gmpcare`.
+
+        Returns
+        -------
+        A dict of available solvers with default solver options.
+        """
+
+        return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
+                                            'linesearch': dense_nm_gmpcare_linesearch,
+                                            'maxit': dense_nm_gmpcare_maxit,
+                                            'absres_tol': dense_nm_gmpcare_absres_tol,
+                                            'relres_tol': dense_nm_gmpcare_relres_tol,
+                                            'nrm': dense_nm_gmpcare_nrm}}
+
+    def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+        """Compute an approximate low-rank solution of a positive Riccati equation.
+
+        See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
+        general description.
+
+        This function uses `pymess.dense_nm_gmpcare`, which is a dense
+        solver and expects :func:`~pymor.algorithms.to_matrix.to_matrix`
+        to work for all |Operators|,
+
+        Parameters
+        ----------
+        A
+            The |Operator| A.
+        E
+            The |Operator| E or `None`.
+        B
+            The |Operator| B.
+        C
+            The |Operator| C.
+        R
+            The |Operator| R or `None`.
+        S
+            The |Operator| S or `None`.
+        trans
+            Whether the first |Operator| in the Riccati equation is
+            transposed.
+        options
+            The solver options to use (see :func:`ricc_solver_options`).
+
+        Returns
+        -------
+        Z
+            Low-rank Cholesky factor of the Riccati equation solution,
+            |VectorArray| from `A.source`.
+        """
+
+        _solve_ricc_check_args(A, E, B, C, R, S, trans)
+        options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'pymess_dense_nm_gmpcare', None, False)
+
+        if options['type'] == 'pymess_dense_nm_gmpcare':
+            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options, plus=True)
+            Z = chol(X)
+        else:
+            raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
+
+        Z = A.source.from_numpy(np.array(Z).T)
+
+        return Z
+
+    def _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=False, options=None, plus=False):
+        """Return the solution from pymess.dense_nm_gmpare solver."""
+        A = to_matrix(A, format='dense')
+        E = to_matrix(E, format='dense') if E else None
+        B = to_matrix(B, format='dense')
+        C = to_matrix(C, format='dense')
+        R = to_matrix(R, format='dense') if R else None
+        S = to_matrix(S, format='dense') if S else None
+        if not trans:
+            Q = B.dot(B.T)
+            if R is None:
+                G = C.T.dot(C)
+                if S is not None:
+                    if not plus:
+                        A -= S.dot(C)
+                        Q -= S.dot(S.T)
+                    else:
+                        A += S.dot(C)
+                        Q += S.dot(S.T)
+            else:
+                import scipy.linalg as spla
+                RinvC = spla.solve(R, C)
+                G = C.T.dot(RinvC)
+                if S is not None:
+                    if not plus:
+                        A -= S.dot(RinvC)
+                        Q -= S.dot(spla.solve(R, S.T))
+                    else:
+                        A += S.dot(RinvC)
+                        Q += S.dot(spla.solve(R, S.T))
+            pymess_trans = pymess.MESS_OP_NONE
+        else:
+            Q = C.T.dot(C)
+            if R is None:
+                G = B.dot(B.T)
+                if S is not None:
+                    if not plus:
+                        A -= B.dot(S.T)
+                        Q -= S.dot(S.T)
+                    else:
+                        A += B.dot(S.T)
+                        Q += S.dot(S.T)
+            else:
+                import scipy.linalg as spla
+                RinvBT = spla.solve(R, B.T)
+                G = B.dot(RinvBT)
+                if S is not None:
+                    if not plus:
+                        A -= RinvBT.T.dot(S.T)
+                        Q -= S.dot(spla.solve(R, S.T))
+                    else:
+                        A += RinvBT.T.dot(S.T)
+                        Q += S.dot(spla.solve(R, S.T))
+            pymess_trans = pymess.MESS_OP_TRANSPOSE
+        X, absres, relres = pymess.dense_nm_gmpare(None,
+                                                   A, E, Q, G,
+                                                   plus=plus, trans=pymess_trans,
+                                                   linesearch=options['linesearch'],
+                                                   maxit=options['maxit'],
+                                                   absres_tol=options['absres_tol'],
+                                                   relres_tol=options['relres_tol'],
+                                                   nrm=options['nrm'])
+        if absres > options['absres_tol']:
+            logger = getLogger('pymess.dense_nm_gmpcare')
+            logger.warning('Desired absolute residual tolerance was not achieved '
+                           '({:e} > {:e}).'.format(absres, options['absres_tol']))
+        if relres > options['relres_tol']:
+            logger = getLogger('pymess.dense_nm_gmpcare')
+            logger.warning('Desired relative residual tolerance was not achieved '
+                           '({:e} > {:e}).'.format(relres, options['relres_tol']))
+
+        return X
 
     class LyapunovEquation(pymess.Equation):
         r"""Lyapunov equation class for pymess

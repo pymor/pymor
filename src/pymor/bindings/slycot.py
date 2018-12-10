@@ -211,8 +211,8 @@ if config.HAVE_SLYCOT:
         A_source = A.source
         A = to_matrix(A, format='dense')
         E = to_matrix(E, format='dense') if E else None
-        B = to_matrix(B, format='dense') if B else None
-        C = to_matrix(C, format='dense') if C else None
+        B = to_matrix(B, format='dense')
+        C = to_matrix(C, format='dense')
         R = to_matrix(R, format='dense') if R else None
         S = to_matrix(S, format='dense') if S else None
 
@@ -286,9 +286,71 @@ if config.HAVE_SLYCOT:
         Z = A_source.from_numpy(np.array(Z).T)
         return Z
 
+    def _ricc_rcond_check(solver, rcond):
+        if rcond < np.sqrt(np.finfo(np.float64).eps):
+            logger = getLogger(solver)
+            logger.warning('Estimated reciprocal condition number is small (rcond={:e}). '
+                           'Result may not be accurate.'.format(rcond))
 
-def _ricc_rcond_check(solver, rcond):
-    if rcond < np.sqrt(np.finfo(np.float64).eps):
-        logger = getLogger(solver)
-        logger.warning('Estimated reciprocal condition number is small (rcond={:e}). '
-                       'Result may not be accurate.'.format(rcond))
+    def pos_ricc_lrcf_solver_options():
+        """Returns available positive Riccati equation solvers with default solver options for the SciPy backend.
+
+        Returns
+        -------
+        A dict of available solvers with default solver options.
+        """
+
+        return {'slycot': {'type': 'slycot'}}
+
+    def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+        """Compute an approximate low-rank solution of a positive Riccati equation.
+
+        See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
+        general description.
+
+        This function uses `slycot.sb02md` (if E and S are `None`),
+        `slycot.sb02od` (if E is `None` and S is not `None`) and
+        `slycot.sg03ad` (if E is not `None`), which are dense solvers.
+        Therefore, we assume all |Operators| can be converted to |NumPy
+        arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix`.
+
+        Parameters
+        ----------
+        A
+            The |Operator| A.
+        E
+            The |Operator| E or `None`.
+        B
+            The |Operator| B.
+        C
+            The |Operator| C.
+        R
+            The |Operator| R or `None`.
+        S
+            The |Operator| S or `None`.
+        trans
+            Whether the first |Operator| in the positive Riccati
+            equation is transposed.
+        options
+            The solver options to use (see
+            :func:`pos_ricc_lrcf_solver_options`).
+
+        Returns
+        -------
+        Z
+            Low-rank Cholesky factor of the positive Riccati equation
+            solution, |VectorArray| from `A.source`.
+        """
+
+        _solve_ricc_check_args(A, E, B, C, R, S, trans)
+        options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'slycot', None, False)
+        if options['type'] != 'slycot':
+            raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
+
+        if R is None:
+            from pymor.operators.constructions import IdentityOperator
+            R = -IdentityOperator(C.range if not trans else B.source)
+        else:
+            R = -R
+        Z = solve_ricc_lrcf(A, E, B, C, R, S, trans, options)
+        return Z

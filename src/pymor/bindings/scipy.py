@@ -523,3 +523,69 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         raise ValueError('Unexpected Riccati equation solver ({}).'.format(options['type']))
 
     return Z
+
+
+def pos_ricc_lrcf_solver_options():
+    """Returns available positive Riccati equation solvers with default solver options for the SciPy backend.
+
+    Returns
+    -------
+    A dict of available solvers with default solver options.
+    """
+
+    return {'scipy': {'type': 'scipy'}}
+
+
+def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+    r"""Compute an approximate low-rank solution of a positive Riccati equation.
+
+    See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a general
+    description.
+
+    This function uses `scipy.linalg.solve_continuous_are`, which
+    is a dense solver.
+    Therefore, we assume all |Operators| can be converted to |NumPy arrays|
+    using :func:`~pymor.algorithms.to_matrix.to_matrix`.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A.
+    E
+        The |Operator| E or `None`.
+    B
+        The |Operator| B.
+    C
+        The |Operator| C.
+    R
+        The |Operator| R or `None`.
+    S
+        The |Operator| S or `None`.
+    trans
+        Whether the first |Operator| in the positive Riccati equation is
+        transposed.
+    options
+        The solver options to use (see
+        :func:`pos_ricc_lrcf_solver_options`).
+
+    Returns
+    -------
+    Z
+        Low-rank Cholesky factor of the positive Riccati equation
+        solution, |VectorArray| from `A.source`.
+    """
+
+    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'scipy', None, False)
+
+    if options['type'] == 'scipy':
+        if R is None:
+            from pymor.operators.constructions import IdentityOperator
+            R = -IdentityOperator(C.range if not trans else B.source)
+        else:
+            R = -R
+        Z = solve_ricc_lrcf(A, E, B, C, R, S, trans, options)
+    else:
+        raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
+
+    return Z

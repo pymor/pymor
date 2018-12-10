@@ -5,7 +5,7 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.riccati import solve_ricc_lrcf
+from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.operators.numpy import NumpyMatrixOperator
 
 from itertools import chain, product
@@ -101,6 +101,57 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
 
     if not with_R:
         R = None
+    if not with_S:
+        S = None
+
+    assert relative_residual(A, E, B, C, R, S, Z, trans) < 1e-8
+
+
+@pytest.mark.parametrize('n', n_list_small)
+@pytest.mark.parametrize('m', m_list)
+@pytest.mark.parametrize('p', p_list)
+@pytest.mark.parametrize('with_E', [False, True])
+@pytest.mark.parametrize('with_R,with_S', [(False, False), (True, False), (True, True)])
+# @pytest.mark.parametrize('with_R', [True])
+# @pytest.mark.parametrize('with_S', [True])
+@pytest.mark.parametrize('trans', [False, True])
+@pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
+def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
+    _check_availability(solver)
+
+    if not with_E:
+        A = conv_diff_1d_fd(n, 1, 1)
+        E = None
+    else:
+        A, E = conv_diff_1d_fem(n, 1, 1)
+    np.random.seed(0)
+    B = np.random.randn(n, m)
+    C = np.random.randn(p, n)
+    D = np.random.randn(p, m)
+    if not trans:
+        R0 = np.random.randn(p, p)
+        R = D.dot(D.T) + 10 * R0.dot(R0.T)
+        S = B.dot(D.T)
+    else:
+        R0 = np.random.randn(m, m)
+        R = D.T.dot(D) + 10 * R0.dot(R0.T)
+        S = C.T.dot(D)
+
+    Aop = NumpyMatrixOperator(A)
+    Eop = None if not with_E else NumpyMatrixOperator(E)
+    Bop = NumpyMatrixOperator(B)
+    Cop = NumpyMatrixOperator(C)
+    Rop = None if not with_R else NumpyMatrixOperator(R)
+    Sop = None if not with_S else NumpyMatrixOperator(S)
+
+    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bop, Cop, Rop, Sop, trans=trans, options=solver)
+    assert len(Zva) <= n
+    Z = Zva.to_numpy().T
+
+    if not with_R:
+        R = -np.eye(p if not trans else m)
+    else:
+        R = -R
     if not with_S:
         S = None
 
