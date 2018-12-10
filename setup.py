@@ -167,6 +167,7 @@ def setup_package():
                      'License :: OSI Approved :: BSD License',
                      'Programming Language :: Python :: 3.5',
                      'Programming Language :: Python :: 3.6',
+                     'Programming Language :: Python :: 3.7',
                      'Intended Audience :: Science/Research',
                      'Topic :: Scientific/Engineering :: Mathematics',
                      'Topic :: Scientific/Engineering :: Visualization'],
