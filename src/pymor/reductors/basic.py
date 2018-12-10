@@ -35,8 +35,8 @@ class GenericRBReductor(BasicInterface):
         should be orthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
-        Inner product for the projection of the |Operators| given by
-        `vector_ranged_operators`.
+        Inner product for the orthonormalization of `RB` and the projection of the
+        |Operators| given by `vector_ranged_operators`.
     """
 
     def __init__(self, d, RB=None, basis_is_orthonormal=None,

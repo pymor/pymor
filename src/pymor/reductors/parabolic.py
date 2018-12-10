@@ -45,10 +45,10 @@ class ParabolicRBReductor(GenericRBReductor):
     RB
         |VectorArray| containing the reduced basis on which to project.
     basis_is_orthonormal
-        If `RB` is specified, indicate whether or not the basis is orthonormal
-        w.r.t. `product`.
+        Indicate whether or not the basis is orthonormal w.r.t. `product`.
     product
-        The energy inner product |Operator| w.r.t. the reduction error is estimated.
+        The energy inner product |Operator| w.r.t. which the reduction error is
+        estimated and `RB` is orthonormalized.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `d.operator` w.r.t. `product`.

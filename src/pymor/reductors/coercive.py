@@ -35,9 +35,9 @@ class CoerciveRBReductor(GenericRBReductor):
         should be orthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
-        Inner product for the projection of the |Operators| given by
-        `vector_ranged_operators` and for the computation of Riesz representatives
-        of the residual. If `None`, the Euclidean product is used.
+        Inner product for the orthonormalization of `RB`, the projection of the
+        |Operators| given by `vector_ranged_operators` and for the computation of
+        Riesz representatives of the residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
         constant of the given problem. Note that the computed error estimate is only
@@ -123,9 +123,9 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         should be orthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
-        Inner product for the projection of the |Operators| given by
-        `vector_ranged_operators` and for the computation of Riesz representatives
-        of the residual. If `None`, the Euclidean product is used.
+        Inner product for the orthonormalization of `RB`, the projection of the
+        |Operators| given by `vector_ranged_operators` and for the computation of
+        Riesz representatives of the residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
         constant of the given problem. Note that the computed error estimate is only
