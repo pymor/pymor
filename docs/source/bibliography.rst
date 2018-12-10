@@ -59,6 +59,10 @@ Bibliography
            approximations of parametrized evolution equations,
            M2AN 42(2), 277-302, 2008.
 
+.. [HLR18] C. Himpe, T. Leibner, S. Rave,
+           Hierarchical Approximate Proper Orthogonal Decomposition,
+           SIAM J. Sci. Comput. 40, A3267-A3292, 2018.
+
 .. [PK16]  P. Kürschner,
            Efficient Low-Rank Solution of Large-Scale Matrix Equations,
            Shaker Verlag Aachen, available from

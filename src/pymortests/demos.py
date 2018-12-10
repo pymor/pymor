@@ -86,9 +86,15 @@ SYS_MOR_ARGS = (
     ('string_equation', [])
 )
 
+HAPOD_ARGS = (
+    ('hapod', ['--snap=3', 1e-2, 10, 100]),
+    ('hapod', ['--snap=3', '--threads=2', 1e-2, 10, 100]),
+    ('hapod', ['--snap=3', '--procs=2', 1e-2, 10, 100]),
+)
+
 DEMO_ARGS = (DISCRETIZATION_ARGS +
              THERMALBLOCK_ARGS + THERMALBLOCK_ADAPTIVE_ARGS + THERMALBLOCK_SIMPLE_ARGS + THERMALBLOCK_GUI_ARGS +
-             BURGERS_EI_ARGS + PARABOLIC_MOR_ARGS + SYS_MOR_ARGS)
+             BURGERS_EI_ARGS + PARABOLIC_MOR_ARGS + SYS_MOR_ARGS + HAPOD_ARGS)
 DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]
 
 

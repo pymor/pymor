@@ -8,6 +8,7 @@ import numpy as np
 
 
 def format_table(rows, width='AUTO', title=None):
+    rows = [[str(c) for c in r] for r in rows]
     if width == 'AUTO':
         try:
             from shutil import get_terminal_size
