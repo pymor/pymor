@@ -10,7 +10,8 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.exceptions import ExtensionError
 from pymor.core.interfaces import BasicInterface
-from pymor.operators.constructions import IdentityOperator
+from pymor.operators.constructions import IdentityOperator, Concatenation, InverseOperator
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -26,6 +27,9 @@ class GenericRBReductor(BasicInterface):
         The |Discretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
+    basis_is_orthonormal
+        If `RB` is specified, indicate whether or not the basis is orthonormal
+        w.r.t. `product`.
     vector_ranged_operators
         List of keys in `d.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
@@ -35,10 +39,16 @@ class GenericRBReductor(BasicInterface):
         `vector_ranged_operators`.
     """
 
-    def __init__(self, d, RB=None, vector_ranged_operators=('initial_data',), product=None):
+    def __init__(self, d, RB=None, basis_is_orthonormal=None,
+                 vector_ranged_operators=('initial_data',), product=None):
+        if RB is not None and basis_is_orthonormal is None:
+            raise ValueError('Please specify is given basis is orthonormal using basis_is_orthonormal.')
+        if RB is None and basis_is_orthonormal is None:
+            basis_is_orthonormal = True
         self.d = d
         self.RB = d.solution_space.empty() if RB is None else RB
         assert self.RB in d.solution_space
+        self.basis_is_orthonormal = basis_is_orthonormal
         self.vector_ranged_operators = vector_ranged_operators
         self.product = product
         self._last_rd = None
@@ -72,11 +82,23 @@ class GenericRBReductor(BasicInterface):
         d = self.d
         RB = self.RB
 
+        if any(k in self.vector_ranged_operators for k in d.operators):
+            projection_matrix = RB.inner(RB, self.product)
+            projection_op = NumpyMatrixOperator(projection_matrix, source_id=RB.space.id, range_id=RB.space.id)
+            inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
+
         def project_operator(k, op):
-            return project(op,
-                           range_basis=RB if RB in op.range else None,
-                           source_basis=RB if RB in op.source else None,
-                           product=self.product if k in self.vector_ranged_operators else None)
+            if k in self.vector_ranged_operators:
+                assert RB in op.range
+                pop = project(op, range_basis=RB, source_basis=RB if RB in op.source else None, product=self.product)
+                if not self.basis_is_orthonormal:
+                    return Concatenation([inverse_projection_op, pop])
+                else:
+                    return pop
+            else:
+                return project(op,
+                               range_basis=RB if RB in op.range else None,
+                               source_basis=RB if RB in op.source else None)
 
         projected_operators = {k: project_operator(k, op) if op else None for k, op in d.operators.items()}
 
@@ -92,14 +114,26 @@ class GenericRBReductor(BasicInterface):
     def _reduce_to_subbasis(self, dim):
         rd = self._last_rd
 
-        def project_operator(op):
-            return project_to_subbasis(op,
-                                       dim_range=dim if op.range == rd.solution_space else None,
-                                       dim_source=dim if op.source == rd.solution_space else None)
+        def project_operator(k, op):
+            if k in self.vector_ranged_operators and not self.basis_is_orthonormal:
+                assert (isinstance(op, Concatenation) and len(op.operators) == 2 and
+                        op.operators[0].name == 'inverse_projection_op')
+                pop = project_to_subbasis(op.operators[1],
+                                          dim_range=dim,
+                                          dim_source=dim if op.source == rd.solution_space else None)
+                inverse_projection_op = InverseOperator(
+                    project_to_subbasis(op.operators[0].operator, dim_range=dim, dim_source=dim),
+                    name='inverse_projection_op'
+                )
+                return Concatenation([inverse_projection_op, pop])
+            else:
+                return project_to_subbasis(op,
+                                           dim_range=dim if op.range == rd.solution_space else None,
+                                           dim_source=dim if op.source == rd.solution_space else None)
 
-        projected_operators = {k: project_operator(op) if op else None for k, op in rd.operators.items()}
+        projected_operators = {k: project_operator(k, op) if op else None for k, op in rd.operators.items()}
 
-        projected_products = {k: project_operator(op) for k, op in rd.products.items()}
+        projected_products = {k: project_operator(k, op) for k, op in rd.products.items()}
 
         if rd.estimator:
             estimator = rd.estimator.restricted_to_subbasis(dim, d=rd)
@@ -115,7 +149,8 @@ class GenericRBReductor(BasicInterface):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         return self.RB[:u.dim].lincomb(u.to_numpy())
 
-    def extend_basis(self, U, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
+    def extend_basis(self, U, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, orthonormal=None,
+                     copy_U=True):
         """Extend basis by new vectors.
 
         Parameters
@@ -147,6 +182,9 @@ class GenericRBReductor(BasicInterface):
             by the POD in order to improve numerical accuracy.
         copy_U
             If `copy_U` is `False`, the new basis vectors might be removed from `U`.
+        orthonormal
+            If `method == 'trivial'`, set this to `True` to indicate that the basis will remain
+            orthonormal after extending.
 
         Raises
         ------
@@ -154,8 +192,11 @@ class GenericRBReductor(BasicInterface):
             Raised when the selected extension method does not yield a basis of increased
             dimension.
         """
+        assert method == 'trivial' or orthonormal is None
         extend_basis(self.RB, U, self.product, method=method, pod_modes=pod_modes,
                      pod_orthonormalize=pod_orthonormalize, copy_U=copy_U)
+        if method == 'trivial' and not orthonormal:
+            self.basis_is_orthonormal = False
 
 
 class GenericPGReductor(BasicInterface):

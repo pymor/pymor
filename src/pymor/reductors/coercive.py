@@ -27,6 +27,9 @@ class CoerciveRBReductor(GenericRBReductor):
         The |Discretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
+    basis_is_orthonormal
+        If `RB` is specified, indicate whether or not the basis is orthonormal
+        w.r.t. `product`.
     vector_ranged_operators
         List of keys in `d.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
@@ -42,9 +45,11 @@ class CoerciveRBReductor(GenericRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, d, RB=None, vector_ranged_operators=('initial_data',), product=None,
+    def __init__(self, d, RB=None, basis_is_orthonormal=None,
+                 vector_ranged_operators=('initial_data',), product=None,
                  coercivity_estimator=None):
         super().__init__(d, RB,
+                         basis_is_orthonormal=basis_is_orthonormal,
                          vector_ranged_operators=vector_ranged_operators,
                          product=product)
         self.coercivity_estimator = coercivity_estimator
@@ -110,6 +115,9 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         The |Discretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
+    basis_is_orthonormal
+        If `RB` is specified, indicate whether or not the basis is orthonormal
+        w.r.t. `product`.
     vector_ranged_operators
         List of keys in `d.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
@@ -125,7 +133,8 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, d, RB=None, vector_ranged_operators=('initial_data',), product=None,
+    def __init__(self, d, RB=None, basis_is_orthonormal=None,
+                 vector_ranged_operators=('initial_data',), product=None,
                  coercivity_estimator=None):
         assert d.linear
         assert isinstance(d.operator, LincombOperator)
@@ -135,6 +144,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
             assert all(not op.parametric for op in d.rhs.operators)
 
         super().__init__(d, RB,
+                         basis_is_orthonormal=basis_is_orthonormal,
                          vector_ranged_operators=vector_ranged_operators,
                          product=product)
         self.coercivity_estimator = coercivity_estimator
