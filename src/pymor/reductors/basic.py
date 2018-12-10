@@ -26,20 +26,20 @@ class GenericRBReductor(BasicInterface):
         The |Discretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    orthogonal_projection
+    vector_ranged_operators
         List of keys in `d.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
         Inner product for the projection of the |Operators| given by
-        `orthogonal_projection`.
+        `vector_ranged_operators`.
     """
 
-    def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None):
+    def __init__(self, d, RB=None, vector_ranged_operators=('initial_data',), product=None):
         self.d = d
         self.RB = d.solution_space.empty() if RB is None else RB
         assert self.RB in d.solution_space
-        self.orthogonal_projection = orthogonal_projection
+        self.vector_ranged_operators = vector_ranged_operators
         self.product = product
         self._last_rd = None
 
@@ -76,7 +76,7 @@ class GenericRBReductor(BasicInterface):
             return project(op,
                            range_basis=RB if RB in op.range else None,
                            source_basis=RB if RB in op.source else None,
-                           product=self.product if k in self.orthogonal_projection else None)
+                           product=self.product if k in self.vector_ranged_operators else None)
 
         projected_operators = {k: project_operator(k, op) if op else None for k, op in d.operators.items()}
 

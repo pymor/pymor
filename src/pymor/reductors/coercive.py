@@ -27,13 +27,13 @@ class CoerciveRBReductor(GenericRBReductor):
         The |Discretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    orthogonal_projection
+    vector_ranged_operators
         List of keys in `d.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
         Inner product for the projection of the |Operators| given by
-        `orthogonal_projection` and for the computation of Riesz representatives
+        `vector_ranged_operators` and for the computation of Riesz representatives
         of the residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
@@ -42,10 +42,10 @@ class CoerciveRBReductor(GenericRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None,
+    def __init__(self, d, RB=None, vector_ranged_operators=('initial_data',), product=None,
                  coercivity_estimator=None):
         super().__init__(d, RB,
-                         orthogonal_projection=orthogonal_projection,
+                         vector_ranged_operators=vector_ranged_operators,
                          product=product)
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
@@ -110,13 +110,13 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         The |Discretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    orthogonal_projection
+    vector_ranged_operators
         List of keys in `d.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
         Inner product for the projection of the |Operators| given by
-        `orthogonal_projection` and for the computation of Riesz representatives
+        `vector_ranged_operators` and for the computation of Riesz representatives
         of the residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
@@ -125,7 +125,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None,
+    def __init__(self, d, RB=None, vector_ranged_operators=('initial_data',), product=None,
                  coercivity_estimator=None):
         assert d.linear
         assert isinstance(d.operator, LincombOperator)
@@ -135,7 +135,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
             assert all(not op.parametric for op in d.rhs.operators)
 
         super().__init__(d, RB,
-                         orthogonal_projection=orthogonal_projection,
+                         vector_ranged_operators=vector_ranged_operators,
                          product=product)
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
