@@ -226,7 +226,6 @@ class GenericPGReductor(BasicInterface):
         self.V = V
         self.W = W
         self.biorthogonal_product = biorthogonal_product
-        self._last_rd = None
 
     def reduce(self):
         """Perform the Petrov-Galerkin projection.
