@@ -82,7 +82,7 @@ class GenericRBReductor(BasicInterface):
         d = self.d
         RB = self.RB
 
-        if any(k in self.vector_ranged_operators for k in d.operators):
+        if any(k in self.vector_ranged_operators for k in d.operators) and not self.basis_is_orthonormal:
             projection_matrix = RB.inner(RB, self.product)
             projection_op = NumpyMatrixOperator(projection_matrix, source_id=RB.space.id, range_id=RB.space.id)
             inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
