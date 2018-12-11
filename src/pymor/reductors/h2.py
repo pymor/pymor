@@ -215,9 +215,6 @@ class IRKAReductor(GenericPGReductor):
 
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
-
 
 class TSIAReductor(GenericPGReductor):
     """Two-Sided Iteration Algorithm reductor.
@@ -354,9 +351,6 @@ class TSIAReductor(GenericPGReductor):
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=d.E)
-
-    extend_source_basis = None
-    extend_range_basis = None
 
 
 class TF_IRKAReductor(BasicInterface):

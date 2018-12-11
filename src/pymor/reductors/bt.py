@@ -113,9 +113,6 @@ class GenericBTReductor(GenericPGReductor):
 
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
-
 
 class BTReductor(GenericBTReductor):
     """Standard (Lyapunov) Balanced Truncation reductor.

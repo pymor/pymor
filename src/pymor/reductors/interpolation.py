@@ -121,9 +121,6 @@ class GenericBHIReductor(GenericPGReductor):
         rd = super().reduce()
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
-
 
 class LTI_BHIReductor(GenericBHIReductor):
     """Bitangential Hermite interpolation for |LTISystems|.

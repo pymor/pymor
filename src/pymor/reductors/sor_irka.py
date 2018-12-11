@@ -220,6 +220,3 @@ class SOR_IRKAReductor(GenericPGReductor):
         self.W = interp_reductor.W
 
         return rd
-
-    extend_source_basis = None
-    extend_range_basis = None

@@ -90,9 +90,6 @@ class GenericSOBTpvReductor(GenericPGReductor):
 
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
-
 
 class SOBTpReductor(GenericSOBTpvReductor):
     """Second-Order Balanced Truncation position reductor.
@@ -258,9 +255,6 @@ class SOBTfvReductor(GenericPGReductor):
         rd = super().reduce()
 
         return rd
-
-    extend_source_basis = None
-    extend_range_basis = None
 
 
 class SOBTReductor(BasicInterface):

@@ -261,62 +261,6 @@ class GenericPGReductor(BasicInterface):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         return self.V[:u.dim].lincomb(u.to_numpy())
 
-    def extend_source_basis(self, U, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
-        """Extend range basis by new vectors.
-
-        Parameters
-        ----------
-        U
-            |VectorArray| containing the new basis vectors.
-        method
-            Basis extension method to use. The following methods are available:
-
-                :trivial:      Vectors in `U` are appended to the basis. Duplicate vectors
-                               in the sense of :func:`~pymor.algorithms.basic.almost_equal`
-                               are removed.
-                :gram_schmidt: New basis vectors are orthonormalized w.r.t. to the old
-                               basis using the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt`
-                               algorithm.
-                :pod:          Append the first POD modes of the defects of the projections
-                               of the vectors in U onto the existing basis
-                               (e.g. for use in POD-Greedy algorithm).
-
-            .. warning::
-                In case of the `'gram_schmidt'` and `'pod'` extension methods, the existing reduced
-                basis is assumed to be orthonormal w.r.t. the given inner product.
-
-        pod_modes
-            In case `method == 'pod'`, the number of POD modes that shall be appended to
-            the basis.
-        pod_orthonormalize
-            If `True` and `method == 'pod'`, re-orthonormalize the new basis vectors obtained
-            by the POD in order to improve numerical accuracy.
-        copy_U
-            If `copy_U` is `False`, the new basis vectors might be removed from `U`.
-
-        Raises
-        ------
-        ExtensionError
-            Raised when the selected extension method does not yield a basis of increased
-            dimension.
-        """
-        extend_basis(self.V, U, self.product, method=method, pod_modes=pod_modes,
-                     pod_orthonormalize=pod_orthonormalize, copy_U=copy_U)
-
-    def extend_range_basis(self, U, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
-        """Extend range basis by new vectors.
-
-        Parameters
-        ----------
-        See :meth:`extend_source_basis`.
-
-        Raises
-        ------
-        See :meth:`extend_source_basis`.
-        """
-        extend_basis(self.W, U, self.product, method=method, pod_modes=pod_modes,
-                     pod_orthonormalize=pod_orthonormalize, copy_U=copy_U)
-
 
 def extend_basis(basis, U, product=None, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
     assert method in ('trivial', 'gram_schmidt', 'pod')
