@@ -20,7 +20,8 @@ from pymor.vectorarrays.block import BlockVectorSpace
 class InputOutputSystem(DiscretizationBase):
     """Base class for input-output systems."""
 
-    def __init__(self, input_space, output_space, cont_time=True, cache_region='memory', name=None, **kwargs):
+    def __init__(self, input_space, output_space, cont_time=True,
+                 cache_region='memory', name=None, **kwargs):
         self.input_space = input_space
         self.output_space = output_space
         super().__init__(cache_region=cache_region, name=name, **kwargs)
@@ -115,11 +116,13 @@ class InputOutputSystem(DiscretizationBase):
 class InputStateOutputSystem(InputOutputSystem):
     """Base class for input-output systems with state space."""
 
-    def __init__(self, input_space, state_space, output_space, cont_time=True, cache_region='memory', name=None, **kwargs):
+    def __init__(self, input_space, state_space, output_space, cont_time=True,
+                 cache_region='memory', name=None, **kwargs):
         # ensure that state_space can be distinguished from input and output space
         # ensure that ids are different to make sure that also reduced spaces can be differentiated
         assert state_space.id != input_space.id and state_space.id != output_space.id
-        super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name, **kwargs)
+        super().__init__(input_space, output_space, cont_time=cont_time,
+                         cache_region=cache_region, name=name, **kwargs)
         self.state_space = state_space
 
     @property
@@ -136,17 +139,21 @@ class InputStateOutputSystem(InputOutputSystem):
                 if op.range == self.output_space:
                     return (op + other_op).assemble()
                 elif op.range == self.state_space:
-                    return BlockColumnOperator([op, other_op], range_id=self.state_space.id)
+                    return BlockColumnOperator([op, other_op],
+                                               range_id=self.state_space.id)
                 else:
                     raise NotImplementedError
             elif op.source == self.state_space:
                 if op.range == self.output_space:
-                    return BlockRowOperator([op, other_op], source_id=self.state_space.id)
+                    return BlockRowOperator([op, other_op],
+                                            source_id=self.state_space.id)
                 elif op.range == self.state_space:
                     if isinstance(op, IdentityOperator) and isinstance(other_op, IdentityOperator):
-                        return IdentityOperator(BlockVectorSpace([op.source, other_op.source], self.state_space.id))
+                        return IdentityOperator(BlockVectorSpace([op.source, other_op.source],
+                                                                 self.state_space.id))
                     else:
-                        return BlockDiagonalOperator([op, other_op], source_id=self.state_space.id,
+                        return BlockDiagonalOperator([op, other_op],
+                                                     source_id=self.state_space.id,
                                                      range_id=self.state_space.id)
                 else:
                     raise NotImplementedError
@@ -294,6 +301,12 @@ class LTISystem(InputStateOutputSystem):
             assumed to be identity).
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
+        input_id
+            Id of the input space.
+        state_id
+            Id of the state space.
+        output_id
+            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -339,6 +352,7 @@ class LTISystem(InputStateOutputSystem):
 
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True,
+                   input_id='INPUT', state_id='STATE', output_id='OUTPUT',
                    solver_options=None, estimator=None, visualizer=None,
                    cache_region='memory', name=None):
         """Create |LTISystem| from matrices stored in separate files.
@@ -359,6 +373,12 @@ class LTISystem(InputStateOutputSystem):
             E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
+        input_id
+            Id of the input space.
+        state_id
+            Id of the state space.
+        output_id
+            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -393,11 +413,13 @@ class LTISystem(InputStateOutputSystem):
         E = load_matrix(E_file) if E_file is not None else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
+                                 input_id=input_id, state_id=state_id, output_id=output_id,
                                  solver_options=solver_options, estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True,
+                      input_id='INPUT', state_id='STATE', output_id='OUTPUT',
                       solver_options=None, estimator=None, visualizer=None,
                       cache_region='memory', name=None):
         """Create |LTISystem| from matrices stored in a .mat file.
@@ -409,6 +431,12 @@ class LTISystem(InputStateOutputSystem):
             be included) containing A, B, C, and optionally D and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
+        input_id
+            Id of the input space.
+        state_id
+            Id of the state space.
+        output_id
+            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -446,11 +474,13 @@ class LTISystem(InputStateOutputSystem):
         E = mat_dict['E'] if 'E' in mat_dict else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
+                                 input_id=input_id, state_id=state_id, output_id=output_id,
                                  solver_options=solver_options, estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
     @classmethod
     def from_abcde_files(cls, files_basename, cont_time=True,
+                         input_id='INPUT', state_id='STATE', output_id='OUTPUT',
                          solver_options=None, estimator=None, visualizer=None,
                          cache_region='memory', name=None):
         """Create |LTISystem| from matrices stored in a .[ABCDE] files.
@@ -462,6 +492,12 @@ class LTISystem(InputStateOutputSystem):
             and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
+        input_id
+            Id of the input space.
+        state_id
+            Id of the state space.
+        output_id
+            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -497,6 +533,7 @@ class LTISystem(InputStateOutputSystem):
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
+                                 input_id=input_id, state_id=state_id, output_id=output_id,
                                  solver_options=solver_options, estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
@@ -520,7 +557,8 @@ class LTISystem(InputStateOutputSystem):
             self.logger.warn('Converting operator A to a NumPy array.')
         A = to_matrix(self.A, format='dense')
 
-        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or isinstance(self.E, IdentityOperator)):
+        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
+                isinstance(self.E, IdentityOperator)):
             self.logger.warn('Converting operator E to a NumPy array.')
         E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
 
@@ -729,9 +767,11 @@ class LTISystem(InputStateOutputSystem):
         for op_name in ['A', 'B', 'C']:
             if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and not getattr(self, op_name).sparse):
                 self.logger.warn('Converting operator ' + op_name + ' to a NumPy array.')
-        if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse) or isinstance(self.D, ZeroOperator)):
+        if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse) or
+                isinstance(self.D, ZeroOperator)):
             self.logger.warn('Converting operator D to a NumPy array.')
-        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or isinstance(self.E, IdentityOperator)):
+        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
+                isinstance(self.E, IdentityOperator)):
             self.logger.warn('Converting operator E to a NumPy array.')
 
         from slycot import ab13dd
@@ -765,7 +805,7 @@ class TransferFunction(InputOutputSystem):
         The input |VectorSpace|. Typically `NumpyVectorSpace(m, 'INPUT')` where
         m is the number of inputs.
     output_space
-        The output |VectorSapce|. Typically `NumpyVectorSpace(p, 'OUTPUT')` where
+        The output |VectorSpace|. Typically `NumpyVectorSpace(p, 'OUTPUT')` where
         p is the number of outputs.
     H
         The transfer function defined at least on the open right complex
@@ -1019,10 +1059,14 @@ class SecondOrderSystem(InputStateOutputSystem):
         """
         state_id = self.state_space.id
         return LTISystem(A=SecondOrderSystemOperator(self.E, self.K),
-                         B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B], range_id=state_id),
-                         C=BlockRowOperator([self.Cp, self.Cv], source_id=state_id),
+                         B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B],
+                                               range_id=state_id),
+                         C=BlockRowOperator([self.Cp, self.Cv],
+                                            source_id=state_id),
                          D=self.D,
-                         E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source], state_id)) if isinstance(self.M, IdentityOperator) else
+                         E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source],
+                                                              state_id))
+                            if isinstance(self.M, IdentityOperator) else
                             BlockDiagonalOperator([IdentityOperator(self.M.source), self.M],
                                                   source_id=state_id, range_id=state_id)),
                          cont_time=self.cont_time,
