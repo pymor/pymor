@@ -2,16 +2,13 @@
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from functools import partial
-
 import numpy as np
 import scipy.linalg as spla
 import scipy.sparse as sps
 
+from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
-from pymor.core.config import config
-from pymor.core.defaults import defaults
 from pymor.discretizations.basic import DiscretizationBase
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderSystemOperator)
@@ -172,11 +169,6 @@ class InputStateOutputSystem(InputOutputSystem):
         return self + (-other)
 
 
-_DEFAULT_ME_SOLVER_BACKEND = 'pymess' if config.HAVE_PYMESS else \
-                             'slycot' if config.HAVE_SLYCOT else \
-                             'scipy'
-
-
 class LTISystem(InputStateOutputSystem):
     r"""Class for linear time-invariant systems.
 
@@ -269,7 +261,7 @@ class LTISystem(InputStateOutputSystem):
         assert E.source == E.range
         assert E.source == A.source
         assert cont_time in (True, False)
-        assert solver_options is None or solver_options.keys() <= {'lyap', 'ricc'}
+        assert solver_options is None or solver_options.keys() <= {'lyap'}
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
@@ -608,26 +600,6 @@ class LTISystem(InputStateOutputSystem):
                 C.as_source_array())))).to_numpy().conj()
         return dtfs
 
-    @defaults('default_solver_backend')
-    def _lyap_solver(self, default_solver_backend=_DEFAULT_ME_SOLVER_BACKEND):
-        options = self.solver_options.get('lyap') if self.solver_options else None
-        if options:
-            solver = options if isinstance(options, str) else options['type']
-            backend = solver.split('_')[0]
-        else:
-            backend = default_solver_backend
-        if backend == 'scipy':
-            from pymor.bindings.scipy import solve_lyap as solve_lyap_impl
-        elif backend == 'slycot':
-            from pymor.bindings.slycot import solve_lyap as solve_lyap_impl
-        elif backend == 'pymess':
-            from pymor.bindings.pymess import solve_lyap as solve_lyap_impl
-        elif backend == 'lradi':
-            from pymor.algorithms.lyapunov import solve_lyap as solve_lyap_impl
-        else:
-            raise NotImplementedError
-        return partial(solve_lyap_impl, options=options)
-
     @cached
     def gramian(self, typ):
         """Compute a Gramian.
@@ -637,12 +609,19 @@ class LTISystem(InputStateOutputSystem):
         typ
             The type of the Gramian:
 
-            - `'cf'`: controllability Gramian factor,
-            - `'of'`: observability Gramian factor.
+            - `'c_lrcf'`: low-rank Cholesky factor of the
+              controllability Gramian,
+            - `'o_lrcf'`: low-rank Cholesky factor of the
+              observability Gramian,
+            - `'c_dense'`: dense controllability Gramian,
+            - `'o_dense'`: dense observability Gramian,
 
         Returns
         -------
-        Gramian factor as a |VectorArray| from `self.A.source`.
+        If typ is `'c_lrcf'` or `'o_lrcf'`, then the Gramian factor as a
+        |VectorArray| from `self.A.source`.
+        If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a
+        |NumPy array|.
         """
         assert isinstance(typ, str)
 
@@ -653,13 +632,19 @@ class LTISystem(InputStateOutputSystem):
         B = self.B
         C = self.C
         E = self.E if not isinstance(self.E, IdentityOperator) else None
+        options = self.solver_options.get('lyap') if self.solver_options else None
 
-        if typ == 'cf':
-            return self._lyap_solver()(A, E, B, trans=False)
-        elif typ == 'of':
-            return self._lyap_solver()(A, E, C, trans=True)
+        if typ == 'c_lrcf':
+            return solve_lyap_lrcf(A, E, B, trans=False, options=options)
+        elif typ == 'o_lrcf':
+            return solve_lyap_lrcf(A, E, C, trans=True, options=options)
+        elif typ == 'c_dense':
+            return solve_lyap_dense(A, E, B, trans=False, options=options)
+        elif typ == 'o_lrcf':
+            return solve_lyap_dense(A, E, C, trans=True, options=options)
         else:
-            raise NotImplementedError("Only 'cf' and 'of' types are possible.")
+            raise NotImplementedError("Only 'c_lrcf', 'o_lrcf', 'c_dense', and 'o_dense' types are possible"
+                                      " ({} was given).".format(typ))
 
     @cached
     def _hsv_U_V(self):
@@ -674,8 +659,8 @@ class LTISystem(InputStateOutputSystem):
         Vh
             |NumPy array| of right singluar vectors.
         """
-        cf = self.gramian('cf')
-        of = self.gramian('of')
+        cf = self.gramian('c_lrcf')
+        of = self.gramian('o_lrcf')
 
         U, hsv, Vh = spla.svd(self.E.apply2(of, cf), lapack_driver='gesvd')
         return hsv, U.T, Vh
@@ -716,10 +701,10 @@ class LTISystem(InputStateOutputSystem):
         if not self.cont_time:
             raise NotImplementedError
         if self.m <= self.p:
-            cf = self.gramian('cf')
+            cf = self.gramian('c_lrcf')
             return np.sqrt(self.C.apply(cf).l2_norm2().sum())
         else:
-            of = self.gramian('of')
+            of = self.gramian('o_lrcf')
             return np.sqrt(self.B.apply_adjoint(of).l2_norm2().sum())
 
     @cached
@@ -1144,25 +1129,40 @@ class SecondOrderSystem(InputStateOutputSystem):
         typ
             The type of the Gramian:
 
-            - `'pcf'`: position controllability Gramian factor,
-            - `'vcf'`: velocity controllability Gramian factor,
-            - `'pof'`: position observability Gramian factor,
-            - `'vof'`: velocity observability Gramian factor.
+            - `'pc_lrcf'`: low-rank Cholesky factor of the position
+              controllability Gramian,
+            - `'vc_lrcf'`: low-rank Cholesky factor of the velocity
+              controllability Gramian,
+            - `'po_lrcf'`: low-rank Cholesky factor of the position
+              observability Gramian,
+            - `'vo_lrcf'`: low-rank Cholesky factor of the velocity
+              observability Gramian,
+            - `'pc_dense'`: dense position controllability Gramian,
+            - `'vc_dense'`: dense velocity controllability Gramian,
+            - `'po_dense'`: dense position observability Gramian,
+            - `'vo_dense'`: dense velocity observability Gramian,
 
         Returns
         -------
-        Gramian factor as a |VectorArray| from `self.M.source`.
+        If typ is `'pc_lrcf'`, `'vc_lrcf'`, `'po_lrcf'` or `'vo_lrcf'`,
+        then the Gramian factor as a |VectorArray| from `self.M.source`.
+        If typ is `'pc_dense'`, `'vc_dense'`, `'po_dense'` or
+        `'vo_dense'`, then the Gramian as a |NumPy array|.
         """
-        if typ == 'pcf':
-            return self.to_lti().gramian('cf').block(0)
-        elif typ == 'vcf':
-            return self.to_lti().gramian('cf').block(1)
-        elif typ == 'pof':
-            return self.to_lti().gramian('of').block(0)
-        elif typ == 'vof':
-            return self.to_lti().gramian('of').block(1)
+        if typ not in ['pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',
+                       'pc_dense', 'vc_dense', 'po_dense', 'vo_dense']:
+            raise NotImplementedError("Only 'pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',"
+                                      " 'pc_dense', 'vc_dense', 'po_dense', and 'vo_dense' types are possible"
+                                      " ({} was given).".format(typ))
+
+        if typ.endswith('lrcf'):
+            return self.to_lti().gramian(typ[1:]).block(0 if typ.startswith('p') else 1)
         else:
-            raise NotImplementedError("Only 'pcf', 'vcf', 'pof', and 'vof' types are possible.")
+            g = self.to_lti().gramian(typ[1:])
+            if typ.startswith('p'):
+                return g[:self.n, :self.n]
+            else:
+                return g[self.n:, self.n:]
 
     def psv(self):
         """Position singular values.
@@ -1171,7 +1171,7 @@ class SecondOrderSystem(InputStateOutputSystem):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('pof').inner(self.gramian('pcf')))
+        return spla.svdvals(self.gramian('po_lrcf').inner(self.gramian('pc_lrcf')))
 
     def vsv(self):
         """Velocity singular values.
@@ -1180,7 +1180,7 @@ class SecondOrderSystem(InputStateOutputSystem):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('vof').inner(self.gramian('vcf'), product=self.M))
+        return spla.svdvals(self.gramian('vo_lrcf').inner(self.gramian('vc_lrcf'), product=self.M))
 
     def pvsv(self):
         """Position-velocity singular values.
@@ -1189,7 +1189,7 @@ class SecondOrderSystem(InputStateOutputSystem):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('vof').inner(self.gramian('pcf'), product=self.M))
+        return spla.svdvals(self.gramian('vo_lrcf').inner(self.gramian('pc_lrcf'), product=self.M))
 
     def vpsv(self):
         """Velocity-position singular values.
@@ -1198,7 +1198,7 @@ class SecondOrderSystem(InputStateOutputSystem):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('pof').inner(self.gramian('vcf')))
+        return spla.svdvals(self.gramian('po_lrcf').inner(self.gramian('vc_lrcf')))
 
     @cached
     def h2_norm(self):
