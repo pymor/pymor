@@ -211,21 +211,30 @@ class GenericPGReductor(BasicInterface):
     ----------
     d
         The |Discretization| which is to be reduced.
-    V
-        |VectorArray| containing the right projection matrix.
     W
         |VectorArray| containing the left projection matrix.
-    biorthogonal_product
-        Key of the operator in d.operators() used as the product to
-        biorthogonalize V and W.
+    V
+        |VectorArray| containing the right projection matrix.
+    bases_are_biorthonormal
+        Indicate whether or not V and W are biorthonormal w.r.t. `product`.
+    vector_ranged_operators
+        List of keys in `d.operators` for which the corresponding |Operator|
+        should be biorthogonally projected (i.e. operators which map to vectors in
+        contrast to bilinear forms which map to functionals).
+    product
+        Inner product for the projection of the |Operators| given by
+        `vector_ranged_operators`.
     """
 
-    def __init__(self, d, V, W, biorthogonal_product=None):
+    def __init__(self, d, W, V, bases_are_biorthonormal, vector_ranged_operators=('initial_data',), product=None):
         assert V in d.solution_space
+        assert product is None or (W in product.range and V in product.source)
         self.d = d
         self.V = V
         self.W = W
-        self.biorthogonal_product = biorthogonal_product
+        self.bases_are_biorthonormal = bases_are_biorthonormal
+        self.vector_ranged_operators = vector_ranged_operators
+        self.product = product
 
     def reduce(self):
         """Perform the Petrov-Galerkin projection.
@@ -235,13 +244,27 @@ class GenericPGReductor(BasicInterface):
         The reduced |Discretization|.
         """
         d, V, W = self.d, self.V, self.W
-        biorthogonal_product = self.biorthogonal_product
+        product = self.product
+
+        if any(k in self.vector_ranged_operators for k in d.operators) and not self.bases_are_biorthonormal:
+            projection_matrix = W.inner(V, product)
+            projection_op = NumpyMatrixOperator(projection_matrix, source_id=V.space.id, range_id=W.space.id)
+            inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
 
         def project_operator(k, op):
             if not op:
                 return None
-            if k == biorthogonal_product:
+            if k is product and self.bases_are_biorthonormal:
+                if V.space.id != W.space.id:
+                    raise NotImplementedError
                 return IdentityOperator(NumpyVectorSpace(len(V), V.space.id))
+            elif k in self.vector_ranged_operators:
+                assert W in op.range
+                pop = project(op, range_basis=W, source_basis=V if V in op.source else None, product=product)
+                if not self.bases_are_biorthonormal:
+                    return Concatenation([inverse_projection_op, pop])
+                else:
+                    return pop
             else:
                 return project(op,
                                range_basis=W if W in op.range else None,
