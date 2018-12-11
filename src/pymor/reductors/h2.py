@@ -290,7 +290,6 @@ class TSIAReductor(BasicInterface):
         assert isinstance(num_prev, int) and num_prev >= 1
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('sigma', 'h2')
-        self.pg_reductor = GenericPGReductor(d, self.W, self.V, projection == 'biorth', product=d.E)
 
         # begin logging
         self.logger.info('Starting TSIA')
@@ -355,6 +354,8 @@ class TSIAReductor(BasicInterface):
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=d.E)
+
+        self.pg_reductor = GenericPGReductor(d, self.W, self.V, projection == 'biorth', product=d.E)
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
