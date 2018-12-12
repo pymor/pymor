@@ -67,8 +67,6 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     _check_availability(solver)
-    if solver == 'pymess_lrnm' and with_S:
-        pytest.skip('pymess.lrnm does not support S')
 
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
@@ -95,7 +93,11 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     Rop = None if not with_R else NumpyMatrixOperator(R)
     Sop = None if not with_S else NumpyMatrixOperator(S)
 
-    Zva = solve_ricc_lrcf(Aop, Eop, Bop, Cop, Rop, Sop, trans=trans, options=solver)
+    try:
+        Zva = solve_ricc_lrcf(Aop, Eop, Bop, Cop, Rop, Sop, trans=trans, options=solver)
+    except NotImplementedError:
+        return
+
     assert len(Zva) <= n
     Z = Zva.to_numpy().T
 
@@ -112,8 +114,6 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R,with_S', [(False, False), (True, False), (True, True)])
-# @pytest.mark.parametrize('with_R', [True])
-# @pytest.mark.parametrize('with_S', [True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):

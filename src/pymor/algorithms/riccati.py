@@ -10,9 +10,9 @@ from pymor.operators.interfaces import OperatorInterface
 
 _DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = 'pymess'
 
-_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = 'pymess' if config.HAVE_PYMESS else \
-                                          'slycot' if config.HAVE_SLYCOT else \
-                                          'scipy'
+_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
+                                           'slycot' if config.HAVE_SLYCOT else
+                                           'scipy')
 
 
 @defaults('options', 'default_sparse_solver_backend', 'default_dense_solver_backend')
@@ -130,9 +130,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
 
 
-_DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = 'pymess' if config.HAVE_PYMESS else \
-                                              'slycot' if config.HAVE_SLYCOT else \
-                                              'scipy'
+_DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
+                                               'slycot' if config.HAVE_SLYCOT else
+                                               'scipy')
 
 
 @defaults('options', 'default_dense_solver_backend')

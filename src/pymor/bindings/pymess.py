@@ -259,6 +259,9 @@ if config.HAVE_PYMESS:
             |VectorArray| from `A.source`.
         """
 
+        if S is not None:
+            raise NotImplementedError
+
         _solve_ricc_check_args(A, E, B, C, R, S, trans)
         default_solver = 'pymess_lrnm' if A.source.dim >= MAT_EQN_SPARSE_MIN_SIZE else 'pymess_dense_nm_gmpcare'
         options = _parse_options(options, ricc_lrcf_solver_options(), default_solver, None, False)
