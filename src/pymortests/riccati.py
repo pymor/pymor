@@ -79,33 +79,27 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     D = np.random.randn(p, m)
     if not trans:
         R0 = np.random.randn(p, p)
-        R = D.dot(D.T) + R0.dot(R0.T)
-        S = B.dot(D.T)
+        R = D.dot(D.T) + R0.dot(R0.T) if with_R else None
+        S = B.dot(D.T) if with_S else None
     else:
         R0 = np.random.randn(m, m)
-        R = D.T.dot(D) + R0.dot(R0.T)
-        S = C.T.dot(D)
+        R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
+        S = C.T.dot(D) if with_S else None
 
     Aop = NumpyMatrixOperator(A)
-    Eop = None if not with_E else NumpyMatrixOperator(E)
-    Bop = NumpyMatrixOperator(B)
-    Cop = NumpyMatrixOperator(C)
-    Rop = None if not with_R else NumpyMatrixOperator(R)
-    Sop = None if not with_S else NumpyMatrixOperator(S)
+    Eop = NumpyMatrixOperator(E) if with_E else None
+    Bva = Aop.source.from_numpy(B.T)
+    Cva = Aop.source.from_numpy(C)
+    Sva = Aop.source.from_numpy(S.T) if with_S else None
 
     try:
-        Zva = solve_ricc_lrcf(Aop, Eop, Bop, Cop, Rop, Sop, trans=trans, options=solver)
+        Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
     except NotImplementedError:
         return
 
     assert len(Zva) <= n
+
     Z = Zva.to_numpy().T
-
-    if not with_R:
-        R = None
-    if not with_S:
-        S = None
-
     assert relative_residual(A, E, B, C, R, S, Z, trans) < 1e-8
 
 
@@ -130,29 +124,23 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     D = np.random.randn(p, m)
     if not trans:
         R0 = np.random.randn(p, p)
-        R = D.dot(D.T) + 10 * R0.dot(R0.T)
-        S = B.dot(D.T)
+        R = D.dot(D.T) + 10 * R0.dot(R0.T) if with_R else None
+        S = B.dot(D.T) if with_S else None
     else:
         R0 = np.random.randn(m, m)
-        R = D.T.dot(D) + 10 * R0.dot(R0.T)
-        S = C.T.dot(D)
+        R = D.T.dot(D) + 10 * R0.dot(R0.T) if with_R else None
+        S = C.T.dot(D) if with_S else None
 
     Aop = NumpyMatrixOperator(A)
-    Eop = None if not with_E else NumpyMatrixOperator(E)
-    Bop = NumpyMatrixOperator(B)
-    Cop = NumpyMatrixOperator(C)
-    Rop = None if not with_R else NumpyMatrixOperator(R)
-    Sop = None if not with_S else NumpyMatrixOperator(S)
+    Eop = NumpyMatrixOperator(E) if with_E else None
+    Bva = Aop.source.from_numpy(B.T)
+    Cva = Aop.source.from_numpy(C)
+    Sva = Aop.source.from_numpy(S.T) if with_S else None
 
-    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bop, Cop, Rop, Sop, trans=trans, options=solver)
+    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
     assert len(Zva) <= n
+
     Z = Zva.to_numpy().T
-
     if not with_R:
-        R = -np.eye(p if not trans else m)
-    else:
-        R = -R
-    if not with_S:
-        S = None
-
-    assert relative_residual(A, E, B, C, R, S, Z, trans) < 1e-8
+        R = np.eye(p if not trans else m)
+    assert relative_residual(A, E, B, C, -R, S, Z, trans) < 1e-8

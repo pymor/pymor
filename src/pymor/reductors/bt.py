@@ -155,8 +155,8 @@ class LQGBTReductor(GenericBTReductor):
         E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
         options = self.solver_options
 
-        cf = solve_ricc_lrcf(A, E, B, C, trans=False, options=options)
-        of = solve_ricc_lrcf(A, E, B, C, trans=True, options=options)
+        cf = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), trans=False, options=options)
+        of = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), trans=True, options=options)
         return cf, of
 
     def error_bounds(self):
@@ -190,9 +190,9 @@ class BRBTReductor(GenericBTReductor):
         E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
         options = self.solver_options
 
-        cf = solve_pos_ricc_lrcf(A, E, B, C, R=IdentityOperator(C.range) * (self.gamma ** 2),
+        cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), R=self.gamma**2 * np.eye(C.range.dim),
                                  trans=False, options=options)
-        of = solve_pos_ricc_lrcf(A, E, B, C, R=IdentityOperator(B.source) * (self.gamma ** 2),
+        of = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), R=self.gamma**2 * np.eye(B.source.dim),
                                  trans=True, options=options)
         return cf, of
 

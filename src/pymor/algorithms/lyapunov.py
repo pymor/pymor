@@ -49,15 +49,15 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
         .. math::
             A^T X + X A + B^T B = 0,
 
-    - if trans is `True` and E is an |Operator|
+    - if trans is `True` and E is an |Operator|:
 
         .. math::
             A^T X E + E^T X A + B^T B = 0.
 
     We assume A and E are real |Operators|, E is invertible, and all the
     eigenvalues of (A, E) all lie in the open left half-plane.
-    For large-scale problems, we additionally assume `B.source.dim`
-    (`B.range.dim`) is small if trans is `False` (`True`).
+    Operator B needs to be given as a |VectorArray| from `A.source`, and
+    for large-scale problems, we assume `len(B)` is small.
 
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
@@ -81,7 +81,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
     E
         The |Operator| E or `None`.
     B
-        The |Operator| B.
+        The operator B as a |VectorArray| from `A.source`.
     trans
         Whether the first |Operator| in the Lyapunov equation is
         transposed.
@@ -106,7 +106,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
         |VectorArray| from `A.source`.
     """
 
-    _solve_lyap_check_args(A, E, B, trans)
+    _solve_lyap_lrcf_check_args(A, E, B, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
@@ -126,6 +126,16 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
     else:
         raise ValueError('Unknown solver backend ({}).'.format(backend))
     return solve_lyap_impl(A, E, B, trans=trans, options=options)
+
+
+def _solve_lyap_lrcf_check_args(A, E, B, trans):
+    assert isinstance(A, OperatorInterface) and A.linear
+    assert A.source == A.range
+    if E is not None:
+        assert isinstance(E, OperatorInterface) and E.linear
+        assert E.source == E.range
+        assert E.source == A.source
+    assert B in A.source
 
 
 @defaults('options', 'default_solver_backend')
@@ -151,17 +161,14 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
         .. math::
             A^T X + X A + B^T B = 0,
 
-    - if trans is `True` and E is an |Operator|
+    - if trans is `True` and E is an |Operator|:
 
         .. math::
             A^T X E + E^T X A + B^T B = 0.
 
-    We assume A and E are real |Operators|, E is invertible, and that no
-    two eigenvalues of (A, E) sum to zero (i.e., there exists a unique
-    solution X).
-    Since the solution X is returned as a |NumPy array|, we assume A, E,
-    and B can be converted to |NumPy arrays| using
-    :func:`~pymor.algorithms.to_matrix.to_matrix`.
+    We assume A and E are real |NumPy arrays|, E is invertible, and that
+    no two eigenvalues of (A, E) sum to zero (i.e., there exists a
+    unique solution X).
 
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
@@ -173,13 +180,13 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
     Parameters
     ----------
     A
-        The |Operator| A.
+        The operator A as a 2D |NumPy array|.
     E
-        The |Operator| E or `None`.
+        The operator E as a 2D |NumPy array| or `None`.
     B
-        The |Operator| B.
+        The operator B as a 2D |NumPy array|.
     trans
-        Whether the first |Operator| in the Lyapunov equation is
+        Whether the first operator in the Lyapunov equation is
         transposed.
     options
         The solver options to use.
@@ -198,7 +205,7 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
         Lyapunov equation solution as a |NumPy array|.
     """
 
-    _solve_lyap_check_args(A, E, B, trans)
+    _solve_lyap_dense_check_args(A, E, B, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
@@ -215,12 +222,15 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
     return solve_lyap_impl(A, E, B, trans, options=options)
 
 
-def _solve_lyap_check_args(A, E, B, trans=False):
-    assert isinstance(A, OperatorInterface) and A.linear
-    assert A.source == A.range
-    assert isinstance(B, OperatorInterface) and B.linear
-    assert not trans and B.range == A.source or trans and B.source == A.source
-    assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+def _solve_lyap_dense_check_args(A, E, B, trans):
+    assert isinstance(A, np.ndarray) and A.ndim == 2
+    assert A.shape[0] == A.shape[1]
+    if E is not None:
+        assert isinstance(E, np.ndarray) and E.ndim == 2
+        assert E.shape[0] == E.shape[1]
+        assert E.shape[0] == A.shape[0]
+    assert isinstance(B, np.ndarray) and A.ndim == 2
+    assert not trans and B.shape[0] == A.shape[0] or trans and B.shape[1] == A.shape[0]
 
 
 def _chol(A):

@@ -10,7 +10,7 @@ import scipy.version
 from scipy.linalg import solve, solve_continuous_lyapunov, solve_continuous_are
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 
-from pymor.algorithms.lyapunov import _solve_lyap_check_args, _chol
+from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args, _solve_lyap_dense_check_args, _chol
 from pymor.algorithms.riccati import _solve_ricc_check_args
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.to_matrix import to_matrix
@@ -341,8 +341,9 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
 
     This function uses `scipy.linalg.solve_continuous_lyapunov`, which
     is a dense solver for Lyapunov equations with E=I.
-    Therefore, we assume A, E, and B can be converted to |NumPy arrays|
-    using :func:`~pymor.algorithms.to_matrix.to_matrix`.
+    Therefore, we assume A and E can be converted to |NumPy arrays|
+    using :func:`~pymor.algorithms.to_matrix.to_matrix` and that
+    `B.to_numpy` is implemented.
 
     .. note::
         If E is not `None`, the problem will be reduced to a standard
@@ -355,7 +356,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     E
         The |Operator| E or `None`.
     B
-        The |Operator| B.
+        The operator B as a |VectorArray| from `A.source`.
     trans
         Whether the first |Operator| in the Lyapunov equation is
         transposed.
@@ -370,13 +371,14 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         |VectorArray| from `A.source`.
     """
 
-    _solve_lyap_check_args(A, E, B, trans)
+    _solve_lyap_lrcf_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
 
-    X = solve_lyap_dense(A, E, B, trans=trans, options=options)
-    Z = _chol(X)
-    Z = A.source.from_numpy(np.array(Z).T)
-    return Z
+    X = solve_lyap_dense(to_matrix(A, format='dense'),
+                         to_matrix(E, format='dense') if E else None,
+                         B.to_numpy().T if not trans else B.to_numpy(),
+                         trans=trans, options=options)
+    return A.source.from_numpy(_chol(X).T)
 
 
 def lyap_dense_solver_options():
@@ -407,13 +409,13 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
     Parameters
     ----------
     A
-        The |Operator| A.
+        The operator A as a 2D |NumPy array|.
     E
-        The |Operator| E or `None`.
+        The operator E as a 2D |NumPy array| or `None`.
     B
-        The |Operator| B.
+        The operator B as a 2D |NumPy array|.
     trans
-        Whether the first |Operator| in the Lyapunov equation is
+        Whether the first operator in the Lyapunov equation is
         transposed.
     options
         The solver options to use (see
@@ -425,26 +427,20 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
         Lyapunov equation solution as a |NumPy array|.
     """
 
-    _solve_lyap_check_args(A, E, B, trans)
+    _solve_lyap_dense_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_dense_solver_options(), 'scipy', None, False)
 
     if options['type'] == 'scipy':
-        A = to_matrix(A, format='dense')
-        B = to_matrix(B, format='dense')
         if E is not None:
-            E = to_matrix(E, format='dense')
-            if not trans:
-                A = solve(E, A)
-                B = solve(E, B)
-            else:
-                A = solve(E.T, A.T).T
-                B = solve(E.T, B.T).T
+            A = solve(E, A) if not trans else solve(E.T, A.T).T
+            B = solve(E, B) if not trans else solve(E.T, B.T).T
         if trans:
             A = A.T
             B = B.T
         X = solve_continuous_lyapunov(A, -B.dot(B.T))
     else:
         raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
+
     return X
 
 
@@ -461,15 +457,17 @@ def ricc_lrcf_solver_options():
 
 @defaults('options')
 def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    r"""Compute an approximate low-rank solution of a Riccati equation.
+    """Compute an approximate low-rank solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a general
     description.
 
     This function uses `scipy.linalg.solve_continuous_are`, which
     is a dense solver.
-    Therefore, we assume all |Operators| can be converted to |NumPy arrays|
-    using :func:`~pymor.algorithms.to_matrix.to_matrix`.
+    Therefore, we assume all |Operators| and |VectorArrays| can be
+    converted to |NumPy arrays| using
+    :func:`~pymor.algorithms.to_matrix.to_matrix` and
+    :func:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`.
 
     Parameters
     ----------
@@ -478,13 +476,13 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     E
         The |Operator| E or `None`.
     B
-        The |Operator| B.
+        The operator B as a |VectorArray| from `A.source`.
     C
-        The |Operator| C.
+        The operator C as a |VectorArray| from `A.source`.
     R
-        The |Operator| R or `None`.
+        The operator R as a 2D |NumPy array| or `None`.
     S
-        The |Operator| S or `None`.
+        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.
@@ -500,32 +498,25 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
 
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
     options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
-
-    if options['type'] == 'scipy':
-        A_source = A.source
-        A = to_matrix(A, format='dense')
-        E = to_matrix(E, format='dense') if E else None
-        B = to_matrix(B, format='dense') if B else None
-        C = to_matrix(C, format='dense') if C else None
-        R = to_matrix(R, format='dense') if R else None
-        S = to_matrix(S, format='dense') if S else None
-        if R is None:
-            if not trans:
-                R = np.eye(C.shape[0])
-            else:
-                R = np.eye(B.shape[1])
-        if not trans:
-            if E is not None:
-                E = E.T
-            X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, E, S)
-        else:
-            X = solve_continuous_are(A, B, C.T.dot(C), R, E, S)
-        Z = _chol(X)
-        Z = A_source.from_numpy(np.array(Z).T)
-    else:
+    if options['type'] != 'scipy':
         raise ValueError('Unexpected Riccati equation solver ({}).'.format(options['type']))
 
-    return Z
+    A_source = A.source
+    A = to_matrix(A, format='dense')
+    E = to_matrix(E, format='dense') if E else None
+    B = B.to_numpy().T
+    C = C.to_numpy()
+    S = S.to_numpy().T if S else None
+    if R is None:
+        R = np.eye(C.shape[0] if not trans else B.shape[1])
+    if not trans:
+        if E is not None:
+            E = E.T
+        X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, E, S)
+    else:
+        X = solve_continuous_are(A, B, C.T.dot(C), R, E, S)
+
+    return A_source.from_numpy(_chol(X).T)
 
 
 def pos_ricc_lrcf_solver_options():
@@ -541,15 +532,17 @@ def pos_ricc_lrcf_solver_options():
 
 @defaults('options')
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    r"""Compute an approximate low-rank solution of a positive Riccati equation.
+    """Compute an approximate low-rank solution of a positive Riccati equation.
 
-    See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a general
-    description.
+    See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
+    general description.
 
     This function uses `scipy.linalg.solve_continuous_are`, which
     is a dense solver.
-    Therefore, we assume all |Operators| can be converted to |NumPy arrays|
-    using :func:`~pymor.algorithms.to_matrix.to_matrix`.
+    Therefore, we assume all |Operators| and |VectorArrays| can be
+    converted to |NumPy arrays| using
+    :func:`~pymor.algorithms.to_matrix.to_matrix` and
+    :func:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`.
 
     Parameters
     ----------
@@ -558,13 +551,13 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     E
         The |Operator| E or `None`.
     B
-        The |Operator| B.
+        The operator B as a |VectorArray| from `A.source`.
     C
-        The |Operator| C.
+        The operator C as a |VectorArray| from `A.source`.
     R
-        The |Operator| R or `None`.
+        The operator R as a 2D |NumPy array| or `None`.
     S
-        The |Operator| S or `None`.
+        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the positive Riccati equation is
         transposed.
@@ -581,15 +574,9 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
 
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'scipy', None, False)
-
-    if options['type'] == 'scipy':
-        if R is None:
-            from pymor.operators.constructions import IdentityOperator
-            R = -IdentityOperator(C.range if not trans else B.source)
-        else:
-            R = -R
-        Z = solve_ricc_lrcf(A, E, B, C, R, S, trans, options)
-    else:
+    if options['type'] != 'scipy':
         raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
 
-    return Z
+    if R is None:
+        R = np.eye(len(C) if not trans else len(B))
+    return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)

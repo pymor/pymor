@@ -7,10 +7,12 @@ from pymor.core.config import config
 
 if config.HAVE_PYMESS:
     import numpy as np
+    import scipy.linalg as spla
     import pymess
 
     from pymor.algorithms.genericsolvers import _parse_options
-    from pymor.algorithms.lyapunov import MAT_EQN_SPARSE_MIN_SIZE, _solve_lyap_check_args, _chol
+    from pymor.algorithms.lyapunov import (MAT_EQN_SPARSE_MIN_SIZE, _solve_lyap_lrcf_check_args,
+                                           _solve_lyap_dense_check_args, _chol)
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
     from pymor.core.defaults import defaults
@@ -45,19 +47,15 @@ if config.HAVE_PYMESS:
         See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
         general description.
 
-        This function uses `pymess`, in particular its `glyap` and
-        `lradi` methods:
-
-        - `glyap` is a dense solver and expects
-          :func:`~pymor.algorithms.to_matrix.to_matrix` to work for A,
-          E, and B,
-        - `lradi` is a sparse solver and expects
-          :func:`~pymor.algorithms.to_matrix.to_matrix` to work for B
-          and
-          :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`
-          and
-          :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`
-          to be implemented for `A.source`.
+        This function uses `pymess.glyap` and `pymess.lradi`.
+        For both methods,
+        :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`
+        and
+        :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`
+        need to be implemented for `A.source`.
+        Additionally, since `glyap` is a dense solver, it expects
+        :func:`~pymor.algorithms.to_matrix.to_matrix` to work for A and
+        E.
 
         If the solver is not specified using the options argument,
         `glyap` is used for small problems (smaller than
@@ -70,7 +68,7 @@ if config.HAVE_PYMESS:
         E
             The |Operator| E or `None`.
         B
-            The |Operator| B.
+            The operator B as a |VectorArray| from `A.source`.
         trans
             Whether the first |Operator| in the Lyapunov equation is
             transposed.
@@ -85,12 +83,15 @@ if config.HAVE_PYMESS:
             |VectorArray| from `A.source`.
         """
 
-        _solve_lyap_check_args(A, E, B, trans)
+        _solve_lyap_lrcf_check_args(A, E, B, trans)
         default_solver = 'pymess_lradi' if A.source.dim >= MAT_EQN_SPARSE_MIN_SIZE else 'pymess_glyap'
         options = _parse_options(options, lyap_lrcf_solver_options(), default_solver, None, False)
 
         if options['type'] == 'pymess_glyap':
-            X = solve_lyap_dense(A, E, B, trans=trans)
+            X = solve_lyap_dense(to_matrix(A, format='dense'),
+                                 to_matrix(E, format='dense') if E else None,
+                                 B.to_numpy().T if not trans else B.to_numpy(),
+                                 trans=trans, options=options)
             Z = _chol(X)
         elif options['type'] == 'pymess_lradi':
             opts = options['opts']
@@ -103,8 +104,7 @@ if config.HAVE_PYMESS:
         else:
             raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
 
-        Z = A.source.from_numpy(np.array(Z).T)
-        return Z
+        return A.source.from_numpy(Z.T)
 
     def lyap_dense_solver_options():
         """Returns available Lyapunov equation solvers with default solver options for the pymess backend.
@@ -128,13 +128,13 @@ if config.HAVE_PYMESS:
         Parameters
         ----------
         A
-            The |Operator| A.
+            The operator A as a 2D |NumPy array|.
         E
-            The |Operator| E or `None`.
+            The operator E as a 2D |NumPy array| or `None`.
         B
-            The |Operator| B.
+            The operator B as a 2D |NumPy array|.
         trans
-            Whether the first |Operator| in the Lyapunov equation is
+            Whether the first operator in the Lyapunov equation is
             transposed.
         options
             The solver options to use (see
@@ -146,20 +146,12 @@ if config.HAVE_PYMESS:
             Lyapunov equation solution as a |NumPy array|.
         """
 
-        _solve_lyap_check_args(A, E, B, trans)
+        _solve_lyap_dense_check_args(A, E, B, trans)
         options = _parse_options(options, lyap_lrcf_solver_options(), 'pymess_glyap', None, False)
 
         if options['type'] == 'pymess_glyap':
-            A = to_matrix(A, format='dense')
-            if E is not None:
-                E = to_matrix(E, format='dense')
-            B = to_matrix(B, format='dense')
-            if not trans:
-                Y = B.dot(B.T)
-                op = pymess.MESS_OP_NONE
-            else:
-                Y = B.T.dot(B)
-                op = pymess.MESS_OP_TRANSPOSE
+            Y = B.dot(B.T) if not trans else B.T.dot(B)
+            op = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             X = pymess.glyap(A, E, Y, op=op)[0]
         else:
             raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
@@ -214,19 +206,15 @@ if config.HAVE_PYMESS:
         See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
         general description.
 
-        This function uses `pymess`, in particular its
-        `dense_nm_gmpcare` and `lrnm` methods:
-
-        - `dense_nm_gmpcare` is a dense solver and expects
-          :func:`~pymor.algorithms.to_matrix.to_matrix` to work for all
-          |Operators|,
-        - `lrnm` is a sparse solver and expects
-          :func:`~pymor.algorithms.to_matrix.to_matrix` to work for B
-          and C, and
-          :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`
-          and
-          :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`
-          to be implemented for `A.source`.
+        This function uses `pymess.dense_nm_gmpcare` and `pymess.lrnm`.
+        For both methods,
+        :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`
+        and
+        :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`
+        need to be implemented for `A.source`.
+        Additionally, since `dense_nm_gmpcare` is a dense solver, it
+        expects :func:`~pymor.algorithms.to_matrix.to_matrix` to work
+        for A and E.
 
         If the solver is not specified using the options argument,
         `dense_nm_gmpcare` is used for small problems (smaller than
@@ -239,13 +227,13 @@ if config.HAVE_PYMESS:
         E
             The |Operator| E or `None`.
         B
-            The |Operator| B.
+            The operator B as a |VectorArray| from `A.source`.
         C
-            The |Operator| C.
+            The operator C as a |VectorArray| from `A.source`.
         R
-            The |Operator| R or `None`.
+            The operator R as a 2D |NumPy array| or `None`.
         S
-            The |Operator| S or `None`.
+            The operator S as a |VectorArray| from `A.source` or `None`.
         trans
             Whether the first |Operator| in the Riccati equation is
             transposed.
@@ -259,9 +247,6 @@ if config.HAVE_PYMESS:
             |VectorArray| from `A.source`.
         """
 
-        if S is not None:
-            raise NotImplementedError
-
         _solve_ricc_check_args(A, E, B, C, R, S, trans)
         default_solver = 'pymess_lrnm' if A.source.dim >= MAT_EQN_SPARSE_MIN_SIZE else 'pymess_dense_nm_gmpcare'
         options = _parse_options(options, ricc_lrcf_solver_options(), default_solver, None, False)
@@ -270,47 +255,24 @@ if config.HAVE_PYMESS:
             X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options, plus=False)
             Z = _chol(X)
         elif options['type'] == 'pymess_lrnm':
-            if R is not None and S is not None:
-                from pymor.operators.constructions import InverseOperator
-                if not trans:
-                    A = A - S @ InverseOperator(R) @ C
-                else:
-                    A = A - B @ InverseOperator(R) @ S.H
-            elif S is not None:
-                if not trans:
-                    A = A - S @ C
-                else:
-                    A = A - B @ S.H
+            if S is not None:
+                raise NotImplementedError
             if R is not None:
                 import scipy.linalg as spla
-                from pymor.operators.constructions import VectorArrayOperator
+                Rc = spla.cholesky(R)                                 # R = Rc^T * Rc
+                Rci = spla.solve_triangular(Rc, np.eye(Rc.shape[0]))  # R^{-1} = Rci * Rci^T
                 if not trans:
-                    R_chol = spla.cholesky(to_matrix(R, format='dense'),
-                                           lower=True)
-                    R_chol_inv = spla.solve_triangular(R_chol, np.eye(R_chol.shape[0]),
-                                                       lower=True)
-                    R_chol_inv_va = C.range.from_numpy(R_chol_inv.T)
-                    R_chol_inv_va_op = VectorArrayOperator(R_chol_inv_va)
-                    C = R_chol_inv_va_op @ C
+                    C = C.lincomb(Rci.T)  # C <- Rci^T * C = (C^T * Rci)^T
                 else:
-                    R_chol = spla.cholesky(to_matrix(R, format='dense'))
-                    R_chol_inv = spla.solve_triangular(R_chol, np.eye(R_chol.shape[0]))
-                    R_chol_inv_va = B.source.from_numpy(R_chol_inv.T)
-                    R_chol_inv_va_op = VectorArrayOperator(R_chol_inv_va)
-                    B = B @ R_chol_inv_va_op
+                    B = B.lincomb(Rci.T)  # B <- B * Rci
             opts = options['opts']
-            if not trans:
-                opts.type = pymess.MESS_OP_NONE
-            else:
-                opts.type = pymess.MESS_OP_TRANSPOSE
+            opts.type = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             eqn = RiccatiEquation(opts, A, E, B, C)
             Z, status = pymess.lrnm(eqn, opts)
         else:
             raise ValueError('Unexpected Riccati equation solver ({}).'.format(options['type']))
 
-        Z = A.source.from_numpy(np.array(Z).T)
-
-        return Z
+        return A.source.from_numpy(Z.T)
 
     def pos_ricc_lrcf_solver_options(dense_nm_gmpcare_linesearch=False,
                                      dense_nm_gmpcare_maxit=50,
@@ -351,9 +313,7 @@ if config.HAVE_PYMESS:
         See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
         general description.
 
-        This function uses `pymess.dense_nm_gmpcare`, which is a dense
-        solver and expects :func:`~pymor.algorithms.to_matrix.to_matrix`
-        to work for all |Operators|,
+        This function uses `pymess.dense_nm_gmpcare`.
 
         Parameters
         ----------
@@ -362,13 +322,13 @@ if config.HAVE_PYMESS:
         E
             The |Operator| E or `None`.
         B
-            The |Operator| B.
+            The operator B as a |VectorArray| from `A.source`.
         C
-            The |Operator| C.
+            The operator C as a |VectorArray| from `A.source`.
         R
-            The |Operator| R or `None`.
+            The operator R as a 2D |NumPy array| or `None`.
         S
-            The |Operator| S or `None`.
+            The operator S as a |VectorArray| from `A.source` or `None`.
         trans
             Whether the first |Operator| in the Riccati equation is
             transposed.
@@ -391,64 +351,40 @@ if config.HAVE_PYMESS:
         else:
             raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
 
-        Z = A.source.from_numpy(np.array(Z).T)
-
-        return Z
+        return A.source.from_numpy(Z.T)
 
     def _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=False, options=None, plus=False):
         """Return the solution from pymess.dense_nm_gmpare solver."""
         A = to_matrix(A, format='dense')
         E = to_matrix(E, format='dense') if E else None
-        B = to_matrix(B, format='dense')
-        C = to_matrix(C, format='dense')
-        R = to_matrix(R, format='dense') if R else None
-        S = to_matrix(S, format='dense') if S else None
+        B = B.to_numpy().T
+        C = C.to_numpy()
+        S = S.to_numpy().T if S else None
+
+        Q = B.dot(B.T) if not trans else C.T.dot(C)
+        pymess_trans = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
         if not trans:
-            Q = B.dot(B.T)
-            if R is None:
-                G = C.T.dot(C)
-                if S is not None:
-                    if not plus:
-                        A -= S.dot(C)
-                        Q -= S.dot(S.T)
-                    else:
-                        A += S.dot(C)
-                        Q += S.dot(S.T)
-            else:
-                import scipy.linalg as spla
-                RinvC = spla.solve(R, C)
-                G = C.T.dot(RinvC)
-                if S is not None:
-                    if not plus:
-                        A -= S.dot(RinvC)
-                        Q -= S.dot(spla.solve(R, S.T))
-                    else:
-                        A += S.dot(RinvC)
-                        Q += S.dot(spla.solve(R, S.T))
-            pymess_trans = pymess.MESS_OP_NONE
+            RinvC = spla.solve(R, C) if R is not None else C
+            G = C.T.dot(RinvC)
+            if S is not None:
+                RinvST = spla.solve(R, S.T) if R is not None else S.T
+                if not plus:
+                    A -= S.dot(RinvC)
+                    Q -= S.dot(RinvST)
+                else:
+                    A += S.dot(RinvC)
+                    Q += S.dot(RinvST)
         else:
-            Q = C.T.dot(C)
-            if R is None:
-                G = B.dot(B.T)
-                if S is not None:
-                    if not plus:
-                        A -= B.dot(S.T)
-                        Q -= S.dot(S.T)
-                    else:
-                        A += B.dot(S.T)
-                        Q += S.dot(S.T)
-            else:
-                import scipy.linalg as spla
-                RinvBT = spla.solve(R, B.T)
-                G = B.dot(RinvBT)
-                if S is not None:
-                    if not plus:
-                        A -= RinvBT.T.dot(S.T)
-                        Q -= S.dot(spla.solve(R, S.T))
-                    else:
-                        A += RinvBT.T.dot(S.T)
-                        Q += S.dot(spla.solve(R, S.T))
-            pymess_trans = pymess.MESS_OP_TRANSPOSE
+            RinvBT = spla.solve(R, B.T) if R is not None else B.T
+            G = B.dot(RinvBT)
+            if S is not None:
+                RinvST = spla.solve(R, S.T) if R is not None else S.T
+                if not plus:
+                    A -= RinvBT.T.dot(S.T)
+                    Q -= S.dot(RinvST)
+                else:
+                    A += RinvBT.T.dot(S.T)
+                    Q += S.dot(RinvST)
         X, absres, relres = pymess.dense_nm_gmpare(None,
                                                    A, E, Q, G,
                                                    plus=plus, trans=pymess_trans,
@@ -471,23 +407,28 @@ if config.HAVE_PYMESS:
     class LyapunovEquation(pymess.Equation):
         r"""Lyapunov equation class for pymess
 
-        Represents a Lyapunov equation
+        Represents a (generalized) continuous-time algebraic Lyapunov
+        equation:
 
-        .. math::
-            A X + X A^T + B B^T = 0
+        - if opt.type is `pymess.MESS_OP_NONE` and E is `None`:
 
-        if E is `None`, otherwise a generalized Lyapunov equation
+            .. math::
+                A X + X A^T + B B^T = 0,
 
-        .. math::
-            A X E^T + E X A^T + B B^T = 0.
+        - if opt.type is `pymess.MESS_OP_NONE` and E is not `None`:
 
-        For the dual Lyapunov equation
+            .. math::
+                A X E^T + E X A^T + B B^T = 0,
 
-        .. math::
-            A^T X + X A + B^T B = 0, \\
-            A^T X E + E^T X A + B^T B = 0,
+        - if opt.type is `pymess.MESS_OP_TRANSPOSE` and E is `None`:
 
-        `opt.type` needs to be `pymess.MESS_OP_TRANSPOSE`.
+            .. math::
+                A^T X + X A + B^T B = 0,
+
+        - if opt.type is `pymess.MESS_OP_TRANSPOSE` and E is not `None`:
+
+            .. math::
+                A^T X E + E^T X A + B^T B = 0.
 
         Parameters
         ----------
@@ -498,20 +439,17 @@ if config.HAVE_PYMESS:
         E
             The |Operator| E or `None`.
         B
-            The |Operator| B.
+            The operator B as a |VectorArray| from `A.source`.
         """
         def __init__(self, opt, A, E, B):
             super().__init__(name='LyapunovEquation', opt=opt, dim=A.source.dim)
-
             self.a = A
             self.e = E
-            self.rhs = to_matrix(B, format='dense')
-            if opt.type == pymess.MESS_OP_TRANSPOSE:
-                self.rhs = self.rhs.T
+            self.rhs = B.to_numpy().T
             self.p = []
 
         def ax_apply(self, op, y):
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
             else:
@@ -522,7 +460,7 @@ if config.HAVE_PYMESS:
             if self.e is None:
                 return y
 
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply(y)
             else:
@@ -530,7 +468,7 @@ if config.HAVE_PYMESS:
             return x.to_numpy().T
 
         def ainv_apply(self, op, y):
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply_inverse(y)
             else:
@@ -541,7 +479,7 @@ if config.HAVE_PYMESS:
             if self.e is None:
                 return y
 
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply_inverse(y)
             else:
@@ -549,7 +487,7 @@ if config.HAVE_PYMESS:
             return x.to_numpy().T
 
         def apex_apply(self, op, p, idx_p, y):
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
                 if self.e is None:
@@ -565,7 +503,7 @@ if config.HAVE_PYMESS:
             return x.to_numpy().T
 
         def apeinv_apply(self, op, p, idx_p, y):
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             e = IdentityOperator(self.a.source) if self.e is None else self.e
 
             if p.imag == 0:
@@ -587,21 +525,25 @@ if config.HAVE_PYMESS:
 
         Represents a Riccati equation
 
-        .. math::
-            A^T X + X A - X B B^T X + C^T C = 0
+        - if opt.type is `pymess.MESS_OP_NONE` and E is `None`:
 
-        if E is `None`, otherwise a generalized Lyapunov equation
+            .. math::
+                A X + X A^T - X C^T C X + B B^T = 0,
 
-        .. math::
-            A^T X E + E^T X A - E^T X B B^T X E + C^T C = 0.
+        - if opt.type is `pymess.MESS_OP_NONE` and E is not `None`:
 
-        For the dual Riccati equation
+            .. math::
+                A X E^T + E X A^T - E X C^T C X E^T + B B^T = 0,
 
-        .. math::
-            A X + X A^T - X C^T C X + B B^T = 0, \\
-            A X E^T + E X A^T - E X C^T C X E^T + B B^T = 0,
+        - if opt.type is `pymess.MESS_OP_TRANSPOSE` and E is `None`:
 
-        `opt.type` needs to be `pymess.MESS_OP_NONE`.
+            .. math::
+                A^T X + X A - X B B^T X + C^T C = 0,
+
+        - if opt.type is `pymess.MESS_OP_TRANSPOSE` and E is not `None`:
+
+            .. math::
+                A^T X E + E^T X A - E X B B^T X E^T + C^T C = 0.
 
         Parameters
         ----------
@@ -612,22 +554,21 @@ if config.HAVE_PYMESS:
         E
             The |Operator| E or `None`.
         B
-            The |Operator| B.
+            The operator B as a |VectorArray| from `A.source`.
         C
-            The |Operator| C.
+            The operator C as a |VectorArray| from `A.source`.
         """
         def __init__(self, opt, A, E, B, C):
             super().__init__(name='RiccatiEquation', opt=opt, dim=A.source.dim)
-
             self.a = A
             self.e = E
-            self.b = to_matrix(B, format='dense')
-            self.c = to_matrix(C, format='dense')
+            self.b = B.to_numpy().T
+            self.c = C.to_numpy()
             self.rhs = self.b if opt.type == pymess.MESS_OP_NONE else self.c.T
             self.p = []
 
         def ax_apply(self, op, y):
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
             else:
@@ -638,7 +579,7 @@ if config.HAVE_PYMESS:
             if self.e is None:
                 return y
 
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply(y)
             else:
@@ -646,7 +587,7 @@ if config.HAVE_PYMESS:
             return x.to_numpy().T
 
         def ainv_apply(self, op, y):
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply_inverse(y)
             else:
@@ -657,7 +598,7 @@ if config.HAVE_PYMESS:
             if self.e is None:
                 return y
 
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.e.apply_inverse(y)
             else:
@@ -665,7 +606,7 @@ if config.HAVE_PYMESS:
             return x.to_numpy().T
 
         def apex_apply(self, op, p, idx_p, y):
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             if op == pymess.MESS_OP_NONE:
                 x = self.a.apply(y)
                 if self.e is None:
@@ -681,7 +622,7 @@ if config.HAVE_PYMESS:
             return x.to_numpy().T
 
         def apeinv_apply(self, op, p, idx_p, y):
-            y = self.a.source.from_numpy(np.array(y).T)
+            y = self.a.source.from_numpy(y.T)
             e = IdentityOperator(self.a.source) if self.e is None else self.e
 
             if p.imag == 0:

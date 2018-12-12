@@ -8,6 +8,8 @@ import numpy as np
 
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args
+from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 
@@ -54,6 +56,7 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                                              'implicit_subspace': projection_shifts_implicit_subspace}}}}
 
 
+@defaults('options')
 def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
@@ -62,9 +65,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
 
     This function uses the low-rank ADI iteration as described in
     Algorithm 4.3 in [PK16]_.
-    We assume `B.as_range_array` (`B.as_source_array`) to work if trans
-    is `False` (`True`).
-    Additionally, in :func:`projection_shifts_init` we assume
+    We assume in :func:`projection_shifts_init` for
     `A.source.from_numpy` to be implemented if projecting (A, E) with B
     does not give stable eigenvalues.
 
@@ -75,12 +76,13 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     E
         The |Operator| E or `None`.
     B
-        The |Operator| B.
+        The operator B as a |VectorArray| from `A.source`.
     trans
         Whether the first |Operator| in the Lyapunov equation is
         transposed.
     options
-        The solver options to use (see :func:`lyap_lrcf_solver_options`).
+        The solver options to use (see
+        :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
@@ -88,9 +90,11 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         Low-rank Cholesky factor of the Lyapunov equation solution,
         |VectorArray| from `A.source`.
     """
+
+    _solve_lyap_lrcf_check_args(A, E, B, trans)
+    options = _parse_options(options, lyap_lrcf_solver_options(), 'lradi', None, False)
     logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')
 
-    options = _parse_options(options, lyap_lrcf_solver_options(), 'lradi', None, False)
     shift_options = options['shift_options'][options['shifts']]
     if shift_options['type'] == 'projection_shifts':
         init_shifts = projection_shifts_init
@@ -101,12 +105,8 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     if E is None:
         E = IdentityOperator(A.source)
 
-    if not trans:
-        Z = A.source.empty(reserve=B.source.dim * options['maxiter'])
-        W = B.as_range_array()
-    else:
-        Z = A.range.empty(reserve=B.range.dim * options['maxiter'])
-        W = B.as_source_array()
+    Z = A.source.empty(reserve=len(B) * options['maxiter'])
+    W = B.copy()
 
     j = 0
     shifts = init_shifts(A, E, W, shift_options)

@@ -3,6 +3,8 @@
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.algorithms.lyapunov import MAT_EQN_SPARSE_MIN_SIZE
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -19,7 +21,7 @@ _DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
 def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
                     default_sparse_solver_backend=_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND,
                     default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
-    r"""Compute an approximate low-rank solution of a Riccati equation.
+    """Compute an approximate low-rank solution of a Riccati equation.
 
     Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T`
     approximates the solution :math:`X` of a (generalized)
@@ -39,25 +41,21 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
             - (E^T X B + S) R^{-1} (E^T X B + S)^T
             + C^T C = 0.
 
-    If E is None, it is taken to be the identity operator, and similarly
-    for R.
-    If S is None, it is taken to be the zero operator.
+    If E is None, it is taken to be identity, and similarly for R.
+    If S is None, it is taken to be zero.
 
-    We assume A, E, B, C, R, S are real |Operators|, (E, A, B, C) is
-    stabilizable and detectable, R is symmetric positive definite, and
+    We assume:
 
-    .. math::
-        \begin{bmatrix}
-            Q & S \\
-            S^T & R
-        \end{bmatrix}
+    - A and E are real |Operators|,
+    - B, C and S are real |VectorArrays| from `A.source`,
+    - R is a real |NumPy array|,
+    - (E, A, B, C) is stabilizable and detectable,
+    - R is symmetric positive definite, and
+    - :math:`B B^T - S R^{-1} S^T` (:math:`C^T C - S R^{-1} S^T`) is
+      positive semi-definite trans is `False` (`True`).
 
-    is positive semi-definite, where :math:`Q = B B^T` if trans is
-    `False` and :math:`Q = C^T C` if trans is `True` (sufficient
-    conditions for existence of a unique positive semi-definite
-    stabilizing solution X).
-    For large-scale problems, we additionally assume that `B.source.dim`
-    and `C.range.dim` are small.
+    For large-scale problems, we additionally assume that `len(B)` and
+    `len(C)` are small.
 
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
@@ -80,13 +78,13 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     E
         The |Operator| E or `None`.
     B
-        The |Operator| B.
+        The operator B as a |VectorArray| from `A.source`.
     C
-        The |Operator| C.
+        The operator C as a |VectorArray| from `A.source`.
     R
-        The |Operator| R or `None`.
+        The operator R as a 2D |NumPy array| or `None`.
     S
-        The |Operator| S or `None`.
+        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.
@@ -138,10 +136,10 @@ _DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS el
 @defaults('options', 'default_dense_solver_backend')
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
                         default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
-    r"""Compute an approximate low-rank solution of a positive Riccati equation.
+    """Compute an approximate low-rank solution of a positive Riccati equation.
 
     Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T`
-    approximates the solution :math:`X` of a positive (generalized)
+    approximates the solution :math:`X` of a (generalized) positive
     continuous-time algebraic Riccati equation:
 
     - if trans is `False`
@@ -158,9 +156,8 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
             + (E^T X B + S) R^{-1} (E^T X B + S)^T
             + C^T C = 0.
 
-    If E is None, it is taken to be the identity operator, and similarly
-    for R.
-    If S is None, it is taken to be the zero operator.
+    If E is None, it is taken to be identity, and similarly for R.
+    If S is None, it is taken to be zero.
 
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
@@ -179,13 +176,13 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     E
         The |Operator| E or `None`.
     B
-        The |Operator| B.
+        The operator B as a |VectorArray| from `A.source`.
     C
-        The |Operator| C.
+        The operator C as a |VectorArray| from `A.source`.
     R
-        The |Operator| R or `None`.
+        The operator R as a 2D |NumPy array| or `None`.
     S
-        The |Operator| S or `None`.
+        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the positive Riccati equation is
         transposed.
@@ -224,29 +221,24 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
 
 
-def _solve_ricc_check_args(A, E, B, C, R=None, S=None, trans=False):
+def _solve_ricc_check_args(A, E, B, C, R, S, trans):
     assert isinstance(A, OperatorInterface) and A.linear
     assert A.source == A.range
     if E is not None:
         assert isinstance(E, OperatorInterface) and E.linear
         assert E.source == E.range == A.source
-    assert isinstance(B, OperatorInterface) and B.linear
-    assert B.range == A.source
-    assert isinstance(C, OperatorInterface) and C.linear
-    assert C.source == A.source
-    if not trans:
-        if R is not None:
-            assert isinstance(R, OperatorInterface) and R.linear
-            assert R.source == R.range == C.range
-        if S is not None:
-            assert isinstance(S, OperatorInterface) and S.linear
-            assert S.source == C.range
-            assert S.range == A.source
-    else:
-        if R is not None:
-            assert isinstance(R, OperatorInterface) and R.linear
-            assert R.source == R.range == B.source
-        if S is not None:
-            assert isinstance(S, OperatorInterface) and S.linear
-            assert S.source == B.source
-            assert S.range == A.source
+    assert B in A.source
+    assert C in A.source
+    if R is not None:
+        assert isinstance(R, np.ndarray) and R.ndim == 2
+        assert R.shape[0] == R.shape[1]
+        if not trans:
+            assert R.shape[0] == len(C)
+        else:
+            assert R.shape[0] == len(B)
+    if S is not None:
+        assert S in A.source
+        if not trans:
+            assert len(S) == len(C)
+        else:
+            assert len(S) == len(B)

@@ -10,17 +10,11 @@ if config.HAVE_SLYCOT:
     import slycot
 
     from pymor.algorithms.genericsolvers import _parse_options
-    from pymor.algorithms.lyapunov import _solve_lyap_check_args, _chol
+    from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args, _solve_lyap_dense_check_args, _chol
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
     from pymor.core.defaults import defaults
     from pymor.core.logger import getLogger
-
-    def _solve_check(dtype, solver, sep, ferr):
-        if ferr > np.sqrt(np.finfo(dtype).eps):
-            logger = getLogger(solver)
-            logger.warning('Estimated forward relative error bound is large (ferr={:e}, sep={:e}). '
-                           'Result may not be accurate.'.format(ferr, sep))
 
     def lyap_lrcf_solver_options():
         """Returns available Lyapunov equation solvers with default solver options for the slycot backend.
@@ -42,8 +36,9 @@ if config.HAVE_SLYCOT:
         This function uses `slycot.sb03md` (if `E is None`) and
         `slycot.sg03ad` (if `E is not None`), which are dense solvers
         based on the Bartels-Stewart algorithm.
-        Therefore, we assume A, E, and B can be converted to |NumPy
-        arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix`.
+        Therefore, we assume A and E can be converted to |NumPy arrays|
+        using :func:`~pymor.algorithms.to_matrix.to_matrix` and that
+        `B.to_numpy` is implemented.
 
         Parameters
         ----------
@@ -52,7 +47,7 @@ if config.HAVE_SLYCOT:
         E
             The |Operator| E or `None`.
         B
-            The |Operator| B.
+            The operator B as a |VectorArray| from `A.source`.
         trans
             Whether the first |Operator| in the Lyapunov equation is
             transposed.
@@ -67,16 +62,19 @@ if config.HAVE_SLYCOT:
             |VectorArray| from `A.source`.
         """
 
-        _solve_lyap_check_args(A, E, B, trans)
+        _solve_lyap_lrcf_check_args(A, E, B, trans)
         options = _parse_options(options, lyap_lrcf_solver_options(), 'slycot_bartels-stewart', None, False)
 
         if options['type'] == 'slycot_bartels-stewart':
-            X = solve_lyap_dense(A, E, B, trans=trans)
+            X = solve_lyap_dense(to_matrix(A, format='dense'),
+                                 to_matrix(E, format='dense') if E else None,
+                                 B.to_numpy().T if not trans else B.to_numpy(),
+                                 trans=trans, options=options)
             Z = _chol(X)
         else:
             raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
-        Z = A.source.from_numpy(np.array(Z).T)
-        return Z
+
+        return A.source.from_numpy(Z.T)
 
     def lyap_dense_solver_options():
         """Returns available Lyapunov equation solvers with default solver options for the Slycot backend.
@@ -102,13 +100,13 @@ if config.HAVE_SLYCOT:
         Parameters
         ----------
         A
-            The |Operator| A.
+            The operator A as a 2D |NumPy array|.
         E
-            The |Operator| E or `None`.
+            The operator E as a 2D |NumPy array| or `None`.
         B
-            The |Operator| B.
+            The operator B as a 2D |NumPy array|.
         trans
-            Whether the first |Operator| in the Lyapunov equation is
+            Whether the first operator in the Lyapunov equation is
             transposed.
         options
             The solver options to use (see
@@ -120,21 +118,13 @@ if config.HAVE_SLYCOT:
             Lyapunov equation solution as a |NumPy array|.
         """
 
-        _solve_lyap_check_args(A, E, B, trans)
+        _solve_lyap_dense_check_args(A, E, B, trans)
         options = _parse_options(options, lyap_dense_solver_options(), 'slycot_bartels-stewart', None, False)
 
         if options['type'] == 'slycot_bartels-stewart':
-            A = to_matrix(A, format='dense')
             n = A.shape[0]
-            if E is not None:
-                E = to_matrix(E, format='dense')
-            B = to_matrix(B, format='dense')
-            if not trans:
-                C = -B.dot(B.T)
-                trana = 'T'
-            else:
-                C = -B.T.dot(B)
-                trana = 'N'
+            C = -B.dot(B.T) if not trans else -B.T.dot(B)
+            trana = 'T' if not trans else 'N'
             dico = 'C'
             job = 'B'
             if E is None:
@@ -156,6 +146,12 @@ if config.HAVE_SLYCOT:
 
         return X
 
+    def _solve_check(dtype, solver, sep, ferr):
+        if ferr > np.sqrt(np.finfo(dtype).eps):
+            logger = getLogger(solver)
+            logger.warning('Estimated forward relative error bound is large (ferr={:e}, sep={:e}). '
+                           'Result may not be accurate.'.format(ferr, sep))
+
     def ricc_lrcf_solver_options():
         """Returns available Riccati equation solvers with default solver options for the SciPy backend.
 
@@ -176,8 +172,10 @@ if config.HAVE_SLYCOT:
         This function uses `slycot.sb02md` (if E and S are `None`),
         `slycot.sb02od` (if E is `None` and S is not `None`) and
         `slycot.sg03ad` (if E is not `None`), which are dense solvers.
-        Therefore, we assume all |Operators| can be converted to |NumPy
-        arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix`.
+        Therefore, we assume all |Operators| and |VectorArrays| can be
+        converted to |NumPy arrays| using
+        :func:`~pymor.algorithms.to_matrix.to_matrix` and
+        :func:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`.
 
         Parameters
         ----------
@@ -186,13 +184,13 @@ if config.HAVE_SLYCOT:
         E
             The |Operator| E or `None`.
         B
-            The |Operator| B.
+            The operator B as a |VectorArray| from `A.source`.
         C
-            The |Operator| C.
+            The operator C as a |VectorArray| from `A.source`.
         R
-            The |Operator| R or `None`.
+            The operator R as a 2D |NumPy array| or `None`.
         S
-            The |Operator| S or `None`.
+            The operator S as a |VectorArray| from `A.source` or `None`.
         trans
             Whether the first |Operator| in the Riccati equation is
             transposed.
@@ -215,10 +213,9 @@ if config.HAVE_SLYCOT:
         A_source = A.source
         A = to_matrix(A, format='dense')
         E = to_matrix(E, format='dense') if E else None
-        B = to_matrix(B, format='dense')
-        C = to_matrix(C, format='dense')
-        R = to_matrix(R, format='dense') if R else None
-        S = to_matrix(S, format='dense') if S else None
+        B = B.to_numpy().T
+        C = C.to_numpy()
+        S = S.to_numpy().T if S else None
 
         n = A.shape[0]
         dico = 'C'
@@ -227,32 +224,21 @@ if config.HAVE_SLYCOT:
             if S is None:
                 if not trans:
                     A = A.T
-                    if R is None:
-                        G = C.T.dot(C)
-                    else:
-                        G = slycot.sb02mt(n, C.shape[0], C.T, R)[-1]
-                    Q = B.dot(B.T)
+                    G = C.T.dot(C) if R is None else slycot.sb02mt(n, C.shape[0], C.T, R)[-1]
                 else:
-                    if R is None:
-                        G = B.dot(B.T)
-                    else:
-                        G = slycot.sb02mt(n, B.shape[1], B, R)[-1]
-                    Q = C.T.dot(C)
+                    G = B.dot(B.T) if R is None else slycot.sb02mt(n, B.shape[1], B, R)[-1]
+                Q = B.dot(B.T) if not trans else C.T.dot(C)
                 X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
                 _ricc_rcond_check('slycot.sb02md', rcond)
             else:
+                m = C.shape[0] if not trans else B.shape[1]
+                p = B.shape[1] if not trans else C.shape[0]
+                if R is None:
+                    R = np.eye(m)
                 if not trans:
-                    m = C.shape[0]
-                    p = B.shape[1]
-                    if R is None:
-                        R = np.eye(m)
-                    X, rcond = slycot.sb02od(n, m, A.T, C.T, B.T, R, dico, p=p, L=S, fact='C')[:2]
-                else:
-                    m = B.shape[1]
-                    p = C.shape[0]
-                    if R is None:
-                        R = np.eye(m)
-                    X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
+                    A = A.T
+                    B, C = C.T, B.T
+                X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
                 _ricc_rcond_check('slycot.sb02od', rcond)
         else:
             jobb = 'B'
@@ -262,33 +248,24 @@ if config.HAVE_SLYCOT:
             scal = 'N'
             sort = 'S'
             acc = 'R'
+            m = C.shape[0] if not trans else B.shape[1]
+            p = B.shape[1] if not trans else C.shape[0]
+            if R is None:
+                R = np.eye(m)
+            if S is None:
+                S = np.empty((n, m))
             if not trans:
-                m = C.shape[0]
-                p = B.shape[1]
-                if R is None:
-                    R = np.eye(m)
-                if S is None:
-                    S = np.empty((n, m))
-                out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                                    n, m, p,
-                                    A.T, E.T, C.T, B.T, R, S)
-            else:
-                m = B.shape[1]
-                p = C.shape[0]
-                if R is None:
-                    R = np.eye(m)
-                if S is None:
-                    S = np.empty((n, m))
-                out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                                    n, m, p,
-                                    A, E, B, C, R, S)
-            rcond = out[0]
+                A = A.T
+                E = E.T
+                B, C = C.T, B.T
+            out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
+                                n, m, p,
+                                A, E, B, C, R, S)
             X = out[1]
+            rcond = out[0]
             _ricc_rcond_check('slycot.sg02ad', rcond)
 
-        Z = _chol(X)
-        Z = A_source.from_numpy(np.array(Z).T)
-        return Z
+        return A_source.from_numpy(_chol(X).T)
 
     def _ricc_rcond_check(solver, rcond):
         if rcond < np.sqrt(np.finfo(np.float64).eps):
@@ -316,8 +293,10 @@ if config.HAVE_SLYCOT:
         This function uses `slycot.sb02md` (if E and S are `None`),
         `slycot.sb02od` (if E is `None` and S is not `None`) and
         `slycot.sg03ad` (if E is not `None`), which are dense solvers.
-        Therefore, we assume all |Operators| can be converted to |NumPy
-        arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix`.
+        Therefore, we assume all |Operators| and |VectorArrays| can be
+        converted to |NumPy arrays| using
+        :func:`~pymor.algorithms.to_matrix.to_matrix` and
+        :func:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`.
 
         Parameters
         ----------
@@ -326,13 +305,13 @@ if config.HAVE_SLYCOT:
         E
             The |Operator| E or `None`.
         B
-            The |Operator| B.
+            The operator B as a |VectorArray| from `A.source`.
         C
-            The |Operator| C.
+            The operator C as a |VectorArray| from `A.source`.
         R
-            The |Operator| R or `None`.
+            The operator R as a 2D |NumPy array| or `None`.
         S
-            The |Operator| S or `None`.
+            The operator S as a |VectorArray| from `A.source` or `None`.
         trans
             Whether the first |Operator| in the positive Riccati
             equation is transposed.
@@ -353,9 +332,5 @@ if config.HAVE_SLYCOT:
             raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
 
         if R is None:
-            from pymor.operators.constructions import IdentityOperator
-            R = -IdentityOperator(C.range if not trans else B.source)
-        else:
-            R = -R
-        Z = solve_ricc_lrcf(A, E, B, C, R, S, trans, options)
-        return Z
+            R = np.eye(len(C) if not trans else len(B))
+        return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)

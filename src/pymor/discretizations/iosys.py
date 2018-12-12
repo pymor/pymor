@@ -673,13 +673,19 @@ class LTISystem(InputStateOutputSystem):
         options = self.solver_options.get('lyap') if self.solver_options else None
 
         if typ == 'c_lrcf':
-            return solve_lyap_lrcf(A, E, B, trans=False, options=options)
+            return solve_lyap_lrcf(A, E, B.as_range_array(), trans=False, options=options)
         elif typ == 'o_lrcf':
-            return solve_lyap_lrcf(A, E, C, trans=True, options=options)
+            return solve_lyap_lrcf(A, E, C.as_source_array(), trans=True, options=options)
         elif typ == 'c_dense':
-            return solve_lyap_dense(A, E, B, trans=False, options=options)
+            return solve_lyap_dense(to_matrix(A, format='dense'),
+                                    to_matrix(E, format='dense') if E else None,
+                                    to_matrix(B, format='dense'),
+                                    trans=False, options=options)
         elif typ == 'o_lrcf':
-            return solve_lyap_dense(A, E, C, trans=True, options=options)
+            return solve_lyap_dense(to_matrix(A, format='dense'),
+                                    to_matrix(E, format='dense') if E else None,
+                                    to_matrix(C, format='dense'),
+                                    trans=True, options=options)
         else:
             raise NotImplementedError("Only 'c_lrcf', 'o_lrcf', 'c_dense', and 'o_dense' types are possible"
                                       " ({} was given).".format(typ))
