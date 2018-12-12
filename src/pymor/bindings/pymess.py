@@ -10,7 +10,7 @@ if config.HAVE_PYMESS:
     import pymess
 
     from pymor.algorithms.genericsolvers import _parse_options
-    from pymor.algorithms.lyapunov import MAT_EQN_SPARSE_MIN_SIZE, _solve_lyap_check_args, chol
+    from pymor.algorithms.lyapunov import MAT_EQN_SPARSE_MIN_SIZE, _solve_lyap_check_args, _chol
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
     from pymor.core.defaults import defaults
@@ -91,7 +91,7 @@ if config.HAVE_PYMESS:
 
         if options['type'] == 'pymess_glyap':
             X = solve_lyap_dense(A, E, B, trans=trans)
-            Z = chol(X)
+            Z = _chol(X)
         elif options['type'] == 'pymess_lradi':
             opts = options['opts']
             if not trans:
@@ -265,7 +265,7 @@ if config.HAVE_PYMESS:
 
         if options['type'] == 'pymess_dense_nm_gmpcare':
             X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options, plus=False)
-            Z = chol(X)
+            Z = _chol(X)
         elif options['type'] == 'pymess_lrnm':
             if R is not None and S is not None:
                 from pymor.operators.constructions import InverseOperator
@@ -384,7 +384,7 @@ if config.HAVE_PYMESS:
 
         if options['type'] == 'pymess_dense_nm_gmpcare':
             X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options, plus=True)
-            Z = chol(X)
+            Z = _chol(X)
         else:
             raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
 

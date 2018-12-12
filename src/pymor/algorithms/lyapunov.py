@@ -223,7 +223,7 @@ def _solve_lyap_check_args(A, E, B, trans=False):
     assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
 
 
-def chol(A):
+def _chol(A):
     """Cholesky decomposition.
 
     This implementation uses SVD to compute the Cholesky factor (can be

@@ -10,7 +10,7 @@ if config.HAVE_SLYCOT:
     import slycot
 
     from pymor.algorithms.genericsolvers import _parse_options
-    from pymor.algorithms.lyapunov import _solve_lyap_check_args, chol
+    from pymor.algorithms.lyapunov import _solve_lyap_check_args, _chol
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
     from pymor.core.defaults import defaults
@@ -72,7 +72,7 @@ if config.HAVE_SLYCOT:
 
         if options['type'] == 'slycot_bartels-stewart':
             X = solve_lyap_dense(A, E, B, trans=trans)
-            Z = chol(X)
+            Z = _chol(X)
         else:
             raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
         Z = A.source.from_numpy(np.array(Z).T)
@@ -286,7 +286,7 @@ if config.HAVE_SLYCOT:
             X = out[1]
             _ricc_rcond_check('slycot.sg02ad', rcond)
 
-        Z = chol(X)
+        Z = _chol(X)
         Z = A_source.from_numpy(np.array(Z).T)
         return Z
 

@@ -10,7 +10,7 @@ import scipy.version
 from scipy.linalg import solve, solve_continuous_lyapunov, solve_continuous_are
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 
-from pymor.algorithms.lyapunov import _solve_lyap_check_args, chol
+from pymor.algorithms.lyapunov import _solve_lyap_check_args, _chol
 from pymor.algorithms.riccati import _solve_ricc_check_args
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.to_matrix import to_matrix
@@ -374,7 +374,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
 
     X = solve_lyap_dense(A, E, B, trans=trans, options=options)
-    Z = chol(X)
+    Z = _chol(X)
     Z = A.source.from_numpy(np.array(Z).T)
     return Z
 
@@ -520,7 +520,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
             X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, E, S)
         else:
             X = solve_continuous_are(A, B, C.T.dot(C), R, E, S)
-        Z = chol(X)
+        Z = _chol(X)
         Z = A_source.from_numpy(np.array(Z).T)
     else:
         raise ValueError('Unexpected Riccati equation solver ({}).'.format(options['type']))
