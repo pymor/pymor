@@ -5,6 +5,7 @@
 
 from pymor.algorithms.lyapunov import MAT_EQN_SPARSE_MIN_SIZE
 from pymor.core.config import config
+from pymor.core.defaults import defaults
 from pymor.operators.interfaces import OperatorInterface
 
 _DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = 'pymess'
@@ -14,6 +15,7 @@ _DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = 'pymess' if config.HAVE_PYMESS else \
                                           'scipy'
 
 
+@defaults('options', 'default_sparse_solver_backend', 'default_dense_solver_backend')
 def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
                     default_sparse_solver_backend=_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND,
                     default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
@@ -133,6 +135,7 @@ _DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = 'pymess' if config.HAVE_PYMESS els
                                               'scipy'
 
 
+@defaults('options', 'default_dense_solver_backend')
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
                         default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
     r"""Compute an approximate low-rank solution of a positive Riccati equation.

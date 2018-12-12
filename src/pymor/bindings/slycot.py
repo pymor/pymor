@@ -13,6 +13,7 @@ if config.HAVE_SLYCOT:
     from pymor.algorithms.lyapunov import _solve_lyap_check_args, chol
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
+    from pymor.core.defaults import defaults
     from pymor.core.logger import getLogger
 
     def _solve_check(dtype, solver, sep, ferr):
@@ -31,6 +32,7 @@ if config.HAVE_SLYCOT:
 
         return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
+    @defaults('options')
     def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         """Compute an approximate low-rank solution of a Lyapunov equation.
 
@@ -86,6 +88,7 @@ if config.HAVE_SLYCOT:
 
         return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
+    @defaults('options')
     def solve_lyap_dense(A, E, B, trans=False, options=None):
         """Compute the solution of a Lyapunov equation.
 
@@ -163,6 +166,7 @@ if config.HAVE_SLYCOT:
 
         return {'slycot': {'type': 'slycot'}}
 
+    @defaults('options')
     def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a Riccati equation.
 
@@ -302,6 +306,7 @@ if config.HAVE_SLYCOT:
 
         return {'slycot': {'type': 'slycot'}}
 
+    @defaults('options')
     def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a positive Riccati equation.
 

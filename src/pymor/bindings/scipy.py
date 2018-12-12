@@ -332,6 +332,7 @@ def lyap_lrcf_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
+@defaults('options')
 def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
@@ -389,6 +390,7 @@ def lyap_dense_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
+@defaults('options')
 def solve_lyap_dense(A, E, B, trans=False, options=None):
     """Compute the solution of a Lyapunov equation.
 
@@ -457,6 +459,7 @@ def ricc_lrcf_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
+@defaults('options')
 def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     r"""Compute an approximate low-rank solution of a Riccati equation.
 
@@ -536,6 +539,7 @@ def pos_ricc_lrcf_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
+@defaults('options')
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     r"""Compute an approximate low-rank solution of a positive Riccati equation.
 

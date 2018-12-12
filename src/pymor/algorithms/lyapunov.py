@@ -7,6 +7,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.core.config import config
+from pymor.core.defaults import defaults
 from pymor.operators.interfaces import OperatorInterface
 
 MAT_EQN_SPARSE_MIN_SIZE = 1000  # minimal size for which a sparse solver will be used by default
@@ -23,6 +24,7 @@ _DEFAULT_LYAP_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
                                       'scipy')
 
 
+@defaults('options', 'default_sparse_solver_backend', 'default_dense_solver_backend')
 def solve_lyap_lrcf(A, E, B, trans=False, options=None,
                     default_sparse_solver_backend=_DEFAULT_LYAP_LRCF_SPARSE_SOLVER_BACKEND,
                     default_dense_solver_backend=_DEFAULT_LYAP_LRCF_DENSE_SOLVER_BACKEND):
@@ -126,6 +128,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
     return solve_lyap_impl(A, E, B, trans=trans, options=options)
 
 
+@defaults('options', 'default_solver_backend')
 def solve_lyap_dense(A, E, B, trans=False, options=None,
                      default_solver_backend=_DEFAULT_LYAP_DENSE_SOLVER_BACKEND):
     """Compute the solution of a Lyapunov equation.
