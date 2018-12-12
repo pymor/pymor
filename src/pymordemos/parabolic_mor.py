@@ -219,7 +219,7 @@ def reduce_pod(d, reductor, snapshots, basis_size):
         snapshots.append(d.solve(mu))
 
     basis, singular_values = pod(snapshots, modes=basis_size, product=d.h1_0_semi_product)
-    reductor.extend_basis(basis, 'trivial')
+    reductor.extend_basis(basis, 'trivial', orthonormal=True)
 
     rd = reductor.reduce()
 

@@ -5,13 +5,14 @@
 
 import numpy as np
 
+from pymor.core.interfaces import BasicInterface
 from pymor.discretizations.iosys import SecondOrderSystem
 from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import SO_BHIReductor
 from pymor.reductors.h2 import IRKAReductor, _poles_and_tangential_directions, _convergence_criterion
 
 
-class SOR_IRKAReductor(GenericPGReductor):
+class SOR_IRKAReductor(BasicInterface):
     """SOR-IRKA reductor.
 
     Parameters
@@ -221,5 +222,6 @@ class SOR_IRKAReductor(GenericPGReductor):
 
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        return self.V[:u.dim].lincomb(u.to_numpy())

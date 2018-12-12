@@ -16,7 +16,7 @@ from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import LTI_BHIReductor, TFInterpReductor
 
 
-class IRKAReductor(GenericPGReductor):
+class IRKAReductor(BasicInterface):
     """Iterative Rational Krylov Algorithm reductor.
 
     Parameters
@@ -215,11 +215,12 @@ class IRKAReductor(GenericPGReductor):
 
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        return self.V[:u.dim].lincomb(u.to_numpy())
 
 
-class TSIAReductor(GenericPGReductor):
+class TSIAReductor(BasicInterface):
     """Two-Sided Iteration Algorithm reductor.
 
     Parameters
@@ -288,7 +289,6 @@ class TSIAReductor(GenericPGReductor):
         assert 0 < r < d.n
         assert isinstance(num_prev, int) and num_prev >= 1
         assert projection in ('orth', 'biorth')
-        self.biorthogonal_product = None if projection == 'orth' else 'E'
         assert conv_crit in ('sigma', 'h2')
 
         # begin logging
@@ -310,7 +310,7 @@ class TSIAReductor(GenericPGReductor):
         # main loop
         for it in range(maxit):
             # project the full order model
-            rd = super().reduce()
+            rd = self.pg_reductor.reduce()
 
             # compute convergence criterion
             data[1:] = data[:-1]
@@ -339,7 +339,7 @@ class TSIAReductor(GenericPGReductor):
                 break
 
         # final reduced order model
-        rd = super().reduce()
+        rd = self.pg_reductor.reduce()
 
         return rd
 
@@ -355,8 +355,11 @@ class TSIAReductor(GenericPGReductor):
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=d.E)
 
-    extend_source_basis = None
-    extend_range_basis = None
+        self.pg_reductor = GenericPGReductor(d, self.W, self.V, projection == 'biorth', product=d.E)
+
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        self.pg_reductor.reconstruct(u)
 
 
 class TF_IRKAReductor(BasicInterface):

@@ -13,7 +13,7 @@ from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import GenericPGReductor
 
 
-class GenericBHIReductor(GenericPGReductor):
+class GenericBHIReductor(BasicInterface):
     """Generic bitangential Hermite interpolation reductor.
 
     This reductor can be used for any system with generalized coprime
@@ -113,16 +113,17 @@ class GenericBHIReductor(GenericPGReductor):
         if projection == 'orth':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.biorthogonal_product = None
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
-            self.biorthogonal_product = self._biorthogonal_product
 
-        rd = super().reduce()
+        self.pg_reductor = GenericPGReductor(self.d, self.W, self.V, projection == 'biorth', product=self._product)
+
+        rd = self.pg_reductor.reduce()
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        return self.RB[:u.dim].lincomb(u.to_numpy())
 
 
 class LTI_BHIReductor(GenericBHIReductor):

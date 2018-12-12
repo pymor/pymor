@@ -14,7 +14,7 @@ from pymor.reductors.basic import GenericPGReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class GenericSOBTpvReductor(GenericPGReductor):
+class GenericSOBTpvReductor(BasicInterface):
     """Generic Second-Order Balanced Truncation position/velocity reductor.
 
     See [RS08]_.
@@ -77,21 +77,21 @@ class GenericSOBTpvReductor(GenericPGReductor):
             alpha = 1 / np.sqrt(singular_values[:r])
             self.V.scal(alpha)
             self.W.scal(alpha)
-            self.biorthogonal_product = None
         elif projection == 'bfsr':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.biorthogonal_product = None
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.M)
-            self.biorthogonal_product = 'M'
 
-        rd = super().reduce()
+        self.pg_reductor = GenericPGReductor(self.d, self.W, self.V, projection == 'biorth', product=self.d.M)
+
+        rd = self.pg_reductor.reduce()
 
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        self.pg_reductor.reconstruct(u)
 
 
 class SOBTpReductor(GenericSOBTpvReductor):
@@ -187,7 +187,7 @@ class SOBTvpReductor(GenericSOBTpvReductor):
         return vcf.lincomb(Vvp[:r]), vof.lincomb(Uv[:r]), svp
 
 
-class SOBTfvReductor(GenericPGReductor):
+class SOBTfvReductor(BasicInterface):
     """Free-velocity Second-Order Balanced Truncation reductor.
 
     See [MS96]_.
@@ -245,22 +245,25 @@ class SOBTfvReductor(GenericPGReductor):
         if projection == 'sr':
             alpha = 1 / np.sqrt(sp[:r])
             self.V.scal(alpha)
-            self.biorthogonal_product = None
+            self.bases_are_biorthonormal = False
         elif projection == 'bfsr':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.biorthogonal_product = None
+            self.bases_are_biorthonormal = False
         elif projection == 'biorth':
             self.V = gram_schmidt(self.V, product=self.d.M, atol=0, rtol=0)
-            self.biorthogonal_product = 'M'
+            self.bases_are_biorthonormal = True
 
         self.W = self.V
 
-        rd = super().reduce()
+        self.pg_reductor = GenericPGReductor(self.d, self.W, self.V, projection == 'biorth', product=self.d.M)
+
+        rd = self.pg_reductor.reduce()
 
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        self.pg_reductor.reconstruct(u)
 
 
 class SOBTReductor(BasicInterface):

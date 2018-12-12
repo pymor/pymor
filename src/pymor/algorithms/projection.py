@@ -10,7 +10,7 @@ from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.basic import ProjectedOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation, ConstantOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           VectorArrayOperator)
+                                           VectorArrayOperator, IdentityOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -286,6 +286,14 @@ class ProjectToSubbasisRules(RuleTable):
         source = op.source if dim_source is None else NumpyVectorSpace(dim_source, op.source.id)
         value = op._value if dim_range is None else NumpyVectorSpace(op._value.to_numpy()[:, :dim_range], op.range.id)
         return ConstantOperator(value, source, name=op.name)
+
+    @match_class(IdentityOperator)
+    def action_IdentityOperator(self, op):
+        dim_range, dim_source = self.dim_range, self.dim_source
+        if dim_range != dim_source:
+            raise RuleNotMatchingError('dim_range and dim_source must be equal.')
+        space = op.source if dim_source is None else NumpyVectorSpace(dim_source, op.source.id)
+        return IdentityOperator(space, name=op.name)
 
     @match_class(ProjectedEmpiciralInterpolatedOperator)
     def action_ProjectedEmpiciralInterpolatedOperator(self, op):
