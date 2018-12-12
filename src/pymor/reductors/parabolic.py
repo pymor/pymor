@@ -38,27 +38,25 @@ class ParabolicRBReductor(GenericRBReductor):
     The dual norm of the residual is computed using the numerically stable projection
     from [BEOR14]_.
 
-    .. warning::
-        The reduced basis `RB` is required to be orthonormal w.r.t. the given
-        energy product. If not, the projection of the initial values will be
-        computed incorrectly.
-
     Parameters
     ----------
     d
         The |InstationaryDiscretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
+    basis_is_orthonormal
+        Indicate whether or not the basis is orthonormal w.r.t. `product`.
     product
-        The energy inner product |Operator| w.r.t. the reduction error is estimated.
-        RB must be to be orthonomrmal w.r.t. this product!
+        The energy inner product |Operator| w.r.t. which the reduction error is
+        estimated and `RB` is orthonormalized.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `d.operator` w.r.t. `product`.
     """
-    def __init__(self, d, RB=None, product=None, coercivity_estimator=None):
+    def __init__(self, d, RB=None, basis_is_orthonormal=None,
+                 product=None, coercivity_estimator=None):
         assert isinstance(d.time_stepper, ImplicitEulerTimeStepper)
-        super().__init__(d, RB, product=product)
+        super().__init__(d, RB, basis_is_orthonormal=basis_is_orthonormal, product=product)
         self.coercivity_estimator = coercivity_estimator
 
         self.residual_reductor = ImplicitEulerResidualReductor(

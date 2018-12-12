@@ -7,12 +7,13 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
+from pymor.core.interfaces import BasicInterface
 from pymor.discretizations.iosys import LTISystem
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 
 
-class GenericBTReductor(GenericPGReductor):
+class GenericBTReductor(BasicInterface):
     """Generic Balanced Truncation reductor.
 
     Parameters
@@ -97,21 +98,20 @@ class GenericBTReductor(GenericPGReductor):
             alpha = 1 / np.sqrt(sv[:r])
             self.V.scal(alpha)
             self.W.scal(alpha)
-            self.biorthogonal_product = 'E'
         elif projection == 'bfsr':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-            self.biorthogonal_product = None
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.E)
-            self.biorthogonal_product = 'E'
 
-        rd = super().reduce()
+        self.pg_reductor = GenericPGReductor(self.d, self.W, self.V, projection in ('sr', 'biorth'), product=self.d.E)
+        rd = self.pg_reductor.reduce()
 
         return rd
 
-    extend_source_basis = None
-    extend_range_basis = None
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        self.pg_reductor.reconstruct(u)
 
 
 class BTReductor(GenericBTReductor):
