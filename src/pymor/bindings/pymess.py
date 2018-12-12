@@ -508,7 +508,7 @@ if config.HAVE_PYMESS:
                 x = self.a.apply(y)
             else:
                 x = self.a.apply_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def ex_apply(self, op, y):
             if self.e is None:
@@ -519,7 +519,7 @@ if config.HAVE_PYMESS:
                 x = self.e.apply(y)
             else:
                 x = self.e.apply_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def ainv_apply(self, op, y):
             y = self.a.source.from_numpy(np.array(y).T)
@@ -527,7 +527,7 @@ if config.HAVE_PYMESS:
                 x = self.a.apply_inverse(y)
             else:
                 x = self.a.apply_inverse_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def einv_apply(self, op, y):
             if self.e is None:
@@ -538,7 +538,7 @@ if config.HAVE_PYMESS:
                 x = self.e.apply_inverse(y)
             else:
                 x = self.e.apply_inverse_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def apex_apply(self, op, p, idx_p, y):
             y = self.a.source.from_numpy(np.array(y).T)
@@ -554,7 +554,7 @@ if config.HAVE_PYMESS:
                     x += p.conjugate() * y
                 else:
                     x += p.conjugate() * self.e.apply_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def apeinv_apply(self, op, p, idx_p, y):
             y = self.a.source.from_numpy(np.array(y).T)
@@ -569,7 +569,7 @@ if config.HAVE_PYMESS:
                 x = ape.apply_inverse(y)
             else:
                 x = ape.apply_inverse_adjoint(y.conj()).conj()
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def parameter(self, arp_p, arp_m, B=None, K=None):
             return None
@@ -624,7 +624,7 @@ if config.HAVE_PYMESS:
                 x = self.a.apply(y)
             else:
                 x = self.a.apply_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def ex_apply(self, op, y):
             if self.e is None:
@@ -635,7 +635,7 @@ if config.HAVE_PYMESS:
                 x = self.e.apply(y)
             else:
                 x = self.e.apply_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def ainv_apply(self, op, y):
             y = self.a.source.from_numpy(np.array(y).T)
@@ -643,7 +643,7 @@ if config.HAVE_PYMESS:
                 x = self.a.apply_inverse(y)
             else:
                 x = self.a.apply_inverse_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def einv_apply(self, op, y):
             if self.e is None:
@@ -654,7 +654,7 @@ if config.HAVE_PYMESS:
                 x = self.e.apply_inverse(y)
             else:
                 x = self.e.apply_inverse_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def apex_apply(self, op, p, idx_p, y):
             y = self.a.source.from_numpy(np.array(y).T)
@@ -670,7 +670,7 @@ if config.HAVE_PYMESS:
                     x += p.conjugate() * y
                 else:
                     x += p.conjugate() * self.e.apply_adjoint(y)
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def apeinv_apply(self, op, p, idx_p, y):
             y = self.a.source.from_numpy(np.array(y).T)
@@ -685,7 +685,7 @@ if config.HAVE_PYMESS:
                 x = ape.apply_inverse(y)
             else:
                 x = ape.apply_inverse_adjoint(y.conj()).conj()
-            return np.matrix(x.to_numpy()).T
+            return x.to_numpy().T
 
         def parameter(self, arp_p, arp_m, B=None, K=None):
             return None
