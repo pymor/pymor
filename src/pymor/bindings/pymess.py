@@ -20,10 +20,20 @@ if config.HAVE_PYMESS:
     from pymor.operators.constructions import IdentityOperator
 
     @defaults('adi_maxit', 'adi_memory_usage', 'adi_output', 'adi_rel_change_tol', 'adi_res2_tol', 'adi_res2c_tol',
-              'adi_shifts_arp_m', 'adi_shifts_arp_p', 'adi_shifts_l0')
-    def lradi_solver_options(adi_maxit=500, adi_memory_usage=1, adi_output=1, adi_rel_change_tol=1e-10,
-                             adi_res2_tol=1e-10, adi_res2c_tol=1e-11, adi_shifts_arp_m=32, adi_shifts_arp_p=48,
-                             adi_shifts_l0=16):
+              'adi_shifts_arp_m', 'adi_shifts_arp_p', 'adi_shifts_b0', 'adi_shifts_l0', 'adi_shifts_p',
+              'adi_shifts_paratype')
+    def lradi_solver_options(adi_maxit=500,
+                             adi_memory_usage=pymess.MESS_MEMORY_MID,
+                             adi_output=1,
+                             adi_rel_change_tol=1e-10,
+                             adi_res2_tol=1e-10,
+                             adi_res2c_tol=1e-11,
+                             adi_shifts_arp_m=32,
+                             adi_shifts_arp_p=48,
+                             adi_shifts_b0=None,
+                             adi_shifts_l0=16,
+                             adi_shifts_p=None,
+                             adi_shifts_paratype=pymess.MESS_LRCFADI_PARA_ADAPTIVE_V):
         """Returns available adi solver options with default values for the pymess backend.
 
         Parameters
@@ -44,7 +54,13 @@ if config.HAVE_PYMESS:
             See `pymess.OptionsAdiShifts`.
         adi_shifts_arp_p
             See `pymess.OptionsAdiShifts`.
+        adi_shifts_b0
+            See `pymess.OptionsAdiShifts`.
         adi_shifts_l0
+            See `pymess.OptionsAdiShifts`.
+        adi_shifts_p
+            See `pymess.OptionsAdiShifts`.
+        adi_shifts_paratype
             See `pymess.OptionsAdiShifts`.
 
         Returns
@@ -61,7 +77,10 @@ if config.HAVE_PYMESS:
         lradi_opts.adi.res2c_tol = adi_res2c_tol
         lradi_opts.adi.shifts.arp_m = adi_shifts_arp_m
         lradi_opts.adi.shifts.arp_p = adi_shifts_arp_p
+        lradi_opts.adi.shifts.b0 = adi_shifts_b0
         lradi_opts.adi.shifts.l0 = adi_shifts_l0
+        lradi_opts.adi.shifts.p = adi_shifts_p
+        lradi_opts.adi.shifts.paratype = adi_shifts_paratype
 
         return lradi_opts
 
@@ -75,12 +94,9 @@ if config.HAVE_PYMESS:
         A dict of available solvers with default solver options.
         """
 
-        lradi_opts = lradi_solver_options()
-        lradi_opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
-
         return {'pymess_glyap': {'type': 'pymess_glyap'},
                 'pymess_lradi': {'type': 'pymess_lradi',
-                                 'opts': lradi_opts}}
+                                 'opts': lradi_solver_options()}}
 
     @defaults('default_solver')
     def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
@@ -99,9 +115,10 @@ if config.HAVE_PYMESS:
         :func:`~pymor.algorithms.to_matrix.to_matrix` to work for A and
         E.
 
-        If the solver is not specified using the options or default_solver arguments,
-        `glyap` is used for small problems (smaller than
-        `mat_eqn_sparse_min_size`) and `lradi` for large problems.
+        If the solver is not specified using the options or
+        default_solver arguments, `glyap` is used for small problems
+        (smaller than `mat_eqn_sparse_min_size`) and `lradi` for large
+        problems.
 
         Parameters
         ----------
@@ -118,8 +135,8 @@ if config.HAVE_PYMESS:
             The solver options to use (see
             :func:`lyap_lrcf_solver_options`).
         default_solver
-            Default solver to use (pymess_lradi, pymess_glyap). If `None`
-            chose solver depending on dimension `A`.
+            Default solver to use (pymess_lradi, pymess_glyap).
+            If `None`, choose solver depending on the dimension of A.
 
         Returns
         -------
@@ -141,10 +158,7 @@ if config.HAVE_PYMESS:
             Z = _chol(X)
         elif options['type'] == 'pymess_lradi':
             opts = options['opts']
-            if not trans:
-                opts.type = pymess.MESS_OP_NONE
-            else:
-                opts.type = pymess.MESS_OP_TRANSPOSE
+            opts.type = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             eqn = LyapunovEquation(opts, A, E, B)
             Z, status = pymess.lradi(eqn, opts)
         else:
@@ -203,28 +217,27 @@ if config.HAVE_PYMESS:
 
         return X
 
-    @defaults('dense_nm_gmpcare_linesearch', 'dense_nm_gmpcare_maxit', 'dense_nm_gmpcare_absres_tol',
-              'dense_nm_gmpcare_relres_tol', 'dense_nm_gmpcare_nrm')
-    def ricc_lrcf_solver_options(dense_nm_gmpcare_linesearch=False,
-                                 dense_nm_gmpcare_maxit=50,
-                                 dense_nm_gmpcare_absres_tol=1e-11,
-                                 dense_nm_gmpcare_relres_tol=1e-12,
-                                 dense_nm_gmpcare_nrm=0):
+    @defaults('linesearch', 'maxit', 'absres_tol', 'relres_tol', 'nrm')
+    def dense_nm_gmpcare_solver_options(linesearch=False,
+                                        maxit=50,
+                                        absres_tol=1e-11,
+                                        relres_tol=1e-12,
+                                        nrm=0):
         """Returns available Riccati equation solvers with default solver options for the pymess backend.
 
         Also see :func:`lradi_solver_options`.
 
         Parameters
         ----------
-        dense_nm_gmpcare_linesearch
+        linesearch
             See `pymess.dense_nm_gmpcare`.
-        dense_nm_gmpcare_maxit
+        maxit
             See `pymess.dense_nm_gmpcare`.
-        dense_nm_gmpcare_absres_tol
+        absres_tol
             See `pymess.dense_nm_gmpcare`.
-        dense_nm_gmpcare_relres_tol
+        relres_tol
             See `pymess.dense_nm_gmpcare`.
-        dense_nm_gmpcare_nrm
+        nrm
             See `pymess.dense_nm_gmpcare`.
 
         Returns
@@ -232,17 +245,70 @@ if config.HAVE_PYMESS:
         A dict of available solvers with default solver options.
         """
 
+        return {'linesearch': linesearch,
+                'maxit':      maxit,
+                'absres_tol': absres_tol,
+                'relres_tol': relres_tol,
+                'nrm':        nrm}
+
+    @defaults('newton_gstep', 'newton_k0', 'newton_linesearch', 'newton_maxit', 'newton_output', 'newton_res2_tol',
+              'newton_singleshifts')
+    def lrnm_solver_options(newton_gstep=0,
+                            newton_k0=None,
+                            newton_linesearch=0,
+                            newton_maxit=30,
+                            newton_output=1,
+                            newton_res2_tol=1e-10,
+                            newton_singleshifts=0):
+        """Returns available adi solver options with default values for the pymess backend.
+
+        Parameters
+        ----------
+        newton_gstep
+          See `pymess.OptionsNewton`.
+        newton_k0
+          See `pymess.OptionsNewton`.
+        newton_linesearch
+          See `pymess.OptionsNewton`.
+        newton_maxit
+          See `pymess.OptionsNewton`.
+        newton_output
+          See `pymess.OptionsNewton`.
+        newton_res2_tol
+          See `pymess.OptionsNewton`.
+        newton_singleshifts
+          See `pymess.OptionsNewton`.
+
+        Returns
+        -------
+        A dict of available solvers with default solver options.
+        """
+
         lrnm_opts = lradi_solver_options()
-        lrnm_opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
+        lrnm_opts.nm.gstep = newton_gstep
+        lrnm_opts.nm.k0 = newton_k0
+        lrnm_opts.nm.linesearch = newton_linesearch
+        lrnm_opts.nm.maxit = newton_maxit
+        lrnm_opts.nm.output = newton_output
+        lrnm_opts.nm.res2_tol = newton_res2_tol
+        lrnm_opts.nm.singleshifts = newton_singleshifts
+
+        return lrnm_opts
+
+    def ricc_lrcf_solver_options():
+        """Returns available Riccati equation solvers with default solver options for the pymess backend.
+
+        Also see :func:`dense_nm_gmpcare_solver_options` and :func:`lrnm_solver_options`.
+
+        Returns
+        -------
+        A dict of available solvers with default solver options.
+        """
 
         return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
-                                            'linesearch': dense_nm_gmpcare_linesearch,
-                                            'maxit': dense_nm_gmpcare_maxit,
-                                            'absres_tol': dense_nm_gmpcare_absres_tol,
-                                            'relres_tol': dense_nm_gmpcare_relres_tol,
-                                            'nrm': dense_nm_gmpcare_nrm},
+                                            'opts': dense_nm_gmpcare_solver_options()},
                 'pymess_lrnm':             {'type': 'pymess_lrnm',
-                                            'opts': lrnm_opts}}
+                                            'opts': lrnm_solver_options()}}
 
     @defaults('default_solver')
     def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None, default_solver=None):
@@ -301,7 +367,7 @@ if config.HAVE_PYMESS:
         options = _parse_options(options, ricc_lrcf_solver_options(), default_solver, None, False)
 
         if options['type'] == 'pymess_dense_nm_gmpcare':
-            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options, plus=False)
+            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=False)
             Z = _chol(X)
         elif options['type'] == 'pymess_lrnm':
             if S is not None:
@@ -323,27 +389,8 @@ if config.HAVE_PYMESS:
 
         return A.source.from_numpy(Z.T)
 
-    @defaults('dense_nm_gmpcare_linesearch', 'dense_nm_gmpcare_maxit', 'dense_nm_gmpcare_absres_tol',
-              'dense_nm_gmpcare_relres_tol', 'dense_nm_gmpcare_nrm')
-    def pos_ricc_lrcf_solver_options(dense_nm_gmpcare_linesearch=False,
-                                     dense_nm_gmpcare_maxit=50,
-                                     dense_nm_gmpcare_absres_tol=1e-11,
-                                     dense_nm_gmpcare_relres_tol=1e-12,
-                                     dense_nm_gmpcare_nrm=0):
+    def pos_ricc_lrcf_solver_options():
         """Returns available positive Riccati equation solvers with default solver options for the pymess backend.
-
-        Parameters
-        ----------
-        dense_nm_gmpcare_linesearch
-            See `pymess.dense_nm_gmpcare`.
-        dense_nm_gmpcare_maxit
-            See `pymess.dense_nm_gmpcare`.
-        dense_nm_gmpcare_absres_tol
-            See `pymess.dense_nm_gmpcare`.
-        dense_nm_gmpcare_relres_tol
-            See `pymess.dense_nm_gmpcare`.
-        dense_nm_gmpcare_nrm
-            See `pymess.dense_nm_gmpcare`.
 
         Returns
         -------
@@ -351,11 +398,7 @@ if config.HAVE_PYMESS:
         """
 
         return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
-                                            'linesearch': dense_nm_gmpcare_linesearch,
-                                            'maxit': dense_nm_gmpcare_maxit,
-                                            'absres_tol': dense_nm_gmpcare_absres_tol,
-                                            'relres_tol': dense_nm_gmpcare_relres_tol,
-                                            'nrm': dense_nm_gmpcare_nrm}}
+                                            'opts': dense_nm_gmpcare_solver_options()}}
 
     def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a positive Riccati equation.
@@ -383,7 +426,8 @@ if config.HAVE_PYMESS:
             Whether the first |Operator| in the Riccati equation is
             transposed.
         options
-            The solver options to use (see :func:`ricc_solver_options`).
+            The solver options to use (see
+            :func:`ricc_pos_solver_options`).
 
         Returns
         -------
@@ -396,7 +440,7 @@ if config.HAVE_PYMESS:
         options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'pymess_dense_nm_gmpcare', None, False)
 
         if options['type'] == 'pymess_dense_nm_gmpcare':
-            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options, plus=True)
+            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=True)
             Z = _chol(X)
         else:
             raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
