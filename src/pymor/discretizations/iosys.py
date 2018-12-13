@@ -16,6 +16,8 @@ from pymor.operators.constructions import Concatenation, IdentityOperator, Linco
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 
+SPARSE_MIN_SIZE = 1000  # minimal sparse problem size for which to warn about converting to dense
+
 
 class InputOutputSystem(DiscretizationBase):
     """Base class for input-output systems."""
@@ -553,15 +555,15 @@ class LTISystem(InputStateOutputSystem):
     @cached
     def poles(self):
         """Compute system poles."""
-        if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
-            self.logger.warn('Converting operator A to a NumPy array.')
+        if self.n >= SPARSE_MIN_SIZE:
+            if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
+                self.logger.warning('Converting operator A to a NumPy array.')
+            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
+                    isinstance(self.E, IdentityOperator)):
+                self.logger.warning('Converting operator E to a NumPy array.')
+
         A = to_matrix(self.A, format='dense')
-
-        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
-                isinstance(self.E, IdentityOperator)):
-            self.logger.warn('Converting operator E to a NumPy array.')
         E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
-
         return spla.eigvals(A, E)
 
     def eval_tf(self, s):
@@ -770,15 +772,17 @@ class LTISystem(InputStateOutputSystem):
         fpeak
             Frequency at which the maximum is achieved.
         """
-        for op_name in ['A', 'B', 'C']:
-            if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and not getattr(self, op_name).sparse):
-                self.logger.warn('Converting operator ' + op_name + ' to a NumPy array.')
-        if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse) or
-                isinstance(self.D, ZeroOperator)):
-            self.logger.warn('Converting operator D to a NumPy array.')
-        if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
-                isinstance(self.E, IdentityOperator)):
-            self.logger.warn('Converting operator E to a NumPy array.')
+        if self.n >= SPARSE_MIN_SIZE:
+            for op_name in ['A', 'B', 'C']:
+                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and
+                        not getattr(self, op_name).sparse):
+                    self.logger.warning('Converting operator ' + op_name + ' to a NumPy array.')
+            if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse) or
+                    isinstance(self.D, ZeroOperator)):
+                self.logger.warning('Converting operator D to a NumPy array.')
+            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
+                    isinstance(self.E, IdentityOperator)):
+                self.logger.warning('Converting operator E to a NumPy array.')
 
         from slycot import ab13dd
         dico = 'C' if self.cont_time else 'D'
