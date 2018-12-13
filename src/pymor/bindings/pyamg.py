@@ -169,7 +169,7 @@ if config.HAVE_PYAMG:
         options
             The |solver_options| to use (see :func:`solver_options`).
         check_finite
-            Test if solution only containes finite values.
+            Test if solution only contains finite values.
         default_solver
             Default solver to use (pyamg_solve, pyamg_rs, pyamg_sa).
 

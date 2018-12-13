@@ -114,7 +114,7 @@ def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
     options
         The |solver_options| to use (see :func:`solver_options`).
     check_finite
-        Test if solution only containes finite values.
+        Test if solution only contains finite values.
     default_solver
         Default solver to use (generic_lgmres, generic_least_squares_lsmr, generic_least_squares_lsqr).
     default_least_squares_solver
