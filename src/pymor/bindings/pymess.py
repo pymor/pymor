@@ -11,7 +11,7 @@ if config.HAVE_PYMESS:
     import pymess
 
     from pymor.algorithms.genericsolvers import _parse_options
-    from pymor.algorithms.lyapunov import (MAT_EQN_SPARSE_MIN_SIZE, _solve_lyap_lrcf_check_args,
+    from pymor.algorithms.lyapunov import (mat_eqn_sparse_min_size, _solve_lyap_lrcf_check_args,
                                            _solve_lyap_dense_check_args, _chol)
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
@@ -19,29 +19,71 @@ if config.HAVE_PYMESS:
     from pymor.core.logger import getLogger
     from pymor.operators.constructions import IdentityOperator
 
-    def lyap_lrcf_solver_options(lradi_opts=None):
-        """Returns available Lyapunov equation solvers with default solver options for the pymess backend.
+    @defaults('adi_maxit', 'adi_memory_usage', 'adi_output', 'adi_rel_change_tol', 'adi_res2_tol', 'adi_res2c_tol',
+              'adi_shifts_arp_m', 'adi_shifts_arp_p', 'adi_shifts_l0')
+    def lradi_solver_options(adi_maxit=500, adi_memory_usage=1, adi_output=1, adi_rel_change_tol=1e-10,
+                             adi_res2_tol=1e-10, adi_res2c_tol=1e-11, adi_shifts_arp_m=32, adi_shifts_arp_p=48,
+                             adi_shifts_l0=16):
+        """Returns available adi solver options with default values for the pymess backend.
 
         Parameters
         ----------
-        lradi_opts
-            Options for `pymess.lradi` (see `pymess.Options()`).
+        adi_maxit
+            See `pymess.OptionsAdi`.
+        adi_memory_usage
+            See `pymess.OptionsAdi`.
+        adi_output
+            See `pymess.OptionsAdi`.
+        adi_rel_change_tol
+            See `pymess.OptionsAdi`.
+        adi_res2_tol
+            See `pymess.OptionsAdi`.
+        adi_res2c_tol
+            See `pymess.OptionsAdi`.
+        adi_shifts_arp_m
+            See `pymess.OptionsAdiShifts`.
+        adi_shifts_arp_p
+            See `pymess.OptionsAdiShifts`.
+        adi_shifts_l0
+            See `pymess.OptionsAdiShifts`.
 
         Returns
         -------
         A dict of available solvers with default solver options.
         """
 
-        if lradi_opts is None:
-            lradi_opts = pymess.Options()
-            lradi_opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
+        lradi_opts = pymess.Options()
+        lradi_opts.adi.maxit = adi_maxit
+        lradi_opts.adi.memory_usage = adi_memory_usage
+        lradi_opts.adi.output = adi_output
+        lradi_opts.adi.rel_change_tol = adi_rel_change_tol
+        lradi_opts.adi.res2_tol = adi_res2_tol
+        lradi_opts.adi.res2c_tol = adi_res2c_tol
+        lradi_opts.adi.shifts.arp_m = adi_shifts_arp_m
+        lradi_opts.adi.shifts.arp_p = adi_shifts_arp_p
+        lradi_opts.adi.shifts.l0 = adi_shifts_l0
+
+        return lradi_opts
+
+    def lyap_lrcf_solver_options():
+        """Returns available Lyapunov equation solvers with default solver options for the pymess backend.
+
+        Also see :func:`lradi_solver_options`.
+
+        Returns
+        -------
+        A dict of available solvers with default solver options.
+        """
+
+        lradi_opts = lradi_solver_options()
+        lradi_opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
 
         return {'pymess_glyap': {'type': 'pymess_glyap'},
                 'pymess_lradi': {'type': 'pymess_lradi',
                                  'opts': lradi_opts}}
 
-    @defaults('options')
-    def solve_lyap_lrcf(A, E, B, trans=False, options=None):
+    @defaults('default_solver')
+    def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
         """Compute an approximate low-rank solution of a Lyapunov equation.
 
         See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
@@ -57,9 +99,9 @@ if config.HAVE_PYMESS:
         :func:`~pymor.algorithms.to_matrix.to_matrix` to work for A and
         E.
 
-        If the solver is not specified using the options argument,
+        If the solver is not specified using the options or default_solver arguments,
         `glyap` is used for small problems (smaller than
-        `MAT_EQN_SPARSE_MIN_SIZE`) and `lradi` for large problems.
+        `mat_eqn_sparse_min_size`) and `lradi` for large problems.
 
         Parameters
         ----------
@@ -75,6 +117,9 @@ if config.HAVE_PYMESS:
         options
             The solver options to use (see
             :func:`lyap_lrcf_solver_options`).
+        default_solver
+            Default solver to use (pymess_lradi, pymess_glyap). If `None`
+            chose solver depending on dimension `A`.
 
         Returns
         -------
@@ -84,7 +129,8 @@ if config.HAVE_PYMESS:
         """
 
         _solve_lyap_lrcf_check_args(A, E, B, trans)
-        default_solver = 'pymess_lradi' if A.source.dim >= MAT_EQN_SPARSE_MIN_SIZE else 'pymess_glyap'
+        if default_solver is None:
+            default_solver = 'pymess_lradi' if A.source.dim >= mat_eqn_sparse_min_size() else 'pymess_glyap'
         options = _parse_options(options, lyap_lrcf_solver_options(), default_solver, None, False)
 
         if options['type'] == 'pymess_glyap':
@@ -116,7 +162,6 @@ if config.HAVE_PYMESS:
 
         return {'pymess_glyap': {'type': 'pymess_glyap'}}
 
-    @defaults('options')
     def solve_lyap_dense(A, E, B, trans=False, options=None):
         """Compute the solution of a Lyapunov equation.
 
@@ -158,13 +203,16 @@ if config.HAVE_PYMESS:
 
         return X
 
+    @defaults('dense_nm_gmpcare_linesearch', 'dense_nm_gmpcare_maxit', 'dense_nm_gmpcare_absres_tol',
+              'dense_nm_gmpcare_relres_tol', 'dense_nm_gmpcare_nrm')
     def ricc_lrcf_solver_options(dense_nm_gmpcare_linesearch=False,
                                  dense_nm_gmpcare_maxit=50,
                                  dense_nm_gmpcare_absres_tol=1e-11,
                                  dense_nm_gmpcare_relres_tol=1e-12,
-                                 dense_nm_gmpcare_nrm=0,
-                                 lrnm_opts=None):
+                                 dense_nm_gmpcare_nrm=0):
         """Returns available Riccati equation solvers with default solver options for the pymess backend.
+
+        Also see :func:`lradi_solver_options`.
 
         Parameters
         ----------
@@ -178,17 +226,14 @@ if config.HAVE_PYMESS:
             See `pymess.dense_nm_gmpcare`.
         dense_nm_gmpcare_nrm
             See `pymess.dense_nm_gmpcare`.
-        lrnm_opts
-            Options for `pymess.lrnm` (see `pymess.Options()`).
 
         Returns
         -------
         A dict of available solvers with default solver options.
         """
 
-        if lrnm_opts is None:
-            lrnm_opts = pymess.Options()
-            lrnm_opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
+        lrnm_opts = lradi_solver_options()
+        lrnm_opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
 
         return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
                                             'linesearch': dense_nm_gmpcare_linesearch,
@@ -199,8 +244,8 @@ if config.HAVE_PYMESS:
                 'pymess_lrnm':             {'type': 'pymess_lrnm',
                                             'opts': lrnm_opts}}
 
-    @defaults('options')
-    def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+    @defaults('default_solver')
+    def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None, default_solver=None):
         """Compute an approximate low-rank solution of a Riccati equation.
 
         See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
@@ -216,9 +261,9 @@ if config.HAVE_PYMESS:
         expects :func:`~pymor.algorithms.to_matrix.to_matrix` to work
         for A and E.
 
-        If the solver is not specified using the options argument,
+        If the solver is not specified using the options or default_solver arguments,
         `dense_nm_gmpcare` is used for small problems (smaller than
-        `MAT_EQN_SPARSE_MIN_SIZE`) and `lrnm` for large problems.
+        `mat_eqn_sparse_min_size`) and `lrnm` for large problems.
 
         Parameters
         ----------
@@ -239,6 +284,9 @@ if config.HAVE_PYMESS:
             transposed.
         options
             The solver options to use (see :func:`ricc_solver_options`).
+        default_solver
+            Default solver to use (pymess_lrnm, pymess_dense_nm_gmpcare). If `None`
+            chose solver depending on dimension `A`.
 
         Returns
         -------
@@ -248,7 +296,8 @@ if config.HAVE_PYMESS:
         """
 
         _solve_ricc_check_args(A, E, B, C, R, S, trans)
-        default_solver = 'pymess_lrnm' if A.source.dim >= MAT_EQN_SPARSE_MIN_SIZE else 'pymess_dense_nm_gmpcare'
+        if default_solver is None:
+            default_solver = 'pymess_lrnm' if A.source.dim >= mat_eqn_sparse_min_size() else 'pymess_dense_nm_gmpcare'
         options = _parse_options(options, ricc_lrcf_solver_options(), default_solver, None, False)
 
         if options['type'] == 'pymess_dense_nm_gmpcare':
@@ -274,6 +323,8 @@ if config.HAVE_PYMESS:
 
         return A.source.from_numpy(Z.T)
 
+    @defaults('dense_nm_gmpcare_linesearch', 'dense_nm_gmpcare_maxit', 'dense_nm_gmpcare_absres_tol',
+              'dense_nm_gmpcare_relres_tol', 'dense_nm_gmpcare_nrm')
     def pos_ricc_lrcf_solver_options(dense_nm_gmpcare_linesearch=False,
                                      dense_nm_gmpcare_maxit=50,
                                      dense_nm_gmpcare_absres_tol=1e-11,
@@ -306,7 +357,6 @@ if config.HAVE_PYMESS:
                                             'relres_tol': dense_nm_gmpcare_relres_tol,
                                             'nrm': dense_nm_gmpcare_nrm}}
 
-    @defaults('options')
     def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a positive Riccati equation.
 

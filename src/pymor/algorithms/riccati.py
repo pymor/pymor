@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from pymor.algorithms.lyapunov import MAT_EQN_SPARSE_MIN_SIZE
+from pymor.algorithms.lyapunov import mat_eqn_sparse_min_size
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.operators.interfaces import OperatorInterface
@@ -17,7 +17,7 @@ _DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
                                            'scipy')
 
 
-@defaults('options', 'default_sparse_solver_backend', 'default_dense_solver_backend')
+@defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
 def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
                     default_sparse_solver_backend=_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND,
                     default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
@@ -61,11 +61,11 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     backend is chosen based on availability in the following order:
 
     - for sparse problems (minimum size specified by
-      `MAT_EQN_SPARSE_MIN_SIZE`)
+      `mat_eqn_sparse_min_size`)
 
         1. `pymess` (see :func:`pymor.bindings.pymess.solve_ricc_lrcf`)
 
-    - for dense problems (smaller than `MAT_EQN_SPARSE_MIN_SIZE`)
+    - for dense problems (smaller than `mat_eqn_sparse_min_size`)
 
         1. `pymess` (see :func:`pymor.bindings.pymess.solve_ricc_lrcf`)
         2. `slycot` (see :func:`pymor.bindings.slycot.solve_ricc_lrcf`)
@@ -113,7 +113,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
     else:
-        if A.source.dim >= MAT_EQN_SPARSE_MIN_SIZE:
+        if A.source.dim >= mat_eqn_sparse_min_size:
             backend = default_sparse_solver_backend
         else:
             backend = default_dense_solver_backend
@@ -133,7 +133,7 @@ _DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS el
                                                'scipy')
 
 
-@defaults('options', 'default_dense_solver_backend')
+@defaults('default_dense_solver_backend')
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
                         default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
     """Compute an approximate low-rank solution of a positive Riccati equation.

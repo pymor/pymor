@@ -14,6 +14,8 @@ from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 
 
+@defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_z_columns', 'projection_shifts_init_maxiter',
+          'projection_shifts_init_seed', 'projection_shifts_implicit_subspace')
 def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              lradi_maxiter=500,
                              lradi_shifts='projection_shifts',
@@ -56,7 +58,6 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                                              'implicit_subspace': projection_shifts_implicit_subspace}}}}
 
 
-@defaults('options')
 def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
