@@ -27,9 +27,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from pymor.basic import *
+from pymor.core.config import config
 
 import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
+
+
+def compute_hinf_norm(message, sys):
+    if config.HAVE_SLYCOT:
+        print(message.format(sys.hinf_norm()))
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+
 
 if __name__ == '__main__':
     p = InstationaryProblem(
@@ -76,7 +85,7 @@ if __name__ == '__main__':
 
     # Norms of the system
     print('H_2-norm of the full model:    {:e}'.format(lti.h2_norm()))
-    print('H_inf-norm of the full model:  {:e}'.format(lti.hinf_norm()))
+    compute_hinf_norm('H_inf-norm of the full model:  {:e}', lti)
     print('Hankel-norm of the full model: {:e}'.format(lti.hankel_norm()))
 
     # Balanced Truncation
@@ -85,7 +94,7 @@ if __name__ == '__main__':
     rom_bt = reductor.reduce(r, tol=1e-5)
     err_bt = lti - rom_bt
     print('H_2-error for the BT ROM:    {:e}'.format(err_bt.h2_norm()))
-    print('H_inf-error for the BT ROM:  {:e}'.format(err_bt.hinf_norm()))
+    compute_hinf_norm('H_inf-error for the BT ROM:  {:e}', err_bt)
     print('Hankel-error for the BT ROM: {:e}'.format(err_bt.hankel_norm()))
 
     # Bode plot of the full and BT reduced model
@@ -116,7 +125,7 @@ if __name__ == '__main__':
 
     err_irka = lti - rom_irka
     print('H_2-error for the IRKA ROM:    {:e}'.format(err_irka.h2_norm()))
-    print('H_inf-error for the IRKA ROM:  {:e}'.format(err_irka.hinf_norm()))
+    compute_hinf_norm('H_inf-error for the IRKA ROM:  {:e}', err_irka)
     print('Hankel-error for the IRKA ROM: {:e}'.format(err_irka.hankel_norm()))
 
     # Bode plot of the full and IRKA reduced model
