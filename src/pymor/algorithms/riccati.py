@@ -113,7 +113,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
     else:
-        if A.source.dim >= mat_eqn_sparse_min_size:
+        if A.source.dim >= mat_eqn_sparse_min_size():
             backend = default_sparse_solver_backend
         else:
             backend = default_dense_solver_backend
