@@ -9,6 +9,7 @@ import scipy.sparse as sps
 from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
+from pymor.core.config import config
 from pymor.discretizations.basic import DiscretizationBase
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderSystemOperator)
@@ -772,6 +773,10 @@ class LTISystem(InputStateOutputSystem):
         fpeak
             Frequency at which the maximum is achieved.
         """
+
+        if not config.HAVE_SLYCOT:
+            raise NotImplementedError
+
         if self.n >= SPARSE_MIN_SIZE:
             for op_name in ['A', 'B', 'C']:
                 if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and
