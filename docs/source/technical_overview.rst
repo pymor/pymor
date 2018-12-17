@@ -12,17 +12,18 @@ operating on objects of the following types:
 
 |VectorArrays|
     Vector arrays are ordered collections of vectors. Each vector of the array
-    must be of the same |dimension|. Subsets of vectors can be
-    |copied| to a new array, |appended| to an existing array or |removed| from the
-    array. Basic linear algebra operations can be performed on the vectors of the
+    must be of the same |dimension|. Vectors can be |copied| to a new array,
+    |appended| to an existing array or |removed| from the array. Basic linear
+    algebra operations can be performed on the vectors of the
     array: vectors can be |scaled| in-place, the BLAS |axpy| operation is
     supported and |inner products| between vectors can be formed. Linear
     combinations of vectors can be formed using the |lincomb| method. Moreover,
     various norms can be computed and selected |dofs| of the vectors can
     be extracted for :mod:`empirical interpolation <pymor.algorithms.ei>`.
-    To act on subsets of vectors of an array, arrays can be |indexed|, returning
-    a new |VectorArray| which acts as a view onto the respective vectors in the
-    original array. As a convenience, many of Python's math operators are
+    To act on subsets of vectors of an array, arrays can be |indexed| with an
+    integer, a list of integers or a slice, in each case returning a new
+    |VectorArray| which acts as a modifiable view onto the respective vectors in
+    the original array. As a convenience, many of Python's math operators are
     implemented in terms of the interface methods.
 
     Note that there is not the notion of a single vector in pyMOR. The main
@@ -40,9 +41,9 @@ operating on objects of the following types:
 
     Associated to each vector array is a |VectorSpace| which acts as a
     factory for new arrays of a given type.  New vector arrays can be created
-    from their associated the |zeros| and |empty| methods. To wrap the raw
-    objects of the underlying linear algebra backend into a new |VectorArray|,
-    |make_array| is used.
+    using the |zeros| and |empty| methods. To wrap the raw objects of the
+    underlying linear algebra backend into a new |VectorArray|, |make_array|
+    is used.
 
     The data needed to define a new |VectorSpace| largely depends on the
     implementation of the underlying backend. For |NumpyVectorSpace|, the
@@ -122,8 +123,8 @@ operating on objects of the following types:
 
     Apart from describing the discrete problem, discretizations also implement
     algorithms for |solving| the given problem, returning |VectorArrays|
-    with space |solution_space|. The solution can be |cached|, s.t.
-    subsequent solving of the problem for the same parameters reduces to
+    from the |solution_space|. The solution can be |cached|, s.t.
+    subsequent solving of the problem for the same parameter reduces to
     looking up the solution in pyMOR's cache.
 
     While special discretization classes may be implemented which make use of
@@ -136,8 +137,9 @@ operating on objects of the following types:
     discretizations found in :mod:`pymor.discretizations.basic`.
 
     Discretizations can also implement |estimate| and |visualize| methods to
-    estimate the discretization error of a computed solution and create graphic
-    representations of |VectorArrays| from the |solution_space|.
+    estimate the discretization or model reduction error of a computed solution
+    and create graphic representations of |VectorArrays| from the
+    |solution_space|.
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
     .. |estimate|         replace:: :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.estimate`
@@ -243,9 +245,12 @@ structures which can be used to quickly add features to the high-dimensional
 code without any recompilation. A minimal example for such an integration using
 `pybindgen <https://code.google.com/p/pybindgen>`_ can be found in the
 ``src/pymordemos/minimal_cpp_demo`` directory of the pyMOR repository.
-The `dune-pymor <https://github.com/pymor/dune-pymor>`_ repository contains
-experimental bindings for the `DUNE <http://dune-project.org>`_ software
-framework.
+Bindings for `FEnicS <https://fenicsproject.org>`_ and
+`NGSolve <https://ngsolve.org>`_ packages are available in the 
+:mod:`bindings.fenics <pymor.bindings.fenics>` and
+:mod:`bindings.ngsolve <pymor.bindings.ngsolve>` modules.
+The `pymor-deal.II <https://github.com/pymor/pymor-deal.II>`_ repository contains
+experimental bindings for `deal.II <https://dealii.org>`_.
 
 
 Parameters
@@ -265,7 +270,7 @@ expected shapes.
 The |ParameterType| of a |Parametric| object is determined by the class
 implementor during `__init__` via a call to
 :meth:`~pymor.parameters.base.Parametric.build_parameter_type`, which can be
-used, to infer the |ParameterType| from the |ParameterTypes| of objects the
+used to infer the |ParameterType| from the |ParameterTypes| of objects the
 given object depends upon. I.e. an |Operator| implementing the L2-product with
 some |Function| will inherit the |ParameterType| of the |Function|.
 
@@ -288,10 +293,11 @@ decorator::
         ...
 
 Default values can be changed by calling :func:`~pymor.core.defaults.set_defaults`.
-A configuration file with all defaults defined in pyMOR can be obtained with
-:func:`~pymor.core.defaults.write_defaults_to_file`. This file can then be loaded,
-either programmatically or automatically by setting the ``PYMOR_DEFAULTS`` environment
-variable.
+By calling :func:`~pymor.core.defaults.print_defaults` a summary of all defaults
+in pyMOR and their values can be printed. A configuration file with all defaults
+can be obtained with :func:`~pymor.core.defaults.write_defaults_to_file`. This file can
+then be loaded, either programmatically or automatically by setting the
+``PYMOR_DEFAULTS`` environment variable.
 
 As an additional feature, if ``None`` is passed as value for a function argument
 which is a default, its default value is used instead of ``None``. This allows
