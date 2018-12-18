@@ -345,13 +345,14 @@ class InstationaryDiscretization(DiscretizationBase):
         """Convert discretization to |LTISystem|.
 
         This method interprets the given discretization as an |LTISystem|
-        in the following way:
+        in the following way::
 
             - self.operator        -> A
             self.rhs               -> B
             self.operators[output] -> C
             None                   -> D
             self.mass              -> E
+
 
         Parameters
         ----------

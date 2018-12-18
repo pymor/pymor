@@ -246,7 +246,7 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, e
 def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
     """Incremental Hierarchical Approximate POD.
 
-    This computes the incremental HAPOD from [HLR18]_ for a given |VectorArrray|.
+    This computes the incremental HAPOD from [HLR18]_ for a given |VectorArray|.
 
     Parameters
     ----------
