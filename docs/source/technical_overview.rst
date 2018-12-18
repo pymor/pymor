@@ -311,6 +311,48 @@ writing code of the following form::
 See the :mod:`~pymor.core.defaults` module for more information.
 
 
+RuleTables
+----------
+
+Many algorithms in pyMOR can be seen as transformations acting on trees of
+|Operators|. One example is the structure-preserving (Petrov-)Galerkin
+projection of |Operators| performed by the |project| method. For instance, a
+|LincombOperator| is projected by replacing all its children (the |Operators|
+forming the affine decomposition) with projected |Operators|.
+
+During development of pyMOR, it turned out that using inheritance for selecting
+the action to be taken to project a specific operator (i.e. single dispatch
+based on the class of the to-be-projected |Operator|) is not sufficiently
+flexible. With pyMOR 0.5 we have introduced algorithms which are based on
+|RuleTables| instead of inheritance. A |RuleTable| is simply an ordered list of
+:class:`rules <pymor.algorithms.rules.rule>`, i.e. pairs of conditions to match
+with corresponding actions. When a |RuleTable| is :meth:`applied
+<pymor.algorithms.rules.RuleTable.apply>` to an object (e.g. an |Operator|),
+the action associated with the first matching rule in the table is executed. As
+part of the action, the |RuleTable| can be easily :meth:`applied recursively
+<pymor.algorithms.rules.RuleTable.apply_children>` to the children of the given
+object.
+
+This approach has several advantages over an inheritance-based model:
+
+- Rules can match based on the class of the object, but also on more general
+  conditions, i.e. the name of the |Operator| or being linear and non-|parametric|.
+
+- The entire mathematical algorithm can be specified in a single file even when the
+  definition of the possible classes the algorithm can be applied to is scattered
+  over various files.
+
+- The precedence of rules is directly apparent from the definition of the |RuleTable|.
+
+- Generic rules (e.g. the projection of a linear non-|parametric| |Operator| by simply
+  applying the basis) can be easily scheduled to take precedence over more specific
+  rules.
+
+- Users can implement or modify |RuleTables| without modification of the classes
+  shipped with pyMOR.
+
+
+
 The Reduction Process
 ---------------------
 

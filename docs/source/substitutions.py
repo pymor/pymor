@@ -103,6 +103,7 @@ common = '''
 .. |Parameter| replace:: :class:`~pymor.parameters.base.Parameter`
 .. |Parameters| replace:: :class:`Parameters <pymor.parameters.base.Parameter>`
 .. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
+.. |parametric| replace:: :attr:`~pymor.parameters.base.Parametric.parametric`
 
 .. |LTISystem| replace:: :class:`~pymor.discretizations.iosys.LTISystem`
 .. |LTISystems| replace:: :class:`LTISystems <pymor.discretizations.iosys.LTISystem>`
@@ -126,8 +127,10 @@ common = '''
 .. |solver_options| replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
 
 .. |RuleTable| replace:: :class:`~pymor.algorithms.rules.RuleTable`
+.. |RuleTables| replace:: :class:`RuleTables <pymor.algorithms.rules.RuleTable>`
 .. |rule| replace:: :class:`~pymor.algorithms.rules.rule`
 .. |rules| replace:: :class:`rules <pymor.algorithms.rules.rule>`
+.. |project| replace:: :func:`~pymor.algorithms.projection.project`
 
 '''
 
