@@ -22,13 +22,11 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'matplotlib': 'needed for error plots in demo scipts',
                     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
                     'pyamg': 'algebraic multigrid solvers',
-                    'mpi4py': 'required for pymor.tools.mpi and pymor.parallel.mpi',
                     'pyevtk>=1.1': 'writing vtk output',
                     _PYTEST: 'testing framework required to execute unit tests',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'pillow': 'image library used for bitmap data functions',
-                    'psutil': 'Process management abstractions used for gui',
-                    'slycot>=0.3.3': 'python wrapper for the SLICOT control and systems library'}
+                    'psutil': 'Process management abstractions used for gui',}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'python-coveralls', 'pytest-travis-fold',
                    'readme_renderer[md]', 'rstcheck', 'codecov', 'twine']
@@ -43,8 +41,8 @@ import_names = {'ipython': 'IPython',
                 _pymess('1.0.0', 3, 6, False): 'pymess',
                 _pymess('1.0.0', 3, 7, False): 'pymess',
                 'pyopengl': 'OpenGL'}
-needs_extra_compile_setup = ['mpi4py']
-optional_requirements_file_only = [_pymess('1.0.0', 3, 5),_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7)]
+optional_requirements_file_only = [_pymess('1.0.0', 3, 5),_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7),
+                    'slycot>=0.3.3', 'mpi4py']
 
 
 def strip_markers(name):
@@ -91,7 +89,6 @@ def extras():
                     continue
 
     return {
-        'full-nompi': [_ex(f) for f in _candidates(blacklist=needs_extra_compile_setup)],
         'full': [_ex(f) for f in _candidates(blacklist=[])],
         'travis':  travis_requires,
     }
