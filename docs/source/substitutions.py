@@ -42,6 +42,8 @@ interfaces = '''
 .. |RemoteObjects| replace:: :class:`RemoteObjects <pymor.parallel.interfaces.RemoteObjectInterface>`
 .. |VectorArrays| replace:: :class:`VectorArrays <pymor.vectorarrays.interfaces.VectorArrayInterface>`
 .. |VectorArray| replace:: :class:`VectorArray <pymor.vectorarrays.interfaces.VectorArrayInterface>`
+.. |VectorSpace| replace:: :class:`VectorSpace <pymor.vectorarrays.interfaces.VectorSpaceInterface>`
+.. |VectorSpaces| replace:: :class:`VectorSpaces <pymor.vectorarrays.interfaces.VectorSpaceInterface>`
 .. |WorkerPool| replace:: :class:`WorkerPool <pymor.parallel.interfaces.WorkerPoolInterface>`
 .. |WorkerPools| replace:: :class:`WorkerPools <pymor.parallel.interfaces.WorkerPoolInterface>`
 
@@ -89,8 +91,6 @@ common = '''
 .. |EmpiricalInterpolatedOperator| replace:: :class:`~pymor.operators.ei.EmpiricalInterpolatedOperator`
 .. |EmpiricalInterpolatedOperators| replace:: :class:`EmpiricalInterpolatedOperators <pymor.operators.ei.EmpiricalInterpolatedOperator>`
 .. |Concatenation| replace:: :class:`~pymor.operators.constructions.Concatenation`
-.. |VectorSpace| replace:: :class:`~pymor.vectorarrays.interfaces.VectorSpaceInterface`
-.. |VectorSpaces| replace:: :class:`VectorSpaces <pymor.vectorarrays.interfaces.VectorSpaceInterface>`
 .. |NumpyVectorSpace| replace:: :func:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
 .. |NumpyVectorSpaces| replace:: :func:`NumpyVectorSpaces <pymor.vectorarrays.numpy.NumpyVectorSpace>`
 
@@ -103,6 +103,7 @@ common = '''
 .. |Parameter| replace:: :class:`~pymor.parameters.base.Parameter`
 .. |Parameters| replace:: :class:`Parameters <pymor.parameters.base.Parameter>`
 .. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
+.. |parametric| replace:: :attr:`~pymor.parameters.base.Parametric.parametric`
 
 .. |LTISystem| replace:: :class:`~pymor.discretizations.iosys.LTISystem`
 .. |LTISystems| replace:: :class:`LTISystems <pymor.discretizations.iosys.LTISystem>`
@@ -126,8 +127,10 @@ common = '''
 .. |solver_options| replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
 
 .. |RuleTable| replace:: :class:`~pymor.algorithms.rules.RuleTable`
+.. |RuleTables| replace:: :class:`RuleTables <pymor.algorithms.rules.RuleTable>`
 .. |rule| replace:: :class:`~pymor.algorithms.rules.rule`
 .. |rules| replace:: :class:`rules <pymor.algorithms.rules.rule>`
+.. |project| replace:: :func:`~pymor.algorithms.projection.project`
 
 '''
 
