@@ -39,8 +39,9 @@ Trying it out
 
 While we consider pyMOR mainly as a library for building MOR applications, we
 ship a few example scripts. These can be found in the ``src/pymordemos``
-directory of the source repository.  Try launching one of
-them using the ``pymor-demo`` script::
+directory of the source repository (some are available as Jupyter notebooks in
+the ``notebooks`` directory). Try launching one of them using the ``pymor-demo``
+script::
 
     pymor-demo thermalblock --plot-err --plot-solutions 3 2 3 32
 
