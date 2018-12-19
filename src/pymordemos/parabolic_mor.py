@@ -6,7 +6,7 @@
 """Reduced basis approximation of the heat equation.
 
 Usage:
-  parabolic_mor.py [options] BACKEND ALG SNAPSHOTS RBSIZE TEST
+  parabolic_mor.py BACKEND ALG SNAPSHOTS RBSIZE TEST
 
 Arguments:
   BACKEND    Discretization toolkit to use (pymor, fenics).
