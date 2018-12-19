@@ -27,7 +27,9 @@ branches:
 stages:
     - test_top
     - test_bottom
+    - install_check
     - deploy
+
 
 before_script:
     - export IMAGE="pymor/testing:${DOCKER_TAG}"
@@ -87,6 +89,27 @@ jobs:
       env: PYMOR_PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.7" PYMOR_TEST_HALF="BOTTOM"
     - stage: test_bottom
       env: PYMOR_PYTEST_MARKER="MPI" DOCKER_TAG="3.7" PYMOR_TEST_HALF="BOTTOM"
+
+    - stage: install_check
+      script: docker build -f .ci/docker/install_checks/debian_stable/Dockerfile .
+      # overwrite other global/matrix settings
+      before_script: true
+      after_script: true
+      env: OS=debian_stable
+
+    - stage: install_check
+      script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
+      # overwrite other global/matrix settings
+      before_script: true
+      after_script: true
+      env: OS=debian_testing
+
+    - stage: install_check
+      script: docker build -f .ci/docker/install_checks/centos_7/Dockerfile .
+      # overwrite other global/matrix settings
+      before_script: true
+      after_script: true
+      env: OS=centos_7
 
     - stage: deploy
       if: type = push
