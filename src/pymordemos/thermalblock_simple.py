@@ -6,7 +6,7 @@
 """Simplified version of the thermalblock demo.
 
 Usage:
-  thermalblock_simple.py [options] MODEL ALG SNAPSHOTS RBSIZE TEST
+  thermalblock_simple.py MODEL ALG SNAPSHOTS RBSIZE TEST
 
 Arguments:
   MODEL      High-dimensional model (pymor, fenics, ngsolve, pymor-text).
