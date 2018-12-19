@@ -80,7 +80,7 @@ def discretize_pymor():
 
     # discretize using continuous finite elements
     d, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./GRID_INTERVALS, nt=NT)
-    d.enable_caching('persistent')
+    d.enable_caching('disk')
 
     return d
 
