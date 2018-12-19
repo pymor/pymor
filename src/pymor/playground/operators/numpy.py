@@ -45,7 +45,20 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
             return self.range.make_array(V)
 
     def apply_adjoint(self, V, mu=None):
-        raise NotImplementedError
+        assert V in self.range
+
+        if self.functional:
+            U = super().apply_adjoint(V, mu=mu)
+            return self.source.from_numpy(U.to_numpy())
+
+        adj_op = NumpyMatrixOperator(self.matrix).H
+
+        U = [adj_op.apply(adj_op.source.make_array(v._array)).to_numpy().ravel() for v in V._list]
+
+        if self.vector:
+            return self.source.make_array(np.array(U)) if len(U) > 0 else self.source.empty()
+        else:
+            return self.source.from_numpy(U)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
