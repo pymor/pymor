@@ -16,11 +16,11 @@ For Linux we provide binary wheels, so no further system packages should
 be required. The following optional packages must be installed separately::
 
         # for support of MPI distributed models and parallelization of
-        # greedy algorithms (requires MPI development headers)
-        pip install mpi4py 
+        # greedy algorithms (requires MPI development headers and a C compiler)
+        pip install mpi4py
 
         # dense matrix equation solver for system-theoretic MOR methods,
-        # required for H-infinity norm calculation (requires OpenBLAS headers)
+        # required for H-infinity norm calculation (requires OpenBLAS headers and a Fortran compiler)
         pip install slycot
 
         # sparse matrix equation solver for system-theoretic MOR methods
@@ -28,7 +28,7 @@ be required. The following optional packages must be installed separately::
         open https://www.mpi-magdeburg.mpg.de/projects/mess
         # download and install pymess wheel for your architecture
 
-We recommend installation of pyMOR in a `virtual environment <http://www.virtualenv.org/>`_.
+We recommend installation of pyMOR in a `virtual environment <https://virtualenv.pypa.io/en/latest/>`_.
 Please take a look at our `README <https://github.com/pymor/pymor#installation-via-pip>`_
 file for more detailed installation instructions and a guide to setup a
 development environment for working on pyMOR itself.
