@@ -249,6 +249,8 @@ if config.HAVE_FENICS:
                     function.vector()[:] = u.impl
                     f << function
             else:
+                from matplotlib import pyplot as plt
+
                 assert U in self.space and len(U) == 1 \
                     or (isinstance(U, tuple) and all(u in self.space for u in U) and all(len(u) == 1 for u in U))
                 if not isinstance(U, tuple):
@@ -274,8 +276,10 @@ if config.HAVE_FENICS:
                     else:
                         tit = title
                     if separate_colorbars:
-                        df.plot(function, interactive=False, title=tit)
+                        plt.figure()
+                        df.plot(function, title=tit)
                     else:
-                        df.plot(function, interactive=False, title=tit,
+                        plt.figure()
+                        df.plot(function, title=tit,
                                 range_min=vmin, range_max=vmax)
-                df.interactive()
+                plt.show()
