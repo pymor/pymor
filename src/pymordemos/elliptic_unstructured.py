@@ -9,7 +9,7 @@ domain of radius 1 using an unstructured mesh.
 Note that Gmsh (http://geuz.org/gmsh/) is required for meshing.
 
 Usage:
-    elliptic_unstructured.py [--fv] ANGLE NUM_POINTS CLSCALE
+    elliptic_unstructured.py ANGLE NUM_POINTS CLSCALE
 
 Arguments:
     ANGLE        The angle of the circular sector.
@@ -21,8 +21,6 @@ Arguments:
 
 Options:
     -h, --help   Show this message.
-
-    --fv         Use finite volume discretization instead of finite elements.
 """
 
 from docopt import docopt
@@ -30,7 +28,6 @@ import numpy as np
 
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.cg import discretize_stationary_cg
-from pymor.discretizers.fv import discretize_stationary_fv
 from pymor.domaindescriptions.polygonal import CircularSectorDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction
 
@@ -49,8 +46,7 @@ def elliptic_gmsh_demo(args):
     )
 
     print('Discretize ...')
-    discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    d, data = discretizer(analytical_problem=problem, diameter=args['CLSCALE'])
+    d, data = discretize_stationary_cg(analytical_problem=problem, diameter=args['CLSCALE'])
     grid = data['grid']
     print(grid)
     print()
@@ -60,7 +56,7 @@ def elliptic_gmsh_demo(args):
 
     solution = ExpressionFunction('(lambda r, phi: r**(pi/angle) * sin(phi * pi/angle))(*polar(x))', 2, (),
                                   {}, {'angle': args['ANGLE']})
-    U_ref = U.space.make_array(solution(grid.centers(0)) if args['--fv'] else solution(grid.centers(2)))
+    U_ref = U.space.make_array(solution(grid.centers(2)))
 
     d.visualize((U, U_ref, U-U_ref),
                 legend=('Solution', 'Analytical solution (circular boundary)', 'Error'),
