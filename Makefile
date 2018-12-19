@@ -6,10 +6,6 @@ PYMOR_PYTEST_MARKER?=None
 all:
 	./dependencies.py
 
-# PyPI wants ReStructured text
-README.rst: README.md
-	pandoc -f gfm -t rst $< > $@
-
 # I want HTML (to preview the formatting :))
 README.html: README.md
 	pandoc -f gfm -t html $< > $@
