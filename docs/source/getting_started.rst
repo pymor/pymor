@@ -57,7 +57,7 @@ consists in solving the stationary heat equation ::
                       u(x, μ)   = 0     for x in ∂Ω
 
 on the domain Ω = [0,1]^2 for the unknown u. The domain is partitioned into
-``XBLOCKS x YBLOCKS`` blocks (``XBLOCKS`` and ``YBLOCKS`` are the first 
+``XBLOCKS x YBLOCKS`` blocks (``XBLOCKS`` and ``YBLOCKS`` are the first
 two arguments to ``thermalblock.py``). The thermal conductivity d(x, μ)
 is constant on each block (i,j) with value μ_ij: ::
 
@@ -125,7 +125,7 @@ by executing:
 >>> from pymor.basic import *
 
 Next we will instantiate a class describing the analytical problem
-we want so solve. In this case, a 
+we want so solve. In this case, a
 :meth:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`:
 
 >>> p = thermal_block_problem(num_blocks=(3, 2))
@@ -178,7 +178,7 @@ This tells us, that the |Parameter| which
 :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve` expects
 should be a dictionary with one key ``'diffusion'`` whose value is a
 |NumPy array| of shape ``(2, 3)``, corresponding to the block structure of
-the problem. However, by using the 
+the problem. However, by using the
 :meth:`~pymor.parameters.base.Parametric.parse_parameter` method, pyMOR is
 smart enough to correctly parse the input ``[1.0, 0.1, 0.3, 0.1, 0.2, 1.0]``.
 
@@ -199,7 +199,7 @@ the reductor with a |ParameterFunctional| which computes a lower bound for
 the coercivity of the problem for a given parameter.
 
 >>> reductor = CoerciveRBReductor(
-...     d, 
+...     d,
 ...     product=d.h1_0_semi_product,
 ...     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
 ... )
@@ -249,7 +249,7 @@ Now we start the basis generation:
 18:58 |   |   |   |   gram_schmidt: Orthonormalizing vector 186 again
 18:58 |   |   ResidualReductor: Projecting residual operator ...
 18:58 greedy: Greedy search took 126.14163041114807 seconds
-                 
+
 
 The ``max_extensions`` parameter defines how many basis vectors we want to
 obtain. ``greedy_data`` is a dictionary containing various data that has
