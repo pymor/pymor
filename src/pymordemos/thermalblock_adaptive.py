@@ -56,7 +56,7 @@ Options:
 
   --no-visualize-refinement  Do not visualize the training set refinement indicators.
 
-  --validation-mus           Size of validation set. [default: 0]
+  --validation-mus=VALUE     Size of validation set. [default: 0]
 
   --rho=VALUE                Maximum allowed ratio between error on validation set and on
                              training set [default: 1.1].
