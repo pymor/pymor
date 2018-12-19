@@ -1,14 +1,15 @@
 pyMOR - Model Order Reduction with Python
 =========================================
 
-pyMOR is a software library for building model order reduction applications
-with the Python programming language.  Its main focus lies on the application
-of reduced basis methods to parameterized partial differential equations.  All
-algorithms in pyMOR are formulated in terms of abstract interfaces for seamless
-integration with external high-dimensional PDE solvers. Moreover, pure Python
-implementations of finite element and finite volume discretizations using the
-NumPy/SciPy scientific computing stack are provided for getting started
-quickly.
+pyMOR is a software library for building model order
+reduction applications with the Python programming language. Implemented
+algorithms include reduced basis methods for parametric linear and non-linear
+problems, as well as system-theoretic methods such as balanced truncation or
+IRKA.  All algorithms in pyMOR are formulated in terms of abstract interfaces
+for seamless integration with external PDE solver packages.  Moreover, pure
+Python implementations of finite element and finite volume discretizations
+using the NumPy/SciPy scientific computing stack are
+provided for getting started quickly.
 
 [![Latest Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](http://pymor.readthedocs.org/en/latest)
 [![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
@@ -60,21 +61,42 @@ If you use pyMOR for academic work, please consider citing our
 Installation via pip
 --------------------
 
-pyMOR can also easily be installed via the [pip](https://pip.pypa.io/en/stable/)
+We recommend installation of pyMOR in a [virtual environment](https://virtualenv.pypa.io/en/latest/>).
+
+pyMOR can easily be installed with the [pip](https://pip.pypa.io/en/stable/)
 command:
 
-    pip install numpy cython
+    pip install --upgrade pip  # make sure that pip is reasonably new
     pip install pymor[full]
 
-This will install the latest release of pyMOR on your system with all optional
-dependencies. Use
+This will install the latest release of pyMOR on your system with most optional
+dependencies.
+For Linux we provide binary wheels, so no further system packages should
+be required. Use
 
     pip install pymor
 
-for an installation with minimal dependencies. Passing the optional `--user`
-argument, pyMOR will only be installed for your local user, not requiring
-administrator privileges. To install the latest development version
-of pyMOR, execute
+for an installation with minimal dependencies.
+There are some optional packages not included with `pymor[full]`
+because they need additional setup on your system:
+
+    # for support of MPI distributed models and parallelization of
+    # greedy algorithms (requires MPI development headers and a C compiler)
+    pip install mpi4py
+
+    # dense matrix equation solver for system-theoretic MOR methods,
+    # required for H-infinity norm calculation (requires OpenBLAS headers and a Fortran compiler)
+    pip install slycot
+
+    # sparse matrix equation solver for system-theoretic MOR methods
+    # (other backends available)
+    open https://www.mpi-magdeburg.mpg.de/projects/mess
+    # download and install pymess wheel for your architecture
+
+If you are not operating in a virtual environment, you can pass the optional `--user`
+argument to pip, pyMOR will then only be installed for your
+local user, not requiring administrator privileges. To install the latest development
+version of pyMOR, execute
 
     pip install git+https://github.com/pymor/pymor#egg=pymor[full]
 
@@ -86,51 +108,22 @@ might break (this is usually announced on our
 [mailing list](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install git+https://github.com/pymor/pymor@0.4.x#egg=pymor[full]
+    pip install git+https://github.com/pymor/pymor@0.5.x#egg=pymor[full]
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
-
-Note that pyMOR depends on [Cython](http://www.cython.org/), as well as the
-[NumPy](http://numpy.org/) and [SciPy](http://www.scipy.org/) packages.
-On all major Linux distributions, these packages can be easily installed
-via the distribution's package manager. For Debian-based systems (e.g. Ubuntu),
-the following command should work:
-
-    sudo apt-get install cython python-pip python-numpy python-scipy
-
-When not available on your system, pip will automatically build and
-install these dependencies. This, however, will in turn require a full C/C++ compiler
-toolchain and header files for several libraries (BLAS, etc.).
-
-After installation of pyMOR, further optional packages will be suggested if
-not already installed.  Some of these ([PySide](http://qt-project.org/wiki/PySide),
-[matplotlib](http://matplotlib.org), [pyopengl](http://pyopengl.sourceforge.net/),
-[mpi4py](http://mpi4py.scipy.org/)) are again most easily installed
-via your package manager. For Debian-based systems, try:
-
-    sudo apt-get install python-pyside python-matplotlib python-opengl python-mpi4py
-
-Again, all these dependencies can also be installed directly via pip.
-
-**Warning:** Ubuntu 16.04 currently ships
-[broken](https://bugs.launchpad.net/ubuntu/+source/mpi4py/+bug/1583432) mpi4py
-packages which will cause pyMOR to fail at import time. Fixed packages can be
-found in the [pyMOR PPA](https://launchpad.net/~pymor/+archive/stable).
 
 
 Documentation
 -------------
 
-Documentation is available online at [Read the Docs](http://pymor.readthedocs.org/)
-or offline in the `python-pymor-doc` package.
-
-To build the documentation yourself, execute
+Documentation is available online at [Read the Docs](https://pymor.readthedocs.org/)
+or you can build it yourself from inside the root directory of the pyMOR source tree
+by executing:
 
     make doc
 
-inside the root directory of the pyMOR source tree. This will generate HTML
-documentation in `docs/_build/html`.
+This will generate HTML documentation in `docs/_build/html`.
 
 
 External PDE solvers
@@ -164,12 +157,6 @@ we provide bindings for the following solver libraries:
     Python bindings and pyMOR wrapper classes can be found
     [here](https://github.com/pymor/pymor-deal.II).
 
-* [DUNE](https://www.dune-project.org)
-
-    [dune-pymor](https://github.com/pymor/dune-pymor) automatically wraps
-    [dune-hdd](https://users.dune-project.org/projects/dune-hdd/wiki) discretizations
-    for use with pyMOR.
-
 * [NGSolve](https://ngsolve.org)
 
     Wrapper classes for the NGSolve finite element library are shipped with pyMOR
@@ -189,10 +176,6 @@ First make sure that all dependencies are installed. This can be easily
 achieved by first installing pyMOR with its dependencies as described
 above. Then uninstall the pyMOR package itself, e.g.
 
-    sudo apt-get uninstall python-pymor
-
-or
-
     pip uninstall pyMOR
 
 Then, clone the pyMOR git repository using
@@ -202,50 +185,26 @@ Then, clone the pyMOR git repository using
 
 and, optionally, switch to the branch you are interested in, e.g.
 
-    git checkout 0.4.x
+    git checkout 0.5.x
 
-Then, add pyMOR to the search path of your Python interpreter, either by
-setting PYTHONPATH
+Then, make an editable installation of pyMOR with
 
-    export PYTHONPATH=$PYMOR_SOURCE_DIR/src:$PYTHONPATH
+    pip install -e .
 
-or by using a .pth file:
+and pull in all optional dependencies by using
 
-    echo "$PYMOR_SOURCE_DIR/src" > $PYTHON_ROOT/lib/python2.7/site-packages/pymor.pth
-
-Here, PYTHON_ROOT is either '/usr', '$HOME/.local' or the root of your
-[virtual environment](http://www.virtualenv.org/). Finally, build the Cython
-extension modules as described in the next section.
-
-
-Cython extension modules
-------------------------
-
-pyMOR uses [Cython](http://www.cython.org/) extension modules to speed up
-numerical algorithms which cannot be efficiently expressed using NumPy idioms.
-The source files of these modules (files with extension `.pyx`) have to be
-processed by Cython into a `.c`-file which then must be compiled into a shared
-object (`.so` file). The whole build process is handeled automatically by
-`setup.py`.
-
-If you want to develop Cython extensions modules for pyMOR yourself, you should
-add your module to the `ext_modules` list defined in the `_setup` method of
-`setup.py`. Calling
-
-    python setup.py build_ext --inplace
-
-will then build the extension module and place it into your pyMOR source tree.
+    pip install -r requirements-optional.txt
 
 
 Tests
 -----
 
-pyMOR uses [pytest](http://pytest.org/) for unit testing. To run the test suite,
+pyMOR uses [pytest](https://pytest.org/) for unit testing. To run the test suite,
 simply execute `make test` in the base directory of the pyMOR repository. This
 will also create a test coverage report which can be found in the `htmlcov`
 directory. Alternatively, you can run `make full-test` which will also enable
 [pyflakes](https://pypi.python.org/pypi/pyflakes) and
-[pep8](http://www.python.org/dev/peps/pep-0008/) checks.
+[pep8](https://www.python.org/dev/peps/pep-0008/) checks.
 
 All tests are contained within the `src/pymortests` directory and can be run
 individually by executing `py.test src/pymortests/the_module.py`.
