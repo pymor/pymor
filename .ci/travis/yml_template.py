@@ -29,7 +29,9 @@ branches:
 stages:
     - test_top
     - test_bottom
+    - install_check
     - deploy
+
 
 before_script:
     - export IMAGE="pymor/testing:${DOCKER_TAG}"
@@ -56,6 +58,14 @@ jobs:
       env: PYMOR_PYTEST_MARKER="{{m}}" DOCKER_TAG="{{py}}" PYMOR_TEST_HALF="{{half}}"
 {%- endfor %}
 {% endfor %}
+{%- for OS in testos %}
+    - stage: install_check
+      script: docker build -f .ci/docker/install_checks/{{OS}}/Dockerfile .
+      # overwrite other global/matrix settings
+      before_script: true
+      after_script: true
+      env: OS={{OS}}
+{% endfor %}
     - stage: deploy
       if: type = push
       script: ./.ci/travis/deploy.bash
@@ -78,4 +88,4 @@ pythons = ['3.5', '3.6', '3.7']
 marker = [None, "PIP_ONLY", "MPI"]
 with open(os.path.join(os.path.dirname(__file__), 'travis.yml'), 'wt') as yml:
     matrix = list(product(pythons, marker))
-    yml.write(tpl.render(matrix=matrix))
+    yml.write(tpl.render(matrix=matrix,testos=['debian_stable', 'debian_testing', 'centos_7']))

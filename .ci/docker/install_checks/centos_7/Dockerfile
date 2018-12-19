@@ -1,0 +1,10 @@
+FROM centos:7
+
+RUN yum install -y centos-release-scl && yum install -y rh-python36 gcc
+ADD . /src
+RUN source scl_source enable rh-python36  && pip install /src[full]
+
+ENV CC=/usr/lib64/openmpi/bin/mpicc
+RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
+    yum install -y openmpi-devel openblas-devel
+RUN source scl_source enable rh-python36  && pip3 install -r /src/requirements-optional.txt
