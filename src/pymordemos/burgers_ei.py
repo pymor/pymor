@@ -49,7 +49,7 @@ Options:
   --nt=COUNT                      Number of time steps [default: 100].
 
   --num-flux=FLUX                 Numerical flux to use (lax_friedrichs, engquist_osher)
-                                  [default: lax_friedrichs].
+                                  [default: engquist_osher].
 
   -h, --help                      Show this message.
 
