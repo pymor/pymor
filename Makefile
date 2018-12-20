@@ -1,5 +1,9 @@
 PYMOR_DOCKER_TAG?=3.6
 PYMOR_PYTEST_MARKER?=None
+PANDOC_MAJOR=$(shell pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)
+ifeq ($(PANDOC_MAJOR),1)
+	PANDOC_FORMAT=-f markdown_github
+endif
 
 .PHONY: README.html pylint test
 
@@ -8,7 +12,7 @@ all:
 
 # I want HTML (to preview the formatting :))
 README.html: README.md
-	pandoc -t html $< > $@
+	pandoc $(PANDOC_FORMAT) -t html $< > $@
 
 README: README.html
 
