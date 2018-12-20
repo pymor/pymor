@@ -94,9 +94,10 @@ because they need additional setup on your system:
     # download and install pymess wheel for your architecture
 
 If you are not operating in a virtual environment, you can pass the optional `--user`
-argument to pip, pyMOR will then only be installed for your
-local user, not requiring administrator privileges. To install the latest development
-version of pyMOR, execute
+argument to pip. pyMOR will then only be installed for your
+local user, not requiring administrator privileges.
+
+To install the latest development version of pyMOR, execute
 
     pip install git+https://github.com/pymor/pymor#egg=pymor[full]
 
@@ -172,9 +173,7 @@ need help with the integration of your PDE solver.
 Setting up an Environment for pyMOR Development
 -----------------------------------------------
 
-First make sure that all dependencies are installed. This can be easily
-achieved by first installing pyMOR with its dependencies as described
-above. Then uninstall the pyMOR package itself, e.g.
+If you already installed a pyMOR release version, please uninstall it
 
     pip uninstall pyMOR
 
