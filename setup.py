@@ -159,6 +159,7 @@ def setup_package():
         url='http://pymor.org',
         description=' ',
         long_description=open('README.md').read(),
+        long_description_content_type='text/markdown',
         setup_requires=setup_requires,
         tests_require=tests_require,
         install_requires=install_requires,
