@@ -8,7 +8,7 @@ all:
 
 # I want HTML (to preview the formatting :))
 README.html: README.md
-	pandoc -f gfm -t html $< > $@
+	pandoc -t html $< > $@
 
 README: README.html
 
