@@ -191,28 +191,25 @@ def _launch_qt_app(main_window_factory, block):
         app.exec_()
 
     import sys
-    import psutil
     if (block and not getattr(sys, '_called_from_test', False)) or is_windows_platform():
         _doit(main_window_factory)
     else:
         p = multiprocessing.Process(target=_doit, args=(main_window_factory,))
         p.start()
-        _launch_qt_processes.add(psutil.Process(p.pid))
+        _launch_qt_processes.add(p.pid)
 
 
 def stop_gui_processes():
-    import psutil
-    active_pids = {p.pid for p in multiprocessing.active_children()}
-    kill_procs = [pr for pr in _launch_qt_processes if pr.pid in active_pids]
+    import os, signal
+    kill_procs = {p for p in multiprocessing.active_children() if p.pid in _launch_qt_processes}
     for p in kill_procs:
-        try:
-            # active_children apparently contains false positives sometimes
-            p.terminate()
-        except psutil.NoSuchProcess:
-            pass
-    gone, still_alive = psutil.wait_procs(kill_procs, timeout=1)
-    for p in still_alive:
-        p.kill()
+        # active_children apparently contains false positives sometimes
+        p.terminate()
+        p.join(1)
+
+    for p in kill_procs:
+        if p.is_alive():
+            os.kill(p.pid, signal.SIGKILL)
 
 
 @defaults('backend', sid_ignore=('backend',))

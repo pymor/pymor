@@ -11,7 +11,6 @@ ipython>=3.0
 matplotlib
 mpi4py
 pillow
-psutil
 pyamg
 pyevtk>=1.1
 pyopengl
