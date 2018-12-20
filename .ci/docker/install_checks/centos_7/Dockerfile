@@ -1,6 +1,5 @@
-FROM centos:7
+FROM pymor/deploy_checks:centos_7
 
-RUN yum install -y centos-release-scl && yum install -y rh-python36 gcc
 ADD . /src
 RUN source scl_source enable rh-python36  && pip install /src[full]
 

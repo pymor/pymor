@@ -1,6 +1,5 @@
-FROM debian:stable
+FROM pymor/deploy_checks:debian_stable
 
-RUN apt update -y && apt install -y python3-pip
 ADD . /src
 RUN pip3 install /src[full]
 
