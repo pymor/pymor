@@ -1,7 +1,7 @@
 PYMOR_DOCKER_TAG?=3.6
 PYMOR_PYTEST_MARKER?=None
 
-.PHONY: README.rst README.txt README.html pylint test
+.PHONY: README.html pylint test
 
 all:
 	./dependencies.py
@@ -10,10 +10,7 @@ all:
 README.html: README.md
 	pandoc -f gfm -t html $< > $@
 
-README.txt: README.md
-	pandoc -f gfm -t plain $< > $@
-
-README: README.txt README.html README.rst
+README: README.html
 
 pep8:
 	pep8 ./src

@@ -39,9 +39,6 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
       sudo pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
     fi
 
-    # README sanity
-    rstcheck README.txt
-
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
     twine check ${SDIST_DIR}/*
     check-manifest -p python ${PWD}
