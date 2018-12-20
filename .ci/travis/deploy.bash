@@ -17,7 +17,7 @@ rm -rf ~/.ssh
 set -x
 mkdir -p ${BUILDER_WHEELHOUSE}
 git clone git@github.com:pymor/wheels.pymor.org ${REPODIR}
-for py in 3.5 3.6 ; do
+for py in 3.5 3.6 3.7 ; do
     BUILDER_IMAGE=pymor/wheelbuilder:py${py}
     git clean -xdf
     docker pull ${BUILDER_IMAGE} 1> /dev/null
