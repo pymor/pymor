@@ -25,8 +25,7 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'pyevtk>=1.1': 'writing vtk output',
                     _PYTEST: 'testing framework required to execute unit tests',
                     'PyQt5': 'solution visualization for builtin discretizations',
-                    'pillow': 'image library used for bitmap data functions',
-                    'psutil': 'Process management abstractions used for gui',}
+                    'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'python-coveralls', 'pytest-travis-fold',
                    'readme_renderer[md]', 'rstcheck', 'codecov', 'twine']
