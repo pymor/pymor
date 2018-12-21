@@ -26,9 +26,9 @@ for py in 3.5 3.6 3.7 ; do
         -v ${PYMOR_ROOT}:/io/pymor ${BUILDER_IMAGE} /usr/local/bin/build-wheels.sh
 done
 
-# for os in debian_stable debian_testing centos_7 ; do
-for os in centos_7 ; do
-    docker build --build-arg tag=${os} -f .ci/docker/deploy_checks/Dockerfile ${BUILDER_WHEELHOUSE}
+cp ${PYMOR_ROOT}/.ci/docker/deploy_checks/Dockerfile ${BUILDER_WHEELHOUSE}
+for os in debian_stable debian_testing centos_7 ; do
+    docker build --build-arg tag=${os} ${BUILDER_WHEELHOUSE}
 done
 
 for py in 3.5 3.6 3.7 ; do
