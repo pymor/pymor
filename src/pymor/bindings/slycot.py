@@ -144,7 +144,7 @@ if config.HAVE_SLYCOT:
         return X
 
     def _solve_check(dtype, solver, sep, ferr):
-        if ferr > np.sqrt(np.finfo(dtype).eps):
+        if ferr > 1e-1:
             logger = getLogger(solver)
             logger.warning('Estimated forward relative error bound is large (ferr={:e}, sep={:e}). '
                            'Result may not be accurate.'.format(ferr, sep))
@@ -264,7 +264,7 @@ if config.HAVE_SLYCOT:
         return A_source.from_numpy(_chol(X).T)
 
     def _ricc_rcond_check(solver, rcond):
-        if rcond < np.sqrt(np.finfo(np.float64).eps):
+        if rcond < np.finfo(np.float64).eps:
             logger = getLogger(solver)
             logger.warning('Estimated reciprocal condition number is small (rcond={:e}). '
                            'Result may not be accurate.'.format(rcond))
