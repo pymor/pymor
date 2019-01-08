@@ -146,6 +146,9 @@ class MemoryRegion(CacheRegion):
         if value is self.NO_VALUE:
             return False, None
         else:
+            from pymor.vectorarrays.interfaces import VectorArrayInterface
+            if isinstance(value, VectorArrayInterface):
+                value = value.copy()
             return True, value
 
     def set(self, key, value):
@@ -154,6 +157,10 @@ class MemoryRegion(CacheRegion):
             return
         if len(self._cache) == self.max_keys:
             self._cache.popitem(last=False)
+
+        import numpy as np
+        if isinstance(value, np.ndarray):
+            value.setflags(write=False)
         self._cache[key] = value
 
     def clear(self):

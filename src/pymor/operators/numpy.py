@@ -135,7 +135,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
         return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
                                    source_id=self.source.id,
                                    range_id=self.range.id,
-                                   solver_options=self.solver_options)
+                                   solver_options=self.solver_options,
+                                   name=self.name)
 
     def apply(self, U, mu=None):
         return self.assemble(mu).apply(U)

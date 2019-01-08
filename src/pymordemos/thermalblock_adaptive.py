@@ -54,9 +54,9 @@ Options:
 
   --list-vector-array        Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
 
-  --visualize-refinement     Visualize the training set refinement indicators.
+  --no-visualize-refinement  Do not visualize the training set refinement indicators.
 
-  --validation-mus           Size of validation set. [default: 0]
+  --validation-mus=VALUE     Size of validation set. [default: 0]
 
   --rho=VALUE                Maximum allowed ratio between error on validation set and on
                              training set [default: 1.1].
@@ -151,7 +151,7 @@ def thermalblock_demo(args):
         use_estimator=not args['--without-estimator'],
         error_norm=d.h1_0_semi_norm,
         max_extensions=args['RBSIZE'],
-        visualize=args['--visualize-refinement']
+        visualize=not args['--no-visualize-refinement']
     )
 
     rd = greedy_data['rd']

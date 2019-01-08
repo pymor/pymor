@@ -163,7 +163,7 @@ class IPythonPool(WorkerPoolBase):
         return self.view.apply_sync(_worker_call_function, function, False, args, kwargs)
 
     def _apply_only(self, function, worker, *args, **kwargs):
-        view = self.client[worker]
+        view = self.client[int(worker)]
         return view.apply_sync(_worker_call_function, function, False, args, kwargs)
 
     def _map(self, function, chunks, **kwargs):

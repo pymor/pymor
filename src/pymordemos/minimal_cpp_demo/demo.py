@@ -61,7 +61,7 @@ for mu in d.parameter_space.sample_uniformly(2):
 reduced_basis = pod(snapshots, 4)[0]
 
 # reduce the model
-reductor = GenericRBReductor(d, reduced_basis)
+reductor = GenericRBReductor(d, reduced_basis, basis_is_orthonormal=True)
 rd = reductor.reduce()
 
 # stochastic error estimation

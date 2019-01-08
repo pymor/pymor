@@ -6,7 +6,7 @@
 """Reduced basis approximation of the heat equation.
 
 Usage:
-  parabolic_mor.py [options] BACKEND ALG SNAPSHOTS RBSIZE TEST
+  parabolic_mor.py BACKEND ALG SNAPSHOTS RBSIZE TEST
 
 Arguments:
   BACKEND    Discretization toolkit to use (pymor, fenics).
@@ -80,7 +80,7 @@ def discretize_pymor():
 
     # discretize using continuous finite elements
     d, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./GRID_INTERVALS, nt=NT)
-    d.enable_caching('persistent')
+    d.enable_caching('disk')
 
     return d
 

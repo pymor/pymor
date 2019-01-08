@@ -55,7 +55,7 @@ THERMALBLOCK_ARGS = (
 
 THERMALBLOCK_ADAPTIVE_ARGS = (
     ('thermalblock_adaptive', [10]),
-    ('thermalblock_adaptive', ['--visualize-refinement', 10]),
+    ('thermalblock_adaptive', ['--no-visualize-refinement', 10]),
 )
 
 THERMALBLOCK_SIMPLE_ARGS = (
@@ -147,9 +147,9 @@ def _test_demo(demo):
     try:
         import dolfin
         dolfin.plot = nop
-        dolfin.interactive = nop
     except ImportError:
         pass
+
     result = None
     try:
         result = demo()

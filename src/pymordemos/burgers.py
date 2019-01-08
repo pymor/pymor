@@ -8,7 +8,7 @@
 Solves a two-dimensional Burgers-type equation. See pymor.analyticalproblems.burgers for more details.
 
 Usage:
-  burgers.py [-hp] [--grid=NI] [--grid-type=TYPE] [--initial-data=TYPE] [--lxf-lambda=VALUE] [--nt=COUNT]
+  burgers.py [-h] [--grid=NI] [--grid-type=TYPE] [--initial-data=TYPE] [--lxf-lambda=VALUE] [--nt=COUNT]
              [--not-periodic] [--num-flux=FLUX] [--vx=XSPEED] [--vy=YSPEED] EXP
 
 
@@ -31,7 +31,7 @@ Options:
                          and bottom boundary.
 
   --num-flux=FLUX        Numerical flux to use (lax_friedrichs, engquist_osher)
-                         [default: lax_friedrichs].
+                         [default: engquist_osher].
 
   -h, --help             Show this message.
 
