@@ -147,9 +147,9 @@ def _test_demo(demo):
     try:
         import dolfin
         dolfin.plot = nop
-        dolfin.interactive = nop
     except ImportError:
         pass
+
     result = None
     try:
         result = demo()

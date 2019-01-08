@@ -12,18 +12,24 @@ if __name__ == '__main__':
 
     from pymor.tools import mpi
     import runpy
-    import sys
 
     # ensure that FEniCS visualization does nothing on all MPI ranks
-    def monkey_dolfin():
+    def monkey_plot():
         def nop(*args, **kwargs):
             pass
+
+        try:
+            from matplotlib import pyplot
+            pyplot.show = nop
+        except ImportError:
+            pass
+
         try:
             import dolfin
             dolfin.plot = nop
-            dolfin.interactive = nop
         except ImportError:
             pass
-    mpi.call(monkey_dolfin)
+
+    mpi.call(monkey_plot)
 
     runpy.run_module('pymortests.demos', init_globals=None, run_name='__main__', alter_sys=True)
