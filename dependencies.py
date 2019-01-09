@@ -14,7 +14,7 @@ def _pymess(rev, major, minor, marker=True):
         return '{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'.format(url=url, major=major, minor=minor)
     return url
 
-tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker', 'pytest-flake8', 'pytest-docstyle']
+tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker', 'pytest-flake8']
 install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'docopt', 'Qt.py', 'packaging']
 setup_requires = ['pytest-runner>=2.9', 'cython>=0.20.1', 'numpy>=1.8.1', 'packaging']
 install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
