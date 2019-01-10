@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """ This module provides a few methods and classes for visualizing data
-associated to grids. We use the the `Qt <http://www.qt-project.org>`_ widget
+associated to grids. We use the `Qt <http://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """
 

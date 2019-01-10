@@ -35,6 +35,8 @@ class LincombOperator(OperatorBase):
     coefficients
         A list of linear coefficients. A linear coefficient can
         either be a fixed number or a |ParameterFunctional|.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """
@@ -251,6 +253,8 @@ class Concatenation(OperatorBase):
         Tuple  of |Operators| to concatenate. `operators[-1]`
         is the first applied operator, `operators[0]` is the last
         applied operator.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """
@@ -331,13 +335,13 @@ class Concatenation(OperatorBase):
 
 
 class ComponentProjection(OperatorBase):
-    """|Operator| representing the projection of a |VectorArray| on some of its components.
+    """|Operator| representing the projection of a |VectorArray| onto some of its components.
 
     Parameters
     ----------
     components
         List or 1D |NumPy array| of the indices of the vector
-        :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.components` that ar
+        :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.components` that are
         to be extracted by the operator.
     source
         Source |VectorSpace| of the operator.
@@ -544,6 +548,9 @@ class VectorArrayOperator(OperatorBase):
         The |VectorArray| which is to be treated as an operator.
     adjoint
         See description above.
+    space_id
+        Id of the `source` (`range`) |VectorSpace| in case `adjoint` is
+        `False` (`True`).
     name
         The name of the operator.
     """
@@ -752,7 +759,7 @@ class FixedParameterOperator(ProxyOperator):
     mu
         The fixed |Parameter| that will be fed to the
         :meth:`~pymor.operators.interfaces.OperatorInterface.apply` method
-        of `operator`.
+        (and related methods) of `operator`.
     """
 
     def __init__(self, operator, mu=None, name=None):
@@ -896,7 +903,7 @@ class AdjointOperator(OperatorBase):
         op^*(v) = P_s^(-1) o op.H o P_r,
 
     Thus, if `( , )_s` and `( , )_r` are the Euclidean inner products,
-    `op^*v` is simply given by applycation of the
+    `op^*v` is simply given by application of the
     :attr:adjoint <pymor.operators.interface.OperatorInterface.H>`
     |Operator|.
 

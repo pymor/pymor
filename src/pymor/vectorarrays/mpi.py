@@ -171,8 +171,6 @@ _local_space_to_id = {}
 
 
 def _register_local_space(local_space):
-    # if mpi.rank == 0:
-    #     import pdb; pdb.set_trace()
     local_space_id = _local_space_to_id.get(local_space)
     if local_space_id is None:
         local_space_id = RegisteredLocalSpace(len(_local_space_registry))

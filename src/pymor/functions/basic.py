@@ -16,9 +16,6 @@ class FunctionBase(FunctionInterface):
     """Base class for |Functions| providing some common functionality."""
 
     def __add__(self, other):
-        """Returns a new :class:`LincombFunction` representing the sum of two functions, or
-        of one function and a constant.
-        """
         if isinstance(other, Number) and other == 0:
             return self
         elif not isinstance(other, FunctionInterface):
@@ -32,17 +29,12 @@ class FunctionBase(FunctionInterface):
     __radd__ = __add__
 
     def __sub__(self, other):
-        """Returns a new :class:`LincombFunction` representing the difference of two functions, or
-        of one function and a constant.
-        """
         if isinstance(other, FunctionInterface):
             return LincombFunction([self, other], [1., -1.])
         else:
             return self + (- np.array(other))
 
     def __mul__(self, other):
-        """Returns a new :class:`LincombFunction` representing the product of a function by a scalar.
-        """
         if isinstance(other, (Number, ParameterFunctionalInterface)):
             return LincombFunction([self], [other])
         if isinstance(other, FunctionInterface):
@@ -52,7 +44,6 @@ class FunctionBase(FunctionInterface):
     __rmul__ = __mul__
 
     def __neg__(self):
-        """Returns a new :class:`LincombFunction` representing the function scaled by -1."""
         return LincombFunction([self], [-1.])
 
 

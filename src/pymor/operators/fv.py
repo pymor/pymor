@@ -209,6 +209,8 @@ class NonlinearAdvectionOperator(OperatorBase):
     dirichlet_data
         |Function| providing the Dirichlet boundary values. If `None`, constant-zero
         boundary is assumed.
+    solver_options
+        The |solver_options| for the operator.
     name
         The name of the operator.
     """
@@ -479,6 +481,8 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         |Function| defining the velocity field `v`.
     lxf_lambda
         The stabilization parameter `λ`.
+    solver_options
+        The |solver_options| for the operator.
     name
         The name of the operator.
     """
@@ -541,6 +545,8 @@ class L2Product(NumpyMatrixBasedOperator):
     ----------
     grid
         The |Grid| for which to assemble the product.
+    solver_options
+        The |solver_options| for the operator.
     name
         The name of the product.
     """
@@ -573,6 +579,8 @@ class ReactionOperator(NumpyMatrixBasedOperator):
         The |Grid| for which to assemble the operator.
     reaction_coefficient
         The function 'c'
+    solver_options
+        The |solver_options| for the operator.
     name
         The name of the operator.
     """
@@ -629,7 +637,7 @@ class NonlinearReactionOperator(OperatorBase):
 
 
 class L2ProductFunctional(NumpyMatrixBasedOperator):
-    """Finite volume |Functional| representing the inner product with an L2-|Function|.
+    """Finite volume functional representing the inner product with an L2-|Function|.
 
     Additionally, boundary conditions can be enforced by providing `dirichlet_data`
     and `neumann_data` functions.
@@ -745,6 +753,8 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         The scalar-valued |Function| `d(x)`. If `None`, constant one is assumed.
     diffusion_constant
         The constant `c`. If `None`, `c` is set to one.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """

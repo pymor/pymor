@@ -58,7 +58,7 @@ class PatchVisualizer(BasicInterface):
             provided, in which case a subplot is created for each entry of the tuple. The
             lengths of all arrays have to agree.
         d
-            Filled in :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
+            Filled in by :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
         title
             Title of the plot.
         legend

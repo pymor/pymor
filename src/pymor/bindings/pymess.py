@@ -499,7 +499,7 @@ if config.HAVE_PYMESS:
         return X
 
     class LyapunovEquation(pymess.Equation):
-        r"""Lyapunov equation class for pymess
+        """Lyapunov equation class for pymess
 
         Represents a (generalized) continuous-time algebraic Lyapunov
         equation:
@@ -615,7 +615,7 @@ if config.HAVE_PYMESS:
             return None
 
     class RiccatiEquation(pymess.Equation):
-        r"""Riccati equation class for pymess
+        """Riccati equation class for pymess
 
         Represents a Riccati equation
 

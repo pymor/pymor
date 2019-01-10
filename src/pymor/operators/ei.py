@@ -52,6 +52,8 @@ class EmpiricalInterpolatedOperator(OperatorBase):
     triangular
         If `True`, assume that ψ_(c_i)(b_j) = 0  for i < j, which means
         that the interpolation matrix is triangular.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """

@@ -79,8 +79,7 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors whith each component
-        zero.
+        A |VectorArray| containing `count` vectors with each component zero.
         """
         return self.space.zeros(count, reserve=reserve)
 
@@ -125,7 +124,7 @@ class VectorArrayInterface(BasicInterface):
         Parameters
         ----------
         ensure_copy
-            If `False` modifying the returned |NumPy array| might alter the original
+            If `False`, modifying the returned |NumPy array| might alter the original
             |VectorArray|. If `True` always a copy of the array data is made.
         """
         raise NotImplementedError
@@ -152,7 +151,7 @@ class VectorArrayInterface(BasicInterface):
 
     @abstractmethod
     def copy(self, deep=False):
-        """Returns a copy of a subarray.
+        """Returns a copy of the array.
 
         All |VectorArray| implementations in pyMOR have copy-on-write semantics:
         if not specified otherwise by setting `deep` to `True`, the returned
@@ -364,7 +363,7 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     def sup_norm(self):
-        """The l-infinity--norms of the vectors contained in the array.
+        """The l-infinity-norms of the vectors contained in the array.
 
         Returns
         -------
@@ -413,7 +412,6 @@ class VectorArrayInterface(BasicInterface):
         return self.inner(self, product)
 
     def __add__(self, other):
-        """The pairwise sum of two |VectorArrays|."""
         if isinstance(other, Number):
             assert other == 0
             return self.copy()
@@ -423,25 +421,21 @@ class VectorArrayInterface(BasicInterface):
         return result
 
     def __iadd__(self, other):
-        """In-place pairwise addition of |VectorArrays|."""
         self.axpy(1, other)
         return self
 
     __radd__ = __add__
 
     def __sub__(self, other):
-        """The pairwise difference of two |VectorArrays|."""
         result = self.copy()
         result.axpy(-1, other)
         return result
 
     def __isub__(self, other):
-        """In-place pairwise difference of |VectorArrays|."""
         self.axpy(-1, other)
         return self
 
     def __mul__(self, other):
-        """Product by a scalar."""
         result = self.copy()
         result.scal(other)
         return result
@@ -449,12 +443,10 @@ class VectorArrayInterface(BasicInterface):
     __rmul__ = __mul__
 
     def __imul__(self, other):
-        """In-place product by a scalar."""
         self.scal(other)
         return self
 
     def __neg__(self):
-        """Product by -1."""
         result = self.copy()
         result.scal(-1)
         return result
@@ -472,14 +464,14 @@ class VectorArrayInterface(BasicInterface):
         return self.copy()
 
     def check_ind(self, ind):
-        """Check if `ind` is an admissable list of indices in the sense of the class documentation."""
+        """Check if `ind` is an admissible list of indices in the sense of the class documentation."""
         l = len(self)
         return (type(ind) is slice or
                 isinstance(ind, _INDEXTYPES) and -l <= ind < l or
                 isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind):
-        """Check if `ind` is an admissable list of non-repeated indices in the sense of the class documentation."""
+        """Check if `ind` is an admissible list of non-repeated indices in the sense of the class documentation."""
         l = len(self)
         return (type(ind) is slice or
                 isinstance(ind, _INDEXTYPES) and -l <= ind < l or
@@ -635,7 +627,7 @@ class VectorSpaceInterface(ImmutableInterface):
             |NumPy| array of shape `(len, dim)` where `len` is the
             number of vectors and `dim` their dimension.
         ensure_copy
-            If `False` modifying the returned |VectorArray| might alter the original
+            If `False`, modifying the returned |VectorArray| might alter the original
             |NumPy array|. If `True` always a copy of the array data is made.
 
         Returns

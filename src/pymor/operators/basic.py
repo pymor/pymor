@@ -169,12 +169,14 @@ class ProjectedOperator(OperatorBase):
     ----------
     operator
         The |Operator| to project.
-    source_basis
-        See :func:`pymor.algorithms.projection.project`.
     range_basis
+        See :func:`pymor.algorithms.projection.project`.
+    source_basis
         See :func:`pymor.algorithms.projection.project`.
     product
         See :func:`pymor.algorithms.projection.project`.
+    solver_options
+        The |solver_options| for the projected operator.
     """
 
     linear = False
