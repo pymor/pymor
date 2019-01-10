@@ -54,10 +54,10 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
 
     Parameters
     ----------
-    parameter_type
-        The |ParameterType| of the |Parameters| the functional expects.
     mapping
         The function to wrap. The function has signature `mapping(mu)`.
+    parameter_type
+        The |ParameterType| of the |Parameters| the functional expects.
     name
         The name of the functional.
     """
@@ -94,6 +94,8 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         A Python expression in the parameter components of the given `parameter_type`.
     parameter_type
         The |ParameterType| of the |Parameters| the functional expects.
+    name
+        The name of the functional.
     """
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',

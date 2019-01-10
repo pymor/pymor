@@ -80,11 +80,10 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     Parameters
     ----------
     grid
-        a |Grid| with triangular or rectilinear reference element
-
+        A |Grid| with triangular or rectilinear reference element.
     data
-        VectorArrayInterface instance with either cell (ie one datapoint per codim 0 entity)
-        or vertex (ie one datapoint per codim 2 entity) data in each array element
+        |VectorArray| with either cell (ie one datapoint per codim 0 entity)
+        or vertex (ie one datapoint per codim 2 entity) data in each array element.
     codim
         the codimension associated with the data
     filename_base

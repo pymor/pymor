@@ -15,24 +15,24 @@ from pymor.operators.numpy import NumpyMatrixOperator
 
 
 def to_matrix(op, format=None, mu=None):
-    """Transform construction of Operators to matrix
+    """Convert a linear |Operator| to a matrix.
 
     Parameters
     ----------
     op
-        Operator.
+        The |Operator| to convert.
     format
         Format of the resulting matrix: |NumPy array| if 'dense',
         otherwise the appropriate |SciPy spmatrix|.
         If `None`, a choice between dense and sparse format is
         automatically made.
     mu
-        |Parameter|.
+        The |Parameter| for which to convert `op`.
 
     Returns
     -------
     res
-        Equivalent matrix.
+        The matrix equivalent to `op`.
     """
     assert format is None or format in ('dense', 'bsr', 'coo', 'csc', 'csr', 'dia', 'dok', 'lil')
     op = op.assemble(mu)

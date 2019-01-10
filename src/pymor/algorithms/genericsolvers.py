@@ -113,6 +113,8 @@ def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
         |VectorArray| of right-hand sides for the equation system.
     options
         The |solver_options| to use (see :func:`solver_options`).
+    least_squares
+        If `True`, return least squares solution.
     check_finite
         Test if solution only contains finite values.
     default_solver
@@ -196,7 +198,7 @@ def _parse_options(options, default_options, default_solver, default_least_squar
         if least_squares:
             logger.warning('Non-least squares solver selected for least squares problem.')
         else:
-            logger.warning('Least squares solver selected for non-least squares probelm.')
+            logger.warning('Least squares solver selected for non-least squares problem.')
 
     return options
 

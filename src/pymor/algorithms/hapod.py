@@ -13,6 +13,7 @@ from pymor.core.logger import getLogger
 
 
 class Tree(BasicInterface):
+    """A rooted tree."""
 
     root = 0
 
@@ -75,12 +76,12 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     tree
         A :class:`Tree` defining the worker topology.
     snapshots
-        A mapping `snapshots(nodes)` returning for each leaf node the
+        A mapping `snapshots(node)` returning for each leaf node the
         associated snapshot vectors.
     local_eps
         A mapping `local_eps(node, snap_count, num_vecs)` assigning
         to each tree node `node` an l2 truncation error tolerance for the
-        local pod based on the numer of input vectors `num_vecs` and the
+        local pod based on the number of input vectors `num_vecs` and the
         total number of snapshot vectors below the given node `snap_count`.
     product
         Inner product |Operator| w.r.t. which to compute the POD.
@@ -168,7 +169,7 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_sn
     steps
         The number of incremental POD updates.
     snapshots
-        A mapping `snapshots(steps)` returning for each incremental POD
+        A mapping `snapshots(step)` returning for each incremental POD
         step the associated snapshot vectors.
     eps
         Desired l2-mean approximation error.
@@ -252,9 +253,8 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
     ----------
     steps
         The number of incremental POD updates.
-    snapshots
-        A mapping `snapshots(steps)` returning for each incremental POD
-        step the associated snapshot vectors.
+    U
+        The |VectorArray| of which to compute the HAPOD.
     eps
         Desired l2-mean approximation error.
     omega

@@ -226,7 +226,7 @@ class ProjectRules(RuleTable):
 
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):
-    """Project given already projected |Operator| to a subbasis.
+    """Project already projected |Operator| to a subbasis.
 
     The purpose of this method is to further project an operator that has been
     obtained through :meth:`project` to subbases of the original projection bases, i.e. ::

@@ -15,7 +15,7 @@ from pymor.parameters.spaces import CubicParameterSpace
 def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
     """Analytical description of a 2D 'thermal block' diffusion problem.
 
-    This problem is to solve the elliptic equation ::
+    The problem is to solve the elliptic equation ::
 
       - ∇ ⋅ [ d(x, μ) ∇ u(x, μ) ] = f(x, μ)
 

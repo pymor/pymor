@@ -34,6 +34,12 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
     domain
         Tuple `(ll, ur)` where `ll` defines the lower left and `ur` the upper right
         corner of the domain.
+    identify_left_right
+        If `True`, the left and right boundaries are identified, i.e. the left-most
+        codim-0 entities become neighbors of the right-most codim-0 entities.
+    identify_bottom_top
+        If `True`, the bottom and top boundaries are identified, i.e. the bottom-most
+        codim-0 entities become neighbors of the top-most codim-0 entities.
     """
 
     dim = 2
@@ -155,7 +161,7 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
 
     def subentities(self, codim, subentity_codim):
         assert 0 <= codim <= 2, 'Invalid codimension'
-        assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimensoin'
+        assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimension'
         if codim == 0:
             if subentity_codim == 0:
                 return np.arange(self.size(0), dtype='int32')[:, np.newaxis]

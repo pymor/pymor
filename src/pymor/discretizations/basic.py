@@ -160,6 +160,8 @@ class StationaryDiscretization(DiscretizationBase):
         The right-hand side F. The same as `operators['rhs']`.
     operators
         Dict of all |Operators| appearing in the discretization.
+    products
+        Dict of all product |Operators| associated with the discretization.
     """
 
     special_operators = frozenset({'operator', 'rhs'})
@@ -276,6 +278,8 @@ class InstationaryDiscretization(DiscretizationBase):
         The provided :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`.
     operators
         Dict of all |Operators| appearing in the discretization.
+    products
+        Dict of all product |Operators| associated with the discretization.
     """
 
     special_operators = frozenset({'operator', 'mass', 'rhs', 'initial_data'})
