@@ -264,7 +264,8 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                     for i, VV in enumerate(V):
                         R[i] = factorization.solve(VV)
                 else:
-                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).reshape((1, -1))
+                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T,
+                                permc_spec=options['permc_spec']).reshape((1, -1))
         except RuntimeError as e:
             raise InversionError(e)
     elif options['type'] == 'scipy_lgmres':

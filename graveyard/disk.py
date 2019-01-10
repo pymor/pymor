@@ -19,9 +19,13 @@ from pymor.vectorarrays.list import ListVectorArray
 
 
 _registered_paths = set()
+
+
 def cleanup():
     for path in _registered_paths:
         shutil.rmtree(path)
+
+
 atexit.register(cleanup)
 
 
@@ -40,9 +44,9 @@ class DiskVectorArray(VectorArrayInterface):
 
     def __init__(self, vectors, subtype=_NONE):
         if isinstance(vectors, ListVectorArray):
-            assert subtype is self._NONE \
-                or (type(subtype) is tuple and len(subtype) == 2
-                    and subtype[0] == vectors.vector_type and subtype[1] == vectors.subtype)
+            assert subtype is self._NONE or \
+                (type(subtype) is tuple and len(subtype) == 2 and
+                    subtype[0] == vectors.vector_type and subtype[1] == vectors.subtype)
             subtype = (vectors.vector_type and vectors.subtype)
             vectors = vectors._list
         else:

@@ -153,7 +153,6 @@ if config.HAVE_PYAMG:
                                 'tol': sa_tol,
                                 'maxiter': sa_maxiter}}
 
-
     @defaults('check_finite', 'default_solver')
     def apply_inverse(op, V, options=None, least_squares=False, check_finite=True, default_solver='pyamg_solve'):
         """Solve linear equation system.

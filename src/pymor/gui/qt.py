@@ -12,9 +12,6 @@ import math as m
 import numpy as np
 
 import multiprocessing
-import os
-import signal
-import sys
 
 from pymor.core.config import config
 from pymor.core.config import is_windows_platform
@@ -31,7 +28,6 @@ if config.HAVE_QT:
     from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
                               QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
     from Qt.QtCore import Qt, QCoreApplication, QTimer, Slot
-
 
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
@@ -425,8 +421,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, codim, title, legend, separate_plots):
             assert isinstance(U, VectorArrayInterface) \
-                or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) for u in U)
-                    and all(len(u) == len(U[0]) for u in U))
+                or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) for u in U) and
+                    all(len(u) == len(U[0]) for u in U))
             U = (U.to_numpy(),) if isinstance(U, VectorArrayInterface) else tuple(u.to_numpy() for u in U)
             if isinstance(legend, str):
                 legend = (legend,)

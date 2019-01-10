@@ -10,7 +10,6 @@ from collections import deque, defaultdict, OrderedDict
 from types import MethodType, FunctionType
 import re
 import functools
-import sys
 
 from sphinx.util.inspect import safe_getattr
 
@@ -132,9 +131,9 @@ def parse_docstring(docstring):
 
     def consume_contiguous():
         lines = []
-        while (line_iter.has_next()
-               and line_iter.peek()
-               and not is_section_header()):
+        while (line_iter.has_next() and
+               line_iter.peek() and
+               not is_section_header()):
             lines.append(next(line_iter))
         return lines
 
@@ -163,9 +162,9 @@ def parse_docstring(docstring):
 
     def is_section_break():
         line1, line2 = line_iter.peek(2)
-        return (not line_iter.has_next()
-                or is_section_header()
-                or ['', ''] == [line1, line2])
+        return (not line_iter.has_next() or
+                is_section_header() or
+                ['', ''] == [line1, line2])
 
     if isinstance(docstring, STRING_TYPE):
         docstring = dedent(docstring.splitlines())
@@ -312,7 +311,7 @@ def inspect_class(obj):
 
     # this is pretty lame, should do better
     for c in mro:
-        if not '_sphinx_documented_attributes' in c.__dict__:
+        if '_sphinx_documented_attributes' not in c.__dict__:
             format_docstring(c, dont_recurse=True)
 
     # sorted(dir(obj), key=lambda x: '|' + x if x.startswith('_') else x):
@@ -374,7 +373,7 @@ def inspect_class(obj):
     all_attributes = {x[0] for v in attributes.values() for x in v}
     for c in mro:
         for a in c.__dict__.get('_sphinx_documented_attributes', []):
-            if not a in all_attributes:
+            if a not in all_attributes:
                 attributes[c].append((a, c))
     attributes = {k: [':attr:`~{}.{}`'.format(get_full_class_name(c), n) for n, c in sorted(v, key=key_func)]
                   for k, v in attributes.items()}

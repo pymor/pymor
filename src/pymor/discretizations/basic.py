@@ -184,12 +184,11 @@ class StationaryDiscretization(DiscretizationBase):
     def as_generic_type(self):
         if type(self) is StationaryDiscretization:
             return self
-        operators = {k: o for k, o in self.operators.items() if not k in self.special_operators}
+        operators = {k: o for k, o in self.operators.items() if k not in self.special_operators}
         return StationaryDiscretization(
             self.operator, self.rhs, self.products, operators,
             self.parameter_space, self.estimator, self.visualizer, self.cache_region, self.name
         )
-
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -315,7 +314,7 @@ class InstationaryDiscretization(DiscretizationBase):
     def as_generic_type(self):
         if type(self) is StationaryDiscretization:
             return self
-        operators = {k: o for k, o in self.operators.items() if not k in self.special_operators}
+        operators = {k: o for k, o in self.operators.items() if k not in self.special_operators}
         return InstationaryDiscretization(
             self.T, self.initial_data, self.operator, self.rhs, self.mass, self.time_stepper, self.num_values,
             self.products, operators, self.parameter_space, self.estimator, self.visualizer,

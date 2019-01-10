@@ -23,8 +23,8 @@ except ImportError:
     import pickle as pickle
 from io import BytesIO as IOtype
 import sys
+import platform
 
-from pymor.core.config import config
 
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
@@ -33,14 +33,12 @@ PROTOCOL = pickle.HIGHEST_PROTOCOL
 
 # on CPython provide pickling methods which use
 # dumps_function in case pickling of a function fails
-import platform
 if platform.python_implementation() == 'CPython':
 
     def dump(obj, file, protocol=None):
         pickler = pickle.Pickler(file, protocol=PROTOCOL)
         pickler.persistent_id = _function_pickling_handler
         pickler.dump(obj)
-
 
     def dumps(obj, protocol=None):
         file = IOtype()
@@ -49,12 +47,10 @@ if platform.python_implementation() == 'CPython':
         pickler.dump(obj)
         return file.getvalue()
 
-
     def load(file):
         unpickler = pickle.Unpickler(file)
         unpickler.persistent_load = _function_unpickling_handler
         return unpickler.load()
-
 
     def loads(str):
         file = IOtype(str)
@@ -74,6 +70,8 @@ def _generate_opcode(code_object):
     import dis
     for ins in dis.get_instructions(code_object):
         yield (ins.opcode, ins.arg)
+
+
 
 
 def _global_names(code_object):

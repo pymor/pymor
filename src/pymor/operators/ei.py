@@ -192,8 +192,9 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
             else:
                 interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, J.to_numpy().T).T
         except ValueError:  # this exception occurs when J contains NaNs ...
-            interpolation_coefficients = (np.empty((len(self.source_basis_dofs), len(self.projected_collateral_basis)))
-                                          + np.nan)
+            interpolation_coefficients = (np.empty((len(self.source_basis_dofs),
+                                                    len(self.projected_collateral_basis))) +
+                                          np.nan)
         M = self.projected_collateral_basis.lincomb(interpolation_coefficients)
         if isinstance(M.space, NumpyVectorSpace):
             return NumpyMatrixOperator(M.to_numpy().T, source_id=self.source.id, range_id=self.range.id,

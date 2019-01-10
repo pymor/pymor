@@ -70,7 +70,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     p = analytical_problem
 
     if not (p.nonlinear_advection == p.nonlinear_advection_derivative ==
-            p.nonlinear_reaction == p.nonlinear_reaction_derivative == None):
+            p.nonlinear_reaction == p.nonlinear_reaction_derivative is None):
         raise NotImplementedError
 
     if grid is None:

@@ -297,8 +297,10 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
             try:
                 v = getattr(obj, k)
                 if (isinstance(v, OperatorInterface) or
-                    isinstance(v, Mapping) and all(isinstance(vv, OperatorInterface) or vv is None for vv in v.values()) or
-                    isinstance(v, Iterable) and type(v) is not str and all(isinstance(vv, OperatorInterface) or vv is None for vv in v)):
+                    isinstance(v, Mapping) and all(isinstance(vv, OperatorInterface) or
+                                                   vv is None for vv in v.values()) or
+                    isinstance(v, Iterable) and type(v) is not str and all(isinstance(vv, OperatorInterface) or
+                                                                           vv is None for vv in v)):
                     children.add(k)
             except AttributeError:
                 pass

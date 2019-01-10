@@ -73,7 +73,6 @@ import sqlite3
 import tempfile
 from types import MethodType
 
-from pymor.core.config import config
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.interfaces import ImmutableInterface, generate_sid
 from pymor.core.pickle import dump, load
@@ -209,7 +208,8 @@ class SQLiteRegion(CacheRegion):
             raise RuntimeError('Cache is corrupt!')
 
     def set(self, key, value):
-        fd, file_path = tempfile.mkstemp('.dat', _safe_filename(datetime.datetime.now().isoformat()[:-7]) + '-', self.path)
+        fd, file_path = tempfile.mkstemp('.dat',
+                                         _safe_filename(datetime.datetime.now().isoformat()[:-7]) + '-', self.path)
         filename = os.path.basename(file_path)
         with os.fdopen(fd, 'wb') as f:
             dump(value, f)
@@ -305,6 +305,7 @@ def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.'
     cache_regions['disk'] = SQLiteRegion(path=disk_path, max_size=disk_max_size, persistent=False)
     cache_regions['persistent'] = SQLiteRegion(path=persistent_path, max_size=persistent_max_size, persistent=True)
     cache_regions['memory'] = MemoryRegion(memory_max_keys)
+
 
 cache_regions = {}
 

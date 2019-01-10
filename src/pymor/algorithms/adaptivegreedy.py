@@ -172,8 +172,8 @@ def adaptive_greedy(d, reductor, parameter_space=None,
                         logger.info3('Overfitting detected after refinement. Computing element indicators ...')
                     vertex_errors = np.max(errors[sample_set.vertex_ids], axis=1)
                     center_errors = estimate(sample_set.center_mus)
-                    indicators_age_part = (gamma * sample_set.volumes / sample_set.total_volume
-                                           * (sample_set.refinement_count - sample_set.creation_times))
+                    indicators_age_part = (gamma * sample_set.volumes / sample_set.total_volume *
+                                             (sample_set.refinement_count - sample_set.creation_times))
                     indicators_error_part = np.max([vertex_errors, center_errors], axis=0) / max_err
                     indicators = indicators_age_part + indicators_error_part
 

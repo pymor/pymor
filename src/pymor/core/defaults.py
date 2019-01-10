@@ -67,11 +67,9 @@ from collections import defaultdict, OrderedDict
 import functools
 import importlib
 import inspect
-import os
 import pkgutil
 import textwrap
 
-from pymor.core.config import config
 from pymor.tools.table import format_table
 
 
@@ -258,7 +256,8 @@ def defaults(*args, sid_ignore=()):
                     raise TypeError("{} got multiple values for argument '{}'"
                                     .format(func.__name__, k))
                 wrapper_kwargs[k] = v
-            wrapper_kwargs = {k: v if v is not None else func.defaultsdict.get(k, None) for k, v in wrapper_kwargs.items()}
+            wrapper_kwargs = {k: v if v is not None else func.defaultsdict.get(k, None)
+                              for k, v in wrapper_kwargs.items()}
             wrapper_kwargs = dict(func.defaultsdict, **wrapper_kwargs)
             return func(**wrapper_kwargs)
 

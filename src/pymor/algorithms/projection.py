@@ -10,7 +10,7 @@ from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.basic import ProjectedOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation, ConstantOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           VectorArrayOperator, IdentityOperator)
+                                           IdentityOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -77,7 +77,7 @@ class ProjectRules(RuleTable):
 
     @match_class(ZeroOperator)
     def action_ZeroOperator(self, op):
-        range_basis, source_basis, product = self.range_basis, self.source_basis, self.product
+        range_basis, source_basis = self.range_basis, self.source_basis
         if source_basis is not None and range_basis is not None:
             from pymor.operators.numpy import NumpyMatrixOperator
             return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
@@ -195,18 +195,17 @@ class ProjectRules(RuleTable):
             return self.apply(ZeroOperator(op.range, op.source, op.name))
         elif not hasattr(op, 'restricted_operator') or source_basis is None:
             raise RuleNotMatchingError('Has no restricted operator or source_basis is None')
+        if range_basis is not None:
+            projected_collateral_basis = NumpyVectorSpace.make_array(op.collateral_basis.inner(range_basis,
+                                                                                               product),
+                                                                     op.range.id)
         else:
-            if range_basis is not None:
-                projected_collateral_basis = NumpyVectorSpace.make_array(op.collateral_basis.inner(range_basis,
-                                                                                                   product),
-                                                                         op.range.id)
-            else:
-                projected_collateral_basis = op.collateral_basis
+            projected_collateral_basis = op.collateral_basis
 
-            return ProjectedEmpiciralInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
-                                                          NumpyVectorSpace.make_array(source_basis.dofs(op.source_dofs)),
-                                                          projected_collateral_basis, op.triangular,
-                                                          op.source.id, None, op.name)
+        return ProjectedEmpiciralInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
+                                                      NumpyVectorSpace.make_array(source_basis.dofs(op.source_dofs)),
+                                                      projected_collateral_basis, op.triangular,
+                                                      op.source.id, None, op.name)
 
     @match_class(AffineOperator)
     def action_AffineOperator(self, op):
