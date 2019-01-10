@@ -166,6 +166,8 @@ if config.HAVE_PYAMG:
             |VectorArray| of right-hand sides for the equation system.
         options
             The |solver_options| to use (see :func:`solver_options`).
+        least_squares
+            Must be `False`.
         check_finite
             Test if solution only contains finite values.
         default_solver
@@ -177,6 +179,9 @@ if config.HAVE_PYAMG:
         """
 
         assert V in op.range
+
+        if least_squares:
+            raise NotImplementedError
 
         if isinstance(op, NumpyMatrixOperator):
             matrix = op.matrix
