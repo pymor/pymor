@@ -11,7 +11,7 @@ from pymor.core.logger import getLogger
 
 
 @defaults('atol', 'rtol', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
-def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplicates=True,
+def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
                  reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
                  copy=True):
     """Orthonormalize a |VectorArray| using the stabilized Gram-Schmidt algorithm.
@@ -43,9 +43,6 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         Tolerance for the check.
     copy
         If `True`, create a copy of `A` instead of modifying `A` in-place.
-    find_duplicates
-        unused
-
 
     Returns
     -------
