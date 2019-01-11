@@ -216,7 +216,8 @@ class NonlinearAdvectionOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None, name=None):
+    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None,
+                 space_id='STATE', name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
 
         self.grid = grid
@@ -224,6 +225,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         self.numerical_flux = numerical_flux
         self.dirichlet_data = dirichlet_data
         self.solver_options = solver_options
+        self.space_id = space_id
         self.name = name
         if (isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet
                 and not dirichlet_data.parametric):
@@ -231,7 +233,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             self._dirichlet_values = self._dirichlet_values.ravel()
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.build_parameter_type(numerical_flux, dirichlet_data)
-        self.source = self.range = FVVectorSpace(grid)
+        self.source = self.range = FVVectorSpace(grid, space_id)
         self.add_with_arguments = self.add_with_arguments.union('numerical_flux_{}'.format(arg)
                                                                 for arg in numerical_flux.with_arguments)
 
