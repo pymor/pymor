@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -227,11 +226,8 @@ if config.HAVE_FENICS:
             separate_colorbars
                 If `True`, use separate colorbars for each subplot.
             block
-                If `True`, block execution until the plot window is closed
-                (non-blocking execution is currently unsupported).
+                If `True`, block execution until the plot window is closed.
             """
-            if not block:
-                raise NotImplementedError
             if filename:
                 assert not isinstance(U, tuple)
                 assert U in self.space
@@ -276,4 +272,4 @@ if config.HAVE_FENICS:
                         plt.figure()
                         df.plot(function, title=tit,
                                 range_min=vmin, range_max=vmax)
-                plt.show()
+                plt.show(block=block)

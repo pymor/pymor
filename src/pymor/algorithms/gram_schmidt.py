@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -11,7 +10,7 @@ from pymor.core.logger import getLogger
 
 
 @defaults('atol', 'rtol', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
-def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplicates=True,
+def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
                  reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
                  copy=True):
     """Orthonormalize a |VectorArray| using the stabilized Gram-Schmidt algorithm.
@@ -31,8 +30,6 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     offset
         Assume that the first `offset` vectors are already orthonormal and start the
         algorithm at the `offset + 1`-th vector.
-    find_duplicates
-        unused
     reiterate
         If `True`, orthonormalize again if the norm of the orthogonalized vector is
         much smaller than the norm of the original vector.
@@ -45,7 +42,6 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         Tolerance for the check.
     copy
         If `True`, create a copy of `A` instead of modifying `A` in-place.
-
 
     Returns
     -------
