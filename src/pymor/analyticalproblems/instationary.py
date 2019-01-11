@@ -8,7 +8,7 @@ from pymor.core.interfaces import ImmutableInterface
 class InstationaryProblem(ImmutableInterface):
     """Instationary problem description.
 
-    This class desciribes an instationary problem of the form ::
+    This class describes an instationary problem of the form ::
 
     |    ∂_t u(x, t, μ) + A(u(x, t, μ), t, μ) = f(x, t, μ),
     |                              u(x, 0, μ) = u_0(x, μ)

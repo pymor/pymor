@@ -56,7 +56,7 @@ class ResidualReductor(BasicInterface):
         Inner product |Operator| w.r.t. which to orthonormalize and w.r.t. which to
         compute the Riesz representatives in case `operator` maps to functionals.
     riesz_representatives
-        If `true` compute the Riesz representative of the residual.
+        If `True` compute the Riesz representative of the residual.
     """
 
     def __init__(self, RB, operator, rhs=None, product=None, riesz_representatives=False):

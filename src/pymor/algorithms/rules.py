@@ -245,7 +245,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
 
         This method calls :meth:`apply` to each child of
         the given object. The children of the object are either provided
-        by the `children` parameter or authomatically infered by the
+        by the `children` parameter or automatically inferred by the
         :meth:`get_children` method.
 
         Parameters

@@ -403,7 +403,7 @@ class Parametric(object):
         Parameters
         ----------
         args
-            Each positional argument must eihter be a dict of parameter components and shapes or
+            Each positional argument must either be a dict of parameter components and shapes or
             a |Parametric| object whose :attr:`~Parametric.parameter_type` is added.
         kwargs
             Each keyword argument is interpreted as parameter component with corresponding shape.

@@ -18,10 +18,7 @@ def CGVectorSpace(grid, id_='STATE'):
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
-    """Linear finite element |Functional| representing the inner product with an L2-|Function|.
-
-    The current implementation works in one and two dimensions, but can be trivially
-    extended to arbitrary dimensions.
+    """Linear finite element functional representing the inner product with an L2-|Function|.
 
     Parameters
     ----------
@@ -92,7 +89,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
 
 class BoundaryL2ProductFunctionalP1(NumpyMatrixBasedOperator):
-    """Linear finite element |Functional| representing the inner product with an L2-|Function| on the boundary.
+    """Linear finite element functional representing the inner product with an L2-|Function| on the boundary.
 
     Parameters
     ----------
@@ -158,7 +155,7 @@ class BoundaryL2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
 
 class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
-    """Linear finite element |Functional| for enforcing Dirichlet boundary values.
+    """Linear finite element functional for enforcing Dirichlet boundary values.
 
     Parameters
     ----------
@@ -196,7 +193,7 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
 
 
 class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
-    """Bilinear finite element |Functional| representing the inner product with an L2-|Function|.
+    """Bilinear finite element functional representing the inner product with an L2-|Function|.
 
     Parameters
     ----------
@@ -266,7 +263,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
 
 
 class BoundaryL2ProductFunctionalQ1(NumpyMatrixBasedOperator):
-    """Bilinear finite element |Functional| representing the inner product with an L2-|Function| on the boundary.
+    """Bilinear finite element functional representing the inner product with an L2-|Function| on the boundary.
 
     Parameters
     ----------
@@ -330,9 +327,6 @@ class BoundaryL2ProductFunctionalQ1(NumpyMatrixBasedOperator):
 class L2ProductP1(NumpyMatrixBasedOperator):
     """|Operator| representing the L2-product between linear finite element functions.
 
-    The current implementation works in one and two dimensions, but can be trivially
-    extended to arbitrary dimensions.
-
     Parameters
     ----------
     grid
@@ -352,6 +346,8 @@ class L2ProductP1(NumpyMatrixBasedOperator):
     coefficient_function
         Coefficient |Function| for product with `shape_range == ()`.
         If `None`, constant one is assumed.
+    solver_options
+        The |solver_options| for the operator.
     name
         The name of the product.
     """
@@ -429,9 +425,6 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 class L2ProductQ1(NumpyMatrixBasedOperator):
     """|Operator| representing the L2-product between bilinear finite element functions.
 
-    The current implementation works in two dimensions, but can be trivially
-    extended to arbitrary dimensions.
-
     Parameters
     ----------
     grid
@@ -451,6 +444,8 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     coefficient_function
         Coefficient |Function| for product with `shape_range == ()`.
         If `None`, constant one is assumed.
+    solver_options
+        The |solver_options| for the operator.
     name
         The name of the product.
     """
@@ -531,8 +526,6 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         (Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
 
     The function `d` can be scalar- or matrix-valued.
-    The current implementation works in one and two dimensions, but can be trivially
-    extended to arbitrary dimensions.
 
     Parameters
     ----------
@@ -553,6 +546,8 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero. Otherwise they are set to one.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """
@@ -651,8 +646,6 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         (Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
 
     The function `d` can be scalar- or matrix-valued.
-    The current implementation works in two dimensions, but can be trivially
-    extended to arbitrary dimensions.
 
     Parameters
     ----------
@@ -673,6 +666,8 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero. Otherwise they are set to one.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """
@@ -771,8 +766,6 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
         (Lu)(x) = c ∇ ⋅ [ v(x) u(x) ]
 
     The function `v` is vector-valued.
-    The current implementation works in one and two dimensions, but can be trivially
-    extended to arbitrary dimensions.
 
     Parameters
     ----------
@@ -792,6 +785,8 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero. Otherwise they are set to one.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """
@@ -889,8 +884,6 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
         (Lu)(x) = c ∇ ⋅ [ v(x) u(x) ]
 
     The function `v` has to be vector-valued.
-    The current implementation works in two dimensions, but can be trivially
-    extended to arbitrary dimensions.
 
     Parameters
     ----------
@@ -910,6 +903,8 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero. Otherwise they are set to one.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """
@@ -1024,6 +1019,8 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
     robin_data
         Tuple providing two |Functions| that represent the Robin parameter and boundary
         value function. If `None`, the resulting operator is zero.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """

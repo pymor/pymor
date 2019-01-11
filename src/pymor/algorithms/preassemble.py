@@ -11,6 +11,12 @@ from pymor.operators.interfaces import OperatorInterface
 
 
 def preassemble(obj):
+    """Preassemble non-parametric operators.
+
+    If `obj` is a non-parametric |Operator|, return
+    `obj.assemble()` otherwise return `obj`. Recursively
+    replaces children of `obj`.
+    """
     return PreAssembleRules().apply(obj)
 
 

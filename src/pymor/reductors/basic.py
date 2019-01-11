@@ -182,11 +182,11 @@ class GenericRBReductor(BasicInterface):
         pod_orthonormalize
             If `True` and `method == 'pod'`, re-orthonormalize the new basis vectors obtained
             by the POD in order to improve numerical accuracy.
-        copy_U
-            If `copy_U` is `False`, the new basis vectors might be removed from `U`.
         orthonormal
             If `method == 'trivial'`, set this to `True` to indicate that the basis will remain
             orthonormal after extending.
+        copy_U
+            If `copy_U` is `False`, the new basis vectors might be removed from `U`.
 
         Raises
         ------

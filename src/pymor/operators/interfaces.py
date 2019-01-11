@@ -11,12 +11,12 @@ class OperatorInterface(ImmutableInterface, Parametric):
     """Interface for |Parameter| dependent discrete operators.
 
     An operator in pyMOR is simply a mapping which for any given
-    |Parameter| maps vectors from its source |VectorSpace|
-    to vectors in its range |VectorSpace|.
+    |Parameter| maps vectors from its `source` |VectorSpace|
+    to vectors in its `range` |VectorSpace|.
 
     Note that there is no special distinction between functionals
     and operators in pyMOR. A functional is simply an operator with
-    |NumpyVectorSpace| `(1)` as its range |VectorSpace|.
+    |NumpyVectorSpace| `(1)` as its `range` |VectorSpace|.
 
     Attributes
     ----------
@@ -201,7 +201,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         least_squares
             If `True`, solve the least squares problem::
 
-                v = argmin ||op*(v) - u||_2.
+                v = argmin ||op^*(v) - u||_2.
 
             Since for an invertible operator the least squares solution agrees
             with the result of the application of the inverse operator,
@@ -366,7 +366,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """Try to assemble a linear combination of the given operators.
 
         This method is called in the :meth:`assemble` method of |LincombOperator| on
-        the first of its operator. If an assembly of the given linear combination
+        the first of its operators. If an assembly of the given linear combination
         is possible, e.g. the linear combination of the system matrices of the
         operators can be formed, then the assembled operator is returned.
         Otherwise, the method returns `None` to indicate that assembly is not possible.

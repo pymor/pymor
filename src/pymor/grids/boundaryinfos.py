@@ -9,8 +9,7 @@ from pymor.grids.interfaces import BoundaryInfoInterface
 
 
 class EmptyBoundaryInfo(BoundaryInfoInterface):
-    """|BoundaryInfo| with no boundary types attached to any boundary.
-    """
+    """|BoundaryInfo| with no boundary types attached to any boundary."""
 
     def __init__(self, grid):
         self.grid = grid
