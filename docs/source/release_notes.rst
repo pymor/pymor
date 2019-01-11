@@ -4,6 +4,148 @@
 Release Notes
 *************
 
+pyMOR 0.5 (January ??, 2019)
+----------------------------
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+
+Python 3 support
+~~~~~~~~~~~~~~~~
+
+
+System-theoretic MOR methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+NGSolve support
+~~~~~~~~~~~~~~~
+
+
+New linear algebra algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- HAPOD
+- Biorthogonal Gram Schmidt
+
+
+VectorArray improvements
+~~~~~~~~~~~~~~~~~~~~~~~~
+- Indexing of VectorArrays
+- Improved VectorSpace concept
+- `[#323] <https://github.com/pymor/pymor/pull/323>`_
+- New methods with clear semantics have been introduced for the conversion of |VectorArrays| to
+  (:meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`) and from
+  (:meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`) |NumPy arrays|
+  `[#446] <https://github.com/pymor/pymor/pull/446>`_.
+- Inner products between |VectorArrays| w.r.t. to a given inner product |Operator| or their norm 
+  w.r.t. such an operator can now easily be computed by passing the |Operator| as the optional
+  `product` argument to the new :meth:`~pymor.vectorarrays.interfaces.VectorarrayInterface.inner` and
+  :meth:`~pymor.vectorarrays.interfaces.VectorarrayInterface.norm` methods
+  `[#407] <https://github.com/pymor/pymor/pull/407>`_.
+- The `components` method of |VectorArrayInterface| has been renamed to the more intuitive name
+  :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dofs` `[414] <https://github.com/pymor/pymor/pull/414>`_.
+- `[#237] l2_norm2 methods <https://github.com/pymor/pymor/pull/237>`_
+
+
+
+RuleTable based algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[367] <https://github.com/pymor/pymor/pull/367>`_
+- `[408] <https://github.com/pymor/pymor/pull/408>`_
+
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Reductor objects `[#375] <https://github.com/pymor/pymor/pull/375>`_
+
+- Linear combinations and concatenations of |Operators| can now easily be formed using arithmetic
+  operators `[#421] <https://github.com/pymor/pymor/pull/421>`_.
+
+- Improved handling of complex numbers.
+  `[#362] <https://github.com/pymor/pymor/pull/362>`_.
+  `[#442] <https://github.com/pymor/pymor/pull/442>`_.
+  `[#447] <https://github.com/pymor/pymor/pull/447>`_
+  `[#458] <https://github.com/pymor/pymor/pull/459>`_.
+
+- Improved analytical problems and reductors.
+  `[#316] <https://github.com/pymor/pymor/pull/316>`_
+  `[#337] <https://github.com/pymor/pymor/pull/337>`_.
+  `[#318] <https://github.com/pymor/pymor/pull/318>`_.
+  `[#312] https://github.com/pymor/pymor/pull/312>`_.
+
+- The :mod:`pymor.config` module allows simple run-time checking of the availability of optional
+  dependencies and their versions `[#339] <https://github.com/pymor/pymor/pull/339>`_.
+
+- Packaging improvements
+  Wheels, extras
+
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `dim_outer` has been removed from the grid interface `[#277] <https://github.com/pymor/pymor/pull/277>`_.
+
+- All wrapper code for interfacing with external PDE libraries or equation solvers has been moved
+  to the :mod:`pymor.bindings` package. For instance, `FenicsMatrixOperator` can now be found in
+  the :mod:`pymor.bindings.fenics` module. `[#353] <https://github.com/pymor/pymor/pull/353>`_
+
+- The `source` and `range` arguments of the constructor of |ZeroOperator| have been swapped to
+  comply with related function signatures `[#415] <https://github.com/pymor/pymor/pull/415>`_.
+
+- The identifiers `discretization`, `rb_discretization`, `ei_discretization` have been replaced
+  by `d`, `rd`, `ei_d` throughout pyMOR `[#416] <https://github.com/pymor/pymor/pull/416>`.
+
+- The `_matrix` attribute of |NumpyMatrixOperator| has been renamed to `matrix` `[#436] <https://github.com/pymor/pymor/pull/436>`_.
+  If `matrix` holds a |NumPy array| this array is automatically made read-only to prevent
+  accidental modification of the |Operator| `[#462] <https://github.com/pymor/pymor/pull/462>`_.
+
+- The `BoundaryType` class has been removed in favor of simple strings `[#305] <https://github.com/pymor/pymor/pull/305>`_.
+
+- The complicated and unused mapping of local parameter component names to global names has been
+  removed `[#306] <https://github.com/pymor/pymor/pull/306>`_.
+
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#176] Support different colormaps in GLPatchWidget <https://github.com/pymor/pymor/pull/176>`_
+- `[#238] From Operator to NumPy operator <https://github.com/pymor/pymor/pull/238>`_
+- `[#308] Add NumpyGenericOperator.apply_adjoint <https://github.com/pymor/pymor/pull/308>`_.
+- `[#313] Add finiteness checks to linear solvers <https://github.com/pymor/pymor/pull/313>`_.
+- `[#314] [ExpressionFunction] add components of mu to locals  <https://github.com/pymor/pymor/pull/314>`_.
+- `[#315] [functions] some improvements to ExpressionFunction/GenericFunction <https://github.com/pymor/pymor/pull/315>`_.
+- `[#338] Do not print version string on import <https://github.com/pymor/pymor/pull/338>`_
+- `[#346] Implement more arithmetic operations on VectorArrays and Operators <https://github.com/pymor/pymor/pull/346>`_.
+- `[#348] add InverseOperator and InverseTransposeOperator <https://github.com/pymor/pymor/pull/348>`_.
+- `[#359] [grids] bugfix for boundary handling in subgrid <https://github.com/pymor/pymor/pull/359>`_.
+- `[#365] [operators] add ProxyOperator <https://github.com/pymor/pymor/pull/365>`_.
+- `[#366] [operators] add LinearOperator and AffineOperator <https://github.com/pymor/pymor/pull/366>`_.
+- `[#368] Add support for PyQt4 and PyQt5 by using Qt.py shim  <https://github.com/pymor/pymor/pull/368>`_
+- `[#369] Add basic support for visualization in juypter notebooks <https://github.com/pymor/pymor/pull/369>`_.
+- `[#370] Let BitmapFunction accept non-grayscale images <https://github.com/pymor/pymor/pull/370>`_.
+- `[#382] Support mpi4py > 2.0 <https://github.com/pymor/pymor/pull/382>`_
+- `[#401] [analyticalproblems] add text_problem <https://github.com/pymor/pymor/pull/401>`_.
+- `[#410] add relative_error and project_array functions <https://github.com/pymor/pymor/pull/410>`_
+- `[#422] [Concatenation] allow more than two operators in a Concatenation <https://github.com/pymor/pymor/pull/422>`_.
+- `[#425] [ParameterType] base implementation on OrderedDict <https://github.com/pymor/pymor/pull/425>`_.
+- `[#431] [operators.cg] fix first order integration <https://github.com/pymor/pymor/pull/431>`_.
+- `[#437] [LincombOperator] implement 'apply_inverse' <https://github.com/pymor/pymor/pull/437>`_.
+- `[#438] Fix VectorArrayOperator, generalize as_range/source_array <https://github.com/pymor/pymor/pull/438>`_.
+- `[#441] fix #439 (assemble_lincomb "operators" parameter sometimes list, sometimes tuple)  <https://github.com/pymor/pymor/pull/441>`_.
+- `[#452] Several improvements to pymor.algorithms.ei.deim <https://github.com/pymor/pymor/pull/452>`_.
+- `[#453] Extend test_assemble <https://github.com/pymor/pymor/pull/453>`_.
+- `[#480| [operators] Improve subtraction of LincombOperators <https://github.com/pymor/pymor/pull/480>`_.
+- `[#481] [project] ensure solver_options are removed from projected operators <https://github.com/pymor/pymor/pull/481>`_.
+- `[#484] [docs] move all references to bibliography.rst <https://github.com/pymor/pymor/pull/484>`_.
+- `[#488] [operators.block] add BlockRowOperator, BlockColumnOperator <https://github.com/pymor/pymor/pull/488>`_.
+- `[#489] Output functionals in CG discretizations https://github.com/pymor/pymor/pull/489>`_.
+- `[#497] Support automatic conversion of InstationaryDiscretization to LTISystem <https://github.com/pymor/pymor/pull/497>`_.
+
+
+
 pyMOR 0.4 (September 28, 2016)
 ------------------------------
 
