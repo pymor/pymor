@@ -27,19 +27,9 @@ if __name__ == '__main__':
     modules = []
     shorts = []
     for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
-        try:
-            foo = __import__(module_name)
-            short = module_name[len('pymordemos.'):]
-            modules.append(module_name)
-            shorts.append(short)
-
-            # unload module to prevent runpy warning
-            assert sys.getrefcount(foo) == 4, (module_name, sys.getrefcount(foo))
-            del foo
-            del sys.modules[module_name]
-            del sys.modules['pymordemos'][short]
-        except (TypeError, ImportError):
-            pass
+        short = module_name[len('pymordemos.'):]
+        modules.append(module_name)
+        shorts.append(short)
 
     def usage():
         msg = '''Usage:
