@@ -38,7 +38,7 @@ VectorArray improvements
   (:meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`) and from
   (:meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`) |NumPy arrays|
   `[#446] <https://github.com/pymor/pymor/pull/446>`_.
-- Inner products between |VectorArrays| w.r.t. to a given inner product |Operator| or their norm 
+- Inner products between |VectorArrays| w.r.t. to a given inner product |Operator| or their norm
   w.r.t. such an operator can now easily be computed by passing the |Operator| as the optional
   `product` argument to the new :meth:`~pymor.vectorarrays.interfaces.VectorarrayInterface.inner` and
   :meth:`~pymor.vectorarrays.interfaces.VectorarrayInterface.norm` methods
@@ -150,7 +150,7 @@ pyMOR 0.4 (September 28, 2016)
 ------------------------------
 
 With the pyMOR 0.4 release we have changed the copyright of
-pyMOR to 
+pyMOR to
 
   Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 
@@ -230,11 +230,11 @@ New reduction algorithms
 - :meth:`~pymor.reductors.parabolic.reduce_parabolic` reduces linear parabolic
   problems using :meth:`~pymor.reductors.basic.reduce_generic_rb` and
   assembles an error estimator similar to [GP05]_, [HO08]_.
-  The :mod:`~pymordemos.parabolic_mor` demo contains a simple sample 
+  The :mod:`~pymordemos.parabolic_mor` demo contains a simple sample
   application using this reductor `[#190] <https://github.com/pymor/pymor/issues/190>`_.
 
 - The :meth:`~pymor.algorithms.image.estimate_image` and
-  :meth:`~pymor.algorithms.image.estimate_image_hierarchical` algorithms 
+  :meth:`~pymor.algorithms.image.estimate_image_hierarchical` algorithms
   can be used to find an as small as possible space in which the images of
   a given list of operators for a given source space are contained for all
   possible parameters `mu`. For possible applications, see
@@ -361,7 +361,7 @@ Additional new features
     :meth:`NumpyVectorArray.from_file <pymor.vectorarrays.numpy.NumpyVectorArray.from_file>` and
     :meth:`NumpyMatrixOperator.from_file <pymor.operators.numpy.NumpyMatrixOperator.from_file>`
     can be used to construct such objects from data files of various formats
-    (MATLAB, matrix market, NumPy data files, text). 
+    (MATLAB, matrix market, NumPy data files, text).
 
 - |ListVectorArray|-based |NumpyMatrixOperator| `[#164] <https://github.com/pymor/pymor/pull/164>`_.
     The :mod:`~pymor.playground` now contains
@@ -491,40 +491,40 @@ Further improvements
 pyMOR 0.3 (March 2, 2015)
 -------------------------
 
-- Introduction of the vector space concept for even simpler 
+- Introduction of the vector space concept for even simpler
   integration with external solvers.
 
 - Addition of a generic Newton algorithm.
 
 - Support for Jacobian evaluation of empirically interpolated operators.
 
-- Greatly improved performance of the EI-Greedy algorithm. Addition of 
+- Greatly improved performance of the EI-Greedy algorithm. Addition of
   the DEIM algorithm.
 
-- A new algorithm for residual operator projection and a new, 
-  numerically stable a posteriori error estimator for stationary coercive 
-  problems based on this algorithm. (cf. A. Buhr, C. Engwer, M. Ohlberger, 
-  S. Rave, 'A numerically stable a posteriori error estimator for reduced 
-  basis approximations of elliptic equations', proceedings of WCCM 2014, 
+- A new algorithm for residual operator projection and a new,
+  numerically stable a posteriori error estimator for stationary coercive
+  problems based on this algorithm. (cf. A. Buhr, C. Engwer, M. Ohlberger,
+  S. Rave, 'A numerically stable a posteriori error estimator for reduced
+  basis approximations of elliptic equations', proceedings of WCCM 2014,
   Barcelona, 2014.)
 
 - A new, easy to use mechanism for setting and accessing default values.
 
-- Serialization via the pickle module is now possible for each class in 
+- Serialization via the pickle module is now possible for each class in
   pyMOR. (See the new 'analyze_pickle' demo.)
 
-- Addition of generic iterative linear solvers which can be used in 
-  conjunction with any operator satisfying pyMOR's operator interface. 
+- Addition of generic iterative linear solvers which can be used in
+  conjunction with any operator satisfying pyMOR's operator interface.
   Support for least squares solvers and PyAMG (http://www.pyamg.org/).
 
 - An improved SQLite-based cache backend.
 
-- Improvements to the built-in discretizations: support for bilinear 
+- Improvements to the built-in discretizations: support for bilinear
   finite elements and addition of a finite volume diffusion operator.
 
 - Test coverage has been raised from 46% to 75%.
 
-Over 500 single commits have entered this release. A full list of 
+Over 500 single commits have entered this release. A full list of
 all changes can be obtained under the following address:
 https://github.com/pymor/pymor/compare/0.2.2...0.3.0
 
