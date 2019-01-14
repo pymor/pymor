@@ -80,7 +80,22 @@ Additional new features
   dependencies and their versions `[#339] <https://github.com/pymor/pymor/pull/339>`_.
 
 - Packaging improvements
-  Wheels, extras
+
+  A compiler toolchain is no longer necessary to install pyMOR as we are now distributing
+  binary wheels for releases through the Python Package Index (PyPI). Using the `extras_require` mechanism the user
+  can select to install either a minimal set::
+
+    pip install pymor
+
+  or almost all, including optional, dependencies::
+
+    pip install pymor[full]
+
+  A docker image containing all of the discretization packages pyMOR has bindings to is available
+  for demonstation and development purposes::
+
+    docker run -it pymor/demo:0.5 pymor-demo -h
+    docker run -it pymor/demo:0.5 pymor-demo thermalblock --fenics  2 2 5 5
 
 
 
