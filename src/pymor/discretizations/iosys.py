@@ -185,14 +185,14 @@ class LTISystem(InputStateOutputSystem):
     This class describes input-state-output systems given by
 
     .. math::
-        E x'(t) &= A x(t) + B u(t) \\
-           y(t) &= C x(t) + D u(t)
+        E \dot{x}(t) & = A x(t) + B u(t), \\
+                y(t) & = C x(t) + D u(t),
 
     if continuous-time, or
 
     .. math::
-        E x(k + 1) &= A x(k) + B u(k) \\
-          y(k)     &= C x(k) + D u(k)
+        E x(k + 1) & = A x(k) + B u(k), \\
+          y(k)     & = C x(k) + D u(k),
 
     if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`,
     and :math:`E` are linear operators.
@@ -771,7 +771,8 @@ class LTISystem(InputStateOutputSystem):
         norm
             H_infinity-norm.
         fpeak
-            Frequency at which the maximum is achieved.
+            Frequency at which the maximum is achieved (if
+            `return_fpeak` is `True`).
         """
 
         if not config.HAVE_SLYCOT:
@@ -825,7 +826,6 @@ class TransferFunction(InputOutputSystem):
     H
         The transfer function defined at least on the open right complex
         half-plane.
-
         `H(s)` is a |NumPy array| of shape `(p, m)`.
     dH
         The complex derivative of `H`.
@@ -865,14 +865,30 @@ class SecondOrderSystem(InputStateOutputSystem):
     This class describes input-output systems given by
 
     .. math::
-        M x''(t) + E x'(t) + K x(t) &= B u(t) \\
-                               y(t) &= C_p x(t) + C_v x'(t) + D u(t)
+        M \ddot{x}(t)
+        + E \dot{x}(t)
+        + K x(t)
+        & =
+            B u(t), \\
+        y(t)
+        & =
+            C_p x(t)
+            + C_v \dot{x}(t)
+            + D u(t),
 
     if continuous-time, or
 
     .. math::
-        M x(k + 2) + E x(k + 1) + K x(k) &= B u(k) \\
-                                    y(k) &= C_p x(k) + C_v x(k + 1) + D u(k)
+        M x(k + 2)
+        + E x(k + 1)
+        + K x(k)
+        & =
+            B u(k), \\
+        y(k)
+        & =
+            C_p x(k)
+            + C_v x(k + 1)
+            + D u(k),
 
     if discrete-time, where :math:`M`, :math:`E`, :math:`K`, :math:`B`,
     :math:`C_p`, :math:`C_v`, and :math:`D` are linear operators.
@@ -1048,22 +1064,36 @@ class SecondOrderSystem(InputStateOutputSystem):
                 I & 0 \\
                 0 & M
             \end{bmatrix}
-            x'(t) & =
+            \frac{\mathrm{d}}{\mathrm{d}t}\!
+            \begin{bmatrix}
+                x(t) \\
+                \dot{x}(t)
+            \end{bmatrix}
+            & =
             \begin{bmatrix}
                 0 & I \\
                 -K & -E
             \end{bmatrix}
-            x(t) +
+            \begin{bmatrix}
+                x(t) \\
+                \dot{x}(t)
+            \end{bmatrix}
+            +
             \begin{bmatrix}
                 0 \\
                 B
             \end{bmatrix}
-            u(t) \\
-            y(t) & =
+            u(t), \\
+            y(t)
+            & =
             \begin{bmatrix}
                 C_p & C_v
             \end{bmatrix}
-            x(t) + D u(t)
+            \begin{bmatrix}
+                x(t) \\
+                \dot{x}(t)
+            \end{bmatrix}
+            + D u(t)
 
         is returned.
 
@@ -1281,7 +1311,8 @@ class SecondOrderSystem(InputStateOutputSystem):
         norm
             H_infinity-norm.
         fpeak
-            Frequency at which the maximum is achieved.
+            Frequency at which the maximum is achieved (if
+            `return_fpeak` is `True`).
         """
         return self.to_lti().hinf_norm(return_fpeak=return_fpeak,
                                        ab13dd_equilibrate=ab13dd_equilibrate)
@@ -1299,17 +1330,27 @@ class LinearDelaySystem(InputStateOutputSystem):
 
     .. math::
         E x'(t)
-        & = A x(t) + \sum_{i = 1}^q{A_i x(t - \tau_i)} + B u(t) \\
+        & =
+            A x(t)
+            + \sum_{i = 1}^q{A_i x(t - \tau_i)}
+            + B u(t), \\
         y(t)
-        & = C x(t) + D u(t)
+        & =
+            C x(t)
+            + D u(t),
 
     if continuous-time, or
 
     .. math::
         E x(k + 1)
-        & = A x(k) + \sum_{i = 1}^q{A_i x(k - \tau_i)} + B u(k) \\
+        & =
+            A x(k)
+            + \sum_{i = 1}^q{A_i x(k - \tau_i)}
+            + B u(k), \\
         y(k)
-        &= C x(k) + D u(k)
+        & =
+            C x(k)
+            + D u(k),
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`,
     :math:`B`, :math:`C`, and :math:`D` are linear operators.
@@ -1409,7 +1450,8 @@ class LinearDelaySystem(InputStateOutputSystem):
 
         .. math::
             C \left(s E - A
-                - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B + D.
+                - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B
+            + D.
 
         .. note::
             We assume that either the number of inputs or the number of
@@ -1498,9 +1540,11 @@ class LinearStochasticSystem(InputStateOutputSystem):
         & =
             A x(t) \mathrm{d}t
             + \sum_{i = 1}^q{A_i x(t) \mathrm{d}\omega_i(t)}
-            + B u(t) \mathrm{d}t \\
+            + B u(t) \mathrm{d}t, \\
         y(t)
-        & = C x(t) + D u(t)
+        & =
+            C x(t)
+            + D u(t),
 
     if continuous-time, or
 
@@ -1509,9 +1553,11 @@ class LinearStochasticSystem(InputStateOutputSystem):
         & =
             A x(k)
             + \sum_{i = 1}^q{A_i x(k) \omega_i(k)}
-            + B u(k) \\
+            + B u(k), \\
         y(k)
-        & = C x(k) + D u(t)
+        & =
+            C x(k)
+            + D u(t),
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`,
     :math:`B`, :math:`C`, and :math:`D` are linear operators and
@@ -1610,9 +1656,11 @@ class BilinearSystem(InputStateOutputSystem):
         & =
             A x(t)
             + \sum_{i = 1}^m{N_i x(t) u_i(t)}
-            + B u(t) \\
+            + B u(t), \\
         y(t)
-        & = C x(t) + D u(t)
+        & =
+            C x(t)
+            + D u(t),
 
     if continuous-time, or
 
@@ -1621,9 +1669,11 @@ class BilinearSystem(InputStateOutputSystem):
         & =
             A x(k)
             + \sum_{i = 1}^m{N_i x(k) u_i(k)}
-            + B u(k) \\
+            + B u(k), \\
         y(k)
-        & = C x(k) + D u(t)
+        & =
+            C x(k)
+            + D u(t),
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`N_i`,
     :math:`B`, :math:`C`, and :math:`D` are linear operators and

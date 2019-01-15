@@ -45,7 +45,7 @@ class IRKAReductor(BasicInterface):
             generate it randomly. Otherwise, it needs to be a
             one-dimensional array-like of length `r`.
 
-            `sigma` and `rd0` cannot be both not `None`.
+            `sigma` and `rd0` cannot both be not `None`.
         b
             Initial right tangential directions.
 
@@ -53,7 +53,7 @@ class IRKAReductor(BasicInterface):
             is used as a seed to generate it randomly. Otherwise, it
             needs to be a |VectorArray| of length `r` from `d.B.source`.
 
-            `b` and `rd0` cannot be both not `None`.
+            `b` and `rd0` cannot both be not `None`.
         c
             Initial left tangential directions.
 
@@ -61,7 +61,7 @@ class IRKAReductor(BasicInterface):
             is used as a seed to generate it randomly. Otherwise, it
             needs to be a |VectorArray| of length `r` from `d.C.range`.
 
-            `c` and `rd0` cannot be both not `None`.
+            `c` and `rd0` cannot both be not `None`.
         rd0
             Initial reduced order model.
 
@@ -83,10 +83,10 @@ class IRKAReductor(BasicInterface):
         projection
             Projection method:
 
-                - `'orth'`: projection matrices are orthogonalized with
-                    respect to the Euclidean inner product
-                - `'biorth'`: projection matrices are biorthogolized
-                    with respect to the E product
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogolized with
+              respect to the E product
         use_arnoldi
             Should the Arnoldi process be used for rational
             interpolation. Available only for SISO systems. Otherwise,
@@ -94,9 +94,9 @@ class IRKAReductor(BasicInterface):
         conv_crit
             Convergence criterion:
 
-                - `'sigma'`: relative change in interpolation points
-                - `'h2'`: relative :math:`\mathcal{H}_2` distance of
-                    reduced order models
+            - `'sigma'`: relative change in interpolation points
+            - `'h2'`: relative :math:`\mathcal{H}_2` distance of
+              reduced-order models
         compute_errors
             Should the relative :math:`\mathcal{H}_2`-errors of
             intermediate reduced order models be computed.
@@ -233,7 +233,7 @@ class TSIAReductor(BasicInterface):
 
     def reduce(self, rd0, tol=1e-4, maxit=100, num_prev=1, projection='orth', conv_crit='sigma',
                compute_errors=False):
-        """Reduce using TSIA.
+        r"""Reduce using TSIA.
 
         See [XZ11]_ (Algorithm 1) and [BKS11]_.
 
@@ -259,16 +259,16 @@ class TSIAReductor(BasicInterface):
         projection
             Projection method:
 
-                - `'orth'`: projection matrices are orthogonalized with
-                    respect to the Euclidean inner product
-                - `'biorth'`: projection matrices are biorthogolized
-                    with respect to the E product
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogolized with
+              respect to the E product
         conv_crit
             Convergence criterion:
 
-                - `'sigma'`: relative change in interpolation points
-                - `'h2'`: relative :math:`\mathcal{H}_2` distance of
-                    reduced order models
+            - `'sigma'`: relative change in interpolation points
+            - `'h2'`: relative :math:`\mathcal{H}_2` distance of
+              reduced-order models
         compute_errors
             Should the relative :math:`\mathcal{H}_2`-errors of
             intermediate reduced order models be computed.
@@ -376,7 +376,7 @@ class TF_IRKAReductor(BasicInterface):
 
     def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
                conv_crit='sigma'):
-        """Reduce using TF-IRKA.
+        r"""Reduce using TF-IRKA.
 
         Parameters
         ----------
@@ -390,7 +390,7 @@ class TF_IRKAReductor(BasicInterface):
             generate it randomly. Otherwise, it needs to be a
             one-dimensional array-like of length `r`.
 
-            `sigma` and `rd0` cannot be both not `None`.
+            `sigma` and `rd0` cannot both be not `None`.
         b
             Initial right tangential directions.
 
@@ -398,7 +398,7 @@ class TF_IRKAReductor(BasicInterface):
             is used as a seed to generate it randomly. Otherwise, it
             needs to be a |NumPy array| of shape `(m, r)`.
 
-            `b` and `rd0` cannot be both not `None`.
+            `b` and `rd0` cannot both be not `None`.
         c
             Initial left tangential directions.
 
@@ -406,7 +406,7 @@ class TF_IRKAReductor(BasicInterface):
             is used as a seed to generate it randomly. Otherwise, it
             needs to be a |NumPy array| of shape `(p, r)`.
 
-            `c` and `rd0` cannot be both not `None`.
+            `c` and `rd0` cannot both be not `None`.
         rd0
             Initial reduced order model.
 
@@ -428,9 +428,9 @@ class TF_IRKAReductor(BasicInterface):
         conv_crit
             Convergence criterion:
 
-                - `'sigma'`: relative change in interpolation points
-                - `'h2'`: relative :math:`\mathcal{H}_2` distance of
-                    reduced order models
+            - `'sigma'`: relative change in interpolation points
+            - `'h2'`: relative :math:`\mathcal{H}_2` distance of
+              reduced-order models
 
         Returns
         -------

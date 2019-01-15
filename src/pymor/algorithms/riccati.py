@@ -28,17 +28,17 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
     - if trans is `False`
 
-        .. math::
-            A X E^T + E X A^T
-            - (E X C^T + S) R^{-1} (E X C^T + S)^T
-            + B B^T = 0.
+      .. math::
+          A X E^T + E X A^T
+          - (E X C^T + S) R^{-1} (E X C^T + S)^T
+          + B B^T = 0.
 
     - if trans is `True`
 
-        .. math::
-            A^T X E + E^T X A
-            - (E^T X B + S) R^{-1} (E^T X B + S)^T
-            + C^T C = 0.
+      .. math::
+          A^T X E + E^T X A
+          - (E^T X B + S) R^{-1} (E^T X B + S)^T
+          + C^T C = 0.
 
     If E is None, it is taken to be identity, and similarly for R.
     If S is None, it is taken to be zero.
@@ -60,15 +60,16 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     backend is chosen based on availability in the following order:
 
     - for sparse problems (minimum size specified by
-      `mat_eqn_sparse_min_size`)
+      :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`)
 
-        1. `pymess` (see :func:`pymor.bindings.pymess.solve_ricc_lrcf`)
+      1. `pymess` (see :func:`pymor.bindings.pymess.solve_ricc_lrcf`),
 
-    - for dense problems (smaller than `mat_eqn_sparse_min_size`)
+    - for dense problems (smaller than
+      :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`)
 
-        1. `pymess` (see :func:`pymor.bindings.pymess.solve_ricc_lrcf`)
-        2. `slycot` (see :func:`pymor.bindings.slycot.solve_ricc_lrcf`)
-        3. `scipy` (see :func:`pymor.bindings.scipy.solve_ricc_lrcf`)
+      1. `pymess` (see :func:`pymor.bindings.pymess.solve_ricc_lrcf`),
+      2. `slycot` (see :func:`pymor.bindings.slycot.solve_ricc_lrcf`),
+      3. `scipy` (see :func:`pymor.bindings.scipy.solve_ricc_lrcf`).
 
     Parameters
     ----------
@@ -143,17 +144,17 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
     - if trans is `False`
 
-        .. math::
-            A X E^T + E X A^T
-            + (E X C^T + S) R^{-1} (E X C^T + S)^T
-            + B B^T = 0.
+      .. math::
+          A X E^T + E X A^T
+          + (E X C^T + S) R^{-1} (E X C^T + S)^T
+          + B B^T = 0.
 
     - if trans is `True`
 
-        .. math::
-            A^T X E + E^T X A
-            + (E^T X B + S) R^{-1} (E^T X B + S)^T
-            + C^T C = 0.
+      .. math::
+          A^T X E + E^T X A
+          + (E^T X B + S) R^{-1} (E^T X B + S)^T
+          + C^T C = 0.
 
     If E is None, it is taken to be identity, and similarly for R.
     If S is None, it is taken to be zero.
@@ -161,12 +162,9 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
 
-        1. `pymess` (see
-        :func:`pymor.bindings.pymess.solve_pos_ricc_lrcf`)
-        2. `slycot` (see
-        :func:`pymor.bindings.slycot.solve_pos_ricc_lrcf`)
-        3. `scipy` (see
-        :func:`pymor.bindings.scipy.solve_pos_ricc_lrcf`)
+    1. `pymess` (see :func:`pymor.bindings.pymess.solve_pos_ricc_lrcf`),
+    2. `slycot` (see :func:`pymor.bindings.slycot.solve_pos_ricc_lrcf`),
+    3. `scipy` (see :func:`pymor.bindings.scipy.solve_pos_ricc_lrcf`).
 
     Parameters
     ----------
