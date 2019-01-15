@@ -17,6 +17,44 @@ Python 3 support
 
 System-theoretic MOR methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- New discretization classes in :mod:`pymor.discretizations.iosys`
+
+- MOR methods for finite-dimensional, continuous-time, linear time-invariant
+  systems (:class:`~pymor.discretizations.iosys.LTISystem`):
+
+  - balancing-based methods:
+    :class:`~pymor.reductors.bt.BTReductor`,
+    :class:`~pymor.reductors.bt.LQGBTReductor`,
+    :class:`~pymor.reductors.bt.BRBTReductor`
+
+  - interpolation-based methods:
+    :class:`~pymor.reductors.interpolation.LTI_BHIReductor`,
+    :class:`~pymor.reductors.h2.IRKAReductor`,
+    :class:`~pymor.reductors.h2.TSIAReductor`
+
+- MOR methods for second-order systems
+  (:class:`~pymor.discretizations.iosys.SecondOrderSystem`):
+
+  - balancing-based methods:
+    :class:`~pymor.reductors.sobt.SOBTpReductor`,
+    :class:`~pymor.reductors.sobt.SOBTvReductor`,
+    :class:`~pymor.reductors.sobt.SOBTpvReductor`,
+    :class:`~pymor.reductors.sobt.SOBTvpReductor`,
+    :class:`~pymor.reductors.sobt.SOBTfvReductor`,
+    :class:`~pymor.reductors.sobt.SOBTReductor`
+
+  - interpolation-based methods:
+    :class:`~pymor.reductors.interpolation.SO_BHIReductor`,
+    :class:`~pymor.reductors.sor_irka.SOR_IRKAReductor`
+
+- interpolation-based method for time-delay systems
+  (:class:`~pymor.discretizations.iosys.LinearDelaySystem`):
+  :class:`~pymor.reductors.interpolation.DelayBHIReductor`
+
+- interpolation-based methods for transfer functions
+  (:class:`~pymor.discretizations.iosys.TransferFunction`):
+  :class:`~pymor.reductors.interpolation.TFInterpReductor`,
+  :class:`~pymor.reductors.h2.TF_IRKAReductor`
 
 
 NGSolve support
