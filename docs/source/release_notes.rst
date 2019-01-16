@@ -21,10 +21,10 @@ supported by pyMOR. In particular, no import of the system matrices is
 required.
 
 Over 1,500 single commits have entered this release. For a full list of changes
-see `here <https://github.com/pymor/pymor/compare/0.4.x...0.5.x>`_.
+see `here <https://github.com/pymor/pymor/compare/0.4.x...0.5.x>`__.
 
 pyMOR 0.5 contains contributions by Linus Balicki, Julia Brunken and Christoph
-Lehrenfeld. See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`_
+Lehrenfeld. See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__
 for more details.
 
 
@@ -327,10 +327,11 @@ Moreover, we have added a `Contribution guideline <https://github.com/pymor/pymo
 to help new users with starting to contribute to pyMOR.
 Over 800 single commits have entered this release.
 For a full list of changes see
-`here <https://github.com/pymor/pymor/compare/0.3.2...0.4.x>`_.
+`here <https://github.com/pymor/pymor/compare/0.3.2...0.4.x>`__.
 pyMOR 0.4 contains contributions by Andreas Buhr, Michael Laier, Falk Meyer,
 Petar Mlinarić and Michael Schaefer. See
-`here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`_ for more details.
+`here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for more
+details.
 
 
 Release highlights
@@ -586,7 +587,7 @@ Backward incompatible changes
     has been replaced by the :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
     attribute. This attribute controls which fixed (linear) solver options are
     used when :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse` is
-    called. See `here <https://github.com/pymor/pymor/pull/184>` for more details.
+    called. See `here <https://github.com/pymor/pymor/pull/184>`__ for more details.
 
 - Renaming of reductors for coercive problems `[#224] <https://github.com/pymor/pymor/issues/224>`_.
     :meth:`pymor.reductors.linear.reduce_stationary_affine_linear` and
