@@ -16,8 +16,8 @@ projection algorithm based on |RuleTables|.
 Especially we would like to highlight the addition of various system-theoretic
 reduction methods such as Balanced Truncation or IRKA. All algorithms are
 implemented in terms of pyMOR's |Operator| and |VectorArray| interfaces,
-allowing their direct application to any model implemented using one of the PDE
-solver supported by pyMOR. In particular, no export of the system matrices is
+allowing their application to any model implemented using one of the PDE solver
+supported by pyMOR. In particular, no import of the system matrices is
 required.
 
 Over 1,500 single commits have entered this release. For a full list of changes
@@ -159,7 +159,7 @@ RuleTable based algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In pyMOR 0.5, reduction algorithms are implemented via recursively applied
-tables of transformation rules. The replaces the previous inheritance-based
+tables of transformation rules. This replaces the previous inheritance-based
 approach. In particular, the `projected` method to perform a (Petrov-)Galerkin
 projection of an arbitrary |Operator| has been removed and replaced by a free
 |project| function. Rule-based algorithms are implemented by deriving from the
@@ -185,22 +185,39 @@ This approach has several advantages:
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-- Reductor objects `[#375] <https://github.com/pymor/pymor/pull/375>`_
+- Reduction algorithms are now implemented using mutable reductor objects, e.g.
+  :class:`~pymor.reductors.basic.GenericRBReductor`, which store and
+  :meth:`extend <pymor.reductors.basic.GenericRBReductor.extend_basis>` the
+  reduced bases onto which the model is projected. The only return value of the
+  reductor's :meth:`~pymor.reductors.basic.GenericRBReductor.reduce` method is
+  now the reduced discretization. Instead of a separate reconstructor, the
+  reductor's :meth:`~pymor.reductors.basic.GenericRBReductor.reconstruct` method
+  can be used to reconstruct a high-dimensional state-space representation.
+  Additional reduction data (e.g. used to speed up repeated reductions in greedy
+  algorithms) is now managed by the reductor
+  `[#375] <https://github.com/pymor/pymor/pull/375>`_.
 
 - Linear combinations and concatenations of |Operators| can now easily be formed
   using arithmetic operators `[#421] <https://github.com/pymor/pymor/pull/421>`_.
 
-- Improved handling of complex numbers.
-  `[#362] <https://github.com/pymor/pymor/pull/362>`_.
-  `[#442] <https://github.com/pymor/pymor/pull/442>`_.
+- The handling of complex numbers in pyMOR is now more consistent. See
+  `[#458] <https://github.com/pymor/pymor/pull/459>`_,
+  `[#362] <https://github.com/pymor/pymor/pull/362>`_,
   `[#447] <https://github.com/pymor/pymor/pull/447>`_
-  `[#458] <https://github.com/pymor/pymor/pull/459>`_.
+  for details. As a consequence of these changes, the `rhs` |Operator| in
+  |StationaryDiscretization| is now a vector-like |Operator| instead of a functional.
 
-- Improved analytical problems and reductors.
-  `[#316] <https://github.com/pymor/pymor/pull/316>`_
+- The analytical problems and discretizers of pyMOR's discretization toolbox
+  have been reorganized and improved.  All problems are now implemented as
+  instances of |StationaryProblem| or |InstationaryProblem|, which allows an
+  easy exchange of data |Functions| of a predefined problem with user-defined
+  |Functions|. Affine decomposition of |Functions| is now represented by
+  specifying a :class:`~pymor.functions.basic.LincombFunction` as the respective
+  data function
+  `[#312] <https://github.com/pymor/pymor/pull/312>`_,
+  `[#316] <https://github.com/pymor/pymor/pull/316>`_,
+  `[#318] <https://github.com/pymor/pymor/pull/318>`_,
   `[#337] <https://github.com/pymor/pymor/pull/337>`_.
-  `[#318] <https://github.com/pymor/pymor/pull/318>`_.
-  `[#312] <https://github.com/pymor/pymor/pull/312>`_.
 
 - The :mod:`pymor.core.config` module allows simple run-time checking of the
   availability of optional dependencies and their versions
