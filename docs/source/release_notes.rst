@@ -100,7 +100,7 @@ in the `thermalblock_simple` demo script.
 New linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-pyMOR now includes an implementation of the 
+pyMOR now includes an implementation of the
 `HAPOD algorithm <https://doi.org/10.1137/16M1085413>`_ for fast distributed
 or incremental computation of the Proper Orthogonal Decomposition
 (:mod:`pymor.algorithms.hapod`). The code allows for arbitrary sub-POD trees,
@@ -108,8 +108,8 @@ on-the-fly snapshot generation and shared memory parallelization via
 :mod:`concurrent.futures`. A basic usage example can be found in the `hapod`
 demo script.
 
-In addition, a biorthogonal version of the Gram Schmidt algorithm has been
-included in :mod:`pymor.algorithms.gram_schmidt`.
+In addition, the Gram-Schmidt biorthogonalization algorithm has been included in
+:mod:`pymor.algorithms.gram_schmidt`.
 
 
 VectorArray improvements
@@ -146,9 +146,10 @@ VectorArray improvements
 
 - The `components` method of |VectorArrays| has been renamed to the more
   intuitive name
-  :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dofs` `[414]
-  <https://github.com/pymor/pymor/pull/414>`_. The
-  :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.l2_norm2` and
+  :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dofs`
+  `[#414] <https://github.com/pymor/pymor/pull/414>`_.
+
+- The :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.l2_norm2` and
   :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.norm2` have been
   introduced to compute the squared vector norms
   `[#237] <https://github.com/pymor/pymor/pull/237>`_.
@@ -163,20 +164,22 @@ tables of transformation rules. This replaces the previous inheritance-based
 approach. In particular, the `projected` method to perform a (Petrov-)Galerkin
 projection of an arbitrary |Operator| has been removed and replaced by a free
 |project| function. Rule-based algorithms are implemented by deriving from the
-|RuleTable| base class `[367] <https://github.com/pymor/pymor/pull/367>`_,
-`[408] <https://github.com/pymor/pymor/pull/408>`_.
+|RuleTable| base class `[#367] <https://github.com/pymor/pymor/pull/367>`_,
+`[#408] <https://github.com/pymor/pymor/pull/408>`_.
 
 This approach has several advantages:
 
 - Rules can match based on the class of the object, but also on more general
-  conditions, i.e. the name of the |Operator| or being linear and non-|parametric|.
-- The entire mathematical algorithm can be specified in a single file even when the
-  definition of the possible classes the algorithm can be applied to is scattered
-  over various files.
-- The precedence of rules is directly apparent from the definition of the |RuleTable|.
-- Generic rules (e.g. the projection of a linear non-|parametric| |Operator| by simply
-  applying the basis) can be easily scheduled to take precedence over more specific
-  rules.
+  conditions, e.g. the name of the |Operator| or being linear and
+  non-|parametric|.
+- The entire mathematical algorithm can be specified in a single file even when
+  the definition of the possible classes the algorithm can be applied to is
+  scattered over various files.
+- The precedence of rules is directly apparent from the definition of the
+  |RuleTable|.
+- Generic rules (e.g. the projection of a linear non-|parametric| |Operator| by
+  simply applying the basis) can be easily scheduled to take precedence over
+  more specific rules.
 - Users can implement or modify |RuleTables| without modification of the classes
   shipped with pyMOR.
 
@@ -208,7 +211,7 @@ Additional new features
   |StationaryDiscretization| is now a vector-like |Operator| instead of a functional.
 
 - The analytical problems and discretizers of pyMOR's discretization toolbox
-  have been reorganized and improved.  All problems are now implemented as
+  have been reorganized and improved. All problems are now implemented as
   instances of |StationaryProblem| or |InstationaryProblem|, which allows an
   easy exchange of data |Functions| of a predefined problem with user-defined
   |Functions|. Affine decomposition of |Functions| is now represented by
@@ -240,7 +243,7 @@ Additional new features
   bindings to is available for demonstration and development purposes::
 
     docker run -it pymor/demo:0.5 pymor-demo -h
-    docker run -it pymor/demo:0.5 pymor-demo thermalblock --fenics  2 2 5 5
+    docker run -it pymor/demo:0.5 pymor-demo thermalblock --fenics 2 2 5 5
 
 
 
@@ -257,12 +260,12 @@ Backward incompatible changes
 
 - The `source` and `range` arguments of the constructor of
   :class:`~pymor.operators.constructions.ZeroOperator` have
-  been swapped to comply with related function signatures 
+  been swapped to comply with related function signatures
   `[#415] <https://github.com/pymor/pymor/pull/415>`_.
 
 - The identifiers `discretization`, `rb_discretization`, `ei_discretization`
   have been replaced by `d`, `rd`, `ei_d` throughout pyMOR
-  `[#416] <https://github.com/pymor/pymor/pull/416>`.
+  `[#416] <https://github.com/pymor/pymor/pull/416>`_.
 
 - The `_matrix` attribute of |NumpyMatrixOperator| has been renamed to `matrix`
   `[#436] <https://github.com/pymor/pymor/pull/436>`_. If `matrix` holds a
@@ -279,30 +282,30 @@ Backward incompatible changes
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- `[#176] Support different colormaps in GLPatchWidget <https://github.com/pymor/pymor/pull/176>`_
-- `[#238] From Operator to NumPy operator <https://github.com/pymor/pymor/pull/238>`_
+- `[#176] Support different colormaps in GLPatchWidget <https://github.com/pymor/pymor/pull/176>`_.
+- `[#238] From Operator to NumPy operator <https://github.com/pymor/pymor/pull/238>`_.
 - `[#308] Add NumpyGenericOperator.apply_adjoint <https://github.com/pymor/pymor/pull/308>`_.
 - `[#313] Add finiteness checks to linear solvers <https://github.com/pymor/pymor/pull/313>`_.
-- `[#314] [ExpressionFunction] add components of mu to locals  <https://github.com/pymor/pymor/pull/314>`_.
+- `[#314] [ExpressionFunction] add components of mu to locals <https://github.com/pymor/pymor/pull/314>`_.
 - `[#315] [functions] some improvements to ExpressionFunction/GenericFunction <https://github.com/pymor/pymor/pull/315>`_.
-- `[#338] Do not print version string on import <https://github.com/pymor/pymor/pull/338>`_
+- `[#338] Do not print version string on import <https://github.com/pymor/pymor/pull/338>`_.
 - `[#346] Implement more arithmetic operations on VectorArrays and Operators <https://github.com/pymor/pymor/pull/346>`_.
 - `[#348] add InverseOperator and InverseTransposeOperator <https://github.com/pymor/pymor/pull/348>`_.
 - `[#359] [grids] bugfix for boundary handling in subgrid <https://github.com/pymor/pymor/pull/359>`_.
 - `[#365] [operators] add ProxyOperator <https://github.com/pymor/pymor/pull/365>`_.
 - `[#366] [operators] add LinearOperator and AffineOperator <https://github.com/pymor/pymor/pull/366>`_.
-- `[#368] Add support for PyQt4 and PyQt5 by using Qt.py shim  <https://github.com/pymor/pymor/pull/368>`_
+- `[#368] Add support for PyQt4 and PyQt5 by using Qt.py shim <https://github.com/pymor/pymor/pull/368>`_.
 - `[#369] Add basic support for visualization in juypter notebooks <https://github.com/pymor/pymor/pull/369>`_.
 - `[#370] Let BitmapFunction accept non-grayscale images <https://github.com/pymor/pymor/pull/370>`_.
-- `[#382] Support mpi4py > 2.0 <https://github.com/pymor/pymor/pull/382>`_
+- `[#382] Support mpi4py > 2.0 <https://github.com/pymor/pymor/pull/382>`_.
 - `[#401] [analyticalproblems] add text_problem <https://github.com/pymor/pymor/pull/401>`_.
-- `[#410] add relative_error and project_array functions <https://github.com/pymor/pymor/pull/410>`_
+- `[#410] add relative_error and project_array functions <https://github.com/pymor/pymor/pull/410>`_.
 - `[#422] [Concatenation] allow more than two operators in a Concatenation <https://github.com/pymor/pymor/pull/422>`_.
 - `[#425] [ParameterType] base implementation on OrderedDict <https://github.com/pymor/pymor/pull/425>`_.
 - `[#431] [operators.cg] fix first order integration <https://github.com/pymor/pymor/pull/431>`_.
 - `[#437] [LincombOperator] implement 'apply_inverse' <https://github.com/pymor/pymor/pull/437>`_.
 - `[#438] Fix VectorArrayOperator, generalize as_range/source_array <https://github.com/pymor/pymor/pull/438>`_.
-- `[#441] fix #439 (assemble_lincomb "operators" parameter sometimes list, sometimes tuple)  <https://github.com/pymor/pymor/pull/441>`_.
+- `[#441] fix #439 (assemble_lincomb "operators" parameter sometimes list, sometimes tuple) <https://github.com/pymor/pymor/pull/441>`_.
 - `[#452] Several improvements to pymor.algorithms.ei.deim <https://github.com/pymor/pymor/pull/452>`_.
 - `[#453] Extend test_assemble <https://github.com/pymor/pymor/pull/453>`_.
 - `[#480| [operators] Improve subtraction of LincombOperators <https://github.com/pymor/pymor/pull/480>`_.
@@ -697,4 +700,3 @@ pyMOR 0.3 (March 2, 2015)
 Over 500 single commits have entered this release. A full list of
 all changes can be obtained under the following address:
 https://github.com/pymor/pymor/compare/0.2.2...0.3.0
-
