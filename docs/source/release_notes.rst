@@ -90,6 +90,8 @@ also available. Bitangential Hermite interpolation is implemented in
 :class:`~pymor.reductors.interpolation.TFInterpReductor` and Transfer Function
 IRKA (TF-IRKA) in :class:`~pymor.reductors.h2.TF_IRKAReductor`.
 
+Usage examples can be found in the `heat` and `string_equation` demo scripts.
+
 
 NGSolve support
 ~~~~~~~~~~~~~~~
