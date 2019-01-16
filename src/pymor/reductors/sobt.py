@@ -30,16 +30,16 @@ class GenericSOBTpvReductor(BasicInterface):
         self.V = None
         self.W = None
 
-    def gramians(self):
+    def _gramians(self):
         """Returns gramians."""
         raise NotImplementedError
 
-    def projection_matrices_and_singular_values(self, r, gramians):
+    def _projection_matrices_and_singular_values(self, r, gramians):
         """Returns projection matrices and singular values."""
         raise NotImplementedError
 
     def reduce(self, r, projection='bfsr'):
-        """Reduce using SOBTp.
+        """Reduce using GenericSOBTpv.
 
         Parameters
         ----------
@@ -48,14 +48,13 @@ class GenericSOBTpvReductor(BasicInterface):
         projection
             Projection method used:
 
-                - `'sr'`: square root method
-                - `'bfsr'`: balancing-free square root method (default,
-                    since it avoids scaling by singular values and
-                    orthogonalizes the projection matrices, which might
-                    make it more accurate than the square root method)
-                - `'biorth'`: like the balancing-free square root
-                    method, except it biorthogonalizes the projection
-                    matrices
+            - `'sr'`: square root method
+            - `'bfsr'`: balancing-free square root method (default,
+              since it avoids scaling by singular values and
+              orthogonalizes the projection matrices, which might make
+              it more accurate than the square root method)
+            - `'biorth'`: like the balancing-free square root method,
+              except it biorthogonalizes the projection matrices
 
         Returns
         -------
@@ -66,13 +65,13 @@ class GenericSOBTpvReductor(BasicInterface):
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
-        gramians = self.gramians()
+        gramians = self._gramians()
 
         if r > min(len(g) for g in gramians):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # compute projection matrices and find the reduced model
-        self.V, self.W, singular_values = self.projection_matrices_and_singular_values(r, gramians)
+        self.V, self.W, singular_values = self._projection_matrices_and_singular_values(r, gramians)
         if projection == 'sr':
             alpha = 1 / np.sqrt(singular_values[:r])
             self.V.scal(alpha)
@@ -104,14 +103,14 @@ class SOBTpReductor(GenericSOBTpvReductor):
     d
         The system which is to be reduced.
     """
-    def gramians(self):
+    def _gramians(self):
         pcf = self.d.gramian('pc_lrcf')
         pof = self.d.gramian('po_lrcf')
         vcf = self.d.gramian('vc_lrcf')
         vof = self.d.gramian('vo_lrcf')
         return pcf, pof, vcf, vof
 
-    def projection_matrices_and_singular_values(self, r, gramians):
+    def _projection_matrices_and_singular_values(self, r, gramians):
         pcf, pof, vcf, vof = gramians
         _, sp, Vp = spla.svd(pof.inner(pcf))
         Uv, _, _ = spla.svd(vof.inner(vcf, product=self.d.M))
@@ -129,12 +128,12 @@ class SOBTvReductor(GenericSOBTpvReductor):
     d
         The system which is to be reduced.
     """
-    def gramians(self):
+    def _gramians(self):
         vcf = self.d.gramian('vc_lrcf')
         vof = self.d.gramian('vo_lrcf')
         return vcf, vof
 
-    def projection_matrices_and_singular_values(self, r, gramians):
+    def _projection_matrices_and_singular_values(self, r, gramians):
         vcf, vof = gramians
         Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.d.M))
         Uv = Uv.T
@@ -151,12 +150,12 @@ class SOBTpvReductor(GenericSOBTpvReductor):
     d
         The system which is to be reduced.
     """
-    def gramians(self):
+    def _gramians(self):
         pcf = self.d.gramian('pc_lrcf')
         vof = self.d.gramian('vo_lrcf')
         return pcf, vof
 
-    def projection_matrices_and_singular_values(self, r, gramians):
+    def _projection_matrices_and_singular_values(self, r, gramians):
         pcf, vof = gramians
         Upv, spv, Vpv = spla.svd(vof.inner(pcf, product=self.d.M))
         Upv = Upv.T
@@ -173,13 +172,13 @@ class SOBTvpReductor(GenericSOBTpvReductor):
     d
         The system which is to be reduced.
     """
-    def gramians(self):
+    def _gramians(self):
         pof = self.d.gramian('po_lrcf')
         vcf = self.d.gramian('vc_lrcf')
         vof = self.d.gramian('vo_lrcf')
         return pof, vcf, vof
 
-    def projection_matrices_and_singular_values(self, r, gramians):
+    def _projection_matrices_and_singular_values(self, r, gramians):
         pof, vcf, vof = gramians
         Uv, _, _ = spla.svd(vof.inner(vcf, product=self.d.M))
         Uv = Uv.T
@@ -213,14 +212,13 @@ class SOBTfvReductor(BasicInterface):
         projection
             Projection method used:
 
-                - `'sr'`: square root method
-                - `'bfsr'`: balancing-free square root method (default,
-                    since it avoids scaling by singular values and
-                    orthogonalizes the projection matrices, which might
-                    make it more accurate than the square root method)
-                - `'biorth'`: like the balancing-free square root
-                    method, except it biorthogonalizes the projection
-                    matrices
+            - `'sr'`: square root method
+            - `'bfsr'`: balancing-free square root method (default,
+              since it avoids scaling by singular values and
+              orthogonalizes the projection matrices, which might make
+              it more accurate than the square root method)
+            - `'biorth'`: like the balancing-free square root method,
+              except it biorthogonalizes the projection matrices
 
         Returns
         -------
@@ -294,14 +292,13 @@ class SOBTReductor(BasicInterface):
         projection
             Projection method used:
 
-                - `'sr'`: square root method
-                - `'bfsr'`: balancing-free square root method (default,
-                    since it avoids scaling by singular values and
-                    orthogonalizes the projection matrices, which might
-                    make it more accurate than the square root method)
-                - `'biorth'`: like the balancing-free square root
-                    method, except it biorthogonalizes the projection
-                    matrices
+            - `'sr'`: square root method
+            - `'bfsr'`: balancing-free square root method (default,
+              since it avoids scaling by singular values and
+              orthogonalizes the projection matrices, which might make
+              it more accurate than the square root method)
+            - `'biorth'`: like the balancing-free square root method,
+              except it biorthogonalizes the projection matrices
 
         Returns
         -------

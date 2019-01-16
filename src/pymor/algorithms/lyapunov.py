@@ -39,23 +39,23 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
 
     - if trans is `False` and E is `None`:
 
-        .. math::
-            A X + X A^T + B B^T = 0,
+      .. math::
+         A X + X A^T + B B^T = 0,
 
     - if trans is `False` and E is an |Operator|:
 
-        .. math::
-            A X E^T + E X A^T + B B^T = 0,
+      .. math::
+          A X E^T + E X A^T + B B^T = 0,
 
     - if trans is `True` and E is `None`:
 
-        .. math::
-            A^T X + X A + B^T B = 0,
+      .. math::
+          A^T X + X A + B^T B = 0,
 
     - if trans is `True` and E is an |Operator|:
 
-        .. math::
-            A^T X E + E^T X A + B^T B = 0.
+      .. math::
+          A^T X E + E^T X A + B^T B = 0.
 
     We assume A and E are real |Operators|, E is invertible, and all the
     eigenvalues of (A, E) all lie in the open left half-plane.
@@ -66,16 +66,16 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
     backend is chosen based on availability in the following order:
 
     - for sparse problems (minimum size specified by
-      `mat_eqn_sparse_min_size`)
+      :func:`mat_eqn_sparse_min_size`)
 
-        1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_lrcf`)
-        2. `lradi` (see :func:`pymor.algorithms.lradi.solve_lyap_lrcf`)
+      1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_lrcf`),
+      2. `lradi` (see :func:`pymor.algorithms.lradi.solve_lyap_lrcf`),
 
-    - for dense problems (smaller than `mat_eqn_sparse_min_size`)
+    - for dense problems (smaller than :func:`mat_eqn_sparse_min_size`)
 
-        1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_lrcf`)
-        2. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`)
-        3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`)
+      1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_lrcf`),
+      2. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`),
+      3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
 
     Parameters
     ----------
@@ -151,23 +151,23 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
 
     - if trans is `False` and E is `None`:
 
-        .. math::
-            A X + X A^T + B B^T = 0,
+      .. math::
+          A X + X A^T + B B^T = 0,
 
     - if trans is `False` and E is an |Operator|:
 
-        .. math::
-            A X E^T + E X A^T + B B^T = 0,
+      .. math::
+          A X E^T + E X A^T + B B^T = 0,
 
     - if trans is `True` and E is `None`:
 
-        .. math::
-            A^T X + X A + B^T B = 0,
+      .. math::
+          A^T X + X A + B^T B = 0,
 
     - if trans is `True` and E is an |Operator|:
 
-        .. math::
-            A^T X E + E^T X A + B^T B = 0.
+      .. math::
+          A^T X E + E^T X A + B^T B = 0.
 
     We assume A and E are real |NumPy arrays|, E is invertible, and that
     no two eigenvalues of (A, E) sum to zero (i.e., there exists a

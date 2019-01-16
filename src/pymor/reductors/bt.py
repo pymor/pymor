@@ -61,14 +61,14 @@ class GenericBTReductor(BasicInterface):
         projection
             Projection method used:
 
-                - `'sr'`: square root method
-                - `'bfsr'`: balancing-free square root method (default,
-                    since it avoids scaling by singular values and
-                    orthogonalizes the projection matrices, which might
-                    make it more accurate than the square root method)
-                - `'biorth'`: like the balancing-free square root
-                    method, except it biorthogonalizes the projection
-                    matrices
+            - `'sr'`: square root method
+            - `'bfsr'`: balancing-free square root method (default,
+              since it avoids scaling by singular values and
+              orthogonalizes the projection matrices, which might make
+              it more accurate than the square root method)
+            - `'biorth'`: like the balancing-free square root method,
+              except it biorthogonalizes the projection matrices (using
+              :func:`~pymor.algorithms.gram_schmidt.gram_schmidt_biorth`)
 
         Returns
         -------
