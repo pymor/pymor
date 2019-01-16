@@ -11,7 +11,7 @@ After more than two years of development, we are proud to announce the release
 of pyMOR 0.5! Highlights of this release are support for Python 3, bindings for
 the NGSolve finite element library, new linear algebra algorithms, various
 |VectorArray| usability improvements, as well as a redesign of pyMOR's
-projection algorithm based on |RuleTables|.
+projection algorithms based on |RuleTables|.
 
 Especially we would like to highlight the addition of various system-theoretic
 reduction methods such as Balanced Truncation or IRKA. All algorithms are
@@ -129,7 +129,7 @@ VectorArray improvements
   allows to differentiate between technically identical but mathematically
   different spaces `[#323] <https://github.com/pymor/pymor/pull/323>`_.
 
-- |VectorArrays| can now be indexed to select a subset to vectors to operate on.
+- |VectorArrays| can now be indexed to select a subset of vectors to operate on.
   In contrast to advanced indexing in |NumPy|, indexing a |VectorArray| will
   always return a view onto the original array data
   `[#299] <https://github.com/pymor/pymor/pull/299>`_.
