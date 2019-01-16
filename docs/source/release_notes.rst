@@ -162,7 +162,7 @@ VectorArray improvements
 RuleTable based algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In pyMOR 0.5, reduction algorithms are implemented via recursively applied
+In pyMOR 0.5, projection algorithms are implemented via recursively applied
 tables of transformation rules. This replaces the previous inheritance-based
 approach. In particular, the `projected` method to perform a (Petrov-)Galerkin
 projection of an arbitrary |Operator| has been removed and replaced by a free
