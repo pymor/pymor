@@ -23,7 +23,7 @@ for py in 3.5 3.6 3.7 ; do
     docker pull ${BUILDER_IMAGE} 1> /dev/null
     docker run --rm  -t -e LOCAL_USER_ID=$(id -u)  \
         -v ${BUILDER_WHEELHOUSE}:/io/wheelhouse \
-        -v ${PYMOR_ROOT}:/io/pymor ${BUILDER_IMAGE} /usr/local/bin/build-wheels.sh
+        -v ${PYMOR_ROOT}:/io/pymor ${BUILDER_IMAGE} /usr/local/bin/build-wheels.sh 1> /dev/null
 done
 
 cp ${PYMOR_ROOT}/.ci/docker/deploy_checks/Dockerfile ${BUILDER_WHEELHOUSE}

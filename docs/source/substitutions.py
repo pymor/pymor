@@ -106,6 +106,10 @@ common = '''
 
 .. |LTISystem| replace:: :class:`~pymor.discretizations.iosys.LTISystem`
 .. |LTISystems| replace:: :class:`LTISystems <pymor.discretizations.iosys.LTISystem>`
+.. |SecondOrderSystem| replace:: :class:`~pymor.discretizations.iosys.SecondOrderSystem`
+.. |SecondOrderSystems| replace:: :class:`SecondOrderSystems <pymor.discretizations.iosys.SecondOrderSystem>`
+.. |TransferFunction| replace:: :class:`~pymor.discretizations.iosys.TransferFunction`
+.. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.discretizations.iosys.TransferFunction>`
 
 .. |NumPy| replace:: :mod:`NumPy <numpy>`
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`
