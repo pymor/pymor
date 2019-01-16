@@ -48,44 +48,47 @@ improved support for asynchronous programming.
 
 System-theoretic MOR methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- New discretization classes in :mod:`pymor.discretizations.iosys`
 
-- MOR methods for finite-dimensional, continuous-time, linear time-invariant
-  systems (:class:`~pymor.discretizations.iosys.LTISystem`):
+With 386 commits, `[#464] <https://github.com/pymor/pymor/pull/464>`_ added
+systems-theoretic methods to pyMOR. Module :mod:`pymor.discretizations.iosys`
+contains new discretization classes for input-output systems, e.g. |LTISystem|,
+|SecondOrderSystem| and |TransferFunction|. At present, methods related to these
+classes mainly focus on continuous-time, non-parametric systems.
 
-  - balancing-based methods:
-    :class:`~pymor.reductors.bt.BTReductor`,
-    :class:`~pymor.reductors.bt.LQGBTReductor`,
-    :class:`~pymor.reductors.bt.BRBTReductor`
+Since matrix equation solvers are important tools in many system-theoretic
+methods, support for Lyapunov, Riccati and Sylvester equations has been added in
+:mod:`pymor.algorithms.lyapunov`, :mod:`pymor.algorithms.riccati` and
+:mod:`pymor.algorithms.sylvester`. A generic low-rank ADI (Alternating Direction
+Implicit) solver for Lyapunov equations is implemented in
+:mod:`pymor.algorithms.lradi`. Furthermore, bindings to low-rank and dense
+solvers for Lyapunov and Riccati equations from |SciPy|,
+`Slycot <https://github.com/python-control/Slycot>`_ and
+`Py-M.E.S.S. <https://www.mpi-magdeburg.mpg.de/projects/mess>`_ are provided in
+:mod:`pymor.bindings.scipy`, :mod:`pymor.bindings.slycot` and
+:mod:`pymor.bindings.pymess`. A generic Schur decomposition-based solver for
+sparse-dense Sylvester equations is implemented in
+:mod:`pymor.algorithms.sylvester`.
 
-  - interpolation-based methods:
-    :class:`~pymor.reductors.interpolation.LTI_BHIReductor`,
-    :class:`~pymor.reductors.h2.IRKAReductor`,
-    :class:`~pymor.reductors.h2.TSIAReductor`
+Balancing Truncation (BT) and Iterative Rational Krylov Algorithm (IRKA) are
+implemented in :class:`~pymor.reductors.bt.BTReductor` and
+:class:`~pymor.reductors.h2.IRKAReductor`. LQG and Bounded Real variants of BT
+are also available (:class:`~pymor.reductors.bt.LQGBTReductor`,
+:class:`~pymor.reductors.bt.BRBTReductor`). Bitangential Hermite interpolation
+(used in IRKA) is implemented in
+:class:`~pymor.reductors.interpolation.LTI_BHIReductor`. Two-Sided Iteration
+Algorithm (TSIA), a method related to IRKA, is implemented in
+:class:`~pymor.reductors.h2.TSIAReductor`.
 
-- MOR methods for second-order systems
-  (:class:`~pymor.discretizations.iosys.SecondOrderSystem`):
+Several structure-preserving MOR methods for second-order systems have been
+implemented. Balancing-based MOR methods are implemented in
+:mod:`pymor.reductors.sobt`, bitangential Hermite interpolation in
+:class:`~pymor.reductors.interpolation.SO_BHIReductor` and Second-Order Reduced
+IRKA (SOR-IRKA) in :class:`~pymor.reductors.sor_irka.SOR_IRKAReductor`.
 
-  - balancing-based methods:
-    :class:`~pymor.reductors.sobt.SOBTpReductor`,
-    :class:`~pymor.reductors.sobt.SOBTvReductor`,
-    :class:`~pymor.reductors.sobt.SOBTpvReductor`,
-    :class:`~pymor.reductors.sobt.SOBTvpReductor`,
-    :class:`~pymor.reductors.sobt.SOBTfvReductor`,
-    :class:`~pymor.reductors.sobt.SOBTReductor`
-
-  - interpolation-based methods:
-    :class:`~pymor.reductors.interpolation.SO_BHIReductor`,
-    :class:`~pymor.reductors.sor_irka.SOR_IRKAReductor`
-
-- interpolation-based method for time-delay systems
-  (:class:`~pymor.discretizations.iosys.LinearDelaySystem`):
-  :class:`~pymor.reductors.interpolation.DelayBHIReductor`
-
-- interpolation-based methods for transfer functions
-  (:class:`~pymor.discretizations.iosys.TransferFunction`):
-  :class:`~pymor.reductors.interpolation.TFInterpReductor`,
-  :class:`~pymor.reductors.h2.TF_IRKAReductor`
+For more general transfer functions, MOR methods which return |LTISystems| are
+also available. Bitangential Hermite interpolation is implemented in
+:class:`~pymor.reductors.interpolation.TFInterpReductor` and Transfer Function
+IRKA (TF-IRKA) in :class:`~pymor.reductors.h2.TF_IRKAReductor`.
 
 
 NGSolve support
