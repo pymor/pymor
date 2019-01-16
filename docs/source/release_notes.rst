@@ -4,7 +4,7 @@
 Release Notes
 *************
 
-pyMOR 0.5 (January ??, 2019)
+pyMOR 0.5 (January 17, 2019)
 ----------------------------
 
 After more than two years of development, we are proud to announce the release
