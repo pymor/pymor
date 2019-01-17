@@ -7,7 +7,7 @@ REPODIR=${HOME}/wheels
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
-sed -i -e 's;style\ \=\ pep440;style\ \=\ ci_wheel_builder;g' setup.cfg
+# sed -i -e 's;style\ \=\ pep440;style\ \=\ ci_wheel_builder;g' setup.cfg
 
 rm -rf ~/.ssh
 
