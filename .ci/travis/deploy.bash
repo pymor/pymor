@@ -7,8 +7,10 @@ REPODIR=${HOME}/wheels
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
-# sed -i -e 's;style\ \=\ pep440;style\ \=\ ci_wheel_builder;g' setup.cfg
-
+TAG=${DRONE_TAG:-${TRAVIS_TAG}}
+if [[ "x${TAG}" == "x" ]] ; then
+    sed -i -e 's;style\ \=\ pep440;style\ \=\ ci_wheel_builder;g' setup.cfg
+fi
 rm -rf ~/.ssh
 
 ./.ci/travis/init_sshkey.bash "${encrypted_a599472c800f_key}" "${encrypted_a599472c800f_iv}" \
