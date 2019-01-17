@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -12,7 +11,7 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInter
 class VectorInterface(BasicInterface):
     """Interface for vectors used in conjunction with |ListVectorArray|.
 
-    This interface must be staisfied by the individual entries of the
+    This interface must be satisfied by the individual entries of the
     vector `list` managed by |ListVectorArray|. All interface methods
     have a direct counterpart in the |VectorArray| interface.
     """

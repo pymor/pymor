@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -169,12 +168,14 @@ class ProjectedOperator(OperatorBase):
     ----------
     operator
         The |Operator| to project.
-    source_basis
-        See :func:`pymor.algorithms.projection.project`.
     range_basis
+        See :func:`pymor.algorithms.projection.project`.
+    source_basis
         See :func:`pymor.algorithms.projection.project`.
     product
         See :func:`pymor.algorithms.projection.project`.
+    solver_options
+        The |solver_options| for the projected operator.
     """
 
     linear = False

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -165,6 +164,8 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
         |VectorArray| of right-hand sides for the equation system.
     options
         The |solver_options| to use (see :func:`solver_options`).
+    least_squares
+        If `True`, return least squares solution.
     check_finite
         Test if solution only contains finite values.
     default_solver

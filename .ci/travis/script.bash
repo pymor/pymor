@@ -46,6 +46,7 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     sudo pip install $(ls ${SDIST_DIR})
     popd
     xvfb-run -a py.test -r sxX --pyargs pymortests -c .ci/installed_pytest.ini |& grep -v 'pymess/lrnm.py:82: PendingDeprecationWarning'
+    pymor-demo -h
 
     coverage_submit
 elif [ "${PYMOR_PYTEST_MARKER}" == "MPI" ] ; then

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -168,7 +167,7 @@ def projection_shifts_init(A, E, B, shift_options):
     B
         The |VectorArray| B from the corresponding Lyapunov equation.
     shift_options
-        The shift options to use (see :func:`lyap_solver_options`).
+        The shift options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
@@ -212,7 +211,7 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
         A |NumPy array| containing the set of all previously used shift
         parameters.
     shift_options
-        The shift options to use (see :func:`lyap_solver_options`).
+        The shift options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------

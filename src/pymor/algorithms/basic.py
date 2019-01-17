@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -36,8 +35,8 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
         If specified, use this inner product |Operator| to compute the norm.
         `product` and `norm` are mutually exclusive.
     norm
-        If specified, must be a callable, which is used to compute the norm
-        or, alternatively, one of the string 'l1', 'l2', 'sup', in which case the
+        If specified, must be a callable which is used to compute the norm
+        or, alternatively, one of the strings 'l1', 'l2', 'sup', in which case the
         respective |VectorArray| norm methods are used.
         `product` and `norm` are mutually exclusive. If neither is specified,
         `norm='l2'` is assumed.

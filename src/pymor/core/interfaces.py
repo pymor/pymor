@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -87,7 +86,7 @@ NoneType = type(None)
 
 
 class UID(object):
-    '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
+    '''Provides unique, quickly computed ids by combining a session UUID4 with a counter.'''
 
     __slots__ = ['uid']
 

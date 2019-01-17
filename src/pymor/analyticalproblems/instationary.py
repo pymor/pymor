@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -9,7 +8,7 @@ from pymor.core.interfaces import ImmutableInterface
 class InstationaryProblem(ImmutableInterface):
     """Instationary problem description.
 
-    This class desciribes an instationary problem of the form ::
+    This class describes an instationary problem of the form ::
 
     |    ∂_t u(x, t, μ) + A(u(x, t, μ), t, μ) = f(x, t, μ),
     |                              u(x, 0, μ) = u_0(x, μ)

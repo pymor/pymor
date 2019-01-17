@@ -16,11 +16,14 @@ from pymor.reductors.basic import GenericPGReductor
 class GenericBHIReductor(BasicInterface):
     """Generic bitangential Hermite interpolation reductor.
 
-    This reductor can be used for any system with generalized coprime
-    factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
-    \mathcal{B}(s)` as in [BG09]_. The interpolation here is limited to
-    only up to the first derivative. Hence, interpolation points are
-    assumed to be pairwise distinct.
+    This is a generic reductor for reducing any linear
+    :class:`~pymor.discretizations.iosys.InputStateOutputSystem` with
+    the transfer function which can be written in the generalized
+    coprime factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
+    \mathcal{B}(s)` as in [BG09]_.
+    The interpolation here is limited to only up to the first
+    derivative.
+    Hence, interpolation points are assumed to be pairwise distinct.
 
     Parameters
     ----------
@@ -29,11 +32,7 @@ class GenericBHIReductor(BasicInterface):
     """
     def __init__(self, d):
         self.d = d
-        self._B_source = None
-        self._C_range = None
-        self._K_source = None
         self._product = None
-        self._biorthogonal_product = None
 
     def _B_apply(self, s, V):
         raise NotImplementedError
@@ -57,17 +56,17 @@ class GenericBHIReductor(BasicInterface):
             length `r`.
         b
             Right tangential directions, |VectorArray| of length `r`
-            from `self._B_source`.
+            from `self.d.input_space`.
         c
             Left tangential directions, |VectorArray| of length `r` from
-            `self._C_range`.
+            `self.d.output_space`.
         projection
             Projection method:
 
-                - `'orth'`: projection matrices are orthogonalized with
-                    respect to the Euclidean inner product
-                - `'biorth'`: projection matrices are biorthogolized
-                    with respect to the E product
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogolized with
+              respect to the E product
 
         Returns
         -------
@@ -75,23 +74,23 @@ class GenericBHIReductor(BasicInterface):
             Reduced discretization.
         """
         r = len(sigma)
-        assert b in self._B_source and len(b) == r
-        assert c in self._C_range and len(c) == r
+        assert b in self.d.input_space and len(b) == r
+        assert c in self.d.output_space and len(c) == r
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
         if b.dim > 1:
             b.scal(1 / b.l2_norm())
         else:
-            b = self._B_source.from_numpy(np.ones((r, 1)))
+            b = self.d.input_space.from_numpy(np.ones((r, 1)))
         if c.dim > 1:
             c.scal(1 / c.l2_norm())
         else:
-            c = self._C_range.from_numpy(np.ones((r, 1)))
+            c = self.d.output_space.from_numpy(np.ones((r, 1)))
 
         # compute projection matrices
-        self.V = self._K_source.empty(reserve=r)
-        self.W = self._K_source.empty(reserve=r)
+        self.V = self.d.state_space.empty(reserve=r)
+        self.W = self.d.state_space.empty(reserve=r)
         for i in range(r):
             if sigma[i].imag == 0:
                 Bb = self._B_apply(sigma[i].real, b.real[i])
@@ -137,11 +136,7 @@ class LTI_BHIReductor(GenericBHIReductor):
     def __init__(self, d):
         assert isinstance(d, LTISystem)
         self.d = d
-        self._B_source = d.B.source
-        self._C_range = d.C.range
-        self._K_source = d.A.source
         self._product = d.E
-        self._biorthogonal_product = 'E'
 
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
@@ -167,17 +162,17 @@ class LTI_BHIReductor(GenericBHIReductor):
             length `r`.
         b
             Right tangential directions, |VectorArray| of length `r`
-            from `self._B_source`.
+            from `self.d.input_space`.
         c
             Left tangential directions, |VectorArray| of length `r` from
-            `self._C_range`.
+            `self.d.output_space`.
         projection
             Projection method:
 
-                - `'orth'`: projection matrices are orthogonalized with
-                    respect to the Euclidean inner product
-                - `'biorth'`: projection matrices are biorthogolized
-                    with respect to the E product
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogolized with
+              respect to the E product
         use_arnoldi
             Should the Arnoldi process be used for rational
             interpolation. Available only for SISO systems. Otherwise,
@@ -203,10 +198,10 @@ class LTI_BHIReductor(GenericBHIReductor):
             length `r`.
         b
             Right tangential directions, |VectorArray| of length `r`
-            from `d.B.source`.
+            from `self.d.B.source`.
         c
             Left tangential directions, |VectorArray| of length `r` from
-            `d.C.range`.
+            `self.d.C.range`.
 
         Returns
         -------
@@ -221,7 +216,6 @@ class LTI_BHIReductor(GenericBHIReductor):
 
         self.V = arnoldi(d.A, d.E, d.B, sigma)
         self.W = arnoldi(d.A, d.E, d.C, sigma, trans=True)
-        self.biorthogonal_product = None
 
         rd = super(GenericBHIReductor, self).reduce()
         return rd
@@ -238,11 +232,7 @@ class SO_BHIReductor(GenericBHIReductor):
     def __init__(self, d):
         assert isinstance(d, SecondOrderSystem)
         self.d = d
-        self._B_source = d.B.source
-        self._C_range = d.Cp.range
-        self._K_source = d.K.source
         self._product = d.M
-        self._biorthogonal_product = 'M'
 
     def _B_apply(self, s, V):
         return self.d.B.apply(V)
@@ -272,11 +262,7 @@ class DelayBHIReductor(GenericBHIReductor):
     def __init__(self, d):
         assert isinstance(d, LinearDelaySystem)
         self.d = d
-        self._B_source = d.B.source
-        self._C_range = d.C.range
-        self._K_source = d.A.source
         self._product = d.E
-        self._biorthogonal_product = 'E'
 
     def _B_apply(self, s, V):
         return self.d.B.apply(V)

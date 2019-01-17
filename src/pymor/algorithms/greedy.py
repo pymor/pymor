@@ -29,7 +29,7 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
     d
         The |Discretization| to reduce.
     reductor
-        Reductor for reducing the given |Discretization|. This has to be a
+        Reductor for reducing the given |Discretization|. This has to be
         an object with a `reduce` method, such that `reductor.reduce()`
         yields the reduced discretization, and an `exted_basis` method,
         such that `reductor.extend_basis(U, copy_U=False, **extension_params)`
@@ -68,8 +68,6 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
         :max_err_mus:            The parameters corresponding to `max_errs`.
         :extensions:             Number of performed basis extensions.
         :time:                   Total runtime of the algorithm.
-        :reduction_data:         The `reduction_data` returned by the last
-                                 `reductor` call.
     """
 
     logger = getLogger('pymor.algorithms.greedy.greedy')

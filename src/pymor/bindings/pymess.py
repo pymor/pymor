@@ -117,8 +117,9 @@ if config.HAVE_PYMESS:
 
         If the solver is not specified using the options or
         default_solver arguments, `glyap` is used for small problems
-        (smaller than `mat_eqn_sparse_min_size`) and `lradi` for large
-        problems.
+        (smaller than defined with
+        :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`) and
+        `lradi` for large problems.
 
         Parameters
         ----------
@@ -298,7 +299,8 @@ if config.HAVE_PYMESS:
     def ricc_lrcf_solver_options():
         """Returns available Riccati equation solvers with default solver options for the pymess backend.
 
-        Also see :func:`dense_nm_gmpcare_solver_options` and :func:`lrnm_solver_options`.
+        Also see :func:`dense_nm_gmpcare_solver_options` and
+        :func:`lrnm_solver_options`.
 
         Returns
         -------
@@ -327,9 +329,11 @@ if config.HAVE_PYMESS:
         expects :func:`~pymor.algorithms.to_matrix.to_matrix` to work
         for A and E.
 
-        If the solver is not specified using the options or default_solver arguments,
-        `dense_nm_gmpcare` is used for small problems (smaller than
-        `mat_eqn_sparse_min_size`) and `lrnm` for large problems.
+        If the solver is not specified using the options or
+        default_solver arguments, `dense_nm_gmpcare` is used for small
+        problems (smaller than defined with
+        :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`) and
+        `lrnm` for large problems.
 
         Parameters
         ----------
@@ -349,10 +353,12 @@ if config.HAVE_PYMESS:
             Whether the first |Operator| in the Riccati equation is
             transposed.
         options
-            The solver options to use (see :func:`ricc_solver_options`).
+            The solver options to use (see
+            :func:`ricc_lrcf_solver_options`).
         default_solver
-            Default solver to use (pymess_lrnm, pymess_dense_nm_gmpcare). If `None`
-            chose solver depending on dimension `A`.
+            Default solver to use (pymess_lrnm,
+            pymess_dense_nm_gmpcare).
+            If `None`, chose solver depending on dimension `A`.
 
         Returns
         -------
@@ -427,7 +433,7 @@ if config.HAVE_PYMESS:
             transposed.
         options
             The solver options to use (see
-            :func:`ricc_pos_solver_options`).
+            :func:`pos_ricc_lrcf_solver_options`).
 
         Returns
         -------
@@ -499,30 +505,30 @@ if config.HAVE_PYMESS:
         return X
 
     class LyapunovEquation(pymess.Equation):
-        r"""Lyapunov equation class for pymess
+        """Lyapunov equation class for pymess
 
         Represents a (generalized) continuous-time algebraic Lyapunov
         equation:
 
         - if opt.type is `pymess.MESS_OP_NONE` and E is `None`:
 
-            .. math::
-                A X + X A^T + B B^T = 0,
+          .. math::
+              A X + X A^T + B B^T = 0,
 
         - if opt.type is `pymess.MESS_OP_NONE` and E is not `None`:
 
-            .. math::
-                A X E^T + E X A^T + B B^T = 0,
+          .. math::
+              A X E^T + E X A^T + B B^T = 0,
 
         - if opt.type is `pymess.MESS_OP_TRANSPOSE` and E is `None`:
 
-            .. math::
-                A^T X + X A + B^T B = 0,
+          .. math::
+              A^T X + X A + B^T B = 0,
 
         - if opt.type is `pymess.MESS_OP_TRANSPOSE` and E is not `None`:
 
-            .. math::
-                A^T X E + E^T X A + B^T B = 0.
+          .. math::
+              A^T X E + E^T X A + B^T B = 0.
 
         Parameters
         ----------
@@ -615,29 +621,29 @@ if config.HAVE_PYMESS:
             return None
 
     class RiccatiEquation(pymess.Equation):
-        r"""Riccati equation class for pymess
+        """Riccati equation class for pymess
 
         Represents a Riccati equation
 
         - if opt.type is `pymess.MESS_OP_NONE` and E is `None`:
 
-            .. math::
-                A X + X A^T - X C^T C X + B B^T = 0,
+          .. math::
+              A X + X A^T - X C^T C X + B B^T = 0,
 
         - if opt.type is `pymess.MESS_OP_NONE` and E is not `None`:
 
-            .. math::
-                A X E^T + E X A^T - E X C^T C X E^T + B B^T = 0,
+          .. math::
+              A X E^T + E X A^T - E X C^T C X E^T + B B^T = 0,
 
         - if opt.type is `pymess.MESS_OP_TRANSPOSE` and E is `None`:
 
-            .. math::
-                A^T X + X A - X B B^T X + C^T C = 0,
+          .. math::
+              A^T X + X A - X B B^T X + C^T C = 0,
 
         - if opt.type is `pymess.MESS_OP_TRANSPOSE` and E is not `None`:
 
-            .. math::
-                A^T X E + E^T X A - E X B B^T X E^T + C^T C = 0.
+          .. math::
+              A^T X E + E^T X A - E X B B^T X E^T + C^T C = 0.
 
         Parameters
         ----------

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -7,7 +6,6 @@ import numpy as np
 
 from pymor.core.interfaces import BasicInterface
 from pymor.discretizations.iosys import SecondOrderSystem
-from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import SO_BHIReductor
 from pymor.reductors.h2 import IRKAReductor, _poles_and_tangential_directions, _convergence_criterion
 
@@ -27,9 +25,10 @@ class SOR_IRKAReductor(BasicInterface):
     def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
                projection='orth', use_arnoldi=False, conv_crit='sigma', compute_errors=False,
                irka_options=None):
-        """Reduce using SOR-IRKA.
+        r"""Reduce using SOR-IRKA.
 
-        It uses IRKA as the intermediate reductor, to reduce from 2r poles to r.
+        It uses IRKA as the intermediate reductor, to reduce from 2r to
+        r poles.
         See Section 5.3.2 in [W12]_.
 
         Parameters
@@ -44,7 +43,7 @@ class SOR_IRKAReductor(BasicInterface):
             generate it randomly. Otherwise, it needs to be a
             one-dimensional array-like of length `r`.
 
-            `sigma` and `rd0` cannot be both not `None`.
+            `sigma` and `rd0` cannot both be not `None`.
         b
             Initial right tangential directions.
 
@@ -52,7 +51,7 @@ class SOR_IRKAReductor(BasicInterface):
             is used as a seed to generate it randomly. Otherwise, it
             needs to be a |VectorArray| of length `r` from `d.B.source`.
 
-            `b` and `rd0` cannot be both not `None`.
+            `b` and `rd0` cannot both be not `None`.
         c
             Initial left tangential directions.
 
@@ -60,7 +59,7 @@ class SOR_IRKAReductor(BasicInterface):
             is used as a seed to generate it randomly. Otherwise, it
             needs to be a |VectorArray| of length `r` from `d.Cp.range`.
 
-            `c` and `rd0` cannot be both not `None`.
+            `c` and `rd0` cannot both be not `None`.
         rd0
             Initial reduced order model.
 
@@ -82,16 +81,16 @@ class SOR_IRKAReductor(BasicInterface):
         projection
             Projection method:
 
-                - `'orth'`: projection matrices are orthogonalized with
-                    respect to the Euclidean inner product
-                - `'biorth'`: projection matrices are biorthogolized
-                    with respect to the E product
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogolized with
+              respect to the E product
         conv_crit
             Convergence criterion:
 
-                - `'sigma'`: relative change in interpolation points
-                - `'h2'`: relative :math:`\mathcal{H}_2` distance of
-                    reduced order models
+            - `'sigma'`: relative change in interpolation points
+            - `'h2'`: relative :math:`\mathcal{H}_2` distance of
+              reduced-order models
         compute_errors
             Should the relative :math:`\mathcal{H}_2`-errors of
             intermediate reduced order models be computed.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -30,7 +29,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class NumpyGenericOperator(OperatorBase):
-    """Wraps an arbitrary Python function between |NumPy arrays| as a an |Operator|.
+    """Wraps an arbitrary Python function between |NumPy arrays| as an |Operator|.
 
     Parameters
     ----------
@@ -58,6 +57,8 @@ class NumpyGenericOperator(OperatorBase):
         Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
     parameter_type
         The |ParameterType| of the |Parameters| the mapping accepts.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """
@@ -121,17 +122,6 @@ class NumpyMatrixBasedOperator(OperatorBase):
         pass
 
     def assemble(self, mu=None):
-        """Assembles the operator for a given |Parameter|.
-
-        Parameters
-        ----------
-        mu
-            The |Parameter| for which to assemble the operator.
-
-        Returns
-        -------
-        The assembled parameter independent |Operator|.
-        """
         return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
                                    source_id=self.source.id,
                                    range_id=self.range.id,
@@ -185,6 +175,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     ----------
     matrix
         The |NumPy array| which is to be wrapped.
+    source_id
+        The id of the operator's `source` |VectorSpace|.
+    range_id
+        The id of the operator's `range` |VectorSpace|.
+    solver_options
+        The |solver_options| for the operator.
     name
         Name of the operator.
     """

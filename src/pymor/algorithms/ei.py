@@ -288,10 +288,9 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
 
             :dofs:                  |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
             :basis:                 |VectorArray| containing the generated collateral basis.
-            :errors:                Sequence of maximum approximation errors during greedy search.
-            :triangularity_errors:  Sequence of maximum absolute values of interoplation
-                                    matrix coefficients in the upper triangle (should
-                                    be near zero).
+
+        In addition, `data` contains the fields of the `data` `dict` returned by
+        :func:`ei_greedy`/:func:`deim`.
     """
 
     assert alg in ('ei_greedy', 'deim')
@@ -389,7 +388,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             new_vec = pool.apply_only(_parallel_ei_greedy_get_vector, max_err_ind, data=distributed_data)
             new_dof = new_vec.amax()[0][0]
             if new_dof in interpolation_dofs:
-                logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
+                logger.info('DOF {} selected twice for interpolation! Stopping extension loop.'.format(new_dof))
                 break
             new_dof_value = new_vec.dofs([new_dof])[0, 0]
             if new_dof_value == 0.:

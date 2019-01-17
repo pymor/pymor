@@ -28,7 +28,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                              num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                              grid=None, boundary_info=None, preassemble=True):
-    """Discretizes an |StationaryProblem| using the finite volume method.
+    """Discretizes a |StationaryProblem| using the finite volume method.
 
     Parameters
     ----------
@@ -74,6 +74,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
             :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
+            :unassembled_d:  In case `preassemble` is `True`, the generated |Discretization|
+                             before preassembling operators.
     """
 
     assert isinstance(analytical_problem, StationaryProblem)
@@ -209,7 +211,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
                                num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                                grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
                                preassemble=True):
-    """Discretizes an |InstationaryProblem| with an |StationaryProblem| as stationary part
+    """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
     using the finite volume method.
 
     Parameters
@@ -266,6 +268,8 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
             :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
+            :unassembled_d:  In case `preassemble` is `True`, the generated |Discretization|
+                             before preassembling operators.
     """
 
     assert isinstance(analytical_problem, InstationaryProblem)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -226,7 +225,7 @@ class ProjectRules(RuleTable):
 
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):
-    """Project given already projected |Operator| to a subbasis.
+    """Project already projected |Operator| to a subbasis.
 
     The purpose of this method is to further project an operator that has been
     obtained through :meth:`project` to subbases of the original projection bases, i.e. ::
