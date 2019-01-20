@@ -58,7 +58,6 @@ If you use pyMOR for academic work, please consider citing our
 	SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
 
 
-
 Installation via pip
 --------------------
 
@@ -126,6 +125,14 @@ by executing:
     make doc
 
 This will generate HTML documentation in `docs/_build/html`.
+
+
+Useful Links
+------------
+
+* [Latest Changelog](https://pymor.readthedocs.io/en/latest/release_notes.html)
+* [Getting Started](https://pymor.readthedocs.io/en/latest/getting_started.html)
+* [Dependencies](requirements.txt)
 
 
 External PDE solvers
