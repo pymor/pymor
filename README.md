@@ -54,7 +54,7 @@ If you use pyMOR for academic work, please consider citing our
 
 	R. Milk, S. Rave, F. Schindler
 	pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
-	SIAM J. Sci. Comput., 38(5), pp. S194-S216, 2016
+	SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
 
 
 
@@ -147,7 +147,7 @@ using [Boost.Python](http://www.boost.org/) can be found
 [here](https://github.com/pymor/dune-burgers-demo). Moreover,
 we provide bindings for the following solver libraries:
 
-* [FEniCS](http://fenicsproject.org)
+* [FEniCS](https://fenicsproject.org)
 
     MPI-compatible wrapper classes for dolfin linear algebra data structures are
     shipped with pyMOR (`pymor.bindings.fenics`).
