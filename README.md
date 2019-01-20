@@ -170,6 +170,21 @@ Do not hesitate to contact
 need help with the integration of your PDE solver.
 
 
+External Matrix Equation Solvers
+--------------------------------
+
+pyMOR also integrates matrix equation solvers for system-theoretic methods.
+The following solver libraries are included:
+
+* [M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess)
+
+    The Matrix Equation Sparse Solver library is intended for solving large sparse matrix equations.
+
+* [Slycot](https://github.com/python-control/Slycot)
+
+    Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT). 
+
+
 Setting up an Environment for pyMOR Development
 -----------------------------------------------
 
