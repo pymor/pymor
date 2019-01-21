@@ -36,11 +36,10 @@ import_names = {'ipython': 'IPython',
                 'pytest-cov': 'pytest_cov',
                 'pytest-flakes': 'pytest_flakes',
                 'pytest-pep8': 'pytest_pep8',
-                _pymess('1.0.0', 3, 5, False): 'pymess',
                 _pymess('1.0.0', 3, 6, False): 'pymess',
                 _pymess('1.0.0', 3, 7, False): 'pymess',
                 'pyopengl': 'OpenGL'}
-optional_requirements_file_only = [_pymess('1.0.0', 3, 5),_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7),
+optional_requirements_file_only = [_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7),
                     'slycot>=0.3.3', 'mpi4py']
 
 
