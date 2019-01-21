@@ -77,7 +77,7 @@ class NumpyVectorArray(VectorArrayInterface):
             ind = {ind if 0 <= ind else self._len + ind}
         else:
             l = self._len
-            ind = set(i if 0 <= i else l+i for i in ind)
+            ind = {i if 0 <= i else l+i for i in ind}
         remaining = sorted(set(range(len(self))) - ind)
         self._array = self._array[remaining]
         self._len = len(self._array)
