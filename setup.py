@@ -166,7 +166,6 @@ def setup_package():
         extras_require = dependencies.extras(),
         classifiers=['Development Status :: 4 - Beta',
                      'License :: OSI Approved :: BSD License',
-                     'Programming Language :: Python :: 3.5',
                      'Programming Language :: Python :: 3.6',
                      'Programming Language :: Python :: 3.7',
                      'Intended Audience :: Science/Research',
