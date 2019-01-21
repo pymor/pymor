@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
-class Counter(object):
+class Counter:
 
     def __init__(self, start=0):
         self.value = start

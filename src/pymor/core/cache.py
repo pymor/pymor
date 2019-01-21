@@ -89,7 +89,7 @@ def _safe_filename(old_name):
     return ''.join(x for x in old_name if (x.isalnum() or x in '._- '))
 
 
-class CacheRegion(object):
+class CacheRegion:
     """Base class for all pyMOR cache regions.
 
     Attributes

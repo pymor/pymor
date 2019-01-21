@@ -150,8 +150,8 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
 
 else:
 
-    class Matplotlib1DWidget(object):
+    class Matplotlib1DWidget:
         pass
 
-    class MatplotlibPatchWidget(object):
+    class MatplotlibPatchWidget:
         pass

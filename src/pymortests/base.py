@@ -18,7 +18,7 @@ from pymor.operators.basic import OperatorBase
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class TestInterface(object):
+class TestInterface:
     logger = logger.getLogger(__name__)
 
 

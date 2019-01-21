@@ -470,7 +470,7 @@ class AdaptiveSampleSet(BasicInterface):
             self._vertex_to_id_map[v] = v_id
         return v_id
 
-    class Element(object):
+    class Element:
         __slots__ = ['level', 'center', 'vertex_ids', 'children', 'creation_time']
 
         def __init__(self, level, center, sample_set):

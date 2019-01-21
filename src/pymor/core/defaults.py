@@ -75,7 +75,7 @@ from pymor.tools.table import format_table
 _default_container = None
 
 
-class DefaultContainer(object):
+class DefaultContainer:
     """Internal singleton class holding all default values defined in pyMOR.
 
     Not to be used directly.

@@ -306,7 +306,7 @@ class Parameter(dict):
         return dict(self)
 
 
-class Parametric(object):
+class Parametric:
     """Mixin class for objects representing mathematical entities depending on a |Parameter|.
 
     Each such object has a |ParameterType| stored in the :attr:`parameter_type` attribute,

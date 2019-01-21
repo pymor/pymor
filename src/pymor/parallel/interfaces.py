@@ -186,7 +186,7 @@ class WorkerPoolInterface(BasicInterface):
         pass
 
 
-class RemoteObjectInterface(object):
+class RemoteObjectInterface:
     """Handle to remote data on the workers of a |WorkerPool|.
 
     See documentation of :class:`WorkerPoolInterface` for usage
