@@ -183,7 +183,7 @@ External Matrix Equation Solvers
 
 pyMOR also provides bindings to matrix equation solvers (in `pymor.bindings`),
 which are needed for the system-theoretic methods and need to be installed
-separately. The following solver libraries are included:
+separately. Bindings for the following solver libraries are included:
 
 * [Py-M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess)
 
