@@ -250,7 +250,7 @@ class ListVectorArray(VectorArrayInterface):
         if hasattr(ind, '__len__'):
             thelist = self._list
             l = len(thelist)
-            remaining = sorted(set(range(l)) - set(i if 0 <= i else l+i for i in ind))
+            remaining = sorted(set(range(l)) - {i if 0 <= i else l+i for i in ind})
             self._list = [thelist[i] for i in remaining]
         else:
             del self._list[ind]

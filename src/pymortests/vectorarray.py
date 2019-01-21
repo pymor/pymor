@@ -25,7 +25,7 @@ def ind_complement(v, ind):
     elif type(ind) is slice:
         ind = range(*ind.indices(len(v)))
     l = len(v)
-    return sorted(set(range(l)) - set(i if i >= 0 else l+i for i in ind))
+    return sorted(set(range(l)) - {i if i >= 0 else l+i for i in ind})
 
 
 def indexed(v, ind):
