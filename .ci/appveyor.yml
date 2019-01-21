@@ -3,16 +3,16 @@ environment:
     # Pre-installed Python versions, which Appveyor may upgrade to
     # a later point release.
     # See: http://www.appveyor.com/docs/installed-software#python
-    - PYTHON_VERSION: "3.5" # currently 3.5.1
+    - PYTHON_VERSION: "3.6" # currently 3.5.1
       PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda35"
+      CONDA: "C:\\Miniconda36"
       MARKER: "not grid"
       QT_API: "pyqt5"
       ALLOW_FAIL: true
 
-    - PYTHON_VERSION: "3.5" # currently 3.5.1
+    - PYTHON_VERSION: "3.6" # currently 3.5.1
       PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda35"
+      CONDA: "C:\\Miniconda36"
       MARKER: "grid"
       QT_API: "pyqt5"
       ALLOW_FAIL: true

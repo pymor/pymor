@@ -19,7 +19,7 @@ rm -rf ~/.ssh
 set -x
 mkdir -p ${BUILDER_WHEELHOUSE}
 git clone git@github.com:pymor/wheels.pymor.org ${REPODIR}
-for py in 3.5 3.6 3.7 ; do
+for py in 3.6 3.7 ; do
     BUILDER_IMAGE=pymor/wheelbuilder:py${py}
     git clean -xdf
     docker pull ${BUILDER_IMAGE} 1> /dev/null
@@ -33,7 +33,7 @@ for os in debian_stable debian_testing centos_7 ; do
     docker build --build-arg tag=${os} ${BUILDER_WHEELHOUSE}
 done
 
-for py in 3.5 3.6 3.7 ; do
+for py in 3.6 3.7 ; do
     ${REPODIR}/add_wheels.py ${TRAVIS_BRANCH} ${BUILDER_WHEELHOUSE}/pymor*manylinux*.whl
 done
 

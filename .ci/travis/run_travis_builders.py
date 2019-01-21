@@ -39,7 +39,7 @@ def _run_config(tm, clone_dir, commit):
         return True, ''
 
 
-docker_tags = env.list('PYMOR_DOCKER_TAG', default=['3.5', '3.6', '3.7-rc'])
+docker_tags = env.list('PYMOR_DOCKER_TAG', default=['3.6', '3.7'])
 pytest_marker = env.list('PYMOR_PYTEST_MARKER', default=["None", 'PIP_ONLY', 'MPI'])
 commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
 variations = list(product(docker_tags, pytest_marker))
