@@ -181,16 +181,17 @@ need help with the integration of your PDE solver.
 External Matrix Equation Solvers
 --------------------------------
 
-pyMOR also integrates matrix equation solvers for system-theoretic methods.
-The following solver libraries are included:
+pyMOR also provides bindings to matrix equation solvers (in `pymor.bindings`),
+which are needed for the system-theoretic methods and need to be installed
+separately. The following solver libraries are included:
 
-* [M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess)
+* [Py-M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess)
 
-    The Matrix Equation Sparse Solver library is intended for solving large sparse matrix equations.
+    The Matrix Equation Sparse Solver library is intended for solving large sparse matrix equations (`pymor.bindings.pymess`).
 
 * [Slycot](https://github.com/python-control/Slycot)
 
-    Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT). 
+    Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also used for Hardy norm computations (`pymor.bindings.slycot`). 
 
 
 Setting up an Environment for pyMOR Development
