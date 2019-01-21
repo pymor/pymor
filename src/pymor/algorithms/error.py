@@ -211,10 +211,10 @@ def reduction_error_analysis(rd, d, reductor,
         for name, norm, norm_mu, error, error_mu in zip(error_norm_names,
                                                         max_norms, max_norm_mus,
                                                         max_errors[:, -1], max_error_mus[:, -1]):
-            summary.append(('maximum {}-norm'.format(name),
-                            '{:.7e} (mu = {})'.format(norm, error_mu)))
-            summary.append(('maximum {}-error'.format(name),
-                            '{:.7e} (mu = {})'.format(error, error_mu)))
+            summary.append((f'maximum {name}-norm',
+                            f'{norm:.7e} (mu = {error_mu})'))
+            summary.append((f'maximum {name}-error',
+                            f'{error:.7e} (mu = {error_mu})'))
         result['error_norm_names'] = error_norm_names
 
     if estimator:
@@ -247,8 +247,8 @@ def reduction_error_analysis(rd, d, reductor,
         result['max_custom_values'] = max_custom_values = np.max(custom_values, axis=0)
         result['max_custom_values_mus'] = max_custom_values_mus = test_mus[np.argmax(custom_values, axis=0)]
         for i, (value, mu) in enumerate(zip(max_custom_values[:, -1], max_custom_values_mus[:, -1])):
-            summary.append(('maximum custom value {}'.format(i),
-                            '{:.7e} (mu = {})'.format(value, mu)))
+            summary.append((f'maximum custom value {i}',
+                            f'{value:.7e} (mu = {mu})'))
 
     toc = time.time()
     result['time'] = toc - tic

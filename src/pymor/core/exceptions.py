@@ -48,7 +48,7 @@ class GmshError(Exception):
 class ImageCollectionError(Exception):
     """Is raised when a pymor.algorithms.image.estimate_image fails for given operator."""
     def __init__(self, op):
-        super().__init__('Cannot estimage image for {}'.format(op))
+        super().__init__(f'Cannot estimage image for {op}')
         self.op = op
 
 
@@ -65,5 +65,5 @@ class RuleNotMatchingError(NotImplementedError):
 
 class NoMatchingRuleError(NotImplementedError):
     def __init__(self, obj):
-        super().__init__('No rule could be applied to {}'.format(obj))
+        super().__init__(f'No rule could be applied to {obj}')
         self.obj = obj

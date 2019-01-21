@@ -78,5 +78,5 @@ for mu in d.parameter_space.sample_randomly(10):
 # visualize maximum error solution
 U_RB = (reductor.reconstruct(rd.solve(mu_max)))
 U = d.solve(mu_max)
-d.visualize((U_RB, U), title='mu = {}'.format(mu), legend=('reduced', 'detailed'))
-d.visualize((U-U_RB), title='mu = {}'.format(mu), legend=('error'))
+d.visualize((U_RB, U), title=f'mu = {mu}', legend=('reduced', 'detailed'))
+d.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))

@@ -82,7 +82,7 @@ _PACKAGES = {
 class Config:
 
     def __init__(self):
-        self.PYTHON_VERSION = '{}.{}.{}'.format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
+        self.PYTHON_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}'
 
     @property
     def version(self):

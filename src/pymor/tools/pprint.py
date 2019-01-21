@@ -24,13 +24,13 @@ def format_array(array, compact_print=False):
     '''
     def format_element(e):
         if e > 1e15:
-            return '%(n).2e' % {'n': e}
+            return f'{e:.2e}'
         elif e == np.floor(e):
-            return '%(n).0f' % {'n': e}
+            return f'{e:.0f}'
         elif e - np.floor(e) > 0.01 or e < 1000:
-            return '%(n).2f' % {'n': e}
+            return f'{e:.2f}'
         else:
-            return '%(n).2e' % {'n': e}
+            return f'{e:.2e}'
 
     if array.ndim == 0:
         return str(array.item())

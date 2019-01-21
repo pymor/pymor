@@ -423,8 +423,8 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return self.dim == 1
 
     def __repr__(self):
-        return 'NumpyVectorSpace({})'.format(self.dim) if self.id is None \
-            else 'NumpyVectorSpace({}, {})'.format(self.dim, self.id)
+        return f'NumpyVectorSpace({self.dim})' if self.id is None \
+            else f'NumpyVectorSpace({self.dim}, {self.id})'
 
 
 class NumpyVectorArrayView(NumpyVectorArray):

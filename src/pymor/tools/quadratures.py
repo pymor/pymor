@@ -19,10 +19,10 @@ class GaussQuadratures(object):
         assert order is not None or npoints is not None, 'must specify "order" or "npoints"'
         assert order is None or npoints is None, 'cannot specify "order" and "npoints"'
         if order is not None:
-            assert 0 <= order <= cls.order_map.size - 1, 'order {} not implmented'.format(order)
+            assert 0 <= order <= cls.order_map.size - 1, f'order {order} not implmented'
             p = cls.order_map[order]
         else:
-            assert 1 <= npoints <= cls.orders.size, 'not implemented with {} points'.format(npoints)
+            assert 1 <= npoints <= cls.orders.size, f'not implemented with {npoints} points'
             p = npoints - 1
         return p
 

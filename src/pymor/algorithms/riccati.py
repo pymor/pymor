@@ -124,7 +124,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     elif backend == 'pymess':
         from pymor.bindings.pymess import solve_ricc_lrcf as solve_ricc_impl
     else:
-        raise ValueError('Unknown solver backend ({}).'.format(backend))
+        raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
 
 
@@ -214,7 +214,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     elif backend == 'pymess':
         from pymor.bindings.pymess import solve_pos_ricc_lrcf as solve_ricc_impl
     else:
-        raise ValueError('Unknown solver backend ({}).'.format(backend))
+        raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
 
 

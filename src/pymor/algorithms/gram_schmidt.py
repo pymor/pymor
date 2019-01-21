@@ -60,7 +60,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
         initial_norm = A[i].norm(product)[0]
 
         if initial_norm < atol:
-            logger.info("Removing vector {} of norm {}".format(i, initial_norm))
+            logger.info(f"Removing vector {i} of norm {initial_norm}")
             remove.append(i)
             continue
 
@@ -77,7 +77,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
                 if first_iteration:
                     first_iteration = False
                 else:
-                    logger.info('Orthonormalizing vector {} again'.format(i))
+                    logger.info(f'Orthonormalizing vector {i} again')
 
                 # orthogonalize to all vectors left
                 for j in range(i):
@@ -91,7 +91,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
 
                 # remove vector if it got too small:
                 if norm / initial_norm < rtol:
-                    logger.info("Removing linear dependent vector {}".format(i))
+                    logger.info(f"Removing linear dependent vector {i}")
                     remove.append(i)
                     break
 
@@ -107,7 +107,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
-                raise AccuracyError('result not orthogonal (max err={})'.format(err))
+                raise AccuracyError(f'result not orthogonal (max err={err})')
 
     return A
 
@@ -169,7 +169,7 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
                 if first_iteration:
                     first_iteration = False
                 else:
-                    logger.info('Projecting vector V[{}] again'.format(i))
+                    logger.info(f'Projecting vector V[{i}] again')
 
                 for j in range(i):
                     # project by (I - V[j] * W[j]^T * E)
@@ -197,7 +197,7 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
                 if first_iteration:
                     first_iteration = False
                 else:
-                    logger.info('Projecting vector W[{}] again'.format(i))
+                    logger.info(f'Projecting vector W[{i}] again')
 
                 for j in range(i):
                     # project by (I - W[j] * V[j]^T * E)
@@ -220,6 +220,6 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
-                raise AccuracyError('Result not biorthogonal (max err={})'.format(err))
+                raise AccuracyError(f'Result not biorthogonal (max err={err})')
 
     return V, W

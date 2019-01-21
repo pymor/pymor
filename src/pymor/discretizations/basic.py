@@ -51,8 +51,8 @@ class DiscretizationBase(DiscretizationInterface):
 
         if products:
             for k, v in products.items():
-                setattr(self, '{}_product'.format(k), v)
-                setattr(self, '{}_norm'.format(k), induced_norm(v))
+                setattr(self, f'{k}_product', v)
+                setattr(self, f'{k}_norm', induced_norm(v))
 
         self.build_parameter_type(*operators.values())
 
@@ -196,7 +196,7 @@ class StationaryDiscretization(DiscretizationBase):
 
         # explicitly checking if logging is disabled saves the str(mu) call
         if not self.logging_disabled:
-            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
+            self.logger.info(f'Solving {self.name} for {mu} ...')
 
         return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
@@ -336,7 +336,7 @@ class InstationaryDiscretization(DiscretizationBase):
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
-            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
+            self.logger.info(f'Solving {self.name} for {mu} ...')
 
         mu['_t'] = 0
         U0 = self.initial_data.as_range_array(mu)

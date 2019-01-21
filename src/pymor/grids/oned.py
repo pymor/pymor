@@ -57,7 +57,7 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
         )
 
     def size(self, codim=0):
-        assert 0 <= codim <= 1, 'codim has to be between 0 and {}!'.format(self.dim)
+        assert 0 <= codim <= 1, f'codim has to be between 0 and {self.dim}!'
         return self._sizes[codim]
 
     def subentities(self, codim, subentity_codim):

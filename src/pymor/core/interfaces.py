@@ -366,7 +366,7 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
         if not self._locked or key[0] == '_':
             return object.__setattr__(self, key, value)
         else:
-            raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
+            raise ConstError(f'Changing "{key}" is not allowed in locked "{self.__class__}"')
 
     def generate_sid(self, debug=False):
         """Generate a unique |state id| for the given object.
@@ -494,7 +494,7 @@ class _SIDGenerator(object):
         sid = hashlib.sha256(dumps(state, protocol=-1)).hexdigest()
 
         if debug:
-            print('SID: {}, reference cycles: {}'.format(sid, self.has_cycles))
+            print(f'SID: {sid}, reference cycles: {self.has_cycles}')
             print()
             print()
 
@@ -547,10 +547,10 @@ class _SIDGenerator(object):
                     return (t, obj.sid)
                 except _SIDGenerationRecursionError:
                     self.has_cycles = True
-                    self.logger.debug('{}: contains cycles of immutable objects, consider refactoring'.format(obj.name))
+                    self.logger.debug(f'{obj.name}: contains cycles of immutable objects, consider refactoring')
 
             if obj._implements_reduce:
-                self.logger.debug('{}: __reduce__ is implemented, not using sid_ignore'.format(obj.name))
+                self.logger.debug(f'{obj.name}: __reduce__ is implemented, not using sid_ignore')
                 return self.handle_reduce_value(obj, t, obj.__reduce_ex__(HIGHEST_PROTOCOL), first_obj)
             else:
                 try:
@@ -579,18 +579,18 @@ class _SIDGenerator(object):
                 if reduce:
                     rv = reduce()
                 else:
-                    raise SIDGenerationError('Cannot handle {} of type {}'.format(obj, t.__name__))
+                    raise SIDGenerationError(f'Cannot handle {obj} of type {t.__name__}')
 
         return self.handle_reduce_value(obj, t, rv, first_obj)
 
     def handle_reduce_value(self, obj, t, rv, first_obj):
         if type(rv) is str:
             raise SIDGenerationError('__reduce__ methods returning a string are currently not handled '
-                                     + '(object {} of type {})'.format(obj, t.__name__))
+                                     + f'(object {obj} of type {t.__name__})')
 
         if type(rv) is not tuple or not (2 <= len(rv) <= 5):
             raise SIDGenerationError('__reduce__ return value malformed ' +
-                                     '(object {} of type {})'.format(obj, t.__name__))
+                                     f'(object {obj} of type {t.__name__})')
 
         rv = rv + (None,) * (5 - len(rv))
         func, args, state, listitems, dictitems = rv

@@ -125,7 +125,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
                 U = snapshots(node)
             snap_count = len(U)
 
-        with logger.block('Processing node {}'.format(node)):
+        with logger.block(f'Processing node {node}'):
             eps = local_eps(node, snap_count, len(U))
             if eps:
                 modes, svals = await executor.submit(pod_method, U, eps, node == tree.root, product)

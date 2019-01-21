@@ -105,7 +105,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     # diffusion part
     if isinstance(p.diffusion, LincombFunction):
         Li += [DiffusionOperator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
-                                 name='diffusion_{}'.format(i))
+                                 name=f'diffusion_{i}')
                for i, df in enumerate(p.diffusion.functions)]
         coefficients += list(p.diffusion.coefficients)
     elif p.diffusion is not None:
@@ -116,7 +116,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     # advection part
     if isinstance(p.advection, LincombFunction):
         Li += [AdvectionOperator(grid, boundary_info, advection_function=af, dirichlet_clear_diag=True,
-                                 name='advection_{}'.format(i))
+                                 name=f'advection_{i}')
                for i, af in enumerate(p.advection.functions)]
         coefficients += list(p.advection.coefficients)
     elif p.advection is not None:
@@ -127,7 +127,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     # reaction part
     if isinstance(p.reaction, LincombFunction):
         Li += [ReactionOperator(grid, boundary_info, coefficient_function=rf, dirichlet_clear_diag=True,
-                                name='reaction_{}'.format(i))
+                                name=f'reaction_{i}')
                for i, rf in enumerate(p.reaction.functions)]
         coefficients += list(p.reaction.coefficients)
     elif p.reaction is not None:
@@ -192,7 +192,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
     d  = StationaryDiscretization(L, F, operators=functionals, products=products, visualizer=visualizer,
-                                  parameter_space=parameter_space, name='{}_CG'.format(p.name))
+                                  parameter_space=parameter_space, name=f'{p.name}_CG')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
@@ -285,7 +285,7 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
                                    time_stepper=time_stepper,
                                    parameter_space=p.parameter_space,
                                    visualizer=d.visualizer,
-                                   num_values=num_values, name='{}_CG'.format(p.name))
+                                   num_values=num_values, name=f'{p.name}_CG')
 
     if preassemble:
         data['unassembled_d'] = d

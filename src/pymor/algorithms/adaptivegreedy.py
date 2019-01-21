@@ -154,13 +154,13 @@ def adaptive_greedy(d, reductor, parameter_space=None,
                     errors = estimate(sample_set.vertex_mus)
                 max_err_ind = np.argmax(errors)
                 max_err, max_err_mu = errors[max_err_ind], sample_set.vertex_mus[max_err_ind]
-                logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
+                logger.info(f'Maximum error after {extensions} extensions: {max_err} (mu = {max_err_mu})')
 
                 # estimate on validation set
                 val_errors = estimate(validation_set)
                 max_val_err_ind = np.argmax(val_errors)
                 max_val_err, max_val_err_mu = val_errors[max_val_err_ind], validation_set[max_val_err_ind]
-                logger.info('Maximum validation error: {}'.format(max_val_err))
+                logger.info(f'Maximum validation error: {max_val_err}')
                 logger.info('Validation error to training error ratio: {:.3e}'.format(max_val_err / max_err))
 
                 if max_val_err >= max_err * rho:  # overfitting?
@@ -225,7 +225,7 @@ def adaptive_greedy(d, reductor, parameter_space=None,
 
                     logger.info('New training set size: {}. New validation set size: {}'
                                 .format(len(sample_set.vertex_mus), len(validation_set)))
-                    logger.info('Number of refinements: {}'.format(sample_set.refinement_count))
+                    logger.info(f'Number of refinements: {sample_set.refinement_count}')
                     logger.info('')
                 else:
                     break  # no overfitting, leave the refinement loop
@@ -239,11 +239,11 @@ def adaptive_greedy(d, reductor, parameter_space=None,
 
             # break if traget error reached
             if target_error is not None and max_err <= target_error:
-                logger.info('Reached maximal error on snapshots of {} <= {}'.format(max_err, target_error))
+                logger.info(f'Reached maximal error on snapshots of {max_err} <= {target_error}')
                 break
 
             # basis extension
-            with logger.block('Computing solution snapshot for mu = {} ...'.format(max_err_mu)):
+            with logger.block(f'Computing solution snapshot for mu = {max_err_mu} ...'):
                 U = d.solve(max_err_mu)
             with logger.block('Extending basis with solution snapshot ...'):
                 try:
@@ -257,13 +257,13 @@ def adaptive_greedy(d, reductor, parameter_space=None,
 
             # break if prescribed basis size reached
             if max_extensions is not None and extensions >= max_extensions:
-                logger.info('Maximum number of {} extensions reached.'.format(max_extensions))
+                logger.info(f'Maximum number of {max_extensions} extensions reached.')
                 with logger.block('Reducing once more ...'):
                     rd = reductor.reduce()
                 break
 
     tictoc = time.time() - tic
-    logger.info('Greedy search took {} seconds'.format(tictoc))
+    logger.info(f'Greedy search took {tictoc} seconds')
     return {'rd': rd,
             'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'max_val_errs': max_val_errs, 'max_val_err_mus': max_val_err_mus,

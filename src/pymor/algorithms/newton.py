@@ -93,17 +93,17 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     residual = rhs - operator.apply(U, mu=mu)
 
     err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
-    logger.info('      Initial Residual: {:5e}'.format(err))
+    logger.info(f'      Initial Residual: {err:5e}')
 
     iteration = 0
     error_sequence = [err]
     while True:
         if iteration >= miniter:
             if err <= atol:
-                logger.info('Absolute limit of {} reached. Stopping.'.format(atol))
+                logger.info(f'Absolute limit of {atol} reached. Stopping.')
                 break
             if err/error_sequence[0] <= rtol:
-                logger.info('Prescribed total reduction of {} reached. Stopping.'.format(rtol))
+                logger.info(f'Prescribed total reduction of {rtol} reached. Stopping.')
                 break
             if (len(error_sequence) >= stagnation_window + 1 and
                     err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):

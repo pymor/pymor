@@ -127,7 +127,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
     elif backend == 'lradi':
         from pymor.algorithms.lradi import solve_lyap_lrcf as solve_lyap_impl
     else:
-        raise ValueError('Unknown solver backend ({}).'.format(backend))
+        raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_lyap_impl(A, E, B, trans=trans, options=options)
 
 
@@ -221,7 +221,7 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
     elif backend == 'pymess':
         from pymor.bindings.pymess import solve_lyap_dense as solve_lyap_impl
     else:
-        raise ValueError('Unknown solver backend ({}).'.format(backend))
+        raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_lyap_impl(A, E, B, trans, options=options)
 
 

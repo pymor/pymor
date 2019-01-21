@@ -14,7 +14,7 @@ class MPIPool(WorkerPoolBase):
 
     def __init__(self):
         super().__init__()
-        self.logger.info('Connected to {} ranks'.format(mpi.size))
+        self.logger.info(f'Connected to {mpi.size} ranks')
         self._payload = mpi.call(mpi.function_call_manage, _setup_worker)
 
     def __del__(self):

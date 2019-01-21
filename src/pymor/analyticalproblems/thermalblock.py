@@ -45,7 +45,7 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
         return ProjectionParameterFunctional(component_name='diffusion',
                                              component_shape=(num_blocks[1], num_blocks[0]),
                                              coordinates=(num_blocks[1] - iy - 1, ix),
-                                             name='diffusion_{}_{}'.format(ix, iy))
+                                             name=f'diffusion_{ix}_{iy}')
 
     def diffusion_function_factory(ix, iy):
         if ix + 1 < num_blocks[0]:
@@ -56,9 +56,9 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
             Y = '(x[..., 1] >= iy * dy) * (x[..., 1] < (iy + 1) * dy)'
         else:
             Y = '(x[..., 1] >= iy * dy)'
-        return ExpressionFunction('{} * {} * 1.'.format(X, Y),
+        return ExpressionFunction(f'{X} * {Y} * 1.',
                                   2, (), {}, {'ix': ix, 'iy': iy, 'dx': 1. / num_blocks[0], 'dy': 1. / num_blocks[1]},
-                                  name='diffusion_{}_{}'.format(ix, iy))
+                                  name=f'diffusion_{ix}_{iy}')
 
     return StationaryProblem(
 
@@ -74,6 +74,6 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
 
         parameter_space=CubicParameterSpace({'diffusion': (num_blocks[1], num_blocks[0])}, *parameter_range),
 
-        name='ThermalBlock({})'.format(num_blocks)
+        name=f'ThermalBlock({num_blocks})'
 
     )

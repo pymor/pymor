@@ -113,7 +113,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
         logger.info('Checking orthonormality ...')
         if not float_cmp_all(POD.inner(POD, product), np.eye(len(POD)), atol=check_tol, rtol=0.):
             err = np.max(np.abs(POD.inner(POD, product) - np.eye(len(POD))))
-            raise AccuracyError('result not orthogonal (max err={})'.format(err))
+            raise AccuracyError(f'result not orthogonal (max err={err})')
         if len(POD) < len(EVECS):
             raise AccuracyError('additional orthonormalization removed basis vectors')
 

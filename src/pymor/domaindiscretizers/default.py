@@ -155,7 +155,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
     if not isinstance(domain_description,
                       (RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain, PolygonalDomain)):
-        raise NotImplementedError('I do not know how to discretize {}'.format(domain_description))
+        raise NotImplementedError(f'I do not know how to discretize {domain_description}')
     if isinstance(domain_description, RectDomain):
         grid_type = grid_type or TriaGrid
         if grid_type not in (TriaGrid, RectGrid):

@@ -87,7 +87,7 @@ class PatchVisualizer(BasicInterface):
                 write_vtk(self.grid, U, filename, codim=self.codim)
             else:
                 for i, u in enumerate(U):
-                    write_vtk(self.grid, u, '{}-{}'.format(filename, i), codim=self.codim)
+                    write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
         else:
             if self.backend == 'jupyter':
                 from pymor.gui.jupyter import visualize_patch

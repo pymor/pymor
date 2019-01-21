@@ -321,7 +321,7 @@ class BoundaryInfoInterface(CacheableInterface):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is
         associated to the boundary type `boundary_type`.
         """
-        raise ValueError('Has no boundary_type "{}"'.format(boundary_type))
+        raise ValueError(f'Has no boundary_type "{boundary_type}"')
 
     def unique_boundary_type_mask(self, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is

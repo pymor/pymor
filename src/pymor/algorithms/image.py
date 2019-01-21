@@ -198,7 +198,7 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
         ind_range = range(-1, len(domain)) if operators else [-1]
 
     for i in ind_range:
-        logger.info('Estimating image for basis vector {} ...'.format(i))
+        logger.info(f'Estimating image for basis vector {i} ...')
         if i == -1:
             new_image = estimate_image(operators, vectors, None, extends=False,
                                        orthonormalize=False, product=product,

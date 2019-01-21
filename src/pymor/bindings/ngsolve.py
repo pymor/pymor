@@ -172,7 +172,7 @@ if config.HAVE_NGSOLVE:
                 raise NotImplementedError
 
             if legend is None:
-                legend = ['VectorArray{}'.format(i) for i in range(len(U))]
+                legend = [f'VectorArray{i}' for i in range(len(U))]
             if isinstance(legend, str):
                 legend = [legend]
             assert len(legend) == len(U)

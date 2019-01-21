@@ -118,7 +118,7 @@ def check_results(test_name, params, results, *args):
 
     basepath = resource_filename('pymortests', 'testdata/check_results')
     arg_id = hashlib.sha1(params.encode()).hexdigest()
-    filename = resource_filename('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id))
+    filename = resource_filename('pymortests', f'testdata/check_results/{test_name}/{arg_id}')
     testname_dir = os.path.join(basepath, test_name)
 
     def _dump_results(fn, res):
@@ -128,7 +128,7 @@ def check_results(test_name, params, results, *args):
             dump(res, f, protocol=2)
 
     try:
-        with resource_stream('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id)) as f:
+        with resource_stream('pymortests', f'testdata/check_results/{test_name}/{arg_id}') as f:
             f.readline()
             old_results = load(f)
     except FileNotFoundError:

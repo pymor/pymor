@@ -94,7 +94,7 @@ class new_ipcluster_pool(BasicInterface):
                 raise IOError('IPython cluster engines failed to start')
             wait = min(waited, timeout - waited)
             if wait > 0:
-                self.logger.info('Waiting {} more seconds for engines to start ...'.format(wait))
+                self.logger.info(f'Waiting {wait} more seconds for engines to start ...')
                 time.sleep(wait)
         else:
             running = len(client)

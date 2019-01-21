@@ -1134,5 +1134,5 @@ class InducedNorm(ImmutableInterface, Parametric):
             norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - self.tol),
                                     0, norm_squared)
         if self.raise_negative and np.any(norm_squared < 0):
-            raise ValueError('norm is negative (square = {})'.format(norm_squared))
+            raise ValueError(f'norm is negative (square = {norm_squared})')
         return np.sqrt(norm_squared)
