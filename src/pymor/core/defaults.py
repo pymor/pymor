@@ -110,14 +110,14 @@ Defaults
         for n in args:
             p = params.get(n, None)
             if p is None:
-                raise ValueError("Decorated function has no argument '{}'".format(n))
+                raise ValueError(f"Decorated function has no argument '{n}'")
             if p.default is p.empty:
-                raise ValueError("Decorated function has no default for argument '{}'".format(n))
+                raise ValueError(f"Decorated function has no default for argument '{n}'")
             defaultsdict[n] = p.default
 
         path = func.__module__ + '.' + getattr(func, '__qualname__', func.__name__)
         if path in self.registered_functions:
-            raise ValueError('Function with name {} already registered for default values!'.format(path))
+            raise ValueError(f'Function with name {path} already registered for default values!')
         self.registered_functions.add(path)
         for k, v in defaultsdict.items():
             self._data[path + '.' + k]['func'] = func
@@ -428,7 +428,7 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
     try:
         _default_container.update(env['d'], type='file')
     except KeyError as e:
-        raise KeyError('Error loading defaults from file. Key {} does not correspond to a default'.format(e))
+        raise KeyError(f'Error loading defaults from file. Key {e} does not correspond to a default')
 
 
 def set_defaults(defaults):
@@ -451,7 +451,7 @@ def set_defaults(defaults):
     try:
         _default_container.update(defaults, type='user')
     except KeyError as e:
-        raise KeyError('Error setting defaults. Key {} does not correspond to a default'.format(e))
+        raise KeyError(f'Error setting defaults. Key {e} does not correspond to a default')
 
 
 def defaults_sid():

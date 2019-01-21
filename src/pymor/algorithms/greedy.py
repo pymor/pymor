@@ -74,7 +74,7 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
     samples = list(samples)
     sample_count = len(samples)
     extension_params = extension_params or {}
-    logger.info('Started greedy search on {} samples'.format(sample_count))
+    logger.info(f'Started greedy search on {sample_count} samples')
     if pool is None or pool is dummy_pool:
         pool = dummy_pool
     else:
@@ -116,17 +116,17 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
 
             max_errs.append(max_err)
             max_err_mus.append(max_err_mu)
-            logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
+            logger.info(f'Maximum error after {extensions} extensions: {max_err} (mu = {max_err_mu})')
 
             if atol is not None and max_err <= atol:
-                logger.info('Absolute error tolerance ({}) reached! Stoping extension loop.'.format(atol))
+                logger.info(f'Absolute error tolerance ({atol}) reached! Stoping extension loop.')
                 break
 
             if rtol is not None and max_err / max_errs[0] <= rtol:
-                logger.info('Relative error tolerance ({}) reached! Stoping extension loop.'.format(rtol))
+                logger.info(f'Relative error tolerance ({rtol}) reached! Stoping extension loop.')
                 break
 
-            with logger.block('Computing solution snapshot for mu = {} ...'.format(max_err_mu)):
+            with logger.block(f'Computing solution snapshot for mu = {max_err_mu} ...'):
                 U = d.solve(max_err_mu)
             with logger.block('Extending basis with solution snapshot ...'):
                 try:
@@ -139,13 +139,13 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
             logger.info('')
 
             if max_extensions is not None and extensions >= max_extensions:
-                logger.info('Maximum number of {} extensions reached.'.format(max_extensions))
+                logger.info(f'Maximum number of {max_extensions} extensions reached.')
                 with logger.block('Reducing once more ...'):
                     rd = reductor.reduce()
                 break
 
         tictoc = time.time() - tic
-        logger.info('Greedy search took {} seconds'.format(tictoc))
+        logger.info(f'Greedy search took {tictoc} seconds')
         return {'rd': rd,
                 'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
                 'time': tictoc}

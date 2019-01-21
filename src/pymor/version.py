@@ -91,7 +91,7 @@ def run_command(commands, args, cwd=None, verbose=False, hide_stderr=False,
             return None, None
     else:
         if verbose:
-            print("unable to find command, tried %s" % (commands,))
+            print(f"unable to find command, tried {commands}")
         return None, None
     stdout = p.communicate()[0].strip()
     if sys.version_info[0] >= 3:

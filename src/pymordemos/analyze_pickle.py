@@ -63,7 +63,7 @@ def analyze_pickle_histogram(args):
     mus = rd.parameter_space.sample_randomly(args['SAMPLES'])
     us = []
     for mu in mus:
-        print('Solving reduced for {} ... '.format(mu), end='')
+        print(f'Solving reduced for {mu} ... ', end='')
         sys.stdout.flush()
         us.append(rd.solve(mu))
         print('done')
@@ -73,7 +73,7 @@ def analyze_pickle_histogram(args):
     if hasattr(rd, 'estimate'):
         ests = []
         for u, mu in zip(us, mus):
-            print('Estimating error for {} ... '.format(mu), end='')
+            print(f'Estimating error for {mu} ... ', end='')
             sys.stdout.flush()
             ests.append(rd.estimate(u, mu=mu))
             print('done')
@@ -84,7 +84,7 @@ def analyze_pickle_histogram(args):
 
         errs = []
         for u, mu in zip(us, mus):
-            print('Calculating error for {} ... '.format(mu))
+            print(f'Calculating error for {mu} ... ')
             sys.stdout.flush()
             err = d.solve(mu) - reductor.reconstruct(u)
             if args['--error-norm']:
@@ -198,7 +198,7 @@ def analyze_pickle_convergence(args):
     T_ESTS = []
     for N in dims:
         rd = reductor.reduce(dim=N)
-        print('N = {:3} '.format(N), end='')
+        print(f'N = {N:3} ', end='')
         us = []
         print('solve ', end='')
         sys.stdout.flush()

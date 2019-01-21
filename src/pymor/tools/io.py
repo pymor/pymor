@@ -23,14 +23,14 @@ def _loadmat(path, key=None):
         try:
             return data[key]
         except KeyError:
-            raise IOError('"{}" not found in MATLAB file {}'.format(key, path))
+            raise IOError(f'"{key}" not found in MATLAB file {path}')
 
     data = [v for v in data.values() if isinstance(v, np.ndarray) or issparse(v)]
 
     if len(data) == 0:
-        raise IOError('No matrix data contained in MATLAB file {}'.format(path))
+        raise IOError(f'No matrix data contained in MATLAB file {path}')
     elif len(data) > 1:
-        raise IOError('More than one matrix object stored in MATLAB file {}'.format(path))
+        raise IOError(f'More than one matrix object stored in MATLAB file {path}')
     else:
         return data[0]
 
@@ -55,11 +55,11 @@ def _load(path, key=None):
             try:
                 matrix = data[key]
             except KeyError:
-                raise IOError('"{}" not found in NPY file {}'.format(key, path))
+                raise IOError(f'"{key}" not found in NPY file {path}')
         elif len(data) == 0:
-            raise IOError('No data contained in NPY file {}'.format(path))
+            raise IOError(f'No data contained in NPY file {path}')
         elif len(data) > 1:
-            raise IOError('More than one object stored in NPY file {} for key {}'.format(path, key))
+            raise IOError(f'More than one object stored in NPY file {path} for key {key}')
         else:
             matrix = next(iter(data.values()))
     else:
@@ -112,7 +112,7 @@ def load_matrix(path, key=None):
         except IOError:
             pass
 
-    raise IOError('Could not load file {} (key = {})'.format(path, key))
+    raise IOError(f'Could not load file {path} (key = {key})')
 
 
 @contextmanager

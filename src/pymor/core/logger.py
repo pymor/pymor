@@ -82,11 +82,11 @@ class ColoredFormatter(logging.Formatter):
         days, remainder = divmod(elapsed, 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
-        timestamp = '{}d {:02}:{:02}:{:02}'.format(days, hours, minutes, seconds) if days \
-            else '{:02}:{:02}:{:02}'.format(hours, minutes, seconds) if hours \
-            else '{:02}:{:02}'.format(minutes, seconds)
+        timestamp = f'{days}d {hours:02}:{minutes:02}:{seconds:02}' if days \
+            else f'{hours:02}:{minutes:02}:{seconds:02}' if hours \
+            else f'{minutes:02}:{seconds:02}'
         if not mpi.rank0:
-            timestamp = 'RANK{}|{}'.format(mpi.rank, timestamp)
+            timestamp = f'RANK{mpi.rank}|{timestamp}'
         if LAST_TIMESTAMP_LENGTH == 0:
             LAST_TIMESTAMP_LENGTH = len(timestamp)
 
@@ -94,14 +94,14 @@ class ColoredFormatter(logging.Formatter):
         if not record.msg:
             return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '|   ' * INDENT
         if record.levelname == 'BLOCK_TIME':
-            return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '|   ' * (INDENT - 1) + '\----------------- ' + record.msg
+            return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '|   ' * (INDENT - 1) + r'\----------------- ' + record.msg
 
         # handle length change of timestamp
         if len(timestamp) > LAST_TIMESTAMP_LENGTH:
             timestep_length = len(timestamp)
             if INDENT > 0:
                 for i in reversed(range(LAST_TIMESTAMP_LENGTH, timestep_length)):
-                    timestamp = ' ' * (i + 2) + '\   ' * INDENT + '\n' + timestamp
+                    timestamp = ' ' * (i + 2) + r'\   ' * INDENT + '\n' + timestamp
             LAST_TIMESTAMP_LENGTH = timestep_length
 
         indent = '|   ' * INDENT
@@ -130,7 +130,7 @@ class ColoredFormatter(logging.Formatter):
             else:
                 levelname = '|' + levelname + '|'
 
-        return '{} {}{}{}: {}'.format(timestamp, indent, levelname, path, msg)
+        return f'{timestamp} {indent}{levelname}{path}: {msg}'
 
 
 @defaults('filename', sid_ignore='filename')
@@ -270,7 +270,7 @@ class LogIndenter(object):
         if self.doit:
             if BLOCK_TIMINGS:
                 duration = time.time() - self.tic
-                self.logger.log(BLOCK_TIME, 'duration: {}s'.format(duration))
+                self.logger.log(BLOCK_TIME, f'duration: {duration}s')
             INDENT -= 1
 
 

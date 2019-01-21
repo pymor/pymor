@@ -55,9 +55,9 @@ if __name__ == '__main__':
     # Second-order system
     so_sys = SecondOrderSystem.from_matrices(M, E, K, B, Cp)
 
-    print('n = {}'.format(so_sys.n))
-    print('m = {}'.format(so_sys.m))
-    print('p = {}'.format(so_sys.p))
+    print(f'n = {so_sys.n}')
+    print(f'm = {so_sys.m}')
+    print(f'p = {so_sys.p}')
 
     poles = so_sys.poles()
     fig, ax = plt.subplots()

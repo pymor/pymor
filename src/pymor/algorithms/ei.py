@@ -121,7 +121,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         new_vec = U[max_err_ind].copy()
         new_dof = new_vec.amax()[0][0]
         if new_dof in interpolation_dofs:
-            logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
+            logger.info(f'DOF {new_dof} selected twice for interplation! Stopping extension loop.')
             break
         new_dof_value = new_vec.dofs([new_dof])[0, 0]
         if new_dof_value == 0.:
@@ -202,7 +202,7 @@ def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
     interpolation_matrix = np.zeros((0, 0))
 
     for i in range(len(collateral_basis)):
-        logger.info('Choosing interpolation point for basis vector {}.'.format(i))
+        logger.info(f'Choosing interpolation point for basis vector {i}.')
 
         if len(interpolation_dofs) > 0:
             coefficients = np.linalg.solve(interpolation_matrix,
@@ -217,7 +217,7 @@ def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
         new_dof = ERR.amax()[0][0]
 
         if new_dof in interpolation_dofs:
-            logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
+            logger.info(f'DOF {new_dof} selected twice for interplation! Stopping extension loop.')
             break
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
@@ -333,7 +333,7 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
                     for name, operator in zip(operator_names, operators)}
     operators_dict = d.operators.copy()
     operators_dict.update(ei_operators)
-    ei_d = d.with_(operators=operators_dict, name='{}_ei'.format(d.name))
+    ei_d = d.with_(operators=operators_dict, name=f'{d.name}_ei')
 
     data.update({'dofs': dofs, 'basis': basis})
     return ei_d, data
@@ -388,7 +388,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             new_vec = pool.apply_only(_parallel_ei_greedy_get_vector, max_err_ind, data=distributed_data)
             new_dof = new_vec.amax()[0][0]
             if new_dof in interpolation_dofs:
-                logger.info('DOF {} selected twice for interpolation! Stopping extension loop.'.format(new_dof))
+                logger.info(f'DOF {new_dof} selected twice for interpolation! Stopping extension loop.')
                 break
             new_dof_value = new_vec.dofs([new_dof])[0, 0]
             if new_dof_value == 0.:

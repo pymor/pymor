@@ -341,7 +341,7 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
         return ProjectionParameterFunctional(component_name='diffusion',
                                              component_shape=(yblocks, xblocks),
                                              coordinates=(yblocks - y - 1, x),
-                                             name='diffusion_{}_{}'.format(x, y))
+                                             name=f'diffusion_{x}_{y}')
     parameter_functionals = tuple(parameter_functional_factory(x, y)
                                   for x in range(xblocks) for y in range(yblocks))
 

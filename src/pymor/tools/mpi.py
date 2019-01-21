@@ -122,7 +122,7 @@ if mpi4py_version == Version('2.0'):
                     method(*args, **kwargs)
             except:
                 import traceback
-                print("Caught exception on MPI rank {}:".format(rank))
+                print(f"Caught exception on MPI rank {rank}:")
                 traceback.print_exception(*sys.exc_info())
 
     def call(method, *args, **kwargs):
@@ -184,7 +184,7 @@ else:
                     method(*args, **kwargs)
             except:
                 import traceback
-                print("Caught exception on MPI rank {}:".format(rank))
+                print(f"Caught exception on MPI rank {rank}:")
                 traceback.print_exception(*sys.exc_info())
 
     def call(method, *args, **kwargs):
@@ -235,7 +235,7 @@ def mpi_info():
     """
     data = comm.gather((rank, MPI.Get_processor_name()), root=0)
     if rank0:
-        print('\n'.join('{}: {}'.format(rank, processor) for rank, processor in data))
+        print('\n'.join(f'{rank}: {processor}' for rank, processor in data))
 
 
 def run_code(code):

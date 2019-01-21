@@ -81,7 +81,7 @@ class ResidualReductor(BasicInterface):
                                                     orthonormalize=True, product=self.product,
                                                     riesz_representatives=self.riesz_representatives)
                 except ImageCollectionError as e:
-                    self.logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+                    self.logger.warning(f'Cannot compute range of {e.op}. Evaluation will be slow.')
                     self.residual_range = False
 
         if self.residual_range is False:
@@ -232,7 +232,7 @@ class ImplicitEulerResidualReductor(BasicInterface):
                                                     orthonormalize=True, product=self.product,
                                                     riesz_representatives=True)
                 except ImageCollectionError as e:
-                    self.logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+                    self.logger.warning(f'Cannot compute range of {e.op}. Evaluation will be slow.')
                     self.residual_range = False
 
         if self.residual_range is False:

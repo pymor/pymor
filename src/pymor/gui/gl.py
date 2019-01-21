@@ -95,7 +95,7 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             from pymor.core.logger import getLogger
             # this is our default which might not exist for older matplotlib so a warning would be annoying
             if name != 'viridis':
-                msg = 'Unknown colormap {}, using default colormap'.format(name)
+                msg = f'Unknown colormap {name}, using default colormap'
                 getLogger('pymor.gui.gl.colormap_texture').warn(msg)
             cmap = get_cmap()
         colormap[:] = cmap(np.linspace(0., 1., resolution))

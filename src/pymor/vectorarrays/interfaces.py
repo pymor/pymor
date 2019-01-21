@@ -474,7 +474,7 @@ class VectorArrayInterface(BasicInterface):
         l = len(self)
         return (type(ind) is slice or
                 isinstance(ind, _INDEXTYPES) and -l <= ind < l or
-                isinstance(ind, (list, np.ndarray)) and len(set(i if i >= 0 else l+i for i in ind if -l <= i < l)) == len(ind))
+                isinstance(ind, (list, np.ndarray)) and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
 
     def len_ind(self, ind):
         """Return the number of given indices."""
@@ -488,7 +488,7 @@ class VectorArrayInterface(BasicInterface):
         l = len(self)
         return (len(range(*ind.indices(l))) if type(ind) is slice else
                 1 if isinstance(ind, _INDEXTYPES) else
-                len(set(i if i >= 0 else l+i for i in ind)))
+                len({i if i >= 0 else l+i for i in ind}))
 
     def normalize_ind(self, ind):
         """Normalize given indices such that they are independent of the array length."""
@@ -652,4 +652,4 @@ class VectorSpaceInterface(ImmutableInterface):
         return hash(self.id)
 
     def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self.id)
+        return f'{self.__class__.__name__}({self.id})'

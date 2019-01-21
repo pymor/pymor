@@ -95,7 +95,7 @@ HAPOD_ARGS = (
 DEMO_ARGS = (DISCRETIZATION_ARGS +
              THERMALBLOCK_ARGS + THERMALBLOCK_ADAPTIVE_ARGS + THERMALBLOCK_SIMPLE_ARGS + THERMALBLOCK_GUI_ARGS +
              BURGERS_EI_ARGS + PARABOLIC_MOR_ARGS + SYS_MOR_ARGS + HAPOD_ARGS)
-DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]
+DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 
 
 def _run_module(module, args):

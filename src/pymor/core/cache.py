@@ -411,7 +411,7 @@ class CacheableInterface(ImmutableInterface):
             try:
                 region = cache_regions[self.cache_region]
             except KeyError:
-                raise KeyError('No cache region "{}" found'.format(self.cache_region))
+                raise KeyError(f'No cache region "{self.cache_region}" found')
 
             # compute id for self
             if region.persistent:

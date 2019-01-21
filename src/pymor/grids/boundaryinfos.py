@@ -16,7 +16,7 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
         self.boundary_types = frozenset()
 
     def mask(self, boundary_type, codim):
-        assert False, 'Has no boundary_type "{}"'.format(boundary_type)
+        assert False, f'Has no boundary_type "{boundary_type}"'
 
 
 class BoundaryInfoFromIndicators(BoundaryInfoInterface):
@@ -57,7 +57,7 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
         self.boundary_types = frozenset({'dirichlet'})
 
     def mask(self, boundary_type, codim):
-        assert boundary_type == 'dirichlet', 'Has no boundary_type "{}"'.format(boundary_type)
+        assert boundary_type == 'dirichlet', f'Has no boundary_type "{boundary_type}"'
         assert 1 <= codim <= self.grid.dim
         return np.ones(self.grid.size(codim), dtype='bool') * self.grid.boundary_mask(codim)
 
@@ -80,7 +80,7 @@ class SubGridBoundaryInfo(BoundaryInfoInterface):
 
     def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None):
         if new_boundary_type is not None and new_boundary_type not in KNOWN_BOUNDARY_TYPES:
-            self.logger.warning('Unknown boundary type: {}'.format(new_boundary_type))
+            self.logger.warning(f'Unknown boundary type: {new_boundary_type}')
 
         boundary_types = grid_boundary_info.boundary_types
         has_new_boundaries = False

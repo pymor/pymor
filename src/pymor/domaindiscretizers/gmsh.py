@@ -117,7 +117,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             elif isinstance(domain_description, RectDomain):
                 points, boundary_types = discretize_RectDomain()
             else:
-                raise NotImplementedError('I do not know how to discretize {}'.format(domain_description))
+                raise NotImplementedError(f'I do not know how to discretize {domain_description}')
 
             # assign ids to all points and write them to the GEO-file.
             for id, p in enumerate([p for ps in points for p in ps]):
@@ -182,7 +182,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
         toc = time.time()
         t_gmsh = toc - tic
-        logger.info('Gmsh took {} s'.format(t_gmsh))
+        logger.info(f'Gmsh took {t_gmsh} s')
 
         # Create |GmshGrid| and |GmshBoundaryInfo| form the just created MSH-file.
         grid, bi = load_gmsh(open(msh_file_path))

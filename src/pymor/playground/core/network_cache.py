@@ -126,7 +126,7 @@ class NetworkFilesystemRegionServer(BasicInterface):
                 return False
             c = conn.cursor()
             try:
-                c.execute("UPDATE entries SET size='{}' WHERE key='{}'".format(file_size, key))
+                c.execute(f"UPDATE entries SET size='{file_size}' WHERE key='{key}'")
                 conn.commit()
             except sqlite3.IntegrityError:
                 raise RuntimeError('Cache is corrupt!')

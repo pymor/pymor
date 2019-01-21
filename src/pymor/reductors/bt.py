@@ -165,7 +165,7 @@ class LQGBTReductor(GenericBTReductor):
 
 
 class BRBTReductor(GenericBTReductor):
-    """Bounded Real (BR) Balanced Truncation reductor.
+    r"""Bounded Real (BR) Balanced Truncation reductor.
 
     See [A05]_ (Section 7.5.3) and [OJ88]_.
 

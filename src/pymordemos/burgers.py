@@ -84,10 +84,10 @@ def burgers_demo(args):
     )
     print(d.operator.grid)
 
-    print('The parameter type is {}'.format(d.parameter_type))
+    print(f'The parameter type is {d.parameter_type}')
 
     mu = args['EXP']
-    print('Solving for exponent = {} ... '.format(mu))
+    print(f'Solving for exponent = {mu} ... ')
     sys.stdout.flush()
     tic = time.time()
     U = d.solve(mu)

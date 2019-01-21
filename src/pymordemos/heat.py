@@ -58,9 +58,9 @@ if __name__ == '__main__':
 
     lti = d.to_lti()
 
-    print('n = {}'.format(lti.n))
-    print('m = {}'.format(lti.m))
-    print('p = {}'.format(lti.p))
+    print(f'n = {lti.n}')
+    print(f'm = {lti.m}')
+    print(f'p = {lti.p}')
 
     # System poles
     poles = lti.poles()

@@ -295,9 +295,9 @@ class Parameter(dict):
             if v.ndim > 1:
                 v = v.ravel()
             if s == '{':
-                s += '{}: {}'.format(k, v)
+                s += f'{k}: {v}'
             else:
-                s += ', {}: {}'.format(k, v)
+                s += f', {k}: {v}'
         s += '}'
         np.set_string_function(None, repr=False)
         return s
@@ -358,7 +358,7 @@ class Parametric(object):
         """
         if mu is None:
             assert not self.parameter_type, \
-                'Given parameter is None but expected parameter of type {}'.format(self.parameter_type)
+                f'Given parameter is None but expected parameter of type {self.parameter_type}'
             return Parameter({})
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)

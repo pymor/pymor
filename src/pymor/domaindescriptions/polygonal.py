@@ -56,7 +56,7 @@ class PolygonalDomain(DomainDescriptionInterface):
 
         for bt in self.boundary_types.keys():
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
-                self.logger.warning('Unknown boundary type: {}'.format(bt))
+                self.logger.warning(f'Unknown boundary type: {bt}')
 
     def __repr__(self):
         return 'PolygonalDomain({}, {}, {})'.format(repr(self.points), repr(self.boundary_types), repr(self.holes))

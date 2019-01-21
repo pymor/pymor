@@ -236,7 +236,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.build_parameter_type(numerical_flux, dirichlet_data)
         self.source = self.range = FVVectorSpace(grid, space_id)
-        self.add_with_arguments = self.add_with_arguments.union('numerical_flux_{}'.format(arg)
+        self.add_with_arguments = self.add_with_arguments.union(f'numerical_flux_{arg}'
                                                                 for arg in numerical_flux.with_arguments)
 
     def with_(self, **kwargs):
@@ -254,7 +254,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         sub_grid = SubGrid(self.grid, entities=source_dofs)
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
         op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id=None,
-                        name='{}_restricted'.format(self.name))
+                        name=f'{self.name}_restricted')
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.range)
         return proj @ op, sub_grid.parent_indices(0)

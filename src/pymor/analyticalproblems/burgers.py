@@ -65,7 +65,7 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
 
         parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),
 
-        name="burgers_problem({}, {}, '{}')".format(v, circle, initial_data_type)
+        name=f"burgers_problem({v}, {circle}, '{initial_data_type}')"
     )
 
 
@@ -125,5 +125,5 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
 
         parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),
 
-        name="burgers_problem_2d({}, {}, {}, '{}')".format(vx, vy, torus, initial_data_type)
+        name=f"burgers_problem_2d({vx}, {vy}, {torus}, '{initial_data_type}')"
     )

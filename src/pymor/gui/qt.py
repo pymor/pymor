@@ -377,7 +377,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     write_vtk(self.grid, NumpyVectorSpace.make_array(self.U[0]), base_name, codim=self.codim)
                 else:
                     for i, u in enumerate(self.U):
-                        write_vtk(self.grid, NumpyVectorSpace.make_array(u), '{}-{}'.format(base_name, i),
+                        write_vtk(self.grid, NumpyVectorSpace.make_array(u), f'{base_name}-{i}',
                                   codim=self.codim)
 
     _launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,

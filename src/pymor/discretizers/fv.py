@@ -109,12 +109,12 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     # diffusion part
     if isinstance(p.diffusion, LincombFunction):
-        L += [DiffusionOperator(grid, boundary_info, diffusion_function=df, name='diffusion_{}'.format(i))
+        L += [DiffusionOperator(grid, boundary_info, diffusion_function=df, name=f'diffusion_{i}')
               for i, df in enumerate(p.diffusion.functions)]
         L_coefficients += p.diffusion.coefficients
         if p.dirichlet_data is not None:
             F += [L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
-                                      diffusion_function=df, name='dirichlet_{}'.format(i))
+                                      diffusion_function=df, name=f'dirichlet_{i}')
                   for i, df in enumerate(p.diffusion.functions)]
             F_coefficients += p.diffusion.coefficients
 
@@ -128,7 +128,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     # advection part
     if isinstance(p.advection, LincombFunction):
-        L += [LinearAdvectionLaxFriedrichs(grid, boundary_info, af, name='advection_{}'.format(i))
+        L += [LinearAdvectionLaxFriedrichs(grid, boundary_info, af, name=f'advection_{i}')
               for i, af in enumerate(p.advection.functions)]
         L_coefficients += list(p.advection.coefficients)
     elif p.advection is not None:
@@ -196,7 +196,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
     d = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
-                                 parameter_space=parameter_space, name='{}_FV'.format(p.name))
+                                 parameter_space=parameter_space, name=f'{p.name}_FV')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
@@ -311,7 +311,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
     d = InstationaryDiscretization(operator=d.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
                                    products=d.products, time_stepper=time_stepper,
                                    parameter_space=p.parameter_space, visualizer=d.visualizer,
-                                   num_values=num_values, name='{}_FV'.format(p.name))
+                                   num_values=num_values, name=f'{p.name}_FV')
 
     if preassemble:
         data['unassembled_d'] = d

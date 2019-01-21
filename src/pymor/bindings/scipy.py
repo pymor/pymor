@@ -199,7 +199,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
             R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'])
             if info != 0:
                 if info > 0:
-                    raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
+                    raise InversionError(f'bicgstab failed to converge after {info} iterations')
                 else:
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
@@ -218,7 +218,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
             R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'], M=precond)
             if info != 0:
                 if info > 0:
-                    raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
+                    raise InversionError(f'bicgstab failed to converge after {info} iterations')
                 else:
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
@@ -277,7 +277,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                                 inner_m=options['inner_m'],
                                 outer_k=options['outer_k'])
             if info > 0:
-                raise InversionError('lgmres failed to converge after {} iterations'.format(info))
+                raise InversionError(f'lgmres failed to converge after {info} iterations')
             assert info == 0
     elif options['type'] == 'scipy_least_squares_lsmr':
         from scipy.sparse.linalg import lsmr
@@ -291,7 +291,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                                                   show=options['show'])
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
+                raise InversionError(f'lsmr failed to converge after {itn} iterations')
     elif options['type'] == 'scipy_least_squares_lsqr':
         for i, VV in enumerate(V):
             R[i], info, itn, _, _, _, _, _, _, _ = lsqr(matrix, VV,
@@ -303,7 +303,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                                                         show=options['show'])
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
+                raise InversionError(f'lsmr failed to converge after {itn} iterations')
     else:
         raise ValueError('Unknown solver type')
 

@@ -145,7 +145,7 @@ def _parse_gmsh_file(f):
 
         l = next(f).strip()
         if l != '$MeshFormat':
-            raise GmshError('expected $MeshFormat, got {}'.format(l))
+            raise GmshError(f'expected $MeshFormat, got {l}')
 
         l = next(f).strip()
         header = l.split(' ')
@@ -170,7 +170,7 @@ def _parse_gmsh_file(f):
 
         l = next(f).strip()
         if l != '$EndMeshFormat':
-            raise GmshError('expected $EndMeshFormat, got {}'.format(l))
+            raise GmshError(f'expected $EndMeshFormat, got {l}')
 
     except StopIteration:
         raise GmshError('unexcpected end of file')
@@ -184,24 +184,24 @@ def _parse_gmsh_file(f):
             continue
         if not in_section:
             if not l.startswith('$'):
-                raise GmshError('expected section name, got {}'.format(l))
+                raise GmshError(f'expected section name, got {l}')
             section = l[1:]
             if section not in allowed_sections:
-                raise GmshError('unknown section type: {}'.format(section))
+                raise GmshError(f'unknown section type: {section}')
             if section not in supported_sections:
-                raise GmshError('unsupported section type: {}'.format(section))
+                raise GmshError(f'unsupported section type: {section}')
             if section in sections:
-                raise GmshError('only one {} section allowed'.format(section))
+                raise GmshError(f'only one {section} section allowed')
             in_section = True
         elif l.startswith('$'):
             if l != '$End' + section:
-                raise GmshError('expected $End{}, got {}'.format(section, l))
+                raise GmshError(f'expected $End{section}, got {l}')
             in_section = False
         else:
             sections[section].append(l)
 
     if in_section:
-        raise GmshError('file ended while in section {}'.format(section))
+        raise GmshError(f'file ended while in section {section}')
 
     # now we parse each section ...
 

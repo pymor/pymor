@@ -27,7 +27,7 @@ class TestGaussQuadrature(TestInterface):
 
     def test_polynomials(self):
         for n, function, _, integral in polynomials(GaussQuadratures.orders[-1]):
-            name = 'x^{}'.format(n)
+            name = f'x^{n}'
             for order in GaussQuadratures.orders:
                 if n > order / 2:
                     continue
@@ -64,7 +64,7 @@ class TestCmp(TestInterface):
         nan = float('nan')
         inf = float('inf')
         for (rtol, atol) in itertools.product(tol_range, tol_range):
-            msg = 'rtol: {} | atol {}'.format(rtol, atol)
+            msg = f'rtol: {rtol} | atol {atol}'
             assert float_cmp(0., 0., rtol, atol), msg
             assert float_cmp(-0., -0., rtol, atol), msg
             assert float_cmp(-1., -1., rtol, atol), msg

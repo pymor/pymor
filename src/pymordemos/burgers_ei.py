@@ -145,7 +145,7 @@ def main(args):
 
     print(d.operator.grid)
 
-    print('The parameter type is {}'.format(d.parameter_type))
+    print(f'The parameter type is {d.parameter_type}')
 
     if args['--plot-solutions']:
         print('Showing some solutions')
@@ -207,7 +207,7 @@ def main(args):
     mus = d.parameter_space.sample_randomly(args['--test'])
 
     def error_analysis(N, M):
-        print('N = {}, M = {}: '.format(N, M), end='')
+        print(f'N = {N}, M = {M}: ', end='')
         rd = reductor.reduce(N)
         rd = rd.with_(operator=rd.operator.with_cb_dim(M))
         l2_err_max = -1

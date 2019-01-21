@@ -157,7 +157,7 @@ class MPIVectorSpace(VectorSpaceInterface):
             all(ls == ols for ls, ols in zip(self.local_spaces, other.local_spaces))
 
     def __repr__(self):
-        return '{}({}, {})'.format(self.__class__, self.local_spaces, self.id)
+        return f'{self.__class__}({self.local_spaces}, {self.id})'
 
 
 class RegisteredLocalSpace(int):

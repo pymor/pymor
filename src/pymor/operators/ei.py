@@ -69,7 +69,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         self.range = operator.range
         self.linear = operator.linear
         self.solver_options = solver_options
-        self.name = name or '{}_interpolated'.format(operator.name)
+        self.name = name or f'{operator.name}_interpolated'
 
         interpolation_dofs = np.array(interpolation_dofs, dtype=np.int32)
         self.interpolation_dofs = interpolation_dofs
@@ -158,7 +158,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         self.triangular = triangular
         self.source_id = source_id
         self.solver_options = solver_options
-        self.name = name or '{}_projected'.format(restricted_operator.name)
+        self.name = name or f'{restricted_operator.name}_projected'
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
