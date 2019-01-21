@@ -146,7 +146,7 @@ class RBGui(QtWidgets.QMainWindow):
 
 
 # noinspection PyShadowingNames
-class SimBase(object):
+class SimBase:
     def __init__(self, args):
         self.args = args
         self.first = True

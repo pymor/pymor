@@ -169,7 +169,7 @@ def getLogger(module, level=None, filename=''):
     return logger
 
 
-class DummyLogger(object):
+class DummyLogger:
 
     __slots__ = []
 
@@ -250,7 +250,7 @@ def set_log_format(max_hierarchy_level=1, indent_blocks=True, block_timings=Fals
     BLOCK_TIMINGS = block_timings
 
 
-class LogIndenter(object):
+class LogIndenter:
 
     def __init__(self, logger, doit):
         self.logger = logger

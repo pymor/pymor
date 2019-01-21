@@ -85,7 +85,7 @@ DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
 NoneType = type(None)
 
 
-class UID(object):
+class UID:
     '''Provides unique, quickly computed ids by combining a session UUID4 with a counter.'''
 
     __slots__ = ['uid']
@@ -169,7 +169,7 @@ class UberMeta(abc.ABCMeta):
         return c
 
 
-class BasicInterface(object, metaclass=UberMeta):
+class BasicInterface(metaclass=UberMeta):
     """Base class for most classes in pyMOR.
 
     Attributes
@@ -468,7 +468,7 @@ def generate_sid(obj, debug=False):
 STRING_TYPES = (str, bytes)
 
 
-class _SIDGenerator(object):
+class _SIDGenerator:
 
     def __init__(self):
         self.memo = {}
@@ -604,7 +604,7 @@ class _SIDGenerator(object):
         return state if first_obj else (t,) + state
 
 
-class _MemoKey(object):
+class _MemoKey:
     def __init__(self, key, obj):
         self.key = key
         self.obj = obj

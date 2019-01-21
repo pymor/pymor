@@ -20,7 +20,7 @@ def importable_function(x):
     return (x[..., 0] * x[..., 1])[..., np.newaxis]
 
 
-class A(object):
+class A:
 
     @staticmethod
     def unimportable_function(x):

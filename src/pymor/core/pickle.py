@@ -94,7 +94,7 @@ def _global_names(code_object):
     return result
 
 
-class Module(object):
+class Module:
 
     def __init__(self, mod):
         self.mod = mod

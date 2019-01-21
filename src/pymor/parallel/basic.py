@@ -10,7 +10,7 @@ from pymor.core.interfaces import ImmutableInterface
 from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
 
 
-class WorkerPoolDefaultImplementations(object):
+class WorkerPoolDefaultImplementations:
 
     def scatter_array(self, U, copy=True):
         slice_len = len(U) // len(self) + (1 if len(U) % len(self) else 0)

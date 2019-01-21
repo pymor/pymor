@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
-class NoContext(object):
+class NoContext:
 
     def __enter__(self):
         pass

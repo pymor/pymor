@@ -314,8 +314,8 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
 
 else:
 
-    class GLPatchWidget(object):
+    class GLPatchWidget:
         pass
 
-    class ColorBarWidget(object):
+    class ColorBarWidget:
         pass

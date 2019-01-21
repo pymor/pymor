@@ -9,7 +9,7 @@ from pymor.tools.inverse import inv_transposed_two_by_two
 from pymor.tools.relations import inverse_relation
 
 
-class ConformalTopologicalGridDefaultImplementations(object):
+class ConformalTopologicalGridDefaultImplementations:
     """Provides default informations for |ConformalTopologicalGrids|."""
 
     @cached
@@ -127,7 +127,7 @@ class ConformalTopologicalGridDefaultImplementations(object):
         return M
 
 
-class ReferenceElementDefaultImplementations(object):
+class ReferenceElementDefaultImplementations:
     """Provides default implementations for |ReferenceElements|."""
 
     @cached
@@ -158,7 +158,7 @@ class ReferenceElementDefaultImplementations(object):
             raise NotImplementedError
 
 
-class AffineGridDefaultImplementations(object):
+class AffineGridDefaultImplementations:
     """Provides default implementations for |AffineGrids|."""
 
     @cached
