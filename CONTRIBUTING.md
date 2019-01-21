@@ -14,13 +14,14 @@ your code is contained in one or several [git](https://git-scm.com/)
 commits which have commit messages appropriately describing
 their content.
 
-The recommended way to send us your code is to create a
+All new code and all code changes enter pyMOR by way of a 
 [pull request](https://help.github.com/articles/creating-a-pull-request/)
-on [github](https://github.com/pymor/pymor) containing the code.
-For this to work you will have to create a new github account
-(if you do not have one already) and push your commits into a
-[fork](https://guides.github.com/activities/forking/) of pyMOR 
-owned by you. Alternatively, you may send patches to our
+from a branch on [GitHub](https://github.com/pymor/pymor).
+Therefore the recommended way to send us your code is to create a
+[fork](https://guides.github.com/activities/forking/) of pyMOR
+on GitHub (if you do not have one already) and push your commits into a branch 
+containing the code and create a pull request for it.
+Alternatively, you may send patches to our
 [mailinglist](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)
 that have been created using `git format-patch`.
 
@@ -107,14 +108,14 @@ of developers which, apart from making contributions to pyMOR,
 have the job of guiding and maintaining the future development of
 pyMOR. They are the only persons with direct push acces to pyMOR's
 main repository and have administrative priviliges over the
-[pyMOR organization](https://github.com/pymor) on github.
+[pyMOR organization](https://github.com/pymor) on GitHub.
 
 As pyMOR is an open project, everyone is invited to step up to
 become a main developer. The current main developers will decide
 by simple majority vote if a candidate should be included into the
 group. In order to be accepted, an applicant should have made
 major contributions to pyMOR, both in form of code and by taking part
-in discussions on the mailing list and through github. The applicant
+in discussions on the mailing list and through GitHub. The applicant
 should be able to commit to the project for a time period of at
 least one year.
 
