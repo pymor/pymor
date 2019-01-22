@@ -23,7 +23,7 @@ Options:
     -h, --help   Show this message.
 """
 
-from docopt import docopt
+from pymor.tools.docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems.elliptic import StationaryProblem

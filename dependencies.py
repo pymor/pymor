@@ -15,7 +15,7 @@ def _pymess(rev, major, minor, marker=True):
     return url
 
 tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker']
-install_requires = ['numpy>=1.8.1', 'scipy>=0.13.3', 'docopt', 'Qt.py', 'packaging', 'Sphinx>=1.4.0',]
+install_requires = ['numpy>=1.8.1', 'scipy>=0.13.3', 'Qt.py', 'packaging', 'Sphinx>=1.4.0',]
 setup_requires = ['setuptools', 'wheel', 'pytest-runner>=2.9', 'cython>=0.20.1', 'numpy>=1.8.1', 'packaging',]
 install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'ipyparallel': 'required for pymor.parallel.ipython',
