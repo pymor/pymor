@@ -83,7 +83,7 @@ Options:
 import sys
 import time
 
-from docopt import docopt
+from pymor.tools.docopt import docopt
 
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.core.pickle import dump
