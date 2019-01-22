@@ -44,7 +44,7 @@ import sys
 import math
 import time
 
-from docopt import docopt
+from pymor.tools.docopt import docopt
 
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.fv import discretize_instationary_fv

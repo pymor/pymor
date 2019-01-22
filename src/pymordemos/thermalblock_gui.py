@@ -33,7 +33,7 @@ Options:
 """
 
 import sys
-from docopt import docopt
+from pymor.tools.docopt import docopt
 import time
 import numpy as np
 import OpenGL
