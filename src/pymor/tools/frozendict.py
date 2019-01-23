@@ -25,7 +25,7 @@ class FrozenDict(dict):
         pass
 
     def __repr__(self):
-        return 'FrozenDict({})'.format(dict.__repr__(self))
+        return f'FrozenDict({dict.__repr__(self)})'
 
     def __reduce__(self):
         return (FrozenDict, (dict(self),))

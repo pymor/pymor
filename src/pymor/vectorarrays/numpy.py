@@ -266,7 +266,7 @@ class NumpyVectorArray(VectorArrayInterface):
         return self._array[:self._len].__str__()
 
     def __repr__(self):
-        return 'NumpyVectorArray({}, {})'.format(self._array[:self._len].__str__(), self.space)
+        return f'NumpyVectorArray({self._array[:self._len].__str__()}, {self.space})'
 
     def __del__(self):
         self._refcount[0] -= 1
@@ -559,4 +559,4 @@ class NumpyVectorArrayView(NumpyVectorArray):
         return
 
     def __repr__(self):
-        return 'NumpyVectorArrayView({}, {})'.format(self.to_numpy(), self.space)
+        return f'NumpyVectorArrayView({self.to_numpy()}, {self.space})'

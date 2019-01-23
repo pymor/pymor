@@ -84,7 +84,7 @@ def hapod_demo(args):
     inc_modes = inc_vectorarray_hapod(args['INC'], U, tol, omega, product=d.l2_product)[0]
     inc_time = time() - tic
 
-    print('Snapshot matrix: {} x {}'.format(U.dim, len(U)))
+    print(f'Snapshot matrix: {U.dim} x {len(U)}')
     print(format_table([
         ['Method', 'Error', 'Modes', 'Time'],
         ['POD', np.linalg.norm(d.l2_norm(U-pod_modes.lincomb(d.l2_product.apply2(U, pod_modes)))/np.sqrt(len(U))),

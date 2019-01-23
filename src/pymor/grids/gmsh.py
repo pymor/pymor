@@ -78,7 +78,7 @@ class GmshGrid(UnstructuredTriangleGrid):
         super().__init__(vertices, faces)
 
     def __str__(self):
-        return 'GmshGrid with {} triangles, {} edges, {} vertices'.format(self.size(0), self.size(1), self.size(2))
+        return f'GmshGrid with {self.size(0)} triangles, {self.size(1)} edges, {self.size(2)} vertices'
 
 
 class GmshBoundaryInfo(BoundaryInfoInterface):
@@ -150,7 +150,7 @@ def _parse_gmsh_file(f):
         l = next(f).strip()
         header = l.split(' ')
         if len(header) != 3:
-            raise GmshError('header {} has {} fields, expected 3'.format(l, len(header)))
+            raise GmshError(f'header {l} has {len(header)} fields, expected 3')
 
         if header[0] != '2.2':
             raise GmshError('wrong file format version: got {}, expected 2.2'.format(header[0]))

@@ -147,7 +147,7 @@ class IPythonPool(WorkerPoolBase):
             self.view = self.client[:num_engines]
         else:
             self.view = self.client[:]
-        self.logger.info('Connected to {} engines'.format(len(self.view)))
+        self.logger.info(f'Connected to {len(self.view)} engines')
         self.view.apply_sync(_setup_worker)
         self._remote_objects_created = Counter()
 

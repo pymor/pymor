@@ -178,7 +178,7 @@ def main(args):
             ERR = U - U_EI
             ERRs = ERRs + (ERR,)
             legend = legend + ('exponent: {}'.format(mu['exponent']),)
-            print('Error: {}'.format(np.max(d.l2_norm(ERR))))
+            print(f'Error: {np.max(d.l2_norm(ERR))}')
         d.visualize(ERRs, legend=legend, title='EI Errors', separate_colorbars=True)
 
         print('Showing interpolation DOFs ...')

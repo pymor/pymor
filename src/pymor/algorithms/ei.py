@@ -299,7 +299,7 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
         operators = [d.operators[operator_name] for operator_name in operator_names]
         with logger.block('Computing operator evaluations on solution snapshots ...'):
             if pool:
-                logger.info('Using pool of {} workers for parallel evaluation'.format(len(pool)))
+                logger.info(f'Using pool of {len(pool)} workers for parallel evaluation')
                 evaluations = rom.manage(pool.push(d.solution_space.empty()))
                 pool.map(_interpolate_operators_build_evaluations, parameter_sample,
                          d=d, operators=operators, evaluations=evaluations)
@@ -351,7 +351,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
 
     logger = getLogger('pymor.algorithms.ei.ei_greedy')
     logger.info('Generating Interpolation Data ...')
-    logger.info('Using pool of {} workers for parallel greedy search'.format(len(pool)))
+    logger.info(f'Using pool of {len(pool)} workers for parallel greedy search')
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     collateral_basis = pool.apply_only(_parallel_ei_greedy_get_empty, 0, U=U)

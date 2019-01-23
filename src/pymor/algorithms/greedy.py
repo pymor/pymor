@@ -78,7 +78,7 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
     if pool is None or pool is dummy_pool:
         pool = dummy_pool
     else:
-        logger.info('Using pool of {} workers for parallel greedy search'.format(len(pool)))
+        logger.info(f'Using pool of {len(pool)} workers for parallel greedy search')
 
     with RemoteObjectManager() as rom:
         # Push everything we need during the greedy search to the workers.

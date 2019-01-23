@@ -75,7 +75,7 @@ class ConstantFunction(FunctionBase):
         return f'{self.name}: x -> {self._value}'
 
     def __repr__(self):
-        return 'ConstantFunction({}, {})'.format(repr(self._value), self.dim_domain)
+        return f'ConstantFunction({repr(self._value)}, {self.dim_domain})'
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)

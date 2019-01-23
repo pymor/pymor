@@ -15,7 +15,7 @@ def exercise_logger(logger):
         logger.setLevel(lvl)
         assert logger.isEnabledFor(lvl)
     for verb in ['warning', 'error', 'debug', 'info']:
-        getattr(logger, verb)('{} -- logger {}'.format(verb, str(logger)))
+        getattr(logger, verb)(f'{verb} -- logger {str(logger)}')
 
 
 def test_logclass(basicinterface_subclass):
