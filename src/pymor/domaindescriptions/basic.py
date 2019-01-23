@@ -196,7 +196,7 @@ class TorusDomain(DomainDescriptionInterface):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
     def __repr__(self):
-        return f'TorusDomain({str(self.domain).replace('\n', ',')})'
+        return f'TorusDomain({str(self.domain).replace("\n", ",")})'
 
 
 class LineDomain(DomainDescriptionInterface):

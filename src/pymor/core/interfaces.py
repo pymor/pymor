@@ -123,7 +123,7 @@ class UberMeta(abc.ABCMeta):
                 getattr(base, attribute).append(derived)
             else:
                 setattr(base, attribute, [derived])
-        cls._logger = logger.getLogger(f'{cls.__module__.replace('__main__', 'pymor')}.{name}')
+        cls._logger = logger.getLogger(f'{cls.__module__.replace("__main__", "pymor")}.{name}')
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
     def __new__(cls, classname, bases, classdict):
