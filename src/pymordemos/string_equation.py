@@ -86,9 +86,9 @@ if __name__ == '__main__':
     ax[1, 1].set_title('Velocity-position singular values')
     plt.show()
 
-    print('H_2-norm of the full model:    {:e}'.format(so_sys.h2_norm()))
+    print(f'H_2-norm of the full model:    {so_sys.h2_norm():e}')
     compute_hinf_norm('H_inf-norm of the full model:  {:e}', so_sys)
-    print('Hankel-norm of the full model: {:e}'.format(so_sys.hankel_norm()))
+    print(f'Hankel-norm of the full model: {so_sys.hankel_norm():e}')
 
     # Position Second-Order Balanced Truncation (SOBTp)
     r = 10
@@ -102,9 +102,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtp = so_sys - rom_sobtp
-    print('H_2-error for the SOBTp ROM:    {:e}'.format(err_sobtp.h2_norm()))
+    print(f'H_2-error for the SOBTp ROM:    {err_sobtp.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the SOBTp ROM:  {:e}', err_sobtp)
-    print('Hankel-error for the SOBTp ROM: {:e}'.format(err_sobtp.hankel_norm()))
+    print(f'Hankel-error for the SOBTp ROM: {err_sobtp.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -129,9 +129,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtv = so_sys - rom_sobtv
-    print('H_2-error for the SOBTv ROM:    {:e}'.format(err_sobtv.h2_norm()))
+    print(f'H_2-error for the SOBTv ROM:    {err_sobtv.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the SOBTv ROM:  {:e}', err_sobtv)
-    print('Hankel-error for the SOBTv ROM: {:e}'.format(err_sobtv.hankel_norm()))
+    print(f'Hankel-error for the SOBTv ROM: {err_sobtv.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -156,9 +156,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtpv = so_sys - rom_sobtpv
-    print('H_2-error for the SOBTpv ROM:    {:e}'.format(err_sobtpv.h2_norm()))
+    print(f'H_2-error for the SOBTpv ROM:    {err_sobtpv.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the SOBTpv ROM:  {:e}', err_sobtpv)
-    print('Hankel-error for the SOBTpv ROM: {:e}'.format(err_sobtpv.hankel_norm()))
+    print(f'Hankel-error for the SOBTpv ROM: {err_sobtpv.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -183,9 +183,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtvp = so_sys - rom_sobtvp
-    print('H_2-error for the SOBTvp ROM:    {:e}'.format(err_sobtvp.h2_norm()))
+    print(f'H_2-error for the SOBTvp ROM:    {err_sobtvp.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the SOBTvp ROM:  {:e}', err_sobtvp)
-    print('Hankel-error for the SOBTvp ROM: {:e}'.format(err_sobtvp.hankel_norm()))
+    print(f'Hankel-error for the SOBTvp ROM: {err_sobtvp.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -210,9 +210,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtfv = so_sys - rom_sobtfv
-    print('H_2-error for the SOBTfv ROM:    {:e}'.format(err_sobtfv.h2_norm()))
+    print(f'H_2-error for the SOBTfv ROM:    {err_sobtfv.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the SOBTfv ROM:  {:e}', err_sobtfv)
-    print('Hankel-error for the SOBTfv ROM: {:e}'.format(err_sobtfv.hankel_norm()))
+    print(f'Hankel-error for the SOBTfv ROM: {err_sobtfv.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -237,9 +237,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobt = so_sys - rom_sobt
-    print('H_2-error for the SOBT ROM:    {:e}'.format(err_sobt.h2_norm()))
+    print(f'H_2-error for the SOBT ROM:    {err_sobt.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the SOBT ROM:  {:e}', err_sobt)
-    print('Hankel-error for the SOBT ROM: {:e}'.format(err_sobt.hankel_norm()))
+    print(f'Hankel-error for the SOBT ROM: {err_sobt.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -264,9 +264,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_bt = so_sys.to_lti() - rom_bt
-    print('H_2-error for the BT ROM:    {:e}'.format(err_bt.h2_norm()))
+    print(f'H_2-error for the BT ROM:    {err_bt.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the BT ROM:  {:e}', err_bt)
-    print('Hankel-error for the BT ROM: {:e}'.format(err_bt.hankel_norm()))
+    print(f'Hankel-error for the BT ROM: {err_bt.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -296,9 +296,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_irka = so_sys.to_lti() - rom_irka
-    print('H_2-error for the IRKA ROM:    {:e}'.format(err_irka.h2_norm()))
+    print(f'H_2-error for the IRKA ROM:    {err_irka.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the IRKA ROM:  {:e}', err_irka)
-    print('Hankel-error for the IRKA ROM: {:e}'.format(err_irka.hankel_norm()))
+    print(f'Hankel-error for the IRKA ROM: {err_irka.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -328,9 +328,9 @@ if __name__ == '__main__':
     plt.show()
 
     err_sor_irka = so_sys - rom_sor_irka
-    print('H_2-error for the SOR-IRKA ROM:    {:e}'.format(err_sor_irka.h2_norm()))
+    print(f'H_2-error for the SOR-IRKA ROM:    {err_sor_irka.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the SOR-IRKA ROM:  {:e}', err_sor_irka)
-    print('Hankel-error for the SOR-IRKA ROM: {:e}'.format(err_sor_irka.hankel_norm()))
+    print(f'Hankel-error for the SOR-IRKA ROM: {err_sor_irka.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)

@@ -170,7 +170,7 @@ def reduction_error_analysis(rd, d, reductor,
     if pool is None or pool is dummy_pool:
         pool = dummy_pool
     else:
-        logger.info('Using pool of {} workers for error analysis'.format(len(pool)))
+        logger.info(f'Using pool of {len(pool)} workers for error analysis')
 
     tic = time.time()
 

@@ -239,7 +239,7 @@ class SQLiteRegion(CacheRegion):
         entries = c.fetchall()
         if entries:
             ids_to_delete, files_to_delete = zip(*entries)
-            c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
+            c.execute(f'DELETE FROM entries WHERE id in ({""",""".join(map(str, ids_to_delete))})')
             conn.commit()
             path = self.path
             for filename in files_to_delete:
@@ -271,7 +271,7 @@ class SQLiteRegion(CacheRegion):
                 ids_to_delete.append(id_)
                 files_to_delete.append(filename)
                 deleted += file_size
-            c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
+            c.execute(f'DELETE FROM entries WHERE id in ({""",""".join(map(str, ids_to_delete))})')
             conn.commit()
             path = self.path
             for filename in files_to_delete:
@@ -282,7 +282,7 @@ class SQLiteRegion(CacheRegion):
                     getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
 
             from pymor.core.logger import getLogger
-            getLogger('pymor.core.cache.SQLiteRegion').info('Removed {} old cache entries'.format(len(ids_to_delete)))
+            getLogger('pymor.core.cache.SQLiteRegion').info(f'Removed {len(ids_to_delete)} old cache entries')
 
 
 @defaults('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys',

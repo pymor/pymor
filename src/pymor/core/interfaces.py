@@ -90,7 +90,7 @@ class UID:
 
     __slots__ = ['uid']
 
-    prefix = '{}_'.format(uuid.uuid4())
+    prefix = f'{uuid.uuid4()}_'
     counter = [0]
 
     def __init__(self):
@@ -123,7 +123,7 @@ class UberMeta(abc.ABCMeta):
                 getattr(base, attribute).append(derived)
             else:
                 setattr(base, attribute, [derived])
-        cls._logger = logger.getLogger('{}.{}'.format(cls.__module__.replace('__main__', 'pymor'), name))
+        cls._logger = logger.getLogger(f'{cls.__module__.replace('__main__', 'pymor')}.{name}')
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
     def __new__(cls, classname, bases, classdict):
@@ -610,7 +610,7 @@ class _MemoKey:
         self.obj = obj
 
     def __repr__(self):
-        return '_MemoKey({}, {})'.format(self.key, repr(self.obj))
+        return f'_MemoKey({self.key}, {repr(self.obj)})'
 
     def __getstate__(self):
         return self.key

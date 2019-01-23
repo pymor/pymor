@@ -317,13 +317,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 try:
                     R, _, _, _ = np.linalg.lstsq(self.matrix, V.to_numpy().T)
                 except np.linalg.LinAlgError as e:
-                    raise InversionError('{}: {}'.format(str(type(e)), str(e)))
+                    raise InversionError(f'{str(type(e))}: {str(e)}')
                 R = R.T
             else:
                 try:
                     R = np.linalg.solve(self.matrix, V.to_numpy().T).T
                 except np.linalg.LinAlgError as e:
-                    raise InversionError('{}: {}'.format(str(type(e)), str(e)))
+                    raise InversionError(f'{str(type(e))}: {str(e)}')
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):

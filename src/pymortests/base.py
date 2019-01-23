@@ -39,7 +39,7 @@ def _load_all():
         except (TypeError, ImportError) as t:
             fails.append((module_name, t))
     if len(fails) > 0:
-        logger.getLogger(__name__).fatal('Failed imports: {}'.format(pprint.pformat(fails)))
+        logger.getLogger(__name__).fatal(f'Failed imports: {pprint.pformat(fails)}')
         raise ImportError(__name__)
 
 
@@ -55,7 +55,7 @@ def subclassForImplemetorsOf(InterfaceType, TestCase):
 
     test_types = set(sorted([T for T in InterfaceType.implementors(True) if not (T.has_interface_name() or issubclass(T, TestInterface))], key=lambda g: g.__name__))
     for Type in test_types:
-        cname = 'DynamicTest_{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
+        cname = f'DynamicTest_{Type.__name__}_{TestCase.__name__.replace('Interface', '')}'
         yield type(cname, (TestCase,), {'Type': Type})
 
 

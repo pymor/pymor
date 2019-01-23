@@ -111,7 +111,7 @@ def adaptive_greedy(d, reductor, parameter_space=None,
     if pool is None or pool is dummy_pool:
         pool = dummy_pool
     else:
-        logger.info('Using pool of {} workers for parallel greedy search'.format(len(pool)))
+        logger.info(f'Using pool of {len(pool)} workers for parallel greedy search')
 
     with RemoteObjectManager() as rom:
         # Push everything we need during the greedy search to the workers.
@@ -180,7 +180,7 @@ def adaptive_greedy(d, reductor, parameter_space=None,
                     # select elements
                     sorted_indicators_inds = np.argsort(indicators)[::-1]
                     refinement_elements = sorted_indicators_inds[:max(int(len(sorted_indicators_inds) * theta), 1)]
-                    logger.info('Refining {} elements: {}'.format(len(refinement_elements), refinement_elements))
+                    logger.info(f'Refining {len(refinement_elements)} elements: {refinement_elements}')
 
                     # visualization
                     if visualize:

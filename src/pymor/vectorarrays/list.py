@@ -392,7 +392,7 @@ class ListVectorArray(VectorArrayInterface):
         return MI, MV
 
     def __str__(self):
-        return 'ListVectorArray of {} of space {}'.format(len(self._list), self.space)
+        return f'ListVectorArray of {len(self._list)} of space {self.space}'
 
 
 class ListVectorSpace(VectorSpaceInterface):
@@ -511,7 +511,7 @@ class ListVectorArrayView(ListVectorArray):
         super().axpy(alpha, x)
 
     def __str__(self):
-        return 'ListVectorArrayView of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self.dim)
+        return f'ListVectorArrayView of {len(self._list)} {str(self.vector_type)}s of dimension {self.dim}'
 
 
 class ListVectorArrayNumpyView:
