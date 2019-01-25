@@ -163,7 +163,7 @@ if config.HAVE_PYMESS:
             eqn = LyapunovEquation(opts, A, E, B)
             Z, status = pymess.lradi(eqn, opts)
         else:
-            raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
+            raise ValueError(f'Unexpected Lyapunov equation solver ({options["type"]}).')
 
         return A.source.from_numpy(Z.T)
 
@@ -214,7 +214,7 @@ if config.HAVE_PYMESS:
             op = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             X = pymess.glyap(A, E, Y, op=op)[0]
         else:
-            raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
+            raise ValueError(f'Unexpected Lyapunov equation solver ({options["type"]}).')
 
         return X
 
@@ -391,7 +391,7 @@ if config.HAVE_PYMESS:
             eqn = RiccatiEquation(opts, A, E, B, C)
             Z, status = pymess.lrnm(eqn, opts)
         else:
-            raise ValueError('Unexpected Riccati equation solver ({}).'.format(options['type']))
+            raise ValueError(f'Unexpected Riccati equation solver ({options["type"]}).')
 
         return A.source.from_numpy(Z.T)
 
@@ -449,7 +449,7 @@ if config.HAVE_PYMESS:
             X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=True)
             Z = _chol(X)
         else:
-            raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
+            raise ValueError(f'Unexpected positive Riccati equation solver ({options["type"]}).')
 
         return A.source.from_numpy(Z.T)
 
@@ -495,12 +495,12 @@ if config.HAVE_PYMESS:
                                                    nrm=options['nrm'])
         if absres > options['absres_tol']:
             logger = getLogger('pymess.dense_nm_gmpcare')
-            logger.warning('Desired absolute residual tolerance was not achieved '
-                           '({:e} > {:e}).'.format(absres, options['absres_tol']))
+            logger.warning(f'Desired absolute residual tolerance was not achieved '
+                           f'({absres:e} > {options["absres_tol"]:e}).')
         if relres > options['relres_tol']:
             logger = getLogger('pymess.dense_nm_gmpcare')
-            logger.warning('Desired relative residual tolerance was not achieved '
-                           '({:e} > {:e}).'.format(relres, options['relres_tol']))
+            logger.warning(f'Desired relative residual tolerance was not achieved '
+                           f'({relres:e} > {options["relres_tol"]:e}).')
 
         return X
 

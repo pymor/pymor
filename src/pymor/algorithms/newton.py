@@ -107,8 +107,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
                 break
             if (len(error_sequence) >= stagnation_window + 1 and
                     err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
-                logger.info('Error is stagnating (threshold: {:5e}, window: {}). Stopping.'.format(stagnation_threshold,
-                                                                                                   stagnation_window))
+                logger.info(f'Error is stagnating (threshold: {stagnation_threshold:5e}, window: {stagnation_window}). '
+                            f'Stopping.')
                 break
             if iteration >= maxiter:
                 raise NewtonError('Failed to converge')
@@ -126,8 +126,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         residual = rhs - operator.apply(U, mu=mu)
 
         err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
-        logger.info('Iteration {:2}: Residual: {:5e},  Reduction: {:5e}, Total Reduction: {:5e}'
-                    .format(iteration, err, err / error_sequence[-1], err / error_sequence[0]))
+        logger.info(f'Iteration {iteration:2}: Residual: {err:5e},  '
+                    f'Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}')
         error_sequence.append(err)
         if not np.isfinite(err):
             raise NewtonError('Failed to converge')

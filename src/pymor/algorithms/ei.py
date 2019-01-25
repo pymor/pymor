@@ -102,12 +102,12 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     while True:
         if max_interpolation_dofs is not None and len(interpolation_dofs) >= max_interpolation_dofs:
             logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
-            logger.info('Final maximum interpolation error with {} interpolation DOFs: {}'.format(
-                len(interpolation_dofs), max_err))
+            logger.info(f'Final maximum interpolation error with'
+                        f'{len(interpolation_dofs)} interpolation DOFs: {max_err}')
             break
 
-        logger.info('Maximum interpolation error with {} interpolation DOFs: {}'
-                    .format(len(interpolation_dofs), max_err))
+        logger.info(f'Maximum interpolation error with '
+                    f'{len(interpolation_dofs)} interpolation DOFs: {max_err}')
 
         if atol is not None and max_err <= atol:
             logger.info('Absolute error tolerance reached! Stopping extension loop.')
@@ -125,8 +125,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
             break
         new_dof_value = new_vec.dofs([new_dof])[0, 0]
         if new_dof_value == 0.:
-            logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'
-                        .format(new_dof))
+            logger.info(f'DOF {new_dof} selected for interpolation has zero maximum error! Stopping extension loop.')
             break
         new_vec *= 1 / new_dof_value
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
@@ -146,8 +145,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
 
     if len(triangularity_errs) > 0:
-        logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
-                    .format(triangularity_errs[-1]))
+        logger.info(f'Interpolation matrix is not lower triangular with maximum error of {triangularity_errs[-1]}')
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
 
@@ -369,12 +367,11 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
 
             if max_interpolation_dofs is not None and len(interpolation_dofs) >= max_interpolation_dofs:
                 logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
-                logger.info('Final maximum interpolation error with {} interpolation DOFs: {}'
-                            .format(len(interpolation_dofs), max_err))
+                logger.info(f'Final maximum interpolation error with '
+                            f'{len(interpolation_dofs)} interpolation DOFs: {max_err}')
                 break
 
-            logger.info('Maximum interpolation error with {} interpolation DOFs: {}'
-                        .format(len(interpolation_dofs), max_err))
+            logger.info(f'Maximum interpolation error with {len(interpolation_dofs)} interpolation DOFs: {max_err}')
 
             if atol is not None and max_err <= atol:
                 logger.info('Absolute error tolerance reached! Stopping extension loop.')
@@ -392,8 +389,8 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
                 break
             new_dof_value = new_vec.dofs([new_dof])[0, 0]
             if new_dof_value == 0.:
-                logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'
-                            .format(new_dof))
+                logger.info(f'DOF {new_dof} selected for interpolation has zero maximum error! '
+                            f'Stopping extension loop.')
                 break
             new_vec *= 1 / new_dof_value
             interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
@@ -410,8 +407,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
 
     if len(triangularity_errs) > 0:
-        logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
-                    .format(triangularity_errs[-1]))
+        logger.info(f'Interpolation matrix is not lower triangular with maximum error of {triangularity_errs[-1]}')
         logger.info('')
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
