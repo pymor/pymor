@@ -239,7 +239,7 @@ class SQLiteRegion(CacheRegion):
         entries = c.fetchall()
         if entries:
             ids_to_delete, files_to_delete = zip(*entries)
-            c.execute(f'DELETE FROM entries WHERE id in ({""",""".join(map(str, ids_to_delete))})')
+            c.execute(f'DELETE FROM entries WHERE id in ({",".join(map(str, ids_to_delete))})')
             conn.commit()
             path = self.path
             for filename in files_to_delete:
@@ -271,7 +271,7 @@ class SQLiteRegion(CacheRegion):
                 ids_to_delete.append(id_)
                 files_to_delete.append(filename)
                 deleted += file_size
-            c.execute(f'DELETE FROM entries WHERE id in ({""",""".join(map(str, ids_to_delete))})')
+            c.execute(f'DELETE FROM entries WHERE id in ({",".join(map(str, ids_to_delete))})')
             conn.commit()
             path = self.path
             for filename in files_to_delete:
