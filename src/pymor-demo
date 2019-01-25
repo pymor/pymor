@@ -15,7 +15,7 @@ import functools
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Launcher script for all available pyMOR demos.',
-                                     epilog='Example: {} burgers 1'.format(sys.argv[0]))
+                                     epilog=f'Example: {sys.argv[0]} burgers 1')
 
     def _run(module):
         # only need to remove the modname from args, rest is automatic
@@ -31,14 +31,14 @@ if __name__ == '__main__':
         shorts.append(short)
 
     def usage():
-        msg = '''Usage:
-    {} DEMO_NAME | -h [DEMO_OPTIONS]
+        msg = f'''Usage:
+    {sys.argv[0]} DEMO_NAME | -h [DEMO_OPTIONS]
 
 Arguments:
     -h           this message
-    DEMO_NAME    select one from these: {}
+    DEMO_NAME    select one from these: {",".join(shorts)}
     DEMO_OPTIONS any arguments for the demo, including -h for detailed help
-'''.format(sys.argv[0], ','.join(shorts))
+'''
         print(msg)
         sys.exit(0)
 

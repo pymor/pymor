@@ -222,7 +222,7 @@ def reduction_error_analysis(rd, d, reductor,
         result['max_estimates'] = max_estimates = np.max(estimates, axis=0)
         result['max_estimate_mus'] = max_estimate_mus = test_mus[np.argmax(estimates, axis=0)]
         summary.append(('maximum estimated error',
-                        '{:.7e} (mu = {})'.format(max_estimates[-1], max_estimate_mus[-1])))
+                        f'{max_estimates[-1]:.7e} (mu = {max_estimate_mus[-1]})'))
 
     if estimator and error_norms:
         result['effectivities'] = effectivities = errors[:, estimator_norm_index, :] / estimates
@@ -231,16 +231,16 @@ def reduction_error_analysis(rd, d, reductor,
         result['min_effectivities'] = min_effectivities = np.min(effectivities, axis=0)
         result['min_effectivity_mus'] = min_effectivity_mus = test_mus[np.argmin(effectivities, axis=0)]
         summary.append(('minimum estimator effectivity',
-                        '{:.7e} (mu = {})'.format(min_effectivities[-1], min_effectivity_mus[-1])))
+                        f'{min_effectivities[-1]:.7e} (mu = {min_effectivity_mus[-1]})'))
         summary.append(('maximum estimator effectivity',
-                        '{:.7e} (mu = {})'.format(max_effectivities[-1], max_effectivity_mus[-1])))
+                        f'{max_effectivities[-1]:.7e} (mu = {max_effectivity_mus[-1]})'))
 
     if condition:
         result['conditions'] = conditions = np.array(conditions)
         result['max_conditions'] = max_conditions = np.max(conditions, axis=0)
         result['max_condition_mus'] = max_condition_mus = test_mus[np.argmax(conditions, axis=0)]
         summary.append(('maximum system matrix condition',
-                        '{:.7e} (mu = {})'.format(max_conditions[-1], max_condition_mus[-1])))
+                        f'{max_conditions[-1]:.7e} (mu = {max_condition_mus[-1]})'))
 
     if custom:
         result['custom_values'] = custom_values = np.array(custom_values)
@@ -256,7 +256,7 @@ def reduction_error_analysis(rd, d, reductor,
 
     summary_fields, summary_values = list(zip(*summary))
     summary_field_width = np.max(list(map(len, summary_fields))) + 2
-    summary_lines = ['    {:{}} {}'.format(field + ':', summary_field_width, value)
+    summary_lines = [f'    {field+":":{summary_field_width}} {value}'
                      for field, value in zip(summary_fields, summary_values)]
     summary = 'Stochastic error estimation:\n' + '\n'.join(summary_lines)
     result['summary'] = summary
