@@ -465,16 +465,17 @@ class VectorArrayInterface(BasicInterface):
     def check_ind(self, ind):
         """Check if `ind` is an admissible list of indices in the sense of the class documentation."""
         l = len(self)
-        return (type(ind) is slice or
-                isinstance(ind, _INDEXTYPES) and -l <= ind < l or
-                isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
+        return (type(ind) is slice
+                or isinstance(ind, _INDEXTYPES) and -l <= ind < l
+                or isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind):
         """Check if `ind` is an admissible list of non-repeated indices in the sense of the class documentation."""
         l = len(self)
-        return (type(ind) is slice or
-                isinstance(ind, _INDEXTYPES) and -l <= ind < l or
-                isinstance(ind, (list, np.ndarray)) and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
+        return (type(ind) is slice
+                or isinstance(ind, _INDEXTYPES) and -l <= ind < l
+                or isinstance(ind, (list, np.ndarray))
+                and len(set(i if i >= 0 else l+i for i in ind if -l <= i < l)) == len(ind))
 
     def len_ind(self, ind):
         """Return the number of given indices."""

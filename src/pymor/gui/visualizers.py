@@ -79,9 +79,9 @@ class PatchVisualizer(BasicInterface):
             at the same time.
         """
         assert isinstance(U, VectorArrayInterface) \
-            or (isinstance(U, tuple) and
-                all(isinstance(u, VectorArrayInterface) for u in U) and
-                all(len(u) == len(U[0]) for u in U))
+            or (isinstance(U, tuple)
+                and all(isinstance(u, VectorArrayInterface) for u in U)
+                and all(len(u) == len(U[0]) for u in U))
         if filename:
             if not isinstance(U, tuple):
                 write_vtk(self.grid, U, filename, codim=self.codim)

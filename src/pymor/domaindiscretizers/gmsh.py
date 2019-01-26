@@ -63,7 +63,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     try:
         version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT, env=env).decode()
     except (subprocess.CalledProcessError, OSError):
-        raise GmshError('Could not find Gmsh.' +
+        raise GmshError('Could not find Gmsh.'
                         ' Please ensure that the gmsh binary (http://geuz.org/gmsh/) is in your PATH.')
 
     logger.info('Found version ' + version.strip())
@@ -147,14 +147,14 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             # set this here explicitly for string conversion to make sense
             line_loop_ids = list(line_loop_ids)
             # create the surface defined by line loops, starting with the exterior and then the holes.
-            geo_file.write('Plane Surface(' + str(line_loop_ids[0]+1) + ')' + ' = ' +
-                           str(line_loop_ids).replace('[', '{').replace(']', '}') + ';\n')
+            geo_file.write('Plane Surface(' + str(line_loop_ids[0]+1) + ')' + ' = '
+                           + str(line_loop_ids).replace('[', '{').replace(']', '}') + ';\n')
             geo_file.write('Physical Surface("boundary") = {'+str(line_loop_ids[0]+1)+'};\n')
 
             # write boundaries.
             for boundary_type, bs in boundary_types.items():
-                geo_file.write('Physical Line' + '("' + str(boundary_type) + '")' + ' = ' +
-                               str([l_id for l_id in bs]).replace('[', '{').replace(']', '}') + ';\n')
+                geo_file.write('Physical Line' + '("' + str(boundary_type) + '")' + ' = '
+                               + str([l_id for l_id in bs]).replace('[', '{').replace(']', '}') + ';\n')
 
             geo_file.close()
         # When a GEO-File is provided just get the corresponding file path.

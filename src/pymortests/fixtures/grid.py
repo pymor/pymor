@@ -81,8 +81,13 @@ subgrid_generators = [lambda args=args: subgrid_factory(*args) for args in
                        (lambda: TriaGrid((24, 24)), 4, 123)]]
 
 
-@pytest.fixture(params=(rect_grid_generators + tria_grid_generators + oned_grid_generators + subgrid_generators
-                        + unstructured_grid_generators))
+@pytest.fixture(params=(
+    rect_grid_generators
+    + tria_grid_generators
+    + oned_grid_generators
+    + subgrid_generators
+    + unstructured_grid_generators
+))
 def grid(request):
     return request.param()
 
@@ -96,6 +101,12 @@ def rect_or_tria_grid(request):
 def grid_with_orthogonal_centers(request):
     return request.param()
 
-@pytest.fixture(params=(rect_grid_generators + tria_grid_generators + oned_grid_generators + unstructured_grid_generators))
+
+@pytest.fixture(params=(
+    rect_grid_generators
+    + tria_grid_generators
+    + oned_grid_generators
+    + unstructured_grid_generators
+))
 def grids_with_visualize(request):
     return request.param()

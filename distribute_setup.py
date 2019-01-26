@@ -440,8 +440,8 @@ def _fake_setuptools():
     else:
         log.warn('Egg installation')
         pkg_info = os.path.join(setuptools_location, 'EGG-INFO', 'PKG-INFO')
-        if (os.path.exists(pkg_info) and
-            _same_content(pkg_info, SETUPTOOLS_PKG_INFO)):
+        if (os.path.exists(pkg_info)
+                and _same_content(pkg_info, SETUPTOOLS_PKG_INFO)):
             log.warn('Already patched.')
             return
         log.warn('Patching...')

@@ -421,8 +421,9 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, codim, title, legend, separate_plots):
             assert isinstance(U, VectorArrayInterface) \
-                or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) for u in U) and
-                    all(len(u) == len(U[0]) for u in U))
+                or (isinstance(U, tuple)
+                    and all(isinstance(u, VectorArrayInterface) for u in U)
+                    and all(len(u) == len(U[0]) for u in U))
             U = (U.to_numpy(),) if isinstance(U, VectorArrayInterface) else tuple(u.to_numpy() for u in U)
             if isinstance(legend, str):
                 legend = (legend,)

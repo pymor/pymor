@@ -559,9 +559,10 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
                  solver_options=None, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
         assert diffusion_function is None \
-            or (isinstance(diffusion_function, FunctionInterface) and
-                diffusion_function.dim_domain == grid.dim and
-                diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim,) * 2)
+            or (isinstance(diffusion_function, FunctionInterface)
+                and diffusion_function.dim_domain == grid.dim
+                and diffusion_function.shape_range == ()
+                or diffusion_function.shape_range == (grid.dim,) * 2)
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
@@ -679,9 +680,10 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
                  solver_options=None, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         assert diffusion_function is None \
-            or (isinstance(diffusion_function, FunctionInterface) and
-                diffusion_function.dim_domain == grid.dim and
-                diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim,) * 2)
+            or (isinstance(diffusion_function, FunctionInterface)
+                and diffusion_function.dim_domain == grid.dim
+                and diffusion_function.shape_range == ()
+                or diffusion_function.shape_range == (grid.dim,) * 2)
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
@@ -798,9 +800,9 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
                  solver_options=None, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
         assert advection_function is None \
-            or (isinstance(advection_function, FunctionInterface) and
-                advection_function.dim_domain == grid.dim and
-                advection_function.shape_range == (grid.dim,))
+            or (isinstance(advection_function, FunctionInterface)
+                and advection_function.dim_domain == grid.dim
+                and advection_function.shape_range == (grid.dim,))
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
@@ -916,9 +918,9 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
                  solver_options=None, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         assert advection_function is None \
-            or (isinstance(advection_function, FunctionInterface) and
-                advection_function.dim_domain == grid.dim and
-                advection_function.shape_range == (grid.dim,))
+            or (isinstance(advection_function, FunctionInterface)
+                and advection_function.dim_domain == grid.dim
+                and advection_function.shape_range == (grid.dim,))
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
@@ -1029,11 +1031,11 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, robin_data=None, order=2, solver_options=None, name=None):
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
-        assert robin_data is None or all([isinstance(f, FunctionInterface) and
-                                          f.dim_domain == grid.dim and
-                                          (f.shape_range == ()
-                                               or f.shape_range == (grid.dim,)
-                                               ) for f in robin_data])
+        assert robin_data is None or all([isinstance(f, FunctionInterface)
+                                          and f.dim_domain == grid.dim
+                                          and (f.shape_range == ()
+                                               or f.shape_range == (grid.dim,))
+                                          for f in robin_data])
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info

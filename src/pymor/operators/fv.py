@@ -715,7 +715,8 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
                 dirichlet_mask = bi.dirichlet_mask(1)
                 SE_I0_D = SE_I0[dirichlet_mask]
                 boundary_normals = g.unit_outer_normals()[SE_I0_D, superentity_indices[:, 0][dirichlet_mask]]
-                BOUNDARY_DISTS = np.sum((centers[dirichlet_mask, :] - g.orthogonal_centers()[SE_I0_D, :]) * boundary_normals,
+                BOUNDARY_DISTS = np.sum((centers[dirichlet_mask, :] - g.orthogonal_centers()[SE_I0_D, :])
+                                        * boundary_normals,
                                         axis=-1)
                 DIRICHLET_FLUXES = VOLS[dirichlet_mask] * self.dirichlet_data(centers[dirichlet_mask]) / BOUNDARY_DISTS
                 if self.diffusion_function is not None:
@@ -764,10 +765,10 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
                  name=None):
         super().__init__()
         assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
-        assert diffusion_function is None \
-            or (isinstance(diffusion_function, FunctionInterface) and
-                diffusion_function.dim_domain == grid.dim and
-                diffusion_function.shape_range == ())
+        assert (diffusion_function is None
+                or (isinstance(diffusion_function, FunctionInterface)
+                    and diffusion_function.dim_domain == grid.dim
+                    and diffusion_function.shape_range == ()))
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_function = diffusion_function

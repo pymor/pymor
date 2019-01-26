@@ -97,8 +97,8 @@ def _testdatafiles():
 def _setup(**kwargs):
     # the following hack is taken from scipy's setup.py
     # https://github.com/scipy/scipy
-    if (len(sys.argv) >= 2 and
-            ('--help' in sys.argv[1:] or sys.argv[1] in ('--help-commands', 'egg_info', '--version', 'clean'))):
+    if (len(sys.argv) >= 2
+            and ('--help' in sys.argv[1:] or sys.argv[1] in ('--help-commands', 'egg_info', '--version', 'clean'))):
         # For these actions, NumPy is not required.
         #
         # They are required to succeed without Numpy for example when

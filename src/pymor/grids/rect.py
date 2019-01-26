@@ -91,7 +91,8 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
             codim1_subentities[:, :,  1] = codim1_subentities[:, :, 3] + 1
             codim1_subentities[:, -1, 1] = codim1_subentities[:, 0, 3]
         else:
-            codim1_subentities[:, :,  3] = (np.arange(ni0)[np.newaxis, :] + (np.arange(ni1) * (ni0 + 1))[:, np.newaxis])
+            codim1_subentities[:, :,  3] = (np.arange(ni0)[np.newaxis, :]
+                                            + (np.arange(ni1) * (ni0 + 1))[:, np.newaxis])
             codim1_subentities[:, :,  1] = codim1_subentities[:, :, 3] + 1
         offset = np.max(codim1_subentities[:, :, [1, 3]]) + 1
         codim1_subentities[:, :, 0] = (np.arange(ni0 * ni1) + offset).reshape((ni1, ni0))
@@ -109,8 +110,8 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
             codim2_subentities[:, :,  3] = codim2_subentities[:, :, 0] + ni0
             codim2_subentities[:, :,  2] = codim2_subentities[:, :, 1] + ni0
         else:
-            codim2_subentities[:, :,  0] = (np.arange(ni0)[np.newaxis, :] +
-                                            (np.arange(ni1) * (ni0 + 1))[:, np.newaxis])
+            codim2_subentities[:, :,  0] = (np.arange(ni0)[np.newaxis, :]
+                                            + (np.arange(ni1) * (ni0 + 1))[:, np.newaxis])
             codim2_subentities[:, :,  1] = codim2_subentities[:, :, 0] + 1
             codim2_subentities[:, :,  3] = codim2_subentities[:, :, 0] + (ni0 + 1)
             codim2_subentities[:, :,  2] = codim2_subentities[:, :, 0] + (ni0 + 2)

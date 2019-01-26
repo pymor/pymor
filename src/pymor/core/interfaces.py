@@ -292,8 +292,10 @@ class ImmutableMeta(UberMeta):
 
         c = UberMeta.__new__(cls, classname, bases, classdict)
 
-        c._implements_reduce = ('__reduce__' in classdict or '__reduce_ex__' in classdict or
-                                any(getattr(base, '_implements_reduce', False) for base in bases))
+        c._implements_reduce = ('__reduce__' in classdict
+                                or '__reduce_ex__' in classdict
+                                or any(getattr(base, '_implements_reduce', False)
+                                       for base in bases))
 
         # set __signature__ attribute on newly created class c to ensure that
         # inspect.signature(c) returns the signature of its __init__ arguments and not
@@ -589,8 +591,7 @@ class _SIDGenerator:
                                      + f'(object {obj} of type {t.__name__})')
 
         if type(rv) is not tuple or not (2 <= len(rv) <= 5):
-            raise SIDGenerationError('__reduce__ return value malformed ' +
-                                     f'(object {obj} of type {t.__name__})')
+            raise SIDGenerationError(f'__reduce__ return value malformed (object {obj} of type {t.__name__})')
 
         rv = rv + (None,) * (5 - len(rv))
         func, args, state, listitems, dictitems = rv

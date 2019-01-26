@@ -182,9 +182,9 @@ class BlockVectorSpace(VectorSpaceInterface):
         self.id = id_
 
     def __eq__(self, other):
-        return (type(other) is BlockVectorSpace and
-                len(self.subspaces) == len(other.subspaces) and
-                all(space == other_space for space, other_space in zip(self.subspaces, other.subspaces)))
+        return (type(other) is BlockVectorSpace
+                and len(self.subspaces) == len(other.subspaces)
+                and all(space == other_space for space, other_space in zip(self.subspaces, other.subspaces)))
 
     def __hash__(self):
         return sum(hash(s) for s in self.subspaces) + hash(self.id)

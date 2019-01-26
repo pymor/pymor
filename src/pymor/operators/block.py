@@ -390,9 +390,11 @@ class SecondOrderSystemOperator(BlockOperator):
         assert operators[0] is self
 
         # return ShiftedSecondOrderSystemOperator if possible
-        if (len(operators) == 2 and isinstance(operators[1], BlockDiagonalOperator) and
-                operators[1].num_source_blocks == 2 and operators[1].num_range_blocks == 2 and
-                isinstance(operators[1]._blocks[0, 0], IdentityOperator)):
+        if (len(operators) == 2
+                and isinstance(operators[1], BlockDiagonalOperator)
+                and operators[1].num_source_blocks == 2
+                and operators[1].num_range_blocks == 2
+                and isinstance(operators[1]._blocks[0, 0], IdentityOperator)):
             return ShiftedSecondOrderSystemOperator(operators[1]._blocks[1, 1],
                                                     self.E,
                                                     self.K,
@@ -479,19 +481,20 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V_blocks = [U.block(0) * self.a + U.block(1) * self.b,
-                    self.K.apply(U.block(0), mu=mu) * (-self.b) +
-                    self.M.apply(U.block(1), mu=mu) * self.a -
-                    self.E.apply(U.block(1), mu=mu) * self.b]
+        V_blocks = [U.block(0) * self.a
+                    + U.block(1) * self.b,
+                    self.K.apply(U.block(0), mu=mu) * (-self.b)
+                    + self.M.apply(U.block(1), mu=mu) * self.a
+                    - self.E.apply(U.block(1), mu=mu) * self.b]
         return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [V.block(0) * self.a.conjugate() -
-                    self.K.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate(),
-                    V.block(0) * self.b.conjugate() +
-                    self.M.apply_adjoint(V.block(1), mu=mu) * self.a.conjugate() -
-                    self.E.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate()]
+        U_blocks = [V.block(0) * self.a.conjugate()
+                    - self.K.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate(),
+                    V.block(0) * self.b.conjugate()
+                    + self.M.apply_adjoint(V.block(1), mu=mu) * self.a.conjugate()
+                    - self.E.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate()]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
@@ -500,10 +503,10 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         KV0 = self.K.apply(V.block(0), mu=mu)
         a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
         a2MmabEpb2KiV1 = a2MmabEpb2K.apply_inverse(V.block(1), mu=mu, least_squares=least_squares)
-        U_blocks = [a2MmabEpb2K.apply_inverse(aMmbEV0, mu=mu, least_squares=least_squares) -
-                    a2MmabEpb2KiV1 * self.b,
-                    a2MmabEpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) * self.b +
-                    a2MmabEpb2KiV1 * self.a]
+        U_blocks = [a2MmabEpb2K.apply_inverse(aMmbEV0, mu=mu, least_squares=least_squares)
+                    - a2MmabEpb2KiV1 * self.b,
+                    a2MmabEpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) * self.b
+                    + a2MmabEpb2KiV1 * self.a]
         return self.source.make_array(U_blocks)
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
@@ -511,10 +514,11 @@ class ShiftedSecondOrderSystemOperator(BlockOperator):
         a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
         a2MmabEpb2KitU0 = a2MmabEpb2K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
         a2MmabEpb2KitU1 = a2MmabEpb2K.apply_inverse_adjoint(U.block(1), mu=mu, least_squares=least_squares)
-        V_blocks = [self.M.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.a.conjugate() -
-                    self.E.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.b.conjugate() +
-                    self.K.apply_adjoint(a2MmabEpb2KitU1, mu=mu) * self.b.conjugate(),
-                    -a2MmabEpb2KitU0 * self.b.conjugate() + a2MmabEpb2KitU1 * self.a.conjugate()]
+        V_blocks = [self.M.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.a.conjugate()
+                    - self.E.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.b.conjugate()
+                    + self.K.apply_adjoint(a2MmabEpb2KitU1, mu=mu) * self.b.conjugate(),
+                    -a2MmabEpb2KitU0 * self.b.conjugate()
+                    + a2MmabEpb2KitU1 * self.a.conjugate()]
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):

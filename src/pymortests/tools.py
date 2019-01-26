@@ -89,7 +89,8 @@ def test_vtkio(rect_or_tria_grid):
     grid = rect_or_tria_grid
     steps = 4
     for dim in range(1, 2):
-        for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.zeros((steps, grid.size(c)))) for c in range(grid.dim+1))):
+        for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.zeros((steps, grid.size(c))))
+                                      for c in range(grid.dim+1))):
             with SafeTemporaryFileName('wb') as out_name:
                 if codim == 1:
                     with pytest.raises(NotImplementedError):
