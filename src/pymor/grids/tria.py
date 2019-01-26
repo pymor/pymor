@@ -10,7 +10,7 @@ from pymor.grids.referenceelements import triangle
 
 
 class TriaGrid(AffineGridWithOrthogonalCentersInterface):
-    """Basic implementation of a triangular grid on a rectangular domain.
+    r"""Basic implementation of a triangular grid on a rectangular domain.
 
     The global face, edge and vertex indices are given as follows ::
 

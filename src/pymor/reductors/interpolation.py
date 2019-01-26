@@ -14,7 +14,7 @@ from pymor.reductors.basic import GenericPGReductor
 
 
 class GenericBHIReductor(BasicInterface):
-    """Generic bitangential Hermite interpolation reductor.
+    r"""Generic bitangential Hermite interpolation reductor.
 
     This is a generic reductor for reducing any linear
     :class:`~pymor.discretizations.iosys.InputStateOutputSystem` with

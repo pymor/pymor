@@ -94,14 +94,14 @@ class ColoredFormatter(logging.Formatter):
         if not record.msg:
             return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '|   ' * INDENT
         if record.levelname == 'BLOCK_TIME':
-            return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '|   ' * (INDENT - 1) + '\----------------- ' + record.msg
+            return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '|   ' * (INDENT - 1) + r'\----------------- ' + record.msg
 
         # handle length change of timestamp
         if len(timestamp) > LAST_TIMESTAMP_LENGTH:
             timestep_length = len(timestamp)
             if INDENT > 0:
                 for i in reversed(range(LAST_TIMESTAMP_LENGTH, timestep_length)):
-                    timestamp = ' ' * (i + 2) + '\   ' * INDENT + '\n' + timestamp
+                    timestamp = ' ' * (i + 2) + r'\   ' * INDENT + '\n' + timestamp
             LAST_TIMESTAMP_LENGTH = timestep_length
 
         indent = '|   ' * INDENT
