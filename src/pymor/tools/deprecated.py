@@ -23,8 +23,9 @@ class Deprecated:
         @functools.wraps(func)
         def new_func(*args, **kwargs):
             frame = inspect.currentframe().f_back
-            msg = 'DeprecationWarning. Call to deprecated function {} in {}:{}\nUse {} instead'.format(
-                func.__name__, frame.f_code.co_filename, frame.f_code.co_firstlineno, self._alt)
+            msg = f'DeprecationWarning. Call to deprecated function {func.__name__,} in ' \
+                  f'{frame.f_code.co_filename}:{frame.f_code.co_firstlineno}\n' \
+                  f'Use {self._alt} instead'
             warnings.warn(msg, DeprecationWarning)
             return func(*args, **kwargs)
         return new_func

@@ -690,8 +690,8 @@ class LTISystem(InputStateOutputSystem):
                                     to_matrix(C, format='dense'),
                                     trans=True, options=options)
         else:
-            raise NotImplementedError("Only 'c_lrcf', 'o_lrcf', 'c_dense', and 'o_dense' types are possible"
-                                      " ({} was given).".format(typ))
+            raise NotImplementedError(f"Only 'c_lrcf', 'o_lrcf', 'c_dense', and 'o_dense' types are possible "
+                                      f"({typ} was given).")
 
     @cached
     def _hsv_U_V(self):
@@ -1240,9 +1240,9 @@ class SecondOrderSystem(InputStateOutputSystem):
         """
         if typ not in ['pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',
                        'pc_dense', 'vc_dense', 'po_dense', 'vo_dense']:
-            raise NotImplementedError("Only 'pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',"
-                                      " 'pc_dense', 'vc_dense', 'po_dense', and 'vo_dense' types are possible"
-                                      " ({} was given).".format(typ))
+            raise NotImplementedError(f"Only 'pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',"
+                                      f" 'pc_dense', 'vc_dense', 'po_dense', and 'vo_dense' types are possible"
+                                      f" ({typ} was given).")
 
         if typ.endswith('lrcf'):
             return self.to_lti().gramian(typ[1:]).block(0 if typ.startswith('p') else 1)

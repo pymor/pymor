@@ -34,9 +34,11 @@ def format_table(rows, width='AUTO', title=None):
     rows.insert(1, ['-' * cw for cw in column_widths])
 
     if title is not None:
-        title = '{:^{}}\n{:^{}}\n\n'.format(title, total_width, '='*len(title), total_width)
+        separator = '=' * len(title)
+        title = f'{title:^{total_width}}\n' \
+                f'{separator:^{total_width}}\n\n'
     else:
         title = ''
 
-    return title + '\n'.join('  '.join('{:<{}}'.format(c, cw) for c, cw in zip(r, column_widths))
+    return title + '\n'.join('  '.join(f'{c:<{cw}}' for c, cw in zip(r, column_widths))
                              for r in rows)

@@ -252,8 +252,7 @@ def defaults(*args, sid_ignore=()):
         def wrapper(*wrapper_args, **wrapper_kwargs):
             for k, v in zip(func.argnames, wrapper_args):
                 if k in wrapper_kwargs:
-                    raise TypeError("{} got multiple values for argument '{}'"
-                                    .format(func.__name__, k))
+                    raise TypeError(f"{func.__name__} got multiple values for argument '{k}'")
                 wrapper_kwargs[k] = v
             wrapper_kwargs = {k: v if v is not None else func.defaultsdict.get(k, None)
                               for k, v in wrapper_kwargs.items()}
@@ -396,9 +395,8 @@ d = {}
                     print('', file=f)
                 lks = ks
 
-                print('{}d[{:{key_width}}] = {}'.format('# ' if c else '', k, v,
-                                                        key_width=key_width),
-                      file=f)
+                comment = '# ' if c else ''
+                print(f'{comment}d[{k:{key_width}}] = {v}', file=f)
 
             print(file=f)
             print(file=f)

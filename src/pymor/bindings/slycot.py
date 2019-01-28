@@ -70,7 +70,7 @@ if config.HAVE_SLYCOT:
                                  trans=trans, options=options)
             Z = _chol(X)
         else:
-            raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
+            raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
         return A.source.from_numpy(Z.T)
 
@@ -139,15 +139,15 @@ if config.HAVE_SLYCOT:
                 _solve_check(A.dtype, 'slycot.sg03ad', sep, ferr)
             X /= scale
         else:
-            raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
+            raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
         return X
 
     def _solve_check(dtype, solver, sep, ferr):
         if ferr > 1e-1:
             logger = getLogger(solver)
-            logger.warning('Estimated forward relative error bound is large (ferr={:e}, sep={:e}). '
-                           'Result may not be accurate.'.format(ferr, sep))
+            logger.warning(f'Estimated forward relative error bound is large (ferr={ferr:e}, sep={sep:e}). '
+                           f'Result may not be accurate.')
 
     def ricc_lrcf_solver_options():
         """Returns available Riccati equation solvers with default solver options for the SciPy backend.
@@ -204,7 +204,7 @@ if config.HAVE_SLYCOT:
         _solve_ricc_check_args(A, E, B, C, R, S, trans)
         options = _parse_options(options, ricc_lrcf_solver_options(), 'slycot', None, False)
         if options['type'] != 'slycot':
-            raise ValueError('Unexpected Riccati equation solver ({}).'.format(options['type']))
+            raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
 
         A_source = A.source
         A = to_matrix(A, format='dense')
@@ -266,8 +266,8 @@ if config.HAVE_SLYCOT:
     def _ricc_rcond_check(solver, rcond):
         if rcond < np.finfo(np.float64).eps:
             logger = getLogger(solver)
-            logger.warning('Estimated reciprocal condition number is small (rcond={:e}). '
-                           'Result may not be accurate.'.format(rcond))
+            logger.warning(f'Estimated reciprocal condition number is small (rcond={rcond:e}). '
+                           f'Result may not be accurate.')
 
     def pos_ricc_lrcf_solver_options():
         """Returns available positive Riccati equation solvers with default solver options for the SciPy backend.
@@ -324,7 +324,7 @@ if config.HAVE_SLYCOT:
         _solve_ricc_check_args(A, E, B, C, R, S, trans)
         options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'slycot', None, False)
         if options['type'] != 'slycot':
-            raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
+            raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
 
         if R is None:
             R = np.eye(len(C) if not trans else len(B))

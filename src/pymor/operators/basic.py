@@ -87,9 +87,8 @@ class OperatorBase(OperatorInterface):
             return Concatenation((self, other))
 
     def __str__(self):
-        return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
-            self.name, self.source.dim, self.range.dim, self.parameter_type,
-            self.__class__.__name__)
+        return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
+               f'(parameter type: {self.parameter_type}, class: {self.__class__.__name__})'
 
     def apply_adjoint(self, V, mu=None):
         if self.linear:

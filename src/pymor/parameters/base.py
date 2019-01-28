@@ -195,8 +195,8 @@ class Parameter(dict):
                 raise ValueError('Parameter length does not match.')
             mu = dict(zip(sorted(parameter_type), mu))
         elif set(mu.keys()) != set(parameter_type.keys()):
-            raise ValueError('Provided parameter with keys {} does not match parameter type {}.'
-                             .format(list(mu.keys()), parameter_type))
+            raise ValueError(f'Provided parameter with keys {list(mu.keys())} does not match '
+                             f'parameter type {parameter_type}.')
 
         def parse_value(k, v):
             if not isinstance(v, np.ndarray):
@@ -204,11 +204,11 @@ class Parameter(dict):
                 try:
                     v = v.reshape(parameter_type[k])
                 except ValueError:
-                    raise ValueError('Shape mismatch for parameter component {}: got {}, expected {}'
-                                     .format(k, v.shape, parameter_type[k]))
+                    raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
+                                     f'expected {parameter_type[k]}')
             if v.shape != parameter_type[k]:
-                raise ValueError('Shape mismatch for parameter component {}: got {}, expected {}'
-                                 .format(k, v.shape, parameter_type[k]))
+                raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
+                                 f'expected {parameter_type[k]}')
             return v
 
         return cls({k: parse_value(k, v) for k, v in mu.items()})
@@ -364,8 +364,7 @@ class Parametric:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
         assert not self.parameter_type or all(getattr(mu.get(k, None), 'shape', None) == v
                                               for k, v in self.parameter_type.items()), \
-            ('Given parameter of type {} does not match expected parameter type {}'
-             .format(mu.parameter_type, self.parameter_type))
+            f'Given parameter of type {mu.parameter_type} does not match expected parameter type {self.parameter_type}'
         return mu
 
     def strip_parameter(self, mu):
@@ -423,8 +422,8 @@ class Parametric:
                 assert isinstance(shape2, Number)
                 shape2 = () if shape2 == 0 else (shape2,)
             assert shape1 == shape2, \
-                ('Dimension mismatch for parameter component {} (got {} and {})'
-                 .format(component, my_parameter_type[component], shape))
+                (f'Dimension mismatch for parameter component {component} '
+                 f'(got {my_parameter_type[component]} and {shape})')
             return True
 
         for arg in args:

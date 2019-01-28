@@ -419,8 +419,8 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
         Copy of `self` with changed attributes.
         """
         if not set(kwargs.keys()) <= self.with_arguments:
-            raise ValueError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
-                list(kwargs.keys()), self.__class__, self.with_arguments))
+            raise ValueError(f"Changing '{list(kwargs.keys())}' using with() is not allowed in {self.__class__} "
+                             f"(only '{self.with_arguments}')")
 
         # fill missing __init__ arguments using instance attributes of same name
         for arg in self._init_arguments:
@@ -428,8 +428,8 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
                 try:
                     kwargs[arg] = getattr(self, arg)
                 except AttributeError:
-                    raise ValueError('Cannot find missing __init__ argument "{}" for "{}" as attribute of "{}"'.format(
-                        arg, self.__class__, self))
+                    raise ValueError(f"Cannot find missing __init__ argument '{arg}' for '{self.__class__}' "
+                                     f"as attribute of '{self}'")
 
         c = type(self)(**kwargs)
 
@@ -500,9 +500,9 @@ class _SIDGenerator:
 
         name = getattr(obj, 'name', None)
         if name:
-            self.logger.debug('{}: SID generation took {} seconds'.format(name, time.time() - start))
+            self.logger.debug(f'{name}: SID generation took {time.time()-start} seconds')
         else:
-            self.logger.debug('SID generation took {} seconds'.format(time.time() - start))
+            self.logger.debug(f'SID generation took {time.time()-start} seconds')
         return sid, self.has_cycles
 
     def deterministic_state(self, obj, first_obj=False):

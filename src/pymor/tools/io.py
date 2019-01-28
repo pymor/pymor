@@ -65,7 +65,7 @@ def _load(path, key=None):
     else:
         matrix = data
     if not isinstance(matrix, np.ndarray) and not issparse(matrix):
-        raise IOError('Loaded data is not a matrix in NPY file {}').format(path)
+        raise IOError(f'Loaded data is not a matrix in NPY file {path}')
     return matrix
 
 

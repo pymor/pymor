@@ -324,13 +324,13 @@ def test_neighbours_each_neighbour_has_entry(grid):
                     for ei, ni in product(SUE[si], SUN[si]):
                         if ei != -1 and ni != -1:
                             assert ni in N[ei],\
-                                'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals())
+                                f'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
             else:
                 for si in range(SUE.shape[0]):
                     for ei, ni in product(SUE[si], SUN[si]):
                         if ei != ni and ei != -1 and ni != -1:
                             assert ni in N[ei],\
-                                'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals())
+                                f'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
 
 
 def test_neighbours_not_neighbour_of_itself(grid):
@@ -340,7 +340,7 @@ def test_neighbours_not_neighbour_of_itself(grid):
             N = g.neighbours(e, e, s)
             for ei, E in enumerate(N):
                 assert ei not in E,\
-                    'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'.format(**locals())
+                    f'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'
 
 
 def test_boundary_mask_wrong_arguments(grid):

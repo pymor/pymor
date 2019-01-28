@@ -112,7 +112,7 @@ def check_results(test_name, params, results, *args):
 
     assert results is not None
     assert set(keys.keys()) <= set(results.keys()), \
-        'Keys {} missing in results dict'.format(set(keys.keys()) - set(results.keys()))
+        f'Keys {set(keys.keys()) - set(results.keys())} missing in results dict'
     results = {k: np.asarray(results[k]) for k in keys.keys()}
     assert all(v.dtype != object for v in results.values())
 
@@ -136,13 +136,13 @@ def check_results(test_name, params, results, *args):
             os.mkdir(testname_dir)
         _dump_results(filename, results)
         assert False, \
-            'No results found for test {} ({}), saved current results. Remember to check in {}.'.format(
-                test_name, params, filename)
+            f'No results found for test {test_name} ({params}), saved current results. Remember to check in {filename}.'
 
     for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
             abs_errs = np.abs(results[k] - old_results[k])
             rel_errs = abs_errs / np.abs(old_results[k])
             _dump_results(filename + '_changed', results)
-            assert False, 'Results for test {}({}, key: {}) have changed.\n (maximum error: {} abs / {} rel).\nSaved new results in {}'.format(
-                test_name, params, k, np.max(abs_errs), np.max(rel_errs), filename + '_changed')
+            assert False, (f'Results for test {test_name}({params}, key: {k}) have changed.\n'
+                           f'(maximum error: {np.max(abs_errs)} abs / {np.max(rel_errs)} rel).\n'
+                           f'Saved new results in {filename}_changed')

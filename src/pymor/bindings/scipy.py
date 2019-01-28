@@ -439,7 +439,7 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
             B = B.T
         X = solve_continuous_lyapunov(A, -B.dot(B.T))
     else:
-        raise ValueError('Unexpected Lyapunov equation solver ({}).'.format(options['type']))
+        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
     return X
 
@@ -498,7 +498,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
     options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
-        raise ValueError('Unexpected Riccati equation solver ({}).'.format(options['type']))
+        raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
 
     A_source = A.source
     A = to_matrix(A, format='dense')
@@ -573,7 +573,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
-        raise ValueError('Unexpected positive Riccati equation solver ({}).'.format(options['type']))
+        raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
 
     if R is None:
         R = np.eye(len(C) if not trans else len(B))

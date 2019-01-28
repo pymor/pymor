@@ -171,13 +171,10 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
                 (self.num_intervals, self.domain, self.identify_left_right, self.identify_bottom_top))
 
     def __str__(self):
-        return (('Tria-Grid on domain [{xmin},{xmax}] x [{ymin},{ymax}]\n' +
-                 'x0-intervals: {x0ni}, x1-intervals: {x1ni}\n' +
-                 'elements: {elements}, edges: {edges}, vertices: {vertices}')
-                .format(xmin=self.x0_range[0], xmax=self.x0_range[1],
-                        ymin=self.x1_range[0], ymax=self.x1_range[1],
-                        x0ni=self.x0_num_intervals, x1ni=self.x1_num_intervals,
-                        elements=self.size(0), edges=self.size(1), vertices=self.size(2)))
+        return (f'Tria-Grid on domain '
+                f'[{self.x0_range[0]},{self.x0_range[1]}] x [{self.x1_range[0]},{self.x1_range[1]}]\n'
+                f'x0-intervals: {self.x0_num_intervals}, x1-intervals: {self.x1_num_intervals}\n'
+                f'elements: {self.size(0)}, edges: {self.size(1)}, vertices: {self.size(2)}')
 
     def __repr__(self):
         return 'TriaGrid({}, {}, {}, {})'.format(

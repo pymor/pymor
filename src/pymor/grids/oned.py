@@ -43,18 +43,11 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
                 (self._domain, self._num_intervals, self._identify_left_right))
 
     def __str__(self):
-        return ('OnedGrid, domain [{xmin},{xmax}]' +
-                ', {elements} elements' +
-                ', {vertices} vertices'
-                ).format(xmin=self._domain[0],
-                         xmax=self._domain[1],
-                         elements=self.size(0),
-                         vertices=self.size(1))
+        return (f'OnedGrid, domain [{self._domain[0]},{self._domain[1]}], '
+                f'{self.size(0)} elements, {self.size(1)} vertices')
 
     def __repr__(self):
-        return 'OnedGrid({}, {}, {})'.format(
-            self.domain, self.num_intervals, self.identify_left_right
-        )
+        return f'OnedGrid({self.domain}, {self.num_intervals}, {self.identify_left_right})'
 
     def size(self, codim=0):
         assert 0 <= codim <= 1, f'codim has to be between 0 and {self.dim}!'
