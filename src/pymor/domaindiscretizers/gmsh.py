@@ -177,7 +177,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         # run gmsh; perform mesh refinement
         cmd = ['gmsh', msh_file_path, '-refine', '-o', msh_file_path]
         for i in range(refinement_steps):
-            logger.info('Performing Gmsh refinement step {}'.format(i+1))
+            logger.info(f'Performing Gmsh refinement step {i+1}')
             subprocess.check_call(cmd, env=env)
 
         toc = time.time()

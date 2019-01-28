@@ -80,7 +80,8 @@ class RectDomain(DomainDescriptionInterface):
         right = ', right=' + repr(self.right) if self.right != 'dirichlet' else ''
         top = ', top=' + repr(self.top) if self.top != 'dirichlet' else ''
         bottom = ', bottom=' + repr(self.bottom) if self.bottom != 'dirichlet' else ''
-        return 'RectDomain({}{})'.format(str(self.domain).replace('\n', ','), left + right + top + bottom)
+        domain = str(self.domain).replace('\n', ',')
+        return f'RectDomain({domain}{left}{right}{top}{bottom})'
 
 
 class CylindricalDomain(DomainDescriptionInterface):
@@ -145,7 +146,8 @@ class CylindricalDomain(DomainDescriptionInterface):
     def __repr__(self):
         top = ', top=' + repr(self.top) if self.top != 'dirichlet' else ''
         bottom = ', bottom=' + repr(self.bottom) if self.bottom != 'dirichlet' else ''
-        return 'CylindricalDomain({}{})'.format(str(self.domain).replace('\n', ','), top + bottom)
+        domain = str(self.domain).replace('\n', ',')
+        return f'CylindricalDomain({domain}{top}{bottom})'
 
 
 class TorusDomain(DomainDescriptionInterface):
@@ -240,7 +242,7 @@ class LineDomain(DomainDescriptionInterface):
     def __repr__(self):
         left = ', left=' + repr(self.left) if self.left != 'dirichlet' else ''
         right = ', right=' + repr(self.right) if self.right != 'dirichlet' else ''
-        return 'LineDomain({}{})'.format(self.domain, left + right)
+        return f'LineDomain({self.domain}{left}{right})'
 
 
 class CircleDomain(DomainDescriptionInterface):

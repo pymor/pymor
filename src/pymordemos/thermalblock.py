@@ -109,7 +109,7 @@ def main(args):
         Us = ()
         legend = ()
         for mu in d.parameter_space.sample_randomly(2):
-            print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
+            print(f"Solving for diffusion = \n{mu['diffusion']} ... ")
             sys.stdout.flush()
             Us = Us + (d.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
@@ -160,12 +160,11 @@ def main(args):
         assert False  # this should never happen
 
     if args['--pickle']:
-        print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
+        print(f"\nWriting reduced discretization to file {args['--pickle']}_reduced ...")
         with open(args['--pickle'] + '_reduced', 'wb') as f:
             dump(rd, f)
         if not args['--fenics']:  # FEniCS data structures do not support serialization
-            print('Writing detailed discretization and reductor to file {} ...'
-                  .format(args['--pickle'] + '_detailed'))
+            print(f"Writing detailed discretization and reductor to file {args['--pickle']}_detailed ...")
             with open(args['--pickle'] + '_detailed', 'wb') as f:
                 dump((d, reductor), f)
 
@@ -253,11 +252,11 @@ def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array
     if use_list_vector_array:
         d = convert_to_numpy_list_vector_array(d)
 
-    summary = '''pyMOR discretization:
+    summary = f'''pyMOR discretization:
    number of blocks: {xblocks}x{yblocks}
    grid intervals:   {grid_num_intervals}
    ListVectorArray:  {use_list_vector_array}
-'''.format(**locals())
+'''
 
     return d, summary
 
@@ -272,11 +271,11 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     else:
         d = _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order)
 
-    summary = '''FEniCS discretization:
+    summary = f'''FEniCS discretization:
    number of blocks:      {xblocks}x{yblocks}
    grid intervals:        {grid_num_intervals}
    finite element order:  {element_order}
-'''.format(**locals())
+'''
 
     return d, summary
 
@@ -376,10 +375,10 @@ def reduce_naive(d, reductor, basis_size):
 
     elapsed_time = time.time() - tic
 
-    summary = '''Naive basis generation:
+    summary = f'''Naive basis generation:
    basis size set: {basis_size}
    elapsed time:   {elapsed_time}
-'''.format(**locals())
+'''
 
     return rd, summary
 
@@ -400,14 +399,14 @@ def reduce_greedy(d, reductor, snapshots_per_block,
     # generate summary
     real_rb_size = rd.solution_space.dim
     training_set_size = len(training_set)
-    summary = '''Greedy basis generation:
+    summary = f'''Greedy basis generation:
    size of training set:   {training_set_size}
    error estimator used:   {use_estimator}
    extension method:       {extension_alg_name}
    prescribed basis size:  {max_extensions}
    actual basis size:      {real_rb_size}
    elapsed time:           {greedy_data[time]}
-'''.format(**locals())
+'''
 
     return rd, summary
 
@@ -429,14 +428,14 @@ def reduce_adaptive_greedy(d, reductor, validation_mus,
     real_rb_size = rd.solution_space.dim
     # the validation set consists of `validation_mus` random parameters plus the centers of the adaptive sample set cells
     validation_mus += 1
-    summary = '''Adaptive greedy basis generation:
+    summary = f'''Adaptive greedy basis generation:
    initial size of validation set:  {validation_mus}
    error estimator used:            {use_estimator}
    extension method:                {extension_alg_name}
    prescribed basis size:           {max_extensions}
    actual basis size:               {real_rb_size}
    elapsed time:                    {greedy_data[time]}
-'''.format(**locals())
+'''
 
     return rd, summary
 
@@ -465,12 +464,12 @@ def reduce_pod(d, reductor, snapshots_per_block, basis_size):
     # generate summary
     real_rb_size = rd.solution_space.dim
     training_set_size = len(training_set)
-    summary = '''POD basis generation:
+    summary = f'''POD basis generation:
    size of training set:   {training_set_size}
    prescribed basis size:  {basis_size}
    actual basis size:      {real_rb_size}
    elapsed time:           {elapsed_time}
-'''.format(**locals())
+'''
 
     return rd, summary
 

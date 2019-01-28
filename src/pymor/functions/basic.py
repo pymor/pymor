@@ -183,9 +183,8 @@ class ExpressionFunction(GenericFunction):
                          dim_domain, shape_range, parameter_type, name)
 
     def __repr__(self):
-        return 'ExpressionFunction({}, {}, {}, {}, {})'.format(self.expression, repr(self.parameter_type),
-                                                               self.shape_range, self.parameter_type,
-                                                               self.values)
+        return f'ExpressionFunction({self.expression}, {repr(self.parameter_type)}, {self.shape_range}, ' \
+               f'{self.parameter_type}, {self.values})'
 
     def __reduce__(self):
         return (ExpressionFunction,

@@ -91,7 +91,7 @@ def burgers_demo(args):
     sys.stdout.flush()
     tic = time.time()
     U = d.solve(mu)
-    print('Solving took {}s'.format(time.time() - tic))
+    print(f'Solving took {time.time()-tic}s')
     d.visualize(U)
 
 if __name__ == '__main__':

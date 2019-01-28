@@ -40,15 +40,15 @@ def format_array(array, compact_print=False):
         if compact_print:
             return '[' + format_element(array[0]) + ']'
         else:
-            return '[{}]'.format(array[0])
+            return f'[{array[0]}]'
     s = '['
     for ii in np.arange(len(array) - 1):
         if compact_print:
             s += format_element(array[ii]) + ', '
         else:
-            s += '{}, '.format(array[ii])
+            s += f'{array[ii]}, '
     if compact_print:
         s += format_element(array[-1]) + ']'
     else:
-        s += '{}]'.format(array[-1])
+        s += f'{array[-1]}]'
     return s

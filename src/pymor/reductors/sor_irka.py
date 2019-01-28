@@ -199,7 +199,7 @@ class SOR_IRKAReductor(BasicInterface):
 
             # report convergence
             if not compute_errors:
-                self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
             else:
                 if np.max(rd.poles().real) < 0:
                     err = d - rd
@@ -208,7 +208,7 @@ class SOR_IRKAReductor(BasicInterface):
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
 
-                self.logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
+                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e} | {rel_H2_err:15.9e}')
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:

@@ -114,8 +114,8 @@ class CircularSectorDomain(PolygonalDomain):
         super().__init__(points, boundary_types)
 
     def __repr__(self):
-        return 'PieDomain({}, {}, {}, {}, {})'.format(repr(self.angle), repr(self.radius), repr(self.arc),
-                                                      repr(self.radii), repr(self.num_points))
+        return f'PieDomain({repr(self.angle)}, {repr(self.radius)}, {repr(self.arc)}, {repr(self.radii)}, ' \
+               f'{repr(self.num_points)})'
 
 
 class DiscDomain(PolygonalDomain):

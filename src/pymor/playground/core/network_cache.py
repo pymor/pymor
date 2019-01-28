@@ -96,13 +96,12 @@ class NetworkFilesystemRegionServer(BasicInterface):
     def _set(self, secret, key):
         if self.secret and secret != self.secret:
             return
-        filename = '{}-{:0>6}.dat'.format(self.prefix, self.created + 1)
+        filename = f'{self.prefix}-{self.created+1:0>6}.dat'
         file_path = os.path.join(self.path, filename)
         conn = self.conn
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})"
-                      .format(key, filename, -1))
+            c.execute(f"INSERT INTO entries(key, filename, size) VALUES ('{key}', '{filename}', {-1})")
             conn.commit()
         except sqlite3.IntegrityError:
             conn.commit()

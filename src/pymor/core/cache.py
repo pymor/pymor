@@ -217,8 +217,7 @@ class SQLiteRegion(CacheRegion):
         conn = self.conn
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})"
-                      .format(key, filename, file_size))
+            c.execute(f"INSERT INTO entries(key, filename, size) VALUES ('{key}', '{filename}', {file_size})")
             conn.commit()
         except sqlite3.IntegrityError:
             conn.commit()
@@ -434,8 +433,7 @@ class CacheableInterface(ImmutableInterface):
             if found:
                 return value
             else:
-                self.logger.debug('creating new cache entry for {}.{}'
-                                  .format(self.__class__.__name__, method.__name__))
+                self.logger.debug(f'creating new cache entry for {self.__class__.__name__}.{method.__name__}')
                 value = method(self, **kwargs) if pass_self else method(**kwargs)
                 region.set(key, value)
                 return value

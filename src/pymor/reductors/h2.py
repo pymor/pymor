@@ -192,7 +192,7 @@ class IRKAReductor(BasicInterface):
 
             # report convergence
             if not compute_errors:
-                self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
             else:
                 if np.max(rd.poles().real) < 0:
                     err = d - rd
@@ -201,7 +201,7 @@ class IRKAReductor(BasicInterface):
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
 
-                self.logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
+                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e} | {rel_H2_err:15.9e}')
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:
@@ -319,7 +319,7 @@ class TSIAReductor(BasicInterface):
 
             # report convergence
             if not compute_errors:
-                self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
             else:
                 if np.max(rd.poles().real) < 0:
                     err = d - rd
@@ -328,7 +328,7 @@ class TSIAReductor(BasicInterface):
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
 
-                self.logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
+                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e} | {rel_H2_err:15.9e}')
 
             # new projection matrices
             self._projection_matrices(rd, projection)
@@ -514,7 +514,7 @@ class TF_IRKAReductor(BasicInterface):
                     self.dist.append(dist)
 
             # report convergence
-            self.logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+            self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:

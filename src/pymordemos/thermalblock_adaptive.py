@@ -124,7 +124,7 @@ def thermalblock_demo(args):
         Us = ()
         legend = ()
         for mu in d.parameter_space.sample_randomly(2):
-            print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
+            print(f"Solving for diffusion = \n{mu['diffusion']} ... ")
             sys.stdout.flush()
             Us = Us + (d.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
@@ -157,10 +157,10 @@ def thermalblock_demo(args):
     rd = greedy_data['rd']
 
     if args['--pickle']:
-        print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
+        print(f"\nWriting reduced discretization to file {args['--pickle']}_reduced ...")
         with open(args['--pickle'] + '_reduced', 'wb') as f:
             dump(rd, f)
-        print('Writing detailed discretization and reductor to file {} ...'.format(args['--pickle'] + '_detailed'))
+        print(f"Writing detailed discretization and reductor to file {args['--pickle']}_detailed ...")
         with open(args['--pickle'] + '_detailed', 'wb') as f:
             dump((d, reductor), f)
 

@@ -100,15 +100,13 @@ class new_ipcluster_pool(BasicInterface):
             running = len(client)
             while running < num_engines and waited < timeout:
                 if waited % 10 == 0:
-                    self.logger.info('Waiting for {} of {} engines to start ...'
-                                     .format(num_engines - running, num_engines))
+                    self.logger.info(f'Waiting for {num_engines-running} of {num_engines} engines to start ...')
                 time.sleep(1)
                 waited += 1
                 running = len(client)
             running = len(client)
             if running < num_engines:
-                raise IOError('{} of {} IPython cluster engines failed to start'
-                              .format(num_engines - running, num_engines))
+                raise IOError(f'{num_engines-running} of {num_engines} IPython cluster engines failed to start')
         client.close()
 
         self.pool = IPythonPool(profile=self.profile, cluster_id=self.cluster_id)

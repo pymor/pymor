@@ -33,16 +33,16 @@ class TestGaussQuadrature(TestInterface):
                     continue
                 Q = GaussQuadratures.iter_quadrature(order)
                 ret = sum([function(p) * w for (p, w) in Q])
-                assert float_cmp(ret, integral), '{} integral wrong: {} vs {} (quadrature order {})'.format(
-                    name, integral, ret, order)
+                assert float_cmp(ret, integral), \
+                    f'{name} integral wrong: {integral} vs {ret} (quadrature order {order})'
 
     def test_other_functions(self):
         order = GaussQuadratures.orders[-1]
         for name, function, integral in FUNCTIONS:
             Q = GaussQuadratures.iter_quadrature(order)
             ret = sum([function(p) * w for (p, w) in Q])
-            assert float_cmp(ret, integral), '{} integral wrong: {} vs {} (quadrature order {})'.format(
-                name, integral, ret, order)
+            assert float_cmp(ret, integral), \
+                f'{name} integral wrong: {integral} vs {ret} (quadrature order {order})'
 
     def test_weights(self):
         for order in GaussQuadratures.orders:

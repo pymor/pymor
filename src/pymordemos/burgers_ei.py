@@ -152,10 +152,10 @@ def main(args):
         Us = ()
         legend = ()
         for mu in d.parameter_space.sample_uniformly(4):
-            print('Solving for exponent = {} ... '.format(mu['exponent']))
+            print(f"Solving for exponent = {mu['exponent']} ... ")
             sys.stdout.flush()
             Us = Us + (d.solve(mu),)
-            legend = legend + ('exponent: {}'.format(mu['exponent']),)
+            legend = legend + (f"exponent: {mu['exponent']}",)
         d.visualize(Us, legend=legend, title='Detailed Solutions', block=True)
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
@@ -171,13 +171,13 @@ def main(args):
         ERRs = ()
         legend = ()
         for mu in d.parameter_space.sample_randomly(2):
-            print('Solving for exponent = \n{} ... '.format(mu['exponent']))
+            print(f"Solving for exponent = \n{mu['exponent']} ... ")
             sys.stdout.flush()
             U = d.solve(mu)
             U_EI = ei_d.solve(mu)
             ERR = U - U_EI
             ERRs = ERRs + (ERR,)
-            legend = legend + ('exponent: {}'.format(mu['exponent']),)
+            legend = legend + (f"exponent: {mu['exponent']}",)
             print(f'Error: {np.max(d.l2_norm(ERR))}')
         d.visualize(ERRs, legend=legend, title='EI Errors', separate_colorbars=True)
 

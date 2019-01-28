@@ -48,8 +48,7 @@ def load_gmsh(gmsh_file):
     toc = time.time()
     t_bi = toc - tic
 
-    logger.info('Parsing took {} s; Grid creation took {} s; BoundaryInfo creation took {} s'
-                .format(t_parse, t_grid, t_bi))
+    logger.info(f'Parsing took {t_parse} s; Grid creation took {t_grid} s; BoundaryInfo creation took {t_bi} s')
 
     return grid, bi
 
@@ -153,12 +152,12 @@ def _parse_gmsh_file(f):
             raise GmshError(f'header {l} has {len(header)} fields, expected 3')
 
         if header[0] != '2.2':
-            raise GmshError('wrong file format version: got {}, expected 2.2'.format(header[0]))
+            raise GmshError(f'wrong file format version: got {header[0]}, expected 2.2')
 
         try:
             file_type = int(header[1])
         except ValueError:
-            raise GmshError('malformed header: expected integer, got {}'.format(header[1]))
+            raise GmshError(f'malformed header: expected integer, got {header[1]}')
 
         if file_type != 0:
             raise GmshError('wrong file type: only ASCII gmsh files are supported')
@@ -166,7 +165,7 @@ def _parse_gmsh_file(f):
         try:
             data_size = int(header[2])    # NOQA
         except ValueError:
-            raise GmshError('malformed header: expected integer, got {}'.format(header[2]))
+            raise GmshError(f'malformed header: expected integer, got {header[2]}')
 
         l = next(f).strip()
         if l != '$EndMeshFormat':
@@ -209,7 +208,7 @@ def _parse_gmsh_file(f):
         try:
             num_nodes = int(nodes[0])
         except ValueError:
-            raise GmshError('first line of nodes sections is not a number: {}'.format(nodes[0]))
+            raise GmshError(f'first line of nodes sections is not a number: {nodes[0]}')
         if len(nodes) != num_nodes + 1:
             raise GmshError('number-of-nodes field does not match number of lines in nodes section')
 
@@ -228,7 +227,7 @@ def _parse_gmsh_file(f):
         try:
             num_elements = int(elements[0])
         except ValueError:
-            raise GmshError('first line of elements sections is not a number: {}'.format(elements[0]))
+            raise GmshError(f'first line of elements sections is not a number: {elements[0]}')
         if len(elements) != num_elements + 1:
             raise GmshError('number-of-elements field does not match number of lines in elements section')
 
@@ -243,7 +242,7 @@ def _parse_gmsh_file(f):
 
         def parse_line(fields):
             if fields[1] not in element_types:
-                raise GmshError('element type {} not supported'.format(fields[0]))
+                raise GmshError(f'element type {fields[0]} not supported')
             element_type = element_types[fields[1]]
             num_nodes = element_nodes[element_type]
             num_tags = fields[2]
@@ -262,7 +261,7 @@ def _parse_gmsh_file(f):
         try:
             num_elements = int(physical_names[0])
         except ValueError:
-            raise GmshError('first line of physical names sections is not a number: {}'.format(physical_names[0]))
+            raise GmshError(f'first line of physical names sections is not a number: {physical_names[0]}')
         if len(physical_names) != num_elements + 1:
             raise GmshError('number-of-names field does not match number of lines in physical names section')
 

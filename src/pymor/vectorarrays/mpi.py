@@ -163,7 +163,7 @@ class MPIVectorSpace(VectorSpaceInterface):
 class RegisteredLocalSpace(int):
 
     def __repr__(self):
-        return '{} (id: {})'.format(_local_space_registry[self], int(self))
+        return f'{_local_space_registry[self]} (id: {int(self)})'
 
 
 _local_space_registry = {}

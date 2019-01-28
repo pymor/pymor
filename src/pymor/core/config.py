@@ -124,21 +124,22 @@ class Config:
         status = {p: (lambda v: 'missing' if not v else 'present' if v is True else v)(getattr(self, p + '_VERSION'))
                   for p in _PACKAGES}
         key_width = max(len(p) for p in _PACKAGES) + 2
-        package_info = ['{:{}} {}'.format(p + ':', key_width, v) for p, v in sorted(status.items())]
-        info = '''
-pyMOR Version {}
+        package_info = [f"{p+':':{key_width}} {v}" for p, v in sorted(status.items())]
+        separator = '-' * max(map(len, package_info))
+        package_info = '\n'.join(package_info)
+        info = f'''
+pyMOR Version {self.version}
 
-Python: {}
+Python: {self.PYTHON_VERSION}
 
 External Packages
-{}
-{}
+{separator}
+{package_info}
 
 Defaults
 --------
 See pymor.core.defaults.print_defaults.
-'''[1:].format(self.version, self.PYTHON_VERSION, '-' * max(map(len, package_info)),
-               '\n'.join(package_info))
+'''[1:]
         return info
 
 
