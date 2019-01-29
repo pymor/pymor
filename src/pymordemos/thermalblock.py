@@ -405,7 +405,7 @@ def reduce_greedy(d, reductor, snapshots_per_block,
    extension method:       {extension_alg_name}
    prescribed basis size:  {max_extensions}
    actual basis size:      {real_rb_size}
-   elapsed time:           {greedy_data[time]}
+   elapsed time:           {greedy_data["time"]}
 '''
 
     return rd, summary
@@ -434,7 +434,7 @@ def reduce_adaptive_greedy(d, reductor, validation_mus,
    extension method:                {extension_alg_name}
    prescribed basis size:           {max_extensions}
    actual basis size:               {real_rb_size}
-   elapsed time:                    {greedy_data[time]}
+   elapsed time:                    {greedy_data["time"]}
 '''
 
     return rd, summary
