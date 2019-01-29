@@ -1,0 +1,6 @@
+test:3.7:
+    image: pymor/testing:3.7
+    script:
+      - export PYTEST_MARKER="NONE" DOCKER_TAG="3.7"
+      - .ci/gitlab/script.bash
+
