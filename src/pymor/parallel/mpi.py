@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from itertools import chain
+import os
 
 
 from pymor.parallel.basic import WorkerPoolBase
@@ -16,6 +17,7 @@ class MPIPool(WorkerPoolBase):
         super().__init__()
         self.logger.info(f'Connected to {mpi.size} ranks')
         self._payload = mpi.call(mpi.function_call_manage, _setup_worker)
+        self._apply(os.chdir, os.getcwd())
 
     def __del__(self):
         mpi.call(mpi.remove_object, self._payload)
