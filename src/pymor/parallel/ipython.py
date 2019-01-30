@@ -107,6 +107,8 @@ class new_ipcluster_pool(BasicInterface):
             running = len(client)
             if running < num_engines:
                 raise IOError(f'{num_engines-running} of {num_engines} IPython cluster engines failed to start')
+        # make sure all (potential) engines are in the same cwd, so they can import the same code
+        client[:].apply_sync(os.chdir, os.getcwd())
         client.close()
 
         self.pool = IPythonPool(profile=self.profile, cluster_id=self.cluster_id)
