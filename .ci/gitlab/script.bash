@@ -11,7 +11,7 @@ if [ "x${CI_MERGE_REQUEST_ID}" == "x" ] ; then
 else
     export TRAVIS_PULL_REQUEST=${CI_MERGE_REQUEST_ID}
 fi
-
+export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
 
 "${TRAVIS_DIR}/script.bash"
 
