@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# exit early if the var is not and should not be available
-if [ x"${encrypted_aaee34775583_key}" == x ] ; then
-    exit $([ "${TRAVIS_REPO_SLUG}" != "pymor/pymor" ])
+# exit early if we do not want to upload tests
+if [ ${CI_MERGE_REQUEST_SOURCE_PROJECT_URL} != ${CI_MERGE_REQUEST_PROJECT_URL} ] ; then
+    exit 0
 fi
 
 set -e
@@ -11,14 +11,14 @@ set -u
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
-./.ci/travis/init_sshkey.bash "${encrypted_aaee34775583_key}" "${encrypted_aaee34775583_iv}" \
-    ${PYMOR_ROOT}/.ci/travis/logs_deploy_key
+source ./.ci/gitlab/init_sshkey.bash
+init_ssh
 
 TESTLOGS_URL="git@github.com:pymor/pymor-testlogs.git"
 LOGS_DIR="${HOME}/pymor_logs"
-BRANCH=${TRAVIS_BRANCH}
-if [ "x${TRAVIS_PULL_REQUEST}" != "xfalse" ] ; then
-    BRANCH=PR_${TRAVIS_PULL_REQUEST}_to_${BRANCH}
+BRANCH=${CI_COMMIT_REF_NAME}
+if [ "x${CI_MERGE_REQUEST_ID}" != "xfalse" ] ; then
+    BRANCH=PR_${CI_MERGE_REQUEST_ID}_to_${BRANCH}
 fi
 PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
 RESULT_FN=test_results.xml
@@ -42,8 +42,8 @@ if [ "${PYMOR_PYTEST_MARKER}" == "None" ] ; then
 
     git add ${TARGET_DIR}/*
     git config user.name "pyMOR Bot"
-    git config user.email "travis@pymor.org"
-    git commit -m "Testlogs for Job ${TRAVIS_JOB_NUMBER} - ${TRAVIS_COMMIT_RANGE}"
+    git config user.email "gitlab-ci@pymor.org"
+    git commit -m "Testlogs for Job ${CI_JOB_ID} - ${CI_COMMIT_BEFORE_SHA} ... ${CI_COMMIT_SHA}"
     git push -q --set-upstream origin ${BRANCH}
 
 fi
