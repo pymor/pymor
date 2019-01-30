@@ -281,8 +281,8 @@ class NumpyVectorArray(VectorArrayInterface):
             assert other == 0
             return self.copy()
         assert self.dim == other.dim
-        return NumpyVectorArray(self._array[:self._len] +
-                                (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
+        return NumpyVectorArray(self._array[:self._len]
+                                + (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
                                 self.space)
 
     def __iadd__(self, other):
@@ -300,8 +300,8 @@ class NumpyVectorArray(VectorArrayInterface):
 
     def __sub__(self, other):
         assert self.dim == other.dim
-        return NumpyVectorArray(self._array[:self._len] -
-                                (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
+        return NumpyVectorArray(self._array[:self._len]
+                                - (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
                                 self.space)
 
     def __isub__(self, other):
@@ -498,8 +498,8 @@ class NumpyVectorArrayView(NumpyVectorArray):
             assert other == 0
             return self.copy()
         assert self.dim == other.dim
-        return NumpyVectorArray(self.base._array[self.ind] +
-                                (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
+        return NumpyVectorArray(self.base._array[self.ind]
+                                + (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
                                 self.space)
 
     def __iadd__(self, other):
@@ -518,8 +518,8 @@ class NumpyVectorArrayView(NumpyVectorArray):
 
     def __sub__(self, other):
         assert self.dim == other.dim
-        return NumpyVectorArray(self.base._array[self.ind] -
-                                (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
+        return NumpyVectorArray(self.base._array[self.ind]
+                                - (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
                                 self.space)
 
     def __isub__(self, other):

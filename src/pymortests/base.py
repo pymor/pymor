@@ -52,8 +52,9 @@ def subclassForImplemetorsOf(InterfaceType, TestCase):
     except ImportError:
         pass
 
-
-    test_types = set(sorted([T for T in InterfaceType.implementors(True) if not (T.has_interface_name() or issubclass(T, TestInterface))], key=lambda g: g.__name__))
+    test_types = set(sorted([T for T in InterfaceType.implementors(True) if not (T.has_interface_name()
+                                                                                 or issubclass(T, TestInterface))],
+                            key=lambda g: g.__name__))
     for Type in test_types:
         cname = f'DynamicTest_{Type.__name__}_{TestCase.__name__.replace("Interface", "")}'
         yield type(cname, (TestCase,), {'Type': Type})

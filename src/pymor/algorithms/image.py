@@ -75,8 +75,8 @@ def estimate_image(operators=(), vectors=(),
     assert all(
         isinstance(v, VectorArrayInterface) and (
             v in image_space
-        ) or
-        isinstance(v, OperatorInterface) and (
+        )
+        or isinstance(v, OperatorInterface) and (
             v.range == image_space and isinstance(v.source, NumpyVectorSpace) and v.linear
         )
         for v in vectors
@@ -173,8 +173,8 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
     assert all(
         isinstance(v, VectorArrayInterface) and (
             v in image_space
-        ) or
-        isinstance(v, OperatorInterface) and (
+        )
+        or isinstance(v, OperatorInterface) and (
             v.range == image_space and isinstance(v.source, NumpyVectorSpace) and v.linear
         )
         for v in vectors

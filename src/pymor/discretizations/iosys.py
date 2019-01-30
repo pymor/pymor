@@ -559,8 +559,8 @@ class LTISystem(InputStateOutputSystem):
         if self.n >= SPARSE_MIN_SIZE:
             if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
                 self.logger.warning('Converting operator A to a NumPy array.')
-            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
-                    isinstance(self.E, IdentityOperator)):
+            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse)
+                    or isinstance(self.E, IdentityOperator)):
                 self.logger.warning('Converting operator E to a NumPy array.')
 
         A = to_matrix(self.A, format='dense')
@@ -780,14 +780,14 @@ class LTISystem(InputStateOutputSystem):
 
         if self.n >= SPARSE_MIN_SIZE:
             for op_name in ['A', 'B', 'C']:
-                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator) and
-                        not getattr(self, op_name).sparse):
+                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator)
+                        and not getattr(self, op_name).sparse):
                     self.logger.warning('Converting operator ' + op_name + ' to a NumPy array.')
-            if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse) or
-                    isinstance(self.D, ZeroOperator)):
+            if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse)
+                    or isinstance(self.D, ZeroOperator)):
                 self.logger.warning('Converting operator D to a NumPy array.')
-            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
-                    isinstance(self.E, IdentityOperator)):
+            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse)
+                    or isinstance(self.E, IdentityOperator)):
                 self.logger.warning('Converting operator E to a NumPy array.')
 
         from slycot import ab13dd
@@ -1205,8 +1205,8 @@ class SecondOrderSystem(InputStateOutputSystem):
         else:
             dtfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(Cv.as_source_array())).to_numpy().conj() * s
             dtfs -= B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(sM2pE.apply_adjoint(
-                s2MpsEpK.apply_inverse_adjoint(Cp.as_source_array() +
-                                               Cv.as_source_array() * s.conjugate())))).to_numpy().conj()
+                s2MpsEpK.apply_inverse_adjoint(Cp.as_source_array()
+                                               + Cv.as_source_array() * s.conjugate())))).to_numpy().conj()
         return dtfs
 
     @cached

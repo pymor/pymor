@@ -122,9 +122,9 @@ class IRKAReductor(BasicInterface):
         assert sigma is None or isinstance(sigma, int) or len(sigma) == r
         assert b is None or isinstance(b, int) or b in d.B.source and len(b) == r
         assert c is None or isinstance(c, int) or c in d.C.range and len(c) == r
-        assert (rd0 is None or
-                isinstance(rd0, LTISystem) and
-                rd0.n == r and rd0.B.source == d.B.source and rd0.C.range == d.C.range)
+        assert (rd0 is None
+                or isinstance(rd0, LTISystem)
+                and rd0.n == r and rd0.B.source == d.B.source and rd0.C.range == d.C.range)
         assert sigma is None or rd0 is None
         assert b is None or rd0 is None
         assert c is None or rd0 is None

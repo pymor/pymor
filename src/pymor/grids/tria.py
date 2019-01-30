@@ -74,9 +74,9 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         # TOPOLOGY
         n_outer_vertices = (x0_num_intervals + 1 - identify_left_right) * (x1_num_intervals + 1 - identify_bottom_top)
         self.__sizes = (n_elements,
-                        ((x0_num_intervals + 1 - identify_left_right) * x1_num_intervals +
-                         (x1_num_intervals + 1 - identify_bottom_top) * x0_num_intervals +
-                         n_elements),
+                        ((x0_num_intervals + 1 - identify_left_right) * x1_num_intervals
+                         + (x1_num_intervals + 1 - identify_bottom_top) * x0_num_intervals
+                         + n_elements),
                         n_outer_vertices + int(n_elements / 4))
 
         # calculate subentities -- codim-1

@@ -13,8 +13,8 @@ def implementors(interface_type):
         _load_all()
     except ImportError:
         pass
-    return [T for T in interface_type.implementors(True) if not (T.has_interface_name() or
-                                                                 issubclass(T, TestInterface))]
+    return [T for T in interface_type.implementors(True) if not (T.has_interface_name()
+                                                                 or issubclass(T, TestInterface))]
 
 
 def subclasses_of(interface_type, **kwargs):

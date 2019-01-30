@@ -53,9 +53,9 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     """
 
     assert isinstance(U, VectorArrayInterface) \
-        or (isinstance(U, tuple) and
-            all(isinstance(u, VectorArrayInterface) for u in U) and
-            all(len(u) == len(U[0]) for u in U))
+        or (isinstance(U, tuple)
+            and all(isinstance(u, VectorArrayInterface) for u in U)
+            and all(len(u) == len(U[0]) for u in U))
     U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArrayInterface) else \
         tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
 

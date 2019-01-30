@@ -54,7 +54,7 @@ def discretize_pymor():
                 [ConstantFunction(1., dim_domain=2),
                  ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
                                     dim_domain=2),
-                 ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + ' +
+                 ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + '
                                     '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
                                     dim_domain=2)],
                 [1.,
@@ -111,7 +111,7 @@ def _discretize_fenics():
     # data functions
     bottom_diffusion = df.Expression('(x[0] > 0.45) * (x[0] < 0.55) * (x[1] < 0.7) * 1.',
                                      element=df.FunctionSpace(mesh, 'DG', 0).ufl_element())
-    top_diffusion = df.Expression('(x[0] > 0.35) * (x[0] < 0.40) * (x[1] > 0.3) * 1. +' +
+    top_diffusion = df.Expression('(x[0] > 0.35) * (x[0] < 0.40) * (x[1] > 0.3) * 1. +'
                                   '(x[0] > 0.60) * (x[0] < 0.65) * (x[1] > 0.3) * 1.',
                                   element=df.FunctionSpace(mesh, 'DG', 0).ufl_element())
     initial_data = df.Expression('(x[0] > 0.45) * (x[0] < 0.55) * (x[1] < 0.7) * 10.',

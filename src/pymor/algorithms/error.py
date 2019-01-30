@@ -264,8 +264,8 @@ def reduction_error_analysis(rd, d, reductor,
     if plot:
         import matplotlib.pyplot as plt
         fig = plt.figure()
-        num_plots = (int(bool(error_norms) or estimator) + int(bool(error_norms) and estimator) +
-                     int(condition) + int(bool(custom)))
+        num_plots = (int(bool(error_norms) or estimator) + int(bool(error_norms) and estimator)
+                     + int(condition) + int(bool(custom)))
         current_plot = 1
 
         if bool(error_norms) or estimator:

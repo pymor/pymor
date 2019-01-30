@@ -118,8 +118,8 @@ class GenericRBReductor(BasicInterface):
 
         def project_operator(k, op):
             if k in self.vector_ranged_operators and not self.basis_is_orthonormal:
-                assert (isinstance(op, Concatenation) and len(op.operators) == 2 and
-                        op.operators[0].name == 'inverse_projection_op')
+                assert (isinstance(op, Concatenation) and len(op.operators) == 2
+                        and op.operators[0].name == 'inverse_projection_op')
                 pop = project_to_subbasis(op.operators[1],
                                           dim_range=dim,
                                           dim_source=dim if op.source == rd.solution_space else None)

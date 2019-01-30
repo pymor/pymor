@@ -254,15 +254,23 @@ dealii_vector_array_pair_with_different_dim_generators = \
     if config.HAVE_DEALII else []
 
 
-@pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +
-                       block_vector_array_generators + fenics_vector_array_generators +
-                       ngsolve_vector_array_generators + dealii_vector_array_generators)
+@pytest.fixture(params=(
+    numpy_vector_array_generators
+    + numpy_list_vector_array_generators
+    + block_vector_array_generators
+    + fenics_vector_array_generators
+    + ngsolve_vector_array_generators
+    + dealii_vector_array_generators
+))
 def vector_array_without_reserve(request):
     return request.param()
 
 
-@pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +
-                       block_vector_array_generators)
+@pytest.fixture(params=(
+    numpy_vector_array_generators
+    + numpy_list_vector_array_generators
+    + block_vector_array_generators
+))
 def picklable_vector_array_without_reserve(request):
     return request.param()
 
@@ -277,12 +285,14 @@ def picklable_vector_array(picklable_vector_array_without_reserve, request):
     return vector_array_from_empty_reserve(picklable_vector_array_without_reserve, request.param)
 
 
-@pytest.fixture(params=(numpy_vector_array_pair_with_same_dim_generators +
-                        numpy_list_vector_array_pair_with_same_dim_generators +
-                        block_vector_array_pair_with_same_dim_generators +
-                        fenics_vector_array_pair_with_same_dim_generators +
-                        ngsolve_vector_array_pair_with_same_dim_generators +
-                        dealii_vector_array_pair_with_same_dim_generators))
+@pytest.fixture(params=(
+    numpy_vector_array_pair_with_same_dim_generators
+    + numpy_list_vector_array_pair_with_same_dim_generators
+    + block_vector_array_pair_with_same_dim_generators
+    + fenics_vector_array_pair_with_same_dim_generators
+    + ngsolve_vector_array_pair_with_same_dim_generators
+    + dealii_vector_array_pair_with_same_dim_generators
+))
 def compatible_vector_array_pair_without_reserve(request):
     return request.param()
 
@@ -293,11 +303,13 @@ def compatible_vector_array_pair(compatible_vector_array_pair_without_reserve, r
     return vector_array_from_empty_reserve(v1, request.param[0]), vector_array_from_empty_reserve(v2, request.param[1])
 
 
-@pytest.fixture(params=(numpy_vector_array_pair_with_different_dim_generators +
-                        numpy_list_vector_array_pair_with_different_dim_generators +
-                        block_vector_array_pair_with_different_dim_generators +
-                        fenics_vector_array_pair_with_different_dim_generators +
-                        ngsolve_vector_array_pair_with_different_dim_generators +
-                        dealii_vector_array_pair_with_different_dim_generators))
+@pytest.fixture(params=(
+    numpy_vector_array_pair_with_different_dim_generators
+    + numpy_list_vector_array_pair_with_different_dim_generators
+    + block_vector_array_pair_with_different_dim_generators
+    + fenics_vector_array_pair_with_different_dim_generators
+    + ngsolve_vector_array_pair_with_different_dim_generators
+    + dealii_vector_array_pair_with_different_dim_generators
+))
 def incompatible_vector_array_pair(request):
     return request.param()

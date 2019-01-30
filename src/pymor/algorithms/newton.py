@@ -105,8 +105,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
             if err/error_sequence[0] <= rtol:
                 logger.info(f'Prescribed total reduction of {rtol} reached. Stopping.')
                 break
-            if (len(error_sequence) >= stagnation_window + 1 and
-                    err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
+            if (len(error_sequence) >= stagnation_window + 1
+                    and err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
                 logger.info(f'Error is stagnating (threshold: {stagnation_threshold:5e}, window: {stagnation_window}). '
                             f'Stopping.')
                 break

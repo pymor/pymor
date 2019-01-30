@@ -87,7 +87,8 @@ def assert_is_equal(first, second):
         elif not isinstance(first, BasicInterface):
             assert first == second
         else:
-            assert (set(first.__dict__.keys()) - ignored_attributes) == (set(second.__dict__.keys()) - ignored_attributes)
+            assert ((set(first.__dict__.keys()) - ignored_attributes)
+                    == (set(second.__dict__.keys()) - ignored_attributes))
             for k, v in first.__dict__.items():
                 if k not in ignored_attributes:
                     _assert_is_equal(v, second.__dict__.get(k))

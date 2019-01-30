@@ -204,7 +204,8 @@ class LincombOperator(OperatorBase):
                 operators, coefficients = (self, other), (1., sign)
         elif isinstance(other, LincombOperator) and other.name == 'LincombOperator':
             operators = self.operators + other.operators
-            coefficients = self.coefficients + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
+            coefficients = self.coefficients + (other.coefficients if sign == 1.
+                                                else tuple(-c for c in other.coefficients))
         else:
             operators, coefficients = self.operators + (other,), self.coefficients + (sign,)
 
@@ -592,8 +593,10 @@ class VectorArrayOperator(OperatorBase):
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         adjoint = operators[0].adjoint
-        if not all(isinstance(op, VectorArrayOperator) and op.adjoint == adjoint and
-                   op.source == operators[0].source and op.range == operators[0].range
+        if not all(isinstance(op, VectorArrayOperator)
+                   and op.adjoint == adjoint
+                   and op.source == operators[0].source
+                   and op.range == operators[0].range
                    for op in operators):
             return None
         assert not solver_options
