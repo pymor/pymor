@@ -171,9 +171,16 @@ class NonProjectedResidualOperator(ResidualOperator):
         if self.product:
             if self.rhs_is_functional:
                 R_riesz = self.product.apply_inverse(R)
-                return R_riesz * (np.sqrt(R_riesz.dot(R)) / R_riesz.l2_norm())[0]
+
+                # divide by norm, except when norm is zero:
+                inversel2 = 1./R_riesz.l2_norm()
+                inversel2 = np.nan_to_num(inversel2)
+                return R_riesz * (np.sqrt(R_riesz.dot(R)) * inversel2)[0]
             else:
-                return R * (np.sqrt(self.product.pairwise_apply2(R, R)) / R.l2_norm())[0]
+                # divide by norm, except when norm is zero:
+                inversel2 = 1./R.l2_norm()
+                inversel2 = np.nan_to_num(inversel2)
+                return R * (np.sqrt(self.product.pairwise_apply2(R, R)) * inversel2)[0]
         else:
             return R
 
