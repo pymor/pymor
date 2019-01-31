@@ -1103,20 +1103,20 @@ class SecondOrderModel(InputStateOutputModel):
             |LTISystem| equivalent to the second order system.
         """
         state_id = self.state_space.id
-        return LTISystem(A=SecondOrderSystemOperator(self.E, self.K),
-                         B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B],
-                                               range_id=state_id),
-                         C=BlockRowOperator([self.Cp, self.Cv],
-                                            source_id=state_id),
-                         D=self.D,
-                         E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source],
-                                                              state_id))
-                            if isinstance(self.M, IdentityOperator) else
-                            BlockDiagonalOperator([IdentityOperator(self.M.source), self.M],
-                                                  source_id=state_id, range_id=state_id)),
-                         cont_time=self.cont_time,
-                         solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
-                         cache_region=self.cache_region, name=self.name + '_first_order')
+        return LTIModel(A=SecondOrderModelOperator(self.E, self.K),
+                        B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B],
+                                              range_id=state_id),
+                        C=BlockRowOperator([self.Cp, self.Cv],
+                                           source_id=state_id),
+                        D=self.D,
+                        E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source],
+                                                             state_id))
+                           if isinstance(self.M, IdentityOperator) else
+                           BlockDiagonalOperator([IdentityOperator(self.M.source), self.M],
+                                                 source_id=state_id, range_id=state_id)),
+                        cont_time=self.cont_time,
+                        solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
+                        cache_region=self.cache_region, name=self.name + '_first_order')
 
     @cached
     def poles(self):
