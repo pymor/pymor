@@ -59,7 +59,7 @@ def discretize_fenics():
     from pymor.tools import mpi
 
     if mpi.parallel:
-        from pymor.discretizations.mpi import mpi_wrap_discretization
+        from pymor.models.mpi import mpi_wrap_discretization
         return mpi_wrap_discretization(_discretize_fenics, use_with=True, pickle_local_spaces=False)
     else:
         return _discretize_fenics()
