@@ -10,10 +10,10 @@ from pymor.core.logger import getLogger
 
 
 @defaults('atol', 'rtol', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
-def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
+def gram_schmidt(A, product=None, compute_R=False, atol=1e-13, rtol=1e-13, offset=0,
                  reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
                  copy=True):
-    """Orthonormalize a |VectorArray| using the stabilized Gram-Schmidt algorithm.
+    """Orthonormalize a |VectorArray| using the modified Gram-Schmidt algorithm.
 
     Parameters
     ----------
@@ -22,6 +22,8 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
     product
         The inner product |Operator| w.r.t. which to orthonormalize.
         If `None`, the Euclidean product is used.
+    compute_R
+        If `True`, the R matrix from QR decomposition is returned.
     atol
         Vectors of norm smaller than `atol` are removed from the array.
     rtol
@@ -45,7 +47,10 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
 
     Returns
     -------
-    The orthonormalized |VectorArray|.
+    Q
+        The orthonormalized |VectorArray|.
+    R
+        The upper-triangular/trapezoidal matrix (if `compute_R` is `True`).
     """
 
     logger = getLogger('pymor.algorithms.gram_schmidt.gram_schmidt')
@@ -53,8 +58,11 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
     if copy:
         A = A.copy()
 
+    if compute_R:
+        R = np.eye(len(A))
+
     # main loop
-    remove = []
+    remove = []  # indices of to be removed vectors
     for i in range(offset, len(A)):
         # first calculate norm
         initial_norm = A[i].norm(product)[0]
@@ -65,41 +73,45 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
             continue
 
         if i == 0:
-            A[0].scal(1/initial_norm)
-
+            A[0].scal(1 / initial_norm)
+            if compute_R:
+                R[i, i] = initial_norm
         else:
-            first_iteration = True
             norm = initial_norm
             # If reiterate is True, reiterate as long as the norm of the vector changes
-            # strongly during orthonormalization (due to Andreas Buhr).
-            while first_iteration or reiterate and norm/old_norm < reiteration_threshold:
-
-                if first_iteration:
-                    first_iteration = False
-                else:
-                    logger.info(f'Orthonormalizing vector {i} again')
-
+            # strongly during orthogonalization (due to Andreas Buhr).
+            while True:
                 # orthogonalize to all vectors left
                 for j in range(i):
                     if j in remove:
                         continue
-                    p = A[i].pairwise_inner(A[j], product)[0]
+                    p = A[j].pairwise_inner(A[i], product)[0]
                     A[i].axpy(-p, A[j])
+                    if compute_R:
+                        R[j, i] += p
 
                 # calculate new norm
                 old_norm, norm = norm, A[i].norm(product)[0]
 
-                # remove vector if it got too small:
-                if norm / initial_norm < rtol:
-                    logger.info(f"Removing linear dependent vector {i}")
+                # remove vector if it got too small
+                if norm < rtol * initial_norm:
+                    logger.info(f"Removing linearly dependent vector {i}")
                     remove.append(i)
                     break
 
-            if norm > 0:
-                A[i].scal(1 / norm)
+                # check if reorthogonalization should be done
+                if reiterate and norm < reiteration_threshold * old_norm:
+                    logger.info(f"Orthonormalizing vector {i} again")
+                else:
+                    A[i].scal(1 / norm)
+                    if compute_R:
+                        R[i, i] = norm
+                    break
 
     if remove:
         del A[remove]
+        if compute_R:
+            R = np.delete(R, remove, axis=0)
 
     if check:
         error_matrix = A[offset:len(A)].inner(A, product)
@@ -107,12 +119,16 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0,
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
-                raise AccuracyError(f'result not orthogonal (max err={err})')
+                raise AccuracyError(f"result not orthogonal (max err={err})")
+
+    if compute_R:
+        return A, R
 
     return A
 
 
-def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
+def gram_schmidt_biorth(V, W, product=None,
+                        reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
                         copy=True):
     """Biorthonormalize a pair of |VectorArrays| using the biorthonormal Gram-Schmidt process.
 
@@ -161,16 +177,10 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
         if i == 0:
             V[0].scal(1 / initial_norm)
         else:
-            first_iteration = True
             norm = initial_norm
             # If reiterate is True, reiterate as long as the norm of the vector changes
             # strongly during projection.
-            while first_iteration or reiterate and norm / old_norm < reiteration_threshold:
-                if first_iteration:
-                    first_iteration = False
-                else:
-                    logger.info(f'Projecting vector V[{i}] again')
-
+            while True:
                 for j in range(i):
                     # project by (I - V[j] * W[j]^T * E)
                     p = W[j].pairwise_inner(V[i], product)[0]
@@ -179,8 +189,12 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
                 # calculate new norm
                 old_norm, norm = norm, V[i].norm(product)[0]
 
-            if norm > 0:
-                V[i].scal(1 / norm)
+                # check if reorthogonalization should be done
+                if reiterate and norm < reiteration_threshold * old_norm:
+                    logger.info(f"Projecting vector V[{i}] again")
+                else:
+                    V[i].scal(1 / norm)
+                    break
 
         # calculate norm of W[i]
         initial_norm = W[i].norm(product)[0]
@@ -189,16 +203,10 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
         if i == 0:
             W[0].scal(1 / initial_norm)
         else:
-            first_iteration = True
             norm = initial_norm
             # If reiterate is True, reiterate as long as the norm of the vector changes
             # strongly during projection.
-            while first_iteration or reiterate and norm / old_norm < reiteration_threshold:
-                if first_iteration:
-                    first_iteration = False
-                else:
-                    logger.info(f'Projecting vector W[{i}] again')
-
+            while True:
                 for j in range(i):
                     # project by (I - W[j] * V[j]^T * E)
                     p = V[j].pairwise_inner(W[i], product)[0]
@@ -207,8 +215,12 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
                 # calculate new norm
                 old_norm, norm = norm, W[i].norm(product)[0]
 
-            if norm > 0:
-                W[i].scal(1 / norm)
+                # check if reorthogonalization should be done
+                if reiterate and norm < reiteration_threshold * old_norm:
+                    logger.info(f"Projecting vector W[{i}] again")
+                else:
+                    W[i].scal(1 / norm)
+                    break
 
         # rescale V[i]
         p = W[i].pairwise_inner(V[i], product)[0]
@@ -220,6 +232,6 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
-                raise AccuracyError(f'Result not biorthogonal (max err={err})')
+                raise AccuracyError(f"result not biorthogonal (max err={err})")
 
     return V, W
