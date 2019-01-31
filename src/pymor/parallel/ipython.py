@@ -79,9 +79,13 @@ class new_ipcluster_pool(BasicInterface):
         waited = self.min_wait
         client = None
         while client is None:
+            if HAVE_IPYTHON:
+                excepted_errors = (IOError, TimeoutError)
+            else:
+                excepted_errors = (IOError,)
             try:
                 client = Client(profile=self.profile, cluster_id=self.cluster_id)
-            except (IOError, TimeoutError):
+            except excepted_errors:
                 if waited >= self.timeout:
                     raise IOError('Could not connect to IPython cluster controller')
                 if waited % 10 == 0:
