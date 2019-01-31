@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import LTIModel, SecondOrderModel, LinearDelayModel
+from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import GenericPGReductor
 
@@ -17,7 +17,7 @@ class GenericBHIReductor(BasicInterface):
     r"""Generic bitangential Hermite interpolation reductor.
 
     This is a generic reductor for reducing any linear
-    :class:`~pymor.discretizations.iosys.InputStateOutputModel` with
+    :class:`~pymor.models.iosys.InputStateOutputModel` with
     the transfer function which can be written in the generalized
     coprime factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
     \mathcal{B}(s)` as in [BG09]_.
@@ -71,7 +71,7 @@ class GenericBHIReductor(BasicInterface):
         Returns
         -------
         rd
-            Reduced discretization.
+            Reduced model.
         """
         r = len(sigma)
         assert b in self.d.input_space and len(b) == r
@@ -181,7 +181,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         Returns
         -------
         rd
-            Reduced discretization.
+            Reduced model.
         """
         if use_arnoldi and self.d.m == 1 and self.d.p == 1:
             return self.reduce_arnoldi(sigma, b, c)
@@ -227,7 +227,7 @@ class SO_BHIReductor(GenericBHIReductor):
     Parameters
     ----------
     d
-        :class:`~pymor.discretizations.iosys.SecondOrderModel`.
+        :class:`~pymor.models.iosys.SecondOrderModel`.
     """
     def __init__(self, d):
         assert isinstance(d, SecondOrderModel)
@@ -257,7 +257,7 @@ class DelayBHIReductor(GenericBHIReductor):
     Parameters
     ----------
     d
-        :class:`~pymor.discretizations.iosys.LinearDelayModel`.
+        :class:`~pymor.models.iosys.LinearDelayModel`.
     """
     def __init__(self, d):
         assert isinstance(d, LinearDelayModel)

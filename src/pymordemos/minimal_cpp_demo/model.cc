@@ -1,4 +1,4 @@
-#include "discretization.hh"
+#include "model.hh"
 
 #include <assert.h>
 #include <iostream>

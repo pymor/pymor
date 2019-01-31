@@ -10,7 +10,7 @@ from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
-from pymor.discretizations.basic import ModelBase
+from pymor.models.basic import ModelBase
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
@@ -215,15 +215,15 @@ class LTIModel(InputStateOutputModel):
         The solver options to use to solve the Lyapunov equations.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, discretization)` method. If `estimator` is
+        an `estimate(U, mu, model)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call
+        model which will call
         `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
-        a `visualize(U, discretization, ...)` method. If `visualizer`
+        a `visualize(U, model, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the discretization which forwards its arguments to the
+        to the model which forwards its arguments to the
         visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
@@ -246,7 +246,7 @@ class LTIModel(InputStateOutputModel):
     E
         The |Operator| E.
     operators
-        Dict of all |Operators| appearing in the discretization.
+        Dict of all |Operators| appearing in the model.
     """
 
     special_operators = frozenset({'A', 'B', 'C', 'D', 'E'})
@@ -314,15 +314,15 @@ class LTIModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, discretization)` method. If `estimator` is
+            an `estimate(U, mu, model)` method. If `estimator` is
             not `None`, an `estimate(U, mu)` method is added to the
-            discretization which will call
+            model which will call
             `estimator.estimate(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with
-            a `visualize(U, discretization, ...)` method. If `visualizer`
+            a `visualize(U, model, ...)` method. If `visualizer`
             is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the discretization which forwards its arguments to the
+            to the model which forwards its arguments to the
             visualizer's `visualize` method.
         cache_region
             `None` or name of the cache region to use. See
@@ -386,15 +386,15 @@ class LTIModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, discretization)` method. If `estimator` is
+            an `estimate(U, mu, model)` method. If `estimator` is
             not `None`, an `estimate(U, mu)` method is added to the
-            discretization which will call
+            model which will call
             `estimator.estimate(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with
-            a `visualize(U, discretization, ...)` method. If `visualizer`
+            a `visualize(U, model, ...)` method. If `visualizer`
             is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the discretization which forwards its arguments to the
+            to the model which forwards its arguments to the
             visualizer's `visualize` method.
         cache_region
             `None` or name of the cache region to use. See
@@ -444,15 +444,15 @@ class LTIModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, discretization)` method. If `estimator` is
+            an `estimate(U, mu, model)` method. If `estimator` is
             not `None`, an `estimate(U, mu)` method is added to the
-            discretization which will call
+            model which will call
             `estimator.estimate(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with
-            a `visualize(U, discretization, ...)` method. If `visualizer`
+            a `visualize(U, model, ...)` method. If `visualizer`
             is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the discretization which forwards its arguments to the
+            to the model which forwards its arguments to the
             visualizer's `visualize` method.
         cache_region
             `None` or name of the cache region to use. See
@@ -505,15 +505,15 @@ class LTIModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, discretization)` method. If `estimator` is
+            an `estimate(U, mu, model)` method. If `estimator` is
             not `None`, an `estimate(U, mu)` method is added to the
-            discretization which will call
+            model which will call
             `estimator.estimate(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with
-            a `visualize(U, discretization, ...)` method. If `visualizer`
+            a `visualize(U, model, ...)` method. If `visualizer`
             is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the discretization which forwards its arguments to the
+            to the model which forwards its arguments to the
             visualizer's `visualize` method.
         cache_region
             `None` or name of the cache region to use. See
@@ -915,15 +915,15 @@ class SecondOrderModel(InputStateOutputModel):
         The solver options to use to solve the Lyapunov equations.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, discretization)` method. If `estimator` is
+        an `estimate(U, mu, model)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call
+        model which will call
         `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
-        a `visualize(U, discretization, ...)` method. If `visualizer`
+        a `visualize(U, model, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the discretization which forwards its arguments to the
+        to the model which forwards its arguments to the
         visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
@@ -950,7 +950,7 @@ class SecondOrderModel(InputStateOutputModel):
     D
         The |Operator| D.
     operators
-        Dictionary of all |Operators| contained in the discretization.
+        Dictionary of all |Operators| contained in the model.
     """
 
     special_operators = frozenset({'M', 'E', 'K', 'B', 'Cp', 'Cv', 'D'})
@@ -1010,15 +1010,15 @@ class SecondOrderModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         estimator
             An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, discretization)` method. If `estimator` is
+            an `estimate(U, mu, model)` method. If `estimator` is
             not `None`, an `estimate(U, mu)` method is added to the
-            discretization which will call
+            model which will call
             `estimator.estimate(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with
-            a `visualize(U, discretization, ...)` method. If `visualizer`
+            a `visualize(U, model, ...)` method. If `visualizer`
             is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the discretization which forwards its arguments to the
+            to the model which forwards its arguments to the
             visualizer's `visualize` method.
         cache_region
             `None` or name of the cache region to use. See
@@ -1375,15 +1375,15 @@ class LinearDelayModel(InputStateOutputModel):
         `True` if the system is continuous-time, otherwise `False`.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, discretization)` method. If `estimator` is
+        an `estimate(U, mu, model)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call
+        model which will call
         `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
-        a `visualize(U, discretization, ...)` method. If `visualizer`
+        a `visualize(U, model, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the discretization which forwards its arguments to the
+        to the model which forwards its arguments to the
         visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
@@ -1412,7 +1412,7 @@ class LinearDelayModel(InputStateOutputModel):
     E
         The |Operator| E.
     operators
-        Dict of all |Operators| appearing in the discretization.
+        Dict of all |Operators| appearing in the model.
     """
 
     special_operators = frozenset({'A', 'Ad', 'B', 'C', 'D', 'E'})
@@ -1581,15 +1581,15 @@ class LinearStochasticModel(InputStateOutputModel):
         `True` if the system is continuous-time, otherwise `False`.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, discretization)` method. If `estimator` is
+        an `estimate(U, mu, model)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call
+        model which will call
         `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
-        a `visualize(U, discretization, ...)` method. If `visualizer`
+        a `visualize(U, model, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the discretization which forwards its arguments to the
+        to the model which forwards its arguments to the
         visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
@@ -1616,7 +1616,7 @@ class LinearStochasticModel(InputStateOutputModel):
     E
         The |Operator| E.
     operators
-        Dictionary of all |Operators| contained in the discretization.
+        Dictionary of all |Operators| contained in the model.
     """
 
     special_operators = frozenset({'A', 'As', 'B', 'C', 'D', 'E'})
@@ -1697,15 +1697,15 @@ class BilinearModel(InputStateOutputModel):
         `True` if the system is continuous-time, otherwise `False`.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, discretization)` method. If `estimator` is
+        an `estimate(U, mu, model)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call
+        model which will call
         `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
-        a `visualize(U, discretization, ...)` method. If `visualizer`
+        a `visualize(U, model, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the discretization which forwards its arguments to the
+        to the model which forwards its arguments to the
         visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
@@ -1730,7 +1730,7 @@ class BilinearModel(InputStateOutputModel):
     E
         The |Operator| E.
     operators
-        Dictionary of all |Operators| contained in the discretization.
+        Dictionary of all |Operators| contained in the model.
     """
 
     special_operators = frozenset({'A', 'N', 'B', 'C', 'D', 'E'})

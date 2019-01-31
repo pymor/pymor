@@ -7,7 +7,7 @@ from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
 import numpy as np
 import math as m
-from discretization import Vector, DiffusionOperator
+from model import Vector, DiffusionOperator
 
 
 class WrappedVector(CopyOnWriteVector):

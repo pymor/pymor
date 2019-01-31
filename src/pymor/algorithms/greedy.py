@@ -31,7 +31,7 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
     reductor
         Reductor for reducing the given |Model|. This has to be
         an object with a `reduce` method, such that `reductor.reduce()`
-        yields the reduced discretization, and an `exted_basis` method,
+        yields the reduced model, and an `exted_basis` method,
         such that `reductor.extend_basis(U, copy_U=False, **extension_params)`
         extends the current reduced basis by the vectors contained in `U`.
         For an example see :class:`~pymor.reductors.coercive.CoerciveRBReductor`.

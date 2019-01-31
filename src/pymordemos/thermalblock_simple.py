@@ -59,8 +59,8 @@ def discretize_fenics():
     from pymor.tools import mpi
 
     if mpi.parallel:
-        from pymor.models.mpi import mpi_wrap_discretization
-        return mpi_wrap_discretization(_discretize_fenics, use_with=True, pickle_local_spaces=False)
+        from pymor.models.mpi import mpi_wrap_model
+        return mpi_wrap_model(_discretize_fenics, use_with=True, pickle_local_spaces=False)
     else:
         return _discretize_fenics()
 
@@ -108,8 +108,8 @@ def _discretize_fenics():
     bc.apply(h1_mat)
     bc.apply(F)
 
-    # wrap everything as a pyMOR discretization
-    ###########################################
+    # wrap everything as a pyMOR model
+    ##################################
 
     # FEniCS wrappers
     from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
@@ -126,7 +126,7 @@ def _discretize_fenics():
     rhs = VectorOperator(FenicsVectorSpace(V).make_array([F]))
     h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
 
-    # build discretization
+    # build model
     visualizer = FenicsVisualizer(FenicsVectorSpace(V))
     parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
     d = StationaryModel(op, rhs, products={'h1_0_semi': h1_product},

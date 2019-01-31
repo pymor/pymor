@@ -6,21 +6,21 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.core.pickle import dumps, loads
-from pymortests.fixtures.discretization import discretization, picklable_discretization
+from pymortests.fixtures.model import model, picklable_model
 from pymortests.base import runmodule
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 
 
-def test_pickle(discretization):
-    assert_picklable(discretization)
+def test_pickle(model):
+    assert_picklable(model)
 
 
-def test_pickle_without_dumps_function(picklable_discretization):
-    assert_picklable_without_dumps_function(picklable_discretization)
+def test_pickle_without_dumps_function(picklable_model):
+    assert_picklable_without_dumps_function(picklable_model)
 
 
-def test_pickle_by_solving(discretization):
-    d = discretization
+def test_pickle_by_solving(model):
+    d = model
     d2 = loads(dumps(d))
     d.disable_caching()
     d2.disable_caching()

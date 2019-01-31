@@ -42,7 +42,7 @@ Options:
   --extension-alg=ALG             Basis extension algorithm (trivial, gram_schmidt)
                                   to be used [default: gram_schmidt].
 
-  --fenics                        Use FEniCS discretization.
+  --fenics                        Use FEniCS model.
 
   --grid=NI                       Use grid with 4*NI*NI elements [default: 100].
 
@@ -57,10 +57,10 @@ Options:
   --list-vector-array             Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
 
   --order=ORDER                   Polynomial order of the Lagrange finite elements to use in FEniCS
-                                  discretization [default: 1].
+                                  model [default: 1].
 
-  --pickle=PREFIX                 Pickle reduced discretizaion, as well as reductor and high-dimensional
-                                  discretization to files with this prefix.
+  --pickle=PREFIX                 Pickle reduced model, as well as reductor and high-dimensional
+                                  model to files with this prefix.
 
   --plot-err                      Plot error.
 
@@ -137,14 +137,14 @@ def main(args):
     if args['--alg'] == 'naive':
         rd, red_summary = reduce_naive(d=d, reductor=reductor, basis_size=args['RBSIZE'])
     elif args['--alg'] == 'greedy':
-        parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS discretization
+        parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS model
         rd, red_summary = reduce_greedy(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
                                         extension_alg_name=args['--extension-alg'],
                                         max_extensions=args['RBSIZE'],
                                         use_estimator=not args['--greedy-without-estimator'],
                                         pool=pool if parallel else None)
     elif args['--alg'] == 'adaptive_greedy':
-        parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS discretization
+        parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS model
         rd, red_summary = reduce_adaptive_greedy(d=d, reductor=reductor, validation_mus=args['SNAPSHOTS'],
                                                  extension_alg_name=args['--extension-alg'],
                                                  max_extensions=args['RBSIZE'],
@@ -160,11 +160,11 @@ def main(args):
         assert False  # this should never happen
 
     if args['--pickle']:
-        print(f"\nWriting reduced discretization to file {args['--pickle']}_reduced ...")
+        print(f"\nWriting reduced model to file {args['--pickle']}_reduced ...")
         with open(args['--pickle'] + '_reduced', 'wb') as f:
             dump(rd, f)
         if not args['--fenics']:  # FEniCS data structures do not support serialization
-            print(f"Writing detailed discretization and reductor to file {args['--pickle']}_detailed ...")
+            print(f"Writing detailed model and reductor to file {args['--pickle']}_detailed ...")
             with open(args['--pickle'] + '_detailed', 'wb') as f:
                 dump((d, reductor), f)
 
@@ -179,7 +179,7 @@ def main(args):
                                        test_mus=args['--test'],
                                        basis_sizes=0 if args['--plot-error-sequence'] else 1,
                                        plot=args['--plot-error-sequence'],
-                                       pool=None if args['--fenics'] else pool,  # cannot pickle FEniCS discretization
+                                       pool=None if args['--fenics'] else pool,  # cannot pickle FEniCS model
                                        random_seed=999)
 
     print('\n*** RESULTS ***\n')
@@ -229,10 +229,10 @@ def parse_arguments(args):
 
     if args['--fenics']:
         if args['--cache-region'] != 'none':
-            raise ValueError('Caching of high-dimensional solutions is not supported for FEniCS discretization.')
+            raise ValueError('Caching of high-dimensional solutions is not supported for FEniCS model.')
     else:
         if args['--order'] != 1:
-            raise ValueError('Higher-order finite elements only supported for FEniCS discretization.')
+            raise ValueError('Higher-order finite elements only supported for FEniCS model.')
 
     return args
 
@@ -252,7 +252,7 @@ def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array
     if use_list_vector_array:
         d = convert_to_numpy_list_vector_array(d)
 
-    summary = f'''pyMOR discretization:
+    summary = f'''pyMOR model:
    number of blocks: {xblocks}x{yblocks}
    grid intervals:   {grid_num_intervals}
    ListVectorArray:  {use_list_vector_array}
@@ -265,13 +265,13 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     from pymor.tools import mpi
 
     if mpi.parallel:
-        from pymor.discretizations.mpi import mpi_wrap_discretization
-        d = mpi_wrap_discretization(lambda: _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order),
+        from pymor.models.mpi import mpi_wrap_model
+        d = mpi_wrap_model(lambda: _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order),
                                     use_with=True, pickle_local_spaces=False)
     else:
         d = _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order)
 
-    summary = f'''FEniCS discretization:
+    summary = f'''FEniCS model:
    number of blocks:      {xblocks}x{yblocks}
    grid intervals:        {grid_num_intervals}
    finite element order:  {element_order}
@@ -323,14 +323,14 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     bc.apply(h1_mat)
     bc.apply(F)
 
-    # wrap everything as a pyMOR discretization
-    ###########################################
+    # wrap everything as a pyMOR model
+    ##################################
 
     # FEniCS wrappers
     from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
 
     # generic pyMOR classes
-    from pymor.discretizations.basic import StationaryModel
+    from pymor.models.basic import StationaryModel
     from pymor.operators.constructions import LincombOperator, VectorOperator
     from pymor.parameters.functionals import ProjectionParameterFunctional
     from pymor.parameters.spaces import CubicParameterSpace
@@ -351,7 +351,7 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
     l2_product = FenicsMatrixOperator(l2_mat, V, V, name='l2')
 
-    # build discretization
+    # build model
     visualizer = FenicsVisualizer(FenicsVectorSpace(V))
     parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
     d = StationaryModel(op, rhs, products={'h1_0_semi': h1_product,

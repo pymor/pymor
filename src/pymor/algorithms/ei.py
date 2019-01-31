@@ -9,7 +9,7 @@ the :func:`ei_greedy` method. The objects returned by this method can be used
 to instantiate an |EmpiricalInterpolatedOperator|.
 
 As a convenience, the :func:`interpolate_operators` method allows to perform
-the empirical interpolation of the |Operators| of a given discretization with
+the empirical interpolation of the |Operators| of a given model with
 a single function call.
 """
 
@@ -238,10 +238,10 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
 
     This is a convenience method to facilitate the use of :func:`ei_greedy` or :func:`deim`.
     Given a |Model|, names of |Operators|, and a sample of |Parameters|, first
-    the operators are evaluated on the solution snapshots of the discretization for the
+    the operators are evaluated on the solution snapshots of the model for the
     provided parameters. These evaluations are then used as input for
     :func:`ei_greedy`/:func:`deim`.  Finally the resulting interpolation data is used to
-    create |EmpiricalInterpolatedOperators| and a new discretization with the interpolated
+    create |EmpiricalInterpolatedOperators| and a new model with the interpolated
     operators is returned.
 
     Note that this implementation creates *one* common collateral basis for all specified
@@ -252,7 +252,7 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
     d
         The |Model| whose |Operators| will be interpolated.
     operator_names
-        List of keys in the `operators` dict of the discretization. The corresponding
+        List of keys in the `operators` dict of the model. The corresponding
         |Operators| will be interpolated.
     parameter_sample
         A list of |Parameters| for which solution snapshots are calculated.

@@ -116,25 +116,25 @@ operating on objects of the following types:
 |Models|
     Models in pyMOR encode the mathematical structure of a given
     discrete problem by acting as container classes for operators. Each
-    discretization object has |operators|, |products| dictionaries holding the
+    model object has |operators|, |products| dictionaries holding the
     |Operators| which appear in the formulation of the discrete problem. The
     keys in these dictionaries describe the role of the respective operator
     in the discrete problem.
 
-    Apart from describing the discrete problem, discretizations also implement
+    Apart from describing the discrete problem, models also implement
     algorithms for |solving| the given problem, returning |VectorArrays|
     from the |solution_space|. The solution can be |cached|, s.t.
     subsequent solving of the problem for the same parameter reduces to
     looking up the solution in pyMOR's cache.
 
-    While special discretization classes may be implemented which make use of
+    While special model classes may be implemented which make use of
     the specific types of operators they contain (e.g. using some external
     high-dimensional solver for the problem), it is generally favourable to
     implement the solution algorithms only through the interfaces provided by
-    the operators contained in the discretization, as this allows to use the
-    same discretization class to solve high-dimensional and reduced problems.
+    the operators contained in the model, as this allows to use the
+    same model class to solve high-dimensional and reduced problems.
     This has been done for the simple stationary and instationary
-    discretizations found in :mod:`pymor.discretizations.basic`.
+    models found in :mod:`pymor.models.basic`.
 
     Models can also implement |estimate| and |visualize| methods to
     estimate the discretization or model reduction error of a computed solution
@@ -142,15 +142,15 @@ operating on objects of the following types:
     |solution_space|.
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
-    .. |estimate|         replace:: :meth:`~pymor.discretizations.interfaces.ModelInterface.estimate`
-    .. |functionals|      replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.functionals`
-    .. |operators|        replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.operators`
-    .. |products|         replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.products`
-    .. |solution_space|   replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.solution_space`
-    .. |solve|            replace:: :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
-    .. |solving|          replace:: :meth:`solving <pymor.discretizations.interfaces.ModelInterface.solve>`
-    .. |vector_operators| replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.vector_operators`
-    .. |visualize|        replace:: :meth:`~pymor.discretizations.interfaces.ModelInterface.visualize`
+    .. |estimate|         replace:: :meth:`~pymor.models.interfaces.ModelInterface.estimate`
+    .. |functionals|      replace:: :attr:`~pymor.models.interfaces.ModelInterface.functionals`
+    .. |operators|        replace:: :attr:`~pymor.models.interfaces.ModelInterface.operators`
+    .. |products|         replace:: :attr:`~pymor.models.interfaces.ModelInterface.products`
+    .. |solution_space|   replace:: :attr:`~pymor.models.interfaces.ModelInterface.solution_space`
+    .. |solve|            replace:: :meth:`~pymor.models.interfaces.ModelInterface.solve`
+    .. |solving|          replace:: :meth:`solving <pymor.models.interfaces.ModelInterface.solve>`
+    .. |vector_operators| replace:: :attr:`~pymor.models.interfaces.ModelInterface.vector_operators`
+    .. |visualize|        replace:: :meth:`~pymor.models.interfaces.ModelInterface.visualize`
 
 
 Base Classes
@@ -181,7 +181,7 @@ objects private `__cache_region` attribute, which might affect the speed of a
 subsequent |solve| call, but not its result.
 
 Of course, in many situations one may wish to change properties of an immutable
-object, e.g. the number of timesteps for a given discretization. This can be
+object, e.g. the number of timesteps for a given model. This can be
 easily achieved using the
 :meth:`~pymor.core.interfaces.ImmutableInterface.with_` method every immutable
 object has: a call of the form ``o.with_(a=x, b=y)`` will return a copy of `o`
@@ -231,7 +231,7 @@ runs of the applications written with pyMOR.
 
 While pyMOR's internal discretizations are useful for getting started quickly
 with model reduction experiments, pyMOR's main goal is to allow the reduction of
-discretizations provided by external solvers. In order to do so, all that needs
+models provided by external solvers. In order to do so, all that needs
 to be done is to provide |VectorArrays|, |Operators| and |Models| which
 interact appropriately with the solver. pyMOR makes no assumption on how the
 communication with the solver is managed. For instance, communication could take
@@ -370,7 +370,7 @@ reduced basis method: the operators and functionals of a given discrete problem
 are projected onto the reduced basis space whereas the structure of the problem
 (i.e. the type of |Model| containing the operators) stays the same.
 pyMOR reflects this fact by offering with :class:`~pymor.reductors.basic.GenericRBReductor`
-a generic algorithm which can be used to RB-project any discretization available to pyMOR.
+a generic algorithm which can be used to RB-project any model available to pyMOR.
 It should be noted however that this reductor is only able to efficiently
 offline/online-decompose affinely |Parameter|-dependent linear problems.
 Non-linear problems or such with no affine |Parameter| dependence require

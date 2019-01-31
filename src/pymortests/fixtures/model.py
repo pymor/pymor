@@ -25,19 +25,19 @@ picklable_discretizaion_generators = \
          for p in (resource_filename('pymortests', 'testdata/parameter_instationary.ini'),)]
 
 
-non_picklable_discretization_generators = \
+non_picklable_model_generators = \
         [lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]
          for p, d in product(non_picklable_thermalblock_problems, [1./20., 1./30.])]
 
 
-discretization_generators = picklable_discretizaion_generators + non_picklable_discretization_generators
+model_generators = picklable_discretizaion_generators + non_picklable_model_generators
 
 
-@pytest.fixture(params=discretization_generators)
-def discretization(request):
+@pytest.fixture(params=model_generators)
+def model(request):
     return request.param()
 
 
 @pytest.fixture(params=picklable_discretizaion_generators)
-def picklable_discretization(request):
+def picklable_model(request):
     return request.param()

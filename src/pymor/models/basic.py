@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.timestepping import TimeStepperInterface
-from pymor.discretizations.interfaces import ModelInterface
+from pymor.models.interfaces import ModelInterface
 from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.frozendict import FrozenDict
@@ -89,7 +89,7 @@ class ModelBase(ModelInterface):
         ----------
         U
             The |VectorArray| from
-            :attr:`~pymor.discretizations.interfaces.ModelInterface.solution_space`
+            :attr:`~pymor.models.interfaces.ModelInterface.solution_space`
             that shall be visualized.
         kwargs
             See docstring of `self.visualizer.visualize`.
@@ -107,7 +107,7 @@ class ModelBase(ModelInterface):
 
 
 class StationaryModel(ModelBase):
-    """Generic class for discretizations of stationary problems.
+    """Generic class for models of stationary problems.
 
     This class describes discrete problems given by the equation::
 
@@ -130,26 +130,26 @@ class StationaryModel(ModelBase):
     products
         A dict of inner product |Operators| defined on the discrete space the
         problem is posed on. For each product a corresponding norm
-        is added as a method of the discretization.
+        is added as a method of the model.
     operators
-        A dict of additional |Operators| associated with the discretization.
+        A dict of additional |Operators| associated with the model.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, d)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call `estimator.estimate(U, mu, self)`.
+        model which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, d, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the discretization which forwards its arguments to the
+        to the model which forwards its arguments to the
         visualizer's `visualize` method.
     cache_region
         `None` or name of the |CacheRegion| to use.
     name
-        Name of the discretization.
+        Name of the model.
 
     Attributes
     ----------
@@ -158,9 +158,9 @@ class StationaryModel(ModelBase):
     rhs
         The right-hand side F. The same as `operators['rhs']`.
     operators
-        Dict of all |Operators| appearing in the discretization.
+        Dict of all |Operators| appearing in the model.
     products
-        Dict of all product |Operators| associated with the discretization.
+        Dict of all product |Operators| associated with the model.
     """
 
     special_operators = frozenset({'operator', 'rhs'})
@@ -202,7 +202,7 @@ class StationaryModel(ModelBase):
 
 
 class InstationaryModel(ModelBase):
-    """Generic class for discretizations of instationary problems.
+    """Generic class for models of instationary problems.
 
     This class describes instationary problems given by the equations::
 
@@ -232,33 +232,33 @@ class InstationaryModel(ModelBase):
         The mass |Operator| `M`. If `None`, the identity is assumed.
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
-        to be used by :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`.
+        to be used by :meth:`~pymor.models.interfaces.ModelInterface.solve`.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
     products
         A dict of product |Operators| defined on the discrete space the
         problem is posed on. For each product a corresponding norm
-        is added as a method of the discretization.
+        is added as a method of the model.
     operators
-        A dict of additional |Operators| associated with the discretization.
+        A dict of additional |Operators| associated with the model.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, d)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call `estimator.estimate(U, mu, self)`.
+        model which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, d, ...)` method. If `visualizer`
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the discretization which forwards its arguments to the
+        to the model which forwards its arguments to the
         visualizer's `visualize` method.
     cache_region
         `None` or name of the |CacheRegion| to use.
     name
-        Name of the discretization.
+        Name of the model.
 
     Attributes
     ----------
@@ -276,9 +276,9 @@ class InstationaryModel(ModelBase):
     time_stepper
         The provided :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`.
     operators
-        Dict of all |Operators| appearing in the discretization.
+        Dict of all |Operators| appearing in the model.
     products
-        Dict of all product |Operators| associated with the discretization.
+        Dict of all product |Operators| associated with the model.
     """
 
     special_operators = frozenset({'operator', 'mass', 'rhs', 'initial_data'})
@@ -344,9 +344,9 @@ class InstationaryModel(ModelBase):
                                        initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
 
     def to_lti(self, output='output_functional'):
-        """Convert discretization to |LTIModel|.
+        """Convert model to |LTIModel|.
 
-        This method interprets the given discretization as an |LTIModel|
+        This method interprets the given model as an |LTIModel|
         in the following way::
 
             - self.operator        -> A
@@ -373,5 +373,5 @@ class InstationaryModel(ModelBase):
         if A.source.id == C.range.id:
             raise ValueError('State space must have different id than output space.')
 
-        from pymor.discretizations.iosys import LTIModel
+        from pymor.models.iosys import LTIModel
         return LTIModel(A, B, C, E=E, visualizer=self.visualizer)

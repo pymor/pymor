@@ -10,7 +10,7 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEule
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.algorithms.preassemble import preassemble as preassemble_
-from pymor.discretizations.basic import StationaryModel, InstationaryModel
+from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import LincombFunction
 from pymor.grids.referenceelements import line, triangle, square
@@ -201,7 +201,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     data = {'grid': grid, 'boundary_info': boundary_info}
 
     if preassemble:
-        data['unassembled_discretization'] = d
+        data['unassembled_model'] = d
         d = preassemble_(d)
 
     return d, data
@@ -252,7 +252,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
         intermediate vector that is calculated is returned.
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
-        to be used by :class:`~pymor.discretizations.basic.InstationaryModel.solve`.
+        to be used by :class:`~pymor.models.basic.InstationaryModel.solve`.
     nt
         If `time_stepper` is not specified, the number of time steps for implicit
         Euler time stepping.

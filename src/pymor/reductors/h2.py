@@ -9,7 +9,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import LTIModel
+from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import LTI_BHIReductor, TFInterpReductor

@@ -8,7 +8,7 @@ import time
 import numpy as np
 
 from pymor.core.logger import getLogger
-from pymor.discretizations.basic import StationaryModel
+from pymor.models.basic import StationaryModel
 from pymor.parallel.dummy import dummy_pool
 
 

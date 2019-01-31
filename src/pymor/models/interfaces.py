@@ -8,11 +8,11 @@ from pymor.parameters.base import Parametric
 
 
 class ModelInterface(CacheableInterface, Parametric):
-    """Interface for discretization objects.
+    """Interface for model objects.
 
-    A discretization object defines a discrete problem
+    A model object defines a discrete problem
     via its `class` and the |Operators| it contains.
-    Furthermore, discretizations can be
+    Furthermore, models can be
     :meth:`solved <ModelInterface.solve>` for a given
     |Parameter| resulting in a solution |VectorArray|.
 
@@ -21,14 +21,14 @@ class ModelInterface(CacheableInterface, Parametric):
     solution_space
         |VectorSpace| of the |VectorArrays| returned by :meth:`solve`.
     linear
-        `True` if the discretization describes a linear problem.
+        `True` if the model describes a linear problem.
     operators
-        Dictionary of all |Operators| contained in the discretization
+        Dictionary of all |Operators| contained in the model
         (see :class:`~pymor.reductors.basic.GenericRBReductor` for a usage
         example).
     products
         Same as |Operators| but for inner product operators associated with the
-        discretization.
+        model.
     """
 
     solution_space = None
@@ -45,7 +45,7 @@ class ModelInterface(CacheableInterface, Parametric):
         """Solve the discrete problem for the |Parameter| `mu`.
 
         The result will be :mod:`cached <pymor.core.cache>`
-        in case caching has been activated for the given discretization.
+        in case caching has been activated for the given model.
 
         Parameters
         ----------
@@ -60,9 +60,9 @@ class ModelInterface(CacheableInterface, Parametric):
         return self.cached_method_call(self._solve, mu=mu, **kwargs)
 
     def estimate(self, U, mu=None):
-        """Estimate the discretization error for a given solution.
+        """Estimate the model error for a given solution.
 
-        The discretization error could be the error w.r.t. the analytical
+        The model error could be the error w.r.t. the analytical
         solution of the given problem or the model reduction error w.r.t.
         a corresponding high-dimensional |Model|.
 

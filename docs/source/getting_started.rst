@@ -175,7 +175,7 @@ have a look:
 {diffusion: (2, 3)}
 
 This tells us, that the |Parameter| which
-:meth:`~pymor.discretizations.interfaces.ModelInterface.solve` expects
+:meth:`~pymor.models.interfaces.ModelInterface.solve` expects
 should be a dictionary with one key ``'diffusion'`` whose value is a
 |NumPy array| of shape ``(2, 3)``, corresponding to the block structure of
 the problem. However, by using the
@@ -192,7 +192,7 @@ solve the high-dimensional problem for those parameters in the training set
 which are actually selected for basis extension. To control the condition of
 the reduced system matrix, we must ensure that the generated basis is
 orthonormal w.r.t. the H1_0-product on the solution space. For this we pass
-the :attr:`h1_0_semi_product` attribute of the discretization as inner product to
+the :attr:`h1_0_semi_product` attribute of the model as inner product to
 the reductor, which will also use it for computing the Riesz representatives
 required for error estimation. Moreover, we have to provide
 the reductor with a |ParameterFunctional| which computes a lower bound for
@@ -204,7 +204,7 @@ the coercivity of the problem for a given parameter.
 ...     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
 ... )
 
-Moreover, we need to select a |Parameter| training set. The discretization
+Moreover, we need to select a |Parameter| training set. The model
 ``d`` already comes with a |ParameterSpace| which it has inherited from the
 analytical problem. We can sample our parameters from this space, which is a
 :class:`~pymor.parameters.spaces.CubicParameterSpace`. E.g.:

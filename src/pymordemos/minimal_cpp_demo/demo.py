@@ -6,7 +6,7 @@ import numpy as np
 
 from pymor.algorithms.pod import pod
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
-from pymor.discretizations.basic import InstationaryModel
+from pymor.models.basic import InstationaryModel
 from pymor.grids.oned import OnedGrid
 from pymor.gui.visualizers import OnedVisualizer
 from pymor.operators.constructions import VectorOperator, LincombOperator

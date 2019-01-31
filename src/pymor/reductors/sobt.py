@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.projection import project
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import SecondOrderModel
+from pymor.models.iosys import SecondOrderModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace

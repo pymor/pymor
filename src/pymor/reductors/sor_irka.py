@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import SecondOrderModel
+from pymor.models.iosys import SecondOrderModel
 from pymor.reductors.interpolation import SO_BHIReductor
 from pymor.reductors.h2 import IRKAReductor, _poles_and_tangential_directions, _convergence_criterion
 

@@ -10,7 +10,7 @@ import scipy.sparse as sps
 import matplotlib.pyplot as plt
 
 from pymor.core.config import config
-from pymor.discretizations.iosys import SecondOrderModel
+from pymor.models.iosys import SecondOrderModel
 from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor,

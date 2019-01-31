@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import LTIModel
+from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 

@@ -10,9 +10,9 @@ Usage:
   analyze_pickle.py convergence [--detailed=DETAILED_DATA] [--error-norm=NORM] [--ndim=NDIM] REDUCED_DATA SAMPLES
   analyze_pickle.py (-h | --help)
 
-This demo loads a pickled reduced discretization, solves for random
+This demo loads a pickled reduced model, solves for random
 parameters, estimates the reduction errors and then visualizes these
-estimates. If the detailed discretization and the reductor are
+estimates. If the detailed model and the reductor are
 also provided, the estimated error is visualized in comparison to
 the real reduction error.
 
@@ -20,12 +20,12 @@ The needed data files are created by the thermal block demo, by
 setting the '--pickle' option.
 
 Arguments:
-  REDUCED_DATA  File containing the pickled reduced discretization.
+  REDUCED_DATA  File containing the pickled reduced model.
 
   SAMPLES       Number of parameter samples to test with.
 
 Options:
-  --detailed=DETAILED_DATA  File containing the high-dimensional discretization
+  --detailed=DETAILED_DATA  File containing the high-dimensional model
                             and the reductor.
 
   --error-norm=NORM         Name of norm in which to compute the errors.
@@ -57,7 +57,7 @@ def _bins(start, stop, steps=100):
 def analyze_pickle_histogram(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
-    print('Loading reduced discretization ...')
+    print('Loading reduced model ...')
     rd = load(open(args['REDUCED_DATA'], 'rb'))
 
     mus = rd.parameter_space.sample_randomly(args['SAMPLES'])
@@ -175,7 +175,7 @@ def analyze_pickle_histogram(args):
 def analyze_pickle_convergence(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
-    print('Loading reduced discretization ...')
+    print('Loading reduced model ...')
     rd = load(open(args['REDUCED_DATA'], 'rb'))
 
     if not args['--detailed']:

@@ -25,7 +25,7 @@ Options:
   --grid=NI                  Use grid with 2*NI*NI elements [default: 100].
 
   --pickle=PREFIX            Pickle reduced discretizaion, as well as reductor and high-dimensional
-                             discretization to files with this prefix.
+                             model to files with this prefix.
 
   -p, --plot-err             Plot error.
 
@@ -157,10 +157,10 @@ def thermalblock_demo(args):
     rd = greedy_data['rd']
 
     if args['--pickle']:
-        print(f"\nWriting reduced discretization to file {args['--pickle']}_reduced ...")
+        print(f"\nWriting reduced model to file {args['--pickle']}_reduced ...")
         with open(args['--pickle'] + '_reduced', 'wb') as f:
             dump(rd, f)
-        print(f"Writing detailed discretization and reductor to file {args['--pickle']}_detailed ...")
+        print(f"Writing detailed model and reductor to file {args['--pickle']}_detailed ...")
         with open(args['--pickle'] + '_detailed', 'wb') as f:
             dump((d, reductor), f)
 

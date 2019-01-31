@@ -8,8 +8,8 @@ import configparser
 import numpy as np
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-from pymor.discretizations.basic import StationaryModel
-from pymor.discretizations.basic import InstationaryModel
+from pymor.models.basic import StationaryModel
+from pymor.models.basic import InstationaryModel
 from pymor.operators.constructions import LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.spaces import CubicParameterSpace
@@ -19,7 +19,7 @@ from pymor.parameters.functionals import ExpressionParameterFunctional
 def discretize_stationary_from_disk(parameter_file):
     """Load a linear affinely decomposed |StationaryModel| from file.
 
-    The discretization is defined via an `.ini`-style file as follows ::
+    The model is defined via an `.ini`-style file as follows ::
 
         [system-matrices]
         L_1.mat: l_1(μ_1,...,μ_n)
@@ -156,7 +156,7 @@ def discretize_stationary_from_disk(parameter_file):
     else:
         products = None
 
-    # Create and return stationary discretization
+    # Create and return stationary model
     return StationaryModel(operator=system_lincombOperator, rhs=rhs_lincombOperator,
                            parameter_space=parameter_space, products=products)
 
@@ -164,7 +164,7 @@ def discretize_stationary_from_disk(parameter_file):
 def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=None, time_stepper=None):
     """Load a linear affinely decomposed |InstationaryModel| from file.
 
-    Similarly to :func:`discretize_stationary_from_disk`, the discretization is
+    Similarly to :func:`discretize_stationary_from_disk`, the model is
     specified via an `ini.`-file of the following form ::
 
         [system-matrices]
@@ -321,7 +321,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     else:
         time_stepper = time_stepper(steps)
 
-    # Create and return instationary discretization
+    # Create and return instationary model
     return InstationaryModel(operator=system_lincombOperator, rhs=rhs_lincombOperator,
                              parameter_space=parameter_space, initial_data=u0, T=T,
                              time_stepper=time_stepper, mass=mass_operator, products=products)

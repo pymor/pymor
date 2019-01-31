@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.discretizations.basic import ModelBase
+from pymor.models.basic import ModelBase
 from pymor.operators.mpi import mpi_wrap_operator
 from pymor.tools import mpi
 from pymor.vectorarrays.mpi import MPIVectorSpace, _register_local_space
@@ -16,12 +16,12 @@ class MPIModel(ModelBase):
     wrapper class uses the event loop from :mod:`pymor.tools.mpi`
     to allow an MPI distributed usage of the |Model|.
     The underlying implementation needs to be MPI aware.
-    In particular, the discretization's
-    :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
-    method has to perform an MPI parallel solve of the discretization.
+    In particular, the model's
+    :meth:`~pymor.models.interfaces.ModelInterface.solve`
+    method has to perform an MPI parallel solve of the model.
 
     Note that this class is not intended to be instantiated directly.
-    Instead, you should use :func:`mpi_wrap_discretization`.
+    Instead, you should use :func:`mpi_wrap_model`.
 
     Parameters
     ----------
@@ -29,8 +29,8 @@ class MPIModel(ModelBase):
         :class:`~pymor.tools.mpi.ObjectId` of the local
         |Model| on each rank.
     operators
-        Dictionary of all |Operators| contained in the discretization,
-        wrapped for use on rank 0. Use :func:`mpi_wrap_discretization`
+        Dictionary of all |Operators| contained in the model,
+        wrapped for use on rank 0. Use :func:`mpi_wrap_model`
         to automatically wrap all operators of a given MPI-aware
         |Model|.
     products
@@ -96,24 +96,24 @@ def _MPIVisualizer_visualize(d, U, **kwargs):
     d.visualize(U, **kwargs)
 
 
-def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=False,
-                            pickle_local_spaces=True, space_type=MPIVectorSpace):
+def mpi_wrap_model(local_models, use_with=False, with_apply2=False,
+                   pickle_local_spaces=True, space_type=MPIVectorSpace):
     """Wrap MPI distributed local |Models| to a global |Model| on rank 0.
 
     Given MPI distributed local |Models| referred to by the
-    :class:`~pymor.tools.mpi.ObjectId` `local_discretizations`, return a new |Model|
-    which manages these distributed discretizations from rank 0. This
+    :class:`~pymor.tools.mpi.ObjectId` `local_models`, return a new |Model|
+    which manages these distributed models from rank 0. This
     is done by first wrapping all |Operators| of the |Model| using
     :func:`~pymor.operators.mpi.mpi_wrap_operator`.
 
-    Alternatively, `local_discretizations` can be a callable (with no arguments)
+    Alternatively, `local_models` can be a callable (with no arguments)
     which is then called on each rank to instantiate the local |Models|.
 
     When `use_with` is `False`, an :class:`MPIModel` is instantiated
     with the wrapped operators. A call to
-    :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
+    :meth:`~pymor.models.interfaces.ModelInterface.solve`
     will then use an MPI parallel call to the
-    :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
+    :meth:`~pymor.models.interfaces.ModelInterface.solve`
     methods of the wrapped local |Models| to obtain the solution.
     This is usually what you want when the actual solve is performed by
     an implementation in the external solver.
@@ -121,15 +121,15 @@ def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=F
     When `use_with` is `True`, :meth:`~pymor.core.interfaces.ImmutableInterface.with_`
     is called on the local |Model| on rank 0, to obtain a new
     |Model| with the wrapped MPI |Operators|. This is mainly useful
-    when the local discretizations are generic |Models| as in
-    :mod:`pymor.discretizations.basic` and
-    :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
+    when the local models are generic |Models| as in
+    :mod:`pymor.models.basic` and
+    :meth:`~pymor.models.interfaces.ModelInterface.solve`
     is implemented directly in pyMOR via operations on the contained
     |Operators|.
 
     Parameters
     ----------
-    local_discretizations
+    local_models
         :class:`~pymor.tools.mpi.ObjectId` of the local |Models|
         on each rank or a callable generating the |Models|.
     use_with
@@ -142,10 +142,10 @@ def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=F
         See :class:`~pymor.operators.mpi.MPIOperator`.
     """
 
-    if not isinstance(local_discretizations, mpi.ObjectId):
-        local_discretizations = mpi.call(mpi.function_call_manage, local_discretizations)
+    if not isinstance(local_models, mpi.ObjectId):
+        local_models = mpi.call(mpi.function_call_manage, local_models)
 
-    operators, products = mpi.call(_mpi_wrap_discretization_manage_operators, local_discretizations)
+    operators, products = mpi.call(_mpi_wrap_model_manage_operators, local_models)
 
     operators = {k: mpi_wrap_operator(v, with_apply2=with_apply2,
                                       pickle_local_spaces=pickle_local_spaces, space_type=space_type) if v else None
@@ -155,15 +155,15 @@ def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=F
                 for k, v in products.items()}
 
     if use_with:
-        d = mpi.get_object(local_discretizations)
-        visualizer = MPIVisualizer(local_discretizations)
+        d = mpi.get_object(local_models)
+        visualizer = MPIVisualizer(local_models)
         return d.with_(operators=operators, products=products, visualizer=visualizer, cache_region=None)
     else:
-        return MPIModel(local_discretizations, operators, products,
+        return MPIModel(local_models, operators, products,
                         pickle_local_spaces=pickle_local_spaces, space_type=space_type)
 
 
-def _mpi_wrap_discretization_manage_operators(obj_id):
+def _mpi_wrap_model_manage_operators(obj_id):
     d = mpi.get_object(obj_id)
     operators = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.operators.items())}
     products = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.products.items())} if d.products else {}
