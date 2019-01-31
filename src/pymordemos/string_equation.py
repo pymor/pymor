@@ -10,7 +10,7 @@ import scipy.sparse as sps
 import matplotlib.pyplot as plt
 
 from pymor.core.config import config
-from pymor.discretizations.iosys import SecondOrderSystem
+from pymor.discretizations.iosys import SecondOrderModel
 from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor,
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     Cp[0, n2 - 1] = 1
 
     # Second-order system
-    so_sys = SecondOrderSystem.from_matrices(M, E, K, B, Cp)
+    so_sys = SecondOrderModel.from_matrices(M, E, K, B, Cp)
 
     print(f'n = {so_sys.n}')
     print(f'm = {so_sys.m}')

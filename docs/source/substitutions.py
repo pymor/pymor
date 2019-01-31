@@ -104,10 +104,10 @@ common = '''
 .. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
 .. |parametric| replace:: :attr:`~pymor.parameters.base.Parametric.parametric`
 
-.. |LTISystem| replace:: :class:`~pymor.discretizations.iosys.LTISystem`
-.. |LTISystems| replace:: :class:`LTISystems <pymor.discretizations.iosys.LTISystem>`
-.. |SecondOrderSystem| replace:: :class:`~pymor.discretizations.iosys.SecondOrderSystem`
-.. |SecondOrderSystems| replace:: :class:`SecondOrderSystems <pymor.discretizations.iosys.SecondOrderSystem>`
+.. |LTIModel| replace:: :class:`~pymor.discretizations.iosys.LTIModel`
+.. |LTIModels| replace:: :class:`LTIModels <pymor.discretizations.iosys.LTIModel>`
+.. |SecondOrderModel| replace:: :class:`~pymor.discretizations.iosys.SecondOrderModel`
+.. |SecondOrderModels| replace:: :class:`SecondOrderModels <pymor.discretizations.iosys.SecondOrderModel>`
 .. |TransferFunction| replace:: :class:`~pymor.discretizations.iosys.TransferFunction`
 .. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.discretizations.iosys.TransferFunction>`
 

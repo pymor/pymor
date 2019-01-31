@@ -344,9 +344,9 @@ class InstationaryModel(ModelBase):
                                        initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
 
     def to_lti(self, output='output_functional'):
-        """Convert discretization to |LTISystem|.
+        """Convert discretization to |LTIModel|.
 
-        This method interprets the given discretization as an |LTISystem|
+        This method interprets the given discretization as an |LTIModel|
         in the following way::
 
             - self.operator        -> A
@@ -373,5 +373,5 @@ class InstationaryModel(ModelBase):
         if A.source.id == C.range.id:
             raise ValueError('State space must have different id than output space.')
 
-        from pymor.discretizations.iosys import LTISystem
-        return LTISystem(A, B, C, E=E, visualizer=self.visualizer)
+        from pymor.discretizations.iosys import LTIModel
+        return LTIModel(A, B, C, E=E, visualizer=self.visualizer)

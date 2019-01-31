@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import SecondOrderSystem
+from pymor.discretizations.iosys import SecondOrderModel
 from pymor.reductors.interpolation import SO_BHIReductor
 from pymor.reductors.h2 import IRKAReductor, _poles_and_tangential_directions, _convergence_criterion
 
@@ -16,10 +16,10 @@ class SOR_IRKAReductor(BasicInterface):
     Parameters
     ----------
     d
-        SecondOrderSystem.
+        SecondOrderModel.
     """
     def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
+        assert isinstance(d, SecondOrderModel)
         self.d = d
 
     def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
@@ -64,7 +64,7 @@ class SOR_IRKAReductor(BasicInterface):
             Initial reduced order model.
 
             If `None`, then `sigma`, `b`, and `c` are used. Otherwise,
-            it needs to be an |LTISystem| of order `r` and it is used to
+            it needs to be an |LTIModel| of order `r` and it is used to
             construct `sigma`, `b`, and `c`.
         tol
             Tolerance for the convergence criterion.
@@ -104,7 +104,7 @@ class SOR_IRKAReductor(BasicInterface):
         Returns
         -------
         rd
-            Reduced |LTISystem| model.
+            Reduced |LTIModel| model.
         """
         d = self.d
         if not d.cont_time:
@@ -122,7 +122,7 @@ class SOR_IRKAReductor(BasicInterface):
         assert b is None or isinstance(b, int) or b in d.B.source and len(b) == r
         assert c is None or isinstance(c, int) or c in d.Cp.range and len(c) == r
         assert (rd0 is None
-                or isinstance(rd0, SecondOrderSystem)
+                or isinstance(rd0, SecondOrderModel)
                 and rd0.n == r and rd0.B.source == d.B.source and rd0.Cp.range == d.Cp.range)
         assert sigma is None or rd0 is None
         assert b is None or rd0 is None

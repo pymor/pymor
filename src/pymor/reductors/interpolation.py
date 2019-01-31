@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import LTISystem, SecondOrderSystem, LinearDelaySystem
+from pymor.discretizations.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import GenericPGReductor
 
@@ -17,7 +17,7 @@ class GenericBHIReductor(BasicInterface):
     r"""Generic bitangential Hermite interpolation reductor.
 
     This is a generic reductor for reducing any linear
-    :class:`~pymor.discretizations.iosys.InputStateOutputSystem` with
+    :class:`~pymor.discretizations.iosys.InputStateOutputModel` with
     the transfer function which can be written in the generalized
     coprime factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
     \mathcal{B}(s)` as in [BG09]_.
@@ -126,15 +126,15 @@ class GenericBHIReductor(BasicInterface):
 
 
 class LTI_BHIReductor(GenericBHIReductor):
-    """Bitangential Hermite interpolation for |LTISystems|.
+    """Bitangential Hermite interpolation for |LTIModels|.
 
     Parameters
     ----------
     d
-        |LTISystem|.
+        |LTIModel|.
     """
     def __init__(self, d):
-        assert isinstance(d, LTISystem)
+        assert isinstance(d, LTIModel)
         self.d = d
         self._product = d.E
 
@@ -189,7 +189,7 @@ class LTI_BHIReductor(GenericBHIReductor):
             return super().reduce(sigma, b, c, projection=projection)
 
     def reduce_arnoldi(self, sigma, b, c):
-        """Bitangential Hermite interpolation for SISO |LTISystems|.
+        """Bitangential Hermite interpolation for SISO |LTIModels|.
 
         Parameters
         ----------
@@ -206,7 +206,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         Returns
         -------
         rd
-            Reduced |LTISystem| model.
+            Reduced |LTIModel| model.
         """
         d = self.d
         assert d.m == 1 and d.p == 1
@@ -227,10 +227,10 @@ class SO_BHIReductor(GenericBHIReductor):
     Parameters
     ----------
     d
-        :class:`~pymor.discretizations.iosys.SecondOrderSystem`.
+        :class:`~pymor.discretizations.iosys.SecondOrderModel`.
     """
     def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
+        assert isinstance(d, SecondOrderModel)
         self.d = d
         self._product = d.M
 
@@ -257,10 +257,10 @@ class DelayBHIReductor(GenericBHIReductor):
     Parameters
     ----------
     d
-        :class:`~pymor.discretizations.iosys.LinearDelaySystem`.
+        :class:`~pymor.discretizations.iosys.LinearDelayModel`.
     """
     def __init__(self, d):
-        assert isinstance(d, LinearDelaySystem)
+        assert isinstance(d, LinearDelayModel)
         self.d = d
         self._product = d.E
 
@@ -312,7 +312,7 @@ class TFInterpReductor(BasicInterface):
         Returns
         -------
         lti
-            |LTISystem| interpolating the transfer function of `d`.
+            |LTIModel| interpolating the transfer function of `d`.
         """
         d = self.d
         r = len(sigma)
@@ -369,4 +369,4 @@ class TFInterpReductor(BasicInterface):
         Br = (T.dot(Br)).real
         Cr = (Cr.dot(T.conj().T)).real
 
-        return LTISystem.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=d.cont_time)
+        return LTIModel.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=d.cont_time)

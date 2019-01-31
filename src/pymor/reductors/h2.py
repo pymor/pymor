@@ -9,7 +9,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import LTISystem
+from pymor.discretizations.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.reductors.interpolation import LTI_BHIReductor, TFInterpReductor
@@ -21,10 +21,10 @@ class IRKAReductor(BasicInterface):
     Parameters
     ----------
     d
-        |LTISystem|.
+        |LTIModel|.
     """
     def __init__(self, d):
-        assert isinstance(d, LTISystem)
+        assert isinstance(d, LTIModel)
         self.d = d
 
     def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
@@ -66,7 +66,7 @@ class IRKAReductor(BasicInterface):
             Initial reduced order model.
 
             If `None`, then `sigma`, `b`, and `c` are used. Otherwise,
-            it needs to be an |LTISystem| of order `r` and it is used to
+            it needs to be an |LTIModel| of order `r` and it is used to
             construct `sigma`, `b`, and `c`.
         tol
             Tolerance for the convergence criterion.
@@ -108,7 +108,7 @@ class IRKAReductor(BasicInterface):
         Returns
         -------
         rd
-            Reduced |LTISystem| model.
+            Reduced |LTIModel| model.
         """
         d = self.d
         if not d.cont_time:
@@ -123,7 +123,7 @@ class IRKAReductor(BasicInterface):
         assert b is None or isinstance(b, int) or b in d.B.source and len(b) == r
         assert c is None or isinstance(c, int) or c in d.C.range and len(c) == r
         assert (rd0 is None
-                or isinstance(rd0, LTISystem)
+                or isinstance(rd0, LTIModel)
                 and rd0.n == r and rd0.B.source == d.B.source and rd0.C.range == d.C.range)
         assert sigma is None or rd0 is None
         assert b is None or rd0 is None
@@ -225,10 +225,10 @@ class TSIAReductor(BasicInterface):
     Parameters
     ----------
     d
-        |LTISystem|.
+        |LTIModel|.
     """
     def __init__(self, d):
-        assert isinstance(d, LTISystem)
+        assert isinstance(d, LTIModel)
         self.d = d
 
     def reduce(self, rd0, tol=1e-4, maxit=100, num_prev=1, projection='orth', conv_crit='sigma',
@@ -280,10 +280,10 @@ class TSIAReductor(BasicInterface):
         Returns
         -------
         rd
-            Reduced |LTISystem|.
+            Reduced |LTIModel|.
         """
         d = self.d
-        assert isinstance(rd0, LTISystem) and rd0.B.source == d.B.source and rd0.C.range == d.C.range
+        assert isinstance(rd0, LTIModel) and rd0.B.source == d.B.source and rd0.C.range == d.C.range
         r = rd0.n
         assert 0 < r < d.n
         assert isinstance(num_prev, int) and num_prev >= 1
@@ -411,7 +411,7 @@ class TF_IRKAReductor(BasicInterface):
             Initial reduced order model.
 
             If `None`, then `sigma`, `b`, and `c` are used. Otherwise,
-            it needs to be an |LTISystem| of order `r` and it is used to
+            it needs to be an |LTIModel| of order `r` and it is used to
             construct `sigma`, `b`, and `c`.
         tol
             Tolerance for the convergence criterion.
@@ -435,7 +435,7 @@ class TF_IRKAReductor(BasicInterface):
         Returns
         -------
         rd
-            Reduced |LTISystem| model.
+            Reduced |LTIModel| model.
         """
         d = self.d
         if not d.cont_time:

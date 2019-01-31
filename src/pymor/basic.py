@@ -34,7 +34,7 @@ from pymor.core.logger import set_log_levels, getLogger
 from pymor.core.pickle import dump, dumps, load, loads
 
 from pymor.discretizations.basic import StationaryModel, InstationaryModel
-from pymor.discretizations.iosys import LTISystem, SecondOrderSystem, TransferFunction
+from pymor.discretizations.iosys import LTIModel, SecondOrderModel, TransferFunction
 
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
 from pymor.domaindescriptions.polygonal import DiscDomain, CircularSectorDomain, PolygonalDomain

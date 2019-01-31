@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.projection import project
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import SecondOrderSystem
+from pymor.discretizations.iosys import SecondOrderModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -25,7 +25,7 @@ class GenericSOBTpvReductor(BasicInterface):
         The system which is to be reduced.
     """
     def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
+        assert isinstance(d, SecondOrderModel)
         self.d = d
         self.V = None
         self.W = None
@@ -197,7 +197,7 @@ class SOBTfvReductor(BasicInterface):
         The system which is to be reduced.
     """
     def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
+        assert isinstance(d, SecondOrderModel)
         self.d = d
         self.V = None
         self.W = None
@@ -275,7 +275,7 @@ class SOBTReductor(BasicInterface):
         The system which is to be reduced.
     """
     def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
+        assert isinstance(d, SecondOrderModel)
         self.d = d
         self.V1 = None
         self.W1 = None
