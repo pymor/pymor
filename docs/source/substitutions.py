@@ -14,8 +14,8 @@ interfaces = '''
 .. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.grids.interfaces.BoundaryInfoInterface>`
 .. |ConformalTopologicalGrids| replace:: :class:`ConformalTopologicalGrids <pymor.grids.interfaces.ConformalTopologicalGridInterface>`
 .. |ConformalTopologicalGrid| replace:: :class:`ConformalTopologicalGrid <pymor.grids.interfaces.ConformalTopologicalGridInterface>`
-.. |Discretizations| replace:: :class:`Discretizations <pymor.discretizations.interfaces.DiscretizationInterface>`
-.. |Discretization| replace:: :class:`Discretization <pymor.discretizations.interfaces.DiscretizationInterface>`
+.. |Models| replace:: :class:`Models <pymor.discretizations.interfaces.ModelInterface>`
+.. |Model| replace:: :class:`Model <pymor.discretizations.interfaces.ModelInterface>`
 .. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.domaindescriptions.interfaces.DomainDescriptionInterface>`
 .. |DomainDescription| replace:: :class:`DomainDescription <pymor.domaindescriptions.interfaces.DomainDescriptionInterface>`
 .. |Functionals| replace:: :class:`Functionals <pymor.operators.interfaces.OperatorInterface>`
@@ -93,9 +93,9 @@ common = '''
 .. |NumpyVectorSpace| replace:: :func:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
 .. |NumpyVectorSpaces| replace:: :func:`NumpyVectorSpaces <pymor.vectorarrays.numpy.NumpyVectorSpace>`
 
-.. |StationaryDiscretization| replace:: :class:`~pymor.discretizations.basic.StationaryDiscretization`
-.. |StationaryDiscretizations| replace:: :class:`StationaryDiscretizations <pymor.discretizations.basic.StationaryDiscretization>`
-.. |InstationaryDiscretization| replace:: :class:`~pymor.discretizations.basic.InstationaryDiscretization`
+.. |StationaryModel| replace:: :class:`~pymor.discretizations.basic.StationaryModel`
+.. |StationaryModels| replace:: :class:`StationaryModels <pymor.discretizations.basic.StationaryModel>`
+.. |InstationaryModel| replace:: :class:`~pymor.discretizations.basic.InstationaryModel`
 
 .. |ParameterType| replace:: :class:`~pymor.parameters.base.ParameterType`
 .. |ParameterTypes| replace:: :class:`ParameterTypes <pymor.parameters.base.ParameterType>`

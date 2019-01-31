@@ -41,7 +41,7 @@ class ParabolicRBReductor(GenericRBReductor):
     Parameters
     ----------
     d
-        The |InstationaryDiscretization| which is to be reduced.
+        The |InstationaryModel| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
     basis_is_orthonormal

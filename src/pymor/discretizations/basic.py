@@ -3,18 +3,18 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.timestepping import TimeStepperInterface
-from pymor.discretizations.interfaces import DiscretizationInterface
+from pymor.discretizations.interfaces import ModelInterface
 from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-class DiscretizationBase(DiscretizationInterface):
-    """Base class for |Discretizations| providing some common functionality."""
+class ModelBase(ModelInterface):
+    """Base class for |Models| providing some common functionality."""
 
-    sid_ignore = DiscretizationInterface.sid_ignore | {'visualizer'}
-    add_with_arguments = DiscretizationInterface.add_with_arguments | {'operators'}
+    sid_ignore = ModelInterface.sid_ignore | {'visualizer'}
+    add_with_arguments = ModelInterface.add_with_arguments | {'operators'}
     special_operators = frozenset()
 
     def __init__(self, operators=None, products=None, estimator=None, visualizer=None,
@@ -80,7 +80,7 @@ class DiscretizationBase(DiscretizationInterface):
             # in that case, there should not be any operators left in 'operators'
             assert not operators
 
-        return super(DiscretizationBase, self).with_(**kwargs)
+        return super(ModelBase, self).with_(**kwargs)
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
@@ -89,7 +89,7 @@ class DiscretizationBase(DiscretizationInterface):
         ----------
         U
             The |VectorArray| from
-            :attr:`~pymor.discretizations.interfaces.DiscretizationInterface.solution_space`
+            :attr:`~pymor.discretizations.interfaces.ModelInterface.solution_space`
             that shall be visualized.
         kwargs
             See docstring of `self.visualizer.visualize`.
@@ -97,16 +97,16 @@ class DiscretizationBase(DiscretizationInterface):
         if self.visualizer is not None:
             self.visualizer.visualize(U, self, **kwargs)
         else:
-            raise NotImplementedError('Discretization has no visualizer.')
+            raise NotImplementedError('Model has no visualizer.')
 
     def estimate(self, U, mu=None):
         if self.estimator is not None:
             return self.estimator.estimate(U, mu=mu, d=self)
         else:
-            raise NotImplementedError('Discretization has no estimator.')
+            raise NotImplementedError('Model has no estimator.')
 
 
-class StationaryDiscretization(DiscretizationBase):
+class StationaryModel(ModelBase):
     """Generic class for discretizations of stationary problems.
 
     This class describes discrete problems given by the equation::
@@ -183,10 +183,10 @@ class StationaryDiscretization(DiscretizationBase):
         self.parameter_space = parameter_space
 
     def as_generic_type(self):
-        if type(self) is StationaryDiscretization:
+        if type(self) is StationaryModel:
             return self
         operators = {k: o for k, o in self.operators.items() if k not in self.special_operators}
-        return StationaryDiscretization(
+        return StationaryModel(
             self.operator, self.rhs, self.products, operators,
             self.parameter_space, self.estimator, self.visualizer, self.cache_region, self.name
         )
@@ -201,7 +201,7 @@ class StationaryDiscretization(DiscretizationBase):
         return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
 
-class InstationaryDiscretization(DiscretizationBase):
+class InstationaryModel(ModelBase):
     """Generic class for discretizations of instationary problems.
 
     This class describes instationary problems given by the equations::
@@ -232,7 +232,7 @@ class InstationaryDiscretization(DiscretizationBase):
         The mass |Operator| `M`. If `None`, the identity is assumed.
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
-        to be used by :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`.
+        to be used by :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
@@ -315,10 +315,10 @@ class InstationaryDiscretization(DiscretizationBase):
             self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}
 
     def as_generic_type(self):
-        if type(self) is StationaryDiscretization:
+        if type(self) is StationaryModel:
             return self
         operators = {k: o for k, o in self.operators.items() if k not in self.special_operators}
-        return InstationaryDiscretization(
+        return InstationaryModel(
             self.T, self.initial_data, self.operator, self.rhs, self.mass, self.time_stepper, self.num_values,
             self.products, operators, self.parameter_space, self.estimator, self.visualizer,
             self.cache_region, self.name

@@ -369,7 +369,7 @@ class TF_IRKAReductor(BasicInterface):
     Parameters
     ----------
     d
-        Discretization with `eval_tf` and `eval_dtf` methods.
+        Model with `eval_tf` and `eval_dtf` methods.
     """
     def __init__(self, d):
         self.d = d

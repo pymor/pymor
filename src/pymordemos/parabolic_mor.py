@@ -150,7 +150,7 @@ def _discretize_fenics():
 
     from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
 
-    d = InstationaryDiscretization(
+    d = InstationaryModel(
         T=1.,
 
         initial_data=FenicsVectorSpace(V).make_array([u0]),

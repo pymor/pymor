@@ -28,7 +28,7 @@ class GenericBHIReductor(BasicInterface):
     Parameters
     ----------
     d
-        Discretization.
+        Model.
     """
     def __init__(self, d):
         self.d = d
@@ -289,7 +289,7 @@ class TFInterpReductor(BasicInterface):
     Parameters
     ----------
     d
-        Discretization with `eval_tf` and `eval_dtf` methods.
+        Model with `eval_tf` and `eval_dtf` methods.
     """
     def __init__(self, d):
         self.d = d

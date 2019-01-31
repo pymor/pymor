@@ -33,7 +33,7 @@ from pymor.core.defaults import print_defaults, write_defaults_to_file, load_def
 from pymor.core.logger import set_log_levels, getLogger
 from pymor.core.pickle import dump, dumps, load, loads
 
-from pymor.discretizations.basic import StationaryDiscretization, InstationaryDiscretization
+from pymor.discretizations.basic import StationaryModel, InstationaryModel
 from pymor.discretizations.iosys import LTISystem, SecondOrderSystem, TransferFunction
 
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain

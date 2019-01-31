@@ -8,7 +8,7 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEule
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.instationary import InstationaryProblem
-from pymor.discretizations.basic import StationaryDiscretization, InstationaryDiscretization
+from pymor.discretizations.basic import StationaryModel, InstationaryModel
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import ConstantFunction, LincombFunction
 from pymor.grids.boundaryinfos import EmptyBoundaryInfo
@@ -48,18 +48,18 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
         Must be provided if `grid` is specified.
     preassemble
-        If `True`, preassemble all operators in the resulting |Discretization|.
+        If `True`, preassemble all operators in the resulting |Model|.
 
     Returns
     -------
     d
-        The |Discretization| that has been generated.
+        The |Model| that has been generated.
     data
         Dictionary with the following entries:
 
             :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_d:  In case `preassemble` is `True`, the generated |Discretization|
+            :unassembled_d:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
 
@@ -194,8 +194,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    d  = StationaryDiscretization(L, F, operators=functionals, products=products, visualizer=visualizer,
-                                  parameter_space=parameter_space, name=f'{p.name}_CG')
+    d  = StationaryModel(L, F, operators=functionals, products=products, visualizer=visualizer,
+                         parameter_space=parameter_space, name=f'{p.name}_CG')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
@@ -236,23 +236,23 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
         intermediate vector that is calculated is returned.
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
-        to be used by :class:`~pymor.discretizations.basic.InstationaryDiscretization.solve`.
+        to be used by :class:`~pymor.discretizations.basic.InstationaryModel.solve`.
     nt
         If `time_stepper` is not specified, the number of time steps for implicit
         Euler time stepping.
     preassemble
-        If `True`, preassemble all operators in the resulting |Discretization|.
+        If `True`, preassemble all operators in the resulting |Model|.
 
     Returns
     -------
     d
-        The |Discretization| that has been generated.
+        The |Model| that has been generated.
     data
         Dictionary with the following entries:
 
             :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_d:  In case `preassemble` is `True`, the generated |Discretization|
+            :unassembled_d:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
 
@@ -282,13 +282,13 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     mass = d.l2_0_product
 
-    d = InstationaryDiscretization(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
-                                   products=d.products,
-                                   operators={k: v for k, v in d.operators.items() if not k in {'operator', 'rhs'}},
-                                   time_stepper=time_stepper,
-                                   parameter_space=p.parameter_space,
-                                   visualizer=d.visualizer,
-                                   num_values=num_values, name=f'{p.name}_CG')
+    d = InstationaryModel(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
+                          products=d.products,
+                          operators={k: v for k, v in d.operators.items() if not k in {'operator', 'rhs'}},
+                          time_stepper=time_stepper,
+                          parameter_space=p.parameter_space,
+                          visualizer=d.visualizer,
+                          num_values=num_values, name=f'{p.name}_CG')
 
     if preassemble:
         data['unassembled_d'] = d

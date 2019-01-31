@@ -6,7 +6,7 @@ import numpy as np
 
 from pymor.algorithms.pod import pod
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
-from pymor.discretizations.basic import InstationaryDiscretization
+from pymor.discretizations.basic import InstationaryModel
 from pymor.grids.oned import OnedGrid
 from pymor.gui.visualizers import OnedVisualizer
 from pymor.operators.constructions import VectorOperator, LincombOperator
@@ -43,9 +43,9 @@ def discretize(n, nt, blocks):
     time_stepper = ExplicitEulerTimeStepper(nt)
     parameter_space = CubicParameterSpace(operator.parameter_type, 0.1, 1)
 
-    d = InstationaryDiscretization(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
-                                   time_stepper=time_stepper, num_values=20, parameter_space=parameter_space,
-                                   visualizer=visualizer, name='C++-Discretization', cache_region=None)
+    d = InstationaryModel(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
+                          time_stepper=time_stepper, num_values=20, parameter_space=parameter_space,
+                          visualizer=visualizer, name='C++-Model', cache_region=None)
     return d
 
 

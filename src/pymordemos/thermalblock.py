@@ -330,7 +330,7 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
 
     # generic pyMOR classes
-    from pymor.discretizations.basic import StationaryDiscretization
+    from pymor.discretizations.basic import StationaryModel
     from pymor.operators.constructions import LincombOperator, VectorOperator
     from pymor.parameters.functionals import ProjectionParameterFunctional
     from pymor.parameters.spaces import CubicParameterSpace
@@ -354,10 +354,10 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     # build discretization
     visualizer = FenicsVisualizer(FenicsVectorSpace(V))
     parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
-    d = StationaryDiscretization(op, rhs, products={'h1_0_semi': h1_product,
-                                                    'l2': l2_product},
-                                 parameter_space=parameter_space,
-                                 visualizer=visualizer)
+    d = StationaryModel(op, rhs, products={'h1_0_semi': h1_product,
+                                           'l2': l2_product},
+                        parameter_space=parameter_space,
+                        visualizer=visualizer)
 
     return d
 

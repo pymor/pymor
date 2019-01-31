@@ -13,7 +13,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class CoerciveRBReductor(GenericRBReductor):
-    """Reduced Basis reductor for |StationaryDiscretizations| with coercive linear operator.
+    """Reduced Basis reductor for |StationaryModels| with coercive linear operator.
 
     The only addition to :class:`~pymor.reductors.basic.GenericRBReductor` is an error
     estimator which evaluates the dual norm of the residual with respect to a given inner
@@ -24,7 +24,7 @@ class CoerciveRBReductor(GenericRBReductor):
     Parameters
     ----------
     d
-        The |Discretization| which is to be reduced.
+        The |Model| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
     basis_is_orthonormal
@@ -99,11 +99,11 @@ class CoerciveRBEstimator(ImmutableInterface):
 
 
 class SimpleCoerciveRBReductor(GenericRBReductor):
-    """Reductor for linear |StationaryDiscretizations| with affinely decomposed operator and rhs.
+    """Reductor for linear |StationaryModels| with affinely decomposed operator and rhs.
 
     .. note::
        The reductor :class:`CoerciveRBReductor` can be used for arbitrary coercive
-       |StationaryDiscretizations| and offers an improved error estimator
+       |StationaryModels| and offers an improved error estimator
        with better numerical stability.
 
     The only addition is to :class:`~pymor.reductors.basic.GenericRBReductor` is an error
@@ -112,7 +112,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
     Parameters
     ----------
     d
-        The |Discretization| which is to be reduced.
+        The |Model| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
     basis_is_orthonormal

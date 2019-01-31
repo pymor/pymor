@@ -87,7 +87,7 @@ operating on objects of the following types:
     `NumpyVectorSpace(1)` as |range|. Dually, a vector-like operator is an operator
     with `NumpyVectorSpace(1)` as |source|. Such vector-like operators are used
     in pyMOR to represent |Parameter| dependent vectors such as the initial data
-    of an |InstationaryDiscretization|. For linear functionals and vector-like
+    of an |InstationaryModel|. For linear functionals and vector-like
     operators, the |as_vector| method can be called to obtain a vector
     representation of the operator as a |VectorArray| of length 1.
 
@@ -113,8 +113,8 @@ operating on objects of the following types:
     .. |range|             replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.range`
     .. |source|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.source`
 
-|Discretizations|
-    Discretizations in pyMOR encode the mathematical structure of a given
+|Models|
+    Models in pyMOR encode the mathematical structure of a given
     discrete problem by acting as container classes for operators. Each
     discretization object has |operators|, |products| dictionaries holding the
     |Operators| which appear in the formulation of the discrete problem. The
@@ -136,34 +136,34 @@ operating on objects of the following types:
     This has been done for the simple stationary and instationary
     discretizations found in :mod:`pymor.discretizations.basic`.
 
-    Discretizations can also implement |estimate| and |visualize| methods to
+    Models can also implement |estimate| and |visualize| methods to
     estimate the discretization or model reduction error of a computed solution
     and create graphic representations of |VectorArrays| from the
     |solution_space|.
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
-    .. |estimate|         replace:: :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.estimate`
-    .. |functionals|      replace:: :attr:`~pymor.discretizations.interfaces.DiscretizationInterface.functionals`
-    .. |operators|        replace:: :attr:`~pymor.discretizations.interfaces.DiscretizationInterface.operators`
-    .. |products|         replace:: :attr:`~pymor.discretizations.interfaces.DiscretizationInterface.products`
-    .. |solution_space|   replace:: :attr:`~pymor.discretizations.interfaces.DiscretizationInterface.solution_space`
-    .. |solve|            replace:: :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
-    .. |solving|          replace:: :meth:`solving <pymor.discretizations.interfaces.DiscretizationInterface.solve>`
-    .. |vector_operators| replace:: :attr:`~pymor.discretizations.interfaces.DiscretizationInterface.vector_operators`
-    .. |visualize|        replace:: :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.visualize`
+    .. |estimate|         replace:: :meth:`~pymor.discretizations.interfaces.ModelInterface.estimate`
+    .. |functionals|      replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.functionals`
+    .. |operators|        replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.operators`
+    .. |products|         replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.products`
+    .. |solution_space|   replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.solution_space`
+    .. |solve|            replace:: :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
+    .. |solving|          replace:: :meth:`solving <pymor.discretizations.interfaces.ModelInterface.solve>`
+    .. |vector_operators| replace:: :attr:`~pymor.discretizations.interfaces.ModelInterface.vector_operators`
+    .. |visualize|        replace:: :meth:`~pymor.discretizations.interfaces.ModelInterface.visualize`
 
 
 Base Classes
 ------------
 
-While |VectorArrays| are mutable objects, both |Operators| and |Discretizations|
+While |VectorArrays| are mutable objects, both |Operators| and |Models|
 are immutable in pyMOR: the application of an |Operator| to the same
-|VectorArray| will always lead to the same result, solving a |Discretization|
+|VectorArray| will always lead to the same result, solving a |Model|
 for the same parameter will always produce the same solution array. This has two
 main benefits:
 
 1. If multiple objects/algorithms hold references to the same
-   |Operator| or |Discretization|, none of the objects has to worry that the
+   |Operator| or |Model|, none of the objects has to worry that the
    referenced object changes without their knowledge.
 2. It becomes affordable to generate persistent keys for |caching| of computation
    results by generating |state ids| which uniquely identify the object's state.
@@ -200,20 +200,20 @@ specific prefix.
 .. |caching|        replace:: :mod:`caching <pymor.core.cache>`
 
 
-Creating Discretizations
+Creating Models
 ------------------------
 
 pyMOR ships a small (and still quite incomplete) framework for creating finite
 element or finite volume discretizations based on the `NumPy/Scipy
 <http://scipy.org>`_ software stack. To end up with an appropriate
-|Discretization|, one starts by instantiating an |analytical problem| which
+|Model|, one starts by instantiating an |analytical problem| which
 describes the problem we want to discretize. |analytical problems| contain
 |Functions| which define the analytical data functions associated with the
 problem and a |DomainDescription| that provides a geometrical definition of the
 domain the problem is posed on and associates a boundary type to each part of
 its boundary.
 
-To obtain a |Discretization| from an |analytical problem| we use a
+To obtain a |Model| from an |analytical problem| we use a
 :mod:`discretizer <pymor.discretizers>`. A discretizer will first mesh the
 computational domain by feeding the |DomainDescription| into a
 :mod:`domaindiscretizer <pymor.domaindiscretizers>` which will return the |Grid|
@@ -222,17 +222,17 @@ Next, the |Grid|, |BoundaryInfo| and the various data functions of the
 |analytical problem| are used to instatiate :mod:`finite element
 <pymor.operators.cg>` or :mod:`finite volume <pymor.operators.fv>` operators.
 Finally these operators are used to instatiate one of the provided
-|Discretization| classes.
+|Model| classes.
 
 In pyMOR, |analytical problems|, |Functions|, |DomainDescriptions|,
 |BoundaryInfos| and |Grids| are all immutable, enabling efficient 
-disk |caching| for the resulting |Discretizations|, persistent over various
+disk |caching| for the resulting |Models|, persistent over various
 runs of the applications written with pyMOR.
 
 While pyMOR's internal discretizations are useful for getting started quickly
 with model reduction experiments, pyMOR's main goal is to allow the reduction of
 discretizations provided by external solvers. In order to do so, all that needs
-to be done is to provide |VectorArrays|, |Operators| and |Discretizations| which
+to be done is to provide |VectorArrays|, |Operators| and |Models| which
 interact appropriately with the solver. pyMOR makes no assumption on how the
 communication with the solver is managed. For instance, communication could take
 place via a network protocol or job files.  In particular it should be stressed
@@ -357,18 +357,18 @@ The Reduction Process
 ---------------------
 
 The reduction process in pyMOR is handled by so called :mod:`~pymor.reductors`
-which take arbitrary |Discretizations| and additional data (e.g. the reduced
-basis) to create reduced |Discretizations|. If proper offline/online
-decomposition is achieved by the reductor, the reduced |Discretization| will
+which take arbitrary |Models| and additional data (e.g. the reduced
+basis) to create reduced |Models|. If proper offline/online
+decomposition is achieved by the reductor, the reduced |Model| will
 not store any high-dimensional data. Note that there is no inherent distinction
-between low- and high-dimensional |Discretizations| in pyMOR. The only
-difference lies in the different types of operators, the |Discretization|
+between low- and high-dimensional |Models| in pyMOR. The only
+difference lies in the different types of operators, the |Model|
 contains.
 
 This observation is particularly apparent in the case of the classical
 reduced basis method: the operators and functionals of a given discrete problem
 are projected onto the reduced basis space whereas the structure of the problem
-(i.e. the type of |Discretization| containing the operators) stays the same.
+(i.e. the type of |Model| containing the operators) stays the same.
 pyMOR reflects this fact by offering with :class:`~pymor.reductors.basic.GenericRBReductor`
 a generic algorithm which can be used to RB-project any discretization available to pyMOR.
 It should be noted however that this reductor is only able to efficiently

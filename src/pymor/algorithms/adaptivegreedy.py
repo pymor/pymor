@@ -82,7 +82,7 @@ def adaptive_greedy(d, reductor, parameter_space=None,
     -------
     Dict with the following fields:
 
-        :rd:                     The reduced |Discretization| obtained for the
+        :rd:                     The reduced |Model| obtained for the
                                  computed basis.
         :extensions:             Number of greedy iterations.
         :max_errs:               Sequence of maximum errors during the greedy run.

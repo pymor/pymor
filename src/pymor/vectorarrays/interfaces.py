@@ -573,7 +573,7 @@ class VectorSpaceInterface(ImmutableInterface):
         """Create a |VectorArray| from raw data.
 
         This method is used in the implementation of |Operators|
-        and |Discretizations| to create new |VectorArrays| from
+        and |Models| to create new |VectorArrays| from
         raw data of the underlying solver backends. The ownership
         of the data is transferred to the newly created array.
 

@@ -27,9 +27,9 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
     Parameters
     ----------
     d
-        The |Discretization| to reduce.
+        The |Model| to reduce.
     reductor
-        Reductor for reducing the given |Discretization|. This has to be
+        Reductor for reducing the given |Model|. This has to be
         an object with a `reduce` method, such that `reductor.reduce()`
         yields the reduced discretization, and an `exted_basis` method,
         such that `reductor.extend_basis(U, copy_U=False, **extension_params)`
@@ -62,7 +62,7 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
     -------
     Dict with the following fields:
 
-        :rd:                     The reduced |Discretization| obtained for the
+        :rd:                     The reduced |Model| obtained for the
                                  computed basis.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.

@@ -10,7 +10,7 @@ from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
-from pymor.discretizations.basic import DiscretizationBase
+from pymor.discretizations.basic import ModelBase
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderSystemOperator)
 from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
@@ -20,7 +20,7 @@ from pymor.vectorarrays.block import BlockVectorSpace
 SPARSE_MIN_SIZE = 1000  # minimal sparse problem size for which to warn about converting to dense
 
 
-class InputOutputSystem(DiscretizationBase):
+class InputOutputSystem(ModelBase):
     """Base class for input-output systems."""
 
     def __init__(self, input_space, output_space, cont_time=True,

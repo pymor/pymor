@@ -136,7 +136,7 @@ We could do this by hand, creating a |Grid|, instatiating
 operators for each subblock of the domain, forming a |LincombOperator|
 to represent the affine decomposition, instantiating a
 :class:`~pymor.operators.cg.L2ProductFunctionalP1` as right hand side, and
-putting it all together into a |StationaryDiscretization|. However, since
+putting it all together into a |StationaryModel|. However, since
 :meth:`~pymor.analyticalproblems.thermalblock.thermal_block_problem` returns
 a :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`, we can use
 a predifined *discretizer* to do the work for us. In this case, we use
@@ -144,7 +144,7 @@ a predifined *discretizer* to do the work for us. In this case, we use
 
 >>> d, d_data = discretize_stationary_cg(p, diameter=1./100.)
 
-``d`` is the |StationaryDiscretization| which has been created for us,
+``d`` is the |StationaryModel| which has been created for us,
 whereas ``d_data`` contains some additional data, in particular the |Grid|
 and the |BoundaryInfo| which have been created during discretization. We
 can have a look at the grid,
@@ -161,10 +161,10 @@ Let's solve the thermal block problem and visualize the solution:
 
 >>> U = d.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
 >>> d.visualize(U, title='Solution')
-01:11 StationaryDiscretization: Solving ThermalBlock((3, 2))_CG for {diffusion: [1.0, 0.1, 0.3, 0.1, 0.2, 1.0]} ...
+01:11 StationaryModel: Solving ThermalBlock((3, 2))_CG for {diffusion: [1.0, 0.1, 0.3, 0.1, 0.2, 1.0]} ...
 
 Each class in pyMOR that describes a |Parameter| dependent mathematical
-object, like the |StationaryDiscretization| in our case, derives from
+object, like the |StationaryModel| in our case, derives from
 |Parametric| and determines the |Parameters| it expects during :meth:`__init__`
 by calling :meth:`~pymor.parameters.base.Parametric.build_parameter_type`.
 The resulting |ParameterType| is stored in the object's
@@ -175,7 +175,7 @@ have a look:
 {diffusion: (2, 3)}
 
 This tells us, that the |Parameter| which
-:meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve` expects
+:meth:`~pymor.discretizations.interfaces.ModelInterface.solve` expects
 should be a dictionary with one key ``'diffusion'`` whose value is a
 |NumPy array| of shape ``(2, 3)``, corresponding to the block structure of
 the problem. However, by using the
@@ -229,7 +229,7 @@ Now we start the basis generation:
 16:52 greedy: Estimating errors ...
 16:55 greedy: Maximum error after 0 extensions: 1.8745731821515579 (mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]})
 16:55 greedy: Computing solution snapshot for mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
-16:55 |   StationaryDiscretization: Solving ThermalBlock((3, 2))_CG for {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
+16:55 |   StationaryModel: Solving ThermalBlock((3, 2))_CG for {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
 16:55 greedy: Extending basis with solution snapshot ...
                  ...
                  ...
@@ -258,7 +258,7 @@ been generated during the run of the algorithm:
 >>> print(greedy_data.keys())
 dict_keys(['rd', 'max_errs', 'extensions', 'max_err_mus', 'time'])
 
-The most important items is ``'rd'`` which holds the reduced |Discretization|
+The most important items is ``'rd'`` which holds the reduced |Model|
 obtained from applying our reductor with the final reduced basis.
 
 >>> rd = greedy_data['rd']

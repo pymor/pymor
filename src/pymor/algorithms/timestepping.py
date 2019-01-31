@@ -7,13 +7,13 @@ instationary problems.
 
 The algorithms are generic in the sense that each algorithms operates exclusively
 on |Operators| and |VectorArrays|. In particular, the algorithms
-can also be used to turn an arbitrary stationary |Discretization| provided
-by an external library into an instationary |Discretization|.
+can also be used to turn an arbitrary stationary |Model| provided
+by an external library into an instationary |Model|.
 
 Currently, implementations of :func:`explicit_euler` and :func:`implicit_euler`
 time-stepping are provided. The :class:`TimeStepperInterface` defines a
 common interface that has to be fulfilled by the time-steppers used
-by |InstationaryDiscretization|. The classes :class:`ExplicitEulerTimeStepper`
+by |InstationaryModel|. The classes :class:`ExplicitEulerTimeStepper`
 and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 :func:`implicit_euler` to provide this interface.
 """
@@ -31,7 +31,7 @@ class TimeStepperInterface(ImmutableInterface):
 
         M * d_t u + A(u, mu, t) = F(mu, t).
 
-    Time-steppers used by |InstationaryDiscretization| have to fulfill
+    Time-steppers used by |InstationaryModel| have to fulfill
     this interface.
     """
 

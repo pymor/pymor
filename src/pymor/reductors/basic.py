@@ -18,13 +18,13 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class GenericRBReductor(BasicInterface):
     """Generic reduced basis reductor.
 
-    Replaces each |Operator| of the given |Discretization| with the Galerkin
+    Replaces each |Operator| of the given |Model| with the Galerkin
     projection onto the span of the given reduced basis.
 
     Parameters
     ----------
     d
-        The |Discretization| which is to be reduced.
+        The |Model| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
     basis_is_orthonormal
@@ -64,7 +64,7 @@ class GenericRBReductor(BasicInterface):
 
         Returns
         -------
-        The reduced |Discretization|.
+        The reduced |Model|.
         """
         if dim is None:
             dim = len(self.RB)
@@ -204,13 +204,13 @@ class GenericRBReductor(BasicInterface):
 class GenericPGReductor(BasicInterface):
     """Generic Petrov-Galerkin reductor.
 
-    Replaces each |Operator| of the given |Discretization| with the projection
+    Replaces each |Operator| of the given |Model| with the projection
     onto the span of the given projection matrices.
 
     Parameters
     ----------
     d
-        The |Discretization| which is to be reduced.
+        The |Model| which is to be reduced.
     W
         |VectorArray| containing the left projection matrix.
     V
@@ -241,7 +241,7 @@ class GenericPGReductor(BasicInterface):
 
         Returns
         -------
-        The reduced |Discretization|.
+        The reduced |Model|.
         """
         d, V, W = self.d, self.V, self.W
         product = self.product

@@ -237,7 +237,7 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
     """Empirical operator interpolation using the EI-Greedy/DEIM algorithm.
 
     This is a convenience method to facilitate the use of :func:`ei_greedy` or :func:`deim`.
-    Given a |Discretization|, names of |Operators|, and a sample of |Parameters|, first
+    Given a |Model|, names of |Operators|, and a sample of |Parameters|, first
     the operators are evaluated on the solution snapshots of the discretization for the
     provided parameters. These evaluations are then used as input for
     :func:`ei_greedy`/:func:`deim`.  Finally the resulting interpolation data is used to
@@ -250,7 +250,7 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
     Parameters
     ----------
     d
-        The |Discretization| whose |Operators| will be interpolated.
+        The |Model| whose |Operators| will be interpolated.
     operator_names
         List of keys in the `operators` dict of the discretization. The corresponding
         |Operators| will be interpolated.
@@ -279,7 +279,7 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
     Returns
     -------
     ei_d
-        |Discretization| with |Operators| given by `operator_names` replaced by
+        |Model| with |Operators| given by `operator_names` replaced by
         |EmpiricalInterpolatedOperators|.
     data
         Dict containing the following fields:

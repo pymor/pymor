@@ -3,21 +3,21 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.discretizations.basic import DiscretizationBase
+from pymor.discretizations.basic import ModelBase
 from pymor.operators.mpi import mpi_wrap_operator
 from pymor.tools import mpi
 from pymor.vectorarrays.mpi import MPIVectorSpace, _register_local_space
 
 
-class MPIDiscretization(DiscretizationBase):
-    """Wrapper class for MPI distributed |Discretizations|.
+class MPIModel(ModelBase):
+    """Wrapper class for MPI distributed |Models|.
 
-    Given a single-rank implementation of a |Discretization|, this
+    Given a single-rank implementation of a |Model|, this
     wrapper class uses the event loop from :mod:`pymor.tools.mpi`
-    to allow an MPI distributed usage of the |Discretization|.
+    to allow an MPI distributed usage of the |Model|.
     The underlying implementation needs to be MPI aware.
     In particular, the discretization's
-    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
     method has to perform an MPI parallel solve of the discretization.
 
     Note that this class is not intended to be instantiated directly.
@@ -27,12 +27,12 @@ class MPIDiscretization(DiscretizationBase):
     ----------
     obj_id
         :class:`~pymor.tools.mpi.ObjectId` of the local
-        |Discretization| on each rank.
+        |Model| on each rank.
     operators
         Dictionary of all |Operators| contained in the discretization,
         wrapped for use on rank 0. Use :func:`mpi_wrap_discretization`
         to automatically wrap all operators of a given MPI-aware
-        |Discretization|.
+        |Model|.
     products
         See `operators`.
     pickle_local_spaces
@@ -48,7 +48,7 @@ class MPIDiscretization(DiscretizationBase):
         super().__init__(operators=operators, products=products,
                          visualizer=visualizer, cache_region=None, name=d.name)
         self.obj_id = obj_id
-        local_spaces = mpi.call(_MPIDiscretization_get_local_spaces, obj_id, pickle_local_spaces)
+        local_spaces = mpi.call(_MPIModel_get_local_spaces, obj_id, pickle_local_spaces)
         if all(ls == local_spaces[0] for ls in local_spaces):
             local_spaces = (local_spaces[0],)
         self.solution_space = space_type(local_spaces)
@@ -64,7 +64,7 @@ class MPIDiscretization(DiscretizationBase):
         mpi.call(mpi.remove_object, self.obj_id)
 
 
-def _MPIDiscretization_get_local_spaces(self, pickle_local_spaces):
+def _MPIModel_get_local_spaces(self, pickle_local_spaces):
     self = mpi.get_object(self)
     local_space = self.solution_space
     if not pickle_local_spaces:
@@ -98,40 +98,40 @@ def _MPIVisualizer_visualize(d, U, **kwargs):
 
 def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=False,
                             pickle_local_spaces=True, space_type=MPIVectorSpace):
-    """Wrap MPI distributed local |Discretizations| to a global |Discretization| on rank 0.
+    """Wrap MPI distributed local |Models| to a global |Model| on rank 0.
 
-    Given MPI distributed local |Discretizations| referred to by the
-    :class:`~pymor.tools.mpi.ObjectId` `local_discretizations`, return a new |Discretization|
+    Given MPI distributed local |Models| referred to by the
+    :class:`~pymor.tools.mpi.ObjectId` `local_discretizations`, return a new |Model|
     which manages these distributed discretizations from rank 0. This
-    is done by first wrapping all |Operators| of the |Discretization| using
+    is done by first wrapping all |Operators| of the |Model| using
     :func:`~pymor.operators.mpi.mpi_wrap_operator`.
 
     Alternatively, `local_discretizations` can be a callable (with no arguments)
-    which is then called on each rank to instantiate the local |Discretizations|.
+    which is then called on each rank to instantiate the local |Models|.
 
-    When `use_with` is `False`, an :class:`MPIDiscretization` is instantiated
+    When `use_with` is `False`, an :class:`MPIModel` is instantiated
     with the wrapped operators. A call to
-    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
     will then use an MPI parallel call to the
-    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
-    methods of the wrapped local |Discretizations| to obtain the solution.
+    :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
+    methods of the wrapped local |Models| to obtain the solution.
     This is usually what you want when the actual solve is performed by
     an implementation in the external solver.
 
     When `use_with` is `True`, :meth:`~pymor.core.interfaces.ImmutableInterface.with_`
-    is called on the local |Discretization| on rank 0, to obtain a new
-    |Discretization| with the wrapped MPI |Operators|. This is mainly useful
-    when the local discretizations are generic |Discretizations| as in
+    is called on the local |Model| on rank 0, to obtain a new
+    |Model| with the wrapped MPI |Operators|. This is mainly useful
+    when the local discretizations are generic |Models| as in
     :mod:`pymor.discretizations.basic` and
-    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    :meth:`~pymor.discretizations.interfaces.ModelInterface.solve`
     is implemented directly in pyMOR via operations on the contained
     |Operators|.
 
     Parameters
     ----------
     local_discretizations
-        :class:`~pymor.tools.mpi.ObjectId` of the local |Discretizations|
-        on each rank or a callable generating the |Discretizations|.
+        :class:`~pymor.tools.mpi.ObjectId` of the local |Models|
+        on each rank or a callable generating the |Models|.
     use_with
         See above.
     with_apply2
@@ -159,8 +159,8 @@ def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=F
         visualizer = MPIVisualizer(local_discretizations)
         return d.with_(operators=operators, products=products, visualizer=visualizer, cache_region=None)
     else:
-        return MPIDiscretization(local_discretizations, operators, products,
-                                 pickle_local_spaces=pickle_local_spaces, space_type=space_type)
+        return MPIModel(local_discretizations, operators, products,
+                        pickle_local_spaces=pickle_local_spaces, space_type=space_type)
 
 
 def _mpi_wrap_discretization_manage_operators(obj_id):

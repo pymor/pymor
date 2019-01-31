@@ -129,9 +129,9 @@ def _discretize_fenics():
     # build discretization
     visualizer = FenicsVisualizer(FenicsVectorSpace(V))
     parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
-    d = StationaryDiscretization(op, rhs, products={'h1_0_semi': h1_product},
-                                 parameter_space=parameter_space,
-                                 visualizer=visualizer)
+    d = StationaryModel(op, rhs, products={'h1_0_semi': h1_product},
+                        parameter_space=parameter_space,
+                        visualizer=visualizer)
 
     return d
 
@@ -204,9 +204,9 @@ def discretize_ngsolve():
     F._list[0].impl.vec.data = f.vec
     F = VectorOperator(F)
 
-    return StationaryDiscretization(op, F, visualizer=NGSolveVisualizer(mesh, V),
-                                    products={'h1_0_semi': h1_0_op},
-                                    parameter_space=CubicParameterSpace(op.parameter_type, 0.1, 1.))
+    return StationaryModel(op, F, visualizer=NGSolveVisualizer(mesh, V),
+                           products={'h1_0_semi': h1_0_op},
+                           parameter_space=CubicParameterSpace(op.parameter_type, 0.1, 1.))
 
 
 def discretize_pymor_text():

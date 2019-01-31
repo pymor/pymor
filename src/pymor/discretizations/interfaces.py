@@ -7,13 +7,13 @@ from pymor.core.interfaces import abstractmethod
 from pymor.parameters.base import Parametric
 
 
-class DiscretizationInterface(CacheableInterface, Parametric):
+class ModelInterface(CacheableInterface, Parametric):
     """Interface for discretization objects.
 
     A discretization object defines a discrete problem
     via its `class` and the |Operators| it contains.
     Furthermore, discretizations can be
-    :meth:`solved <DiscretizationInterface.solve>` for a given
+    :meth:`solved <ModelInterface.solve>` for a given
     |Parameter| resulting in a solution |VectorArray|.
 
     Attributes
@@ -64,7 +64,7 @@ class DiscretizationInterface(CacheableInterface, Parametric):
 
         The discretization error could be the error w.r.t. the analytical
         solution of the given problem or the model reduction error w.r.t.
-        a corresponding high-dimensional |Discretization|.
+        a corresponding high-dimensional |Model|.
 
         Parameters
         ----------
@@ -85,7 +85,7 @@ class DiscretizationInterface(CacheableInterface, Parametric):
         Parameters
         ----------
         U
-            The |VectorArray| from :attr:`~DiscretizationInterface.solution_space`
+            The |VectorArray| from :attr:`~ModelInterface.solution_space`
             that shall be visualized.
         """
         raise NotImplementedError

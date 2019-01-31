@@ -8,8 +8,8 @@ import configparser
 import numpy as np
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-from pymor.discretizations.basic import StationaryDiscretization
-from pymor.discretizations.basic import InstationaryDiscretization
+from pymor.discretizations.basic import StationaryModel
+from pymor.discretizations.basic import InstationaryModel
 from pymor.operators.constructions import LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.spaces import CubicParameterSpace
@@ -17,7 +17,7 @@ from pymor.parameters.functionals import ExpressionParameterFunctional
 
 
 def discretize_stationary_from_disk(parameter_file):
-    """Load a linear affinely decomposed |StationaryDiscretization| from file.
+    """Load a linear affinely decomposed |StationaryModel| from file.
 
     The discretization is defined via an `.ini`-style file as follows ::
 
@@ -82,7 +82,7 @@ def discretize_stationary_from_disk(parameter_file):
     Returns
     -------
     d
-        The |StationaryDiscretization| that has been generated.
+        The |StationaryModel| that has been generated.
     """
     assert ".ini" == parameter_file[-4:], f'Given file is not an .ini file: {parameter_file}'
     assert os.path.isfile(parameter_file)
@@ -157,12 +157,12 @@ def discretize_stationary_from_disk(parameter_file):
         products = None
 
     # Create and return stationary discretization
-    return StationaryDiscretization(operator=system_lincombOperator, rhs=rhs_lincombOperator,
-                                    parameter_space=parameter_space, products=products)
+    return StationaryModel(operator=system_lincombOperator, rhs=rhs_lincombOperator,
+                           parameter_space=parameter_space, products=products)
 
 
 def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=None, time_stepper=None):
-    """Load a linear affinely decomposed |InstationaryDiscretization| from file.
+    """Load a linear affinely decomposed |InstationaryModel| from file.
 
     Similarly to :func:`discretize_stationary_from_disk`, the discretization is
     specified via an `ini.`-file of the following form ::
@@ -218,7 +218,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     Returns
     -------
     d
-        The |InstationaryDiscretization| that has been generated.
+        The |InstationaryModel| that has been generated.
     """
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
     assert os.path.isfile(parameter_file)
@@ -322,6 +322,6 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         time_stepper = time_stepper(steps)
 
     # Create and return instationary discretization
-    return InstationaryDiscretization(operator=system_lincombOperator, rhs=rhs_lincombOperator,
-                                      parameter_space=parameter_space, initial_data=u0, T=T,
-                                      time_stepper=time_stepper, mass=mass_operator, products=products)
+    return InstationaryModel(operator=system_lincombOperator, rhs=rhs_lincombOperator,
+                             parameter_space=parameter_space, initial_data=u0, T=T,
+                             time_stepper=time_stepper, mass=mass_operator, products=products)

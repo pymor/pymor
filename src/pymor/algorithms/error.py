@@ -8,7 +8,7 @@ import time
 import numpy as np
 
 from pymor.core.logger import getLogger
-from pymor.discretizations.basic import StationaryDiscretization
+from pymor.discretizations.basic import StationaryModel
 from pymor.parallel.dummy import dummy_pool
 
 
@@ -21,14 +21,14 @@ def reduction_error_analysis(rd, d, reductor,
     """Analyze the model reduction error.
 
     The maximum model reduction error is estimated by solving the reduced
-    |Discretization| for given random |Parameters|.
+    |Model| for given random |Parameters|.
 
     Parameters
     ----------
     rd
-        The reduced |Discretization|.
+        The reduced |Model|.
     d
-        The high-dimensional |Discretization|.
+        The high-dimensional |Model|.
     reductor
         The reductor which has created `rd`.
     test_mus
@@ -50,7 +50,7 @@ def reduction_error_analysis(rd, d, reductor,
     condition
         If `True`, compute the condition of the reduced system matrix
         for the given test |Parameters| (can only be specified if
-        `rd` is an instance of |StationaryDiscretization|
+        `rd` is an instance of |StationaryModel|
         and `rd.operator` is linear).
     error_norms
         List of norms in which to compute the model reduction error.
@@ -164,7 +164,7 @@ def reduction_error_analysis(rd, d, reductor,
     assert not error_norms or (d and reductor)
     assert error_norm_names is None or len(error_norm_names) == len(error_norms)
     assert not condition \
-        or isinstance(rd, StationaryDiscretization) and rd.operator.linear
+        or isinstance(rd, StationaryModel) and rd.operator.linear
 
     logger = getLogger('pymor.algorithms.error')
     if pool is None or pool is dummy_pool:
