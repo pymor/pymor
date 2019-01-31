@@ -104,7 +104,7 @@ def estimate_image(operators=(), vectors=(),
             for o in op.operators:
                 collect_vector_ranges(o, image)
         elif isinstance(op, AdjointOperator):
-            if op.source not in image_space:
+            if op.source != image_space:
                 raise ImageCollectionError(op)  # Not implemented
             operator = Concatenation(op.range_product, op.operator) if op.range_product else op.operator
             collect_operator_ranges(operator, NumpyVectorArray(np.ones(1)), image)
