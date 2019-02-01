@@ -79,18 +79,18 @@ def discretize_pymor():
     )
 
     # discretize using continuous finite elements
-    d, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./GRID_INTERVALS, nt=NT)
-    d.enable_caching('disk')
+    fom, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./GRID_INTERVALS, nt=NT)
+    fom.enable_caching('disk')
 
-    return d
+    return fom
 
 
 def discretize_fenics():
     from pymor.tools import mpi
 
     if mpi.parallel:
-        from pymor.discretizations.mpi import mpi_wrap_discretization
-        return mpi_wrap_discretization(_discretize_fenics, use_with=True, pickle_local_spaces=False)
+        from pymor.models.mpi import mpi_wrap_model
+        return mpi_wrap_model(_discretize_fenics, use_with=True, pickle_local_spaces=False)
     else:
         return _discretize_fenics()
 
@@ -145,12 +145,12 @@ def _discretize_fenics():
     bc.apply(f)
     bc.apply(u0)
 
-    # wrap everything as a pyMOR discretization
-    ###########################################
+    # wrap everything as a pyMOR model
+    ##################################
 
     from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
 
-    d = InstationaryDiscretization(
+    fom = InstationaryModel(
         T=1.,
 
         initial_data=FenicsVectorSpace(V).make_array([u0]),
@@ -180,7 +180,7 @@ def _discretize_fenics():
         visualizer=FenicsVisualizer(FenicsVectorSpace(V))
     )
 
-    return d
+    return fom
 
 
 ####################################################################################################
@@ -188,42 +188,42 @@ def _discretize_fenics():
 ####################################################################################################
 
 
-def reduce_greedy(d, reductor, snapshots, basis_size):
+def reduce_greedy(fom, reductor, snapshots, basis_size):
 
-    training_set = d.parameter_space.sample_uniformly(snapshots)
+    training_set = fom.parameter_space.sample_uniformly(snapshots)
     pool = new_parallel_pool()
 
-    greedy_data = greedy(d, reductor, training_set, max_extensions=basis_size, pool=pool,
+    greedy_data = greedy(fom, reductor, training_set, max_extensions=basis_size, pool=pool,
                          extension_params={'method': 'pod'})
 
-    return greedy_data['rd']
+    return greedy_data['rom']
 
 
-def reduce_adaptive_greedy(d, reductor, validation_mus, basis_size):
+def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
 
     pool = new_parallel_pool()
 
-    greedy_data = adaptive_greedy(d, reductor, validation_mus=validation_mus,
+    greedy_data = adaptive_greedy(fom, reductor, validation_mus=validation_mus,
                                   extension_params={'method': 'pod'}, max_extensions=basis_size,
                                   pool=pool)
 
-    return greedy_data['rd']
+    return greedy_data['rom']
 
 
-def reduce_pod(d, reductor, snapshots, basis_size):
+def reduce_pod(fom, reductor, snapshots, basis_size):
 
-    training_set = d.parameter_space.sample_uniformly(snapshots)
+    training_set = fom.parameter_space.sample_uniformly(snapshots)
 
-    snapshots = d.operator.source.empty()
+    snapshots = fom.operator.source.empty()
     for mu in training_set:
-        snapshots.append(d.solve(mu))
+        snapshots.append(fom.solve(mu))
 
-    basis, singular_values = pod(snapshots, modes=basis_size, product=d.h1_0_semi_product)
+    basis, singular_values = pod(snapshots, modes=basis_size, product=fom.h1_0_semi_product)
     reductor.extend_basis(basis, 'trivial', orthonormal=True)
 
-    rd = reductor.reduce()
+    rom = reductor.reduce()
 
-    return rd
+    return rom
 
 
 ####################################################################################################
@@ -234,33 +234,33 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     # discretize
     ############
     if BACKEND == 'pymor':
-        d = discretize_pymor()
+        fom = discretize_pymor()
     elif BACKEND == 'fenics':
-        d = discretize_fenics()
+        fom = discretize_fenics()
     else:
         raise NotImplementedError
 
     # select reduction algorithm with error estimator
     #################################################
-    coercivity_estimator = ExpressionParameterFunctional('1.', d.parameter_type)
-    reductor = ParabolicRBReductor(d, product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
+    coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameter_type)
+    reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
     # generate reduced model
     ########################
     if ALG == 'greedy':
-        rd = reduce_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'adaptive_greedy':
-        rd = reduce_adaptive_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_adaptive_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':
-        rd = reduce_pod(d, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_pod(fom, reductor, SNAPSHOTS, RBSIZE)
     else:
         raise NotImplementedError
 
     # evaluate the reduction error
     ##############################
     results = reduction_error_analysis(
-        rd, d=d, reductor=reductor, estimator=True,
-        error_norms=[lambda U: DT * np.sqrt(np.sum(d.h1_0_semi_norm(U)[1:]**2))],
+        rom, fom=fom, reductor=reductor, estimator=True,
+        error_norms=[lambda U: DT * np.sqrt(np.sum(fom.h1_0_semi_norm(U)[1:]**2))],
         error_norm_names=['l^2-h^1'],
         condition=False, test_mus=TEST, random_seed=999, plot=True
     )
@@ -274,19 +274,19 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     # write results to disk
     #######################
     from pymor.core.pickle import dump
-    dump(rd, open('reduced_model.out', 'wb'))
+    dump(rom, open('reduced_model.out', 'wb'))
     results.pop('figure')  # matplotlib figures cannot be serialized
     dump(results, open('results.out', 'wb'))
 
     # visualize reduction error for worst-approximated mu
     #####################################################
     mumax = results['max_error_mus'][0, -1]
-    U = d.solve(mumax)
-    U_RB = reductor.reconstruct(rd.solve(mumax))
+    U = fom.solve(mumax)
+    U_RB = reductor.reconstruct(rom.solve(mumax))
     if BACKEND == 'fenics':  # right now the fenics visualizer does not support time trajectories
         U = U[len(U) - 1].copy()
         U_RB = U_RB[len(U_RB) - 1].copy()
-    d.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+    fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                 separate_colorbars=True)
 
     return results

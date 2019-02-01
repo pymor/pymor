@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import LTISystem
+from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 
@@ -18,12 +18,12 @@ class GenericBTReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     """
-    def __init__(self, d):
-        assert isinstance(d, LTISystem)
-        self.d = d
+    def __init__(self, fom):
+        assert isinstance(fom, LTIModel)
+        self.fom = fom
         self.V = None
         self.W = None
         self.sv = None
@@ -38,7 +38,7 @@ class GenericBTReductor(BasicInterface):
         """Return singular values and vectors."""
         if self.sv is None or self.sU is None or self.sV is None:
             cf, of = self.gramians()
-            U, sv, Vh = spla.svd(self.d.E.apply2(of, cf), lapack_driver='gesvd')
+            U, sv, Vh = spla.svd(self.fom.E.apply2(of, cf), lapack_driver='gesvd')
             self.sv = sv
             self.sU = U.T
             self.sV = Vh
@@ -72,11 +72,11 @@ class GenericBTReductor(BasicInterface):
 
         Returns
         -------
-        rd
+        rom
             Reduced system.
         """
         assert r is not None or tol is not None
-        assert r is None or 0 < r < self.d.n
+        assert r is None or 0 < r < self.fom.n
         assert projection in ('sr', 'bfsr', 'biorth')
 
         cf, of = self.gramians()
@@ -102,12 +102,13 @@ class GenericBTReductor(BasicInterface):
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
         elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.E)
+            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.E)
 
-        self.pg_reductor = GenericPGReductor(self.d, self.W, self.V, projection in ('sr', 'biorth'), product=self.d.E)
-        rd = self.pg_reductor.reduce()
+        self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection in ('sr', 'biorth'),
+                                             product=self.fom.E)
+        rom = self.pg_reductor.reduce()
 
-        return rd
+        return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -121,11 +122,11 @@ class BTReductor(GenericBTReductor):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     """
     def gramians(self):
-        return self.d.gramian('c_lrcf'), self.d.gramian('o_lrcf')
+        return self.fom.gramian('c_lrcf'), self.fom.gramian('o_lrcf')
 
     def error_bounds(self):
         sv = self.sv_U_V()[0]
@@ -139,20 +140,20 @@ class LQGBTReductor(GenericBTReductor):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     solver_options
         The solver options to use to solve the Riccati equations.
     """
-    def __init__(self, d, solver_options=None):
-        super().__init__(d)
+    def __init__(self, fom, solver_options=None):
+        super().__init__(fom)
         self.solver_options = solver_options
 
     def gramians(self):
-        A = self.d.A
-        B = self.d.B
-        C = self.d.C
-        E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
+        A = self.fom.A
+        B = self.fom.B
+        C = self.fom.C
+        E = self.fom.E if not isinstance(self.fom.E, IdentityOperator) else None
         options = self.solver_options
 
         cf = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), trans=False, options=options)
@@ -171,23 +172,23 @@ class BRBTReductor(GenericBTReductor):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     gamma
         Upper bound for the :math:`\mathcal{H}_\infty`-norm.
     solver_options
         The solver options to use to solve the positive Riccati equations.
     """
-    def __init__(self, d, gamma, solver_options=None):
-        super().__init__(d)
+    def __init__(self, fom, gamma, solver_options=None):
+        super().__init__(fom)
         self.gamma = gamma
         self.solver_options = solver_options
 
     def gramians(self):
-        A = self.d.A
-        B = self.d.B
-        C = self.d.C
-        E = self.d.E if not isinstance(self.d.E, IdentityOperator) else None
+        A = self.fom.A
+        B = self.fom.B
+        C = self.fom.C
+        E = self.fom.E if not isinstance(self.fom.E, IdentityOperator) else None
         options = self.solver_options
 
         cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), R=self.gamma**2 * np.eye(C.range.dim),

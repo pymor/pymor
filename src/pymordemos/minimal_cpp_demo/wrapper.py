@@ -6,8 +6,8 @@ from pymor.operators.basic import OperatorBase
 from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
 import numpy as np
-import math as m
-from discretization import Vector, DiffusionOperator
+import math
+from model import Vector, DiffusionOperator
 
 
 class WrappedVector(CopyOnWriteVector):
@@ -42,7 +42,7 @@ class WrappedVector(CopyOnWriteVector):
         raise NotImplementedError
 
     def l2_norm(self):
-        return m.sqrt(self.dot(self))
+        return math.sqrt(self.dot(self))
 
     def l2_norm2(self):
         return self.dot(self)

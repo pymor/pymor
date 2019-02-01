@@ -97,7 +97,7 @@ def parabolic_demo(args):
 
     print('Discretize ...')
     discretizer = discretize_instationary_fv if args['--fv'] else discretize_instationary_cg
-    d, data = discretizer(
+    m, data = discretizer(
         analytical_problem=problem,
         grid_type=RectGrid if args['--rect'] else TriaGrid,
         diameter=np.sqrt(2) / args['--grid'] if args['--rect'] else 1. / args['--grid'],
@@ -108,8 +108,8 @@ def parabolic_demo(args):
     print()
 
     print('Solve ...')
-    U = d.solve({'top': args['TOP']} if args['heat'] else {'speed': args['SPEED']})
-    d.visualize(U, title='Solution')
+    U = m.solve({'top': args['TOP']} if args['heat'] else {'speed': args['SPEED']})
+    m.visualize(U, title='Solution')
 
     print('')
 

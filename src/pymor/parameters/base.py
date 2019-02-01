@@ -11,7 +11,7 @@ of the shapes of the parameter components, i.e. ::
     mu.parameter_type['component'] == mu['component'].shape
 
 Classes which represent mathematical objects depending on parameters, e.g. |Functions|,
-|Operators|, |Discretizations| derive from the |Parametric| mixin. Each |Parametric|
+|Operators|, |Models| derive from the |Parametric| mixin. Each |Parametric|
 object has a :attr:`~Parametric.parameter_type` attribute holding the |ParameterType|
 of the |Parameters| the object's `evaluate`, `apply`, `solve`, etc. methods expect.
 Note that the |ParameterType| of the given |Parameter| is allowed to be a
@@ -396,7 +396,7 @@ class Parametric:
         specifying them via the `provides` parameter. The idea is that the object itself
         may provide parameter components to the inherited objects which thus should
         not become part of the object's own parameter type. (A typical application
-        would be |InstationaryDiscretization|, which provides a time parameter
+        would be |InstationaryModel|, which provides a time parameter
         component to its (time-dependent) operators during time-stepping.)
 
         Parameters

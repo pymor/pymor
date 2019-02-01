@@ -9,7 +9,7 @@ the :func:`ei_greedy` method. The objects returned by this method can be used
 to instantiate an |EmpiricalInterpolatedOperator|.
 
 As a convenience, the :func:`interpolate_operators` method allows to perform
-the empirical interpolation of the |Operators| of a given discretization with
+the empirical interpolation of the |Operators| of a given model with
 a single function call.
 """
 
@@ -231,17 +231,17 @@ def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
     return interpolation_dofs, collateral_basis, data
 
 
-def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
+def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None,
                           product=None, atol=None, rtol=None, max_interpolation_dofs=None,
                           pod_options={}, alg='ei_greedy', pool=dummy_pool):
     """Empirical operator interpolation using the EI-Greedy/DEIM algorithm.
 
     This is a convenience method to facilitate the use of :func:`ei_greedy` or :func:`deim`.
-    Given a |Discretization|, names of |Operators|, and a sample of |Parameters|, first
-    the operators are evaluated on the solution snapshots of the discretization for the
+    Given a |Model|, names of |Operators|, and a sample of |Parameters|, first
+    the operators are evaluated on the solution snapshots of the model for the
     provided parameters. These evaluations are then used as input for
     :func:`ei_greedy`/:func:`deim`.  Finally the resulting interpolation data is used to
-    create |EmpiricalInterpolatedOperators| and a new discretization with the interpolated
+    create |EmpiricalInterpolatedOperators| and a new model with the interpolated
     operators is returned.
 
     Note that this implementation creates *one* common collateral basis for all specified
@@ -249,10 +249,10 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
 
     Parameters
     ----------
-    d
-        The |Discretization| whose |Operators| will be interpolated.
+    fom
+        The |Model| whose |Operators| will be interpolated.
     operator_names
-        List of keys in the `operators` dict of the discretization. The corresponding
+        List of keys in the `operators` dict of the model. The corresponding
         |Operators| will be interpolated.
     parameter_sample
         A list of |Parameters| for which solution snapshots are calculated.
@@ -278,8 +278,8 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
 
     Returns
     -------
-    ei_d
-        |Discretization| with |Operators| given by `operator_names` replaced by
+    eim
+        |Model| with |Operators| given by `operator_names` replaced by
         |EmpiricalInterpolatedOperators|.
     data
         Dict containing the following fields:
@@ -294,17 +294,17 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
     assert alg in ('ei_greedy', 'deim')
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:
-        operators = [d.operators[operator_name] for operator_name in operator_names]
+        operators = [fom.operators[operator_name] for operator_name in operator_names]
         with logger.block('Computing operator evaluations on solution snapshots ...'):
             if pool:
                 logger.info(f'Using pool of {len(pool)} workers for parallel evaluation')
-                evaluations = rom.manage(pool.push(d.solution_space.empty()))
+                evaluations = rom.manage(pool.push(fom.solution_space.empty()))
                 pool.map(_interpolate_operators_build_evaluations, parameter_sample,
-                         d=d, operators=operators, evaluations=evaluations)
+                         fom=fom, operators=operators, evaluations=evaluations)
             else:
                 evaluations = operators[0].range.empty()
                 for mu in parameter_sample:
-                    U = d.solve(mu)
+                    U = fom.solve(mu)
                     for op in operators:
                         evaluations.append(op.apply(U, mu=mu))
 
@@ -329,16 +329,16 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=(alg == 'ei_greedy'))
                     for name, operator in zip(operator_names, operators)}
-    operators_dict = d.operators.copy()
+    operators_dict = fom.operators.copy()
     operators_dict.update(ei_operators)
-    ei_d = d.with_(operators=operators_dict, name=f'{d.name}_ei')
+    eim = fom.with_(operators=operators_dict, name=f'{fom.name}_ei')
 
     data.update({'dofs': dofs, 'basis': basis})
-    return ei_d, data
+    return eim, data
 
 
-def _interpolate_operators_build_evaluations(mu, d=None, operators=None, evaluations=None):
-    U = d.solve(mu)
+def _interpolate_operators_build_evaluations(mu, fom=None, operators=None, evaluations=None):
+    U = fom.solve(mu)
     for op in operators:
         evaluations.append(op.apply(U, mu=mu))
 

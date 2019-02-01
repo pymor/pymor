@@ -40,8 +40,8 @@ class ParabolicRBReductor(GenericRBReductor):
 
     Parameters
     ----------
-    d
-        The |InstationaryDiscretization| which is to be reduced.
+    fom
+        The |InstationaryModel| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
     basis_is_orthonormal
@@ -51,34 +51,34 @@ class ParabolicRBReductor(GenericRBReductor):
         estimated and `RB` is orthonormalized.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
-        for the coercivity constant of `d.operator` w.r.t. `product`.
+        for the coercivity constant of `fom.operator` w.r.t. `product`.
     """
-    def __init__(self, d, RB=None, basis_is_orthonormal=None,
+    def __init__(self, fom, RB=None, basis_is_orthonormal=None,
                  product=None, coercivity_estimator=None):
-        assert isinstance(d.time_stepper, ImplicitEulerTimeStepper)
-        super().__init__(d, RB, basis_is_orthonormal=basis_is_orthonormal, product=product)
+        assert isinstance(fom.time_stepper, ImplicitEulerTimeStepper)
+        super().__init__(fom, RB, basis_is_orthonormal=basis_is_orthonormal, product=product)
         self.coercivity_estimator = coercivity_estimator
 
         self.residual_reductor = ImplicitEulerResidualReductor(
             self.RB,
-            d.operator,
-            d.mass,
-            d.T / d.time_stepper.nt,
-            rhs=d.rhs,
+            fom.operator,
+            fom.mass,
+            fom.T / fom.time_stepper.nt,
+            rhs=fom.rhs,
             product=product
         )
 
         self.initial_residual_reductor = ResidualReductor(
             self.RB,
-            IdentityOperator(d.solution_space),
-            d.initial_data,
-            product=d.l2_product,
+            IdentityOperator(fom.solution_space),
+            fom.initial_data,
+            product=fom.l2_product,
             riesz_representatives=False
         )
 
     def _reduce(self):
         with self.logger.block('RB projection ...'):
-            rd = super()._reduce()
+            rom = super()._reduce()
 
         with self.logger.block('Assembling error estimator ...'):
             residual = self.residual_reductor.reduce()
@@ -87,9 +87,9 @@ class ParabolicRBReductor(GenericRBReductor):
             estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
                                              initial_residual, self.initial_residual_reductor.residual_range_dims,
                                              self.coercivity_estimator)
-            rd = rd.with_(estimator=estimator)
+            rom = rom.with_(estimator=estimator)
 
-        return rd
+        return rom
 
 
 class ParabolicRBEstimator(ImmutableInterface):
@@ -106,8 +106,8 @@ class ParabolicRBEstimator(ImmutableInterface):
         self.initial_residual_range_dims = initial_residual_range_dims
         self.coercivity_estimator = coercivity_estimator
 
-    def estimate(self, U, mu, d, return_error_sequence=False):
-        dt = d.T / d.time_stepper.nt
+    def estimate(self, U, mu, m, return_error_sequence=False):
+        dt = m.T / m.time_stepper.nt
         C = self.coercivity_estimator(mu) if self.coercivity_estimator else 1.
 
         est = np.empty(len(U))
@@ -119,7 +119,7 @@ class ParabolicRBEstimator(ImmutableInterface):
 
         return est if return_error_sequence else est[-1]
 
-    def restricted_to_subbasis(self, dim, d):
+    def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims and self.initial_residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)

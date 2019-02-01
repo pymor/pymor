@@ -270,8 +270,8 @@ class BlockDiagonalOperator(BlockOperator):
 
         assert operators[0] is self
 
-        # return ShiftedSecondOrderSystemOperator if possible
-        if len(operators) == 2 and isinstance(operators[1], SecondOrderSystemOperator):
+        # return ShiftedSecondOrderModelOperator if possible
+        if len(operators) == 2 and isinstance(operators[1], SecondOrderModelOperator):
             return operators[1].assemble_lincomb(operators[::-1], coefficients[::-1],
                                                  solver_options=solver_options, name=name)
 
@@ -298,8 +298,8 @@ class BlockDiagonalOperator(BlockOperator):
             return self.__class__(blocks)
 
 
-class SecondOrderSystemOperator(BlockOperator):
-    r"""BlockOperator appearing in SecondOrderSystem.to_lti().
+class SecondOrderModelOperator(BlockOperator):
+    r"""BlockOperator appearing in SecondOrderModel.to_lti().
 
     This represents a block operator
 
@@ -389,17 +389,17 @@ class SecondOrderSystemOperator(BlockOperator):
 
         assert operators[0] is self
 
-        # return ShiftedSecondOrderSystemOperator if possible
+        # return ShiftedSecondOrderModelOperator if possible
         if (len(operators) == 2
                 and isinstance(operators[1], BlockDiagonalOperator)
                 and operators[1].num_source_blocks == 2
                 and operators[1].num_range_blocks == 2
                 and isinstance(operators[1]._blocks[0, 0], IdentityOperator)):
-            return ShiftedSecondOrderSystemOperator(operators[1]._blocks[1, 1],
-                                                    self.E,
-                                                    self.K,
-                                                    coefficients[1],
-                                                    coefficients[0])
+            return ShiftedSecondOrderModelOperator(operators[1]._blocks[1, 1],
+                                                   self.E,
+                                                   self.K,
+                                                   coefficients[1],
+                                                   coefficients[0])
 
         # return BlockOperator
         blocks = np.empty(self._blocks.shape, dtype=object)
@@ -420,7 +420,7 @@ class SecondOrderSystemOperator(BlockOperator):
             return BlockOperator(blocks)
 
 
-class ShiftedSecondOrderSystemOperator(BlockOperator):
+class ShiftedSecondOrderModelOperator(BlockOperator):
     r"""BlockOperator appearing in second-order systems.
 
     This represents a block operator

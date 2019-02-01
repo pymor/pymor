@@ -50,17 +50,17 @@ def discretize_pymor():
     problem = thermal_block_problem(num_blocks=(XBLOCKS, YBLOCKS))
 
     # discretize using continuous finite elements
-    d, _ = discretize_stationary_cg(problem, diameter=1. / GRID_INTERVALS)
+    fom, _ = discretize_stationary_cg(problem, diameter=1. / GRID_INTERVALS)
 
-    return d
+    return fom
 
 
 def discretize_fenics():
     from pymor.tools import mpi
 
     if mpi.parallel:
-        from pymor.discretizations.mpi import mpi_wrap_discretization
-        return mpi_wrap_discretization(_discretize_fenics, use_with=True, pickle_local_spaces=False)
+        from pymor.models.mpi import mpi_wrap_model
+        return mpi_wrap_model(_discretize_fenics, use_with=True, pickle_local_spaces=False)
     else:
         return _discretize_fenics()
 
@@ -108,8 +108,8 @@ def _discretize_fenics():
     bc.apply(h1_mat)
     bc.apply(F)
 
-    # wrap everything as a pyMOR discretization
-    ###########################################
+    # wrap everything as a pyMOR model
+    ##################################
 
     # FEniCS wrappers
     from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
@@ -126,14 +126,14 @@ def _discretize_fenics():
     rhs = VectorOperator(FenicsVectorSpace(V).make_array([F]))
     h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
 
-    # build discretization
+    # build model
     visualizer = FenicsVisualizer(FenicsVectorSpace(V))
     parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
-    d = StationaryDiscretization(op, rhs, products={'h1_0_semi': h1_product},
-                                 parameter_space=parameter_space,
-                                 visualizer=visualizer)
+    fom = StationaryModel(op, rhs, products={'h1_0_semi': h1_product},
+                          parameter_space=parameter_space,
+                          visualizer=visualizer)
 
-    return d
+    return fom
 
 
 def discretize_ngsolve():
@@ -204,9 +204,9 @@ def discretize_ngsolve():
     F._list[0].impl.vec.data = f.vec
     F = VectorOperator(F)
 
-    return StationaryDiscretization(op, F, visualizer=NGSolveVisualizer(mesh, V),
-                                    products={'h1_0_semi': h1_0_op},
-                                    parameter_space=CubicParameterSpace(op.parameter_type, 0.1, 1.))
+    return StationaryModel(op, F, visualizer=NGSolveVisualizer(mesh, V),
+                           products={'h1_0_semi': h1_0_op},
+                           parameter_space=CubicParameterSpace(op.parameter_type, 0.1, 1.))
 
 
 def discretize_pymor_text():
@@ -215,9 +215,9 @@ def discretize_pymor_text():
     problem = text_problem(TEXT)
 
     # discretize using continuous finite elements
-    d, _ = discretize_stationary_cg(problem, diameter=1.)
+    fom, _ = discretize_stationary_cg(problem, diameter=1.)
 
-    return d
+    return fom
 
 
 ####################################################################################################
@@ -225,57 +225,57 @@ def discretize_pymor_text():
 ####################################################################################################
 
 
-def reduce_naive(d, reductor, basis_size):
+def reduce_naive(fom, reductor, basis_size):
 
-    training_set = d.parameter_space.sample_randomly(basis_size)
+    training_set = fom.parameter_space.sample_randomly(basis_size)
 
     for mu in training_set:
-        reductor.extend_basis(d.solve(mu), 'trivial')
+        reductor.extend_basis(fom.solve(mu), 'trivial')
 
-    rd = reductor.reduce()
+    rom = reductor.reduce()
 
-    return rd
+    return rom
 
 
-def reduce_greedy(d, reductor, snapshots, basis_size):
+def reduce_greedy(fom, reductor, snapshots, basis_size):
 
-    training_set = d.parameter_space.sample_uniformly(snapshots)
+    training_set = fom.parameter_space.sample_uniformly(snapshots)
     pool = new_parallel_pool()
 
-    greedy_data = greedy(d, reductor, training_set,
+    greedy_data = greedy(fom, reductor, training_set,
                          extension_params={'method': 'gram_schmidt'},
                          max_extensions=basis_size,
                          pool=pool)
 
-    return greedy_data['rd']
+    return greedy_data['rom']
 
 
-def reduce_adaptive_greedy(d, reductor, validation_mus, basis_size):
+def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
 
     pool = new_parallel_pool()
 
-    greedy_data = adaptive_greedy(d, reductor, validation_mus=-validation_mus,
+    greedy_data = adaptive_greedy(fom, reductor, validation_mus=-validation_mus,
                                   extension_params={'method': 'gram_schmidt'},
                                   max_extensions=basis_size,
                                   pool=pool)
 
-    return greedy_data['rd']
+    return greedy_data['rom']
 
 
-def reduce_pod(d, reductor, snapshots, basis_size):
+def reduce_pod(fom, reductor, snapshots, basis_size):
 
-    training_set = d.parameter_space.sample_uniformly(snapshots)
+    training_set = fom.parameter_space.sample_uniformly(snapshots)
 
-    snapshots = d.operator.source.empty()
+    snapshots = fom.operator.source.empty()
     for mu in training_set:
-        snapshots.append(d.solve(mu))
+        snapshots.append(fom.solve(mu))
 
     basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.product)
     reductor.extend_basis(basis, 'trivial')
 
-    rd = reductor.reduce()
+    rom = reductor.reduce()
 
-    return rd
+    return rom
 
 
 ####################################################################################################
@@ -295,38 +295,38 @@ def main():
     # discretize
     ############
     if MODEL == 'pymor':
-        d = discretize_pymor()
+        fom = discretize_pymor()
     elif MODEL == 'fenics':
-        d = discretize_fenics()
+        fom = discretize_fenics()
     elif MODEL == 'ngsolve':
-        d = discretize_ngsolve()
+        fom = discretize_ngsolve()
     elif MODEL == 'pymor-text':
-        d = discretize_pymor_text()
+        fom = discretize_pymor_text()
     else:
         raise NotImplementedError
 
     # select reduction algorithm with error estimator
     #################################################
-    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
-    reductor = CoerciveRBReductor(d, product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameter_type)
+    reductor = CoerciveRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
     # generate reduced model
     ########################
     if ALG == 'naive':
-        rd = reduce_naive(d, reductor, RBSIZE)
+        rom = reduce_naive(fom, reductor, RBSIZE)
     elif ALG == 'greedy':
-        rd = reduce_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'adaptive_greedy':
-        rd = reduce_adaptive_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_adaptive_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':
-        rd = reduce_pod(d, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_pod(fom, reductor, SNAPSHOTS, RBSIZE)
     else:
         raise NotImplementedError
 
     # evaluate the reduction error
     ##############################
-    results = reduction_error_analysis(rd, d=d, reductor=reductor, estimator=True,
-                                       error_norms=[d.h1_0_semi_norm], condition=True,
+    results = reduction_error_analysis(rom, fom=fom, reductor=reductor, estimator=True,
+                                       error_norms=[fom.h1_0_semi_norm], condition=True,
                                        test_mus=TEST, random_seed=999, plot=True)
 
     # show results
@@ -338,17 +338,17 @@ def main():
     # write results to disk
     #######################
     from pymor.core.pickle import dump
-    dump(rd, open('reduced_model.out', 'wb'))
+    dump(rom, open('reduced_model.out', 'wb'))
     results.pop('figure')  # matplotlib figures cannot be serialized
     dump(results, open('results.out', 'wb'))
 
     # visualize reduction error for worst-approximated mu
     #####################################################
     mumax = results['max_error_mus'][0, -1]
-    U = d.solve(mumax)
-    U_RB = reductor.reconstruct(rd.solve(mumax))
-    d.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                separate_colorbars=True, block=True)
+    U = fom.solve(mumax)
+    U_RB = reductor.reconstruct(rom.solve(mumax))
+    fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                  separate_colorbars=True, block=True)
 
 
 if __name__ == '__main__':

@@ -18,20 +18,20 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class GenericRBReductor(BasicInterface):
     """Generic reduced basis reductor.
 
-    Replaces each |Operator| of the given |Discretization| with the Galerkin
+    Replaces each |Operator| of the given |Model| with the Galerkin
     projection onto the span of the given reduced basis.
 
     Parameters
     ----------
-    d
-        The |Discretization| which is to be reduced.
+    fom
+        The |Model| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
     basis_is_orthonormal
         If `RB` is specified, indicate whether or not the basis is orthonormal
         w.r.t. `product`.
     vector_ranged_operators
-        List of keys in `d.operators` for which the corresponding |Operator|
+        List of keys in `fom.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
@@ -39,19 +39,19 @@ class GenericRBReductor(BasicInterface):
         |Operators| given by `vector_ranged_operators`.
     """
 
-    def __init__(self, d, RB=None, basis_is_orthonormal=None,
+    def __init__(self, fom, RB=None, basis_is_orthonormal=None,
                  vector_ranged_operators=('initial_data',), product=None):
         if RB is not None and basis_is_orthonormal is None:
             raise ValueError('Please specify is given basis is orthonormal using basis_is_orthonormal.')
         if RB is None and basis_is_orthonormal is None:
             basis_is_orthonormal = True
-        self.d = d
-        self.RB = d.solution_space.empty() if RB is None else RB
-        assert self.RB in d.solution_space
+        self.fom = fom
+        self.RB = fom.solution_space.empty() if RB is None else RB
+        assert self.RB in fom.solution_space
         self.basis_is_orthonormal = basis_is_orthonormal
         self.vector_ranged_operators = vector_ranged_operators
         self.product = product
-        self._last_rd = None
+        self._last_rom = None
 
     def reduce(self, dim=None):
         """Perform the reduced basis projection.
@@ -64,25 +64,25 @@ class GenericRBReductor(BasicInterface):
 
         Returns
         -------
-        The reduced |Discretization|.
+        The reduced |Model|.
         """
         if dim is None:
             dim = len(self.RB)
         if dim > len(self.RB):
             raise ValueError('Specified reduced state dimension larger than reduced basis')
-        if self._last_rd is None or dim > self._last_rd.solution_space.dim:
-            self._last_rd = self._reduce()
-        if dim == self._last_rd.solution_space.dim:
-            return self._last_rd
+        if self._last_rom is None or dim > self._last_rom.solution_space.dim:
+            self._last_rom = self._reduce()
+        if dim == self._last_rom.solution_space.dim:
+            return self._last_rom
         else:
             return self._reduce_to_subbasis(dim)
 
     def _reduce(self):
 
-        d = self.d
+        fom = self.fom
         RB = self.RB
 
-        if any(k in self.vector_ranged_operators for k in d.operators) and not self.basis_is_orthonormal:
+        if any(k in self.vector_ranged_operators for k in fom.operators) and not self.basis_is_orthonormal:
             projection_matrix = RB.inner(RB, self.product)
             projection_op = NumpyMatrixOperator(projection_matrix, source_id=RB.space.id, range_id=RB.space.id)
             inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
@@ -102,19 +102,19 @@ class GenericRBReductor(BasicInterface):
                                range_basis=RB if RB in op.range else None,
                                source_basis=RB if RB in op.source else None)
 
-        projected_operators = {k: project_operator(k, op) if op else None for k, op in d.operators.items()}
+        projected_operators = {k: project_operator(k, op) if op else None for k, op in fom.operators.items()}
 
-        projected_products = {k: project_operator(k, p) for k, p in d.products.items()}
+        projected_products = {k: project_operator(k, p) for k, p in fom.products.items()}
 
-        rd = d.with_(operators=projected_operators, products=projected_products,
-                     visualizer=None, estimator=None,
-                     cache_region=None, name=d.name + '_reduced')
-        rd.disable_logging()
+        rom = fom.with_(operators=projected_operators, products=projected_products,
+                        visualizer=None, estimator=None,
+                        cache_region=None, name=fom.name + '_reduced')
+        rom.disable_logging()
 
-        return rd
+        return rom
 
     def _reduce_to_subbasis(self, dim):
-        rd = self._last_rd
+        rom = self._last_rom
 
         def project_operator(k, op):
             if k in self.vector_ranged_operators and not self.basis_is_orthonormal:
@@ -122,7 +122,7 @@ class GenericRBReductor(BasicInterface):
                         and op.operators[0].name == 'inverse_projection_op')
                 pop = project_to_subbasis(op.operators[1],
                                           dim_range=dim,
-                                          dim_source=dim if op.source == rd.solution_space else None)
+                                          dim_source=dim if op.source == rom.solution_space else None)
                 inverse_projection_op = InverseOperator(
                     project_to_subbasis(op.operators[0].operator, dim_range=dim, dim_source=dim),
                     name='inverse_projection_op'
@@ -130,22 +130,22 @@ class GenericRBReductor(BasicInterface):
                 return Concatenation([inverse_projection_op, pop])
             else:
                 return project_to_subbasis(op,
-                                           dim_range=dim if op.range == rd.solution_space else None,
-                                           dim_source=dim if op.source == rd.solution_space else None)
+                                           dim_range=dim if op.range == rom.solution_space else None,
+                                           dim_source=dim if op.source == rom.solution_space else None)
 
-        projected_operators = {k: project_operator(k, op) if op else None for k, op in rd.operators.items()}
+        projected_operators = {k: project_operator(k, op) if op else None for k, op in rom.operators.items()}
 
-        projected_products = {k: project_operator(k, op) for k, op in rd.products.items()}
+        projected_products = {k: project_operator(k, op) for k, op in rom.products.items()}
 
-        if rd.estimator:
-            estimator = rd.estimator.restricted_to_subbasis(dim, d=rd)
+        if rom.estimator:
+            estimator = rom.estimator.restricted_to_subbasis(dim, m=rom)
         else:
             estimator = None
 
-        rrd = rd.with_(operators=projected_operators, products=projected_products, estimator=estimator,
-                       visualizer=None, name=rd.name + '_reduced_to_subbasis')
+        rrom = rom.with_(operators=projected_operators, products=projected_products, estimator=estimator,
+                         visualizer=None, name=rom.name + '_reduced_to_subbasis')
 
-        return rrd
+        return rrom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -204,13 +204,13 @@ class GenericRBReductor(BasicInterface):
 class GenericPGReductor(BasicInterface):
     """Generic Petrov-Galerkin reductor.
 
-    Replaces each |Operator| of the given |Discretization| with the projection
+    Replaces each |Operator| of the given |Model| with the projection
     onto the span of the given projection matrices.
 
     Parameters
     ----------
-    d
-        The |Discretization| which is to be reduced.
+    fom
+        The |Model| which is to be reduced.
     W
         |VectorArray| containing the left projection matrix.
     V
@@ -218,7 +218,7 @@ class GenericPGReductor(BasicInterface):
     bases_are_biorthonormal
         Indicate whether or not V and W are biorthonormal w.r.t. `product`.
     vector_ranged_operators
-        List of keys in `d.operators` for which the corresponding |Operator|
+        List of keys in `fom.operators` for which the corresponding |Operator|
         should be biorthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
@@ -226,10 +226,10 @@ class GenericPGReductor(BasicInterface):
         `vector_ranged_operators`.
     """
 
-    def __init__(self, d, W, V, bases_are_biorthonormal, vector_ranged_operators=('initial_data',), product=None):
-        assert V in d.solution_space
+    def __init__(self, fom, W, V, bases_are_biorthonormal, vector_ranged_operators=('initial_data',), product=None):
+        assert V in fom.solution_space
         assert product is None or (W in product.range and V in product.source)
-        self.d = d
+        self.fom = fom
         self.V = V
         self.W = W
         self.bases_are_biorthonormal = bases_are_biorthonormal
@@ -241,12 +241,12 @@ class GenericPGReductor(BasicInterface):
 
         Returns
         -------
-        The reduced |Discretization|.
+        The reduced |Model|.
         """
-        d, V, W = self.d, self.V, self.W
+        fom, V, W = self.fom, self.V, self.W
         product = self.product
 
-        if any(k in self.vector_ranged_operators for k in d.operators) and not self.bases_are_biorthonormal:
+        if any(k in self.vector_ranged_operators for k in fom.operators) and not self.bases_are_biorthonormal:
             projection_matrix = W.inner(V, product)
             projection_op = NumpyMatrixOperator(projection_matrix, source_id=V.space.id, range_id=W.space.id)
             inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
@@ -270,14 +270,14 @@ class GenericPGReductor(BasicInterface):
                                range_basis=W if W in op.range else None,
                                source_basis=V if V in op.source else None)
 
-        projected_ops = {k: project_operator(k, op) for k, op in d.operators.items()}
+        projected_ops = {k: project_operator(k, op) for k, op in fom.operators.items()}
 
-        rd = d.with_(operators=projected_ops,
-                     visualizer=None, estimator=None,
-                     cache_region=None, name=d.name + '_reduced')
-        rd.disable_logging()
+        rom = fom.with_(operators=projected_ops,
+                        visualizer=None, estimator=None,
+                        cache_region=None, name=fom.name + '_reduced')
+        rom.disable_logging()
 
-        return rd
+        return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""

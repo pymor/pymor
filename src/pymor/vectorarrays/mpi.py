@@ -267,7 +267,7 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
     requiring interface methods for the case when the
     wrapped array is not MPI aware.
 
-    Note, however, that depending on the discretization
+    Note, however, that depending on the model
     these default implementations might lead to wrong results
     (for instance in the presence of shared DOFs).
 

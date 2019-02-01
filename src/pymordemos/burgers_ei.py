@@ -80,7 +80,7 @@ Options:
 """
 
 import sys
-import math as m
+import math
 import time
 
 import numpy as np
@@ -130,8 +130,8 @@ def main(args):
 
     print('Discretize ...')
     if args['--grid-type'] == 'rect':
-        args['--grid'] *= 1. / m.sqrt(2)
-    d, _ = discretize_instationary_fv(
+        args['--grid'] *= 1. / math.sqrt(2)
+    fom, _ = discretize_instationary_fv(
         problem,
         diameter=1. / args['--grid'],
         grid_type=RectGrid if args['--grid-type'] == 'rect' else TriaGrid,
@@ -141,84 +141,84 @@ def main(args):
     )
 
     if args['--cache-region'] != 'none':
-        d.enable_caching(args['--cache-region'])
+        fom.enable_caching(args['--cache-region'])
 
-    print(d.operator.grid)
+    print(fom.operator.grid)
 
-    print(f'The parameter type is {d.parameter_type}')
+    print(f'The parameter type is {fom.parameter_type}')
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = ()
         legend = ()
-        for mu in d.parameter_space.sample_uniformly(4):
+        for mu in fom.parameter_space.sample_uniformly(4):
             print(f"Solving for exponent = {mu['exponent']} ... ")
             sys.stdout.flush()
-            Us = Us + (d.solve(mu),)
+            Us = Us + (fom.solve(mu),)
             legend = legend + (f"exponent: {mu['exponent']}",)
-        d.visualize(Us, legend=legend, title='Detailed Solutions', block=True)
+        fom.visualize(Us, legend=legend, title='Detailed Solutions', block=True)
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
-    ei_d, ei_data = interpolate_operators(d, ['operator'],
-                                          d.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
-                                          error_norm=d.l2_norm, product=d.l2_product,
-                                          max_interpolation_dofs=args['EISIZE'],
-                                          alg=args['--ei-alg'],
-                                          pool=pool)
+    eim, ei_data = interpolate_operators(fom, ['operator'],
+                                         fom.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
+                                         error_norm=fom.l2_norm, product=fom.l2_product,
+                                         max_interpolation_dofs=args['EISIZE'],
+                                         alg=args['--ei-alg'],
+                                         pool=pool)
 
     if args['--plot-ei-err']:
         print('Showing some EI errors')
         ERRs = ()
         legend = ()
-        for mu in d.parameter_space.sample_randomly(2):
+        for mu in fom.parameter_space.sample_randomly(2):
             print(f"Solving for exponent = \n{mu['exponent']} ... ")
             sys.stdout.flush()
-            U = d.solve(mu)
-            U_EI = ei_d.solve(mu)
+            U = fom.solve(mu)
+            U_EI = eim.solve(mu)
             ERR = U - U_EI
             ERRs = ERRs + (ERR,)
             legend = legend + (f"exponent: {mu['exponent']}",)
-            print(f'Error: {np.max(d.l2_norm(ERR))}')
-        d.visualize(ERRs, legend=legend, title='EI Errors', separate_colorbars=True)
+            print(f'Error: {np.max(fom.l2_norm(ERR))}')
+        fom.visualize(ERRs, legend=legend, title='EI Errors', separate_colorbars=True)
 
         print('Showing interpolation DOFs ...')
         U = np.zeros(U.dim)
-        dofs = ei_d.operator.interpolation_dofs
+        dofs = eim.operator.interpolation_dofs
         U[dofs] = np.arange(1, len(dofs) + 1)
-        U[ei_d.operator.source_dofs] += int(len(dofs)/2)
-        d.visualize(d.solution_space.make_array(U),
-                                 title='Interpolation DOFs')
+        U[eim.operator.source_dofs] += int(len(dofs)/2)
+        fom.visualize(fom.solution_space.make_array(U),
+                      title='Interpolation DOFs')
 
     print('RB generation ...')
 
-    reductor = GenericRBReductor(ei_d)
+    reductor = GenericRBReductor(eim)
 
-    greedy_data = greedy(d, reductor, d.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                         use_estimator=False, error_norm=lambda U: np.max(d.l2_norm(U)),
+    greedy_data = greedy(fom, reductor, fom.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                         use_estimator=False, error_norm=lambda U: np.max(fom.l2_norm(U)),
                          extension_params={'method': 'pod'}, max_extensions=args['RBSIZE'],
                          pool=pool)
 
-    rd = greedy_data['rd']
+    rom = greedy_data['rom']
 
     print('\nSearching for maximum error on random snapshots ...')
 
     tic = time.time()
 
-    mus = d.parameter_space.sample_randomly(args['--test'])
+    mus = fom.parameter_space.sample_randomly(args['--test'])
 
     def error_analysis(N, M):
         print(f'N = {N}, M = {M}: ', end='')
-        rd = reductor.reduce(N)
-        rd = rd.with_(operator=rd.operator.with_cb_dim(M))
+        rom = reductor.reduce(N)
+        rom = rom.with_(operator=rom.operator.with_cb_dim(M))
         l2_err_max = -1
         mumax = None
         for mu in mus:
             print('.', end='')
             sys.stdout.flush()
-            u = rd.solve(mu)
+            u = rom.solve(mu)
             URB = reductor.reconstruct(u)
-            U = d.solve(mu)
-            l2_err = np.max(d.l2_norm(U - URB))
+            U = fom.solve(mu)
+            l2_err = np.max(fom.l2_norm(U - URB))
             l2_err = np.inf if not np.isfinite(l2_err) else l2_err
             if l2_err > l2_err_max:
                 l2_err_max = l2_err
@@ -289,10 +289,10 @@ def main(args):
                                rstride=1, cstride=1, cmap='jet')
         plt.show()
     if args['--plot-err']:
-        U = d.solve(mumax)
-        URB = reductor.reconstruct(rd.solve(mumax))
-        d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                    title='Maximum Error Solution', separate_colorbars=True)
+        U = fom.solve(mumax)
+        URB = reductor.reconstruct(rom.solve(mumax))
+        fom.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                      title='Maximum Error Solution', separate_colorbars=True)
 
     return ei_data, greedy_data
 

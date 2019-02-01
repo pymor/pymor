@@ -12,7 +12,7 @@ import numpy as np
 import scipy.linalg as spla
 import matplotlib.pyplot as plt
 
-from pymor.discretizations.iosys import TransferFunction
+from pymor.models.iosys import TransferFunction
 from pymor.reductors.interpolation import TFInterpReductor
 from pymor.reductors.h2 import TF_IRKAReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace

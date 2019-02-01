@@ -16,7 +16,7 @@ from pymor.parameters.base import Parameter
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-def adaptive_greedy(d, reductor, parameter_space=None,
+def adaptive_greedy(fom, reductor, parameter_space=None,
                     use_estimator=True, error_norm=None,
                     target_error=None, max_extensions=None,
                     validation_mus=0, rho=1.1, gamma=0.2, theta=0.,
@@ -35,13 +35,13 @@ def adaptive_greedy(d, reductor, parameter_space=None,
 
     Parameters
     ----------
-    d
+    fom
         See :func:`~pymor.algorithms.greedy.greedy`.
     reductor
         See :func:`~pymor.algorithms.greedy.greedy`.
     parameter_space
         The |ParameterSpace| for which to compute the reduced model. If `None`,
-        the parameter space of `d` is used.
+        the parameter space of `fom` is used.
     use_estimator
         See :func:`~pymor.algorithms.greedy.greedy`.
     error_norm
@@ -82,7 +82,7 @@ def adaptive_greedy(d, reductor, parameter_space=None,
     -------
     Dict with the following fields:
 
-        :rd:                     The reduced |Discretization| obtained for the
+        :rom:                    The reduced |Model| obtained for the
                                  computed basis.
         :extensions:             Number of greedy iterations.
         :max_errs:               Sequence of maximum errors during the greedy run.
@@ -99,9 +99,9 @@ def adaptive_greedy(d, reductor, parameter_space=None,
 
     def estimate(mus):
         if use_estimator:
-            errors = pool.map(_estimate, mus, rd=rd)
+            errors = pool.map(_estimate, mus, rom=rom)
         else:
-            errors = pool.map(_estimate, mus, rd=rd, d=d, reductor=reductor, error_norm=error_norm)
+            errors = pool.map(_estimate, mus, rom=rom, fom=fom, reductor=reductor, error_norm=error_norm)
         # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
         # if necessary
         return np.array([x[0] if hasattr(x, '__len__') else x for x in errors])
@@ -116,14 +116,14 @@ def adaptive_greedy(d, reductor, parameter_space=None,
     with RemoteObjectManager() as rom:
         # Push everything we need during the greedy search to the workers.
         if not use_estimator:
-            rom.manage(pool.push(d))
+            rom.manage(pool.push(fom))
             if error_norm:
                 rom.manage(pool.push(error_norm))
 
         tic = time.time()
 
         # setup training and validation sets
-        parameter_space = parameter_space or d.parameter_space
+        parameter_space = parameter_space or fom.parameter_space
         sample_set = AdaptiveSampleSet(parameter_space)
         if validation_mus <= 0:
             validation_set = sample_set.center_mus + parameter_space.sample_randomly(-validation_mus)
@@ -143,7 +143,7 @@ def adaptive_greedy(d, reductor, parameter_space=None,
 
         while True:  # main loop
             with logger.block('Reducing ...'):
-                rd = reductor.reduce()
+                rom = reductor.reduce()
 
             current_refinements = 0
             while True:  # estimate reduction errors and refine training set until no overfitting is detected
@@ -243,7 +243,7 @@ def adaptive_greedy(d, reductor, parameter_space=None,
 
             # basis extension
             with logger.block(f'Computing solution snapshot for mu = {max_err_mu} ...'):
-                U = d.solve(max_err_mu)
+                U = fom.solve(max_err_mu)
             with logger.block('Extending basis with solution snapshot ...'):
                 try:
                     reductor.extend_basis(U, copy_U=False, **extension_params)
@@ -258,26 +258,26 @@ def adaptive_greedy(d, reductor, parameter_space=None,
             if max_extensions is not None and extensions >= max_extensions:
                 logger.info(f'Maximum number of {max_extensions} extensions reached.')
                 with logger.block('Reducing once more ...'):
-                    rd = reductor.reduce()
+                    rom = reductor.reduce()
                 break
 
     tictoc = time.time() - tic
     logger.info(f'Greedy search took {tictoc} seconds')
-    return {'rd': rd,
+    return {'rom': rom,
             'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'max_val_errs': max_val_errs, 'max_val_err_mus': max_val_err_mus,
             'refinements': refinements, 'training_set_sizes': training_set_sizes,
             'time': tictoc}
 
 
-def _estimate(mu, rd=None, d=None, reductor=None, error_norm=None):
+def _estimate(mu, rom=None, fom=None, reductor=None, error_norm=None):
     """Called by :func:`adaptive_greedy`."""
-    if d is None:
-        return rd.estimate(rd.solve(mu), mu)
+    if fom is None:
+        return rom.estimate(rom.solve(mu), mu)
     elif error_norm is not None:
-        return error_norm(d.solve(mu) - reductor.reconstruct(rd.solve(mu)))
+        return error_norm(fom.solve(mu) - reductor.reconstruct(rom.solve(mu)))
     else:
-        return (d.solve(mu) - reductor.reconstruct(rd.solve(mu))).l2_norm()
+        return (fom.solve(mu) - reductor.reconstruct(rom.solve(mu))).l2_norm()
 
 
 class AdaptiveSampleSet(BasicInterface):

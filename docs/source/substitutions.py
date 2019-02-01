@@ -14,8 +14,8 @@ interfaces = '''
 .. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.grids.interfaces.BoundaryInfoInterface>`
 .. |ConformalTopologicalGrids| replace:: :class:`ConformalTopologicalGrids <pymor.grids.interfaces.ConformalTopologicalGridInterface>`
 .. |ConformalTopologicalGrid| replace:: :class:`ConformalTopologicalGrid <pymor.grids.interfaces.ConformalTopologicalGridInterface>`
-.. |Discretizations| replace:: :class:`Discretizations <pymor.discretizations.interfaces.DiscretizationInterface>`
-.. |Discretization| replace:: :class:`Discretization <pymor.discretizations.interfaces.DiscretizationInterface>`
+.. |Models| replace:: :class:`Models <pymor.models.interfaces.ModelInterface>`
+.. |Model| replace:: :class:`Model <pymor.models.interfaces.ModelInterface>`
 .. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.domaindescriptions.interfaces.DomainDescriptionInterface>`
 .. |DomainDescription| replace:: :class:`DomainDescription <pymor.domaindescriptions.interfaces.DomainDescriptionInterface>`
 .. |Functionals| replace:: :class:`Functionals <pymor.operators.interfaces.OperatorInterface>`
@@ -93,9 +93,9 @@ common = '''
 .. |NumpyVectorSpace| replace:: :func:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
 .. |NumpyVectorSpaces| replace:: :func:`NumpyVectorSpaces <pymor.vectorarrays.numpy.NumpyVectorSpace>`
 
-.. |StationaryDiscretization| replace:: :class:`~pymor.discretizations.basic.StationaryDiscretization`
-.. |StationaryDiscretizations| replace:: :class:`StationaryDiscretizations <pymor.discretizations.basic.StationaryDiscretization>`
-.. |InstationaryDiscretization| replace:: :class:`~pymor.discretizations.basic.InstationaryDiscretization`
+.. |StationaryModel| replace:: :class:`~pymor.models.basic.StationaryModel`
+.. |StationaryModels| replace:: :class:`StationaryModels <pymor.models.basic.StationaryModel>`
+.. |InstationaryModel| replace:: :class:`~pymor.models.basic.InstationaryModel`
 
 .. |ParameterType| replace:: :class:`~pymor.parameters.base.ParameterType`
 .. |ParameterTypes| replace:: :class:`ParameterTypes <pymor.parameters.base.ParameterType>`
@@ -104,12 +104,12 @@ common = '''
 .. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
 .. |parametric| replace:: :attr:`~pymor.parameters.base.Parametric.parametric`
 
-.. |LTISystem| replace:: :class:`~pymor.discretizations.iosys.LTISystem`
-.. |LTISystems| replace:: :class:`LTISystems <pymor.discretizations.iosys.LTISystem>`
-.. |SecondOrderSystem| replace:: :class:`~pymor.discretizations.iosys.SecondOrderSystem`
-.. |SecondOrderSystems| replace:: :class:`SecondOrderSystems <pymor.discretizations.iosys.SecondOrderSystem>`
-.. |TransferFunction| replace:: :class:`~pymor.discretizations.iosys.TransferFunction`
-.. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.discretizations.iosys.TransferFunction>`
+.. |LTIModel| replace:: :class:`~pymor.models.iosys.LTIModel`
+.. |LTIModels| replace:: :class:`LTIModels <pymor.models.iosys.LTIModel>`
+.. |SecondOrderModel| replace:: :class:`~pymor.models.iosys.SecondOrderModel`
+.. |SecondOrderModels| replace:: :class:`SecondOrderModels <pymor.models.iosys.SecondOrderModel>`
+.. |TransferFunction| replace:: :class:`~pymor.models.iosys.TransferFunction`
+.. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.models.iosys.TransferFunction>`
 
 .. |NumPy| replace:: :mod:`NumPy <numpy>`
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`

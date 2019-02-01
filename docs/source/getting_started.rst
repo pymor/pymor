@@ -136,46 +136,46 @@ We could do this by hand, creating a |Grid|, instatiating
 operators for each subblock of the domain, forming a |LincombOperator|
 to represent the affine decomposition, instantiating a
 :class:`~pymor.operators.cg.L2ProductFunctionalP1` as right hand side, and
-putting it all together into a |StationaryDiscretization|. However, since
+putting it all together into a |StationaryModel|. However, since
 :meth:`~pymor.analyticalproblems.thermalblock.thermal_block_problem` returns
 a :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`, we can use
 a predifined *discretizer* to do the work for us. In this case, we use
 :func:`~pymor.discretizers.cg.discretize_stationary_cg`:
 
->>> d, d_data = discretize_stationary_cg(p, diameter=1./100.)
+>>> fom, fom_data = discretize_stationary_cg(p, diameter=1./100.)
 
-``d`` is the |StationaryDiscretization| which has been created for us,
-whereas ``d_data`` contains some additional data, in particular the |Grid|
+``fom`` is the |StationaryModel| which has been created for us,
+whereas ``fom_data`` contains some additional data, in particular the |Grid|
 and the |BoundaryInfo| which have been created during discretization. We
 can have a look at the grid,
 
->>> print(d_data['grid'])
+>>> print(fom_data['grid'])
 Tria-Grid on domain [0,1] x [0,1]
 x0-intervals: 100, x1-intervals: 100
 elements: 40000, edges: 60200, vertices: 20201
 
 and, as always, we can display its class documentation using
-``help(d_data['grid'])``.
+``help(fom_data['grid'])``.
 
 Let's solve the thermal block problem and visualize the solution:
 
->>> U = d.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
->>> d.visualize(U, title='Solution')
-01:11 StationaryDiscretization: Solving ThermalBlock((3, 2))_CG for {diffusion: [1.0, 0.1, 0.3, 0.1, 0.2, 1.0]} ...
+>>> U = fom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
+>>> fom.visualize(U, title='Solution')
+01:11 StationaryModel: Solving ThermalBlock((3, 2))_CG for {diffusion: [1.0, 0.1, 0.3, 0.1, 0.2, 1.0]} ...
 
 Each class in pyMOR that describes a |Parameter| dependent mathematical
-object, like the |StationaryDiscretization| in our case, derives from
+object, like the |StationaryModel| in our case, derives from
 |Parametric| and determines the |Parameters| it expects during :meth:`__init__`
 by calling :meth:`~pymor.parameters.base.Parametric.build_parameter_type`.
 The resulting |ParameterType| is stored in the object's
 :attr:`~pymor.parameters.base.Parametric.parameter_type` attribute. Let us
 have a look:
 
->>> print(d.parameter_type)
+>>> print(fom.parameter_type)
 {diffusion: (2, 3)}
 
 This tells us, that the |Parameter| which
-:meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve` expects
+:meth:`~pymor.models.interfaces.ModelInterface.solve` expects
 should be a dictionary with one key ``'diffusion'`` whose value is a
 |NumPy array| of shape ``(2, 3)``, corresponding to the block structure of
 the problem. However, by using the
@@ -192,30 +192,30 @@ solve the high-dimensional problem for those parameters in the training set
 which are actually selected for basis extension. To control the condition of
 the reduced system matrix, we must ensure that the generated basis is
 orthonormal w.r.t. the H1_0-product on the solution space. For this we pass
-the :attr:`h1_0_semi_product` attribute of the discretization as inner product to
+the :attr:`h1_0_semi_product` attribute of the model as inner product to
 the reductor, which will also use it for computing the Riesz representatives
 required for error estimation. Moreover, we have to provide
 the reductor with a |ParameterFunctional| which computes a lower bound for
 the coercivity of the problem for a given parameter.
 
 >>> reductor = CoerciveRBReductor(
-...     d,
-...     product=d.h1_0_semi_product,
-...     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
+...     fom,
+...     product=fom.h1_0_semi_product,
+...     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', fom.parameter_type)
 ... )
 
-Moreover, we need to select a |Parameter| training set. The discretization
-``d`` already comes with a |ParameterSpace| which it has inherited from the
+Moreover, we need to select a |Parameter| training set. The model
+``fom`` already comes with a |ParameterSpace| which it has inherited from the
 analytical problem. We can sample our parameters from this space, which is a
 :class:`~pymor.parameters.spaces.CubicParameterSpace`. E.g.:
 
->>> samples = d.parameter_space.sample_uniformly(4)
+>>> samples = fom.parameter_space.sample_uniformly(4)
 >>> print(samples[0])
 {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]}
 
 Now we start the basis generation:
 
->>> greedy_data = greedy(d, reductor, samples,
+>>> greedy_data = greedy(fom, reductor, samples,
 ...                      use_estimator=True,
 ...                      max_extensions=32)
 16:52 greedy: Started greedy search on 4096 samples
@@ -229,7 +229,7 @@ Now we start the basis generation:
 16:52 greedy: Estimating errors ...
 16:55 greedy: Maximum error after 0 extensions: 1.8745731821515579 (mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]})
 16:55 greedy: Computing solution snapshot for mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
-16:55 |   StationaryDiscretization: Solving ThermalBlock((3, 2))_CG for {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
+16:55 |   StationaryModel: Solving ThermalBlock((3, 2))_CG for {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
 16:55 greedy: Extending basis with solution snapshot ...
                  ...
                  ...
@@ -256,12 +256,12 @@ obtain. ``greedy_data`` is a dictionary containing various data that has
 been generated during the run of the algorithm:
 
 >>> print(greedy_data.keys())
-dict_keys(['rd', 'max_errs', 'extensions', 'max_err_mus', 'time'])
+dict_keys(['rom', 'max_errs', 'extensions', 'max_err_mus', 'time'])
 
-The most important items is ``'rd'`` which holds the reduced |Discretization|
+The most important items is ``'rom'`` which holds the reduced |Model|
 obtained from applying our reductor with the final reduced basis.
 
->>> rd = greedy_data['rd']
+>>> rom = greedy_data['rom']
 
 All vectors in pyMOR are stored in so called |VectorArrays|. For example
 the solution ``U`` computed above is given as a |VectorArray| of length 1.
@@ -279,7 +279,7 @@ the H1-product. For this we use the :meth:`~pymor.operators.interfaces.OperatorI
 method:
 
 >>> import numpy as np
->>> gram_matrix = reductor.RB.gramian(d.h1_0_semi_product)
+>>> gram_matrix = reductor.RB.gramian(fom.h1_0_semi_product)
 >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
 3.0088616060491846e-14
 
@@ -288,7 +288,7 @@ The result is a vector of coefficients w.r.t. the reduced basis, which is
 currently stored in ``rb``. To form the linear combination, we can use the
 `reconstruct` method of the reductor:
 
->>> u = rd.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
+>>> u = rom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
 >>> print(u)
 [[  5.79477471e-01   5.91289054e-02   1.89924036e-01   1.89149529e-02
     1.81103127e-01   2.69920752e-02  -1.79611519e-01   7.99676272e-03
@@ -306,11 +306,11 @@ Finally we compute the reduction error and display the reduced solution along wi
 the detailed solution and the error:
 
 >>> ERR = U - U_red
->>> print(ERR.norm(d.h1_0_semi_product))
+>>> print(ERR.norm(fom.h1_0_semi_product))
 [0.00473238]
->>> d.visualize((U, U_red, ERR),
-...             legend=('Detailed', 'Reduced', 'Error'),
-...             separate_colorbars=True)
+>>> fom.visualize((U, U_red, ERR),
+...               legend=('Detailed', 'Reduced', 'Error'),
+...               separate_colorbars=True)
 
 We can nicely observe that, as expected, the error is maximized along the
 jumps of the diffusion coefficient.

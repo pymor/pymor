@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.projection import project
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import SecondOrderSystem
+from pymor.models.iosys import SecondOrderModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -21,12 +21,12 @@ class GenericSOBTpvReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     """
-    def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
-        self.d = d
+    def __init__(self, fom):
+        assert isinstance(fom, SecondOrderModel)
+        self.fom = fom
         self.V = None
         self.W = None
 
@@ -58,10 +58,10 @@ class GenericSOBTpvReductor(BasicInterface):
 
         Returns
         -------
-        rd
+        rom
             Reduced system.
         """
-        assert 0 < r < self.d.n
+        assert 0 < r < self.fom.n
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
@@ -80,13 +80,13 @@ class GenericSOBTpvReductor(BasicInterface):
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
         elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.M)
+            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.M)
 
-        self.pg_reductor = GenericPGReductor(self.d, self.W, self.V, projection == 'biorth', product=self.d.M)
+        self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection == 'biorth', product=self.fom.M)
 
-        rd = self.pg_reductor.reduce()
+        rom = self.pg_reductor.reduce()
 
-        return rd
+        return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -100,20 +100,20 @@ class SOBTpReductor(GenericSOBTpvReductor):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     """
     def _gramians(self):
-        pcf = self.d.gramian('pc_lrcf')
-        pof = self.d.gramian('po_lrcf')
-        vcf = self.d.gramian('vc_lrcf')
-        vof = self.d.gramian('vo_lrcf')
+        pcf = self.fom.gramian('pc_lrcf')
+        pof = self.fom.gramian('po_lrcf')
+        vcf = self.fom.gramian('vc_lrcf')
+        vof = self.fom.gramian('vo_lrcf')
         return pcf, pof, vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
         pcf, pof, vcf, vof = gramians
         _, sp, Vp = spla.svd(pof.inner(pcf))
-        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.d.M))
+        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.fom.M))
         Uv = Uv.T
         return pcf.lincomb(Vp[:r]), vof.lincomb(Uv[:r]), sp
 
@@ -125,17 +125,17 @@ class SOBTvReductor(GenericSOBTpvReductor):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     """
     def _gramians(self):
-        vcf = self.d.gramian('vc_lrcf')
-        vof = self.d.gramian('vo_lrcf')
+        vcf = self.fom.gramian('vc_lrcf')
+        vof = self.fom.gramian('vo_lrcf')
         return vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
         vcf, vof = gramians
-        Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.d.M))
+        Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.fom.M))
         Uv = Uv.T
         return vcf.lincomb(Vv[:r]), vof.lincomb(Uv[:r]), sv
 
@@ -147,17 +147,17 @@ class SOBTpvReductor(GenericSOBTpvReductor):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     """
     def _gramians(self):
-        pcf = self.d.gramian('pc_lrcf')
-        vof = self.d.gramian('vo_lrcf')
+        pcf = self.fom.gramian('pc_lrcf')
+        vof = self.fom.gramian('vo_lrcf')
         return pcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
         pcf, vof = gramians
-        Upv, spv, Vpv = spla.svd(vof.inner(pcf, product=self.d.M))
+        Upv, spv, Vpv = spla.svd(vof.inner(pcf, product=self.fom.M))
         Upv = Upv.T
         return pcf.lincomb(Vpv[:r]), vof.lincomb(Upv[:r]), spv
 
@@ -169,18 +169,18 @@ class SOBTvpReductor(GenericSOBTpvReductor):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     """
     def _gramians(self):
-        pof = self.d.gramian('po_lrcf')
-        vcf = self.d.gramian('vc_lrcf')
-        vof = self.d.gramian('vo_lrcf')
+        pof = self.fom.gramian('po_lrcf')
+        vcf = self.fom.gramian('vc_lrcf')
+        vof = self.fom.gramian('vo_lrcf')
         return pof, vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
         pof, vcf, vof = gramians
-        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.d.M))
+        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.fom.M))
         Uv = Uv.T
         _, svp, Vvp = spla.svd(pof.inner(vcf))
         return vcf.lincomb(Vvp[:r]), vof.lincomb(Uv[:r]), svp
@@ -193,12 +193,12 @@ class SOBTfvReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     """
-    def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
-        self.d = d
+    def __init__(self, fom):
+        assert isinstance(fom, SecondOrderModel)
+        self.fom = fom
         self.V = None
         self.W = None
 
@@ -222,15 +222,15 @@ class SOBTfvReductor(BasicInterface):
 
         Returns
         -------
-        rd
+        rom
             Reduced system.
         """
-        assert 0 < r < self.d.n
+        assert 0 < r < self.fom.n
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
-        pcf = self.d.gramian('pc_lrcf')
-        pof = self.d.gramian('po_lrcf')
+        pcf = self.fom.gramian('pc_lrcf')
+        pof = self.fom.gramian('po_lrcf')
 
         if r > min(len(pcf), len(pof)):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
@@ -248,16 +248,16 @@ class SOBTfvReductor(BasicInterface):
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.bases_are_biorthonormal = False
         elif projection == 'biorth':
-            self.V = gram_schmidt(self.V, product=self.d.M, atol=0, rtol=0)
+            self.V = gram_schmidt(self.V, product=self.fom.M, atol=0, rtol=0)
             self.bases_are_biorthonormal = True
 
         self.W = self.V
 
-        self.pg_reductor = GenericPGReductor(self.d, self.W, self.V, projection == 'biorth', product=self.d.M)
+        self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection == 'biorth', product=self.fom.M)
 
-        rd = self.pg_reductor.reduce()
+        rom = self.pg_reductor.reduce()
 
-        return rd
+        return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -271,12 +271,12 @@ class SOBTReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         The system which is to be reduced.
     """
-    def __init__(self, d):
-        assert isinstance(d, SecondOrderSystem)
-        self.d = d
+    def __init__(self, fom):
+        assert isinstance(fom, SecondOrderModel)
+        self.fom = fom
         self.V1 = None
         self.W1 = None
         self.V2 = None
@@ -302,17 +302,17 @@ class SOBTReductor(BasicInterface):
 
         Returns
         -------
-        rd
+        rom
             Reduced system.
         """
-        assert 0 < r < self.d.n
+        assert 0 < r < self.fom.n
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
-        pcf = self.d.gramian('pc_lrcf')
-        pof = self.d.gramian('po_lrcf')
-        vcf = self.d.gramian('vc_lrcf')
-        vof = self.d.gramian('vo_lrcf')
+        pcf = self.fom.gramian('pc_lrcf')
+        pof = self.fom.gramian('po_lrcf')
+        vcf = self.fom.gramian('vc_lrcf')
+        vof = self.fom.gramian('vo_lrcf')
 
         if r > min(len(pcf), len(pof), len(vcf), len(vof)):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
@@ -320,7 +320,7 @@ class SOBTReductor(BasicInterface):
         # find necessary SVDs
         Up, sp, Vp = spla.svd(pof.inner(pcf))
         Up = Up.T
-        Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.d.M))
+        Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.fom.M))
         Uv = Uv.T
 
         # compute projection matrices and find the reduced model
@@ -336,39 +336,39 @@ class SOBTReductor(BasicInterface):
             self.V2.scal(alpha2)
             self.W2.scal(alpha2)
             W1TV1invW1TV2 = self.W1.inner(self.V2)
-            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r, self.d.state_space.id))}
+            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r, self.fom.state_space.id))}
         elif projection == 'bfsr':
             self.V1 = gram_schmidt(self.V1, atol=0, rtol=0)
             self.W1 = gram_schmidt(self.W1, atol=0, rtol=0)
             self.V2 = gram_schmidt(self.V2, atol=0, rtol=0)
             self.W2 = gram_schmidt(self.W2, atol=0, rtol=0)
             W1TV1invW1TV2 = spla.solve(self.W1.inner(self.V1), self.W1.inner(self.V2))
-            projected_ops = {'M': project(self.d.M, range_basis=self.W2, source_basis=self.V2)}
+            projected_ops = {'M': project(self.fom.M, range_basis=self.W2, source_basis=self.V2)}
         elif projection == 'biorth':
             self.V1, self.W1 = gram_schmidt_biorth(self.V1, self.W1)
-            self.V2, self.W2 = gram_schmidt_biorth(self.V2, self.W2, product=self.d.M)
+            self.V2, self.W2 = gram_schmidt_biorth(self.V2, self.W2, product=self.fom.M)
             W1TV1invW1TV2 = self.W1.inner(self.V2)
-            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r, self.d.state_space.id))}
+            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r, self.fom.state_space.id))}
 
-        projected_ops.update({'E': project(self.d.E,
+        projected_ops.update({'E': project(self.fom.E,
                                            range_basis=self.W2,
                                            source_basis=self.V2),
-                              'K': project(self.d.K,
+                              'K': project(self.fom.K,
                                            range_basis=self.W2,
                                            source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
-                              'B': project(self.d.B,
+                              'B': project(self.fom.B,
                                            range_basis=self.W2,
                                            source_basis=None),
-                              'Cp': project(self.d.Cp,
+                              'Cp': project(self.fom.Cp,
                                             range_basis=None,
                                             source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
-                              'Cv': project(self.d.Cv,
+                              'Cv': project(self.fom.Cv,
                                             range_basis=None,
                                             source_basis=self.V2)})
 
-        rd = self.d.with_(operators=projected_ops,
-                          visualizer=None, estimator=None,
-                          cache_region=None, name=self.d.name + '_reduced')
-        rd.disable_logging()
+        rom = self.fom.with_(operators=projected_ops,
+                             visualizer=None, estimator=None,
+                             cache_region=None, name=self.fom.name + '_reduced')
+        rom.disable_logging()
 
-        return rd
+        return rom

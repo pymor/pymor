@@ -8,10 +8,10 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.playground.operators.numpy import NumpyListVectorArrayMatrixOperator
 
 
-def convert_to_numpy_list_vector_array(d):
+def convert_to_numpy_list_vector_array(m):
     """Use NumpyListVectorArrayMatrixOperator instead of NumpyMatrixOperator.
 
-    This simple function converts linear, affinely decomposed discretizations
+    This simple function converts linear, affinely decomposed models
     to use :class:`~pymor.playground.operators.numpy.NumpyListVectorArrayMatrixOperator`
     instead of |NumpyMatrixOperator|.
     """
@@ -30,7 +30,7 @@ def convert_to_numpy_list_vector_array(d):
         else:
             raise NotImplementedError
 
-    operators = {k: convert_operator(v) for k, v in d.operators.items()}
-    products = {k: convert_operator(v) for k, v in d.products.items()}
+    operators = {k: convert_operator(v) for k, v in m.operators.items()}
+    products = {k: convert_operator(v) for k, v in m.products.items()}
 
-    return d.with_(operators=operators, products=products)
+    return m.with_(operators=operators, products=products)

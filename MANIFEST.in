@@ -11,8 +11,8 @@ include pytest.ini
 include src/pymordemos/minimal_cpp_demo/bindings.py
 include src/pymordemos/minimal_cpp_demo/buildit.sh
 include src/pymordemos/minimal_cpp_demo/demo.py
-include src/pymordemos/minimal_cpp_demo/discretization.cc
-include src/pymordemos/minimal_cpp_demo/discretization.hh
+include src/pymordemos/minimal_cpp_demo/model.cc
+include src/pymordemos/minimal_cpp_demo/model.hh
 include src/pymordemos/minimal_cpp_demo/wrapper.py
 
 recursive-include src/pymortests/testdata *

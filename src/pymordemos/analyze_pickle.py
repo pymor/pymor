@@ -10,9 +10,9 @@ Usage:
   analyze_pickle.py convergence [--detailed=DETAILED_DATA] [--error-norm=NORM] [--ndim=NDIM] REDUCED_DATA SAMPLES
   analyze_pickle.py (-h | --help)
 
-This demo loads a pickled reduced discretization, solves for random
+This demo loads a pickled reduced model, solves for random
 parameters, estimates the reduction errors and then visualizes these
-estimates. If the detailed discretization and the reductor are
+estimates. If the detailed model and the reductor are
 also provided, the estimated error is visualized in comparison to
 the real reduction error.
 
@@ -20,12 +20,12 @@ The needed data files are created by the thermal block demo, by
 setting the '--pickle' option.
 
 Arguments:
-  REDUCED_DATA  File containing the pickled reduced discretization.
+  REDUCED_DATA  File containing the pickled reduced model.
 
   SAMPLES       Number of parameter samples to test with.
 
 Options:
-  --detailed=DETAILED_DATA  File containing the high-dimensional discretization
+  --detailed=DETAILED_DATA  File containing the high-dimensional model
                             and the reductor.
 
   --error-norm=NORM         Name of norm in which to compute the errors.
@@ -57,38 +57,38 @@ def _bins(start, stop, steps=100):
 def analyze_pickle_histogram(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
-    print('Loading reduced discretization ...')
-    rd = load(open(args['REDUCED_DATA'], 'rb'))
+    print('Loading reduced model ...')
+    rom = load(open(args['REDUCED_DATA'], 'rb'))
 
-    mus = rd.parameter_space.sample_randomly(args['SAMPLES'])
+    mus = rom.parameter_space.sample_randomly(args['SAMPLES'])
     us = []
     for mu in mus:
         print(f'Solving reduced for {mu} ... ', end='')
         sys.stdout.flush()
-        us.append(rd.solve(mu))
+        us.append(rom.solve(mu))
         print('done')
 
     print()
 
-    if hasattr(rd, 'estimate'):
+    if hasattr(rom, 'estimate'):
         ests = []
         for u, mu in zip(us, mus):
             print(f'Estimating error for {mu} ... ', end='')
             sys.stdout.flush()
-            ests.append(rd.estimate(u, mu=mu))
+            ests.append(rom.estimate(u, mu=mu))
             print('done')
 
     if args['--detailed']:
         print('Loading high-dimensional data ...')
-        d, reductor = load(open(args['--detailed'], 'rb'))
+        fom, reductor = load(open(args['--detailed'], 'rb'))
 
         errs = []
         for u, mu in zip(us, mus):
             print(f'Calculating error for {mu} ... ')
             sys.stdout.flush()
-            err = d.solve(mu) - reductor.reconstruct(u)
+            err = fom.solve(mu) - reductor.reconstruct(u)
             if args['--error-norm']:
-                errs.append(np.max(getattr(d, args['--error-norm'] + '_norm')(err)))
+                errs.append(np.max(getattr(fom, args['--error-norm'] + '_norm')(err)))
             else:
                 errs.append(np.max(err.l2_norm()))
             print('done')
@@ -100,7 +100,7 @@ def analyze_pickle_histogram(args):
     except AttributeError:
         pass  # plt.style is only available in newer matplotlib versions
 
-    if hasattr(rd, 'estimate') and args['--detailed']:
+    if hasattr(rom, 'estimate') and args['--detailed']:
 
         # setup axes
         left, width = 0.1, 0.65
@@ -142,7 +142,7 @@ def analyze_pickle_histogram(args):
 
         plt.show()
 
-    elif hasattr(rd, 'estimate'):
+    elif hasattr(rom, 'estimate'):
 
         total_min = min(ests) * 0.9
         total_max = max(ests) * 1.1
@@ -175,47 +175,47 @@ def analyze_pickle_histogram(args):
 def analyze_pickle_convergence(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
-    print('Loading reduced discretization ...')
-    rd = load(open(args['REDUCED_DATA'], 'rb'))
+    print('Loading reduced model ...')
+    rom = load(open(args['REDUCED_DATA'], 'rb'))
 
     if not args['--detailed']:
         raise ValueError('High-dimensional data file must be specified.')
     print('Loading high-dimensional data ...')
-    d, reductor = load(open(args['--detailed'], 'rb'))
-    d.enable_caching('disk')
+    fom, reductor = load(open(args['--detailed'], 'rb'))
+    fom.enable_caching('disk')
 
-    dim = rd.solution_space.dim
+    dim = rom.solution_space.dim
     if args['--ndim']:
         dims = np.linspace(0, dim, args['--ndim'], dtype=np.int)
     else:
         dims = np.arange(dim + 1)
 
-    mus = rd.parameter_space.sample_randomly(args['SAMPLES'])
+    mus = rom.parameter_space.sample_randomly(args['SAMPLES'])
 
     ESTS = []
     ERRS = []
     T_SOLVES = []
     T_ESTS = []
     for N in dims:
-        rd = reductor.reduce(dim=N)
+        rom = reductor.reduce(dim=N)
         print(f'N = {N:3} ', end='')
         us = []
         print('solve ', end='')
         sys.stdout.flush()
         start = time.time()
         for mu in mus:
-            us.append(rd.solve(mu))
+            us.append(rom.solve(mu))
         T_SOLVES.append((time.time() - start) * 1000. / len(mus))
 
         print('estimate ', end='')
         sys.stdout.flush()
-        if hasattr(rd, 'estimate'):
+        if hasattr(rom, 'estimate'):
             ests = []
             start = time.time()
             for u, mu in zip(us, mus):
                 # print('e', end='')
                 # sys.stdout.flush()
-                ests.append(rd.estimate(u, mu=mu))
+                ests.append(rom.estimate(u, mu=mu))
             ESTS.append(max(ests))
             T_ESTS.append((time.time() - start) * 1000. / len(mus))
 
@@ -223,9 +223,9 @@ def analyze_pickle_convergence(args):
         sys.stdout.flush()
         errs = []
         for u, mu in zip(us, mus):
-            err = d.solve(mu) - reductor.reconstruct(u)
+            err = fom.solve(mu) - reductor.reconstruct(u)
             if args['--error-norm']:
-                errs.append(np.max(getattr(d, args['--error-norm'] + '_norm')(err)))
+                errs.append(np.max(getattr(fom, args['--error-norm'] + '_norm')(err)))
             else:
                 errs.append(np.max(err.l2_norm()))
         ERRS.append(max(errs))
@@ -240,7 +240,7 @@ def analyze_pickle_convergence(args):
         pass  # plt.style is only available in newer matplotlib versions
 
     plt.subplot(1, 2, 1)
-    if hasattr(rd, 'estimate'):
+    if hasattr(rom, 'estimate'):
         plt.semilogy(dims, ESTS, label='max. estimate')
     plt.semilogy(dims, ERRS, label='max. error')
     plt.xlabel('dimension')
@@ -248,7 +248,7 @@ def analyze_pickle_convergence(args):
 
     plt.subplot(1, 2, 2)
     plt.plot(dims, T_SOLVES, label='avg. solve time')
-    if hasattr(rd, 'estimate'):
+    if hasattr(rom, 'estimate'):
         plt.plot(dims, T_ESTS, label='avg. estimate time')
     plt.xlabel('dimension')
     plt.ylabel('milliseconds')

@@ -21,8 +21,8 @@ class BufferReturn(pybindgen.ReturnValue):
         wrapper.build_params.add_parameter("N", [memview], prepend=True)
 
 
-mod = pybindgen.Module('discretization')
-mod.add_include('"discretization.hh"')
+mod = pybindgen.Module('model')
+mod.add_include('"model.hh"')
 
 mod.add_container('std::vector<double>', 'double', 'vector')  # declare a container only once
 
