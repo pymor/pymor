@@ -41,7 +41,7 @@ Options:
 """
 
 import sys
-import math as m
+import math
 import time
 
 from docopt import docopt
@@ -73,7 +73,7 @@ def burgers_demo(args):
 
     print('Discretize ...')
     if args['--grid-type'] == 'rect':
-        args['--grid'] *= 1. / m.sqrt(2)
+        args['--grid'] *= 1. / math.sqrt(2)
     m, data = discretize_instationary_fv(
         problem,
         diameter=1. / args['--grid'],

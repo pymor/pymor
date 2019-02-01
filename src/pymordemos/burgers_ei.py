@@ -80,7 +80,7 @@ Options:
 """
 
 import sys
-import math as m
+import math
 import time
 
 import numpy as np
@@ -130,7 +130,7 @@ def main(args):
 
     print('Discretize ...')
     if args['--grid-type'] == 'rect':
-        args['--grid'] *= 1. / m.sqrt(2)
+        args['--grid'] *= 1. / math.sqrt(2)
     fom, _ = discretize_instationary_fv(
         problem,
         diameter=1. / args['--grid'],
