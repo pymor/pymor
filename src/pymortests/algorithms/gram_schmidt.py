@@ -28,13 +28,13 @@ def test_gram_schmidt_with_R(vector_array):
     U = vector_array
 
     V = U.copy()
-    onb, R = gram_schmidt(U, compute_R=True, copy=True)
+    onb, R = gram_schmidt(U, return_R=True, copy=True)
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.dot(onb), np.eye(len(onb)))
     assert np.all(almost_equal(U, onb.lincomb(U.dot(onb)), rtol=1e-13))
     assert np.all(almost_equal(V, onb.lincomb(R.T)))
 
-    onb2, R2 = gram_schmidt(U, compute_R=True, copy=False)
+    onb2, R2 = gram_schmidt(U, return_R=True, copy=False)
     assert np.all(almost_equal(onb, onb2))
     assert np.all(R == R2)
     assert np.all(almost_equal(onb, U))
@@ -58,13 +58,13 @@ def test_gram_schmidt_with_product_and_R(operator_with_arrays_and_products):
     _, _, U, _, p, _ = operator_with_arrays_and_products
 
     V = U.copy()
-    onb, R = gram_schmidt(U, product=p, compute_R=True, copy=True)
+    onb, R = gram_schmidt(U, product=p, return_R=True, copy=True)
     assert np.all(almost_equal(U, V))
     assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
     assert np.all(almost_equal(U, onb.lincomb(p.apply2(U, onb)), rtol=1e-13))
     assert np.all(almost_equal(U, onb.lincomb(R.T)))
 
-    onb2, R2 = gram_schmidt(U, product=p, compute_R=True, copy=False)
+    onb2, R2 = gram_schmidt(U, product=p, return_R=True, copy=False)
     assert np.all(almost_equal(onb, onb2))
     assert np.all(R == R2)
     assert np.all(almost_equal(onb, U))

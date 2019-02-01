@@ -10,7 +10,7 @@ from pymor.core.logger import getLogger
 
 
 @defaults('atol', 'rtol', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
-def gram_schmidt(A, product=None, compute_R=False, atol=1e-13, rtol=1e-13, offset=0,
+def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset=0,
                  reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
                  copy=True):
     """Orthonormalize a |VectorArray| using the modified Gram-Schmidt algorithm.
@@ -22,7 +22,7 @@ def gram_schmidt(A, product=None, compute_R=False, atol=1e-13, rtol=1e-13, offse
     product
         The inner product |Operator| w.r.t. which to orthonormalize.
         If `None`, the Euclidean product is used.
-    compute_R
+    return_R
         If `True`, the R matrix from QR decomposition is returned.
     atol
         Vectors of norm smaller than `atol` are removed from the array.
@@ -58,10 +58,8 @@ def gram_schmidt(A, product=None, compute_R=False, atol=1e-13, rtol=1e-13, offse
     if copy:
         A = A.copy()
 
-    if compute_R:
-        R = np.eye(len(A))
-
     # main loop
+    R = np.eye(len(A))
     remove = []  # indices of to be removed vectors
     for i in range(offset, len(A)):
         # first calculate norm
@@ -74,8 +72,7 @@ def gram_schmidt(A, product=None, compute_R=False, atol=1e-13, rtol=1e-13, offse
 
         if i == 0:
             A[0].scal(1 / initial_norm)
-            if compute_R:
-                R[i, i] = initial_norm
+            R[i, i] = initial_norm
         else:
             norm = initial_norm
             # If reiterate is True, reiterate as long as the norm of the vector changes
@@ -87,8 +84,7 @@ def gram_schmidt(A, product=None, compute_R=False, atol=1e-13, rtol=1e-13, offse
                         continue
                     p = A[j].pairwise_inner(A[i], product)[0]
                     A[i].axpy(-p, A[j])
-                    if compute_R:
-                        R[j, i] += p
+                    R[j, i] += p
 
                 # calculate new norm
                 old_norm, norm = norm, A[i].norm(product)[0]
@@ -104,14 +100,12 @@ def gram_schmidt(A, product=None, compute_R=False, atol=1e-13, rtol=1e-13, offse
                     logger.info(f"Orthonormalizing vector {i} again")
                 else:
                     A[i].scal(1 / norm)
-                    if compute_R:
-                        R[i, i] = norm
+                    R[i, i] = norm
                     break
 
     if remove:
         del A[remove]
-        if compute_R:
-            R = np.delete(R, remove, axis=0)
+        R = np.delete(R, remove, axis=0)
 
     if check:
         error_matrix = A[offset:len(A)].inner(A, product)
@@ -121,10 +115,10 @@ def gram_schmidt(A, product=None, compute_R=False, atol=1e-13, rtol=1e-13, offse
             if err >= check_tol:
                 raise AccuracyError(f"result not orthogonal (max err={err})")
 
-    if compute_R:
+    if return_R:
         return A, R
-
-    return A
+    else:
+        return A
 
 
 def gram_schmidt_biorth(V, W, product=None,
