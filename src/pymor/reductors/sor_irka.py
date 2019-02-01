@@ -22,9 +22,9 @@ class SOR_IRKAReductor(BasicInterface):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
 
-    def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
-               projection='orth', use_arnoldi=False, conv_crit='sigma', compute_errors=False,
-               irka_options=None):
+    def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1,
+               force_sigma_in_rhp=False, projection='orth', use_arnoldi=False, conv_crit='sigma',
+               compute_errors=False, irka_options=None):
         r"""Reduce using SOR-IRKA.
 
         It uses IRKA as the intermediate reductor, to reduce from 2r to
@@ -109,7 +109,7 @@ class SOR_IRKAReductor(BasicInterface):
         fom = self.fom
         if not fom.cont_time:
             raise NotImplementedError
-        assert 0 < r < fom.n
+        assert 0 < r < fom.order
         assert isinstance(num_prev, int) and num_prev >= 1
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('sigma', 'h2')
@@ -123,7 +123,7 @@ class SOR_IRKAReductor(BasicInterface):
         assert c is None or isinstance(c, int) or c in fom.Cp.range and len(c) == r
         assert (rom0 is None
                 or isinstance(rom0, SecondOrderModel)
-                and rom0.n == r and rom0.B.source == fom.B.source and rom0.Cp.range == fom.Cp.range)
+                and rom0.order == r and rom0.B.source == fom.B.source and rom0.Cp.range == fom.Cp.range)
         assert sigma is None or rom0 is None
         assert b is None or rom0 is None
         assert c is None or rom0 is None
@@ -140,15 +140,15 @@ class SOR_IRKAReductor(BasicInterface):
                 np.random.seed(sigma)
                 sigma = np.abs(np.random.randn(r))
             if b is None:
-                b = fom.B.source.from_numpy(np.ones((r, fom.m)))
+                b = fom.B.source.from_numpy(np.ones((r, fom.input_dim)))
             elif isinstance(b, int):
                 np.random.seed(b)
-                b = fom.B.source.from_numpy(np.random.randn(r, fom.m))
+                b = fom.B.source.from_numpy(np.random.randn(r, fom.input_dim))
             if c is None:
-                c = fom.Cp.range.from_numpy(np.ones((r, fom.p)))
+                c = fom.Cp.range.from_numpy(np.ones((r, fom.output_dim)))
             elif isinstance(c, int):
                 np.random.seed(c)
-                c = fom.Cp.range.from_numpy(np.random.randn(r, fom.p))
+                c = fom.Cp.range.from_numpy(np.random.randn(r, fom.output_dim))
 
         # begin logging
         self.logger.info('Starting SOR-IRKA')

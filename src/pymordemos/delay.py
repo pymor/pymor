@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     nt = 1000
     t = np.linspace(0, 4, nt)
-    x_old = np.zeros(rom.n)
+    x_old = np.zeros(rom.order)
     y = np.zeros(nt)
     for i in range(1, nt):
         h = t[i] - t[i - 1]
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     B_ss = rom_ss.B.matrix
     C_ss = rom_ss.C.matrix
 
-    x_ss_old = np.zeros(rom_ss.n)
+    x_ss_old = np.zeros(rom_ss.order)
     y_ss = np.zeros(nt)
     for i in range(1, nt):
         h = t[i] - t[i - 1]

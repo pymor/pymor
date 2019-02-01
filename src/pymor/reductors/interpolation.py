@@ -183,7 +183,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         rom
             Reduced model.
         """
-        if use_arnoldi and self.fom.m == 1 and self.fom.p == 1:
+        if use_arnoldi and self.fom.input_dim == 1 and self.fom.output_dim == 1:
             return self.reduce_arnoldi(sigma, b, c)
         else:
             return super().reduce(sigma, b, c, projection=projection)
@@ -209,7 +209,7 @@ class LTI_BHIReductor(GenericBHIReductor):
             Reduced |LTIModel| model.
         """
         fom = self.fom
-        assert fom.m == 1 and fom.p == 1
+        assert fom.input_dim == 1 and fom.output_dim == 1
         r = len(sigma)
         assert b in fom.B.source and len(b) == r
         assert c in fom.C.range and len(c) == r
@@ -304,10 +304,10 @@ class TFInterpReductor(BasicInterface):
             length `r`.
         b
             Right tangential directions, |NumPy array| of shape
-            `(fom.m, r)`.
+            `(fom.input_dim, r)`.
         c
             Left tangential directions, |NumPy array| of shape
-            `(fom.p, r)`.
+            `(fom.output_dim, r)`.
 
         Returns
         -------
@@ -316,8 +316,8 @@ class TFInterpReductor(BasicInterface):
         """
         fom = self.fom
         r = len(sigma)
-        assert isinstance(b, np.ndarray) and b.shape == (fom.m, r)
-        assert isinstance(c, np.ndarray) and c.shape == (fom.p, r)
+        assert isinstance(b, np.ndarray) and b.shape == (fom.input_dim, r)
+        assert isinstance(c, np.ndarray) and c.shape == (fom.output_dim, r)
 
         # rescale tangential directions (to avoid overflow or underflow)
         if b.shape[0] > 1:
@@ -334,8 +334,8 @@ class TFInterpReductor(BasicInterface):
         # matrices of the interpolatory LTI system
         Er = np.empty((r, r), dtype=complex)
         Ar = np.empty((r, r), dtype=complex)
-        Br = np.empty((r, fom.m), dtype=complex)
-        Cr = np.empty((fom.p, r), dtype=complex)
+        Br = np.empty((r, fom.input_dim), dtype=complex)
+        Cr = np.empty((fom.output_dim, r), dtype=complex)
 
         Hs = [fom.eval_tf(s) for s in sigma]
         dHs = [fom.eval_dtf(s) for s in sigma]

@@ -76,7 +76,7 @@ class GenericBTReductor(BasicInterface):
             Reduced system.
         """
         assert r is not None or tol is not None
-        assert r is None or 0 < r < self.fom.n
+        assert r is None or 0 < r < self.fom.order
         assert projection in ('sr', 'bfsr', 'biorth')
 
         cf, of = self.gramians()
@@ -185,15 +185,18 @@ class BRBTReductor(GenericBTReductor):
         self.solver_options = solver_options
 
     def gramians(self):
-        A = self.fom.A
-        B = self.fom.B
-        C = self.fom.C
-        E = self.fom.E if not isinstance(self.fom.E, IdentityOperator) else None
+        fom = self.fom
+        A = fom.A
+        B = fom.B
+        C = fom.C
+        E = fom.E if not isinstance(fom.E, IdentityOperator) else None
         options = self.solver_options
 
-        cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), R=self.gamma**2 * np.eye(C.range.dim),
+        cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
+                                 R=self.gamma**2 * np.eye(fom.output_dim),
                                  trans=False, options=options)
-        of = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), R=self.gamma**2 * np.eye(B.source.dim),
+        of = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
+                                 R=self.gamma**2 * np.eye(fom.input_dim),
                                  trans=True, options=options)
         return cf, of
 

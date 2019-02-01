@@ -31,11 +31,11 @@ class InputOutputModel(ModelBase):
         self.cont_time = cont_time
 
     @property
-    def m(self):
+    def input_dim(self):
         return self.input_space.dim
 
     @property
-    def p(self):
+    def output_dim(self):
         return self.output_space.dim
 
     def _solve(self, mu=None):
@@ -63,7 +63,7 @@ class InputOutputModel(ModelBase):
         -------
         tfw
             Transfer function values at frequencies in `w`,
-            |NumPy array| of shape `(len(w), self.p, self.m)`.
+            |NumPy array| of shape `(len(w), self.output_dim, self.input_dim)`.
         """
         if not self.cont_time:
             raise NotImplementedError
@@ -129,7 +129,7 @@ class InputStateOutputModel(InputOutputModel):
         self.state_space = state_space
 
     @property
-    def n(self):
+    def order(self):
         return self.state_space.dim
 
     def __add__(self, other):
@@ -556,7 +556,7 @@ class LTIModel(InputStateOutputModel):
     @cached
     def poles(self):
         """Compute system poles."""
-        if self.n >= SPARSE_MIN_SIZE:
+        if self.order >= SPARSE_MIN_SIZE:
             if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
                 self.logger.warning('Converting operator A to a NumPy array.')
             if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse)
@@ -588,7 +588,7 @@ class LTIModel(InputStateOutputModel):
         -------
         tfs
             Transfer function evaluated at the complex number `s`,
-            |NumPy array| of shape `(self.p, self.m)`.
+            |NumPy array| of shape `(self.output_dim, self.input_dim)`.
         """
         A = self.A
         B = self.B
@@ -597,7 +597,7 @@ class LTIModel(InputStateOutputModel):
         E = self.E
 
         sEmA = s * E - A
-        if self.m <= self.p:
+        if self.input_dim <= self.output_dim:
             tfs = C.apply(sEmA.apply_inverse(B.as_range_array())).to_numpy().T
         else:
             tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
@@ -626,7 +626,7 @@ class LTIModel(InputStateOutputModel):
         -------
         dtfs
             Derivative of transfer function evaluated at the complex
-            number `s`, |NumPy array| of shape `(self.p, self.m)`.
+            number `s`, |NumPy array| of shape `(self.output_dim, self.input_dim)`.
         """
         A = self.A
         B = self.B
@@ -634,7 +634,7 @@ class LTIModel(InputStateOutputModel):
         E = self.E
 
         sEmA = (s * E - A).assemble()
-        if self.m <= self.p:
+        if self.input_dim <= self.output_dim:
             dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.as_range_array())))).to_numpy().T
         else:
             dtfs = -B.apply_adjoint(sEmA.apply_inverse_adjoint(E.apply_adjoint(sEmA.apply_inverse_adjoint(
@@ -747,7 +747,7 @@ class LTIModel(InputStateOutputModel):
         """Compute the H2-norm of the |LTIModel|."""
         if not self.cont_time:
             raise NotImplementedError
-        if self.m <= self.p:
+        if self.input_dim <= self.output_dim:
             cf = self.gramian('c_lrcf')
             return np.sqrt(self.C.apply(cf).l2_norm2().sum())
         else:
@@ -778,7 +778,7 @@ class LTIModel(InputStateOutputModel):
         if not config.HAVE_SLYCOT:
             raise NotImplementedError
 
-        if self.n >= SPARSE_MIN_SIZE:
+        if self.order >= SPARSE_MIN_SIZE:
             for op_name in ['A', 'B', 'C']:
                 if not (isinstance(getattr(self, op_name), NumpyMatrixOperator)
                         and not getattr(self, op_name).sparse):
@@ -797,7 +797,7 @@ class LTIModel(InputStateOutputModel):
         jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
         A, B, C, D, E = map(lambda op: to_matrix(op, format='dense'),
                             (self.A, self.B, self.C, self.D, self.E))
-        norm, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
+        norm, fpeak = ab13dd(dico, jobe, equil, jobd, self.order, self.input_dim, self.output_dim, A, E, B, C, D)
 
         if return_fpeak:
             return norm, fpeak
@@ -1144,7 +1144,7 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         tfs
             Transfer function evaluated at the complex number `s`,
-            |NumPy array| of shape `(self.p, self.m)`.
+            |NumPy array| of shape `(self.output_dim, self.input_dim)`.
         """
         M = self.M
         E = self.E
@@ -1155,7 +1155,7 @@ class SecondOrderModel(InputStateOutputModel):
         D = self.D
 
         s2MpsEpK = s**2 * M + s * E + K
-        if self.m <= self.p:
+        if self.input_dim <= self.output_dim:
             CppsCv = Cp + s * Cv
             tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T
         else:
@@ -1186,7 +1186,7 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         dtfs
             Derivative of transfer function evaluated at the complex
-            number `s`, |NumPy array| of shape `(self.p, self.m)`.
+            number `s`, |NumPy array| of shape `(self.output_dim, self.input_dim)`.
         """
         M = self.M
         E = self.E
@@ -1197,7 +1197,7 @@ class SecondOrderModel(InputStateOutputModel):
 
         s2MpsEpK = (s**2 * M + s * E + K).assemble()
         sM2pE = 2 * s * M + E
-        if self.m <= self.p:
+        if self.input_dim <= self.output_dim:
             dtfs = Cv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T * s
             CppsCv = Cp + s * Cv
             dtfs -= CppsCv.apply(s2MpsEpK.apply_inverse(sM2pE.apply(s2MpsEpK.apply_inverse(
@@ -1249,9 +1249,9 @@ class SecondOrderModel(InputStateOutputModel):
         else:
             g = self.to_lti().gramian(typ[1:])
             if typ.startswith('p'):
-                return g[:self.n, :self.n]
+                return g[:self.order, :self.order]
             else:
-                return g[self.n:, self.n:]
+                return g[self.order:, self.order:]
 
     def psv(self):
         """Position singular values.
@@ -1466,7 +1466,7 @@ class LinearDelayModel(InputStateOutputModel):
         -------
         tfs
             Transfer function evaluated at the complex number `s`,
-            |NumPy array| of shape `(self.p, self.m)`.
+            |NumPy array| of shape `(self.output_dim, self.input_dim)`.
         """
         A = self.A
         Ad = self.Ad
@@ -1476,7 +1476,7 @@ class LinearDelayModel(InputStateOutputModel):
         E = self.E
 
         middle = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
-        if self.m <= self.p:
+        if self.input_dim <= self.output_dim:
             tfs = C.apply(middle.apply_inverse(B.as_range_array())).to_numpy().T
         else:
             tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
@@ -1510,7 +1510,7 @@ class LinearDelayModel(InputStateOutputModel):
         -------
         dtfs
             Derivative of transfer function evaluated at the complex
-            number `s`, |NumPy array| of shape `(self.p, self.m)`.
+            number `s`, |NumPy array| of shape `(self.output_dim, self.input_dim)`.
         """
         A = self.A
         Ad = self.Ad
@@ -1521,7 +1521,7 @@ class LinearDelayModel(InputStateOutputModel):
         left_and_right = LincombOperator((E, A) + Ad,
                                          (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)).assemble()
         middle = LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
-        if self.m <= self.p:
+        if self.input_dim <= self.output_dim:
             dtfs = -C.apply(left_and_right.apply_inverse(middle.apply(left_and_right.apply_inverse(
                 B.as_range_array())))).to_numpy().T
         else:
