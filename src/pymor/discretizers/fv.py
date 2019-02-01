@@ -140,10 +140,6 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
         if num_flux == 'lax_friedrichs':
             L += [nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, p.nonlinear_advection,
                                                               dirichlet_data=p.dirichlet_data, lxf_lambda=lxf_lambda)]
-        elif num_flux == 'upwind':
-            L += [nonlinear_advection_upwind_operator(grid, boundary_info, p.nonlinear_advection,
-                                                      p.nonlinear_advection_derivative,
-                                                      dirichlet_data=p.dirichlet_data)]
         elif num_flux == 'engquist_osher':
             L += [nonlinear_advection_engquist_osher_operator(grid, boundary_info, p.nonlinear_advection,
                                                               p.nonlinear_advection_derivative,
