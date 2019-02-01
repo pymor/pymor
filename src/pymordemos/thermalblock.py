@@ -135,34 +135,34 @@ def main(args):
         assert False  # this should never happen
 
     if args['--alg'] == 'naive':
-        rd, red_summary = reduce_naive(fom=fom, reductor=reductor, basis_size=args['RBSIZE'])
+        rom, red_summary = reduce_naive(fom=fom, reductor=reductor, basis_size=args['RBSIZE'])
     elif args['--alg'] == 'greedy':
         parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS model
-        rd, red_summary = reduce_greedy(fom=fom, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
-                                        extension_alg_name=args['--extension-alg'],
-                                        max_extensions=args['RBSIZE'],
-                                        use_estimator=not args['--greedy-without-estimator'],
-                                        pool=pool if parallel else None)
+        rom, red_summary = reduce_greedy(fom=fom, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                         extension_alg_name=args['--extension-alg'],
+                                         max_extensions=args['RBSIZE'],
+                                         use_estimator=not args['--greedy-without-estimator'],
+                                         pool=pool if parallel else None)
     elif args['--alg'] == 'adaptive_greedy':
         parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS model
-        rd, red_summary = reduce_adaptive_greedy(fom=fom, reductor=reductor, validation_mus=args['SNAPSHOTS'],
-                                                 extension_alg_name=args['--extension-alg'],
-                                                 max_extensions=args['RBSIZE'],
-                                                 use_estimator=not args['--greedy-without-estimator'],
-                                                 rho=args['--adaptive-greedy-rho'],
-                                                 gamma=args['--adaptive-greedy-gamma'],
-                                                 theta=args['--adaptive-greedy-theta'],
-                                                 pool=pool if parallel else None)
+        rom, red_summary = reduce_adaptive_greedy(fom=fom, reductor=reductor, validation_mus=args['SNAPSHOTS'],
+                                                  extension_alg_name=args['--extension-alg'],
+                                                  max_extensions=args['RBSIZE'],
+                                                  use_estimator=not args['--greedy-without-estimator'],
+                                                  rho=args['--adaptive-greedy-rho'],
+                                                  gamma=args['--adaptive-greedy-gamma'],
+                                                  theta=args['--adaptive-greedy-theta'],
+                                                  pool=pool if parallel else None)
     elif args['--alg'] == 'pod':
-        rd, red_summary = reduce_pod(fom=fom, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
-                                     basis_size=args['RBSIZE'])
+        rom, red_summary = reduce_pod(fom=fom, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                      basis_size=args['RBSIZE'])
     else:
         assert False  # this should never happen
 
     if args['--pickle']:
         print(f"\nWriting reduced model to file {args['--pickle']}_reduced ...")
         with open(args['--pickle'] + '_reduced', 'wb') as f:
-            dump(rd, f)
+            dump(rom, f)
         if not args['--fenics']:  # FEniCS data structures do not support serialization
             print(f"Writing detailed model and reductor to file {args['--pickle']}_detailed ...")
             with open(args['--pickle'] + '_detailed', 'wb') as f:
@@ -170,7 +170,7 @@ def main(args):
 
     print('\nSearching for maximum error on random snapshots ...')
 
-    results = reduction_error_analysis(rd,
+    results = reduction_error_analysis(rom,
                                        fom=fom,
                                        reductor=reductor,
                                        estimator=True,
@@ -194,7 +194,7 @@ def main(args):
     if args['--plot-err']:
         mumax = results['max_error_mus'][0, -1]
         U = fom.solve(mumax)
-        URB = reductor.reconstruct(rd.solve(mumax))
+        URB = reductor.reconstruct(rom.solve(mumax))
         fom.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                     title='Maximum Error Solution', separate_colorbars=True, block=True)
 
@@ -371,7 +371,7 @@ def reduce_naive(fom, reductor, basis_size):
     for mu in training_set:
         reductor.extend_basis(fom.solve(mu), 'trivial')
 
-    rd = reductor.reduce()
+    rom = reductor.reduce()
 
     elapsed_time = time.time() - tic
 
@@ -380,7 +380,7 @@ def reduce_naive(fom, reductor, basis_size):
    elapsed time:   {elapsed_time}
 '''
 
-    return rd, summary
+    return rom, summary
 
 
 def reduce_greedy(fom, reductor, snapshots_per_block,
@@ -394,10 +394,10 @@ def reduce_greedy(fom, reductor, snapshots_per_block,
                          use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
                          extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
                          pool=pool)
-    rd = greedy_data['rd']
+    rom = greedy_data['rom']
 
     # generate summary
-    real_rb_size = rd.solution_space.dim
+    real_rb_size = rom.solution_space.dim
     training_set_size = len(training_set)
     summary = f'''Greedy basis generation:
    size of training set:   {training_set_size}
@@ -408,7 +408,7 @@ def reduce_greedy(fom, reductor, snapshots_per_block,
    elapsed time:           {greedy_data["time"]}
 '''
 
-    return rd, summary
+    return rom, summary
 
 
 def reduce_adaptive_greedy(fom, reductor, validation_mus,
@@ -422,10 +422,10 @@ def reduce_adaptive_greedy(fom, reductor, validation_mus,
                                   use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
                                   extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
                                   rho=rho, gamma=gamma, theta=theta, pool=pool)
-    rd = greedy_data['rd']
+    rom = greedy_data['rom']
 
     # generate summary
-    real_rb_size = rd.solution_space.dim
+    real_rb_size = rom.solution_space.dim
     # the validation set consists of `validation_mus` random parameters plus the centers of the adaptive sample set cells
     validation_mus += 1
     summary = f'''Adaptive greedy basis generation:
@@ -437,7 +437,7 @@ def reduce_adaptive_greedy(fom, reductor, validation_mus,
    elapsed time:                    {greedy_data["time"]}
 '''
 
-    return rd, summary
+    return rom, summary
 
 
 def reduce_pod(fom, reductor, snapshots_per_block, basis_size):
@@ -457,12 +457,12 @@ def reduce_pod(fom, reductor, snapshots_per_block, basis_size):
 
     print('Reducing ...')
     reductor.extend_basis(basis, 'trivial')
-    rd = reductor.reduce()
+    rom = reductor.reduce()
 
     elapsed_time = time.time() - tic
 
     # generate summary
-    real_rb_size = rd.solution_space.dim
+    real_rb_size = rom.solution_space.dim
     training_set_size = len(training_set)
     summary = f'''POD basis generation:
    size of training set:   {training_set_size}
@@ -471,7 +471,7 @@ def reduce_pod(fom, reductor, snapshots_per_block, basis_size):
    elapsed time:           {elapsed_time}
 '''
 
-    return rd, summary
+    return rom, summary
 
 
 if __name__ == '__main__':

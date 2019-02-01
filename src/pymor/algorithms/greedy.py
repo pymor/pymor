@@ -38,7 +38,7 @@ def greedy(fom, reductor, samples, use_estimator=True, error_norm=None,
     samples
         The set of |Parameter| samples on which to perform the greedy search.
     use_estimator
-        If `True`, use `rd.estimate()` to estimate the errors on the
+        If `True`, use `rom.estimate()` to estimate the errors on the
         sample set. Otherwise `fom.solve()` is called to compute the exact
         model reduction error.
     error_norm
@@ -62,7 +62,7 @@ def greedy(fom, reductor, samples, use_estimator=True, error_norm=None,
     -------
     Dict with the following fields:
 
-        :rd:                     The reduced |Model| obtained for the
+        :rom:                    The reduced |Model| obtained for the
                                  computed basis.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.
@@ -96,20 +96,20 @@ def greedy(fom, reductor, samples, use_estimator=True, error_norm=None,
 
         while True:
             with logger.block('Reducing ...'):
-                rd = reductor.reduce()
+                rom = reductor.reduce()
 
             if sample_count == 0:
                 logger.info('There is nothing else to do for empty samples.')
-                return {'rd': rd,
+                return {'rom': rom,
                         'max_errs': [], 'max_err_mus': [], 'extensions': 0,
                         'time': time.time() - tic}
 
             with logger.block('Estimating errors ...'):
                 if use_estimator:
-                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, fom=None, reductor=None,
+                    errors, mus = list(zip(*pool.apply(_estimate, rom=rom, fom=None, reductor=None,
                                                        samples=samples, error_norm=None)))
                 else:
-                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, fom=fom, reductor=reductor,
+                    errors, mus = list(zip(*pool.apply(_estimate, rom=rom, fom=fom, reductor=reductor,
                                                        samples=samples, error_norm=error_norm)))
             max_err_ind = np.argmax(errors)
             max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
@@ -141,26 +141,26 @@ def greedy(fom, reductor, samples, use_estimator=True, error_norm=None,
             if max_extensions is not None and extensions >= max_extensions:
                 logger.info(f'Maximum number of {max_extensions} extensions reached.')
                 with logger.block('Reducing once more ...'):
-                    rd = reductor.reduce()
+                    rom = reductor.reduce()
                 break
 
         tictoc = time.time() - tic
         logger.info(f'Greedy search took {tictoc} seconds')
-        return {'rd': rd,
+        return {'rom': rom,
                 'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
                 'time': tictoc}
 
 
-def _estimate(rd=None, fom=None, reductor=None, samples=None, error_norm=None):
+def _estimate(rom=None, fom=None, reductor=None, samples=None, error_norm=None):
     if not samples:
         return -1., None
 
     if fom is None:
-        errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
+        errors = [rom.estimate(rom.solve(mu), mu) for mu in samples]
     elif error_norm is not None:
-        errors = [error_norm(fom.solve(mu) - reductor.reconstruct(rd.solve(mu))) for mu in samples]
+        errors = [error_norm(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))) for mu in samples]
     else:
-        errors = [(fom.solve(mu) - reductor.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
+        errors = [(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))).l2_norm() for mu in samples]
     # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
     # if necessary
     errors = [x[0] if hasattr(x, '__len__') else x for x in errors]

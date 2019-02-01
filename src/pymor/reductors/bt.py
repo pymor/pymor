@@ -72,7 +72,7 @@ class GenericBTReductor(BasicInterface):
 
         Returns
         -------
-        rd
+        rom
             Reduced system.
         """
         assert r is not None or tol is not None
@@ -106,9 +106,9 @@ class GenericBTReductor(BasicInterface):
 
         self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection in ('sr', 'biorth'),
                                              product=self.fom.E)
-        rd = self.pg_reductor.reduce()
+        rom = self.pg_reductor.reduce()
 
-        return rd
+        return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""

@@ -12,7 +12,7 @@ from pymor.models.basic import StationaryModel
 from pymor.parallel.dummy import dummy_pool
 
 
-def reduction_error_analysis(rd, fom, reductor,
+def reduction_error_analysis(rom, fom, reductor,
                              test_mus=10, basis_sizes=0, random_seed=None,
                              estimator=True, condition=False, error_norms=(), error_norm_names=None,
                              estimator_norm_index=0, custom=(),
@@ -25,16 +25,16 @@ def reduction_error_analysis(rd, fom, reductor,
 
     Parameters
     ----------
-    rd
+    rom
         The reduced |Model|.
     fom
         The high-dimensional |Model|.
     reductor
-        The reductor which has created `rd`.
+        The reductor which has created `rom`.
     test_mus
         Either a list of |Parameters| to compute the errors for, or
         the number of parameters which are sampled randomly from
-        `parameter_space` (if given) or `rd.parameter_space`.
+        `parameter_space` (if given) or `rom.parameter_space`.
     basis_sizes
         Either a list of reduced basis dimensions to consider, or
         the number of dimensions (which are then selected equidistantly,
@@ -45,13 +45,13 @@ def reduction_error_analysis(rd, fom, reductor,
         If `test_mus` is a number, use this value as random seed
         for drawing the |Parameters|.
     estimator
-        If `True` evaluate the error estimator of `rd`
+        If `True` evaluate the error estimator of `rom`
         on the test |Parameters|.
     condition
         If `True`, compute the condition of the reduced system matrix
         for the given test |Parameters| (can only be specified if
-        `rd` is an instance of |StationaryModel|
-        and `rd.operator` is linear).
+        `rom` is an instance of |StationaryModel|
+        and `rom.operator` is linear).
     error_norms
         List of norms in which to compute the model reduction error.
     error_norm_names
@@ -65,7 +65,7 @@ def reduction_error_analysis(rd, fom, reductor,
         List of custom functions which are evaluated for each test |Parameter|
         and basis size. The functions must have the signature ::
 
-            def custom_value(rd, fom, reductor, mu, dim):
+            def custom_value(rom, fom, reductor, mu, dim):
                 pass
 
     plot
@@ -164,7 +164,7 @@ def reduction_error_analysis(rd, fom, reductor,
     assert not error_norms or (fom and reductor)
     assert error_norm_names is None or len(error_norm_names) == len(error_norms)
     assert not condition \
-        or isinstance(rd, StationaryModel) and rd.operator.linear
+        or isinstance(rom, StationaryModel) and rom.operator.linear
 
     logger = getLogger('pymor.algorithms.error')
     if pool is None or pool is dummy_pool:
@@ -175,15 +175,15 @@ def reduction_error_analysis(rd, fom, reductor,
     tic = time.time()
 
     if isinstance(test_mus, Number):
-        test_mus = rd.parameter_space.sample_randomly(test_mus, seed=random_seed)
+        test_mus = rom.parameter_space.sample_randomly(test_mus, seed=random_seed)
     if isinstance(basis_sizes, Number):
         if basis_sizes == 1:
-            basis_sizes = [rd.solution_space.dim]
+            basis_sizes = [rom.solution_space.dim]
         else:
             if basis_sizes == 0:
-                basis_sizes = rd.solution_space.dim + 1
-            basis_sizes = min(rd.solution_space.dim + 1, basis_sizes)
-            basis_sizes = np.linspace(0, rd.solution_space.dim, basis_sizes).astype(int)
+                basis_sizes = rom.solution_space.dim + 1
+            basis_sizes = min(rom.solution_space.dim + 1, basis_sizes)
+            basis_sizes = np.linspace(0, rom.solution_space.dim, basis_sizes).astype(int)
     if error_norm_names is None:
         error_norm_names = tuple(norm.name for norm in error_norms)
 
@@ -337,10 +337,10 @@ def _compute_errors(mu, fom, reductor, estimator, error_norms, condition, custom
             norms[i_norm] = n
 
     for i_N, N in enumerate(basis_sizes):
-        rd = reductor.reduce(dim=N)
-        u = rd.solve(mu)
+        rom = reductor.reduce(dim=N)
+        u = rom.solve(mu)
         if estimator:
-            e = rd.estimate(u, mu)
+            e = rom.estimate(u, mu)
             e = e[0] if hasattr(e, '__len__') else e
             estimates[i_N] = e
         if fom and reductor:
@@ -350,9 +350,9 @@ def _compute_errors(mu, fom, reductor, estimator, error_norms, condition, custom
                 e = e[0] if hasattr(e, '__len__') else e
                 errors[i_norm, i_N] = e
         if condition:
-            conditions[i_N] = np.linalg.cond(rd.operator.assemble(mu).matrix) if N > 0 else 0.
+            conditions[i_N] = np.linalg.cond(rom.operator.assemble(mu).matrix) if N > 0 else 0.
         for i_custom, cust in enumerate(custom):
-            c = cust(rd=rd,
+            c = cust(rom=rom,
                      fom=fom,
                      reductor=reductor,
                      mu=mu,

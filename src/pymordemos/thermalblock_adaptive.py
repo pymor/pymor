@@ -154,19 +154,19 @@ def thermalblock_demo(args):
         visualize=not args['--no-visualize-refinement']
     )
 
-    rd = greedy_data['rd']
+    rom = greedy_data['rom']
 
     if args['--pickle']:
         print(f"\nWriting reduced model to file {args['--pickle']}_reduced ...")
         with open(args['--pickle'] + '_reduced', 'wb') as f:
-            dump(rd, f)
+            dump(rom, f)
         print(f"Writing detailed model and reductor to file {args['--pickle']}_detailed ...")
         with open(args['--pickle'] + '_detailed', 'wb') as f:
             dump((fom, reductor), f)
 
     print('\nSearching for maximum error on random snapshots ...')
 
-    results = reduction_error_analysis(rd,
+    results = reduction_error_analysis(rom,
                                        fom=fom,
                                        reductor=reductor,
                                        estimator=True,
@@ -177,7 +177,7 @@ def thermalblock_demo(args):
                                        plot=True,
                                        pool=pool)
 
-    real_rb_size = rd.solution_space.dim
+    real_rb_size = rom.solution_space.dim
 
     print('''
 *** RESULTS ***
@@ -204,7 +204,7 @@ Greedy basis generation:
     if args['--plot-err']:
         mumax = results['max_error_mus'][0, -1]
         U = fom.solve(mumax)
-        URB = reductor.reconstruct(rd.solve(mumax))
+        URB = reductor.reconstruct(rom.solve(mumax))
         fom.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                     title='Maximum Error Solution', separate_colorbars=True, block=True)
 

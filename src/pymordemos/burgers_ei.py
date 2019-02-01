@@ -198,7 +198,7 @@ def main(args):
                          extension_params={'method': 'pod'}, max_extensions=args['RBSIZE'],
                          pool=pool)
 
-    rd = greedy_data['rd']
+    rom = greedy_data['rom']
 
     print('\nSearching for maximum error on random snapshots ...')
 
@@ -208,14 +208,14 @@ def main(args):
 
     def error_analysis(N, M):
         print(f'N = {N}, M = {M}: ', end='')
-        rd = reductor.reduce(N)
-        rd = rd.with_(operator=rd.operator.with_cb_dim(M))
+        rom = reductor.reduce(N)
+        rom = rom.with_(operator=rom.operator.with_cb_dim(M))
         l2_err_max = -1
         mumax = None
         for mu in mus:
             print('.', end='')
             sys.stdout.flush()
-            u = rd.solve(mu)
+            u = rom.solve(mu)
             URB = reductor.reconstruct(u)
             U = fom.solve(mu)
             l2_err = np.max(fom.l2_norm(U - URB))
@@ -290,7 +290,7 @@ def main(args):
         plt.show()
     if args['--plot-err']:
         U = fom.solve(mumax)
-        URB = reductor.reconstruct(rd.solve(mumax))
+        URB = reductor.reconstruct(rom.solve(mumax))
         fom.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                       title='Maximum Error Solution', separate_colorbars=True)
 

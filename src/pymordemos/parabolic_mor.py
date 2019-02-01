@@ -196,7 +196,7 @@ def reduce_greedy(fom, reductor, snapshots, basis_size):
     greedy_data = greedy(fom, reductor, training_set, max_extensions=basis_size, pool=pool,
                          extension_params={'method': 'pod'})
 
-    return greedy_data['rd']
+    return greedy_data['rom']
 
 
 def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
@@ -207,7 +207,7 @@ def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
                                   extension_params={'method': 'pod'}, max_extensions=basis_size,
                                   pool=pool)
 
-    return greedy_data['rd']
+    return greedy_data['rom']
 
 
 def reduce_pod(fom, reductor, snapshots, basis_size):
@@ -221,9 +221,9 @@ def reduce_pod(fom, reductor, snapshots, basis_size):
     basis, singular_values = pod(snapshots, modes=basis_size, product=fom.h1_0_semi_product)
     reductor.extend_basis(basis, 'trivial', orthonormal=True)
 
-    rd = reductor.reduce()
+    rom = reductor.reduce()
 
-    return rd
+    return rom
 
 
 ####################################################################################################
@@ -248,18 +248,18 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     # generate reduced model
     ########################
     if ALG == 'greedy':
-        rd = reduce_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'adaptive_greedy':
-        rd = reduce_adaptive_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_adaptive_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':
-        rd = reduce_pod(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_pod(fom, reductor, SNAPSHOTS, RBSIZE)
     else:
         raise NotImplementedError
 
     # evaluate the reduction error
     ##############################
     results = reduction_error_analysis(
-        rd, fom=fom, reductor=reductor, estimator=True,
+        rom, fom=fom, reductor=reductor, estimator=True,
         error_norms=[lambda U: DT * np.sqrt(np.sum(fom.h1_0_semi_norm(U)[1:]**2))],
         error_norm_names=['l^2-h^1'],
         condition=False, test_mus=TEST, random_seed=999, plot=True
@@ -274,7 +274,7 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     # write results to disk
     #######################
     from pymor.core.pickle import dump
-    dump(rd, open('reduced_model.out', 'wb'))
+    dump(rom, open('reduced_model.out', 'wb'))
     results.pop('figure')  # matplotlib figures cannot be serialized
     dump(results, open('results.out', 'wb'))
 
@@ -282,7 +282,7 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     #####################################################
     mumax = results['max_error_mus'][0, -1]
     U = fom.solve(mumax)
-    U_RB = reductor.reconstruct(rd.solve(mumax))
+    U_RB = reductor.reconstruct(rom.solve(mumax))
     if BACKEND == 'fenics':  # right now the fenics visualizer does not support time trajectories
         U = U[len(U) - 1].copy()
         U_RB = U_RB[len(U_RB) - 1].copy()

@@ -58,16 +58,16 @@ class CoerciveRBReductor(GenericRBReductor):
 
     def _reduce(self):
         with self.logger.block('RB projection ...'):
-            rd = super()._reduce()
+            rom = super()._reduce()
 
         with self.logger.block('Assembling error estimator ...'):
             residual = self.residual_reductor.reduce()
 
             estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
                                             self.coercivity_estimator)
-            rd = rd.with_(estimator=estimator)
+            rom = rom.with_(estimator=estimator)
 
-        return rd
+        return rom
 
 
 class CoerciveRBEstimator(ImmutableInterface):
@@ -154,7 +154,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
 
     def _reduce(self):
         fom, RB, extends = self.fom, self.RB, self.extends
-        rd = super()._reduce()
+        rom = super()._reduce()
         if extends:
             old_RB_size = extends[0]
             old_data = extends[1]
@@ -222,11 +222,11 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
         estimator = SimpleCoerciveRBEstimator(estimator_matrix, self.coercivity_estimator)
-        rd = rd.with_(estimator=estimator)
+        rom = rom.with_(estimator=estimator)
 
         self.extends = (len(RB), dict(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os))
 
-        return rd
+        return rom
 
 
 class SimpleCoerciveRBEstimator(ImmutableInterface):

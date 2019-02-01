@@ -70,7 +70,7 @@ class GenericBHIReductor(BasicInterface):
 
         Returns
         -------
-        rd
+        rom
             Reduced model.
         """
         r = len(sigma)
@@ -117,8 +117,8 @@ class GenericBHIReductor(BasicInterface):
 
         self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection == 'biorth', product=self._product)
 
-        rd = self.pg_reductor.reduce()
-        return rd
+        rom = self.pg_reductor.reduce()
+        return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -180,7 +180,7 @@ class LTI_BHIReductor(GenericBHIReductor):
 
         Returns
         -------
-        rd
+        rom
             Reduced model.
         """
         if use_arnoldi and self.fom.m == 1 and self.fom.p == 1:
@@ -205,7 +205,7 @@ class LTI_BHIReductor(GenericBHIReductor):
 
         Returns
         -------
-        rd
+        rom
             Reduced |LTIModel| model.
         """
         fom = self.fom
@@ -217,8 +217,8 @@ class LTI_BHIReductor(GenericBHIReductor):
         self.V = arnoldi(fom.A, fom.E, fom.B, sigma)
         self.W = arnoldi(fom.A, fom.E, fom.C, sigma, trans=True)
 
-        rd = super(GenericBHIReductor, self).reduce()
-        return rd
+        rom = super(GenericBHIReductor, self).reduce()
+        return rom
 
 
 class SO_BHIReductor(GenericBHIReductor):

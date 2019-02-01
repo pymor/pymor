@@ -62,13 +62,13 @@ reduced_basis = pod(snapshots, 4)[0]
 
 # reduce the model
 reductor = GenericRBReductor(fom, reduced_basis, basis_is_orthonormal=True)
-rd = reductor.reduce()
+rom = reductor.reduce()
 
 # stochastic error estimation
 mu_max = None
 err_max = -1.
 for mu in fom.parameter_space.sample_randomly(10):
-    U_RB = (reductor.reconstruct(rd.solve(mu)))
+    U_RB = (reductor.reconstruct(rom.solve(mu)))
     U = fom.solve(mu)
     err = np.max((U_RB-U).l2_norm())
     if err > err_max:
@@ -76,7 +76,7 @@ for mu in fom.parameter_space.sample_randomly(10):
         mu_max = mu
 
 # visualize maximum error solution
-U_RB = (reductor.reconstruct(rd.solve(mu_max)))
+U_RB = (reductor.reconstruct(rom.solve(mu_max)))
 U = fom.solve(mu_max)
 fom.visualize((U_RB, U), title=f'mu = {mu}', legend=('reduced', 'detailed'))
 fom.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))

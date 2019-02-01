@@ -58,7 +58,7 @@ class GenericSOBTpvReductor(BasicInterface):
 
         Returns
         -------
-        rd
+        rom
             Reduced system.
         """
         assert 0 < r < self.fom.n
@@ -84,9 +84,9 @@ class GenericSOBTpvReductor(BasicInterface):
 
         self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection == 'biorth', product=self.fom.M)
 
-        rd = self.pg_reductor.reduce()
+        rom = self.pg_reductor.reduce()
 
-        return rd
+        return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -222,7 +222,7 @@ class SOBTfvReductor(BasicInterface):
 
         Returns
         -------
-        rd
+        rom
             Reduced system.
         """
         assert 0 < r < self.fom.n
@@ -255,9 +255,9 @@ class SOBTfvReductor(BasicInterface):
 
         self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection == 'biorth', product=self.fom.M)
 
-        rd = self.pg_reductor.reduce()
+        rom = self.pg_reductor.reduce()
 
-        return rd
+        return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -302,7 +302,7 @@ class SOBTReductor(BasicInterface):
 
         Returns
         -------
-        rd
+        rom
             Reduced system.
         """
         assert 0 < r < self.fom.n
@@ -366,9 +366,9 @@ class SOBTReductor(BasicInterface):
                                             range_basis=None,
                                             source_basis=self.V2)})
 
-        rd = self.fom.with_(operators=projected_ops,
-                            visualizer=None, estimator=None,
-                            cache_region=None, name=self.fom.name + '_reduced')
-        rd.disable_logging()
+        rom = self.fom.with_(operators=projected_ops,
+                             visualizer=None, estimator=None,
+                             cache_region=None, name=self.fom.name + '_reduced')
+        rom.disable_logging()
 
-        return rd
+        return rom

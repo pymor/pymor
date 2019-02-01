@@ -256,12 +256,12 @@ obtain. ``greedy_data`` is a dictionary containing various data that has
 been generated during the run of the algorithm:
 
 >>> print(greedy_data.keys())
-dict_keys(['rd', 'max_errs', 'extensions', 'max_err_mus', 'time'])
+dict_keys(['rom', 'max_errs', 'extensions', 'max_err_mus', 'time'])
 
-The most important items is ``'rd'`` which holds the reduced |Model|
+The most important items is ``'rom'`` which holds the reduced |Model|
 obtained from applying our reductor with the final reduced basis.
 
->>> rd = greedy_data['rd']
+>>> rom = greedy_data['rom']
 
 All vectors in pyMOR are stored in so called |VectorArrays|. For example
 the solution ``U`` computed above is given as a |VectorArray| of length 1.
@@ -288,7 +288,7 @@ The result is a vector of coefficients w.r.t. the reduced basis, which is
 currently stored in ``rb``. To form the linear combination, we can use the
 `reconstruct` method of the reductor:
 
->>> u = rd.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
+>>> u = rom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
 >>> print(u)
 [[  5.79477471e-01   5.91289054e-02   1.89924036e-01   1.89149529e-02
     1.81103127e-01   2.69920752e-02  -1.79611519e-01   7.99676272e-03

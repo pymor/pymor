@@ -78,7 +78,7 @@ class ParabolicRBReductor(GenericRBReductor):
 
     def _reduce(self):
         with self.logger.block('RB projection ...'):
-            rd = super()._reduce()
+            rom = super()._reduce()
 
         with self.logger.block('Assembling error estimator ...'):
             residual = self.residual_reductor.reduce()
@@ -87,9 +87,9 @@ class ParabolicRBReductor(GenericRBReductor):
             estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
                                              initial_residual, self.initial_residual_reductor.residual_range_dims,
                                              self.coercivity_estimator)
-            rd = rd.with_(estimator=estimator)
+            rom = rom.with_(estimator=estimator)
 
-        return rd
+        return rom
 
 
 class ParabolicRBEstimator(ImmutableInterface):

@@ -51,7 +51,7 @@ class GenericRBReductor(BasicInterface):
         self.basis_is_orthonormal = basis_is_orthonormal
         self.vector_ranged_operators = vector_ranged_operators
         self.product = product
-        self._last_rd = None
+        self._last_rom = None
 
     def reduce(self, dim=None):
         """Perform the reduced basis projection.
@@ -70,10 +70,10 @@ class GenericRBReductor(BasicInterface):
             dim = len(self.RB)
         if dim > len(self.RB):
             raise ValueError('Specified reduced state dimension larger than reduced basis')
-        if self._last_rd is None or dim > self._last_rd.solution_space.dim:
-            self._last_rd = self._reduce()
-        if dim == self._last_rd.solution_space.dim:
-            return self._last_rd
+        if self._last_rom is None or dim > self._last_rom.solution_space.dim:
+            self._last_rom = self._reduce()
+        if dim == self._last_rom.solution_space.dim:
+            return self._last_rom
         else:
             return self._reduce_to_subbasis(dim)
 
@@ -106,15 +106,15 @@ class GenericRBReductor(BasicInterface):
 
         projected_products = {k: project_operator(k, p) for k, p in fom.products.items()}
 
-        rd = fom.with_(operators=projected_operators, products=projected_products,
-                       visualizer=None, estimator=None,
-                       cache_region=None, name=fom.name + '_reduced')
-        rd.disable_logging()
+        rom = fom.with_(operators=projected_operators, products=projected_products,
+                        visualizer=None, estimator=None,
+                        cache_region=None, name=fom.name + '_reduced')
+        rom.disable_logging()
 
-        return rd
+        return rom
 
     def _reduce_to_subbasis(self, dim):
-        rd = self._last_rd
+        rom = self._last_rom
 
         def project_operator(k, op):
             if k in self.vector_ranged_operators and not self.basis_is_orthonormal:
@@ -122,7 +122,7 @@ class GenericRBReductor(BasicInterface):
                         and op.operators[0].name == 'inverse_projection_op')
                 pop = project_to_subbasis(op.operators[1],
                                           dim_range=dim,
-                                          dim_source=dim if op.source == rd.solution_space else None)
+                                          dim_source=dim if op.source == rom.solution_space else None)
                 inverse_projection_op = InverseOperator(
                     project_to_subbasis(op.operators[0].operator, dim_range=dim, dim_source=dim),
                     name='inverse_projection_op'
@@ -130,22 +130,22 @@ class GenericRBReductor(BasicInterface):
                 return Concatenation([inverse_projection_op, pop])
             else:
                 return project_to_subbasis(op,
-                                           dim_range=dim if op.range == rd.solution_space else None,
-                                           dim_source=dim if op.source == rd.solution_space else None)
+                                           dim_range=dim if op.range == rom.solution_space else None,
+                                           dim_source=dim if op.source == rom.solution_space else None)
 
-        projected_operators = {k: project_operator(k, op) if op else None for k, op in rd.operators.items()}
+        projected_operators = {k: project_operator(k, op) if op else None for k, op in rom.operators.items()}
 
-        projected_products = {k: project_operator(k, op) for k, op in rd.products.items()}
+        projected_products = {k: project_operator(k, op) for k, op in rom.products.items()}
 
-        if rd.estimator:
-            estimator = rd.estimator.restricted_to_subbasis(dim, m=rd)
+        if rom.estimator:
+            estimator = rom.estimator.restricted_to_subbasis(dim, m=rom)
         else:
             estimator = None
 
-        rrd = rd.with_(operators=projected_operators, products=projected_products, estimator=estimator,
-                       visualizer=None, name=rd.name + '_reduced_to_subbasis')
+        rrom = rom.with_(operators=projected_operators, products=projected_products, estimator=estimator,
+                         visualizer=None, name=rom.name + '_reduced_to_subbasis')
 
-        return rrd
+        return rrom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -272,12 +272,12 @@ class GenericPGReductor(BasicInterface):
 
         projected_ops = {k: project_operator(k, op) for k, op in fom.operators.items()}
 
-        rd = fom.with_(operators=projected_ops,
-                       visualizer=None, estimator=None,
-                       cache_region=None, name=fom.name + '_reduced')
-        rd.disable_logging()
+        rom = fom.with_(operators=projected_ops,
+                        visualizer=None, estimator=None,
+                        cache_region=None, name=fom.name + '_reduced')
+        rom.disable_logging()
 
-        return rd
+        return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""

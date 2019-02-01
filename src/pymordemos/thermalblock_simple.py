@@ -232,9 +232,9 @@ def reduce_naive(fom, reductor, basis_size):
     for mu in training_set:
         reductor.extend_basis(fom.solve(mu), 'trivial')
 
-    rd = reductor.reduce()
+    rom = reductor.reduce()
 
-    return rd
+    return rom
 
 
 def reduce_greedy(fom, reductor, snapshots, basis_size):
@@ -247,7 +247,7 @@ def reduce_greedy(fom, reductor, snapshots, basis_size):
                          max_extensions=basis_size,
                          pool=pool)
 
-    return greedy_data['rd']
+    return greedy_data['rom']
 
 
 def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
@@ -259,7 +259,7 @@ def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
                                   max_extensions=basis_size,
                                   pool=pool)
 
-    return greedy_data['rd']
+    return greedy_data['rom']
 
 
 def reduce_pod(fom, reductor, snapshots, basis_size):
@@ -273,9 +273,9 @@ def reduce_pod(fom, reductor, snapshots, basis_size):
     basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.product)
     reductor.extend_basis(basis, 'trivial')
 
-    rd = reductor.reduce()
+    rom = reductor.reduce()
 
-    return rd
+    return rom
 
 
 ####################################################################################################
@@ -313,19 +313,19 @@ def main():
     # generate reduced model
     ########################
     if ALG == 'naive':
-        rd = reduce_naive(fom, reductor, RBSIZE)
+        rom = reduce_naive(fom, reductor, RBSIZE)
     elif ALG == 'greedy':
-        rd = reduce_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'adaptive_greedy':
-        rd = reduce_adaptive_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_adaptive_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':
-        rd = reduce_pod(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_pod(fom, reductor, SNAPSHOTS, RBSIZE)
     else:
         raise NotImplementedError
 
     # evaluate the reduction error
     ##############################
-    results = reduction_error_analysis(rd, fom=fom, reductor=reductor, estimator=True,
+    results = reduction_error_analysis(rom, fom=fom, reductor=reductor, estimator=True,
                                        error_norms=[fom.h1_0_semi_norm], condition=True,
                                        test_mus=TEST, random_seed=999, plot=True)
 
@@ -338,7 +338,7 @@ def main():
     # write results to disk
     #######################
     from pymor.core.pickle import dump
-    dump(rd, open('reduced_model.out', 'wb'))
+    dump(rom, open('reduced_model.out', 'wb'))
     results.pop('figure')  # matplotlib figures cannot be serialized
     dump(results, open('results.out', 'wb'))
 
@@ -346,7 +346,7 @@ def main():
     #####################################################
     mumax = results['max_error_mus'][0, -1]
     U = fom.solve(mumax)
-    U_RB = reductor.reconstruct(rd.solve(mumax))
+    U_RB = reductor.reconstruct(rom.solve(mumax))
     fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                   separate_colorbars=True, block=True)
 
