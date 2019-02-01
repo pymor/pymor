@@ -80,7 +80,7 @@ def elliptic_demo(args):
     for n in [32, 128]:
         print('Discretize ...')
         discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-        d, data = discretizer(
+        m, data = discretizer(
             analytical_problem=problem,
             grid_type=RectGrid if args['--rect'] else TriaGrid,
             diameter=np.sqrt(2) / n if args['--rect'] else 1. / n
@@ -90,8 +90,8 @@ def elliptic_demo(args):
         print()
 
         print('Solve ...')
-        U = d.solve()
-        d.visualize(U, title=repr(grid))
+        U = m.solve()
+        m.visualize(U, title=repr(grid))
         print()
 
 

@@ -46,19 +46,19 @@ def elliptic_gmsh_demo(args):
     )
 
     print('Discretize ...')
-    d, data = discretize_stationary_cg(analytical_problem=problem, diameter=args['CLSCALE'])
+    m, data = discretize_stationary_cg(analytical_problem=problem, diameter=args['CLSCALE'])
     grid = data['grid']
     print(grid)
     print()
 
     print('Solve ...')
-    U = d.solve()
+    U = m.solve()
 
     solution = ExpressionFunction('(lambda r, phi: r**(pi/angle) * sin(phi * pi/angle))(*polar(x))', 2, (),
                                   {}, {'angle': args['ANGLE']})
     U_ref = U.space.make_array(solution(grid.centers(2)))
 
-    d.visualize((U, U_ref, U-U_ref),
+    m.visualize((U, U_ref, U-U_ref),
                 legend=('Solution', 'Analytical solution (circular boundary)', 'Error'),
                 separate_colorbars=True)
 

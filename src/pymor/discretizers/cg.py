@@ -52,14 +52,14 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     Returns
     -------
-    d
+    m
         The |Model| that has been generated.
     data
         Dictionary with the following entries:
 
             :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_d:  In case `preassemble` is `True`, the generated |Model|
+            :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
 
@@ -194,16 +194,16 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    d  = StationaryModel(L, F, operators=functionals, products=products, visualizer=visualizer,
+    m  = StationaryModel(L, F, operators=functionals, products=products, visualizer=visualizer,
                          parameter_space=parameter_space, name=f'{p.name}_CG')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
     if preassemble:
-        data['unassembled_d'] = d
-        d = preassemble_(d)
+        data['unassembled_m'] = m
+        m = preassemble_(m)
 
-    return d, data
+    return m, data
 
 
 def discretize_instationary_cg(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
@@ -245,14 +245,14 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     Returns
     -------
-    d
+    m
         The |Model| that has been generated.
     data
         Dictionary with the following entries:
 
             :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_d:  In case `preassemble` is `True`, the generated |Model|
+            :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
 
@@ -265,14 +265,14 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     p = analytical_problem
 
-    d, data = discretize_stationary_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
+    m, data = discretize_stationary_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
                                        grid_type=grid_type, grid=grid, boundary_info=boundary_info)
 
     if p.initial_data.parametric:
         I = InterpolationOperator(data['grid'], p.initial_data)
     else:
         I = p.initial_data.evaluate(data['grid'].centers(data['grid'].dim))
-        I = d.solution_space.make_array(I)
+        I = m.solution_space.make_array(I)
 
     if time_stepper is None:
         if p.stationary_part.diffusion is None:
@@ -280,18 +280,18 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
         else:
             time_stepper = ImplicitEulerTimeStepper(nt=nt)
 
-    mass = d.l2_0_product
+    mass = m.l2_0_product
 
-    d = InstationaryModel(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
-                          products=d.products,
-                          operators={k: v for k, v in d.operators.items() if not k in {'operator', 'rhs'}},
+    m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=mass, initial_data=I, T=p.T,
+                          products=m.products,
+                          operators={k: v for k, v in m.operators.items() if not k in {'operator', 'rhs'}},
                           time_stepper=time_stepper,
                           parameter_space=p.parameter_space,
-                          visualizer=d.visualizer,
+                          visualizer=m.visualizer,
                           num_values=num_values, name=f'{p.name}_CG')
 
     if preassemble:
-        data['unassembled_d'] = d
-        d = preassemble_(d)
+        data['unassembled_m'] = m
+        m = preassemble_(m)
 
-    return d, data
+    return m, data

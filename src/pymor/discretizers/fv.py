@@ -67,14 +67,14 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     Returns
     -------
-    d
+    m
         The |Model| that has been generated.
     data
         Dictionary with the following entries:
 
             :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_d:  In case `preassemble` is `True`, the generated |Model|
+            :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
 
@@ -195,16 +195,16 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    d = StationaryModel(L, F, products=products, visualizer=visualizer,
+    m = StationaryModel(L, F, products=products, visualizer=visualizer,
                         parameter_space=parameter_space, name=f'{p.name}_FV')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
     if preassemble:
-        data['unassembled_model'] = d
-        d = preassemble_(d)
+        data['unassembled_m'] = m
+        m = preassemble_(m)
 
-    return d, data
+    return m, data
 
 
 def discretize_instationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
@@ -261,14 +261,14 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     Returns
     -------
-    d
+    m
         The |Model| that has been generated.
     data
         Dictionary with the following entries:
 
             :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_d:  In case `preassemble` is `True`, the generated |Model|
+            :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
 
@@ -281,7 +281,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     p = analytical_problem
 
-    d, data = discretize_stationary_fv(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
+    m, data = discretize_stationary_fv(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
                                        grid_type=grid_type, num_flux=num_flux, lxf_lambda=lxf_lambda,
                                        eo_gausspoints=eo_gausspoints, eo_intervals=eo_intervals, grid=grid,
                                        boundary_info=boundary_info)
@@ -291,14 +291,14 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
         def initial_projection(U, mu):
             I = p.initial_data.evaluate(grid.quadrature_points(0, order=2), mu).squeeze()
             I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
-            I = d.solution_space.make_array(I)
+            I = m.solution_space.make_array(I)
             return I.lincomb(U).to_numpy()
-        I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True, range_id=d.solution_space.id,
+        I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True, range_id=m.solution_space.id,
                                  parameter_type=p.initial_data.parameter_type)
     else:
         I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
         I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
-        I = d.solution_space.make_array(I)
+        I = m.solution_space.make_array(I)
 
     if time_stepper is None:
         if p.stationary_part.diffusion is None:
@@ -306,15 +306,15 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
         else:
             time_stepper = ImplicitEulerTimeStepper(nt=nt)
 
-    rhs = None if isinstance(d.rhs, ZeroOperator) else d.rhs
+    rhs = None if isinstance(m.rhs, ZeroOperator) else m.rhs
 
-    d = InstationaryModel(operator=d.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
-                          products=d.products, time_stepper=time_stepper,
-                          parameter_space=p.parameter_space, visualizer=d.visualizer,
+    m = InstationaryModel(operator=m.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
+                          products=m.products, time_stepper=time_stepper,
+                          parameter_space=p.parameter_space, visualizer=m.visualizer,
                           num_values=num_values, name=f'{p.name}_FV')
 
     if preassemble:
-        data['unassembled_d'] = d
-        d = preassemble_(d)
+        data['unassembled_m'] = m
+        m = preassemble_(m)
 
-    return d, data
+    return m, data

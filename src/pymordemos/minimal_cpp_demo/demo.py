@@ -43,33 +43,33 @@ def discretize(n, nt, blocks):
     time_stepper = ExplicitEulerTimeStepper(nt)
     parameter_space = CubicParameterSpace(operator.parameter_type, 0.1, 1)
 
-    d = InstationaryModel(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
-                          time_stepper=time_stepper, num_values=20, parameter_space=parameter_space,
-                          visualizer=visualizer, name='C++-Model', cache_region=None)
-    return d
+    fom = InstationaryModel(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
+                            time_stepper=time_stepper, num_values=20, parameter_space=parameter_space,
+                            visualizer=visualizer, name='C++-Model', cache_region=None)
+    return fom
 
 
 # discretize
-d = discretize(50, 10000, 4)
+fom = discretize(50, 10000, 4)
 
 # generate solution snapshots
-snapshots = d.solution_space.empty()
-for mu in d.parameter_space.sample_uniformly(2):
-    snapshots.append(d.solve(mu))
+snapshots = fom.solution_space.empty()
+for mu in fom.parameter_space.sample_uniformly(2):
+    snapshots.append(fom.solve(mu))
 
 # apply POD
 reduced_basis = pod(snapshots, 4)[0]
 
 # reduce the model
-reductor = GenericRBReductor(d, reduced_basis, basis_is_orthonormal=True)
+reductor = GenericRBReductor(fom, reduced_basis, basis_is_orthonormal=True)
 rd = reductor.reduce()
 
 # stochastic error estimation
 mu_max = None
 err_max = -1.
-for mu in d.parameter_space.sample_randomly(10):
+for mu in fom.parameter_space.sample_randomly(10):
     U_RB = (reductor.reconstruct(rd.solve(mu)))
-    U = d.solve(mu)
+    U = fom.solve(mu)
     err = np.max((U_RB-U).l2_norm())
     if err > err_max:
         err_max = err
@@ -77,6 +77,6 @@ for mu in d.parameter_space.sample_randomly(10):
 
 # visualize maximum error solution
 U_RB = (reductor.reconstruct(rd.solve(mu_max)))
-U = d.solve(mu_max)
-d.visualize((U_RB, U), title=f'mu = {mu}', legend=('reduced', 'detailed'))
-d.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))
+U = fom.solve(mu_max)
+fom.visualize((U_RB, U), title=f'mu = {mu}', legend=('reduced', 'detailed'))
+fom.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))

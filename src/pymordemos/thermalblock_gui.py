@@ -152,7 +152,7 @@ class SimBase:
         self.first = True
         self.problem = thermal_block_problem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']),
                                              parameter_range=(PARAM_MIN, PARAM_MAX))
-        self.d, pack = discretize_stationary_cg(self.problem, diameter=1. / args['--grid'])
+        self.m, pack = discretize_stationary_cg(self.problem, diameter=1. / args['--grid'])
         self.grid = pack['grid']
 
 
@@ -164,12 +164,12 @@ class ReducedSim(SimBase):
 
     def _first(self):
         args = self.args
-        product = self.d.h1_0_semi_product if args['--product'] == 'h1' else None
-        reductor = CoerciveRBReductor(self.d, product=product)
+        product = self.m.h1_0_semi_product if args['--product'] == 'h1' else None
+        reductor = CoerciveRBReductor(self.m, product=product)
 
-        greedy_data = greedy(self.d, reductor,
-                             self.d.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                             use_estimator=True, error_norm=self.d.h1_0_semi_norm,
+        greedy_data = greedy(self.m, reductor,
+                             self.m.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                             use_estimator=True, error_norm=self.m.h1_0_semi_norm,
                              max_extensions=args['RBSIZE'])
         self.rd, self.reductor = greedy_data['rd'], reductor
         self.first = False
@@ -185,10 +185,10 @@ class DetailedSim(SimBase):
 
     def __init__(self, args):
         super().__init__(args)
-        self.d.disable_caching()
+        self.m.disable_caching()
 
     def solve(self, mu):
-        return self.d.solve(mu)
+        return self.m.solve(mu)
 
 
 if __name__ == '__main__':

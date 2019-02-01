@@ -231,7 +231,7 @@ def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
     return interpolation_dofs, collateral_basis, data
 
 
-def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
+def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None,
                           product=None, atol=None, rtol=None, max_interpolation_dofs=None,
                           pod_options={}, alg='ei_greedy', pool=dummy_pool):
     """Empirical operator interpolation using the EI-Greedy/DEIM algorithm.
@@ -249,7 +249,7 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
 
     Parameters
     ----------
-    d
+    fom
         The |Model| whose |Operators| will be interpolated.
     operator_names
         List of keys in the `operators` dict of the model. The corresponding
@@ -278,7 +278,7 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
 
     Returns
     -------
-    ei_d
+    eim
         |Model| with |Operators| given by `operator_names` replaced by
         |EmpiricalInterpolatedOperators|.
     data
@@ -294,17 +294,17 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
     assert alg in ('ei_greedy', 'deim')
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:
-        operators = [d.operators[operator_name] for operator_name in operator_names]
+        operators = [fom.operators[operator_name] for operator_name in operator_names]
         with logger.block('Computing operator evaluations on solution snapshots ...'):
             if pool:
                 logger.info(f'Using pool of {len(pool)} workers for parallel evaluation')
-                evaluations = rom.manage(pool.push(d.solution_space.empty()))
+                evaluations = rom.manage(pool.push(fom.solution_space.empty()))
                 pool.map(_interpolate_operators_build_evaluations, parameter_sample,
-                         d=d, operators=operators, evaluations=evaluations)
+                         fom=fom, operators=operators, evaluations=evaluations)
             else:
                 evaluations = operators[0].range.empty()
                 for mu in parameter_sample:
-                    U = d.solve(mu)
+                    U = fom.solve(mu)
                     for op in operators:
                         evaluations.append(op.apply(U, mu=mu))
 
@@ -329,16 +329,16 @@ def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=(alg == 'ei_greedy'))
                     for name, operator in zip(operator_names, operators)}
-    operators_dict = d.operators.copy()
+    operators_dict = fom.operators.copy()
     operators_dict.update(ei_operators)
-    ei_d = d.with_(operators=operators_dict, name=f'{d.name}_ei')
+    eim = fom.with_(operators=operators_dict, name=f'{fom.name}_ei')
 
     data.update({'dofs': dofs, 'basis': basis})
-    return ei_d, data
+    return eim, data
 
 
-def _interpolate_operators_build_evaluations(mu, d=None, operators=None, evaluations=None):
-    U = d.solve(mu)
+def _interpolate_operators_build_evaluations(mu, fom=None, operators=None, evaluations=None):
+    U = fom.solve(mu)
     for op in operators:
         evaluations.append(op.apply(U, mu=mu))
 

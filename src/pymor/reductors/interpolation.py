@@ -27,11 +27,11 @@ class GenericBHIReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         Model.
     """
-    def __init__(self, d):
-        self.d = d
+    def __init__(self, fom):
+        self.fom = fom
         self._product = None
 
     def _B_apply(self, s, V):
@@ -56,10 +56,10 @@ class GenericBHIReductor(BasicInterface):
             length `r`.
         b
             Right tangential directions, |VectorArray| of length `r`
-            from `self.d.input_space`.
+            from `self.fom.input_space`.
         c
             Left tangential directions, |VectorArray| of length `r` from
-            `self.d.output_space`.
+            `self.fom.output_space`.
         projection
             Projection method:
 
@@ -74,23 +74,23 @@ class GenericBHIReductor(BasicInterface):
             Reduced model.
         """
         r = len(sigma)
-        assert b in self.d.input_space and len(b) == r
-        assert c in self.d.output_space and len(c) == r
+        assert b in self.fom.input_space and len(b) == r
+        assert c in self.fom.output_space and len(c) == r
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
         if b.dim > 1:
             b.scal(1 / b.l2_norm())
         else:
-            b = self.d.input_space.from_numpy(np.ones((r, 1)))
+            b = self.fom.input_space.from_numpy(np.ones((r, 1)))
         if c.dim > 1:
             c.scal(1 / c.l2_norm())
         else:
-            c = self.d.output_space.from_numpy(np.ones((r, 1)))
+            c = self.fom.output_space.from_numpy(np.ones((r, 1)))
 
         # compute projection matrices
-        self.V = self.d.state_space.empty(reserve=r)
-        self.W = self.d.state_space.empty(reserve=r)
+        self.V = self.fom.state_space.empty(reserve=r)
+        self.W = self.fom.state_space.empty(reserve=r)
         for i in range(r):
             if sigma[i].imag == 0:
                 Bb = self._B_apply(sigma[i].real, b.real[i])
@@ -115,7 +115,7 @@ class GenericBHIReductor(BasicInterface):
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
 
-        self.pg_reductor = GenericPGReductor(self.d, self.W, self.V, projection == 'biorth', product=self._product)
+        self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection == 'biorth', product=self._product)
 
         rd = self.pg_reductor.reduce()
         return rd
@@ -130,26 +130,26 @@ class LTI_BHIReductor(GenericBHIReductor):
 
     Parameters
     ----------
-    d
+    fom
         |LTIModel|.
     """
-    def __init__(self, d):
-        assert isinstance(d, LTIModel)
-        self.d = d
-        self._product = d.E
+    def __init__(self, fom):
+        assert isinstance(fom, LTIModel)
+        self.fom = fom
+        self._product = fom.E
 
     def _B_apply(self, s, V):
-        return self.d.B.apply(V)
+        return self.fom.B.apply(V)
 
     def _C_apply_adjoint(self, s, V):
-        return self.d.C.apply_adjoint(V)
+        return self.fom.C.apply_adjoint(V)
 
     def _K_apply_inverse(self, s, V):
-        sEmA = s * self.d.E - self.d.A
+        sEmA = s * self.fom.E - self.fom.A
         return sEmA.apply_inverse(V)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        sEmA = s * self.d.E - self.d.A
+        sEmA = s * self.fom.E - self.fom.A
         return sEmA.apply_inverse_adjoint(V)
 
     def reduce(self, sigma, b, c, projection='orth', use_arnoldi=False):
@@ -162,10 +162,10 @@ class LTI_BHIReductor(GenericBHIReductor):
             length `r`.
         b
             Right tangential directions, |VectorArray| of length `r`
-            from `self.d.input_space`.
+            from `self.fom.input_space`.
         c
             Left tangential directions, |VectorArray| of length `r` from
-            `self.d.output_space`.
+            `self.fom.output_space`.
         projection
             Projection method:
 
@@ -183,7 +183,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         rd
             Reduced model.
         """
-        if use_arnoldi and self.d.m == 1 and self.d.p == 1:
+        if use_arnoldi and self.fom.m == 1 and self.fom.p == 1:
             return self.reduce_arnoldi(sigma, b, c)
         else:
             return super().reduce(sigma, b, c, projection=projection)
@@ -198,24 +198,24 @@ class LTI_BHIReductor(GenericBHIReductor):
             length `r`.
         b
             Right tangential directions, |VectorArray| of length `r`
-            from `self.d.B.source`.
+            from `self.fom.B.source`.
         c
             Left tangential directions, |VectorArray| of length `r` from
-            `self.d.C.range`.
+            `self.fom.C.range`.
 
         Returns
         -------
         rd
             Reduced |LTIModel| model.
         """
-        d = self.d
-        assert d.m == 1 and d.p == 1
+        fom = self.fom
+        assert fom.m == 1 and fom.p == 1
         r = len(sigma)
-        assert b in d.B.source and len(b) == r
-        assert c in d.C.range and len(c) == r
+        assert b in fom.B.source and len(b) == r
+        assert c in fom.C.range and len(c) == r
 
-        self.V = arnoldi(d.A, d.E, d.B, sigma)
-        self.W = arnoldi(d.A, d.E, d.C, sigma, trans=True)
+        self.V = arnoldi(fom.A, fom.E, fom.B, sigma)
+        self.W = arnoldi(fom.A, fom.E, fom.C, sigma, trans=True)
 
         rd = super(GenericBHIReductor, self).reduce()
         return rd
@@ -226,28 +226,28 @@ class SO_BHIReductor(GenericBHIReductor):
 
     Parameters
     ----------
-    d
+    fom
         :class:`~pymor.models.iosys.SecondOrderModel`.
     """
-    def __init__(self, d):
-        assert isinstance(d, SecondOrderModel)
-        self.d = d
-        self._product = d.M
+    def __init__(self, fom):
+        assert isinstance(fom, SecondOrderModel)
+        self.fom = fom
+        self._product = fom.M
 
     def _B_apply(self, s, V):
-        return self.d.B.apply(V)
+        return self.fom.B.apply(V)
 
     def _C_apply_adjoint(self, s, V):
-        x = self.d.Cp.apply_adjoint(V)
-        y = self.d.Cv.apply_adjoint(V)
+        x = self.fom.Cp.apply_adjoint(V)
+        y = self.fom.Cv.apply_adjoint(V)
         return x + y * s.conjugate()
 
     def _K_apply_inverse(self, s, V):
-        s2MpsEpK = s**2 * self.d.M + s * self.d.E + self.d.K
+        s2MpsEpK = s**2 * self.fom.M + s * self.fom.E + self.fom.K
         return s2MpsEpK.apply_inverse(V)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        s2MpsEpK = s**2 * self.d.M + s * self.d.E + self.d.K
+        s2MpsEpK = s**2 * self.fom.M + s * self.fom.E + self.fom.K
         return s2MpsEpK.apply_inverse_adjoint(V)
 
 
@@ -256,28 +256,28 @@ class DelayBHIReductor(GenericBHIReductor):
 
     Parameters
     ----------
-    d
+    fom
         :class:`~pymor.models.iosys.LinearDelayModel`.
     """
-    def __init__(self, d):
-        assert isinstance(d, LinearDelayModel)
-        self.d = d
-        self._product = d.E
+    def __init__(self, fom):
+        assert isinstance(fom, LinearDelayModel)
+        self.fom = fom
+        self._product = fom.E
 
     def _B_apply(self, s, V):
-        return self.d.B.apply(V)
+        return self.fom.B.apply(V)
 
     def _C_apply_adjoint(self, s, V):
-        return self.d.C.apply_adjoint(V)
+        return self.fom.C.apply_adjoint(V)
 
     def _K_apply_inverse(self, s, V):
-        Ks = LincombOperator((self.d.E, self.d.A) + self.d.Ad,
-                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.d.tau))
+        Ks = LincombOperator((self.fom.E, self.fom.A) + self.fom.Ad,
+                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau))
         return Ks.apply_inverse(V)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        Ks = LincombOperator((self.d.E, self.d.A) + self.d.Ad,
-                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.d.tau))
+        Ks = LincombOperator((self.fom.E, self.fom.A) + self.fom.Ad,
+                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau))
         return Ks.apply_inverse_adjoint(V)
 
 
@@ -288,11 +288,11 @@ class TFInterpReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         Model with `eval_tf` and `eval_dtf` methods.
     """
-    def __init__(self, d):
-        self.d = d
+    def __init__(self, fom):
+        self.fom = fom
 
     def reduce(self, sigma, b, c):
         """Realization-independent tangential Hermite interpolation.
@@ -304,20 +304,20 @@ class TFInterpReductor(BasicInterface):
             length `r`.
         b
             Right tangential directions, |NumPy array| of shape
-            `(d.m, r)`.
+            `(fom.m, r)`.
         c
             Left tangential directions, |NumPy array| of shape
-            `(d.p, r)`.
+            `(fom.p, r)`.
 
         Returns
         -------
         lti
-            |LTIModel| interpolating the transfer function of `d`.
+            |LTIModel| interpolating the transfer function of `fom`.
         """
-        d = self.d
+        fom = self.fom
         r = len(sigma)
-        assert isinstance(b, np.ndarray) and b.shape == (d.m, r)
-        assert isinstance(c, np.ndarray) and c.shape == (d.p, r)
+        assert isinstance(b, np.ndarray) and b.shape == (fom.m, r)
+        assert isinstance(c, np.ndarray) and c.shape == (fom.p, r)
 
         # rescale tangential directions (to avoid overflow or underflow)
         if b.shape[0] > 1:
@@ -334,11 +334,11 @@ class TFInterpReductor(BasicInterface):
         # matrices of the interpolatory LTI system
         Er = np.empty((r, r), dtype=complex)
         Ar = np.empty((r, r), dtype=complex)
-        Br = np.empty((r, d.m), dtype=complex)
-        Cr = np.empty((d.p, r), dtype=complex)
+        Br = np.empty((r, fom.m), dtype=complex)
+        Cr = np.empty((fom.p, r), dtype=complex)
 
-        Hs = [d.eval_tf(s) for s in sigma]
-        dHs = [d.eval_dtf(s) for s in sigma]
+        Hs = [fom.eval_tf(s) for s in sigma]
+        dHs = [fom.eval_dtf(s) for s in sigma]
 
         for i in range(r):
             for j in range(r):
@@ -369,4 +369,4 @@ class TFInterpReductor(BasicInterface):
         Br = (T.dot(Br)).real
         Cr = (Cr.dot(T.conj().T)).real
 
-        return LTIModel.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=d.cont_time)
+        return LTIModel.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=fom.cont_time)

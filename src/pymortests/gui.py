@@ -33,8 +33,8 @@ def test_visualize_patch(backend_gridtype):
     diffusion = GenericFunction(lambda X: np.ones(X.shape[:-1]), dim)  # NOQA
     problem = StationaryProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet, diffusion=diffusion)
     grid, bi = discretize_domain_default(problem.domain, grid_type=gridtype)
-    d, data = discretize_stationary_cg(analytical_problem=problem, grid=grid, boundary_info=bi)
-    U = d.solve()
+    m, data = discretize_stationary_cg(analytical_problem=problem, grid=grid, boundary_info=bi)
+    U = m.solve()
     try:
         visualize_patch(data['grid'], U=U, backend=backend)
     except QtMissing as ie:

@@ -43,17 +43,17 @@ class MPIModel(ModelBase):
 
     def __init__(self, obj_id, operators, products=None,
                  pickle_local_spaces=True, space_type=MPIVectorSpace):
-        d = mpi.get_object(obj_id)
+        m = mpi.get_object(obj_id)
         visualizer = MPIVisualizer(obj_id)
         super().__init__(operators=operators, products=products,
-                         visualizer=visualizer, cache_region=None, name=d.name)
+                         visualizer=visualizer, cache_region=None, name=m.name)
         self.obj_id = obj_id
         local_spaces = mpi.call(_MPIModel_get_local_spaces, obj_id, pickle_local_spaces)
         if all(ls == local_spaces[0] for ls in local_spaces):
             local_spaces = (local_spaces[0],)
         self.solution_space = space_type(local_spaces)
-        self.build_parameter_type(d)
-        self.parameter_space = d.parameter_space
+        self.build_parameter_type(m)
+        self.parameter_space = m.parameter_space
 
     def _solve(self, mu=None):
         return self.solution_space.make_array(
@@ -76,24 +76,24 @@ def _MPIModel_get_local_spaces(self, pickle_local_spaces):
 
 class MPIVisualizer(ImmutableInterface):
 
-    def __init__(self, d_obj_id):
-        self.d_obj_id = d_obj_id
+    def __init__(self, m_obj_id):
+        self.m_obj_id = m_obj_id
 
-    def visualize(self, U, d, **kwargs):
+    def visualize(self, U, m, **kwargs):
         if isinstance(U, tuple):
             U = tuple(u.obj_id for u in U)
         else:
             U = U.obj_id
-        mpi.call(_MPIVisualizer_visualize, self.d_obj_id, U, **kwargs)
+        mpi.call(_MPIVisualizer_visualize, self.m_obj_id, U, **kwargs)
 
 
-def _MPIVisualizer_visualize(d, U, **kwargs):
-    d = mpi.get_object(d)
+def _MPIVisualizer_visualize(m, U, **kwargs):
+    m = mpi.get_object(m)
     if isinstance(U, tuple):
         U = tuple(mpi.get_object(u) for u in U)
     else:
         U = mpi.get_object(U)
-    d.visualize(U, **kwargs)
+    m.visualize(U, **kwargs)
 
 
 def mpi_wrap_model(local_models, use_with=False, with_apply2=False,
@@ -155,17 +155,17 @@ def mpi_wrap_model(local_models, use_with=False, with_apply2=False,
                 for k, v in products.items()}
 
     if use_with:
-        d = mpi.get_object(local_models)
+        m = mpi.get_object(local_models)
         visualizer = MPIVisualizer(local_models)
-        return d.with_(operators=operators, products=products, visualizer=visualizer, cache_region=None)
+        return m.with_(operators=operators, products=products, visualizer=visualizer, cache_region=None)
     else:
         return MPIModel(local_models, operators, products,
                         pickle_local_spaces=pickle_local_spaces, space_type=space_type)
 
 
 def _mpi_wrap_model_manage_operators(obj_id):
-    d = mpi.get_object(obj_id)
-    operators = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.operators.items())}
-    products = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.products.items())} if d.products else {}
+    m = mpi.get_object(obj_id)
+    operators = {k: mpi.manage_object(v) if v else None for k, v in sorted(m.operators.items())}
+    products = {k: mpi.manage_object(v) if v else None for k, v in sorted(m.products.items())} if m.products else {}
     if mpi.rank0:
         return operators, products

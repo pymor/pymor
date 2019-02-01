@@ -201,7 +201,7 @@ if config.HAVE_FENICS:
         def __init__(self, space):
             self.space = space
 
-        def visualize(self, U, d, title='', legend=None, filename=None, block=True,
+        def visualize(self, U, m, title='', legend=None, filename=None, block=True,
                       separate_colorbars=True):
             """Visualize the provided data.
 
@@ -213,7 +213,7 @@ if config.HAVE_FENICS:
                 If `filename` is specified, only one |VectorArray| may be provided which,
                 however, is allowed to contain multipled vectors that will be interpreted
                 as a time series.
-            d
+            m
                 Filled in by :meth:`pymor.models.ModelBase.visualize` (ignored).
             title
                 Title of the plot.

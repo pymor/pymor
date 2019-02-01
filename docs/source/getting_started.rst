@@ -142,25 +142,25 @@ a :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`, we can use
 a predifined *discretizer* to do the work for us. In this case, we use
 :func:`~pymor.discretizers.cg.discretize_stationary_cg`:
 
->>> d, d_data = discretize_stationary_cg(p, diameter=1./100.)
+>>> fom, fom_data = discretize_stationary_cg(p, diameter=1./100.)
 
-``d`` is the |StationaryModel| which has been created for us,
-whereas ``d_data`` contains some additional data, in particular the |Grid|
+``fom`` is the |StationaryModel| which has been created for us,
+whereas ``fom_data`` contains some additional data, in particular the |Grid|
 and the |BoundaryInfo| which have been created during discretization. We
 can have a look at the grid,
 
->>> print(d_data['grid'])
+>>> print(fom_data['grid'])
 Tria-Grid on domain [0,1] x [0,1]
 x0-intervals: 100, x1-intervals: 100
 elements: 40000, edges: 60200, vertices: 20201
 
 and, as always, we can display its class documentation using
-``help(d_data['grid'])``.
+``help(fom_data['grid'])``.
 
 Let's solve the thermal block problem and visualize the solution:
 
->>> U = d.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
->>> d.visualize(U, title='Solution')
+>>> U = fom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
+>>> fom.visualize(U, title='Solution')
 01:11 StationaryModel: Solving ThermalBlock((3, 2))_CG for {diffusion: [1.0, 0.1, 0.3, 0.1, 0.2, 1.0]} ...
 
 Each class in pyMOR that describes a |Parameter| dependent mathematical
@@ -171,7 +171,7 @@ The resulting |ParameterType| is stored in the object's
 :attr:`~pymor.parameters.base.Parametric.parameter_type` attribute. Let us
 have a look:
 
->>> print(d.parameter_type)
+>>> print(fom.parameter_type)
 {diffusion: (2, 3)}
 
 This tells us, that the |Parameter| which
@@ -199,23 +199,23 @@ the reductor with a |ParameterFunctional| which computes a lower bound for
 the coercivity of the problem for a given parameter.
 
 >>> reductor = CoerciveRBReductor(
-...     d,
-...     product=d.h1_0_semi_product,
-...     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
+...     fom,
+...     product=fom.h1_0_semi_product,
+...     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', fom.parameter_type)
 ... )
 
 Moreover, we need to select a |Parameter| training set. The model
-``d`` already comes with a |ParameterSpace| which it has inherited from the
+``fom`` already comes with a |ParameterSpace| which it has inherited from the
 analytical problem. We can sample our parameters from this space, which is a
 :class:`~pymor.parameters.spaces.CubicParameterSpace`. E.g.:
 
->>> samples = d.parameter_space.sample_uniformly(4)
+>>> samples = fom.parameter_space.sample_uniformly(4)
 >>> print(samples[0])
 {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]}
 
 Now we start the basis generation:
 
->>> greedy_data = greedy(d, reductor, samples,
+>>> greedy_data = greedy(fom, reductor, samples,
 ...                      use_estimator=True,
 ...                      max_extensions=32)
 16:52 greedy: Started greedy search on 4096 samples
@@ -279,7 +279,7 @@ the H1-product. For this we use the :meth:`~pymor.operators.interfaces.OperatorI
 method:
 
 >>> import numpy as np
->>> gram_matrix = reductor.RB.gramian(d.h1_0_semi_product)
+>>> gram_matrix = reductor.RB.gramian(fom.h1_0_semi_product)
 >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
 3.0088616060491846e-14
 
@@ -306,11 +306,11 @@ Finally we compute the reduction error and display the reduced solution along wi
 the detailed solution and the error:
 
 >>> ERR = U - U_red
->>> print(ERR.norm(d.h1_0_semi_product))
+>>> print(ERR.norm(fom.h1_0_semi_product))
 [0.00473238]
->>> d.visualize((U, U_red, ERR),
-...             legend=('Detailed', 'Reduced', 'Error'),
-...             separate_colorbars=True)
+>>> fom.visualize((U, U_red, ERR),
+...               legend=('Detailed', 'Reduced', 'Error'),
+...               separate_colorbars=True)
 
 We can nicely observe that, as expected, the error is maximized along the
 jumps of the diffusion coefficient.

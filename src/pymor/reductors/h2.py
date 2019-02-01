@@ -20,12 +20,12 @@ class IRKAReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         |LTIModel|.
     """
-    def __init__(self, d):
-        assert isinstance(d, LTIModel)
-        self.d = d
+    def __init__(self, fom):
+        assert isinstance(fom, LTIModel)
+        self.fom = fom
 
     def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
                projection='orth', use_arnoldi=False, conv_crit='sigma', compute_errors=False):
@@ -51,7 +51,7 @@ class IRKAReductor(BasicInterface):
 
             If `None`, if is chosen as all ones. If `b` is an `int`, it
             is used as a seed to generate it randomly. Otherwise, it
-            needs to be a |VectorArray| of length `r` from `d.B.source`.
+            needs to be a |VectorArray| of length `r` from `fom.B.source`.
 
             `b` and `rd0` cannot both be not `None`.
         c
@@ -59,7 +59,7 @@ class IRKAReductor(BasicInterface):
 
             If `None`, if is chosen as all ones. If `c` is an `int`, it
             is used as a seed to generate it randomly. Otherwise, it
-            needs to be a |VectorArray| of length `r` from `d.C.range`.
+            needs to be a |VectorArray| of length `r` from `fom.C.range`.
 
             `c` and `rd0` cannot both be not `None`.
         rd0
@@ -110,21 +110,21 @@ class IRKAReductor(BasicInterface):
         rd
             Reduced |LTIModel| model.
         """
-        d = self.d
-        if not d.cont_time:
+        fom = self.fom
+        if not fom.cont_time:
             raise NotImplementedError
-        assert 0 < r < d.n
+        assert 0 < r < fom.n
         assert isinstance(num_prev, int) and num_prev >= 1
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('sigma', 'h2')
 
         # initial interpolation points and tangential directions
         assert sigma is None or isinstance(sigma, int) or len(sigma) == r
-        assert b is None or isinstance(b, int) or b in d.B.source and len(b) == r
-        assert c is None or isinstance(c, int) or c in d.C.range and len(c) == r
+        assert b is None or isinstance(b, int) or b in fom.B.source and len(b) == r
+        assert c is None or isinstance(c, int) or c in fom.C.range and len(c) == r
         assert (rd0 is None
                 or isinstance(rd0, LTIModel)
-                and rd0.n == r and rd0.B.source == d.B.source and rd0.C.range == d.C.range)
+                and rd0.n == r and rd0.B.source == fom.B.source and rd0.C.range == fom.C.range)
         assert sigma is None or rd0 is None
         assert b is None or rd0 is None
         assert c is None or rd0 is None
@@ -138,15 +138,15 @@ class IRKAReductor(BasicInterface):
                 np.random.seed(sigma)
                 sigma = np.abs(np.random.randn(r))
             if b is None:
-                b = d.B.source.from_numpy(np.ones((r, d.m)))
+                b = fom.B.source.from_numpy(np.ones((r, fom.m)))
             elif isinstance(b, int):
                 np.random.seed(b)
-                b = d.B.source.from_numpy(np.random.randn(r, d.m))
+                b = fom.B.source.from_numpy(np.random.randn(r, fom.m))
             if c is None:
-                c = d.C.range.from_numpy(np.ones((r, d.p)))
+                c = fom.C.range.from_numpy(np.ones((r, fom.p)))
             elif isinstance(c, int):
                 np.random.seed(c)
-                c = d.C.range.from_numpy(np.random.randn(r, d.p))
+                c = fom.C.range.from_numpy(np.random.randn(r, fom.p))
 
         # being logging
         self.logger.info('Starting IRKA')
@@ -162,7 +162,7 @@ class IRKAReductor(BasicInterface):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        interp_reductor = LTI_BHIReductor(d)
+        interp_reductor = LTI_BHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
@@ -195,8 +195,8 @@ class IRKAReductor(BasicInterface):
                 self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
             else:
                 if np.max(rd.poles().real) < 0:
-                    err = d - rd
-                    rel_H2_err = err.h2_norm() / d.h2_norm()
+                    err = fom - rd
+                    rel_H2_err = err.h2_norm() / fom.h2_norm()
                 else:
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
@@ -224,12 +224,12 @@ class TSIAReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         |LTIModel|.
     """
-    def __init__(self, d):
-        assert isinstance(d, LTIModel)
-        self.d = d
+    def __init__(self, fom):
+        assert isinstance(fom, LTIModel)
+        self.fom = fom
 
     def reduce(self, rd0, tol=1e-4, maxit=100, num_prev=1, projection='orth', conv_crit='sigma',
                compute_errors=False):
@@ -282,10 +282,10 @@ class TSIAReductor(BasicInterface):
         rd
             Reduced |LTIModel|.
         """
-        d = self.d
-        assert isinstance(rd0, LTIModel) and rd0.B.source == d.B.source and rd0.C.range == d.C.range
+        fom = self.fom
+        assert isinstance(rd0, LTIModel) and rd0.B.source == fom.B.source and rd0.C.range == fom.C.range
         r = rd0.n
-        assert 0 < r < d.n
+        assert 0 < r < fom.n
         assert isinstance(num_prev, int) and num_prev >= 1
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('sigma', 'h2')
@@ -322,8 +322,8 @@ class TSIAReductor(BasicInterface):
                 self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
             else:
                 if np.max(rd.poles().real) < 0:
-                    err = d - rd
-                    rel_H2_err = err.h2_norm() / d.h2_norm()
+                    err = fom - rd
+                    rel_H2_err = err.h2_norm() / fom.h2_norm()
                 else:
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
@@ -343,18 +343,18 @@ class TSIAReductor(BasicInterface):
         return rd
 
     def _projection_matrices(self, rd, projection):
-        d = self.d
-        self.V, self.W = solve_sylv_schur(d.A, rd.A,
-                                          E=d.E, Er=rd.E,
-                                          B=d.B, Br=rd.B,
-                                          C=d.C, Cr=rd.C)
+        fom = self.fom
+        self.V, self.W = solve_sylv_schur(fom.A, rd.A,
+                                          E=fom.E, Er=rd.E,
+                                          B=fom.B, Br=rd.B,
+                                          C=fom.C, Cr=rd.C)
         if projection == 'orth':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
         elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=d.E)
+            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=fom.E)
 
-        self.pg_reductor = GenericPGReductor(d, self.W, self.V, projection == 'biorth', product=d.E)
+        self.pg_reductor = GenericPGReductor(fom, self.W, self.V, projection == 'biorth', product=fom.E)
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -368,11 +368,11 @@ class TF_IRKAReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         Model with `eval_tf` and `eval_dtf` methods.
     """
-    def __init__(self, d):
-        self.d = d
+    def __init__(self, fom):
+        self.fom = fom
 
     def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
                conv_crit='sigma'):
@@ -437,8 +437,8 @@ class TF_IRKAReductor(BasicInterface):
         rd
             Reduced |LTIModel| model.
         """
-        d = self.d
-        if not d.cont_time:
+        fom = self.fom
+        if not fom.cont_time:
             raise NotImplementedError
         assert r > 0
         assert isinstance(num_prev, int) and num_prev >= 1
@@ -446,9 +446,9 @@ class TF_IRKAReductor(BasicInterface):
 
         # initial interpolation points and tangential directions
         assert sigma is None or isinstance(sigma, int) or len(sigma) == r
-        assert b is None or isinstance(b, int) or isinstance(b, np.ndarray) and b.shape == (d.m, r)
-        assert c is None or isinstance(c, int) or isinstance(c, np.ndarray) and c.shape == (d.p, r)
-        assert rd0 is None or rd0.n == r and rd0.B.source.dim == d.m and rd0.C.range.dim == d.p
+        assert b is None or isinstance(b, int) or isinstance(b, np.ndarray) and b.shape == (fom.m, r)
+        assert c is None or isinstance(c, int) or isinstance(c, np.ndarray) and c.shape == (fom.p, r)
+        assert rd0 is None or rd0.n == r and rd0.B.source.dim == fom.m and rd0.C.range.dim == fom.p
         assert sigma is None or rd0 is None
         assert b is None or rd0 is None
         assert c is None or rd0 is None
@@ -464,15 +464,15 @@ class TF_IRKAReductor(BasicInterface):
                 np.random.seed(sigma)
                 sigma = np.abs(np.random.randn(r))
             if b is None:
-                b = np.ones((d.m, r))
+                b = np.ones((fom.m, r))
             elif isinstance(b, int):
                 np.random.seed(b)
-                b = np.random.randn(d.m, r)
+                b = np.random.randn(fom.m, r)
             if c is None:
-                c = np.ones((d.p, r))
+                c = np.ones((fom.p, r))
             elif isinstance(c, int):
                 np.random.seed(c)
-                c = np.random.randn(d.p, r)
+                c = np.random.randn(fom.p, r)
 
         # begin logging
         self.logger.info('Starting TF-IRKA')
@@ -483,7 +483,7 @@ class TF_IRKAReductor(BasicInterface):
         self.sigmas = [np.array(sigma)]
         self.R = [b]
         self.L = [c]
-        interp_reductor = TFInterpReductor(d)
+        interp_reductor = TFInterpReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model

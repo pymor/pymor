@@ -20,12 +20,12 @@ def test_pickle_without_dumps_function(picklable_model):
 
 
 def test_pickle_by_solving(model):
-    d = model
-    d2 = loads(dumps(d))
-    d.disable_caching()
-    d2.disable_caching()
-    for mu in d.parameter_space.sample_randomly(3, seed=234):
-        assert np.all(almost_equal(d.solve(mu), d2.solve(mu)))
+    m = model
+    m2 = loads(dumps(m))
+    m.disable_caching()
+    m2.disable_caching()
+    for mu in m.parameter_space.sample_randomly(3, seed=234):
+        assert np.all(almost_equal(m.solve(mu), m2.solve(mu)))
 
 
 if __name__ == "__main__":

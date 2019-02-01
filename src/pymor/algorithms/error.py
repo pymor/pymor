@@ -12,7 +12,7 @@ from pymor.models.basic import StationaryModel
 from pymor.parallel.dummy import dummy_pool
 
 
-def reduction_error_analysis(rd, d, reductor,
+def reduction_error_analysis(rd, fom, reductor,
                              test_mus=10, basis_sizes=0, random_seed=None,
                              estimator=True, condition=False, error_norms=(), error_norm_names=None,
                              estimator_norm_index=0, custom=(),
@@ -27,7 +27,7 @@ def reduction_error_analysis(rd, d, reductor,
     ----------
     rd
         The reduced |Model|.
-    d
+    fom
         The high-dimensional |Model|.
     reductor
         The reductor which has created `rd`.
@@ -65,7 +65,7 @@ def reduction_error_analysis(rd, d, reductor,
         List of custom functions which are evaluated for each test |Parameter|
         and basis size. The functions must have the signature ::
 
-            def custom_value(rd, d, reductor, mu, dim):
+            def custom_value(rd, fom, reductor, mu, dim):
                 pass
 
     plot
@@ -161,7 +161,7 @@ def reduction_error_analysis(rd, d, reductor,
                                  (Only present when `plot` is `True`.)
     """
 
-    assert not error_norms or (d and reductor)
+    assert not error_norms or (fom and reductor)
     assert error_norm_names is None or len(error_norm_names) == len(error_norms)
     assert not condition \
         or isinstance(rd, StationaryModel) and rd.operator.linear
@@ -188,8 +188,8 @@ def reduction_error_analysis(rd, d, reductor,
         error_norm_names = tuple(norm.name for norm in error_norms)
 
     norms, estimates, errors, conditions, custom_values = \
-        list(zip(*pool.map(_compute_errors, test_mus, d=d, reductor=reductor, estimator=estimator,
-                      error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes)))
+        list(zip(*pool.map(_compute_errors, test_mus, fom=fom, reductor=reductor, estimator=estimator,
+                           error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes)))
     print()
 
     result = {}
@@ -314,7 +314,7 @@ def reduction_error_analysis(rd, d, reductor,
     return result
 
 
-def _compute_errors(mu, d, reductor, estimator, error_norms, condition, custom, basis_sizes):
+def _compute_errors(mu, fom, reductor, estimator, error_norms, condition, custom, basis_sizes):
     import sys
 
     print('.', end='')
@@ -326,11 +326,11 @@ def _compute_errors(mu, d, reductor, estimator, error_norms, condition, custom, 
     conditions = np.empty(len(basis_sizes)) if condition else None
     custom_values = np.empty((len(custom), len(basis_sizes)))
 
-    if d:
-        logging_disabled = d.logging_disabled
-        d.disable_logging()
-        U = d.solve(mu)
-        d.disable_logging(logging_disabled)
+    if fom:
+        logging_disabled = fom.logging_disabled
+        fom.disable_logging()
+        U = fom.solve(mu)
+        fom.disable_logging(logging_disabled)
         for i_norm, norm in enumerate(error_norms):
             n = norm(U)
             n = n[0] if hasattr(n, '__len__') else n
@@ -343,7 +343,7 @@ def _compute_errors(mu, d, reductor, estimator, error_norms, condition, custom, 
             e = rd.estimate(u, mu)
             e = e[0] if hasattr(e, '__len__') else e
             estimates[i_N] = e
-        if d and reductor:
+        if fom and reductor:
             URB = reductor.reconstruct(u)
             for i_norm, norm in enumerate(error_norms):
                 e = norm(U - URB)
@@ -353,7 +353,7 @@ def _compute_errors(mu, d, reductor, estimator, error_norms, condition, custom, 
             conditions[i_N] = np.linalg.cond(rd.operator.assemble(mu).matrix) if N > 0 else 0.
         for i_custom, cust in enumerate(custom):
             c = cust(rd=rd,
-                     d=d,
+                     fom=fom,
                      reductor=reductor,
                      mu=mu,
                      dim=N)

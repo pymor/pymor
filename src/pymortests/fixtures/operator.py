@@ -74,18 +74,18 @@ def thermalblock_factory(xblocks, yblocks, diameter, seed):
     from pymor.functions.basic import GenericFunction
     from pymor.operators.cg import InterpolationOperator
     p = thermal_block_problem((xblocks, yblocks))
-    d, d_data = discretize_stationary_cg(p, diameter)
+    m, m_data = discretize_stationary_cg(p, diameter)
     f = GenericFunction(lambda X, mu: X[..., 0]**mu['exp'] + X[..., 1],
                         dim_domain=2, parameter_type={'exp': ()})
-    iop = InterpolationOperator(d_data['grid'], f)
-    U = d.operator.source.empty()
-    V = d.operator.range.empty()
+    iop = InterpolationOperator(m_data['grid'], f)
+    U = m.operator.source.empty()
+    V = m.operator.range.empty()
     np.random.seed(seed)
     for exp in np.random.random(5):
         U.append(iop.as_vector(exp))
     for exp in np.random.random(6):
         V.append(iop.as_vector(exp))
-    return d.operator, d.parameter_space.sample_randomly(1, seed=seed)[0], U, V, d.h1_product, d.l2_product
+    return m.operator, m.parameter_space.sample_randomly(1, seed=seed)[0], U, V, m.h1_product, m.l2_product
 
 
 def thermalblock_assemble_factory(xblocks, yblocks, diameter, seed):

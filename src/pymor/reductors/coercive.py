@@ -23,7 +23,7 @@ class CoerciveRBReductor(GenericRBReductor):
 
     Parameters
     ----------
-    d
+    fom
         The |Model| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
@@ -31,7 +31,7 @@ class CoerciveRBReductor(GenericRBReductor):
         If `RB` is specified, indicate whether or not the basis is orthonormal
         w.r.t. `product`.
     vector_ranged_operators
-        List of keys in `d.operators` for which the corresponding |Operator|
+        List of keys in `fom.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
@@ -45,15 +45,15 @@ class CoerciveRBReductor(GenericRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, d, RB=None, basis_is_orthonormal=None,
+    def __init__(self, fom, RB=None, basis_is_orthonormal=None,
                  vector_ranged_operators=('initial_data',), product=None,
                  coercivity_estimator=None):
-        super().__init__(d, RB,
+        super().__init__(fom, RB,
                          basis_is_orthonormal=basis_is_orthonormal,
                          vector_ranged_operators=vector_ranged_operators,
                          product=product)
         self.coercivity_estimator = coercivity_estimator
-        self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
+        self.residual_reductor = ResidualReductor(self.RB, self.fom.operator, self.fom.rhs,
                                                   product=product, riesz_representatives=True)
 
     def _reduce(self):
@@ -81,13 +81,13 @@ class CoerciveRBEstimator(ImmutableInterface):
         self.residual_range_dims = residual_range_dims
         self.coercivity_estimator = coercivity_estimator
 
-    def estimate(self, U, mu, d):
+    def estimate(self, U, mu, m):
         est = self.residual.apply(U, mu=mu).l2_norm()
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
         return est
 
-    def restricted_to_subbasis(self, dim, d):
+    def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
@@ -111,7 +111,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
 
     Parameters
     ----------
-    d
+    fom
         The |Model| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
@@ -119,7 +119,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         If `RB` is specified, indicate whether or not the basis is orthonormal
         w.r.t. `product`.
     vector_ranged_operators
-        List of keys in `d.operators` for which the corresponding |Operator|
+        List of keys in `fom.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
         contrast to bilinear forms which map to functionals).
     product
@@ -133,27 +133,27 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, d, RB=None, basis_is_orthonormal=None,
+    def __init__(self, fom, RB=None, basis_is_orthonormal=None,
                  vector_ranged_operators=('initial_data',), product=None,
                  coercivity_estimator=None):
-        assert d.linear
-        assert isinstance(d.operator, LincombOperator)
-        assert all(not op.parametric for op in d.operator.operators)
-        if d.rhs.parametric:
-            assert isinstance(d.rhs, LincombOperator)
-            assert all(not op.parametric for op in d.rhs.operators)
+        assert fom.linear
+        assert isinstance(fom.operator, LincombOperator)
+        assert all(not op.parametric for op in fom.operator.operators)
+        if fom.rhs.parametric:
+            assert isinstance(fom.rhs, LincombOperator)
+            assert all(not op.parametric for op in fom.rhs.operators)
 
-        super().__init__(d, RB,
+        super().__init__(fom, RB,
                          basis_is_orthonormal=basis_is_orthonormal,
                          vector_ranged_operators=vector_ranged_operators,
                          product=product)
         self.coercivity_estimator = coercivity_estimator
-        self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
+        self.residual_reductor = ResidualReductor(self.RB, self.fom.operator, self.fom.rhs,
                                                   product=product)
         self.extends = None
 
     def _reduce(self):
-        d, RB, extends = self.d, self.RB, self.extends
+        fom, RB, extends = self.fom, self.RB, self.extends
         rd = super()._reduce()
         if extends:
             old_RB_size = extends[0]
@@ -162,7 +162,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
             old_RB_size = 0
 
         # compute data for estimator
-        space = d.operator.source
+        space = fom.operator.source
 
         # compute the Riesz representative of (U, .)_L2 with respect to product
         def riesz_representative(U):
@@ -178,33 +178,33 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         # compute all components of the residual
         if extends:
             R_R, RR_R = old_data['R_R'], old_data['RR_R']
-        elif not d.rhs.parametric:
+        elif not fom.rhs.parametric:
             R_R = space.empty(reserve=1)
             RR_R = space.empty(reserve=1)
-            append_vector(d.rhs.as_range_array(), R_R, RR_R)
+            append_vector(fom.rhs.as_range_array(), R_R, RR_R)
         else:
-            R_R = space.empty(reserve=len(d.rhs.operators))
-            RR_R = space.empty(reserve=len(d.rhs.operators))
-            for op in d.rhs.operators:
+            R_R = space.empty(reserve=len(fom.rhs.operators))
+            RR_R = space.empty(reserve=len(fom.rhs.operators))
+            for op in fom.rhs.operators:
                 append_vector(op.as_range_array(), R_R, RR_R)
 
         if len(RB) == 0:
             R_Os = [space.empty()]
             RR_Os = [space.empty()]
-        elif not d.operator.parametric:
+        elif not fom.operator.parametric:
             R_Os = [space.empty(reserve=len(RB))]
             RR_Os = [space.empty(reserve=len(RB))]
             for i in range(len(RB)):
-                append_vector(-d.operator.apply(RB[i]), R_Os[0], RR_Os[0])
+                append_vector(-fom.operator.apply(RB[i]), R_Os[0], RR_Os[0])
         else:
-            R_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
-            RR_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
+            R_Os = [space.empty(reserve=len(RB)) for _ in range(len(fom.operator.operators))]
+            RR_Os = [space.empty(reserve=len(RB)) for _ in range(len(fom.operator.operators))]
             if old_RB_size > 0:
-                for op, R_O, RR_O, old_R_O, old_RR_O in zip(d.operator.operators, R_Os, RR_Os,
+                for op, R_O, RR_O, old_R_O, old_RR_O in zip(fom.operator.operators, R_Os, RR_Os,
                                                             old_data['R_Os'], old_data['RR_Os']):
                     R_O.append(old_R_O)
                     RR_O.append(old_RR_O)
-            for op, R_O, RR_O in zip(d.operator.operators, R_Os, RR_Os):
+            for op, R_O, RR_O in zip(fom.operator.operators, R_Os, RR_Os):
                 for i in range(old_RB_size, len(RB)):
                     append_vector(-op.apply(RB[i]), R_O, RR_O)
 
@@ -240,18 +240,18 @@ class SimpleCoerciveRBEstimator(ImmutableInterface):
         self.coercivity_estimator = coercivity_estimator
         self.norm = induced_norm(estimator_matrix)
 
-    def estimate(self, U, mu, d):
+    def estimate(self, U, mu, m):
         if len(U) > 1:
             raise NotImplementedError
-        if not d.rhs.parametric:
+        if not m.rhs.parametric:
             CR = np.ones(1)
         else:
-            CR = np.array(d.rhs.evaluate_coefficients(mu))
+            CR = np.array(m.rhs.evaluate_coefficients(mu))
 
-        if not d.operator.parametric:
+        if not m.operator.parametric:
             CO = np.ones(1)
         else:
-            CO = np.array(d.operator.evaluate_coefficients(mu))
+            CO = np.array(m.operator.evaluate_coefficients(mu))
 
         C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.to_numpy()).ravel()))
 
@@ -261,10 +261,10 @@ class SimpleCoerciveRBEstimator(ImmutableInterface):
 
         return est
 
-    def restricted_to_subbasis(self, dim, d):
-        cr = 1 if not d.rhs.parametric else len(d.rhs.operators)
-        co = 1 if not d.operator.parametric else len(d.operator.operators)
-        old_dim = d.operator.source.dim
+    def restricted_to_subbasis(self, dim, m):
+        cr = 1 if not m.rhs.parametric else len(m.rhs.operators)
+        co = 1 if not m.operator.parametric else len(m.operator.operators)
+        old_dim = m.operator.source.dim
 
         indices = np.concatenate((np.arange(cr),
                                  ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() + cr))

@@ -12,7 +12,7 @@ from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.manager import RemoteObjectManager
 
 
-def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
+def greedy(fom, reductor, samples, use_estimator=True, error_norm=None,
            atol=None, rtol=None, max_extensions=None, extension_params=None, pool=None):
     """Greedy basis generation algorithm.
 
@@ -26,7 +26,7 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
 
     Parameters
     ----------
-    d
+    fom
         The |Model| to reduce.
     reductor
         Reductor for reducing the given |Model|. This has to be
@@ -39,7 +39,7 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
         The set of |Parameter| samples on which to perform the greedy search.
     use_estimator
         If `True`, use `rd.estimate()` to estimate the errors on the
-        sample set. Otherwise `d.solve()` is called to compute the exact
+        sample set. Otherwise `fom.solve()` is called to compute the exact
         model reduction error.
     error_norm
         If `use_estimator == False`, use this function to calculate the
@@ -84,7 +84,7 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
         # Push everything we need during the greedy search to the workers.
         # Distribute the training set evenly among the workes.
         if not use_estimator:
-            rom.manage(pool.push(d))
+            rom.manage(pool.push(fom))
             if error_norm:
                 rom.manage(pool.push(error_norm))
         samples = rom.manage(pool.scatter_list(samples))
@@ -106,10 +106,10 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
 
             with logger.block('Estimating errors ...'):
                 if use_estimator:
-                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=None, reductor=None,
+                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, fom=None, reductor=None,
                                                        samples=samples, error_norm=None)))
                 else:
-                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=d, reductor=reductor,
+                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, fom=fom, reductor=reductor,
                                                        samples=samples, error_norm=error_norm)))
             max_err_ind = np.argmax(errors)
             max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
@@ -127,7 +127,7 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
                 break
 
             with logger.block(f'Computing solution snapshot for mu = {max_err_mu} ...'):
-                U = d.solve(max_err_mu)
+                U = fom.solve(max_err_mu)
             with logger.block('Extending basis with solution snapshot ...'):
                 try:
                     reductor.extend_basis(U, copy_U=False, **extension_params)
@@ -151,16 +151,16 @@ def greedy(d, reductor, samples, use_estimator=True, error_norm=None,
                 'time': tictoc}
 
 
-def _estimate(rd=None, d=None, reductor=None, samples=None, error_norm=None):
+def _estimate(rd=None, fom=None, reductor=None, samples=None, error_norm=None):
     if not samples:
         return -1., None
 
-    if d is None:
+    if fom is None:
         errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
     elif error_norm is not None:
-        errors = [error_norm(d.solve(mu) - reductor.reconstruct(rd.solve(mu))) for mu in samples]
+        errors = [error_norm(fom.solve(mu) - reductor.reconstruct(rd.solve(mu))) for mu in samples]
     else:
-        errors = [(d.solve(mu) - reductor.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
+        errors = [(fom.solve(mu) - reductor.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
     # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
     # if necessary
     errors = [x[0] if hasattr(x, '__len__') else x for x in errors]

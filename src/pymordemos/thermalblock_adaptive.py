@@ -110,46 +110,46 @@ def thermalblock_demo(args):
     )
 
     print('Discretize ...')
-    d, _ = discretize_stationary_cg(problem, diameter=1. / args['--grid'])
+    fom, _ = discretize_stationary_cg(problem, diameter=1. / args['--grid'])
 
     if args['--list-vector-array']:
         from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
-        d = convert_to_numpy_list_vector_array(d)
+        fom = convert_to_numpy_list_vector_array(fom)
 
     if args['--cache-region'] != 'none':
-        d.enable_caching(args['--cache-region'])
+        fom.enable_caching(args['--cache-region'])
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = ()
         legend = ()
-        for mu in d.parameter_space.sample_randomly(2):
+        for mu in fom.parameter_space.sample_randomly(2):
             print(f"Solving for diffusion = \n{mu['diffusion']} ... ")
             sys.stdout.flush()
-            Us = Us + (d.solve(mu),)
+            Us = Us + (fom.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
-        d.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
+        fom.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
 
     print('RB generation ...')
 
-    product = d.h1_0_semi_product if args['--product'] == 'h1' else None
+    product = fom.h1_0_semi_product if args['--product'] == 'h1' else None
     coercivity_estimator = ExpressionParameterFunctional('min([diffusion[0], diffusion[1]**2])',
-                                                         d.parameter_type)
-    reductors = {'residual_basis': CoerciveRBReductor(d, product=product,
+                                                         fom.parameter_type)
+    reductors = {'residual_basis': CoerciveRBReductor(fom, product=product,
                                                       coercivity_estimator=coercivity_estimator),
-                 'traditional': SimpleCoerciveRBReductor(d, product=product,
+                 'traditional': SimpleCoerciveRBReductor(fom, product=product,
                                                          coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
     greedy_data = adaptive_greedy(
-        d, reductor,
+        fom, reductor,
         validation_mus=args['--validation-mus'],
         rho=args['--rho'],
         gamma=args['--gamma'],
         theta=args['--theta'],
         use_estimator=not args['--without-estimator'],
-        error_norm=d.h1_0_semi_norm,
+        error_norm=fom.h1_0_semi_norm,
         max_extensions=args['RBSIZE'],
         visualize=not args['--no-visualize-refinement']
     )
@@ -162,15 +162,15 @@ def thermalblock_demo(args):
             dump(rd, f)
         print(f"Writing detailed model and reductor to file {args['--pickle']}_detailed ...")
         with open(args['--pickle'] + '_detailed', 'wb') as f:
-            dump((d, reductor), f)
+            dump((fom, reductor), f)
 
     print('\nSearching for maximum error on random snapshots ...')
 
     results = reduction_error_analysis(rd,
-                                       d=d,
+                                       fom=fom,
                                        reductor=reductor,
                                        estimator=True,
-                                       error_norms=(d.h1_0_semi_norm,),
+                                       error_norms=(fom.h1_0_semi_norm,),
                                        condition=True,
                                        test_mus=args['--test'],
                                        basis_sizes=25 if args['--plot-error-sequence'] else 1,
@@ -203,9 +203,9 @@ Greedy basis generation:
         plt.show(results['figure'])
     if args['--plot-err']:
         mumax = results['max_error_mus'][0, -1]
-        U = d.solve(mumax)
+        U = fom.solve(mumax)
         URB = reductor.reconstruct(rd.solve(mumax))
-        d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+        fom.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                     title='Maximum Error Solution', separate_colorbars=True, block=True)
 
 

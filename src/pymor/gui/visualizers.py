@@ -46,7 +46,7 @@ class PatchVisualizer(BasicInterface):
         self.backend = backend
         self.block = block
 
-    def visualize(self, U, d, title=None, legend=None, separate_colorbars=False,
+    def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
                   rescale_colorbars=False, block=None, filename=None, columns=2):
         """Visualize the provided data.
 
@@ -57,7 +57,7 @@ class PatchVisualizer(BasicInterface):
             as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
             provided, in which case a subplot is created for each entry of the tuple. The
             lengths of all arrays have to agree.
-        d
+        m
             Filled in by :meth:`pymor.models.ModelBase.visualize` (ignored).
         title
             Title of the plot.
@@ -126,7 +126,7 @@ class OnedVisualizer(BasicInterface):
         self.codim = codim
         self.block = block
 
-    def visualize(self, U, d, title=None, legend=None, block=None):
+    def visualize(self, U, m, title=None, legend=None, block=None):
         """Visualize the provided data.
 
         Parameters
@@ -136,7 +136,7 @@ class OnedVisualizer(BasicInterface):
             as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
             provided, in which case several plots are made into the same axes. The
             lengths of all arrays have to agree.
-        d
+        m
             Filled in by :meth:`pymor.models.ModelBase.visualize` (ignored).
         title
             Title of the plot.

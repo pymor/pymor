@@ -52,11 +52,11 @@ if __name__ == '__main__':
         T=1.
     )
 
-    d, _ = discretize_instationary_cg(p, diameter=1/10, nt=100)
+    fom, _ = discretize_instationary_cg(p, diameter=1/10, nt=100)
 
-    d.visualize(d.solve())
+    fom.visualize(fom.solve())
 
-    lti = d.to_lti()
+    lti = fom.to_lti()
 
     print(f'n = {lti.n}')
     print(f'm = {lti.m}')

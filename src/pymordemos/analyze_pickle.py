@@ -80,15 +80,15 @@ def analyze_pickle_histogram(args):
 
     if args['--detailed']:
         print('Loading high-dimensional data ...')
-        d, reductor = load(open(args['--detailed'], 'rb'))
+        fom, reductor = load(open(args['--detailed'], 'rb'))
 
         errs = []
         for u, mu in zip(us, mus):
             print(f'Calculating error for {mu} ... ')
             sys.stdout.flush()
-            err = d.solve(mu) - reductor.reconstruct(u)
+            err = fom.solve(mu) - reductor.reconstruct(u)
             if args['--error-norm']:
-                errs.append(np.max(getattr(d, args['--error-norm'] + '_norm')(err)))
+                errs.append(np.max(getattr(fom, args['--error-norm'] + '_norm')(err)))
             else:
                 errs.append(np.max(err.l2_norm()))
             print('done')
@@ -181,8 +181,8 @@ def analyze_pickle_convergence(args):
     if not args['--detailed']:
         raise ValueError('High-dimensional data file must be specified.')
     print('Loading high-dimensional data ...')
-    d, reductor = load(open(args['--detailed'], 'rb'))
-    d.enable_caching('disk')
+    fom, reductor = load(open(args['--detailed'], 'rb'))
+    fom.enable_caching('disk')
 
     dim = rd.solution_space.dim
     if args['--ndim']:
@@ -223,9 +223,9 @@ def analyze_pickle_convergence(args):
         sys.stdout.flush()
         errs = []
         for u, mu in zip(us, mus):
-            err = d.solve(mu) - reductor.reconstruct(u)
+            err = fom.solve(mu) - reductor.reconstruct(u)
             if args['--error-norm']:
-                errs.append(np.max(getattr(d, args['--error-norm'] + '_norm')(err)))
+                errs.append(np.max(getattr(fom, args['--error-norm'] + '_norm')(err)))
             else:
                 errs.append(np.max(err.l2_norm()))
         ERRS.append(max(errs))

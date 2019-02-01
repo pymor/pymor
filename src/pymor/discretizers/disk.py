@@ -81,7 +81,7 @@ def discretize_stationary_from_disk(parameter_file):
 
     Returns
     -------
-    d
+    m
         The |StationaryModel| that has been generated.
     """
     assert ".ini" == parameter_file[-4:], f'Given file is not an .ini file: {parameter_file}'
@@ -217,7 +217,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
 
     Returns
     -------
-    d
+    m
         The |InstationaryModel| that has been generated.
     """
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"

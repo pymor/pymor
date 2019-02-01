@@ -15,12 +15,12 @@ class SOR_IRKAReductor(BasicInterface):
 
     Parameters
     ----------
-    d
+    fom
         SecondOrderModel.
     """
-    def __init__(self, d):
-        assert isinstance(d, SecondOrderModel)
-        self.d = d
+    def __init__(self, fom):
+        assert isinstance(fom, SecondOrderModel)
+        self.fom = fom
 
     def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
                projection='orth', use_arnoldi=False, conv_crit='sigma', compute_errors=False,
@@ -49,7 +49,7 @@ class SOR_IRKAReductor(BasicInterface):
 
             If `None`, if is chosen as all ones. If `b` is an `int`, it
             is used as a seed to generate it randomly. Otherwise, it
-            needs to be a |VectorArray| of length `r` from `d.B.source`.
+            needs to be a |VectorArray| of length `r` from `fom.B.source`.
 
             `b` and `rd0` cannot both be not `None`.
         c
@@ -57,7 +57,7 @@ class SOR_IRKAReductor(BasicInterface):
 
             If `None`, if is chosen as all ones. If `c` is an `int`, it
             is used as a seed to generate it randomly. Otherwise, it
-            needs to be a |VectorArray| of length `r` from `d.Cp.range`.
+            needs to be a |VectorArray| of length `r` from `fom.Cp.range`.
 
             `c` and `rd0` cannot both be not `None`.
         rd0
@@ -106,10 +106,10 @@ class SOR_IRKAReductor(BasicInterface):
         rd
             Reduced |LTIModel| model.
         """
-        d = self.d
-        if not d.cont_time:
+        fom = self.fom
+        if not fom.cont_time:
             raise NotImplementedError
-        assert 0 < r < d.n
+        assert 0 < r < fom.n
         assert isinstance(num_prev, int) and num_prev >= 1
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('sigma', 'h2')
@@ -119,11 +119,11 @@ class SOR_IRKAReductor(BasicInterface):
 
         # initial interpolation points and tangential directions
         assert sigma is None or isinstance(sigma, int) or len(sigma) == r
-        assert b is None or isinstance(b, int) or b in d.B.source and len(b) == r
-        assert c is None or isinstance(c, int) or c in d.Cp.range and len(c) == r
+        assert b is None or isinstance(b, int) or b in fom.B.source and len(b) == r
+        assert c is None or isinstance(c, int) or c in fom.Cp.range and len(c) == r
         assert (rd0 is None
                 or isinstance(rd0, SecondOrderModel)
-                and rd0.n == r and rd0.B.source == d.B.source and rd0.Cp.range == d.Cp.range)
+                and rd0.n == r and rd0.B.source == fom.B.source and rd0.Cp.range == fom.Cp.range)
         assert sigma is None or rd0 is None
         assert b is None or rd0 is None
         assert c is None or rd0 is None
@@ -140,15 +140,15 @@ class SOR_IRKAReductor(BasicInterface):
                 np.random.seed(sigma)
                 sigma = np.abs(np.random.randn(r))
             if b is None:
-                b = d.B.source.from_numpy(np.ones((r, d.m)))
+                b = fom.B.source.from_numpy(np.ones((r, fom.m)))
             elif isinstance(b, int):
                 np.random.seed(b)
-                b = d.B.source.from_numpy(np.random.randn(r, d.m))
+                b = fom.B.source.from_numpy(np.random.randn(r, fom.m))
             if c is None:
-                c = d.Cp.range.from_numpy(np.ones((r, d.p)))
+                c = fom.Cp.range.from_numpy(np.ones((r, fom.p)))
             elif isinstance(c, int):
                 np.random.seed(c)
-                c = d.Cp.range.from_numpy(np.random.randn(r, d.p))
+                c = fom.Cp.range.from_numpy(np.random.randn(r, fom.p))
 
         # begin logging
         self.logger.info('Starting SOR-IRKA')
@@ -164,7 +164,7 @@ class SOR_IRKAReductor(BasicInterface):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        interp_reductor = SO_BHIReductor(d)
+        interp_reductor = SO_BHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
@@ -202,8 +202,8 @@ class SOR_IRKAReductor(BasicInterface):
                 self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
             else:
                 if np.max(rd.poles().real) < 0:
-                    err = d - rd
-                    rel_H2_err = err.h2_norm() / d.h2_norm()
+                    err = fom - rd
+                    rel_H2_err = err.h2_norm() / fom.h2_norm()
                 else:
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
