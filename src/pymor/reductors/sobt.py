@@ -61,7 +61,7 @@ class GenericSOBTpvReductor(BasicInterface):
         rom
             Reduced system.
         """
-        assert 0 < r < self.fom.n
+        assert 0 < r < self.fom.order
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
@@ -225,7 +225,7 @@ class SOBTfvReductor(BasicInterface):
         rom
             Reduced system.
         """
-        assert 0 < r < self.fom.n
+        assert 0 < r < self.fom.order
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
@@ -305,7 +305,7 @@ class SOBTReductor(BasicInterface):
         rom
             Reduced system.
         """
-        assert 0 < r < self.fom.n
+        assert 0 < r < self.fom.order
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors

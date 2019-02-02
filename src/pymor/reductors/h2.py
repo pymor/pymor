@@ -28,7 +28,8 @@ class IRKAReductor(BasicInterface):
         self.fom = fom
 
     def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1,
-               force_sigma_in_rhp=False, projection='orth', use_arnoldi=False, conv_crit='sigma', compute_errors=False):
+               force_sigma_in_rhp=False, projection='orth', use_arnoldi=False, conv_crit='sigma',
+               compute_errors=False):
         r"""Reduce using IRKA.
 
         See [GAB08]_ (Algorithm 4.1) and [ABG10]_ (Algorithm 1).
@@ -113,7 +114,7 @@ class IRKAReductor(BasicInterface):
         fom = self.fom
         if not fom.cont_time:
             raise NotImplementedError
-        assert 0 < r < fom.n
+        assert 0 < r < fom.order
         assert isinstance(num_prev, int) and num_prev >= 1
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('sigma', 'h2')
@@ -124,7 +125,7 @@ class IRKAReductor(BasicInterface):
         assert c is None or isinstance(c, int) or c in fom.C.range and len(c) == r
         assert (rom0 is None
                 or isinstance(rom0, LTIModel)
-                and rom0.n == r and rom0.B.source == fom.B.source and rom0.C.range == fom.C.range)
+                and rom0.order == r and rom0.B.source == fom.B.source and rom0.C.range == fom.C.range)
         assert sigma is None or rom0 is None
         assert b is None or rom0 is None
         assert c is None or rom0 is None
@@ -138,15 +139,15 @@ class IRKAReductor(BasicInterface):
                 np.random.seed(sigma)
                 sigma = np.abs(np.random.randn(r))
             if b is None:
-                b = fom.B.source.from_numpy(np.ones((r, fom.m)))
+                b = fom.B.source.from_numpy(np.ones((r, fom.input_dim)))
             elif isinstance(b, int):
                 np.random.seed(b)
-                b = fom.B.source.from_numpy(np.random.randn(r, fom.m))
+                b = fom.B.source.from_numpy(np.random.randn(r, fom.input_dim))
             if c is None:
-                c = fom.C.range.from_numpy(np.ones((r, fom.p)))
+                c = fom.C.range.from_numpy(np.ones((r, fom.output_dim)))
             elif isinstance(c, int):
                 np.random.seed(c)
-                c = fom.C.range.from_numpy(np.random.randn(r, fom.p))
+                c = fom.C.range.from_numpy(np.random.randn(r, fom.output_dim))
 
         # being logging
         self.logger.info('Starting IRKA')
@@ -284,8 +285,8 @@ class TSIAReductor(BasicInterface):
         """
         fom = self.fom
         assert isinstance(rom0, LTIModel) and rom0.B.source == fom.B.source and rom0.C.range == fom.C.range
-        r = rom0.n
-        assert 0 < r < fom.n
+        r = rom0.order
+        assert 0 < r < fom.order
         assert isinstance(num_prev, int) and num_prev >= 1
         assert projection in ('orth', 'biorth')
         assert conv_crit in ('sigma', 'h2')
@@ -374,8 +375,8 @@ class TF_IRKAReductor(BasicInterface):
     def __init__(self, fom):
         self.fom = fom
 
-    def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1, force_sigma_in_rhp=False,
-               conv_crit='sigma'):
+    def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1,
+               force_sigma_in_rhp=False, conv_crit='sigma'):
         r"""Reduce using TF-IRKA.
 
         Parameters
@@ -446,9 +447,9 @@ class TF_IRKAReductor(BasicInterface):
 
         # initial interpolation points and tangential directions
         assert sigma is None or isinstance(sigma, int) or len(sigma) == r
-        assert b is None or isinstance(b, int) or isinstance(b, np.ndarray) and b.shape == (fom.m, r)
-        assert c is None or isinstance(c, int) or isinstance(c, np.ndarray) and c.shape == (fom.p, r)
-        assert rom0 is None or rom0.n == r and rom0.B.source.dim == fom.m and rom0.C.range.dim == fom.p
+        assert b is None or isinstance(b, int) or isinstance(b, np.ndarray) and b.shape == (fom.input_dim, r)
+        assert c is None or isinstance(c, int) or isinstance(c, np.ndarray) and c.shape == (fom.output_dim, r)
+        assert rom0 is None or rom0.order == r and rom0.input_dim == fom.input_dim and rom0.output_dim == fom.output_dim
         assert sigma is None or rom0 is None
         assert b is None or rom0 is None
         assert c is None or rom0 is None
@@ -464,15 +465,15 @@ class TF_IRKAReductor(BasicInterface):
                 np.random.seed(sigma)
                 sigma = np.abs(np.random.randn(r))
             if b is None:
-                b = np.ones((fom.m, r))
+                b = np.ones((fom.input_dim, r))
             elif isinstance(b, int):
                 np.random.seed(b)
-                b = np.random.randn(fom.m, r)
+                b = np.random.randn(fom.input_dim, r)
             if c is None:
-                c = np.ones((fom.p, r))
+                c = np.ones((fom.output_dim, r))
             elif isinstance(c, int):
                 np.random.seed(c)
-                c = np.random.randn(fom.p, r)
+                c = np.random.randn(fom.output_dim, r)
 
         # begin logging
         self.logger.info('Starting TF-IRKA')
