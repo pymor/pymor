@@ -10,7 +10,7 @@ from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.table import format_table
 
 
-class rule():
+class rule:
     """Decorator to make a method a rule in a given |RuleTable|.
 
     The decorated function will become the :attr:`action` to
@@ -23,11 +23,6 @@ class rule():
     action
         Method to call in case the rule matches.
     """
-    _rules_created = [0]
-
-    def __init__(self):
-        self._rule_nr = self._rules_created[0]
-        self._rules_created[0] += 1
 
     def __call__(self, action):
         self.action = action
@@ -127,7 +122,7 @@ class RuleTableMeta(UberMeta):
                     raise ValueError('Rule definition names have to start with "action_"')
                 v.name = k
                 rules.append(v)
-        rules = list(sorted(rules, key=lambda r: r._rule_nr))
+        # note: since Python 3.6, the definition order is preserved in dct, so rules has the right order
         dct['rules'] = rules
 
         return super().__new__(cls, name, parents, dct)
