@@ -135,6 +135,14 @@ class MPIOperator(OperatorBase):
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
                                                V.obj_id, mu=mu, least_squares=least_squares))
 
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+        if self.source.id is None or self.range.id is None:
+            raise NotImplementedError
+        assert U in self.source
+        mu = self.parse_parameter(mu)
+        return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse_adjoint',
+                                               U.obj_id, mu=mu, least_squares=least_squares))
+
     def jacobian(self, U, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)
