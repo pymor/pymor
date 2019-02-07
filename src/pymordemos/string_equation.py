@@ -27,21 +27,17 @@ if __name__ == '__main__':
     n = 2 * n2 - 1  # dimension of the system
 
     d = 10  # damping
-    k = 1   # stiffness
+    k = 0.01   # stiffness
 
     M = sps.eye(n, format='csc')
-
     E = d * sps.eye(n, format='csc')
-
     K = sps.diags([n * [2 * k * n ** 2],
                    (n - 1) * [-k * n ** 2],
                    (n - 1) * [-k * n ** 2]],
                   [0, -1, 1],
                   format='csc')
-
     B = np.zeros((n, 1))
     B[n2 - 1, 0] = n
-
     Cp = np.zeros((1, n))
     Cp[0, n2 - 1] = 1
 
@@ -58,7 +54,7 @@ if __name__ == '__main__':
     ax.set_title('System poles')
     plt.show()
 
-    w = np.logspace(-1, 3, 1000)
+    w = np.logspace(-4, 2, 200)
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the full model')
@@ -87,7 +83,7 @@ if __name__ == '__main__':
     print(f'FOM Hankel-norm: {so_sys.hankel_norm():e}')
 
     # Position Second-Order Balanced Truncation (SOBTp)
-    r = 10
+    r = 5
     sobtp_reductor = SOBTpReductor(so_sys)
     rom_sobtp = sobtp_reductor.reduce(r)
 
@@ -117,7 +113,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Velocity Second-Order Balanced Truncation (SOBTv)
-    r = 10
+    r = 5
     sobtv_reductor = SOBTvReductor(so_sys)
     rom_sobtv = sobtv_reductor.reduce(r)
 
@@ -147,7 +143,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Position-Velocity Second-Order Balanced Truncation (SOBTpv)
-    r = 10
+    r = 5
     sobtpv_reductor = SOBTpvReductor(so_sys)
     rom_sobtpv = sobtpv_reductor.reduce(r)
 
@@ -177,7 +173,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Velocity-Position Second-Order Balanced Truncation (SOBTvp)
-    r = 10
+    r = 5
     sobtvp_reductor = SOBTvpReductor(so_sys)
     rom_sobtvp = sobtvp_reductor.reduce(r)
 
@@ -207,7 +203,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Free-Velocity Second-Order Balanced Truncation (SOBTfv)
-    r = 10
+    r = 5
     sobtfv_reductor = SOBTfvReductor(so_sys)
     rom_sobtfv = sobtfv_reductor.reduce(r)
 
@@ -237,7 +233,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Second-Order Balanced Truncation (SOBT)
-    r = 10
+    r = 5
     sobt_reductor = SOBTReductor(so_sys)
     rom_sobt = sobt_reductor.reduce(r)
 
@@ -267,7 +263,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Balanced Truncation (BT)
-    r = 10
+    r = 5
     bt_reductor = BTReductor(so_sys.to_lti())
     rom_bt = bt_reductor.reduce(r)
 
@@ -297,9 +293,9 @@ if __name__ == '__main__':
     plt.show()
 
     # Iterative Rational Krylov Algorithm (IRKA)
-    r = 10
+    r = 5
     irka_reductor = IRKAReductor(so_sys.to_lti())
-    rom_irka = irka_reductor.reduce(r, num_prev=2, conv_crit='h2')
+    rom_irka = irka_reductor.reduce(r)
 
     fig, ax = plt.subplots()
     ax.semilogy(irka_reductor.dist, '.-')
@@ -331,10 +327,10 @@ if __name__ == '__main__':
     ax.set_title('Bode plot of the IRKA error system')
     plt.show()
 
-    # Second-Order Iterative Rational Krylov Algorithm (SOR-IRKA)
-    r = 10
+    # Second-Order Reduced Iterative Rational Krylov Algorithm (SOR-IRKA)
+    r = 5
     sor_irka_reductor = SOR_IRKAReductor(so_sys)
-    rom_sor_irka = sor_irka_reductor.reduce(r, num_prev=2, maxit=5)
+    rom_sor_irka = sor_irka_reductor.reduce(r)
 
     fig, ax = plt.subplots()
     ax.semilogy(sor_irka_reductor.dist, '.-')

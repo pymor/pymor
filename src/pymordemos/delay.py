@@ -28,16 +28,9 @@ if __name__ == '__main__':
 
     tf = TransferFunction(NumpyVectorSpace(1, 'INPUT'), NumpyVectorSpace(1, 'OUTPUT'), H, dH)
 
-    w = np.logspace(-1, 3, 1000)
-
     r = 10
-    sigma = np.logspace(-2, 2, r)
-    b = np.ones((1, r))
-    c = np.ones((1, r))
-    tol = 1e-3
-    maxit = 1000
     tf_irka_reductor = TF_IRKAReductor(tf)
-    rom = tf_irka_reductor.reduce(r, sigma, b, c, tol=tol, maxit=maxit)
+    rom = tf_irka_reductor.reduce(r, maxit=1000)
 
     sigmas = tf_irka_reductor.sigmas
     fig, ax = plt.subplots()
@@ -45,6 +38,9 @@ if __name__ == '__main__':
     ax.set_title('Final interpolation points of TF-IRKA')
     ax.set_xlabel('Re')
     ax.set_ylabel('Im')
+    plt.show()
+
+    w = np.logspace(-1, 3, 200)
 
     fig, ax = plt.subplots()
     tf.mag_plot(w, ax=ax)

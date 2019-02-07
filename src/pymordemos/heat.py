@@ -26,7 +26,8 @@ where :math:`u(t)` is the input and :math:`y(t)` is the output.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pymor.basic import *
+from pymor.basic import (InstationaryProblem, StationaryProblem, RectDomain, ConstantFunction, ExpressionFunction,
+                         discretize_instationary_cg, BTReductor, IRKAReductor)
 from pymor.core.config import config
 
 import logging
@@ -36,7 +37,7 @@ logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging
 if __name__ == '__main__':
     p = InstationaryProblem(
         StationaryProblem(
-            domain=RectDomain([[0.,0.], [1.,1.]], left='robin', right='robin', top='robin', bottom='robin'),
+            domain=RectDomain([[0., 0.], [1., 1.]], left='robin', right='robin', top='robin', bottom='robin'),
             diffusion=ConstantFunction(1., 2),
             robin_data=(ConstantFunction(1., 2), ExpressionFunction('(x[...,0] < 1e-10) * 1.', 2)),
             functionals={'output': ('l2_boundary', ExpressionFunction('(x[...,0] > (1 - 1e-10)) * 1.', 2))}
@@ -63,7 +64,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Bode plot of the full model
-    w = np.logspace(-2, 3, 100)
+    w = np.logspace(-1, 3, 100)
     fig, ax = plt.subplots()
     lti.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the full model')
@@ -111,10 +112,8 @@ if __name__ == '__main__':
 
     # Iterative Rational Krylov Algorithm
     sigma = np.logspace(-1, 3, r)
-    tol = 1e-4
-    maxit = 100
     irka_reductor = IRKAReductor(lti)
-    rom_irka = irka_reductor.reduce(r, sigma, tol=tol, maxit=maxit, compute_errors=True)
+    rom_irka = irka_reductor.reduce(r, sigma, compute_errors=True)
 
     # Shift distances
     fig, ax = plt.subplots()
