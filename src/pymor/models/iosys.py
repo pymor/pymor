@@ -1195,6 +1195,125 @@ class SecondOrderModel(InputStateOutputModel):
                         solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
                         cache_region=self.cache_region, name=self.name + '_first_order')
 
+    def __add__(self, other):
+        """Add a |SecondOrderModel| or an |LTIModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.input_space
+        assert self.output_space == other.output_space
+
+        if isinstance(other, LTIModel):
+            return self.to_lti() + other
+
+        if not isinstance(other, SecondOrderModel):
+            return NotImplemented
+
+        M = BlockDiagonalOperator([self.M, other.M],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        E = BlockDiagonalOperator([self.E, other.E],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        K = BlockDiagonalOperator([self.K, other.K],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        B = BlockColumnOperator([self.B, other.B],
+                                range_id=self.state_space.id)
+        Cp = BlockRowOperator([self.Cp, other.Cp],
+                              source_id=self.state_space.id)
+        Cv = BlockRowOperator([self.Cv, other.Cv],
+                              source_id=self.state_space.id)
+        D = self.D + other.D
+        return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
+
+    def __radd__(self, other):
+        """Add to an |LTIModel|."""
+        if isinstance(other, LTIModel):
+            return other + self.to_lti()
+        else:
+            raise NotImplementedError
+
+    def __sub__(self, other):
+        """Subtract a |SecondOrderModel| or an |LTIModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.input_space
+        assert self.output_space == other.output_space
+
+        if isinstance(other, LTIModel):
+            return self.to_lti() - other
+
+        if not isinstance(other, SecondOrderModel):
+            return NotImplemented
+
+        M = BlockDiagonalOperator([self.M, other.M],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        E = BlockDiagonalOperator([self.E, other.E],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        K = BlockDiagonalOperator([self.K, other.K],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        B = BlockColumnOperator([self.B, other.B],
+                                range_id=self.state_space.id)
+        Cp = BlockRowOperator([self.Cp, -other.Cp],
+                              source_id=self.state_space.id)
+        Cv = BlockRowOperator([self.Cv, -other.Cv],
+                              source_id=self.state_space.id)
+        if self.D is other.D:
+            D = ZeroOperator(self.output_space, self.input_space)
+        else:
+            D = self.D - other.D
+        return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
+
+    def __rsub__(self, other):
+        """Subtract from an |LTIModel|."""
+        if isinstance(other, LTIModel):
+            return other - self.to_lti()
+        else:
+            raise NotImplementedError
+
+    def __neg__(self):
+        """Negate the |SecondOrderModel|."""
+        return self.with_(Cp=-self.Cp, Cv=-self.Cv, D=-self.D)
+
+    def __mul__(self, other):
+        """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.output_space
+
+        if isinstance(other, LTIModel):
+            return self.to_lti() * other
+
+        if not isinstance(other, SecondOrderModel):
+            return NotImplemented
+
+        M = BlockDiagonalOperator([self.M, other.M],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        E = BlockOperator([[self.E, -Concatenation(self.B, other.Cv)],
+                           [None, other.E]],
+                          source_id=self.state_space.id,
+                          range_id=self.state_space.id)
+        K = BlockOperator([[self.K, -Concatenation(self.B, other.Cp)],
+                           [None, other.K]],
+                          source_id=self.state_space.id,
+                          range_id=self.state_space.id)
+        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B],
+                                range_id=self.state_space.id)
+        Cp = BlockRowOperator([self.Cp, Concatenation(self.D, other.Cp)],
+                              source_id=self.state_space.id)
+        Cv = BlockRowOperator([self.Cv, Concatenation(self.D, other.Cv)],
+                              source_id=self.state_space.id)
+        D = Concatenation(self.D, other.D)
+        return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
+
+    def __rmul__(self, other):
+        """Premultiply by an |LTIModel|."""
+        if isinstance(other, LTIModel):
+            return other * self.to_lti()
+        else:
+            raise NotImplementedError
+
     @cached
     def poles(self):
         """Compute system poles."""
