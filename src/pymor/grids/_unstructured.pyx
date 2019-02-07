@@ -2,7 +2,7 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import division
+#cython: language_level=3
 
 import numpy as np
 import cython
