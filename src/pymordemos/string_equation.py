@@ -263,7 +263,7 @@ if __name__ == '__main__':
     ax.set_title("BT reduced model's poles")
     plt.show()
 
-    err_bt = so_sys.to_lti() - rom_bt
+    err_bt = so_sys - rom_bt
     print(f'H_2-error for the BT ROM:    {err_bt.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the BT ROM:  {:e}', err_bt)
     print(f'Hankel-error for the BT ROM: {err_bt.hankel_norm():e}')
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     ax.set_title("IRKA reduced model's poles")
     plt.show()
 
-    err_irka = so_sys.to_lti() - rom_irka
+    err_irka = so_sys - rom_irka
     print(f'H_2-error for the IRKA ROM:    {err_irka.h2_norm():e}')
     compute_hinf_norm('H_inf-error for the IRKA ROM:  {:e}', err_irka)
     print(f'Hankel-error for the IRKA ROM: {err_irka.hankel_norm():e}')
