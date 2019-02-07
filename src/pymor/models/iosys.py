@@ -880,6 +880,61 @@ class TransferFunction(InputOutputModel):
     def eval_dtf(self, s):
         return self.dtf(s)
 
+    def __add__(self, other):
+        assert isinstance(other, InputOutputModel)
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.input_space
+        assert self.output_space == other.output_space
+
+        H = lambda s: self.eval_tf(s) + other.eval_tf(s)
+        dH = lambda s: self.eval_dtf(s) + other.eval_dtf(s)
+        return self.with_(H=H, dH=dH)
+
+    __radd__ = __add__
+
+    def __sub__(self, other):
+        assert isinstance(other, InputOutputModel)
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.input_space
+        assert self.output_space == other.output_space
+
+        H = lambda s: self.eval_tf(s) - other.eval_tf(s)
+        dH = lambda s: self.eval_dtf(s) - other.eval_dtf(s)
+        return self.with_(H=H, dH=dH)
+
+    def __rsub__(self, other):
+        assert isinstance(other, InputOutputModel)
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.input_space
+        assert self.output_space == other.output_space
+
+        H = lambda s: other.eval_tf(s) - self.eval_tf(s)
+        dH = lambda s: other.eval_dtf(s) - self.eval_dtf(s)
+        return self.with_(H=H, dH=dH)
+
+    def __neg__(self):
+        H = lambda s: -self.eval_tf(s)
+        dH = lambda s: -self.eval_dtf(s)
+        return self.with_(H=H, dH=dH)
+
+    def __mul__(self, other):
+        assert isinstance(other, InputOutputModel)
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.output_space
+
+        H = lambda s: self.eval_tf(s) @ other.eval_tf(s)
+        dH = lambda s: self.eval_dtf(s) @ other.eval_dtf(s)
+        return self.with_(H=H, dH=dH)
+
+    def __rmul__(self, other):
+        assert isinstance(other, InputOutputModel)
+        assert self.cont_time == other.cont_time
+        assert self.output_space == other.input_space
+
+        H = lambda s: other.eval_tf(s) @ self.eval_tf(s)
+        dH = lambda s: other.eval_dtf(s) @ self.eval_dtf(s)
+        return self.with_(H=H, dH=dH)
+
 
 class SecondOrderModel(InputStateOutputModel):
     r"""Class for linear second order systems.
