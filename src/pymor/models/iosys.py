@@ -132,52 +132,6 @@ class InputStateOutputModel(InputOutputModel):
     def order(self):
         return self.state_space.dim
 
-    def __add__(self, other):
-        """Add two input-state-output systems."""
-        assert type(self) == type(other)
-        assert self.cont_time == other.cont_time
-
-        def add_operator(op, other_op):
-            if op.source == self.input_space:
-                if op.range == self.output_space:
-                    return (op + other_op).assemble()
-                elif op.range == self.state_space:
-                    return BlockColumnOperator([op, other_op],
-                                               range_id=self.state_space.id)
-                else:
-                    raise NotImplementedError
-            elif op.source == self.state_space:
-                if op.range == self.output_space:
-                    return BlockRowOperator([op, other_op],
-                                            source_id=self.state_space.id)
-                elif op.range == self.state_space:
-                    if isinstance(op, IdentityOperator) and isinstance(other_op, IdentityOperator):
-                        return IdentityOperator(BlockVectorSpace([op.source, other_op.source],
-                                                                 self.state_space.id))
-                    else:
-                        return BlockDiagonalOperator([op, other_op],
-                                                     source_id=self.state_space.id,
-                                                     range_id=self.state_space.id)
-                else:
-                    raise NotImplementedError
-            else:
-                raise NotImplementedError
-
-        new_operators = {k: add_operator(self.operators[k], other.operators[k]) for k in self.operators}
-
-        return self.with_(operators=new_operators, cont_time=self.cont_time)
-
-    def __neg__(self):
-        """Negate input-state-output system."""
-        new_operators = {k: (op * (-1)).assemble() if op.range == self.output_space else op
-                         for k, op in self.operators.items()}
-
-        return self.with_(operators=new_operators)
-
-    def __sub__(self, other):
-        """Subtract two input-state-output system."""
-        return self + (-other)
-
 
 class LTIModel(InputStateOutputModel):
     r"""Class for linear time-invariant systems.
@@ -540,18 +494,86 @@ class LTIModel(InputStateOutputModel):
                                  solver_options=solver_options, estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
+    def __add__(self, other):
+        """Add an |LTIModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.input_space
+        assert self.output_space == other.output_space
+
+        if not isinstance(other, LTIModel):
+            return NotImplemented
+
+        A = BlockDiagonalOperator([self.A, other.A],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        B = BlockColumnOperator([self.B, other.B],
+                                range_id=self.state_space.id)
+        C = BlockRowOperator([self.C, other.C],
+                             source_id=self.state_space.id)
+        D = self.D + other.D
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space],
+                                                  self.state_space.id))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E],
+                                      source_id=self.state_space.id,
+                                      range_id=self.state_space.id)
+        return self.with_(A=A, B=B, C=C, D=D, E=E)
+
+    def __sub__(self, other):
+        """Subtract an |LTIModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.input_space
+        assert self.output_space == other.output_space
+
+        if not isinstance(other, LTIModel):
+            return NotImplemented
+
+        A = BlockDiagonalOperator([self.A, other.A],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        B = BlockColumnOperator([self.B, other.B],
+                                range_id=self.state_space.id)
+        C = BlockRowOperator([self.C, -other.C],
+                             source_id=self.state_space.id)
+        if self.D is other.D:
+            D = ZeroOperator(self.output_space, self.input_space)
+        else:
+            D = self.D - other.D
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space],
+                                                  self.state_space.id))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E],
+                                      source_id=self.state_space.id,
+                                      range_id=self.state_space.id)
+        return self.with_(A=A, B=B, C=C, D=D, E=E)
+
+    def __neg__(self):
+        """Negate the |LTIModel|."""
+        return self.with_(C=-self.C, D=-self.D)
+
     def __mul__(self, other):
-        """Multiply (cascade) two |LTIModels|."""
-        assert self.B.source == other.C.range
+        """Postmultiply by an |LTIModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.output_space
+
+        if not isinstance(other, LTIModel):
+            return NotImplemented
 
         A = BlockOperator([[self.A, Concatenation(self.B, other.C)],
-                           [None, other.A]])
-        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B])
-        C = BlockRowOperator([self.C, Concatenation(self.D, other.C)])
+                           [None, other.A]],
+                          source_id=self.state_space.id,
+                          range_id=self.state_space.id)
+        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B],
+                                range_id=self.state_space.id)
+        C = BlockRowOperator([self.C, Concatenation(self.D, other.C)],
+                             source_id=self.state_space.id)
         D = Concatenation(self.D, other.D)
-        E = BlockDiagonalOperator((self.E, other.E))
-
-        return self.__class__(A, B, C, D, E, cont_time=self.cont_time)
+        E = BlockDiagonalOperator([self.E, other.E],
+                                  source_id=self.state_space.id,
+                                  range_id=self.state_space.id)
+        return self.with_(A=A, B=B, C=C, D=D, E=E)
 
     @cached
     def poles(self):
