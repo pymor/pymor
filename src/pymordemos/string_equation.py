@@ -21,13 +21,6 @@ import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
 
 
-def compute_hinf_norm(message, sys):
-    if config.HAVE_SLYCOT:
-        print(message.format(sys.hinf_norm()))
-    else:
-        print('H_inf-norm calculation is skipped due to missing slycot.')
-
-
 if __name__ == '__main__':
     # Assemble matrices
     n2 = 50
@@ -86,9 +79,12 @@ if __name__ == '__main__':
     ax[1, 1].set_title('Velocity-position singular values')
     plt.show()
 
-    print(f'H_2-norm of the full model:    {so_sys.h2_norm():e}')
-    compute_hinf_norm('H_inf-norm of the full model:  {:e}', so_sys)
-    print(f'Hankel-norm of the full model: {so_sys.hankel_norm():e}')
+    print(f'FOM H_2-norm:    {so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'FOM H_inf-norm:  {so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'FOM Hankel-norm: {so_sys.hankel_norm():e}')
 
     # Position Second-Order Balanced Truncation (SOBTp)
     r = 10
@@ -102,9 +98,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtp = so_sys - rom_sobtp
-    print(f'H_2-error for the SOBTp ROM:    {err_sobtp.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the SOBTp ROM:  {:e}', err_sobtp)
-    print(f'Hankel-error for the SOBTp ROM: {err_sobtp.hankel_norm():e}')
+    print(f'SOBTp relative H_2-error:    {err_sobtp.h2_norm() / so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'SOBTp relative H_inf-error:  {err_sobtp.hinf_norm() / so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'SOBTp relative Hankel-error: {err_sobtp.hankel_norm() / so_sys.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -129,9 +128,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtv = so_sys - rom_sobtv
-    print(f'H_2-error for the SOBTv ROM:    {err_sobtv.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the SOBTv ROM:  {:e}', err_sobtv)
-    print(f'Hankel-error for the SOBTv ROM: {err_sobtv.hankel_norm():e}')
+    print(f'SOBTv relative H_2-error:    {err_sobtv.h2_norm() / so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'SOBTv relative H_inf-error:  {err_sobtv.hinf_norm() / so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'SOBTv relative Hankel-error: {err_sobtv.hankel_norm() / so_sys.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -156,9 +158,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtpv = so_sys - rom_sobtpv
-    print(f'H_2-error for the SOBTpv ROM:    {err_sobtpv.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the SOBTpv ROM:  {:e}', err_sobtpv)
-    print(f'Hankel-error for the SOBTpv ROM: {err_sobtpv.hankel_norm():e}')
+    print(f'SOBTpv relative H_2-error:    {err_sobtpv.h2_norm() / so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'SOBTpv relative H_inf-error:  {err_sobtpv.hinf_norm() / so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'SOBTpv relative Hankel-error: {err_sobtpv.hankel_norm() / so_sys.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -183,9 +188,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtvp = so_sys - rom_sobtvp
-    print(f'H_2-error for the SOBTvp ROM:    {err_sobtvp.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the SOBTvp ROM:  {:e}', err_sobtvp)
-    print(f'Hankel-error for the SOBTvp ROM: {err_sobtvp.hankel_norm():e}')
+    print(f'SOBTvp relative H_2-error:    {err_sobtvp.h2_norm() / so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'SOBTvp relative H_inf-error:  {err_sobtvp.hinf_norm() / so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'SOBTvp relative Hankel-error: {err_sobtvp.hankel_norm() / so_sys.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -210,9 +218,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobtfv = so_sys - rom_sobtfv
-    print(f'H_2-error for the SOBTfv ROM:    {err_sobtfv.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the SOBTfv ROM:  {:e}', err_sobtfv)
-    print(f'Hankel-error for the SOBTfv ROM: {err_sobtfv.hankel_norm():e}')
+    print(f'SOBTfv relative H_2-error:    {err_sobtfv.h2_norm() / so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'SOBTfv relative H_inf-error:  {err_sobtfv.hinf_norm() / so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'SOBTfv relative Hankel-error: {err_sobtfv.hankel_norm() / so_sys.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -237,9 +248,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_sobt = so_sys - rom_sobt
-    print(f'H_2-error for the SOBT ROM:    {err_sobt.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the SOBT ROM:  {:e}', err_sobt)
-    print(f'Hankel-error for the SOBT ROM: {err_sobt.hankel_norm():e}')
+    print(f'SOBT relative H_2-error:    {err_sobt.h2_norm() / so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'SOBT relative H_inf-error:  {err_sobt.hinf_norm() / so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'SOBT relative Hankel-error: {err_sobt.hankel_norm() / so_sys.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -264,9 +278,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_bt = so_sys.to_lti() - rom_bt
-    print(f'H_2-error for the BT ROM:    {err_bt.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the BT ROM:  {:e}', err_bt)
-    print(f'Hankel-error for the BT ROM: {err_bt.hankel_norm():e}')
+    print(f'BT relative H_2-error:    {err_bt.h2_norm() / so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'BT relative H_inf-error:  {err_bt.hinf_norm() / so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'BT relative Hankel-error: {err_bt.hankel_norm() / so_sys.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -296,9 +313,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_irka = so_sys.to_lti() - rom_irka
-    print(f'H_2-error for the IRKA ROM:    {err_irka.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the IRKA ROM:  {:e}', err_irka)
-    print(f'Hankel-error for the IRKA ROM: {err_irka.hankel_norm():e}')
+    print(f'IRKA relative H_2-error:    {err_irka.h2_norm() / so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'IRKA relative H_inf-error:  {err_irka.hinf_norm() / so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'IRKA relative Hankel-error: {err_irka.hankel_norm() / so_sys.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
@@ -328,9 +348,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_sor_irka = so_sys - rom_sor_irka
-    print(f'H_2-error for the SOR-IRKA ROM:    {err_sor_irka.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the SOR-IRKA ROM:  {:e}', err_sor_irka)
-    print(f'Hankel-error for the SOR-IRKA ROM: {err_sor_irka.hankel_norm():e}')
+    print(f'SOR-IRKA relative H_2-error:    {err_sor_irka.h2_norm() / so_sys.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'SOR-IRKA relative H_inf-error:  {err_sor_irka.hinf_norm() / so_sys.hinf_norm():e}')
+    else:
+        print('H_inf-norm calculation is skipped due to missing slycot.')
+    print(f'SOR-IRKA relative Hankel-error: {err_sor_irka.hankel_norm() / so_sys.hankel_norm():e}')
 
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)

@@ -71,7 +71,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     ax.plot(t, step_response, '-', t, y, '--')
     ax.set_title('Step responses of the full and reduced model')
-    ax.set_xlabel(r'$t$')
+    ax.set_xlabel('$t$')
     plt.show()
 
     # match steady state (add interpolation point at 0)
@@ -98,5 +98,5 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     ax.plot(t, step_response, '-', t, y_ss, '--')
     ax.set_title('Step responses of the full and reduced model 2')
-    ax.set_xlabel(r'$t$')
+    ax.set_xlabel('$t$')
     plt.show()

@@ -33,13 +33,6 @@ import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
 
 
-def compute_hinf_norm(message, sys):
-    if config.HAVE_SLYCOT:
-        print(message.format(sys.hinf_norm()))
-    else:
-        print('H_inf-norm calculation is skipped due to missing slycot.')
-
-
 if __name__ == '__main__':
     p = InstationaryProblem(
         StationaryProblem(
@@ -84,18 +77,24 @@ if __name__ == '__main__':
     plt.show()
 
     # Norms of the system
-    print(f'H_2-norm of the full model:    {lti.h2_norm():e}')
-    compute_hinf_norm('H_inf-norm of the full model:  {:e}', lti)
-    print(f'Hankel-norm of the full model: {lti.hankel_norm():e}')
+    print(f'FOM H_2-norm:    {lti.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'FOM H_inf-norm:  {lti.hinf_norm():e}')
+    else:
+        print('Skipped H_inf-norm calculation due to missing slycot.')
+    print(f'FOM Hankel-norm: {lti.hankel_norm():e}')
 
     # Balanced Truncation
     r = 5
     reductor = BTReductor(lti)
     rom_bt = reductor.reduce(r, tol=1e-5)
     err_bt = lti - rom_bt
-    print(f'H_2-error for the BT ROM:    {err_bt.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the BT ROM:  {:e}', err_bt)
-    print(f'Hankel-error for the BT ROM: {err_bt.hankel_norm():e}')
+    print(f'BT relative H_2-error:    {err_bt.h2_norm() / lti.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'BT relative H_inf-error:  {err_bt.hinf_norm() / lti.hinf_norm():e}')
+    else:
+        print('Skipped H_inf-norm calculation due to missing slycot.')
+    print(f'BT relative Hankel-error: {err_bt.hankel_norm() / lti.hankel_norm():e}')
 
     # Bode plot of the full and BT reduced model
     fig, ax = plt.subplots()
@@ -124,9 +123,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_irka = lti - rom_irka
-    print(f'H_2-error for the IRKA ROM:    {err_irka.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the IRKA ROM:  {:e}', err_irka)
-    print(f'Hankel-error for the IRKA ROM: {err_irka.hankel_norm():e}')
+    print(f'IRKA relative H_2-error:    {err_irka.h2_norm() / lti.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'IRKA relative H_inf-error:  {err_irka.hinf_norm() / lti.hinf_norm():e}')
+    else:
+        print('Skipped H_inf-norm calculation due to missing slycot.')
+    print(f'IRKA relative Hankel-error: {err_irka.hankel_norm() / lti.hankel_norm():e}')
 
     # Bode plot of the full and IRKA reduced model
     fig, ax = plt.subplots()
