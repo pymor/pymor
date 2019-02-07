@@ -5,12 +5,15 @@ pyMOR is a software library for building model order
 reduction applications with the Python programming language. Implemented
 algorithms include reduced basis methods for parametric linear and non-linear
 problems, as well as system-theoretic methods such as balanced truncation or
-IRKA.  All algorithms in pyMOR are formulated in terms of abstract interfaces
-for seamless integration with external PDE solver packages.  Moreover, pure
-Python implementations of finite element and finite volume discretizations
-using the NumPy/SciPy scientific computing stack are
+IRKA (Iterative Rational Krylov Algorithm).  All algorithms in pyMOR are
+formulated in terms of abstract interfaces for seamless integration with
+external PDE (Partial Differential Equation) solver packages.  Moreover, pure
+Python implementations of FEM (Finite Element Method) and FVM (Finite Volume
+Method) discretizations using the NumPy/SciPy scientific computing stack are
 provided for getting started quickly.
 
+[![PyPI](https://img.shields.io/pypi/pyversions/pymor.svg)](https://pypi.python.org/pypi/pymor)
+[![PyPI](https://img.shields.io/pypi/v/pymor.svg)](https://pypi.python.org/pypi/pymor)
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](https://pymor.readthedocs.org)
 [![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
 [![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
@@ -19,7 +22,7 @@ provided for getting started quickly.
 License
 -------
 
-Copyright 2013-2018 pyMOR developers and contributors. All rights reserved.
+Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:
@@ -50,12 +53,11 @@ Citing
 ------
 
 If you use pyMOR for academic work, please consider citing our
-[publication](https://epubs.siam.org/doi/abs/10.1137/15M1026614):
+[publication](https://doi.org/10.1137/15M1026614):
 
 	R. Milk, S. Rave, F. Schindler
 	pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
-	SIAM J. Sci. Comput., 38(5), pp. S194-S216
-
+	SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
 
 
 Installation via pip
@@ -127,6 +129,14 @@ by executing:
 This will generate HTML documentation in `docs/_build/html`.
 
 
+Useful Links
+------------
+
+* [Latest Changelog](https://pymor.readthedocs.io/en/latest/release_notes.html)
+* [Getting Started](https://pymor.readthedocs.io/en/latest/getting_started.html)
+* [Dependencies](requirements.txt)
+
+
 External PDE solvers
 --------------------
 
@@ -147,7 +157,7 @@ using [Boost.Python](http://www.boost.org/) can be found
 [here](https://github.com/pymor/dune-burgers-demo). Moreover,
 we provide bindings for the following solver libraries:
 
-* [FEniCS](http://fenicsproject.org)
+* [FEniCS](https://fenicsproject.org)
 
     MPI-compatible wrapper classes for dolfin linear algebra data structures are
     shipped with pyMOR (`pymor.bindings.fenics`).
@@ -168,6 +178,22 @@ we provide bindings for the following solver libraries:
 Do not hesitate to contact
 [us](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev) if you
 need help with the integration of your PDE solver.
+
+
+External Matrix Equation Solvers
+--------------------------------
+
+pyMOR also provides bindings to matrix equation solvers (in `pymor.bindings`),
+which are needed for the system-theoretic methods and need to be installed
+separately. Bindings for the following solver libraries are included:
+
+* [Py-M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess)
+
+    The Matrix Equation Sparse Solver library is intended for solving large sparse matrix equations (`pymor.bindings.pymess`).
+
+* [Slycot](https://github.com/python-control/Slycot)
+
+    Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also used for Hardy norm computations (`pymor.bindings.slycot`). 
 
 
 Setting up an Environment for pyMOR Development
