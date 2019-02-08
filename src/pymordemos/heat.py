@@ -26,24 +26,18 @@ where :math:`u(t)` is the input and :math:`y(t)` is the output.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pymor.basic import *
+from pymor.basic import (InstationaryProblem, StationaryProblem, RectDomain, ConstantFunction, ExpressionFunction,
+                         discretize_instationary_cg, BTReductor, IRKAReductor)
 from pymor.core.config import config
 
 import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
 
 
-def compute_hinf_norm(message, sys):
-    if config.HAVE_SLYCOT:
-        print(message.format(sys.hinf_norm()))
-    else:
-        print('H_inf-norm calculation is skipped due to missing slycot.')
-
-
 if __name__ == '__main__':
     p = InstationaryProblem(
         StationaryProblem(
-            domain=RectDomain([[0.,0.], [1.,1.]], left='robin', right='robin', top='robin', bottom='robin'),
+            domain=RectDomain([[0., 0.], [1., 1.]], left='robin', right='robin', top='robin', bottom='robin'),
             diffusion=ConstantFunction(1., 2),
             robin_data=(ConstantFunction(1., 2), ExpressionFunction('(x[...,0] < 1e-10) * 1.', 2)),
             functionals={'output': ('l2_boundary', ExpressionFunction('(x[...,0] > (1 - 1e-10)) * 1.', 2))}
@@ -70,7 +64,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Bode plot of the full model
-    w = np.logspace(-2, 3, 100)
+    w = np.logspace(-1, 3, 100)
     fig, ax = plt.subplots()
     lti.mag_plot(w, ax=ax)
     ax.set_title('Bode plot of the full model')
@@ -84,18 +78,24 @@ if __name__ == '__main__':
     plt.show()
 
     # Norms of the system
-    print(f'H_2-norm of the full model:    {lti.h2_norm():e}')
-    compute_hinf_norm('H_inf-norm of the full model:  {:e}', lti)
-    print(f'Hankel-norm of the full model: {lti.hankel_norm():e}')
+    print(f'FOM H_2-norm:    {lti.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'FOM H_inf-norm:  {lti.hinf_norm():e}')
+    else:
+        print('Skipped H_inf-norm calculation due to missing slycot.')
+    print(f'FOM Hankel-norm: {lti.hankel_norm():e}')
 
     # Balanced Truncation
     r = 5
     reductor = BTReductor(lti)
     rom_bt = reductor.reduce(r, tol=1e-5)
     err_bt = lti - rom_bt
-    print(f'H_2-error for the BT ROM:    {err_bt.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the BT ROM:  {:e}', err_bt)
-    print(f'Hankel-error for the BT ROM: {err_bt.hankel_norm():e}')
+    print(f'BT relative H_2-error:    {err_bt.h2_norm() / lti.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'BT relative H_inf-error:  {err_bt.hinf_norm() / lti.hinf_norm():e}')
+    else:
+        print('Skipped H_inf-norm calculation due to missing slycot.')
+    print(f'BT relative Hankel-error: {err_bt.hankel_norm() / lti.hankel_norm():e}')
 
     # Bode plot of the full and BT reduced model
     fig, ax = plt.subplots()
@@ -112,10 +112,8 @@ if __name__ == '__main__':
 
     # Iterative Rational Krylov Algorithm
     sigma = np.logspace(-1, 3, r)
-    tol = 1e-4
-    maxit = 100
     irka_reductor = IRKAReductor(lti)
-    rom_irka = irka_reductor.reduce(r, sigma, tol=tol, maxit=maxit, compute_errors=True)
+    rom_irka = irka_reductor.reduce(r, sigma, compute_errors=True)
 
     # Shift distances
     fig, ax = plt.subplots()
@@ -124,9 +122,12 @@ if __name__ == '__main__':
     plt.show()
 
     err_irka = lti - rom_irka
-    print(f'H_2-error for the IRKA ROM:    {err_irka.h2_norm():e}')
-    compute_hinf_norm('H_inf-error for the IRKA ROM:  {:e}', err_irka)
-    print(f'Hankel-error for the IRKA ROM: {err_irka.hankel_norm():e}')
+    print(f'IRKA relative H_2-error:    {err_irka.h2_norm() / lti.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'IRKA relative H_inf-error:  {err_irka.hinf_norm() / lti.hinf_norm():e}')
+    else:
+        print('Skipped H_inf-norm calculation due to missing slycot.')
+    print(f'IRKA relative Hankel-error: {err_irka.hankel_norm() / lti.hankel_norm():e}')
 
     # Bode plot of the full and IRKA reduced model
     fig, ax = plt.subplots()
