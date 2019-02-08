@@ -46,6 +46,12 @@ if __name__ == '__main__':
     tf.mag_plot(w, ax=ax)
     rom.mag_plot(w, ax=ax, linestyle='dashed')
     ax.set_title('Magnitude Bode plots of the full and reduced model')
+    plt.show()
+
+    fig, ax = plt.subplots()
+    (tf - rom).mag_plot(w, ax=ax)
+    ax.set_title('Magnitude Bode plots of the error system')
+    plt.show()
 
     # step response
     E = rom.E.matrix

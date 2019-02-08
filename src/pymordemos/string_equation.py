@@ -273,7 +273,7 @@ if __name__ == '__main__':
     ax.set_title("BT reduced model's poles")
     plt.show()
 
-    err_bt = so_sys.to_lti() - rom_bt
+    err_bt = so_sys - rom_bt
     print(f'BT relative H_2-error:    {err_bt.h2_norm() / so_sys.h2_norm():e}')
     if config.HAVE_SLYCOT:
         print(f'BT relative H_inf-error:  {err_bt.hinf_norm() / so_sys.hinf_norm():e}')
@@ -308,7 +308,7 @@ if __name__ == '__main__':
     ax.set_title("IRKA reduced model's poles")
     plt.show()
 
-    err_irka = so_sys.to_lti() - rom_irka
+    err_irka = so_sys - rom_irka
     print(f'IRKA relative H_2-error:    {err_irka.h2_norm() / so_sys.h2_norm():e}')
     if config.HAVE_SLYCOT:
         print(f'IRKA relative H_inf-error:  {err_irka.hinf_norm() / so_sys.hinf_norm():e}')
