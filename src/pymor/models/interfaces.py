@@ -24,8 +24,6 @@ class ModelInterface(CacheableInterface, Parametric):
         `True` if the model describes a linear problem.
     operators
         Dictionary of all |Operators| contained in the model
-        (see :class:`~pymor.reductors.basic.GenericRBReductor` for a usage
-        example).
     products
         Same as |Operators| but for inner product operators associated with the
         model.

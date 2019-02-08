@@ -93,7 +93,7 @@ from pymor.discretizers.fv import discretize_instationary_fv
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 from pymor.parallel.default import new_parallel_pool
-from pymor.reductors.basic import GenericRBReductor
+from pymor.reductors.basic import InstationaryRBReductor
 
 
 def main(args):
@@ -191,7 +191,7 @@ def main(args):
 
     print('RB generation ...')
 
-    reductor = GenericRBReductor(eim)
+    reductor = InstationaryRBReductor(eim)
 
     greedy_data = greedy(fom, reductor, fom.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                          use_estimator=False, error_norm=lambda U: np.max(fom.l2_norm(U)),
@@ -227,7 +227,7 @@ def main(args):
         return l2_err_max, mumax
     error_analysis = np.frompyfunc(error_analysis, 2, 2)
 
-    real_rb_size = len(reductor.RB)
+    real_rb_size = len(reductor.bases['RB'])
     real_cb_size = len(ei_data['basis'])
     if args['--plot-error-landscape']:
         N_count = min(real_rb_size - 1, args['--plot-error-landscape-N'])

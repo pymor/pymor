@@ -7,15 +7,15 @@ import numpy as np
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.reductors.basic import GenericRBReductor
+from pymor.reductors.basic import StationaryRBReductor
 from pymor.reductors.residual import ResidualReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class CoerciveRBReductor(GenericRBReductor):
+class CoerciveRBReductor(StationaryRBReductor):
     """Reduced Basis reductor for |StationaryModels| with coercive linear operator.
 
-    The only addition to :class:`~pymor.reductors.basic.GenericRBReductor` is an error
+    The only addition to :class:`~pymor.reductors.basic.StationaryRBReductor` is an error
     estimator which evaluates the dual norm of the residual with respect to a given inner
     product. For the reduction of the residual we use
     :class:`~pymor.reductors.residual.ResidualReductor` for improved numerical stability
@@ -27,13 +27,6 @@ class CoerciveRBReductor(GenericRBReductor):
         The |Model| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    basis_is_orthonormal
-        If `RB` is specified, indicate whether or not the basis is orthonormal
-        w.r.t. `product`.
-    vector_ranged_operators
-        List of keys in `fom.operators` for which the corresponding |Operator|
-        should be orthogonally projected (i.e. operators which map to vectors in
-        contrast to bilinear forms which map to functionals).
     product
         Inner product for the orthonormalization of `RB`, the projection of the
         |Operators| given by `vector_ranged_operators` and for the computation of
@@ -45,29 +38,22 @@ class CoerciveRBReductor(GenericRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, fom, RB=None, basis_is_orthonormal=None,
-                 vector_ranged_operators=('initial_data',), product=None,
-                 coercivity_estimator=None):
-        super().__init__(fom, RB,
-                         basis_is_orthonormal=basis_is_orthonormal,
-                         vector_ranged_operators=vector_ranged_operators,
-                         product=product)
+    def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
+                 check_orthonormality=None, check_tol=None):
+        super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
+                         check_tol=check_tol)
         self.coercivity_estimator = coercivity_estimator
-        self.residual_reductor = ResidualReductor(self.RB, self.fom.operator, self.fom.rhs,
+        self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
                                                   product=product, riesz_representatives=True)
 
-    def _reduce(self):
-        with self.logger.block('RB projection ...'):
-            rom = super()._reduce()
+    def assemble_estimator(self):
+        residual = self.residual_reductor.reduce()
+        estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
+                                        self.coercivity_estimator)
+        return estimator
 
-        with self.logger.block('Assembling error estimator ...'):
-            residual = self.residual_reductor.reduce()
-
-            estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
-                                            self.coercivity_estimator)
-            rom = rom.with_(estimator=estimator)
-
-        return rom
+    def assemble_estimator_for_subbasis(self, dims):
+        return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
 class CoerciveRBEstimator(ImmutableInterface):
@@ -98,7 +84,7 @@ class CoerciveRBEstimator(ImmutableInterface):
                                        self.coercivity_estimator)
 
 
-class SimpleCoerciveRBReductor(GenericRBReductor):
+class SimpleCoerciveRBReductor(StationaryRBReductor):
     """Reductor for linear |StationaryModels| with affinely decomposed operator and rhs.
 
     .. note::
@@ -106,7 +92,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
        |StationaryModels| and offers an improved error estimator
        with better numerical stability.
 
-    The only addition is to :class:`~pymor.reductors.basic.GenericRBReductor` is an error
+    The only addition is to :class:`~pymor.reductors.basic.StationaryRBReductor` is an error
     estimator, which evaluates the norm of the residual with respect to a given inner product.
 
     Parameters
@@ -115,13 +101,6 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         The |Model| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    basis_is_orthonormal
-        If `RB` is specified, indicate whether or not the basis is orthonormal
-        w.r.t. `product`.
-    vector_ranged_operators
-        List of keys in `fom.operators` for which the corresponding |Operator|
-        should be orthogonally projected (i.e. operators which map to vectors in
-        contrast to bilinear forms which map to functionals).
     product
         Inner product for the orthonormalization of `RB`, the projection of the
         |Operators| given by `vector_ranged_operators` and for the computation of
@@ -133,9 +112,8 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, fom, RB=None, basis_is_orthonormal=None,
-                 vector_ranged_operators=('initial_data',), product=None,
-                 coercivity_estimator=None):
+    def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
+                 check_orthonormality=None, check_tol=None):
         assert fom.linear
         assert isinstance(fom.operator, LincombOperator)
         assert all(not op.parametric for op in fom.operator.operators)
@@ -143,18 +121,15 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
             assert isinstance(fom.rhs, LincombOperator)
             assert all(not op.parametric for op in fom.rhs.operators)
 
-        super().__init__(fom, RB,
-                         basis_is_orthonormal=basis_is_orthonormal,
-                         vector_ranged_operators=vector_ranged_operators,
-                         product=product)
+        super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
+                         check_tol=check_tol)
         self.coercivity_estimator = coercivity_estimator
-        self.residual_reductor = ResidualReductor(self.RB, self.fom.operator, self.fom.rhs,
+        self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
                                                   product=product)
         self.extends = None
 
-    def _reduce(self):
-        fom, RB, extends = self.fom, self.RB, self.extends
-        rom = super()._reduce()
+    def assemble_estimator(self):
+        fom, RB, extends = self.fom, self.bases['RB'], self.extends
         if extends:
             old_RB_size = extends[0]
             old_data = extends[1]
@@ -166,10 +141,10 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
 
         # compute the Riesz representative of (U, .)_L2 with respect to product
         def riesz_representative(U):
-            if self.product is None:
+            if self.products['RB'] is None:
                 return U.copy()
             else:
-                return self.product.apply_inverse(U)
+                return self.products['RB'].apply_inverse(U)
 
         def append_vector(U, R, RR):
             RR.append(riesz_representative(U), remove_from_other=True)
@@ -222,11 +197,12 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
         estimator = SimpleCoerciveRBEstimator(estimator_matrix, self.coercivity_estimator)
-        rom = rom.with_(estimator=estimator)
-
         self.extends = (len(RB), dict(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os))
 
-        return rom
+        return estimator
+
+    def assemble_estimator_for_subbasis(self, dims):
+        return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
 class SimpleCoerciveRBEstimator(ImmutableInterface):

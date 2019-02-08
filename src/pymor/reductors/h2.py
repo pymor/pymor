@@ -11,7 +11,7 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
-from pymor.reductors.basic import GenericPGReductor
+from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTI_BHIReductor, TFInterpReductor
 
 
@@ -454,7 +454,7 @@ class OneSidedIRKAReductor(BasicInterface):
         else:
             self.V = gram_schmidt(W, atol=0, rtol=0, product=None if projection == 'orth' else fom.E)
 
-        self.pg_reductor = GenericPGReductor(fom, self.V, self.V, projection == 'Eorth', product=fom.E)
+        self.pg_reductor = LTIPGReductor(fom, self.V, self.V, projection == 'Eorth')
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -596,7 +596,7 @@ class TSIAReductor(BasicInterface):
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=fom.E)
 
-        self.pg_reductor = GenericPGReductor(fom, self.W, self.V, projection == 'biorth', product=fom.E)
+        self.pg_reductor = LTIPGReductor(fom, self.W, self.V, projection == 'biorth')
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""

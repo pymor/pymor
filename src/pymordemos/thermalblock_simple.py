@@ -230,7 +230,7 @@ def reduce_naive(fom, reductor, basis_size):
     training_set = fom.parameter_space.sample_randomly(basis_size)
 
     for mu in training_set:
-        reductor.extend_basis(fom.solve(mu), 'trivial')
+        reductor.extend_basis(fom.solve(mu), method='trivial')
 
     rom = reductor.reduce()
 
@@ -271,7 +271,7 @@ def reduce_pod(fom, reductor, snapshots, basis_size):
         snapshots.append(fom.solve(mu))
 
     basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.product)
-    reductor.extend_basis(basis, 'trivial')
+    reductor.extend_basis(basis, method='trivial')
 
     rom = reductor.reduce()
 
@@ -308,7 +308,8 @@ def main():
     # select reduction algorithm with error estimator
     #################################################
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameter_type)
-    reductor = CoerciveRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
+    reductor = CoerciveRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator,
+                                  check_orthonormality=False)
 
     # generate reduced model
     ########################
