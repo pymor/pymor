@@ -53,7 +53,6 @@ from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.coercive import CoerciveRBReductor
-from pymor import gui
 
 
 PARAM_STEPS = 10
@@ -200,4 +199,5 @@ if __name__ == '__main__':
         win.show()
         sys.exit(app.exec_())
 
-    gui.qt._launch_qt_app(lambda _: RBGui(args), block=False)
+    from pymor.gui import qt
+    qt._launch_qt_app(lambda : RBGui(args), block=False)
