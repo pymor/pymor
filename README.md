@@ -242,3 +242,4 @@ Should you have any questions regarding pyMOR or wish to contribute,
 do not hestitate to contact us via our development mailing list:
 
 <http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev>
+Di 12. Feb 15:20:25 CET 2019
