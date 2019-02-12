@@ -1,21 +1,15 @@
 #!/bin/bash
 
-### this block was historically needed to use one main logic script for both gitlab and travis
-export CODECOV_TOKEN="${PYMOR_CODECOV_TOKEN}" \
-    TRAVIS_REPO_SLUG="${CI_PROJECT_PATH}" \
-    TRAVIS_COMMIT="${CI_COMMIT_SHA}"
-
 if [ "x${CI_MERGE_REQUEST_ID}" == "x" ] ; then
-    export TRAVIS_PULL_REQUEST=false
+    export PULL_REQUEST=false
 else
-    export TRAVIS_PULL_REQUEST=${CI_MERGE_REQUEST_ID}
+    export PULL_REQUEST=${CI_MERGE_REQUEST_ID}
 fi
+
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
 
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
-
-### *******************************************************************************************
 
 # any failure here should fail the whole test
 set -eu
@@ -30,7 +24,7 @@ sudo pip install -r requirements-travis.txt
 sudo pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
 function coverage_submit {
-    codecov
+    codecov -t "${PYMOR_CODECOV_TOKEN}"
 }
 
 #allow xdist to work by fixing parametrization order
@@ -39,19 +33,17 @@ export PYTHONHASHSEED=0
 python setup.py build_ext -i
 if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
-    # this fails on PRs, so skip it
-    if [[ "${TRAVIS_PULL_REQUEST}" == "false" ]] ; then
-      sudo pip uninstall -y -r requirements.txt
-      sudo pip uninstall -y -r requirements-travis.txt
-      sudo pip uninstall -y -r requirements-optional.txt || echo "Some optional modules failed to uninstall"
-      sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
-      sudo pip uninstall -y pymor
-      sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}#egg=pymor[full]
-      sudo pip uninstall -y pymor
-      sudo pip install -r requirements.txt
-      sudo pip install -r requirements-travis.txt
-      sudo pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
-    fi
+    PIP_CLONE_URL="git+${CI_PROJECT_URL}@${CI_COMMIT_SHA}"
+    sudo pip uninstall -y -r requirements.txt
+    sudo pip uninstall -y -r requirements-travis.txt
+    sudo pip uninstall -y -r requirements-optional.txt || echo "Some optional modules failed to uninstall"
+    sudo pip install ${PIP_CLONE_URL}
+    sudo pip uninstall -y pymor
+    sudo pip install ${PIP_CLONE_URL}#egg=pymor[full]
+    sudo pip uninstall -y pymor
+    sudo pip install -r requirements.txt
+    sudo pip install -r requirements-travis.txt
+    sudo pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
     twine check ${SDIST_DIR}/*
