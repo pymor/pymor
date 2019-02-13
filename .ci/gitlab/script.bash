@@ -7,13 +7,13 @@ else
 fi
 
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
-
+CODECOV_TOKEN="${PYMOR_CODECOV_TOKEN}"
+SUDO="sudo -E -H"
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
 # any failure here should fail the whole test
-set -eu
-SUDO="sudo -E"
+set -eux
 ${SUDO} pip install -U pip
 
 # check if requirements files are up-to-date
@@ -25,7 +25,7 @@ ${SUDO} pip install -r requirements-travis.txt
 ${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
 function coverage_submit {
-    codecov -t "${PYMOR_CODECOV_TOKEN}"
+    codecov
 }
 
 #allow xdist to work by fixing parametrization order
