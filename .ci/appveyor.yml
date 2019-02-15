@@ -36,7 +36,7 @@ install:
     # these ones are not in the 0.5.1 conda build yet
     - conda install pyevtk gmsh
     # these are build/test-time deps for the conda package, not runtime
-    - conda install cython pytest
+    - conda install cython pytest pytest-cov
 
 build_script:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
