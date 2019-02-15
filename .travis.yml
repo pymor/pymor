@@ -12,11 +12,6 @@ env:
     - CONFIG=osx_python3.7
 
 before_install:
-    # Fast finish the PR.
-    - |
-      (curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/master/recipe/conda_forge_ci_setup/ff_ci_pr_build.py | \
-          python - -v --ci "travis" "${TRAVIS_REPO_SLUG}" "${TRAVIS_BUILD_NUMBER}" "${TRAVIS_PULL_REQUEST}") || exit 1
-
     # Remove homebrew.
     - |
       echo ""
@@ -44,13 +39,6 @@ install:
       source /Users/travis/miniconda3/bin/activate root
 
       conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
-      setup_conda_rc ./ ./recipe ./.ci_support/${CONFIG}.yaml
-
-      source run_conda_forge_build_setup
-
-    # compiler cleanup
-    - |
-      mangle_compiler ./ ./recipe ./.ci_support/${CONFIG}.yaml
     - conda config --add channels conda-forge
     - conda install --only-deps pymor
     # these ones are not in the 0.5.1 conda build yet
