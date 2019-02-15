@@ -43,8 +43,8 @@ install:
     - conda install --only-deps pymor
     # these ones are not in the 0.5.1 conda build yet
     - conda install pyevtk gmsh
-    # cython is only a buildtime, not a runtime,  dep for our conda package
-    - conda install cython
+    # these are buildtime, not a runtime,  deps for our conda package
+    - conda install cython pytest-cov pytest
 
 script:
     - conda list
