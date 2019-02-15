@@ -33,11 +33,10 @@ install:
     - conda config --add channels conda-forge
     - conda update -q conda
     - conda install --only-deps pymor
-    # this one is not in the 0.5.1 conda build yet
-    - conda install pyevtk
-    # cython is only a buildtime, not a runtime,  dep for our conda package
-    - conda install cython
-    - curl -fsS -o gmsh.zip http://gmsh.info/bin/Windows/gmsh-2.16.0-Windows32.zip && unzip -j gmsh.zip -d %CONDA%\Scripts
+    # these ones are not in the 0.5.1 conda build yet
+    - conda install pyevtk gmsh
+    # these are build/test-time deps for the conda package, not runtime
+    - conda install cython pytest
 
 build_script:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
