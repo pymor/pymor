@@ -4,13 +4,11 @@ environment:
     # a later point release.
     # See: http://www.appveyor.com/docs/installed-software#python
     - PYTHON_VERSION: "3.6" # currently 3.6.5
-      PYTHON_ARCH: "64"
       CONDA: "C:\\Miniconda36-x64"
       MARKER: "not grid"
       ALLOW_FAIL: false
 
     - PYTHON_VERSION: "3.6" # currently 3.6.5
-      PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda36-x64"
       MARKER: "grid"
       ALLOW_FAIL: false
@@ -37,6 +35,8 @@ install:
     - conda install --only-deps pymor
     # this one is not in the 0.5.1 conda build yet
     - conda install pyevtk
+    # cython is only a buildtime, not a runtime,  dep for our conda package
+    - conda install cython
     - curl -fsS -o gmsh.zip http://gmsh.info/bin/Windows/gmsh-2.16.0-Windows32.zip && unzip -j gmsh.zip -d %CONDA%\Scripts
 
 build_script:
