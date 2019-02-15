@@ -3,19 +3,17 @@ environment:
     # Pre-installed Python versions, which Appveyor may upgrade to
     # a later point release.
     # See: http://www.appveyor.com/docs/installed-software#python
-    - PYTHON_VERSION: "3.6" # currently 3.5.1
-      PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda36"
+    - PYTHON_VERSION: "3.6" # currently 3.6.5
+      PYTHON_ARCH: "64"
+      CONDA: "C:\\Miniconda36-x64"
       MARKER: "not grid"
-      QT_API: "pyqt5"
-      ALLOW_FAIL: true
+      ALLOW_FAIL: false
 
-    - PYTHON_VERSION: "3.6" # currently 3.5.1
+    - PYTHON_VERSION: "3.6" # currently 3.6.5
       PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda36"
+      CONDA: "C:\\Miniconda36-x64"
       MARKER: "grid"
-      QT_API: "pyqt5"
-      ALLOW_FAIL: true
+      ALLOW_FAIL: false
 
 matrix:
   allow_failures:
@@ -34,20 +32,16 @@ install:
           throw "There are newer queued builds for this pull request, failing early." }
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
     - conda config --set always_yes yes --set changeps1 no
+    - conda config --add channels conda-forge
     - conda update -q conda
-    # hardcode a few installs that don't succeed otherwise
-    - conda install numpy pip m2-unzip
-    - conda install -c anaconda pyqt=5.6.0
-    - if [%PYTHON_VERSION%] == [3.4] ( conda remove numpy && pip install numpy && pip install https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz)
-
-    - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt ) do (
-                conda install %%i 1> nul 2>&1 & pip install %%i 1> nul 2>&1 & echo %%i
-            )
+    - conda install --only-deps pymor
+    # this one is not in the 0.5.1 conda build yet
+    - conda install pyevtk
     - curl -fsS -o gmsh.zip http://gmsh.info/bin/Windows/gmsh-2.16.0-Windows32.zip && unzip -j gmsh.zip -d %CONDA%\Scripts
 
 build_script:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
-    - pip freeze
+    - conda list
     - set PYTHONPATH=%cd%\src;%PYTHONPATH%;
     - python setup.py build_ext -i
 
