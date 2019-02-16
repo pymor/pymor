@@ -31,7 +31,6 @@ install:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
     - conda config --set always_yes yes --set changeps1 no
     - conda config --add channels conda-forge
-    - conda update -q conda
     - conda install --only-deps pymor
     # these ones are not in the 0.5.1 conda build yet
     - conda install pyevtk gmsh
