@@ -32,7 +32,7 @@ install:
     - conda config --set always_yes yes --set changeps1 no
     - conda config --add channels conda-forge
     # Install OpenGL
-    - ps: ./.ci/install_mesa.bat
+    - ps: .ci\install_mesa.ps1
     - conda install --only-deps pymor
     # these ones are not in the 0.5.1 conda build yet
     - conda install pyevtk gmsh
