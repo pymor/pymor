@@ -49,6 +49,6 @@ install:
 
 script:
     - conda list
-    - set PYTHONPATH=%cd%\src;%PYTHONPATH%;
+    - export PYTHONPATH=${PWD}/src;${PYTHONPATH};
     - python setup.py build_ext -i
     - py.test -r sxX -k "demos"
