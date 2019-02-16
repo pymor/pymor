@@ -45,7 +45,7 @@ build_script:
 
 test_script:
     - set PYTHONPATH=%cd%\src;%PYTHONPATH%;
-    - py.test -r sxX -k "%MARKER%"
+    - py.test -r sxX -k "%MARKER%" -s -v 
 
 #after_test:
   # If tests are successful, create binary packages for the project.
