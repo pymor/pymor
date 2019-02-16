@@ -6,5 +6,5 @@ numpy>=1.8.1
 packaging
 pytest-runner>=2.9
 scipy>=0.13.3
-setuptools
+setuptools>=40.8.0
 wheel
