@@ -1,3 +1,6 @@
+image:
+    - Visual Studio 2017
+
 environment:
   matrix:
     # Pre-installed Python versions, which Appveyor may upgrade to
