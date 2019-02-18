@@ -29,8 +29,20 @@ jobs:
         REM these ones are not in the 0.5.1 conda build yet
         conda install pyevtk gmsh
         REM these are build/test-time deps for the conda package, not runtime
-        conda install cython pytest pytest-cov
+        conda install cython pytest pytest-cov curl
+        pip install pytest-azurepipelines
+        curl https://pymor.github.io/dist/opengl32.dll.7z -o D:\opengl32.dll.7z
     displayName: Install Anaconda packages
+  - task: ExtractFiles@1
+    inputs:
+        archiveFilePatterns: D:\opengl32.dll.7z
+        destinationFolder: D:\
+        cleanDestinationFolder: false
+  - task: CopyFiles@2
+    inputs:
+        contents: D:\opengl32.dll
+        targetFolder: c:\windows\system32
+        overWrite: true
   - script: |
         call activate pyMORenv
         python -c "import numpy"
@@ -38,6 +50,7 @@ jobs:
         python setup.py build_ext -i
 
         py.test -r sxX -k "thermalblock_adaptive" -s -v 
+        py.test -r sxX -k "thermalblock" -s -v 
     displayName: 'Tests'
 
   ## Publish build results
