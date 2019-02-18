@@ -17,30 +17,27 @@ jobs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
 
-  # Conda Environment
-  # Create and activate a Conda environment.
-  - task: CondaEnvironment@1
-    inputs:
-      packageSpecs: 'python=$(python.version) pygments prompt_toolkit pytest pytest-timeout numpy psutil matplotlib flake8 coverage pyflakes pytest-cov pytest-flake8 codecov'
-      installOptions: '-c conda-forge'
-      updateConda: false
-    condition: ne(variables['python.version'], '3.5')
-    displayName: 'Conda Environment (conda-forge)'
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda to PATH
+  - script: conda create --yes --quiet --name pyMORenv
+    displayName: Create Anaconda environment
   - script: |
+        call activate pyMORenv
         conda config --set always_yes yes --set changeps1 no
         conda config --add channels conda-forge
-        - conda install --only-deps pymor
-        # these ones are not in the 0.5.1 conda build yet
+        conda install --only-deps pymor
+        REM these ones are not in the 0.5.1 conda build yet
         conda install pyevtk gmsh
-        # these are build/test-time deps for the conda package, not runtime
+        REM these are build/test-time deps for the conda package, not runtime
         conda install cython pytest pytest-cov
-
-        set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
-        conda list
-        set PYTHONPATH=%cd%\src;%PYTHONPATH%;
+    displayName: Install Anaconda packages
+  - script: |
+        call activate pyMORenv
+        python -c "import numpy"
+        REM set PYTHONPATH=%cd%\src;%PYTHONPATH%;
         python setup.py build_ext -i
 
-        py.test -r sxX -k "demos" -s -v 
+        py.test -r sxX -k "thermalblock_adaptive" -s -v 
     displayName: 'Tests'
 
   ## Publish build results
