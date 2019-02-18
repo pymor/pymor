@@ -1,0 +1,50 @@
+jobs:
+
+- job: 'pyMOR_CI'
+  pool:
+    vmImage: 'VS2017-Win2016'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '3.6'
+      Python37:
+        python.version: '3.7'
+    maxParallel: 4
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+
+  # Conda Environment
+  # Create and activate a Conda environment.
+  - task: CondaEnvironment@1
+    inputs:
+      packageSpecs: 'python=$(python.version) pygments prompt_toolkit pytest pytest-timeout numpy psutil matplotlib flake8 coverage pyflakes pytest-cov pytest-flake8 codecov'
+      installOptions: '-c conda-forge'
+      updateConda: false
+    condition: ne(variables['python.version'], '3.5')
+    displayName: 'Conda Environment (conda-forge)'
+  - script: |
+        conda config --set always_yes yes --set changeps1 no
+        conda config --add channels conda-forge
+        - conda install --only-deps pymor
+        # these ones are not in the 0.5.1 conda build yet
+        conda install pyevtk gmsh
+        # these are build/test-time deps for the conda package, not runtime
+        conda install cython pytest pytest-cov
+
+        set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
+        conda list
+        set PYTHONPATH=%cd%\src;%PYTHONPATH%;
+        python setup.py build_ext -i
+
+        py.test -r sxX -k "demos" -s -v 
+    displayName: 'Tests'
+
+  ## Publish build results
+  #- task: PublishTestResults@2
+    #inputs:
+      #testResultsFiles: '**/test-*.xml'
+      #testRunTitle: 'Publish test results for Python $(python.version)'
