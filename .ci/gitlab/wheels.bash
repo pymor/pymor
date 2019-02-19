@@ -13,21 +13,16 @@ BUILDER_WHEELHOUSE=${SHARED_PATH}
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
-source ./.ci/gitlab/init_sshkey.bash
-init_ssh
-
 set -x
 mkdir -p ${BUILDER_WHEELHOUSE}
-for py in 3.6 3.7 ; do
-    BUILDER_IMAGE=pymor/wheelbuilder:py${py}
-    git clean -xdf
-    docker pull ${BUILDER_IMAGE} 1> /dev/null
-    docker run --rm  -t -e LOCAL_USER_ID=$(id -u)  \
-        -v ${BUILDER_WHEELHOUSE}:/io/wheelhouse \
-        -v ${PYMOR_ROOT}:/io/pymor ${BUILDER_IMAGE} /usr/local/bin/build-wheels.sh #1> /dev/null
-done
+
+BUILDER_IMAGE=pymor/wheelbuilder:py${PYVER}
+docker pull ${BUILDER_IMAGE} 1> /dev/null
+docker run --rm  -t -e LOCAL_USER_ID=$(id -u)  \
+    -v ${BUILDER_WHEELHOUSE}:/io/wheelhouse \
+    -v ${PYMOR_ROOT}:/io/pymor ${BUILDER_IMAGE} /usr/local/bin/build-wheels.sh #1> /dev/null
 
 cp ${PYMOR_ROOT}/.ci/docker/deploy_checks/Dockerfile ${BUILDER_WHEELHOUSE}
-for os in debian_stable debian_testing centos_7 ; do
+for os in ${TEST_OS} ; do
     docker build --build-arg tag=${os} ${BUILDER_WHEELHOUSE}
 done
