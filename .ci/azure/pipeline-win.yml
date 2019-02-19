@@ -50,6 +50,6 @@ jobs:
         REM set PYTHONPATH=%cd%\src;%PYTHONPATH%;
         python setup.py build_ext -i
 
-        py.test -r sxX -k "thermalblock_adaptive" -s -v 
+        py.test -r sxX -k "thermalblock_adaptive or not demos" 
     displayName: 'Tests'
 
