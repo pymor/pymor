@@ -50,6 +50,8 @@ jobs:
 
       conda config --add channels conda-forge
       conda config --set always_yes yes --set changeps1 no
+      conda create pymorEnv
+      conda activate pymorEnv
       conda install --only-deps pymor
       # these ones are not in the 0.5.1 conda build yet
       conda install pyevtk gmsh
@@ -61,6 +63,9 @@ jobs:
     displayName: Configure conda and conda-build
 
   - script: |
+      set -ex
+      export PATH=$(Build.StagingDirectory)/miniconda/bin:$PATH
+      conda activate pymorEnv
       conda list
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
       python setup.py build_ext -i
