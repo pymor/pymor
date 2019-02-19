@@ -1,0 +1,55 @@
+jobs:
+- job: 'Windows_CI'
+  pool:
+    vmImage: 'VS2017-Win2016'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '3.6'
+      Python37:
+        python.version: '3.7'
+    maxParallel: 4
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda to PATH
+  - script: conda create --yes --quiet --name pyMORenv
+    displayName: Create Anaconda environment
+  - script: |
+        call activate pyMORenv
+        conda config --set always_yes yes --set changeps1 no
+        conda config --add channels conda-forge
+        conda install --only-deps pymor
+        REM these ones are not in the 0.5.1 conda build yet
+        conda install pyevtk gmsh
+        REM these are build/test-time deps for the conda package, not runtime
+        conda install cython pytest pytest-cov curl
+        pip install pytest-azurepipelines
+        curl https://pymor.github.io/dist/opengl32.dll.7z -o D:\opengl32.dll.7z
+    displayName: Install Anaconda packages
+  - task: ExtractFiles@1
+    inputs:
+        archiveFilePatterns: D:\opengl32.dll.7z
+        destinationFolder: D:\tmp\
+        cleanDestinationFolder: false
+  - task: CopyFiles@2
+    inputs:
+        sourceFolder: D:\tmp\
+        contents: 'opengl32.dll*'
+        targetFolder: C:\Windows\SysWOW64\mesadrv.dll
+        overWrite: true
+  - script: |
+        REG IMPORT .ci\replace_opengl_imp.reg
+        call activate pyMORenv
+        python -c "import numpy"
+        REM set PYTHONPATH=%cd%\src;%PYTHONPATH%;
+        python setup.py build_ext -i
+
+        py.test -r sxX -k "thermalblock_adaptive" -s -v 
+    displayName: 'Tests'
+
