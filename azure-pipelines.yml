@@ -36,21 +36,22 @@ jobs:
   - task: ExtractFiles@1
     inputs:
         archiveFilePatterns: D:\opengl32.dll.7z
-        destinationFolder: D:\
+        destinationFolder: D:\tmp\
         cleanDestinationFolder: false
   - task: CopyFiles@2
     inputs:
-        contents: D:\opengl32.dll
-        targetFolder: c:\windows\system32
+        sourceFolder: D:\tmp\
+        contents: 'opengl32.dll*'
+        targetFolder: C:\Windows\SysWOW64\mesadrv.dll
         overWrite: true
   - script: |
+        REG IMPORT .ci\replace_opengl_imp.reg
         call activate pyMORenv
         python -c "import numpy"
         REM set PYTHONPATH=%cd%\src;%PYTHONPATH%;
         python setup.py build_ext -i
 
         py.test -r sxX -k "thermalblock_adaptive" -s -v 
-        py.test -r sxX -k "thermalblock" -s -v 
     displayName: 'Tests'
 
   ## Publish build results

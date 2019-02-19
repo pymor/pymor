@@ -1,0 +1,9 @@
+REGEDIT4
+
+; https://technet.microsoft.com/en-us/library/cc749368.aspx
+; https://www.msfn.org/board/topic/143241-portable-windows-7-build-from-winpe-30/page-5#entry942596
+[HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\OpenGLDrivers\MSOGL]
+"DLL"="mesadrv.dll"
+"DriverVersion"=dword:00000001
+"Flags"=dword:00000001
+"Version"=dword:00000002
