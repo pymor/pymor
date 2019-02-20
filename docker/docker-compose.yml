@@ -1,0 +1,27 @@
+version: '3'
+
+# this service runs a jupyter notebook server with all of pymor's
+# requirements installed and the src directory added to PYTHONPATH
+
+# you should have a preset PYMOR_JUPYTER_TOKEN environment variable,
+# then start with ```docker-compose up --build```
+# and connect to the server at http://localhost:9180/?token=${PYMOR_JUPYTER_TOKEN}
+
+services:
+  pymor_notebooks:
+    build:
+        context: ../
+        dockerfile: docker/Dockerfile
+        args:
+            PYVER: 3.7
+            PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
+
+    ports:
+        - 9180:8888
+    volumes:
+        - ./..:/pymor
+    restart: "no"
+    command: >
+        bash -c "cd /pymor && python setup.py build_ext -i && \
+            cd notebooks && jupyter notebook --ip 0.0.0.0 --no-browser"
+

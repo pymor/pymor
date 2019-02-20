@@ -33,3 +33,5 @@ include MANIFEST.in
 include README.rst
 # this file and entry needs to be removed upon completion of issue #540
 include src/pymor/tools/LICENSE-MIT
+
+prune docker
