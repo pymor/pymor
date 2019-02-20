@@ -64,3 +64,6 @@ test_timings.csv
 
 # pycharm
 .idea/
+
+Pipfile 
+Pipfile.lock
