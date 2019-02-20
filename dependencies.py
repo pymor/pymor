@@ -39,6 +39,8 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'pygmsh': 'python frontend for gmsh',
                     _PYTEST: 'testing framework required to execute unit tests',
                     'PyQt5': 'solution visualization for builtin discretizations',
+                    'k3d': 'in-notebook visualizations of 3D data',
+                    'vtk': 'KitWares python bindings for vtk',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
