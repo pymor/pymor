@@ -8,26 +8,15 @@ include .coveragerc
 include Makefile
 include pytest.ini
 
-include src/pymordemos/minimal_cpp_demo/bindings.py
-include src/pymordemos/minimal_cpp_demo/buildit.sh
-include src/pymordemos/minimal_cpp_demo/demo.py
-include src/pymordemos/minimal_cpp_demo/model.cc
-include src/pymordemos/minimal_cpp_demo/model.hh
-include src/pymordemos/minimal_cpp_demo/wrapper.py
-
-recursive-include src/pymortests/testdata *
-
-recursive-include docs *.conf
-recursive-include docs *.css
-recursive-include docs *.py
-recursive-include docs *.rst
-recursive-include docs Makefile
+graft src/pymordemos/minimal_cpp_demo
+graft src/pymortests/testdata
+graft docs
+graft notebooks 
 
 include *.md
 include *.py
 include versioneer.py
 include pyproject.toml
-recursive-include notebooks *.ipynb
 
 include MANIFEST.in
 include README.rst
