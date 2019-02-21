@@ -37,6 +37,9 @@ class PatchVisualizer(BasicInterface):
         assert codim in (0, 2)
         backend = backend or ('jupyter' if is_jupyter() else None)
         self.__auto_init(locals())
+            # TODO this check is not currently working as expected
+            # HACK s.o.
+            backend = 'jupyter'
 
     def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
                   rescale_colorbars=False, block=None, filename=None, columns=2):
@@ -82,8 +85,8 @@ class PatchVisualizer(BasicInterface):
                     write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
         else:
             if self.backend == 'jupyter':
-                from pymor.gui.jupyter import visualize_patch
-                visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                from pymor.gui.jupyter import visualize_k3d
+                visualize_k3d(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                 legend=legend, separate_colorbars=separate_colorbars,
                                 rescale_colorbars=rescale_colorbars, columns=columns)
             else:
