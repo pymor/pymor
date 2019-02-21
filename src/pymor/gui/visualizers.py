@@ -38,11 +38,14 @@ class PatchVisualizer(BasicInterface):
         self.bounding_box = bounding_box
         self.codim = codim
         if backend is None:
+            # TODO this check is not currently working as expected
             import sys
             if 'matplotlib' in sys.modules:
                 matplotlib = sys.modules['matplotlib']
                 if matplotlib.get_backend() == 'nbAgg':
                     backend = 'jupyter'
+            # HACK s.o.
+            backend = 'jupyter'
         self.backend = backend
         self.block = block
 
@@ -90,8 +93,8 @@ class PatchVisualizer(BasicInterface):
                     write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
         else:
             if self.backend == 'jupyter':
-                from pymor.gui.jupyter import visualize_patch
-                visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                from pymor.gui.jupyter import visualize_k3d
+                visualize_k3d(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                 legend=legend, separate_colorbars=separate_colorbars,
                                 rescale_colorbars=rescale_colorbars, columns=columns)
             else:
