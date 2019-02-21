@@ -16,6 +16,9 @@ import numpy as np
 from pymor.core.config import config
 from pymor.gui.matplotlib import MatplotlibPatchAxes
 from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.tools.vtkio import write_vtk
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+# from IPython.core.debugger import set_trace
 
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
@@ -131,4 +134,82 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
         interact(set_time, t=IntSlider(min=0, max=len(U[0])-1, step=1, value=0))
 
+    return plot
+
+
+def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
+                    separate_colorbars=False, rescale_colorbars=False, columns=2):
+    """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
+
+    The grid's |ReferenceElement| must be the triangle or square. The data can either
+    be attached to the faces or vertices of the grid.
+
+    Parameters
+    ----------
+    grid
+        The underlying |Grid|.
+    U
+        |VectorArray| of the data to visualize. If `len(U) 1`, the data is visualized
+        as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
+        provided, in which case a subplot is created for each entry of the tuple. The
+        lengths of all arrays have to agree.
+    bounding_box
+        A bounding box in which the grid is contained.
+    codim
+        The codimension of the entities the data in `U` is attached to (either 0 or 2).
+    title
+        Title of the plot.
+    legend
+        Description of the data that is plotted. Most useful if `U` is a tuple in which
+        case `legend` has to be a tuple of strings of the same length.
+    separate_colorbars
+        If `True`, use separate colorbars for each subplot.
+    rescale_colorbars
+        If `True`, rescale colorbars to data in each frame.
+    columns
+        The number of columns in the visualizer GUI in case multiple plots are displayed
+        at the same time.
+    """
+
+    assert isinstance(U, VectorArrayInterface) \
+        or (isinstance(U, tuple)
+            and all(isinstance(u, VectorArrayInterface) for u in U)
+            and all(len(u) == len(U[0]) for u in U))
+    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArrayInterface) else \
+        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+
+    import k3d
+    import vtk
+
+    model_matrix = (
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    )
+
+    filename_base = 'foo'
+    if len(U) == 1:
+        write_vtk(grid, NumpyVectorSpace.make_array(U[0]), filename_base, codim=codim)
+    else:
+        raise NotImplemented
+
+    reader = vtk.vtkXMLUnstructuredGridReader()
+    reader.SetFileName("foo_00000000.vtu")
+    reader.Update()
+
+    geometryFilter = vtk.vtkGeometryFilter()
+    geometryFilter.SetInputData(reader.GetOutput())
+    geometryFilter.Update()
+
+    plot = k3d.plot()
+    poly_data = geometryFilter.GetOutput()
+
+    vmin = min(np.min(u[0]) for u in U)
+    vmax = max(np.max(u[0]) for u in U)
+
+    data = k3d.vtk_poly_data(poly_data, color_attribute=('Data', vmin, vmax),
+                             color_map=k3d.basic_color_maps.CoolWarm, model_matrix=model_matrix)
+    plot += data
+    plot.display()
     return plot
