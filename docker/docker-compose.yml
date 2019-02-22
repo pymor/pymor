@@ -11,10 +11,13 @@ services:
   pymor_notebooks:
     build:
         context: ../
-        dockerfile: docker/Dockerfile
+        dockerfile: Dockerfile
         args:
             PYVER: 3.7
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
+            NB_USER: "${USER}"
+            NB_UID: 1000
+            BUILD_ENV: dev
 
     ports:
         - 9180:8888
