@@ -24,3 +24,4 @@ include README.rst
 include src/pymor/tools/LICENSE-MIT
 
 prune docker
+exclude Dockerfile
