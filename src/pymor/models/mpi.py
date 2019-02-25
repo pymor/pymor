@@ -3,14 +3,15 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.models.basic import ModelBase
+from pymor.models.interfaces import ModelInterface
+from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.mpi import mpi_wrap_operator
 from pymor.tools import mpi
-from pymor.vectorarrays.mpi import MPIVectorSpace, _register_local_space
+from pymor.vectorarrays.mpi import MPIVectorSpace
 
 
-class MPIModel(ModelBase):
-    """Wrapper class for MPI distributed |Models|.
+class MPIModel:
+    """Wrapper class mixin for MPI distributed |Models|.
 
     Given a single-rank implementation of a |Model|, this
     wrapper class uses the event loop from :mod:`pymor.tools.mpi`
@@ -22,56 +23,23 @@ class MPIModel(ModelBase):
 
     Note that this class is not intended to be instantiated directly.
     Instead, you should use :func:`mpi_wrap_model`.
-
-    Parameters
-    ----------
-    obj_id
-        :class:`~pymor.tools.mpi.ObjectId` of the local
-        |Model| on each rank.
-    operators
-        Dictionary of all |Operators| contained in the model,
-        wrapped for use on rank 0. Use :func:`mpi_wrap_model`
-        to automatically wrap all operators of a given MPI-aware
-        |Model|.
-    products
-        See `operators`.
-    pickle_local_spaces
-        See :class:`~pymor.operators.mpi.MPIOperator`.
-    space_type
-        See :class:`~pymor.operators.mpi.MPIOperator`.
     """
 
-    def __init__(self, obj_id, operators, products=None,
-                 pickle_local_spaces=True, space_type=MPIVectorSpace):
-        m = mpi.get_object(obj_id)
-        visualizer = MPIVisualizer(obj_id)
-        super().__init__(operators=operators, products=products,
-                         visualizer=visualizer, cache_region=None, name=m.name)
+    def __init__(self, obj_id, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.obj_id = obj_id
-        local_spaces = mpi.call(_MPIModel_get_local_spaces, obj_id, pickle_local_spaces)
-        if all(ls == local_spaces[0] for ls in local_spaces):
-            local_spaces = (local_spaces[0],)
-        self.solution_space = space_type(local_spaces)
-        self.build_parameter_type(m)
-        self.parameter_space = m.parameter_space
+        self.visualizer = MPIVisualizer(obj_id)
 
     def _solve(self, mu=None):
         return self.solution_space.make_array(
             mpi.call(mpi.method_call_manage, self.obj_id, 'solve', mu=mu)
         )
 
+    def visualize(self, U, **kwargs):
+        self.visualizer.visualize(U, self, **kwargs)
+
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
-
-
-def _MPIModel_get_local_spaces(self, pickle_local_spaces):
-    self = mpi.get_object(self)
-    local_space = self.solution_space
-    if not pickle_local_spaces:
-        local_space = _register_local_space(local_space)
-    local_spaces = mpi.comm.gather(local_space, root=0)
-    if mpi.rank0:
-        return tuple(local_spaces)
 
 
 class MPIVisualizer(ImmutableInterface):
@@ -96,8 +64,9 @@ def _MPIVisualizer_visualize(m, U, **kwargs):
     m.visualize(U, **kwargs)
 
 
-def mpi_wrap_model(local_models, use_with=False, with_apply2=False,
-                   pickle_local_spaces=True, space_type=MPIVectorSpace):
+def mpi_wrap_model(local_models, use_with=True, with_apply2=False,
+                   pickle_local_spaces=True, space_type=MPIVectorSpace,
+                   base_type=None):
     """Wrap MPI distributed local |Models| to a global |Model| on rank 0.
 
     Given MPI distributed local |Models| referred to by the
@@ -142,30 +111,49 @@ def mpi_wrap_model(local_models, use_with=False, with_apply2=False,
         See :class:`~pymor.operators.mpi.MPIOperator`.
     """
 
+    assert use_with or isinstance(base_type, ModelInterface)
+
     if not isinstance(local_models, mpi.ObjectId):
         local_models = mpi.call(mpi.function_call_manage, local_models)
 
-    operators, products = mpi.call(_mpi_wrap_model_manage_operators, local_models)
+    attributes = mpi.call(_mpi_wrap_model_manage_operators, local_models, use_with, base_type)
 
-    operators = {k: mpi_wrap_operator(v, with_apply2=with_apply2,
-                                      pickle_local_spaces=pickle_local_spaces, space_type=space_type) if v else None
-                 for k, v in operators.items()}
-    products = {k: mpi_wrap_operator(v, with_apply2=with_apply2,
-                                     pickle_local_spaces=pickle_local_spaces, space_type=space_type) if v else None
-                for k, v in products.items()}
+    wrapped_attributes = {
+        k: _map_children(lambda v: mpi_wrap_operator(v, with_apply2=with_apply2,
+                                                     pickle_local_spaces=pickle_local_spaces,
+                                                     space_type=space_type) if isinstance(v, mpi.ObjectId) else v,
+                         v)
+        for k, v in attributes.items()
+    }
 
     if use_with:
         m = mpi.get_object(local_models)
         visualizer = MPIVisualizer(local_models)
-        return m.with_(operators=operators, products=products, visualizer=visualizer, cache_region=None)
+        return m.with_(visualizer=visualizer, cache_region=None, **wrapped_attributes)
     else:
-        return MPIModel(local_models, operators, products,
-                        pickle_local_spaces=pickle_local_spaces, space_type=space_type)
+
+        class MPIWrappedModel(MPIModel, base_type):
+            pass
+
+        return MPIWrappedModel(local_models, **wrapped_attributes)
 
 
-def _mpi_wrap_model_manage_operators(obj_id):
+def _mpi_wrap_model_manage_operators(obj_id, use_with, base_type):
     m = mpi.get_object(obj_id)
-    operators = {k: mpi.manage_object(v) if v else None for k, v in sorted(m.operators.items())}
-    products = {k: mpi.manage_object(v) if v else None for k, v in sorted(m.products.items())} if m.products else {}
+
+    attributes_to_consider = m.with_arguments if use_with else base_type._init_arguments
+    attributes = {k: getattr(m, k) for k in attributes_to_consider}
+    managed_attributes = {k: _map_children(lambda v: mpi.manage_object(v) if isinstance(v, OperatorInterface) else v, v)
+                          for k, v in sorted(attributes.items()) if k not in {'cache_region', 'visualizer'}}
+    print(managed_attributes, flush=True)
     if mpi.rank0:
-        return operators, products
+        return managed_attributes
+
+
+def _map_children(f, obj):
+    if isinstance(obj, dict):
+        return {k: f(v) for k, v in sorted(obj.items())}
+    elif isinstance(obj, (list, tuple, set)):
+        return type(obj)(f(v) for v in obj)
+    else:
+        return f(obj)

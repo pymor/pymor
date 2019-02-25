@@ -24,10 +24,10 @@ class InputOutputModel(ModelBase):
     """Base class for input-output systems."""
 
     def __init__(self, input_space, output_space, cont_time=True,
-                 cache_region='memory', name=None, **kwargs):
+                 estimator=None, visualizer=None, cache_region='memory', name=None):
         self.input_space = input_space
         self.output_space = output_space
-        super().__init__(cache_region=cache_region, name=name, **kwargs)
+        super().__init__(estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
         self.cont_time = cont_time
 
     @property
@@ -120,12 +120,12 @@ class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
 
     def __init__(self, input_space, state_space, output_space, cont_time=True,
-                 cache_region='memory', name=None, **kwargs):
+                 estimator=None, visualizer=None, cache_region='memory', name=None):
         # ensure that state_space can be distinguished from input and output space
         # ensure that ids are different to make sure that also reduced spaces can be differentiated
         assert state_space.id != input_space.id and state_space.id != output_space.id
         super().__init__(input_space, output_space, cont_time=cont_time,
-                         cache_region=cache_region, name=name, **kwargs)
+                         estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
         self.state_space = state_space
 
     @property
@@ -203,8 +203,6 @@ class LTIModel(InputStateOutputModel):
         Dict of all |Operators| appearing in the model.
     """
 
-    special_operators = frozenset({'A', 'B', 'C', 'D', 'E'})
-
     def __init__(self, A, B, C, D=None, E=None, cont_time=True,
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -229,9 +227,13 @@ class LTIModel(InputStateOutputModel):
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name,
-                         A=A, B=B, C=C, D=D, E=E)
+                         cache_region=cache_region, name=name)
 
+        self.A = A
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
         self.solution_space = A.source
         self.solver_options = solver_options
 
@@ -1030,8 +1032,6 @@ class SecondOrderModel(InputStateOutputModel):
         Dictionary of all |Operators| contained in the model.
     """
 
-    special_operators = frozenset({'M', 'E', 'K', 'B', 'Cp', 'Cv', 'D'})
-
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -1050,9 +1050,14 @@ class SecondOrderModel(InputStateOutputModel):
 
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name,
-                         M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
-
+                         cache_region=cache_region, name=name)
+        self.M = M
+        self.E = E
+        self.K = K
+        self.B = B
+        self.Cp = Cp
+        self.Cv = Cv
+        self.D = D
         self.solution_space = M.source
         self.solver_options = solver_options
 
@@ -1611,8 +1616,6 @@ class LinearDelayModel(InputStateOutputModel):
         Dict of all |Operators| appearing in the model.
     """
 
-    special_operators = frozenset({'A', 'Ad', 'B', 'C', 'D', 'E'})
-
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True,
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -1632,9 +1635,14 @@ class LinearDelayModel(InputStateOutputModel):
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name,
-                         A=A, Ad=Ad, B=B, C=C, D=D, E=E)
+                         cache_region=cache_region, name=name)
 
+        self.A = A
+        self.Ad = Ad
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
         self.solution_space = A.source
         self.tau = tau
         self.q = len(Ad)
@@ -1815,8 +1823,6 @@ class LinearStochasticModel(InputStateOutputModel):
         Dictionary of all |Operators| contained in the model.
     """
 
-    special_operators = frozenset({'A', 'As', 'B', 'C', 'D', 'E'})
-
     def __init__(self, A, As, B, C, D=None, E=None, cont_time=True,
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -1835,9 +1841,14 @@ class LinearStochasticModel(InputStateOutputModel):
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name,
-                         A=A, As=As, B=B, C=C, D=D, E=E)
+                         cache_region=cache_region, name=name)
 
+        self.A = A
+        self.As = As
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
         self.solution_space = A.source
         self.q = len(As)
 
@@ -1929,8 +1940,6 @@ class BilinearModel(InputStateOutputModel):
         Dictionary of all |Operators| contained in the model.
     """
 
-    special_operators = frozenset({'A', 'N', 'B', 'C', 'D', 'E'})
-
     def __init__(self, A, N, B, C, D, E=None, cont_time=True,
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -1949,8 +1958,13 @@ class BilinearModel(InputStateOutputModel):
 
         super().__init__(B.source, C.range, state_space=A.source, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name,
-                         A=A, N=N, B=B, C=C, D=D, E=E)
+                         cache_region=cache_region, name=name)
 
+        self.A = A
+        self.N = N
+        self.B = B
+        self.C = C
+        self.D = D
+        self.E = E
         self.solution_space = A.source
         self.linear = False

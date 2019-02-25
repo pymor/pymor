@@ -142,7 +142,8 @@ class StationaryRBReductor(ProjectionBasedReductor):
         RB = self.bases['RB']
         projected_operators = {'operator': project(fom.operator, RB, RB),
                                'rhs':      project(fom.rhs, RB, None),
-                               'products': {k: project(v, RB, RB) for k, v in fom.products.items()}}
+                               'products': {k: project(v, RB, RB) for k, v in fom.products.items()},
+                               'outputs':  {k: project(v, None, RB) for k, v in fom.outputs.items()}}
         return projected_operators
 
     def project_operators_to_subbasis(self, dims):
@@ -150,7 +151,8 @@ class StationaryRBReductor(ProjectionBasedReductor):
         dim = dims['RB']
         projected_operators = {'operator': project_to_subbasis(rom.operator, dim, dim),
                                'rhs':      project_to_subbasis(rom.rhs, dim, None),
-                               'products': {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()}}
+                               'products': {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                               'outputs':  {k: project_to_subbasis(v, None, dim) for k, v in rom.outputs.items()}}
         return projected_operators
 
     def build_rom(self, projected_operators, estimator):
@@ -189,7 +191,8 @@ class InstationaryRBReductor(ProjectionBasedReductor):
                                'operator':     project(fom.operator, RB, RB),
                                'rhs':          project(fom.rhs, RB, None) if fom.rhs is not None else None,
                                'initial_data': projected_initial_data,
-                               'products':     {k: project(v, RB, RB) for k, v in fom.products.items()}}
+                               'products':     {k: project(v, RB, RB) for k, v in fom.products.items()},
+                               'outputs':      {k: project(v, None, RB) for k, v in fom.outputs.items()}}
 
         return projected_operators
 
@@ -214,7 +217,8 @@ class InstationaryRBReductor(ProjectionBasedReductor):
                                'operator': project_to_subbasis(rom.operator, dim, dim),
                                'rhs':      project_to_subbasis(rom.rhs, dim, None) if rom.rhs is not None else None,
                                'initial_data': projected_initial_data,
-                               'products': {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()}}
+                               'products': {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                               'outputs':  {k: project_to_subbasis(v, None, dim) for k, v in rom.outputs.items()}}
         return projected_operators
 
     def build_rom(self, projected_operators, estimator):
