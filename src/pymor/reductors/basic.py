@@ -69,12 +69,20 @@ class ProjectionBasedReductor(BasicInterface):
     def _reduce(self):
         with self.logger.block('Operator projection ...'):
             projected_operators = self.project_operators()
-        with self.logger.block('Assembling error estimator ...'):
-            estimator = self.assemble_estimator()
+
+        # ensure that no logging output is generated for estimator assembly in case there is
+        # no estimator to assemble
+        if self.assemble_estimator.__func__ is not ProjectionBasedReductor.assemble_estimator:
+            with self.logger.block('Assembling error estimator ...'):
+                estimator = self.assemble_estimator()
+        else:
+            estimator = None
+
         with self.logger.block('Building ROM ...'):
             rom = self.build_rom(projected_operators, estimator)
             rom = rom.with_(name=f'{self.fom.name}_reduced')
             rom.disable_logging()
+
         return rom
 
     def _reduce_to_subbasis(self, dims):
