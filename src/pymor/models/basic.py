@@ -251,15 +251,9 @@ class InstationaryModel(ModelBase):
         self.outputs = FrozenDict(outputs or {})
         self.build_parameter_type(self.initial_data, self.operator, self.rhs, self.mass, provides={'_t': 0})
         self.parameter_space = parameter_space
-        if hasattr(time_stepper, 'nt'):
-            self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}
 
-    def with_(self, **kwargs):
-        assert set(kwargs.keys()) <= self.with_arguments
-        assert 'time_stepper_nt' not in kwargs or 'time_stepper' not in kwargs
-        if 'time_stepper_nt' in kwargs:
-            kwargs['time_stepper'] = self.time_stepper.with_(nt=kwargs.pop('time_stepper_nt'))
-        return super().with_(**kwargs)
+    def with_time_stepper(self, **kwargs):
+        return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu).copy()
