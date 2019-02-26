@@ -10,7 +10,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
-from pymor.reductors.basic import LTIPGReductor, SOLTIPGReductor
+from pymor.reductors.basic import LTIPGReductor, SOLTIPGReductor, DelayLTIPGReductor
 
 
 class GenericBHIReductor(BasicInterface):
@@ -268,6 +268,9 @@ class DelayBHIReductor(GenericBHIReductor):
     fom
         :class:`~pymor.models.iosys.LinearDelayModel`.
     """
+
+    PGReductor = DelayLTIPGReductor
+
     def __init__(self, fom):
         assert isinstance(fom, LinearDelayModel)
         self.fom = fom
