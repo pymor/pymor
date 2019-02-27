@@ -2,289 +2,454 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from numbers import Number
+
 import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
-from pymor.core.exceptions import ExtensionError
-from pymor.core.interfaces import BasicInterface
-from pymor.operators.constructions import IdentityOperator, Concatenation, InverseOperator
+from pymor.core.defaults import defaults
+from pymor.core.exceptions import ExtensionError, AccuracyError
+from pymor.core.interfaces import BasicInterface, abstractmethod
+from pymor.models.basic import StationaryModel, InstationaryModel
+from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.constructions import Concatenation, InverseOperator
 
 
-class GenericRBReductor(BasicInterface):
-    """Generic reduced basis reductor.
-
-    Replaces each |Operator| of the given |Model| with the Galerkin
-    projection onto the span of the given reduced basis.
+class ProjectionBasedReductor(BasicInterface):
+    """Generic projection based reductor.
 
     Parameters
     ----------
     fom
-        The |Model| which is to be reduced.
-    RB
-        |VectorArray| containing the reduced basis on which to project.
-    basis_is_orthonormal
-        If `RB` is specified, indicate whether or not the basis is orthonormal
-        w.r.t. `product`.
-    vector_ranged_operators
-        List of keys in `fom.operators` for which the corresponding |Operator|
-        should be orthogonally projected (i.e. operators which map to vectors in
-        contrast to bilinear forms which map to functionals).
-    product
-        Inner product for the orthonormalization of `RB` and the projection of the
-        |Operators| given by `vector_ranged_operators`.
+        The full order |Model| to reduce.
+    bases
+        A dict of |VectorArrays| of basis vectors.
+    products
+        A dict of inner product |Operators| w.r.t. which the corresponding bases are
+        orthonormalized. A value of `None` corresponds to orthonormalization of the
+        basis w.r.t. the Euclidean inner product.
+    check_orthonormality
+        If `True`, check if bases which have a corresponding entry in the `products`
+        dict are orthonormal w.r.t. the given inner product. After each
+        :meth:`basis extension <extend_basis>`, orthonormality is checked again.
+    check_tol
+        If `check_orthonormality` is `True`, the numerical tolerance with which the checks
+        are performed.
     """
 
-    def __init__(self, fom, RB=None, basis_is_orthonormal=None,
-                 vector_ranged_operators=('initial_data',), product=None):
-        if RB is not None and basis_is_orthonormal is None:
-            raise ValueError('Please specify is given basis is orthonormal using basis_is_orthonormal.')
-        if RB is None and basis_is_orthonormal is None:
-            basis_is_orthonormal = True
+    @defaults('check_orthonormality', 'check_tol')
+    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3):
+        assert products.keys() <= bases.keys()
         self.fom = fom
-        self.RB = fom.solution_space.empty() if RB is None else RB
-        assert self.RB in fom.solution_space
-        self.basis_is_orthonormal = basis_is_orthonormal
-        self.vector_ranged_operators = vector_ranged_operators
-        self.product = product
+        self.bases = dict(bases)
+        self.products = dict(products)
+        self.check_orthonormality = check_orthonormality
+        self.check_tol = check_tol
         self._last_rom = None
 
-    def reduce(self, dim=None):
-        """Perform the reduced basis projection.
+        if check_orthonormality:
+            for basis in bases:
+                self._check_orthonormality(basis)
 
-        Parameters
-        ----------
-        dim
-            If specified, the desired reduced state dimension. Must not be larger than the
-            current reduced basis dimension.
+    def reduce(self, dims=None):
+        if dims is None:
+            dims = {k: len(v) for k, v in self.bases.items()}
+        if isinstance(dims, Number):
+            dims = {k: dims for k in self.bases}
+        if set(dims.keys()) != set(self.bases.keys()):
+            raise ValueError(f'Must specify dimensions for {set(self.bases.keys())}')
+        for k, d in dims.items():
+            if d < 0:
+                raise ValueError(f'Reduced state dimension must be larger than zero {k}')
+            if d > len(self.bases[k]):
+                raise ValueError(f'Specified reduced state dimension larger than reduced basis {k}')
 
-        Returns
-        -------
-        The reduced |Model|.
-        """
-        if dim is None:
-            dim = len(self.RB)
-        if dim > len(self.RB):
-            raise ValueError('Specified reduced state dimension larger than reduced basis')
-        if self._last_rom is None or dim > self._last_rom.solution_space.dim:
+        if self._last_rom is None or any(dims[b] > self._last_rom_dims[b] for b in dims):
             self._last_rom = self._reduce()
-        if dim == self._last_rom.solution_space.dim:
+            self._last_rom_dims = dict(dims)
+
+        if dims == self._last_rom_dims:
             return self._last_rom
         else:
-            return self._reduce_to_subbasis(dim)
+            return self._reduce_to_subbasis(dims)
 
     def _reduce(self):
+        with self.logger.block('Operator projection ...'):
+            projected_operators = self.project_operators()
 
-        fom = self.fom
-        RB = self.RB
-
-        if any(k in self.vector_ranged_operators for k in fom.operators) and not self.basis_is_orthonormal:
-            projection_matrix = RB.inner(RB, self.product)
-            projection_op = NumpyMatrixOperator(projection_matrix, source_id=RB.space.id, range_id=RB.space.id)
-            inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
-
-        def project_operator(k, op):
-            if op is self.product and self.basis_is_orthonormal:
-                return IdentityOperator(NumpyVectorSpace(len(RB), RB.space.id), name=op.name)
-            elif k in self.vector_ranged_operators:
-                assert RB in op.range
-                pop = project(op, range_basis=RB, source_basis=RB if RB in op.source else None, product=self.product)
-                if not self.basis_is_orthonormal:
-                    return Concatenation([inverse_projection_op, pop])
-                else:
-                    return pop
-            else:
-                return project(op,
-                               range_basis=RB if RB in op.range else None,
-                               source_basis=RB if RB in op.source else None)
-
-        projected_operators = {k: project_operator(k, op) if op else None for k, op in fom.operators.items()}
-
-        projected_products = {k: project_operator(k, p) for k, p in fom.products.items()}
-
-        rom = fom.with_(operators=projected_operators, products=projected_products,
-                        visualizer=None, estimator=None,
-                        cache_region=None, name=fom.name + '_reduced')
-        rom.disable_logging()
-
-        return rom
-
-    def _reduce_to_subbasis(self, dim):
-        rom = self._last_rom
-
-        def project_operator(k, op):
-            if k in self.vector_ranged_operators and not self.basis_is_orthonormal:
-                assert (isinstance(op, Concatenation) and len(op.operators) == 2
-                        and op.operators[0].name == 'inverse_projection_op')
-                pop = project_to_subbasis(op.operators[1],
-                                          dim_range=dim,
-                                          dim_source=dim if op.source == rom.solution_space else None)
-                inverse_projection_op = InverseOperator(
-                    project_to_subbasis(op.operators[0].operator, dim_range=dim, dim_source=dim),
-                    name='inverse_projection_op'
-                )
-                return Concatenation([inverse_projection_op, pop])
-            else:
-                return project_to_subbasis(op,
-                                           dim_range=dim if op.range == rom.solution_space else None,
-                                           dim_source=dim if op.source == rom.solution_space else None)
-
-        projected_operators = {k: project_operator(k, op) if op else None for k, op in rom.operators.items()}
-
-        projected_products = {k: project_operator(k, op) for k, op in rom.products.items()}
-
-        if rom.estimator:
-            estimator = rom.estimator.restricted_to_subbasis(dim, m=rom)
+        # ensure that no logging output is generated for estimator assembly in case there is
+        # no estimator to assemble
+        if self.assemble_estimator.__func__ is not ProjectionBasedReductor.assemble_estimator:
+            with self.logger.block('Assembling error estimator ...'):
+                estimator = self.assemble_estimator()
         else:
             estimator = None
 
-        rrom = rom.with_(operators=projected_operators, products=projected_products, estimator=estimator,
-                         visualizer=None, name=rom.name + '_reduced_to_subbasis')
+        with self.logger.block('Building ROM ...'):
+            rom = self.build_rom(projected_operators, estimator)
+            rom = rom.with_(name=f'{self.fom.name}_reduced')
+            rom.disable_logging()
 
-        return rrom
+        return rom
 
-    def reconstruct(self, u):
+    def _reduce_to_subbasis(self, dims):
+        projected_operators = self.project_operators_to_subbasis(dims)
+        estimator = self.assemble_estimator_for_subbasis(dims)
+        rom = self.build_rom(projected_operators, estimator)
+        rom = rom.with_(name=f'{self.fom.name}_reduced')
+        rom.disable_logging()
+        return rom
+
+    @abstractmethod
+    def project_operators(self):
+        pass
+
+    def assemble_estimator(self):
+        return None
+
+    @abstractmethod
+    def build_rom(self, projected_operators, estimator):
+        pass
+
+    def project_operators_to_subbasis(self, dims):
+        raise NotImplementedError
+
+    def assemble_estimator_for_subbasis(self, dims):
+        return None
+
+    def reconstruct(self, u, basis='RB'):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.RB[:u.dim].lincomb(u.to_numpy())
+        return self.bases[basis][:u.dim].lincomb(u.to_numpy())
 
-    def extend_basis(self, U, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, orthonormal=None,
-                     copy_U=True):
-        """Extend basis by new vectors.
+    def extend_basis(self, U, basis='RB', method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
+        basis_length = len(self.bases[basis])
 
-        Parameters
-        ----------
-        U
-            |VectorArray| containing the new basis vectors.
-        method
-            Basis extension method to use. The following methods are available:
+        extend_basis(U, self.bases[basis], self.products.get(basis), method=method, pod_modes=pod_modes,
+                     pod_orthonormalize=pod_orthonormalize,
+                     copy_U=copy_U)
 
-                :trivial:      Vectors in `U` are appended to the basis. Duplicate vectors
-                               in the sense of :func:`~pymor.algorithms.basic.almost_equal`
-                               are removed.
-                :gram_schmidt: New basis vectors are orthonormalized w.r.t. to the old
-                               basis using the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt`
-                               algorithm.
-                :pod:          Append the first POD modes of the defects of the projections
-                               of the vectors in U onto the existing basis
-                               (e.g. for use in POD-Greedy algorithm).
+        self._check_orthonormality(basis, basis_length)
 
-            .. warning::
-                In case of the `'gram_schmidt'` and `'pod'` extension methods, the existing reduced
-                basis is assumed to be orthonormal w.r.t. the given inner product.
+    def _check_orthonormality(self, basis, offset=0):
+        if not self.check_orthonormality or basis not in self.products:
+            return
 
-        pod_modes
-            In case `method == 'pod'`, the number of POD modes that shall be appended to
-            the basis.
-        pod_orthonormalize
-            If `True` and `method == 'pod'`, re-orthonormalize the new basis vectors obtained
-            by the POD in order to improve numerical accuracy.
-        orthonormal
-            If `method == 'trivial'`, set this to `True` to indicate that the basis will remain
-            orthonormal after extending.
-        copy_U
-            If `copy_U` is `False`, the new basis vectors might be removed from `U`.
-
-        Raises
-        ------
-        ExtensionError
-            Raised when the selected extension method does not yield a basis of increased
-            dimension.
-        """
-        assert method == 'trivial' or orthonormal is None
-        extend_basis(self.RB, U, self.product, method=method, pod_modes=pod_modes,
-                     pod_orthonormalize=pod_orthonormalize, copy_U=copy_U)
-        if method == 'trivial' and not orthonormal:
-            self.basis_is_orthonormal = False
+        U = self.bases[basis]
+        product = self.products.get(basis, None)
+        error_matrix = U[offset:].inner(U, product)
+        error_matrix[:len(U) - offset, offset:] -= np.eye(len(U) - offset)
+        if error_matrix.size > 0:
+            err = np.max(np.abs(error_matrix))
+            if err >= self.check_tol:
+                raise AccuracyError(f"result not orthogonal (max err={err})")
 
 
-class GenericPGReductor(BasicInterface):
-    """Generic Petrov-Galerkin reductor.
-
-    Replaces each |Operator| of the given |Model| with the projection
-    onto the span of the given projection matrices.
+class StationaryRBReductor(ProjectionBasedReductor):
+    """Galerkin projection of a |StationaryModel|.
 
     Parameters
     ----------
     fom
-        The |Model| which is to be reduced.
-    W
-        |VectorArray| containing the left projection matrix.
-    V
-        |VectorArray| containing the right projection matrix.
-    bases_are_biorthonormal
-        Indicate whether or not V and W are biorthonormal w.r.t. `product`.
-    vector_ranged_operators
-        List of keys in `fom.operators` for which the corresponding |Operator|
-        should be biorthogonally projected (i.e. operators which map to vectors in
-        contrast to bilinear forms which map to functionals).
+        The full order |Model| to reduce.
+    RB
+        The basis of the reduced space onto which to project. If `None` an empty basis is used.
     product
-        Inner product for the projection of the |Operators| given by
-        `vector_ranged_operators`.
+        Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the Euclidean
+        inner product is used.
+    check_orthonormality
+        See :class:`ProjectionBasedReductor`.
+    check_tol
+        See :class:`ProjectionBasedReductor`.
     """
+    def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None):
+        assert isinstance(fom, StationaryModel)
+        RB = fom.solution_space.empty() if RB is None else RB
+        assert RB in fom.solution_space
+        super().__init__(fom, {'RB': RB}, {'RB': product},
+                         check_orthonormality=check_orthonormality, check_tol=check_tol)
 
-    def __init__(self, fom, W, V, bases_are_biorthonormal, vector_ranged_operators=('initial_data',), product=None):
-        assert V in fom.solution_space
-        assert product is None or (W in product.range and V in product.source)
-        self.fom = fom
-        self.V = V
-        self.W = W
-        self.bases_are_biorthonormal = bases_are_biorthonormal
-        self.vector_ranged_operators = vector_ranged_operators
-        self.product = product
+    def project_operators(self):
+        fom = self.fom
+        RB = self.bases['RB']
+        projected_operators = {'operator': project(fom.operator, RB, RB),
+                               'rhs':      project(fom.rhs, RB, None),
+                               'products': {k: project(v, RB, RB) for k, v in fom.products.items()},
+                               'outputs':  {k: project(v, None, RB) for k, v in fom.outputs.items()}}
+        return projected_operators
 
-    def reduce(self):
-        """Perform the Petrov-Galerkin projection.
+    def project_operators_to_subbasis(self, dims):
+        rom = self._last_rom
+        dim = dims['RB']
+        projected_operators = {'operator': project_to_subbasis(rom.operator, dim, dim),
+                               'rhs':      project_to_subbasis(rom.rhs, dim, None),
+                               'products': {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                               'outputs':  {k: project_to_subbasis(v, None, dim) for k, v in rom.outputs.items()}}
+        return projected_operators
 
-        Returns
-        -------
-        The reduced |Model|.
-        """
-        fom, V, W = self.fom, self.V, self.W
-        product = self.product
+    def build_rom(self, projected_operators, estimator):
+        return StationaryModel(parameter_space=self.fom.parameter_space, estimator=estimator, **projected_operators)
 
-        if any(k in self.vector_ranged_operators for k in fom.operators) and not self.bases_are_biorthonormal:
-            projection_matrix = W.inner(V, product)
-            projection_op = NumpyMatrixOperator(projection_matrix, source_id=V.space.id, range_id=W.space.id)
+
+class InstationaryRBReductor(ProjectionBasedReductor):
+    """Galerkin projection of an |InstationaryModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    RB
+        The basis of the reduced space onto which to project. If `None` an empty basis is used.
+    product
+        Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the
+        the Euclidean inner product is used.
+    initial_data_product
+        Inner product |Operator| w.r.t. which the `initial_data` of `fom` is orthogonally projected. 
+        If `None`, the Euclidean inner product is used.
+    product_is_mass
+        If `True`, no mass matrix for the reduced |Model| is assembled.  Set to `True` if `RB` is
+        orthonormal w.r.t. the `mass` matrix of `fom`.
+    check_orthonormality
+        See :class:`ProjectionBasedReductor`.
+    check_tol
+        See :class:`ProjectionBasedReductor`.
+    """
+    def __init__(self, fom, RB=None, product=None, initial_data_product=None, product_is_mass=False,
+                 check_orthonormality=None, check_tol=None):
+        assert isinstance(fom, InstationaryModel)
+        RB = fom.solution_space.empty() if RB is None else RB
+        assert RB in fom.solution_space
+        super().__init__(fom, {'RB': RB}, {'RB': product},
+                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+        self.initial_data_product = initial_data_product or product
+        self.product_is_mass = product_is_mass
+
+    def project_operators(self):
+        fom = self.fom
+        RB = self.bases['RB']
+        product = self.products['RB']
+
+        if self.initial_data_product != product:
+            # TODO there should be functionality for this somewhere else
+            projection_matrix = RB.gramian(self.initial_data_product)
+            projection_op = NumpyMatrixOperator(projection_matrix, source_id=RB.space.id, range_id=RB.space.id)
             inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
+            pid = project(fom.initial_data, range_basis=RB, source_basis=None, product=self.initial_data_product)
+            projected_initial_data = Concatenation([inverse_projection_op, pid])
+        else:
+            projected_initial_data = project(fom.initial_data, range_basis=RB, source_basis=None,
+                                             product=product)
 
-        def project_operator(k, op):
-            if not op:
-                return None
-            if k is product and self.bases_are_biorthonormal:
-                if V.space.id != W.space.id:
-                    raise NotImplementedError
-                return IdentityOperator(NumpyVectorSpace(len(V), V.space.id))
-            elif k in self.vector_ranged_operators:
-                assert W in op.range
-                pop = project(op, range_basis=W, source_basis=V if V in op.source else None, product=product)
-                if not self.bases_are_biorthonormal:
-                    return Concatenation([inverse_projection_op, pop])
-                else:
-                    return pop
-            else:
-                return project(op,
-                               range_basis=W if W in op.range else None,
-                               source_basis=V if V in op.source else None)
+        projected_operators = {'mass':         (None if fom.mass is None or self.product_is_mass else
+                                                project(fom.mass, RB, RB)),
+                               'operator':     project(fom.operator, RB, RB),
+                               'rhs':          project(fom.rhs, RB, None) if fom.rhs is not None else None,
+                               'initial_data': projected_initial_data,
+                               'products':     {k: project(v, RB, RB) for k, v in fom.products.items()},
+                               'outputs':      {k: project(v, None, RB) for k, v in fom.outputs.items()}}
 
-        projected_ops = {k: project_operator(k, op) for k, op in fom.operators.items()}
+        return projected_operators
 
-        rom = fom.with_(operators=projected_ops,
-                        visualizer=None, estimator=None,
-                        cache_region=None, name=fom.name + '_reduced')
-        rom.disable_logging()
+    def project_operators_to_subbasis(self, dims):
+        rom = self._last_rom
+        dim = dims['RB']
+        product = self.products['RB']
 
-        return rom
+        if self.initial_data_product != product:
+            # TODO there should be functionality for this somewhere else
+            pop = project_to_subbasis(rom.initial_data.operators[1], dim_range=dim, dim_source=None)
+            inverse_projection_op = InverseOperator(
+                project_to_subbasis(rom.initial_data.operators[0].operator, dim_range=dim, dim_source=dim),
+                name='inverse_projection_op'
+            )
+            projected_initial_data = Concatenation([inverse_projection_op, pop])
+        else:
+            projected_initial_data = project_to_subbasis(rom.initial_data, dim_range=dim, dim_source=None)
 
-    def reconstruct(self, u):
-        """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.V[:u.dim].lincomb(u.to_numpy())
+        projected_operators = {'mass':     (None if rom.mass is None or self.product_is_mass else
+                                            project_to_subbasis(rom.mass, dim, dim)),
+                               'operator': project_to_subbasis(rom.operator, dim, dim),
+                               'rhs':      project_to_subbasis(rom.rhs, dim, None) if rom.rhs is not None else None,
+                               'initial_data': projected_initial_data,
+                               'products': {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
+                               'outputs':  {k: project_to_subbasis(v, None, dim) for k, v in rom.outputs.items()}}
+        return projected_operators
+
+    def build_rom(self, projected_operators, estimator):
+        fom = self.fom
+        return InstationaryModel(T=fom.T, time_stepper=fom.time_stepper, num_values=fom.num_values,
+                                 parameter_space=self.fom.parameter_space, estimator=estimator, **projected_operators)
 
 
-def extend_basis(basis, U, product=None, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
+class LTIPGReductor(ProjectionBasedReductor):
+    """Petrov-Galerkin projection of an |LTIModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    W
+        The basis of the test space.
+    V
+        The basis of the ansatz space.
+    E_biorthonormal
+        If `True`, no `E` matrix will be assembled for the reduced |Model|.
+        Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
+    """
+    def __init__(self, fom, W, V, E_biorthonormal=False):
+        assert isinstance(fom, LTIModel)
+        super().__init__(fom, {'W': W, 'V': V})
+        self.E_biorthonormal = E_biorthonormal
+
+    def project_operators(self):
+        fom = self.fom
+        W = self.bases['W']
+        V = self.bases['V']
+        projected_operators = {'A': project(fom.A, W, V),
+                               'B': project(fom.B, W, None),
+                               'C': project(fom.C, None, V),
+                               'D': fom.D,
+                               'E': None if self.E_biorthonormal else project(fom.E, W, V)}
+        return projected_operators
+
+    def project_operators_to_subbasis(self, dims):
+        if dims['W'] != dims['V']:
+            raise ValueError
+        rom = self._last_rom
+        dim = dims['V']
+        projected_operators = {'A': project_to_subbasis(rom.A, dim, dim),
+                               'B': project_to_subbasis(rom.B, dim, None),
+                               'C': project_to_subbasis(rom.C, None, dim),
+                               'D': rom.D,
+                               'E': None if self.E_biorthonormal else project_to_subbasis(rom.E, dim, dim)}
+        return projected_operators
+
+    def build_rom(self, projected_operators, estimator):
+        return LTIModel(estimator=estimator, **projected_operators)
+
+    def extend_basis(self, **kwargs):
+        raise NotImplementedError
+
+    def reconstruct(self, u, basis='V'):
+        return super().reconstruct(u, basis)
+
+
+class SOLTIPGReductor(ProjectionBasedReductor):
+    """Petrov-Galerkin projection of an |SOLTIModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    W
+        The basis of the test space.
+    V
+        The basis of the ansatz space.
+    E_biorthonormal
+        If `True`, no `E` matrix will be assembled for the reduced |Model|.
+        Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
+    """
+    def __init__(self, fom, W, V, M_biorthonormal=False):
+        assert isinstance(fom, SecondOrderModel)
+        super().__init__(fom, {'W': W, 'V': V})
+        self.M_biorthonormal = M_biorthonormal
+
+    def project_operators(self):
+        fom = self.fom
+        W = self.bases['W']
+        V = self.bases['V']
+        projected_operators = {'M':  None if self.M_biorthonormal else project(fom.M, W, V),
+                               'E':  project(fom.E, W, V),
+                               'K':  project(fom.K, W, V),
+                               'B':  project(fom.B, W, None),
+                               'Cp': project(fom.Cp, None, V),
+                               'Cv': project(fom.Cv, None, V),
+                               'D':  fom.D}
+        return projected_operators
+
+    def project_operators_to_subbasis(self, dims):
+        if dims['W'] != dims['V']:
+            raise ValueError
+        rom = self._last_rom
+        dim = dims['V']
+        projected_operators = {'M':  None if self.M_biorthonormal else project_to_subbasis(rom.M, dim, dim),
+                               'E':  project_to_subbasis(rom.E, dim, dim),
+                               'K':  project_to_subbasis(rom.K, dim, dim),
+                               'B':  project_to_subbasis(rom.B, dim, None),
+                               'Cp': project_to_subbasis(rom.C, None, dim),
+                               'Cv': project_to_subbasis(rom.C, None, dim),
+                               'D':  rom.D}
+        return projected_operators
+
+    def build_rom(self, projected_operators, estimator):
+        return SecondOrderModel(estimator=estimator, **projected_operators)
+
+    def extend_basis(self, **kwargs):
+        raise NotImplementedError
+
+    def reconstruct(self, u, basis='V'):
+        return super().reconstruct(u, basis)
+
+
+class DelayLTIPGReductor(ProjectionBasedReductor):
+    """Petrov-Galerkin projection of an |DelayLTIModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    W
+        The basis of the test space.
+    V
+        The basis of the ansatz space.
+    E_biorthonormal
+        If `True`, no `E` matrix will be assembled for the reduced |Model|.
+        Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
+    """
+    def __init__(self, fom, W, V, E_biorthonormal=False):
+        assert isinstance(fom, LinearDelayModel)
+        super().__init__(fom, {'W': W, 'V': V})
+        self.E_biorthonormal = E_biorthonormal
+
+    def project_operators(self):
+        fom = self.fom
+        W = self.bases['W']
+        V = self.bases['V']
+        projected_operators = {'A': project(fom.A, W, V),
+                               'Ad': tuple(project(op, W, V) for op in fom.Ad),
+                               'B': project(fom.B, W, None),
+                               'C': project(fom.C, None, V),
+                               'D': fom.D,
+                               'E': None if self.E_biorthonormal else project(fom.E, W, V)}
+        return projected_operators
+
+    def project_operators_to_subbasis(self, dims):
+        if dims['W'] != dims['V']:
+            raise ValueError
+        rom = self._last_rom
+        dim = dims['V']
+        projected_operators = {'A': project_to_subbasis(rom.A, dim, dim),
+                               'Ad': tuple(project_to_subbasis(op, dim, dim) for op in rom.Ad),
+                               'B': project_to_subbasis(rom.B, dim, None),
+                               'C': project_to_subbasis(rom.C, None, dim),
+                               'D': rom.D,
+                               'E': None if self.E_biorthonormal else project_to_subbasis(rom.E, dim, dim)}
+        return projected_operators
+
+    def build_rom(self, projected_operators, estimator):
+        return LinearDelayModel(tau=self.fom.tau, estimator=estimator, **projected_operators)
+
+    def extend_basis(self, **kwargs):
+        raise NotImplementedError
+
+    def reconstruct(self, u, basis='V'):
+        return super().reconstruct(u, basis)
+
+
+def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
     assert method in ('trivial', 'gram_schmidt', 'pod')
 
     basis_length = len(basis)
@@ -298,14 +463,14 @@ def extend_basis(basis, U, product=None, method='gram_schmidt', pod_modes=1, pod
                      remove_from_other=(not copy_U))
     elif method == 'gram_schmidt':
         basis.append(U, remove_from_other=(not copy_U))
-        gram_schmidt(basis, offset=basis_length, product=product, copy=False)
+        gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
     elif method == 'pod':
         U_proj_err = U - basis.lincomb(U.inner(basis, product))
 
         basis.append(pod(U_proj_err, modes=pod_modes, product=product, orthonormalize=False)[0])
 
         if pod_orthonormalize:
-            gram_schmidt(basis, offset=basis_length, product=product, copy=False)
+            gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
 
     if len(basis) <= basis_length:
         raise ExtensionError

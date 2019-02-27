@@ -14,35 +14,10 @@ class ModelBase(ModelInterface):
     """Base class for |Models| providing some common functionality."""
 
     sid_ignore = ModelInterface.sid_ignore | {'visualizer'}
-    add_with_arguments = ModelInterface.add_with_arguments | {'operators'}
-    special_operators = frozenset()
 
-    def __init__(self, operators=None, products=None, estimator=None, visualizer=None,
+    def __init__(self, products=None, estimator=None, visualizer=None,
                  cache_region=None, name=None, **kwargs):
 
-        operators = {} if operators is None else dict(operators)
-
-        # handle special operators
-        for on in self.special_operators:
-            # special operators must be provided as keyword argument to __init__
-            assert on in kwargs
-            # special operators may not already exist as attributes
-            assert not hasattr(self, on)
-            # special operators may not be contained in operators dict
-            assert on not in operators
-
-            op = kwargs[on]
-            # operators either have to be None or an Operator
-            assert op is None \
-                or isinstance(op, OperatorInterface) \
-                or all(isinstance(o, OperatorInterface) for o in op)
-            # set special operator as an attribute
-            setattr(self, on, op)
-            # add special operator to the operators dict
-            operators[on] = op
-
-        self.operators = FrozenDict(operators)
-        self.linear = all(op is None or op.linear for op in operators.values())
         self.products = FrozenDict(products or {})
         self.estimator = estimator
         self.visualizer = visualizer
@@ -53,34 +28,6 @@ class ModelBase(ModelInterface):
             for k, v in products.items():
                 setattr(self, f'{k}_product', v)
                 setattr(self, f'{k}_norm', induced_norm(v))
-
-        self.build_parameter_type(*operators.values())
-
-    def with_(self, **kwargs):
-        assert set(kwargs.keys()) <= self.with_arguments
-
-        if 'operators' in kwargs:
-            # extract special operators from provided operators dict
-            operators = kwargs['operators'].copy()
-            for on in self.special_operators:
-                if on in operators:
-                    assert on not in kwargs or kwargs[on] == operators[on]
-                    kwargs[on] = operators.pop(on)
-            kwargs['operators'] = operators
-        else:
-            # when an operators dict is not specified make sure that we use the old operators dict
-            # but without the special operators
-            kwargs['operators'] = {on: op for on, op in self.operators.items()
-                                   if on not in self.special_operators}
-
-        # delete empty 'operators' dicts for cases where __init__ does not take
-        # an 'operator' argument
-        if 'operators' not in self._init_arguments:
-            operators = kwargs.pop('operators')
-            # in that case, there should not be any operators left in 'operators'
-            assert not operators
-
-        return super(ModelBase, self).with_(**kwargs)
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
@@ -127,12 +74,12 @@ class StationaryModel(ModelBase):
     rhs
         The vector F. Either a |VectorArray| of length 1 or a vector-like
         |Operator|.
+    outputs
+        A dict of additional output |Functionals| associated with the model.
     products
         A dict of inner product |Operators| defined on the discrete space the
         problem is posed on. For each product a corresponding norm
         is added as a method of the model.
-    operators
-        A dict of additional |Operators| associated with the model.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
@@ -157,15 +104,13 @@ class StationaryModel(ModelBase):
         The |Operator| L. The same as `operators['operator']`.
     rhs
         The right-hand side F. The same as `operators['rhs']`.
-    operators
-        Dict of all |Operators| appearing in the model.
+    outputs
+        Dict of all output |Functionals|.
     products
         Dict of all product |Operators| associated with the model.
     """
 
-    special_operators = frozenset({'operator', 'rhs'})
-
-    def __init__(self, operator, rhs, products=None, operators=None,
+    def __init__(self, operator, rhs, outputs=None, products=None,
                  parameter_space=None, estimator=None, visualizer=None, cache_region=None, name=None):
 
         if isinstance(rhs, VectorArrayInterface):
@@ -174,22 +119,15 @@ class StationaryModel(ModelBase):
 
         assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
 
-        super().__init__(operator=operator, rhs=rhs,
-                         operators=operators,
-                         products=products,
+        super().__init__(products=products,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
+        self.operator = operator
+        self.rhs = rhs
+        self.outputs = FrozenDict(outputs or {})
         self.solution_space = self.operator.source
+        self.build_parameter_type(operator, rhs)
         self.parameter_space = parameter_space
-
-    def as_generic_type(self):
-        if type(self) is StationaryModel:
-            return self
-        operators = {k: o for k, o in self.operators.items() if k not in self.special_operators}
-        return StationaryModel(
-            self.operator, self.rhs, self.products, operators,
-            self.parameter_space, self.estimator, self.visualizer, self.cache_region, self.name
-        )
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -236,12 +174,12 @@ class InstationaryModel(ModelBase):
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
+    outputs
+        A dict of additional output |Functionals| associated with the model.
     products
         A dict of product |Operators| defined on the discrete space the
         problem is posed on. For each product a corresponding norm
         is added as a method of the model.
-    operators
-        A dict of additional |Operators| associated with the model.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
@@ -275,16 +213,14 @@ class InstationaryModel(ModelBase):
         The mass operator M. The same as `operators['mass']`.
     time_stepper
         The provided :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`.
-    operators
-        Dict of all |Operators| appearing in the model.
+    outputs
+        Dict of all output |Functionals|.
     products
         Dict of all product |Operators| associated with the model.
     """
 
-    special_operators = frozenset({'operator', 'mass', 'rhs', 'initial_data'})
-
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
-                 products=None, operators=None, parameter_space=None, estimator=None, visualizer=None,
+                 outputs=None, products=None, parameter_space=None, estimator=None, visualizer=None,
                  cache_region=None, name=None):
 
         if isinstance(rhs, VectorArrayInterface):
@@ -302,34 +238,22 @@ class InstationaryModel(ModelBase):
         assert mass is None \
             or mass.linear and mass.source == mass.range == operator.source
 
-        super().__init__(initial_data=initial_data, operator=operator, rhs=rhs, mass=mass,
-                         operators=operators, products=products, estimator=estimator,
+        super().__init__(products=products, estimator=estimator,
                          visualizer=visualizer, cache_region=cache_region, name=name)
         self.T = T
+        self.initial_data = initial_data
+        self.operator = operator
+        self.rhs = rhs
+        self.mass = mass
         self.solution_space = self.operator.source
         self.time_stepper = time_stepper
         self.num_values = num_values
+        self.outputs = FrozenDict(outputs or {})
         self.build_parameter_type(self.initial_data, self.operator, self.rhs, self.mass, provides={'_t': 0})
         self.parameter_space = parameter_space
-        if hasattr(time_stepper, 'nt'):
-            self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}
 
-    def as_generic_type(self):
-        if type(self) is StationaryModel:
-            return self
-        operators = {k: o for k, o in self.operators.items() if k not in self.special_operators}
-        return InstationaryModel(
-            self.T, self.initial_data, self.operator, self.rhs, self.mass, self.time_stepper, self.num_values,
-            self.products, operators, self.parameter_space, self.estimator, self.visualizer,
-            self.cache_region, self.name
-        )
-
-    def with_(self, **kwargs):
-        assert set(kwargs.keys()) <= self.with_arguments
-        assert 'time_stepper_nt' not in kwargs or 'time_stepper' not in kwargs
-        if 'time_stepper_nt' in kwargs:
-            kwargs['time_stepper'] = self.time_stepper.with_(nt=kwargs.pop('time_stepper_nt'))
-        return super().with_(**kwargs)
+    def with_time_stepper(self, **kwargs):
+        return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu).copy()
@@ -343,7 +267,7 @@ class InstationaryModel(ModelBase):
         return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                        initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
 
-    def to_lti(self, output='output_functional'):
+    def to_lti(self):
         """Convert model to |LTIModel|.
 
         This method interprets the given model as an |LTIModel|
@@ -351,19 +275,17 @@ class InstationaryModel(ModelBase):
 
             - self.operator        -> A
             self.rhs               -> B
-            self.operators[output] -> C
+            self.outputs           -> C
             None                   -> D
             self.mass              -> E
-
-
-        Parameters
-        ----------
-        output
-            Key in `self.operators` to use as output functional.
         """
+        if len(self.outputs) == 0:
+            raise ValueError('No outputs defined.')
+        if len(self.outputs) > 1:
+            raise NotImplementedError('Only one output supported.')
         A = - self.operator
         B = self.rhs
-        C = self.operators[output]
+        C = next(iter(self.outputs.values()))
         E = self.mass
 
         if not all(op.linear for op in [A, B, C, E]):

@@ -10,7 +10,7 @@ from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
-from pymor.reductors.basic import GenericPGReductor
+from pymor.reductors.basic import LTIPGReductor
 
 
 class GenericBTReductor(BasicInterface):
@@ -104,8 +104,7 @@ class GenericBTReductor(BasicInterface):
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.E)
 
-        self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection in ('sr', 'biorth'),
-                                             product=self.fom.E)
+        self.pg_reductor = LTIPGReductor(self.fom, self.W, self.V, projection in ('sr', 'biorth'))
         rom = self.pg_reductor.reduce()
 
         return rom

@@ -294,7 +294,7 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
     assert alg in ('ei_greedy', 'deim')
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:
-        operators = [fom.operators[operator_name] for operator_name in operator_names]
+        operators = [getattr(fom, operator_name) for operator_name in operator_names]
         with logger.block('Computing operator evaluations on solution snapshots ...'):
             if pool:
                 logger.info(f'Using pool of {len(pool)} workers for parallel evaluation')
@@ -329,9 +329,7 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=(alg == 'ei_greedy'))
                     for name, operator in zip(operator_names, operators)}
-    operators_dict = fom.operators.copy()
-    operators_dict.update(ei_operators)
-    eim = fom.with_(operators=operators_dict, name=f'{fom.name}_ei')
+    eim = fom.with_(name=f'{fom.name}_ei', **ei_operators)
 
     data.update({'dofs': dofs, 'basis': basis})
     return eim, data

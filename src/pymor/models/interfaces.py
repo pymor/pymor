@@ -22,18 +22,12 @@ class ModelInterface(CacheableInterface, Parametric):
         |VectorSpace| of the |VectorArrays| returned by :meth:`solve`.
     linear
         `True` if the model describes a linear problem.
-    operators
-        Dictionary of all |Operators| contained in the model
-        (see :class:`~pymor.reductors.basic.GenericRBReductor` for a usage
-        example).
     products
-        Same as |Operators| but for inner product operators associated with the
-        model.
+        Dict of inner product operators associated with the model.
     """
 
     solution_space = None
     linear = False
-    operators = dict()
     products = dict()
 
     @abstractmethod

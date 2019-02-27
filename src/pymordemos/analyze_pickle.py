@@ -197,7 +197,7 @@ def analyze_pickle_convergence(args):
     T_SOLVES = []
     T_ESTS = []
     for N in dims:
-        rom = reductor.reduce(dim=N)
+        rom = reductor.reduce(N)
         print(f'N = {N:3} ', end='')
         us = []
         print('solve ', end='')

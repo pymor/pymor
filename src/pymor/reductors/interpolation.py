@@ -10,7 +10,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
-from pymor.reductors.basic import GenericPGReductor
+from pymor.reductors.basic import LTIPGReductor, SOLTIPGReductor, DelayLTIPGReductor
 
 
 class GenericBHIReductor(BasicInterface):
@@ -30,6 +30,9 @@ class GenericBHIReductor(BasicInterface):
     fom
         Model.
     """
+
+    PGReductor = None
+
     def __init__(self, fom):
         self.fom = fom
         self._product = None
@@ -115,7 +118,7 @@ class GenericBHIReductor(BasicInterface):
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
 
-        self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection == 'biorth', product=self._product)
+        self.pg_reductor = self.PGReductor(self.fom, self.W, self.V, projection == 'biorth')
 
         rom = self.pg_reductor.reduce()
         return rom
@@ -133,6 +136,9 @@ class LTI_BHIReductor(GenericBHIReductor):
     fom
         |LTIModel|.
     """
+
+    PGReductor = LTIPGReductor
+
     def __init__(self, fom):
         assert isinstance(fom, LTIModel)
         self.fom = fom
@@ -229,6 +235,9 @@ class SO_BHIReductor(GenericBHIReductor):
     fom
         :class:`~pymor.models.iosys.SecondOrderModel`.
     """
+
+    PGReductor = SOLTIPGReductor
+
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
@@ -259,6 +268,9 @@ class DelayBHIReductor(GenericBHIReductor):
     fom
         :class:`~pymor.models.iosys.LinearDelayModel`.
     """
+
+    PGReductor = DelayLTIPGReductor
+
     def __init__(self, fom):
         assert isinstance(fom, LinearDelayModel)
         self.fom = fom

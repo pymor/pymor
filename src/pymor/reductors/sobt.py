@@ -10,7 +10,7 @@ from pymor.algorithms.projection import project
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import SecondOrderModel
 from pymor.operators.constructions import IdentityOperator
-from pymor.reductors.basic import GenericPGReductor
+from pymor.reductors.basic import SOLTIPGReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -82,7 +82,7 @@ class GenericSOBTpvReductor(BasicInterface):
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.M)
 
-        self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection == 'biorth', product=self.fom.M)
+        self.pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
 
         rom = self.pg_reductor.reduce()
 
@@ -253,7 +253,7 @@ class SOBTfvReductor(BasicInterface):
 
         self.W = self.V
 
-        self.pg_reductor = GenericPGReductor(self.fom, self.W, self.V, projection == 'biorth', product=self.fom.M)
+        self.pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
 
         rom = self.pg_reductor.reduce()
 
@@ -366,9 +366,7 @@ class SOBTReductor(BasicInterface):
                                             range_basis=None,
                                             source_basis=self.V2)})
 
-        rom = self.fom.with_(operators=projected_ops,
-                             visualizer=None, estimator=None,
-                             cache_region=None, name=self.fom.name + '_reduced')
+        rom = SecondOrderModel(name=self.fom.name + '_reduced', **projected_ops)
         rom.disable_logging()
 
         return rom

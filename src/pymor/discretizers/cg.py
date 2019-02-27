@@ -194,7 +194,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    m  = StationaryModel(L, F, operators=functionals, products=products, visualizer=visualizer,
+    m  = StationaryModel(L, F, outputs=functionals, products=products, visualizer=visualizer,
                          parameter_space=parameter_space, name=f'{p.name}_CG')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
@@ -284,7 +284,7 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=mass, initial_data=I, T=p.T,
                           products=m.products,
-                          operators={k: v for k, v in m.operators.items() if not k in {'operator', 'rhs'}},
+                          outputs=m.outputs,
                           time_stepper=time_stepper,
                           parameter_space=p.parameter_space,
                           visualizer=m.visualizer,

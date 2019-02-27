@@ -5,16 +5,16 @@
 import numpy as np
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.reductors.basic import GenericRBReductor
+from pymor.reductors.basic import InstationaryRBReductor
 from pymor.reductors.residual import ResidualReductor, ImplicitEulerResidualReductor
 from pymor.operators.constructions import IdentityOperator
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 
 
-class ParabolicRBReductor(GenericRBReductor):
+class ParabolicRBReductor(InstationaryRBReductor):
     r"""Reduced Basis Reductor for parabolic equations.
 
-    This reductor uses :class:`~pymor.reductors.basic.GenericRBReductor` for the actual
+    This reductor uses :class:`~pymor.reductors.basic.InstationaryRBReductor` for the actual
     RB-projection. The only addition is the assembly of an error estimator which
     bounds the discrete l2-in time / energy-in space error similar to [GP05]_, [HO08]_
     as follows:
@@ -44,8 +44,6 @@ class ParabolicRBReductor(GenericRBReductor):
         The |InstationaryModel| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    basis_is_orthonormal
-        Indicate whether or not the basis is orthonormal w.r.t. `product`.
     product
         The energy inner product |Operator| w.r.t. which the reduction error is
         estimated and `RB` is orthonormalized.
@@ -53,14 +51,15 @@ class ParabolicRBReductor(GenericRBReductor):
         `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `fom.operator` w.r.t. `product`.
     """
-    def __init__(self, fom, RB=None, basis_is_orthonormal=None,
-                 product=None, coercivity_estimator=None):
+    def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
+                 check_orthonormality=None, check_tol=None):
         assert isinstance(fom.time_stepper, ImplicitEulerTimeStepper)
-        super().__init__(fom, RB, basis_is_orthonormal=basis_is_orthonormal, product=product)
+        super().__init__(fom, RB, product=product,
+                         check_orthonormality=check_orthonormality, check_tol=check_tol)
         self.coercivity_estimator = coercivity_estimator
 
         self.residual_reductor = ImplicitEulerResidualReductor(
-            self.RB,
+            self.bases['RB'],
             fom.operator,
             fom.mass,
             fom.T / fom.time_stepper.nt,
@@ -69,27 +68,24 @@ class ParabolicRBReductor(GenericRBReductor):
         )
 
         self.initial_residual_reductor = ResidualReductor(
-            self.RB,
+            self.bases['RB'],
             IdentityOperator(fom.solution_space),
             fom.initial_data,
             product=fom.l2_product,
             riesz_representatives=False
         )
 
-    def _reduce(self):
-        with self.logger.block('RB projection ...'):
-            rom = super()._reduce()
+    def assemble_estimator(self):
+        residual = self.residual_reductor.reduce()
+        initial_residual = self.initial_residual_reductor.reduce()
 
-        with self.logger.block('Assembling error estimator ...'):
-            residual = self.residual_reductor.reduce()
-            initial_residual = self.initial_residual_reductor.reduce()
+        estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
+                                         initial_residual, self.initial_residual_reductor.residual_range_dims,
+                                         self.coercivity_estimator)
+        return estimator
 
-            estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
-                                             initial_residual, self.initial_residual_reductor.residual_range_dims,
-                                             self.coercivity_estimator)
-            rom = rom.with_(estimator=estimator)
-
-        return rom
+    def assemble_estimator_for_subbasis(self, dims):
+        return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
 class ParabolicRBEstimator(ImmutableInterface):

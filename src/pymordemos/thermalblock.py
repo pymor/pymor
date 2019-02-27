@@ -127,10 +127,12 @@ def main(args):
 
     if args['--reductor'] == 'residual_basis':
         from pymor.reductors.coercive import CoerciveRBReductor
-        reductor = CoerciveRBReductor(fom, product=product, coercivity_estimator=coercivity_estimator)
+        reductor = CoerciveRBReductor(fom, product=product, coercivity_estimator=coercivity_estimator,
+                                      check_orthonormality=False)
     elif args['--reductor'] == 'traditional':
         from pymor.reductors.coercive import SimpleCoerciveRBReductor
-        reductor = SimpleCoerciveRBReductor(fom, product=product, coercivity_estimator=coercivity_estimator)
+        reductor = SimpleCoerciveRBReductor(fom, product=product, coercivity_estimator=coercivity_estimator,
+                                            check_orthonormality=False)
     else:
         assert False  # this should never happen
 
@@ -369,7 +371,7 @@ def reduce_naive(fom, reductor, basis_size):
     training_set = fom.parameter_space.sample_randomly(basis_size)
 
     for mu in training_set:
-        reductor.extend_basis(fom.solve(mu), 'trivial')
+        reductor.extend_basis(fom.solve(mu), method='trivial')
 
     rom = reductor.reduce()
 
@@ -453,10 +455,10 @@ def reduce_pod(fom, reductor, snapshots_per_block, basis_size):
         snapshots.append(fom.solve(mu))
 
     print('Performing POD ...')
-    basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.product)
+    basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.products['RB'])
 
     print('Reducing ...')
-    reductor.extend_basis(basis, 'trivial')
+    reductor.extend_basis(basis, method='trivial')
     rom = reductor.reduce()
 
     elapsed_time = time.time() - tic
