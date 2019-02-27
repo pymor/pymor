@@ -160,6 +160,7 @@ def setup_package():
         scripts=['src/pymor-demo', 'dependencies.py'],
         url='http://pymor.org',
         description=' ',
+        python_requires='>=3.6',
         long_description=open('README.md').read(),
         long_description_content_type='text/markdown',
         setup_requires=setup_requires,
