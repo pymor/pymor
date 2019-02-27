@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.interfaces import BasicInterface
-from pymor.discretizations.iosys import LTISystem, SecondOrderSystem, LinearDelaySystem
+from pymor.discretizations.iosys import LTISystem, SecondOrderSystem
 from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import GenericPGReductor
 
@@ -249,36 +249,6 @@ class SO_BHIReductor(GenericBHIReductor):
     def _K_apply_inverse_adjoint(self, s, V):
         s2MpsEpK = s**2 * self.d.M + s * self.d.E + self.d.K
         return s2MpsEpK.apply_inverse_adjoint(V)
-
-
-class DelayBHIReductor(GenericBHIReductor):
-    """Bitangential Hermite interpolation for delay systems.
-
-    Parameters
-    ----------
-    d
-        :class:`~pymor.discretizations.iosys.LinearDelaySystem`.
-    """
-    def __init__(self, d):
-        assert isinstance(d, LinearDelaySystem)
-        self.d = d
-        self._product = d.E
-
-    def _B_apply(self, s, V):
-        return self.d.B.apply(V)
-
-    def _C_apply_adjoint(self, s, V):
-        return self.d.C.apply_adjoint(V)
-
-    def _K_apply_inverse(self, s, V):
-        Ks = LincombOperator((self.d.E, self.d.A) + self.d.Ad,
-                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.d.tau))
-        return Ks.apply_inverse(V)
-
-    def _K_apply_inverse_adjoint(self, s, V):
-        Ks = LincombOperator((self.d.E, self.d.A) + self.d.Ad,
-                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.d.tau))
-        return Ks.apply_inverse_adjoint(V)
 
 
 class TFInterpReductor(BasicInterface):
