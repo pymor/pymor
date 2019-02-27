@@ -24,10 +24,21 @@ class ProjectionBasedReductor(BasicInterface):
 
     Parameters
     ----------
+    fom
+        The full order |Model| to reduce.
     bases
         A dict of |VectorArrays| of basis vectors.
     products
-        A dict of inner product `Operators` w.r.t. which the bases are orthonormalized
+        A dict of inner product |Operators| w.r.t. which the corresponding bases are
+        orthonormalized. A value of `None` corresponds to orthonormalization of the
+        basis w.r.t. the Euclidean inner product.
+    check_orthonormality
+        If `True`, check if bases which have a corresponding entry in the `products`
+        dict are orthonormal w.r.t. the given inner product. After each
+        :meth:`basis extension <extend_basis>`, orthonormality is checked again.
+    check_tol
+        If `check_orthonormality` is `True`, the numerical tolerance with which the checks
+        are performed.
     """
 
     @defaults('check_orthonormality', 'check_tol')
@@ -138,6 +149,22 @@ class ProjectionBasedReductor(BasicInterface):
 
 
 class StationaryRBReductor(ProjectionBasedReductor):
+    """Galerkin projection of a |StationaryModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    RB
+        The basis of the reduced space onto which to project. If `None` an empty basis is used.
+    product
+        Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the Euclidean
+        inner product is used.
+    check_orthonormality
+        See :class:`ProjectionBasedReductor`.
+    check_tol
+        See :class:`ProjectionBasedReductor`.
+    """
     def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None):
         assert isinstance(fom, StationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
@@ -168,6 +195,28 @@ class StationaryRBReductor(ProjectionBasedReductor):
 
 
 class InstationaryRBReductor(ProjectionBasedReductor):
+    """Galerkin projection of an |InstationaryModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    RB
+        The basis of the reduced space onto which to project. If `None` an empty basis is used.
+    product
+        Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the
+        the Euclidean inner product is used.
+    initial_data_product
+        Inner product |Operator| w.r.t. which the `initial_data` of `fom` is orthogonally projected. 
+        If `None`, the Euclidean inner product is used.
+    product_is_mass
+        If `True`, no mass matrix for the reduced |Model| is assembled.  Set to `True` if `RB` is
+        orthonormal w.r.t. the `mass` matrix of `fom`.
+    check_orthonormality
+        See :class:`ProjectionBasedReductor`.
+    check_tol
+        See :class:`ProjectionBasedReductor`.
+    """
     def __init__(self, fom, RB=None, product=None, initial_data_product=None, product_is_mass=False,
                  check_orthonormality=None, check_tol=None):
         assert isinstance(fom, InstationaryModel)
@@ -236,6 +285,20 @@ class InstationaryRBReductor(ProjectionBasedReductor):
 
 
 class LTIPGReductor(ProjectionBasedReductor):
+    """Petrov-Galerkin projection of an |LTIModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    W
+        The basis of the test space.
+    V
+        The basis of the ansatz space.
+    E_biorthonormal
+        If `True`, no `E` matrix will be assembled for the reduced |Model|.
+        Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
+    """
     def __init__(self, fom, W, V, E_biorthonormal=False):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, {'W': W, 'V': V})
@@ -275,6 +338,20 @@ class LTIPGReductor(ProjectionBasedReductor):
 
 
 class SOLTIPGReductor(ProjectionBasedReductor):
+    """Petrov-Galerkin projection of an |SOLTIModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    W
+        The basis of the test space.
+    V
+        The basis of the ansatz space.
+    E_biorthonormal
+        If `True`, no `E` matrix will be assembled for the reduced |Model|.
+        Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
+    """
     def __init__(self, fom, W, V, M_biorthonormal=False):
         assert isinstance(fom, SecondOrderModel)
         super().__init__(fom, {'W': W, 'V': V})
@@ -318,6 +395,20 @@ class SOLTIPGReductor(ProjectionBasedReductor):
 
 
 class DelayLTIPGReductor(ProjectionBasedReductor):
+    """Petrov-Galerkin projection of an |DelayLTIModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    W
+        The basis of the test space.
+    V
+        The basis of the ansatz space.
+    E_biorthonormal
+        If `True`, no `E` matrix will be assembled for the reduced |Model|.
+        Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
+    """
     def __init__(self, fom, W, V, E_biorthonormal=False):
         assert isinstance(fom, LinearDelayModel)
         super().__init__(fom, {'W': W, 'V': V})

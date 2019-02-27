@@ -74,12 +74,12 @@ class StationaryModel(ModelBase):
     rhs
         The vector F. Either a |VectorArray| of length 1 or a vector-like
         |Operator|.
+    outputs
+        A dict of additional output |Functionals| associated with the model.
     products
         A dict of inner product |Operators| defined on the discrete space the
         problem is posed on. For each product a corresponding norm
         is added as a method of the model.
-    operators
-        A dict of additional |Operators| associated with the model.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
@@ -104,8 +104,8 @@ class StationaryModel(ModelBase):
         The |Operator| L. The same as `operators['operator']`.
     rhs
         The right-hand side F. The same as `operators['rhs']`.
-    operators
-        Dict of all |Operators| appearing in the model.
+    outputs
+        Dict of all output |Functionals|.
     products
         Dict of all product |Operators| associated with the model.
     """
@@ -174,12 +174,12 @@ class InstationaryModel(ModelBase):
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
+    outputs
+        A dict of additional output |Functionals| associated with the model.
     products
         A dict of product |Operators| defined on the discrete space the
         problem is posed on. For each product a corresponding norm
         is added as a method of the model.
-    operators
-        A dict of additional |Operators| associated with the model.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
@@ -213,8 +213,8 @@ class InstationaryModel(ModelBase):
         The mass operator M. The same as `operators['mass']`.
     time_stepper
         The provided :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`.
-    operators
-        Dict of all |Operators| appearing in the model.
+    outputs
+        Dict of all output |Functionals|.
     products
         Dict of all product |Operators| associated with the model.
     """
@@ -279,8 +279,10 @@ class InstationaryModel(ModelBase):
             None                   -> D
             self.mass              -> E
         """
-        if len(self.outputs) != 1:
-            raise NotImplementedError
+        if len(self.outputs) == 0:
+            raise ValueError('No outputs defined.')
+        if len(self.outputs) > 1:
+            raise NotImplementedError('Only one output supported.')
         A = - self.operator
         B = self.rhs
         C = next(iter(self.outputs.values()))
