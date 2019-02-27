@@ -74,10 +74,15 @@ stages:
         - mkdir -p ${SHARED_PATH}
     services:
         - docker:dind
-debian_stable_pip:
+debian_stretch_pip:
     extends: .docker-in-docker
     stage: deploy
-    script: docker build -f .ci/docker/install_checks/debian_stable/Dockerfile .
+    script: docker build -f .ci/docker/install_checks/debian_stretch/Dockerfile .
+
+debian_buster_pip:
+    extends: .docker-in-docker
+    stage: deploy
+    script: docker build -f .ci/docker/install_checks/debian_buster/Dockerfile .
 
 debian_testing_pip:
     extends: .docker-in-docker
@@ -95,7 +100,7 @@ centos_7_pip:
     only: ['branches', 'tags', 'triggers']
     variables:
         PYVER: "3.6"
-        TEST_OS: "debian_stable debian_testing centos_7"
+        TEST_OS: "debian_stretch debian_buster debian_testing centos_7"
     script: bash .ci/gitlab/wheels.bash
     artifacts:
         paths:
@@ -109,7 +114,7 @@ centos_7_pip:
     only: ['branches', 'tags', 'triggers']
     variables:
         PYVER: "3.7"
-        TEST_OS: "debian_stable debian_testing centos_7"
+        TEST_OS: "debian_stretch debian_buster debian_testing centos_7"
     script: bash .ci/gitlab/wheels.bash
     artifacts:
         paths:
