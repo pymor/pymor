@@ -1,4 +1,4 @@
-FROM pymor/deploy_checks:debian_stable
+FROM pymor/deploy_checks:debian_buster
 
 ADD . /src
 RUN apt update && apt install -y gcc python3-dev && pip3 install -U pip && pip install /src[full]
