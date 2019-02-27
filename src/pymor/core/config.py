@@ -14,6 +14,7 @@ def _can_import(module):
         pass
     return False
 
+
 def _get_fenics_version():
     import dolfin as df
     return df.__version__
@@ -77,7 +78,7 @@ _PACKAGES = {
     'PYAMG': lambda: import_module('pyamg.version').full_version,
     'PYMESS': lambda: bool(import_module('pymess')),
     'PYTEST': lambda: import_module('pytest').__version__,
-    'PYVTK': lambda: _can_import('evtk') or _can_import('pyevtk'),
+    'PYEVTK': lambda: _can_import('pyevtk'),
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(import_module('Qt.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
