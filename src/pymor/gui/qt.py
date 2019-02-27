@@ -366,7 +366,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             self.codim = codim
 
         def save(self):
-            if not config.HAVE_PYVTK:
+            if not config.HAVE_PYEVTK:
                 msg = QMessageBox(QMessageBox.Critical, 'Error', 'VTK output disabled. Pleas install pyvtk.')
                 msg.exec_()
                 return
