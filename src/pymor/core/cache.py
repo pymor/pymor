@@ -74,8 +74,7 @@ import diskcache
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.interfaces import ImmutableInterface, generate_sid
-from pymor.core.pickle import dump, load
-
+from pymor.core.logger import getLogger
 
 @atexit.register
 def cleanup_non_persisten_regions():
