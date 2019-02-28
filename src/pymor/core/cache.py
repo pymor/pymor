@@ -29,7 +29,7 @@ private attributes. It is the implementors responsibility not to break things.
 
 Backends for storage of cached return values derive from :class:`CacheRegion`.
 Currently two backends are provided for memory-based and disk-based caching
-(:class:`MemoryRegion` and :class:`SQLiteRegion`). The available regions
+(:class:`MemoryRegion` and :class:`DiskRegion`). The available regions
 are stored in the module level `cache_regions` dict. The user can add
 additional regions (e.g. multiple disk cache regions) as required.
 :attr:`CacheableInterface.cache_region` specifies a key of the `cache_regions` dict
@@ -64,14 +64,13 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 
 import atexit
 from collections import OrderedDict
-import datetime
 import functools
 import getpass
 import inspect
 import os
-import sqlite3
 import tempfile
 from types import MethodType
+import diskcache
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.interfaces import ImmutableInterface, generate_sid
@@ -166,122 +165,31 @@ class MemoryRegion(CacheRegion):
         self._cache = OrderedDict()
 
 
-class SQLiteRegion(CacheRegion):
+class DiskRegion(CacheRegion):
 
     def __init__(self, path, max_size, persistent):
         self.path = path
         self.max_size = max_size
         self.persistent = persistent
-        self.bytes_written = 0
-        if not os.path.exists(path):
-            os.mkdir(path)
+        self._cache = diskcache.Cache(path)
+        self._cache.reset('size_limit', int(max_size))
 
-        self.conn = conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
-        c = conn.cursor()
-
-        # check if table is properly initialized
-        c.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = c.fetchall()
-        if not any(t[0] == 'entries' for t in tables):
-            c.execute('''CREATE TABLE entries
-                         (id INTEGER PRIMARY KEY, key TEXT UNIQUE, filename TEXT, size INT)''')
-            conn.commit()
-
-        if persistent:
-            self.housekeeping()
-        else:
+        if not persistent:
             self.clear()
 
     def get(self, key):
-        c = self.conn.cursor()
-        t = (key,)
-        c.execute('SELECT filename FROM entries WHERE key=?', t)
-        result = c.fetchall()
-        if len(result) == 0:
-            return False, None
-        elif len(result) == 1:
-            file_path = os.path.join(self.path, result[0][0])
-            with open(file_path, 'rb') as f:
-                value = load(f)
-            return True, value
-        else:
-            raise RuntimeError('Cache is corrupt!')
+        has_key = key in self._cache
+        return has_key, self._cache[key]
 
     def set(self, key, value):
-        fd, file_path = tempfile.mkstemp('.dat',
-                                         _safe_filename(datetime.datetime.now().isoformat()[:-7]) + '-', self.path)
-        filename = os.path.basename(file_path)
-        with os.fdopen(fd, 'wb') as f:
-            dump(value, f)
-            file_size = f.tell()
-        conn = self.conn
-        c = conn.cursor()
-        try:
-            c.execute(f"INSERT INTO entries(key, filename, size) VALUES ('{key}', '{filename}', {file_size})")
-            conn.commit()
-        except sqlite3.IntegrityError:
-            conn.commit()
-            from pymor.core.logger import getLogger
-            getLogger('pymor.core.cache.SQLiteRegion').warn('Key already present in cache region, ignoring.')
-            os.unlink(file_path)
-        self.bytes_written += file_size
-        if self.bytes_written >= 0.1 * self.max_size:
-            self.housekeeping()
+        has_key = key in self._cache
+        if has_key:
+            getLogger('pymor.core.cache.DiskRegion').warn('Key already present in cache region, ignoring.')
+            return
+        self._cache[key] = value
 
     def clear(self):
-        # Try to safely delete all cache entries, even if another process
-        # accesses the same region.
-        self.bytes_written = 0
-        conn = self.conn
-        c = conn.cursor()
-        c.execute('SELECT id, filename FROM entries ORDER BY id ASC')
-        entries = c.fetchall()
-        if entries:
-            ids_to_delete, files_to_delete = zip(*entries)
-            c.execute(f'DELETE FROM entries WHERE id in ({",".join(map(str, ids_to_delete))})')
-            conn.commit()
-            path = self.path
-            for filename in files_to_delete:
-                try:
-                    os.unlink(os.path.join(path, filename))
-                except OSError:
-                    from pymor.core.logger import getLogger
-                    getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
-
-    def housekeeping(self):
-        self.bytes_written = 0
-        conn = self.conn
-        c = conn.cursor()
-        c.execute('SELECT SUM(size) FROM entries')
-        size = c.fetchone()
-        # size[0] can apparently also be None
-        try:
-            size = int(size[0]) if size is not None else 0
-        except TypeError:
-            size = 0
-        if size > self.max_size:
-            bytes_to_delete = size - self.max_size + 0.75 * self.max_size
-            deleted = 0
-            ids_to_delete = []
-            files_to_delete = []
-            c.execute('SELECT id, filename, size FROM entries ORDER BY id ASC')
-            while deleted < bytes_to_delete:
-                id_, filename, file_size = c.fetchone()
-                ids_to_delete.append(id_)
-                files_to_delete.append(filename)
-                deleted += file_size
-            c.execute(f'DELETE FROM entries WHERE id in ({",".join(map(str, ids_to_delete))})')
-            conn.commit()
-            path = self.path
-            for filename in files_to_delete:
-                try:
-                    os.unlink(os.path.join(path, filename))
-                except OSError:
-                    from pymor.core.logger import getLogger
-                    getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
-
-            from pymor.core.logger import getLogger
-            getLogger('pymor.core.cache.SQLiteRegion').info(f'Removed {len(ids_to_delete)} old cache entries')
+        self._cache.clear()
 
 
 @defaults('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys',
@@ -301,8 +209,8 @@ def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.'
     if isinstance(disk_max_size, str):
         disk_max_size = parse_size_string(disk_max_size)
 
-    cache_regions['disk'] = SQLiteRegion(path=disk_path, max_size=disk_max_size, persistent=False)
-    cache_regions['persistent'] = SQLiteRegion(path=persistent_path, max_size=persistent_max_size, persistent=True)
+    cache_regions['disk'] = DiskRegion(path=disk_path, max_size=disk_max_size, persistent=False)
+    cache_regions['persistent'] = DiskRegion(path=persistent_path, max_size=persistent_max_size, persistent=True)
     cache_regions['memory'] = MemoryRegion(memory_max_keys)
 
 
