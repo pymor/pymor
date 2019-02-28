@@ -33,7 +33,7 @@ jobs:
       source activate activate pymorEnv
       conda install --only-deps pymor
       # these ones are not in the 0.5.1 conda build yet
-      conda install pyevtk gmsh
+      conda install pyevtk gmsh mpi4py
       # these are buildtime, not a runtime,  deps for our conda package
       conda install cython pytest-cov pytest
       # install anythin which might a niew dependency with pip
