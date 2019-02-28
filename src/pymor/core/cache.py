@@ -178,14 +178,14 @@ class DiskRegion(CacheRegion):
 
     def get(self, key):
         has_key = key in self._cache
-        return has_key, self._cache[key]
+        return has_key, self._cache.get(key, default=None)
 
     def set(self, key, value):
         has_key = key in self._cache
         if has_key:
             getLogger('pymor.core.cache.DiskRegion').warn('Key already present in cache region, ignoring.')
             return
-        self._cache[key] = value
+        self._cache.set(key, value)
 
     def clear(self):
         self._cache.clear()
