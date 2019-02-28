@@ -6,6 +6,7 @@
 from pymor.core.interfaces import BasicInterface
 from pymor.grids.oned import OnedGrid
 from pymor.grids.referenceelements import triangle, square
+from pymor.gui.jupyter import visualize_k3d_np
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
@@ -93,10 +94,10 @@ class PatchVisualizer(BasicInterface):
                     write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
         else:
             if self.backend == 'jupyter':
-                from pymor.gui.jupyter import visualize_k3d
-                visualize_k3d(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                                legend=legend, separate_colorbars=separate_colorbars,
-                                rescale_colorbars=rescale_colorbars, columns=columns)
+                from pymor.gui.jupyter import visualize_k3d_vtk
+                visualize_k3d_vtk(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                                  legend=legend, separate_colorbars=separate_colorbars,
+                                  rescale_colorbars=rescale_colorbars, columns=columns)
             else:
                 block = self.block if block is None else block
                 from pymor.gui.qt import visualize_patch
