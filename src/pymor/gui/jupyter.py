@@ -16,6 +16,8 @@ import numpy as np
 from pymor.core import logger
 from pymor.core.config import config
 from pymor.core.logger import ColoredFormatter
+from pymor.grids.constructions import flatten_grid
+from pymor.grids.referenceelements import triangle
 from pymor.gui.matplotlib import MatplotlibPatchAxes
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from ipywidgets import IntProgress, HTML, VBox
@@ -142,7 +144,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     return plot
 
 
-def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
+def visualize_k3d_vtk(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
@@ -183,41 +185,14 @@ def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, l
     U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArrayInterface) else \
         tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
 
-    import k3d
-    import vtk
-
-    model_matrix = (
-        1.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 1.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 1.0
-    )
-
     filename_base = 'foo'
-    if len(U) == 1:
-        write_vtk(grid, NumpyVectorSpace.make_array(U[0]), filename_base, codim=codim)
-    else:
-        raise NotImplemented
-
-    reader = vtk.vtkXMLUnstructuredGridReader()
-    reader.SetFileName("foo_00000000.vtu")
-    reader.Update()
-
-    geometryFilter = vtk.vtkGeometryFilter()
-    geometryFilter.SetInputData(reader.GetOutput())
-    geometryFilter.Update()
-
-    plot = k3d.plot()
-    poly_data = geometryFilter.GetOutput()
+    write_vtk(grid, NumpyVectorSpace.make_array(U[0]), filename_base, codim=codim)
 
     vmin = min(np.min(u[0]) for u in U)
     vmax = max(np.max(u[0]) for u in U)
 
-    data = k3d.vtk_poly_data(poly_data, color_attribute=('Data', vmin, vmax),
-                             color_map=k3d.basic_color_maps.CoolWarm, model_matrix=model_matrix)
-    plot += data
-    plot.display()
-    return plot
+    from k3d_vtk.plot import plot
+    return plot(f'{filename_base}.pvd', vmin, vmax)
 
 
 

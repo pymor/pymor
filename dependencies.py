@@ -43,6 +43,7 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'ipywidgets': 'notebook GUI elements',
                     'k3d': 'in-notebook visualizations of 3D data',
                     'vtk': 'KitWares python bindings for vtk',
+                    'xmljson': 'xml parsing to dict structure',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
