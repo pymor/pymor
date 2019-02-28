@@ -36,8 +36,7 @@ jobs:
       conda install pyevtk gmsh mpi4py
       # these are buildtime, not a runtime,  deps for our conda package
       conda install cython pytest-cov pytest
-      # install anythin which might a niew dependency with pip
-      pip install -r requirements-optional.txt
+      # install anything which might a new dependency with pip
       pip install -r requirements.txt
       pip install pytest-azurepipelines
     displayName: Configure conda and conda-build
