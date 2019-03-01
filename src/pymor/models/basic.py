@@ -290,10 +290,6 @@ class InstationaryModel(ModelBase):
 
         if not all(op.linear for op in [A, B, C, E]):
             raise ValueError('Operators not linear.')
-        if A.source.id == B.source.id:
-            raise ValueError('State space must have different id than input space.')
-        if A.source.id == C.range.id:
-            raise ValueError('State space must have different id than output space.')
 
         from pymor.models.iosys import LTIModel
         return LTIModel(A, B, C, E=E, visualizer=self.visualizer)
