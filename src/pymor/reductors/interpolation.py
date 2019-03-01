@@ -85,11 +85,11 @@ class GenericBHIReductor(BasicInterface):
         if b.dim > 1:
             b.scal(1 / b.l2_norm())
         else:
-            b = self.fom.input_space.from_numpy(np.ones((r, 1)))
+            b = self.fom.input_space.ones(r)
         if c.dim > 1:
             c.scal(1 / c.l2_norm())
         else:
-            c = self.fom.output_space.from_numpy(np.ones((r, 1)))
+            c = self.fom.output_space.ones(r)
 
         # compute projection matrices
         self.V = self.fom.state_space.empty(reserve=r)
