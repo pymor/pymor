@@ -2,6 +2,8 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from collections import namedtuple
+
 from pymor.core.interfaces import ImmutableInterface
 from pymor.models.interfaces import ModelInterface
 from pymor.operators.interfaces import OperatorInterface
@@ -64,7 +66,7 @@ def _MPIVisualizer_visualize(m, U, **kwargs):
     m.visualize(U, **kwargs)
 
 
-def mpi_wrap_model(local_models, use_with=True, with_apply2=False,
+def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_apply2=False,
                    pickle_local_spaces=True, space_type=MPIVectorSpace,
                    base_type=None):
     """Wrap MPI distributed local |Models| to a global |Model| on rank 0.
@@ -101,6 +103,9 @@ def mpi_wrap_model(local_models, use_with=True, with_apply2=False,
     local_models
         :class:`~pymor.tools.mpi.ObjectId` of the local |Models|
         on each rank or a callable generating the |Models|.
+    mpi_spaces
+        List of types or ids of |VectorSpaces| which are MPI distributed
+        and need to be wrapped.
     use_with
         See above.
     with_apply2
@@ -116,20 +121,21 @@ def mpi_wrap_model(local_models, use_with=True, with_apply2=False,
     if not isinstance(local_models, mpi.ObjectId):
         local_models = mpi.call(mpi.function_call_manage, local_models)
 
-    attributes = mpi.call(_mpi_wrap_model_manage_operators, local_models, use_with, base_type)
+    attributes = mpi.call(_mpi_wrap_model_manage_operators, local_models, mpi_spaces, use_with, base_type)
 
     wrapped_attributes = {
-        k: _map_children(lambda v: mpi_wrap_operator(v, with_apply2=with_apply2,
+        k: _map_children(lambda v: mpi_wrap_operator(*v, with_apply2=with_apply2,
                                                      pickle_local_spaces=pickle_local_spaces,
-                                                     space_type=space_type) if isinstance(v, mpi.ObjectId) else v,
+                                                     space_type=space_type) if isinstance(v, _OperatorToWrap) else v,
                          v)
         for k, v in attributes.items()
     }
 
     if use_with:
         m = mpi.get_object(local_models)
-        visualizer = MPIVisualizer(local_models)
-        return m.with_(visualizer=visualizer, cache_region=None, **wrapped_attributes)
+        if m.visualizer:
+            wrapped_attributes['visualizer'] = MPIVisualizer(local_models)
+        return m.with_(cache_region=None, **wrapped_attributes)
     else:
 
         class MPIWrappedModel(MPIModel, base_type):
@@ -138,14 +144,28 @@ def mpi_wrap_model(local_models, use_with=True, with_apply2=False,
         return MPIWrappedModel(local_models, **wrapped_attributes)
 
 
-def _mpi_wrap_model_manage_operators(obj_id, use_with, base_type):
+_OperatorToWrap = namedtuple('_OperatorToWrap', 'operator mpi_range mpi_source')
+
+
+def _mpi_wrap_model_manage_operators(obj_id, mpi_spaces, use_with, base_type):
     m = mpi.get_object(obj_id)
 
     attributes_to_consider = m.with_arguments if use_with else base_type._init_arguments
     attributes = {k: getattr(m, k) for k in attributes_to_consider}
-    managed_attributes = {k: _map_children(lambda v: mpi.manage_object(v) if isinstance(v, OperatorInterface) else v, v)
+
+    def process_attribute(v):
+        if isinstance(v, OperatorInterface):
+            mpi_range = type(v.range) in mpi_spaces or v.range.id in mpi_spaces
+            mpi_source = type(v.source) in mpi_spaces or v.source.id in mpi_spaces
+            if mpi_range or mpi_source:
+                return _OperatorToWrap(mpi.manage_object(v), mpi_range, mpi_source)
+            else:
+                return v
+        else:
+            return v
+
+    managed_attributes = {k: _map_children(process_attribute, v)
                           for k, v in sorted(attributes.items()) if k not in {'cache_region', 'visualizer'}}
-    print(managed_attributes, flush=True)
     if mpi.rank0:
         return managed_attributes
 
@@ -153,7 +173,7 @@ def _mpi_wrap_model_manage_operators(obj_id, use_with, base_type):
 def _map_children(f, obj):
     if isinstance(obj, dict):
         return {k: f(v) for k, v in sorted(obj.items())}
-    elif isinstance(obj, (list, tuple, set)):
+    elif isinstance(obj, (list, tuple, set)) and not isinstance(obj, _OperatorToWrap):
         return type(obj)(f(v) for v in obj)
     else:
         return f(obj)
