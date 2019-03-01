@@ -236,9 +236,8 @@ class LTIModel(InputStateOutputModel):
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
-                      input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                      solver_options=None, estimator=None, visualizer=None,
-                      cache_region='memory', name=None):
+                      state_id='STATE', solver_options=None, estimator=None,
+                      visualizer=None, cache_region='memory', name=None):
         """Create |LTIModel| from matrices.
 
         Parameters
@@ -257,12 +256,8 @@ class LTIModel(InputStateOutputModel):
             assumed to be identity).
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
-        input_id
-            Id of the input space.
         state_id
             Id of the state space.
-        output_id
-            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -295,10 +290,10 @@ class LTIModel(InputStateOutputModel):
         assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
 
         A = NumpyMatrixOperator(A, source_id=state_id, range_id=state_id)
-        B = NumpyMatrixOperator(B, source_id=input_id, range_id=state_id)
-        C = NumpyMatrixOperator(C, source_id=state_id, range_id=output_id)
+        B = NumpyMatrixOperator(B, range_id=state_id)
+        C = NumpyMatrixOperator(C, source_id=state_id)
         if D is not None:
-            D = NumpyMatrixOperator(D, source_id=input_id, range_id=output_id)
+            D = NumpyMatrixOperator(D)
         if E is not None:
             E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
 
@@ -308,8 +303,7 @@ class LTIModel(InputStateOutputModel):
 
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True,
-                   input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                   solver_options=None, estimator=None, visualizer=None,
+                   state_id='STATE', solver_options=None, estimator=None, visualizer=None,
                    cache_region='memory', name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
@@ -329,12 +323,8 @@ class LTIModel(InputStateOutputModel):
             E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
-        input_id
-            Id of the input space.
         state_id
             Id of the state space.
-        output_id
-            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -369,15 +359,14 @@ class LTIModel(InputStateOutputModel):
         E = load_matrix(E_file) if E_file is not None else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 input_id=input_id, state_id=state_id, output_id=output_id,
-                                 solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                                 state_id=state_id, solver_options=solver_options,
+                                 estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True,
-                      input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                      solver_options=None, estimator=None, visualizer=None,
-                      cache_region='memory', name=None):
+                      state_id='STATE', solver_options=None, estimator=None,
+                      visualizer=None, cache_region='memory', name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
         Parameters
@@ -387,12 +376,8 @@ class LTIModel(InputStateOutputModel):
             be included) containing A, B, C, and optionally D and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
-        input_id
-            Id of the input space.
         state_id
             Id of the state space.
-        output_id
-            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -430,15 +415,14 @@ class LTIModel(InputStateOutputModel):
         E = mat_dict['E'] if 'E' in mat_dict else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 input_id=input_id, state_id=state_id, output_id=output_id,
-                                 solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                                 state_id=state_id, solver_options=solver_options,
+                                 estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
     @classmethod
     def from_abcde_files(cls, files_basename, cont_time=True,
-                         input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                         solver_options=None, estimator=None, visualizer=None,
-                         cache_region='memory', name=None):
+                         state_id='STATE', solver_options=None, estimator=None,
+                         visualizer=None, cache_region='memory', name=None):
         """Create |LTIModel| from matrices stored in a .[ABCDE] files.
 
         Parameters
@@ -448,12 +432,8 @@ class LTIModel(InputStateOutputModel):
             and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
-        input_id
-            Id of the input space.
         state_id
             Id of the state space.
-        output_id
-            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -489,8 +469,8 @@ class LTIModel(InputStateOutputModel):
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 input_id=input_id, state_id=state_id, output_id=output_id,
-                                 solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                                 state_id=state_id, solver_options=solver_options,
+                                 estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
     def __add__(self, other):
@@ -819,10 +799,10 @@ class TransferFunction(InputOutputModel):
     Parameters
     ----------
     input_space
-        The input |VectorSpace|. Typically `NumpyVectorSpace(m, 'INPUT')` where
+        The input |VectorSpace|. Typically `NumpyVectorSpace(m)` where
         m is the number of inputs.
     output_space
-        The output |VectorSpace|. Typically `NumpyVectorSpace(p, 'OUTPUT')` where
+        The output |VectorSpace|. Typically `NumpyVectorSpace(p)` where
         p is the number of outputs.
     H
         The transfer function defined at least on the open right complex
@@ -1040,9 +1020,8 @@ class SecondOrderModel(InputStateOutputModel):
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
-                      input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                      solver_options=None, estimator=None, visualizer=None,
-                      cache_region='memory', name=None):
+                      state_id='STATE', solver_options=None, estimator=None,
+                      visualizer=None, cache_region='memory', name=None):
         """Create a second order system from matrices.
 
         Parameters
@@ -1101,12 +1080,12 @@ class SecondOrderModel(InputStateOutputModel):
         M = NumpyMatrixOperator(M, source_id=state_id, range_id=state_id)
         E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
         K = NumpyMatrixOperator(K, source_id=state_id, range_id=state_id)
-        B = NumpyMatrixOperator(B, source_id=input_id, range_id=state_id)
-        Cp = NumpyMatrixOperator(Cp, source_id=state_id, range_id=output_id)
+        B = NumpyMatrixOperator(B, range_id=state_id)
+        Cp = NumpyMatrixOperator(Cp, source_id=state_id)
         if Cv is not None:
-            Cv = NumpyMatrixOperator(Cv, source_id=state_id, range_id=output_id)
+            Cv = NumpyMatrixOperator(Cv, source_id=state_id)
         if D is not None:
-            D = NumpyMatrixOperator(D, source_id=input_id, range_id=output_id)
+            D = NumpyMatrixOperator(D)
 
         return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
                    solver_options=solver_options, estimator=estimator, visualizer=visualizer,

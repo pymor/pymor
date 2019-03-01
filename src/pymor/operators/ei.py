@@ -146,8 +146,8 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
     """A projected |EmpiricalInterpolatedOperator|."""
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
-                 projected_collateral_basis, triangular, source_id, solver_options=None, name=None):
-        self.source = NumpyVectorSpace(len(source_basis_dofs), source_id)
+                 projected_collateral_basis, triangular, solver_options=None, name=None):
+        self.source = NumpyVectorSpace(len(source_basis_dofs))
         self.range = projected_collateral_basis.space
         self.linear = restricted_operator.linear
         self.build_parameter_type(restricted_operator)
@@ -156,7 +156,6 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         self.source_basis_dofs = source_basis_dofs
         self.projected_collateral_basis = projected_collateral_basis
         self.triangular = triangular
-        self.source_id = source_id
         self.solver_options = solver_options
         self.name = name or f'{restricted_operator.name}_projected'
 
@@ -181,7 +180,6 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
 
         if self.interpolation_matrix.shape[0] == 0:
             return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver_options=options,
-                                       source_id=self.source.id, range_id=self.range.id,
                                        name=self.name + '_jacobian')
 
         U_dofs = self.source_basis_dofs.lincomb(U.to_numpy()[0])
@@ -198,8 +196,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
                                           + np.nan)
         M = self.projected_collateral_basis.lincomb(interpolation_coefficients)
         if isinstance(M.space, NumpyVectorSpace):
-            return NumpyMatrixOperator(M.to_numpy().T, source_id=self.source.id, range_id=self.range.id,
-                                       solver_options=options)
+            return NumpyMatrixOperator(M.to_numpy().T, solver_options=options)
         else:
             assert not options
             return VectorArrayOperator(M)
@@ -212,12 +209,11 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         restricted_operator, source_dofs = self.restricted_operator.restricted(np.arange(dim))
 
         old_pcb = self.projected_collateral_basis
-        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.to_numpy()[:dim, :], old_pcb.space.id)
+        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.to_numpy()[:dim, :])
 
         old_sbd = self.source_basis_dofs
         source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.to_numpy()[:, source_dofs])
 
         return ProjectedEmpiciralInterpolatedOperator(restricted_operator, interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, self.triangular,
-                                                      self.source.id, solver_options=self.solver_options,
-                                                      name=self.name)
+                                                      solver_options=self.solver_options, name=self.name)

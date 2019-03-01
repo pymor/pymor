@@ -381,5 +381,4 @@ class TFInterpReductor(BasicInterface):
         Br = (T.dot(Br)).real
         Cr = (Cr.dot(T.conj().T)).real
 
-        return LTIModel.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=fom.cont_time,
-                                      input_id=fom.input_space.id, output_id=fom.output_space.id)
+        return LTIModel.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=fom.cont_time)
