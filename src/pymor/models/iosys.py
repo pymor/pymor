@@ -121,9 +121,6 @@ class InputStateOutputModel(InputOutputModel):
 
     def __init__(self, input_space, state_space, output_space, cont_time=True,
                  estimator=None, visualizer=None, cache_region='memory', name=None):
-        # ensure that state_space can be distinguished from input and output space
-        # ensure that ids are different to make sure that also reduced spaces can be differentiated
-        assert state_space.id != input_space.id and state_space.id != output_space.id
         super().__init__(input_space, output_space, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
         self.state_space = state_space
@@ -505,21 +502,14 @@ class LTIModel(InputStateOutputModel):
         if not isinstance(other, LTIModel):
             return NotImplemented
 
-        A = BlockDiagonalOperator([self.A, other.A],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        B = BlockColumnOperator([self.B, other.B],
-                                range_id=self.state_space.id)
-        C = BlockRowOperator([self.C, other.C],
-                             source_id=self.state_space.id)
+        A = BlockDiagonalOperator([self.A, other.A])
+        B = BlockColumnOperator([self.B, other.B])
+        C = BlockRowOperator([self.C, other.C])
         D = self.D + other.D
         if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space],
-                                                  self.state_space.id))
+            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space]))
         else:
-            E = BlockDiagonalOperator([self.E, other.E],
-                                      source_id=self.state_space.id,
-                                      range_id=self.state_space.id)
+            E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
 
     def __sub__(self, other):
@@ -531,24 +521,17 @@ class LTIModel(InputStateOutputModel):
         if not isinstance(other, LTIModel):
             return NotImplemented
 
-        A = BlockDiagonalOperator([self.A, other.A],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        B = BlockColumnOperator([self.B, other.B],
-                                range_id=self.state_space.id)
-        C = BlockRowOperator([self.C, -other.C],
-                             source_id=self.state_space.id)
+        A = BlockDiagonalOperator([self.A, other.A])
+        B = BlockColumnOperator([self.B, other.B])
+        C = BlockRowOperator([self.C, -other.C])
         if self.D is other.D:
             D = ZeroOperator(self.output_space, self.input_space)
         else:
             D = self.D - other.D
         if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space],
-                                                  self.state_space.id))
+            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space]))
         else:
-            E = BlockDiagonalOperator([self.E, other.E],
-                                      source_id=self.state_space.id,
-                                      range_id=self.state_space.id)
+            E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
 
     def __neg__(self):
@@ -564,17 +547,11 @@ class LTIModel(InputStateOutputModel):
             return NotImplemented
 
         A = BlockOperator([[self.A, Concatenation(self.B, other.C)],
-                           [None, other.A]],
-                          source_id=self.state_space.id,
-                          range_id=self.state_space.id)
-        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B],
-                                range_id=self.state_space.id)
-        C = BlockRowOperator([self.C, Concatenation(self.D, other.C)],
-                             source_id=self.state_space.id)
+                           [None, other.A]])
+        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B])
+        C = BlockRowOperator([self.C, Concatenation(self.D, other.C)])
         D = Concatenation(self.D, other.D)
-        E = BlockDiagonalOperator([self.E, other.E],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
+        E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
 
     @cached
@@ -1184,18 +1161,13 @@ class SecondOrderModel(InputStateOutputModel):
         lti
             |LTISystem| equivalent to the second order system.
         """
-        state_id = self.state_space.id
         return LTIModel(A=SecondOrderModelOperator(self.E, self.K),
-                        B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B],
-                                              range_id=state_id),
-                        C=BlockRowOperator([self.Cp, self.Cv],
-                                           source_id=state_id),
+                        B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
+                        C=BlockRowOperator([self.Cp, self.Cv]),
                         D=self.D,
-                        E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source],
-                                                             state_id))
+                        E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source]))
                            if isinstance(self.M, IdentityOperator) else
-                           BlockDiagonalOperator([IdentityOperator(self.M.source), self.M],
-                                                 source_id=state_id, range_id=state_id)),
+                           BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
                         cont_time=self.cont_time,
                         solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
                         cache_region=self.cache_region, name=self.name + '_first_order')
@@ -1212,21 +1184,12 @@ class SecondOrderModel(InputStateOutputModel):
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
 
-        M = BlockDiagonalOperator([self.M, other.M],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        E = BlockDiagonalOperator([self.E, other.E],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        K = BlockDiagonalOperator([self.K, other.K],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        B = BlockColumnOperator([self.B, other.B],
-                                range_id=self.state_space.id)
-        Cp = BlockRowOperator([self.Cp, other.Cp],
-                              source_id=self.state_space.id)
-        Cv = BlockRowOperator([self.Cv, other.Cv],
-                              source_id=self.state_space.id)
+        M = BlockDiagonalOperator([self.M, other.M])
+        E = BlockDiagonalOperator([self.E, other.E])
+        K = BlockDiagonalOperator([self.K, other.K])
+        B = BlockColumnOperator([self.B, other.B])
+        Cp = BlockRowOperator([self.Cp, other.Cp])
+        Cv = BlockRowOperator([self.Cv, other.Cv])
         D = self.D + other.D
         return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
 
@@ -1249,21 +1212,12 @@ class SecondOrderModel(InputStateOutputModel):
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
 
-        M = BlockDiagonalOperator([self.M, other.M],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        E = BlockDiagonalOperator([self.E, other.E],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        K = BlockDiagonalOperator([self.K, other.K],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        B = BlockColumnOperator([self.B, other.B],
-                                range_id=self.state_space.id)
-        Cp = BlockRowOperator([self.Cp, -other.Cp],
-                              source_id=self.state_space.id)
-        Cv = BlockRowOperator([self.Cv, -other.Cv],
-                              source_id=self.state_space.id)
+        M = BlockDiagonalOperator([self.M, other.M])
+        E = BlockDiagonalOperator([self.E, other.E])
+        K = BlockDiagonalOperator([self.K, other.K])
+        B = BlockColumnOperator([self.B, other.B])
+        Cp = BlockRowOperator([self.Cp, -other.Cp])
+        Cv = BlockRowOperator([self.Cv, -other.Cv])
         if self.D is other.D:
             D = ZeroOperator(self.output_space, self.input_space)
         else:
@@ -1292,23 +1246,14 @@ class SecondOrderModel(InputStateOutputModel):
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
 
-        M = BlockDiagonalOperator([self.M, other.M],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
+        M = BlockDiagonalOperator([self.M, other.M])
         E = BlockOperator([[self.E, -Concatenation(self.B, other.Cv)],
-                           [None, other.E]],
-                          source_id=self.state_space.id,
-                          range_id=self.state_space.id)
+                           [None, other.E]])
         K = BlockOperator([[self.K, -Concatenation(self.B, other.Cp)],
-                           [None, other.K]],
-                          source_id=self.state_space.id,
-                          range_id=self.state_space.id)
-        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B],
-                                range_id=self.state_space.id)
-        Cp = BlockRowOperator([self.Cp, Concatenation(self.D, other.Cp)],
-                              source_id=self.state_space.id)
-        Cv = BlockRowOperator([self.Cv, Concatenation(self.D, other.Cv)],
-                              source_id=self.state_space.id)
+                           [None, other.K]])
+        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B])
+        Cp = BlockRowOperator([self.Cp, Concatenation(self.D, other.Cp)])
+        Cv = BlockRowOperator([self.Cv, Concatenation(self.D, other.Cv)])
         D = Concatenation(self.D, other.D)
         return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
 
