@@ -120,6 +120,11 @@ if config.HAVE_FENICS:
             impl = df.Function(self.V).vector()
             return FenicsVector(impl)
 
+        def full_vector(self, value):
+            impl = df.Function(self.V).vector()
+            impl += value
+            return FenicsVector(impl)
+
         def make_vector(self, obj):
             return FenicsVector(obj)
 
