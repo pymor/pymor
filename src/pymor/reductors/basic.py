@@ -235,7 +235,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         if self.initial_data_product != product:
             # TODO there should be functionality for this somewhere else
             projection_matrix = RB.gramian(self.initial_data_product)
-            projection_op = NumpyMatrixOperator(projection_matrix, source_id=RB.space.id, range_id=RB.space.id)
+            projection_op = NumpyMatrixOperator(projection_matrix)
             inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
             pid = project(fom.initial_data, range_basis=RB, source_basis=None, product=self.initial_data_product)
             projected_initial_data = Concatenation([inverse_projection_op, pid])

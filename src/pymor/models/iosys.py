@@ -121,9 +121,6 @@ class InputStateOutputModel(InputOutputModel):
 
     def __init__(self, input_space, state_space, output_space, cont_time=True,
                  estimator=None, visualizer=None, cache_region='memory', name=None):
-        # ensure that state_space can be distinguished from input and output space
-        # ensure that ids are different to make sure that also reduced spaces can be differentiated
-        assert state_space.id != input_space.id and state_space.id != output_space.id
         super().__init__(input_space, output_space, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
         self.state_space = state_space
@@ -239,9 +236,8 @@ class LTIModel(InputStateOutputModel):
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
-                      input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                      solver_options=None, estimator=None, visualizer=None,
-                      cache_region='memory', name=None):
+                      state_id='STATE', solver_options=None, estimator=None,
+                      visualizer=None, cache_region='memory', name=None):
         """Create |LTIModel| from matrices.
 
         Parameters
@@ -260,12 +256,8 @@ class LTIModel(InputStateOutputModel):
             assumed to be identity).
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
-        input_id
-            Id of the input space.
         state_id
             Id of the state space.
-        output_id
-            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -298,10 +290,10 @@ class LTIModel(InputStateOutputModel):
         assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
 
         A = NumpyMatrixOperator(A, source_id=state_id, range_id=state_id)
-        B = NumpyMatrixOperator(B, source_id=input_id, range_id=state_id)
-        C = NumpyMatrixOperator(C, source_id=state_id, range_id=output_id)
+        B = NumpyMatrixOperator(B, range_id=state_id)
+        C = NumpyMatrixOperator(C, source_id=state_id)
         if D is not None:
-            D = NumpyMatrixOperator(D, source_id=input_id, range_id=output_id)
+            D = NumpyMatrixOperator(D)
         if E is not None:
             E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
 
@@ -311,8 +303,7 @@ class LTIModel(InputStateOutputModel):
 
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True,
-                   input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                   solver_options=None, estimator=None, visualizer=None,
+                   state_id='STATE', solver_options=None, estimator=None, visualizer=None,
                    cache_region='memory', name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
@@ -332,12 +323,8 @@ class LTIModel(InputStateOutputModel):
             E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
-        input_id
-            Id of the input space.
         state_id
             Id of the state space.
-        output_id
-            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -372,15 +359,14 @@ class LTIModel(InputStateOutputModel):
         E = load_matrix(E_file) if E_file is not None else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 input_id=input_id, state_id=state_id, output_id=output_id,
-                                 solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                                 state_id=state_id, solver_options=solver_options,
+                                 estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True,
-                      input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                      solver_options=None, estimator=None, visualizer=None,
-                      cache_region='memory', name=None):
+                      state_id='STATE', solver_options=None, estimator=None,
+                      visualizer=None, cache_region='memory', name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
         Parameters
@@ -390,12 +376,8 @@ class LTIModel(InputStateOutputModel):
             be included) containing A, B, C, and optionally D and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
-        input_id
-            Id of the input space.
         state_id
             Id of the state space.
-        output_id
-            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -433,15 +415,14 @@ class LTIModel(InputStateOutputModel):
         E = mat_dict['E'] if 'E' in mat_dict else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 input_id=input_id, state_id=state_id, output_id=output_id,
-                                 solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                                 state_id=state_id, solver_options=solver_options,
+                                 estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
     @classmethod
     def from_abcde_files(cls, files_basename, cont_time=True,
-                         input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                         solver_options=None, estimator=None, visualizer=None,
-                         cache_region='memory', name=None):
+                         state_id='STATE', solver_options=None, estimator=None,
+                         visualizer=None, cache_region='memory', name=None):
         """Create |LTIModel| from matrices stored in a .[ABCDE] files.
 
         Parameters
@@ -451,12 +432,8 @@ class LTIModel(InputStateOutputModel):
             and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
-        input_id
-            Id of the input space.
         state_id
             Id of the state space.
-        output_id
-            Id of the output space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
@@ -492,8 +469,8 @@ class LTIModel(InputStateOutputModel):
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 input_id=input_id, state_id=state_id, output_id=output_id,
-                                 solver_options=solver_options, estimator=estimator, visualizer=visualizer,
+                                 state_id=state_id, solver_options=solver_options,
+                                 estimator=estimator, visualizer=visualizer,
                                  cache_region=cache_region, name=name)
 
     def __add__(self, other):
@@ -505,21 +482,14 @@ class LTIModel(InputStateOutputModel):
         if not isinstance(other, LTIModel):
             return NotImplemented
 
-        A = BlockDiagonalOperator([self.A, other.A],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        B = BlockColumnOperator([self.B, other.B],
-                                range_id=self.state_space.id)
-        C = BlockRowOperator([self.C, other.C],
-                             source_id=self.state_space.id)
+        A = BlockDiagonalOperator([self.A, other.A])
+        B = BlockColumnOperator([self.B, other.B])
+        C = BlockRowOperator([self.C, other.C])
         D = self.D + other.D
         if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space],
-                                                  self.state_space.id))
+            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space]))
         else:
-            E = BlockDiagonalOperator([self.E, other.E],
-                                      source_id=self.state_space.id,
-                                      range_id=self.state_space.id)
+            E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
 
     def __sub__(self, other):
@@ -531,24 +501,17 @@ class LTIModel(InputStateOutputModel):
         if not isinstance(other, LTIModel):
             return NotImplemented
 
-        A = BlockDiagonalOperator([self.A, other.A],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        B = BlockColumnOperator([self.B, other.B],
-                                range_id=self.state_space.id)
-        C = BlockRowOperator([self.C, -other.C],
-                             source_id=self.state_space.id)
+        A = BlockDiagonalOperator([self.A, other.A])
+        B = BlockColumnOperator([self.B, other.B])
+        C = BlockRowOperator([self.C, -other.C])
         if self.D is other.D:
             D = ZeroOperator(self.output_space, self.input_space)
         else:
             D = self.D - other.D
         if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space],
-                                                  self.state_space.id))
+            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space]))
         else:
-            E = BlockDiagonalOperator([self.E, other.E],
-                                      source_id=self.state_space.id,
-                                      range_id=self.state_space.id)
+            E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
 
     def __neg__(self):
@@ -564,17 +527,11 @@ class LTIModel(InputStateOutputModel):
             return NotImplemented
 
         A = BlockOperator([[self.A, Concatenation(self.B, other.C)],
-                           [None, other.A]],
-                          source_id=self.state_space.id,
-                          range_id=self.state_space.id)
-        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B],
-                                range_id=self.state_space.id)
-        C = BlockRowOperator([self.C, Concatenation(self.D, other.C)],
-                             source_id=self.state_space.id)
+                           [None, other.A]])
+        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B])
+        C = BlockRowOperator([self.C, Concatenation(self.D, other.C)])
         D = Concatenation(self.D, other.D)
-        E = BlockDiagonalOperator([self.E, other.E],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
+        E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
 
     @cached
@@ -842,10 +799,10 @@ class TransferFunction(InputOutputModel):
     Parameters
     ----------
     input_space
-        The input |VectorSpace|. Typically `NumpyVectorSpace(m, 'INPUT')` where
+        The input |VectorSpace|. Typically `NumpyVectorSpace(m)` where
         m is the number of inputs.
     output_space
-        The output |VectorSpace|. Typically `NumpyVectorSpace(p, 'OUTPUT')` where
+        The output |VectorSpace|. Typically `NumpyVectorSpace(p)` where
         p is the number of outputs.
     H
         The transfer function defined at least on the open right complex
@@ -1063,9 +1020,8 @@ class SecondOrderModel(InputStateOutputModel):
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
-                      input_id='INPUT', state_id='STATE', output_id='OUTPUT',
-                      solver_options=None, estimator=None, visualizer=None,
-                      cache_region='memory', name=None):
+                      state_id='STATE', solver_options=None, estimator=None,
+                      visualizer=None, cache_region='memory', name=None):
         """Create a second order system from matrices.
 
         Parameters
@@ -1124,12 +1080,12 @@ class SecondOrderModel(InputStateOutputModel):
         M = NumpyMatrixOperator(M, source_id=state_id, range_id=state_id)
         E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
         K = NumpyMatrixOperator(K, source_id=state_id, range_id=state_id)
-        B = NumpyMatrixOperator(B, source_id=input_id, range_id=state_id)
-        Cp = NumpyMatrixOperator(Cp, source_id=state_id, range_id=output_id)
+        B = NumpyMatrixOperator(B, range_id=state_id)
+        Cp = NumpyMatrixOperator(Cp, source_id=state_id)
         if Cv is not None:
-            Cv = NumpyMatrixOperator(Cv, source_id=state_id, range_id=output_id)
+            Cv = NumpyMatrixOperator(Cv, source_id=state_id)
         if D is not None:
-            D = NumpyMatrixOperator(D, source_id=input_id, range_id=output_id)
+            D = NumpyMatrixOperator(D)
 
         return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
                    solver_options=solver_options, estimator=estimator, visualizer=visualizer,
@@ -1184,18 +1140,13 @@ class SecondOrderModel(InputStateOutputModel):
         lti
             |LTISystem| equivalent to the second order system.
         """
-        state_id = self.state_space.id
         return LTIModel(A=SecondOrderModelOperator(self.E, self.K),
-                        B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B],
-                                              range_id=state_id),
-                        C=BlockRowOperator([self.Cp, self.Cv],
-                                           source_id=state_id),
+                        B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
+                        C=BlockRowOperator([self.Cp, self.Cv]),
                         D=self.D,
-                        E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source],
-                                                             state_id))
+                        E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source]))
                            if isinstance(self.M, IdentityOperator) else
-                           BlockDiagonalOperator([IdentityOperator(self.M.source), self.M],
-                                                 source_id=state_id, range_id=state_id)),
+                           BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
                         cont_time=self.cont_time,
                         solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
                         cache_region=self.cache_region, name=self.name + '_first_order')
@@ -1212,21 +1163,12 @@ class SecondOrderModel(InputStateOutputModel):
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
 
-        M = BlockDiagonalOperator([self.M, other.M],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        E = BlockDiagonalOperator([self.E, other.E],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        K = BlockDiagonalOperator([self.K, other.K],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        B = BlockColumnOperator([self.B, other.B],
-                                range_id=self.state_space.id)
-        Cp = BlockRowOperator([self.Cp, other.Cp],
-                              source_id=self.state_space.id)
-        Cv = BlockRowOperator([self.Cv, other.Cv],
-                              source_id=self.state_space.id)
+        M = BlockDiagonalOperator([self.M, other.M])
+        E = BlockDiagonalOperator([self.E, other.E])
+        K = BlockDiagonalOperator([self.K, other.K])
+        B = BlockColumnOperator([self.B, other.B])
+        Cp = BlockRowOperator([self.Cp, other.Cp])
+        Cv = BlockRowOperator([self.Cv, other.Cv])
         D = self.D + other.D
         return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
 
@@ -1249,21 +1191,12 @@ class SecondOrderModel(InputStateOutputModel):
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
 
-        M = BlockDiagonalOperator([self.M, other.M],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        E = BlockDiagonalOperator([self.E, other.E],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        K = BlockDiagonalOperator([self.K, other.K],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
-        B = BlockColumnOperator([self.B, other.B],
-                                range_id=self.state_space.id)
-        Cp = BlockRowOperator([self.Cp, -other.Cp],
-                              source_id=self.state_space.id)
-        Cv = BlockRowOperator([self.Cv, -other.Cv],
-                              source_id=self.state_space.id)
+        M = BlockDiagonalOperator([self.M, other.M])
+        E = BlockDiagonalOperator([self.E, other.E])
+        K = BlockDiagonalOperator([self.K, other.K])
+        B = BlockColumnOperator([self.B, other.B])
+        Cp = BlockRowOperator([self.Cp, -other.Cp])
+        Cv = BlockRowOperator([self.Cv, -other.Cv])
         if self.D is other.D:
             D = ZeroOperator(self.output_space, self.input_space)
         else:
@@ -1292,23 +1225,14 @@ class SecondOrderModel(InputStateOutputModel):
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
 
-        M = BlockDiagonalOperator([self.M, other.M],
-                                  source_id=self.state_space.id,
-                                  range_id=self.state_space.id)
+        M = BlockDiagonalOperator([self.M, other.M])
         E = BlockOperator([[self.E, -Concatenation(self.B, other.Cv)],
-                           [None, other.E]],
-                          source_id=self.state_space.id,
-                          range_id=self.state_space.id)
+                           [None, other.E]])
         K = BlockOperator([[self.K, -Concatenation(self.B, other.Cp)],
-                           [None, other.K]],
-                          source_id=self.state_space.id,
-                          range_id=self.state_space.id)
-        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B],
-                                range_id=self.state_space.id)
-        Cp = BlockRowOperator([self.Cp, Concatenation(self.D, other.Cp)],
-                              source_id=self.state_space.id)
-        Cv = BlockRowOperator([self.Cv, Concatenation(self.D, other.Cv)],
-                              source_id=self.state_space.id)
+                           [None, other.K]])
+        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B])
+        Cp = BlockRowOperator([self.Cp, Concatenation(self.D, other.Cp)])
+        Cv = BlockRowOperator([self.Cv, Concatenation(self.D, other.Cv)])
         D = Concatenation(self.D, other.D)
         return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
 

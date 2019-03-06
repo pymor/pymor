@@ -336,7 +336,7 @@ class SOBTReductor(BasicInterface):
             self.V2.scal(alpha2)
             self.W2.scal(alpha2)
             W1TV1invW1TV2 = self.W1.inner(self.V2)
-            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r, self.fom.state_space.id))}
+            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
         elif projection == 'bfsr':
             self.V1 = gram_schmidt(self.V1, atol=0, rtol=0)
             self.W1 = gram_schmidt(self.W1, atol=0, rtol=0)
@@ -348,7 +348,7 @@ class SOBTReductor(BasicInterface):
             self.V1, self.W1 = gram_schmidt_biorth(self.V1, self.W1)
             self.V2, self.W2 = gram_schmidt_biorth(self.V2, self.W2, product=self.fom.M)
             W1TV1invW1TV2 = self.W1.inner(self.V2)
-            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r, self.fom.state_space.id))}
+            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
 
         projected_ops.update({'E': project(self.fom.E,
                                            range_basis=self.W2,
