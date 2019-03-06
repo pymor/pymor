@@ -175,11 +175,10 @@ class BlockVectorSpace(VectorSpaceInterface):
         The tuple defined above.
     """
 
-    def __init__(self, subspaces, id_=None):
+    def __init__(self, subspaces):
         subspaces = tuple(subspaces)
         assert all([isinstance(subspace, VectorSpaceInterface) for subspace in subspaces])
         self.subspaces = subspaces
-        self.id = id_
 
     def __eq__(self, other):
         return (type(other) is BlockVectorSpace
@@ -187,7 +186,7 @@ class BlockVectorSpace(VectorSpaceInterface):
                 and all(space == other_space for space, other_space in zip(self.subspaces, other.subspaces)))
 
     def __hash__(self):
-        return sum(hash(s) for s in self.subspaces) + hash(self.id)
+        return sum(hash(s) for s in self.subspaces)
 
     @property
     def dim(self):
@@ -197,9 +196,9 @@ class BlockVectorSpace(VectorSpaceInterface):
         return BlockVectorArray([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
 
     @classinstancemethod
-    def make_array(cls, obj, id_=None):
+    def make_array(cls, obj):
         assert len(obj) > 0
-        return cls(tuple(o.space for o in obj), id_=id_).make_array(obj)
+        return cls(tuple(o.space for o in obj)).make_array(obj)
 
     @make_array.instancemethod
     def make_array(self, obj):
