@@ -420,7 +420,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
 
     @property
     def is_scalar(self):
-        return self.dim == 1
+        return self.dim == 1 and self.id is None
 
     def __repr__(self):
         return f'NumpyVectorSpace({self.dim})' if self.id is None \
