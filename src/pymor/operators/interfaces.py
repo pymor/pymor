@@ -290,7 +290,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         assert isinstance(self.range, NumpyVectorSpace) and self.linear
         raise NotImplementedError
 
-    def as_vector(self, mu=None, *, space=None):
+    def as_vector(self, mu=None):
         """Return a vector representation of a linear functional or vector operator.
 
         Depending on the operator's :attr:`~OperatorInterface.source` and
@@ -298,18 +298,10 @@ class OperatorInterface(ImmutableInterface, Parametric):
         :meth:`~OperatorInterface.as_range_array` or :meth:`~OperatorInterface.as_source_array`
         respectively. The resulting |VectorArray| is required to have length 1.
 
-        Note that in case both :attr:`~OperatorInterface.source` and
-        :attr:`~OperatorInterface.range` are one-dimensional |NumpyVectorSpaces|
-        but with different :attr:`ids <pymor.vectorarrays.interfaces.VectorSpaceInterface.id>`,
-        it is impossible to determine which space to choose. In this case,
-        the desired space has to be specified via the `space` parameter.
-
         Parameters
         ----------
         mu
             The |Parameter| for which to return the vector representation.
-        space
-            See above.
 
         Returns
         -------
@@ -318,24 +310,9 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         if not self.linear:
             raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
-        if space is not None:
-            if self.range == space:
-                V = self.as_range_array(mu)
-                assert len(V) == 1
-                return V
-            elif self.source == space:
-                V = self.as_source_array(mu)
-                assert len(V) == 1
-                return V
-            else:
-                raise TypeError('This operator cannot be represented by a VectorArray in the given space.')
-        elif self.source.is_scalar:
-            if self.range.is_scalar and self.range.id != self.source.id:
-                raise TypeError("Cannot determine space of VectorArray representation (specify 'space' parameter).")
+        if self.source.is_scalar:
             return self.as_range_array(mu)
         elif self.range.is_scalar:
-            if self.source.is_scalar and self.source.id != self.range.id:
-                raise TypeError("Cannot determine space of VectorArray representation (specify 'space' parameter).")
             return self.as_source_array(mu)
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')

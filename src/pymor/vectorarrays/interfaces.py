@@ -599,7 +599,8 @@ class VectorSpaceInterface(ImmutableInterface):
         The dimension (number of degrees of freedom) of the
         vectors contained in the space.
     is_scalar
-        Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`.
+        Equivalent to
+        `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
     """
 
     id = None

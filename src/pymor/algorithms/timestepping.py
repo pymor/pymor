@@ -135,7 +135,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
         assert F.range == A.range
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
-            dt_F = F.as_vector(mu, space=A.range) * dt
+            dt_F = F.as_vector(mu) * dt
     else:
         assert len(F) == 1
         assert F in A.range
@@ -171,7 +171,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
         mu['_t'] = t
         rhs = M.apply(U)
         if F_time_dep:
-            dt_F = F.as_vector(mu, space=A.range) * dt
+            dt_F = F.as_vector(mu) * dt
         if F:
             rhs += dt_F
         U = M_dt_A.apply_inverse(rhs, mu=mu)
@@ -192,7 +192,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
         assert F.range == A.range
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
-            F_ass = F.as_vector(mu, space=A.range)
+            F_ass = F.as_vector(mu)
     elif isinstance(F, VectorArrayInterface):
         assert len(F) == 1
         assert F in A.range
@@ -226,7 +226,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
             t += dt
             mu['_t'] = t
             if F_time_dep:
-                F_ass = F.as_vector(mu, space=A.range)
+                F_ass = F.as_vector(mu)
             U.axpy(dt, F_ass - A.apply(U, mu=mu))
             while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
