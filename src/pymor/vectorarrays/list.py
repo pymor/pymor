@@ -408,7 +408,7 @@ class ListVectorSpace(VectorSpaceInterface):
         return self.full_vector(1.)
 
     def full_vector(self, value):
-        return self.from_numpy(np.full(self.dim, value))
+        return self.vector_from_numpy(np.full(self.dim, value))
 
     @abstractmethod
     def make_vector(self, obj):
