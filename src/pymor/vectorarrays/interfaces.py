@@ -78,9 +78,47 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors with each component zero.
+        A |VectorArray| containing `count` vectors with each DOF set to zero.
         """
         return self.space.zeros(count, reserve=reserve)
+
+    def ones(self, count=1, reserve=0):
+        """Create a |VectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
+
+        This is a shorthand for `self.space.full(1., count, reserve)`.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors with each DOF set to one.
+        """
+        return self.space.full(1., count, reserve)
+
+    def full(self, value, count=1, reserve=0):
+        """Create a |VectorArray| of vectors with all DOFs set to the same value.
+
+        This is a shorthand for `self.space.full(value, count, reserve)`.
+
+        Parameters
+        ----------
+        value
+            The value each DOF should be set to.
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors with each DOF set to `value`.
+        """
+        return self.space.full(value, count, reserve=reserve)
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray| of the same |VectorSpace|.
@@ -598,6 +636,42 @@ class VectorSpaceInterface(ImmutableInterface):
         A |VectorArray| containing `count` vectors with each component zero.
         """
         pass
+
+    def ones(self, count=1, reserve=0):
+        """Create a |VectorArray| of vectors of with all DOFs set to one.
+
+        This is a shorthand for `self.full(1., count, reserve)`.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors with each DOF set to one.
+        """
+        return self.full(1., count, reserve)
+
+    def full(self, value, count=1, reserve=0):
+        """Create a |VectorArray| of vectors with all DOFs set to the same value.
+
+        Parameters
+        ----------
+        value
+            The value each DOF should be set to.
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors with each DOF set to `value`.
+        """
+        return self.from_numpy(np.full((count, self.dim), value))
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray|

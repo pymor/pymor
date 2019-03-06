@@ -140,12 +140,12 @@ class SOR_IRKAReductor(BasicInterface):
                 np.random.seed(sigma)
                 sigma = np.abs(np.random.randn(r))
             if b is None:
-                b = fom.B.source.from_numpy(np.ones((r, fom.input_dim)))
+                b = fom.B.source.ones(r)
             elif isinstance(b, int):
                 np.random.seed(b)
                 b = fom.B.source.from_numpy(np.random.randn(r, fom.input_dim))
             if c is None:
-                c = fom.Cp.range.from_numpy(np.ones((r, fom.output_dim)))
+                c = fom.Cp.range.ones(r)
             elif isinstance(c, int):
                 np.random.seed(c)
                 c = fom.Cp.range.from_numpy(np.random.randn(r, fom.output_dim))

@@ -180,6 +180,41 @@ def test_zeros(vector_array):
             pass
 
 
+def test_ones(vector_array):
+    with pytest.raises(Exception):
+        vector_array.ones(-1)
+    for c in (0, 1, 2, 30):
+        v = vector_array.ones(count=c)
+        assert v.space == vector_array.space
+        assert len(v) == c
+        if min(v.dim, c) > 0:
+            assert np.allclose(v.sup_norm(), np.ones(c))
+            assert np.allclose(v.l2_norm(), np.full(c, np.sqrt(v.dim)))
+        try:
+            assert v.to_numpy().shape == (c, v.dim)
+            assert np.allclose(v.to_numpy(), np.ones((c, v.dim)))
+        except NotImplementedError:
+            pass
+
+
+def test_full(vector_array):
+    with pytest.raises(Exception):
+        vector_array.ones(-1)
+    for c in (0, 1, 2, 30):
+        for val in (-1e-3,0,7):
+            v = vector_array.full(val, count=c)
+            assert v.space == vector_array.space
+            assert len(v) == c
+            if min(v.dim, c) > 0:
+                assert np.allclose(v.sup_norm(), np.full(c, abs(val)))
+                assert np.allclose(v.l2_norm(), np.full(c, np.sqrt(val**2 * v.dim)))
+            try:
+                assert v.to_numpy().shape == (c, v.dim)
+                assert np.allclose(v.to_numpy(), np.full((c, v.dim), val))
+            except NotImplementedError:
+                pass
+
+
 def test_from_numpy(vector_array):
     try:
         d = vector_array.to_numpy()

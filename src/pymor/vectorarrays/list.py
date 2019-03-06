@@ -404,6 +404,12 @@ class ListVectorSpace(VectorSpaceInterface):
     def zero_vector(self):
         pass
 
+    def ones_vector(self):
+        return self.full_vector(1.)
+
+    def full_vector(self, value):
+        return self.vector_from_numpy(np.full(self.dim, value))
+
     @abstractmethod
     def make_vector(self, obj):
         pass
@@ -422,6 +428,14 @@ class ListVectorSpace(VectorSpaceInterface):
     def zeros(self, count=1, reserve=0):
         assert count >= 0 and reserve >= 0
         return ListVectorArray([self.zero_vector() for _ in range(count)], self)
+
+    def ones(self, count=1, reserve=0):
+        assert count >= 0 and reserve >= 0
+        return ListVectorArray([self.ones_vector() for _ in range(count)], self)
+
+    def full(self, value, count=1, reserve=0):
+        assert count >= 0 and reserve >= 0
+        return ListVectorArray([self.full_vector(value) for _ in range(count)], self)
 
     @classinstancemethod
     def make_array(cls, obj, id_=None):
@@ -461,6 +475,12 @@ class NumpyListVectorSpace(ListVectorSpace):
 
     def zero_vector(self):
         return NumpyVector(np.zeros(self.dim))
+
+    def ones_vector(self):
+        return NumpyVector(np.ones(self.dim))
+
+    def full_vector(self, value):
+        return NumpyVector(np.full(self.dim, value))
 
     def make_vector(self, obj):
         obj = np.asarray(obj)

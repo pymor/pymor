@@ -365,6 +365,14 @@ class NumpyVectorSpace(VectorSpaceInterface):
         va._len = count
         return va
 
+    def full(self, value, count=1, reserve=0):
+        assert count >= 0
+        assert reserve >= 0
+        va = NumpyVectorArray(np.empty((0, 0)), self)
+        va._array = np.full((max(count, reserve), self.dim), value)
+        va._len = count
+        return va
+
     @classinstancemethod
     def make_array(cls, obj, id_=None):
         return cls._array_factory(obj, id_=id_)
