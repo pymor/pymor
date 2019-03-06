@@ -17,7 +17,7 @@ class BlockOperatorBase(OperatorBase):
         for (i, j) in np.ndindex(self._blocks.shape):
             yield self._blocks[i, j]
 
-    def __init__(self, blocks, source_id='STATE', range_id='STATE'):
+    def __init__(self, blocks):
         blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
         if self.blocked_source and self.blocked_range:
@@ -52,8 +52,8 @@ class BlockOperatorBase(OperatorBase):
             if blocks[i, j] is None:
                 self._blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
-        self.source = BlockVectorSpace(source_spaces, id_=source_id) if self.blocked_source else source_spaces[0]
-        self.range = BlockVectorSpace(range_spaces, id_=range_id) if self.blocked_range else range_spaces[0]
+        self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
+        self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
         self.num_source_blocks = len(source_spaces)
         self.num_range_blocks = len(range_spaces)
         self.linear = all(op.linear for op in self._operators())
@@ -100,9 +100,8 @@ class BlockOperatorBase(OperatorBase):
 
     def _assemble_lincomb_preprocess_operators(self, operators):
         return [
-            BlockDiagonalOperator([IdentityOperator(s) for s in op.source.subspaces],
-                                  source_id=op.source.id, range_id=op.range.id) if isinstance(op, IdentityOperator) else
-            op
+            BlockDiagonalOperator([IdentityOperator(s) for s in op.source.subspaces])
+            if isinstance(op, IdentityOperator) else op
             for op in operators if not isinstance(op, ZeroOperator)
         ]
 
@@ -191,22 +190,22 @@ BlockColumnOperator.adjoint_type = BlockRowOperator
 
 class BlockProjectionOperator(BlockRowOperator):
 
-    def __init__(self, block_space, component, source_id='STATE'):
+    def __init__(self, block_space, component):
         assert isinstance(block_space, BlockVectorSpace)
         assert 0 <= component < len(block_space.subspaces)
         blocks = [ZeroOperator(space, space) if i != component else IdentityOperator(space)
                   for i, space in enumerate(block_space.subspaces)]
-        super().__init__(blocks, source_id=source_id)
+        super().__init__(blocks)
 
 
 class BlockEmbeddingOperator(BlockColumnOperator):
 
-    def __init__(self, block_space, component, range_id='STATE'):
+    def __init__(self, block_space, component):
         assert isinstance(block_space, BlockVectorSpace)
         assert 0 <= component < len(block_space.subspaces)
         blocks = [ZeroOperator(space, space) if i != component else IdentityOperator(space)
                   for i, space in enumerate(block_space.subspaces)]
-        super().__init__(blocks, range_id=range_id)
+        super().__init__(blocks)
 
 
 class BlockDiagonalOperator(BlockOperator):
@@ -216,7 +215,7 @@ class BlockDiagonalOperator(BlockOperator):
     block diagonal case.
     """
 
-    def __init__(self, blocks, source_id='STATE', range_id='STATE'):
+    def __init__(self, blocks):
         blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
         if blocks.ndim == 2:
@@ -225,7 +224,7 @@ class BlockDiagonalOperator(BlockOperator):
         blocks2 = np.empty((n, n), dtype=object)
         for i, op in enumerate(blocks):
             blocks2[i, i] = op
-        super().__init__(blocks2, source_id=source_id, range_id=range_id)
+        super().__init__(blocks2)
 
     def apply(self, U, mu=None):
         assert U in self.source
