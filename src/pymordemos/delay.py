@@ -26,7 +26,7 @@ if __name__ == '__main__':
     def dH(s):
         return np.array([[-(tau * s + tau + 1) * np.exp(-s) / (tau * s + 1) ** 2]])
 
-    tf = TransferFunction(NumpyVectorSpace(1, 'INPUT'), NumpyVectorSpace(1, 'OUTPUT'), H, dH)
+    tf = TransferFunction(NumpyVectorSpace(1), NumpyVectorSpace(1), H, dH)
 
     r = 10
     tf_irka_reductor = TF_IRKAReductor(tf)
