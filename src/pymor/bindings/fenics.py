@@ -71,10 +71,24 @@ if config.HAVE_FENICS:
         def amax(self):
             A = np.abs(self.impl.get_local())
             # there seems to be no way in the interface to compute amax without making a copy.
-            # also, we need to check how things behave in the MPI parallel case.
-            max_ind = np.argmax(A)
-            max_val = A[max_ind]
-            return max_ind, max_val
+            max_ind_on_rank = np.argmax(A)
+            max_val_on_rank = A[max_ind_on_rank]
+            from pymor.tools import mpi
+            if not mpi.parallel:
+                return max_ind_on_rank, max_val_on_rank
+            else:
+                max_global_ind_on_rank = max_ind_on_rank + self.impl.local_range()[0]
+                comm = self.impl.mpi_comm()
+                comm_size = comm.Get_size()
+
+                max_inds = np.empty(comm_size, dtype='i')
+                comm.Allgather(np.array(max_global_ind_on_rank, dtype='i'), max_inds)
+
+                max_vals = np.empty(comm_size, dtype=np.float64)
+                comm.Allgather(np.array(max_val_on_rank), max_vals)
+
+                i = np.argmax(max_inds)
+                return max_inds[i], max_vals[i]
 
         def __add__(self, other):
             return FenicsVector(self.impl + other.impl)
