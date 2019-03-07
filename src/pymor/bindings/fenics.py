@@ -63,9 +63,10 @@ if config.HAVE_FENICS:
                 return np.array([], dtype=np.intc)
             assert 0 <= np.min(dof_indices)
             assert np.max(dof_indices) < self.impl.size()
-            x = df.Vector()
-            self.impl.gather(x, dof_indices)
-            return x.get_local()
+            dofs = self.impl.gather(dof_indices)
+            # in the mpi distributed case, gather returns the values
+            # at the *global* dof_indices on each rank
+            return dofs
 
         def amax(self):
             A = np.abs(self.impl.get_local())
