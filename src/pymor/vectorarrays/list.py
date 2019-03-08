@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, classinstancemethod
-from pymor.tools.random import new_random_state
+from pymor.tools.random import get_random_state
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES, _create_random_values
 
 
@@ -445,7 +445,7 @@ class ListVectorSpace(VectorSpaceInterface):
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
         assert count >= 0 and reserve >= 0
         assert random_state is None or seed is None
-        random_state = random_state or new_random_state(seed)
+        random_state = get_random_state(random_state, seed)
         return ListVectorArray([self.random_vector(distribution=distribution, random_state=random_state, **kwargs)
                                 for _ in range(count)], self)
 

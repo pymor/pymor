@@ -160,6 +160,10 @@ def _test_demo(demo):
     except ImportError:
         pass
 
+    # reset default RandomState
+    import pymor.tools.random
+    pymor.tools.random._default_random_state = None
+
     result = None
     try:
         result = demo()

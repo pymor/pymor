@@ -80,7 +80,7 @@ using linear finite elements. (The size of the grid can be controlled
 via the ``--grid`` parameter. The randomly chosen parameters will
 actually be the same for each run, since a the random generator
 is initialized with a fixed default seed in
-:func:`~pymor.tools.random.new_random_state`.)
+:func:`~pymor.tools.random.default_random_state`.)
 
 After closing the window, the reduced basis for model order reduction
 is generated using a greedy search algorithm with error estimator.

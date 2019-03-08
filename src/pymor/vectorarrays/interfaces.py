@@ -9,7 +9,7 @@ import numpy as np
 
 from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
 from pymor.tools.deprecated import Deprecated
-from pymor.tools.random import new_random_state
+from pymor.tools.random import get_random_state
 
 
 _INDEXTYPES = (Number,) if Version(np.__version__) >= Version('1.9') else (Number, np.intp)
@@ -154,11 +154,10 @@ class VectorArrayInterface(BasicInterface):
         random_state
             :class:`~numpy.random.RandomState` to use for sampling.
             If `None`, a new random state is generated using `seed`
-            as random seed.
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
         seed
-            Random seed to use. If `None`, the
-            :func:`default <pymor.tools.random.new_random_state>` random
-            seed is used.
+            If not `None`, a new radom state with this seed is used.
         reserve
             Hint for the backend to which length the array will grow.
         """
@@ -748,16 +747,15 @@ class VectorSpaceInterface(ImmutableInterface):
         random_state
             :class:`~numpy.random.RandomState` to use for sampling.
             If `None`, a new random state is generated using `seed`
-            as random seed.
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
         seed
-            Random seed to use. If `None`, the
-            :func:`default <pymor.tools.random.new_random_state>` random
-            seed is used.
+            If not `None`, a new radom state with this seed is used.
         reserve
             Hint for the backend to which length the array will grow.
         """
         assert random_state is None or seed is None
-        random_state = random_state or new_random_state(seed)
+        random_state = get_random_state(random_state, seed)
         values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
         return self.from_numpy(values)
 

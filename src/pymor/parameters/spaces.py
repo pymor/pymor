@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.parameters.base import Parameter, ParameterType
 from pymor.parameters.interfaces import ParameterSpaceInterface
-from pymor.tools.random import new_random_state
+from pymor.tools.random import get_random_state
 
 
 class CubicParameterSpace(ParameterSpaceInterface):
@@ -66,13 +66,6 @@ class CubicParameterSpace(ParameterSpaceInterface):
     def sample_randomly(self, count=None, random_state=None, seed=None):
         """Randomly sample |Parameters| from the space.
 
-        .. warning::
-
-            When neither `random_state` nor `seed` are specified,
-            repeated calls to this method will return the same sequence
-            of parameters!
-
-
         Parameters
         ----------
         count
@@ -80,11 +73,10 @@ class CubicParameterSpace(ParameterSpaceInterface):
         random_state
             :class:`~numpy.random.RandomState` to use for sampling.
             If `None`, a new random state is generated using `seed`
-            as random seed.
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
         seed
-            Random seed to use. If `None`, the
-            :func:`default <pymor.tools.random.new_random_state>` random seed
-            is used.
+            If not `None`, a new radom state with this seed is used.
 
         Returns
         -------
@@ -94,7 +86,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
         """
         assert not random_state or seed is None
         ranges = self.ranges
-        random_state = random_state or new_random_state(seed)
+        random_state = get_random_state(random_state, seed)
         get_param = lambda: Parameter(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
                                        for k, shp in self.parameter_type.items()))
         if count is None:
