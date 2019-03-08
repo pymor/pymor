@@ -273,7 +273,7 @@ class LTISystem(InputStateOutputSystem):
         assert E.source == A.source
 
         assert cont_time in (True, False)
-        assert solver_options is None or solver_options.keys() <= {'lyap'}
+        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
@@ -675,22 +675,23 @@ class LTISystem(InputStateOutputSystem):
         B = self.B
         C = self.C
         E = self.E if not isinstance(self.E, IdentityOperator) else None
-        options = self.solver_options.get('lyap') if self.solver_options else None
+        options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
+        options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
 
         if typ == 'c_lrcf':
-            return solve_lyap_lrcf(A, E, B.as_range_array(), trans=False, options=options)
+            return solve_lyap_lrcf(A, E, B.as_range_array(), trans=False, options=options_lrcf)
         elif typ == 'o_lrcf':
-            return solve_lyap_lrcf(A, E, C.as_source_array(), trans=True, options=options)
+            return solve_lyap_lrcf(A, E, C.as_source_array(), trans=True, options=options_lrcf)
         elif typ == 'c_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'),
                                     to_matrix(E, format='dense') if E else None,
                                     to_matrix(B, format='dense'),
-                                    trans=False, options=options)
-        elif typ == 'o_lrcf':
+                                    trans=False, options=options_dense)
+        elif typ == 'o_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'),
                                     to_matrix(E, format='dense') if E else None,
                                     to_matrix(C, format='dense'),
-                                    trans=True, options=options)
+                                    trans=True, options=options_dense)
         else:
             raise NotImplementedError("Only 'c_lrcf', 'o_lrcf', 'c_dense', and 'o_dense' types are possible"
                                       " ({} was given).".format(typ))
@@ -974,7 +975,7 @@ class SecondOrderSystem(InputStateOutputSystem):
         assert D.linear and D.source == B.source and D.range == Cp.range
 
         assert cont_time in (True, False)
-        assert solver_options is None or solver_options.keys() <= {'lyap'}
+        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
