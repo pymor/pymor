@@ -11,7 +11,6 @@ if config.HAVE_NGSOLVE:
 
     from pymor.core.interfaces import ImmutableInterface
     from pymor.operators.basic import OperatorBase
-    from pymor.operators.constructions import ZeroOperator
     from pymor.vectorarrays.interfaces import VectorArrayInterface
     from pymor.vectorarrays.numpy import NumpyVectorSpace
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
@@ -144,15 +143,13 @@ if config.HAVE_NGSOLVE:
                     r.impl.vec.data = inv * v.impl.vec
             return R
 
-        def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-            if not all(isinstance(op, (NGSolveMatrixOperator, ZeroOperator)) for op in operators):
+        def _assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+            if not all(isinstance(op, NGSolveMatrixOperator) for op in operators):
                 return None
 
             matrix = operators[0].matrix.CreateMatrix()
             matrix.AsVector().data = float(coefficients[0]) * matrix.AsVector()
             for op, c in zip(operators[1:], coefficients[1:]):
-                if isinstance(op, ZeroOperator):
-                    continue
                 matrix.AsVector().data += float(c) * op.matrix.AsVector()
             return NGSolveMatrixOperator(matrix, self.range, self.source, solver_options=solver_options, name=name)
 

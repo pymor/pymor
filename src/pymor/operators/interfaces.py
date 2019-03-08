@@ -339,7 +339,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         """Try to assemble a linear combination of the given operators.
 
         This method is called in the :meth:`assemble` method of |LincombOperator| on

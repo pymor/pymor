@@ -159,7 +159,7 @@ class MPIOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
 
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if not all(isinstance(op, MPIOperator) for op in operators):
             return None
         assert solver_options is None
@@ -191,7 +191,7 @@ def _MPIOperator_get_local_spaces(self, source, pickle_local_spaces):
 
 def _MPIOperator_assemble_lincomb(operators, coefficients, name):
     operators = [mpi.get_object(op) for op in operators]
-    return mpi.manage_object(operators[0].assemble_lincomb(operators, coefficients, name=name))
+    return mpi.manage_object(operators[0]._assemble_lincomb(operators, coefficients, name=name))
 
 
 def mpi_wrap_operator(obj_id, mpi_range, mpi_source, with_apply2=False, pickle_local_spaces=True,

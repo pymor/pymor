@@ -24,7 +24,7 @@ from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import abstractmethod
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import IdentityOperator, ZeroOperator
+from pymor.operators.constructions import IdentityOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -334,8 +334,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         return self.H.apply_inverse(U, mu=mu, least_squares=least_squares)
 
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-        if not all(isinstance(op, (NumpyMatrixOperator, ZeroOperator, IdentityOperator)) for op in operators):
+    def _assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        if not all(isinstance(op, (NumpyMatrixOperator, IdentityOperator)) for op in operators):
             return None
 
         common_mat_dtype = reduce(np.promote_types,
@@ -351,9 +351,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 matrix = matrix.astype(common_dtype)
 
         for op, c in zip(operators[1:], coefficients[1:]):
-            if type(op) is ZeroOperator:
-                continue
-            elif type(op) is IdentityOperator:
+            if type(op) is IdentityOperator:
                 if c.imag == 0:
                     c = c.real
                 if operators[0].sparse:

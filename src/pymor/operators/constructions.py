@@ -122,10 +122,11 @@ class LincombOperator(OperatorBase):
         return R
 
     def assemble(self, mu=None):
+        from pymor.algorithms.lincomb import assemble_lincomb
         operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        op = operators[0].assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
-                                           name=self.name + '_assembled')
+        op = assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
+                              name=self.name + '_assembled')
         if op:
             return op
         else:
@@ -136,13 +137,14 @@ class LincombOperator(OperatorBase):
                 return self  # avoid infinite recursion
 
     def jacobian(self, U, mu=None):
+        from pymor.algorithms.lincomb import assemble_lincomb
         if self.linear:
             return self.assemble(mu)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
-        jac = jacobians[0].assemble_lincomb(jacobians, coefficients, solver_options=options,
-                                            name=self.name + '_jacobian')
+        jac = assemble_lincomb(jacobians, coefficients, solver_options=options,
+                               name=self.name + '_jacobian')
         if jac is None:
             return LincombOperator(jacobians, coefficients, solver_options=options,
                                    name=self.name + '_jacobian')
@@ -412,17 +414,6 @@ class IdentityOperator(OperatorBase):
     def assemble(self, mu=None):
         return self
 
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-        if all(isinstance(op, IdentityOperator) for op in operators):
-            if len(operators) == 1:  # avoid infinite recursion
-                return None
-            assert all(op.source == operators[0].source for op in operators)
-            return IdentityOperator(operators[0].source, name=name) * sum(coefficients)
-        else:
-            return operators[1].assemble_lincomb(operators[1:] + [operators[0]],
-                                                 coefficients[1:] + [coefficients[0]],
-                                                 solver_options=solver_options, name=name)
-
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         return IdentityOperator(NumpyVectorSpace(len(dofs))), dofs
@@ -518,14 +509,6 @@ class ZeroOperator(OperatorBase):
             raise InversionError
         return self.range.zeros(len(U))
 
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-        assert operators[0] is self
-        if len(operators) > 1:
-            return operators[1].assemble_lincomb(operators[1:], coefficients[1:], solver_options=solver_options,
-                                                 name=name)
-        else:
-            return self
-
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         return ZeroOperator(NumpyVectorSpace(len(dofs)), NumpyVectorSpace(0)), np.array([], dtype=np.int32)
@@ -590,27 +573,6 @@ class VectorArrayOperator(OperatorBase):
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         adjoint_op = VectorArrayOperator(self._array, adjoint=not self.adjoint)
         return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
-
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-        adjoint = operators[0].adjoint
-        if not all(isinstance(op, VectorArrayOperator)
-                   and op.adjoint == adjoint
-                   and op.source == operators[0].source
-                   and op.range == operators[0].range
-                   for op in operators):
-            return None
-        assert not solver_options
-
-        if adjoint:
-            coefficients = np.conj(coefficients)
-
-        if coefficients[0] == 1:
-            array = operators[0]._array.copy()
-        else:
-            array = operators[0]._array * coefficients[0]
-        for op, c in zip(operators[1:], coefficients[1:]):
-            array.axpy(c, op._array)
-        return VectorArrayOperator(array, adjoint=adjoint, space_id=operators[0].space_id, name=name)
 
     def as_range_array(self, mu=None):
         if not self.adjoint:
