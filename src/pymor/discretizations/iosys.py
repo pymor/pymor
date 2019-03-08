@@ -255,21 +255,23 @@ class LTISystem(InputStateOutputSystem):
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
-        D = D or ZeroOperator(C.range, B.source)
-        E = E or IdentityOperator(A.source)
-
         assert A.linear
         assert A.source == A.range
         assert B.linear
         assert B.range == A.source
         assert C.linear
         assert C.source == A.range
+
+        D = D or ZeroOperator(C.range, B.source)
         assert D.linear
         assert D.source == B.source
         assert D.range == C.range
+
+        E = E or IdentityOperator(A.source)
         assert E.linear
         assert E.source == E.range
         assert E.source == A.source
+
         assert cont_time in (True, False)
         assert solver_options is None or solver_options.keys() <= {'lyap'}
 
@@ -959,16 +961,18 @@ class SecondOrderSystem(InputStateOutputSystem):
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
-        Cv = Cv or ZeroOperator(Cp.range, Cp.source)
-        D = D or ZeroOperator(Cp.range, B.source)
-
         assert M.linear and M.source == M.range
         assert E.linear and E.source == E.range == M.source
         assert K.linear and K.source == K.range == M.source
         assert B.linear and B.range == M.source
         assert Cp.linear and Cp.source == M.range
+
+        Cv = Cv or ZeroOperator(Cp.range, Cp.source)
         assert Cv.linear and Cv.source == M.range and Cv.range == Cp.range
+
+        D = D or ZeroOperator(Cp.range, B.source)
         assert D.linear and D.source == B.source and D.range == Cp.range
+
         assert cont_time in (True, False)
 
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
