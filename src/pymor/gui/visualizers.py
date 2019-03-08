@@ -6,7 +6,6 @@
 from pymor.core.interfaces import BasicInterface
 from pymor.grids.oned import OnedGrid
 from pymor.grids.referenceelements import triangle, square
-from pymor.gui.jupyter import visualize_k3d_np
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.core.config import is_jupyter
