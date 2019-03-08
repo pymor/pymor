@@ -199,7 +199,7 @@ def test_ones(vector_array):
 
 def test_full(vector_array):
     with pytest.raises(Exception):
-        vector_array.full(-1)
+        vector_array.full(9, -1)
     for c in (0, 1, 2, 30):
         for val in (-1e-3,0,7):
             v = vector_array.full(val, count=c)
