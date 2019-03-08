@@ -1008,6 +1008,7 @@ class SecondOrderModel(InputStateOutputModel):
         assert D.linear and D.source == B.source and D.range == Cp.range
 
         assert cont_time in (True, False)
+        assert solver_options is None or solver_options.keys() <= {'lyap'}
 
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
