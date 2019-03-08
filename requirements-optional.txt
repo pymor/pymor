@@ -9,6 +9,7 @@ ipyparallel
 ipython>=3.0
 ipywidgets
 k3d
+lxml
 matplotlib
 mpi4py
 pillow

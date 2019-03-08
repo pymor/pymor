@@ -41,10 +41,13 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     _PYTEST: 'testing framework required to execute unit tests',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
-                    'k3d': 'in-notebook visualizations of 3D data',
-                    'vtk': 'KitWares python bindings for vtk',
-                    'xmljson': 'xml parsing to dict structure',
                     'pillow': 'image library used for bitmap data functions'}
+# these will be refactored out into a visualization package
+vtk_vis = {'k3d': 'in-notebook visualizations of 3D data',
+           'vtk': 'KitWares python bindings for vtk',
+           'lxml': 'advanced XML parsers',
+           'xmljson': 'xml parsing to dict structure',}
+install_suggests.update(vtk_vis)
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
