@@ -13,6 +13,7 @@ if config.HAVE_FENICS:
     from pymor.core.interfaces import BasicInterface
     from pymor.operators.basic import OperatorBase
     from pymor.operators.constructions import ZeroOperator
+    from pymor.vectorarrays.interfaces import _create_random_values
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
     class FenicsVector(CopyOnWriteVector):
@@ -138,6 +139,12 @@ if config.HAVE_FENICS:
         def full_vector(self, value):
             impl = df.Function(self.V).vector()
             impl += value
+            return FenicsVector(impl)
+
+        def random_vector(self, distribution, random_state, **kwargs):
+            impl = df.Function(self.V).vector()
+            values = _create_random_values(impl.local_size(), distribution, random_state, **kwargs)
+            impl[:] = values
             return FenicsVector(impl)
 
         def make_vector(self, obj):

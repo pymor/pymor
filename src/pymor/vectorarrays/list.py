@@ -5,7 +5,8 @@
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
+from pymor.tools.random import new_random_state
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES, _create_random_values
 
 
 class VectorInterface(BasicInterface):
@@ -410,6 +411,10 @@ class ListVectorSpace(VectorSpaceInterface):
     def full_vector(self, value):
         return self.vector_from_numpy(np.full(self.dim, value))
 
+    def random_vector(self, distribution, random_state, **kwargs):
+        values = _create_random_values(self.dim, distribution, random_state, **kwargs)
+        return self.vector_from_numpy(values)
+
     @abstractmethod
     def make_vector(self, obj):
         pass
@@ -436,6 +441,13 @@ class ListVectorSpace(VectorSpaceInterface):
     def full(self, value, count=1, reserve=0):
         assert count >= 0 and reserve >= 0
         return ListVectorArray([self.full_vector(value) for _ in range(count)], self)
+
+    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+        assert count >= 0 and reserve >= 0
+        assert random_state is None or seed is None
+        random_state = random_state or new_random_state(seed)
+        return ListVectorArray([self.random_vector(distribution=distribution, random_state=random_state, **kwargs)
+                                for _ in range(count)], self)
 
     @classinstancemethod
     def make_array(cls, obj, id_=None):

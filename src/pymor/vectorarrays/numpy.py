@@ -7,7 +7,8 @@ from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.core.interfaces import classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
+from pymor.tools.random import new_random_state
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES, _create_random_values
 
 
 class NumpyVectorArray(VectorArrayInterface):
@@ -371,6 +372,15 @@ class NumpyVectorSpace(VectorSpaceInterface):
         va = NumpyVectorArray(np.empty((0, 0)), self)
         va._array = np.full((max(count, reserve), self.dim), value)
         va._len = count
+        return va
+
+    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+        assert count >= 0
+        assert reserve >= 0
+        assert random_state is None or seed is None
+        random_state = random_state or new_random_state(seed)
+        va = self.zeros(count, reserve)
+        va._array[:count] = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
         return va
 
     @classinstancemethod

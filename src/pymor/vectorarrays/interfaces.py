@@ -9,6 +9,7 @@ import numpy as np
 
 from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
 from pymor.tools.deprecated import Deprecated
+from pymor.tools.random import new_random_state
 
 
 _INDEXTYPES = (Number,) if Version(np.__version__) >= Version('1.9') else (Number, np.intp)
@@ -119,6 +120,49 @@ class VectorArrayInterface(BasicInterface):
         A |VectorArray| containing `count` vectors with each DOF set to `value`.
         """
         return self.space.full(value, count, reserve=reserve)
+
+    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+        """Create a |VectorArray| of vectors with random entries.
+
+        This is a shorthand for
+        `self.space.random(count, distribution, radom_state, seed, **kwargs)`.
+
+        Supported random distributions::
+
+            'uniform': Uniform distribution in half-open interval
+                       [`low`, `high`).
+            'normal':  Normal (Gaussian) distribution with mean
+                       `loc` and standard deviation `scale`.
+
+        Note that not all random distributions are necessarily implemented
+        by all |VectorSpace| implementations.
+
+        Parameter
+        ---------
+        count
+            The number of vectors.
+        distribution
+            Random distribution to use (`'uniform'`, `'normal'`).
+        low
+            Lower bound for `'uniform'` distribution (defaults to `0`).
+        high
+            Upper bound for `'uniform'` distribution (defaults to `1`).
+        loc
+            Mean for `'normal'` distribution (defaults to `0`).
+        scale
+            Standard deviation for `'normal'` distribution (defaults to `1`).
+        random_state
+            :class:`~numpy.random.RandomState` to use for sampling.
+            If `None`, a new random state is generated using `seed`
+            as random seed.
+        seed
+            Random seed to use. If `None`, the
+            :func:`default <pymor.tools.random.new_random_state>` random
+            seed is used.
+        reserve
+            Hint for the backend to which length the array will grow.
+        """
+        return self.space.random(count, distribution, random_state, seed, **kwargs)
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray| of the same |VectorSpace|.
@@ -674,6 +718,49 @@ class VectorSpaceInterface(ImmutableInterface):
         """
         return self.from_numpy(np.full((count, self.dim), value))
 
+    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+        """Create a |VectorArray| of vectors with random entries.
+
+        Supported random distributions::
+
+            'uniform': Uniform distribution in half-open interval
+                       [`low`, `high`).
+            'normal':  Normal (Gaussian) distribution with mean
+                       `loc` and standard deviation `scale`.
+
+        Note that not all random distributions are necessarily implemented
+        by all |VectorSpace| implementations.
+
+        Parameter
+        ---------
+        count
+            The number of vectors.
+        distribution
+            Random distribution to use (`'uniform'`, `'normal'`).
+        low
+            Lower bound for `'uniform'` distribution (defaults to `0`).
+        high
+            Upper bound for `'uniform'` distribution (defaults to `1`).
+        loc
+            Mean for `'normal'` distribution (defaults to `0`).
+        scale
+            Standard deviation for `'normal'` distribution (defaults to `1`).
+        random_state
+            :class:`~numpy.random.RandomState` to use for sampling.
+            If `None`, a new random state is generated using `seed`
+            as random seed.
+        seed
+            Random seed to use. If `None`, the
+            :func:`default <pymor.tools.random.new_random_state>` random
+            seed is used.
+        reserve
+            Hint for the backend to which length the array will grow.
+        """
+        assert random_state is None or seed is None
+        random_state = random_state or new_random_state(seed)
+        values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
+        return self.from_numpy(values)
+
     def empty(self, reserve=0):
         """Create an empty |VectorArray|
 
@@ -729,3 +816,25 @@ class VectorSpaceInterface(ImmutableInterface):
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.id})'
+
+
+def _create_random_values(shape, distribution, random_state, **kwargs):
+    if distribution not in ('uniform', 'normal'):
+        raise NotImplementedError
+
+    if distribution == 'uniform':
+        if not kwargs.keys() <= {'low', 'high'}:
+            raise ValueError
+        low = kwargs.get('low', 0.)
+        high = kwargs.get('high', 1.)
+        if high <= low:
+            raise ValueError
+        return random_state.uniform(low, high, shape)
+    elif distribution == 'normal':
+        if not kwargs.keys() <= {'loc', 'scale'}:
+            raise ValueError
+        loc = kwargs.get('loc', 0.)
+        scale = kwargs.get('scale', 1.)
+        return random_state.normal(loc, scale, shape)
+    else:
+        assert False
