@@ -1161,7 +1161,7 @@ class SecondOrderSystem(InputStateOutputSystem):
         else:
             tfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(
                 Cp.as_source_array() + Cv.as_source_array() * s.conjugate())).to_numpy().conj()
-        if isinstance(D, ZeroOperator):
+        if not isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 
