@@ -1286,7 +1286,7 @@ class SecondOrderModel(InputStateOutputModel):
         else:
             tfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(
                 Cp.as_source_array() + Cv.as_source_array() * s.conjugate())).to_numpy().conj()
-        if isinstance(D, ZeroOperator):
+        if not isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 
@@ -1608,7 +1608,7 @@ class LinearDelayModel(InputStateOutputModel):
             tfs = C.apply(middle.apply_inverse(B.as_range_array())).to_numpy().T
         else:
             tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
-        if isinstance(D, ZeroOperator):
+        if not isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 
