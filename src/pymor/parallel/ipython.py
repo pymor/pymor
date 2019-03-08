@@ -148,7 +148,7 @@ class IPythonPool(WorkerPoolBase):
         else:
             self.view = self.client[:]
         self.logger.info(f'Connected to {len(self.view)} engines')
-        self.view.apply_sync(_setup_worker)
+        self.view.map_sync(_setup_worker, range(len(self.view)))
         self._remote_objects_created = Counter()
 
     def __len__(self):
@@ -190,9 +190,15 @@ def _worker_call_function(function, loop, args, kwargs):
         return function(*args, **kwargs)
 
 
-def _setup_worker():
+def _setup_worker(worker_id):
     global _remote_objects
     _remote_objects = {}
+    # ensure that each worker starts with a different RandomState
+    from pymor.tools import random
+    import numpy as np
+    state = random.default_random_state()
+    new_state = np.random.RandomState(state.randint(0, 2**16) + worker_id)
+    random._default_random_state = new_state
 
 
 def _push_object(remote_id, obj):
