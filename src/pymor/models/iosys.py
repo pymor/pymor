@@ -665,7 +665,7 @@ class LTIModel(InputStateOutputModel):
                                     to_matrix(E, format='dense') if E else None,
                                     to_matrix(B, format='dense'),
                                     trans=False, options=options)
-        elif typ == 'o_lrcf':
+        elif typ == 'o_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'),
                                     to_matrix(E, format='dense') if E else None,
                                     to_matrix(C, format='dense'),
