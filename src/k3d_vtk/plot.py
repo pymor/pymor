@@ -1,3 +1,6 @@
+import IPython
+from ipywidgets import IntSlider, interact, widgets
+
 from k3d_vtk.reader import read_vtkfile
 from k3d.plot import Plot as k3dPlot
 import k3d
@@ -73,6 +76,9 @@ class VTKPlot(k3dPlot):
 
 def plot(vtkfile_path, vmin, vmax):
     data = read_vtkfile(vtkfile_path)
+    size = len(data)
     plot = VTKPlot(data, vmin, vmax, grid_auto_fit=False)
     plot.display()
-    return plot
+    if size > 1:
+        ws = interact(idx=IntSlider(min=0, max=size-1, step=1, value=0, description='Timestep:')).widget(plot._goto_idx)
+        IPython.display.display(ws)
