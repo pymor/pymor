@@ -43,14 +43,10 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         Real |Operator| or `None`.
     Br
         Real |Operator| or `None`.
-        It is converted into a |VectorArray| using
-        `Br.as_source_array()`.
     C
         Real |Operator| or `None`.
     Cr
         Real |Operator| or `None`.
-        It is converted into a |VectorArray| using
-        `Cr.as_range_array()`.
 
     Returns
     -------
@@ -96,10 +92,6 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     r = Ar.shape[0]
     if Er is not None:
         Er = to_matrix(Er, format='dense')
-    if Br is not None:
-        Br = Br.as_source_array()
-    if Cr is not None:
-        Cr = Cr.as_range_array()
 
     # (Generalized) Schur decomposition
     if Er is None:
@@ -112,10 +104,10 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     if compute_V:
         V = A.source.empty(reserve=r)
 
-        Br2 = Br.lincomb(Q.T)
-        BBr2 = B.apply(Br2)
+        BrTQ = Br.apply_adjoint(Br.range.from_numpy(Q.T))
+        BBrTQ = B.apply(BrTQ)
         for i in range(-1, -r - 1, -1):
-            rhs = -BBr2[i].copy()
+            rhs = -BBrTQ[i].copy()
             if i < -1:
                 if Er is not None:
                     rhs -= A.apply(V.lincomb(TEr[i, :i:-1].conjugate()))
@@ -131,10 +123,10 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     if compute_W:
         W = A.source.empty(reserve=r)
 
-        Cr2 = Cr.lincomb(Z.T)
-        CTCr2 = C.apply_adjoint(Cr2)
+        CrZ = Cr.apply(Cr.source.from_numpy(Z.T))
+        CTCrZ = C.apply_adjoint(CrZ)
         for i in range(r):
-            rhs = -CTCr2[i].copy()
+            rhs = -CTCrZ[i].copy()
             if i > 0:
                 if Er is not None:
                     rhs -= A.apply_adjoint(W.lincomb(TEr[:i, i]))
