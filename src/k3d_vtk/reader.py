@@ -9,8 +9,9 @@ from lxml import etree
 def _read_collection(xml):
     collection = xml['VTKFile']['Collection']
     files = collection['DataSet']
-    data = [_read_single(f['@file']) for f in files]
-    return data[0]
+    data = [(f['@timestep'],_read_single(f['@file'])) for f in files]
+    data.sort(key = lambda t: t[0])
+    return data
 
 
 def _read_single(filename, vtk_type=None):
@@ -56,4 +57,4 @@ def read_vtkfile(filename):
     if vtk_type == 'Collection':
         path, xml = _get_collection_data(filename)
         return _read_collection(xml)
-    return _read_single(filename, vtk_type)
+    return [None, _read_single(filename, vtk_type)]
