@@ -11,6 +11,13 @@ stages:
     after_script:
       - .ci/gitlab/after_script.bash
     only: ['branches', 'tags', 'triggers', 'merge-requests']
+    artifacts:
+        name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+        expire_in: 3 months
+        paths:
+            - src/pymortests/testdata/check_results/*/*_changed
+        reports:
+            junit: test_results.xml
 
 3.6_numpy:
     extends: .pytest
