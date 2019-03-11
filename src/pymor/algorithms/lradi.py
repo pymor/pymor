@@ -181,8 +181,7 @@ def projection_shifts_init(A, E, B, shift_options):
         if shifts.size == 0:
             # use random subspace instead of span{B} (with same dimensions)
             if shift_options['init_seed'] is not None:
-                np.random.seed(shift_options['init_seed'])
-                np.random.seed(np.random.random() + i)
+                np.random.seed(shift_options['init_seed'] + i)
             B = B.space.from_numpy(np.random.randn(len(B), B.space.dim))
         else:
             return shifts
