@@ -7,6 +7,7 @@ https://pymor.github.io/wheels/pymess-1.0.0-cp36-cp36m-manylinux1_x86_64.whl ; p
 https://pymor.github.io/wheels/pymess-1.0.0-cp37-cp37m-manylinux1_x86_64.whl ; python_version == "3.7" and "linux" in sys_platform
 ipyparallel
 ipython>=3.0
+ipywidgets
 k3d
 lxml
 matplotlib
