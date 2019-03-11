@@ -43,10 +43,12 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         Real |Operator| or `None`.
     Br
         Real |Operator| or `None`.
+        It is assumed that `Br.range.from_numpy` is implemented.
     C
         Real |Operator| or `None`.
     Cr
         Real |Operator| or `None`.
+        It is assumed that `Cr.source.from_numpy` is implemented.
 
     Returns
     -------
