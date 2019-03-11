@@ -8,7 +8,15 @@ stages:
   - check install
   - deploy
 
+.retry:
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+
 .pytest:
+    extends: .retry
     script: .ci/gitlab/script.bash
     after_script:
       - .ci/gitlab/after_script.bash
@@ -40,6 +48,7 @@ stages:
 {%- endfor %}
 
 .docker-in-docker:
+    extends: .retry
     image: docker:stable
     variables:
         DOCKER_HOST: tcp://docker:2375/
