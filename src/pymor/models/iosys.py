@@ -204,23 +204,25 @@ class LTIModel(InputStateOutputModel):
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
-        D = D or ZeroOperator(C.range, B.source)
-        E = E or IdentityOperator(A.source)
-
         assert A.linear
         assert A.source == A.range
         assert B.linear
         assert B.range == A.source
         assert C.linear
         assert C.source == A.range
+
+        D = D or ZeroOperator(C.range, B.source)
         assert D.linear
         assert D.source == B.source
         assert D.range == C.range
+
+        E = E or IdentityOperator(A.source)
         assert E.linear
         assert E.source == E.range
         assert E.source == A.source
+
         assert cont_time in (True, False)
-        assert solver_options is None or solver_options.keys() <= {'lyap'}
+        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
@@ -654,22 +656,23 @@ class LTIModel(InputStateOutputModel):
         B = self.B
         C = self.C
         E = self.E if not isinstance(self.E, IdentityOperator) else None
-        options = self.solver_options.get('lyap') if self.solver_options else None
+        options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
+        options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
 
         if typ == 'c_lrcf':
-            return solve_lyap_lrcf(A, E, B.as_range_array(), trans=False, options=options)
+            return solve_lyap_lrcf(A, E, B.as_range_array(), trans=False, options=options_lrcf)
         elif typ == 'o_lrcf':
-            return solve_lyap_lrcf(A, E, C.as_source_array(), trans=True, options=options)
+            return solve_lyap_lrcf(A, E, C.as_source_array(), trans=True, options=options_lrcf)
         elif typ == 'c_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'),
                                     to_matrix(E, format='dense') if E else None,
                                     to_matrix(B, format='dense'),
-                                    trans=False, options=options)
-        elif typ == 'o_lrcf':
+                                    trans=False, options=options_dense)
+        elif typ == 'o_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'),
                                     to_matrix(E, format='dense') if E else None,
                                     to_matrix(C, format='dense'),
-                                    trans=True, options=options)
+                                    trans=True, options=options_dense)
         else:
             raise NotImplementedError(f"Only 'c_lrcf', 'o_lrcf', 'c_dense', and 'o_dense' types are possible "
                                       f"({typ} was given).")
@@ -993,17 +996,20 @@ class SecondOrderModel(InputStateOutputModel):
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
-        Cv = Cv or ZeroOperator(Cp.range, Cp.source)
-        D = D or ZeroOperator(Cp.range, B.source)
-
         assert M.linear and M.source == M.range
         assert E.linear and E.source == E.range == M.source
         assert K.linear and K.source == K.range == M.source
         assert B.linear and B.range == M.source
         assert Cp.linear and Cp.source == M.range
+
+        Cv = Cv or ZeroOperator(Cp.range, Cp.source)
         assert Cv.linear and Cv.source == M.range and Cv.range == Cp.range
+
+        D = D or ZeroOperator(Cp.range, B.source)
         assert D.linear and D.source == B.source and D.range == Cp.range
+
         assert cont_time in (True, False)
+        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
@@ -1286,7 +1292,7 @@ class SecondOrderModel(InputStateOutputModel):
         else:
             tfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(
                 Cp.as_source_array() + Cv.as_source_array() * s.conjugate())).to_numpy().conj()
-        if isinstance(D, ZeroOperator):
+        if not isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 
@@ -1544,17 +1550,19 @@ class LinearDelayModel(InputStateOutputModel):
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
-        D = D or ZeroOperator(C.range, B.source)
-        E = E or IdentityOperator(A.source)
-
         assert A.linear and A.source == A.range
         assert isinstance(Ad, tuple) and len(Ad) > 0
         assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in Ad)
         assert isinstance(tau, tuple) and len(tau) == len(Ad) and all(taui > 0 for taui in tau)
         assert B.linear and B.range == A.source
         assert C.linear and C.source == A.range
+
+        D = D or ZeroOperator(C.range, B.source)
         assert D.linear and D.source == B.source and D.range == C.range
+
+        E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
+
         assert cont_time in (True, False)
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
@@ -1608,7 +1616,7 @@ class LinearDelayModel(InputStateOutputModel):
             tfs = C.apply(middle.apply_inverse(B.as_range_array())).to_numpy().T
         else:
             tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
-        if isinstance(D, ZeroOperator):
+        if not isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 
@@ -1751,16 +1759,18 @@ class LinearStochasticModel(InputStateOutputModel):
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
-        D = D or ZeroOperator(C.range, B.source)
-        E = E or IdentityOperator(A.source)
-
         assert A.linear and A.source == A.range
         assert isinstance(As, tuple) and len(As) > 0
         assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in As)
         assert B.linear and B.range == A.source
         assert C.linear and C.source == A.range
+
+        D = D or ZeroOperator(C.range, B.source)
         assert D.linear and D.source == B.source and D.range == C.range
+
+        E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
+
         assert cont_time in (True, False)
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
@@ -1868,16 +1878,18 @@ class BilinearModel(InputStateOutputModel):
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
-        D = D or ZeroOperator(C.range, B.source)
-        E = E or IdentityOperator(A.source)
-
         assert A.linear and A.source == A.range
         assert B.linear and B.range == A.source
         assert isinstance(N, tuple) and len(N) == B.source.dim
         assert all(Ni.linear and Ni.source == Ni.range == A.source for Ni in N)
         assert C.linear and C.source == A.range
+
+        D = D or ZeroOperator(C.range, B.source)
         assert D.linear and D.source == B.source and D.range == C.range
+
+        E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
+
         assert cont_time in (True, False)
 
         super().__init__(B.source, C.range, state_space=A.source, cont_time=cont_time,
