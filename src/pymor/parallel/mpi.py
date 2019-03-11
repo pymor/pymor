@@ -91,11 +91,12 @@ def _worker_map_function(payload, function, **kwargs):
 
 def _setup_worker():
     # ensure that each worker starts with a different RandomState
-    from pymor.tools import random
-    import numpy as np
-    state = random.default_random_state()
-    new_state = np.random.RandomState(state.randint(0, 2**16) + mpi.rank)
-    random._default_random_state = new_state
+    if not mpi.rank0:
+        from pymor.tools import random
+        import numpy as np
+        state = random.default_random_state()
+        new_state = np.random.RandomState(state.randint(0, 2**16) + mpi.rank)
+        random._default_random_state = new_state
     return [None]
 
 
