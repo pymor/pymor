@@ -23,6 +23,7 @@ ARG PYMOR_JUPYTER_TOKEN
 
 USER root
 RUN useradd -d /home/pymor --shell /bin/bash -u ${NB_UID} -o -c "" -m ${NB_USER} && \
+    ([ -d /pymor ] || mkdir /pymor) && \
     chown -R ${NB_USER} /home/pymor /pymor/
 
 # at this point setup.py exists only in image_binder
