@@ -7,7 +7,7 @@ from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.core.interfaces import classinstancemethod
-from pymor.tools.random import new_random_state
+from pymor.tools.random import get_random_state
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES, _create_random_values
 
 
@@ -378,7 +378,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
         assert count >= 0
         assert reserve >= 0
         assert random_state is None or seed is None
-        random_state = random_state or new_random_state(seed)
+        random_state = get_random_state(random_state, seed)
         va = self.zeros(count, reserve)
         va._array[:count] = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
         return va

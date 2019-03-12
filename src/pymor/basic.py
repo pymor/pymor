@@ -77,7 +77,7 @@ from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, 
                                   SOBTReductor)
 from pymor.reductors.sor_irka import SOR_IRKAReductor
 
-from pymor.tools.random import new_random_state
+from pymor.tools.random import default_random_state
 
 from pymor.vectorarrays.constructions import cat_arrays
 from pymor.vectorarrays.list import ListVectorSpace
