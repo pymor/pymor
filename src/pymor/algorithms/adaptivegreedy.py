@@ -14,6 +14,7 @@ from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.manager import RemoteObjectManager
 from pymor.parameters.base import Parameter
 from pymor.parameters.spaces import CubicParameterSpace
+from pymor.tools.random import new_random_state
 
 
 def adaptive_greedy(d, reductor, parameter_space=None,
@@ -95,6 +96,8 @@ def adaptive_greedy(d, reductor, parameter_space=None,
         :reduction_data:         Reduction data returned by the last reductor call.
     """
 
+    random_state = new_random_state()
+
     extension_params = extension_params or {}
 
     def estimate(mus):
@@ -126,9 +129,10 @@ def adaptive_greedy(d, reductor, parameter_space=None,
         parameter_space = parameter_space or d.parameter_space
         sample_set = AdaptiveSampleSet(parameter_space)
         if validation_mus <= 0:
-            validation_set = sample_set.center_mus + parameter_space.sample_randomly(-validation_mus)
+            validation_set = sample_set.center_mus + parameter_space.sample_randomly(-validation_mus,
+                                                                                     random_state=random_state)
         else:
-            validation_set = parameter_space.sample_randomly(validation_mus)
+            validation_set = parameter_space.sample_randomly(validation_mus, random_state=random_state)
         if visualize and sample_set.dim not in (2, 3):
             raise NotImplementedError
         logger.info('Training set size: {}. Validation set size: {}'
@@ -221,7 +225,8 @@ def adaptive_greedy(d, reductor, parameter_space=None,
 
                     # update validation set if needed
                     if validation_mus <= 0:
-                        validation_set = sample_set.center_mus + parameter_space.sample_randomly(-validation_mus)
+                        validation_set = sample_set.center_mus + parameter_space.sample_randomly(-validation_mus,
+                                                                                                 random_state=random_state)
 
                     logger.info('New training set size: {}. New validation set size: {}'
                                 .format(len(sample_set.vertex_mus), len(validation_set)))
