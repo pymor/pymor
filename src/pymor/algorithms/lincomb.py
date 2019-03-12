@@ -52,9 +52,9 @@ class AssembleLincombRules(RuleTable):
             if id_coeff == 0:
                 return op_without_id
             else:
-                op = assemble_lincomb((op_without_id, id_op),
-                                      (1., id_coeff),
-                                      solver_options=self.solver_options, name=self.name)
+                op = op_without_id._assemble_lincomb((op_without_id, id_op),
+                                                     (1., id_coeff),
+                                                     solver_options=self.solver_options, name=self.name)
                 if op:
                     return op
                 else:
