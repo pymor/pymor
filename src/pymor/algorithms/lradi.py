@@ -8,20 +8,19 @@ import numpy as np
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args
+from pymor.vectorarrays.constructions import cat_arrays
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 
 
-@defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_z_columns', 'projection_shifts_init_maxiter',
-          'projection_shifts_init_seed', 'projection_shifts_implicit_subspace')
+@defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_init_maxiter',
+          'projection_shifts_init_seed')
 def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              lradi_maxiter=500,
                              lradi_shifts='projection_shifts',
-                             projection_shifts_z_columns=1,
                              projection_shifts_init_maxiter=20,
-                             projection_shifts_init_seed=None,
-                             projection_shifts_implicit_subspace=True):
+                             projection_shifts_init_seed=None):
     """Returns available Lyapunov equation solvers with default solver options.
 
     Parameters
@@ -32,14 +31,10 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
         See :func:`solve_lyap_lrcf`.
     lradi_shifts
         See :func:`solve_lyap_lrcf`.
-    projection_shifts_z_columns
-        See :func:`projection_shifts`.
     projection_shifts_init_maxiter
         See :func:`projection_shifts_init`.
     projection_shifts_init_seed
         See :func:`projection_shifts_init`.
-    projection_shifts_implicit_subspace
-        See :func:`projection_shifts`.
 
     Returns
     -------
@@ -51,10 +46,8 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                       'shifts': lradi_shifts,
                       'shift_options':
                       {'projection_shifts': {'type': 'projection_shifts',
-                                             'z_columns': projection_shifts_z_columns,
                                              'init_maxiter': projection_shifts_init_maxiter,
-                                             'init_seed': projection_shifts_init_seed,
-                                             'implicit_subspace': projection_shifts_implicit_subspace}}}}
+                                             'init_seed': projection_shifts_init_seed}}}}
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, options=None):
@@ -109,6 +102,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     W = B.copy()
 
     j = 0
+    j_shift = 0
     shifts = init_shifts(A, E, W, shift_options)
     size_shift = shifts.size
     res = np.linalg.norm(W.gramian(), ord=2)
@@ -116,34 +110,37 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     Btol = res * options['tol']
 
     while res > Btol and j < options['maxiter']:
-        if shifts[j].imag == 0:
-            AaE = A + shifts[j].real * E
+        if shifts[j_shift].imag == 0:
+            AaE = A + shifts[j_shift].real * E
             if not trans:
                 V = AaE.apply_inverse(W)
-                W -= E.apply(V) * (2 * shifts[j].real)
+                W -= E.apply(V) * (2 * shifts[j_shift].real)
             else:
                 V = AaE.apply_inverse_adjoint(W)
-                W -= E.apply_adjoint(V) * (2 * shifts[j].real)
-            Z.append(V * np.sqrt(-2 * shifts[j].real))
+                W -= E.apply_adjoint(V) * (2 * shifts[j_shift].real)
+            Z.append(V * np.sqrt(-2 * shifts[j_shift].real))
             j += 1
         else:
-            AaE = A + shifts[j] * E
-            g = 2 * np.sqrt(-shifts[j].real)
-            d = shifts[j].real / shifts[j].imag
+            AaE = A + shifts[j_shift] * E
+            gs = -4 * shifts[j_shift].real
+            d = shifts[j_shift].real / shifts[j_shift].imag
             if not trans:
                 V = AaE.apply_inverse(W)
-                W += E.apply(V.real + V.imag * d) * g**2
+                W += E.apply(V.real + V.imag * d) * gs
             else:
                 V = AaE.apply_inverse_adjoint(W).conj()
-                W += E.apply_adjoint(V.real + V.imag * d) * g**2
+                W += E.apply_adjoint(V.real + V.imag * d) * gs
+            g = np.sqrt(gs)
             Z.append((V.real + V.imag * d) * g)
             Z.append(V.imag * (g * np.sqrt(d**2 + 1)))
             j += 2
-        if j >= size_shift:
-            shifts = iteration_shifts(A, E, Z, W, shifts, shift_options)
-            size_shift = shifts.size
+        j_shift += 1
         res = np.linalg.norm(W.gramian(), ord=2)
         logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
+        if j_shift >= size_shift:
+            shifts = iteration_shifts(A, E, Z, V, shifts, shift_options)
+            size_shift = shifts.size
+            j_shift = 0
 
     if res > Btol:
         logger.warning(f'Prescribed relative residual tolerance was not achieved '
@@ -188,7 +185,7 @@ def projection_shifts_init(A, E, B, shift_options):
     raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')
 
 
-def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
+def projection_shifts(A, E, Z, V, prev_shifts, shift_options):
     """Find further shift parameters for low-rank ADI iteration using
     Galerkin projection on spaces spanned by LR-ADI iterates.
 
@@ -203,9 +200,8 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
     Z
         A |VectorArray| representing the currently computed low-rank
         solution factor.
-    W
-        A |VectorArray| representing the currently computed low-rank
-        residual factor.
+    V
+        A |VectorArray| representing the currently computed iterate.
     prev_shifts
         A |NumPy array| containing the set of all previously used shift
         parameters.
@@ -217,67 +213,22 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-    u = shift_options['z_columns']
-    L = prev_shifts.size
-    r = len(W)
-    d = L - u
-    if d < 0:
-        u = L
-        d = 0
-    if prev_shifts[-u].imag < 0:
-        u = u + 1
-
-    Vu = Z[-u * r:]  # last u matrices V added to solution factor Z
-
-    if shift_options['implicit_subspace']:
-        B = np.zeros((u, u))
-        G = np.zeros((u, 1))
-        Ir = np.eye(r)
-        iC = np.where(np.imag(prev_shifts) > 0)[0]  # complex shifts indices (first shift of complex pair)
-        iR = np.where(np.isreal(prev_shifts))[0]  # real shifts indices
-        iC = iC[iC >= d]
-        iR = iR[iR >= d]
-        i = 0
-
-        while i < u:
-            rS = iR[iR < d + i]
-            cS = iC[iC < d + i]
-            rp = prev_shifts[d + i].real
-            cp = prev_shifts[d + i].imag
-            G[i, 0] = np.sqrt(-2 * rp)
-            if cp == 0:
-                B[i, i] = rp
-                if rS.size > 0:
-                    B[i, rS - d] = -2 * np.sqrt(rp*np.real(prev_shifts[rS]))
-                if cS.size > 0:
-                    B[i, cS - d] = -2 * np.sqrt(2*rp*np.real(prev_shifts[cS]))
-                i = i + 1
-            else:
-                sri = np.sqrt(rp**2+cp**2)
-                B[i: i + 2, i: i + 2] = [[2*rp, -sri], [sri, 0]]
-                if rS.size > 0:
-                    B[i, rS - d] = -2 * np.sqrt(2*rp*np.real(prev_shifts[rS]))
-                if cS.size > 0:
-                    B[i, cS - d] = -4 * np.sqrt(rp*np.real(prev_shifts[cS]))
-                i = i + 2
-        B = spla.kron(B, Ir)
-        G = spla.kron(G, Ir)
-
-        s, v = spla.svd(Vu.gramian(), full_matrices=False)[1:3]
-        P = v.T.dot(np.diag(1. / np.sqrt(s)))
-        Q = Vu.lincomb(P.T)
-
-        T = E.apply2(Q, Vu)
-        Ap = Q.dot(W).dot(G.T).dot(P) + T.dot(B.dot(P))
-        Ep = T.dot(P)
+    if prev_shifts[prev_shifts.size - 1].imag != 0:
+        Q = gram_schmidt(cat_arrays([V.real, V.imag]), atol=0, rtol=0)
     else:
-        Q = gram_schmidt(Vu, atol=0, rtol=0)
-        Ap = A.apply2(Q, Q)
-        Ep = E.apply2(Q, Q)
+        Q = gram_schmidt(V, atol=0, rtol=0)
+
+    Ap = A.apply2(Q, Q)
+    Ep = E.apply2(Q, Q)
 
     shifts = spla.eigvals(Ap, Ep)
-    shifts = shifts[shifts.real < 0]
+    shifts.imag[abs(shifts.imag) < np.finfo(float).eps] = 0
+    shifts = shifts[np.real(shifts) < 0]
     if shifts.size == 0:
-        return np.concatenate((prev_shifts, prev_shifts))
+        return prev_shifts
     else:
-        return np.concatenate((prev_shifts, shifts))
+        if(shifts[np.imag(shifts) != 0].size > 0):
+            shifts = np.array(sorted(shifts, key=np.abs))
+        else:
+            shifts.sort()
+        return shifts
