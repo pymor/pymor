@@ -141,13 +141,12 @@ class IRKAReductor(BasicInterface):
             if b is None:
                 b = fom.B.source.ones(r)
             elif isinstance(b, int):
-                np.random.seed(b)
-                b = fom.B.source.from_numpy(np.random.randn(r, fom.input_dim))
+                b = fom.B.source.random(r, distribution='normal', seed=b)
             if c is None:
                 c = fom.C.range.ones(r)
             elif isinstance(c, int):
                 np.random.seed(c)
-                c = fom.C.range.from_numpy(np.random.randn(r, fom.output_dim))
+                c = fom.C.range.random(r, distribution='normal', seed=c)
 
         # being logging
         self.logger.info('Starting IRKA')
@@ -343,14 +342,12 @@ class OneSidedIRKAReductor(BasicInterface):
                 if b is None:
                     b = fom.B.source.ones(r)
                 elif isinstance(b, int):
-                    np.random.seed(b)
-                    b = fom.B.source.from_numpy(np.random.randn(r, fom.input_dim))
+                    b = fom.B.source.random(r, distribution='normal', seed=b)
             else:
                 if c is None:
                     c = fom.C.range.ones(r)
                 elif isinstance(c, int):
-                    np.random.seed(c)
-                    c = fom.C.range.from_numpy(np.random.randn(r, fom.output_dim))
+                    c = fom.C.range.random(r, distribution='normal', seed=c)
 
         # begin logging
         self.logger.info('Starting one-sided IRKA')

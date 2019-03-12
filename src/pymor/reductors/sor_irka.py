@@ -142,13 +142,11 @@ class SOR_IRKAReductor(BasicInterface):
             if b is None:
                 b = fom.B.source.ones(r)
             elif isinstance(b, int):
-                np.random.seed(b)
-                b = fom.B.source.from_numpy(np.random.randn(r, fom.input_dim))
+                b = fom.B.source.random(r, distribution='normal', seed=b)
             if c is None:
                 c = fom.Cp.range.ones(r)
             elif isinstance(c, int):
-                np.random.seed(c)
-                c = fom.Cp.range.from_numpy(np.random.randn(r, fom.output_dim))
+                c = fom.Cp.range.random(r, distribution='normal', seed=c)
 
         # begin logging
         self.logger.info('Starting SOR-IRKA')
