@@ -4,7 +4,8 @@
 
 import numpy as np
 
-from pymor.algorithms.rules import RuleTable, match_generic
+from pymor.algorithms.rules import RuleTable, match_generic, match_class_all, match_class_any, match_always
+from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.block import (BlockOperator, BlockOperatorBase, BlockDiagonalOperator, SecondOrderModelOperator,
                                    ShiftedSecondOrderModelOperator)
 from pymor.operators.constructions import LincombOperator, ZeroOperator, IdentityOperator, VectorArrayOperator
@@ -20,7 +21,7 @@ class AssembleLincombRules(RuleTable):
         self.coefficients, self.solver_options, self.name \
             = coefficients, solver_options, name
 
-    @match_generic(lambda ops: any(isinstance(op, ZeroOperator) for op in ops))
+    @match_class_any(ZeroOperator)
     def action_ZeroOperator(self, ops):
         without_zero = [(op, coeff)
                         for op, coeff in zip(ops, self.coefficients)
@@ -40,7 +41,7 @@ class AssembleLincombRules(RuleTable):
                    for op in ops if not isinstance(op, ZeroOperator)]
         return self.apply(new_ops)
 
-    @match_generic(lambda ops: any(isinstance(op, IdentityOperator) for op in ops))
+    @match_class_any(IdentityOperator)
     def action_IdentityOperator(self, ops):
         id_coeffs, new_ops, new_coeffs = [], [], []
         for op, coeff in zip(ops, self.coefficients):
@@ -77,12 +78,11 @@ class AssembleLincombRules(RuleTable):
             else:
                 return None
 
-    @match_generic(lambda ops: all(isinstance(op, VectorArrayOperator)
-                                   and op.adjoint == ops[0].adjoint
-                                   and op.source == ops[0].source
-                                   and op.range == ops[0].range
-                                   for op in ops))
+    @match_class_all(VectorArrayOperator)
     def action_VectorArrrayOperator(self, ops):
+        if not all(op.adjoint == ops[0].adjoint for op in ops):
+            raise RuleNotMatchingError
+
         adjoint = ops[0].adjoint
         assert not self.solver_options
 
@@ -115,7 +115,7 @@ class AssembleLincombRules(RuleTable):
                                                self.coefficients[1],
                                                self.coefficients[0])
 
-    @match_generic(lambda ops: all(isinstance(op, BlockDiagonalOperator) for op in ops))
+    @match_class_all(BlockDiagonalOperator)
     def action_BlockDiagonalOpertors(self, ops):
         coefficients = self.coefficients
         num_source_blocks = ops[0].num_source_blocks
@@ -180,7 +180,7 @@ class AssembleLincombRules(RuleTable):
                 blocks[i, j] = ops[0]._blocks[i, j] * c
             return BlockOperator(blocks)
 
-    @match_generic(lambda ops: all(isinstance(op, BlockOperatorBase) for op in ops))
+    @match_class_all(BlockOperatorBase)
     def action_BlockOperatorBase(self, ops):
         coefficients = self.coefficients
         shape = ops[0]._blocks.shape
@@ -201,7 +201,7 @@ class AssembleLincombRules(RuleTable):
                 blocks[i, j] = ops[0]._blocks[i, j] * c
             return ops[0].__class__(blocks)
 
-    @match_generic(lambda ops: True)
+    @match_always
     def action_call_assemble_lincomb_method(self, ops):
         op = ops[0]._assemble_lincomb(ops, self.coefficients,
                                       solver_options=self.solver_options, name=self.name)
