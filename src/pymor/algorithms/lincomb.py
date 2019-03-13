@@ -5,7 +5,6 @@
 import numpy as np
 
 from pymor.algorithms.rules import RuleTable, match_generic
-from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.block import (BlockOperator, BlockOperatorBase, BlockDiagonalOperator, SecondOrderModelOperator,
                                    ShiftedSecondOrderModelOperator)
 from pymor.operators.constructions import LincombOperator, ZeroOperator, IdentityOperator, VectorArrayOperator
@@ -98,23 +97,27 @@ class AssembleLincombRules(RuleTable):
 
         return VectorArrayOperator(array, adjoint=adjoint, space_id=ops[0].space_id, name=self.name)
 
-    @match_generic(lambda ops: isinstance(ops[0], BlockDiagonalOperator))
+    @match_generic(lambda ops: (len(ops) == 2
+                                and isinstance(ops[0], BlockDiagonalOperator)
+                                and isinstance(ops[1], SecondOrderModelOperator)))
+    def action_IdentityAndSecondOrderModelOperator(self, ops):
+        return assemble_lincomb(ops[::-1], self.coefficients[::-1],
+                                solver_options=self.solver_options, name=self.name)
+
+    @match_generic(lambda ops: (len(ops) == 2
+                                and isinstance(ops[0], SecondOrderModelOperator)
+                                and isinstance(ops[1], BlockDiagonalOperator)
+                                and isinstance(ops[1]._blocks[0, 0], IdentityOperator)))
+    def action_SecondOrderModelOperatorAndShift(self, ops):
+        return ShiftedSecondOrderModelOperator(ops[1]._blocks[1, 1],
+                                               ops[0].E,
+                                               ops[0].K,
+                                               self.coefficients[1],
+                                               self.coefficients[0])
+
+    @match_generic(lambda ops: all(isinstance(op, BlockDiagonalOperator) for op in ops))
     def action_BlockDiagonalOpertors(self, ops):
         coefficients = self.coefficients
-
-        if not all(isinstance(op, BlockOperator) for op in ops):
-            raise RuleNotMatchingError
-
-        # return ShiftedSecondOrderModelOperator if possible
-        if len(ops) == 2 and isinstance(ops[1], SecondOrderModelOperator):
-            return assemble_lincomb(ops[::-1], coefficients[::-1],
-                                    solver_options=self.solver_options, name=self.name)
-
-        # return BlockOperator if not all operators are BlockDiagonalOperators
-        if not all(isinstance(op, BlockDiagonalOperator) for op in ops):
-            raise RuleNotMatchingError
-
-        # return BlockDiagonalOperator
         num_source_blocks = ops[0].num_source_blocks
         blocks = np.empty((num_source_blocks,), dtype=object)
         if len(ops) > 1:
@@ -133,26 +136,10 @@ class AssembleLincombRules(RuleTable):
                 blocks[i] = ops[0]._blocks[i, i] * c
             return BlockDiagonalOperator(blocks)
 
-    @match_generic(lambda ops: isinstance(ops[0], SecondOrderModelOperator))
+    @match_generic(lambda ops: (isinstance(ops[0], SecondOrderModelOperator)
+                                and all(isinstance(op, BlockOperatorBase) for op in ops[1:])))
     def action_SecondOrderModelOperator(self, ops):
         coefficients = self.coefficients
-
-        if not all(isinstance(op, BlockOperator) for op in ops):
-            raise RuleNotMatchingError
-
-        # return ShiftedSecondOrderModelOperator if possible
-        if (len(ops) == 2
-                and isinstance(ops[1], BlockDiagonalOperator)
-                and ops[1].num_source_blocks == 2
-                and ops[1].num_range_blocks == 2
-                and isinstance(ops[1]._blocks[0, 0], IdentityOperator)):
-            return ShiftedSecondOrderModelOperator(ops[1]._blocks[1, 1],
-                                                   ops[0].E,
-                                                   ops[0].K,
-                                                   coefficients[1],
-                                                   coefficients[0])
-
-        # return BlockOperator
         shape = ops[0]._blocks.shape
         blocks = np.empty(shape, dtype=object)
         if len(ops) > 1:
@@ -171,13 +158,10 @@ class AssembleLincombRules(RuleTable):
                 blocks[i, j] = ops[0]._blocks[i, j] * c
             return BlockOperator(blocks)
 
-    @match_generic(lambda ops: isinstance(ops[0], ShiftedSecondOrderModelOperator))
+    @match_generic(lambda ops: (isinstance(ops[0], ShiftedSecondOrderModelOperator)
+                                and all(isinstance(op, BlockOperatorBase) for op in ops[1:])))
     def action_ShiftedSecondOrderModelOperator(self, ops):
         coefficients = self.coefficients
-
-        if not all(isinstance(op, BlockOperator) for op in ops):
-            raise RuleNotMatchingError
-
         shape = ops[0]._blocks.shape
         blocks = np.empty(shape, dtype=object)
         if len(ops) > 1:
@@ -196,13 +180,9 @@ class AssembleLincombRules(RuleTable):
                 blocks[i, j] = ops[0]._blocks[i, j] * c
             return BlockOperator(blocks)
 
-    @match_generic(lambda ops: isinstance(ops[0], BlockOperatorBase))
+    @match_generic(lambda ops: all(isinstance(op, BlockOperatorBase) for op in ops))
     def action_BlockOperatorBase(self, ops):
         coefficients = self.coefficients
-
-        if not all(isinstance(op, BlockOperatorBase) for op in ops):
-            raise RuleNotMatchingError
-
         shape = ops[0]._blocks.shape
         blocks = np.empty(shape, dtype=object)
         if len(ops) > 1:
