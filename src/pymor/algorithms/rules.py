@@ -69,10 +69,7 @@ class rule:
         return ''.join(lines)
 
 
-class match_class(rule):
-    """|rule| that matches when obj is instance of one of the given classes."""
-
-    condition_type = 'CLASS'
+class match_class_base(rule):
 
     def __init__(self, *classes):
         super().__init__()
@@ -81,8 +78,44 @@ class match_class(rule):
         self.classes = classes
         self.condition_description = ', '.join(c.__name__ for c in classes)
 
+
+class match_class(match_class_base):
+    """|rule| that matches when obj is instance of one of the given classes."""
+
+    condition_type = 'CLASS'
+
     def matches(self, obj):
         return isinstance(obj, self.classes)
+
+
+class match_class_all(match_class_base):
+    """|rule| that matches when each item of obj is instance of one of the given classes."""
+
+    condition_type = 'ALLCLASSES'
+
+    def matches(self, obj):
+        return all(isinstance(o, self.classes) for o in obj)
+
+
+class match_class_any(match_class_base):
+    """|rule| that matches when any item of obj is instance of one of the given classes."""
+
+    condition_type = 'ANYCLASS'
+
+    def matches(self, obj):
+        return any(isinstance(o, self.classes) for o in obj)
+
+
+class match_always(rule):
+    """|rule| that always matches."""
+
+    condition_type = 'ALWAYS'
+
+    def __init__(self, action):
+        self(action)
+
+    def matches(self, obj):
+        return True
 
 
 class match_generic(rule):
