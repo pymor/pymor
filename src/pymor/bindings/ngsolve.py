@@ -143,8 +143,10 @@ if config.HAVE_NGSOLVE:
                     r.impl.vec.data = inv * v.impl.vec
             return R
 
-        def _assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        def _assemble_lincomb(self, operators, coefficients, shift=0., solver_options=None, name=None):
             if not all(isinstance(op, NGSolveMatrixOperator) for op in operators):
+                return None
+            if shift != 0:
                 return None
 
             matrix = operators[0].matrix.CreateMatrix()

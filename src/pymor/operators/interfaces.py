@@ -339,8 +339,14 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    def _assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, shift=0., solver_options=None, name=None):
         """Try to assemble a linear combination of the given operators.
+
+        Returns a new |Operator| which represents the sum ::
+
+            c_1*O_1 + ... + c_N*O_N + s*I
+
+        where `O_i` are |Operators|, `c_i`, `s` scalar coefficients and `I` the identity.
 
         This method is called in the :meth:`assemble` method of |LincombOperator| on
         the first of its operators. If an assembly of the given linear combination
@@ -351,9 +357,11 @@ class OperatorInterface(ImmutableInterface, Parametric):
         Parameters
         ----------
         operators
-            List of |Operators| whose linear combination is formed.
+            List of |Operators| `O_i` whose linear combination is formed.
         coefficients
-            List of the corresponding linear coefficients.
+            List of the corresponding linear coefficients `c_i`.
+        shift
+            The coefficient `s`.
         solver_options
             |solver_options| for the assembled operator.
         name

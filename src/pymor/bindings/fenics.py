@@ -186,8 +186,10 @@ if config.HAVE_FENICS:
                 _apply_inverse(self.matrix, r.impl, v.impl, options)
             return R
 
-        def _assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        def _assemble_lincomb(self, operators, coefficients, shift=0., solver_options=None, name=None):
             if not all(isinstance(op, FenicsMatrixOperator) for op in operators):
+                return None
+            if shift != 0:
                 return None
             assert not solver_options
 
