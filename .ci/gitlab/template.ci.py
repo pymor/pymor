@@ -16,6 +16,8 @@ stages:
             - stuck_or_timeout_failure
             - api_failure
     script: .ci/gitlab/script.bash
+    environment:
+        name: unsafe
     after_script:
       - .ci/gitlab/after_script.bash
     only: ['branches', 'tags', 'triggers', 'merge-requests']
@@ -24,6 +26,7 @@ stages:
         expire_in: 3 months
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
+            - .coverage
         reports:
             junit: test_results.xml
 
@@ -45,6 +48,22 @@ stages:
         DOCKER_TAG: "{{py}}"
 {%- endfor %}
 
+{%- for py, m in matrix if m != 'MPI' %}
+{{py}}_{{m}}_submit:
+    extends: .pytest
+    image: pymor/testing:{{py}}
+    stage: deploy
+    dependencies:
+        - {{py}}_{{m}}
+    environment:
+        name: safe
+    except:
+        - github/PR_.*
+    variables:
+        PYMOR_PYTEST_MARKER: "{{m}}"
+        DOCKER_TAG: "{{py}}"
+{%- endfor %}
+
 .docker-in-docker:
     retry:
         max: 2
@@ -61,6 +80,8 @@ stages:
         - mkdir -p ${SHARED_PATH}
     services:
         - docker:dind
+    environment:
+        name: unsafe
 
 {%- for OS in testos %}
 {{OS}}_pip:
