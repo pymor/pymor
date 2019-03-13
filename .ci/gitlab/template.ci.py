@@ -16,6 +16,8 @@ stages:
             - stuck_or_timeout_failure
             - api_failure
     script: .ci/gitlab/script.bash
+    environment:
+        name: unsafe
     after_script:
       - .ci/gitlab/after_script.bash
     only: ['branches', 'tags', 'triggers', 'merge-requests']
@@ -24,10 +26,11 @@ stages:
         expire_in: 3 months
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
+            - .coverage
         reports:
             junit: test_results.xml
 
-3.6_numpy:
+numpy 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
@@ -36,13 +39,31 @@ stages:
         DOCKER_TAG: "3.6"
 
 {%- for py, m in matrix %}
-{{py}}_{{m}}:
+{{m}} {{py}}:
     extends: .pytest
     image: pymor/testing:{{py}}
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "{{m}}"
         DOCKER_TAG: "{{py}}"
+{%- endfor %}
+
+{# note: MPI runs do no generate coverage or test_results so we can skip them entirely here #}
+{%- for py, m in matrix if m != 'MPI' %}
+submit {{m}} {{py}}:
+    extends: .pytest
+    image: pymor/python:{{py}}
+    stage: deploy
+    dependencies:
+        - {{m}} {{py}}
+    environment:
+        name: safe
+    except:
+        - github/PR_.*
+    variables:
+        PYMOR_PYTEST_MARKER: "{{m}}"
+        DOCKER_TAG: "{{py}}"
+    script: .ci/gitlab/submit.bash
 {%- endfor %}
 
 .docker-in-docker:
@@ -61,16 +82,18 @@ stages:
         - mkdir -p ${SHARED_PATH}
     services:
         - docker:dind
+    environment:
+        name: unsafe
 
 {%- for OS in testos %}
-{{OS}}_pip:
+pip {{OS.replace('_', ' ')}}:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/{{OS}}/Dockerfile .
 {% endfor %}
 
 {%- for PY in pythons %}
-{{PY}}_wheel:
+wheel {{PY}}:
     extends: .docker-in-docker
     stage: deploy
     only: ['branches', 'tags', 'triggers']
