@@ -33,6 +33,14 @@ class AssembleLincombRules(RuleTable):
             return assemble_lincomb(new_ops, new_coeffs,
                                     solver_options=self.solver_options, name=self.name)
 
+    @match_generic(lambda ops: (isinstance(ops[0], BlockOperatorBase)
+                                and any(isinstance(op, IdentityOperator) for op in ops)))
+    def action_BlockSpaceIdentityOperator(self, ops):
+        new_ops = [BlockDiagonalOperator([IdentityOperator(s) for s in op.source.subspaces])
+                   if isinstance(op, IdentityOperator) else op
+                   for op in ops if not isinstance(op, ZeroOperator)]
+        return self.apply(new_ops)
+
     @match_generic(lambda ops: any(isinstance(op, IdentityOperator) for op in ops))
     def action_IdentityOperator(self, ops):
         id_coeffs, new_ops, new_coeffs = [], [], []
@@ -92,27 +100,26 @@ class AssembleLincombRules(RuleTable):
 
     @match_generic(lambda ops: isinstance(ops[0], BlockDiagonalOperator))
     def action_BlockDiagonalOpertors(self, ops):
-        operators = _assemble_lincomb_preprocess_operators(ops)
         coefficients = self.coefficients
 
-        if not all(isinstance(op, BlockOperator) for op in operators):
+        if not all(isinstance(op, BlockOperator) for op in ops):
             raise RuleNotMatchingError
 
         # return ShiftedSecondOrderModelOperator if possible
-        if len(operators) == 2 and isinstance(operators[1], SecondOrderModelOperator):
-            return assemble_lincomb(operators[::-1], coefficients[::-1],
+        if len(ops) == 2 and isinstance(ops[1], SecondOrderModelOperator):
+            return assemble_lincomb(ops[::-1], coefficients[::-1],
                                     solver_options=self.solver_options, name=self.name)
 
         # return BlockOperator if not all operators are BlockDiagonalOperators
-        if not all(isinstance(op, BlockDiagonalOperator) for op in operators):
+        if not all(isinstance(op, BlockDiagonalOperator) for op in ops):
             raise RuleNotMatchingError
 
         # return BlockDiagonalOperator
-        num_source_blocks = operators[0].num_source_blocks
+        num_source_blocks = ops[0].num_source_blocks
         blocks = np.empty((num_source_blocks,), dtype=object)
-        if len(operators) > 1:
+        if len(ops) > 1:
             for i in range(num_source_blocks):
-                operators_i = [op._blocks[i, i] for op in operators]
+                operators_i = [op._blocks[i, i] for op in ops]
                 blocks[i] = assemble_lincomb(operators_i, coefficients,
                                              solver_options=self.solver_options, name=self.name)
                 if blocks[i] is None:
@@ -121,37 +128,36 @@ class AssembleLincombRules(RuleTable):
         else:
             c = coefficients[0]
             if c == 1:
-                return operators[0]
+                return ops[0]
             for i in range(num_source_blocks):
-                blocks[i] = operators[0]._blocks[i, i] * c
+                blocks[i] = ops[0]._blocks[i, i] * c
             return BlockDiagonalOperator(blocks)
 
     @match_generic(lambda ops: isinstance(ops[0], SecondOrderModelOperator))
     def action_SecondOrderModelOperator(self, ops):
-        operators = _assemble_lincomb_preprocess_operators(ops)
         coefficients = self.coefficients
 
-        if not all(isinstance(op, BlockOperator) for op in operators):
+        if not all(isinstance(op, BlockOperator) for op in ops):
             raise RuleNotMatchingError
 
         # return ShiftedSecondOrderModelOperator if possible
-        if (len(operators) == 2
-                and isinstance(operators[1], BlockDiagonalOperator)
-                and operators[1].num_source_blocks == 2
-                and operators[1].num_range_blocks == 2
-                and isinstance(operators[1]._blocks[0, 0], IdentityOperator)):
-            return ShiftedSecondOrderModelOperator(operators[1]._blocks[1, 1],
-                                                   operators[0].E,
-                                                   operators[0].K,
+        if (len(ops) == 2
+                and isinstance(ops[1], BlockDiagonalOperator)
+                and ops[1].num_source_blocks == 2
+                and ops[1].num_range_blocks == 2
+                and isinstance(ops[1]._blocks[0, 0], IdentityOperator)):
+            return ShiftedSecondOrderModelOperator(ops[1]._blocks[1, 1],
+                                                   ops[0].E,
+                                                   ops[0].K,
                                                    coefficients[1],
                                                    coefficients[0])
 
         # return BlockOperator
-        shape = operators[0]._blocks.shape
+        shape = ops[0]._blocks.shape
         blocks = np.empty(shape, dtype=object)
-        if len(operators) > 1:
+        if len(ops) > 1:
             for (i, j) in np.ndindex(shape):
-                operators_ij = [op._blocks[i, j] for op in operators]
+                operators_ij = [op._blocks[i, j] for op in ops]
                 blocks[i, j] = assemble_lincomb(operators_ij, coefficients,
                                                 solver_options=self.solver_options, name=self.name)
                 if blocks[i, j] is None:
@@ -160,24 +166,23 @@ class AssembleLincombRules(RuleTable):
         else:
             c = coefficients[0]
             if c == 1:
-                return operators[0]
+                return ops[0]
             for (i, j) in np.ndindex(shape):
-                blocks[i, j] = operators[0]._blocks[i, j] * c
+                blocks[i, j] = ops[0]._blocks[i, j] * c
             return BlockOperator(blocks)
 
     @match_generic(lambda ops: isinstance(ops[0], ShiftedSecondOrderModelOperator))
     def action_ShiftedSecondOrderModelOperator(self, ops):
-        operators = _assemble_lincomb_preprocess_operators(ops)
         coefficients = self.coefficients
 
-        if not all(isinstance(op, BlockOperator) for op in operators):
+        if not all(isinstance(op, BlockOperator) for op in ops):
             raise RuleNotMatchingError
 
-        shape = operators[0]._blocks.shape
+        shape = ops[0]._blocks.shape
         blocks = np.empty(shape, dtype=object)
-        if len(operators) > 1:
+        if len(ops) > 1:
             for (i, j) in np.ndindex(shape):
-                operators_ij = [op._blocks[i, j] for op in operators]
+                operators_ij = [op._blocks[i, j] for op in ops]
                 blocks[i, j] = assemble_lincomb(operators_ij, coefficients,
                                                 solver_options=self.solver_options, name=self.name)
                 if blocks[i, j] is None:
@@ -186,47 +191,38 @@ class AssembleLincombRules(RuleTable):
         else:
             c = coefficients[0]
             if c == 1:
-                return operators[0]
+                return ops[0]
             for (i, j) in np.ndindex(shape):
-                blocks[i, j] = operators[0]._blocks[i, j] * c
+                blocks[i, j] = ops[0]._blocks[i, j] * c
             return BlockOperator(blocks)
 
     @match_generic(lambda ops: isinstance(ops[0], BlockOperatorBase))
     def action_BlockOperatorBase(self, ops):
-        operators = self._assemble_lincomb_preprocess_operators(ops)
         coefficients = self.coefficients
 
-        if not all(isinstance(op, BlockOperatorBase) for op in operators):
+        if not all(isinstance(op, BlockOperatorBase) for op in ops):
             raise RuleNotMatchingError
 
-        shape = operators[0]._blocks.shape
+        shape = ops[0]._blocks.shape
         blocks = np.empty(shape, dtype=object)
-        if len(operators) > 1:
+        if len(ops) > 1:
             for (i, j) in np.ndindex(shape):
-                operators_ij = [op._blocks[i, j] for op in operators]
+                operators_ij = [op._blocks[i, j] for op in ops]
                 blocks[i, j] = assemble_lincomb(operators_ij, coefficients,
                                                 solver_options=self.solver_options, name=self.name)
                 if blocks[i, j] is None:
                     return None
-            return operators[0].__class__(blocks)
+            return ops[0].__class__(blocks)
         else:
             c = coefficients[0]
             if c == 1:
-                return operators[0]
+                return ops[0]
             for (i, j) in np.ndindex(shape):
-                blocks[i, j] = operators[0]._blocks[i, j] * c
-            return operators[0].__class__(blocks)
+                blocks[i, j] = ops[0]._blocks[i, j] * c
+            return ops[0].__class__(blocks)
 
     @match_generic(lambda ops: True)
     def action_call_assemble_lincomb_method(self, ops):
         op = ops[0]._assemble_lincomb(ops, self.coefficients,
                                       solver_options=self.solver_options, name=self.name)
         return op
-
-
-def _assemble_lincomb_preprocess_operators(operators):
-    return [
-        BlockDiagonalOperator([IdentityOperator(s) for s in op.source.subspaces])
-        if isinstance(op, IdentityOperator) else op
-        for op in operators if not isinstance(op, ZeroOperator)
-    ]
