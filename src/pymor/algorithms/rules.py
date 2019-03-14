@@ -51,22 +51,8 @@ class rule:
 
     @property
     def source(self):
-        from inspect import getsourcefile, getsourcelines
-        with open(getsourcefile(self.action), 'rt') as f:
-            source = f.readlines()
-        start_line = getsourcelines(self.action)[1] - 1
-        lines = [source[start_line].lstrip()]
-        indent = len(source[start_line]) - len(lines[0])
-        seen_def = False
-        for l in source[start_line + 1:]:
-            if not seen_def and l.lstrip().startswith('def'):
-                seen_def = True
-                lines.append(l[indent:])
-                continue
-            if 0 < len(l) - len(l.lstrip()) <= indent:
-                break
-            lines.append(l[indent:])
-        return ''.join(lines)
+        from inspect import getsourcelines
+        return ''.join(getsourcelines(self.action)[0])
 
 
 class match_class_base(rule):
