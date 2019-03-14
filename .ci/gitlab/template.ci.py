@@ -62,6 +62,7 @@ stages:
     variables:
         PYMOR_PYTEST_MARKER: "{{m}}"
         DOCKER_TAG: "{{py}}"
+    script: .ci/gitlab/submit.bash
 {%- endfor %}
 
 .docker-in-docker:

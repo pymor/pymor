@@ -90,6 +90,7 @@ stages:
     variables:
         PYMOR_PYTEST_MARKER: "None"
         DOCKER_TAG: "3.6"
+    script: .ci/gitlab/submit.bash
 3.6_PIP_ONLY_submit:
     extends: .pytest
     image: pymor/testing:3.6
@@ -103,6 +104,7 @@ stages:
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
         DOCKER_TAG: "3.6"
+    script: .ci/gitlab/submit.bash
 3.7_None_submit:
     extends: .pytest
     image: pymor/testing:3.7
@@ -116,6 +118,7 @@ stages:
     variables:
         PYMOR_PYTEST_MARKER: "None"
         DOCKER_TAG: "3.7"
+    script: .ci/gitlab/submit.bash
 3.7_PIP_ONLY_submit:
     extends: .pytest
     image: pymor/testing:3.7
@@ -129,6 +132,7 @@ stages:
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
         DOCKER_TAG: "3.7"
+    script: .ci/gitlab/submit.bash
 
 .docker-in-docker:
     retry:
