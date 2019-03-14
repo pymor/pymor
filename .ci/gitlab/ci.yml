@@ -35,12 +35,12 @@ numpy 3.6:
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
         DOCKER_TAG: "3.6"
-None 3.6:
+Vanilla 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
-        PYMOR_PYTEST_MARKER: "None"
+        PYMOR_PYTEST_MARKER: "Vanilla"
         DOCKER_TAG: "3.6"
 PIP_ONLY 3.6:
     extends: .pytest
@@ -56,12 +56,12 @@ MPI 3.6:
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
         DOCKER_TAG: "3.6"
-None 3.7:
+Vanilla 3.7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
     variables:
-        PYMOR_PYTEST_MARKER: "None"
+        PYMOR_PYTEST_MARKER: "Vanilla"
         DOCKER_TAG: "3.7"
 PIP_ONLY 3.7:
     extends: .pytest
@@ -79,18 +79,18 @@ MPI 3.7:
         DOCKER_TAG: "3.7"
 
 
-submit None 3.6:
+submit Vanilla 3.6:
     extends: .pytest
     image: pymor/python:3.6
     stage: deploy
     dependencies:
-        - None 3.6
+        - Vanilla 3.6
     environment:
         name: safe
     except:
         - github/PR_.*
     variables:
-        PYMOR_PYTEST_MARKER: "None"
+        PYMOR_PYTEST_MARKER: "Vanilla"
         DOCKER_TAG: "3.6"
     script: .ci/gitlab/submit.bash
 submit PIP_ONLY 3.6:
@@ -107,18 +107,18 @@ submit PIP_ONLY 3.6:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
         DOCKER_TAG: "3.6"
     script: .ci/gitlab/submit.bash
-submit None 3.7:
+submit Vanilla 3.7:
     extends: .pytest
     image: pymor/python:3.7
     stage: deploy
     dependencies:
-        - None 3.7
+        - Vanilla 3.7
     environment:
         name: safe
     except:
         - github/PR_.*
     variables:
-        PYMOR_PYTEST_MARKER: "None"
+        PYMOR_PYTEST_MARKER: "Vanilla"
         DOCKER_TAG: "3.7"
     script: .ci/gitlab/submit.bash
 submit PIP_ONLY 3.7:
