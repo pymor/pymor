@@ -9,6 +9,4 @@ cd "${PYMOR_ROOT}"
 pip install -U pip
 pip install codecov
 
-ls -lha
-git status
 codecov --required  --token "${PYMOR_CODECOV_TOKEN}"  --file .coverage -F ${PYMOR_PYTEST_MARKER}

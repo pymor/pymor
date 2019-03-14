@@ -88,19 +88,6 @@ submit Vanilla 3.6:
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
     script: .ci/gitlab/submit.bash
-submit PIP_ONLY 3.6:
-    extends: .test_base
-    image: pymor/python:3.6
-    stage: deploy
-    dependencies:
-        - PIP_ONLY 3.6
-    environment:
-        name: safe
-    except:
-        - github/PR_.*
-    variables:
-        PYMOR_PYTEST_MARKER: "PIP_ONLY"
-    script: .ci/gitlab/submit.bash
 submit Vanilla 3.7:
     extends: .test_base
     image: pymor/python:3.7
@@ -114,18 +101,19 @@ submit Vanilla 3.7:
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
     script: .ci/gitlab/submit.bash
-submit PIP_ONLY 3.7:
+
+submit numpy 3.6:
     extends: .test_base
-    image: pymor/python:3.7
+    image: pymor/python:3.6
     stage: deploy
     dependencies:
-        - PIP_ONLY 3.7
+        - numpy 3.6
     environment:
         name: safe
     except:
         - github/PR_.*
     variables:
-        PYMOR_PYTEST_MARKER: "PIP_ONLY"
+        PYMOR_PYTEST_MARKER: "numpy"
     script: .ci/gitlab/submit.bash
 
 .docker-in-docker:
