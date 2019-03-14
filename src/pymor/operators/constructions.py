@@ -123,7 +123,7 @@ class LincombOperator(OperatorBase):
 
     def assemble(self, mu=None):
         from pymor.algorithms.lincomb import assemble_lincomb
-        operators = [op.assemble(mu) for op in self.operators]
+        operators = tuple(op.assemble(mu) for op in self.operators)
         coefficients = self.evaluate_coefficients(mu)
         op = assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
                               name=self.name + '_assembled')
@@ -133,7 +133,7 @@ class LincombOperator(OperatorBase):
             if self.parametric or operators != self.operators:
                 return LincombOperator(operators, coefficients, solver_options=self.solver_options,
                                        name=self.name + '_assembled')
-            else:
+            else:  # this can only happen when both operators and self.operators are tuples!
                 return self  # avoid infinite recursion
 
     def jacobian(self, U, mu=None):
