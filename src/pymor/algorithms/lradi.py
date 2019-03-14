@@ -14,15 +14,13 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.tools.random import get_random_state
 
 
-@defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_z_columns', 'projection_shifts_init_maxiter',
-          'projection_shifts_init_seed', 'projection_shifts_implicit_subspace')
+@defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_init_maxiter',
+          'projection_shifts_init_seed')
 def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              lradi_maxiter=500,
                              lradi_shifts='projection_shifts',
-                             projection_shifts_z_columns=1,
                              projection_shifts_init_maxiter=20,
-                             projection_shifts_init_seed=None,
-                             projection_shifts_implicit_subspace=True):
+                             projection_shifts_init_seed=None):
     """Returns available Lyapunov equation solvers with default solver options.
 
     Parameters
@@ -33,14 +31,10 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
         See :func:`solve_lyap_lrcf`.
     lradi_shifts
         See :func:`solve_lyap_lrcf`.
-    projection_shifts_z_columns
-        See :func:`projection_shifts`.
     projection_shifts_init_maxiter
         See :func:`projection_shifts_init`.
     projection_shifts_init_seed
         See :func:`projection_shifts_init`.
-    projection_shifts_implicit_subspace
-        See :func:`projection_shifts`.
 
     Returns
     -------
@@ -52,10 +46,8 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                       'shifts': lradi_shifts,
                       'shift_options':
                       {'projection_shifts': {'type': 'projection_shifts',
-                                             'z_columns': projection_shifts_z_columns,
                                              'init_maxiter': projection_shifts_init_maxiter,
-                                             'init_seed': projection_shifts_init_seed,
-                                             'implicit_subspace': projection_shifts_implicit_subspace}}}}
+                                             'init_seed': projection_shifts_init_seed}}}}
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, options=None):
@@ -214,63 +206,13 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-    u = shift_options['z_columns']
-    L = prev_shifts.size
     r = len(W)
-    d = L - u
-    if d < 0:
-        u = L
-        d = 0
-    if prev_shifts[-u].imag < 0:
-        u = u + 1
 
-    Vu = Z[-u * r:]  # last u matrices V added to solution factor Z
+    Vu = Z[-r:]  # last r columns added to solution factor Z
 
-    if shift_options['implicit_subspace']:
-        B = np.zeros((u, u))
-        G = np.zeros((u, 1))
-        Ir = np.eye(r)
-        iC = np.where(np.imag(prev_shifts) > 0)[0]  # complex shifts indices (first shift of complex pair)
-        iR = np.where(np.isreal(prev_shifts))[0]  # real shifts indices
-        iC = iC[iC >= d]
-        iR = iR[iR >= d]
-        i = 0
-
-        while i < u:
-            rS = iR[iR < d + i]
-            cS = iC[iC < d + i]
-            rp = prev_shifts[d + i].real
-            cp = prev_shifts[d + i].imag
-            G[i, 0] = np.sqrt(-2 * rp)
-            if cp == 0:
-                B[i, i] = rp
-                if rS.size > 0:
-                    B[i, rS - d] = -2 * np.sqrt(rp*np.real(prev_shifts[rS]))
-                if cS.size > 0:
-                    B[i, cS - d] = -2 * np.sqrt(2*rp*np.real(prev_shifts[cS]))
-                i = i + 1
-            else:
-                sri = np.sqrt(rp**2+cp**2)
-                B[i: i + 2, i: i + 2] = [[2*rp, -sri], [sri, 0]]
-                if rS.size > 0:
-                    B[i, rS - d] = -2 * np.sqrt(2*rp*np.real(prev_shifts[rS]))
-                if cS.size > 0:
-                    B[i, cS - d] = -4 * np.sqrt(rp*np.real(prev_shifts[cS]))
-                i = i + 2
-        B = spla.kron(B, Ir)
-        G = spla.kron(G, Ir)
-
-        s, v = spla.svd(Vu.gramian(), full_matrices=False)[1:3]
-        P = v.T.dot(np.diag(1. / np.sqrt(s)))
-        Q = Vu.lincomb(P.T)
-
-        T = E.apply2(Q, Vu)
-        Ap = Q.dot(W).dot(G.T).dot(P) + T.dot(B.dot(P))
-        Ep = T.dot(P)
-    else:
-        Q = gram_schmidt(Vu, atol=0, rtol=0)
-        Ap = A.apply2(Q, Q)
-        Ep = E.apply2(Q, Q)
+    Q = gram_schmidt(Vu, atol=0, rtol=0)
+    Ap = A.apply2(Q, Q)
+    Ep = E.apply2(Q, Q)
 
     shifts = spla.eigvals(Ap, Ep)
     shifts = shifts[shifts.real < 0]
