@@ -49,8 +49,8 @@ numpy 3.6:
         PYMOR_PYTEST_MARKER: "{{m}}"
 {%- endfor %}
 
-{# note: MPI runs do no generate coverage or test_results so we can skip them entirely here #}
-{%- for py, m in matrix if m != 'MPI' %}
+{# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
+{%- for py, m in matrix if m == 'Vanilla' %}
 submit {{m}} {{py}}:
     extends: .test_base
     image: pymor/python:{{py}}
@@ -65,6 +65,20 @@ submit {{m}} {{py}}:
         PYMOR_PYTEST_MARKER: "{{m}}"
     script: .ci/gitlab/submit.bash
 {%- endfor %}
+
+submit numpy 3.6:
+    extends: .test_base
+    image: pymor/python:3.6
+    stage: deploy
+    dependencies:
+        - numpy 3.6
+    environment:
+        name: safe
+    except:
+        - github/PR_.*
+    variables:
+        PYMOR_PYTEST_MARKER: "numpy"
+    script: .ci/gitlab/submit.bash
 
 .docker-in-docker:
     retry:
