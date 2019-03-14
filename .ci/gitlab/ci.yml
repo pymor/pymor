@@ -28,61 +28,63 @@ stages:
         reports:
             junit: test_results.xml
 
-3.6_numpy:
+numpy 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
         DOCKER_TAG: "3.6"
-3.6_None:
+None 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "None"
         DOCKER_TAG: "3.6"
-3.6_PIP_ONLY:
+PIP_ONLY 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
         DOCKER_TAG: "3.6"
-3.6_MPI:
+MPI 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
         DOCKER_TAG: "3.6"
-3.7_None:
+None 3.7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "None"
         DOCKER_TAG: "3.7"
-3.7_PIP_ONLY:
+PIP_ONLY 3.7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
         DOCKER_TAG: "3.7"
-3.7_MPI:
+MPI 3.7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
         DOCKER_TAG: "3.7"
-3.6_None_submit:
+
+
+submit None 3.6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/python:3.6
     stage: deploy
     dependencies:
-        - 3.6_None
+        - None 3.6
     environment:
         name: safe
     except:
@@ -91,12 +93,12 @@ stages:
         PYMOR_PYTEST_MARKER: "None"
         DOCKER_TAG: "3.6"
     script: .ci/gitlab/submit.bash
-3.6_PIP_ONLY_submit:
+submit PIP_ONLY 3.6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/python:3.6
     stage: deploy
     dependencies:
-        - 3.6_PIP_ONLY
+        - PIP_ONLY 3.6
     environment:
         name: safe
     except:
@@ -105,12 +107,12 @@ stages:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
         DOCKER_TAG: "3.6"
     script: .ci/gitlab/submit.bash
-3.7_None_submit:
+submit None 3.7:
     extends: .pytest
-    image: pymor/testing:3.7
+    image: pymor/python:3.7
     stage: deploy
     dependencies:
-        - 3.7_None
+        - None 3.7
     environment:
         name: safe
     except:
@@ -119,12 +121,12 @@ stages:
         PYMOR_PYTEST_MARKER: "None"
         DOCKER_TAG: "3.7"
     script: .ci/gitlab/submit.bash
-3.7_PIP_ONLY_submit:
+submit PIP_ONLY 3.7:
     extends: .pytest
-    image: pymor/testing:3.7
+    image: pymor/python:3.7
     stage: deploy
     dependencies:
-        - 3.7_PIP_ONLY
+        - PIP_ONLY 3.7
     environment:
         name: safe
     except:
@@ -152,27 +154,27 @@ stages:
         - docker:dind
     environment:
         name: unsafe
-debian_stretch_pip:
+pip debian stretch:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_stretch/Dockerfile .
 
-debian_buster_pip:
+pip debian buster:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_buster/Dockerfile .
 
-debian_testing_pip:
+pip debian testing:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
 
-centos_7_pip:
+pip centos 7:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/centos_7/Dockerfile .
 
-3.6_wheel:
+wheel 3.6:
     extends: .docker-in-docker
     stage: deploy
     only: ['branches', 'tags', 'triggers']
@@ -186,7 +188,7 @@ centos_7_pip:
         - ${CI_PROJECT_DIR}/shared/pymor*manylinux*whl
         expire_in: 1 week
 
-3.7_wheel:
+wheel 3.7:
     extends: .docker-in-docker
     stage: deploy
     only: ['branches', 'tags', 'triggers']

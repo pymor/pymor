@@ -30,7 +30,7 @@ stages:
         reports:
             junit: test_results.xml
 
-3.6_numpy:
+numpy 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
@@ -39,7 +39,7 @@ stages:
         DOCKER_TAG: "3.6"
 
 {%- for py, m in matrix %}
-{{py}}_{{m}}:
+{{m}} {{py}}:
     extends: .pytest
     image: pymor/testing:{{py}}
     stage: test
@@ -48,13 +48,14 @@ stages:
         DOCKER_TAG: "{{py}}"
 {%- endfor %}
 
+{# note: MPI runs do no generate coverage or test_results so we can skip them entirely here #}
 {%- for py, m in matrix if m != 'MPI' %}
-{{py}}_{{m}}_submit:
+submit {{m}} {{py}}:
     extends: .pytest
-    image: pymor/testing:{{py}}
+    image: pymor/python:{{py}}
     stage: deploy
     dependencies:
-        - {{py}}_{{m}}
+        - {{m}} {{py}}
     environment:
         name: safe
     except:
@@ -85,14 +86,14 @@ stages:
         name: unsafe
 
 {%- for OS in testos %}
-{{OS}}_pip:
+pip {{OS.replace('_', ' ')}}:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/{{OS}}/Dockerfile .
 {% endfor %}
 
 {%- for PY in pythons %}
-{{PY}}_wheel:
+wheel {{PY}}:
     extends: .docker-in-docker
     stage: deploy
     only: ['branches', 'tags', 'triggers']
