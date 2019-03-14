@@ -1,15 +1,14 @@
 #!/bin/bash
 
 # any failure here should fail the whole test
-set -eux
+set -eu
 
-CODECOV_TOKEN="${PYMOR_CODECOV_TOKEN}"
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
 pip install -U pip
-pip install -r requirements-travis.txt
+pip install codecov
 
-ls -lh
+ls -lha
 git status
-codecov
+codecov --required  --token "${PYMOR_CODECOV_TOKEN}"  --file .coverage -F ${PYMOR_PYTEST_MARKER}
