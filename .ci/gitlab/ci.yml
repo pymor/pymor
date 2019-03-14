@@ -6,19 +6,22 @@ stages:
   - check install
   - deploy
 
-.pytest:
+.test_base:
     retry:
         max: 2
         when:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
+    only: ['branches', 'tags', 'triggers', 'merge-requests']
+
+.pytest:
+    extends: .test_base
     script: .ci/gitlab/script.bash
     environment:
         name: unsafe
     after_script:
       - .ci/gitlab/after_script.bash
-    only: ['branches', 'tags', 'triggers', 'merge-requests']
     artifacts:
         name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
         expire_in: 3 months
@@ -80,7 +83,7 @@ MPI 3.7:
 
 
 submit Vanilla 3.6:
-    extends: .pytest
+    extends: .test_base
     image: pymor/python:3.6
     stage: deploy
     dependencies:
@@ -94,7 +97,7 @@ submit Vanilla 3.6:
         DOCKER_TAG: "3.6"
     script: .ci/gitlab/submit.bash
 submit PIP_ONLY 3.6:
-    extends: .pytest
+    extends: .test_base
     image: pymor/python:3.6
     stage: deploy
     dependencies:
@@ -108,7 +111,7 @@ submit PIP_ONLY 3.6:
         DOCKER_TAG: "3.6"
     script: .ci/gitlab/submit.bash
 submit Vanilla 3.7:
-    extends: .pytest
+    extends: .test_base
     image: pymor/python:3.7
     stage: deploy
     dependencies:
@@ -122,7 +125,7 @@ submit Vanilla 3.7:
         DOCKER_TAG: "3.7"
     script: .ci/gitlab/submit.bash
 submit PIP_ONLY 3.7:
-    extends: .pytest
+    extends: .test_base
     image: pymor/python:3.7
     stage: deploy
     dependencies:

@@ -8,19 +8,22 @@ stages:
   - check install
   - deploy
 
-.pytest:
+.test_base:
     retry:
         max: 2
         when:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
+    only: ['branches', 'tags', 'triggers', 'merge-requests']
+
+.pytest:
+    extends: .test_base
     script: .ci/gitlab/script.bash
     environment:
         name: unsafe
     after_script:
       - .ci/gitlab/after_script.bash
-    only: ['branches', 'tags', 'triggers', 'merge-requests']
     artifacts:
         name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
         expire_in: 3 months
@@ -51,7 +54,7 @@ numpy 3.6:
 {# note: MPI runs do no generate coverage or test_results so we can skip them entirely here #}
 {%- for py, m in matrix if m != 'MPI' %}
 submit {{m}} {{py}}:
-    extends: .pytest
+    extends: .test_base
     image: pymor/python:{{py}}
     stage: deploy
     dependencies:
