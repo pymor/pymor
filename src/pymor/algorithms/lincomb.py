@@ -12,6 +12,39 @@ from pymor.operators.constructions import ZeroOperator, IdentityOperator, Vector
 
 
 def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
+    """Try to assemble a linear combination of the given operators.
+
+    Returns a new |Operator| which represents the sum ::
+
+        c_1*O_1 + ... + c_N*O_N
+
+    where `O_i` are |Operators| and `c_i` scalar coefficients.
+
+    This function is called in the :meth:`assemble` method of |LincombOperator| and
+    is not intended to be used directly. The assembled |Operator| is expected to
+    no longer be a |LincombOperator| nor should it contain any |LincombOperators|.
+    If an assembly of the given linear combination is not possible, `None` is returned.
+
+    To form the linear combination of backend |Operators| (containing actual matrix data),
+    :meth:`~pymor.operators.interfaces.OperatorInterface._assemble_lincomb` will be called
+    on the first |Operator| in the linear combination.
+
+    Parameters
+    ----------
+    operators
+        List of |Operators| `O_i` whose linear combination is formed.
+    coefficients
+        List of the corresponding linear coefficients `c_i`.
+    solver_options
+        |solver_options| for the assembled operator.
+    name
+        Name of the assembled operator.
+
+    Returns
+    -------
+    The assembled |Operator| if assembly is possible, otherwise `None`.
+    """
+
     return AssembleLincombRules(tuple(coefficients), solver_options, name).apply(tuple(operators))
 
 
