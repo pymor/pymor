@@ -39,7 +39,6 @@ numpy 3.6:
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
-        DOCKER_TAG: "3.6"
 
 {%- for py, m in matrix %}
 {{m}} {{py}}:
@@ -48,7 +47,6 @@ numpy 3.6:
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "{{m}}"
-        DOCKER_TAG: "{{py}}"
 {%- endfor %}
 
 {# note: MPI runs do no generate coverage or test_results so we can skip them entirely here #}
@@ -65,7 +63,6 @@ submit {{m}} {{py}}:
         - github/PR_.*
     variables:
         PYMOR_PYTEST_MARKER: "{{m}}"
-        DOCKER_TAG: "{{py}}"
     script: .ci/gitlab/submit.bash
 {%- endfor %}
 
