@@ -333,13 +333,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         return self.H.apply_inverse(U, mu=mu, least_squares=least_squares)
 
-    def _assemble_lincomb(self, operators, coefficients, shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
         if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
             return None
 
         common_mat_dtype = reduce(np.promote_types,
                                   (op.matrix.dtype for op in operators if hasattr(op, 'matrix')))
-        common_coef_dtype = reduce(np.promote_types, (type(c) for c in coefficients + (shift,)))
+        common_coef_dtype = reduce(np.promote_types, (type(c) for c in coefficients + (identity_shift,)))
         common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
 
         if coefficients[0] == 1:
@@ -366,16 +366,16 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 except NotImplementedError:
                     matrix = matrix + (op.matrix * c)
 
-        if shift != 0:
-            if shift.imag == 0:
-                shift = shift.real
+        if identity_shift != 0:
+            if identity_shift.imag == 0:
+                identity_shift = identity_shift.real
             if operators[0].sparse:
                 try:
-                    matrix += (scipy.sparse.eye(matrix.shape[0]) * shift)
+                    matrix += (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
                 except NotImplementedError:
-                    matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * shift)
+                    matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
             else:
-                matrix += (np.eye(matrix.shape[0]) * shift)
+                matrix += (np.eye(matrix.shape[0]) * identity_shift)
 
         return NumpyMatrixOperator(matrix,
                                    source_id=self.source.id,

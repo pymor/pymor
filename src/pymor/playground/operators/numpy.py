@@ -84,8 +84,8 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         assert not self.sparse
         return self.source.make_array(list(self.matrix.copy()))
 
-    def _assemble_lincomb(self, operators, coefficients, shift=0., solver_options=None, name=None):
-        lincomb = super()._assemble_lincomb(operators, coefficients, shift)
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+        lincomb = super()._assemble_lincomb(operators, coefficients, identity_shift)
         if lincomb is None:
             return None
         else:
