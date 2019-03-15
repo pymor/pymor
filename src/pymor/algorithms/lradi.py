@@ -130,7 +130,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
             Z.append(V.imag * (g * np.sqrt(d**2 + 1)))
             j += 2
         if j >= size_shift:
-            shifts = iteration_shifts(A, E, Z, W, shifts, shift_options)
+            shifts = iteration_shifts(A, E, Z, W, shifts)
             size_shift = shifts.size
         res = np.linalg.norm(W.gramian(), ord=2)
         logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
@@ -177,7 +177,7 @@ def projection_shifts_init(A, E, B, shift_options):
     raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')
 
 
-def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
+def projection_shifts(A, E, Z, W, prev_shifts):
     """Find further shift parameters for low-rank ADI iteration using
     Galerkin projection on spaces spanned by LR-ADI iterates.
 
@@ -198,8 +198,6 @@ def projection_shifts(A, E, Z, W, prev_shifts, shift_options):
     prev_shifts
         A |NumPy array| containing the set of all previously used shift
         parameters.
-    shift_options
-        The shift options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
