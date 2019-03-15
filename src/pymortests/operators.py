@@ -8,10 +8,10 @@ import pytest
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
 from pymor.core.exceptions import InversionError, LinAlgError
-from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseAdjointOperator
+from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 from pymortests.algorithms.stuff import MonomOperator
 from pymortests.fixtures.operator import (operator, operator_with_arrays, operator_with_arrays_and_products,
                                           picklable_operator)
@@ -73,6 +73,17 @@ def test_lincomb_op():
         projected = project(p, basis, basis)
         pa = projected.apply(vx)
         assert almost_equal(pa, p.apply(vx)).all()
+
+
+def test_identity_lincomb():
+    space = NumpyVectorSpace(10)
+    identity = IdentityOperator(space)
+    ones = space.ones()
+    idid = (identity + identity)
+    assert almost_equal(ones * 2, idid.apply(ones))
+    assert almost_equal(ones * 2, idid.apply_adjoint(ones))
+    assert almost_equal(ones * 0.5, idid.apply_inverse(ones))
+    assert almost_equal(ones * 0.5, idid.apply_inverse_adjoint(ones))
 
 
 def test_pickle(operator):
