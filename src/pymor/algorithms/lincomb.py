@@ -8,7 +8,7 @@ from pymor.algorithms.rules import RuleTable, match_generic, match_class_all, ma
 from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockOperatorBase,
                                    BlockDiagonalOperator, SecondOrderModelOperator, ShiftedSecondOrderModelOperator)
-from pymor.operators.constructions import ZeroOperator, IdentityOperator, VectorArrayOperator
+from pymor.operators.constructions import ZeroOperator, IdentityOperator, VectorArrayOperator, LincombOperator
 
 
 def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
@@ -24,6 +24,8 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
     is not intended to be used directly. The assembled |Operator| is expected to
     no longer be a |LincombOperator| nor should it contain any |LincombOperators|.
     If an assembly of the given linear combination is not possible, `None` is returned.
+    The special case of a |LincombOperator| with a single operator (i.e. a scaled |Operator|)
+    is allowed as assemble_lincomb implements `apply_inverse` for this special case.
 
     To form the linear combination of backend |Operators| (containing actual matrix data),
     :meth:`~pymor.operators.interfaces.OperatorInterface._assemble_lincomb` will be called
@@ -65,6 +67,16 @@ class AssembleLincombRules(RuleTable):
             new_ops, new_coeffs = zip(*without_zero)
             return assemble_lincomb(new_ops, new_coeffs,
                                     solver_options=self.solver_options, name=self.name)
+
+    @match_class_all(IdentityOperator)
+    def action_IdentityOperator(self, ops):
+        coeff = sum(self.coefficients)
+        if coeff == 0:
+            return ZeroOperator(ops[0].source, ops[0].source, name=self.name)
+        else:
+            return LincombOperator([IdentityOperator(ops[0].source, name=self.name)],
+                                   [coeff],
+                                   name=self.name)
 
     @match_class_any(BlockOperatorBase)
     @match_class_any(IdentityOperator)
@@ -168,4 +180,14 @@ class AssembleLincombRules(RuleTable):
         op = ops_without_id[0]._assemble_lincomb(ops_without_id, self.coefficients, shift=id_coeff,
                                                  solver_options=self.solver_options, name=self.name)
 
+        if not op:
+            raise RuleNotMatchingError
         return op
+
+    @match_generic(lambda ops: len(ops) == 1)
+    def action_only_one_operator(self, ops):
+        return LincombOperator(ops, self.coefficients, name=self.name)
+
+    @match_always
+    def action_failed(self, ops):
+        return None
