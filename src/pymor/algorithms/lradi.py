@@ -104,7 +104,6 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     j = 0
     j_shift = 0
     shifts = init_shifts(A, E, W, shift_options)
-    size_shift = shifts.size
     res = np.linalg.norm(W.gramian(), ord=2)
     init_res = res
     Btol = res * options['tol']
@@ -137,9 +136,8 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         j_shift += 1
         res = np.linalg.norm(W.gramian(), ord=2)
         logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
-        if j_shift >= size_shift:
-            shifts = iteration_shifts(A, E, Z, V, shifts, shift_options)
-            size_shift = shifts.size
+        if j_shift >= shifts.size:
+            shifts = iteration_shifts(A, E, V, shifts)
             j_shift = 0
 
     if res > Btol:
@@ -185,7 +183,7 @@ def projection_shifts_init(A, E, B, shift_options):
     raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')
 
 
-def projection_shifts(A, E, Z, V, prev_shifts, shift_options):
+def projection_shifts(A, E, V, prev_shifts):
     """Find further shift parameters for low-rank ADI iteration using
     Galerkin projection on spaces spanned by LR-ADI iterates.
 
@@ -197,23 +195,18 @@ def projection_shifts(A, E, Z, V, prev_shifts, shift_options):
         The |Operator| A from the corresponding Lyapunov equation.
     E
         The |Operator| E from the corresponding Lyapunov equation.
-    Z
-        A |VectorArray| representing the currently computed low-rank
-        solution factor.
     V
         A |VectorArray| representing the currently computed iterate.
     prev_shifts
         A |NumPy array| containing the set of all previously used shift
         parameters.
-    shift_options
-        The shift options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-    if prev_shifts[prev_shifts.size - 1].imag != 0:
+    if prev_shifts[-1].imag != 0:
         Q = gram_schmidt(cat_arrays([V.real, V.imag]), atol=0, rtol=0)
     else:
         Q = gram_schmidt(V, atol=0, rtol=0)
@@ -227,8 +220,8 @@ def projection_shifts(A, E, Z, V, prev_shifts, shift_options):
     if shifts.size == 0:
         return prev_shifts
     else:
-        if(shifts[np.imag(shifts) != 0].size > 0):
-            shifts = np.array(sorted(shifts, key=np.abs))
+        if np.any(shifts.imag != 0):
+            shifts = shifts[np.abs(shifts).argsort()]
         else:
             shifts.sort()
         return shifts
