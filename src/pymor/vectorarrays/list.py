@@ -2,11 +2,13 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from numbers import Number
+
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES, _create_random_values
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values
 
 
 class VectorInterface(BasicInterface):
@@ -273,7 +275,7 @@ class ListVectorArray(VectorArrayInterface):
         return ListVectorArray([v.copy(deep=deep) for v in self._list], self.space)
 
     def scal(self, alpha):
-        assert isinstance(alpha, _INDEXTYPES) \
+        assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
 
         if type(alpha) is np.ndarray:
@@ -287,7 +289,7 @@ class ListVectorArray(VectorArrayInterface):
         assert self.space == x.space
         len_x = len(x)
         assert len(self) == len_x or len_x == 1
-        assert isinstance(alpha, _INDEXTYPES) \
+        assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
 
         if np.all(alpha == 0):
