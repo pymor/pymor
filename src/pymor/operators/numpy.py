@@ -14,9 +14,10 @@
 from functools import reduce
 
 import numpy as np
+from scipy.io import mmwrite, savemat
+from scipy.linalg import solve
 import scipy.sparse
 from scipy.sparse import issparse
-from scipy.io import mmwrite, savemat
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -321,7 +322,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 R = R.T
             else:
                 try:
-                    R = np.linalg.solve(self.matrix, V.to_numpy().T).T
+                    R = solve(self.matrix, V.to_numpy().T).T
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{str(type(e))}: {str(e)}')
 

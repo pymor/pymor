@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from scipy.linalg import solve_triangular
+from scipy.linalg import solve, solve_triangular
 
 
 from pymor.operators.basic import OperatorBase
@@ -100,7 +100,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy().T,
                                                               lower=True, unit_diagonal=True).T
             else:
-                interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, AU.to_numpy().T).T
+                interpolation_coefficients = solve(self.interpolation_matrix, AU.to_numpy().T).T
         except ValueError:  # this exception occurs when AU contains NaNs ...
             interpolation_coefficients = np.empty((len(AU), len(self.collateral_basis))) + np.nan
         return self.collateral_basis.lincomb(interpolation_coefficients)
@@ -130,7 +130,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                     interpolation_coefficients = solve_triangular(self.interpolation_matrix, JU.to_numpy().T,
                                                                   lower=True, unit_diagonal=True).T
                 else:
-                    interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, JU.to_numpy().T).T
+                    interpolation_coefficients = solve(self.interpolation_matrix, JU.to_numpy().T).T
             except ValueError:  # this exception occurs when AU contains NaNs ...
                 interpolation_coefficients = np.empty((len(JU), len(self.collateral_basis))) + np.nan
             J = self.collateral_basis.lincomb(interpolation_coefficients)
@@ -168,7 +168,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy().T,
                                                               lower=True, unit_diagonal=True).T
             else:
-                interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, AU.to_numpy().T).T
+                interpolation_coefficients = solve(self.interpolation_matrix, AU.to_numpy().T).T
         except ValueError:  # this exception occurs when AU contains NaNs ...
             interpolation_coefficients = np.empty((len(AU), len(self.projected_collateral_basis))) + np.nan
         return self.projected_collateral_basis.lincomb(interpolation_coefficients)
@@ -189,7 +189,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, J.to_numpy().T,
                                                               lower=True, unit_diagonal=True).T
             else:
-                interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, J.to_numpy().T).T
+                interpolation_coefficients = solve(self.interpolation_matrix, J.to_numpy().T).T
         except ValueError:  # this exception occurs when J contains NaNs ...
             interpolation_coefficients = (np.empty((len(self.source_basis_dofs),
                                                     len(self.projected_collateral_basis)))
