@@ -10,7 +10,7 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.vectorarrays.interfaces import VectorSpaceInterface, _INDEXTYPES
+from pymor.vectorarrays.interfaces import VectorSpaceInterface
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair,
@@ -20,7 +20,7 @@ from pymortests.pickling import assert_picklable_without_dumps_function
 
 
 def ind_complement(v, ind):
-    if isinstance(ind, _INDEXTYPES):
+    if isinstance(ind, Number):
         ind = [ind]
     elif type(ind) is slice:
         ind = range(*ind.indices(len(v)))
@@ -33,7 +33,7 @@ def indexed(v, ind):
         return v
     elif type(ind) is slice:
         return v[ind]
-    elif isinstance(ind, _INDEXTYPES):
+    elif isinstance(ind, Number):
         return v[[ind]]
     elif len(ind) == 0:
         return np.empty((0, v.shape[1]), dtype=v.dtype)

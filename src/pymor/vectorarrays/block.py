@@ -7,7 +7,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.interfaces import classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface
 
 
 class BlockVectorArray(VectorArrayInterface):
@@ -82,7 +82,7 @@ class BlockVectorArray(VectorArrayInterface):
 
     def axpy(self, alpha, x):
         assert x in self.space
-        assert isinstance(alpha, _INDEXTYPES) \
+        assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
         if len(x) > 0:
             for block, x_block in zip(self._blocks, x._blocks):

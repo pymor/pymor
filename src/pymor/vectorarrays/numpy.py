@@ -2,13 +2,15 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from numbers import Number
+
 import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.core.interfaces import classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES, _create_random_values
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values
 
 
 class NumpyVectorArray(VectorArrayInterface):
@@ -127,7 +129,7 @@ class NumpyVectorArray(VectorArrayInterface):
     def scal(self, alpha, *, _ind=None):
         if _ind is None:
             _ind = slice(0, self._len)
-        assert isinstance(alpha, _INDEXTYPES) \
+        assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(_ind),)
 
         if self._refcount[0] > 1:
@@ -146,7 +148,7 @@ class NumpyVectorArray(VectorArrayInterface):
         if _ind is None:
             _ind = slice(0, self._len)
         assert self.dim == x.dim
-        assert isinstance(alpha, _INDEXTYPES) \
+        assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(_ind),)
 
         if self._refcount[0] > 1:
@@ -278,7 +280,7 @@ class NumpyVectorArray(VectorArrayInterface):
         self._refcount = [1]              # create new reference counter
 
     def __add__(self, other):
-        if isinstance(other, _INDEXTYPES):
+        if isinstance(other, Number):
             assert other == 0
             return self.copy()
         assert self.dim == other.dim
@@ -317,12 +319,12 @@ class NumpyVectorArray(VectorArrayInterface):
         return self
 
     def __mul__(self, other):
-        assert isinstance(other, _INDEXTYPES) \
+        assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         return NumpyVectorArray(self._array[:self._len] * other, self.space)
 
     def __imul__(self, other):
-        assert isinstance(other, _INDEXTYPES) \
+        assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         if self._refcount[0] > 1:
             self._deep_copy()
@@ -512,7 +514,7 @@ class NumpyVectorArrayView(NumpyVectorArray):
         return self.base.amax(_ind=self.ind)
 
     def __add__(self, other):
-        if isinstance(other, _INDEXTYPES):
+        if isinstance(other, Number):
             assert other == 0
             return self.copy()
         assert self.dim == other.dim
@@ -553,12 +555,12 @@ class NumpyVectorArrayView(NumpyVectorArray):
         return self
 
     def __mul__(self, other):
-        assert isinstance(other, _INDEXTYPES) \
+        assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         return NumpyVectorArray(self.base._array[self.ind] * other, self.space)
 
     def __imul__(self, other):
-        assert isinstance(other, _INDEXTYPES) \
+        assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
