@@ -18,6 +18,9 @@ class rule:
     Matching conditions are specified by subclassing and
     overriding the :meth:`matches` method.
 
+    If an action is decorated by multiple rules, all these rules
+    must match for the action to apply.
+
     Attributes
     ----------
     action
@@ -25,13 +28,28 @@ class rule:
     """
 
     def __call__(self, action):
-        self.action = action
+        if isinstance(action, rule):
+            self.action = action.action
+            self.next_rule = action
+            self.num_rules = action.num_rules + 1
+        else:
+            self.action = action
+            self.next_rule = None
+            self.num_rules = 1
         return self
 
     @abstractmethod
-    def matches(self, obj):
+    def _matches(self, obj):
         """Returns True if given object matches the condition."""
         pass
+
+    def matches(self, obj):
+        """Returns True if given object matches the condition."""
+        if self._matches(obj):
+            if self.next_rule is None:
+                return True
+            else:
+                return self.next_rule.matches(obj)
 
     condition_description = None
     condition_type = None
@@ -51,28 +69,11 @@ class rule:
 
     @property
     def source(self):
-        from inspect import getsourcefile, getsourcelines
-        with open(getsourcefile(self.action), 'rt') as f:
-            source = f.readlines()
-        start_line = getsourcelines(self.action)[1] - 1
-        lines = [source[start_line].lstrip()]
-        indent = len(source[start_line]) - len(lines[0])
-        seen_def = False
-        for l in source[start_line + 1:]:
-            if not seen_def and l.lstrip().startswith('def'):
-                seen_def = True
-                lines.append(l[indent:])
-                continue
-            if 0 < len(l) - len(l.lstrip()) <= indent:
-                break
-            lines.append(l[indent:])
-        return ''.join(lines)
+        from inspect import getsourcelines
+        return ''.join(getsourcelines(self.action)[0])
 
 
-class match_class(rule):
-    """|rule| that matches when obj is instance of one of the given classes."""
-
-    condition_type = 'CLASS'
+class match_class_base(rule):
 
     def __init__(self, *classes):
         super().__init__()
@@ -81,8 +82,44 @@ class match_class(rule):
         self.classes = classes
         self.condition_description = ', '.join(c.__name__ for c in classes)
 
-    def matches(self, obj):
+
+class match_class(match_class_base):
+    """|rule| that matches when obj is instance of one of the given classes."""
+
+    condition_type = 'CLASS'
+
+    def _matches(self, obj):
         return isinstance(obj, self.classes)
+
+
+class match_class_all(match_class_base):
+    """|rule| that matches when each item of obj is instance of one of the given classes."""
+
+    condition_type = 'ALLCLASSES'
+
+    def _matches(self, obj):
+        return all(isinstance(o, self.classes) for o in obj)
+
+
+class match_class_any(match_class_base):
+    """|rule| that matches when any item of obj is instance of one of the given classes."""
+
+    condition_type = 'ANYCLASS'
+
+    def _matches(self, obj):
+        return any(isinstance(o, self.classes) for o in obj)
+
+
+class match_always(rule):
+    """|rule| that always matches."""
+
+    condition_type = 'ALWAYS'
+
+    def __init__(self, action):
+        self(action)
+
+    def _matches(self, obj):
+        return True
 
 
 class match_generic(rule):
@@ -105,7 +142,7 @@ class match_generic(rule):
         self.condition = condition
         self.condition_description = condition_description or 'n.a.'
 
-    def matches(self, obj):
+    def _matches(self, obj):
         return self.condition(obj)
 
 
@@ -130,10 +167,12 @@ class RuleTableMeta(UberMeta):
     def __repr__(cls):
         rows = [['Pos', 'Match Type', 'Condition', 'Action Name / Action Description', 'Stop']]
         for i, r in enumerate(cls.rules):
-            rows.append([str(i),
-                         r.condition_type,
-                         r.condition_description,
-                         r.action_description])
+            for ii in range(r.num_rules):
+                rows.append(['' if ii else str(i),
+                             r.condition_type,
+                             r.condition_description,
+                             '' if ii else r.action_description])
+                r = r.next_rule
         return format_table(rows)
 
     def __getitem__(cls, idx):

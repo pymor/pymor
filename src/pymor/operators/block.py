@@ -98,38 +98,6 @@ class BlockOperatorBase(OperatorBase):
         else:
             return self.__class__(blocks)
 
-    def _assemble_lincomb_preprocess_operators(self, operators):
-        return [
-            BlockDiagonalOperator([IdentityOperator(s) for s in op.source.subspaces])
-            if isinstance(op, IdentityOperator) else op
-            for op in operators if not isinstance(op, ZeroOperator)
-        ]
-
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-
-        operators = self._assemble_lincomb_preprocess_operators(operators)
-
-        if not all(isinstance(op, BlockOperatorBase) for op in operators):
-            return None
-
-        assert operators[0] is self
-        blocks = np.empty(self._blocks.shape, dtype=object)
-        if len(operators) > 1:
-            for (i, j) in np.ndindex(self._blocks.shape):
-                operators_ij = [op._blocks[i, j] for op in operators]
-                blocks[i, j] = operators_ij[0].assemble_lincomb(operators_ij, coefficients,
-                                                                solver_options=solver_options, name=name)
-                if blocks[i, j] is None:
-                    return None
-            return self.__class__(blocks)
-        else:
-            c = coefficients[0]
-            if c == 1:
-                return self
-            for (i, j) in np.ndindex(self._blocks.shape):
-                blocks[i, j] = self._blocks[i, j] * c
-            return self.__class__(blocks)
-
     def as_range_array(self, mu=None):
 
         def process_row(row, space):
@@ -262,42 +230,6 @@ class BlockDiagonalOperator(BlockOperator):
         else:
             return self.__class__(blocks)
 
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-
-        operators = self._assemble_lincomb_preprocess_operators(operators)
-
-        if not all(isinstance(op, BlockOperator) for op in operators):
-            return None
-
-        assert operators[0] is self
-
-        # return ShiftedSecondOrderModelOperator if possible
-        if len(operators) == 2 and isinstance(operators[1], SecondOrderModelOperator):
-            return operators[1].assemble_lincomb(operators[::-1], coefficients[::-1],
-                                                 solver_options=solver_options, name=name)
-
-        # return BlockOperator if not all operators are BlockDiagonalOperators
-        if not all(isinstance(op, self.__class__) for op in operators):
-            return super().assemble_lincomb(operators, coefficients, solver_options=solver_options, name=name)
-
-        # return BlockDiagonalOperator
-        blocks = np.empty((self.num_source_blocks,), dtype=object)
-        if len(operators) > 1:
-            for i in range(self.num_source_blocks):
-                operators_i = [op._blocks[i, i] for op in operators]
-                blocks[i] = operators_i[0].assemble_lincomb(operators_i, coefficients,
-                                                            solver_options=solver_options, name=name)
-                if blocks[i] is None:
-                    return None
-            return self.__class__(blocks)
-        else:
-            c = coefficients[0]
-            if c == 1:
-                return self
-            for i in range(self.num_source_blocks):
-                blocks[i] = self._blocks[i, i] * c
-            return self.__class__(blocks)
-
 
 class SecondOrderModelOperator(BlockOperator):
     r"""BlockOperator appearing in SecondOrderModel.to_lti().
@@ -380,45 +312,6 @@ class SecondOrderModelOperator(BlockOperator):
             return self
         else:
             return self.__class__(E, K)
-
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-
-        operators = self._assemble_lincomb_preprocess_operators(operators)
-
-        if not all(isinstance(op, BlockOperator) for op in operators):
-            return None
-
-        assert operators[0] is self
-
-        # return ShiftedSecondOrderModelOperator if possible
-        if (len(operators) == 2
-                and isinstance(operators[1], BlockDiagonalOperator)
-                and operators[1].num_source_blocks == 2
-                and operators[1].num_range_blocks == 2
-                and isinstance(operators[1]._blocks[0, 0], IdentityOperator)):
-            return ShiftedSecondOrderModelOperator(operators[1]._blocks[1, 1],
-                                                   self.E,
-                                                   self.K,
-                                                   coefficients[1],
-                                                   coefficients[0])
-
-        # return BlockOperator
-        blocks = np.empty(self._blocks.shape, dtype=object)
-        if len(operators) > 1:
-            for (i, j) in np.ndindex(self._blocks.shape):
-                operators_ij = [op._blocks[i, j] for op in operators]
-                blocks[i, j] = operators_ij[0].assemble_lincomb(operators_ij, coefficients,
-                                                                solver_options=solver_options, name=name)
-                if blocks[i, j] is None:
-                    return None
-            return BlockOperator(blocks)
-        else:
-            c = coefficients[0]
-            if c == 1:
-                return self
-            for (i, j) in np.ndindex(self._blocks.shape):
-                blocks[i, j] = self._blocks[i, j] * c
-            return BlockOperator(blocks)
 
 
 class ShiftedSecondOrderModelOperator(BlockOperator):
@@ -530,28 +423,3 @@ class ShiftedSecondOrderModelOperator(BlockOperator):
             return self
         else:
             return self.__class__(M, E, K, self.a, self.b)
-
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-
-        operators = self._assemble_lincomb_preprocess_operators(operators)
-
-        if not all(isinstance(op, BlockOperator) for op in operators):
-            return None
-
-        assert operators[0] is self
-        blocks = np.empty(self._blocks.shape, dtype=object)
-        if len(operators) > 1:
-            for (i, j) in np.ndindex(self._blocks.shape):
-                operators_ij = [op._blocks[i, j] for op in operators]
-                blocks[i, j] = operators_ij[0].assemble_lincomb(operators_ij, coefficients,
-                                                                solver_options=solver_options, name=name)
-                if blocks[i, j] is None:
-                    return None
-            return BlockOperator(blocks)
-        else:
-            c = coefficients[0]
-            if c == 1:
-                return self
-            for (i, j) in np.ndindex(self._blocks.shape):
-                blocks[i, j] = self._blocks[i, j] * c
-            return BlockOperator(blocks)
