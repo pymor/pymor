@@ -9,7 +9,6 @@ import pytest
 import numpy as np
 
 from pymor.algorithms.basic import almost_equal
-from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.vectorarrays.interfaces import VectorSpaceInterface
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
@@ -454,12 +453,9 @@ def test_scal(vector_array):
             assert np.allclose(c[ind].l2_norm(), v[ind].l2_norm() * abs(x))
             try:
                 y = v.to_numpy(True)
-                if NUMPY_INDEX_QUIRK and len(y) == 0:
-                    pass
-                else:
-                    if isinstance(x, np.ndarray) and not isinstance(ind, Number):
-                        x = x[:, np.newaxis]
-                    y[ind] *= x
+                if isinstance(x, np.ndarray) and not isinstance(ind, Number):
+                    x = x[:, np.newaxis]
+                y[ind] *= x
                 assert np.allclose(c.to_numpy(), y)
             except NotImplementedError:
                 pass
@@ -497,14 +493,11 @@ def test_axpy(compatible_vector_array_pair):
                 if isinstance(ind1, Number):
                     x[[ind1]] += indexed(v2.to_numpy(), ind2) * a
                 else:
-                    if NUMPY_INDEX_QUIRK and len(x) == 0:
-                        pass
+                    if isinstance(a, np.ndarray):
+                        aa = a[:, np.newaxis]
                     else:
-                        if isinstance(a, np.ndarray):
-                            aa = a[:, np.newaxis]
-                        else:
-                            aa = a
-                        x[ind1] += indexed(v2.to_numpy(), ind2) * aa
+                        aa = a
+                    x[ind1] += indexed(v2.to_numpy(), ind2) * aa
                 assert np.allclose(c1.to_numpy(), x)
             except NotImplementedError:
                 pass
@@ -545,14 +538,11 @@ def test_axpy_one_x(compatible_vector_array_pair):
                 if isinstance(ind1, Number):
                     x[[ind1]] += indexed(v2.to_numpy(), ind2) * a
                 else:
-                    if NUMPY_INDEX_QUIRK and len(x) == 0:
-                        pass
+                    if isinstance(a, np.ndarray):
+                        aa = a[:, np.newaxis]
                     else:
-                        if isinstance(a, np.ndarray):
-                            aa = a[:, np.newaxis]
-                        else:
-                            aa = a
-                        x[ind1] += indexed(v2.to_numpy(), ind2) * aa
+                        aa = a
+                    x[ind1] += indexed(v2.to_numpy(), ind2) * aa
                 assert np.allclose(c1.to_numpy(), x)
             except NotImplementedError:
                 pass
@@ -590,14 +580,11 @@ def test_axpy_self(vector_array):
                 if isinstance(ind1, Number):
                     x[[ind1]] += indexed(v.to_numpy(), ind2) * a
                 else:
-                    if NUMPY_INDEX_QUIRK and len(x) == 0:
-                        pass
+                    if isinstance(a, np.ndarray):
+                        aa = a[:, np.newaxis]
                     else:
-                        if isinstance(a, np.ndarray):
-                            aa = a[:, np.newaxis]
-                        else:
-                            aa = a
-                        x[ind1] += indexed(v.to_numpy(), ind2) * aa
+                        aa = a
+                    x[ind1] += indexed(v.to_numpy(), ind2) * aa
                 assert np.allclose(c.to_numpy(), x)
             except NotImplementedError:
                 pass

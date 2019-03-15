@@ -7,7 +7,6 @@ from numbers import Number
 import numpy as np
 from scipy.sparse import issparse
 
-from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.core.interfaces import classinstancemethod
 from pymor.tools.random import get_random_state
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values
@@ -240,14 +239,6 @@ class NumpyVectorArray(VectorArrayInterface):
                 and (len(dof_indices) == 0 or max(dof_indices) < self.dim)) \
             or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
                 and (len(dof_indices) == 0 or np.max(dof_indices) < self.dim))
-
-        if NUMPY_INDEX_QUIRK and (self._len == 0 or self.dim == 0):
-            assert isinstance(dof_indices, list) \
-                and (len(dof_indices) == 0 or max(dof_indices) < self.dim) \
-                or isinstance(dof_indices, np.ndarray) \
-                and dof_indices.ndim == 1 \
-                and (len(dof_indices) == 0 or np.max(dof_indices) < self.dim)
-            return np.zeros((self.len_ind(_ind), len(dof_indices)))
 
         return self._array[:, dof_indices][_ind, :]
 
