@@ -176,7 +176,7 @@ class LTIModel(InputStateOutputModel):
 
     Attributes
     ----------
-    n
+    order
         The order of the system.
     A
         The |Operator| A.
@@ -926,7 +926,7 @@ class SecondOrderModel(InputStateOutputModel):
 
     Attributes
     ----------
-    n
+    order
         The order of the system (equal to M.source.dim).
     M
         The |Operator| M.
@@ -1462,7 +1462,7 @@ class LinearDelayModel(InputStateOutputModel):
 
     Attributes
     ----------
-    n
+    order
         The order of the system (equal to A.source.dim).
     q
         The number of delay terms.
@@ -1667,7 +1667,7 @@ class LinearStochasticModel(InputStateOutputModel):
 
     Attributes
     ----------
-    n
+    order
         The order of the system (equal to A.source.dim).
     q
         The number of stochastic processes.
@@ -1782,7 +1782,7 @@ class BilinearModel(InputStateOutputModel):
 
     Attributes
     ----------
-    n
+    order
         The order of the system (equal to A.source.dim).
     A
         The |Operator| A.
