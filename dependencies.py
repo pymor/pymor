@@ -23,7 +23,7 @@ def setup_requires(toml=False):
     numpys = ['numpy>={};python_version == "3.6"'.format(NUMPY),
       'numpy>=1.15.4;python_version == "3.7"',
       'numpy>={};python_version != "3.6" and python_version != "3.7"'.format(NUMPY),]
-    other = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.20.1', 'packaging',]
+    other = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.27', 'packaging',]
     if toml:
         numpys = [f.replace('numpy>=', 'numpy==') for f in numpys]
     return numpys + other
