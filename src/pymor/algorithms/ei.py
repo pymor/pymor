@@ -14,6 +14,7 @@ a single function call.
 """
 
 import numpy as np
+from scipy.linalg import solve
 
 from pymor.core.logger import getLogger
 from pymor.algorithms.pod import pod
@@ -203,8 +204,8 @@ def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
         logger.info(f'Choosing interpolation point for basis vector {i}.')
 
         if len(interpolation_dofs) > 0:
-            coefficients = np.linalg.solve(interpolation_matrix,
-                                           collateral_basis[i].dofs(interpolation_dofs).T).T
+            coefficients = solve(interpolation_matrix,
+                                 collateral_basis[i].dofs(interpolation_dofs).T).T
             U_interpolated = collateral_basis[:len(interpolation_dofs)].lincomb(coefficients)
             ERR = collateral_basis[i].copy()
             ERR -= U_interpolated

@@ -14,9 +14,10 @@
 from functools import reduce
 
 import numpy as np
+from scipy.io import mmwrite, savemat
+from scipy.linalg import solve
 import scipy.sparse
 from scipy.sparse import issparse
-from scipy.io import mmwrite, savemat
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -286,6 +287,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             else:
                 raise InversionError
 
+        if self.source.dim != self.range.dim and not least_squares:
+            raise InversionError
+
         options = self.solver_options.get('inverse') if self.solver_options else None
         assert self.sparse or not options
 
@@ -320,7 +324,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 R = R.T
             else:
                 try:
-                    R = np.linalg.solve(self.matrix, V.to_numpy().T).T
+                    R = solve(self.matrix, V.to_numpy().T).T
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{str(type(e))}: {str(e)}')
 
