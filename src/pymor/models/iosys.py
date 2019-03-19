@@ -192,8 +192,6 @@ class LTIModel(InputStateOutputModel):
         The |Operator| D.
     E
         The |Operator| E.
-    operators
-        Dict of all |Operators| appearing in the model.
     """
 
     def __init__(self, A, B, C, D=None, E=None, cont_time=True,
@@ -950,8 +948,6 @@ class SecondOrderModel(InputStateOutputModel):
         The |Operator| Cv.
     D
         The |Operator| D.
-    operators
-        Dictionary of all |Operators| contained in the model.
     """
 
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
@@ -1492,8 +1488,6 @@ class LinearDelayModel(InputStateOutputModel):
         The |Operator| D.
     E
         The |Operator| E.
-    operators
-        Dict of all |Operators| appearing in the model.
     """
 
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True,
@@ -1699,8 +1693,6 @@ class LinearStochasticModel(InputStateOutputModel):
         The |Operator| D.
     E
         The |Operator| E.
-    operators
-        Dictionary of all |Operators| contained in the model.
     """
 
     def __init__(self, A, As, B, C, D=None, E=None, cont_time=True,
@@ -1816,8 +1808,6 @@ class BilinearModel(InputStateOutputModel):
         The |Operator| D.
     E
         The |Operator| E.
-    operators
-        Dictionary of all |Operators| contained in the model.
     """
 
     def __init__(self, A, N, B, C, D, E=None, cont_time=True,
