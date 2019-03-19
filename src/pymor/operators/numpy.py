@@ -288,6 +288,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             else:
                 raise InversionError
 
+        if self.source.dim != self.range.dim and not least_squares:
+            raise InversionError
+
         options = self.solver_options.get('inverse') if self.solver_options else None
         assert self.sparse or not options
 
