@@ -178,6 +178,10 @@ class LTIModel(InputStateOutputModel):
     ----------
     order
         The order of the system.
+    input_dim
+        The number of inputs.
+    output_dim
+        The number of outputs.
     A
         The |Operator| A.
     B
@@ -928,6 +932,10 @@ class SecondOrderModel(InputStateOutputModel):
     ----------
     order
         The order of the system (equal to M.source.dim).
+    input_dim
+        The number of inputs.
+    output_dim
+        The number of outputs.
     M
         The |Operator| M.
     E
@@ -1464,6 +1472,10 @@ class LinearDelayModel(InputStateOutputModel):
     ----------
     order
         The order of the system (equal to A.source.dim).
+    input_dim
+        The number of inputs.
+    output_dim
+        The number of outputs.
     q
         The number of delay terms.
     tau
@@ -1669,6 +1681,10 @@ class LinearStochasticModel(InputStateOutputModel):
     ----------
     order
         The order of the system (equal to A.source.dim).
+    input_dim
+        The number of inputs.
+    output_dim
+        The number of outputs.
     q
         The number of stochastic processes.
     A
@@ -1784,6 +1800,10 @@ class BilinearModel(InputStateOutputModel):
     ----------
     order
         The order of the system (equal to A.source.dim).
+    input_dim
+        The number of inputs.
+    output_dim
+        The number of outputs.
     A
         The |Operator| A.
     N
