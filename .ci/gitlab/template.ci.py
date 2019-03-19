@@ -45,6 +45,13 @@ numpy 3 6:
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
 
+oldest 3.6:
+    extends: .pytest
+    image: pymor/testing:3.6
+    stage: test
+    variables:
+        PYMOR_PYTEST_MARKER: "OLDEST"
+        
 docs:
     extends: .test_base
     image: pymor/testing:3.6
@@ -93,6 +100,20 @@ submit numpy 3 6:
         - numpy 3 6
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
+
+submit oldest 3.6:
+    extends: .test_base
+    image: pymor/python:3.6
+    stage: deploy
+    dependencies:
+        - oldest 3.6
+    environment:
+        name: safe
+    except:
+        - github/PR_.*
+    variables:
+        PYMOR_PYTEST_MARKER: "OLDEST"
+    script: .ci/gitlab/submit.bash
 
 # this step makes sure that on older python our install fails with
 # a nice message ala "python too old" instead of "SyntaxError"
