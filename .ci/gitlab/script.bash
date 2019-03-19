@@ -58,6 +58,10 @@ elif [ "${PYMOR_PYTEST_MARKER}" == "OLDEST" ] ; then
     ${SUDO} pip install -r requirements.txt
     ${SUDO} pip install -r requirements-travis.txt
     ${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
+    # we've changed numpy versions, recompile cyx
+    find src/pymor/ -name _*.c | xargs rm -f
+    find src/pymor/ -name _*.so | xargs rm -f
+    python setup.py build_ext -i
 
     # this runs in pytest in a fake, auto numbered, X Server
     xvfb-run -a py.test -r sxX --junitxml=test_results.xml
