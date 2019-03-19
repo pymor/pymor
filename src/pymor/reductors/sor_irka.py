@@ -148,15 +148,7 @@ class SOR_IRKAReductor(BasicInterface):
             elif isinstance(c, int):
                 c = fom.Cp.range.random(r, distribution='normal', seed=c)
 
-        # begin logging
         self.logger.info('Starting SOR-IRKA')
-        if not compute_errors:
-            self.logger.info('iter | conv. criterion')
-            self.logger.info('-----+----------------')
-        else:
-            self.logger.info('iter | conv. criterion | rel. H_2-error')
-            self.logger.info('-----+-----------------+----------------')
-
         self.dist = []
         self.sigmas = [np.array(sigma)]
         self.R = [b]
@@ -196,9 +188,8 @@ class SOR_IRKAReductor(BasicInterface):
                     self.dist.append(dist)
 
             # report convergence
-            if not compute_errors:
-                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
-            else:
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
+            if compute_errors:
                 if np.max(rom.poles().real) < 0:
                     err = fom - rom
                     rel_H2_err = err.h2_norm() / fom.h2_norm()
@@ -206,7 +197,7 @@ class SOR_IRKAReductor(BasicInterface):
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
 
-                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e} | {rel_H2_err:15.9e}')
+                self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:
