@@ -49,6 +49,18 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     popd
     xvfb-run -a py.test ${COVERAGE_OPTS} -r sxX --pyargs pymortests -c .ci/installed_pytest.ini |& grep -v 'pymess/lrnm.py:82: PendingDeprecationWarning'
     pymor-demo -h
+elif [ "${PYMOR_PYTEST_MARKER}" == "OLDEST" ] ; then
+    ${SUDO} pip install pypi-oldest-requirements
+    # replaces any loose pin with a hard pin on the oldest version
+    pypi_minimal_requirements_pinned requirements.txt requirements.txt
+    pypi_minimal_requirements_pinned requirements-travis.txt requirements-travis.txt
+    pypi_minimal_requirements_pinned requirements-optional.txt requirements-optional.txt
+    ${SUDO} pip install -r requirements.txt
+    ${SUDO} pip install -r requirements-travis.txt
+    ${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
+
+    # this runs in pytest in a fake, auto numbered, X Server
+    xvfb-run -a py.test -r sxX --junitxml=test_results.xml
 elif [ "${PYMOR_PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
 elif [ "${PYMOR_PYTEST_MARKER}" == "NOTEBOOKS" ] ; then
