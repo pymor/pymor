@@ -56,14 +56,13 @@ class InputOutputModel(ModelBase):
         Parameters
         ----------
         w
-            Angular frequencies at which to compute the transfer
-            function.
+            Angular frequencies at which to compute the transfer function.
 
         Returns
         -------
         tfw
-            Transfer function values at frequencies in `w`,
-            |NumPy array| of shape `(len(w), self.output_dim, self.input_dim)`.
+            Transfer function values at frequencies in `w`, |NumPy array| of shape
+            `(len(w), self.output_dim, self.input_dim)`.
         """
         if not self.cont_time:
             raise NotImplementedError
@@ -76,14 +75,12 @@ class InputOutputModel(ModelBase):
         Parameters
         ----------
         w
-            Angular frequencies at which to evaluate the transfer
-            function.
+            Angular frequencies at which to evaluate the transfer function.
         ax
             Axis to which to plot.
             If not given, `matplotlib.pyplot.gca` is used.
         ord
-            The order of the norm used to compute the magnitude (the
-            default is the Frobenius norm).
+            The order of the norm used to compute the magnitude (the default is the Frobenius norm).
         Hz
             Should the frequency be in Hz on the plot.
         dB
@@ -145,8 +142,8 @@ class LTIModel(InputStateOutputModel):
         E x(k + 1) & = A x(k) + B u(k), \\
           y(k)     & = C x(k) + D u(k),
 
-    if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`,
-    and :math:`E` are linear operators.
+    if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`, and :math:`E` are linear
+    operators.
 
     Parameters
     ----------
@@ -165,20 +162,15 @@ class LTIModel(InputStateOutputModel):
     solver_options
         The solver options to use to solve the Lyapunov equations.
     estimator
-        An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, model)` method. If `estimator` is
-        not `None`, an `estimate(U, mu)` method is added to the
-        model which will call
-        `estimator.estimate(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an `estimate(U, mu, model)`
+        method. If `estimator` is not `None`, an `estimate(U, mu)` method is added to the model
+        which will call `estimator.estimate(U, mu, self)`.
     visualizer
-        A visualizer for the problem. This can be any object with
-        a `visualize(U, model, ...)` method. If `visualizer`
-        is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the model which forwards its arguments to the
-        visualizer's `visualize` method.
+        A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+        method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
+        the model which forwards its arguments to the visualizer's `visualize` method.
     cache_region
-        `None` or name of the cache region to use. See
-        :mod:`pymor.core.cache`.
+        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -251,11 +243,9 @@ class LTIModel(InputStateOutputModel):
         C
             The |NumPy array| or |SciPy spmatrix| C.
         D
-            The |NumPy array| or |SciPy spmatrix| D or `None` (then D is
-            assumed to be zero).
+            The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         E
-            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is
-            assumed to be identity).
+            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         state_id
@@ -263,17 +253,13 @@ class LTIModel(InputStateOutputModel):
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
-            An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, model)` method. If `estimator` is
-            not `None`, an `estimate(U, mu)` method is added to the
-            model which will call
-            `estimator.estimate(U, mu, self)`.
+            An error estimator for the problem. This can be any object with an
+            `estimate(U, mu, model)` method. If `estimator` is not `None`, an `estimate(U, mu)`
+            method is added to the model which will call `estimator.estimate(U, mu, self)`.
         visualizer
-            A visualizer for the problem. This can be any object with
-            a `visualize(U, model, ...)` method. If `visualizer`
-            is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the model which forwards its arguments to the
-            visualizer's `visualize` method.
+            A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+            method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the visualizer's `visualize` method.
         cache_region
             `None` or name of the cache region to use. See
             :mod:`pymor.core.cache`.
@@ -318,11 +304,9 @@ class LTIModel(InputStateOutputModel):
         C_file
             The name of the file (with extension) containing C.
         D_file
-            `None` or the name of the file (with extension) containing
-            D.
+            `None` or the name of the file (with extension) containing D.
         E_file
-            `None` or the name of the file (with extension) containing
-            E.
+            `None` or the name of the file (with extension) containing E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         state_id
@@ -330,20 +314,15 @@ class LTIModel(InputStateOutputModel):
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
-            An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, model)` method. If `estimator` is
-            not `None`, an `estimate(U, mu)` method is added to the
-            model which will call
-            `estimator.estimate(U, mu, self)`.
+            An error estimator for the problem. This can be any object with an
+            `estimate(U, mu, model)` method. If `estimator` is not `None`, an `estimate(U, mu)`
+            method is added to the model which will call `estimator.estimate(U, mu, self)`.
         visualizer
-            A visualizer for the problem. This can be any object with
-            a `visualize(U, model, ...)` method. If `visualizer`
-            is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the model which forwards its arguments to the
-            visualizer's `visualize` method.
+            A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+            method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the visualizer's `visualize` method.
         cache_region
-            `None` or name of the cache region to use. See
-            :mod:`pymor.core.cache`.
+            `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
         name
             Name of the system.
 
@@ -374,8 +353,8 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         file_name
-            The name of the .mat file (extension .mat does not need to
-            be included) containing A, B, C, and optionally D and E.
+            The name of the .mat file (extension .mat does not need to be included) containing A, B,
+            C, and optionally D and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         state_id
@@ -383,20 +362,15 @@ class LTIModel(InputStateOutputModel):
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
-            An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, model)` method. If `estimator` is
-            not `None`, an `estimate(U, mu)` method is added to the
-            model which will call
-            `estimator.estimate(U, mu, self)`.
+            An error estimator for the problem. This can be any object with an
+            `estimate(U, mu, model)` method. If `estimator` is not `None`, an `estimate(U, mu)`
+            method is added to the model which will call `estimator.estimate(U, mu, self)`.
         visualizer
-            A visualizer for the problem. This can be any object with
-            a `visualize(U, model, ...)` method. If `visualizer`
-            is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the model which forwards its arguments to the
-            visualizer's `visualize` method.
+            A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+            method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the visualizer's `visualize` method.
         cache_region
-            `None` or name of the cache region to use. See
-            :mod:`pymor.core.cache`.
+            `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
         name
             Name of the system.
 
@@ -430,8 +404,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         files_basename
-            The basename of files containing A, B, C, and optionally D
-            and E.
+            The basename of files containing A, B, C, and optionally D and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         state_id
@@ -439,20 +412,15 @@ class LTIModel(InputStateOutputModel):
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
-            An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, model)` method. If `estimator` is
-            not `None`, an `estimate(U, mu)` method is added to the
-            model which will call
-            `estimator.estimate(U, mu, self)`.
+            An error estimator for the problem. This can be any object with an
+            `estimate(U, mu, model)` method. If `estimator` is not `None`, an `estimate(U, mu)`
+            method is added to the model which will call `estimator.estimate(U, mu, self)`.
         visualizer
-            A visualizer for the problem. This can be any object with
-            a `visualize(U, model, ...)` method. If `visualizer`
-            is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the model which forwards its arguments to the
-            visualizer's `visualize` method.
+            A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+            method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the visualizer's `visualize` method.
         cache_region
-            `None` or name of the cache region to use. See
-            :mod:`pymor.core.cache`.
+            `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
         name
             Name of the system.
 
@@ -559,8 +527,8 @@ class LTIModel(InputStateOutputModel):
             C (s E - A)^{-1} B + D.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is much smaller than the order of the system.
+            We assume that either the number of inputs or the number of outputs is much smaller than
+            the order of the system.
 
         Parameters
         ----------
@@ -570,8 +538,8 @@ class LTIModel(InputStateOutputModel):
         Returns
         -------
         tfs
-            Transfer function evaluated at the complex number `s`,
-            |NumPy array| of shape `(self.output_dim, self.input_dim)`.
+            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
+            `(self.output_dim, self.input_dim)`.
         """
         A = self.A
         B = self.B
@@ -597,8 +565,8 @@ class LTIModel(InputStateOutputModel):
             -C (s E - A)^{-1} E (s E - A)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is much smaller than the order of the system.
+            We assume that either the number of inputs or the number of outputs is much smaller than
+            the order of the system.
 
         Parameters
         ----------
@@ -608,8 +576,8 @@ class LTIModel(InputStateOutputModel):
         Returns
         -------
         dtfs
-            Derivative of transfer function evaluated at the complex
-            number `s`, |NumPy array| of shape `(self.output_dim, self.input_dim)`.
+            Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
+            shape `(self.output_dim, self.input_dim)`.
         """
         A = self.A
         B = self.B
@@ -633,19 +601,16 @@ class LTIModel(InputStateOutputModel):
         typ
             The type of the Gramian:
 
-            - `'c_lrcf'`: low-rank Cholesky factor of the
-              controllability Gramian,
-            - `'o_lrcf'`: low-rank Cholesky factor of the
-              observability Gramian,
+            - `'c_lrcf'`: low-rank Cholesky factor of the controllability Gramian,
+            - `'o_lrcf'`: low-rank Cholesky factor of the observability Gramian,
             - `'c_dense'`: dense controllability Gramian,
             - `'o_dense'`: dense observability Gramian,
 
         Returns
         -------
-        If typ is `'c_lrcf'` or `'o_lrcf'`, then the Gramian factor as a
-        |VectorArray| from `self.A.source`.
-        If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a
-        |NumPy array|.
+        If typ is `'c_lrcf'` or `'o_lrcf'`, then the Gramian factor as a |VectorArray| from
+        `self.A.source`.
+        If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a |NumPy array|.
         """
         assert isinstance(typ, str)
 
@@ -745,8 +710,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         return_fpeak
-            Should the frequency at which the maximum is achieved should
-            be returned.
+            Should the frequency at which the maximum is achieved should be returned.
         ab13dd_equilibrate
             Should `slycot.ab13dd` use equilibration.
 
@@ -755,8 +719,7 @@ class LTIModel(InputStateOutputModel):
         norm
             H_infinity-norm.
         fpeak
-            Frequency at which the maximum is achieved (if
-            `return_fpeak` is `True`).
+            Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
 
         if not config.HAVE_SLYCOT:
@@ -802,22 +765,18 @@ class TransferFunction(InputOutputModel):
     Parameters
     ----------
     input_space
-        The input |VectorSpace|. Typically `NumpyVectorSpace(m)` where
-        m is the number of inputs.
+        The input |VectorSpace|. Typically `NumpyVectorSpace(m)` where m is the number of inputs.
     output_space
-        The output |VectorSpace|. Typically `NumpyVectorSpace(p)` where
-        p is the number of outputs.
+        The output |VectorSpace|. Typically `NumpyVectorSpace(p)` where p is the number of outputs.
     H
-        The transfer function defined at least on the open right complex
-        half-plane.
+        The transfer function defined at least on the open right complex half-plane.
         `H(s)` is a |NumPy array| of shape `(p, m)`.
     dH
         The complex derivative of `H`.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     cache_region
-        `None` or name of the cache region to use. See
-        :mod:`pymor.core.cache`.
+        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -929,8 +888,8 @@ class SecondOrderModel(InputStateOutputModel):
             + C_v x(k + 1)
             + D u(k),
 
-    if discrete-time, where :math:`M`, :math:`E`, :math:`K`, :math:`B`,
-    :math:`C_p`, :math:`C_v`, and :math:`D` are linear operators.
+    if discrete-time, where :math:`M`, :math:`E`, :math:`K`, :math:`B`, :math:`C_p`, :math:`C_v`,
+    and :math:`D` are linear operators.
 
     Parameters
     ----------
@@ -953,20 +912,15 @@ class SecondOrderModel(InputStateOutputModel):
     solver_options
         The solver options to use to solve the Lyapunov equations.
     estimator
-        An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, model)` method. If `estimator` is
-        not `None`, an `estimate(U, mu)` method is added to the
-        model which will call
-        `estimator.estimate(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an `estimate(U, mu, model)`
+        method. If `estimator` is not `None`, an `estimate(U, mu)` method is added to the model
+        which will call `estimator.estimate(U, mu, self)`.
     visualizer
-        A visualizer for the problem. This can be any object with
-        a `visualize(U, model, ...)` method. If `visualizer`
-        is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the model which forwards its arguments to the
-        visualizer's `visualize` method.
+        A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+        method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
+        the model which forwards its arguments to the visualizer's `visualize` method.
     cache_region
-        `None` or name of the cache region to use. See
-        :mod:`pymor.core.cache`.
+        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -1043,30 +997,23 @@ class SecondOrderModel(InputStateOutputModel):
         Cp
             The |NumPy array| or |SciPy spmatrix| Cp.
         Cv
-            The |NumPy array| or |SciPy spmatrix| Cv or `None` (then Cv
-            is assumed to be zero).
+            The |NumPy array| or |SciPy spmatrix| Cv or `None` (then Cv is assumed to be zero).
         D
-            The |NumPy array| or |SciPy spmatrix| D or `None` (then D
-            is assumed to be zero).
+            The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         estimator
-            An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, model)` method. If `estimator` is
-            not `None`, an `estimate(U, mu)` method is added to the
-            model which will call
-            `estimator.estimate(U, mu, self)`.
+            An error estimator for the problem. This can be any object with an
+            `estimate(U, mu, model)` method. If `estimator` is not `None`, an `estimate(U, mu)`
+            method is added to the model which will call `estimator.estimate(U, mu, self)`.
         visualizer
-            A visualizer for the problem. This can be any object with
-            a `visualize(U, model, ...)` method. If `visualizer`
-            is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the model which forwards its arguments to the
-            visualizer's `visualize` method.
+            A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+            method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the visualizer's `visualize` method.
         cache_region
-            `None` or name of the cache region to use. See
-            :mod:`pymor.core.cache`.
+            `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
         name
             Name of the system.
 
@@ -1263,8 +1210,8 @@ class SecondOrderModel(InputStateOutputModel):
             (C_p + s C_v) (s^2 M + s E + K)^{-1} B + D.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is much smaller than the order of the system.
+            We assume that either the number of inputs or the number of outputs is much smaller than
+            the order of the system.
 
         Parameters
         ----------
@@ -1274,8 +1221,8 @@ class SecondOrderModel(InputStateOutputModel):
         Returns
         -------
         tfs
-            Transfer function evaluated at the complex number `s`,
-            |NumPy array| of shape `(self.output_dim, self.input_dim)`.
+            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
+            `(self.output_dim, self.input_dim)`.
         """
         M = self.M
         E = self.E
@@ -1305,8 +1252,8 @@ class SecondOrderModel(InputStateOutputModel):
                 (s^2 M + s E + K)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is much smaller than the order of the system.
+            We assume that either the number of inputs or the number of outputs is much smaller than
+            the order of the system.
 
         Parameters
         ----------
@@ -1316,8 +1263,8 @@ class SecondOrderModel(InputStateOutputModel):
         Returns
         -------
         dtfs
-            Derivative of transfer function evaluated at the complex
-            number `s`, |NumPy array| of shape `(self.output_dim, self.input_dim)`.
+            Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
+            shape `(self.output_dim, self.input_dim)`.
         """
         M = self.M
         E = self.E
@@ -1349,14 +1296,10 @@ class SecondOrderModel(InputStateOutputModel):
         typ
             The type of the Gramian:
 
-            - `'pc_lrcf'`: low-rank Cholesky factor of the position
-              controllability Gramian,
-            - `'vc_lrcf'`: low-rank Cholesky factor of the velocity
-              controllability Gramian,
-            - `'po_lrcf'`: low-rank Cholesky factor of the position
-              observability Gramian,
-            - `'vo_lrcf'`: low-rank Cholesky factor of the velocity
-              observability Gramian,
+            - `'pc_lrcf'`: low-rank Cholesky factor of the position controllability Gramian,
+            - `'vc_lrcf'`: low-rank Cholesky factor of the velocity controllability Gramian,
+            - `'po_lrcf'`: low-rank Cholesky factor of the position observability Gramian,
+            - `'vo_lrcf'`: low-rank Cholesky factor of the velocity observability Gramian,
             - `'pc_dense'`: dense position controllability Gramian,
             - `'vc_dense'`: dense velocity controllability Gramian,
             - `'po_dense'`: dense position observability Gramian,
@@ -1364,10 +1307,10 @@ class SecondOrderModel(InputStateOutputModel):
 
         Returns
         -------
-        If typ is `'pc_lrcf'`, `'vc_lrcf'`, `'po_lrcf'` or `'vo_lrcf'`,
-        then the Gramian factor as a |VectorArray| from `self.M.source`.
-        If typ is `'pc_dense'`, `'vc_dense'`, `'po_dense'` or
-        `'vo_dense'`, then the Gramian as a |NumPy array|.
+        If typ is `'pc_lrcf'`, `'vc_lrcf'`, `'po_lrcf'` or `'vo_lrcf'`, then the Gramian factor as a
+        |VectorArray| from `self.M.source`.
+        If typ is `'pc_dense'`, `'vc_dense'`, `'po_dense'` or `'vo_dense'`, then the Gramian as a
+        |NumPy array|.
         """
         if typ not in ['pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',
                        'pc_dense', 'vc_dense', 'po_dense', 'vo_dense']:
@@ -1483,8 +1426,8 @@ class LinearDelayModel(InputStateOutputModel):
             C x(k)
             + D u(k),
 
-    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`,
-    :math:`B`, :math:`C`, and :math:`D` are linear operators.
+    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`, :math:`C`, and :math:`D`
+    are linear operators.
 
     Parameters
     ----------
@@ -1505,20 +1448,15 @@ class LinearDelayModel(InputStateOutputModel):
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     estimator
-        An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, model)` method. If `estimator` is
-        not `None`, an `estimate(U, mu)` method is added to the
-        model which will call
-        `estimator.estimate(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an `estimate(U, mu, model)`
+        method. If `estimator` is not `None`, an `estimate(U, mu)` method is added to the model
+        which will call `estimator.estimate(U, mu, self)`.
     visualizer
-        A visualizer for the problem. This can be any object with
-        a `visualize(U, model, ...)` method. If `visualizer`
-        is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the model which forwards its arguments to the
-        visualizer's `visualize` method.
+        A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+        method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
+        the model which forwards its arguments to the visualizer's `visualize` method.
     cache_region
-        `None` or name of the cache region to use. See
-        :mod:`pymor.core.cache`.
+        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -1590,8 +1528,8 @@ class LinearDelayModel(InputStateOutputModel):
             + D.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is much smaller than the order of the system.
+            We assume that either the number of inputs or the number of outputs is much smaller than
+            the order of the system.
 
         Parameters
         ----------
@@ -1601,8 +1539,8 @@ class LinearDelayModel(InputStateOutputModel):
         Returns
         -------
         tfs
-            Transfer function evaluated at the complex number `s`,
-            |NumPy array| of shape `(self.output_dim, self.input_dim)`.
+            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
+            `(self.output_dim, self.input_dim)`.
         """
         A = self.A
         Ad = self.Ad
@@ -1634,8 +1572,8 @@ class LinearDelayModel(InputStateOutputModel):
                     - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is much smaller than the order of the system.
+            We assume that either the number of inputs or the number of outputs is much smaller than
+            the order of the system.
 
         Parameters
         ----------
@@ -1645,8 +1583,8 @@ class LinearDelayModel(InputStateOutputModel):
         Returns
         -------
         dtfs
-            Derivative of transfer function evaluated at the complex
-            number `s`, |NumPy array| of shape `(self.output_dim, self.input_dim)`.
+            Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
+            shape `(self.output_dim, self.input_dim)`.
         """
         A = self.A
         Ad = self.Ad
@@ -1695,9 +1633,8 @@ class LinearStochasticModel(InputStateOutputModel):
             C x(k)
             + D u(t),
 
-    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`,
-    :math:`B`, :math:`C`, and :math:`D` are linear operators and
-    :math:`\omega_i` are stochastic processes.
+    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`, :math:`C`, and :math:`D`
+    are linear operators and :math:`\omega_i` are stochastic processes.
 
     Parameters
     ----------
@@ -1716,20 +1653,15 @@ class LinearStochasticModel(InputStateOutputModel):
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     estimator
-        An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, model)` method. If `estimator` is
-        not `None`, an `estimate(U, mu)` method is added to the
-        model which will call
-        `estimator.estimate(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an `estimate(U, mu, model)`
+        method. If `estimator` is not `None`, an `estimate(U, mu)` method is added to the model
+        which will call `estimator.estimate(U, mu, self)`.
     visualizer
-        A visualizer for the problem. This can be any object with
-        a `visualize(U, model, ...)` method. If `visualizer`
-        is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the model which forwards its arguments to the
-        visualizer's `visualize` method.
+        A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+        method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
+        the model which forwards its arguments to the visualizer's `visualize` method.
     cache_region
-        `None` or name of the cache region to use. See
-        :mod:`pymor.core.cache`.
+        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -1816,9 +1748,8 @@ class BilinearModel(InputStateOutputModel):
             C x(k)
             + D u(t),
 
-    if discrete-time, where :math:`E`, :math:`A`, :math:`N_i`,
-    :math:`B`, :math:`C`, and :math:`D` are linear operators and
-    :math:`m` is the number of inputs.
+    if discrete-time, where :math:`E`, :math:`A`, :math:`N_i`, :math:`B`, :math:`C`, and :math:`D`
+    are linear operators and :math:`m` is the number of inputs.
 
     Parameters
     ----------
@@ -1837,20 +1768,15 @@ class BilinearModel(InputStateOutputModel):
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     estimator
-        An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, model)` method. If `estimator` is
-        not `None`, an `estimate(U, mu)` method is added to the
-        model which will call
-        `estimator.estimate(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an `estimate(U, mu, model)`
+        method. If `estimator` is not `None`, an `estimate(U, mu)` method is added to the model
+        which will call `estimator.estimate(U, mu, self)`.
     visualizer
-        A visualizer for the problem. This can be any object with
-        a `visualize(U, model, ...)` method. If `visualizer`
-        is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the model which forwards its arguments to the
-        visualizer's `visualize` method.
+        A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+        method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
+        the model which forwards its arguments to the visualizer's `visualize` method.
     cache_region
-        `None` or name of the cache region to use. See
-        :mod:`pymor.core.cache`.
+        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
