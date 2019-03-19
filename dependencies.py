@@ -30,7 +30,7 @@ def setup_requires(toml=False):
 
 tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker']
 install_requires = ['scipy>=1.1', 'Qt.py', 'packaging', 'Sphinx>=1.4.0','diskcache', 'docopt-ng'] + setup_requires()
-install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
+install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'ipyparallel': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',
                     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
