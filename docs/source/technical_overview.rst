@@ -92,7 +92,7 @@ operating on objects of the following types:
     representation of the operator as a |VectorArray| of length 1.
 
     Linear combinations of operators can be formed using a |LincombOperator|.
-    When such a linear combination is |assembled|, |assemble_lincomb|
+    When such a linear combination is |assembled|, |_assemble_lincomb|
     is called to ensure that, for instance, linear combinations of operators
     represented by a matrix lead to a new operator holding the linear
     combination of the matrices.
@@ -107,7 +107,7 @@ operating on objects of the following types:
     .. |apply2|            replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply2`
     .. |apply_inverse|     replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse`
     .. |assembled|         replace:: :meth:`assembled <pymor.operators.interfaces.OperatorInterface.assemble>`
-    .. |assemble_lincomb| replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.assemble_lincomb`
+    .. |_assemble_lincomb| replace:: :meth:`~pymor.operators.interfaces.OperatorInterface._assemble_lincomb`
     .. |as_vector|         replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.as_vector`
     .. |linear|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.linear`
     .. |range|             replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.range`

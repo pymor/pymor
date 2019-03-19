@@ -12,7 +12,6 @@ if config.HAVE_FENICS:
     from pymor.core.defaults import defaults
     from pymor.core.interfaces import BasicInterface
     from pymor.operators.basic import OperatorBase
-    from pymor.operators.constructions import ZeroOperator
     from pymor.vectorarrays.interfaces import _create_random_values
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
@@ -187,8 +186,10 @@ if config.HAVE_FENICS:
                 _apply_inverse(self.matrix, r.impl, v.impl, options)
             return R
 
-        def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-            if not all(isinstance(op, (FenicsMatrixOperator, ZeroOperator)) for op in operators):
+        def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+            if not all(isinstance(op, FenicsMatrixOperator) for op in operators):
+                return None
+            if identity_shift != 0:
                 return None
             assert not solver_options
 
@@ -197,8 +198,6 @@ if config.HAVE_FENICS:
             else:
                 matrix = operators[0].matrix * coefficients[0]
             for op, c in zip(operators[1:], coefficients[1:]):
-                if isinstance(op, ZeroOperator):
-                    continue
                 matrix.axpy(c, op.matrix, False)
                 # in general, we cannot assume the same nonzero pattern for # all matrices. how to improve this?
 

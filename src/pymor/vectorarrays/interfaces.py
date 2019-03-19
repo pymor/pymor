@@ -4,15 +4,11 @@
 
 from numbers import Number
 
-from packaging.version import Version
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.random import get_random_state
-
-
-_INDEXTYPES = (Number,) if Version(np.__version__) >= Version('1.9') else (Number, np.intp)
 
 
 class VectorArrayInterface(BasicInterface):
@@ -547,14 +543,14 @@ class VectorArrayInterface(BasicInterface):
         """Check if `ind` is an admissible list of indices in the sense of the class documentation."""
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, _INDEXTYPES) and -l <= ind < l
+                or isinstance(ind, Number) and -l <= ind < l
                 or isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind):
         """Check if `ind` is an admissible list of non-repeated indices in the sense of the class documentation."""
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, _INDEXTYPES) and -l <= ind < l
+                or isinstance(ind, Number) and -l <= ind < l
                 or isinstance(ind, (list, np.ndarray))
                 and len(set(i if i >= 0 else l+i for i in ind if -l <= i < l)) == len(ind))
 
@@ -569,7 +565,7 @@ class VectorArrayInterface(BasicInterface):
         """Return the number of specified unique indices."""
         l = len(self)
         return (len(range(*ind.indices(l))) if type(ind) is slice else
-                1 if isinstance(ind, _INDEXTYPES) else
+                1 if isinstance(ind, Number) else
                 len({i if i >= 0 else l+i for i in ind}))
 
     def normalize_ind(self, ind):

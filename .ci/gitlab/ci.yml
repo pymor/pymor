@@ -6,79 +6,121 @@ stages:
   - check install
   - deploy
 
-.retry:
-  retry:
-    max: 2
-    when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+.test_base:
+    retry:
+        max: 2
+        when:
+            - runner_system_failure
+            - stuck_or_timeout_failure
+            - api_failure
+    only: ['branches', 'tags', 'triggers', 'merge-requests']
 
 .pytest:
-    extends: .retry
+    extends: .test_base
     script: .ci/gitlab/script.bash
+    environment:
+        name: unsafe
     after_script:
       - .ci/gitlab/after_script.bash
-    only: ['branches', 'tags', 'triggers', 'merge-requests']
     artifacts:
         name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
         expire_in: 3 months
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
+            - .coverage
         reports:
             junit: test_results.xml
 
-3.6_numpy:
+numpy 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
-        DOCKER_TAG: "3.6"
-3.6_None:
+Vanilla 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
-        PYMOR_PYTEST_MARKER: "None"
-        DOCKER_TAG: "3.6"
-3.6_PIP_ONLY:
+        PYMOR_PYTEST_MARKER: "Vanilla"
+PIP_ONLY 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
-        DOCKER_TAG: "3.6"
-3.6_MPI:
+MPI 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
-        DOCKER_TAG: "3.6"
-3.7_None:
+Vanilla 3.7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
     variables:
-        PYMOR_PYTEST_MARKER: "None"
-        DOCKER_TAG: "3.7"
-3.7_PIP_ONLY:
+        PYMOR_PYTEST_MARKER: "Vanilla"
+PIP_ONLY 3.7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
-        DOCKER_TAG: "3.7"
-3.7_MPI:
+MPI 3.7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
-        DOCKER_TAG: "3.7"
+
+
+submit Vanilla 3.6:
+    extends: .test_base
+    image: pymor/python:3.6
+    stage: deploy
+    dependencies:
+        - Vanilla 3.6
+    environment:
+        name: safe
+    except:
+        - github/PR_.*
+    variables:
+        PYMOR_PYTEST_MARKER: "Vanilla"
+    script: .ci/gitlab/submit.bash
+submit Vanilla 3.7:
+    extends: .test_base
+    image: pymor/python:3.7
+    stage: deploy
+    dependencies:
+        - Vanilla 3.7
+    environment:
+        name: safe
+    except:
+        - github/PR_.*
+    variables:
+        PYMOR_PYTEST_MARKER: "Vanilla"
+    script: .ci/gitlab/submit.bash
+
+submit numpy 3.6:
+    extends: .test_base
+    image: pymor/python:3.6
+    stage: deploy
+    dependencies:
+        - numpy 3.6
+    environment:
+        name: safe
+    except:
+        - github/PR_.*
+    variables:
+        PYMOR_PYTEST_MARKER: "numpy"
+    script: .ci/gitlab/submit.bash
 
 .docker-in-docker:
-    extends: .retry
+    retry:
+        max: 2
+        when:
+            - always
     image: docker:stable
     variables:
         DOCKER_HOST: tcp://docker:2375/
@@ -90,27 +132,29 @@ stages:
         - mkdir -p ${SHARED_PATH}
     services:
         - docker:dind
-debian_stretch_pip:
+    environment:
+        name: unsafe
+pip debian stretch:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_stretch/Dockerfile .
 
-debian_buster_pip:
+pip debian buster:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_buster/Dockerfile .
 
-debian_testing_pip:
+pip debian testing:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
 
-centos_7_pip:
+pip centos 7:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/centos_7/Dockerfile .
 
-3.6_wheel:
+wheel 3.6:
     extends: .docker-in-docker
     stage: deploy
     only: ['branches', 'tags', 'triggers']
@@ -124,7 +168,7 @@ centos_7_pip:
         - ${CI_PROJECT_DIR}/shared/pymor*manylinux*whl
         expire_in: 1 week
 
-3.7_wheel:
+wheel 3.7:
     extends: .docker-in-docker
     stage: deploy
     only: ['branches', 'tags', 'triggers']

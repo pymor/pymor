@@ -24,7 +24,6 @@ from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import abstractmethod
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -334,13 +333,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         return self.H.apply_inverse(U, mu=mu, least_squares=least_squares)
 
-    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-        if not all(isinstance(op, (NumpyMatrixOperator, ZeroOperator, IdentityOperator)) for op in operators):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+        if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
             return None
 
         common_mat_dtype = reduce(np.promote_types,
                                   (op.matrix.dtype for op in operators if hasattr(op, 'matrix')))
-        common_coef_dtype = reduce(np.promote_types, (type(c) for c in coefficients))
+        common_coef_dtype = reduce(np.promote_types, (type(c) for c in coefficients + (identity_shift,)))
         common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
 
         if coefficients[0] == 1:
@@ -351,19 +350,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 matrix = matrix.astype(common_dtype)
 
         for op, c in zip(operators[1:], coefficients[1:]):
-            if type(op) is ZeroOperator:
-                continue
-            elif type(op) is IdentityOperator:
-                if c.imag == 0:
-                    c = c.real
-                if operators[0].sparse:
-                    try:
-                        matrix += (scipy.sparse.eye(matrix.shape[0]) * c)
-                    except NotImplementedError:
-                        matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * c)
-                else:
-                    matrix += (np.eye(matrix.shape[0]) * c)
-            elif c == 1:
+            if c == 1:
                 try:
                     matrix += op.matrix
                 except NotImplementedError:
@@ -378,6 +365,18 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     matrix += (op.matrix * c)
                 except NotImplementedError:
                     matrix = matrix + (op.matrix * c)
+
+        if identity_shift != 0:
+            if identity_shift.imag == 0:
+                identity_shift = identity_shift.real
+            if operators[0].sparse:
+                try:
+                    matrix += (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
+                except NotImplementedError:
+                    matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
+            else:
+                matrix += (np.eye(matrix.shape[0]) * identity_shift)
+
         return NumpyMatrixOperator(matrix,
                                    source_id=self.source.id,
                                    range_id=self.range.id,

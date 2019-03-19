@@ -8,47 +8,83 @@ stages:
   - check install
   - deploy
 
-.retry:
-  retry:
-    max: 2
-    when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+.test_base:
+    retry:
+        max: 2
+        when:
+            - runner_system_failure
+            - stuck_or_timeout_failure
+            - api_failure
+    only: ['branches', 'tags', 'triggers', 'merge-requests']
 
 .pytest:
-    extends: .retry
+    extends: .test_base
     script: .ci/gitlab/script.bash
+    environment:
+        name: unsafe
     after_script:
       - .ci/gitlab/after_script.bash
-    only: ['branches', 'tags', 'triggers', 'merge-requests']
     artifacts:
         name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
         expire_in: 3 months
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
+            - .coverage
         reports:
             junit: test_results.xml
 
-3.6_numpy:
+numpy 3.6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
-        DOCKER_TAG: "3.6"
 
 {%- for py, m in matrix %}
-{{py}}_{{m}}:
+{{m}} {{py}}:
     extends: .pytest
     image: pymor/testing:{{py}}
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "{{m}}"
-        DOCKER_TAG: "{{py}}"
 {%- endfor %}
 
+{# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
+{%- for py, m in matrix if m == 'Vanilla' %}
+submit {{m}} {{py}}:
+    extends: .test_base
+    image: pymor/python:{{py}}
+    stage: deploy
+    dependencies:
+        - {{m}} {{py}}
+    environment:
+        name: safe
+    except:
+        - github/PR_.*
+    variables:
+        PYMOR_PYTEST_MARKER: "{{m}}"
+    script: .ci/gitlab/submit.bash
+{%- endfor %}
+
+submit numpy 3.6:
+    extends: .test_base
+    image: pymor/python:3.6
+    stage: deploy
+    dependencies:
+        - numpy 3.6
+    environment:
+        name: safe
+    except:
+        - github/PR_.*
+    variables:
+        PYMOR_PYTEST_MARKER: "numpy"
+    script: .ci/gitlab/submit.bash
+
 .docker-in-docker:
-    extends: .retry
+    retry:
+        max: 2
+        when:
+            - always
     image: docker:stable
     variables:
         DOCKER_HOST: tcp://docker:2375/
@@ -60,16 +96,18 @@ stages:
         - mkdir -p ${SHARED_PATH}
     services:
         - docker:dind
+    environment:
+        name: unsafe
 
 {%- for OS in testos %}
-{{OS}}_pip:
+pip {{OS.replace('_', ' ')}}:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/{{OS}}/Dockerfile .
 {% endfor %}
 
 {%- for PY in pythons %}
-{{PY}}_wheel:
+wheel {{PY}}:
     extends: .docker-in-docker
     stage: deploy
     only: ['branches', 'tags', 'triggers']
@@ -96,7 +134,7 @@ import sys
 from itertools import product
 tpl = jinja2.Template(tpl)
 pythons = ['3.6', '3.7']
-marker = [None, "PIP_ONLY", "MPI"]
+marker = ["Vanilla", "PIP_ONLY", "MPI"]
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = list(product(pythons, marker))
     yml.write(tpl.render(matrix=matrix,testos=['debian_stretch', 'debian_buster', 'debian_testing', 'centos_7'], pythons=pythons))

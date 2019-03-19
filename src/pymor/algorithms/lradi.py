@@ -12,6 +12,7 @@ from pymor.vectorarrays.constructions import cat_arrays
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
+from pymor.tools.random import get_random_state
 
 
 @defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_init_maxiter',
@@ -58,9 +59,6 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
 
     This function uses the low-rank ADI iteration as described in
     Algorithm 4.3 in [PK16]_.
-    We assume in :func:`projection_shifts_init` for
-    `A.source.from_numpy` to be implemented if projecting (A, E) with B
-    does not give stable eigenvalues.
 
     Parameters
     ----------
@@ -169,15 +167,14 @@ def projection_shifts_init(A, E, B, shift_options):
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
+    random_state = get_random_state(seed=shift_options['init_seed'])
     for i in range(shift_options['init_maxiter']):
         Q = gram_schmidt(B, atol=0, rtol=0)
         shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
         shifts = shifts[shifts.real < 0]
         if shifts.size == 0:
             # use random subspace instead of span{B} (with same dimensions)
-            if shift_options['init_seed'] is not None:
-                np.random.seed(shift_options['init_seed'] + i)
-            B = B.space.from_numpy(np.random.randn(len(B), B.space.dim))
+            B = B.random(len(B), distribution='normal', random_state=random_state)
         else:
             return shifts
     raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')
