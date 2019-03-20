@@ -82,3 +82,4 @@ def plot(vtkfile_path, vmin, vmax):
     if size > 1:
         ws = interact(idx=IntSlider(min=0, max=size-1, step=1, value=0, description='Timestep:')).widget(plot._goto_idx)
         IPython.display.display(ws)
+    return plot

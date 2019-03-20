@@ -94,13 +94,13 @@ class PatchVisualizer(BasicInterface):
         else:
             if self.backend == 'jupyter':
                 from pymor.gui.jupyter import visualize_k3d_vtk
-                visualize_k3d_vtk(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                return visualize_k3d_vtk(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                   legend=legend, separate_colorbars=separate_colorbars,
                                   rescale_colorbars=rescale_colorbars, columns=columns)
             else:
                 block = self.block if block is None else block
                 from pymor.gui.qt import visualize_patch
-                visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                return visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                 legend=legend, separate_colorbars=separate_colorbars,
                                 rescale_colorbars=rescale_colorbars, backend=self.backend, block=block,
                                 columns=columns)
