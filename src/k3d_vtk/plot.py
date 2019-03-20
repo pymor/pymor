@@ -72,14 +72,17 @@ def plot(vtkfile_path, vmin, vmax):
     data = read_vtkfile(vtkfile_path)
     size = len(data)
 
-    xmin, xmax, ymin, ymax = 0, 1, 0, 1
-    zmin, zmax = 0, 0
+    # getbounds: (xmin, xmax, ymin, ymax, zmin, zmax)
+    bounds = np.stack([p[1].GetBounds() for p in data])
+    xmin, xmax = np.min(bounds[:, 0]), np.max(bounds[:, 1])
+    ymin, ymax = np.min(bounds[:, 2]), np.max(bounds[:, 3])
+    zmin, zmax = np.min(bounds[:, 4]), np.max(bounds[:, 5])
 
     # guesstimate
     fov_angle = 30
     absx = np.abs(xmax - xmin)
     # camera[posx, posy, posz, targetx, targety, targetz, upx, upy, upz]
-    c_dist = np.sin((90-fov_angle)*np.pi/180) * absx / (2 * np.sin(fov_angle*np.pi/180))
+    c_dist = np.sin((90 - fov_angle) * np.pi / 180) * absx / (2 * np.sin(fov_angle * np.pi / 180))
 
     plot = VTKPlot(data, vmin, vmax, grid_auto_fit=False, camera_auto_fit=False)
     # display needs to have been called before chaning camera
