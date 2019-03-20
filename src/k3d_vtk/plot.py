@@ -46,15 +46,9 @@ class VTKPlot(k3dPlot):
         if 'transform' in kwargs.keys() and len(vtk_data) > 1:
             raise RuntimeError('supplying transforms is currently not supported for teim series VTK Data')
 
-        model_matrix = model_matrix or (
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 1.0
-        )
         color_attribute = ('Data', vmin, vmax)
         self.mesh = k3d.vtk_poly_data(vtk_data[0][1], color_attribute=color_attribute,
-                                      color_map=color_map, model_matrix=model_matrix)
+                                      color_map=color_map)
         self.vtk_data = [_transform_to_k3d(v[0], v[1], color_attribute) for v in vtk_data]
         self.timestep = vtk_data[0][0]
         self += self.mesh
@@ -77,8 +71,23 @@ class VTKPlot(k3dPlot):
 def plot(vtkfile_path, vmin, vmax):
     data = read_vtkfile(vtkfile_path)
     size = len(data)
-    plot = VTKPlot(data, vmin, vmax, grid_auto_fit=False)
+
+    xmin, xmax, ymin, ymax = 0, 1, 0, 1
+    zmin, zmax = 0, 0
+
+    # guesstimate
+    fov_angle = 30
+    absx = np.abs(xmax - xmin)
+    # camera[posx, posy, posz, targetx, targety, targetz, upx, upy, upz]
+    c_dist = np.sin((90-fov_angle)*np.pi/180) * absx / (2 * np.sin(fov_angle*np.pi/180))
+
+    plot = VTKPlot(data, vmin, vmax, grid_auto_fit=False, camera_auto_fit=False)
+    # display needs to have been called before chaning camera
     plot.display()
+    plot.grid = (xmin, ymin, zmin, xmax, ymax, zmax)
+    plot.camera = ((xmax+xmin)/2,(ymax+ymin)/2,(zmax+zmin)/2 + c_dist,
+                   (xmax + xmin) / 2, (ymax + ymin) / 2, (zmax + zmin) / 2,
+                   0, 1, 0)
     if size > 1:
         ws = interact(idx=IntSlider(min=0, max=size-1, step=1, value=0, description='Timestep:')).widget(plot._goto_idx)
         IPython.display.display(ws)
