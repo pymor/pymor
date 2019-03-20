@@ -8,6 +8,12 @@
 
 # Contributors
 
+## pyMOR 2019.2
+
+* Linus Balicki, linus.balicki@ovgu.de
+    * improve projection shifts for low-rank ADI method for Lyapunov equations
+
+
 ## pyMOR 0.5
 
 * Linus Balicki, linus.balicki@ovgu.de
