@@ -63,6 +63,7 @@ elif [ "${PYMOR_PYTEST_MARKER}" == "OLDEST" ] ; then
     find src/pymor/ -name _*.so | xargs rm -f
     python setup.py build_ext -i
 
+    pip freeze
     # this runs in pytest in a fake, auto numbered, X Server
     xvfb-run -a py.test -r sxX --junitxml=test_results.xml
 elif [ "${PYMOR_PYTEST_MARKER}" == "MPI" ] ; then
