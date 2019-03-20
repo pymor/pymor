@@ -41,7 +41,7 @@ class ModelBase(ModelInterface):
             See docstring of `self.visualizer.visualize`.
         """
         if self.visualizer is not None:
-            self.visualizer.visualize(U, self, **kwargs)
+            return self.visualizer.visualize(U, self, **kwargs)
         else:
             raise NotImplementedError('Model has no visualizer.')
 
