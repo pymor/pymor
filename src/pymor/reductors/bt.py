@@ -178,7 +178,7 @@ class BRBTReductor(GenericBTReductor):
     solver_options
         The solver options to use to solve the positive Riccati equations.
     """
-    def __init__(self, fom, gamma, solver_options=None):
+    def __init__(self, fom, gamma=1, solver_options=None):
         super().__init__(fom)
         self.gamma = gamma
         self.solver_options = solver_options
@@ -192,10 +192,10 @@ class BRBTReductor(GenericBTReductor):
         options = self.solver_options
 
         cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(fom.output_dim),
+                                 R=self.gamma**2 * np.eye(fom.output_dim) if self.gamma != 1 else None,
                                  trans=False, options=options)
         of = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(fom.input_dim),
+                                 R=self.gamma**2 * np.eye(fom.input_dim) if self.gamma != 1 else None,
                                  trans=True, options=options)
         return cf, of
 
