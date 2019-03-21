@@ -111,7 +111,7 @@ class GenericBTReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        self.pg_reductor.reconstruct(u)
+        return self.pg_reductor.reconstruct(u)
 
 
 class BTReductor(GenericBTReductor):
