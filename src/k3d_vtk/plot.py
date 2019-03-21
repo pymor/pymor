@@ -36,7 +36,7 @@ def _transform_to_k3d(timestep, poly_data, color_attribute_name):
         np.array(vertices, np.float32), np.array(indices, np.uint32)
 
 
-def _get_colorbar(bounds, v_minmax, color_map):
+def _add_colorbar(vtkplot, bounds, v_minmax, color_map):
     z = (bounds[2] + bounds[5]) / 2
     gap = 0.1
     width = np.array([gap * np.abs(bounds[0]-bounds[3]), 0, 0])
@@ -45,9 +45,12 @@ def _get_colorbar(bounds, v_minmax, color_map):
     vertices = [grid_top_left, grid_bottom_left, grid_bottom_left - width, grid_top_left - width]
     indices = [[0, 3, 2], [1, 2, 0]]
     vertex_attribute = [1, 0, 0, 1]
-    bar = k3d.mesh(vertices, indices, attribute=vertex_attribute,
-                    color_map=color_map, color_range=v_minmax)
-    return bar
+    vtkplot += k3d.mesh(vertices, indices, attribute=vertex_attribute,
+                        color_map=color_map, color_range=v_minmax)
+    top = grid_top_left +    np.array([0, -0.2*gap, 0]) - 1.1 * width
+    bot = grid_bottom_left + np.array([0,  0.2*gap, 0]) - 1.1 * width
+    vtkplot += k3d.text(text=f'Max: {np.round(v_minmax[1])}', position=top, color=0, reference_point='rc')
+    vtkplot += k3d.text(text=f'Min: {np.round(v_minmax[0])}', position=bot, color=0, reference_point='rc')
 
 
 class VTKPlot(k3dPlot):
@@ -101,18 +104,18 @@ def plot(vtkfile_path, color_attribute_name, color_map=k3d.basic_color_maps.Cool
     # camera[posx, posy, posz, targetx, targety, targetz, upx, upy, upz]
     c_dist = np.sin((90 - fov_angle) * np.pi / 180) * absx / (2 * np.sin(fov_angle * np.pi / 180))
 
-    plot = VTKPlot(data, color_attribute_name=color_attribute_name,  grid_auto_fit=False, camera_auto_fit=False)
+    vtkplot = VTKPlot(data, color_attribute_name=color_attribute_name,  grid_auto_fit=False, camera_auto_fit=False)
     # display needs to have been called before chaning camera
-    plot.display()
-    plot.grid = combined_bounds
+    vtkplot.display()
+    vtkplot.grid = combined_bounds
     xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
     yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
     zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
-    plot.camera = (xhalf, yhalf, zhalf + c_dist,
-                   xhalf, yhalf, zhalf,
-                   0, 1, 0)
-    plot += _get_colorbar(combined_bounds, plot.value_minmax, color_map)
+    vtkplot.camera = (xhalf, yhalf, zhalf + c_dist,
+                      xhalf, yhalf, zhalf,
+                      0, 1, 0)
+    _add_colorbar(vtkplot, combined_bounds, vtkplot.value_minmax, color_map)
     if size > 1:
-        ws = interact(idx=IntSlider(min=0, max=size-1, step=1, value=0, description='Timestep:')).widget(plot._goto_idx)
+        ws = interact(idx=IntSlider(min=0, max=size-1, step=1, value=0, description='Timestep:')).widget(vtkplot._goto_idx)
         IPython.display.display(ws)
-    return plot
+    return vtkplot
