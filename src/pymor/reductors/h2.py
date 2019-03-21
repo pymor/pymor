@@ -216,7 +216,7 @@ class IRKAReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.V[:u.dim].lincomb(u.to_numpy())
+        return self.pg_reductor.reconstruct(u)
 
 
 class OneSidedIRKAReductor(BasicInterface):
@@ -455,7 +455,7 @@ class OneSidedIRKAReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.V[:u.dim].lincomb(u.to_numpy())
+        return self.pg_reductor.reconstruct(u)
 
 
 class TSIAReductor(BasicInterface):
@@ -597,7 +597,7 @@ class TSIAReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        self.pg_reductor.reconstruct(u)
+        return self.pg_reductor.reconstruct(u)
 
 
 class TF_IRKAReductor(BasicInterface):
