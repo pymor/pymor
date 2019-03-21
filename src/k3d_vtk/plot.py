@@ -44,7 +44,7 @@ def _add_colorbar(vtkplot, bounds, v_minmax, color_map):
     grid_bottom_left = np.array([bounds[0] - gap, bounds[1], z])
     vertices = [grid_top_left, grid_bottom_left, grid_bottom_left - width, grid_top_left - width]
     indices = [[0, 3, 2], [1, 2, 0]]
-    vertex_attribute = [1, 0, 0, 1]
+    vertex_attribute = [v_minmax[1], v_minmax[0], v_minmax[0], v_minmax[1]]
     vtkplot += k3d.mesh(vertices, indices, attribute=vertex_attribute,
                         color_map=color_map, color_range=v_minmax)
     top = grid_top_left +    np.array([0, -0.2*gap, 0]) - 1.1 * width
