@@ -119,15 +119,15 @@ class InputOutputModel(ModelBase):
 class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
 
-    def __init__(self, input_space, state_space, output_space, cont_time=True,
+    def __init__(self, input_space, solution_space, output_space, cont_time=True,
                  estimator=None, visualizer=None, cache_region='memory', name=None):
         super().__init__(input_space, output_space, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
-        self.state_space = state_space
+        self.solution_space = solution_space
 
     @property
     def order(self):
-        return self.state_space.dim
+        return self.solution_space.dim
 
 
 class LTIModel(InputStateOutputModel):
@@ -233,7 +233,6 @@ class LTIModel(InputStateOutputModel):
         self.C = C
         self.D = D
         self.E = E
-        self.solution_space = A.source
         self.solver_options = solver_options
 
     @classmethod
@@ -489,7 +488,7 @@ class LTIModel(InputStateOutputModel):
         C = BlockRowOperator([self.C, other.C])
         D = self.D + other.D
         if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space]))
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
@@ -511,7 +510,7 @@ class LTIModel(InputStateOutputModel):
         else:
             D = self.D - other.D
         if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.state_space, other.state_space]))
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
@@ -1021,7 +1020,6 @@ class SecondOrderModel(InputStateOutputModel):
         self.Cp = Cp
         self.Cv = Cv
         self.D = D
-        self.solution_space = M.source
         self.solver_options = solver_options
 
     @classmethod
@@ -1575,7 +1573,6 @@ class LinearDelayModel(InputStateOutputModel):
         self.C = C
         self.D = D
         self.E = E
-        self.solution_space = A.source
         self.tau = tau
         self.q = len(Ad)
 
@@ -1783,7 +1780,6 @@ class LinearStochasticModel(InputStateOutputModel):
         self.C = C
         self.D = D
         self.E = E
-        self.solution_space = A.source
         self.q = len(As)
 
 
@@ -1892,7 +1888,7 @@ class BilinearModel(InputStateOutputModel):
 
         assert cont_time in (True, False)
 
-        super().__init__(B.source, C.range, state_space=A.source, cont_time=cont_time,
+        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
@@ -1902,5 +1898,4 @@ class BilinearModel(InputStateOutputModel):
         self.C = C
         self.D = D
         self.E = E
-        self.solution_space = A.source
         self.linear = False

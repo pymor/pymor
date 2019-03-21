@@ -92,8 +92,8 @@ class GenericBHIReductor(BasicInterface):
             c = self.fom.output_space.ones(r)
 
         # compute projection matrices
-        self.V = self.fom.state_space.empty(reserve=r)
-        self.W = self.fom.state_space.empty(reserve=r)
+        self.V = self.fom.solution_space.empty(reserve=r)
+        self.W = self.fom.solution_space.empty(reserve=r)
         for i in range(r):
             if sigma[i].imag == 0:
                 Bb = self._B_apply(sigma[i].real, b.real[i])
