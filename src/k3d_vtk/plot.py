@@ -1,7 +1,6 @@
 import IPython
 from ipywidgets import IntSlider, interact, widgets
 from k3d.helpers import minmax
-from k3d.objects import Texture
 from k3d_vtk.reader import read_vtkfile
 from k3d.plot import Plot as k3dPlot
 import k3d
@@ -29,7 +28,7 @@ def _transform_to_k3d(timestep, poly_data, color_attribute_name):
         color_range = minmax(attribute)
     else:
         attribute = []
-        color_range = [-np.inf, np.inf]
+        color_range = [0,-1,]#[-np.inf, np.inf]
     vertices = numpy_support.vtk_to_numpy(poly_data.GetPoints().GetData())
     indices = numpy_support.vtk_to_numpy(poly_data.GetPolys().GetData()).reshape(-1, 4)[:, 1:4]
 
@@ -37,13 +36,23 @@ def _transform_to_k3d(timestep, poly_data, color_attribute_name):
         np.array(vertices, np.float32), np.array(indices, np.uint32)
 
 
-def get_colorbar(vtk_data, v_minmax):
-    var = Texture()
+def _get_colorbar(bounds, v_minmax, color_map):
+    z = (bounds[2] + bounds[5]) / 2
+    gap = 0.1
+    width = np.array([gap * np.abs(bounds[0]-bounds[3]), 0, 0])
+    grid_top_left = np.array([bounds[0] - gap, bounds[4], z])
+    grid_bottom_left = np.array([bounds[0] - gap, bounds[1], z])
+    vertices = [grid_top_left, grid_bottom_left, grid_bottom_left - width, grid_top_left - width]
+    indices = [[0, 3, 2], [1, 2, 0]]
+    vertex_attribute = [1, 0, 0, 1]
+    bar = k3d.mesh(vertices, indices, attribute=vertex_attribute,
+                    color_map=color_map, color_range=v_minmax)
+    return bar
 
 
 class VTKPlot(k3dPlot):
     def __init__(self, vtk_data, color_attribute_name='Data',
-                 model_matrix=None, color_map=k3d.basic_color_maps.CoolWarm,
+                 color_map=k3d.basic_color_maps.CoolWarm,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -53,10 +62,9 @@ class VTKPlot(k3dPlot):
             raise RuntimeError('supplying transforms is currently not supported for teim series VTK Data')
 
         self.vtk_data = np.stack([_transform_to_k3d(v[0], v[1], color_attribute_name) for v in vtk_data])
-        v_minmax = (np.nanmin(self.vtk_data[:, 2]), np.nanmax(self.vtk_data[:, 3]))
-        self.mesh = k3d.vtk_poly_data(vtk_data[0][1], color_attribute=(color_attribute_name, *v_minmax),
+        self.value_minmax = (np.nanmin(self.vtk_data[:, 2]), np.nanmax(self.vtk_data[:, 3]))
+        self.mesh = k3d.vtk_poly_data(vtk_data[0][1], color_attribute=(color_attribute_name, *self.value_minmax),
                                       color_map=color_map)
-        colorbar = get_colorbar(vtk_data, v_minmax)
         self.timestep = vtk_data[0][0]
         self += self.mesh
 
@@ -75,29 +83,35 @@ class VTKPlot(k3dPlot):
         self._goto_idx(self.idx+1)
 
 
-def plot(vtkfile_path, color_attribute_name):
+def plot(vtkfile_path, color_attribute_name, color_map=k3d.basic_color_maps.CoolWarm):
     data = read_vtkfile(vtkfile_path)
     size = len(data)
 
     # getbounds: (xmin, xmax, ymin, ymax, zmin, zmax)
-    bounds = np.stack([p[1].GetBounds() for p in data])
-    xmin, xmax = np.min(bounds[:, 0]), np.max(bounds[:, 1])
-    ymin, ymax = np.min(bounds[:, 2]), np.max(bounds[:, 3])
-    zmin, zmax = np.min(bounds[:, 4]), np.max(bounds[:, 5])
-
+    all_bounds = np.stack([p[1].GetBounds() for p in data])
+    combined_bounds = np.array([np.min(all_bounds[:, 0]),
+                                np.min(all_bounds[:, 2]),
+                                np.min(all_bounds[:, 4]),
+                                np.max(all_bounds[:, 1]),
+                                np.max(all_bounds[:, 3]),
+                                np.max(all_bounds[:, 5])])
     # guesstimate
     fov_angle = 30
-    absx = np.abs(xmax - xmin)
+    absx = np.abs(combined_bounds[0] - combined_bounds[3])
     # camera[posx, posy, posz, targetx, targety, targetz, upx, upy, upz]
     c_dist = np.sin((90 - fov_angle) * np.pi / 180) * absx / (2 * np.sin(fov_angle * np.pi / 180))
 
     plot = VTKPlot(data, color_attribute_name=color_attribute_name,  grid_auto_fit=False, camera_auto_fit=False)
     # display needs to have been called before chaning camera
     plot.display()
-    plot.grid = (xmin, ymin, zmin, xmax, ymax, zmax)
-    plot.camera = ((xmax+xmin)/2,(ymax+ymin)/2,(zmax+zmin)/2 + c_dist,
-                   (xmax + xmin) / 2, (ymax + ymin) / 2, (zmax + zmin) / 2,
+    plot.grid = combined_bounds
+    xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
+    yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
+    zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
+    plot.camera = (xhalf, yhalf, zhalf + c_dist,
+                   xhalf, yhalf, zhalf,
                    0, 1, 0)
+    plot += _get_colorbar(combined_bounds, plot.value_minmax, color_map)
     if size > 1:
         ws = interact(idx=IntSlider(min=0, max=size-1, step=1, value=0, description='Timestep:')).widget(plot._goto_idx)
         IPython.display.display(ws)
