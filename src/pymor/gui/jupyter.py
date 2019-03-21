@@ -188,11 +188,8 @@ def visualize_k3d_vtk(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=Non
     filename_base = 'foo'
     write_vtk(grid, NumpyVectorSpace.make_array(U[0]), filename_base, codim=codim)
 
-    vmin = min(np.min(u[0]) for u in U)
-    vmax = max(np.max(u[0]) for u in U)
-
     from k3d_vtk.plot import plot
-    return plot(f'{filename_base}.pvd', vmin, vmax)
+    return plot(f'{filename_base}.pvd', color_attribute_name='Data')
 
 
 
