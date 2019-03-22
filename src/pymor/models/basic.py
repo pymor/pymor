@@ -129,6 +129,16 @@ class StationaryModel(ModelBase):
         self.build_parameter_type(operator, rhs)
         self.parameter_space = parameter_space
 
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    parameter type: {self.parameter_type}\n'
+            f'    {"" if self.linear else "non-"}linear\n'
+            f'    number of equations: {self.solution_space.dim}\n'
+            f'    number of outputs:   {len(self.outputs)}'
+        )
+
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
 
@@ -252,6 +262,16 @@ class InstationaryModel(ModelBase):
         self.linear = operator.linear and all(output.linear for output in self.outputs.values())
         self.build_parameter_type(self.initial_data, self.operator, self.rhs, self.mass, provides={'_t': 0})
         self.parameter_space = parameter_space
+
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    parameter type: {self.parameter_type}\n'
+            f'    {"" if self.linear else "non-"}linear\n'
+            f'    number of equations: {self.solution_space.dim}\n'
+            f'    number of outputs:   {len(self.outputs)}'
+        )
 
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
