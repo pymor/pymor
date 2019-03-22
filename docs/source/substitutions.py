@@ -97,19 +97,21 @@ common = '''
 .. |StationaryModels| replace:: :class:`StationaryModels <pymor.models.basic.StationaryModel>`
 .. |InstationaryModel| replace:: :class:`~pymor.models.basic.InstationaryModel`
 
+.. |LTIModel| replace:: :class:`~pymor.models.iosys.LTIModel`
+.. |LTIModels| replace:: :class:`LTIModels <pymor.models.iosys.LTIModel>`
+.. |TransferFunction| replace:: :class:`~pymor.models.iosys.TransferFunction`
+.. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.models.iosys.TransferFunction>`
+.. |SecondOrderModel| replace:: :class:`~pymor.models.iosys.SecondOrderModel`
+.. |SecondOrderModels| replace:: :class:`SecondOrderModels <pymor.models.iosys.SecondOrderModel>`
+.. |LinearDelayModel| replace:: :class:`~pymor.models.iosys.LinearDelayModel`
+.. |LinearDelayModels| replace:: :class:`LinearDelayModels <pymor.models.iosys.LinearDelayModel>`
+
 .. |ParameterType| replace:: :class:`~pymor.parameters.base.ParameterType`
 .. |ParameterTypes| replace:: :class:`ParameterTypes <pymor.parameters.base.ParameterType>`
 .. |Parameter| replace:: :class:`~pymor.parameters.base.Parameter`
 .. |Parameters| replace:: :class:`Parameters <pymor.parameters.base.Parameter>`
 .. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
 .. |parametric| replace:: :attr:`~pymor.parameters.base.Parametric.parametric`
-
-.. |LTIModel| replace:: :class:`~pymor.models.iosys.LTIModel`
-.. |LTIModels| replace:: :class:`LTIModels <pymor.models.iosys.LTIModel>`
-.. |SecondOrderModel| replace:: :class:`~pymor.models.iosys.SecondOrderModel`
-.. |SecondOrderModels| replace:: :class:`SecondOrderModels <pymor.models.iosys.SecondOrderModel>`
-.. |TransferFunction| replace:: :class:`~pymor.models.iosys.TransferFunction`
-.. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.models.iosys.TransferFunction>`
 
 .. |NumPy| replace:: :mod:`NumPy <numpy>`
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`

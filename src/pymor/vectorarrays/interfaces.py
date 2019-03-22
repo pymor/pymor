@@ -133,8 +133,8 @@ class VectorArrayInterface(BasicInterface):
         Note that not all random distributions are necessarily implemented
         by all |VectorSpace| implementations.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         count
             The number of vectors.
         distribution
@@ -726,8 +726,8 @@ class VectorSpaceInterface(ImmutableInterface):
         Note that not all random distributions are necessarily implemented
         by all |VectorSpace| implementations.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         count
             The number of vectors.
         distribution
