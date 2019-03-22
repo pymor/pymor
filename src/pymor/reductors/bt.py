@@ -26,23 +26,23 @@ class GenericBTReductor(BasicInterface):
         self.fom = fom
         self.V = None
         self.W = None
-        self.sv = None
-        self.sU = None
-        self.sV = None
+        self._sv = None
+        self._sU = None
+        self._sV = None
 
-    def gramians(self):
+    def _gramians(self):
         """Return low-rank Cholesky factors of Gramians."""
         raise NotImplementedError
 
-    def sv_U_V(self):
+    def _sv_U_V(self):
         """Return singular values and vectors."""
-        if self.sv is None or self.sU is None or self.sV is None:
-            cf, of = self.gramians()
+        if self._sv is None or self._sU is None or self._sV is None:
+            cf, of = self._gramians()
             U, sv, Vh = spla.svd(self.fom.E.apply2(of, cf), lapack_driver='gesvd')
-            self.sv = sv
-            self.sU = U.T
-            self.sV = Vh
-        return self.sv, self.sU, self.sV
+            self._sv = sv
+            self._sU = U.T
+            self._sV = Vh
+        return self._sv, self._sU, self._sV
 
     def error_bounds(self):
         """Returns error bounds for all possible reduced orders."""
@@ -79,8 +79,8 @@ class GenericBTReductor(BasicInterface):
         assert r is None or 0 < r < self.fom.order
         assert projection in ('sr', 'bfsr', 'biorth')
 
-        cf, of = self.gramians()
-        sv, sU, sV = self.sv_U_V()
+        cf, of = self._gramians()
+        sv, sU, sV = self._sv_U_V()
 
         # find reduced order if tol is specified
         if tol is not None:
@@ -124,11 +124,11 @@ class BTReductor(GenericBTReductor):
     fom
         The system which is to be reduced.
     """
-    def gramians(self):
+    def _gramians(self):
         return self.fom.gramian('c_lrcf'), self.fom.gramian('o_lrcf')
 
     def error_bounds(self):
-        sv = self.sv_U_V()[0]
+        sv = self._sv_U_V()[0]
         return 2 * sv[:0:-1].cumsum()[::-1]
 
 
@@ -148,7 +148,7 @@ class LQGBTReductor(GenericBTReductor):
         super().__init__(fom)
         self.solver_options = solver_options
 
-    def gramians(self):
+    def _gramians(self):
         A = self.fom.A
         B = self.fom.B
         C = self.fom.C
@@ -160,7 +160,7 @@ class LQGBTReductor(GenericBTReductor):
         return cf, of
 
     def error_bounds(self):
-        sv = self.sv_U_V()[0]
+        sv = self._sv_U_V()[0]
         return 2 * (sv[:0:-1] / np.sqrt(1 + sv[:0:-1] ** 2)).cumsum()[::-1]
 
 
@@ -183,7 +183,7 @@ class BRBTReductor(GenericBTReductor):
         self.gamma = gamma
         self.solver_options = solver_options
 
-    def gramians(self):
+    def _gramians(self):
         fom = self.fom
         A = fom.A
         B = fom.B
@@ -200,5 +200,5 @@ class BRBTReductor(GenericBTReductor):
         return cf, of
 
     def error_bounds(self):
-        sv = self.sv_U_V()[0]
+        sv = self._sv_U_V()[0]
         return 2 * sv[:0:-1].cumsum()[::-1]
