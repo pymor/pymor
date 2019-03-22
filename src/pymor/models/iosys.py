@@ -238,6 +238,18 @@ class LTIModel(InputStateOutputModel):
         self.build_parameter_type(A, B, C, D, E)
         self.parameter_space = parameter_space
 
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    parameter type: {self.parameter_type}\n'
+            f'    linear time-invariant\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    number of equations: {self.order}\n'
+            f'    number of inputs:    {self.input_dim}\n'
+            f'    number of outputs:   {self.output_dim}'
+        )
+
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
                       state_id='STATE', solver_options=None, estimator=None,
@@ -884,6 +896,17 @@ class TransferFunction(InputOutputModel):
         self.parameter_type = parameter_space.parameter_type if parameter_space else None
         self.parameter_space = parameter_space
 
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    parameter type: {self.parameter_type}\n'
+            f'    linear time-invariant\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    number of inputs:  {self.input_dim}\n'
+            f'    number of outputs: {self.output_dim}'
+        )
+
     def eval_tf(self, s, mu=None):
         if not self.parametric:
             return self.tf(s)
@@ -1126,6 +1149,19 @@ class SecondOrderModel(InputStateOutputModel):
         self.solver_options = solver_options
         self.build_parameter_type(M, E, K, B, Cp, Cv, D)
         self.parameter_space = parameter_space
+
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    parameter type: {self.parameter_type}\n'
+            f'    linear time-invariant\n'
+            f'    second-order\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    number of equations: {self.order}\n'
+            f'    number of inputs:    {self.input_dim}\n'
+            f'    number of outputs:   {self.output_dim}'
+        )
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
@@ -1780,6 +1816,19 @@ class LinearDelayModel(InputStateOutputModel):
         self.build_parameter_type(A, *Ad, B, C, D, E)
         self.parameter_space = parameter_space
 
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    parameter type: {self.parameter_type}\n'
+            f'    linear time-invariant\n'
+            f'    time-delay\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    number of equations: {self.order}\n'
+            f'    number of inputs:    {self.input_dim}\n'
+            f'    number of outputs:   {self.output_dim}'
+        )
+
     def __add__(self, other):
         """Add an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
         assert self.cont_time == other.cont_time
@@ -2153,6 +2202,19 @@ class LinearStochasticModel(InputStateOutputModel):
         self.E = E
         self.q = len(As)
 
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    parameter type: {self.parameter_type}\n'
+            f'    linear time-invariant\n'
+            f'    stochastic\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    number of equations: {self.order}\n'
+            f'    number of inputs:    {self.input_dim}\n'
+            f'    number of outputs:   {self.output_dim}\n'
+        )
+
 
 class BilinearModel(InputStateOutputModel):
     r"""Class for bilinear systems.
@@ -2266,3 +2328,15 @@ class BilinearModel(InputStateOutputModel):
         self.D = D
         self.E = E
         self.linear = False
+
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    parameter type: {self.parameter_type}\n'
+            f'    bilinear time-invariant\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    number of equations: {self.order}\n'
+            f'    number of inputs:    {self.input_dim}\n'
+            f'    number of outputs:   {self.output_dim}'
+        )
