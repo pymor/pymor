@@ -154,11 +154,11 @@ class IRKAReductor(BasicInterface):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        interp_reductor = LTI_BHIReductor(fom)
+        self.pg_reductor = LTI_BHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
-            rom = interp_reductor.reduce(sigma, b, c, projection=projection, use_arnoldi=use_arnoldi)
+            rom = self.pg_reductor.reduce(sigma, b, c, projection=projection, use_arnoldi=use_arnoldi)
 
             # new interpolation points and tangential directions
             poles, b, c = _poles_and_tangential_directions(rom)
@@ -199,15 +199,15 @@ class IRKAReductor(BasicInterface):
                 break
 
         # final reduced order model
-        rom = interp_reductor.reduce(sigma, b, c, projection=projection, use_arnoldi=use_arnoldi)
-        self.V = interp_reductor.V
-        self.W = interp_reductor.W
+        rom = self.pg_reductor.reduce(sigma, b, c, projection=projection, use_arnoldi=use_arnoldi)
+        self.V = self.pg_reductor.V
+        self.W = self.pg_reductor.W
 
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.V[:u.dim].lincomb(u.to_numpy())
+        return self.pg_reductor.reconstruct(u)
 
 
 class OneSidedIRKAReductor(BasicInterface):
@@ -437,7 +437,7 @@ class OneSidedIRKAReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.V[:u.dim].lincomb(u.to_numpy())
+        return self.pg_reductor.reconstruct(u)
 
 
 class TSIAReductor(BasicInterface):
@@ -572,7 +572,7 @@ class TSIAReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        self.pg_reductor.reconstruct(u)
+        return self.pg_reductor.reconstruct(u)
 
 
 class TF_IRKAReductor(BasicInterface):

@@ -90,7 +90,7 @@ class GenericSOBTpvReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        self.pg_reductor.reconstruct(u)
+        return self.pg_reductor.reconstruct(u)
 
 
 class SOBTpReductor(GenericSOBTpvReductor):
@@ -261,7 +261,7 @@ class SOBTfvReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        self.pg_reductor.reconstruct(u)
+        return self.pg_reductor.reconstruct(u)
 
 
 class SOBTReductor(BasicInterface):

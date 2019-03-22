@@ -125,7 +125,7 @@ class GenericBHIReductor(BasicInterface):
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.RB[:u.dim].lincomb(u.to_numpy())
+        return self.pg_reductor.reconstruct(u)
 
 
 class LTI_BHIReductor(GenericBHIReductor):

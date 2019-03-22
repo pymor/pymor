@@ -154,11 +154,11 @@ class SOR_IRKAReductor(BasicInterface):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        interp_reductor = SO_BHIReductor(fom)
+        self.pg_reductor = SO_BHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
-            rom = interp_reductor.reduce(sigma, b, c, projection=projection)
+            rom = self.pg_reductor.reduce(sigma, b, c, projection=projection)
 
             # reduction to a system with r poles
             with self.logger.block('Intermediate reduction ...'):
@@ -204,12 +204,12 @@ class SOR_IRKAReductor(BasicInterface):
                 break
 
         # final reduced order model
-        rom = interp_reductor.reduce(sigma, b, c, projection=projection)
-        self.V = interp_reductor.V
-        self.W = interp_reductor.W
+        rom = self.pg_reductor.reduce(sigma, b, c, projection=projection)
+        self.V = self.pg_reductor.V
+        self.W = self.pg_reductor.W
 
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.V[:u.dim].lincomb(u.to_numpy())
+        return self.pg_reductor.reconstruct(u)
