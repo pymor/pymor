@@ -868,6 +868,18 @@ class TransferFunction(InputOutputModel):
         dH = lambda s: other.eval_dtf(s) @ self.eval_dtf(s)
         return self.with_(H=H, dH=dH)
 
+    @cached
+    def h2_norm(self):
+        """Compute the H2-norm using quadrature."""
+        if not self.cont_time:
+            raise NotImplementedError
+
+        import scipy.integrate as spint
+        h2_int, _ = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
+                               -np.inf, np.inf,
+                               epsabs=0)
+        return np.sqrt(h2_int / 2 / np.pi)
+
 
 class SecondOrderModel(InputStateOutputModel):
     r"""Class for linear second order systems.
