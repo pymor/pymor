@@ -148,15 +148,7 @@ class IRKAReductor(BasicInterface):
                 np.random.seed(c)
                 c = fom.C.range.random(r, distribution='normal', seed=c)
 
-        # being logging
         self.logger.info('Starting IRKA')
-        if not compute_errors:
-            self.logger.info('iter | conv. criterion')
-            self.logger.info('-----+----------------')
-        else:
-            self.logger.info('iter | conv. criterion | rel. H_2-error')
-            self.logger.info('-----+-----------------+----------------')
-
         self.dist = []
         self.sigmas = [np.array(sigma)]
         self.R = [b]
@@ -191,9 +183,8 @@ class IRKAReductor(BasicInterface):
                     self.dist.append(dist)
 
             # report convergence
-            if not compute_errors:
-                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
-            else:
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
+            if compute_errors:
                 if np.max(rom.poles().real) < 0:
                     err = fom - rom
                     rel_H2_err = err.h2_norm() / fom.h2_norm()
@@ -201,7 +192,7 @@ class IRKAReductor(BasicInterface):
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
 
-                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e} | {rel_H2_err:15.9e}')
+                self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:
@@ -349,15 +340,7 @@ class OneSidedIRKAReductor(BasicInterface):
                 elif isinstance(c, int):
                     c = fom.C.range.random(r, distribution='normal', seed=c)
 
-        # begin logging
         self.logger.info('Starting one-sided IRKA')
-        if not compute_errors:
-            self.logger.info('iter | conv. criterion')
-            self.logger.info('-----+----------------')
-        else:
-            self.logger.info('iter | conv. criterion | rel. H_2-error')
-            self.logger.info('-----+-----------------+----------------')
-
         self.dist = []
         self.sigmas = [np.array(sigma)]
         if self.version == 'V':
@@ -396,9 +379,8 @@ class OneSidedIRKAReductor(BasicInterface):
                     self.dist.append(dist)
 
             # report convergence
-            if not compute_errors:
-                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
-            else:
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
+            if compute_errors:
                 if np.max(rom.poles().real) < 0:
                     err = fom - rom
                     rel_H2_err = err.h2_norm() / fom.h2_norm()
@@ -406,7 +388,7 @@ class OneSidedIRKAReductor(BasicInterface):
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
 
-                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e} | {rel_H2_err:15.9e}')
+                self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:
@@ -531,12 +513,6 @@ class TSIAReductor(BasicInterface):
 
         # begin logging
         self.logger.info('Starting TSIA')
-        if not compute_errors:
-            self.logger.info('iter | conv. criterion')
-            self.logger.info('-----+----------------')
-        else:
-            self.logger.info('iter | conv. criterion | rel. H_2-error')
-            self.logger.info('-----+-----------------+----------------')
 
         # find initial projection matrices
         self._projection_matrices(rom0, projection)
@@ -557,9 +533,8 @@ class TSIAReductor(BasicInterface):
             self.dist.append(dist)
 
             # report convergence
-            if not compute_errors:
-                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
-            else:
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
+            if compute_errors:
                 if np.max(rom.poles().real) < 0:
                     err = fom - rom
                     rel_H2_err = err.h2_norm() / fom.h2_norm()
@@ -567,7 +542,7 @@ class TSIAReductor(BasicInterface):
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
 
-                self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e} | {rel_H2_err:15.9e}')
+                self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
 
             # new projection matrices
             self._projection_matrices(rom, projection)
@@ -713,11 +688,7 @@ class TF_IRKAReductor(BasicInterface):
                 np.random.seed(c)
                 c = np.random.randn(fom.output_dim, r)
 
-        # begin logging
         self.logger.info('Starting TF-IRKA')
-        self.logger.info('iter | conv. criterion')
-        self.logger.info('-----+----------------')
-
         self.dist = []
         self.sigmas = [np.array(sigma)]
         self.R = [b]
@@ -753,7 +724,7 @@ class TF_IRKAReductor(BasicInterface):
                     self.dist.append(dist)
 
             # report convergence
-            self.logger.info(f'{it+1:4d} | {self.dist[-1]:15.9e}')
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
 
             # check if convergence criterion is satisfied
             if self.dist[-1] < tol:
