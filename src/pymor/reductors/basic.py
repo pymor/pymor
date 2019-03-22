@@ -207,7 +207,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the
         the Euclidean inner product is used.
     initial_data_product
-        Inner product |Operator| w.r.t. which the `initial_data` of `fom` is orthogonally projected. 
+        Inner product |Operator| w.r.t. which the `initial_data` of `fom` is orthogonally projected.
         If `None`, the Euclidean inner product is used.
     product_is_mass
         If `True`, no mass matrix for the reduced |Model| is assembled.  Set to `True` if `RB` is
@@ -338,7 +338,7 @@ class LTIPGReductor(ProjectionBasedReductor):
 
 
 class SOLTIPGReductor(ProjectionBasedReductor):
-    """Petrov-Galerkin projection of an |SOLTIModel|.
+    """Petrov-Galerkin projection of an |SecondOrderModel|.
 
     Parameters
     ----------
@@ -395,7 +395,7 @@ class SOLTIPGReductor(ProjectionBasedReductor):
 
 
 class DelayLTIPGReductor(ProjectionBasedReductor):
-    """Petrov-Galerkin projection of an |DelayLTIModel|.
+    """Petrov-Galerkin projection of an |LinearDelayModel|.
 
     Parameters
     ----------
