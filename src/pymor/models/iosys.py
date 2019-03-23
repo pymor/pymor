@@ -13,7 +13,7 @@ from pymor.core.config import config
 from pymor.models.basic import ModelBase
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
-from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
+from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 
@@ -497,11 +497,11 @@ class LTIModel(InputStateOutputModel):
         if not isinstance(other, LTIModel):
             return NotImplemented
 
-        A = BlockOperator([[self.A, Concatenation(self.B, other.C)],
+        A = BlockOperator([[self.A, self.B @ other.C],
                            [None, other.A]])
-        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B])
-        C = BlockRowOperator([self.C, Concatenation(self.D, other.C)])
-        D = Concatenation(self.D, other.D)
+        B = BlockColumnOperator([self.B @ other.D, other.B])
+        C = BlockRowOperator([self.C, self.D @ other.C])
+        D = self.D @ other.D
         E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
 
@@ -1181,14 +1181,14 @@ class SecondOrderModel(InputStateOutputModel):
             return NotImplemented
 
         M = BlockDiagonalOperator([self.M, other.M])
-        E = BlockOperator([[self.E, -Concatenation(self.B, other.Cv)],
+        E = BlockOperator([[self.E, -(self.B @ other.Cv)],
                            [None, other.E]])
-        K = BlockOperator([[self.K, -Concatenation(self.B, other.Cp)],
+        K = BlockOperator([[self.K, -(self.B @ other.Cp)],
                            [None, other.K]])
-        B = BlockColumnOperator([Concatenation(self.B, other.D), other.B])
-        Cp = BlockRowOperator([self.Cp, Concatenation(self.D, other.Cp)])
-        Cv = BlockRowOperator([self.Cv, Concatenation(self.D, other.Cv)])
-        D = Concatenation(self.D, other.D)
+        B = BlockColumnOperator([self.B @ other.D, other.B])
+        Cp = BlockRowOperator([self.Cp, self.D @ other.Cp])
+        Cv = BlockRowOperator([self.Cv, self.D @ other.Cv])
+        D = self.D @ other.D
         return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
 
     def __rmul__(self, other):
