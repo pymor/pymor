@@ -672,26 +672,6 @@ class LTIModel(InputStateOutputModel):
         """
         return self._hsv_U_V()[0]
 
-    def hsU(self):
-        """Left Hankel singular vectors.
-
-        Returns
-        -------
-        Uh
-            |NumPy array| of left singluar vectors.
-        """
-        return self._hsv_U_V()[1]
-
-    def hsV(self):
-        """Right Hankel singular vectors.
-
-        Returns
-        -------
-        Vh
-            |NumPy array| of right singluar vectors.
-        """
-        return self._hsv_U_V()[2]
-
     @cached
     def h2_norm(self):
         """Compute the H2-norm of the |LTIModel|."""
