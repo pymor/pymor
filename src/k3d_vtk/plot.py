@@ -1,6 +1,6 @@
 import warnings
 import IPython
-from ipywidgets import IntSlider, interact, widgets
+from ipywidgets import IntSlider, interact, widgets, Play
 from k3d.helpers import minmax
 from k3d_vtk.reader import read_vtkfile
 from k3d.plot import Plot as k3dPlot
@@ -129,6 +129,12 @@ def plot(vtkfile_path, color_attribute_name, color_map=get_cmap('viridis')):
                       0, 1, 0)
     _add_colorbar(vtkplot, combined_bounds, vtkplot.value_minmax, color_map)
     if size > 1:
-        ws = interact(idx=IntSlider(min=0, max=size-1, step=1, value=0, description='Timestep:')).widget(vtkplot._goto_idx)
-        IPython.display.display(ws)
+        play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:')
+        interact(idx=play).widget(vtkplot._goto_idx)
+        slider = IntSlider(min=0, max=size-1, step=1, value=0, description='Timestep:')
+        interact(idx=slider).widget(vtkplot._goto_idx)
+        widgets.jslink((play, 'value'), (slider, 'value'))
+        widgets.HBox([play, slider])
+        IPython.display.display(play)
+        IPython.display.display(slider)
     return vtkplot
