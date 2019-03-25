@@ -7,7 +7,8 @@ import k3d
 from vtk.util import numpy_support
 import numpy as np
 import vtk
-
+from matplotlib.cm import get_cmap
+from matplotlib.colors import Colormap
 
 def _transform_to_k3d(timestep, poly_data, color_attribute_name):
     '''
@@ -86,7 +87,17 @@ class VTKPlot(k3dPlot):
         self._goto_idx(self.idx+1)
 
 
-def plot(vtkfile_path, color_attribute_name, color_map=k3d.basic_color_maps.CoolWarm):
+def plot(vtkfile_path, color_attribute_name, color_map=get_cmap('viridis')):
+    ''' Generate a k3d Plot and associated controls for VTK data from file
+
+    :param vtkfile_path: the path to load vtk data from. Can be a single .vtu or a collection
+    :param color_attribute_name: which data array from vtk to use for plot coloring
+    :param color_map: a Matplotlib Colormap object or a K3D array((step, r, g, b))
+    :return: the generated Plot object
+    '''
+    if isinstance(color_map, Colormap):
+        color_map = [(x, *color_map(x)[:3]) for x in np.linspace(0, 1, 256)]
+
     data = read_vtkfile(vtkfile_path)
     size = len(data)
 
@@ -104,7 +115,8 @@ def plot(vtkfile_path, color_attribute_name, color_map=k3d.basic_color_maps.Cool
     # camera[posx, posy, posz, targetx, targety, targetz, upx, upy, upz]
     c_dist = np.sin((90 - fov_angle) * np.pi / 180) * absx / (2 * np.sin(fov_angle * np.pi / 180))
 
-    vtkplot = VTKPlot(data, color_attribute_name=color_attribute_name,  grid_auto_fit=False, camera_auto_fit=False)
+    vtkplot = VTKPlot(data, color_attribute_name=color_attribute_name,  grid_auto_fit=False,
+                      camera_auto_fit=False, color_map=color_map)
     # display needs to have been called before chaning camera
     vtkplot.display()
     vtkplot.grid = combined_bounds
