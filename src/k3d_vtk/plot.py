@@ -1,3 +1,4 @@
+import warnings
 import IPython
 from ipywidgets import IntSlider, interact, widgets
 from k3d.helpers import minmax
@@ -73,8 +74,8 @@ class VTKPlot(k3dPlot):
         self += self.mesh
 
     def _goto_idx(self, idx):
-        if not (0<= self.idx < len(self.vtk_data)):
-            raise RuntimeWarning(f'Index {idx} outside data range for VTKPlot')
+        if idx > len(self.vtk_data) or idx < 0:
+            warnings.warn(f'Index {idx} outside data range for VTKPlot', RuntimeWarning)
             return
         self.idx = idx
         self.timestep, self.mesh.attribute, _, _, \
