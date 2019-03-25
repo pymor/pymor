@@ -145,7 +145,6 @@ class IRKAReductor(BasicInterface):
             if c is None:
                 c = fom.C.range.ones(r)
             elif isinstance(c, int):
-                np.random.seed(c)
                 c = fom.C.range.random(r, distribution='normal', seed=c)
 
         self.logger.info('Starting IRKA')
