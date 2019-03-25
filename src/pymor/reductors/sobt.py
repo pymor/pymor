@@ -29,6 +29,7 @@ class GenericSOBTpvReductor(BasicInterface):
         self.fom = fom
         self.V = None
         self.W = None
+        self._pg_reductor = None
 
     def _gramians(self):
         """Return Gramians."""
@@ -69,7 +70,7 @@ class GenericSOBTpvReductor(BasicInterface):
         if r > min(len(g) for g in gramians):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
-        # compute projection matrices and find the reduced model
+        # compute projection matrices
         self.V, self.W, singular_values = self._projection_matrices_and_singular_values(r, gramians)
         if projection == 'sr':
             alpha = 1 / np.sqrt(singular_values[:r])
@@ -81,15 +82,14 @@ class GenericSOBTpvReductor(BasicInterface):
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.M)
 
-        self.pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
-
-        rom = self.pg_reductor.reduce()
-
+        # find the reduced model
+        self._pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
+        rom = self._pg_reductor.reduce()
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.pg_reductor.reconstruct(u)
+        return self._pg_reductor.reconstruct(u)
 
 
 class SOBTpReductor(GenericSOBTpvReductor):
@@ -193,11 +193,12 @@ class SOBTfvReductor(BasicInterface):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |SecondOrderModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
+        self._pg_reductor = None
         self.V = None
         self.W = None
 
@@ -236,30 +237,25 @@ class SOBTfvReductor(BasicInterface):
         # find necessary SVDs
         _, sp, Vp = spla.svd(pof.inner(pcf))
 
-        # compute projection matrices and find the reduced model
+        # compute projection matrices
         self.V = pcf.lincomb(Vp[:r])
         if projection == 'sr':
             alpha = 1 / np.sqrt(sp[:r])
             self.V.scal(alpha)
-            self.bases_are_biorthonormal = False
         elif projection == 'bfsr':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.bases_are_biorthonormal = False
         elif projection == 'biorth':
             self.V = gram_schmidt(self.V, product=self.fom.M, atol=0, rtol=0)
-            self.bases_are_biorthonormal = True
-
         self.W = self.V
 
-        self.pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
-
-        rom = self.pg_reductor.reduce()
-
+        # find the reduced model
+        self._pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
+        rom = self._pg_reductor.reduce()
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.pg_reductor.reconstruct(u)
+        return self._pg_reductor.reconstruct(u)
 
 
 class SOBTReductor(BasicInterface):
@@ -347,23 +343,29 @@ class SOBTReductor(BasicInterface):
             W1TV1invW1TV2 = self.W1.inner(self.V2)
             projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
 
-        projected_ops.update({'E': project(self.fom.E,
-                                           range_basis=self.W2,
-                                           source_basis=self.V2),
-                              'K': project(self.fom.K,
-                                           range_basis=self.W2,
-                                           source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
-                              'B': project(self.fom.B,
-                                           range_basis=self.W2,
-                                           source_basis=None),
-                              'Cp': project(self.fom.Cp,
-                                            range_basis=None,
-                                            source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
-                              'Cv': project(self.fom.Cv,
-                                            range_basis=None,
-                                            source_basis=self.V2)})
+        projected_ops.update({
+            'E': project(self.fom.E,
+                         range_basis=self.W2,
+                         source_basis=self.V2),
+            'K': project(self.fom.K,
+                         range_basis=self.W2,
+                         source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
+            'B': project(self.fom.B,
+                         range_basis=self.W2,
+                         source_basis=None),
+            'Cp': project(self.fom.Cp,
+                          range_basis=None,
+                          source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
+            'Cv': project(self.fom.Cv,
+                          range_basis=None,
+                          source_basis=self.V2),
+            'D': self.fom.D,
+        })
 
         rom = SecondOrderModel(name=self.fom.name + '_reduced', **projected_ops)
         rom.disable_logging()
-
         return rom
+
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        raise TypeError(f'The reconstruct method is not available for {self.__class__.__name__}.')

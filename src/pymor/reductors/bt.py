@@ -26,9 +26,8 @@ class GenericBTReductor(BasicInterface):
         self.fom = fom
         self.V = None
         self.W = None
-        self._sv = None
-        self._sU = None
-        self._sV = None
+        self._pg_reductor = None
+        self._sv_U_V_cache = None
 
     def _gramians(self):
         """Return low-rank Cholesky factors of Gramians."""
@@ -36,13 +35,11 @@ class GenericBTReductor(BasicInterface):
 
     def _sv_U_V(self):
         """Return singular values and vectors."""
-        if self._sv is None or self._sU is None or self._sV is None:
+        if self._sv_U_V_cache is None:
             cf, of = self._gramians()
             U, sv, Vh = spla.svd(self.fom.E.apply2(of, cf), lapack_driver='gesvd')
-            self._sv = sv
-            self._sU = U.T
-            self._sV = Vh
-        return self._sv, self._sU, self._sV
+            self._sv_U_V_cache = (sv, U.T, Vh)
+        return self._sv_U_V_cache
 
     def error_bounds(self):
         """Returns error bounds for all possible reduced orders."""
@@ -84,11 +81,10 @@ class GenericBTReductor(BasicInterface):
             error_bounds = self.error_bounds()
             r_tol = np.argmax(error_bounds <= tol) + 1
             r = r_tol if r is None else min(r, r_tol)
-
         if r > min(len(cf), len(of)):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
-        # compute projection matrices and find the reduced model
+        # compute projection matrices
         self.V = cf.lincomb(sV[:r])
         self.W = of.lincomb(sU[:r])
         if projection == 'sr':
@@ -101,14 +97,14 @@ class GenericBTReductor(BasicInterface):
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.E)
 
-        self.pg_reductor = LTIPGReductor(self.fom, self.W, self.V, projection in ('sr', 'biorth'))
-        rom = self.pg_reductor.reduce()
-
+        # find reduced-order model
+        self._pg_reductor = LTIPGReductor(self.fom, self.W, self.V, projection in ('sr', 'biorth'))
+        rom = self._pg_reductor.reduce()
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.pg_reductor.reconstruct(u)
+        return self._pg_reductor.reconstruct(u)
 
 
 class BTReductor(GenericBTReductor):
@@ -152,13 +148,15 @@ class LQGBTReductor(GenericBTReductor):
         E = self.fom.E if not isinstance(self.fom.E, IdentityOperator) else None
         options = self.solver_options
 
-        cf = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), trans=False, options=options)
-        of = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(), trans=True, options=options)
+        cf = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
+                             trans=False, options=options)
+        of = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
+                             trans=True, options=options)
         return cf, of
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]
-        return 2 * (sv[:0:-1] / np.sqrt(1 + sv[:0:-1] ** 2)).cumsum()[::-1]
+        return 2 * (sv[:0:-1] / np.sqrt(1 + sv[:0:-1]**2)).cumsum()[::-1]
 
 
 class BRBTReductor(GenericBTReductor):
@@ -181,18 +179,17 @@ class BRBTReductor(GenericBTReductor):
         self.solver_options = solver_options
 
     def _gramians(self):
-        fom = self.fom
-        A = fom.A
-        B = fom.B
-        C = fom.C
-        E = fom.E if not isinstance(fom.E, IdentityOperator) else None
+        A = self.fom.A
+        B = self.fom.B
+        C = self.fom.C
+        E = self.fom.E if not isinstance(self.fom.E, IdentityOperator) else None
         options = self.solver_options
 
         cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(fom.output_dim) if self.gamma != 1 else None,
+                                 R=self.gamma**2 * np.eye(self.fom.output_dim) if self.gamma != 1 else None,
                                  trans=False, options=options)
         of = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(fom.input_dim) if self.gamma != 1 else None,
+                                 R=self.gamma**2 * np.eye(self.fom.input_dim) if self.gamma != 1 else None,
                                  trans=True, options=options)
         return cf, of
 
