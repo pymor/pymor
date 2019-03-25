@@ -1,3 +1,4 @@
+import time
 import warnings
 import IPython
 from ipywidgets import IntSlider, interact, widgets, Play
@@ -10,6 +11,7 @@ import numpy as np
 import vtk
 from matplotlib.cm import get_cmap
 from matplotlib.colors import Colormap
+
 
 def _transform_to_k3d(timestep, poly_data, color_attribute_name):
     '''
@@ -110,31 +112,35 @@ def plot(vtkfile_path, color_attribute_name, color_map=get_cmap('viridis')):
                                 np.max(all_bounds[:, 1]),
                                 np.max(all_bounds[:, 3]),
                                 np.max(all_bounds[:, 5])])
+
+    vtkplot = VTKPlot(data, color_attribute_name=color_attribute_name,  grid_auto_fit=False,
+                      camera_auto_fit=False, color_map=color_map, grid=combined_bounds)
+    # display needs to have been called before changing camera/grid_visible
+    vtkplot.display()
+    # could be replaced with testing if the widget is'ready'
+    time.sleep(0.5)
+    vtkplot.grid_visible = False
     # guesstimate
     fov_angle = 30
     absx = np.abs(combined_bounds[0] - combined_bounds[3])
-    # camera[posx, posy, posz, targetx, targety, targetz, upx, upy, upz]
     c_dist = np.sin((90 - fov_angle) * np.pi / 180) * absx / (2 * np.sin(fov_angle * np.pi / 180))
-
-    vtkplot = VTKPlot(data, color_attribute_name=color_attribute_name,  grid_auto_fit=False,
-                      camera_auto_fit=False, color_map=color_map)
-    # display needs to have been called before chaning camera
-    vtkplot.display()
-    vtkplot.grid = combined_bounds
     xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
     yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
     zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
+    # camera[posx, posy, posz, targetx, targety, targetz, upx, upy, upz]
     vtkplot.camera = (xhalf, yhalf, zhalf + c_dist,
                       xhalf, yhalf, zhalf,
                       0, 1, 0)
+
     _add_colorbar(vtkplot, combined_bounds, vtkplot.value_minmax, color_map)
+    
     if size > 1:
         play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:')
         interact(idx=play).widget(vtkplot._goto_idx)
         slider = IntSlider(min=0, max=size-1, step=1, value=0, description='Timestep:')
         interact(idx=slider).widget(vtkplot._goto_idx)
         widgets.jslink((play, 'value'), (slider, 'value'))
-        widgets.HBox([play, slider])
-        IPython.display.display(play)
-        IPython.display.display(slider)
+        hbox = widgets.HBox([play, slider])
+        IPython.display.display(hbox)
+
     return vtkplot
