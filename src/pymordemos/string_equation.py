@@ -298,7 +298,7 @@ if __name__ == '__main__':
     rom_irka = irka_reductor.reduce(r)
 
     fig, ax = plt.subplots()
-    ax.semilogy(irka_reductor.dist, '.-')
+    ax.semilogy(irka_reductor.conv_crit, '.-')
     ax.set_title('IRKA convergence criterion')
     plt.show()
 
@@ -333,7 +333,7 @@ if __name__ == '__main__':
     rom_sor_irka = sor_irka_reductor.reduce(r)
 
     fig, ax = plt.subplots()
-    ax.semilogy(sor_irka_reductor.dist, '.-')
+    ax.semilogy(sor_irka_reductor.conv_crit, '.-')
     ax.set_title('SOR-IRKA convergence criterion')
     plt.show()
 
