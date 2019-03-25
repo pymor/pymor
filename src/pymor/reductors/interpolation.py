@@ -17,18 +17,16 @@ class GenericBHIReductor(BasicInterface):
     r"""Generic bitangential Hermite interpolation reductor.
 
     This is a generic reductor for reducing any linear
-    :class:`~pymor.models.iosys.InputStateOutputModel` with
-    the transfer function which can be written in the generalized
-    coprime factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
+    :class:`~pymor.models.iosys.InputStateOutputModel` with the transfer function which can be
+    written in the generalized coprime factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
     \mathcal{B}(s)` as in [BG09]_.
-    The interpolation here is limited to only up to the first
-    derivative.
+    The interpolation here is limited to only up to the first derivative.
     Hence, interpolation points are assumed to be pairwise distinct.
 
     Parameters
     ----------
     fom
-        Model.
+        The full-order |Model| to reduce.
     """
 
     PGReductor = None
@@ -55,26 +53,22 @@ class GenericBHIReductor(BasicInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of
-            length `r`.
+            Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r`
-            from `self.fom.input_space`.
+            Right tangential directions, |VectorArray| of length `r` from `self.fom.input_space`.
         c
-            Left tangential directions, |VectorArray| of length `r` from
-            `self.fom.output_space`.
+            Left tangential directions, |VectorArray| of length `r` from `self.fom.output_space`.
         projection
             Projection method:
 
-            - `'orth'`: projection matrices are orthogonalized with
-              respect to the Euclidean inner product
-            - `'biorth'`: projection matrices are biorthogolized with
-              respect to the E product
+            - `'orth'`: projection matrices are orthogonalized with respect to the Euclidean inner
+              product
+            - `'biorth'`: projection matrices are biorthogolized with respect to the E product
 
         Returns
         -------
         rom
-            Reduced model.
+            Reduced-order model.
         """
         r = len(sigma)
         assert b in self.fom.input_space and len(b) == r
@@ -134,7 +128,7 @@ class LTI_BHIReductor(GenericBHIReductor):
     Parameters
     ----------
     fom
-        |LTIModel|.
+        The full-order |LTIModel| to reduce.
     """
 
     PGReductor = LTIPGReductor
@@ -164,14 +158,11 @@ class LTI_BHIReductor(GenericBHIReductor):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of
-            length `r`.
+            Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r`
-            from `self.fom.input_space`.
+            Right tangential directions, |VectorArray| of length `r` from `self.fom.input_space`.
         c
-            Left tangential directions, |VectorArray| of length `r` from
-            `self.fom.output_space`.
+            Left tangential directions, |VectorArray| of length `r` from `self.fom.output_space`.
         projection
             Projection method:
 
@@ -187,7 +178,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         Returns
         -------
         rom
-            Reduced model.
+            Reduced-order model.
         """
         if use_arnoldi and self.fom.input_dim == 1 and self.fom.output_dim == 1:
             return self.reduce_arnoldi(sigma, b, c)
@@ -228,12 +219,12 @@ class LTI_BHIReductor(GenericBHIReductor):
 
 
 class SO_BHIReductor(GenericBHIReductor):
-    """Bitangential Hermite interpolation for second-order systems.
+    """Bitangential Hermite interpolation for |SecondOrderModels|.
 
     Parameters
     ----------
     fom
-        :class:`~pymor.models.iosys.SecondOrderModel`.
+        The full-order |SecondOrderModel| to reduce.
     """
 
     PGReductor = SOLTIPGReductor
@@ -261,12 +252,12 @@ class SO_BHIReductor(GenericBHIReductor):
 
 
 class DelayBHIReductor(GenericBHIReductor):
-    """Bitangential Hermite interpolation for delay systems.
+    """Bitangential Hermite interpolation for |LinearDelayModels|.
 
     Parameters
     ----------
     fom
-        :class:`~pymor.models.iosys.LinearDelayModel`.
+        The full-order |LinearDelayModel| to reduce.
     """
 
     PGReductor = DelayLTIPGReductor
@@ -301,7 +292,7 @@ class TFInterpReductor(BasicInterface):
     Parameters
     ----------
     fom
-        Model with `eval_tf` and `eval_dtf` methods.
+        The |Model| with `eval_tf` and `eval_dtf` methods.
     """
     def __init__(self, fom):
         self.fom = fom
@@ -312,19 +303,16 @@ class TFInterpReductor(BasicInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of
-            length `r`.
+            Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |NumPy array| of shape
-            `(fom.input_dim, r)`.
+            Right tangential directions, |NumPy array| of shape `(fom.input_dim, r)`.
         c
-            Left tangential directions, |NumPy array| of shape
-            `(fom.output_dim, r)`.
+            Left tangential directions, |NumPy array| of shape `(fom.output_dim, r)`.
 
         Returns
         -------
         lti
-            |LTIModel| interpolating the transfer function of `fom`.
+            The reduced-order |LTIModel| interpolating the transfer function of `fom`.
         """
         fom = self.fom
         r = len(sigma)

@@ -16,7 +16,7 @@ class SOR_IRKAReductor(BasicInterface):
     Parameters
     ----------
     fom
-        SecondOrderModel.
+        The full-order |SecondOrderModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
@@ -104,7 +104,7 @@ class SOR_IRKAReductor(BasicInterface):
         Returns
         -------
         rom
-            Reduced |LTIModel| model.
+            Reduced-order |SecondOrderModel|.
         """
         fom = self.fom
         if not fom.cont_time:

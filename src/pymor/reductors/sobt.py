@@ -22,7 +22,7 @@ class GenericSOBTpvReductor(BasicInterface):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |SecondOrderModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
@@ -31,11 +31,11 @@ class GenericSOBTpvReductor(BasicInterface):
         self.W = None
 
     def _gramians(self):
-        """Returns gramians."""
+        """Return Gramians."""
         raise NotImplementedError
 
     def _projection_matrices_and_singular_values(self, r, gramians):
-        """Returns projection matrices and singular values."""
+        """Return projection matrices and singular values."""
         raise NotImplementedError
 
     def reduce(self, r, projection='bfsr'):
@@ -49,17 +49,16 @@ class GenericSOBTpvReductor(BasicInterface):
             Projection method used:
 
             - `'sr'`: square root method
-            - `'bfsr'`: balancing-free square root method (default,
-              since it avoids scaling by singular values and
-              orthogonalizes the projection matrices, which might make
-              it more accurate than the square root method)
-            - `'biorth'`: like the balancing-free square root method,
-              except it biorthogonalizes the projection matrices
+            - `'bfsr'`: balancing-free square root method (default, since it avoids scaling by
+              singular values and orthogonalizes the projection matrices, which might make it more
+              accurate than the square root method)
+            - `'biorth'`: like the balancing-free square root method, except it biorthogonalizes the
+              projection matrices
 
         Returns
         -------
         rom
-            Reduced system.
+            Reduced-order |SecondOrderModel|.
         """
         assert 0 < r < self.fom.order
         assert projection in ('sr', 'bfsr', 'biorth')
@@ -101,7 +100,7 @@ class SOBTpReductor(GenericSOBTpvReductor):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |SecondOrderModel| to reduce.
     """
     def _gramians(self):
         pcf = self.fom.gramian('pc_lrcf')
@@ -126,7 +125,7 @@ class SOBTvReductor(GenericSOBTpvReductor):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |SecondOrderModel| to reduce.
     """
     def _gramians(self):
         vcf = self.fom.gramian('vc_lrcf')
@@ -148,7 +147,7 @@ class SOBTpvReductor(GenericSOBTpvReductor):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |SecondOrderModel| to reduce.
     """
     def _gramians(self):
         pcf = self.fom.gramian('pc_lrcf')
@@ -170,7 +169,7 @@ class SOBTvpReductor(GenericSOBTpvReductor):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |SecondOrderModel| to reduce.
     """
     def _gramians(self):
         pof = self.fom.gramian('po_lrcf')
@@ -213,17 +212,16 @@ class SOBTfvReductor(BasicInterface):
             Projection method used:
 
             - `'sr'`: square root method
-            - `'bfsr'`: balancing-free square root method (default,
-              since it avoids scaling by singular values and
-              orthogonalizes the projection matrices, which might make
-              it more accurate than the square root method)
-            - `'biorth'`: like the balancing-free square root method,
-              except it biorthogonalizes the projection matrices
+            - `'bfsr'`: balancing-free square root method (default, since it avoids scaling by
+              singular values and orthogonalizes the projection matrices, which might make it more
+              accurate than the square root method)
+            - `'biorth'`: like the balancing-free square root method, except it biorthogonalizes the
+              projection matrices
 
         Returns
         -------
         rom
-            Reduced system.
+            Reduced-order |SecondOrderModel|.
         """
         assert 0 < r < self.fom.order
         assert projection in ('sr', 'bfsr', 'biorth')
@@ -272,7 +270,7 @@ class SOBTReductor(BasicInterface):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |SecondOrderModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
@@ -293,17 +291,16 @@ class SOBTReductor(BasicInterface):
             Projection method used:
 
             - `'sr'`: square root method
-            - `'bfsr'`: balancing-free square root method (default,
-              since it avoids scaling by singular values and
-              orthogonalizes the projection matrices, which might make
-              it more accurate than the square root method)
-            - `'biorth'`: like the balancing-free square root method,
-              except it biorthogonalizes the projection matrices
+            - `'bfsr'`: balancing-free square root method (default, since it avoids scaling by
+              singular values and orthogonalizes the projection matrices, which might make it more
+              accurate than the square root method)
+            - `'biorth'`: like the balancing-free square root method, except it biorthogonalizes the
+              projection matrices
 
         Returns
         -------
         rom
-            Reduced system.
+            Reduced-order |SecondOrderModel|.
         """
         assert 0 < r < self.fom.order
         assert projection in ('sr', 'bfsr', 'biorth')

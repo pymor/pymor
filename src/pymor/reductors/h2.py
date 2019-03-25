@@ -21,7 +21,7 @@ class IRKAReductor(BasicInterface):
     Parameters
     ----------
     fom
-        |LTIModel|.
+        The full-order |LTIModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, LTIModel)
@@ -216,7 +216,7 @@ class OneSidedIRKAReductor(BasicInterface):
     Parameters
     ----------
     fom
-        |LTIModel|.
+        The full-order |LTIModel| to reduce.
     version
         Version of the one-sided IRKA:
 
@@ -446,7 +446,7 @@ class TSIAReductor(BasicInterface):
     Parameters
     ----------
     fom
-        |LTIModel|.
+        The full-order |LTIModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, LTIModel)
@@ -583,7 +583,7 @@ class TF_IRKAReductor(BasicInterface):
     Parameters
     ----------
     fom
-        Model with `eval_tf` and `eval_dtf` methods.
+        The full-order |Model| with `eval_tf` and `eval_dtf` methods.
     """
     def __init__(self, fom):
         self.fom = fom

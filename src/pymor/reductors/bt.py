@@ -19,7 +19,7 @@ class GenericBTReductor(BasicInterface):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |LTIModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, LTIModel)
@@ -54,26 +54,23 @@ class GenericBTReductor(BasicInterface):
         Parameters
         ----------
         r
-            Order of the reduced model if `tol` is `None`, maximum order
-            if `tol` is specified.
+            Order of the reduced model if `tol` is `None`, maximum order if `tol` is specified.
         tol
             Tolerance for the error bound if `r` is `None`.
         projection
             Projection method used:
 
             - `'sr'`: square root method
-            - `'bfsr'`: balancing-free square root method (default,
-              since it avoids scaling by singular values and
-              orthogonalizes the projection matrices, which might make
-              it more accurate than the square root method)
-            - `'biorth'`: like the balancing-free square root method,
-              except it biorthogonalizes the projection matrices (using
-              :func:`~pymor.algorithms.gram_schmidt.gram_schmidt_biorth`)
+            - `'bfsr'`: balancing-free square root method (default, since it avoids scaling by
+              singular values and orthogonalizes the projection matrices, which might make it more
+              accurate than the square root method)
+            - `'biorth'`: like the balancing-free square root method, except it biorthogonalizes the
+              projection matrices (using :func:`~pymor.algorithms.gram_schmidt.gram_schmidt_biorth`)
 
         Returns
         -------
         rom
-            Reduced system.
+            Reduced-order model.
         """
         assert r is not None or tol is not None
         assert r is None or 0 < r < self.fom.order
@@ -122,7 +119,7 @@ class BTReductor(GenericBTReductor):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |LTIModel| to reduce.
     """
     def _gramians(self):
         return self.fom.gramian('c_lrcf'), self.fom.gramian('o_lrcf')
@@ -140,7 +137,7 @@ class LQGBTReductor(GenericBTReductor):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |LTIModel| to reduce.
     solver_options
         The solver options to use to solve the Riccati equations.
     """
@@ -172,7 +169,7 @@ class BRBTReductor(GenericBTReductor):
     Parameters
     ----------
     fom
-        The system which is to be reduced.
+        The full-order |LTIModel| to reduce.
     gamma
         Upper bound for the :math:`\mathcal{H}_\infty`-norm.
     solver_options
