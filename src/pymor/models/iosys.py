@@ -507,7 +507,15 @@ class LTIModel(InputStateOutputModel):
 
     @cached
     def poles(self):
-        """Compute system poles."""
+        """Compute system poles.
+
+        .. note::
+            Assumes the systems is small enough to use a dense eigenvalue solver.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of system poles.
+        """
         if self.order >= SPARSE_MIN_SIZE:
             if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
                 self.logger.warning('Converting operator A to a NumPy array.')
@@ -528,7 +536,7 @@ class LTIModel(InputStateOutputModel):
             C (s E - A)^{-1} B + D.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs is much smaller than
+            Assumes that either the number of inputs or the number of outputs is much smaller than
             the order of the system.
 
         Parameters
@@ -566,7 +574,7 @@ class LTIModel(InputStateOutputModel):
             -C (s E - A)^{-1} E (s E - A)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs is much smaller than
+            Assumes that either the number of inputs or the number of outputs is much smaller than
             the order of the system.
 
         Parameters
@@ -605,7 +613,13 @@ class LTIModel(InputStateOutputModel):
             - `'c_lrcf'`: low-rank Cholesky factor of the controllability Gramian,
             - `'o_lrcf'`: low-rank Cholesky factor of the observability Gramian,
             - `'c_dense'`: dense controllability Gramian,
-            - `'o_dense'`: dense observability Gramian,
+            - `'o_dense'`: dense observability Gramian.
+
+            .. note::
+                For `'c_lrcf'` and `'o_lrcf'` types, the method assumes the system is asymptotically
+                stable.
+                For `'c_dense'` and `'o_dense'` types, the method assumes there are no two system
+                poles which add to zero.
 
         Returns
         -------
@@ -647,6 +661,9 @@ class LTIModel(InputStateOutputModel):
     def _hsv_U_V(self):
         """Compute Hankel singular values and vectors.
 
+        .. note::
+            Assumes the system is asymptotically stable.
+
         Returns
         -------
         hsv
@@ -665,6 +682,9 @@ class LTIModel(InputStateOutputModel):
     def hsv(self):
         """Hankel singular values.
 
+        .. note::
+            Assumes the system is asymptotically stable.
+
         Returns
         -------
         sv
@@ -674,7 +694,11 @@ class LTIModel(InputStateOutputModel):
 
     @cached
     def h2_norm(self):
-        """Compute the H2-norm of the |LTIModel|."""
+        """Compute the H2-norm of the |LTIModel|.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+        """
         if not self.cont_time:
             raise NotImplementedError
         if self.input_dim <= self.output_dim:
@@ -687,6 +711,9 @@ class LTIModel(InputStateOutputModel):
     @cached
     def hinf_norm(self, return_fpeak=False, ab13dd_equilibrate=False):
         """Compute the H_infinity-norm of the |LTIModel|.
+
+        .. note::
+            Assumes the system is asymptotically stable.
 
         Parameters
         ----------
@@ -733,7 +760,11 @@ class LTIModel(InputStateOutputModel):
             return norm
 
     def hankel_norm(self):
-        """Compute the Hankel-norm of the |LTIModel|."""
+        """Compute the Hankel-norm of the |LTIModel|.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+        """
         return self.hsv()[0]
 
 
@@ -1180,7 +1211,15 @@ class SecondOrderModel(InputStateOutputModel):
 
     @cached
     def poles(self):
-        """Compute system poles."""
+        """Compute system poles.
+
+        .. note::
+            Assumes the systems is small enough to use a dense eigenvalue solver.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of system poles.
+        """
         return self.to_lti().poles()
 
     def eval_tf(self, s):
@@ -1192,7 +1231,7 @@ class SecondOrderModel(InputStateOutputModel):
             (C_p + s C_v) (s^2 M + s E + K)^{-1} B + D.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs is much smaller than
+            Assumes that either the number of inputs or the number of outputs is much smaller than
             the order of the system.
 
         Parameters
@@ -1234,7 +1273,7 @@ class SecondOrderModel(InputStateOutputModel):
                 (s^2 M + s E + K)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs is much smaller than
+            Assumes that either the number of inputs or the number of outputs is much smaller than
             the order of the system.
 
         Parameters
@@ -1285,7 +1324,12 @@ class SecondOrderModel(InputStateOutputModel):
             - `'pc_dense'`: dense position controllability Gramian,
             - `'vc_dense'`: dense velocity controllability Gramian,
             - `'po_dense'`: dense position observability Gramian,
-            - `'vo_dense'`: dense velocity observability Gramian,
+            - `'vo_dense'`: dense velocity observability Gramian.
+
+            .. note::
+                For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
+                For `'*_dense'` types, the method assumes there are no two system poles which add to
+                zero.
 
         Returns
         -------
@@ -1312,6 +1356,9 @@ class SecondOrderModel(InputStateOutputModel):
     def psv(self):
         """Position singular values.
 
+        .. note::
+            Assumes the system is asymptotically stable.
+
         Returns
         -------
         One-dimensional |NumPy array| of singular values.
@@ -1320,6 +1367,9 @@ class SecondOrderModel(InputStateOutputModel):
 
     def vsv(self):
         """Velocity singular values.
+
+        .. note::
+            Assumes the system is asymptotically stable.
 
         Returns
         -------
@@ -1330,6 +1380,9 @@ class SecondOrderModel(InputStateOutputModel):
     def pvsv(self):
         """Position-velocity singular values.
 
+        .. note::
+            Assumes the system is asymptotically stable.
+
         Returns
         -------
         One-dimensional |NumPy array| of singular values.
@@ -1339,6 +1392,9 @@ class SecondOrderModel(InputStateOutputModel):
     def vpsv(self):
         """Velocity-position singular values.
 
+        .. note::
+            Assumes the system is asymptotically stable.
+
         Returns
         -------
         One-dimensional |NumPy array| of singular values.
@@ -1347,18 +1403,24 @@ class SecondOrderModel(InputStateOutputModel):
 
     @cached
     def h2_norm(self):
-        """Compute the H2-norm."""
+        """Compute the H2-norm.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+        """
         return self.to_lti().h2_norm()
 
     @cached
     def hinf_norm(self, return_fpeak=False, ab13dd_equilibrate=False):
         """Compute the H_infinity-norm.
 
+        .. note::
+            Assumes the system is asymptotically stable.
+
         Parameters
         ----------
         return_fpeak
-            Should the frequency at which the maximum is achieved should
-            be returned.
+            Should the frequency at which the maximum is achieved should be returned.
         ab13dd_equilibrate
             Should `slycot.ab13dd` use equilibration.
 
@@ -1367,15 +1429,18 @@ class SecondOrderModel(InputStateOutputModel):
         norm
             H_infinity-norm.
         fpeak
-            Frequency at which the maximum is achieved (if
-            `return_fpeak` is `True`).
+            Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
         return self.to_lti().hinf_norm(return_fpeak=return_fpeak,
                                        ab13dd_equilibrate=ab13dd_equilibrate)
 
     @cached
     def hankel_norm(self):
-        """Compute the Hankel-norm."""
+        """Compute the Hankel-norm.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+        """
         return self.to_lti().hankel_norm()
 
 
@@ -1511,7 +1576,7 @@ class LinearDelayModel(InputStateOutputModel):
             + D.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs is much smaller than
+            Assumes that either the number of inputs or the number of outputs is much smaller than
             the order of the system.
 
         Parameters
@@ -1555,7 +1620,7 @@ class LinearDelayModel(InputStateOutputModel):
                     - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs is much smaller than
+            Assumes that either the number of inputs or the number of outputs is much smaller than
             the order of the system.
 
         Parameters
