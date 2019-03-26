@@ -13,7 +13,7 @@ import scipy.linalg as spla
 import matplotlib.pyplot as plt
 
 from pymor.models.iosys import TransferFunction
-from pymor.reductors.interpolation import TFInterpReductor
+from pymor.reductors.interpolation import TF_BHIReductor
 from pymor.reductors.h2 import TF_IRKAReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     sigma_ss = list(sigmas[-1]) + [0]
     b_ss = np.ones((1, r + 1))
     c_ss = np.ones((1, r + 1))
-    interp_reductor = TFInterpReductor(tf)
+    interp_reductor = TF_BHIReductor(tf)
     rom_ss = interp_reductor.reduce(sigma_ss, b_ss, c_ss)
 
     # step response

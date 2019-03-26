@@ -263,7 +263,7 @@ class DelayBHIReductor(GenericBHIReductor):
         return Ks.apply_inverse_adjoint(V)
 
 
-class TFInterpReductor(BasicInterface):
+class TF_BHIReductor(BasicInterface):
     """Loewner bitangential Hermite interpolation reductor.
 
     See [BG12]_.

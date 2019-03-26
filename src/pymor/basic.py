@@ -71,7 +71,7 @@ from pymor.reductors.basic import StationaryRBReductor, InstationaryRBReductor, 
 from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 from pymor.reductors.h2 import IRKAReductor, TSIAReductor, TF_IRKAReductor
-from pymor.reductors.interpolation import LTI_BHIReductor, SO_BHIReductor, TFInterpReductor
+from pymor.reductors.interpolation import LTI_BHIReductor, SO_BHIReductor, TF_BHIReductor
 from pymor.reductors.parabolic import ParabolicRBReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor, SOBTfvReductor,
                                   SOBTReductor)
