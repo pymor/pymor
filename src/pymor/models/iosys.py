@@ -1112,7 +1112,7 @@ class SecondOrderModel(InputStateOutputModel):
         if isinstance(other, LTIModel):
             return other + self.to_lti()
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def __sub__(self, other):
         """Subtract a |SecondOrderModel| or an |LTIModel|."""
@@ -1143,7 +1143,7 @@ class SecondOrderModel(InputStateOutputModel):
         if isinstance(other, LTIModel):
             return other - self.to_lti()
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def __neg__(self):
         """Negate the |SecondOrderModel|."""
@@ -1176,7 +1176,7 @@ class SecondOrderModel(InputStateOutputModel):
         if isinstance(other, LTIModel):
             return other * self.to_lti()
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     @cached
     def poles(self):
@@ -1544,7 +1544,7 @@ class LinearDelayModel(InputStateOutputModel):
         elif isinstance(other, SecondOrderModel):
             return self + other.to_lti()
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def __sub__(self, other):
         """Subtract an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
@@ -1591,7 +1591,7 @@ class LinearDelayModel(InputStateOutputModel):
         if isinstance(other, (LTIModel, SecondOrderModel)):
             return -(self - other)
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def __neg__(self):
         """Negate the |LinearDelayModel|."""
@@ -1653,7 +1653,7 @@ class LinearDelayModel(InputStateOutputModel):
             D = other.D @ self.D
             return self.with_(E=E, A=A, Ad=Ad, B=B, C=C, D=D)
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def eval_tf(self, s):
         r"""Evaluate the transfer function.
