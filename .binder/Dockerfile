@@ -31,6 +31,7 @@ RUN useradd -d /home/pymor --shell /bin/bash -u ${NB_UID} -o -c "" -m ${NB_USER}
 ADD requirements*.txt /tmp/
 RUN /bin/bash -c "pip install jupyterlab && \
     pip install -r /tmp/requirements-optional.txt && \
+    pip install git+https://github.com/K3D-tools/K3D-jupyter@devel && \
     [[ -e /pymor/setup.py ]] && pip install /pymor || echo 'no install needed'"
 ADD .binder/dev-entrypoint.bash /usr/local/bin/
 USER ${NB_USER}
