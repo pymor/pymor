@@ -130,6 +130,10 @@ def plot(vtkfile_path, color_attribute_name, color_map=get_cmap('viridis')):
     # could be replaced with testing if the widget is'ready'
     time.sleep(0.5)
     vtkplot.grid_visible = False
+    try:
+        vtkplot.menu_visibility = False
+    except AttributeError:
+        pass # k3d < 2.5.6
     # guesstimate
     fov_angle = 30
     absx = np.abs(combined_bounds[0] - combined_bounds[3])
