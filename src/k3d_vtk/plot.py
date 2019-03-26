@@ -39,22 +39,32 @@ def _transform_to_k3d(timestep, poly_data, color_attribute_name):
     return timestep, np.array(attribute, np.float32), color_range[0], color_range[1], \
         np.array(vertices, np.float32), np.array(indices, np.uint32)
 
-
-def _add_colorbar(vtkplot, bounds, v_minmax, color_map):
+def _add_colorbar(vtkplot, bounds, v_minmax, color_map, align='right'):
     z = (bounds[2] + bounds[5]) / 2
     gap = 0.1
-    width = np.array([gap * np.abs(bounds[0]-bounds[3]), 0, 0])
-    grid_top_left = np.array([bounds[0] - gap, bounds[4], z])
-    grid_bottom_left = np.array([bounds[0] - gap, bounds[1], z])
+    if align == 'left':
+        width = np.array([gap * np.abs(bounds[0]-bounds[3]), 0, 0])
+        grid_top_left = np.array([bounds[0] - gap, bounds[4], z])
+        grid_bottom_left = np.array([bounds[0] - gap, bounds[1], z])
+        top = grid_top_left + np.array([0, -0.2 * gap, 0]) - 1.1 * width
+        bot = grid_bottom_left + np.array([0, 0.2 * gap, 0]) - 1.1 * width
+        rfp = 'rc'
+    else:
+        width = -1 * np.array([gap * np.abs(bounds[0] - bounds[3]), 0, 0])
+        grid_top_left = np.array([bounds[3] + gap, bounds[4], z])
+        grid_bottom_left = np.array([bounds[3] + gap, bounds[1], z])
+        top = grid_top_left + np.array([0, -0.2 * gap, 0]) - 1.1 * width
+        bot = grid_bottom_left + np.array([0, 0.2 * gap, 0]) - 1.1 * width
+        rfp = 'lc'
+
     vertices = [grid_top_left, grid_bottom_left, grid_bottom_left - width, grid_top_left - width]
     indices = [[0, 3, 2], [1, 2, 0]]
     vertex_attribute = [v_minmax[1], v_minmax[0], v_minmax[0], v_minmax[1]]
     vtkplot += k3d.mesh(vertices, indices, attribute=vertex_attribute,
                         color_map=color_map, color_range=v_minmax)
-    top = grid_top_left +    np.array([0, -0.2*gap, 0]) - 1.1 * width
-    bot = grid_bottom_left + np.array([0,  0.2*gap, 0]) - 1.1 * width
-    vtkplot += k3d.text(text=f'Max: {np.round(v_minmax[1])}', position=top, color=0, reference_point='rc')
-    vtkplot += k3d.text(text=f'Min: {np.round(v_minmax[0])}', position=bot, color=0, reference_point='rc')
+
+    vtkplot += k3d.text(text=f'Max: {np.round(v_minmax[1])}', position=top, color=0, reference_point=rfp)
+    vtkplot += k3d.text(text=f'Min: {np.round(v_minmax[0])}', position=bot, color=0, reference_point=rfp)
 
 
 class VTKPlot(k3dPlot):
