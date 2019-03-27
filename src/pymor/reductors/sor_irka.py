@@ -6,11 +6,11 @@ import numpy as np
 
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import SecondOrderModel
-from pymor.reductors.interpolation import SO_BHIReductor
+from pymor.reductors.interpolation import SOBHIReductor
 from pymor.reductors.h2 import IRKAReductor, _poles_and_tangential_directions, _convergence_criterion
 
 
-class SOR_IRKAReductor(BasicInterface):
+class SORIRKAReductor(BasicInterface):
     """SOR-IRKA reductor.
 
     Parameters
@@ -162,7 +162,7 @@ class SOR_IRKAReductor(BasicInterface):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        self._pg_reductor = SO_BHIReductor(fom)
+        self._pg_reductor = SOBHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model

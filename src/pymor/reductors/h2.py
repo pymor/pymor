@@ -12,7 +12,7 @@ from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import LTIPGReductor
-from pymor.reductors.interpolation import LTI_BHIReductor, TF_BHIReductor
+from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
 
 
 class IRKAReductor(BasicInterface):
@@ -160,7 +160,7 @@ class IRKAReductor(BasicInterface):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        self._pg_reductor = LTI_BHIReductor(fom)
+        self._pg_reductor = LTIBHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
@@ -590,7 +590,7 @@ class TSIAReductor(BasicInterface):
         return self._pg_reductor.reconstruct(u)
 
 
-class TF_IRKAReductor(BasicInterface):
+class TFIRKAReductor(BasicInterface):
     """Realization-independent IRKA reductor.
 
     See [BG12]_.
@@ -712,7 +712,7 @@ class TF_IRKAReductor(BasicInterface):
         self.sigmas = [np.array(sigma)]
         self.R = [b]
         self.L = [c]
-        interp_reductor = TF_BHIReductor(fom)
+        interp_reductor = TFBHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model

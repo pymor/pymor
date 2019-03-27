@@ -124,7 +124,7 @@ class GenericBHIReductor(BasicInterface):
         return self._pg_reductor.reconstruct(u)
 
 
-class LTI_BHIReductor(GenericBHIReductor):
+class LTIBHIReductor(GenericBHIReductor):
     """Bitangential Hermite interpolation for |LTIModels|.
 
     Parameters
@@ -197,7 +197,7 @@ class LTI_BHIReductor(GenericBHIReductor):
         return rom
 
 
-class SO_BHIReductor(GenericBHIReductor):
+class SOBHIReductor(GenericBHIReductor):
     """Bitangential Hermite interpolation for |SecondOrderModels|.
 
     Parameters
@@ -263,7 +263,7 @@ class DelayBHIReductor(GenericBHIReductor):
         return Ks.apply_inverse_adjoint(V)
 
 
-class TF_BHIReductor(BasicInterface):
+class TFBHIReductor(BasicInterface):
     """Loewner bitangential Hermite interpolation reductor.
 
     See [BG12]_.
