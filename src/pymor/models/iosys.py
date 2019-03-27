@@ -1112,7 +1112,7 @@ class SecondOrderModel(InputStateOutputModel):
         if isinstance(other, LTIModel):
             return other + self.to_lti()
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def __sub__(self, other):
         """Subtract a |SecondOrderModel| or an |LTIModel|."""
@@ -1143,7 +1143,7 @@ class SecondOrderModel(InputStateOutputModel):
         if isinstance(other, LTIModel):
             return other - self.to_lti()
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     def __neg__(self):
         """Negate the |SecondOrderModel|."""
@@ -1176,7 +1176,7 @@ class SecondOrderModel(InputStateOutputModel):
         if isinstance(other, LTIModel):
             return other * self.to_lti()
         else:
-            raise NotImplementedError
+            return NotImplemented
 
     @cached
     def poles(self):
@@ -1499,6 +1499,161 @@ class LinearDelayModel(InputStateOutputModel):
         self.E = E
         self.tau = tau
         self.q = len(Ad)
+
+    def __add__(self, other):
+        """Add an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.input_space
+        assert self.output_space == other.output_space
+
+        if isinstance(other, SecondOrderModel):
+            other = other.to_lti()
+
+        if isinstance(other, LTIModel):
+            Ad = tuple(BlockDiagonalOperator([op, ZeroOperator(other.solution_space, other.solution_space)])
+                       for op in self.Ad)
+            tau = self.tau
+        elif isinstance(other, LinearDelayModel):
+            tau = tuple(set(self.tau).union(set(other.tau)))
+            Ad = [None for _ in tau]
+            for i, taui in enumerate(tau):
+                if taui in self.tau and taui in other.tau:
+                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
+                                                   other.Ad[other.tau.index(taui)]])
+                elif taui in self.tau:
+                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
+                                                   ZeroOperator(other.solution_space, other.solution_space)])
+                else:
+                    Ad[i] = BlockDiagonalOperator([ZeroOperator(self.solution_space, self.solution_space),
+                                                   other.Ad[other.tau.index(taui)]])
+            Ad = tuple(Ad)
+        else:
+            return NotImplemented
+
+        E = BlockDiagonalOperator([self.E, other.E])
+        A = BlockDiagonalOperator([self.A, other.A])
+        B = BlockColumnOperator([self.B, other.B])
+        C = BlockRowOperator([self.C, other.C])
+        D = self.D + other.D
+        return self.with_(E=E, A=A, Ad=Ad, tau=tau, B=B, C=C, D=D)
+
+    def __radd__(self, other):
+        """Add to an |LTIModel| or a |SecondOrderModel|."""
+        if isinstance(other, LTIModel):
+            return self + other
+        elif isinstance(other, SecondOrderModel):
+            return self + other.to_lti()
+        else:
+            return NotImplemented
+
+    def __sub__(self, other):
+        """Subtract an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.input_space
+        assert self.output_space == other.output_space
+
+        if isinstance(other, SecondOrderModel):
+            other = other.to_lti()
+
+        if isinstance(other, LTIModel):
+            Ad = tuple(BlockDiagonalOperator([op, ZeroOperator(other.solution_space, other.solution_space)])
+                       for op in self.Ad)
+            tau = self.tau
+        elif isinstance(other, LinearDelayModel):
+            tau = tuple(set(self.tau).union(set(other.tau)))
+            Ad = [None for _ in tau]
+            for i, taui in enumerate(tau):
+                if taui in self.tau and taui in other.tau:
+                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
+                                                   other.Ad[other.tau.index(taui)]])
+                elif taui in self.tau:
+                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
+                                                   ZeroOperator(other.solution_space, other.solution_space)])
+                else:
+                    Ad[i] = BlockDiagonalOperator([ZeroOperator(self.solution_space, self.solution_space),
+                                                   other.Ad[other.tau.index(taui)]])
+            Ad = tuple(Ad)
+        else:
+            return NotImplemented
+
+        E = BlockDiagonalOperator([self.E, other.E])
+        A = BlockDiagonalOperator([self.A, other.A])
+        B = BlockColumnOperator([self.B, other.B])
+        C = BlockRowOperator([self.C, -other.C])
+        if self.D is other.D:
+            D = ZeroOperator(self.output_space, self.input_space)
+        else:
+            D = self.D - other.D
+        return self.with_(E=E, A=A, Ad=Ad, tau=tau, B=B, C=C, D=D)
+
+    def __rsub__(self, other):
+        """Subtract from an |LTIModel| or a |SecondOrderModel|."""
+        if isinstance(other, (LTIModel, SecondOrderModel)):
+            return -(self - other)
+        else:
+            return NotImplemented
+
+    def __neg__(self):
+        """Negate the |LinearDelayModel|."""
+        return self.with_(C=-self.C, D=-self.D)
+
+    def __mul__(self, other):
+        """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.output_space
+
+        if isinstance(other, SecondOrderModel):
+            other = other.to_lti()
+
+        if isinstance(other, LTIModel):
+            Ad = tuple(BlockDiagonalOperator([op, ZeroOperator(other.solution_space, other.solution_space)])
+                       for op in self.Ad)
+            tau = self.tau
+        elif isinstance(other, LinearDelayModel):
+            tau = tuple(set(self.tau).union(set(other.tau)))
+            Ad = [None for _ in tau]
+            for i, taui in enumerate(tau):
+                if taui in self.tau and taui in other.tau:
+                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
+                                                   other.Ad[other.tau.index(taui)]])
+                elif taui in self.tau:
+                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
+                                                   ZeroOperator(other.solution_space, other.solution_space)])
+                else:
+                    Ad[i] = BlockDiagonalOperator([ZeroOperator(self.solution_space, self.solution_space),
+                                                   other.Ad[other.tau.index(taui)]])
+            Ad = tuple(Ad)
+        else:
+            return NotImplemented
+
+        E = BlockDiagonalOperator([self.E, other.E])
+        A = BlockOperator([[self.A, self.B @ other.C],
+                           [None, other.A]])
+        B = BlockColumnOperator([self.B @ other.D, other.B])
+        C = BlockRowOperator([self.C, self.D @ other.C])
+        D = self.D @ other.D
+        return self.with_(E=E, A=A, Ad=Ad, tau=tau, B=B, C=C, D=D)
+
+    def __rmul__(self, other):
+        """Premultiply by an |LTIModel| or a |SecondOrderModel|."""
+        assert self.cont_time == other.cont_time
+        assert self.input_space == other.output_space
+
+        if isinstance(other, SecondOrderModel):
+            other = other.to_lti()
+
+        if isinstance(other, LTIModel):
+            E = BlockDiagonalOperator([other.E, self.E])
+            A = BlockOperator([[other.A, other.B @ self.C],
+                               [None, self.A]])
+            Ad = tuple(BlockDiagonalOperator([ZeroOperator(other.solution_space, other.solution_space), op])
+                       for op in self.Ad)
+            B = BlockColumnOperator([other.B @ self.D, self.B])
+            C = BlockRowOperator([other.C, other.D @ self.C])
+            D = other.D @ self.D
+            return self.with_(E=E, A=A, Ad=Ad, B=B, C=C, D=D)
+        else:
+            return NotImplemented
 
     def eval_tf(self, s):
         r"""Evaluate the transfer function.
