@@ -12,7 +12,7 @@ from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import LTIPGReductor
-from pymor.reductors.interpolation import LTI_BHIReductor, TFInterpReductor
+from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
 
 
 class IRKAReductor(BasicInterface):
@@ -21,15 +21,22 @@ class IRKAReductor(BasicInterface):
     Parameters
     ----------
     fom
-        |LTIModel|.
+        The full-order |LTIModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, LTIModel)
         self.fom = fom
+        self.V = None
+        self.W = None
+        self._pg_reductor = None
+        self.conv_crit = None
+        self.sigmas = None
+        self.R = None
+        self.L = None
+        self.errors = None
 
     def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1,
-               force_sigma_in_rhp=False, projection='orth', use_arnoldi=False, conv_crit='sigma',
-               compute_errors=False):
+               force_sigma_in_rhp=False, projection='orth', conv_crit='sigma', compute_errors=False):
         r"""Reduce using IRKA.
 
         See [GAB08]_ (Algorithm 4.1) and [ABG10]_ (Algorithm 1).
@@ -88,10 +95,8 @@ class IRKAReductor(BasicInterface):
               respect to the Euclidean inner product
             - `'biorth'`: projection matrices are biorthogolized with
               respect to the E product
-        use_arnoldi
-            Should the Arnoldi process be used for rational
-            interpolation. Available only for SISO systems. Otherwise,
-            it is ignored.
+            - `'arnoldi'`: projection matrices are orthogonalized using
+              the Arnoldi process (available only for SISO systems).
         conv_crit
             Convergence criterion:
 
@@ -116,7 +121,9 @@ class IRKAReductor(BasicInterface):
             raise NotImplementedError
         assert 0 < r < fom.order
         assert isinstance(num_prev, int) and num_prev >= 1
-        assert projection in ('orth', 'biorth')
+        assert projection in ('orth', 'biorth', 'arnoldi')
+        if projection == 'arnoldi':
+            assert fom.input_dim == fom.output_dim == 1
         assert conv_crit in ('sigma', 'h2')
 
         # initial interpolation points and tangential directions
@@ -145,20 +152,19 @@ class IRKAReductor(BasicInterface):
             if c is None:
                 c = fom.C.range.ones(r)
             elif isinstance(c, int):
-                np.random.seed(c)
                 c = fom.C.range.random(r, distribution='normal', seed=c)
 
         self.logger.info('Starting IRKA')
-        self.dist = []
+        self.conv_crit = []
         self.sigmas = [np.array(sigma)]
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        self.pg_reductor = LTI_BHIReductor(fom)
+        self._pg_reductor = LTIBHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
-            rom = self.pg_reductor.reduce(sigma, b, c, projection=projection, use_arnoldi=use_arnoldi)
+            rom = self._pg_reductor.reduce(sigma, b, c, projection=projection)
 
             # new interpolation points and tangential directions
             poles, b, c = _poles_and_tangential_directions(rom)
@@ -170,20 +176,20 @@ class IRKAReductor(BasicInterface):
             # compute convergence criterion
             if conv_crit == 'sigma':
                 dist = _convergence_criterion(self.sigmas[:-num_prev-2:-1], conv_crit)
-                self.dist.append(dist)
+                self.conv_crit.append(dist)
             elif conv_crit == 'h2':
                 if it == 0:
                     rom_list = (num_prev + 1) * [None]
                     rom_list[0] = rom
-                    self.dist.append(np.inf)
+                    self.conv_crit.append(np.inf)
                 else:
                     rom_list[1:] = rom_list[:-1]
                     rom_list[0] = rom
                     dist = _convergence_criterion(rom_list, conv_crit)
-                    self.dist.append(dist)
+                    self.conv_crit.append(dist)
 
             # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
             if compute_errors:
                 if np.max(rom.poles().real) < 0:
                     err = fom - rom
@@ -195,19 +201,18 @@ class IRKAReductor(BasicInterface):
                 self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
 
             # check if convergence criterion is satisfied
-            if self.dist[-1] < tol:
+            if self.conv_crit[-1] < tol:
                 break
 
         # final reduced order model
-        rom = self.pg_reductor.reduce(sigma, b, c, projection=projection, use_arnoldi=use_arnoldi)
-        self.V = self.pg_reductor.V
-        self.W = self.pg_reductor.W
-
+        rom = self._pg_reductor.reduce(sigma, b, c, projection=projection)
+        self.V = self._pg_reductor.V
+        self.W = self._pg_reductor.W
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.pg_reductor.reconstruct(u)
+        return self._pg_reductor.reconstruct(u)
 
 
 class OneSidedIRKAReductor(BasicInterface):
@@ -216,7 +221,7 @@ class OneSidedIRKAReductor(BasicInterface):
     Parameters
     ----------
     fom
-        |LTIModel|.
+        The full-order |LTIModel| to reduce.
     version
         Version of the one-sided IRKA:
 
@@ -228,6 +233,13 @@ class OneSidedIRKAReductor(BasicInterface):
         assert version in ('V', 'W')
         self.fom = fom
         self.version = version
+        self.V = None
+        self._pg_reductor = None
+        self.conv_crit = None
+        self.sigmas = None
+        self.R = None
+        self.L = None
+        self.errors = None
 
     def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1,
                force_sigma_in_rhp=False, projection='orth', conv_crit='sigma',
@@ -341,7 +353,7 @@ class OneSidedIRKAReductor(BasicInterface):
                     c = fom.C.range.random(r, distribution='normal', seed=c)
 
         self.logger.info('Starting one-sided IRKA')
-        self.dist = []
+        self.conv_crit = []
         self.sigmas = [np.array(sigma)]
         if self.version == 'V':
             self.R = [b]
@@ -352,7 +364,7 @@ class OneSidedIRKAReductor(BasicInterface):
         for it in range(maxit):
             # interpolatory reduced order model
             self._projection_matrix(r, sigma, b, c, projection)
-            rom = self.pg_reductor.reduce()
+            rom = self._pg_reductor.reduce()
 
             # new interpolation points and tangential directions
             poles, b, c = _poles_and_tangential_directions(rom)
@@ -366,20 +378,20 @@ class OneSidedIRKAReductor(BasicInterface):
             # compute convergence criterion
             if conv_crit == 'sigma':
                 dist = _convergence_criterion(self.sigmas[:-num_prev-2:-1], conv_crit)
-                self.dist.append(dist)
+                self.conv_crit.append(dist)
             elif conv_crit == 'h2':
                 if it == 0:
                     rom_list = (num_prev + 1) * [None]
                     rom_list[0] = rom
-                    self.dist.append(np.inf)
+                    self.conv_crit.append(np.inf)
                 else:
                     rom_list[1:] = rom_list[:-1]
                     rom_list[0] = rom
                     dist = _convergence_criterion(rom_list, conv_crit)
-                    self.dist.append(dist)
+                    self.conv_crit.append(dist)
 
             # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
             if compute_errors:
                 if np.max(rom.poles().real) < 0:
                     err = fom - rom
@@ -391,13 +403,12 @@ class OneSidedIRKAReductor(BasicInterface):
                 self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
 
             # check if convergence criterion is satisfied
-            if self.dist[-1] < tol:
+            if self.conv_crit[-1] < tol:
                 break
 
         # final reduced order model
         self._projection_matrix(r, sigma, b, c, projection)
-        rom = self.pg_reductor.reduce()
-
+        rom = self._pg_reductor.reduce()
         return rom
 
     def _projection_matrix(self, r, sigma, b, c, projection):
@@ -433,11 +444,11 @@ class OneSidedIRKAReductor(BasicInterface):
         else:
             self.V = gram_schmidt(W, atol=0, rtol=0, product=None if projection == 'orth' else fom.E)
 
-        self.pg_reductor = LTIPGReductor(fom, self.V, self.V, projection == 'Eorth')
+        self._pg_reductor = LTIPGReductor(fom, self.V, self.V, projection == 'Eorth')
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.pg_reductor.reconstruct(u)
+        return self._pg_reductor.reconstruct(u)
 
 
 class TSIAReductor(BasicInterface):
@@ -446,11 +457,16 @@ class TSIAReductor(BasicInterface):
     Parameters
     ----------
     fom
-        |LTIModel|.
+        The full-order |LTIModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, LTIModel)
         self.fom = fom
+        self.V = None
+        self.W = None
+        self._pg_reductor = None
+        self.conv_crit = None
+        self.errors = None
 
     def reduce(self, rom0, tol=1e-4, maxit=100, num_prev=1, projection='orth', conv_crit='sigma',
                compute_errors=False):
@@ -519,21 +535,21 @@ class TSIAReductor(BasicInterface):
 
         data = (num_prev + 1) * [None]
         data[0] = rom0.poles() if conv_crit == 'sigma' else rom0
-        self.dist = []
+        self.conv_crit = []
         self.errors = [] if compute_errors else None
         # main loop
         for it in range(maxit):
             # project the full order model
-            rom = self.pg_reductor.reduce()
+            rom = self._pg_reductor.reduce()
 
             # compute convergence criterion
             data[1:] = data[:-1]
             data[0] = rom.poles() if conv_crit == 'sigma' else rom
             dist = _convergence_criterion(data, conv_crit)
-            self.dist.append(dist)
+            self.conv_crit.append(dist)
 
             # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
             if compute_errors:
                 if np.max(rom.poles().real) < 0:
                     err = fom - rom
@@ -548,12 +564,11 @@ class TSIAReductor(BasicInterface):
             self._projection_matrices(rom, projection)
 
             # check convergence criterion
-            if self.dist[-1] < tol:
+            if self.conv_crit[-1] < tol:
                 break
 
         # final reduced order model
-        rom = self.pg_reductor.reduce()
-
+        rom = self._pg_reductor.reduce()
         return rom
 
     def _projection_matrices(self, rom, projection):
@@ -568,14 +583,14 @@ class TSIAReductor(BasicInterface):
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=fom.E)
 
-        self.pg_reductor = LTIPGReductor(fom, self.W, self.V, projection == 'biorth')
+        self._pg_reductor = LTIPGReductor(fom, self.W, self.V, projection == 'biorth')
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.pg_reductor.reconstruct(u)
+        return self._pg_reductor.reconstruct(u)
 
 
-class TF_IRKAReductor(BasicInterface):
+class TFIRKAReductor(BasicInterface):
     """Realization-independent IRKA reductor.
 
     See [BG12]_.
@@ -583,10 +598,14 @@ class TF_IRKAReductor(BasicInterface):
     Parameters
     ----------
     fom
-        Model with `eval_tf` and `eval_dtf` methods.
+        The full-order |Model| with `eval_tf` and `eval_dtf` methods.
     """
     def __init__(self, fom):
         self.fom = fom
+        self.conv_crit = None
+        self.sigmas = None
+        self.R = None
+        self.L = None
 
     def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1,
                force_sigma_in_rhp=False, conv_crit='sigma'):
@@ -689,11 +708,11 @@ class TF_IRKAReductor(BasicInterface):
                 c = np.random.randn(fom.output_dim, r)
 
         self.logger.info('Starting TF-IRKA')
-        self.dist = []
+        self.conv_crit = []
         self.sigmas = [np.array(sigma)]
         self.R = [b]
         self.L = [c]
-        interp_reductor = TFInterpReductor(fom)
+        interp_reductor = TFBHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
@@ -711,29 +730,32 @@ class TF_IRKAReductor(BasicInterface):
             # compute convergence criterion
             if conv_crit == 'sigma':
                 dist = _convergence_criterion(self.sigmas[:-num_prev-2:-1], conv_crit)
-                self.dist.append(dist)
+                self.conv_crit.append(dist)
             elif conv_crit == 'h2':
                 if it == 0:
                     rom_list = (num_prev + 1) * [None]
                     rom_list[0] = rom
-                    self.dist.append(np.inf)
+                    self.conv_crit.append(np.inf)
                 else:
                     rom_list[1:] = rom_list[:-1]
                     rom_list[0] = rom
                     dist = _convergence_criterion(rom_list, conv_crit)
-                    self.dist.append(dist)
+                    self.conv_crit.append(dist)
 
             # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
 
             # check if convergence criterion is satisfied
-            if self.dist[-1] < tol:
+            if self.conv_crit[-1] < tol:
                 break
 
         # final reduced order model
         rom = interp_reductor.reduce(sigma, b, c)
-
         return rom
+
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        raise TypeError(f'The reconstruct method is not available for {self.__class__.__name__}.')
 
 
 def _poles_and_tangential_directions(rom):

@@ -6,25 +6,33 @@ import numpy as np
 
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import SecondOrderModel
-from pymor.reductors.interpolation import SO_BHIReductor
+from pymor.reductors.interpolation import SOBHIReductor
 from pymor.reductors.h2 import IRKAReductor, _poles_and_tangential_directions, _convergence_criterion
 
 
-class SOR_IRKAReductor(BasicInterface):
+class SORIRKAReductor(BasicInterface):
     """SOR-IRKA reductor.
 
     Parameters
     ----------
     fom
-        SecondOrderModel.
+        The full-order |SecondOrderModel| to reduce.
     """
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
+        self.V = None
+        self.W = None
+        self._pg_reductor = None
+        self.conv_crit = None
+        self.sigmas = None
+        self.R = None
+        self.L = None
+        self.errors = None
 
     def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1,
-               force_sigma_in_rhp=False, projection='orth', use_arnoldi=False, conv_crit='sigma',
-               compute_errors=False, irka_options=None):
+               force_sigma_in_rhp=False, projection='orth', conv_crit='sigma', compute_errors=False,
+               irka_options=None):
         r"""Reduce using SOR-IRKA.
 
         It uses IRKA as the intermediate reductor, to reduce from 2r to
@@ -104,7 +112,7 @@ class SOR_IRKAReductor(BasicInterface):
         Returns
         -------
         rom
-            Reduced |LTIModel| model.
+            Reduced-order |SecondOrderModel|.
         """
         fom = self.fom
         if not fom.cont_time:
@@ -149,16 +157,16 @@ class SOR_IRKAReductor(BasicInterface):
                 c = fom.Cp.range.random(r, distribution='normal', seed=c)
 
         self.logger.info('Starting SOR-IRKA')
-        self.dist = []
+        self.conv_crit = []
         self.sigmas = [np.array(sigma)]
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        self.pg_reductor = SO_BHIReductor(fom)
+        self._pg_reductor = SOBHIReductor(fom)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
-            rom = self.pg_reductor.reduce(sigma, b, c, projection=projection)
+            rom = self._pg_reductor.reduce(sigma, b, c, projection=projection)
 
             # reduction to a system with r poles
             with self.logger.block('Intermediate reduction ...'):
@@ -175,20 +183,20 @@ class SOR_IRKAReductor(BasicInterface):
             # compute convergence criterion
             if conv_crit == 'sigma':
                 dist = _convergence_criterion(self.sigmas[:-num_prev-2:-1], conv_crit)
-                self.dist.append(dist)
+                self.conv_crit.append(dist)
             elif conv_crit == 'h2':
                 if it == 0:
                     rom_list = (num_prev + 1) * [None]
                     rom_list[0] = rom
-                    self.dist.append(np.inf)
+                    self.conv_crit.append(np.inf)
                 else:
                     rom_list[1:] = rom_list[:-1]
                     rom_list[0] = rom
                     dist = _convergence_criterion(rom_list, conv_crit)
-                    self.dist.append(dist)
+                    self.conv_crit.append(dist)
 
             # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.dist[-1]:e}')
+            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
             if compute_errors:
                 if np.max(rom.poles().real) < 0:
                     err = fom - rom
@@ -200,16 +208,15 @@ class SOR_IRKAReductor(BasicInterface):
                 self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
 
             # check if convergence criterion is satisfied
-            if self.dist[-1] < tol:
+            if self.conv_crit[-1] < tol:
                 break
 
         # final reduced order model
-        rom = self.pg_reductor.reduce(sigma, b, c, projection=projection)
-        self.V = self.pg_reductor.V
-        self.W = self.pg_reductor.W
-
+        rom = self._pg_reductor.reduce(sigma, b, c, projection=projection)
+        self.V = self._pg_reductor.V
+        self.W = self._pg_reductor.W
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.pg_reductor.reconstruct(u)
+        return self._pg_reductor.reconstruct(u)

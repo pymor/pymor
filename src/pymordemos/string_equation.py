@@ -15,7 +15,7 @@ from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor,
                                   SOBTfvReductor, SOBTReductor)
-from pymor.reductors.sor_irka import SOR_IRKAReductor
+from pymor.reductors.sor_irka import SORIRKAReductor
 
 import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
@@ -298,7 +298,7 @@ if __name__ == '__main__':
     rom_irka = irka_reductor.reduce(r)
 
     fig, ax = plt.subplots()
-    ax.semilogy(irka_reductor.dist, '.-')
+    ax.semilogy(irka_reductor.conv_crit, '.-')
     ax.set_title('IRKA convergence criterion')
     plt.show()
 
@@ -329,11 +329,11 @@ if __name__ == '__main__':
 
     # Second-Order Reduced Iterative Rational Krylov Algorithm (SOR-IRKA)
     r = 5
-    sor_irka_reductor = SOR_IRKAReductor(so_sys)
+    sor_irka_reductor = SORIRKAReductor(so_sys)
     rom_sor_irka = sor_irka_reductor.reduce(r)
 
     fig, ax = plt.subplots()
-    ax.semilogy(sor_irka_reductor.dist, '.-')
+    ax.semilogy(sor_irka_reductor.conv_crit, '.-')
     ax.set_title('SOR-IRKA convergence criterion')
     plt.show()
 

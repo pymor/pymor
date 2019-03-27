@@ -10,31 +10,32 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
-from pymor.reductors.basic import LTIPGReductor, SOLTIPGReductor, DelayLTIPGReductor
+from pymor.reductors.basic import ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor, DelayLTIPGReductor
 
 
 class GenericBHIReductor(BasicInterface):
     r"""Generic bitangential Hermite interpolation reductor.
 
     This is a generic reductor for reducing any linear
-    :class:`~pymor.models.iosys.InputStateOutputModel` with
-    the transfer function which can be written in the generalized
-    coprime factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
+    :class:`~pymor.models.iosys.InputStateOutputModel` with the transfer function which can be
+    written in the generalized coprime factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
     \mathcal{B}(s)` as in [BG09]_.
-    The interpolation here is limited to only up to the first
-    derivative.
+    The interpolation here is limited to only up to the first derivative.
     Hence, interpolation points are assumed to be pairwise distinct.
 
     Parameters
     ----------
     fom
-        Model.
+        The full-order |Model| to reduce.
     """
 
-    PGReductor = None
+    _PGReductor = ProjectionBasedReductor
 
     def __init__(self, fom):
         self.fom = fom
+        self.V = None
+        self.W = None
+        self._pg_reductor = None
         self._product = None
 
     def _B_apply(self, s, V):
@@ -55,26 +56,22 @@ class GenericBHIReductor(BasicInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of
-            length `r`.
+            Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r`
-            from `self.fom.input_space`.
+            Right tangential directions, |VectorArray| of length `r` from `self.fom.input_space`.
         c
-            Left tangential directions, |VectorArray| of length `r` from
-            `self.fom.output_space`.
+            Left tangential directions, |VectorArray| of length `r` from `self.fom.output_space`.
         projection
             Projection method:
 
-            - `'orth'`: projection matrices are orthogonalized with
-              respect to the Euclidean inner product
-            - `'biorth'`: projection matrices are biorthogolized with
-              respect to the E product
+            - `'orth'`: projection matrices are orthogonalized with respect to the Euclidean inner
+              product
+            - `'biorth'`: projection matrices are biorthogolized with respect to the E product
 
         Returns
         -------
         rom
-            Reduced model.
+            Reduced-order model.
         """
         r = len(sigma)
         assert b in self.fom.input_space and len(b) == r
@@ -111,37 +108,36 @@ class GenericBHIReductor(BasicInterface):
                 w = self._K_apply_inverse_adjoint(sigma[i], CTc)
                 self.W.append(w.real)
                 self.W.append(w.imag)
-
         if projection == 'orth':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
         elif projection == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
 
-        self.pg_reductor = self.PGReductor(self.fom, self.W, self.V, projection == 'biorth')
-
-        rom = self.pg_reductor.reduce()
+        # find reduced-order model
+        self._pg_reductor = self._PGReductor(self.fom, self.W, self.V, projection == 'biorth')
+        rom = self._pg_reductor.reduce()
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.pg_reductor.reconstruct(u)
+        return self._pg_reductor.reconstruct(u)
 
 
-class LTI_BHIReductor(GenericBHIReductor):
+class LTIBHIReductor(GenericBHIReductor):
     """Bitangential Hermite interpolation for |LTIModels|.
 
     Parameters
     ----------
     fom
-        |LTIModel|.
+        The full-order |LTIModel| to reduce.
     """
 
-    PGReductor = LTIPGReductor
+    _PGReductor = LTIPGReductor
 
     def __init__(self, fom):
         assert isinstance(fom, LTIModel)
-        self.fom = fom
+        super().__init__(fom)
         self._product = fom.E
 
     def _B_apply(self, s, V):
@@ -158,89 +154,63 @@ class LTI_BHIReductor(GenericBHIReductor):
         sEmA = s * self.fom.E - self.fom.A
         return sEmA.apply_inverse_adjoint(V)
 
-    def reduce(self, sigma, b, c, projection='orth', use_arnoldi=False):
+    def reduce(self, sigma, b, c, projection='orth'):
         """Bitangential Hermite interpolation.
 
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of
-            length `r`.
+            Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r`
-            from `self.fom.input_space`.
+            Right tangential directions, |VectorArray| of length `r` from `self.fom.input_space`.
         c
-            Left tangential directions, |VectorArray| of length `r` from
-            `self.fom.output_space`.
+            Left tangential directions, |VectorArray| of length `r` from `self.fom.output_space`.
         projection
             Projection method:
 
-            - `'orth'`: projection matrices are orthogonalized with
-              respect to the Euclidean inner product
-            - `'biorth'`: projection matrices are biorthogolized with
-              respect to the E product
-        use_arnoldi
-            Should the Arnoldi process be used for rational
-            interpolation. Available only for SISO systems. Otherwise,
-            it is ignored.
+            - `'orth'`: projection matrices are orthogonalized with respect to the Euclidean inner
+              product
+            - `'biorth'`: projection matrices are biorthogolized with respect to the E product
+            - `'arnoldi'`: projection matrices are orthogonalized using the Arnoldi process
+              (available only for SISO systems).
 
         Returns
         -------
         rom
-            Reduced model.
+            Reduced-order model.
         """
-        if use_arnoldi and self.fom.input_dim == 1 and self.fom.output_dim == 1:
-            return self.reduce_arnoldi(sigma, b, c)
-        else:
+        if projection != 'arnoldi':
             return super().reduce(sigma, b, c, projection=projection)
 
-    def reduce_arnoldi(self, sigma, b, c):
-        """Bitangential Hermite interpolation for SISO |LTIModels|.
-
-        Parameters
-        ----------
-        sigma
-            Interpolation points (closed under conjugation), list of
-            length `r`.
-        b
-            Right tangential directions, |VectorArray| of length `r`
-            from `self.fom.B.source`.
-        c
-            Left tangential directions, |VectorArray| of length `r` from
-            `self.fom.C.range`.
-
-        Returns
-        -------
-        rom
-            Reduced |LTIModel| model.
-        """
-        fom = self.fom
-        assert fom.input_dim == 1 and fom.output_dim == 1
+        assert self.fom.input_dim == 1 and self.fom.output_dim == 1
         r = len(sigma)
-        assert b in fom.B.source and len(b) == r
-        assert c in fom.C.range and len(c) == r
+        assert b in self.fom.B.source and len(b) == r
+        assert c in self.fom.C.range and len(c) == r
 
-        self.V = arnoldi(fom.A, fom.E, fom.B, sigma)
-        self.W = arnoldi(fom.A, fom.E, fom.C, sigma, trans=True)
+        # compute projection matrices
+        self.V = arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma)
+        self.W = arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True)
 
-        rom = super(GenericBHIReductor, self).reduce()
+        # find reduced-order model
+        self._pg_reductor = self._PGReductor(self.fom, self.W, self.V)
+        rom = self._pg_reductor.reduce()
         return rom
 
 
-class SO_BHIReductor(GenericBHIReductor):
-    """Bitangential Hermite interpolation for second-order systems.
+class SOBHIReductor(GenericBHIReductor):
+    """Bitangential Hermite interpolation for |SecondOrderModels|.
 
     Parameters
     ----------
     fom
-        :class:`~pymor.models.iosys.SecondOrderModel`.
+        The full-order |SecondOrderModel| to reduce.
     """
 
-    PGReductor = SOLTIPGReductor
+    _PGReductor = SOLTIPGReductor
 
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
-        self.fom = fom
+        super().__init__(fom)
         self._product = fom.M
 
     def _B_apply(self, s, V):
@@ -261,19 +231,19 @@ class SO_BHIReductor(GenericBHIReductor):
 
 
 class DelayBHIReductor(GenericBHIReductor):
-    """Bitangential Hermite interpolation for delay systems.
+    """Bitangential Hermite interpolation for |LinearDelayModels|.
 
     Parameters
     ----------
     fom
-        :class:`~pymor.models.iosys.LinearDelayModel`.
+        The full-order |LinearDelayModel| to reduce.
     """
 
-    PGReductor = DelayLTIPGReductor
+    _PGReductor = DelayLTIPGReductor
 
     def __init__(self, fom):
         assert isinstance(fom, LinearDelayModel)
-        self.fom = fom
+        super().__init__(fom)
         self._product = fom.E
 
     def _B_apply(self, s, V):
@@ -293,7 +263,7 @@ class DelayBHIReductor(GenericBHIReductor):
         return Ks.apply_inverse_adjoint(V)
 
 
-class TFInterpReductor(BasicInterface):
+class TFBHIReductor(BasicInterface):
     """Loewner bitangential Hermite interpolation reductor.
 
     See [BG12]_.
@@ -301,7 +271,7 @@ class TFInterpReductor(BasicInterface):
     Parameters
     ----------
     fom
-        Model with `eval_tf` and `eval_dtf` methods.
+        The |Model| with `eval_tf` and `eval_dtf` methods.
     """
     def __init__(self, fom):
         self.fom = fom
@@ -312,24 +282,20 @@ class TFInterpReductor(BasicInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of
-            length `r`.
+            Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |NumPy array| of shape
-            `(fom.input_dim, r)`.
+            Right tangential directions, |NumPy array| of shape `(fom.input_dim, r)`.
         c
-            Left tangential directions, |NumPy array| of shape
-            `(fom.output_dim, r)`.
+            Left tangential directions, |NumPy array| of shape `(fom.output_dim, r)`.
 
         Returns
         -------
         lti
-            |LTIModel| interpolating the transfer function of `fom`.
+            The reduced-order |LTIModel| interpolating the transfer function of `fom`.
         """
-        fom = self.fom
         r = len(sigma)
-        assert isinstance(b, np.ndarray) and b.shape == (fom.input_dim, r)
-        assert isinstance(c, np.ndarray) and c.shape == (fom.output_dim, r)
+        assert isinstance(b, np.ndarray) and b.shape == (self.fom.input_dim, r)
+        assert isinstance(c, np.ndarray) and c.shape == (self.fom.output_dim, r)
 
         # rescale tangential directions (to avoid overflow or underflow)
         if b.shape[0] > 1:
@@ -346,11 +312,11 @@ class TFInterpReductor(BasicInterface):
         # matrices of the interpolatory LTI system
         Er = np.empty((r, r), dtype=complex)
         Ar = np.empty((r, r), dtype=complex)
-        Br = np.empty((r, fom.input_dim), dtype=complex)
-        Cr = np.empty((fom.output_dim, r), dtype=complex)
+        Br = np.empty((r, self.fom.input_dim), dtype=complex)
+        Cr = np.empty((self.fom.output_dim, r), dtype=complex)
 
-        Hs = [fom.eval_tf(s) for s in sigma]
-        dHs = [fom.eval_dtf(s) for s in sigma]
+        Hs = [self.fom.eval_tf(s) for s in sigma]
+        dHs = [self.fom.eval_dtf(s) for s in sigma]
 
         for i in range(r):
             for j in range(r):
@@ -381,4 +347,8 @@ class TFInterpReductor(BasicInterface):
         Br = (T.dot(Br)).real
         Cr = (Cr.dot(T.conj().T)).real
 
-        return LTIModel.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=fom.cont_time)
+        return LTIModel.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=self.fom.cont_time)
+
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        raise TypeError(f'The reconstruct method is not available for {self.__class__.__name__}.')
