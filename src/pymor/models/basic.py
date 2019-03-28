@@ -293,4 +293,4 @@ class InstationaryModel(ModelBase):
             raise ValueError('Operators not linear.')
 
         from pymor.models.iosys import LTIModel
-        return LTIModel(A, B, C, E=E, visualizer=self.visualizer)
+        return LTIModel(A, B, C, E=E, parameter_space=self.parameter_space, visualizer=self.visualizer)
