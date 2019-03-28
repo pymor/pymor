@@ -16,8 +16,6 @@ import numpy as np
 from pymor.core import logger
 from pymor.core.config import config
 from pymor.core.logger import ColoredFormatter
-from pymor.grids.constructions import flatten_grid
-from pymor.grids.referenceelements import triangle
 from pymor.gui.matplotlib import MatplotlibPatchAxes
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from ipywidgets import IntProgress, HTML, VBox
@@ -28,6 +26,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 # from IPython.core.debugger import set_trace
 from ipywidgets import IntProgress, HTML, VBox
 from IPython.display import display
+import contextlib
+import ipywidgets
 
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,

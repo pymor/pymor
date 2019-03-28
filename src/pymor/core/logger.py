@@ -186,6 +186,20 @@ def default_handler(filename=''):
 
 
 @defaults('filename', sid_ignore='filename')
+def default_handler(filename=''):
+    streamhandler = logging.StreamHandler()
+    streamformatter = ColoredFormatter()
+    streamhandler.setFormatter(streamformatter)
+    handlers = [streamhandler]
+    if filename:
+        filehandler = logging.FileHandler(filename)
+        fileformatter = ColoredFormatter()
+        filehandler.setFormatter(fileformatter)
+        handlers.append(filehandler)
+    return handlers
+
+
+@defaults('filename', sid_ignore='filename')
 def getLogger(module, level=None, filename=''):
     """Get the logger of the respective module for pyMOR's logging facility.
 
