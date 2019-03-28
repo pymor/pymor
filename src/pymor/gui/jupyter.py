@@ -13,9 +13,9 @@ inside the given notebook.
 
 import numpy as np
 
+from pymor.core import logger
 from pymor.core.config import config
-from pymor.grids.constructions import flatten_grid
-from pymor.grids.referenceelements import triangle
+from pymor.core.logger import ColoredFormatter
 from pymor.gui.matplotlib import MatplotlibPatchAxes
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.tools.vtkio import write_vtk
@@ -23,6 +23,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 # from IPython.core.debugger import set_trace
 from ipywidgets import IntProgress, HTML, VBox
 from IPython.display import display
+import contextlib
+import ipywidgets
 
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
@@ -239,3 +241,49 @@ def progress_bar(sequence, every=None, size=None, name='Parameters'):
         progress.bar_style = 'success'
         progress.value = index
         label.value = f"{name}: {str(index or '?')}"
+
+
+@contextlib.contextmanager
+def redirect_logging():
+    # TODO: this should be usable via cell magics too
+    import logging
+
+    class LogViewer(logging.Handler):
+        out = None
+
+        def __init__(self, out):
+            super().__init__()
+            self.out = out
+            self.setFormatter(ColoredFormatter())
+
+        def emit(self, record):
+            record = self.format(record)
+            self.out.outputs = ({'name': 'stdout', 'output_type': 'stream', 'text': f'{logger.BLACK}{record}\n'},) + self.out.outputs
+
+        def __repr__(self):
+            return '<%s %s>' % (self.__class__.__name__, self.out)
+
+    # TODO: the widget needs to be fancier, maybe with fold stuff, and correct scroll direction
+    out = ipywidgets.Output(layout=ipywidgets.Layout(width='100%', height='8em', border='solid'))
+    new_handler = LogViewer(out)
+
+    def _new_default(_):
+        return [new_handler]
+
+    old_default = logger.default_handler
+    logger.default_handler = _new_default
+    old_handlers = {name: logging.getLogger(name).handlers for name in logging.root.manager.loggerDict}
+    for name in logging.root.manager.loggerDict:
+        logging.getLogger(name).handlers = [new_handler]
+
+    display(out)
+
+    yield
+
+    logger.default_handler = old_default
+    for name in logging.root.manager.loggerDict:
+        try:
+            logging.getLogger(name).handlers = old_handlers[name]
+        except KeyError:
+            # loggers that have been created during the redirect get a default handler
+            logging.getLogger(name).handlers = logger.default_handler()
