@@ -25,9 +25,10 @@ class InputOutputModel(ModelBase):
 
     def __init__(self, input_space, output_space, cont_time=True,
                  estimator=None, visualizer=None, cache_region='memory', name=None):
+        assert cont_time in (True, False)
+        super().__init__(estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
         self.input_space = input_space
         self.output_space = output_space
-        super().__init__(estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
         self.cont_time = cont_time
 
     @property
@@ -50,13 +51,15 @@ class InputOutputModel(ModelBase):
         raise NotImplementedError
 
     @cached
-    def bode(self, w):
+    def bode(self, w, mu=None):
         """Evaluate the transfer function on the imaginary axis.
 
         Parameters
         ----------
         w
             Angular frequencies at which to compute the transfer function.
+        mu
+            |Parameter| for which to evaluate the transfer function.
 
         Returns
         -------
@@ -67,15 +70,18 @@ class InputOutputModel(ModelBase):
         if not self.cont_time:
             raise NotImplementedError
 
-        return np.stack([self.eval_tf(1j * wi) for wi in w])
+        mu = self.parse_parameter(mu)
+        return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
 
-    def mag_plot(self, w, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
+    def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
         """Draw the magnitude Bode plot.
 
         Parameters
         ----------
         w
             Angular frequencies at which to evaluate the transfer function.
+        mu
+            |Parameter| for which to evaluate the transfer function.
         ax
             Axis to which to plot.
             If not given, `matplotlib.pyplot.gca` is used.
@@ -98,7 +104,7 @@ class InputOutputModel(ModelBase):
             ax = plt.gca()
 
         freq = w / (2 * np.pi) if Hz else w
-        mag = spla.norm(self.bode(w), ord=ord, axis=(1, 2))
+        mag = spla.norm(self.bode(w, mu=mu), ord=ord, axis=(1, 2))
         if dB:
             out = ax.semilogx(freq, 20 * np.log2(mag), **mpl_kwargs)
         else:
@@ -133,14 +139,14 @@ class LTIModel(InputStateOutputModel):
     This class describes input-state-output systems given by
 
     .. math::
-        E \dot{x}(t) & = A x(t) + B u(t), \\
-                y(t) & = C x(t) + D u(t),
+        E(\mu) \dot{x}(t, \mu) & = A(\mu) x(t, \mu) + B(\mu) u(t), \\
+                     y(t, \mu) & = C(\mu) x(t, \mu) + D(\mu) u(t),
 
     if continuous-time, or
 
     .. math::
-        E x(k + 1) & = A x(k) + B u(k), \\
-          y(k)     & = C x(k) + D u(k),
+        E(\mu) x(k + 1, \mu) & = A(\mu) x(k, \mu) + B(\mu) u(k), \\
+               y(k, \mu)     & = C(\mu) x(k, \mu) + D(\mu) u(k),
 
     if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`, and :math:`E` are linear
     operators.
@@ -159,6 +165,8 @@ class LTIModel(InputStateOutputModel):
         The |Operator| E or `None` (then E is assumed to be identity).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    parameter_space
+        The |ParameterSpace| for which the discrete problem is posed.
     solver_options
         The solver options to use to solve the Lyapunov equations.
     estimator
@@ -194,7 +202,7 @@ class LTIModel(InputStateOutputModel):
         The |Operator| E.
     """
 
-    def __init__(self, A, B, C, D=None, E=None, cont_time=True,
+    def __init__(self, A, B, C, D=None, E=None, cont_time=True, parameter_space=None,
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
@@ -215,7 +223,6 @@ class LTIModel(InputStateOutputModel):
         assert E.source == E.range
         assert E.source == A.source
 
-        assert cont_time in (True, False)
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
@@ -228,6 +235,8 @@ class LTIModel(InputStateOutputModel):
         self.D = D
         self.E = E
         self.solver_options = solver_options
+        self.build_parameter_type(A, B, C, D, E)
+        self.parameter_space = parameter_space
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
@@ -506,34 +515,43 @@ class LTIModel(InputStateOutputModel):
         return self.with_(A=A, B=B, C=C, D=D, E=E)
 
     @cached
-    def poles(self):
+    def poles(self, mu=None):
         """Compute system poles.
 
         .. note::
             Assumes the systems is small enough to use a dense eigenvalue solver.
 
+        Parameters
+        ----------
+        mu
+            |Parameter| for which to compute the systems poles.
+
         Returns
         -------
         One-dimensional |NumPy array| of system poles.
         """
-        if self.order >= SPARSE_MIN_SIZE:
-            if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
-                self.logger.warning('Converting operator A to a NumPy array.')
-            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse)
-                    or isinstance(self.E, IdentityOperator)):
-                self.logger.warning('Converting operator E to a NumPy array.')
+        mu = self.parse_parameter(mu)
+        A = self.A.assemble(mu=mu)
+        E = self.E.assemble(mu=mu)
 
-        A = to_matrix(self.A, format='dense')
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
+        if self.order >= SPARSE_MIN_SIZE:
+            if not isinstance(A, NumpyMatrixOperator) or A.sparse:
+                self.logger.warning('Converting operator A to a NumPy array.')
+            if not isinstance(E, IdentityOperator):
+                if not isinstance(E, NumpyMatrixOperator) or E.sparse:
+                    self.logger.warning('Converting operator E to a NumPy array.')
+
+        A = to_matrix(A, format='dense')
+        E = None if isinstance(E, IdentityOperator) else to_matrix(E, format='dense')
         return spla.eigvals(A, E)
 
-    def eval_tf(self, s):
-        """Evaluate the transfer function.
+    def eval_tf(self, s, mu=None):
+        r"""Evaluate the transfer function.
 
         The transfer function at :math:`s` is
 
         .. math::
-            C (s E - A)^{-1} B + D.
+            C(\mu) (s E(\mu) - A(\mu))^{-1} B(\mu) + D(\mu).
 
         .. note::
             Assumes that either the number of inputs or the number of outputs is much smaller than
@@ -543,6 +561,8 @@ class LTIModel(InputStateOutputModel):
         ----------
         s
             Complex number.
+        mu
+            |Parameter|.
 
         Returns
         -------
@@ -550,6 +570,7 @@ class LTIModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
+        mu = self.parse_parameter(mu)
         A = self.A
         B = self.B
         C = self.C
@@ -558,20 +579,25 @@ class LTIModel(InputStateOutputModel):
 
         sEmA = s * E - A
         if self.input_dim <= self.output_dim:
-            tfs = C.apply(sEmA.apply_inverse(B.as_range_array())).to_numpy().T
+            tfs = C.apply(sEmA.apply_inverse(B.as_range_array(mu=mu),
+                                             mu=mu),
+                          mu=mu).to_numpy().T
         else:
-            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
+            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array(mu=mu),
+                                                             mu=mu),
+                                  mu=mu).to_numpy().conj()
         if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense')
+            tfs += to_matrix(D, format='dense', mu=mu)
         return tfs
 
-    def eval_dtf(self, s):
-        """Evaluate the derivative of the transfer function.
+    def eval_dtf(self, s, mu=None):
+        r"""Evaluate the derivative of the transfer function.
 
         The derivative of the transfer function at :math:`s` is
 
         .. math::
-            -C (s E - A)^{-1} E (s E - A)^{-1} B.
+            -C(\mu) (s E(\mu) - A(\mu))^{-1} E(\mu)
+                (s E(\mu) - A(\mu))^{-1} B(\mu).
 
         .. note::
             Assumes that either the number of inputs or the number of outputs is much smaller than
@@ -581,6 +607,8 @@ class LTIModel(InputStateOutputModel):
         ----------
         s
             Complex number.
+        mu
+            |Parameter|.
 
         Returns
         -------
@@ -588,21 +616,33 @@ class LTIModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
+        mu = self.parse_parameter(mu)
         A = self.A
         B = self.B
         C = self.C
         E = self.E
 
-        sEmA = (s * E - A).assemble()
+        sEmA = (s * E - A).assemble(mu=mu)
         if self.input_dim <= self.output_dim:
-            dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.as_range_array())))).to_numpy().T
+            dtfs = -C.apply(
+                sEmA.apply_inverse(
+                    E.apply(
+                        sEmA.apply_inverse(
+                            B.as_range_array(mu=mu)),
+                        mu=mu)),
+                mu=mu).to_numpy().T
         else:
-            dtfs = -B.apply_adjoint(sEmA.apply_inverse_adjoint(E.apply_adjoint(sEmA.apply_inverse_adjoint(
-                C.as_source_array())))).to_numpy().conj()
+            dtfs = -B.apply_adjoint(
+                sEmA.apply_inverse_adjoint(
+                    E.apply_adjoint(
+                        sEmA.apply_inverse_adjoint(
+                            C.as_source_array(mu=mu)),
+                        mu=mu)),
+                mu=mu).to_numpy().conj()
         return dtfs
 
     @cached
-    def gramian(self, typ):
+    def gramian(self, typ, mu=None):
         """Compute a Gramian.
 
         Parameters
@@ -620,6 +660,8 @@ class LTIModel(InputStateOutputModel):
                 stable.
                 For `'c_dense'` and `'o_dense'` types, the method assumes there are no two system
                 poles which add to zero.
+        mu
+            |Parameter|.
 
         Returns
         -------
@@ -627,22 +669,25 @@ class LTIModel(InputStateOutputModel):
         `self.A.source`.
         If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a |NumPy array|.
         """
-        assert isinstance(typ, str)
-
         if not self.cont_time:
             raise NotImplementedError
 
-        A = self.A
+        assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
+
+        mu = self.parse_parameter(mu)
+        A = self.A.assemble(mu)
         B = self.B
         C = self.C
-        E = self.E if not isinstance(self.E, IdentityOperator) else None
+        E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
 
         if typ == 'c_lrcf':
-            return solve_lyap_lrcf(A, E, B.as_range_array(), trans=False, options=options_lrcf)
+            return solve_lyap_lrcf(A, E, B.as_range_array(mu=mu),
+                                   trans=False, options=options_lrcf)
         elif typ == 'o_lrcf':
-            return solve_lyap_lrcf(A, E, C.as_source_array(), trans=True, options=options_lrcf)
+            return solve_lyap_lrcf(A, E, C.as_source_array(mu=mu),
+                                   trans=True, options=options_lrcf)
         elif typ == 'c_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'),
                                     to_matrix(E, format='dense') if E else None,
@@ -653,63 +698,81 @@ class LTIModel(InputStateOutputModel):
                                     to_matrix(E, format='dense') if E else None,
                                     to_matrix(C, format='dense'),
                                     trans=True, options=options_dense)
-        else:
-            raise NotImplementedError(f"Only 'c_lrcf', 'o_lrcf', 'c_dense', and 'o_dense' types are possible "
-                                      f"({typ} was given).")
 
     @cached
-    def _hsv_U_V(self):
+    def _hsv_U_V(self, mu=None):
         """Compute Hankel singular values and vectors.
 
         .. note::
             Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter|.
 
         Returns
         -------
         hsv
             One-dimensional |NumPy array| of singular values.
         Uh
-            |NumPy array| of left singluar vectors.
+            |NumPy array| of left singular vectors.
         Vh
-            |NumPy array| of right singluar vectors.
+            |NumPy array| of right singular vectors.
         """
-        cf = self.gramian('c_lrcf')
-        of = self.gramian('o_lrcf')
-
-        U, hsv, Vh = spla.svd(self.E.apply2(of, cf), lapack_driver='gesvd')
+        mu = self.parse_parameter(mu)
+        cf = self.gramian('c_lrcf', mu=mu)
+        of = self.gramian('o_lrcf', mu=mu)
+        U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver='gesvd')
         return hsv, U.T, Vh
 
-    def hsv(self):
+    def hsv(self, mu=None):
         """Hankel singular values.
 
         .. note::
             Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter|.
 
         Returns
         -------
         sv
             One-dimensional |NumPy array| of singular values.
         """
-        return self._hsv_U_V()[0]
+        return self._hsv_U_V(mu=mu)[0]
 
     @cached
-    def h2_norm(self):
+    def h2_norm(self, mu=None):
         """Compute the H2-norm of the |LTIModel|.
 
         .. note::
             Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+
+        Returns
+        -------
+        norm
+            H_2-norm.
         """
         if not self.cont_time:
             raise NotImplementedError
+        mu = self.parse_parameter(mu)
         if self.input_dim <= self.output_dim:
-            cf = self.gramian('c_lrcf')
-            return np.sqrt(self.C.apply(cf).l2_norm2().sum())
+            cf = self.gramian('c_lrcf', mu=mu)
+            return np.sqrt(self.C.apply(cf, mu=mu).l2_norm2().sum())
         else:
-            of = self.gramian('o_lrcf')
-            return np.sqrt(self.B.apply_adjoint(of).l2_norm2().sum())
+            of = self.gramian('o_lrcf', mu=mu)
+            return np.sqrt(self.B.apply_adjoint(of, mu=mu).l2_norm2().sum())
 
     @cached
-    def hinf_norm(self, return_fpeak=False, ab13dd_equilibrate=False):
+    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
         """Compute the H_infinity-norm of the |LTIModel|.
 
         .. note::
@@ -717,10 +780,12 @@ class LTIModel(InputStateOutputModel):
 
         Parameters
         ----------
+        mu
+            |Parameter|.
         return_fpeak
-            Should the frequency at which the maximum is achieved should be returned.
+            Whether to return the frequency at which the maximum is achieved.
         ab13dd_equilibrate
-            Should `slycot.ab13dd` use equilibration.
+            Whether `slycot.ab13dd` should use equilibration.
 
         Returns
         -------
@@ -729,50 +794,55 @@ class LTIModel(InputStateOutputModel):
         fpeak
             Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
-
         if not config.HAVE_SLYCOT:
             raise NotImplementedError
+        if not return_fpeak:
+            return self.hinf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
+
+        mu = self.parse_parameter(mu)
+        A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
         if self.order >= SPARSE_MIN_SIZE:
-            for op_name in ['A', 'B', 'C']:
-                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator)
-                        and not getattr(self, op_name).sparse):
-                    self.logger.warning('Converting operator ' + op_name + ' to a NumPy array.')
-            if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse)
-                    or isinstance(self.D, ZeroOperator)):
-                self.logger.warning('Converting operator D to a NumPy array.')
-            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse)
-                    or isinstance(self.E, IdentityOperator)):
-                self.logger.warning('Converting operator E to a NumPy array.')
+            for op_name in ['A', 'B', 'C', 'D', 'E']:
+                op = locals()[op_name]
+                if not isinstance(op, NumpyMatrixOperator) or op.sparse:
+                    self.logger.warning(f'Converting operator {op_name} to a NumPy array.')
 
         from slycot import ab13dd
         dico = 'C' if self.cont_time else 'D'
         jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
         equil = 'S' if ab13dd_equilibrate else 'N'
         jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
-        A, B, C, D, E = map(lambda op: to_matrix(op, format='dense'),
-                            (self.A, self.B, self.C, self.D, self.E))
-        norm, fpeak = ab13dd(dico, jobe, equil, jobd, self.order, self.input_dim, self.output_dim, A, E, B, C, D)
+        A, B, C, D, E = (to_matrix(op, format='dense') for op in [A, B, C, D, E])
+        norm, fpeak = ab13dd(dico, jobe, equil, jobd,
+                             self.order, self.input_dim, self.output_dim,
+                             A, E, B, C, D)
+        return norm, fpeak
 
-        if return_fpeak:
-            return norm, fpeak
-        else:
-            return norm
-
-    def hankel_norm(self):
+    def hankel_norm(self, mu=None):
         """Compute the Hankel-norm of the |LTIModel|.
 
         .. note::
             Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+
+        Returns
+        -------
+        norm
+            Hankel-norm.
         """
-        return self.hsv()[0]
+        return self.hsv(mu=mu)[0]
 
 
 class TransferFunction(InputOutputModel):
     """Class for systems represented by a transfer function.
 
     This class describes input-output systems given by a transfer
-    function :math:`H(s)`.
+    function :math:`H(s, mu)`.
 
     Parameters
     ----------
@@ -782,11 +852,13 @@ class TransferFunction(InputOutputModel):
         The output |VectorSpace|. Typically `NumpyVectorSpace(p)` where p is the number of outputs.
     tf
         The transfer function defined at least on the open right complex half-plane.
-        `H(s)` is a |NumPy array| of shape `(p, m)`.
+        `tf(s, mu)` is a |NumPy array| of shape `(p, m)`.
     dtf
-        The complex derivative of `H`.
+        The complex derivative of `tf`.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    parameter_space
+        The |ParameterSpace| for which the discrete problem is posed.
     cache_region
         `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
@@ -794,24 +866,37 @@ class TransferFunction(InputOutputModel):
 
     Attributes
     ----------
+    input_dim
+        The number of inputs.
+    output_dim
+        The number of outputs.
     tf
         The transfer function.
     dtf
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, input_space, output_space, tf, dtf, cont_time=True, cache_region='memory', name=None):
-        assert cont_time in (True, False)
-
+    def __init__(self, input_space, output_space, tf, dtf, cont_time=True, parameter_space=None,
+                 cache_region='memory', name=None):
+        super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name)
         self.tf = tf
         self.dtf = dtf
-        super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name)
+        self.parameter_type = parameter_space.parameter_type if parameter_space else None
+        self.parameter_space = parameter_space
 
-    def eval_tf(self, s):
-        return self.tf(s)
+    def eval_tf(self, s, mu=None):
+        if not self.parametric:
+            return self.tf(s)
+        else:
+            mu = self.parse_parameter(mu)
+            return self.tf(s, mu=mu)
 
-    def eval_dtf(self, s):
-        return self.dtf(s)
+    def eval_dtf(self, s, mu=None):
+        if not self.parametric:
+            return self.dtf(s)
+        else:
+            mu = self.parse_parameter(mu)
+            return self.dtf(s, mu=mu)
 
     def __add__(self, other):
         assert isinstance(other, InputOutputModel)
@@ -819,8 +904,8 @@ class TransferFunction(InputOutputModel):
         assert self.input_space == other.input_space
         assert self.output_space == other.output_space
 
-        tf = lambda s: self.eval_tf(s) + other.eval_tf(s)
-        dtf = lambda s: self.eval_dtf(s) + other.eval_dtf(s)
+        tf = lambda s, mu=None: self.eval_tf(s, mu=mu) + other.eval_tf(s, mu=mu)
+        dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) + other.eval_dtf(s, mu=mu)
         return self.with_(tf=tf, dtf=dtf)
 
     __radd__ = __add__
@@ -831,8 +916,8 @@ class TransferFunction(InputOutputModel):
         assert self.input_space == other.input_space
         assert self.output_space == other.output_space
 
-        tf = lambda s: self.eval_tf(s) - other.eval_tf(s)
-        dtf = lambda s: self.eval_dtf(s) - other.eval_dtf(s)
+        tf = lambda s, mu=None: self.eval_tf(s, mu=mu) - other.eval_tf(s, mu=mu)
+        dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) - other.eval_dtf(s, mu=mu)
         return self.with_(tf=tf, dtf=dtf)
 
     def __rsub__(self, other):
@@ -841,13 +926,13 @@ class TransferFunction(InputOutputModel):
         assert self.input_space == other.input_space
         assert self.output_space == other.output_space
 
-        tf = lambda s: other.eval_tf(s) - self.eval_tf(s)
-        dtf = lambda s: other.eval_dtf(s) - self.eval_dtf(s)
+        tf = lambda s, mu=None: other.eval_tf(s, mu=mu) - self.eval_tf(s, mu=mu)
+        dtf = lambda s, mu=None: other.eval_dtf(s, mu=mu) - self.eval_dtf(s, mu=mu)
         return self.with_(tf=tf, dtf=dtf)
 
     def __neg__(self):
-        tf = lambda s: -self.eval_tf(s)
-        dtf = lambda s: -self.eval_dtf(s)
+        tf = lambda s, mu=None: -self.eval_tf(s, mu=mu)
+        dtf = lambda s, mu=None: -self.eval_dtf(s, mu=mu)
         return self.with_(tf=tf, dtf=dtf)
 
     def __mul__(self, other):
@@ -855,8 +940,8 @@ class TransferFunction(InputOutputModel):
         assert self.cont_time == other.cont_time
         assert self.input_space == other.output_space
 
-        tf = lambda s: self.eval_tf(s) @ other.eval_tf(s)
-        dtf = lambda s: self.eval_dtf(s) @ other.eval_dtf(s)
+        tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
+        dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) @ other.eval_dtf(s, mu=mu)
         return self.with_(tf=tf, dtf=dtf)
 
     def __rmul__(self, other):
@@ -864,8 +949,8 @@ class TransferFunction(InputOutputModel):
         assert self.cont_time == other.cont_time
         assert self.output_space == other.input_space
 
-        tf = lambda s: other.eval_tf(s) @ self.eval_tf(s)
-        dtf = lambda s: other.eval_dtf(s) @ self.eval_dtf(s)
+        tf = lambda s, mu=None: other.eval_tf(s, mu=mu) @ self.eval_tf(s, mu=mu)
+        dtf = lambda s, mu=None: other.eval_dtf(s, mu=mu) @ self.eval_dtf(s, mu=mu)
         return self.with_(tf=tf, dtf=dtf)
 
     @cached
@@ -923,30 +1008,30 @@ class SecondOrderModel(InputStateOutputModel):
     This class describes input-output systems given by
 
     .. math::
-        M \ddot{x}(t)
-        + E \dot{x}(t)
-        + K x(t)
+        M(\mu) \ddot{x}(t, \mu)
+        + E(\mu) \dot{x}(t, \mu)
+        + K(\mu) x(t, \mu)
         & =
-            B u(t), \\
-        y(t)
+            B(\mu) u(t), \\
+        y(t, \mu)
         & =
-            C_p x(t)
-            + C_v \dot{x}(t)
-            + D u(t),
+            C_p(\mu) x(t, \mu)
+            + C_v(\mu) \dot{x}(t, \mu)
+            + D(\mu) u(t),
 
     if continuous-time, or
 
     .. math::
-        M x(k + 2)
-        + E x(k + 1)
-        + K x(k)
+        M(\mu) x(k + 2, \mu)
+        + E(\mu) x(k + 1, \mu)
+        + K(\mu) x(k, \mu)
         & =
-            B u(k), \\
-        y(k)
+            B(\mu) u(k), \\
+        y(k, \mu)
         & =
-            C_p x(k)
-            + C_v x(k + 1)
-            + D u(k),
+            C_p(\mu) x(k, \mu)
+            + C_v(\mu) x(k + 1, \mu)
+            + D(\mu) u(k),
 
     if discrete-time, where :math:`M`, :math:`E`, :math:`K`, :math:`B`, :math:`C_p`, :math:`C_v`,
     and :math:`D` are linear operators.
@@ -969,6 +1054,8 @@ class SecondOrderModel(InputStateOutputModel):
         The |Operator| D or `None` (then D is assumed to be zero).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    parameter_space
+        The |ParameterSpace| for which the discrete problem is posed.
     solver_options
         The solver options to use to solve the Lyapunov equations.
     estimator
@@ -1008,7 +1095,7 @@ class SecondOrderModel(InputStateOutputModel):
         The |Operator| D.
     """
 
-    def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
+    def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True, parameter_space=None,
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
 
@@ -1024,7 +1111,6 @@ class SecondOrderModel(InputStateOutputModel):
         D = D or ZeroOperator(Cp.range, B.source)
         assert D.linear and D.source == B.source and D.range == Cp.range
 
-        assert cont_time in (True, False)
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
@@ -1038,6 +1124,8 @@ class SecondOrderModel(InputStateOutputModel):
         self.Cv = Cv
         self.D = D
         self.solver_options = solver_options
+        self.build_parameter_type(M, E, K, B, Cp, Cv, D)
+        self.parameter_space = parameter_space
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
@@ -1162,6 +1250,7 @@ class SecondOrderModel(InputStateOutputModel):
                            if isinstance(self.M, IdentityOperator) else
                            BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
                         cont_time=self.cont_time,
+                        parameter_space=self.parameter_space,
                         solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
                         cache_region=self.cache_region, name=self.name + '_first_order')
 
@@ -1258,25 +1347,32 @@ class SecondOrderModel(InputStateOutputModel):
             return NotImplemented
 
     @cached
-    def poles(self):
+    def poles(self, mu=None):
         """Compute system poles.
 
         .. note::
             Assumes the systems is small enough to use a dense eigenvalue solver.
 
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+
         Returns
         -------
         One-dimensional |NumPy array| of system poles.
         """
-        return self.to_lti().poles()
+        return self.to_lti().poles(mu=mu)
 
-    def eval_tf(self, s):
-        """Evaluate the transfer function.
+    def eval_tf(self, s, mu=None):
+        r"""Evaluate the transfer function.
 
         The transfer function at :math:`s` is
 
         .. math::
-            (C_p + s C_v) (s^2 M + s E + K)^{-1} B + D.
+            (C_p(\mu) + s C_v(\mu))
+                (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1} B(\mu)
+            + D(\mu).
 
         .. note::
             Assumes that either the number of inputs or the number of outputs is much smaller than
@@ -1286,6 +1382,8 @@ class SecondOrderModel(InputStateOutputModel):
         ----------
         s
             Complex number.
+        mu
+            |Parameter|.
 
         Returns
         -------
@@ -1293,6 +1391,7 @@ class SecondOrderModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
+        mu = self.parse_parameter(mu)
         M = self.M
         E = self.E
         K = self.K
@@ -1304,21 +1403,29 @@ class SecondOrderModel(InputStateOutputModel):
         s2MpsEpK = s**2 * M + s * E + K
         if self.input_dim <= self.output_dim:
             CppsCv = Cp + s * Cv
-            tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T
+            tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array(mu=mu),
+                                                      mu=mu),
+                               mu=mu).to_numpy().T
         else:
-            tfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(
-                Cp.as_source_array() + Cv.as_source_array() * s.conjugate())).to_numpy().conj()
+            tfs = B.apply_adjoint(
+                s2MpsEpK.apply_inverse_adjoint(
+                    Cp.as_source_array(mu=mu) + Cv.as_source_array(mu=mu) * s.conjugate(),
+                    mu=mu),
+                mu=mu).to_numpy().conj()
         if not isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 
-    def eval_dtf(self, s):
-        """Evaluate the derivative of the transfer function.
+    def eval_dtf(self, s, mu=None):
+        r"""Evaluate the derivative of the transfer function.
 
         .. math::
-            s C_v (s^2 M + s E + K)^{-1} B
-            - (C_p + s C_v) (s^2 M + s E + K)^{-1} (2 s M + E)
-                (s^2 M + s E + K)^{-1} B.
+            s C_v(\mu) (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1} B(\mu)
+            - (C_p(\mu) + s C_v(\mu))
+                (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1}
+                (2 s M(\mu) + E(\mu))
+                (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1}
+                B(\mu).
 
         .. note::
             Assumes that either the number of inputs or the number of outputs is much smaller than
@@ -1328,6 +1435,8 @@ class SecondOrderModel(InputStateOutputModel):
         ----------
         s
             Complex number.
+        mu
+            |Parameter|.
 
         Returns
         -------
@@ -1335,6 +1444,7 @@ class SecondOrderModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
+        mu = self.parse_parameter(mu)
         M = self.M
         E = self.E
         K = self.K
@@ -1342,22 +1452,33 @@ class SecondOrderModel(InputStateOutputModel):
         Cp = self.Cp
         Cv = self.Cv
 
-        s2MpsEpK = (s**2 * M + s * E + K).assemble()
+        s2MpsEpK = (s**2 * M + s * E + K).assemble(mu=mu)
         sM2pE = 2 * s * M + E
         if self.input_dim <= self.output_dim:
-            dtfs = Cv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T * s
+            dtfs = Cv.apply(s2MpsEpK.apply_inverse(B.as_range_array(mu=mu)),
+                            mu=mu).to_numpy().T * s
             CppsCv = Cp + s * Cv
-            dtfs -= CppsCv.apply(s2MpsEpK.apply_inverse(sM2pE.apply(s2MpsEpK.apply_inverse(
-                B.as_range_array())))).to_numpy().T
+            dtfs -= CppsCv.apply(
+                s2MpsEpK.apply_inverse(
+                    sM2pE.apply(
+                        s2MpsEpK.apply_inverse(
+                            B.as_range_array(mu=mu)),
+                        mu=mu)),
+                mu=mu).to_numpy().T
         else:
-            dtfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(Cv.as_source_array())).to_numpy().conj() * s
-            dtfs -= B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(sM2pE.apply_adjoint(
-                s2MpsEpK.apply_inverse_adjoint(Cp.as_source_array()
-                                               + Cv.as_source_array() * s.conjugate())))).to_numpy().conj()
+            dtfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(Cv.as_source_array(mu=mu)),
+                                   mu=mu).to_numpy().conj() * s
+            dtfs -= B.apply_adjoint(
+                s2MpsEpK.apply_inverse_adjoint(
+                    sM2pE.apply_adjoint(
+                        s2MpsEpK.apply_inverse_adjoint(
+                            Cp.as_source_array(mu=mu) + Cv.as_source_array(mu=mu) * s.conjugate()),
+                        mu=mu)),
+                mu=mu).to_numpy().conj()
         return dtfs
 
     @cached
-    def gramian(self, typ):
+    def gramian(self, typ, mu=None):
         """Compute a second-order Gramian.
 
         Parameters
@@ -1378,6 +1499,8 @@ class SecondOrderModel(InputStateOutputModel):
                 For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
                 For `'*_dense'` types, the method assumes there are no two system poles which add to
                 zero.
+        mu
+            |Parameter|.
 
         Returns
         -------
@@ -1386,80 +1509,109 @@ class SecondOrderModel(InputStateOutputModel):
         If typ is `'pc_dense'`, `'vc_dense'`, `'po_dense'` or `'vo_dense'`, then the Gramian as a
         |NumPy array|.
         """
-        if typ not in ['pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',
-                       'pc_dense', 'vc_dense', 'po_dense', 'vo_dense']:
-            raise NotImplementedError(f"Only 'pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',"
-                                      f" 'pc_dense', 'vc_dense', 'po_dense', and 'vo_dense' types are possible"
-                                      f" ({typ} was given).")
+        assert typ in ('pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',
+                       'pc_dense', 'vc_dense', 'po_dense', 'vo_dense')
 
         if typ.endswith('lrcf'):
-            return self.to_lti().gramian(typ[1:]).block(0 if typ.startswith('p') else 1)
+            return self.to_lti().gramian(typ[1:], mu=mu).block(0 if typ.startswith('p') else 1)
         else:
-            g = self.to_lti().gramian(typ[1:])
+            g = self.to_lti().gramian(typ[1:], mu=mu)
             if typ.startswith('p'):
                 return g[:self.order, :self.order]
             else:
                 return g[self.order:, self.order:]
 
-    def psv(self):
+    def psv(self, mu=None):
         """Position singular values.
 
         .. note::
             Assumes the system is asymptotically stable.
 
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+
         Returns
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('po_lrcf').inner(self.gramian('pc_lrcf')))
+        return spla.svdvals(self.gramian('po_lrcf', mu=mu).inner(self.gramian('pc_lrcf', mu=mu)))
 
-    def vsv(self):
+    def vsv(self, mu=None):
         """Velocity singular values.
 
         .. note::
             Assumes the system is asymptotically stable.
 
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+
         Returns
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('vo_lrcf').inner(self.gramian('vc_lrcf'), product=self.M))
+        return spla.svdvals(self.gramian('vo_lrcf', mu=mu).inner(self.gramian('vc_lrcf', mu=mu),
+                                                                 product=self.M))
 
-    def pvsv(self):
+    def pvsv(self, mu=None):
         """Position-velocity singular values.
 
         .. note::
             Assumes the system is asymptotically stable.
 
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+
         Returns
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('vo_lrcf').inner(self.gramian('pc_lrcf'), product=self.M))
+        return spla.svdvals(self.gramian('vo_lrcf', mu=mu).inner(self.gramian('pc_lrcf', mu=mu),
+                                                                 product=self.M))
 
-    def vpsv(self):
+    def vpsv(self, mu=None):
         """Velocity-position singular values.
 
         .. note::
             Assumes the system is asymptotically stable.
 
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+
         Returns
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('po_lrcf').inner(self.gramian('vc_lrcf')))
+        return spla.svdvals(self.gramian('po_lrcf', mu=mu).inner(self.gramian('vc_lrcf', mu=mu)))
 
     @cached
-    def h2_norm(self):
+    def h2_norm(self, mu=None):
         """Compute the H2-norm.
 
         .. note::
             Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+
+        Returns
+        -------
+        norm
+            H_2-norm.
         """
-        return self.to_lti().h2_norm()
+        return self.to_lti().h2_norm(mu=mu)
 
     @cached
-    def hinf_norm(self, return_fpeak=False, ab13dd_equilibrate=False):
+    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
         """Compute the H_infinity-norm.
 
         .. note::
@@ -1467,6 +1619,8 @@ class SecondOrderModel(InputStateOutputModel):
 
         Parameters
         ----------
+        mu
+            |Parameter|.
         return_fpeak
             Should the frequency at which the maximum is achieved should be returned.
         ab13dd_equilibrate
@@ -1479,17 +1633,28 @@ class SecondOrderModel(InputStateOutputModel):
         fpeak
             Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
-        return self.to_lti().hinf_norm(return_fpeak=return_fpeak,
+        return self.to_lti().hinf_norm(mu=mu,
+                                       return_fpeak=return_fpeak,
                                        ab13dd_equilibrate=ab13dd_equilibrate)
 
     @cached
-    def hankel_norm(self):
+    def hankel_norm(self, mu=None):
         """Compute the Hankel-norm.
 
         .. note::
             Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+
+        Returns
+        -------
+        norm
+            Hankel-norm.
         """
-        return self.to_lti().hankel_norm()
+        return self.to_lti().hankel_norm(mu=mu)
 
 
 class LinearDelayModel(InputStateOutputModel):
@@ -1542,6 +1707,8 @@ class LinearDelayModel(InputStateOutputModel):
         The |Operator| E or `None` (then E is assumed to be identity).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    parameter_space
+        The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with an `estimate(U, mu, model)`
         method. If `estimator` is not `None`, an `estimate(U, mu)` method is added to the model
@@ -1581,9 +1748,8 @@ class LinearDelayModel(InputStateOutputModel):
         The |Operator| E.
     """
 
-    def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True,
-                 estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+    def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True, parameter_space=None,
+                 estimator=None, visualizer=None, cache_region='memory', name=None):
 
         assert A.linear and A.source == A.range
         assert isinstance(Ad, tuple) and len(Ad) > 0
@@ -1598,8 +1764,6 @@ class LinearDelayModel(InputStateOutputModel):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        assert cont_time in (True, False)
-
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
@@ -1612,6 +1776,9 @@ class LinearDelayModel(InputStateOutputModel):
         self.E = E
         self.tau = tau
         self.q = len(Ad)
+        self.solution_space = A.source
+        self.build_parameter_type(A, *Ad, B, C, D, E)
+        self.parameter_space = parameter_space
 
     def __add__(self, other):
         """Add an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
@@ -1768,7 +1935,7 @@ class LinearDelayModel(InputStateOutputModel):
         else:
             return NotImplemented
 
-    def eval_tf(self, s):
+    def eval_tf(self, s, mu=None):
         r"""Evaluate the transfer function.
 
         The transfer function at :math:`s` is
@@ -1786,6 +1953,8 @@ class LinearDelayModel(InputStateOutputModel):
         ----------
         s
             Complex number.
+        mu
+            |Parameter|.
 
         Returns
         -------
@@ -1793,6 +1962,7 @@ class LinearDelayModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
+        mu = self.parse_parameter(mu)
         A = self.A
         Ad = self.Ad
         B = self.B
@@ -1802,14 +1972,18 @@ class LinearDelayModel(InputStateOutputModel):
 
         middle = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
         if self.input_dim <= self.output_dim:
-            tfs = C.apply(middle.apply_inverse(B.as_range_array())).to_numpy().T
+            tfs = C.apply(middle.apply_inverse(B.as_range_array(mu=mu),
+                                               mu=mu),
+                          mu=mu).to_numpy().T
         else:
-            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
+            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array(mu=mu),
+                                                               mu=mu),
+                                  mu=mu).to_numpy().conj()
         if not isinstance(D, ZeroOperator):
             tfs += to_matrix(D, format='dense')
         return tfs
 
-    def eval_dtf(self, s):
+    def eval_dtf(self, s, mu=None):
         r"""Evaluate the derivative of the transfer function.
 
         The derivative of the transfer function at :math:`s` is
@@ -1830,6 +2004,8 @@ class LinearDelayModel(InputStateOutputModel):
         ----------
         s
             Complex number.
+        mu
+            |Parameter|.
 
         Returns
         -------
@@ -1837,6 +2013,7 @@ class LinearDelayModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
+        mu = self.parse_parameter(mu)
         A = self.A
         Ad = self.Ad
         B = self.B
@@ -1844,14 +2021,20 @@ class LinearDelayModel(InputStateOutputModel):
         E = self.E
 
         left_and_right = LincombOperator((E, A) + Ad,
-                                         (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)).assemble()
+                                         (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)).assemble(mu=mu)
         middle = LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
         if self.input_dim <= self.output_dim:
-            dtfs = -C.apply(left_and_right.apply_inverse(middle.apply(left_and_right.apply_inverse(
-                B.as_range_array())))).to_numpy().T
+            dtfs = -C.apply(
+                left_and_right.apply_inverse(
+                    middle.apply(left_and_right.apply_inverse(B.as_range_array(mu=mu)),
+                                 mu=mu)),
+                mu=mu).to_numpy().T
         else:
-            dtfs = -B.apply_adjoint(left_and_right.apply_inverse_adjoint(middle.apply_adjoint(
-                left_and_right.apply_inverse_adjoint(C.as_source_array())))).to_numpy().conj()
+            dtfs = -B.apply_adjoint(
+                left_and_right.apply_inverse_adjoint(
+                    middle.apply_adjoint(left_and_right.apply_inverse_adjoint(C.as_source_array(mu=mu)),
+                                         mu=mu)),
+                mu=mu).to_numpy().conj()
         return dtfs
 
 
