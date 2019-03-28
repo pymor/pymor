@@ -42,6 +42,14 @@ COLORS = {
     'CRITICAL': MAGENTA,
     'ERROR':    RED
 }
+CSSCOLORS = {
+    'WARNING':  'yellow',
+    'INFO2':    'yellow',
+    'INFO3':    'red',
+    'DEBUG':    'blue',
+    'CRITICAL': 'magenta',
+    'ERROR':    'red'
+}
 
 MAX_HIERARCHY_LEVEL = 1
 BLOCK_TIMINGS = True
@@ -72,7 +80,7 @@ class ColoredFormatter(logging.Formatter):
 
         super().__init__()
 
-    def format(self, record):
+    def _format_common(self, record):
         global LAST_TIMESTAMP_LENGTH
 
         msg = super().format(record)  # call base class to support exception formatting
@@ -113,7 +121,10 @@ class ColoredFormatter(logging.Formatter):
             path = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL])
 
         levelname = record.levelname
+        return levelname, path, msg, timestamp, indent
 
+    def format(self, record):
+        levelname, path, msg, timestamp, indent = self._format_common(record)
         if self.use_color:
             if levelname in ('INFO', 'BLOCK'):
                 path = BOLD_SEQ + path + RESET_SEQ
@@ -131,6 +142,22 @@ class ColoredFormatter(logging.Formatter):
                 levelname = '|' + levelname + '|'
 
         return f'{timestamp} {indent}{levelname}{path}: {msg}'
+
+    def format_html(self, record):
+        levelname, path, msg, timestamp, indent = self._format_common(record)
+
+        if levelname in ('INFO', 'BLOCK'):
+            path = f'<bold>{path}</bold>'
+            levelname = ''
+        elif levelname.startswith('INFO'):
+            path = f'<span style="color:{CSSCOLORS[levelname]};">{path}</span>'
+            levelname = ''
+        else:
+            path = f'<bold>{path}</bold>'
+            levelname = f'<span style="color:{CSSCOLORS[levelname]};">|{levelname}|</span>'
+
+        return f'{timestamp} {indent}{levelname}{path}: {msg}'
+
 
 
 @defaults('filename', sid_ignore='filename')
