@@ -26,6 +26,8 @@ import logging
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 # from IPython.core.debugger import set_trace
+from ipywidgets import IntProgress, HTML, VBox
+from IPython.display import display
 
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
