@@ -22,7 +22,7 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              lradi_shifts='projection_shifts',
                              projection_shifts_init_maxiter=20,
                              projection_shifts_init_seed=None):
-    """Returns available Lyapunov equation solvers with default solver options.
+    """Return available Lyapunov solvers with default options.
 
     Parameters
     ----------

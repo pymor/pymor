@@ -324,7 +324,7 @@ def matrix_astype_nocopy(matrix, dtype):
 
 
 def lyap_lrcf_solver_options():
-    """Returns available Lyapunov equation solvers with default solver options for the SciPy backend.
+    """Return available Lyapunov solvers with default options for the SciPy backend.
 
     Returns
     -------
@@ -383,7 +383,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
 
 
 def lyap_dense_solver_options():
-    """Return available dense Lyapunov equation solvers with default solver options for the SciPy backend.
+    """Return available dense Lyapunov solvers with default options for the SciPy backend.
 
     Returns
     -------
@@ -445,7 +445,7 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
 
 
 def ricc_lrcf_solver_options():
-    """Returns available Riccati equation solvers with default solver options for the SciPy backend.
+    """Return available Riccati solvers with default options for the SciPy backend.
 
     Returns
     -------
@@ -519,7 +519,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
 
 
 def pos_ricc_lrcf_solver_options():
-    """Returns available positive Riccati equation solvers with default solver options for the SciPy backend.
+    """Return available positive Riccati solvers with default options for the SciPy backend.
 
     Returns
     -------

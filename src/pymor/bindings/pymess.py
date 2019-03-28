@@ -34,7 +34,7 @@ if config.HAVE_PYMESS:
                              adi_shifts_l0=16,
                              adi_shifts_p=None,
                              adi_shifts_paratype=pymess.MESS_LRCFADI_PARA_ADAPTIVE_V):
-        """Returns available adi solver options with default values for the pymess backend.
+        """Return available adi solver options with default values for the pymess backend.
 
         Parameters
         ----------
@@ -85,7 +85,7 @@ if config.HAVE_PYMESS:
         return lradi_opts
 
     def lyap_lrcf_solver_options():
-        """Returns available Lyapunov equation solvers with default solver options for the pymess backend.
+        """Return available Lyapunov solvers with default options for the pymess backend.
 
         Also see :func:`lradi_solver_options`.
 
@@ -168,7 +168,7 @@ if config.HAVE_PYMESS:
         return A.source.from_numpy(Z.T)
 
     def lyap_dense_solver_options():
-        """Returns available Lyapunov equation solvers with default solver options for the pymess backend.
+        """Return available Lyapunov solvers with default options for the pymess backend.
 
         Returns
         -------
@@ -224,7 +224,7 @@ if config.HAVE_PYMESS:
                                         absres_tol=1e-11,
                                         relres_tol=1e-12,
                                         nrm=0):
-        """Returns available Riccati equation solvers with default solver options for the pymess backend.
+        """Return available Riccati solvers with default options for the pymess backend.
 
         Also see :func:`lradi_solver_options`.
 
@@ -261,7 +261,7 @@ if config.HAVE_PYMESS:
                             newton_output=1,
                             newton_res2_tol=1e-10,
                             newton_singleshifts=0):
-        """Returns available adi solver options with default values for the pymess backend.
+        """Return available adi solver options with default values for the pymess backend.
 
         Parameters
         ----------
@@ -297,7 +297,7 @@ if config.HAVE_PYMESS:
         return lrnm_opts
 
     def ricc_lrcf_solver_options():
-        """Returns available Riccati equation solvers with default solver options for the pymess backend.
+        """Return available Riccati solvers with default options for the pymess backend.
 
         Also see :func:`dense_nm_gmpcare_solver_options` and
         :func:`lrnm_solver_options`.
@@ -396,7 +396,7 @@ if config.HAVE_PYMESS:
         return A.source.from_numpy(Z.T)
 
     def pos_ricc_lrcf_solver_options():
-        """Returns available positive Riccati equation solvers with default solver options for the pymess backend.
+        """Return available positive Riccati solvers with default options for the pymess backend.
 
         Returns
         -------

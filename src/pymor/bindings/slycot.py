@@ -16,7 +16,7 @@ if config.HAVE_SLYCOT:
     from pymor.core.logger import getLogger
 
     def lyap_lrcf_solver_options():
-        """Returns available Lyapunov equation solvers with default solver options for the slycot backend.
+        """Return available Lyapunov solvers with default options for the slycot backend.
 
         Returns
         -------
@@ -75,7 +75,7 @@ if config.HAVE_SLYCOT:
         return A.source.from_numpy(Z.T)
 
     def lyap_dense_solver_options():
-        """Returns available Lyapunov equation solvers with default solver options for the Slycot backend.
+        """Return available Lyapunov solvers with default options for the slycot backend.
 
         Returns
         -------
@@ -150,7 +150,7 @@ if config.HAVE_SLYCOT:
                            f'Result may not be accurate.')
 
     def ricc_lrcf_solver_options():
-        """Returns available Riccati equation solvers with default solver options for the SciPy backend.
+        """Return available Riccati solvers with default options for the slycot backend.
 
         Returns
         -------
@@ -270,7 +270,7 @@ if config.HAVE_SLYCOT:
                            f'Result may not be accurate.')
 
     def pos_ricc_lrcf_solver_options():
-        """Returns available positive Riccati equation solvers with default solver options for the SciPy backend.
+        """Return available positive Riccati solvers with default options for the slycot backend.
 
         Returns
         -------
