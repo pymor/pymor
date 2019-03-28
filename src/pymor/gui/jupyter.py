@@ -257,14 +257,19 @@ def redirect_logging():
             self.setFormatter(ColoredFormatter())
 
         def emit(self, record):
-            record = self.format(record)
-            self.out.outputs = ({'name': 'stdout', 'output_type': 'stream', 'text': f'{logger.BLACK}{record}\n'},) + self.out.outputs
+            record = self.formatter.format_html(record)
+            self.out.value += f'<p style="line-height:120%">{record}</p>'
 
         def __repr__(self):
             return '<%s %s>' % (self.__class__.__name__, self.out)
 
-    # TODO: the widget needs to be fancier, maybe with fold stuff, and correct scroll direction
-    out = ipywidgets.Output(layout=ipywidgets.Layout(width='100%', height='8em', border='solid'))
+    out = ipywidgets.HTML(layout=ipywidgets.Layout(width='100%', height='16em', overflow_y='auto'))
+
+    accordion = ipywidgets.widgets.Accordion(children=[out])
+    accordion.set_title(0, 'Log Output')
+    # start collapsed
+    accordion.selected_index = None
+
     new_handler = LogViewer(out)
 
     def _new_default(_):
@@ -276,7 +281,7 @@ def redirect_logging():
     for name in logging.root.manager.loggerDict:
         logging.getLogger(name).handlers = [new_handler]
 
-    display(out)
+    display(accordion)
 
     yield
 
