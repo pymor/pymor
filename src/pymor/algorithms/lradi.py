@@ -63,9 +63,9 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     Parameters
     ----------
     A
-        The |Operator| A.
+        The non-parametric |Operator| A.
     E
-        The |Operator| E or `None`.
+        The non-parametric |Operator| E or `None`.
     B
         The operator B as a |VectorArray| from `A.source`.
     trans

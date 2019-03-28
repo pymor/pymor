@@ -41,9 +41,9 @@ if config.HAVE_SLYCOT:
         Parameters
         ----------
         A
-            The |Operator| A.
+            The non-parametric |Operator| A.
         E
-            The |Operator| E or `None`.
+            The non-parametric |Operator| E or `None`.
         B
             The operator B as a |VectorArray| from `A.source`.
         trans
@@ -176,9 +176,9 @@ if config.HAVE_SLYCOT:
         Parameters
         ----------
         A
-            The |Operator| A.
+            The non-parametric |Operator| A.
         E
-            The |Operator| E or `None`.
+            The non-parametric |Operator| E or `None`.
         B
             The operator B as a |VectorArray| from `A.source`.
         C
@@ -296,9 +296,9 @@ if config.HAVE_SLYCOT:
         Parameters
         ----------
         A
-            The |Operator| A.
+            The non-parametric |Operator| A.
         E
-            The |Operator| E or `None`.
+            The non-parametric |Operator| E or `None`.
         B
             The operator B as a |VectorArray| from `A.source`.
         C

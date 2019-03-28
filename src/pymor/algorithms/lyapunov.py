@@ -80,9 +80,9 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
     Parameters
     ----------
     A
-        The |Operator| A.
+        The non-parametric |Operator| A.
     E
-        The |Operator| E or `None`.
+        The non-parametric |Operator| E or `None`.
     B
         The operator B as a |VectorArray| from `A.source`.
     trans
@@ -133,9 +133,11 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
 
 def _solve_lyap_lrcf_check_args(A, E, B, trans):
     assert isinstance(A, OperatorInterface) and A.linear
+    assert not A.parametric
     assert A.source == A.range
     if E is not None:
         assert isinstance(E, OperatorInterface) and E.linear
+        assert not E.parametric
         assert E.source == E.range
         assert E.source == A.source
     assert B in A.source

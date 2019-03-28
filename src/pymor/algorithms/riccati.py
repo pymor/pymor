@@ -74,9 +74,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     Parameters
     ----------
     A
-        The |Operator| A.
+        The non-parametric |Operator| A.
     E
-        The |Operator| E or `None`.
+        The non-parametric |Operator| E or `None`.
     B
         The operator B as a |VectorArray| from `A.source`.
     C
@@ -169,9 +169,9 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     Parameters
     ----------
     A
-        The |Operator| A.
+        The non-parametric |Operator| A.
     E
-        The |Operator| E or `None`.
+        The non-parametric |Operator| E or `None`.
     B
         The operator B as a |VectorArray| from `A.source`.
     C
@@ -220,9 +220,11 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
 def _solve_ricc_check_args(A, E, B, C, R, S, trans):
     assert isinstance(A, OperatorInterface) and A.linear
+    assert not A.parametric
     assert A.source == A.range
     if E is not None:
         assert isinstance(E, OperatorInterface) and E.linear
+        assert not E.parametric
         assert E.source == E.range == A.source
     assert B in A.source
     assert C in A.source
