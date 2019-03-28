@@ -134,6 +134,20 @@ class ColoredFormatter(logging.Formatter):
 
 
 @defaults('filename', sid_ignore='filename')
+def default_handler(filename=''):
+    streamhandler = logging.StreamHandler()
+    streamformatter = ColoredFormatter()
+    streamhandler.setFormatter(streamformatter)
+    handlers = [streamhandler]
+    if filename:
+        filehandler = logging.FileHandler(filename)
+        fileformatter = ColoredFormatter()
+        filehandler.setFormatter(fileformatter)
+        handlers.append(filehandler)
+    return handlers
+
+
+@defaults('filename', sid_ignore='filename')
 def getLogger(module, level=None, filename=''):
     """Get the logger of the respective module for pyMOR's logging facility.
 
@@ -153,16 +167,7 @@ def getLogger(module, level=None, filename=''):
     logger.block = MethodType(_block, logger)
     logger.info2 = MethodType(_info2, logger)
     logger.info3 = MethodType(_info3, logger)
-    streamhandler = logging.StreamHandler()
-    streamformatter = ColoredFormatter()
-    streamhandler.setFormatter(streamformatter)
-    handlers = [streamhandler]
-    if filename:
-        filehandler = logging.FileHandler(filename)
-        fileformatter = ColoredFormatter()
-        filehandler.setFormatter(fileformatter)
-        handlers.append(filehandler)
-    logger.handlers = handlers
+    logger.handlers = default_handler(filename)
     logger.propagate = False
     if level:
         logger.setLevel(level)
