@@ -410,7 +410,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
 
     @from_file.instancemethod
     def from_file(self, path, key=None, single_vector=False, transpose=False):
-        return self.from_file(path, key=key, single_vector=single_vector, transpose=transpose, id_=self.id)
+        return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose, id_=self.id)
 
     @classmethod
     def _array_factory(cls, array, space=None, id_=None):
