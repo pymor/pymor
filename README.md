@@ -63,7 +63,7 @@ If you use pyMOR for academic work, please consider citing our
 Installation via pip
 --------------------
 
-We recommend installation of pyMOR in a [virtual environment](https://virtualenv.pypa.io/en/latest/>).
+We recommend installation of pyMOR in a [virtual environment](https://virtualenv.pypa.io/en/latest/).
 
 pyMOR can easily be installed with the [pip](https://pip.pypa.io/en/stable/)
 command:
