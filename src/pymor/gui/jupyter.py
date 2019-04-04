@@ -25,9 +25,8 @@ from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 # from IPython.core.debugger import set_trace
 from ipywidgets import IntProgress, HTML, VBox
-from IPython.display import display
-import contextlib
 import ipywidgets
+import logging
 
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
@@ -309,12 +308,14 @@ class LoggingRedirector(object):
         self.old_handlers = {name: logging.getLogger(name).handlers for name in logging.root.manager.loggerDict}
         for name in logging.root.manager.loggerDict:
             logging.getLogger(name).handlers = [self.new_handler]
+        IPython.display.display(self.accordion)
 
     def stop(self):
         if self.old_default is None:
             # %load_ext in the frist cell triggers a post_run_cell with no matching pre_run_cell event before
             return
-        self.new_handler.close()
+        if self.new_handler.empty:
+            self.accordion.close()
         logger.default_handler = self.old_default
         for name in logging.root.manager.loggerDict:
             try:
@@ -322,6 +323,7 @@ class LoggingRedirector(object):
             except KeyError:
                 # loggers that have been created during the redirect get a default handler
                 logging.getLogger(name).handlers = logger.default_handler()
+
 
 redirect_logging = LoggingRedirector()
 
