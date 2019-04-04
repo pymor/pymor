@@ -10,7 +10,7 @@ To use these routines you first have to execute ::
 
 inside the given notebook.
 """
-
+import IPython
 import numpy as np
 
 from pymor.core import logger
@@ -22,9 +22,8 @@ from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 # from IPython.core.debugger import set_trace
 from ipywidgets import IntProgress, HTML, VBox
-from IPython.display import display
-import contextlib
 import ipywidgets
+import logging
 
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
@@ -215,7 +214,7 @@ def progress_bar(sequence, every=None, size=None, name='Parameters'):
         progress = IntProgress(min=0, max=size, value=0)
     label = HTML()
     box = VBox(children=[label, progress])
-    display(box)
+    IPython.display.display(box)
 
     index = 0
     try:
@@ -243,52 +242,84 @@ def progress_bar(sequence, every=None, size=None, name='Parameters'):
         label.value = f"{name}: {str(index or '?')}"
 
 
-@contextlib.contextmanager
-def redirect_logging():
-    # TODO: this should be usable via cell magics too
-    import logging
+class LogViewer(logging.Handler):
+    out = None
 
-    class LogViewer(logging.Handler):
-        out = None
+    def __init__(self, out):
+        super().__init__()
+        self.out = out
+        self.setFormatter(ColoredFormatter())
 
-        def __init__(self, out):
-            super().__init__()
-            self.out = out
-            self.setFormatter(ColoredFormatter())
+    def emit(self, record):
+        record = self.formatter.format_html(record)
+        self.out.value += f'<p style="line-height:120%">{record}</p>'
 
-        def emit(self, record):
-            record = self.formatter.format_html(record)
-            self.out.value += f'<p style="line-height:120%">{record}</p>'
+    @property
+    def empty(self):
+        return len(self.out.value) == 0
 
-        def __repr__(self):
-            return '<%s %s>' % (self.__class__.__name__, self.out)
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, self.out)
 
-    out = ipywidgets.HTML(layout=ipywidgets.Layout(width='100%', height='16em', overflow_y='auto'))
 
-    accordion = ipywidgets.widgets.Accordion(children=[out])
-    accordion.set_title(0, 'Log Output')
-    # start collapsed
-    accordion.selected_index = None
+class LoggingRedirector(object):
 
-    new_handler = LogViewer(out)
+    def __init__(self):
+        self.old_handlers = None
+        self.old_default = None
+        self.new_handler = None
+        self.accordion = None
 
-    def _new_default(_):
-        return [new_handler]
+    def __enter__(self):
+        self.start()
 
-    old_default = logger.default_handler
-    logger.default_handler = _new_default
-    old_handlers = {name: logging.getLogger(name).handlers for name in logging.root.manager.loggerDict}
-    for name in logging.root.manager.loggerDict:
-        logging.getLogger(name).handlers = [new_handler]
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
 
-    display(accordion)
+    def start(self):
+        out = ipywidgets.HTML(layout=ipywidgets.Layout(width='100%', height='16em', overflow_y='auto'))
 
-    yield
+        self.accordion = ipywidgets.widgets.Accordion(children=[out])
+        self.accordion.set_title(0, 'Log Output')
+        # start collapsed
+        self.accordion.selected_index = None
 
-    logger.default_handler = old_default
-    for name in logging.root.manager.loggerDict:
-        try:
-            logging.getLogger(name).handlers = old_handlers[name]
-        except KeyError:
-            # loggers that have been created during the redirect get a default handler
-            logging.getLogger(name).handlers = logger.default_handler()
+        self.new_handler = LogViewer(out)
+
+        def _new_default(_):
+            return [self.new_handler]
+
+        self.old_default = logger.default_handler
+        logger.default_handler = _new_default
+        self.old_handlers = {name: logging.getLogger(name).handlers for name in logging.root.manager.loggerDict}
+        for name in logging.root.manager.loggerDict:
+            logging.getLogger(name).handlers = [self.new_handler]
+
+        IPython.display.display(self.accordion)
+
+    def stop(self):
+        if self.old_default is None:
+            # %load_ext in the frist cell triggers a post_run_cell with no matching pre_run_cell event before
+            return
+        if self.new_handler.empty:
+            self.accordion.close()
+        logger.default_handler = self.old_default
+        for name in logging.root.manager.loggerDict:
+            try:
+                logging.getLogger(name).handlers = self.old_handlers[name]
+            except KeyError:
+                # loggers that have been created during the redirect get a default handler
+                logging.getLogger(name).handlers = logger.default_handler()
+
+
+redirect_logging = LoggingRedirector()
+
+
+def load_ipython_extension(ipython):
+    ipython.events.register('pre_run_cell', redirect_logging.start)
+    ipython.events.register('post_run_cell', redirect_logging.stop)
+
+
+def unload_ipython_extension(ipython):
+    ipython.events.unregister('pre_run_cell', redirect_logging.start)
+    ipython.events.unregister('post_run_cell', redirect_logging.stop)
