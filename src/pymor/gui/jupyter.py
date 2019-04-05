@@ -245,18 +245,28 @@ def progress_bar(sequence, every=None, size=None, name='Parameters'):
 class LogViewer(logging.Handler):
     out = None
 
-    def __init__(self, out):
+    def __init__(self, out, accordion=None):
         super().__init__()
         self.out = out
+        self.accordion = accordion
         self.setFormatter(ColoredFormatter())
+        self.first_emit = True
 
     def emit(self, record):
+        if self.first_emit:
+            if self.accordion:
+                IPython.display.display(self.accordion)
+            self.first_emit = False
         record = self.formatter.format_html(record)
         self.out.value += f'<p style="line-height:120%">{record}</p>'
 
     @property
     def empty(self):
         return len(self.out.value) == 0
+
+    def close(self):
+        if self.empty and self.accordion:
+            self.accordion.close()
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.out)
@@ -284,7 +294,7 @@ class LoggingRedirector(object):
         # start collapsed
         self.accordion.selected_index = None
 
-        self.new_handler = LogViewer(out)
+        self.new_handler = LogViewer(out, self.accordion)
 
         def _new_default(_):
             return [self.new_handler]
@@ -295,14 +305,11 @@ class LoggingRedirector(object):
         for name in logging.root.manager.loggerDict:
             logging.getLogger(name).handlers = [self.new_handler]
 
-        IPython.display.display(self.accordion)
-
     def stop(self):
         if self.old_default is None:
             # %load_ext in the frist cell triggers a post_run_cell with no matching pre_run_cell event before
             return
-        if self.new_handler.empty:
-            self.accordion.close()
+        self.new_handler.close()
         logger.default_handler = self.old_default
         for name in logging.root.manager.loggerDict:
             try:
