@@ -29,6 +29,7 @@ RUN useradd -d /home/pymor --shell /bin/bash -u ${NB_UID} -o -c "" -m ${NB_USER}
 # at this point setup.py exists only in image_binder
 # for the dev image it's only available via the mount at runtime
 ADD requirements*.txt /tmp/
+ADD docker/ipython_kernel_config.py /etc/ipython/
 RUN /bin/bash -c "pip install jupyterlab && \
     pip install -r /tmp/requirements-optional.txt && \
     pip install git+https://github.com/K3D-tools/K3D-jupyter@devel && \
