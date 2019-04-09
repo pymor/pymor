@@ -38,8 +38,9 @@ class PatchVisualizer(BasicInterface):
         backend = backend or ('jupyter' if is_jupyter() else None)
         self.__auto_init(locals())
             # TODO this check is not currently working as expected
-            # HACK s.o.
-            backend = 'jupyter'
+            from IPython import get_ipython
+            if type(get_ipython()).__module__.startswith('ipykernel.'):
+                    backend = 'jupyter'
 
     def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
                   rescale_colorbars=False, block=None, filename=None, columns=2):
