@@ -8,6 +8,7 @@ from pymor.grids.oned import OnedGrid
 from pymor.grids.referenceelements import triangle, square
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.core.config import is_jupyter
 
 
 class PatchVisualizer(BasicInterface):
@@ -37,13 +38,7 @@ class PatchVisualizer(BasicInterface):
         self.grid = grid
         self.bounding_box = bounding_box
         self.codim = codim
-        if backend is None:
-            import sys
-            if 'matplotlib' in sys.modules:
-                matplotlib = sys.modules['matplotlib']
-                if matplotlib.get_backend() == 'nbAgg':
-                    backend = 'jupyter'
-        self.backend = backend
+        self.backend = backend or 'jupyter' if is_jupyter() else None
         self.block = block
 
     def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
