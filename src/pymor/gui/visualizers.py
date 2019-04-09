@@ -8,6 +8,7 @@ from pymor.grids.oned import OnedGrid
 from pymor.grids.referenceelements import triangle, square
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.core.config import is_jupyter
 
 
 class PatchVisualizer(BasicInterface):
@@ -38,10 +39,9 @@ class PatchVisualizer(BasicInterface):
         self.bounding_box = bounding_box
         self.codim = codim
         if backend is None:
-            # TODO this check is not currently working as expected
-            from IPython import get_ipython
-            if type(get_ipython()).__module__.startswith('ipykernel.'):
-                    backend = 'jupyter'
+            # A more stable solution might be to express the PatchVisualizer inside IPython's Rich Display System
+            if is_jupyter():
+                backend = 'jupyter'
         self.backend = backend
         self.block = block
 

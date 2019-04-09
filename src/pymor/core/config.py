@@ -55,6 +55,14 @@ def _get_qt_version():
     return Qt.__binding__ + ' ' + Qt.__binding_version__
 
 
+def is_jupyter():
+    """This Method is not foolprof and might fail with any given jupyter release
+    :return: True if we believe to be running in a Jupyter Notebook or Lab
+    """
+    from IPython import get_ipython
+    return type(get_ipython()).__module__.startswith('ipykernel.')
+
+
 _PACKAGES = {
     'CYTHON': lambda: import_module('cython').__version__,
     'DEALII': lambda: import_module('pydealii'),
