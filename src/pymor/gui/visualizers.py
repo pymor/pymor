@@ -39,13 +39,9 @@ class PatchVisualizer(BasicInterface):
         self.codim = codim
         if backend is None:
             # TODO this check is not currently working as expected
-            import sys
-            if 'matplotlib' in sys.modules:
-                matplotlib = sys.modules['matplotlib']
-                if matplotlib.get_backend() == 'nbAgg':
+            from IPython import get_ipython
+            if type(get_ipython()).__module__.startswith('ipykernel.'):
                     backend = 'jupyter'
-            # HACK s.o.
-            backend = 'jupyter'
         self.backend = backend
         self.block = block
 
