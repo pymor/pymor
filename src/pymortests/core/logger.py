@@ -23,5 +23,9 @@ def test_logclass(basicinterface_subclass):
     exercise_logger(logger)
 
 
+def test_empty_log_message():
+    core.logger.getLogger('test').warn('')
+
+
 if __name__ == "__main__":
     runmodule(filename=__file__)
