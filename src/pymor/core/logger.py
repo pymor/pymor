@@ -124,7 +124,12 @@ class ColoredFormatter(logging.Formatter):
         return levelname, path, msg, timestamp, indent
 
     def format(self, record):
-        levelname, path, msg, timestamp, indent = self._format_common(record)
+        try:
+            ret = self._format_common(record)
+            levelname, path, msg, timestamp, indent = ret
+        except ValueError:
+            return ret
+
         if self.use_color:
             if levelname in ('INFO', 'BLOCK'):
                 path = BOLD_SEQ + path + RESET_SEQ
@@ -144,6 +149,12 @@ class ColoredFormatter(logging.Formatter):
         return f'{timestamp} {indent}{levelname}{path}: {msg}'
 
     def format_html(self, record):
+        try:
+            ret = self._format_common(record)
+            levelname, path, msg, timestamp, indent = ret
+        except ValueError:
+            return ret
+
         levelname, path, msg, timestamp, indent = self._format_common(record)
 
         if levelname in ('INFO', 'BLOCK'):
