@@ -37,10 +37,9 @@ class PatchVisualizer(BasicInterface):
         assert codim in (0, 2)
         backend = backend or ('jupyter' if is_jupyter() else None)
         self.__auto_init(locals())
-            # TODO this check is not currently working as expected
-            from IPython import get_ipython
-            if type(get_ipython()).__module__.startswith('ipykernel.'):
-                    backend = 'jupyter'
+            # A more stable solution might be to express the PatchVisualizer inside IPython's Rich Display System
+            if is_jupyter():
+                backend = 'jupyter'
 
     def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
                   rescale_colorbars=False, block=None, filename=None, columns=2):
