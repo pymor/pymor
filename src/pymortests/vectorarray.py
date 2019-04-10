@@ -7,6 +7,8 @@ from numbers import Number
 
 import pytest
 import numpy as np
+from hypothesis import given
+from hypothesis.extra import numpy as hynp
 
 from pymor.algorithms.basic import almost_equal
 from pymor.vectorarrays.interface import VectorSpace
@@ -15,7 +17,7 @@ from pymortests.fixtures.vectorarray import \
      compatible_vector_array_pair, incompatible_vector_array_pair,
      picklable_vector_array_without_reserve, picklable_vector_array)
 from pymortests.pickling import assert_picklable_without_dumps_function
-
+import pymortests.strategies as pyst
 
 
 def ind_complement(v, ind):
@@ -177,6 +179,11 @@ def test_zeros(vector_array):
             assert np.allclose(v.to_numpy(), np.zeros((c, v.dim)))
         except NotImplementedError:
             pass
+
+
+@given(pyst.numpy_vector_array())
+def test_np_zeros(vear):
+    test_zeros(vear)
 
 
 def test_ones(vector_array):
