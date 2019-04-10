@@ -13,8 +13,6 @@ from pymor.vectorarrays.list import NumpyListVectorSpace
 
 
 import os
-TRAVIS = os.getenv('TRAVIS') == 'true'
-
 
 def random_integers(count, seed):
     np.random.seed(seed)
