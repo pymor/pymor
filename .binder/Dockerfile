@@ -24,22 +24,34 @@ ARG PYMOR_JUPYTER_TOKEN
 USER root
 RUN useradd -d /home/pymor --shell /bin/bash -u ${NB_UID} -o -c "" -m ${NB_USER} && \
     ([ -d /pymor ] || mkdir /pymor) && \
-    chown -R ${NB_USER} /home/pymor /pymor/
+    chown -R ${NB_USER} /home/pymor /pymor/ && \
+    pip install virtualenv
 
+# the devel version of K3D needs npm/nodejs installed, K3D wheels do not
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
+    &&  apt update && apt install nodejs 
 # at this point setup.py exists only in image_binder
 # for the dev image it's only available via the mount at runtime
 ADD requirements*.txt /tmp/
 ADD docker/ipython_kernel_config.py /etc/ipython/
-RUN /bin/bash -c "pip install jupyterlab && \
-    pip install -r /tmp/requirements-optional.txt && \
-    pip install git+https://github.com/K3D-tools/K3D-jupyter@devel && \
-    [[ -e /pymor/setup.py ]] && pip install /pymor || echo 'no install needed'"
 ADD .binder/dev-entrypoint.bash /usr/local/bin/
-USER ${NB_USER}
 
 ENV JUPYTER_TOKEN=${PYMOR_JUPYTER_TOKEN} \
     USER=${NB_USER} \
-    HOME=/home/pymor
+    HOME=/home/pymor \
+    VENV=/home/pymor/venv
+
+USER ${NB_USER}
+
+RUN /bin/bash -c "virtualenv --python=/usr/local/bin/python --system-site-packages ${VENV} && \
+    source ${VENV}/bin/activate && \
+    pip install jupyterlab && \
+    pip install -r /tmp/requirements-optional.txt && \
+    pip install git+https://github.com/jupyter/nbconvert@master && \
+    pip install nbviewer && \
+    [[ -e /pymor/setup.py ]] && pip install /pymor || echo 'no install needed'"
+
+ENV PATH=${VENV}/bin:${PATH}
 
 ENTRYPOINT []
 WORKDIR /pymor/notebooks
