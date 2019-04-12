@@ -14,5 +14,5 @@ pyamg
 pyevtk>=1.1
 pyopengl
 pytest-cov
-pytest>=3.3
+pytest>=4.4
 slycot>=0.3.3

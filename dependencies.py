@@ -3,7 +3,7 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-_PYTEST = 'pytest>=3.3'
+_PYTEST = 'pytest>=4.4'
 
 def _pymess(rev, major, minor, marker=True):
     url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
