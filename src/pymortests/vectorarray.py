@@ -13,11 +13,12 @@ from hypothesis.extra import numpy as hynp
 from pymor.algorithms.basic import almost_equal
 from pymor.vectorarrays.interface import VectorSpace
 from pymortests.fixtures.vectorarray import \
-    (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
+    (vector_array_without_reserve, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair,
      picklable_vector_array_without_reserve, picklable_vector_array)
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
+from pymortests.strategies import vector_array
 
 
 def ind_complement(v, ind):
@@ -151,6 +152,7 @@ def ind_to_list(v, ind):
         return ind
 
 
+@given(pyst.vector_array)
 def test_empty(vector_array):
     with pytest.raises(Exception):
         vector_array.empty(-1)
@@ -164,6 +166,7 @@ def test_empty(vector_array):
             pass
 
 
+@given(pyst.vector_array)
 def test_zeros(vector_array):
     with pytest.raises(Exception):
         vector_array.zeros(-1)
@@ -181,11 +184,7 @@ def test_zeros(vector_array):
             pass
 
 
-@given(pyst.numpy_vector_array())
-def test_np_zeros(vear):
-    test_zeros(vear)
-
-
+@given(pyst.vector_array)
 def test_ones(vector_array):
     with pytest.raises(Exception):
         vector_array.ones(-1)
@@ -203,6 +202,7 @@ def test_ones(vector_array):
             pass
 
 
+@given(pyst.vector_array)
 def test_full(vector_array):
     with pytest.raises(Exception):
         vector_array.full(9, -1)
@@ -221,6 +221,7 @@ def test_full(vector_array):
                 pass
 
 
+@given(pyst.vector_array)
 def test_random_uniform(vector_array):
     with pytest.raises(Exception):
         vector_array.random(-1)
@@ -253,6 +254,7 @@ def test_random_uniform(vector_array):
                 assert np.allclose((v - vv).sup_norm(), 0.)
 
 
+@given(pyst.vector_array)
 def test_random_normal(vector_array):
     with pytest.raises(Exception):
         vector_array.random(-1)
@@ -292,6 +294,7 @@ def test_random_normal(vector_array):
                 assert np.allclose((v - vv).sup_norm(), 0.)
 
 
+@given(pyst.vector_array)
 def test_from_numpy(vector_array):
     try:
         d = vector_array.to_numpy()
@@ -304,6 +307,7 @@ def test_from_numpy(vector_array):
         pass
 
 
+@given(pyst.vector_array)
 def test_shape(vector_array):
     v = vector_array
     assert len(vector_array) >= 0
@@ -314,12 +318,14 @@ def test_shape(vector_array):
         pass
 
 
+@given(pyst.vector_array)
 def test_space(vector_array):
     v = vector_array
     assert isinstance(v.space, VectorSpace)
     assert v in v.space
 
 
+@given(pyst.vector_array)
 def test_getitem_repeated(vector_array):
     v = vector_array
     for ind in valid_inds(v):
@@ -331,6 +337,7 @@ def test_getitem_repeated(vector_array):
             assert np.all(almost_equal(v_ind_ind, v_ind_copy[ind_ind]))
 
 
+@given(pyst.vector_array)
 def test_copy(vector_array):
     v = vector_array
     for ind in chain(valid_inds(v), [None]):
@@ -352,6 +359,7 @@ def test_copy(vector_array):
                 pass
 
 
+@given(pyst.vector_array)
 def test_copy_repeated_index(vector_array):
     v = vector_array
     if len(v) == 0:
@@ -400,6 +408,7 @@ def test_append(compatible_vector_array_pair):
             pass
 
 
+@given(pyst.vector_array)
 def test_append_self(vector_array):
     v = vector_array
     c = v.copy()
@@ -416,6 +425,7 @@ def test_append_self(vector_array):
         v.append(v, remove_from_other=True)
 
 
+@given(pyst.vector_array)
 def test_del(vector_array):
     v = vector_array
     for ind in valid_inds(v):
@@ -433,6 +443,7 @@ def test_del(vector_array):
         assert len(c) == 0
 
 
+@given(pyst.vector_array)
 def test_scal(vector_array):
     v = vector_array
     for ind in valid_inds(v):
@@ -556,6 +567,7 @@ def test_axpy_one_x(compatible_vector_array_pair):
             assert np.all(almost_equal(c1, v1))
 
 
+@given(pyst.vector_array)
 def test_axpy_self(vector_array):
     v = vector_array
 
@@ -623,6 +635,7 @@ def test_pairwise_dot(compatible_vector_array_pair):
             pass
 
 
+@given(pyst.vector_array)
 def test_pairwise_dot_self(vector_array):
     v = vector_array
     for ind1, ind2 in valid_inds_of_same_length(v, v):
@@ -656,6 +669,7 @@ def test_dot(compatible_vector_array_pair):
             pass
 
 
+@given(pyst.vector_array)
 def test_dot_self(vector_array):
     v = vector_array
     for ind1, ind2 in chain(valid_inds_of_different_length(v, v), valid_inds_of_same_length(v, v)):
@@ -674,6 +688,7 @@ def test_dot_self(vector_array):
         assert np.allclose(r, r.T.conj())
 
 
+@given(pyst.vector_array)
 def test_lincomb_1d(vector_array):
     v = vector_array
     np.random.seed(len(v) + 42 + v.dim)
@@ -688,6 +703,7 @@ def test_lincomb_1d(vector_array):
         assert np.all(almost_equal(lc, lc2))
 
 
+@given(pyst.vector_array)
 def test_lincomb_2d(vector_array):
     v = vector_array
     np.random.seed(len(v) + 42 + v.dim)
@@ -703,6 +719,7 @@ def test_lincomb_2d(vector_array):
             assert np.all(almost_equal(lc, lc2))
 
 
+@given(pyst.vector_array)
 def test_lincomb_wrong_coefficients(vector_array):
     v = vector_array
     np.random.seed(len(v) + 42 + v.dim)
@@ -722,6 +739,7 @@ def test_lincomb_wrong_coefficients(vector_array):
                 v[ind].lincomb(coeffs)
 
 
+@given(pyst.vector_array)
 def test_l1_norm(vector_array):
     v = vector_array
     for ind in valid_inds(v):
@@ -747,6 +765,7 @@ def test_l1_norm(vector_array):
         assert np.allclose(c[ind].l1_norm(), 0)
 
 
+@given(pyst.vector_array)
 def test_l2_norm(vector_array):
     v = vector_array
     for ind in valid_inds(v):
@@ -769,6 +788,7 @@ def test_l2_norm(vector_array):
         assert np.allclose(c[ind].l2_norm(), 0)
 
 
+@given(pyst.vector_array)
 def test_l2_norm2(vector_array):
     v = vector_array
     for ind in valid_inds(v):
@@ -791,6 +811,7 @@ def test_l2_norm2(vector_array):
         assert np.allclose(c[ind].l2_norm2(), 0)
 
 
+@given(pyst.vector_array)
 def test_sup_norm(vector_array):
     v = vector_array
     for ind in valid_inds(v):
@@ -814,6 +835,7 @@ def test_sup_norm(vector_array):
         assert np.allclose(c[ind].sup_norm(), 0)
 
 
+@given(pyst.vector_array)
 def test_dofs(vector_array):
     v = vector_array
     np.random.seed(len(v) + 24 + v.dim)
@@ -850,6 +872,7 @@ def test_dofs(vector_array):
                     pass
 
 
+@given(pyst.vector_array)
 def test_components_wrong_dof_indices(vector_array):
     v = vector_array
     np.random.seed(len(v) + 24 + v.dim)
@@ -864,6 +887,7 @@ def test_components_wrong_dof_indices(vector_array):
             v[ind].dofs(np.array([v.dim]))
 
 
+@given(pyst.vector_array)
 def test_amax(vector_array):
     v = vector_array
     if v.dim == 0:
@@ -883,6 +907,7 @@ def test_amax(vector_array):
 #                 v.amax(ind)
 
 
+@given(pyst.vector_array)
 def test_gramian(vector_array):
     v = vector_array
     for ind in valid_inds(v):
@@ -939,6 +964,7 @@ def test_isub(compatible_vector_array_pair):
     assert np.all(almost_equal(v1, c1))
 
 
+@given(pyst.vector_array)
 def test_neg(vector_array):
     v = vector_array
     c = v.copy()
@@ -948,6 +974,7 @@ def test_neg(vector_array):
     assert np.all(almost_equal(v, cc))
 
 
+@given(pyst.vector_array)
 def test_mul(vector_array):
     v = vector_array
     c = v.copy()
@@ -958,12 +985,14 @@ def test_mul(vector_array):
         assert np.all(almost_equal(v, c))
 
 
+@given(pyst.vector_array)
 def test_mul_wrong_factor(vector_array):
     v = vector_array
     with pytest.raises(Exception):
         _ = v * v
 
 
+@given(pyst.vector_array)
 def test_rmul(vector_array):
     v = vector_array
     c = v.copy()
@@ -974,6 +1003,7 @@ def test_rmul(vector_array):
         assert np.all(almost_equal(v, c))
 
 
+@given(pyst.vector_array)
 def test_imul(vector_array):
     v = vector_array
     for a in (-1, -3, 0, 1, 23, np.arange(len(v))):
@@ -984,6 +1014,7 @@ def test_imul(vector_array):
         assert np.all(almost_equal(c, cc))
 
 
+@given(pyst.vector_array)
 def test_imul_wrong_factor(vector_array):
     v = vector_array
     with pytest.raises(Exception):
@@ -1064,6 +1095,7 @@ def test_isub_incompatible(incompatible_vector_array_pair):
 ########################################################################################################################
 
 
+@given(pyst.vector_array)
 def test_copy_wrong_ind(vector_array):
     v = vector_array
     for ind in invalid_inds(v):
@@ -1071,6 +1103,7 @@ def test_copy_wrong_ind(vector_array):
             v[ind].copy()
 
 
+@given(pyst.vector_array)
 def test_remove_wrong_ind(vector_array):
     v = vector_array
     for ind in invalid_inds(v):
@@ -1079,6 +1112,7 @@ def test_remove_wrong_ind(vector_array):
             del c[ind]
 
 
+@given(pyst.vector_array)
 def test_scal_wrong_ind(vector_array):
     v = vector_array
     for ind in invalid_inds(v):
@@ -1096,6 +1130,7 @@ def test_scal_wrong_ind(vector_array):
             c[ind].scal(1.2)
 
 
+@given(pyst.vector_array)
 def test_scal_wrong_coefficients(vector_array):
     v = vector_array
     for ind in valid_inds(v):
