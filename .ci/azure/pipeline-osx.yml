@@ -2,7 +2,7 @@ jobs:
 - job: 'OSX_CI'
   pool:
     vmImage: macOS-10.13
-  timeoutInMinutes: 240
+  timeoutInMinutes: 20
   strategy:
     maxParallel: 8
     matrix:
