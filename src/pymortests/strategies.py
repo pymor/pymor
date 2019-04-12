@@ -58,3 +58,5 @@ if config.HAVE_FENICS:
 else:
     fenics_vector_array = hyst.nothing
 
+
+vector_array = fenics_vector_array() | numpy_vector_array() | numpy_list_vector_array()
