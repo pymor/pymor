@@ -25,12 +25,13 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
 
+  - bash: sudo chown -R $USER $CONDA
+    displayName: Take ownership of conda installation
+
   - bash: |
       set -x -e
       conda config --add channels conda-forge
-      conda config --set always_yes yes --set changeps1 no
-      conda create --yes --name pymorEnv
-      source activate activate pymorEnv
+      conda update --all
       conda install --only-deps pymor
       # these ones are not in the 0.5.1 conda build yet
       conda install pyevtk gmsh=3.0.6 mpi4py
@@ -39,12 +40,11 @@ jobs:
       # install anything which might a new dependency with pip
       pip install -r requirements.txt
       pip install pytest-azurepipelines
+      conda list
     displayName: Configure conda and conda-build
 
   - script: |
       set -ex
-      source activate pymorEnv
-      conda list
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
       python setup.py build_ext -i
       py.test -r sxX -k "demos"
