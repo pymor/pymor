@@ -47,7 +47,7 @@ jobs:
         targetFolder: C:\Windows\SysWOW64\mesadrv.dll
         overWrite: true
   - script: |
-        REG IMPORT .ci\replace_opengl_imp.reg
+        REG IMPORT .ci\azure\replace_opengl_imp.reg
         call activate pyMORenv
         python -c "import numpy"
         python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_RENDERER)); print(gl.glGetString(gl.GL_VERSION))"
@@ -55,4 +55,3 @@ jobs:
         python setup.py build_ext -i
         py.test -r sxX -k "thermalblock_adaptive"
     displayName: 'Tests'
-
