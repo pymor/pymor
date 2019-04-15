@@ -123,6 +123,33 @@ vector_array = fenics_vector_array() | numpy_vector_array() | numpy_list_vector_
     dealii_vector_array() | ngsolve_vector_array() | block_vector_array()
 
 
+def valid_inds(draw, v, length=None):
+    el = []
+    if length is None:
+        el.extend([[], slice(None), slice(0, len(v)), slice(0, 0), slice(-3), slice(0, len(v), 3),
+                  slice(0, len(v)//2, 2), list(range(-len(v), len(v))), list(range(int(len(v)/2))),
+                  list(range(len(v))) * 2])
+        length = 32
+    if len(v) > 0:
+        el.extend([ind for ind in [-len(v), 0, len(v) - 1]])
+        if len(v) == length:
+            el.append(slice(None))
+        el.append(draw(hyst.lists(hyst.integers(min_value=-len(v), max_value=len(v)), max_size=length)))
+    else:
+        if len(v) == 0:
+            el.append(slice(0, 0))
+        el.append([])
+    return el
+
+
+@hyst.composite
+def vector_array_with_ind(draw, ind_length=None):
+    v = draw(vector_array)
+    ind = hyst.lists(elements=hyst.sampled_from(valid_inds(draw, v, ind_length)))
+    i = draw(ind)
+    return v, i
+
+
 @hyst.composite
 def compatible_vector_array_pair(draw):
     v1 = draw(vector_array)
