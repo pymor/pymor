@@ -8,10 +8,12 @@ from numbers import Number
 import pytest
 import numpy as np
 from hypothesis import given
+from hypothesis import strategies as hyst
 from hypothesis.extra import numpy as hynp
 
 from pymor.algorithms.basic import almost_equal
 from pymor.vectorarrays.interface import VectorSpace
+from pymor.tools import floatcmp
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair,
@@ -221,77 +223,77 @@ def test_full(vector_array):
                 pass
 
 
-@given(pyst.vector_array)
-def test_random_uniform(vector_array):
+# TODO relax float restrictions
+@given(pyst.vector_array, hyst.integers(min_value=0, max_value=30),
+       hyst.floats(min_value=-1e-3, max_value=7), hyst.floats(min_value=0, max_value=7))
+def test_random_uniform(vector_array, count, low, high):
     with pytest.raises(Exception):
         vector_array.random(-1)
-    for c in (0, 1, 2, 30):
-        for low in (-1e-3, 0, 7):
-            for high in (0.5, 7):
-                if c > 0 and high <= low:
-                    with pytest.raises(ValueError):
-                        vector_array.random(c, low=low, high=high)
-                    continue
-                seed = 123
-                try:
-                    v = vector_array.random(c, low=low, high=high, seed=seed)
-                except ValueError as e:
-                    if high <= low:
-                        continue
-                    raise e
-                assert v.space == vector_array.space
-                assert len(v) == c
-                if min(v.dim, c) > 0:
-                    assert np.all(v.sup_norm() < max(abs(low), abs(high)))
-                try:
-                    x = v.to_numpy()
-                    assert x.shape == (c, v.dim)
-                    assert np.all(x < high)
-                    assert np.all(x >= low)
-                except NotImplementedError:
-                    pass
-                vv = vector_array.random(c, distribution='uniform', low=low, high=high, seed=seed)
-                assert np.allclose((v - vv).sup_norm(), 0.)
+    c = count
+    if c > 0 and high <= low:
+        with pytest.raises(ValueError):
+            vector_array.random(c, low=low, high=high)
+        return
+    seed = 123
+    try:
+        v = vector_array.random(c, low=low, high=high, seed=seed)
+    except ValueError as e:
+        if high <= low:
+            return
+        raise e
+    assert v.space == vector_array.space
+    assert len(v) == c
+    if min(v.dim, c) > 0:
+        assert np.all(v.sup_norm() < max(abs(low), abs(high)))
+    try:
+        x = v.to_numpy()
+        assert x.shape == (c, v.dim)
+        assert np.all(x < high)
+        assert np.all(x >= low)
+    except NotImplementedError:
+        pass
+    vv = vector_array.random(c, distribution='uniform', low=low, high=high, seed=seed)
+    assert np.allclose((v - vv).sup_norm(), 0.)
 
 
-@given(pyst.vector_array)
-def test_random_normal(vector_array):
+# TODO relax float restrictions
+@given(pyst.vector_array, hyst.integers(min_value=0, max_value=30),
+       hyst.floats(min_value=-1e-3, max_value=7), hyst.floats(min_value=-1, max_value=7))
+def test_random_normal(vector_array, count, loc, scale):
     with pytest.raises(Exception):
         vector_array.random(-1)
-    for c in (0, 1, 2, 30):
-        for loc in (-1e-3, 0, 7):
-            for scale in (-1, 0.5, 7):
-                if c > 0 and scale <= 0:
-                    with pytest.raises(ValueError):
-                        vector_array.random(c, 'normal', loc=loc, scale=scale)
-                    continue
-                seed = 123
-                try:
-                    v = vector_array.random(c, 'normal', loc=loc, scale=scale, seed=seed)
-                except ValueError as e:
-                    if scale <= 0:
-                        continue
-                    raise e
-                assert v.space == vector_array.space
-                assert len(v) == c
-                try:
-                    x = v.to_numpy()
-                    assert x.shape == (c, v.dim)
-                    import scipy.stats
-                    n = x.size
-                    if n == 0:
-                        continue
-                    # test for expected value
-                    norm = scipy.stats.norm()
-                    gamma = 1 - 1e-7
-                    alpha = 1 - gamma
-                    lower = np.sum(x)/n - norm.ppf(1 - alpha/2) * scale / np.sqrt(n)
-                    upper = np.sum(x)/n + norm.ppf(1 - alpha/2) * scale / np.sqrt(n)
-                    assert lower <= loc <= upper
-                except NotImplementedError:
-                    pass
-                vv = vector_array.random(c, 'normal', loc=loc, scale=scale, seed=seed)
-                assert np.allclose((v - vv).sup_norm(), 0.)
+    c = count
+    if c > 0 and scale < 0:
+        with pytest.raises(ValueError):
+            vector_array.random(c, 'normal', loc=loc, scale=scale)
+        return
+    seed = 123
+    try:
+        v = vector_array.random(c, 'normal', loc=loc, scale=scale, seed=seed)
+    except ValueError as e:
+        if scale <= 0:
+            return
+        raise e
+    assert v.space == vector_array.space
+    assert len(v) == c
+    try:
+        x = v.to_numpy()
+        assert x.shape == (c, v.dim)
+        import scipy.stats
+        n = x.size
+        if n == 0:
+            return
+        # test for expected value
+        norm = scipy.stats.norm()
+        gamma = 1 - 1e-7
+        alpha = 1 - gamma
+        lower = np.sum(x)/n - norm.ppf(1 - alpha/2) * scale / np.sqrt(n)
+        upper = np.sum(x)/n + norm.ppf(1 - alpha/2) * scale / np.sqrt(n)
+        floatcmp.bounded(lower, upper, loc)
+    except NotImplementedError:
+        pass
+    vv = vector_array.random(c, 'normal', loc=loc, scale=scale, seed=seed)
+    assert np.allclose((v - vv).sup_norm(), 0.)
 
 
 @given(pyst.vector_array)
