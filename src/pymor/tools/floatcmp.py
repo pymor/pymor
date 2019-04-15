@@ -44,3 +44,23 @@ def float_cmp_all(x, y, rtol=None, atol=None):
     See :meth:`float_cmp`.
     """
     return np.all(float_cmp(x, y, rtol, atol))
+
+
+def bounded(lower, upper, x, rtol=None, atol=None):
+    """Check if x is strictly in bounds (lower, upper)
+    or float_compares equal to lower or upper
+
+    Parameters
+    ----------
+    lower
+        Lower bound
+    upper
+        Upper bound
+    x
+        value to check
+    rtol
+        relative tolerance for float_cmp
+    atol
+        absolute tolerance for float_cmp
+    """
+    return (lower < x < upper) or float_cmp(x, lower, rtol, atol) or float_cmp(x, upper, rtol, atol)
