@@ -6,6 +6,7 @@ import pytest
 
 from pymor.core.config import config
 from pymor.vectorarrays.list import NumpyListVectorSpace
+from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.fixtures.vectorarray import vector_array_from_empty_reserve
 
@@ -38,6 +39,8 @@ if config.HAVE_NGSOLVE:
 
 lengths = hyst.integers(min_value=0, max_value=102)
 dims = hyst.integers(min_value=0, max_value=34)
+# TODO non-fixed sampling pool
+block_space_dims = hyst.sampled_from([(32, 1), (0, 3), (0, 0), (10,), (34, 1), (32, 3, 1), (1, 1, 1)])
 seeders = hyst.random_module()
 reserves = hyst.integers(min_value=0, max_value=3)
 dtypes = hyst.sampled_from([np.float, np.complex])
@@ -62,6 +65,14 @@ def numpy_list_vector_array(draw):
     length, dim, data = draw(length_dim_data())
     v = NumpyListVectorSpace.from_numpy(data)
     return vector_array_from_empty_reserve(v, draw(reserves))
+
+
+@hyst.composite
+def block_vector_array(draw):
+    length, dims = draw(lengths), draw(block_space_dims)
+    return BlockVectorSpace([NumpyVectorSpace(dim) for dim in dims]).from_numpy(
+        NumpyVectorSpace.from_numpy(draw(hynp.arrays(dtype=dtypes, shape=(length, sum(dims))))).to_numpy()
+    )
 
 
 if config.HAVE_FENICS:
@@ -107,7 +118,7 @@ else:
     dealii_vector_array = hyst.nothing
 
 vector_array = fenics_vector_array() | numpy_vector_array() | numpy_list_vector_array() | \
-    dealii_vector_array() | ngsolve_vector_array()
+    dealii_vector_array() | ngsolve_vector_array() | block_vector_array()
 
 
 @hyst.composite
