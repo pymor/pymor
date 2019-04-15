@@ -38,6 +38,7 @@ if config.HAVE_NGSOLVE:
         return NGSOLVE_spaces[dim]
 
 lengths = hyst.integers(min_value=0, max_value=102)
+array_elements = hyst.floats(allow_nan=False, allow_infinity=False)
 dims = hyst.integers(min_value=0, max_value=34)
 # TODO non-fixed sampling pool
 block_space_dims = hyst.sampled_from([(32, 1), (0, 3), (0, 0), (10,), (34, 1), (32, 3, 1), (1, 1, 1)])
@@ -49,7 +50,7 @@ dtypes = hyst.sampled_from([np.float, np.complex])
 @hyst.composite
 def length_dim_data(draw):
     length, dim = draw(lengths), draw(dims)
-    data = draw(hynp.arrays(dtype=dtypes, shape=(length, dim)))
+    data = draw(hynp.arrays(dtype=dtypes, shape=(length, dim), elements=array_elements))
     return length, dim, data
 
 
@@ -71,7 +72,8 @@ def numpy_list_vector_array(draw):
 def block_vector_array(draw):
     length, dims = draw(lengths), draw(block_space_dims)
     return BlockVectorSpace([NumpyVectorSpace(dim) for dim in dims]).from_numpy(
-        NumpyVectorSpace.from_numpy(draw(hynp.arrays(dtype=dtypes, shape=(length, sum(dims))))).to_numpy()
+        NumpyVectorSpace.from_numpy(draw(hynp.arrays(dtype=dtypes, shape=(length, sum(dims)),
+                                                     elements=array_elements))).to_numpy()
     )
 
 
@@ -88,7 +90,7 @@ if config.HAVE_FENICS:
         U = FenicsVectorSpace(V).zeros(length)
         dim = U.dim
         # dtype is float here since the petsc vector is not setup for complex
-        for v, a in zip(U._list, draw(hynp.arrays(dtype=np.float, shape=(length, dim)))):
+        for v, a in zip(U._list, draw(hynp.arrays(dtype=np.float, shape=(length, dim), elements=array_elements))):
             v.impl[:] = a
         return U
 else:
@@ -100,7 +102,7 @@ if config.HAVE_NGSOLVE:
         length, dim = draw(lengths), draw(dims)
         space = create_ngsolve_space(dim)
         U = space.zeros(length)
-        for v, a in zip(U._list, draw(hynp.arrays(dtype=np.float, shape=(length, dim)))):
+        for v, a in zip(U._list, draw(hynp.arrays(dtype=np.float, shape=(length, dim), elements=array_elements))):
             v.to_numpy()[:] = a
         return U
 else:
@@ -111,7 +113,7 @@ if config.HAVE_DEALII:
     def dealii_vector_array(draw):
         length, dim = draw(lengths), draw(dims)
         U = DealIIVectorSpace(dim).zeros(length)
-        for v, a in zip(U._list, draw(hynp.arrays(dtype=np.float, shape=(length, dim)))):
+        for v, a in zip(U._list, draw(hynp.arrays(dtype=np.float, shape=(length, dim), elements=array_elements))):
             v.impl[:] = a
         return U
 else:
