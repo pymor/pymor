@@ -58,5 +58,54 @@ if config.HAVE_FENICS:
 else:
     fenics_vector_array = hyst.nothing
 
+if config.HAVE_NGSOLVE:
+    import ngsolve as ngs
+    import netgen.meshing as ngmsh
+    from netgen.geom2d import unit_square
+    from pymor.bindings.ngsolve import NGSolveVectorSpace
 
-vector_array = fenics_vector_array() | numpy_vector_array() | numpy_list_vector_array()
+    NGSOLVE_spaces = {}
+
+    def create_ngsolve_space(dim):
+        if dim not in NGSOLVE_spaces:
+            mesh = ngmsh.Mesh(dim=1)
+            if dim > 0:
+                pids = []
+                for i in range(dim + 1):
+                    pids.append(mesh.Add(ngmsh.MeshPoint(ngmsh.Pnt(i / dim, 0, 0))))
+                for i in range(dim):
+                    mesh.Add(ngmsh.Element1D([pids[i], pids[i + 1]], index=1))
+            NGSOLVE_spaces[dim] = NGSolveVectorSpace(ngs.L2(ngs.Mesh(mesh), order=0))
+        return NGSOLVE_spaces[dim]
+
+
+    @hyst.composite
+    def ngsolve_vector_array(draw):
+        length, dim = draw(lengths), draw(dims)
+        space = create_ngsolve_space(dim)
+        U = space.zeros(length)
+        for v, a in zip(U._list, draw(hynp.arrays(dtype=np.float, shape=(length, dim)))):
+            v.to_numpy()[:] = a
+        return U
+
+else:
+    ngsolve_vector_array = hyst.nothing
+
+if config.HAVE_DEALII:
+    from pydealii.pymor.vectorarray import DealIIVectorSpace
+
+
+    @hyst.composite
+    def dealii_vector_array(draw):
+        length, dim = draw(lengths), draw(dims)
+        U = DealIIVectorSpace(dim).zeros(length)
+        for v, a in zip(U._list, draw(hynp.arrays(dtype=np.float, shape=(length, dim)))):
+            v.impl[:] = a
+        return U
+else:
+    dealii_vector_array = hyst.nothing
+
+vector_array = fenics_vector_array() | numpy_vector_array() | numpy_list_vector_array() | \
+    dealii_vector_array() | ngsolve_vector_array()
+
+
