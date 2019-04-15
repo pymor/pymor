@@ -2,6 +2,9 @@
 
 set -e
 
+MANYLINUX=manylinux${1}
+shift
+
 if [[ "x${CI_COMMIT_TAG}" == "x" ]] ; then
     sed -i -e 's;style\ \=\ pep440;style\ \=\ ci_wheel_builder;g' setup.cfg
 fi
@@ -16,7 +19,7 @@ cd "${PYMOR_ROOT}"
 set -x
 mkdir -p ${BUILDER_WHEELHOUSE}
 
-BUILDER_IMAGE=pymor/wheelbuilder:py${PYVER}
+BUILDER_IMAGE=pymor/wheelbuilder:${MANYLINUX}_py${PYVER}
 docker pull ${BUILDER_IMAGE} 1> /dev/null
 docker run --rm  -t -e LOCAL_USER_ID=$(id -u)  \
     -v ${BUILDER_WHEELHOUSE}:/io/wheelhouse \
