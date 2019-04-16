@@ -179,6 +179,7 @@ class BlockVectorSpace(VectorSpaceInterface):
         subspaces = tuple(subspaces)
         assert all([isinstance(subspace, VectorSpaceInterface) for subspace in subspaces])
         self.subspaces = subspaces
+        self.dtype = tuple([s.dtype for s in subspaces])
 
     def __eq__(self, other):
         return (type(other) is BlockVectorSpace
