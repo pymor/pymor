@@ -411,10 +411,10 @@ class ListVectorSpace(VectorSpaceInterface):
         return self.full_vector(1.)
 
     def full_vector(self, value):
-        return self.vector_from_numpy(np.full(self.dim, value))
+        return self.vector_from_numpy(np.full(self.dim, value, dtype=self.dtype))
 
     def random_vector(self, distribution, random_state, **kwargs):
-        values = _create_random_values(self.dim, distribution, random_state, **kwargs)
+        values = _create_random_values(self.dim, distribution, random_state, dtype=self.dtype, **kwargs)
         return self.vector_from_numpy(values)
 
     @abstractmethod
@@ -472,9 +472,10 @@ class ListVectorSpace(VectorSpaceInterface):
 
 class NumpyListVectorSpace(ListVectorSpace):
 
-    def __init__(self, dim, id_=None):
+    def __init__(self, dim, id_=None, dtype=VectorSpaceInterface.dtype):
         self.dim = dim
         self.id = id_
+        self.dtype = dtype
 
     def __eq__(self, other):
         return type(other) is NumpyListVectorSpace and self.dim == other.dim and self.id == other.id
@@ -488,16 +489,16 @@ class NumpyListVectorSpace(ListVectorSpace):
         return cls(dim, id_)
 
     def zero_vector(self):
-        return NumpyVector(np.zeros(self.dim))
+        return NumpyVector(np.zeros(self.dim, dtype=self.dtype))
 
     def ones_vector(self):
-        return NumpyVector(np.ones(self.dim))
+        return NumpyVector(np.ones(self.dim, dtype=self.dtype))
 
     def full_vector(self, value):
-        return NumpyVector(np.full(self.dim, value))
+        return NumpyVector(np.full(self.dim, value, dtype=self.dtype))
 
     def make_vector(self, obj):
-        obj = np.asarray(obj)
+        obj = np.asarray(obj, dtype=self.dtype)
         assert obj.ndim == 1 and len(obj) == self.dim
         return NumpyVector(obj)
 

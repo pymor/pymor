@@ -341,29 +341,30 @@ class NumpyVectorSpace(VectorSpaceInterface):
         See :attr:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id`.
     """
 
-    def __init__(self, dim, id_=None):
+    def __init__(self, dim, id_=None, dtype=VectorSpaceInterface.dtype):
         self.dim = dim
         self.id = id_
+        self.dtype = dtype
 
     def __eq__(self, other):
-        return type(other) is type(self) and self.dim == other.dim and self.id == other.id
+        return type(other) is type(self) and self.dim == other.dim and self.id == other.id and self.dtype == other.dtype
 
     def __hash__(self):
-        return hash(self.dim) + hash(self.id)
+        return hash(self.dim) + hash(self.id) + hash(self.dtype)
 
     def zeros(self, count=1, reserve=0):
         assert count >= 0
         assert reserve >= 0
-        va = NumpyVectorArray(np.empty((0, 0)), self)
-        va._array = np.zeros((max(count, reserve), self.dim))
+        va = NumpyVectorArray(np.empty((0, 0), dtype=self.dtype), self)
+        va._array = np.zeros((max(count, reserve), self.dim), dtype=self.dtype)
         va._len = count
         return va
 
     def full(self, value, count=1, reserve=0):
         assert count >= 0
         assert reserve >= 0
-        va = NumpyVectorArray(np.empty((0, 0)), self)
-        va._array = np.full((max(count, reserve), self.dim), value)
+        va = NumpyVectorArray(np.empty((0, 0), dtype=self.dtype), self)
+        va._array = np.full((max(count, reserve), self.dim), value, dtype=self.dtype)
         va._len = count
         return va
 
@@ -373,12 +374,13 @@ class NumpyVectorSpace(VectorSpaceInterface):
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
         va = self.zeros(count, reserve)
-        va._array[:count] = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
+        va._array[:count] = _create_random_values((count, self.dim), distribution, random_state,
+                                                  dtype=self.dtype, **kwargs)
         return va
 
     @classinstancemethod
-    def make_array(cls, obj, id_=None):
-        return cls._array_factory(obj, id_=id_)
+    def make_array(cls, obj, id_=None, dtype=None):
+        return cls._array_factory(obj, id_=id_, dtype=dtype)
 
     @make_array.instancemethod
     def make_array(self, obj):
@@ -413,18 +415,20 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose, id_=self.id)
 
     @classmethod
-    def _array_factory(cls, array, space=None, id_=None):
+    def _array_factory(cls, array, space=None, id_=None, dtype=None):
+        if dtype is None:
+            dtype = space.dtype if space else cls.dtype
         if type(array) is np.ndarray:
             pass
         elif issparse(array):
             array = array.toarray()
         else:
-            array = np.array(array, ndmin=2)
+            array = np.array(array, ndmin=2, dtype=dtype)
         if array.ndim != 2:
             assert array.ndim == 1
             array = np.reshape(array, (1, -1))
         if space is None:
-            return NumpyVectorArray(array, cls(array.shape[1], id_))
+            return NumpyVectorArray(array, cls(array.shape[1], id_, dtype=dtype))
         else:
             assert array.shape[1] == space.dim
             return NumpyVectorArray(array, space)
@@ -434,8 +438,8 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return self.dim == 1 and self.id is None
 
     def __repr__(self):
-        return f'NumpyVectorSpace({self.dim})' if self.id is None \
-            else f'NumpyVectorSpace({self.dim}, {self.id})'
+        return f'NumpyVectorSpace({self.dim}, dtype={self.dtype})' if self.id is None \
+            else f'NumpyVectorSpace({self.dim}, {self.id}, dtype={self.dtype})'
 
 
 class NumpyVectorArrayView(NumpyVectorArray):

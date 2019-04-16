@@ -655,11 +655,14 @@ class VectorSpaceInterface(ImmutableInterface):
     is_scalar
         Equivalent to
         `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
+    dtype
+        type hint to create appropriate `zeros`, `ones`, etc.
     """
 
     id = None
     dim = None
     is_scalar = False
+    dtype = np.float64
 
     @abstractmethod
     def make_array(*args, **kwargs):
@@ -827,8 +830,8 @@ class VectorSpaceInterface(ImmutableInterface):
         return f'{self.__class__.__name__}({self.id})'
 
 
-def _create_random_values(shape, distribution, random_state, **kwargs):
-    if distribution not in ('uniform', 'normal'):
+def _create_random_values(shape, distribution, random_state, dtype=VectorSpaceInterface.dtype, **kwargs):
+    if distribution not in ('uniform', 'normal') or not isinstance(dtype(0), np.floating):
         raise NotImplementedError
 
     if distribution == 'uniform':
