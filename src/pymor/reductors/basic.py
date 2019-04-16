@@ -70,7 +70,7 @@ class ProjectionBasedReductor(BasicInterface):
 
         if self._last_rom is None or any(dims[b] > self._last_rom_dims[b] for b in dims):
             self._last_rom = self._reduce()
-            self._last_rom_dims = dict(dims)
+            self._last_rom_dims = {k: len(v) for k, v in self.bases.items()}
 
         if dims == self._last_rom_dims:
             return self._last_rom
