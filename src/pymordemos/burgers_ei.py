@@ -241,7 +241,7 @@ def main(args):
     N_grid, M_grid = np.meshgrid(Ns, Ms)
 
     errs, err_mus = error_analysis(N_grid, M_grid)
-    errs = errs.astype(np.float)
+    errs = errs.astype(np.float_)
 
     l2_err_max = errs[-1, -1]
     mumax = err_mus[-1, -1]
