@@ -123,31 +123,108 @@ vector_array = fenics_vector_array() | numpy_vector_array() | numpy_list_vector_
     dealii_vector_array() | ngsolve_vector_array() | block_vector_array()
 
 
-def valid_inds(draw, v, length=None):
-    el = []
+# TODO this needs to be a strategy
+def valid_inds(v, length=None):
     if length is None:
-        el.extend([[], slice(None), slice(0, len(v)), slice(0, 0), slice(-3), slice(0, len(v), 3),
-                  slice(0, len(v)//2, 2), list(range(-len(v), len(v))), list(range(int(len(v)/2))),
-                  list(range(len(v))) * 2])
+        yield []
+        yield slice(None)
+        yield slice(0, len(v))
+        yield slice(0, 0)
+        yield slice(-3)
+        yield slice(0, len(v), 3)
+        yield slice(0, len(v)//2, 2)
+        yield list(range(-len(v), len(v)))
+        yield list(range(int(len(v)/2)))
+        yield list(range(len(v))) * 2
         length = 32
     if len(v) > 0:
-        el.extend([ind for ind in [-len(v), 0, len(v) - 1]])
+        for ind in [-len(v), 0, len(v) - 1]:
+            yield ind
         if len(v) == length:
-            el.append(slice(None))
-        el.append(draw(hyst.lists(hyst.integers(min_value=-len(v), max_value=len(v)), max_size=length)))
+            yield slice(None)
+        np.random.seed(len(v) * length)
+        yield list(np.random.randint(-len(v), len(v), size=length))
     else:
         if len(v) == 0:
-            el.append(slice(0, 0))
-        el.append([])
-    return el
+            yield slice(0, 0)
+        yield []
+
+
+# TODO this needs to be a strategy
+def valid_inds_of_same_length(v1, v2):
+    if len(v1) == len(v2):
+        yield slice(None), slice(None)
+        yield list(range(len(v1))), list(range(len(v1)))
+        yield (slice(0, len(v1)),) * 2
+        yield (slice(0, 0),) * 2
+        yield (slice(-3),) * 2
+        yield (slice(0, len(v1), 3),) * 2
+        yield (slice(0, len(v1)//2, 2),) * 2
+    yield [], []
+    if len(v1) > 0 and len(v2) > 0:
+        yield 0, 0
+        yield len(v1) - 1, len(v2) - 1
+        yield -len(v1), -len(v2)
+        yield [0], 0
+        yield (list(range(min(len(v1), len(v2))//2)),) * 2
+        np.random.seed(len(v1) * len(v2))
+        for count in np.linspace(0, min(len(v1), len(v2)), 3).astype(int):
+            yield (list(np.random.randint(-len(v1), len(v1), size=count)),
+                   list(np.random.randint(-len(v2), len(v2), size=count)))
+        yield slice(None), np.random.randint(-len(v2), len(v2), size=len(v1))
+        yield np.random.randint(-len(v1), len(v1), size=len(v2)), slice(None)
+
+
+# TODO this needs to be a strategy
+def valid_inds_of_different_length(v1, v2):
+    if len(v1) != len(v2):
+        yield slice(None), slice(None)
+        yield list(range(len(v1))), list(range(len(v2)))
+    if len(v1) > 0 and len(v2) > 0:
+        if len(v1) > 1:
+            yield [0, 1], 0
+            yield [0, 1], [0]
+            yield [-1, 0, 1], [0]
+            yield slice(0, -1), []
+        if len(v2) > 1:
+            yield 0, [0, 1]
+            yield [0], [0, 1]
+        np.random.seed(len(v1) * len(v2))
+        for count1 in np.linspace(0, len(v1), 3).astype(int):
+            count2 = np.random.randint(0, len(v2))
+            if count2 == count1:
+                count2 += 1
+                if count2 == len(v2):
+                    count2 -= 2
+            if count2 >= 0:
+                yield (list(np.random.randint(-len(v1), len(v1), size=count1)),
+                       list(np.random.randint(-len(v2), len(v2), size=count2)))
 
 
 @hyst.composite
 def vector_array_with_ind(draw, ind_length=None):
     v = draw(vector_array)
-    ind = hyst.lists(elements=hyst.sampled_from(valid_inds(draw, v, ind_length)))
+    ind = hyst.sampled_from(list(valid_inds(v, ind_length)))
     i = draw(ind)
     return v, i
+
+
+@hyst.composite
+def vector_arrays_with_ind_pairs_same_length(draw):
+    v = draw(vector_array)
+    ind = hyst.sampled_from(list(valid_inds_of_same_length(v,v)))
+    return v, draw(ind)
+
+
+@hyst.composite
+def vector_arrays_with_ind_pairs_diff_length(draw):
+    v = draw(vector_array)
+    ind = hyst.sampled_from(list(valid_inds_of_same_length(v,v)))
+    return v, draw(ind)
+
+
+vector_arrays_with_ind_pairs_both_lengths = vector_arrays_with_ind_pairs_same_length() | \
+                                           vector_arrays_with_ind_pairs_diff_length()
 
 
 @hyst.composite
