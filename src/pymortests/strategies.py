@@ -38,7 +38,7 @@ if config.HAVE_NGSOLVE:
         return NGSOLVE_spaces[dim]
 
 lengths = hyst.integers(min_value=0, max_value=102)
-array_elements = hyst.floats(allow_nan=False, allow_infinity=False)
+array_elements = hyst.floats(allow_nan=False, allow_infinity=False, min_value=-1, max_value=1)
 dims = hyst.integers(min_value=0, max_value=34)
 # TODO non-fixed sampling pool
 block_space_dims = hyst.sampled_from([(32, 1), (0, 3), (0, 0), (10,), (34, 1), (32, 3, 1), (1, 1, 1)])
