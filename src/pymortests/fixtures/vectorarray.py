@@ -292,11 +292,6 @@ def picklable_vector_array_without_reserve(request):
 
 
 @pytest.fixture(params=range(3))
-def vector_array(vector_array_without_reserve, request):
-    return vector_array_from_empty_reserve(vector_array_without_reserve, request.param)
-
-
-@pytest.fixture(params=range(3))
 def picklable_vector_array(picklable_vector_array_without_reserve, request):
     return vector_array_from_empty_reserve(picklable_vector_array_without_reserve, request.param)
 
