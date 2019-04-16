@@ -120,10 +120,10 @@ class MPIVectorSpace(VectorSpaceInterface):
         self.local_spaces = tuple(local_spaces)
         if type(local_spaces[0]) is RegisteredLocalSpace:
             self.id = _local_space_registry[local_spaces[0]].id
+            self.dtype = _local_space_registry[local_spaces[0]].dtype
         else:
             self.id = local_spaces[0].id
-        self.dtype = local_spaces[0].dtype
-        assert all(self.dtype == s.dtype for s in local_spaces)
+            self.dtype = local_spaces[0].dtype
 
     def make_array(self, obj_id):
         """Create array from rank-local |VectorArray| instances.
