@@ -7,13 +7,14 @@ from numbers import Number
 
 import pytest
 import numpy as np
-from hypothesis import given
+from hypothesis import given, assume
 from hypothesis import strategies as hyst
 from hypothesis.extra import numpy as hynp
 
 from pymor.algorithms.basic import almost_equal
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.tools import floatcmp
+from pymor.tools.floatcmp import float_cmp
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair,
@@ -57,81 +58,6 @@ def invalid_inds(v, length=None):
     if length > 0:
         yield [-len(v)-1] + [0, ] * (length - 1)
         yield list(range(length - 1)) + [len(v)]
-
-
-def valid_inds(v, length=None):
-    if length is None:
-        yield []
-        yield slice(None)
-        yield slice(0, len(v))
-        yield slice(0, 0)
-        yield slice(-3)
-        yield slice(0, len(v), 3)
-        yield slice(0, len(v)//2, 2)
-        yield list(range(-len(v), len(v)))
-        yield list(range(int(len(v)/2)))
-        yield list(range(len(v))) * 2
-        length = 32
-    if len(v) > 0:
-        for ind in [-len(v), 0, len(v) - 1]:
-            yield ind
-        if len(v) == length:
-            yield slice(None)
-        np.random.seed(len(v) * length)
-        yield list(np.random.randint(-len(v), len(v), size=length))
-    else:
-        if len(v) == 0:
-            yield slice(0, 0)
-        yield []
-
-
-def valid_inds_of_same_length(v1, v2):
-    if len(v1) == len(v2):
-        yield slice(None), slice(None)
-        yield list(range(len(v1))), list(range(len(v1)))
-        yield (slice(0, len(v1)),) * 2
-        yield (slice(0, 0),) * 2
-        yield (slice(-3),) * 2
-        yield (slice(0, len(v1), 3),) * 2
-        yield (slice(0, len(v1)//2, 2),) * 2
-    yield [], []
-    if len(v1) > 0 and len(v2) > 0:
-        yield 0, 0
-        yield len(v1) - 1, len(v2) - 1
-        yield -len(v1), -len(v2)
-        yield [0], 0
-        yield (list(range(min(len(v1), len(v2))//2)),) * 2
-        np.random.seed(len(v1) * len(v2))
-        for count in np.linspace(0, min(len(v1), len(v2)), 3).astype(int):
-            yield (list(np.random.randint(-len(v1), len(v1), size=count)),
-                   list(np.random.randint(-len(v2), len(v2), size=count)))
-        yield slice(None), np.random.randint(-len(v2), len(v2), size=len(v1))
-        yield np.random.randint(-len(v1), len(v1), size=len(v2)), slice(None)
-
-
-def valid_inds_of_different_length(v1, v2):
-    if len(v1) != len(v2):
-        yield slice(None), slice(None)
-        yield list(range(len(v1))), list(range(len(v2)))
-    if len(v1) > 0 and len(v2) > 0:
-        if len(v1) > 1:
-            yield [0, 1], 0
-            yield [0, 1], [0]
-            yield [-1, 0, 1], [0]
-            yield slice(0, -1), []
-        if len(v2) > 1:
-            yield 0, [0, 1]
-            yield [0], [0, 1]
-        np.random.seed(len(v1) * len(v2))
-        for count1 in np.linspace(0, len(v1), 3).astype(int):
-            count2 = np.random.randint(0, len(v2))
-            if count2 == count1:
-                count2 += 1
-                if count2 == len(v2):
-                    count2 -= 2
-            if count2 >= 0:
-                yield (list(np.random.randint(-len(v1), len(v1), size=count1)),
-                       list(np.random.randint(-len(v2), len(v2), size=count2)))
 
 
 def invalid_ind_pairs(v1, v2):
@@ -327,38 +253,36 @@ def test_space(vector_array):
     assert v in v.space
 
 
-@given(pyst.vector_array)
-def test_getitem_repeated(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
-        v_ind = v[ind]
-        v_ind_copy = v_ind.copy()
-        assert not v_ind_copy.is_view
-        for ind_ind in valid_inds(v_ind):
-            v_ind_ind = v_ind[ind_ind]
-            assert np.all(almost_equal(v_ind_ind, v_ind_copy[ind_ind]))
+@given(pyst.vector_array_with_ind())
+def test_getitem_repeated(v_ind):
+    v, ind = v_ind
+    v_ind = v[ind]
+    v_ind_copy = v_ind.copy()
+    assert not v_ind_copy.is_view
+    for ind_ind in pyst.valid_inds(v_ind):
+        v_ind_ind = v_ind[ind_ind]
+        assert np.all(almost_equal(v_ind_ind, v_ind_copy[ind_ind]))
 
 
-@given(pyst.vector_array)
-def test_copy(vector_array):
-    v = vector_array
-    for ind in chain(valid_inds(v), [None]):
-        for deep in (True, False):
-            if ind is None:
-                c = v.copy(deep)
-                assert len(c) == len(v)
-            else:
-                c = v[ind].copy(deep)
-                assert len(c) == v.len_ind(ind)
-            assert c.space == v.space
-            if ind is None:
-                assert np.all(almost_equal(c, v))
-            else:
-                assert np.all(almost_equal(c, v[ind]))
-            try:
-                assert np.allclose(c.to_numpy(), indexed(v.to_numpy(), ind))
-            except NotImplementedError:
-                pass
+@given(pyst.vector_array_with_ind())
+def test_copy(v_ind):
+    v, ind = v_ind
+    for deep in (True, False):
+        if ind is None:
+            c = v.copy(deep)
+            assert len(c) == len(v)
+        else:
+            c = v[ind].copy(deep)
+            assert len(c) == v.len_ind(ind)
+        assert c.space == v.space
+        if ind is None:
+            assert np.all(almost_equal(c, v))
+        else:
+            assert np.all(almost_equal(c, v[ind]))
+        try:
+            assert np.allclose(c.to_numpy(), indexed(v.to_numpy(), ind))
+        except NotImplementedError:
+            pass
 
 
 @given(pyst.vector_array)
@@ -376,8 +300,9 @@ def test_copy_repeated_index(vector_array):
         except NotImplementedError:
             pass
         c[0].scal(2.)
+        assume(c[0].l2_norm() != np.inf)
         assert almost_equal(c[1], v[ind[0]])
-        assert c[0].l2_norm() == 2 * v[ind[0]].l2_norm()
+        assert float_cmp(c[0].l2_norm(), 2 * v[ind[0]].l2_norm())
         try:
             assert indexed(v.to_numpy(), ind).shape == c.to_numpy().shape
         except NotImplementedError:
@@ -427,10 +352,10 @@ def test_append_self(vector_array):
         v.append(v, remove_from_other=True)
 
 
-@given(pyst.vector_array)
-def test_del(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
+@given(pyst.vector_array_with_ind())
+def test_del(vector_array_indices):
+    v, inds = vector_array_indices
+    for ind in inds(v):
         ind_complement_ = ind_complement(v, ind)
         c = v.copy()
         del c[ind]
@@ -445,10 +370,10 @@ def test_del(vector_array):
         assert len(c) == 0
 
 
-@given(pyst.vector_array)
-def test_scal(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
+@given(pyst.vector_array_with_ind())
+def test_scla(vector_array_indices):
+    v, inds = vector_array_indices
+    for ind in inds(v):
         if v.len_ind(ind) != v.len_ind_unique(ind):
             with pytest.raises(Exception):
                 c = v.copy()
@@ -569,57 +494,56 @@ def test_axpy_one_x(compatible_vector_array_pair):
             assert np.all(almost_equal(c1, v1))
 
 
-@given(pyst.vector_array)
-def test_axpy_self(vector_array):
-    v = vector_array
+@given(pyst.vector_arrays_with_ind_pairs_same_length())
+def test_axpy_self(vector_array_inds):
+    v, (ind1, ind2) = vector_array_inds
 
-    for ind1, ind2 in valid_inds_of_same_length(v, v):
-        if v.len_ind(ind1) != v.len_ind_unique(ind1):
-            with pytest.raises(Exception):
-                c, = v.copy()
-                c[ind1].axpy(0., c[ind2])
-            continue
+    if v.len_ind(ind1) != v.len_ind_unique(ind1):
+        with pytest.raises(Exception):
+            c, = v.copy()
+            c[ind1].axpy(0., c[ind2])
+        return
 
-        ind1_complement = ind_complement(v, ind1)
+    ind1_complement = ind_complement(v, ind1)
+    c = v.copy()
+    c[ind1].axpy(0., c[ind2])
+    assert len(c) == len(v)
+    assert np.all(almost_equal(c, v))
+
+    np.random.seed(len(v) + 8)
+    for a in (1., 1.4, np.random.random(v.len_ind(ind1))):
         c = v.copy()
-        c[ind1].axpy(0., c[ind2])
+        c[ind1].axpy(a, c[ind2])
+        assert len(c) == len(v)
+        assert np.all(almost_equal(c[ind1_complement], v[ind1_complement]))
+        assert np.all(c[ind1].sup_norm() <= v[ind1].sup_norm() + abs(a) * v[ind2].sup_norm() * (1. + 1e-10))
+        try:
+                x = v.to_numpy(True).astype(complex)  # ensure that inplace addition works
+            if isinstance(ind1, Number):
+                x[[ind1]] += indexed(v.to_numpy(), ind2) * a
+            else:
+                if isinstance(a, np.ndarray):
+                    aa = a[:, np.newaxis]
+                else:
+                    aa = a
+                x[ind1] += indexed(v.to_numpy(), ind2) * aa
+            assert np.allclose(c.to_numpy(), x)
+        except NotImplementedError:
+            pass
+        c[ind1].axpy(-a, v[ind2])
         assert len(c) == len(v)
         assert np.all(almost_equal(c, v))
 
-        np.random.seed(len(v) + 8)
-        for a in (1., 1.4, np.random.random(v.len_ind(ind1))):
-            c = v.copy()
-            c[ind1].axpy(a, c[ind2])
-            assert len(c) == len(v)
-            assert np.all(almost_equal(c[ind1_complement], v[ind1_complement]))
-            assert np.all(c[ind1].sup_norm() <= v[ind1].sup_norm() + abs(a) * v[ind2].sup_norm() * (1. + 1e-10))
-            try:
-                x = v.to_numpy(True).astype(complex)  # ensure that inplace addition works
-                if isinstance(ind1, Number):
-                    x[[ind1]] += indexed(v.to_numpy(), ind2) * a
-                else:
-                    if isinstance(a, np.ndarray):
-                        aa = a[:, np.newaxis]
-                    else:
-                        aa = a
-                    x[ind1] += indexed(v.to_numpy(), ind2) * aa
-                assert np.allclose(c.to_numpy(), x)
-            except NotImplementedError:
-                pass
-            c[ind1].axpy(-a, v[ind2])
-            assert len(c) == len(v)
-            assert np.all(almost_equal(c, v))
+    ind = ind1
+    if v.len_ind(ind) != v.len_ind_unique(ind):
+        return
 
-    for ind in valid_inds(v):
-        if v.len_ind(ind) != v.len_ind_unique(ind):
-            continue
-
-        for x in (1., 23., -4):
-            c = v.copy()
-            cc = v.copy()
-            c[ind].axpy(x, c[ind])
-            cc[ind].scal(1 + x)
-            assert np.all(almost_equal(c, cc))
+    for x in (1., 23., -4):
+        c = v.copy()
+        cc = v.copy()
+        c[ind].axpy(x, c[ind])
+        cc[ind].scal(1 + x)
+        assert np.all(almost_equal(c, cc))
 
 
 def test_pairwise_dot(compatible_vector_array_pair):
@@ -637,23 +561,22 @@ def test_pairwise_dot(compatible_vector_array_pair):
             pass
 
 
-@given(pyst.vector_array)
-def test_pairwise_dot_self(vector_array):
-    v = vector_array
-    for ind1, ind2 in valid_inds_of_same_length(v, v):
-        r = v[ind1].pairwise_dot(v[ind2])
-        assert isinstance(r, np.ndarray)
-        assert r.shape == (v.len_ind(ind1),)
-        r2 = v[ind2].pairwise_dot(v[ind1]).conj()
-        assert np.allclose(r, r2)
-        assert np.all(r <= v[ind1].l2_norm() * v[ind2].l2_norm() * (1. + 1e-10))
-        try:
+@given(pyst.vector_arrays_with_ind_pairs_same_length())
+def test_pairwise_dot_self(vector_array_inds):
+    v, (ind1, ind2) = vector_array_inds
+    r = v[ind1].pairwise_dot(v[ind2])
+    assert isinstance(r, np.ndarray)
+    assert r.shape == (v.len_ind(ind1),)
+    r2 = v[ind2].pairwise_dot(v[ind1])
+    assert np.allclose(r, r2)
+    assert np.all(r <= v[ind1].l2_norm() * v[ind2].l2_norm() * (1. + 1e-10))
+    try:
             assert np.allclose(r, np.sum(indexed(v.to_numpy(), ind1).conj() * indexed(v.to_numpy(), ind2), axis=1))
-        except NotImplementedError:
-            pass
-    for ind in valid_inds(v):
-        r = v[ind].pairwise_dot(v[ind])
-        assert np.allclose(r, v[ind].l2_norm() ** 2)
+    except NotImplementedError:
+        pass
+    ind = ind1
+    r = v[ind].pairwise_dot(v[ind])
+    assert np.allclose(r, v[ind].l2_norm() ** 2)
 
 
 def test_dot(compatible_vector_array_pair):
@@ -671,233 +594,218 @@ def test_dot(compatible_vector_array_pair):
             pass
 
 
-@given(pyst.vector_array)
-def test_dot_self(vector_array):
-    v = vector_array
-    for ind1, ind2 in chain(valid_inds_of_different_length(v, v), valid_inds_of_same_length(v, v)):
-        r = v[ind1].dot(v[ind2])
-        assert isinstance(r, np.ndarray)
-        assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
-        r2 = v[ind2].dot(v[ind1])
+@given(pyst.vector_arrays_with_ind_pairs_both_lengths)
+def test_dot_self(vector_array_inds):
+    v, (ind1, ind2) = vector_array_inds
+    r = v[ind1].dot(v[ind2])
+    assert isinstance(r, np.ndarray)
+    assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
+    r2 = v[ind2].dot(v[ind1])
         assert np.allclose(r, r2.T.conj())
-        assert np.all(r <= v[ind1].l2_norm()[:, np.newaxis] * v[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
-        try:
+    assert np.all(r <= v[ind1].l2_norm()[:, np.newaxis] * v[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
+    try:
             assert np.allclose(r, indexed(v.to_numpy(), ind1).conj().dot(indexed(v.to_numpy(), ind2).T))
-        except NotImplementedError:
-            pass
-    for ind in valid_inds(v):
-        r = v[ind].dot(v[ind])
+    except NotImplementedError:
+        pass
+    r = v[ind1].dot(v[ind1])
         assert np.allclose(r, r.T.conj())
 
 
-@given(pyst.vector_array)
-def test_lincomb_1d(vector_array):
-    v = vector_array
+@given(pyst.vector_array_with_ind())
+def test_lincomb_1d(v_ind):
+    v, ind = v_ind
     np.random.seed(len(v) + 42 + v.dim)
-    for ind in valid_inds(v):
-        coeffs = np.random.random(v.len_ind(ind))
+    coeffs = np.random.random(v.len_ind(ind))
+    lc = v[ind].lincomb(coeffs)
+    assert lc.space == v.space
+    assert len(lc) == 1
+    lc2 = v.zeros()
+    for coeff, i in zip(coeffs, ind_to_list(v, ind)):
+        lc2.axpy(coeff, v[i])
+    assert np.all(almost_equal(lc, lc2))
+
+
+@given(pyst.vector_array_with_ind())
+def test_lincomb_2d(v_ind):
+    v, ind = v_ind
+    np.random.seed(len(v) + 42 + v.dim)
+    for count in (0, 1, 5):
+        coeffs = np.random.random((count, v.len_ind(ind)))
         lc = v[ind].lincomb(coeffs)
         assert lc.space == v.space
-        assert len(lc) == 1
-        lc2 = v.zeros()
-        for coeff, i in zip(coeffs, ind_to_list(v, ind)):
-            lc2.axpy(coeff, v[i])
+        assert len(lc) == count
+        lc2 = v.empty(reserve=count)
+        for coeffs_1d in coeffs:
+            lc2.append(v[ind].lincomb(coeffs_1d))
         assert np.all(almost_equal(lc, lc2))
 
 
-@given(pyst.vector_array)
-def test_lincomb_2d(vector_array):
-    v = vector_array
+@given(pyst.vector_array_with_ind())
+def test_lincomb_wrong_coefficients(v_ind):
+    v, ind = v_ind
     np.random.seed(len(v) + 42 + v.dim)
-    for ind in valid_inds(v):
-        for count in (0, 1, 5):
-            coeffs = np.random.random((count, v.len_ind(ind)))
-            lc = v[ind].lincomb(coeffs)
-            assert lc.space == v.space
-            assert len(lc) == count
-            lc2 = v.empty(reserve=count)
-            for coeffs_1d in coeffs:
-                lc2.append(v[ind].lincomb(coeffs_1d))
-            assert np.all(almost_equal(lc, lc2))
-
-
-@given(pyst.vector_array)
-def test_lincomb_wrong_coefficients(vector_array):
-    v = vector_array
-    np.random.seed(len(v) + 42 + v.dim)
-    for ind in valid_inds(v):
-        coeffs = np.random.random(v.len_ind(ind) + 1)
+    coeffs = np.random.random(v.len_ind(ind) + 1)
+    with pytest.raises(Exception):
+        v[ind].lincomb(coeffs)
+    coeffs = np.random.random(v.len_ind(ind)).reshape((1, 1, -1))
+    with pytest.raises(Exception):
+        v[ind].lincomb(coeffs)
+    if v.len_ind(ind) > 0:
+        coeffs = np.random.random(v.len_ind(ind) - 1)
         with pytest.raises(Exception):
             v[ind].lincomb(coeffs)
-        coeffs = np.random.random(v.len_ind(ind)).reshape((1, 1, -1))
+        coeffs = np.array([])
         with pytest.raises(Exception):
             v[ind].lincomb(coeffs)
-        if v.len_ind(ind) > 0:
-            coeffs = np.random.random(v.len_ind(ind) - 1)
-            with pytest.raises(Exception):
-                v[ind].lincomb(coeffs)
-            coeffs = np.array([])
-            with pytest.raises(Exception):
-                v[ind].lincomb(coeffs)
 
 
-@given(pyst.vector_array)
-def test_l1_norm(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
-        c = v.copy()
+@given(pyst.vector_array_with_ind())
+def test_l1_norm(v_ind):
+    v, ind = v_ind
+    c = v.copy()
         try:
             norm = c[ind].l1_norm()
         except NotImplementedError:
             pytest.xfail('l1_norm not implemented')
-        assert isinstance(norm, np.ndarray)
-        assert norm.shape == (v.len_ind(ind),)
-        assert np.all(norm >= 0)
-        if v.dim == 0:
-            assert np.all(norm == 0)
-        try:
-            assert np.allclose(norm, np.sum(np.abs(indexed(v.to_numpy(), ind)), axis=1))
-        except NotImplementedError:
-            pass
-        c.scal(4.)
-        assert np.allclose(c[ind].l1_norm(), norm * 4)
-        c.scal(-4.)
-        assert np.allclose(c[ind].l1_norm(), norm * 16)
-        c.scal(0.)
-        assert np.allclose(c[ind].l1_norm(), 0)
-
-
-@given(pyst.vector_array)
-def test_l2_norm(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
-        c = v.copy()
-        norm = c[ind].l2_norm()
-        assert isinstance(norm, np.ndarray)
-        assert norm.shape == (v.len_ind(ind),)
-        assert np.all(norm >= 0)
-        if v.dim == 0:
-            assert np.all(norm == 0)
-        try:
-            assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=1))
-        except NotImplementedError:
-            pass
-        c.scal(4.)
-        assert np.allclose(c[ind].l2_norm(), norm * 4)
-        c.scal(-4.)
-        assert np.allclose(c[ind].l2_norm(), norm * 16)
-        c.scal(0.)
-        assert np.allclose(c[ind].l2_norm(), 0)
-
-
-@given(pyst.vector_array)
-def test_l2_norm2(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
-        c = v.copy()
-        norm = c[ind].l2_norm2()
-        assert isinstance(norm, np.ndarray)
-        assert norm.shape == (v.len_ind(ind),)
-        assert np.all(norm >= 0)
-        if v.dim == 0:
-            assert np.all(norm == 0)
-        try:
-            assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=1)**2)
-        except NotImplementedError:
-            pass
-        c.scal(4.)
-        assert np.allclose(c[ind].l2_norm2(), norm * 16)
-        c.scal(-4.)
-        assert np.allclose(c[ind].l2_norm2(), norm * 256)
-        c.scal(0.)
-        assert np.allclose(c[ind].l2_norm2(), 0)
-
-
-@given(pyst.vector_array)
-def test_sup_norm(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
-        c = v.copy()
-        norm = c[ind].sup_norm()
-        assert isinstance(norm, np.ndarray)
-        assert norm.shape == (v.len_ind(ind),)
-        assert np.all(norm >= 0)
-        if v.dim == 0:
-            assert np.all(norm == 0)
-        if v.dim > 0:
-            try:
-                assert np.allclose(norm, np.max(np.abs(indexed(v.to_numpy(), ind)), axis=1))
-            except NotImplementedError:
-                pass
-        c.scal(4.)
-        assert np.allclose(c[ind].sup_norm(), norm * 4)
-        c.scal(-4.)
-        assert np.allclose(c[ind].sup_norm(), norm * 16)
-        c.scal(0.)
-        assert np.allclose(c[ind].sup_norm(), 0)
-
-
-@given(pyst.vector_array)
-def test_dofs(vector_array):
-    v = vector_array
-    np.random.seed(len(v) + 24 + v.dim)
-    for ind in valid_inds(v):
-        c = v.copy()
-        dofs = c[ind].dofs(np.array([], dtype=np.int))
-        assert isinstance(dofs, np.ndarray)
-        assert dofs.shape == (v.len_ind(ind), 0)
-
-        c = v.copy()
-        dofs = c[ind].dofs([])
-        assert isinstance(dofs, np.ndarray)
-        assert dofs.shape == (v.len_ind(ind), 0)
-
-        if v.dim > 0:
-            for count in (1, 5, 10):
-                c_ind = np.random.randint(0, v.dim, count)
-                c = v.copy()
-                dofs = c[ind].dofs(c_ind)
-                assert dofs.shape == (v.len_ind(ind), count)
-                c = v.copy()
-                dofs2 = c[ind].dofs(list(c_ind))
-                assert np.all(dofs == dofs2)
-                c = v.copy()
-                c.scal(3.)
-                dofs2 = c[ind].dofs(c_ind)
-                assert np.allclose(dofs * 3, dofs2)
-                c = v.copy()
-                dofs2 = c[ind].dofs(np.hstack((c_ind, c_ind)))
-                assert np.all(dofs2 == np.hstack((dofs, dofs)))
-                try:
-                    assert np.all(dofs == indexed(v.to_numpy(), ind)[:, c_ind])
-                except NotImplementedError:
-                    pass
-
-
-@given(pyst.vector_array)
-def test_components_wrong_dof_indices(vector_array):
-    v = vector_array
-    np.random.seed(len(v) + 24 + v.dim)
-    for ind in valid_inds(v):
-        with pytest.raises(Exception):
-            v[ind].dofs(None)
-        with pytest.raises(Exception):
-            v[ind].dofs(1)
-        with pytest.raises(Exception):
-            v[ind].dofs(np.array([-1]))
-        with pytest.raises(Exception):
-            v[ind].dofs(np.array([v.dim]))
-
-
-@given(pyst.vector_array)
-def test_amax(vector_array):
-    v = vector_array
+    assert isinstance(norm, np.ndarray)
+    assert norm.shape == (v.len_ind(ind),)
+    assert np.all(norm >= 0)
     if v.dim == 0:
-        return
-    for ind in valid_inds(v):
-        max_inds, max_vals = v[ind].amax()
+        assert np.all(norm == 0)
+    try:
+        assert np.allclose(norm, np.sum(np.abs(indexed(v.to_numpy(), ind)), axis=1))
+    except NotImplementedError:
+        pass
+    c.scal(4.)
+    assert np.allclose(c[ind].l1_norm(), norm * 4)
+    c.scal(-4.)
+    assert np.allclose(c[ind].l1_norm(), norm * 16)
+    c.scal(0.)
+    assert np.allclose(c[ind].l1_norm(), 0)
+
+
+@given(pyst.vector_array_with_ind())
+def test_l2_norm(v_ind):
+    v, ind = v_ind
+    c = v.copy()
+    norm = c[ind].l2_norm()
+    assert isinstance(norm, np.ndarray)
+    assert norm.shape == (v.len_ind(ind),)
+    assert np.all(norm >= 0)
+    if v.dim == 0:
+        assert np.all(norm == 0)
+    try:
+            assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=1))
+    except NotImplementedError:
+        pass
+    c.scal(4.)
+    assert np.allclose(c[ind].l2_norm(), norm * 4)
+    c.scal(-4.)
+    assert np.allclose(c[ind].l2_norm(), norm * 16)
+    c.scal(0.)
+    assert np.allclose(c[ind].l2_norm(), 0)
+
+
+@given(pyst.vector_array_with_ind())
+def test_l2_norm2(v_ind):
+    v, ind = v_ind
+    c = v.copy()
+    norm = c[ind].l2_norm2()
+    assert isinstance(norm, np.ndarray)
+    assert norm.shape == (v.len_ind(ind),)
+    assert np.all(norm >= 0)
+    if v.dim == 0:
+        assert np.all(norm == 0)
+    try:
+            assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=1)**2)
+    except NotImplementedError:
+        pass
+    c.scal(4.)
+    assert np.allclose(c[ind].l2_norm2(), norm * 16)
+    c.scal(-4.)
+    assert np.allclose(c[ind].l2_norm2(), norm * 256)
+    c.scal(0.)
+    assert np.allclose(c[ind].l2_norm2(), 0)
+
+
+@given(pyst.vector_array_with_ind())
+def test_sup_norm(v_ind):
+    v, ind = v_ind
+    c = v.copy()
+    norm = c[ind].sup_norm()
+    assert isinstance(norm, np.ndarray)
+    assert norm.shape == (v.len_ind(ind),)
+    assert np.all(norm >= 0)
+    if v.dim == 0:
+        assert np.all(norm == 0)
+    if v.dim > 0:
+        try:
+            assert np.allclose(norm, np.max(np.abs(indexed(v.to_numpy(), ind)), axis=1))
+        except NotImplementedError:
+            pass
+    c.scal(4.)
+    assert np.allclose(c[ind].sup_norm(), norm * 4)
+    c.scal(-4.)
+    assert np.allclose(c[ind].sup_norm(), norm * 16)
+    c.scal(0.)
+    assert np.allclose(c[ind].sup_norm(), 0)
+
+
+@given(pyst.vector_array_with_ind())
+def test_dofs(v_ind):
+    v, ind = v_ind
+    c = v.copy()
+    dofs = c[ind].dofs(np.array([], dtype=np.int))
+    assert isinstance(dofs, np.ndarray)
+    assert dofs.shape == (v.len_ind(ind), 0)
+
+    c = v.copy()
+    dofs = c[ind].dofs([])
+    assert isinstance(dofs, np.ndarray)
+    assert dofs.shape == (v.len_ind(ind), 0)
+
+    assume(v.dim > 0)
+    for count in (1, 5, 10):
+        c_ind = np.random.randint(0, v.dim, count)
+        c = v.copy()
+        dofs = c[ind].dofs(c_ind)
+        assert dofs.shape == (v.len_ind(ind), count)
+        c = v.copy()
+        dofs2 = c[ind].dofs(list(c_ind))
+        assert np.all(dofs == dofs2)
+        c = v.copy()
+        c.scal(3.)
+        dofs2 = c[ind].dofs(c_ind)
+        assert np.allclose(dofs * 3, dofs2)
+        c = v.copy()
+        dofs2 = c[ind].dofs(np.hstack((c_ind, c_ind)))
+        assert np.all(dofs2 == np.hstack((dofs, dofs)))
+        try:
+            assert np.all(dofs == indexed(v.to_numpy(), ind)[:, c_ind])
+        except NotImplementedError:
+            pass
+
+
+@given(pyst.vector_array_with_ind())
+def test_components_wrong_dof_indices(v_ind):
+    v, ind = v_ind
+    with pytest.raises(Exception):
+        v[ind].dofs(None)
+    with pytest.raises(Exception):
+        v[ind].dofs(1)
+    with pytest.raises(Exception):
+        v[ind].dofs(np.array([-1]))
+    with pytest.raises(Exception):
+        v[ind].dofs(np.array([v.dim]))
+
+
+@given(pyst.vector_array_with_ind())
+def test_amax(v_ind):
+    v, ind = v_ind
+    assume(v.dim != 0)
+    max_inds, max_vals = v[ind].amax()
         assert np.allclose(max_vals, v[ind].sup_norm())
-        for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals):
+    for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals):
             assert np.allclose(max_val, np.abs(v[[i]].dofs([max_ind])))
 
 
@@ -909,11 +817,10 @@ def test_amax(vector_array):
 #                 v.amax(ind)
 
 
-@given(pyst.vector_array)
-def test_gramian(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
-        assert np.allclose(v[ind].gramian(), v[ind].dot(v[ind]))
+@given(pyst.vector_array_with_ind())
+def test_gramian(v_ind):
+    v, ind = v_ind
+    assert np.allclose(v[ind].gramian(), v[ind].dot(v[ind]))
 
 
 def test_add(compatible_vector_array_pair):
@@ -1132,16 +1039,14 @@ def test_scal_wrong_ind(vector_array):
             c[ind].scal(1.2)
 
 
-@given(pyst.vector_array)
-def test_scal_wrong_coefficients(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
-        np.random.seed(len(v) + 99)
-        for alpha in ([np.array([]), np.eye(v.len_ind(ind)), np.random.random(v.len_ind(ind) + 1)]
-                      if v.len_ind(ind) > 0 else
-                      [np.random.random(1)]):
-            with pytest.raises(Exception):
-                v[ind].scal(alpha)
+@given(pyst.vector_array_with_ind())
+def test_scal_wrong_coefficients(v_ind):
+    v, ind = v_ind
+    for alpha in ([np.array([]), np.eye(v.len_ind(ind)), np.random.random(v.len_ind(ind) + 1)]
+                  if v.len_ind(ind) > 0 else
+                  [np.random.random(1)]):
+        with pytest.raises(Exception):
+            v[ind].scal(alpha)
 
 
 def test_axpy_wrong_ind(compatible_vector_array_pair):
