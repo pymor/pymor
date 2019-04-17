@@ -515,6 +515,8 @@ def test_axpy_one_x(compatible_vector_array_pair):
 
 
 @given(pyst.vector_arrays_with_ind_pairs_same_length())
+# TODO replace indices loop
+@settings(deadline=None)
 def test_axpy_self(vector_array_inds):
     v, (ind1, ind2) = vector_array_inds
 
@@ -783,6 +785,8 @@ def test_sup_norm(v_ind):
 
 
 @given(pyst.vector_array_with_ind())
+# TODO split and replace count loop
+@settings(deadline=None)
 def test_dofs(v_ind):
     v, ind = v_ind
     c = v.copy()
@@ -920,6 +924,8 @@ def test_neg(vector_arrays):
 
 
 @given(pyst.vector_arrays(count=1))
+# TODO split and replace count loop
+@settings(deadline=None)
 def test_mul(vector_arrays):
     v = vector_arrays[0]
     c = v.copy()
