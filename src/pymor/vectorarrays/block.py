@@ -94,8 +94,7 @@ class BlockVectorArray(VectorArrayInterface):
         assert other in self.space
         dots = [block.dot(other_block) for block, other_block in zip(self._blocks, other._blocks)]
         assert all([dot.shape == dots[0].shape for dot in dots])
-        common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
-        ret = np.zeros(dots[0].shape, dtype=common_dtype)
+        ret = np.zeros(dots[0].shape, dtype=self.space.dtype)
         for dot in dots:
             ret += dot
         return ret
@@ -179,7 +178,7 @@ class BlockVectorSpace(VectorSpaceInterface):
         subspaces = tuple(subspaces)
         assert all([isinstance(subspace, VectorSpaceInterface) for subspace in subspaces])
         self.subspaces = subspaces
-        self.dtype = tuple([s.dtype for s in subspaces])
+        self.dtype = reduce(np.promote_types, (s.dtype for s in subspaces))
 
     def __eq__(self, other):
         return (type(other) is BlockVectorSpace
