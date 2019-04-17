@@ -859,13 +859,9 @@ def test_gramian(v_ind):
     assert np.allclose(v[ind].gramian(), v[ind].dot(v[ind]))
 
 
-@given(pyst.vector_arrays(count=2))
+@given(pyst.vector_arrays(count=2, length=pyst.equal_length_tuples(count=2)))
 def test_add(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if len(v2) < len(v1):
-        v2.append(v2[np.zeros(len(v1) - len(v2), dtype=np.int)])
-    elif len(v2) > len(v1):
-        del v2[:len(v2)-len(v1)]
     c1 = v1.copy()
     cc1 = v1.copy()
     c1.axpy(1, v2)
@@ -873,26 +869,18 @@ def test_add(compatible_vector_array_pair):
     assert np.all(almost_equal(v1, cc1))
 
 
-@given(pyst.vector_arrays(count=2))
+@given(pyst.vector_arrays(count=2, length=pyst.equal_length_tuples(count=2)))
 def test_iadd(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if len(v2) < len(v1):
-        v2.append(v2[np.zeros(len(v1) - len(v2), dtype=np.int)])
-    elif len(v2) > len(v1):
-        del v2[:len(v2)-len(v1)]
     c1 = v1.copy()
     c1.axpy(1, v2)
     v1 += v2
     assert np.all(almost_equal(v1, c1))
 
 
-@given(pyst.vector_arrays(count=2))
+@given(pyst.vector_arrays(count=2, length=pyst.equal_length_tuples(count=2)))
 def test_sub(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if len(v2) < len(v1):
-        v2.append(v2[np.zeros(len(v1) - len(v2), dtype=np.int)])
-    elif len(v2) > len(v1):
-        del v2[list(range(len(v2)-len(v1)))]
     c1 = v1.copy()
     cc1 = v1.copy()
     c1.axpy(-1, v2)
@@ -900,13 +888,9 @@ def test_sub(compatible_vector_array_pair):
     assert np.all(almost_equal(v1, cc1))
 
 
-@given(pyst.vector_arrays(count=2))
+@given(pyst.vector_arrays(count=2, length=pyst.equal_length_tuples(count=2)))
 def test_isub(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if len(v2) < len(v1):
-        v2.append(v2[np.zeros(len(v1) - len(v2), dtype=np.int)])
-    elif len(v2) > len(v1):
-        del v2[:len(v2)-len(v1)]
     c1 = v1.copy()
     c1.axpy(-1, v2)
     v1 -= v2
