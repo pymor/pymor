@@ -6,6 +6,7 @@ from numbers import Number
 
 import numpy as np
 
+from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.random import get_random_state
@@ -383,27 +384,41 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
-    def norm(self, product=None):
+    @defaults('tol', 'raise_complex')
+    def norm(self, product=None, tol=1e-10, raise_complex=True):
         """Norm w.r.t. given inner product |Operator|.
 
         Equivalent to `self.l2_norm()` if `product` is None,
         else equivalent to `np.sqrt(product.pairwise_apply2(self, self))`.
+        If `raise_complex` is `True`, a :exc:`ValueError` exception
+        is raised if there are complex norm squares of absolute value
+        larger than `tol`.
         """
         if product is None:
             return self.l2_norm()
         else:
-            return np.sqrt(product.pairwise_apply2(self, self))
+            norm_squared = product.pairwise_apply2(self, self)
+            if raise_complex and np.any(np.abs(norm_squared.imag) > tol):
+                raise ValueError(f'norm is complex (square = {norm_squared})')
+            return np.sqrt(norm_squared.real)
 
-    def norm2(self, product=None):
+    @defaults('tol', 'raise_complex')
+    def norm2(self, product=None, tol=1e-10, raise_complex=True):
         """Squared norm w.r.t. given inner product |Operator|.
 
         Equivalent to `self.l2_norm2()` if `product` is None,
         else equivalent to `product.pairwise_apply2(self, self)`.
+        If `raise_complex` is `True`, a :exc:`ValueError` exception
+        is raised if there are complex norm squares of absolute value
+        larger than `tol`.
         """
         if product is None:
             return self.l2_norm2()
         else:
-            return product.pairwise_apply2(self, self)
+            norm_squared = product.pairwise_apply2(self, self)
+            if raise_complex and np.any(np.abs(norm_squared.imag) > tol):
+                raise ValueError(f'norm is complex (square = {norm_squared})')
+            return norm_squared.real
 
     @abstractmethod
     def l1_norm(self):
