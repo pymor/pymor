@@ -37,15 +37,14 @@ if config.HAVE_NGSOLVE:
             NGSOLVE_spaces[dim] = NGSolveVectorSpace(ngs.L2(ngs.Mesh(mesh), order=0))
         return NGSOLVE_spaces[dim]
 
-lengths = hyst.integers(min_value=0, max_value=102)
-float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False, min_value=-1, max_value=1)
-complex_array_elements = hyst.complex_numbers(allow_nan=False, allow_infinity=False, max_magnitude=2)
-dims = hyst.integers(min_value=0, max_value=34)
+hy_lengths = hyst.integers(min_value=0, max_value=102)
+hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False, min_value=-1, max_value=1)
+hy_complex_array_elements = hyst.complex_numbers(allow_nan=False, allow_infinity=False, max_magnitude=2)
+hy_dims = hyst.integers(min_value=0, max_value=34)
 # TODO non-fixed sampling pool
-block_space_dims = hyst.sampled_from([(32, 1), (0, 3), (0, 0), (10,), (34, 1), (32, 3, 1), (1, 1, 1)])
-seeders = hyst.random_module()
-reserves = hyst.integers(min_value=0, max_value=3)
-dtypes = hyst.sampled_from([np.float64, np.complex128])
+hy_block_space_dims = hyst.sampled_from([(32, 1), (0, 3), (0, 0), (10,), (34, 1), (32, 3, 1), (1, 1, 1)])
+hy_reserves = hyst.integers(min_value=0, max_value=3)
+hy_dtypes = hyst.sampled_from([np.float64, np.complex128])
 
 
 def nothing(*args, **kwargs):
@@ -54,48 +53,48 @@ def nothing(*args, **kwargs):
 
 def np_arrays(length, dim, dtype=None):
     if dtype is None:
-        return hynp.arrays(dtype=np.float64, shape=(length, dim), elements=float_array_elements) | \
-            hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=complex_array_elements)
+        return hynp.arrays(dtype=np.float64, shape=(length, dim), elements=hy_float_array_elements) | \
+               hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements)
     if dtype is np.complex128:
-        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=complex_array_elements)
+        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_complex_array_elements)
     if dtype is np.float64:
-        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=float_array_elements)
+        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_float_array_elements)
     raise RuntimeError(f'unsupported dtype={dtype}')
 
 
 @hyst.composite
 def length_dim_data(draw):
-    length, dim = draw(lengths), draw(dims)
+    length, dim = draw(hy_lengths), draw(hy_dims)
     data = draw(np_arrays(length, dim))
     return length, dim, data
 
 
 @hyst.composite
 def numpy_vector_array(draw, count=1, dtype=None):
-    dim = draw(dims) # compatible? draw single : draw tuple
-    dtype = dtype or draw(dtypes)
-    lngs = hyst.tuples(*[lengths for _ in range(count)])
+    dim = draw(hy_dims) # compatible? draw single : draw tuple
+    dtype = dtype or draw(hy_dtypes)
+    lngs = hyst.tuples(*[hy_lengths for _ in range(count)])
     data = hyst.tuples(*[np_arrays(l, dim, dtype=dtype) for l in draw(lngs)])
     vec = [NumpyVectorSpace.from_numpy(d) for d in draw(data)]
-    return [vector_array_from_empty_reserve(v, draw(reserves)) for v in vec]
+    return [vector_array_from_empty_reserve(v, draw(hy_reserves)) for v in vec]
 
 
 @hyst.composite
 def numpy_list_vector_array(draw, count=1, dtype=None):
-    dim = draw(dims)
-    dtype = dtype or draw(dtypes)
-    lngs = hyst.tuples(*[lengths for _ in range(count)])
+    dim = draw(hy_dims)
+    dtype = dtype or draw(hy_dtypes)
+    lngs = hyst.tuples(*[hy_lengths for _ in range(count)])
     data = hyst.tuples(*[np_arrays(l, dim, dtype=dtype) for l in draw(lngs)])
     vec = [NumpyListVectorSpace.from_numpy(d) for d in draw(data)]
-    return [vector_array_from_empty_reserve(v, draw(reserves)) for v in vec]
+    return [vector_array_from_empty_reserve(v, draw(hy_reserves)) for v in vec]
 
 
 @hyst.composite
 def block_vector_array(draw, count=1, dtype=None):
-    dims = draw(block_space_dims)
-    lngs = hyst.tuples(*[lengths for _ in range(count)])
+    dims = draw(hy_block_space_dims)
+    lngs = hyst.tuples(*[hy_lengths for _ in range(count)])
     ret = []
-    dtype = dtype or draw(dtypes)
+    dtype = dtype or draw(hy_dtypes)
     for l in draw(lngs):
         data = draw(np_arrays(l, sum(dims), dtype=dtype))
         V = BlockVectorSpace([NumpyVectorSpace(dim, dtype=data.dtype) for dim in dims]).from_numpy(
@@ -116,7 +115,7 @@ if config.HAVE_FENICS:
         if dtype: # complex is not actually supported
             assert dtype == np.float64
         dtype = np.float64
-        lngs = draw(hyst.tuples(*[lengths for _ in range(count)]))
+        lngs = draw(hyst.tuples(*[hy_lengths for _ in range(count)]))
         V = draw(fenics_spaces())
         Us = [FenicsVectorSpace(V).zeros(l) for l in lngs]
         dims = [U.dim for U in Us]
@@ -134,8 +133,8 @@ if config.HAVE_NGSOLVE:
         if dtype: # complex is not actually supported
             assert dtype == np.float64
         dtype = np.float64
-        dim = draw(dims)
-        lngs = draw(hyst.tuples(*[lengths for _ in range(count)]))
+        dim = draw(hy_dims)
+        lngs = draw(hyst.tuples(*[hy_lengths for _ in range(count)]))
         space = create_ngsolve_space(dim)
         Us = [space.zeros(l) for l in lngs]
         for i in range(count):
@@ -148,9 +147,9 @@ else:
 if config.HAVE_DEALII:
     @hyst.composite
     def dealii_vector_array(draw, count=1, dtype=None):
-        dim = draw(dims)
-        dtype = dtype or draw(dtypes)
-        lngs = draw(hyst.tuples(*[lengths for _ in range(count)]))
+        dim = draw(hy_dims)
+        dtype = dtype or draw(hy_dtypes)
+        lngs = draw(hyst.tuples(*[hy_lengths for _ in range(count)]))
         Us = [DealIIVectorSpace(dim).zeros(l) for l in lngs]
         for i in range(count):
             for v, a in zip(Us[i]._list, draw(np_arrays(lngs[i], dim, dtype=dtype))):
