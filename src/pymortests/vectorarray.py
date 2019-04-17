@@ -59,12 +59,12 @@ def invalid_inds(v, length=None):
 
 
 def invalid_ind_pairs(v1, v2):
-    for inds in valid_inds_of_different_length(v1, v2):
+    for inds in pyst.valid_inds_of_different_length(v1, v2):
         yield inds
-    for ind1 in valid_inds(v1):
+    for ind1 in pyst.valid_inds(v1):
         for ind2 in invalid_inds(v2, length=v1.len_ind(ind1)):
             yield ind1, ind2
-    for ind2 in valid_inds(v2):
+    for ind2 in pyst.valid_inds(v2):
         for ind1 in invalid_inds(v1, length=v2.len_ind(ind2)):
             yield ind1, ind2
 
@@ -838,7 +838,7 @@ def test_components_wrong_dof_indices(v_ind):
 @given(pyst.vector_array_with_ind(dtype=np.float64))
 def test_amax(v_ind):
     v, ind = v_ind
-    assume(v.dim != 0)
+    assume(v.dim > 0)
     max_inds, max_vals = v[ind].amax()
     assert np.allclose(max_vals, v[ind].sup_norm())
     for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals):
