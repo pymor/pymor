@@ -30,6 +30,7 @@ class NumpyVectorArray(VectorArrayInterface):
     """
 
     def __init__(self, array, space):
+        assert space.dtype == array.dtype
         self._array = array
         self.space = space
         self._refcount = [1]
@@ -374,8 +375,9 @@ class NumpyVectorSpace(VectorSpaceInterface):
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
         va = self.zeros(count, reserve)
-        va._array[:count] = _create_random_values((count, self.dim), distribution, random_state,
-                                                  dtype=self.dtype, **kwargs)
+        # in case we're not called via the VectorArrayInterface
+        kwargs['dtype'] = self.dtype
+        va._array[:count] = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
         return va
 
     @classinstancemethod
@@ -416,21 +418,25 @@ class NumpyVectorSpace(VectorSpaceInterface):
 
     @classmethod
     def _array_factory(cls, array, space=None, id_=None, dtype=None):
-        if dtype is None:
-            dtype = space.dtype if space else cls.dtype
         if type(array) is np.ndarray:
-            pass
+            if dtype:
+                assert dtype == array.dtype
         elif issparse(array):
             array = array.toarray()
+            if dtype:
+                assert dtype == array.dtype
         else:
+            if dtype is None:
+                dtype = space.dtype if space else cls.dtype
             array = np.array(array, ndmin=2, dtype=dtype)
         if array.ndim != 2:
             assert array.ndim == 1
             array = np.reshape(array, (1, -1))
         if space is None:
-            return NumpyVectorArray(array, cls(array.shape[1], id_, dtype=dtype))
+            return NumpyVectorArray(array, cls(array.shape[1], id_, dtype=array.dtype))
         else:
             assert array.shape[1] == space.dim
+            assert array.dtype == space.dtype
             return NumpyVectorArray(array, space)
 
     @property

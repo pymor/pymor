@@ -325,7 +325,7 @@ class ListVectorArray(VectorArrayInterface):
     def pairwise_dot(self, other):
         assert self.space == other.space
         assert len(self._list) == len(other)
-        return np.array([a.dot(b) for a, b in zip(self._list, other._list)])
+        return np.array([a.dot(b) for a, b in zip(self._list, other._list)], dtype=self.space.dtype)
 
     def gramian(self, product=None):
         if product is not None:
@@ -414,7 +414,9 @@ class ListVectorSpace(VectorSpaceInterface):
         return self.vector_from_numpy(np.full(self.dim, value, dtype=self.dtype))
 
     def random_vector(self, distribution, random_state, **kwargs):
-        values = _create_random_values(self.dim, distribution, random_state, dtype=self.dtype, **kwargs)
+        # in case we're not called via the VectorArrayInterface
+        kwargs['dtype'] = self.dtype
+        values = _create_random_values(self.dim, distribution, random_state, **kwargs)
         return self.vector_from_numpy(values)
 
     @abstractmethod

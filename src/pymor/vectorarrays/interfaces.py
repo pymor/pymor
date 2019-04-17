@@ -158,7 +158,7 @@ class VectorArrayInterface(BasicInterface):
         reserve
             Hint for the backend to which length the array will grow.
         """
-        return self.space.random(count, distribution, random_state, seed, **kwargs)
+        return self.space.random(count, distribution, random_state, seed, dtype=self.space.dtype, **kwargs)
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray| of the same |VectorSpace|.
@@ -729,7 +729,7 @@ class VectorSpaceInterface(ImmutableInterface):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to `value`.
         """
-        return self.from_numpy(np.full((count, self.dim), value))
+        return self.from_numpy(np.full((count, self.dim), value, dtype=self.dtype))
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
@@ -827,11 +827,17 @@ class VectorSpaceInterface(ImmutableInterface):
         return hash(self.id)
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.id})'
+        return f'{self.__class__.__name__}({self.id}, dtype={self.dtype})'
+
+
+def _is_complex_dtype(dtype):
+    if isinstance(dtype, np.dtype):
+        dtype = dtype.type
+    return dtype in [np.complex, np.complex64, np.complex128]
 
 
 def _create_random_values(shape, distribution, random_state, dtype=VectorSpaceInterface.dtype, **kwargs):
-    if distribution not in ('uniform', 'normal') or not isinstance(dtype(0), np.floating):
+    if distribution not in ('uniform', 'normal') or _is_complex_dtype(dtype):
         raise NotImplementedError
 
     if distribution == 'uniform':
