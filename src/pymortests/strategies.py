@@ -45,12 +45,22 @@ dims = hyst.integers(min_value=0, max_value=34)
 block_space_dims = hyst.sampled_from([(32, 1), (0, 3), (0, 0), (10,), (34, 1), (32, 3, 1), (1, 1, 1)])
 seeders = hyst.random_module()
 reserves = hyst.integers(min_value=0, max_value=3)
-dtypes = hyst.sampled_from([np.float, np.complex])
+dtypes = hyst.sampled_from([np.float64, np.complex128])
 
 
-def np_arrays(length, dim):
-    return hynp.arrays(dtype=np.float, shape=(length, dim), elements=float_array_elements) | \
-            hynp.arrays(dtype=np.complex, shape=(length, dim), elements=complex_array_elements)
+def nothing(*args, **kwargs):
+    return hyst.nothing()
+
+
+def np_arrays(length, dim, dtype=None):
+    if dtype is None:
+        return hynp.arrays(dtype=np.float64, shape=(length, dim), elements=float_array_elements) | \
+            hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=complex_array_elements)
+    if dtype is np.complex128:
+        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=complex_array_elements)
+    if dtype is np.float64:
+        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=float_array_elements)
+    raise RuntimeError(f'unsupported dtype={dtype}')
 
 
 @hyst.composite
@@ -61,25 +71,38 @@ def length_dim_data(draw):
 
 
 @hyst.composite
-def numpy_vector_array(draw):
-    length, dim, data = draw(length_dim_data())
-    v = NumpyVectorSpace.from_numpy(data)
-    return vector_array_from_empty_reserve(v, draw(reserves))
+def numpy_vector_array(draw, count=1, dtype=None):
+    dim = draw(dims) # compatible? draw single : draw tuple
+    dtype = dtype or draw(dtypes)
+    lngs = hyst.tuples(*[lengths for _ in range(count)])
+    data = hyst.tuples(*[np_arrays(l, dim, dtype=dtype) for l in draw(lngs)])
+    vec = [NumpyVectorSpace.from_numpy(d) for d in draw(data)]
+    return [vector_array_from_empty_reserve(v, draw(reserves)) for v in vec]
 
 
 @hyst.composite
-def numpy_list_vector_array(draw):
-    length, dim, data = draw(length_dim_data())
-    v = NumpyListVectorSpace.from_numpy(data)
-    return vector_array_from_empty_reserve(v, draw(reserves))
+def numpy_list_vector_array(draw, count=1, dtype=None):
+    dim = draw(dims)
+    dtype = dtype or draw(dtypes)
+    lngs = hyst.tuples(*[lengths for _ in range(count)])
+    data = hyst.tuples(*[np_arrays(l, dim, dtype=dtype) for l in draw(lngs)])
+    vec = [NumpyListVectorSpace.from_numpy(d) for d in draw(data)]
+    return [vector_array_from_empty_reserve(v, draw(reserves)) for v in vec]
 
 
 @hyst.composite
-def block_vector_array(draw):
-    length, dims = draw(lengths), draw(block_space_dims)
-    return BlockVectorSpace([NumpyVectorSpace(dim) for dim in dims]).from_numpy(
-        NumpyVectorSpace.from_numpy(draw(np_arrays(length, sum(dims)))).to_numpy()
-    )
+def block_vector_array(draw, count=1, dtype=None):
+    dims = draw(block_space_dims)
+    lngs = hyst.tuples(*[lengths for _ in range(count)])
+    ret = []
+    dtype = dtype or draw(dtypes)
+    for l in draw(lngs):
+        data = draw(np_arrays(l, sum(dims), dtype=dtype))
+        V = BlockVectorSpace([NumpyVectorSpace(dim, dtype=data.dtype) for dim in dims]).from_numpy(
+            NumpyVectorSpace.from_numpy(data).to_numpy()
+        )
+        ret.append(V)
+    return ret
 
 
 if config.HAVE_FENICS:
@@ -89,44 +112,57 @@ if config.HAVE_FENICS:
         return df.FunctionSpace(df.UnitSquareMesh(ni, ni), 'Lagrange', 1)
 
     @hyst.composite
-    def fenics_vector_array(draw):
-        length = draw(lengths)
+    def fenics_vector_array(draw, count=1, dtype=None):
+        if dtype: # complex is not actually supported
+            assert dtype == np.float64
+        dtype = np.float64
+        lngs = draw(hyst.tuples(*[lengths for _ in range(count)]))
         V = draw(fenics_spaces())
-        space = FenicsVectorSpace(V)
-        U = space.zeros(length)
-        dim = U.dim
-        # dtype is float here since the petsc vector is not setup for complex
-        for v, a in zip(U._list, draw(np_arrays(length, dim))):
-            v = space.vector_from_numpy(a)
-        return U
+        Us = [FenicsVectorSpace(V).zeros(l) for l in lngs]
+        dims = [U.dim for U in Us]
+        for i in range(count):
+            # dtype is float here since the petsc vector is not setup for complex
+            for v, a in zip(Us[i]._list, draw(np_arrays(lngs[i], dims[i], dtype=dtype))):
+            v = v.space.vector_from_numpy(a)
+        return Us
 else:
-    fenics_vector_array = hyst.nothing
+    fenics_vector_array = nothing
 
 if config.HAVE_NGSOLVE:
     @hyst.composite
-    def ngsolve_vector_array(draw):
-        length, dim = draw(lengths), draw(dims)
+    def ngsolve_vector_array(draw, count=1, dtype=None):
+        if dtype: # complex is not actually supported
+            assert dtype == np.float64
+        dtype = np.float64
+        dim = draw(dims)
+        lngs = draw(hyst.tuples(*[lengths for _ in range(count)]))
         space = create_ngsolve_space(dim)
-        U = space.zeros(length)
-        for v, a in zip(U._list, draw(np_arrays(length, dim))):
-            v.to_numpy()[:] = a
-        return U
+        Us = [space.zeros(l) for l in lngs]
+        for i in range(count):
+            for v, a in zip(Us[i]._list, draw(np_arrays(lngs[i], dim, dtype=dtype))):
+                v.to_numpy()[:] = a
+        return Us
 else:
-    ngsolve_vector_array = hyst.nothing
+    ngsolve_vector_array = nothing
 
 if config.HAVE_DEALII:
     @hyst.composite
-    def dealii_vector_array(draw):
-        length, dim = draw(lengths), draw(dims)
-        U = DealIIVectorSpace(dim).zeros(length)
-        for v, a in zip(U._list, draw(np_arrays(length, dim))):
-            v.impl[:] = a
-        return U
+    def dealii_vector_array(draw, count=1, dtype=None):
+        dim = draw(dims)
+        dtype = dtype or draw(dtypes)
+        lngs = draw(hyst.tuples(*[lengths for _ in range(count)]))
+        Us = [DealIIVectorSpace(dim).zeros(l) for l in lngs]
+        for i in range(count):
+            for v, a in zip(Us[i]._list, draw(np_arrays(lngs[i], dim, dtype=dtype))):
+                v.impl[:] = a
+        return Us
 else:
-    dealii_vector_array = hyst.nothing
+    dealii_vector_array = nothing
 
-vector_array = fenics_vector_array() | numpy_vector_array() | numpy_list_vector_array() | \
-    dealii_vector_array() | ngsolve_vector_array() | block_vector_array()
+
+def vector_arrays(count=1, dtype=None):
+    return fenics_vector_array(count, dtype) | numpy_vector_array(count, dtype) | numpy_list_vector_array(count,dtype) | \
+        dealii_vector_array(count, dtype) | ngsolve_vector_array(count, dtype) | block_vector_array(count, dtype)
 
 
 # TODO this needs to be a strategy
@@ -208,35 +244,30 @@ def valid_inds_of_different_length(v1, v2):
 
 
 @hyst.composite
-def vector_array_with_ind(draw, ind_length=None):
-    v = draw(vector_array)
-    ind = hyst.sampled_from(list(valid_inds(v, ind_length)))
-    i = draw(ind)
-    return v, i
+def vector_array_with_ind(draw, ind_length=None, count=1, dtype=None):
+    assert count == 1
+    v = draw(vector_arrays(dtype=dtype), count)
+    ind = hyst.sampled_from(list(valid_inds(v[0], ind_length)))
+    return (*v, draw(ind))
 
 
 @hyst.composite
-def vector_arrays_with_ind_pairs_same_length(draw):
-    v = draw(vector_array)
-    ind = hyst.sampled_from(list(valid_inds_of_same_length(v,v)))
-    return v, draw(ind)
+def vector_arrays_with_ind_pairs_same_length(draw, count=1, dtype=None):
+    assert count == 1
+    v = draw(vector_arrays(dtype=dtype), count)
+    ind = hyst.sampled_from(list(valid_inds_of_same_length(v[0],v[0])))
+    return (*v, draw(ind))
 
 
 @hyst.composite
-def vector_arrays_with_ind_pairs_diff_length(draw):
-    v = draw(vector_array)
-    ind = hyst.sampled_from(list(valid_inds_of_same_length(v,v)))
-    return v, draw(ind)
+def vector_arrays_with_ind_pairs_diff_length(draw, count=1, dtype=None):
+    assert count == 1
+    v = draw(vector_arrays(dtype=dtype), count)
+    ind = hyst.sampled_from(list(valid_inds_of_different_length(v[0],v[0])))
+    return (*v, draw(ind))
 
 
-vector_arrays_with_ind_pairs_both_lengths = vector_arrays_with_ind_pairs_same_length() | \
-                                           vector_arrays_with_ind_pairs_diff_length()
+def vector_arrays_with_ind_pairs_both_lengths(count=1, dtype=None):
+    return vector_arrays_with_ind_pairs_same_length(count, dtype) | \
+           vector_arrays_with_ind_pairs_diff_length(count, dtype)
 
-
-@hyst.composite
-def compatible_vector_array_pair(draw):
-    v1 = draw(vector_array)
-    v2 = draw(vector_array)
-    assume(v1.dim == v2.dim)
-    assume(v1.space == v2.space)
-    return v1, v2
