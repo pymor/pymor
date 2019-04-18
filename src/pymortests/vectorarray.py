@@ -15,9 +15,6 @@ from pymor.algorithms.basic import almost_equal
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.tools import floatcmp
 from pymor.tools.floatcmp import float_cmp
-from pymortests.fixtures.vectorarray import \
-    (incompatible_vector_array_pair,
-     picklable_vector_array_without_reserve, picklable_vector_array)
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
 
@@ -860,7 +857,7 @@ def test_gramian(v_ind):
     assert np.allclose(v[ind].gramian(), v[ind].dot(v[ind]))
 
 
-@given(pyst.vector_arrays(count=2, length=pyst.equal_length_tuples(count=2)))
+@given(pyst.vector_arrays(count=2, length=pyst.equal_tuples(pyst.hy_lengths, count=2)))
 def test_add(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     c1 = v1.copy()
@@ -870,7 +867,7 @@ def test_add(compatible_vector_array_pair):
     assert np.all(almost_equal(v1, cc1))
 
 
-@given(pyst.vector_arrays(count=2, length=pyst.equal_length_tuples(count=2)))
+@given(pyst.vector_arrays(count=2, length=pyst.equal_tuples(pyst.hy_lengths, count=2)))
 def test_iadd(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     c1 = v1.copy()
@@ -879,7 +876,7 @@ def test_iadd(compatible_vector_array_pair):
     assert np.all(almost_equal(v1, c1))
 
 
-@given(pyst.vector_arrays(count=2, length=pyst.equal_length_tuples(count=2)))
+@given(pyst.vector_arrays(count=2, length=pyst.equal_tuples(pyst.hy_lengths, count=2)))
 def test_sub(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     c1 = v1.copy()
@@ -889,7 +886,7 @@ def test_sub(compatible_vector_array_pair):
     assert np.all(almost_equal(v1, cc1))
 
 
-@given(pyst.vector_arrays(count=2, length=pyst.equal_length_tuples(count=2)))
+@given(pyst.vector_arrays(count=2, length=pyst.equal_tuples(pyst.hy_lengths, count=2)))
 def test_isub(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     c1 = v1.copy()
@@ -963,7 +960,7 @@ def test_imul_wrong_factor(vector_arrays):
 
 ########################################################################################################################
 
-
+@given(pyst.vector_arrays(count=2, compatible=False))
 def test_append_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     c1, c2 = v1.copy(), v2.copy()
@@ -972,9 +969,9 @@ def test_append_incompatible(incompatible_vector_array_pair):
     c1, c2 = v1.copy(), v2.copy()
     with pytest.raises(Exception):
         c1.append(c2, remove_from_other=True)
-    c1, c2 = v1.copy(), v2.copy()
 
 
+@given(pyst.vector_arrays(count=2, compatible=False))
 def test_axpy_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
@@ -992,6 +989,7 @@ def test_axpy_incompatible(incompatible_vector_array_pair):
             c1[ind1].axpy(1.42, c2[ind2])
 
 
+@given(pyst.vector_arrays(count=2, compatible=False))
 def test_dot_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
@@ -1000,6 +998,7 @@ def test_dot_incompatible(incompatible_vector_array_pair):
             c1[ind1].dot(c2[ind2])
 
 
+@given(pyst.vector_arrays(count=2, compatible=False))
 def test_pairwise_dot_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
@@ -1008,24 +1007,28 @@ def test_pairwise_dot_incompatible(incompatible_vector_array_pair):
             c1[ind1].pairwise_dot(c2[ind2])
 
 
+@given(pyst.vector_arrays(count=2, compatible=False))
 def test_add_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     with pytest.raises(Exception):
         _ = v1 + v2
 
 
+@given(pyst.vector_arrays(count=2, compatible=False))
 def test_iadd_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     with pytest.raises(Exception):
         v1 += v2
 
 
+@given(pyst.vector_arrays(count=2, compatible=False))
 def test_sub_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     with pytest.raises(Exception):
         _ = v1 - v2
 
 
+@given(pyst.vector_arrays(count=2, compatible=False))
 def test_isub_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     with pytest.raises(Exception):
@@ -1121,5 +1124,6 @@ def test_pairwise_dot_wrong_ind(compatible_vector_array_pair):
             c1[ind1].pairwise_dot(c2[ind2])
 
 
+@given(pyst.picklable_vector_arrays())
 def test_pickle(picklable_vector_array):
     assert_picklable_without_dumps_function(picklable_vector_array)
