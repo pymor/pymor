@@ -854,6 +854,7 @@ def test_amax(v_ind):
 
 
 @given(pyst.vector_array_with_ind())
+@settings(deadline=None)
 def test_gramian(v_ind):
     v, ind = v_ind
     assert np.allclose(v[ind].gramian(), v[ind].dot(v[ind]))
@@ -928,6 +929,8 @@ def test_mul_wrong_factor(vector_arrays):
 
 
 @given(pyst.vector_arrays(count=1))
+# TODO split and replace count loop
+@settings(deadline=None)
 def test_rmul(vector_arrays):
     v = vector_arrays[0]
     c = v.copy()
@@ -939,6 +942,8 @@ def test_rmul(vector_arrays):
 
 
 @given(pyst.vector_arrays(count=1))
+# TODO split and replace count loop
+@settings(deadline=None)
 def test_imul(vector_arrays):
     v = vector_arrays[0]
     for a in (-1, -3, 0, 1, 23, np.arange(len(v))):
