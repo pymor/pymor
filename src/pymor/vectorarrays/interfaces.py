@@ -662,7 +662,7 @@ class VectorSpaceInterface(ImmutableInterface):
     id = None
     dim = None
     is_scalar = False
-    dtype = np.float64
+    dtype = np.float_
 
     @abstractmethod
     def make_array(*args, **kwargs):
