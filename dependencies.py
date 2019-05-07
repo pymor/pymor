@@ -39,8 +39,9 @@ import_names = {'ipython': 'IPython',
                 _pymess('1.0.0', 3, 6, False): 'pymess',
                 _pymess('1.0.0', 3, 7, False): 'pymess',
                 'pyopengl': 'OpenGL'}
+# Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = [_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7),
-                    'slycot>=0.3.3', 'mpi4py']
+                    'slycot==0.3.3', 'mpi4py']
 
 
 def strip_markers(name):
