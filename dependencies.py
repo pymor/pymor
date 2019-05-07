@@ -43,7 +43,7 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'ipywidgets': 'notebook GUI elements',
                     'pillow': 'image library used for bitmap data functions'}
 # these will be refactored out into a visualization package
-vtk_vis = {'k3d': 'in-notebook visualizations of 3D data',
+vtk_vis = {'k3d>=2.6.2': 'in-notebook visualizations of 3D data',
            'vtk': 'KitWares python bindings for vtk',
            'ipywidgets': 'notebook GUI elements',
            'lxml': 'advanced XML parsers',
