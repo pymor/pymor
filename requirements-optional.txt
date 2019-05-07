@@ -8,7 +8,7 @@ https://pymor.github.io/wheels/pymess-1.0.0-cp37-cp37m-manylinux1_x86_64.whl ; p
 ipyparallel
 ipython>=3.0
 ipywidgets
-k3d
+k3d>=2.6.2
 lxml
 matplotlib
 mpi4py
