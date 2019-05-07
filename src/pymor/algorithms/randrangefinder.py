@@ -24,9 +24,9 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     .. math::
         \Vert A - P_{span(B)} A \Vert \leq tol
 
-    with a failure probability smaller than `failure_tolerance`, where the inner product of the
-    range of `A` is given by `range_product` and the inner product of the source of `A`
-    is given by `source_product`.
+    with a failure probability smaller than `failure_tolerance`, where the norm denotes the
+    operator norm. The inner product of the range of `A` is given by `range_product` and
+    the inner product of the source of `A` is given by `source_product`.
 
     Parameters
     ----------
@@ -72,8 +72,8 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 
         def mvinv(v):
             return source_product.apply_inverse(source_product.range.from_numpy(v)).to_numpy()
-        L = LinearOperator((source_product.source.dim, source_product.range.dim), matvec=mv, matmat=mv)
-        Linv = LinearOperator((source_product.range.dim, source_product.source.dim), matvec=mvinv, matmat=mvinv)
+        L = LinearOperator((source_product.source.dim, source_product.range.dim), matvec=mv)
+        Linv = LinearOperator((source_product.range.dim, source_product.source.dim), matvec=mvinv)
         lambda_min = eigsh(L, sigma=0, which="LM", return_eigenvectors=False, k=1, OPinv=Linv)[0]
 
     testfail = failure_tolerance / min(A.source.dim, A.range.dim)
@@ -101,7 +101,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
     This is an implementation of Algorithm 4.4 in [HMT11]_.
 
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
-    `Q` whose vectors form an orthonomal basis for the range of `A`.
+    `Q` whose vectors form an approximate orthonomal basis for the range of `A`.
 
     Parameters
     ----------
