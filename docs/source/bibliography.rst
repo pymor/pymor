@@ -33,6 +33,10 @@ Bibliography
             Equations, Proceedings of the 11th World Congress on Computational
             Mechanics, 2014.
 
+.. [BS18] A. Buhr, K. Smetana, 
+          Randomized Local Model Order Reduction. 
+          SIAM Journal on Scientific Computing, 40(4), A2120–A2151, 2018.
+
 .. [CLVV06] Y. Chahlaoui, D. Lemonnier, A. Vandendorpe, P. Van
             Dooren,
             Second-order balanced truncation,
@@ -58,6 +62,12 @@ Bibliography
 .. [HO08]  B. Haasdonk, M. Ohlberger, Reduced basis method for finite volume
            approximations of parametrized evolution equations,
            M2AN 42(2), 277-302, 2008.
+
+.. [HMT11] N. Halko, P. G. Martinsson and J. A. Tropp,
+           Finding structure with randomness: probabilistic
+           algorithms for constructing approximate matrix
+           decompositions, 
+           SIAM Review, 53(2), 217–288, 2011.
 
 .. [HLR18] C. Himpe, T. Leibner, S. Rave,
            Hierarchical Approximate Proper Orthogonal Decomposition,
