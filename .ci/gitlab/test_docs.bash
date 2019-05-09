@@ -19,8 +19,7 @@ ${SUDO} pip install -U pip
 ${SUDO} pip uninstall -y -r requirements.txt
 ${SUDO} pip uninstall -y -r requirements-travis.txt
 ${SUDO} pip uninstall -y -r requirements-optional.txt || echo "Some optional modules failed to uninstall"
-${SUDO} pip install -r requirements-rtd.txt
 
-${SUDO} python setup.py install --force
+${SUDO} pip install .[docs]
 
 sphinx-build -T -b readthedocs -d _build/doctrees-readthedocs -D language=en . _build/html
