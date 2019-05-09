@@ -5,7 +5,7 @@ ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
 
-.PHONY: README.html pylint test
+.PHONY: README.html pylint test docs
 
 all:
 	./dependencies.py
@@ -50,6 +50,5 @@ full-test:
 	@echo
 	py.test --flakes --pep8 --cov=pymor --cov-report=html --cov-report=xml src/pymortests
 
-doc:
+docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
-
