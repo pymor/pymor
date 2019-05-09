@@ -14,12 +14,16 @@ cd "${PYMOR_ROOT}"
 # any failure here should fail the whole test
 set -eux
 ${SUDO} pip install -U pip
+${SUDO} apt update -q && ${SUDO} apt install -qy pandoc
 
-# try to make env similar to what's on RTD
-${SUDO} pip uninstall -y -r requirements.txt
-${SUDO} pip uninstall -y -r requirements-travis.txt
-${SUDO} pip uninstall -y -r requirements-optional.txt || echo "Some optional modules failed to uninstall"
+# we actually need to have most of our deps installed
+# since the docker images contains all of the external PDE solvers
+${SUDO} pip install -r requirements.txt
+${SUDO} pip install -r requirements-travis.txt
+${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
 ${SUDO} pip install .[docs]
+python setup.py build_ext -i
 
-sphinx-build -T -b readthedocs -d _build/doctrees-readthedocs -D language=en . _build/html
+export READTHEDOCS='True'
+make docs
