@@ -90,6 +90,7 @@ def extras():
     return {
         'full': [_ex(f) for f in _candidates(blacklist=[])],
         'travis':  travis_requires,
+        'docs': doc_requires,
     }
 
 toml_tpl = '''
@@ -111,14 +112,6 @@ if __name__ == '__main__':
         req.write('-r requirements.txt\n')
         for module in sorted(set(itertools.chain(tests_require, optional_requirements_file_only,
                                                  install_suggests.keys()))):
-            req.write(module+'\n')
-    with open(os.path.join(os.path.dirname(__file__), 'requirements-rtd.txt'), 'wt') as req:
-        rtd = '''# This file is sourced by readthedocs.org to install missing dependencies.
-# We need a more recent version of Sphinx for being able to provide
-# our own docutils.conf.'''
-        req.write(rtd+'\n')
-        req.write(note+'\n')
-        for module in sorted(doc_requires):
             req.write(module+'\n')
     with open(os.path.join(os.path.dirname(__file__), 'requirements-travis.txt'), 'wt') as req:
         req.write('-r requirements.txt\n')
