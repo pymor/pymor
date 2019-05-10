@@ -2,7 +2,7 @@ jobs:
 - job: 'OSX_CI'
   pool:
     vmImage: macOS-10.13
-  timeoutInMinutes: 20
+  timeoutInMinutes: 30
   strategy:
     maxParallel: 8
     matrix:
@@ -31,12 +31,12 @@ jobs:
   - bash: |
       set -x -e
       conda config --add channels conda-forge
-      conda update --all
-      conda install --only-deps pymor
+      conda update -y --all
+      conda install -y --only-deps pymor
       # these ones are not in the 0.5.1 conda build yet
-      conda install pyevtk gmsh=3.0.6 mpi4py
+      conda install -y pyevtk gmsh=3.0.6 mpi4py
       # these are buildtime, not a runtime,  deps for our conda package
-      conda install cython pytest-cov pytest
+      conda install -y cython pytest-cov pytest
       # install anything which might a new dependency with pip
       pip install -r requirements.txt
       pip install pytest-azurepipelines
