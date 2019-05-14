@@ -825,9 +825,15 @@ class VectorSpaceInterface(ImmutableInterface):
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.id})'
+        
+        
+def _is_complex_dtype(dtype):
+    if isinstance(dtype, np.dtype):
+        dtype = dtype.type
+    return dtype in [np.complex, np.complex64, np.complex128]
 
-
-def _create_random_values(shape, distribution, random_state, **kwargs):
+    
+def _create_random_values(shape, distribution, random_state, dtype=VectorArrayInterface.dtype, **kwargs):
     if distribution not in ('uniform', 'normal'):
         raise NotImplementedError
 
@@ -838,12 +844,20 @@ def _create_random_values(shape, distribution, random_state, **kwargs):
         high = kwargs.get('high', 1.)
         if high <= low:
             raise ValueError
-        return random_state.uniform(low, high, shape)
+        if _is_complex_dtype(dtype):
+            # TODO the branches may not have a comparable EV
+            return random_state.uniform(low, high, shape)+1j*random_state.uniform(low, high, shape)
+        else:
+            return random_state.uniform(low, high, shape)
     elif distribution == 'normal':
         if not kwargs.keys() <= {'loc', 'scale'}:
             raise ValueError
         loc = kwargs.get('loc', 0.)
         scale = kwargs.get('scale', 1.)
-        return random_state.normal(loc, scale, shape)
+        if _is_complex_dtype(dtype):
+            # TODO the branches may not have a comparable EV
+            return random_state.normal(loc, scale, shape)+1j*random_state.normal(loc, scale, shape)
+        else:
+            return random_state.normal(loc, scale, shape)
     else:
         assert False
