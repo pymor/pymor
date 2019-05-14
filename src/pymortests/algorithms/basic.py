@@ -3,22 +3,22 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
-
 import pytest
 import numpy as np
+from hypothesis import given, assume, reproduce_failure, settings, HealthCheck
 
 from pymor.algorithms.basic import almost_equal, project_array, relative_error
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.operators.constructions import induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymortests.fixtures.vectorarray import \
-    (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
-     compatible_vector_array_pair, incompatible_vector_array_pair)
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_ind_pairs, indexed
+from pymortests.strategies import valid_inds, valid_inds_of_same_length
+from pymortests.vectorarray import invalid_ind_pairs, indexed
+import pymortests.strategies as pyst
 
 
+@given(pyst.vector_arrays(count=2))
 def test_almost_equal(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     try:
@@ -68,50 +68,50 @@ def test_almost_equal_product(operator_with_arrays_and_products):
                                 <= atol + rtol * norm(v2[ind2])))
 
 
-def test_almost_equal_self(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
-        for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)):
-            for n in ['sup', 'l1', 'l2']:
-                try:
-                    r = almost_equal(v[ind], v[ind], norm=n)
-                except NotImplementedError as e:
-                    if n == 'l1':
-                        pytest.xfail('l1_norm not implemented')
-                    else:
-                        raise e
-                assert isinstance(r, np.ndarray)
-                assert r.shape == (v.len_ind(ind),)
-                assert np.all(r)
-                if v.len_ind(ind) == 0 or np.max(v[ind].sup_norm() == 0):
-                    continue
+@given(pyst.vector_arrays_with_ind_pairs_same_length(count=1))
+def test_almost_equal_self(v_ind):
+    v, ind = v_ind
+    for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)):
+        for n in ['sup', 'l1', 'l2']:
+            try:
+                r = almost_equal(v[ind], v[ind], norm=n)
+            except NotImplementedError as e:
+                if n == 'l1':
+                    pytest.xfail('l1_norm not implemented')
+                else:
+                    raise e
+            assert isinstance(r, np.ndarray)
+            assert r.shape == (v.len_ind(ind),)
+            assert np.all(r)
+            if v.len_ind(ind) == 0 or np.max(v[ind].sup_norm() == 0):
+                continue
 
+            c = v.copy()
+            c.scal(atol * (1 - 1e-10) / (np.max(getattr(v[ind], n + '_norm')())))
+            assert np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=n))
+
+            if atol > 0:
                 c = v.copy()
-                c.scal(atol * (1 - 1e-10) / (np.max(getattr(v[ind], n + '_norm')())))
-                assert np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=n))
+                c.scal(2. * atol / (np.max(getattr(v[ind], n + '_norm')())))
+                assert not np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=n))
 
-                if atol > 0:
-                    c = v.copy()
-                    c.scal(2. * atol / (np.max(getattr(v[ind], n + '_norm')())))
-                    assert not np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=n))
+            c = v.copy()
+            c.scal(1. + rtol * 0.9)
+            assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
 
+            if rtol > 0:
                 c = v.copy()
-                c.scal(1. + rtol * 0.9)
-                assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
+                c.scal(2. + rtol * 1.1)
+                assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
 
-                if rtol > 0:
-                    c = v.copy()
-                    c.scal(2. + rtol * 1.1)
-                    assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
+            c = v.copy()
+            c.scal(1. + atol * 0.9 / np.max(getattr(v[ind], n + '_norm')()))
+            assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
 
+            if atol > 0 or rtol > 0:
                 c = v.copy()
-                c.scal(1. + atol * 0.9 / np.max(getattr(v[ind], n + '_norm')()))
-                assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
-
-                if atol > 0 or rtol > 0:
-                    c = v.copy()
-                    c.scal(1 + rtol * 1.1 + atol * 1.1 / np.max(getattr(v[ind], n + '_norm')()))
-                    assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
+                c.scal(1 + rtol * 1.1 + atol * 1.1 / np.max(getattr(v[ind], n + '_norm')()))
+                assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
 
 
 def test_almost_equal_self_product(operator_with_arrays_and_products):
@@ -167,6 +167,7 @@ def test_almost_equal_self_product(operator_with_arrays_and_products):
                 assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, product=product))
 
 
+@given(pyst.vector_arrays(count=2, compatible=False))
 def test_almost_equal_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
@@ -176,16 +177,19 @@ def test_almost_equal_incompatible(incompatible_vector_array_pair):
                 almost_equal(c1[ind1], c2[ind2], norm=n)
 
 
+@given(pyst.vector_arrays(count=2))
 def test_almost_equal_wrong_ind(compatible_vector_array_pair):
+    def _check(ind, v):
+        return ind is None and len(v) == 1 or isinstance(ind, Number) or hasattr(ind, '__len__') and len(ind) == 1
+
     v1, v2 = compatible_vector_array_pair
     for ind1, ind2 in invalid_ind_pairs(v1, v2):
         for n in ['sup', 'l1', 'l2']:
-            if (ind1 is None and len(v1) == 1 or isinstance(ind1, Number) or hasattr(ind1, '__len__') and len(ind1) == 1 or  # NOQA
-                ind2 is None and len(v2) == 1 or isinstance(ind2, Number) or hasattr(ind2, '__len__') and len(ind2) == 1):   # NOQA
+            if _check(ind1, v1) or _check(ind2, v2):
                 continue
             c1, c2 = v1.copy(), v2.copy()
             with pytest.raises(Exception):
-                almost_equal(c1[ind], c2[ind], norm=n)
+                almost_equal(c1[ind1], c2[ind2], norm=n)
 
 
 def test_project_array():
