@@ -13,7 +13,7 @@ from pymor.operators.interfaces import OperatorInterface
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
 def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
-                 failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False):
+                 failure_tolerance=1e-15, num_testvecs=20, lambda_min=None):
     r"""Adaptive randomized range approximation of `A`.
 
     This is an implementation of Algorithm 1 in [BS18]_.
@@ -61,8 +61,6 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     B = A.range.empty()
 
     R = A.source.random(num_testvecs, distribution='normal')
-    if iscomplex:
-        R += 1j*A.source.random(num_testvecs, distribution='normal')
 
     if source_product is None:
         lambda_min = 1
@@ -84,8 +82,6 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     while(maxnorm > testlimit):
         basis_length = len(B)
         v = A.source.random(distribution='normal')
-        if iscomplex:
-            v += 1j*A.source.random(distribution='normal')
         B.append(A.apply(v))
         gram_schmidt(B, range_product, atol=0, rtol=0, offset=basis_length, copy=False)
         M -= B.lincomb(B.inner(M, range_product).T)
@@ -95,7 +91,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 
 
 @defaults('q', 'l')
-def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
+def rrf(A, source_product=None, range_product=None, q=2, l=8):
     """Randomized range approximation of `A`.
 
     This is an implementation of Algorithm 4.4 in [HMT11]_.
@@ -129,8 +125,6 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
     assert isinstance(A, OperatorInterface)
 
     R = A.source.random(l, distribution='normal')
-    if iscomplex:
-        R += 1j*A.source.random(l, distribution='normal')
     Q = A.apply(R)
     gram_schmidt(Q, range_product, atol=0, rtol=0, copy=False)
 
