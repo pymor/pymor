@@ -581,3 +581,6 @@ class NumpyVectorArrayView(NumpyVectorArray):
 
     def __repr__(self):
         return f'NumpyVectorArrayView({self.to_numpy()}, {self.space})'
+
+    def __str__(self):
+        return self.to_numpy().__str__()
