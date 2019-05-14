@@ -552,7 +552,7 @@ class ListVectorArrayView(ListVectorArray):
         super().axpy(alpha, x)
 
     def __str__(self):
-        return f'ListVectorArrayView of {len(self._list)} {str(self.vector_type)}s of dimension {self.dim}'
+        return f'ListVectorArrayView of {len(self._list)} of space {str(self.base.space)}'
 
 
 class ListVectorArrayNumpyView:
