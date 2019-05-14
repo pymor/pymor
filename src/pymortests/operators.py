@@ -16,7 +16,7 @@ from pymortests.algorithms.stuff import MonomOperator
 from pymortests.fixtures.operator import (operator, operator_with_arrays, operator_with_arrays_and_products,
                                           picklable_operator)
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
-from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_inds
+from pymortests.strategies import valid_inds, valid_inds_of_same_length
 from pymor.core.config import is_windows_platform
 
 def test_selection_op():
