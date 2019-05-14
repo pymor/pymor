@@ -276,16 +276,16 @@ class NumpyVectorArray(VectorArrayInterface):
             assert other == 0
             return self.copy()
         assert self.dim == other.dim
+        space = other.space if self.space.subset(other.space) else self.space
         return NumpyVectorArray(self._array[:self._len]
                                 + (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
-                                self.space)
+                                space)
 
     def __iadd__(self, other):
         assert self.dim == other.dim
         if self._refcount[0] > 1:
             self._deep_copy()
-        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
-        common_dtype = np.promote_types(self._array.dtype, other_dtype)
+        common_dtype = self.space.type_promote(other).dtype
         if self._array.dtype != common_dtype:
             self._array = self._array.astype(common_dtype)
         self._array[:self._len] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
@@ -295,16 +295,16 @@ class NumpyVectorArray(VectorArrayInterface):
 
     def __sub__(self, other):
         assert self.dim == other.dim
+        space = self.space.type_promote(other)
         return NumpyVectorArray(self._array[:self._len]
                                 - (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
-                                self.space)
+                                space)
 
     def __isub__(self, other):
         assert self.dim == other.dim
         if self._refcount[0] > 1:
             self._deep_copy()
-        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
-        common_dtype = np.promote_types(self._array.dtype, other_dtype)
+        common_dtype = self.space.type_promote(other).dtype
         if self._array.dtype != common_dtype:
             self._array = self._array.astype(common_dtype)
         self._array[:self._len] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
@@ -313,15 +313,17 @@ class NumpyVectorArray(VectorArrayInterface):
     def __mul__(self, other):
         assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
-        return NumpyVectorArray(self._array[:self._len] * other, self.space)
+        space = self.space.type_promote(other)
+        return NumpyVectorArray(self._array[:self._len] * other, space)
+
+    __rmul__ = __mul__
 
     def __imul__(self, other):
         assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         if self._refcount[0] > 1:
             self._deep_copy()
-        other_dtype = other.dtype if isinstance(other, np.ndarray) else type(other)
-        common_dtype = np.promote_types(self._array.dtype, other_dtype)
+        common_dtype = space = self.space.type_promote(other).dtype
         if self._array.dtype != common_dtype:
             self._array = self._array.astype(common_dtype)
         self._array[:self._len] *= other

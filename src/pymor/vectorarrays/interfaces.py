@@ -823,6 +823,25 @@ class VectorSpaceInterface(ImmutableInterface):
     def __contains__(self, other):
         return self == getattr(other, 'space', None)
 
+    def subset(self, other):
+        """Return true if self \subseteq other"""
+        assert isinstance(other, VectorSpaceInterface)
+        if other is None:
+            return False
+        return self.dim <= other.dim and np.promote_types(self.dtype, other.dtype) == other.dtype
+
+    def type_promote(self, other):
+        """Given a `Number`, `VectorSpaceInterface` or `numpy.ndarray` return myself with a promoted dtype"""
+        try:
+            other_dtype = other.dtype
+        except AttributeError:
+            if isinstance(other, VectorArrayInterface):
+                other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+            else:
+                other_dtype = type(other)
+        dtype = np.promote_types(self.dtype, other_dtype)
+        return self.with_(dtype=dtype, id_=self.id)
+
     def __hash__(self):
         return hash(self.id)
 

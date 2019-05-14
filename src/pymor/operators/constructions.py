@@ -544,9 +544,9 @@ class VectorArrayOperator(OperatorBase):
         self._array = array.copy()
         if adjoint:
             self.source = array.space
-            self.range = NumpyVectorSpace(len(array), space_id)
+            self.range = NumpyVectorSpace(len(array), space_id, dtype=array.space.dtype)
         else:
-            self.source = NumpyVectorSpace(len(array), space_id)
+            self.source = NumpyVectorSpace(len(array), space_id, dtype=array.space.dtype)
             self.range = array.space
         self.adjoint = adjoint
         self.space_id = space_id
