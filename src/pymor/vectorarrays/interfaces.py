@@ -856,7 +856,7 @@ def _is_complex_dtype(dtype):
 
 
 def _create_random_values(shape, distribution, random_state, dtype=VectorSpaceInterface.dtype, **kwargs):
-    if distribution not in ('uniform', 'normal') or _is_complex_dtype(dtype):
+    if distribution not in ('uniform', 'normal'):
         raise NotImplementedError
 
     if distribution == 'uniform':
@@ -866,12 +866,20 @@ def _create_random_values(shape, distribution, random_state, dtype=VectorSpaceIn
         high = kwargs.get('high', 1.)
         if high <= low:
             raise ValueError
-        return random_state.uniform(low, high, shape)
+        if _is_complex_dtype(dtype):
+            # TODO the branches may not have a comparable EV
+            return random_state.uniform(low, high, shape)+1j*random_state.uniform(low, high, shape)
+        else:
+            return random_state.uniform(low, high, shape)
     elif distribution == 'normal':
         if not kwargs.keys() <= {'loc', 'scale'}:
             raise ValueError
         loc = kwargs.get('loc', 0.)
         scale = kwargs.get('scale', 1.)
-        return random_state.normal(loc, scale, shape)
+        if _is_complex_dtype(dtype):
+            # TODO the branches may not have a comparable EV
+            return random_state.normal(loc, scale, shape)+1j*random_state.normal(loc, scale, shape)
+        else:
+            return random_state.normal(loc, scale, shape)
     else:
         assert False
