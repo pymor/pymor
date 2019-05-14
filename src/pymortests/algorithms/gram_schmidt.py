@@ -3,15 +3,17 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+from hypothesis import given, settings, assume, reproduce_failure
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.fixtures.vectorarray import vector_array, vector_array_without_reserve
+import pymortests.strategies as pyst
 
 
+@given(pyst.vector_arrays(count=1))
 def test_gram_schmidt(vector_array):
-    U = vector_array
+    U = vector_array[0]
 
     V = U.copy()
     onb = gram_schmidt(U, copy=True)
@@ -24,8 +26,10 @@ def test_gram_schmidt(vector_array):
     assert np.all(almost_equal(onb, U))
 
 
+@given(pyst.vector_arrays(count=1))
+@settings(deadline=None)
 def test_gram_schmidt_with_R(vector_array):
-    U = vector_array
+    U = vector_array[0]
 
     V = U.copy()
     onb, R = gram_schmidt(U, return_R=True, copy=True)
@@ -70,19 +74,23 @@ def test_gram_schmidt_with_product_and_R(operator_with_arrays_and_products):
     assert np.all(almost_equal(onb, U))
 
 
+@given(pyst.vector_arrays(count=1))
+@settings(deadline=None)
 def test_gram_schmidt_biorth(vector_array):
-    U = vector_array
-    if U.dim < 2:
-        return
+    U = vector_array[0]
+    assume(U.dim >= 2)
     l = len(U) // 2
     l = min((l, U.dim - 1))
-    if l < 1:
-        return
+    assume(l>=1)
     U1 = U[:l].copy()
     U2 = U[l:2 * l].copy()
 
     V1 = U1.copy()
     V2 = U2.copy()
+    from pprint import pprint
+    pprint(U1.to_numpy())
+    pprint(U2.to_numpy())
+
     A1, A2 = gram_schmidt_biorth(U1, U2, copy=True)
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
