@@ -8,8 +8,6 @@ from pymor.core.config import config
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymortests.fixtures.vectorarray import vector_array_from_empty_reserve
-
 if config.HAVE_FENICS:
     import dolfin as df
     from pymor.bindings.fenics import FenicsVectorSpace
@@ -49,6 +47,20 @@ hy_reserves = hyst.integers(min_value=0, max_value=3)
 hy_dtypes = hyst.sampled_from([np.float64, np.complex128])
 
 
+def _vector_array_from_empty_reserve(v, reserve):
+    if reserve == 0:
+        return v
+    if reserve == 1:
+        r = 0
+    elif reserve == 2:
+        r = len(v) + 10
+    elif reserve == 3:
+        r = int(len(v) / 2)
+    c = v.empty(reserve=r)
+    c.append(v)
+    return c
+
+
 @hyst.composite
 def hy_dims(draw, count, compatible):
     dims = hyst.integers(min_value=0, max_value=34)
@@ -82,7 +94,7 @@ def numpy_vector_array(draw, count=1, dtype=None, length=None, compatible=True):
     lngs = length or hyst.tuples(*[hy_lengths for _ in range(count)])
     data = hyst.tuples(*[np_arrays(l, d, dtype=dtype) for d, l in zip(dim, draw(lngs))])
     vec = [NumpyVectorSpace.from_numpy(d) for d in draw(data)]
-    return [vector_array_from_empty_reserve(v, draw(hy_reserves)) for v in vec]
+    return [_vector_array_from_empty_reserve(v, draw(hy_reserves)) for v in vec]
 
 
 @hyst.composite
@@ -92,7 +104,7 @@ def numpy_list_vector_array(draw, count=1, dtype=None, length=None, compatible=T
     lngs = length or hyst.tuples(*[hy_lengths for _ in range(count)])
     data = hyst.tuples(*[np_arrays(l, d, dtype=dtype) for d, l in zip(dim, draw(lngs))])
     vec = [NumpyListVectorSpace.from_numpy(d) for d in draw(data)]
-    return [vector_array_from_empty_reserve(v, draw(hy_reserves)) for v in vec]
+    return [_vector_array_from_empty_reserve(v, draw(hy_reserves)) for v in vec]
 
 
 @hyst.composite
@@ -101,8 +113,7 @@ def block_vector_array(draw, count=1, dtype=None, length=None, compatible=True):
         assert count == 2
         dim_tuples = draw(hy_block_space_dims_incompat)
     else:
-        assert count == 1
-        dim_tuples = (draw(hy_block_space_dims),)
+        dim_tuples = draw(equal_tuples(hy_block_space_dims, count=count))
     lngs = length or hyst.tuples(*[hy_lengths for _ in range(count)])
     ret = []
     dtype = dtype or draw(hy_dtypes)
