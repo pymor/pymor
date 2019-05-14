@@ -9,7 +9,6 @@ import pytest
 import numpy as np
 from hypothesis import given, assume, reproduce_failure, settings, HealthCheck
 from hypothesis import strategies as hyst
-from hypothesis.extra import numpy as hynp
 
 from pymor.algorithms.basic import almost_equal
 from pymor.vectorarrays.interface import VectorSpace
