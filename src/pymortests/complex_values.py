@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -31,7 +32,13 @@ def test_complex():
     assert not np.iscomplexobj(Aop.apply_inverse(Cva).to_numpy())
     assert np.iscomplexobj((Aop * 1j).apply_inverse(Cva).to_numpy())
     assert np.iscomplexobj((Aop * 1 + Bop * 1j).assemble().apply_inverse(Cva).to_numpy())
-    assert np.iscomplexobj(Aop.apply_inverse(Cva * 1j).to_numpy())
+    # apply_inverse does not involve type promotion
+    with pytest.raises(AssertionError):
+        Aop.apply_inverse(Cva * 1j)
+    # TODO this currently raises because it uses the first operator
+    #  of the lincomb to call apply_inverse on. The first op however has
+    #  a dtype=float source, so the check if `Cva * 1j` is in source fails
+    # assert np.iscomplexobj((Aop*1j).apply_inverse(Cva * 1j).to_numpy())
 
     # append
     for rsrv in (0, 10):
