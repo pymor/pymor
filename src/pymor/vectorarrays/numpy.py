@@ -53,11 +53,15 @@ class NumpyVectorArray(VectorArrayInterface):
 
     @property
     def real(self):
-        return NumpyVectorArray(self.to_numpy().real.copy(), self.space)
+        real_data = self.to_numpy().real.copy()
+        real_space = self.space.with_(dtype=real_data.dtype, id_=self.space.id)
+        return NumpyVectorArray(real_data, real_space)
 
     @property
     def imag(self):
-        return NumpyVectorArray(self.to_numpy().imag.copy(), self.space)
+        imag_data = self.to_numpy().imag.copy()
+        imag_space = self.space.with_(dtype=imag_data.dtype, id_=self.space.id)
+        return NumpyVectorArray(imag_data, imag_space)
 
     def conj(self):
         if np.isrealobj(self.to_numpy()):
