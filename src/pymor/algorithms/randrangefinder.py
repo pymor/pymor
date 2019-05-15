@@ -45,8 +45,6 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     lambda_min
         The smallest eigenvalue of source_product.
         If `None`, the smallest eigenvalue is computed using scipy.
-    iscomplex
-        If `True`, the random vectors are chosen complex.
 
     Returns
     -------
@@ -111,8 +109,6 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8):
         The number of power iterations.
     l
         The block size of the normalized power iterations.
-    iscomplex
-        If `True`, the random vectors are chosen complex.
 
     Returns
     -------
