@@ -821,7 +821,10 @@ class VectorSpaceInterface(ImmutableInterface):
         return not (self == other)
 
     def __contains__(self, other):
-        return self == getattr(other, 'space', None)
+        otherspace = getattr(other, 'space', None)
+        if otherspace:
+            return otherspace.subset(self)
+        return False
 
     def subset(self, other):
         """Return true if self \subseteq other"""
