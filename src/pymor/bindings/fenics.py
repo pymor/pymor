@@ -176,8 +176,9 @@ if config.HAVE_FENICS:
                 self.matrix.transpmult(v.impl, u.impl)  # there are no complex numbers in FEniCS
             return U
 
-        def apply_inverse(self, V, mu=None, least_squares=False):
-            assert V in self.range
+        def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+            if not disable_range_check:
+                assert V in self.range
             if least_squares:
                 raise NotImplementedError
             R = self.source.zeros(len(V))

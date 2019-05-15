@@ -99,7 +99,8 @@ def solver_options(lgmres_tol=1e-5,
 
 @defaults('check_finite', 'default_solver', 'default_least_squares_solver')
 def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
-                  default_solver='generic_lgmres', default_least_squares_solver='generic_least_squares_lsmr'):
+                  default_solver='generic_lgmres', default_least_squares_solver='generic_least_squares_lsmr',
+                  disable_range_check=False):
     """Solve linear equation system.
 
     Applies the inverse of `op` to the vectors in `rhs` using a generic iterative solver.

@@ -134,10 +134,11 @@ class MPIOperator(OperatorBase):
         else:
             return mpi.call(mpi.method_call, self.obj_id, 'apply_adjoint', V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
-        assert V in self.range
+        if not disable_range_check:
+            assert V in self.range
         mu = self.parse_parameter(mu)
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
                                                V.obj_id, mu=mu, least_squares=least_squares))

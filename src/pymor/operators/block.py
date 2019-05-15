@@ -206,8 +206,9 @@ class BlockDiagonalOperator(BlockOperator):
         U_blocks = [self._blocks[i, i].apply_adjoint(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        assert V in self.range
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        if not disable_range_check:
+            assert V in self.range
         U_blocks = [self._blocks[i, i].apply_inverse(V.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
@@ -291,8 +292,9 @@ class SecondOrderModelOperator(BlockOperator):
                     V.block(0) - self.E.apply_adjoint(V.block(1), mu=mu)]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        assert V in self.range
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        if not disable_range_check:
+            assert V in self.range
         U_blocks = [-self.K.apply_inverse(self.E.apply(V.block(0), mu=mu) + V.block(1), mu=mu,
                                           least_squares=least_squares),
                     V.block(0)]
@@ -391,8 +393,9 @@ class ShiftedSecondOrderModelOperator(BlockOperator):
                     - self.E.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate()]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        assert V in self.range
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        if not disable_range_check:
+            assert V in self.range
         aMmbEV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.E.apply(V.block(0), mu=mu) * self.b
         KV0 = self.K.apply(V.block(0), mu=mu)
         a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)

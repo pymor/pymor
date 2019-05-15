@@ -155,7 +155,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
         """Apply the inverse operator.
 
         Parameters

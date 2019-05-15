@@ -140,8 +140,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def as_source_array(self, mu=None):
         return self.assemble(mu).as_source_array()
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        return self.assemble(mu).apply_inverse(V, least_squares=least_squares)
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        return self.assemble(mu).apply_inverse(V, least_squares=least_squares, disable_range_check=disable_range_check)
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save the matrix of the operator to a file.
@@ -244,7 +244,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
     @defaults('check_finite', 'default_sparse_solver_backend')
     def apply_inverse(self, V, mu=None, least_squares=False, check_finite=True,
-                      default_sparse_solver_backend='scipy'):
+                      default_sparse_solver_backend='scipy', disable_range_check=False):
         """Apply the inverse operator.
 
         Parameters
@@ -279,7 +279,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         InversionError
             The operator could not be inverted.
         """
-        assert V in self.range
+        if not disable_range_check:
+            assert V in self.range
 
         if V.dim == 0:
             if self.source.dim == 0 or least_squares:

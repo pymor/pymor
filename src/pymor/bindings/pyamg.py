@@ -153,7 +153,8 @@ if config.HAVE_PYAMG:
                                 'maxiter': sa_maxiter}}
 
     @defaults('check_finite', 'default_solver')
-    def apply_inverse(op, V, options=None, least_squares=False, check_finite=True, default_solver='pyamg_solve'):
+    def apply_inverse(op, V, options=None, least_squares=False, check_finite=True, default_solver='pyamg_solve',
+                      disable_range_check=False):
         """Solve linear equation system.
 
         Applies the inverse of `op` to the vectors in `rhs` using PyAMG.
@@ -177,8 +178,8 @@ if config.HAVE_PYAMG:
         -------
         |VectorArray| of the solution vectors.
         """
-
-        assert V in op.range
+        if not disable_range_check:
+            assert V in op.range
 
         if least_squares:
             raise NotImplementedError

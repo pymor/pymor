@@ -96,14 +96,15 @@ class OperatorBase(OperatorInterface):
         else:
             raise LinAlgError('Operator not linear.')
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse(V, least_squares=least_squares)
+            return assembled_op.apply_inverse(V, least_squares=least_squares, disable_range_check=disable_range_check)
         elif self.linear:
             options = self.solver_options.get('inverse') if self.solver_options else None
-            return genericsolvers.apply_inverse(assembled_op, V, options=options, least_squares=least_squares)
+            return genericsolvers.apply_inverse(assembled_op, V, options=options, least_squares=least_squares,
+                                                disable_range_check=disable_range_check)
         else:
             from pymor.algorithms.newton import newton
             from pymor.core.exceptions import NewtonError

@@ -156,7 +156,9 @@ class LincombOperator(OperatorBase):
         else:
             return jac
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        if not disable_range_check:
+            assert V in self.range
         if len(self.operators) == 1:
             if self.coefficients[0] == 0.:
                 if least_squares:
@@ -164,7 +166,7 @@ class LincombOperator(OperatorBase):
                 else:
                     raise InversionError
             else:
-                U = self.operators[0].apply_inverse(V, mu=mu, least_squares=least_squares)
+                U = self.operators[0].apply_inverse(V, mu=mu, least_squares=least_squares, disable_range_check=True)
                 U *= (1. / self.coefficients[0])
                 return U
         else:
@@ -408,8 +410,9 @@ class IdentityOperator(OperatorBase):
         assert V in self.range
         return V.copy()
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        assert V in self.range
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        if not disable_range_check:
+            assert V in self.range
         return V.copy()
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
@@ -462,7 +465,7 @@ class ConstantOperator(OperatorBase):
         restricted_value = NumpyVectorSpace.make_array(self._value.dofs(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
         if not least_squares:
             raise InversionError('ConstantOperator is not invertible.')
         return self.source.zeros(len(V))
@@ -502,8 +505,9 @@ class ZeroOperator(OperatorBase):
         assert V in self.range
         return self.source.zeros(len(V))
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        assert V in self.range
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        if not disable_range_check:
+            assert V in self.range
         if not least_squares:
             raise InversionError
         return self.source.zeros(len(V))
@@ -704,8 +708,9 @@ class ProxyOperator(OperatorBase):
     def apply_adjoint(self, V, mu=None):
         return self.operator.apply_adjoint(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        return self.operator.apply_inverse(V, mu=mu, least_squares=least_squares)
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        return self.operator.apply_inverse(V, mu=mu, least_squares=least_squares,
+                                           disable_range_check=disable_range_check)
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         return self.operator.apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
@@ -743,8 +748,9 @@ class FixedParameterOperator(ProxyOperator):
     def apply_adjoint(self, V, mu=None):
         return self.operator.apply_adjoint(V, mu=self.mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        return self.operator.apply_inverse(V, mu=self.mu, least_squares=least_squares)
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        return self.operator.apply_inverse(V, mu=self.mu, least_squares=least_squares,
+                                           disable_range_check=disable_range_check)
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         return self.operator.apply_inverse_adjoint(U, mu=self.mu, least_squares=least_squares)
@@ -807,8 +813,9 @@ class InverseOperator(OperatorBase):
         assert V in self.range
         return self.operator.apply_inverse_adjoint(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        assert V in self.range
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        if not disable_range_check:
+            assert V in self.range
         return self.operator.apply(V, mu=mu)
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
@@ -850,8 +857,9 @@ class InverseAdjointOperator(OperatorBase):
         assert V in self.range
         return self.operator.apply_inverse(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        assert V in self.range
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        if not disable_range_check:
+            assert V in self.range
         return self.operator.apply_adjoint(V, mu=mu)
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
@@ -944,14 +952,15 @@ class AdjointOperator(OperatorBase):
             U = self.range_product.apply(U)
         return U
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
         if not self.with_apply_inverse:
             return super().apply_inverse(V, mu=mu, least_squares=least_squares)
-
-        assert V in self.range
+        if not disable_range_check:
+            assert V in self.range
         if self.source_product:
             V = self.source_product(V)
-        U = self.operator.apply_inverse_adjoint(V, mu=mu, least_squares=least_squares)
+        U = self.operator.apply_inverse_adjoint(V, mu=mu, least_squares=least_squares,
+                                                disable_range_check=disable_range_check)
         if self.range_product:
             U = self.range_product.apply_inverse(U)
         return U

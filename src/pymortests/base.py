@@ -96,7 +96,7 @@ class MonomOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         return MonomOperator(self.order - 1, self.derivative)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
         return self.range.make_array(1. / V.to_numpy())
 
 

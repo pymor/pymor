@@ -60,8 +60,9 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         else:
             return self.source.from_numpy(U)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        assert V in self.range
+    def apply_inverse(self, V, mu=None, least_squares=False, disable_range_check=False):
+        if not disable_range_check:
+            assert V in self.range
         assert not self.functional and not self.vector
 
         if V.dim == 0:

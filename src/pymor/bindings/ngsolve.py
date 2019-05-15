@@ -131,8 +131,9 @@ if config.HAVE_NGSOLVE:
             return U
 
         @defaults('default_solver')
-        def apply_inverse(self, V, mu=None, least_squares=False, default_solver=''):
-            assert V in self.range
+        def apply_inverse(self, V, mu=None, least_squares=False, default_solver='', disable_range_check=False):
+            if not disable_range_check:
+                assert V in self.range
             if least_squares:
                 raise NotImplementedError
             solver = self.solver_options.get('inverse', default_solver) if self.solver_options else default_solver
