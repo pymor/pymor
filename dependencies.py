@@ -23,6 +23,7 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
                     'pyamg': 'algebraic multigrid solvers',
                     'pyevtk>=1.1': 'writing vtk output',
+                    'pygmsh': 'python frontend for gmsh',
                     _PYTEST: 'testing framework required to execute unit tests',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'pillow': 'image library used for bitmap data functions'}
