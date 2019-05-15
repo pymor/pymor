@@ -13,6 +13,7 @@ mpi4py
 pillow
 pyamg
 pyevtk>=1.1
+pygmsh
 pyopengl
 pytest-cov
 pytest>=3.3
