@@ -7,7 +7,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.interfaces import classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, dtype_promotion
 
 
 class BlockVectorArray(VectorArrayInterface):
@@ -178,7 +178,7 @@ class BlockVectorSpace(VectorSpaceInterface):
         subspaces = tuple(subspaces)
         assert all([isinstance(subspace, VectorSpaceInterface) for subspace in subspaces])
         self.subspaces = subspaces
-        self.dtype = reduce(np.promote_types, (s.dtype for s in subspaces))
+        self.dtype = dtype_promotion(subspaces)
 
     def __eq__(self, other):
         return (type(other) is BlockVectorSpace

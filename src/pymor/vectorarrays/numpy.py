@@ -9,7 +9,8 @@ from scipy.sparse import issparse
 
 from pymor.core.interfaces import classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values, \
+    dtype_promotion
 
 
 class NumpyVectorArray(VectorArrayInterface):
@@ -323,7 +324,7 @@ class NumpyVectorArray(VectorArrayInterface):
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         if self._refcount[0] > 1:
             self._deep_copy()
-        common_dtype = space = self.space.type_promote(other).dtype
+        common_dtype = dtype_promotion((self.space, other))
         if self._array.dtype != common_dtype:
             self._array = self._array.astype(common_dtype)
         self._array[:self._len] *= other

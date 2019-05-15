@@ -1,13 +1,13 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
+import functools
 from numbers import Number
-
 import numpy as np
 
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
+from pymor.parameters.interfaces import ParameterFunctionalInterface
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.random import get_random_state
 
@@ -830,23 +830,37 @@ class VectorSpaceInterface(ImmutableInterface):
             return False
         return self.dim <= other.dim and np.promote_types(self.dtype, other.dtype) == other.dtype
 
-    def type_promote(self, other):
-        """Given a `Number`, `VectorSpaceInterface` or `numpy.ndarray` return myself with a promoted dtype"""
-        try:
-            other_dtype = other.dtype
-        except AttributeError:
-            if isinstance(other, VectorArrayInterface):
-                other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
-            else:
-                other_dtype = type(other)
-        dtype = np.promote_types(self.dtype, other_dtype)
-        return self.with_(dtype=dtype, id_=self.id)
+    def type_promote(self, *others):
+        """Get the common dtype for `self` and `others` and and return a copy of myself with a it"""
+        common_dtype = dtype_promotion((self, *others))
+        return self.with_(dtype=common_dtype, id_=self.id)
 
     def __hash__(self):
         return hash(self.id)
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.id}, dtype={self.dtype})'
+
+
+def dtype_promotion(objects):
+    """Given a an iterable `others` of related types return the appropiately promoted dtype"""
+    def _dtype(obj):
+        try:
+            return obj.dtype
+        except AttributeError:
+            if isinstance(obj, VectorArrayInterface):
+                return obj.base._array.dtype if obj.is_view else obj._array.dtype
+            if isinstance(obj, Number):
+                return np.dtype(type(obj))
+            if isinstance(obj, ParameterFunctionalInterface):
+                # TODO this should be defined in the ParameterFunctionalInterface
+                return VectorSpaceInterface.dtype
+            try:
+                # recurse into iterables
+                return dtype_promotion(iter(obj))
+            except TypeError:
+                raise RuntimeError(f'Cannot get dtype from unsupported object {obj}.')
+    return functools.reduce(np.promote_types, (_dtype(o) for o in objects))
 
 
 def _is_complex_dtype(dtype):
