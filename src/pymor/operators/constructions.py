@@ -17,7 +17,7 @@ from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.base import Parametric
 from pymor.parameters.interfaces import ParameterFunctionalInterface
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, dtype_promotion
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -47,8 +47,13 @@ class LincombOperator(OperatorBase):
         assert all(isinstance(c, (ParameterFunctionalInterface, Number)) for c in coefficients)
         assert all(op.source == operators[0].source for op in operators[1:])
         assert all(op.range == operators[0].range for op in operators[1:])
-        self.source = operators[0].source
-        self.range = operators[0].range
+        coefficient_dtype = dtype_promotion(coefficients)
+        source_dtype = dtype_promotion((o.source for o in operators))
+        range_dtype = dtype_promotion((o.range for o in operators))
+        self.source = operators[0].source.with_(dtype=np.promote_types(coefficient_dtype, source_dtype),
+                                                id_=operators[0].source.id)
+        self.range = operators[0].range.with_(dtype=np.promote_types(coefficient_dtype, range_dtype),
+                                              id_=operators[0].range.id)
         self.operators = tuple(operators)
         self.linear = all(op.linear for op in operators)
         self.coefficients = tuple(coefficients)

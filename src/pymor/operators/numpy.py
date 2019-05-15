@@ -193,8 +193,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             matrix.setflags(write=False)  # make numpy arrays read-only
         except AttributeError:
             pass
-        self.source = NumpyVectorSpace(matrix.shape[1], source_id)
-        self.range = NumpyVectorSpace(matrix.shape[0], range_id)
+        self.source = NumpyVectorSpace(matrix.shape[1], source_id, dtype=matrix.dtype)
+        self.range = NumpyVectorSpace(matrix.shape[0], range_id, dtype=matrix.dtype)
         self.solver_options = solver_options
         self.name = name
         self.matrix = matrix
