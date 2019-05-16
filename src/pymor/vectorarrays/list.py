@@ -1,7 +1,7 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
+from functools import reduce
 from numbers import Number
 
 import numpy as np
@@ -18,6 +18,8 @@ class VectorInterface(BasicInterface):
     vector `list` managed by |ListVectorArray|. All interface methods
     have a direct counterpart in the |VectorArray| interface.
     """
+
+    dtype = np.float_
 
     @abstractmethod
     def copy(self, deep=False):
@@ -153,6 +155,7 @@ class NumpyVector(CopyOnWriteVector):
 
     def __init__(self, array):
         self._array = array
+        self.dtype = array.dtype
 
     @classmethod
     def from_instance(cls, instance):
@@ -230,6 +233,8 @@ class ListVectorArray(VectorArrayInterface):
     def __init__(self, vectors, space):
         self._list = vectors
         self.space = space
+        if len(vectors): # else defaults to base class
+            self.dtype = reduce(np.promote_types, (v.dtype for v in vectors))
 
     def to_numpy(self, ensure_copy=False):
         if len(self._list) > 0:
@@ -404,17 +409,17 @@ class ListVectorSpace(VectorSpaceInterface):
     dim = None
 
     @abstractmethod
-    def zero_vector(self):
+    def zero_vector(self, dtype=VectorArrayInterface.dtype):
         pass
 
-    def ones_vector(self):
-        return self.full_vector(1.)
+    def ones_vector(self, dtype=VectorArrayInterface.dtype):
+        return self.full_vector(1., dtype=dtype)
 
-    def full_vector(self, value):
-        return self.vector_from_numpy(np.full(self.dim, value))
+    def full_vector(self, value, dtype=VectorArrayInterface.dtype):
+        return self.vector_from_numpy(np.full(self.dim, value, dtype=dtype))
 
-    def random_vector(self, distribution, random_state, **kwargs):
-        values = _create_random_values(self.dim, distribution, random_state, **kwargs)
+    def random_vector(self, distribution, random_state, dtype=VectorArrayInterface.dtype, **kwargs):
+        values = _create_random_values(self.dim, distribution, random_state, dtype=dtype, **kwargs)
         return self.vector_from_numpy(values)
 
     @abstractmethod
@@ -432,23 +437,25 @@ class ListVectorSpace(VectorSpaceInterface):
     def space_from_dim(cls, dim, id_):
         raise NotImplementedError
 
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
         assert count >= 0 and reserve >= 0
-        return ListVectorArray([self.zero_vector() for _ in range(count)], self)
+        return ListVectorArray([self.zero_vector(dtype) for _ in range(count)], self)
 
-    def ones(self, count=1, reserve=0):
+    def ones(self, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
         assert count >= 0 and reserve >= 0
-        return ListVectorArray([self.ones_vector() for _ in range(count)], self)
+        return ListVectorArray([self.ones_vector(dtype) for _ in range(count)], self)
 
-    def full(self, value, count=1, reserve=0):
+    def full(self, value, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
         assert count >= 0 and reserve >= 0
-        return ListVectorArray([self.full_vector(value) for _ in range(count)], self)
+        return ListVectorArray([self.full_vector(value, dtype) for _ in range(count)], self)
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0,
+               dtype=VectorArrayInterface.dtype, **kwargs):
         assert count >= 0 and reserve >= 0
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
-        return ListVectorArray([self.random_vector(distribution=distribution, random_state=random_state, **kwargs)
+        return ListVectorArray([self.random_vector(distribution=distribution, random_state=random_state,
+                                                   dtype=dtype, **kwargs)
                                 for _ in range(count)], self)
 
     @classinstancemethod
@@ -487,14 +494,14 @@ class NumpyListVectorSpace(ListVectorSpace):
     def space_from_dim(cls, dim, id_):
         return cls(dim, id_)
 
-    def zero_vector(self):
-        return NumpyVector(np.zeros(self.dim))
+    def zero_vector(self, dtype=VectorArrayInterface.dtype):
+        return NumpyVector(np.zeros(self.dim, dtype=dtype))
 
-    def ones_vector(self):
-        return NumpyVector(np.ones(self.dim))
+    def ones_vector(self, dtype=VectorArrayInterface.dtype):
+        return NumpyVector(np.ones(self.dim, dtype=dtype))
 
-    def full_vector(self, value):
-        return NumpyVector(np.full(self.dim, value))
+    def full_vector(self, value, dtype=VectorArrayInterface.dtype):
+        return NumpyVector(np.full(self.dim, value, dtype=dtype))
 
     def make_vector(self, obj):
         obj = np.asarray(obj)

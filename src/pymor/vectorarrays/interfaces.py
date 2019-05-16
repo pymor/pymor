@@ -58,9 +58,12 @@ class VectorArrayInterface(BasicInterface):
         `True` if the array is a view obtained by indexing another array.
     space
         The |VectorSpace| the array belongs to.
+    dtype
+        Field data type of the contained vectors.
     """
 
     is_view = False
+    dtype = np.float_
 
     def zeros(self, count=1, reserve=0):
         """Create a |VectorArray| of null vectors of the same |VectorSpace|.
@@ -78,7 +81,7 @@ class VectorArrayInterface(BasicInterface):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to zero.
         """
-        return self.space.zeros(count, reserve=reserve)
+        return self.space.zeros(count, reserve=reserve, dtype=self.dtype)
 
     def ones(self, count=1, reserve=0):
         """Create a |VectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
@@ -96,7 +99,7 @@ class VectorArrayInterface(BasicInterface):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to one.
         """
-        return self.space.full(1., count, reserve)
+        return self.space.full(1., count, reserve, dtype=self.dtype)
 
     def full(self, value, count=1, reserve=0):
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
@@ -116,7 +119,7 @@ class VectorArrayInterface(BasicInterface):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to `value`.
         """
-        return self.space.full(value, count, reserve=reserve)
+        return self.space.full(value, count, reserve=reserve, dtype=self.dtype)
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
@@ -158,7 +161,7 @@ class VectorArrayInterface(BasicInterface):
         reserve
             Hint for the backend to which length the array will grow.
         """
-        return self.space.random(count, distribution, random_state, seed, **kwargs)
+        return self.space.random(count, distribution, random_state, seed, dtype=self.dtype, **kwargs)
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray| of the same |VectorSpace|.
@@ -174,7 +177,7 @@ class VectorArrayInterface(BasicInterface):
         -------
         An empty |VectorArray|.
         """
-        return self.space.zeros(0, reserve=reserve)
+        return self.space.zeros(0, reserve=reserve, dtype=self.dtype)
 
     @property
     def dim(self):
@@ -548,7 +551,7 @@ class VectorArrayInterface(BasicInterface):
 
     def imag(self):
         """Imaginary part."""
-        return self.zeros(len(self))
+        return self.zeros(len(self), dtype=self.dtype)
 
     def conj(self):
         """Complex conjugation."""
@@ -676,7 +679,7 @@ class VectorSpaceInterface(ImmutableInterface):
         pass
 
     @abstractmethod
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
         """Create a |VectorArray| of null vectors
 
         Parameters
@@ -692,7 +695,7 @@ class VectorSpaceInterface(ImmutableInterface):
         """
         pass
 
-    def ones(self, count=1, reserve=0):
+    def ones(self, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
         """Create a |VectorArray| of vectors of with all DOFs set to one.
 
         This is a shorthand for `self.full(1., count, reserve)`.
@@ -708,9 +711,9 @@ class VectorSpaceInterface(ImmutableInterface):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to one.
         """
-        return self.full(1., count, reserve)
+        return self.full(1., count, reserve, dtype=dtype)
 
-    def full(self, value, count=1, reserve=0):
+    def full(self, value, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
 
         Parameters
@@ -726,9 +729,10 @@ class VectorSpaceInterface(ImmutableInterface):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to `value`.
         """
-        return self.from_numpy(np.full((count, self.dim), value))
+        return self.from_numpy(np.full((count, self.dim), value, dtype=dtype))
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0,
+               dtype=VectorArrayInterface.dtype, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
 
         Supported random distributions::
@@ -770,7 +774,7 @@ class VectorSpaceInterface(ImmutableInterface):
         values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
         return self.from_numpy(values)
 
-    def empty(self, reserve=0):
+    def empty(self, reserve=0, dtype=VectorArrayInterface.dtype):
         """Create an empty |VectorArray|
 
         This is a shorthand for `self.zeros(0, reserve)`.
@@ -784,7 +788,7 @@ class VectorSpaceInterface(ImmutableInterface):
         -------
         An empty |VectorArray|.
         """
-        return self.zeros(0, reserve=reserve)
+        return self.zeros(0, reserve=reserve, dtype=dtype)
 
     def from_numpy(self, data, ensure_copy=False):
         """Create a |VectorArray| from a |NumPy array|

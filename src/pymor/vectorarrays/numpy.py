@@ -30,6 +30,7 @@ class NumpyVectorArray(VectorArrayInterface):
     """
 
     def __init__(self, array, space):
+        self.dtype = array.dtype
         self._array = array
         self.space = space
         self._refcount = [1]
@@ -351,29 +352,30 @@ class NumpyVectorSpace(VectorSpaceInterface):
     def __hash__(self):
         return hash(self.dim) + hash(self.id)
 
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
         assert count >= 0
         assert reserve >= 0
         va = NumpyVectorArray(np.empty((0, 0)), self)
-        va._array = np.zeros((max(count, reserve), self.dim))
+        va._array = np.zeros((max(count, reserve), self.dim), dtype=dtype)
         va._len = count
         return va
 
-    def full(self, value, count=1, reserve=0):
+    def full(self, value, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
         assert count >= 0
         assert reserve >= 0
-        va = NumpyVectorArray(np.empty((0, 0)), self)
-        va._array = np.full((max(count, reserve), self.dim), value)
+        va = NumpyVectorArray(np.empty((0, 0), dtype=dtype), self)
+        va._array = np.full((max(count, reserve), self.dim), value, dtype=dtype)
         va._len = count
         return va
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0,
+               dtype=VectorArrayInterface.dtype, **kwargs):
         assert count >= 0
         assert reserve >= 0
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
-        va = self.zeros(count, reserve)
-        va._array[:count] = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
+        va = self.zeros(count, reserve, dtype=dtype)
+        va._array[:count] = _create_random_values((count, self.dim), distribution, random_state, dtype=dtype, **kwargs)
         return va
 
     @classinstancemethod

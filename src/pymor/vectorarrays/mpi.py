@@ -12,6 +12,7 @@ transform single rank |VectorArrays| into MPI distributed
 The implementations are based on the event loop provided
 by :mod:`pymor.tools.mpi`.
 """
+from functools import reduce
 
 import numpy as np
 
@@ -47,6 +48,7 @@ class MPIVectorArray(VectorArrayInterface):
     def __init__(self, obj_id, space):
         self.obj_id = obj_id
         self.space = space
+        self.dtype = mpi.get_object(obj_id).dtype
 
     def __len__(self):
         return mpi.call(mpi.method_call, self.obj_id, '__len__')
@@ -140,10 +142,10 @@ class MPIVectorSpace(VectorSpaceInterface):
                         self.local_spaces, obj_id)
         return self.array_type(obj_id, self)
 
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
         return self.array_type(
             mpi.call(_MPIVectorSpace_zeros,
-                     self.local_spaces, count=count, reserve=reserve),
+                     self.local_spaces, count=count, reserve=reserve, dtype=dtype),
             self
         )
 
@@ -186,9 +188,9 @@ def _get_local_space(local_spaces):
     return local_space
 
 
-def _MPIVectorSpace_zeros(local_spaces=(None,), count=0, reserve=0):
+def _MPIVectorSpace_zeros(local_spaces=(None,), count=0, reserve=0, dtype=VectorArrayInterface.dtype):
     local_space = _get_local_space(local_spaces)
-    obj = local_space.zeros(count=count, reserve=reserve)
+    obj = local_space.zeros(count=count, reserve=reserve, dtype=dtype)
     return mpi.manage_object(obj)
 
 

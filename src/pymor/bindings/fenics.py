@@ -12,7 +12,7 @@ if config.HAVE_FENICS:
     from pymor.core.defaults import defaults
     from pymor.core.interfaces import BasicInterface
     from pymor.operators.basic import OperatorBase
-    from pymor.vectorarrays.interfaces import _create_random_values
+    from pymor.vectorarrays.interfaces import _create_random_values, VectorArrayInterface
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
     class FenicsVector(CopyOnWriteVector):
@@ -131,11 +131,13 @@ if config.HAVE_FENICS:
         def __hash__(self):
             return id(self.V) + hash(self.id)
 
-        def zero_vector(self):
+        def zero_vector(self, dtype=VectorArrayInterface.dtype):
             impl = df.Function(self.V).vector()
-            return FenicsVector(impl)
+            ret = FenicsVector(impl)
+            assert ret.dtype == dtype
+            return ret
 
-        def full_vector(self, value):
+        def full_vector(self, value, dtype=VectorArrayInterface.dtype):
             impl = df.Function(self.V).vector()
             impl += value
             return FenicsVector(impl)

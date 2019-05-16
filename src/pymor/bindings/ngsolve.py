@@ -20,6 +20,9 @@ if config.HAVE_NGSOLVE:
 
         def __init__(self, impl):
             self.impl = impl
+            # this would be correct, but numpy cannot handle that type
+            # self.dtype = impl.vec.data.s
+            self.dtype = np.float_
 
         @classmethod
         def from_instance(cls, instance):
@@ -91,9 +94,12 @@ if config.HAVE_NGSOLVE:
         def space_from_vector_obj(cls, vec, id_):
             return cls(vec.space, id_)
 
-        def zero_vector(self):
+        def zero_vector(self, dtype=None):
             impl = ngs.GridFunction(self.V)
-            return NGSolveVector(impl)
+            ret = NGSolveVector(impl)
+            if dtype:
+                assert ret.dtype == dtype
+            return ret
 
         def make_vector(self, obj):
             return NGSolveVector(obj)

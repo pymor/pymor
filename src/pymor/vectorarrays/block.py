@@ -24,6 +24,7 @@ class BlockVectorArray(VectorArrayInterface):
     def __init__(self, blocks, space):
         self._blocks = tuple(blocks)
         self.space = space
+        self.dtype = reduce(np.promote_types, (v.dtype for v in self._blocks))
         assert self._blocks_are_valid()
 
     def to_numpy(self, ensure_copy=False):
@@ -192,8 +193,9 @@ class BlockVectorSpace(VectorSpaceInterface):
     def dim(self):
         return sum(subspace.dim for subspace in self.subspaces)
 
-    def zeros(self, count=1, reserve=0):
-        return BlockVectorArray([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
+    def zeros(self, count=1, reserve=0, dtype=VectorArrayInterface.dtype):
+        return BlockVectorArray([subspace.zeros(count=count, reserve=reserve, dtype=dtype)
+                                 for subspace in self.subspaces], self)
 
     @classinstancemethod
     def make_array(cls, obj):
