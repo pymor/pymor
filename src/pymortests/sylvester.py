@@ -57,11 +57,12 @@ def test_sylv_schur_V(n, r, m):
     Ar = np.random.randn(r, r) - r * np.eye(r)
     Br = np.random.randn(r, m)
 
-    Aop = NumpyMatrixOperator(A)
-    Bop = NumpyMatrixOperator(B)
+    # setting the source_dtype makes this Op behave as a complex Op, despite the matrix data being real
+    Aop = NumpyMatrixOperator(A, source_dtype=np.complex_)
+    Bop = NumpyMatrixOperator(B, source_dtype=np.complex_)
 
-    Arop = NumpyMatrixOperator(Ar)
-    Brop = NumpyMatrixOperator(Br)
+    Arop = NumpyMatrixOperator(Ar, source_dtype=np.complex_)
+    Brop = NumpyMatrixOperator(Br, source_dtype=np.complex_)
 
     Vva = solve_sylv_schur(Aop, Arop, B=Bop, Br=Brop)
 
@@ -88,13 +89,13 @@ def test_sylv_schur_V_E(n, r, m):
     Er += r * np.eye(r)
     Br = np.random.randn(r, m)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E)
-    Bop = NumpyMatrixOperator(B)
+    Aop = NumpyMatrixOperator(A, source_dtype=np.complex_)
+    Eop = NumpyMatrixOperator(E, source_dtype=np.complex_)
+    Bop = NumpyMatrixOperator(B, source_dtype=np.complex_)
 
-    Arop = NumpyMatrixOperator(Ar)
-    Erop = NumpyMatrixOperator(Er)
-    Brop = NumpyMatrixOperator(Br)
+    Arop = NumpyMatrixOperator(Ar, source_dtype=np.complex_)
+    Erop = NumpyMatrixOperator(Er, source_dtype=np.complex_)
+    Brop = NumpyMatrixOperator(Br, source_dtype=np.complex_)
 
     Vva = solve_sylv_schur(Aop, Arop, E=Eop, Er=Erop, B=Bop, Br=Brop)
 
@@ -118,11 +119,11 @@ def test_sylv_schur_W(n, r, p):
     Ar = np.random.randn(r, r) - r * np.eye(r)
     Cr = np.random.randn(p, r)
 
-    Aop = NumpyMatrixOperator(A)
-    Cop = NumpyMatrixOperator(C)
+    Aop = NumpyMatrixOperator(A, source_dtype=np.complex_)
+    Cop = NumpyMatrixOperator(C, source_dtype=np.complex_)
 
-    Arop = NumpyMatrixOperator(Ar)
-    Crop = NumpyMatrixOperator(Cr)
+    Arop = NumpyMatrixOperator(Ar, source_dtype=np.complex_)
+    Crop = NumpyMatrixOperator(Cr, source_dtype=np.complex_)
 
     Wva = solve_sylv_schur(Aop, Arop, C=Cop, Cr=Crop)
 
@@ -149,13 +150,13 @@ def test_sylv_schur_W_E(n, r, p):
     Er += r * np.eye(r)
     Cr = np.random.randn(p, r)
 
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E)
-    Cop = NumpyMatrixOperator(C)
+    Aop = NumpyMatrixOperator(A, source_dtype=np.complex_)
+    Eop = NumpyMatrixOperator(E, source_dtype=np.complex_)
+    Cop = NumpyMatrixOperator(C, source_dtype=np.complex_)
 
-    Arop = NumpyMatrixOperator(Ar)
-    Erop = NumpyMatrixOperator(Er)
-    Crop = NumpyMatrixOperator(Cr)
+    Arop = NumpyMatrixOperator(Ar, source_dtype=np.complex_)
+    Erop = NumpyMatrixOperator(Er, source_dtype=np.complex_)
+    Crop = NumpyMatrixOperator(Cr, source_dtype=np.complex_)
 
     Wva = solve_sylv_schur(Aop, Arop, E=Eop, Er=Erop, C=Cop, Cr=Crop)
 

@@ -183,9 +183,16 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         The |solver_options| for the operator.
     name
         Name of the operator.
+    source_dtype
+        Optional, defaults to matrix.dtype.
+        Setting this enables you to use a real data matrix in an Operator that needs to act on complex input.
+    range_dtype
+        Optional, defaults to source_dtype.
+        Setting this enables you to use a real data matrix in an Operators that needs produce complex output.
     """
 
-    def __init__(self, matrix, source_id=None, range_id=None, solver_options=None, name=None):
+    def __init__(self, matrix, source_id=None, range_id=None, solver_options=None, name=None, source_dtype=None,
+                 range_dtype=None):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
@@ -193,8 +200,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             matrix.setflags(write=False)  # make numpy arrays read-only
         except AttributeError:
             pass
-        self.source = NumpyVectorSpace(matrix.shape[1], source_id, dtype=matrix.dtype)
-        self.range = NumpyVectorSpace(matrix.shape[0], range_id, dtype=matrix.dtype)
+        self.source = NumpyVectorSpace(matrix.shape[1], source_id, dtype=source_dtype or matrix.dtype)
+        self.range = NumpyVectorSpace(matrix.shape[0], range_id, dtype=range_dtype or self.source.dtype)
         self.solver_options = solver_options
         self.name = name
         self.matrix = matrix
@@ -220,7 +227,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             adjoint_matrix = self.matrix.T.conj()
         return self.with_(matrix=adjoint_matrix, source_id=self.range_id, range_id=self.source_id,
-                          solver_options=options, name=self.name + '_adjoint')
+                          solver_options=options, name=self.name + '_adjoint', source_dtype=self.source.dtype,
+                          range_dtype=self.range.dtype)
 
     def _assemble(self, mu=None):
         pass
