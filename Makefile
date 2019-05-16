@@ -5,7 +5,7 @@ ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
 
-.PHONY: README.html pylint test docs
+.PHONY: docker README.html pylint test docs
 
 all:
 	./dependencies.py
@@ -25,14 +25,13 @@ flake8:
 test:
 	python setup.py test
 
-dockerrun:
-	docker run --rm -it -v $(shell pwd):/src -e PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) pymor/testing:$(PYMOR_DOCKER_TAG) bash
+docker:
+	docker run --rm -it -v $(shell pwd):/src -e PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) pymor/testing:$(PYMOR_DOCKER_TAG) $(CMD)
 
-dockertest:
-	PYMOR_DOCKER_TAG=$(PYMOR_DOCKER_TAG) PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) ./.ci/travis/run_travis_builders.py
-
-dockertestfull:
-	./.ci/travis/run_travis_builders.py
+dockerrun: CMD="bash"
+dockerrun: docker
+dockertest: CMD="./.ci/gitlab/script.bash"
+dockertest: docker
 
 fasttest:
 	PYMOR_PYTEST_MARKER="not slow" python setup.py test
