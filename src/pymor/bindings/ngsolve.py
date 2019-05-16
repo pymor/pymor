@@ -20,6 +20,9 @@ if config.HAVE_NGSOLVE:
 
         def __init__(self, impl):
             self.impl = impl
+            # this would be correct, but numpy cannot handle that type
+            # self.dtype = impl.vec.data.s
+            self.dtype = np.float_
 
         @classmethod
         def from_instance(cls, instance):

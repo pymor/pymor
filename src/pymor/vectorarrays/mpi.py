@@ -47,6 +47,7 @@ class MPIVectorArray(VectorArrayInterface):
     def __init__(self, obj_id, space):
         self.obj_id = obj_id
         self.space = space
+        self.dtype = mpi.get_object(obj_id).dtype
 
     def __len__(self):
         return mpi.call(mpi.method_call, self.obj_id, '__len__')

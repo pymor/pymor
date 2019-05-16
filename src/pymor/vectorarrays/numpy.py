@@ -30,6 +30,7 @@ class NumpyVectorArray(VectorArrayInterface):
     """
 
     def __init__(self, array, space):
+        self.dtype = array.dtype
         self._array = array
         self.space = space
         self._refcount = [1]

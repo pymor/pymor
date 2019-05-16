@@ -24,6 +24,7 @@ class BlockVectorArray(VectorArrayInterface):
     def __init__(self, blocks, space):
         self._blocks = tuple(blocks)
         self.space = space
+        self.dtype = reduce(np.promote_types, (v.dtype for v in self._blocks))
         assert self._blocks_are_valid()
 
     def to_numpy(self, ensure_copy=False):

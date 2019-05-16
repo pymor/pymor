@@ -1,7 +1,7 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
+from functools import reduce
 from numbers import Number
 
 import numpy as np
@@ -18,6 +18,8 @@ class VectorInterface(BasicInterface):
     vector `list` managed by |ListVectorArray|. All interface methods
     have a direct counterpart in the |VectorArray| interface.
     """
+
+    dtype = np.float_
 
     @abstractmethod
     def copy(self, deep=False):
@@ -153,6 +155,7 @@ class NumpyVector(CopyOnWriteVector):
 
     def __init__(self, array):
         self._array = array
+        self.dtype = array.dtype
 
     @classmethod
     def from_instance(cls, instance):
@@ -230,6 +233,8 @@ class ListVectorArray(VectorArrayInterface):
     def __init__(self, vectors, space):
         self._list = vectors
         self.space = space
+        if len(vectors): # else defaults to base class
+            self.dtype = reduce(np.promote_types, (v.dtype for v in vectors))
 
     def to_numpy(self, ensure_copy=False):
         if len(self._list) > 0:

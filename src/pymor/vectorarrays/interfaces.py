@@ -58,9 +58,12 @@ class VectorArrayInterface(BasicInterface):
         `True` if the array is a view obtained by indexing another array.
     space
         The |VectorSpace| the array belongs to.
+    dtype
+        Field data type of the contained vectors.
     """
 
     is_view = False
+    dtype = np.float_
 
     def zeros(self, count=1, reserve=0):
         """Create a |VectorArray| of null vectors of the same |VectorSpace|.
