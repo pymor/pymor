@@ -119,7 +119,7 @@ def block_vector_array(draw, count=1, dtype=None, length=None, compatible=True):
     dtype = dtype or draw(hy_dtypes)
     for dims, l in zip(dim_tuples, draw(lngs)):
         data = draw(np_arrays(l, sum(dims), dtype=dtype))
-        V = BlockVectorSpace([NumpyVectorSpace(dim, dtype=data.dtype) for dim in dims]).from_numpy(
+        V = BlockVectorSpace([NumpyVectorSpace(dim) for dim in dims]).from_numpy(
             NumpyVectorSpace.from_numpy(data).to_numpy()
         )
         ret.append(V)
@@ -140,7 +140,7 @@ if config.HAVE_FENICS:
         dtype = np.float64
         lngs = draw(length or hyst.tuples(*[hy_lengths for _ in range(count)]))
         V = draw(fenics_spaces())
-        Us = [FenicsVectorSpace(V).zeros(l) for l in lngs]
+        Us = [FenicsVectorSpace(V).zeros(l, dtype=dtype) for l in lngs]
         dims = [U.dim for U in Us]
         for i in range(count):
             # dtype is float here since the petsc vector is not setup for complex
@@ -159,7 +159,7 @@ if config.HAVE_NGSOLVE:
         dim = draw(hy_dims(count, compatible))
         lngs = draw(length or hyst.tuples(*[hy_lengths for _ in range(count)]))
         spaces = [create_ngsolve_space(d) for d in dim]
-        Us = [s.zeros(l) for s,l in zip(spaces, lngs)]
+        Us = [s.zeros(l, dtype=dtype) for s,l in zip(spaces, lngs)]
         for i in range(count):
             for v, a in zip(Us[i]._list, draw(np_arrays(lngs[i], dim[i], dtype=dtype))):
                 v.to_numpy()[:] = a
@@ -173,7 +173,7 @@ if config.HAVE_DEALII:
         dim = draw(hy_dims(count, compatible))
         dtype = dtype or draw(hy_dtypes)
         lngs = draw(length or hyst.tuples(*[hy_lengths for _ in range(count)]))
-        Us = [DealIIVectorSpace(d).zeros(l) for d, l in zip(dim, lngs)]
+        Us = [DealIIVectorSpace(d).zeros(l, dtype=dtype) for d, l in zip(dim, lngs)]
         for i in range(count):
             for v, a in zip(Us[i]._list, draw(np_arrays(lngs[i], dim[i], dtype=dtype))):
                 v.impl[:] = a
