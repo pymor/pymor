@@ -11,7 +11,7 @@ services:
   pymor_notebooks:
     build:
         context: ../
-        dockerfile: Dockerfile
+        dockerfile: .binder/Dockerfile
         args:
             PYVER: 3.7
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
