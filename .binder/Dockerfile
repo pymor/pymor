@@ -1,4 +1,3 @@
-# repo2docker only considers a Dockerfile in the toplevel of the repo
 # the docker container for binder needs pymor installed entirely inside
 # the container, local dev needs it in path from mounted src
 # we trick docker into fulfilling both roles via a conditional ONBUILD
