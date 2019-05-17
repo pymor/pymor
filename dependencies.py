@@ -28,8 +28,8 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
-travis_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'python-coveralls', 'pytest-travis-fold',
-                   'readme_renderer[md]', 'rstcheck', 'codecov', 'twine']
+ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'python-coveralls'
+               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
                 'pytest-instafail': 'pytest_instafail',
@@ -90,7 +90,7 @@ def extras():
 
     return {
         'full': [_ex(f) for f in _candidates(blacklist=[])],
-        'travis':  travis_requires,
+        'ci':  ci_requires,
         'docs': doc_requires,
     }
 
@@ -114,10 +114,10 @@ if __name__ == '__main__':
         for module in sorted(set(itertools.chain(tests_require, optional_requirements_file_only,
                                                  install_suggests.keys()))):
             req.write(module+'\n')
-    with open(os.path.join(os.path.dirname(__file__), 'requirements-travis.txt'), 'wt') as req:
+    with open(os.path.join(os.path.dirname(__file__), 'requirements-ci.txt'), 'wt') as req:
         req.write('-r requirements.txt\n')
         req.write(note+'\n')
-        for module in sorted(travis_requires):
+        for module in sorted(ci_requires):
             req.write(module+'\n')
     with open(os.path.join(os.path.dirname(__file__), 'pyproject.toml'), 'wt') as toml:
         toml.write(note)

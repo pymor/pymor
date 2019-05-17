@@ -20,7 +20,7 @@ ${SUDO} pip install -U pip
 
 # most of these should be baked into the docker image already
 ${SUDO} pip install -r requirements.txt
-${SUDO} pip install -r requirements-travis.txt
+${SUDO} pip install -r requirements-ci.txt
 ${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
 #allow xdist to work by fixing parametrization order
@@ -31,14 +31,14 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
     PIP_CLONE_URL="git+${CI_PROJECT_URL}@${CI_COMMIT_SHA}"
     ${SUDO} pip uninstall -y -r requirements.txt
-    ${SUDO} pip uninstall -y -r requirements-travis.txt
+    ${SUDO} pip uninstall -y -r requirements-ci.txt
     ${SUDO} pip uninstall -y -r requirements-optional.txt || echo "Some optional modules failed to uninstall"
     ${SUDO} pip install ${PIP_CLONE_URL}
     ${SUDO} pip uninstall -y pymor
     ${SUDO} pip install ${PIP_CLONE_URL}#egg=pymor[full]
     ${SUDO} pip uninstall -y pymor
     ${SUDO} pip install -r requirements.txt
-    ${SUDO} pip install -r requirements-travis.txt
+    ${SUDO} pip install -r requirements-ci.txt
     ${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
@@ -61,4 +61,3 @@ else
     # this runs in pytest in a fake, auto numbered, X Server
     xvfb-run -a py.test -r sxX --junitxml=test_results.xml
 fi
-
