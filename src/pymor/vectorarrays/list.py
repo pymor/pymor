@@ -233,8 +233,7 @@ class ListVectorArray(VectorArrayInterface):
     def __init__(self, vectors, space):
         self._list = vectors
         self.space = space
-        if len(vectors): # else defaults to base class
-            self.dtype = reduce(np.promote_types, (v.dtype for v in vectors))
+        self._set_dtype()
 
     def to_numpy(self, ensure_copy=False):
         if len(self._list) > 0:
@@ -262,6 +261,7 @@ class ListVectorArray(VectorArrayInterface):
             self._list = [thelist[i] for i in remaining]
         else:
             del self._list[ind]
+        self._set_dtype()
 
     def append(self, other, remove_from_other=False):
         assert other.space == self.space
@@ -275,6 +275,7 @@ class ListVectorArray(VectorArrayInterface):
                 del other.base[other.ind]
             else:
                 del other[:]
+        self._set_dtype()
 
     def copy(self, deep=False):
         return ListVectorArray([v.copy(deep=deep) for v in self._list], self.space)
@@ -352,7 +353,7 @@ class ListVectorArray(VectorArrayInterface):
 
         RL = []
         for coeffs in coefficients:
-            R = self.space.zero_vector()
+            R = self.space.zero_vector(dtype=self.dtype)
             for v, c in zip(self._list, coeffs):
                 R.axpy(c, v)
             RL.append(R)
@@ -398,6 +399,10 @@ class ListVectorArray(VectorArrayInterface):
             MI[k], MV[k] = v.amax()
 
         return MI, MV
+
+    def _set_dtype(self):
+        if len(self._list): # else defaults to base class
+            self.dtype = reduce(np.promote_types, (v.dtype for v in self._list))
 
     def __str__(self):
         return f'ListVectorArray of {len(self._list)} of space {self.space}'
@@ -527,6 +532,7 @@ class ListVectorArrayView(ListVectorArray):
             self._list = [_list[i] for i in ind]
         else:
             self._list = [base._list[ind]]
+        self._set_dtype()
 
     @property
     def space(self):

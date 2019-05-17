@@ -163,6 +163,7 @@ class NumpyVectorArray(VectorArrayInterface):
             dtype = np.promote_types(self._array.dtype, alpha_dtype)
             dtype = np.promote_types(dtype, B.dtype)
             self._array = self._array.astype(dtype)
+            self.dtype = dtype
 
         if type(alpha) is np.ndarray:
             alpha = alpha[:, np.newaxis]
@@ -552,6 +553,8 @@ class NumpyVectorArrayView(NumpyVectorArray):
         assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         return NumpyVectorArray(self.base._array[self.ind] * other, self.space)
+
+    __rmul__ = __mul__
 
     def __imul__(self, other):
         assert isinstance(other, Number) \
