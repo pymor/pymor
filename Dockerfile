@@ -10,7 +10,7 @@ FROM pymor/testing:$PYVER as image_binder
 ONBUILD ADD . /pymor
 
 FROM pymor/testing:$PYVER as image_dev
-ONBUILD RUN echo "dev image uses mounted pymor"
+ONBUILD RUN echo "dev image uses mounted pymor" && mkdir /pymor
 ONBUILD ENV PYTHONPATH=/pymor/src:${PYTHONPATH}
 
 # select "base" image according to build arg
@@ -32,7 +32,7 @@ ADD requirements*.txt /tmp/
 RUN /bin/bash -c "pip install jupyterlab && \
     pip install -r /tmp/requirements-optional.txt && \
     [[ -e /pymor/setup.py ]] && pip install /pymor || echo 'no install needed'"
-
+ADD docker/dev-entrypoint.bash /usr/local/bin/
 USER ${NB_USER}
 
 ENV JUPYTER_TOKEN=${PYMOR_JUPYTER_TOKEN} \

@@ -24,7 +24,6 @@ services:
     volumes:
         - ./..:/pymor
     restart: "no"
+    entrypoint: /usr/local/bin/dev-entrypoint.bash
     command: >
-        bash -c "cd /pymor && python setup.py build_ext -i && \
-            cd notebooks && jupyter notebook --ip 0.0.0.0 --no-browser"
-
+        bash -c "cd notebooks && jupyter notebook --ip 0.0.0.0 --no-browser"
