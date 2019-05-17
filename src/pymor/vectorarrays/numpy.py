@@ -449,6 +449,7 @@ class NumpyVectorArrayView(NumpyVectorArray):
         self.base = array
         self.ind = array.normalize_ind(ind)
         self.space = array.space
+        self.dtype = array.dtype
 
     def to_numpy(self, ensure_copy=False):
         result = self.base.to_numpy()[self.ind]
