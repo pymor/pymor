@@ -449,7 +449,13 @@ def test_axpy(compatible_vector_array_pair):
                         aa = a[:, np.newaxis]
                     else:
                         aa = a
-                    x[ind1] += indexed(v2.to_numpy(), ind2) * aa
+                    indxd = indexed(v2.to_numpy(), ind2) * aa
+                    # on the numpy level there cannot be a downcast from cplx to float
+                    if np.promote_types(indxd.dtype, x.dtype) != x.dtype:
+                        with pytest.raises(TypeError):
+                            x[ind1] += indxd
+                    else:
+                        x[ind1] += indxd
                 assert np.allclose(c1.to_numpy(), x)
             except NotImplementedError:
                 pass
@@ -503,7 +509,13 @@ def test_axpy_one_x(compatible_vector_array_pair):
                         aa = a[:, np.newaxis]
                     else:
                         aa = a
-                    x[ind1] += indexed(v2.to_numpy(), ind2) * aa
+                    indxd = indexed(v2.to_numpy(), ind2) * aa
+                    # on the numpy level there cannot be a downcast from cplx to float
+                    if np.promote_types(indxd.dtype, x.dtype) != x.dtype:
+                        with pytest.raises(TypeError):
+                            x[ind1] += indxd
+                    else:
+                        x[ind1] += indxd
                 assert np.allclose(c1.to_numpy(), x)
             except NotImplementedError:
                 pass
