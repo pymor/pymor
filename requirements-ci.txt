@@ -4,6 +4,6 @@ check-manifest
 codecov
 pytest-cov
 pytest-xdist
-python-coverallsreadme_renderer[md]
+readme_renderer[md]
 rstcheck
 twine
