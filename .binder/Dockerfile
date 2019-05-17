@@ -31,7 +31,7 @@ ADD requirements*.txt /tmp/
 RUN /bin/bash -c "pip install jupyterlab && \
     pip install -r /tmp/requirements-optional.txt && \
     [[ -e /pymor/setup.py ]] && pip install /pymor || echo 'no install needed'"
-ADD docker/dev-entrypoint.bash /usr/local/bin/
+ADD .binder/dev-entrypoint.bash /usr/local/bin/
 USER ${NB_USER}
 
 ENV JUPYTER_TOKEN=${PYMOR_JUPYTER_TOKEN} \
