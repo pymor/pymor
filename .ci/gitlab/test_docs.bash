@@ -19,7 +19,7 @@ ${SUDO} apt update -q && ${SUDO} apt install -qy pandoc
 # we actually need to have most of our deps installed
 # since the docker images contains all of the external PDE solvers
 ${SUDO} pip install -r requirements.txt
-${SUDO} pip install -r requirements-travis.txt
+${SUDO} pip install -r requirements-ci.txt
 ${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
 ${SUDO} pip install .[docs]

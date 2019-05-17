@@ -3,9 +3,7 @@
 check-manifest
 codecov
 pytest-cov
-pytest-travis-fold
 pytest-xdist
-python-coveralls
-readme_renderer[md]
+python-coverallsreadme_renderer[md]
 rstcheck
 twine
