@@ -121,7 +121,7 @@ pip {{OS.replace('_', ' ')}}:
 repo2docker:
     extends: .docker-in-docker
     stage: deploy
-    script: repo2docker --no-run --debug .
+    script: repo2docker --user-id 2000 --user-name juno --no-run --debug .
 
 .wheel:
     extends: .docker-in-docker
