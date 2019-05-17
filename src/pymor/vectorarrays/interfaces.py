@@ -834,7 +834,7 @@ class VectorSpaceInterface(ImmutableInterface):
 def _is_complex_dtype(dtype):
     if isinstance(dtype, np.dtype):
         dtype = dtype.type
-    return dtype in [np.complex, np.complex64, np.complex128]
+    return np.issubdtype(dtype, np.complexfloating)
 
     
 def _create_random_values(shape, distribution, random_state, dtype=VectorArrayInterface.dtype, **kwargs):
