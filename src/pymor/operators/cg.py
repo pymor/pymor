@@ -88,7 +88,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         return I.reshape((-1, 1))
 
 
-class BoundaryL2ProductFunctionalP1(NumpyMatrixBasedOperator):
+class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
     """Linear finite element functional representing the inner product with an L2-|Function| on the boundary.
 
     Parameters
@@ -116,7 +116,7 @@ class BoundaryL2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, function, boundary_type=None, dirichlet_clear_dofs=False, boundary_info=None,
                  order=2, name=None):
-        assert grid.reference_element(0) in {line, triangle}
+        assert grid.reference_element(0) in {line, triangle, square}
         assert function.shape_range == ()
         assert not (boundary_type or dirichlet_clear_dofs) or boundary_info
         self.range = CGVectorSpace(grid)
@@ -253,68 +253,6 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         # map local DOFs to global DOFs
         # FIXME This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
-        I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
-
-        if self.dirichlet_clear_dofs and bi.has_dirichlet:
-            DI = bi.dirichlet_boundaries(g.dim)
-            I[DI] = 0
-
-        return I.reshape((-1, 1))
-
-
-class BoundaryL2ProductFunctionalQ1(NumpyMatrixBasedOperator):
-    """Bilinear finite element functional representing the inner product with an L2-|Function| on the boundary.
-
-    Parameters
-    ----------
-    grid
-        |Grid| for which to assemble the functional.
-    function
-        The |Function| with which to take the inner product.
-    boundary_type
-        The type of domain boundary (e.g. 'neumann') on which to assemble the functional.
-        If `None` the functional is assembled over the whole boundary.
-    dirichlet_clear_dofs
-        If `True`, set dirichlet boundary DOFs to zero.
-    boundary_info
-        If `boundary_type` is specified or `dirichlet_clear_dofs` is `True`, the
-        |BoundaryInfo| determining which boundary entity belongs to which physical boundary.
-    order
-        Order of the Gauss quadrature to use for numerical integration.
-    name
-        The name of the functional.
-    """
-
-    sparse = False
-    source = NumpyVectorSpace(1)
-
-    def __init__(self, grid, function, boundary_type=None, dirichlet_clear_dofs=False, boundary_info=None,
-                 order=2, name=None):
-        assert grid.reference_element(0) in {square}
-        assert function.shape_range == ()
-        assert not (boundary_type or dirichlet_clear_dofs) or boundary_info
-        self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.function = function
-        self.boundary_type = boundary_type
-        self.dirichlet_clear_dofs = dirichlet_clear_dofs
-        self.boundary_info = boundary_info
-        self.order = order
-        self.name = name
-        self.build_parameter_type(function)
-
-    def _assemble(self, mu=None):
-        g = self.grid
-        bi = self.boundary_info
-
-        NI = bi.neumann_boundaries(1)
-        F = self.function(g.quadrature_points(1, order=self.order)[NI], mu=mu)
-        q, w = line.quadrature(order=self.order)
-        # remove last dimension of q, as line coordinates are one dimensional
-        q = q[:, 0]
-        SF = np.array([1 - q, q])
-        SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
-        SF_I = g.subentities(1, 2)[NI].ravel()
         I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
 
         if self.dirichlet_clear_dofs and bi.has_dirichlet:

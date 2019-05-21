@@ -18,7 +18,7 @@ from pymor.operators.cg import (DiffusionOperatorP1, DiffusionOperatorQ1,
                                 AdvectionOperatorP1, AdvectionOperatorQ1,
                                 L2ProductP1, L2ProductQ1,
                                 L2ProductFunctionalP1, L2ProductFunctionalQ1,
-                                BoundaryL2ProductFunctionalP1, BoundaryL2ProductFunctionalQ1,
+                                BoundaryL2ProductFunctional,
                                 BoundaryDirichletFunctional, RobinBoundaryOperator, InterpolationOperator)
 from pymor.operators.constructions import LincombOperator
 
@@ -94,13 +94,13 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         AdvectionOperator = AdvectionOperatorQ1
         ReactionOperator  = L2ProductQ1
         L2Functional = L2ProductFunctionalQ1
-        BoundaryL2Functional = BoundaryL2ProductFunctionalQ1
+        BoundaryL2Functional = BoundaryL2ProductFunctional
     else:
         DiffusionOperator = DiffusionOperatorP1
         AdvectionOperator = AdvectionOperatorP1
         ReactionOperator  = L2ProductP1
         L2Functional = L2ProductFunctionalP1
-        BoundaryL2Functional = BoundaryL2ProductFunctionalP1
+        BoundaryL2Functional = BoundaryL2ProductFunctional
 
     Li = [DiffusionOperator(grid, boundary_info, diffusion_constant=0, name='boundary_part')]
     coefficients = [1.]
@@ -140,8 +140,6 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     # robin boundaries
     if p.robin_data is not None:
-        if grid.reference_element is square:
-            raise NotImplementedError
         Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, order=2, name='robin')]
         coefficients.append(1.)
 
