@@ -130,14 +130,33 @@ class StationaryModel(ModelBase):
         self.parameter_space = parameter_space
 
     def __str__(self):
-        return (
-            f'{self.name}\n'
-            f'    class: {self.__class__.__name__}\n'
-            f'    parameter type: {self.parameter_type}\n'
-            f'    {"" if self.linear else "non-"}linear\n'
-            f'    number of equations: {self.solution_space.dim}\n'
-            f'    number of outputs:   {len(self.outputs)}'
+        res = (
+            f'StationaryModel {self.name if self.name != "StationaryModel" else ""}\n'
+            f'    parameter_space: {self.parameter_space}\n'
+            f'    solution_space: {self.solution_space}\n'
         )
+
+        op_str = str(self.operator)
+        if '\n' not in op_str:
+            res += f'    operator: {op_str}\n'
+        else:
+            op_str.replace('\n', '\n    ')
+            res += (
+                f'    operator:\n'
+                f'        {op_str}\n'
+            )
+
+        rhs_str = str(self.rhs)
+        if '\n' not in rhs_str:
+            res += f'    rhs: {rhs_str}\n'
+        else:
+            rhs_str.replace('\n', '\n    ')
+            res += (
+                f'    rhs:\n'
+                f'        {rhs_str}\n'
+            )
+
+        return res
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
