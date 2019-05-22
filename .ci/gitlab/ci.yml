@@ -74,46 +74,36 @@ PIP_ONLY 3.7:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
 
 
-submit Vanilla 3.6:
+.submit:
     extends: .test_base
-    image: pymor/python:3.6
+    environment:
+        name: safe
+    except:
+        - /^github\/PR_.*$/
     stage: deploy
+    script: .ci/gitlab/submit.bash
+submit Vanilla 3.6:
+    extends: .submit
+    image: pymor/python:3.6
     dependencies:
         - Vanilla 3.6
-    environment:
-        name: safe
-    except:
-        - github/PR_.*
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
-    script: .ci/gitlab/submit.bash
 submit Vanilla 3.7:
-    extends: .test_base
+    extends: .submit
     image: pymor/python:3.7
-    stage: deploy
     dependencies:
         - Vanilla 3.7
-    environment:
-        name: safe
-    except:
-        - github/PR_.*
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
-    script: .ci/gitlab/submit.bash
 
 submit numpy 3.6:
-    extends: .test_base
+    extends: .submit
     image: pymor/python:3.6
-    stage: deploy
     dependencies:
         - numpy 3.6
-    environment:
-        name: safe
-    except:
-        - github/PR_.*
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
-    script: .ci/gitlab/submit.bash
 
 # this step makes sure that on older python our install fails with
 # a nice message ala "python too old" instead of "SyntaxError"
