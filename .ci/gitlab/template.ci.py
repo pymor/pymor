@@ -61,35 +61,32 @@ docs:
 {%- endfor %}
 
 {# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
-{%- for py, m in matrix if m == 'Vanilla' %}
-submit {{m}} {{py}}:
+.submit:
     extends: .test_base
-    image: pymor/python:{{py}}
-    stage: deploy
-    dependencies:
-        - {{m}} {{py}}
     environment:
         name: safe
     except:
-        - github/PR_.*
+        - /^github\/PR_.*$/
+    stage: deploy
+    script: .ci/gitlab/submit.bash
+
+{%- for py, m in matrix if m == 'Vanilla' %}
+submit {{m}} {{py}}:
+    extends: .submit
+    image: pymor/python:{{py}}
+    dependencies:
+        - {{m}} {{py}}
     variables:
         PYMOR_PYTEST_MARKER: "{{m}}"
-    script: .ci/gitlab/submit.bash
 {%- endfor %}
 
 submit numpy 3.6:
-    extends: .test_base
+    extends: .submit
     image: pymor/python:3.6
-    stage: deploy
     dependencies:
         - numpy 3.6
-    environment:
-        name: safe
-    except:
-        - github/PR_.*
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
-    script: .ci/gitlab/submit.bash
 
 # this step makes sure that on older python our install fails with
 # a nice message ala "python too old" instead of "SyntaxError"
