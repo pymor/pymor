@@ -170,7 +170,17 @@ pip centos 7:
 repo2docker:
     extends: .docker-in-docker
     stage: deploy
-    script: repo2docker --user-id 2000 --user-name juno --no-run --debug .
+    variables:
+        IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
+        CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
+    script:
+        - repo2docker --user-id 2000 --user-name juno --no-run --debug --image-name ${IMAGE} .
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+        - docker run ${IMAGE} ${CMD}
+        - docker push ${IMAGE}
+        - cd .binder
+        - docker-compose build
+        - docker-compose run pymor_notebooks ${CMD}
 
 .wheel:
     extends: .docker-in-docker
