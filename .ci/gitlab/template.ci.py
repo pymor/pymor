@@ -124,8 +124,9 @@ repo2docker:
     variables:
         IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
         CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
+        USER: juno
     script:
-        - repo2docker --user-id 2000 --user-name juno --no-run --debug --image-name ${IMAGE} .
+        - repo2docker --user-id 2000 --user-name ${USER} --no-run --debug --image-name ${IMAGE} .
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
         - docker run ${IMAGE} ${CMD}
         - docker push ${IMAGE}
