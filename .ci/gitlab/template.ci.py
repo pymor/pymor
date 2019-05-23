@@ -102,7 +102,7 @@ submit numpy 3.6:
         DOCKER_DRIVER: overlay2
     before_script:
         - apk --update add openssh-client rsync git file bash python3
-        - pip3 install jinja2 jupyter-repo2docker
+        - pip3 install jinja2 jupyter-repo2docker docker-compose
         - 'export SHARED_PATH="${CI_PROJECT_DIR}/shared"'
         - mkdir -p ${SHARED_PATH}
     services:
