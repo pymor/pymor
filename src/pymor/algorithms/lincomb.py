@@ -177,7 +177,7 @@ class AssembleLincombRules(RuleTable):
                 coeffs_without_id.append(coeff)
         id_coeff = sum(id_coeffs)
 
-        op = ops_without_id[0]._assemble_lincomb(ops_without_id, self.coefficients, identity_shift=id_coeff,
+        op = ops_without_id[0]._assemble_lincomb(ops_without_id, tuple(coeffs_without_id), identity_shift=id_coeff,
                                                  solver_options=self.solver_options, name=self.name)
 
         if not op:
