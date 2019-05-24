@@ -343,7 +343,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
         common_mat_dtype = reduce(np.promote_types,
                                   (op.matrix.dtype for op in operators if hasattr(op, 'matrix')))
-        common_coef_dtype = reduce(np.promote_types, (type(c) for c in coefficients + (identity_shift,)))
+        common_coef_dtype = reduce(np.promote_types, (type(c) for c in coefficients + [identity_shift]))
         common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
 
         if coefficients[0] == 1:

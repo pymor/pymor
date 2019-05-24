@@ -7,8 +7,10 @@ import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
@@ -84,6 +86,19 @@ def test_identity_lincomb():
     assert almost_equal(ones * 2, idid.apply_adjoint(ones))
     assert almost_equal(ones * 0.5, idid.apply_inverse(ones))
     assert almost_equal(ones * 0.5, idid.apply_inverse_adjoint(ones))
+
+
+def test_identity_numpy_lincomb():
+    n = 2
+    space = NumpyVectorSpace(n)
+    identity = IdentityOperator(space)
+    numpy_operator = NumpyMatrixOperator(np.ones((n, n)))
+    for alpha in [-1, 0, 1]:
+        for beta in [-1, 0, 1]:
+            idop = alpha * identity + beta * numpy_operator
+            mat1 = alpha * np.eye(n) + beta * np.ones((n, n))
+            mat2 = to_matrix(idop.assemble(), format='dense')
+            assert np.array_equal(mat1, mat2)
 
 
 def test_pickle(operator):
