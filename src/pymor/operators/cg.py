@@ -31,8 +31,6 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| determining the Dirichlet boundaries in case
         `dirichlet_clear_dofs` is set to `True`.
-    order
-        Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
     """
@@ -40,7 +38,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, order=2, name=None):
+    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == ()
         assert not dirichlet_clear_dofs or boundary_info
@@ -49,7 +47,6 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.function = function
         self.dirichlet_clear_dofs = dirichlet_clear_dofs
         self.boundary_info = boundary_info
-        self.order = order
         self.name = name
         self.build_parameter_type(function)
 
@@ -57,12 +54,12 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         g = self.grid
         bi = self.boundary_info
 
-        # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points)
-        F = self.function(g.quadrature_points(0, order=self.order), mu=mu)
+        # evaluate function at element centers
+        F = self.function(g.centers(0), mu=mu)
 
         # evaluate the shape functions at the quadrature points on the reference
         # element -> shape = (number of shape functions, number of quadrature points)
-        q, w = g.reference_element.quadrature(order=self.order)
+        q, w = g.reference_element.quadrature(order=1)
         if g.dim == 1:
             SF = np.array((1 - q[..., 0], q[..., 0]))
         elif g.dim == 2:
@@ -74,7 +71,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
-        SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
+        SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
         # FIXME This implementation is horrible, find a better way!
@@ -105,8 +102,6 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
     boundary_info
         If `boundary_type` is specified or `dirichlet_clear_dofs` is `True`, the
         |BoundaryInfo| determining which boundary entity belongs to which physical boundary.
-    order
-        Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
     """
@@ -114,8 +109,7 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_type=None, dirichlet_clear_dofs=False, boundary_info=None,
-                 order=2, name=None):
+    def __init__(self, grid, function, boundary_type=None, dirichlet_clear_dofs=False, boundary_info=None, name=None):
         assert grid.reference_element(0) in {line, triangle, square}
         assert function.shape_range == ()
         assert not (boundary_type or dirichlet_clear_dofs) or boundary_info
@@ -125,7 +119,6 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
         self.boundary_type = boundary_type
         self.dirichlet_clear_dofs = dirichlet_clear_dofs
         self.boundary_info = boundary_info
-        self.order = order
         self.name = name
         self.build_parameter_type(function)
 
@@ -138,12 +131,12 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
             I = np.zeros(self.range.dim)
             I[NI] = self.function(g.centers(1)[NI])
         else:
-            F = self.function(g.quadrature_points(1, order=self.order)[NI], mu=mu)
-            q, w = line.quadrature(order=self.order)
+            F = self.function(g.centers(1)[NI], mu=mu)
+            q, w = line.quadrature(order=1)
             # remove last dimension of q, as line coordinates are one dimensional
             q = q[:, 0]
             SF = np.array([1 - q, q])
-            SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
+            SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
             SF_I = g.subentities(1, 2)[NI].ravel()
             I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
 
@@ -206,8 +199,6 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| determining the Dirichlet boundaries in case
         `dirichlet_clear_dofs` is set to `True`.
-    order
-        Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
     """
@@ -215,7 +206,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, order=2, name=None):
+    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == ()
         assert not dirichlet_clear_dofs or boundary_info
@@ -224,7 +215,6 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         self.function = function
         self.dirichlet_clear_dofs = dirichlet_clear_dofs
         self.boundary_info = boundary_info
-        self.order = order
         self.name = name
         self.build_parameter_type(function)
 
@@ -233,11 +223,11 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         bi = self.boundary_info
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points)
-        F = self.function(g.quadrature_points(0, order=self.order), mu=mu)
+        F = self.function(g.centers(0), mu=mu)
 
         # evaluate the shape functions at the quadrature points on the reference
         # element -> shape = (number of shape functions, number of quadrature points)
-        q, w = g.reference_element.quadrature(order=self.order)
+        q, w = g.reference_element.quadrature(order=1)
         if g.dim == 2:
             SF = np.array(((1 - q[..., 0]) * (1 - q[..., 1]),
                            (1 - q[..., 1]) * (q[..., 0]),
@@ -248,7 +238,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
-        SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
+        SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
         # FIXME This implementation is horrible, find a better way!
@@ -425,8 +415,8 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         self.logger.info('Integrate the products of the shape functions on each element')
         # -> shape = (g.size(0), number of shape functions ** 2)
         if self.coefficient_function is not None:
-            C = self.coefficient_function(self.grid.quadrature_points(0, order=2), mu=mu)
-            SF_INTS = np.einsum('iq,jq,q,e,eq->eij', SFQ, SFQ, w, g.integration_elements(0), C).ravel()
+            C = self.coefficient_function(self.grid.centers(0), mu=mu)
+            SF_INTS = np.einsum('iq,jq,q,e,e->eij', SFQ, SFQ, w, g.integration_elements(0), C).ravel()
             del C
         else:
             SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
@@ -653,12 +643,12 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
         if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
-            D = self.diffusion_function(self.grid.quadrature_points(0, order=2), mu=mu)
-            SF_INTS = np.einsum('epic,eqic,c,e,ec->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+            D = self.diffusion_function(self.grid.centers(0), mu=mu)
+            SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
             del D
         elif self.diffusion_function is not None:
-            D = self.diffusion_function(self.grid.quadrature_points(0, order=2), mu=mu)
-            SF_INTS = np.einsum('epic,eqjc,c,e,ecij->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+            D = self.diffusion_function(self.grid.centers(0), mu=mu)
+            SF_INTS = np.einsum('epic,eqjc,c,e,eij->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
             del D
         else:
             SF_INTS = np.einsum('epic,eqic,c,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0)).ravel()
@@ -769,7 +759,7 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
         else:
             raise NotImplementedError
 
-        q, w = g.reference_element.quadrature(order=2)
+        q, w = g.reference_element.quadrature(order=1)
 
         self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
@@ -779,8 +769,8 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
         # SFQ(function, quadraturepoint)
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
-        D = self.advection_function(self.grid.quadrature_points(0, order=2), mu=mu)
-        SF_INTS = - np.einsum('pc,eqi,c,e,eci->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
+        D = self.advection_function(self.grid.centers(0), mu=mu)
+        SF_INTS = - np.einsum('pc,eqi,c,e,ec->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
         del D
         del SF_GRADS
 
@@ -899,8 +889,8 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
 
-        D = self.advection_function(self.grid.quadrature_points(0, order=2), mu=mu)
-        SF_INTS = - np.einsum('pc,eqic,c,e,eci->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
+        D = self.advection_function(self.grid.centers(0), mu=mu)
+        SF_INTS = - np.einsum('pc,eqic,c,e,ei->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
         del D
         del SF_GRADS
 
@@ -967,7 +957,7 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, robin_data=None, order=2, solver_options=None, name=None):
+    def __init__(self, grid, boundary_info, robin_data=None, solver_options=None, name=None):
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
         assert robin_data is None or all([isinstance(f, FunctionInterface)
                                           and f.dim_domain == grid.dim
@@ -980,7 +970,6 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
         self.robin_data = robin_data
         self.solver_options = solver_options
         self.name = name
-        self.order = order
         if self.robin_data is not None:
             self.build_parameter_type(self.robin_data[0])
 
@@ -1000,7 +989,7 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
             I = coo_matrix((robin_c, (RI, RI)), shape=(g.size(g.dim), g.size(g.dim)))
             return csc_matrix(I).copy()
         else:
-            xref = g.quadrature_points(1, order=self.order)[RI]
+            xref = g.centers(1)[RI]
             # xref(robin-index, quadraturepoint-index)
             if self.robin_data[0].shape_range == ():
                 robin_c = self.robin_data[0](xref, mu=mu)
@@ -1012,11 +1001,11 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
                 robin_c = np.einsum('ei,eqi->eq', normals, robin_values)
 
             # robin_c(robin-index, quadraturepoint-index)
-            q, w = line.quadrature(order=self.order)
+            q, w = line.quadrature(order=2)
             # remove last dimension of q, as line coordinates are one dimensional
             q = q[:, 0]
             SF = np.array([1 - q, q])
-            SF_INTS = np.einsum('ep,pi,pj,e,p->eij', robin_c, SF, SF, g.integration_elements(1)[RI], w).ravel()
+            SF_INTS = np.einsum('e,pi,pj,e,p->eij', robin_c, SF, SF, g.integration_elements(1)[RI], w).ravel()
             SF_I0 = np.repeat(g.subentities(1, g.dim)[RI], 2).ravel()
             SF_I1 = np.tile(g.subentities(1, g.dim)[RI], [1, 2]).ravel()
             I = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))

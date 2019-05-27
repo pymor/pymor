@@ -140,7 +140,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     # robin boundaries
     if p.robin_data is not None:
-        Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, order=2, name='robin')]
+        Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name='robin')]
         coefficients.append(1.)
 
     L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
