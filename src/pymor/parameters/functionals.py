@@ -138,7 +138,7 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
         assert all(isinstance(f, (ParameterFunctionalInterface, Number)) for f in factors)
         self.name = name
         self.factors = tuple(factors)
-        self.build_parameter_type(*(f for f in factors if isinstance(f, ProductParameterFunctional)))
+        self.build_parameter_type(*(f for f in factors if isinstance(f, ParameterFunctionalInterface)))
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
