@@ -4,7 +4,6 @@
 
 import numpy as np
 
-from pymor.domaindescriptions.interfaces import KNOWN_BOUNDARY_TYPES
 from pymor.grids.interfaces import BoundaryInfoInterface
 
 
@@ -66,53 +65,3 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
         assert boundary_type == 'dirichlet', f'Has no boundary_type "{boundary_type}"'
         assert 1 <= codim <= self.grid.dim
         return np.ones(self.grid.size(codim), dtype='bool') * self.grid.boundary_mask(codim)
-
-
-class SubGridBoundaryInfo(BoundaryInfoInterface):
-    """Derives a |BoundaryInfo| for a :class:`~pymor.grids.subgrid.SubGrid`.
-
-    Parameters
-    ----------
-    subrid
-        The :class:`~pymor.grids.subgrid.SubGrid` for which a |BoundaryInfo| is created.
-    grid
-        The parent |Grid|.
-    grid_boundary_info
-        The |BoundaryInfo| of the parent |Grid| from which to derive the |BoundaryInfo|
-    new_boundary_type
-        The boundary type which is assigned to the new boundaries of `subgrid`. If
-        `None`, no boundary type is assigned.
-    """
-
-    def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None):
-        if new_boundary_type is not None and new_boundary_type not in KNOWN_BOUNDARY_TYPES:
-            self.logger.warning(f'Unknown boundary type: {new_boundary_type}')
-
-        boundary_types = grid_boundary_info.boundary_types
-        has_new_boundaries = False
-        masks = []
-        for codim in range(1, subgrid.dim + 1):
-            parent_indices = subgrid.parent_indices(codim)[subgrid.boundaries(codim)]
-            new_boundaries = np.where(np.logical_not(grid.boundary_mask(codim)[parent_indices]))
-            new_boundaries_sg_indices = subgrid.boundaries(codim)[new_boundaries]
-            if len(new_boundaries) > 0:
-                has_new_boundaries = True
-            m = {}
-            for t in boundary_types:
-                m[t] = grid_boundary_info.mask(t, codim)[subgrid.parent_indices(codim)]
-                if t == new_boundary_type:
-                    m[t][new_boundaries_sg_indices] = True
-            if new_boundary_type is not None and new_boundary_type not in boundary_types:
-                m[new_boundary_type] = np.zeros(subgrid.size(codim), dtype=np.bool)
-                m[new_boundary_type][new_boundaries_sg_indices] = True
-            masks.append(m)
-        self.__masks = masks
-
-        self.boundary_types = grid_boundary_info.boundary_types
-        if has_new_boundaries and new_boundary_type is not None:
-            self.boundary_types = self.boundary_types.union({new_boundary_type})
-
-    def mask(self, boundary_type, codim):
-        assert 1 <= codim < len(self.__masks) + 1, 'Invalid codimension'
-        assert boundary_type in self.boundary_types
-        return self.__masks[codim - 1][boundary_type]

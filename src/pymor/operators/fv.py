@@ -11,8 +11,7 @@ from pymor.core.defaults import defaults
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.functions.interfaces import FunctionInterface
 from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
-from pymor.grids.boundaryinfos import SubGridBoundaryInfo
-from pymor.grids.subgrid import SubGrid
+from pymor.grids.subgrid import SubGrid, make_sub_grid_boundary_info
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import ComponentProjection
 from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
@@ -252,7 +251,7 @@ class NonlinearAdvectionOperator(OperatorBase):
                                    np.array([-1], dtype=np.int32),
                                    assume_unique=True)
         sub_grid = SubGrid(self.grid, source_dofs)
-        sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
+        sub_boundary_info = make_sub_grid_boundary_info(sub_grid, self.grid, self.boundary_info)
         op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id=None,
                         name=f'{self.name}_restricted')
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
