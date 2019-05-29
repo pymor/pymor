@@ -156,6 +156,8 @@ if config.HAVE_FENICS:
 
         def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
             assert matrix.rank() == 2
+            self.source_space = source_space
+            self.range_space = range_space
             self.source = FenicsVectorSpace(source_space)
             self.range = FenicsVectorSpace(range_space)
             self.matrix = matrix
