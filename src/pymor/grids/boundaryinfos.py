@@ -19,36 +19,40 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
         assert False, f'Has no boundary_type "{boundary_type}"'
 
 
-class BoundaryInfoFromIndicators(BoundaryInfoInterface):
-    """|BoundaryInfo| where the boundary types are determined by indicator functions.
+class GenericBoundaryInfo(BoundaryInfoInterface):
+    """Generic |BoundaryInfo| storing entity masks per boundary type."""
 
-    Parameters
-    ----------
-    grid
-        The |Grid| to which the |BoundaryInfo| is associated.
-    indicators
-        Dict where each key is a boundary type and the corresponding value is a boolean
-        valued function defined on the analytical domain which indicates if a point belongs
-        to a boundary of the given boundary type (the indicator functions must be vectorized).
-    """
-
-    def __init__(self, grid, indicators, assert_unique_type=None, assert_some_type=None):
+    def __init__(self, grid, masks, assert_unique_type=None, assert_some_type=None):
+        self.assert_unique_type = assert_unique_type if assert_unique_type else [1]
+        self.assert_some_type = assert_some_type if assert_some_type else []
         self.grid = grid
-        self.indicators = indicators
-        self.assert_unique_type = assert_unique_type = assert_unique_type if assert_unique_type else [1]
-        self.assert_some_type = assert_some_type
-        assert_some_type = assert_some_type if assert_some_type else []
-        self.boundary_types = frozenset(indicators.keys())
-        self._masks = {boundary_type: [np.zeros(grid.size(codim), dtype='bool') for codim in range(1, grid.dim + 1)]
-                       for boundary_type in self.boundary_types}
-        for boundary_type, codims in self._masks.items():
+        self.masks = masks
+        self.boundary_types = frozenset(masks)
+        self.check_boundary_types(assert_unique_type=self.assert_unique_type, assert_some_type=self.assert_some_type)
+
+    @classmethod
+    def from_indicators(cls, grid, indicators, assert_unique_type=None, assert_some_type=None):
+        """Create |BoundaryInfo| from indicator functions.
+
+        Parameters
+        ----------
+        grid
+            The |Grid| to which the |BoundaryInfo| is associated.
+        indicators
+            Dict where each key is a boundary type and the corresponding value is a boolean
+            valued function defined on the analytical domain which indicates if a point belongs
+            to a boundary of the given boundary type (the indicator functions must be vectorized).
+        """
+        masks = {boundary_type: [np.zeros(grid.size(codim), dtype='bool') for codim in range(1, grid.dim + 1)]
+                 for boundary_type in indicators}
+        for boundary_type, codims in masks.items():
             for c, mask in enumerate(codims):
                 mask[grid.boundaries(c + 1)] = indicators[boundary_type](grid.centers(c + 1)[grid.boundaries(c + 1)])
-        self.check_boundary_types(assert_unique_type=assert_unique_type, assert_some_type=assert_some_type)
+        return cls(grid, masks, assert_unique_type=assert_unique_type, assert_some_type=assert_some_type)
 
     def mask(self, boundary_type, codim):
         assert 1 <= codim <= self.grid.dim
-        return self._masks[boundary_type][codim - 1]
+        return self.masks[boundary_type][codim - 1]
 
 
 class AllDirichletBoundaryInfo(BoundaryInfoInterface):
