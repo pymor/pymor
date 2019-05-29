@@ -2,6 +2,8 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import weakref
+
 import numpy as np
 from scipy.linalg import solve, solve_triangular
 
@@ -71,6 +73,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         self.solver_options = solver_options
         self.name = name or f'{operator.name}_interpolated'
 
+        self._operator = weakref.ref(operator)
         interpolation_dofs = np.array(interpolation_dofs, dtype=np.int32)
         self.interpolation_dofs = interpolation_dofs
         self.triangular = triangular
@@ -84,6 +87,10 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
             self.interpolation_matrix = interpolation_matrix
             self.collateral_basis = collateral_basis.copy()
+
+    @property
+    def operator(self):
+        return self._operator()
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
