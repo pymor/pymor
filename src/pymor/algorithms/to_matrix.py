@@ -64,7 +64,7 @@ class ToMatrixRules(RuleTable):
     @match_class(BlockOperatorBase)
     def action_BlockOperator(self, op):
         format = self.format
-        op_blocks = op._blocks
+        op_blocks = op.blocks
         mat_blocks = [[] for i in range(op.num_range_blocks)]
         is_dense = True
         for i in range(op.num_range_blocks):
