@@ -170,9 +170,9 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         else:
             return discretize_TorusDomain()
     elif isinstance(domain_description, PolygonalDomain):
-        from pymor.grids.gmsh import GmshGrid
+        from pymor.grids.unstructured import UnstructuredTriangleGrid
         from pymor.domaindiscretizers.gmsh import discretize_gmsh
-        assert grid_type is None or grid_type is GmshGrid
+        assert grid_type is None or grid_type is UnstructuredTriangleGrid
         return discretize_gmsh(domain_description, clscale=diameter)
     else:
         grid_type = grid_type or OnedGrid
