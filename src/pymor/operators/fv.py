@@ -235,16 +235,9 @@ class NonlinearAdvectionOperator(OperatorBase):
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.build_parameter_type(numerical_flux, dirichlet_data)
         self.source = self.range = FVVectorSpace(grid, space_id)
-        self.add_with_arguments = self.add_with_arguments.union(f'numerical_flux_{arg}'
-                                                                for arg in numerical_flux.with_arguments)
 
-    def with_(self, **kwargs):
-        assert 'numerical_flux' not in kwargs or not any(arg.startswith('numerical_flux_') for arg in kwargs)
-        num_flux_args = {arg[len('numerical_flux_'):]: kwargs.pop(arg)
-                         for arg in list(kwargs) if arg.startswith('numerical_flux_')}
-        if num_flux_args:
-            kwargs['numerical_flux'] = self.numerical_flux.with_(**num_flux_args)
-        return super().with_(**kwargs)
+    def with_numerical_flux(self, **kwargs):
+        return self.with_(numerical_flux=self.numerical_flux.with_(**kwargs))
 
     def restricted(self, dofs):
         source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[dofs].ravel(), dofs),

@@ -50,14 +50,8 @@ functionality:
            obj.with_(a=x, b=y)
 
        creates a copy with the `a` and `b` attributes of `obj` set to `x` and `y`.
-       (Note that in general `a` and `b` do not necessarily have to correspond to
-       class attributes of `obj`; it is up to the implementor to interpret the
-       provided arguments.) :attr:`ImmutableInterface.with_arguments` holds the
-       set of allowed arguments.
-
-       :class:`ImmutableInterface` provides a default implementation of `with_` which
-       works by creating a new instance, passing  the arguments of `with_` to
-       `__init__`. The missing `__init__` arguments are taken from instance
+       `with_` is implemented by creating a new instance, passing the arguments of
+       `with_` to `__init__`. The missing `__init__` arguments are taken from instance
        attributes of the same name.
 """
 
@@ -344,18 +338,11 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
 
     Attributes
     ----------
-    add_with_arguments
-        Set of additional arguments for `with_`.
-        (See :attr:`~ImmutableInterface.with_arguments`.)
     sid
         The objects |state id|. Only available after
         :meth:`~ImmutableInterface.generate_sid` has been called.
     sid_ignore
         Set of attributes not to include in |state id| calculation.
-    with_arguments
-        Set of allowed keyword arguments for `with_`. This is the
-        union of the argument names of `__init__` and the names
-        specified via :attr:`~ImmutableInterface.add_with_arguments`.
     """
     sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles', 'sid'})
 
@@ -400,34 +387,24 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
         self.__dict__['_sid_contains_cycles'] = has_cycles
         return sid
 
-    add_with_arguments = frozenset()
-
-    @property
-    def with_arguments(self):
-        return set(self._init_arguments).union(getattr(self, 'add_with_arguments', []))
-
     def with_(self, **kwargs):
         """Returns a copy with changed attributes.
 
-        The default implementation is to create a new class instance
-        with the given keyword arguments as arguments for `__init__`.
-        Missing arguments are obtained form instance attributes with the
+        A a new class instance is created with the given keyword arguments as
+        arguments for `__init__`.  Missing arguments are obtained form instance
+        attributes with the
         same name.
 
         Parameters
         ----------
         `**kwargs`
             Names of attributes to change with their new values. Each attribute name
-            has to be contained in `with_arguments`.
+            has to be an argument to `__init__`.
 
         Returns
         -------
         Copy of `self` with changed attributes.
         """
-        if not set(kwargs.keys()) <= self.with_arguments:
-            raise ValueError(f"Changing '{list(kwargs.keys())}' using with() is not allowed in {self.__class__} "
-                             f"(only '{self.with_arguments}')")
-
         # fill missing __init__ arguments using instance attributes of same name
         for arg in self._init_arguments:
             if arg not in kwargs:
