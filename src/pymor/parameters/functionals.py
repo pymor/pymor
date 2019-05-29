@@ -35,6 +35,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
             component_shape = () if component_shape == 0 else (component_shape,)
         self.build_parameter_type({component_name: component_shape})
         self.component_name = component_name
+        self.component_shape = component_shape
         self.coordinates = coordinates
         assert len(coordinates) == len(component_shape)
         assert not component_shape or coordinates < component_shape
