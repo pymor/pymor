@@ -148,6 +148,11 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             return Concatenation([J, ComponentProjection(self.source_dofs, self.source)],
                                  solver_options=options, name=self.name + '_jacobian')
 
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        del d['_operator']
+        return d
+
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
     """A projected |EmpiricalInterpolatedOperator|."""
