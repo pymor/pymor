@@ -389,6 +389,7 @@ class IdentityOperator(OperatorBase):
 
     def __init__(self, space, name=None):
         self.source = self.range = space
+        self.space = space
         self.name = name
 
     @property
