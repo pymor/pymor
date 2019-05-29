@@ -624,6 +624,7 @@ class VectorOperator(VectorArrayOperator):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
         super().__init__(vector, adjoint=False, name=name)
+        self.vector = self.array  # do not init with vector arg, as vector gets copied in VectorArrayOperator.__init__
 
 
 class VectorFunctional(VectorArrayOperator):
