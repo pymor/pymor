@@ -47,3 +47,6 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
         return ProductParameterFunctional([self, other])
 
     __rmul__ = __mul__
+
+    def __neg__(self):
+        return self * (-1.)
