@@ -97,11 +97,11 @@ class AssembleLincombRules(RuleTable):
         coeffs = np.conj(self.coefficients) if adjoint else self.coefficients
 
         if coeffs[0] == 1:
-            array = ops[0]._array.copy()
+            array = ops[0].array.copy()
         else:
-            array = ops[0]._array * coeffs[0]
+            array = ops[0].array * coeffs[0]
         for op, c in zip(ops[1:], coeffs[1:]):
-            array.axpy(c, op._array)
+            array.axpy(c, op.array)
 
         return VectorArrayOperator(array, adjoint=adjoint, space_id=ops[0].space_id, name=self.name)
 

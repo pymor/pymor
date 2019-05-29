@@ -541,7 +541,7 @@ class VectorArrayOperator(OperatorBase):
     linear = True
 
     def __init__(self, array, adjoint=False, space_id=None, name=None):
-        self._array = array.copy()
+        self.array = array.copy()
         if adjoint:
             self.source = array.space
             self.range = NumpyVectorSpace(len(array), space_id)
@@ -554,42 +554,42 @@ class VectorArrayOperator(OperatorBase):
 
     @property
     def H(self):
-        return VectorArrayOperator(self._array, not self.adjoint, self.space_id, self.name + '_adjoint')
+        return VectorArrayOperator(self.array, not self.adjoint, self.space_id, self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         assert U in self.source
         if not self.adjoint:
-            return self._array.lincomb(U.to_numpy())
+            return self.array.lincomb(U.to_numpy())
         else:
-            return self.range.make_array(self._array.dot(U).T)
+            return self.range.make_array(self.array.dot(U).T)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if not self.adjoint:
-            return self.source.make_array(self._array.dot(V).T)
+            return self.source.make_array(self.array.dot(V).T)
         else:
-            return self._array.lincomb(V.to_numpy())
+            return self.array.lincomb(V.to_numpy())
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
-        adjoint_op = VectorArrayOperator(self._array, adjoint=not self.adjoint)
+        adjoint_op = VectorArrayOperator(self.array, adjoint=not self.adjoint)
         return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def as_range_array(self, mu=None):
         if not self.adjoint:
-            return self._array.copy()
+            return self.array.copy()
         else:
             return super().as_range_array(mu)
 
     def as_source_array(self, mu=None):
         if self.adjoint:
-            return self._array.copy()
+            return self.array.copy()
         else:
             return super().as_source_array(mu)
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         if not self.adjoint:
-            restricted_value = NumpyVectorSpace.make_array(self._array.dofs(dofs))
+            restricted_value = NumpyVectorSpace.make_array(self.array.dofs(dofs))
             return VectorArrayOperator(restricted_value, False), np.arange(self.source.dim, dtype=np.int32)
         else:
             raise NotImplementedError
