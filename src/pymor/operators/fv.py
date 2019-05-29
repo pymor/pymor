@@ -251,7 +251,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[dofs].ravel(), dofs),
                                    np.array([-1], dtype=np.int32),
                                    assume_unique=True)
-        sub_grid = SubGrid(self.grid, entities=source_dofs)
+        sub_grid = SubGrid(self.grid, source_dofs)
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
         op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id=None,
                         name=f'{self.name}_restricted')
