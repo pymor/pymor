@@ -86,8 +86,8 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             self.codim = codim
             lines = ()
             centers = grid.centers(1)
-            if grid._identify_left_right:
-                centers = np.concatenate((centers, [[grid._domain[1]]]), axis=0)
+            if grid.identify_left_right:
+                centers = np.concatenate((centers, [[grid.domain[1]]]), axis=0)
                 self.periodic = True
             else:
                 self.periodic = False
