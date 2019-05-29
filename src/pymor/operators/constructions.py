@@ -667,6 +667,8 @@ class VectorFunctional(VectorArrayOperator):
             super().__init__(vector, adjoint=True, name=name)
         else:
             super().__init__(product.apply(vector), adjoint=True, name=name)
+        self.vector = self.array  # do not init with vector arg, as vector gets copied in VectorArrayOperator.__init__
+        self.product = product
 
 
 class ProxyOperator(OperatorBase):
