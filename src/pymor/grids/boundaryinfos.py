@@ -34,7 +34,9 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
 
     def __init__(self, grid, indicators, assert_unique_type=None, assert_some_type=None):
         self.grid = grid
-        assert_unique_type = assert_unique_type if assert_unique_type else [1]
+        self.indicators = indicators
+        self.assert_unique_type = assert_unique_type = assert_unique_type if assert_unique_type else [1]
+        self.assert_some_type = assert_some_type
         assert_some_type = assert_some_type if assert_some_type else []
         self.boundary_types = frozenset(indicators.keys())
         self._masks = {boundary_type: [np.zeros(grid.size(codim), dtype='bool') for codim in range(1, grid.dim + 1)]
