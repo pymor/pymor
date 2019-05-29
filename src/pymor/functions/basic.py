@@ -120,12 +120,12 @@ class GenericFunction(FunctionBase):
         self.dim_domain = dim_domain
         self.shape_range = shape_range if isinstance(shape_range, tuple) else (shape_range,)
         self.name = name
-        self._mapping = mapping
+        self.mapping = mapping
         if parameter_type is not None:
             self.build_parameter_type(parameter_type)
 
     def __str__(self):
-        return f'{self.name}: x -> {self._mapping}'
+        return f'{self.name}: x -> {self.mapping}'
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
@@ -133,9 +133,9 @@ class GenericFunction(FunctionBase):
 
         if self.parametric:
             mu = self.parse_parameter(mu)
-            v = self._mapping(x, mu)
+            v = self.mapping(x, mu)
         else:
-            v = self._mapping(x)
+            v = self.mapping(x)
 
         if v.shape != x.shape[:-1] + self.shape_range:
             assert v.shape[:len(x.shape) - 1] == x.shape[:-1]
