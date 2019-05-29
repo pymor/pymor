@@ -803,8 +803,8 @@ class TransferFunction(InputOutputModel):
     def __init__(self, input_space, output_space, H, dH, cont_time=True, cache_region='memory', name=None):
         assert cont_time in (True, False)
 
-        self.tf = H
-        self.dtf = dH
+        self.tf = self.H = H
+        self.dtf = self.dH = dH
         super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name)
 
     def eval_tf(self, s):
