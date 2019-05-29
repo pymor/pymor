@@ -442,11 +442,11 @@ class ConstantOperator(OperatorBase):
         self.source = source
         self.range = value.space
         self.name = name
-        self._value = value.copy()
+        self.value = value.copy()
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self._value[[0] * len(U)].copy()
+        return self.value[[0] * len(U)].copy()
 
     def jacobian(self, U, mu=None):
         assert U in self.source
@@ -455,7 +455,7 @@ class ConstantOperator(OperatorBase):
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        restricted_value = NumpyVectorSpace.make_array(self._value.dofs(dofs))
+        restricted_value = NumpyVectorSpace.make_array(self.value.dofs(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
     def apply_inverse(self, V, mu=None, least_squares=False):

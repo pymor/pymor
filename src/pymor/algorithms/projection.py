@@ -90,9 +90,9 @@ class ProjectRules(RuleTable):
     def action_ConstantOperator(self, op):
         range_basis, source_basis, product = self.range_basis, self.source_basis, self.product
         if range_basis is not None:
-            projected_value = NumpyVectorSpace.make_array(range_basis.inner(op._value, product).T)
+            projected_value = NumpyVectorSpace.make_array(range_basis.inner(op.value, product).T)
         else:
-            projected_value = op._value
+            projected_value = op.value
         if source_basis is None:
             return ConstantOperator(projected_value, op.source, name=op.name)
         else:
@@ -260,7 +260,7 @@ class ProjectToSubbasisRules(RuleTable):
     def action_ConstantOperator(self, op):
         dim_range, dim_source = self.dim_range, self.dim_source
         source = op.source if dim_source is None else NumpyVectorSpace(dim_source)
-        value = op._value if dim_range is None else NumpyVectorSpace(op._value.to_numpy()[:, :dim_range])
+        value = op.value if dim_range is None else NumpyVectorSpace(op.value.to_numpy()[:, :dim_range])
         return ConstantOperator(value, source, name=op.name)
 
     @match_class(IdentityOperator)
