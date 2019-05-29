@@ -66,24 +66,24 @@ class ConstantFunction(FunctionBase):
         assert dim_domain > 0
         assert isinstance(value, (Number, np.ndarray))
         value = np.array(value)
-        self._value = value
+        self.value = value
         self.dim_domain = dim_domain
         self.shape_range = value.shape
         self.name = name
 
     def __str__(self):
-        return f'{self.name}: x -> {self._value}'
+        return f'{self.name}: x -> {self.value}'
 
     def __repr__(self):
-        return f'ConstantFunction({repr(self._value)}, {self.dim_domain})'
+        return f'ConstantFunction({repr(self.value)}, {self.dim_domain})'
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
         if x.ndim == 1:
-            return np.array(self._value)
+            return np.array(self.value)
         else:
-            return np.tile(self._value, x.shape[:-1] + (1,) * len(self.shape_range))
+            return np.tile(self.value, x.shape[:-1] + (1,) * len(self.shape_range))
 
 
 class GenericFunction(FunctionBase):
