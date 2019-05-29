@@ -116,9 +116,9 @@ if config.HAVE_FENICS:
 
     class FenicsVectorSpace(ListVectorSpace):
 
-        def __init__(self, V, id_='STATE'):
+        def __init__(self, V, id='STATE'):
             self.V = V
-            self.id = id_
+            self.id = id
 
         @property
         def dim(self):

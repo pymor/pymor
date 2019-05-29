@@ -65,9 +65,9 @@ if config.HAVE_NGSOLVE:
 
     class NGSolveVectorSpace(ListVectorSpace):
 
-        def __init__(self, V, id_='STATE'):
+        def __init__(self, V, id='STATE'):
             self.V = V
-            self.id = id_
+            self.id = id
 
         def __eq__(self, other):
             return type(other) is NGSolveVectorSpace and self.V == other.V and self.id == other.id
@@ -88,8 +88,8 @@ if config.HAVE_NGSOLVE:
             return self.V.ndofglobal * self.value_dim
 
         @classmethod
-        def space_from_vector_obj(cls, vec, id_):
-            return cls(vec.space, id_)
+        def space_from_vector_obj(cls, vec, id):
+            return cls(vec.space, id)
 
         def zero_vector(self):
             impl = ngs.GridFunction(self.V)

@@ -22,8 +22,8 @@ from pymor.tools.quadratures import GaussQuadratures
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def FVVectorSpace(grid, id_='STATE'):
-    return NumpyVectorSpace(grid.size(0), id_)
+def FVVectorSpace(grid, id='STATE'):
+    return NumpyVectorSpace(grid.size(0), id)
 
 
 class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):

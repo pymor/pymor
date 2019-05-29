@@ -425,11 +425,11 @@ class ListVectorSpace(VectorSpaceInterface):
         raise NotImplementedError
 
     @classmethod
-    def space_from_vector_obj(cls, vec, id_):
+    def space_from_vector_obj(cls, vec, id):
         raise NotImplementedError
 
     @classmethod
-    def space_from_dim(cls, dim, id_):
+    def space_from_dim(cls, dim, id):
         raise NotImplementedError
 
     def zeros(self, count=1, reserve=0):
@@ -452,18 +452,18 @@ class ListVectorSpace(VectorSpaceInterface):
                                 for _ in range(count)], self)
 
     @classinstancemethod
-    def make_array(cls, obj, id_=None):
+    def make_array(cls, obj, id=None):
         if len(obj) == 0:
             raise NotImplementedError
-        return cls.space_from_vector_obj(obj[0], id_=id_).make_array(obj)
+        return cls.space_from_vector_obj(obj[0], id=id).make_array(obj)
 
     @make_array.instancemethod
     def make_array(self, obj):
         return ListVectorArray([self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
-    def from_numpy(cls, data, id_=None, ensure_copy=False):
-        return cls.space_from_dim(data.shape[1], id_=id_).from_numpy(data, ensure_copy=ensure_copy)
+    def from_numpy(cls, data, id=None, ensure_copy=False):
+        return cls.space_from_dim(data.shape[1], id=id).from_numpy(data, ensure_copy=ensure_copy)
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
@@ -472,20 +472,20 @@ class ListVectorSpace(VectorSpaceInterface):
 
 class NumpyListVectorSpace(ListVectorSpace):
 
-    def __init__(self, dim, id_=None):
+    def __init__(self, dim, id=None):
         self.dim = dim
-        self.id = id_
+        self.id = id
 
     def __eq__(self, other):
         return type(other) is NumpyListVectorSpace and self.dim == other.dim and self.id == other.id
 
     @classmethod
-    def space_from_vector_obj(cls, vec, id_):
-        return cls(len(vec), id_)
+    def space_from_vector_obj(cls, vec, id):
+        return cls(len(vec), id)
 
     @classmethod
-    def space_from_dim(cls, dim, id_):
-        return cls(dim, id_)
+    def space_from_dim(cls, dim, id):
+        return cls(dim, id)
 
     def zero_vector(self):
         return NumpyVector(np.zeros(self.dim))
