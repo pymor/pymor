@@ -71,6 +71,8 @@ class NumpyGenericOperator(OperatorBase):
         self.name = name
         self.mapping = mapping
         self.adjoint_mapping = adjoint_mapping
+        self.dim_source = dim_source
+        self.dim_range = dim_range
         self.linear = linear
         if parameter_type is not None:
             self.build_parameter_type(parameter_type)
