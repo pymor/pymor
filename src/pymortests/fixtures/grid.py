@@ -53,8 +53,9 @@ oned_grid_generators = [lambda kwargs=kwargs: OnedGrid(**kwargs) for kwargs in
                          dict(domain=np.array((2, 3)), num_intervals=10, identify_left_right=True),
                          dict(domain=np.array((1, 2)), num_intervals=10000)]]
 
-unstructured_grid_generators = [lambda: UnstructuredTriangleGrid(np.array([[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]),
-                                                                 np.array([[0, 1, 2], [0, 3, 4], [0, 4, 1]]))]
+unstructured_grid_generators = \
+    [lambda: UnstructuredTriangleGrid.from_vertices(np.array([[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]),
+                                                    np.array([[0, 1, 2], [0, 3, 4], [0, 4, 1]]))]
 
 
 def subgrid_factory(grid_generator, neq, seed):

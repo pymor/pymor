@@ -240,8 +240,8 @@ def _mpi_wrap_operator_LincombOperator_manage_operators(obj_id):
 
 def _mpi_wrap_operator_VectorArrayOperator_manage_array(obj_id, pickle_local_spaces):
     op = mpi.get_object(obj_id)
-    array_obj_id = mpi.manage_object(op._array)
-    local_space = op._array.space
+    array_obj_id = mpi.manage_object(op.array)
+    local_space = op.array.space
     if not pickle_local_spaces:
         local_space = _register_local_space(local_space)
     local_spaces = mpi.comm.gather(local_space, root=0)

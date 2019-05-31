@@ -97,11 +97,11 @@ class AssembleLincombRules(RuleTable):
         coeffs = np.conj(self.coefficients) if adjoint else self.coefficients
 
         if coeffs[0] == 1:
-            array = ops[0]._array.copy()
+            array = ops[0].array.copy()
         else:
-            array = ops[0]._array * coeffs[0]
+            array = ops[0].array * coeffs[0]
         for op, c in zip(ops[1:], coeffs[1:]):
-            array.axpy(c, op._array)
+            array.axpy(c, op.array)
 
         return VectorArrayOperator(array, adjoint=adjoint, space_id=ops[0].space_id, name=self.name)
 
@@ -113,10 +113,10 @@ class AssembleLincombRules(RuleTable):
             ops, coeffs = ops[::-1], self.coefficients[::-1]
         else:
             ops, coeffs = ops, self. coefficients
-        if not isinstance(ops[1]._blocks[0, 0], IdentityOperator):
+        if not isinstance(ops[1].blocks[0, 0], IdentityOperator):
             raise RuleNotMatchingError
 
-        return ShiftedSecondOrderModelOperator(ops[1]._blocks[1, 1],
+        return ShiftedSecondOrderModelOperator(ops[1].blocks[1, 1],
                                                ops[0].E,
                                                ops[0].K,
                                                coeffs[1],
@@ -129,7 +129,7 @@ class AssembleLincombRules(RuleTable):
         blocks = np.empty((num_source_blocks,), dtype=object)
         if len(ops) > 1:
             for i in range(num_source_blocks):
-                operators_i = [op._blocks[i, i] for op in ops]
+                operators_i = [op.blocks[i, i] for op in ops]
                 blocks[i] = assemble_lincomb(operators_i, coefficients,
                                              solver_options=self.solver_options, name=self.name)
                 if blocks[i] is None:
@@ -140,19 +140,19 @@ class AssembleLincombRules(RuleTable):
             if c == 1:
                 return ops[0]
             for i in range(num_source_blocks):
-                blocks[i] = ops[0]._blocks[i, i] * c
+                blocks[i] = ops[0].blocks[i, i] * c
             return BlockDiagonalOperator(blocks)
 
     @match_class_all(BlockOperatorBase)
     def action_BlockOperatorBase(self, ops):
         coefficients = self.coefficients
-        shape = ops[0]._blocks.shape
+        shape = ops[0].blocks.shape
         blocks = np.empty(shape, dtype=object)
         operator_type = ((BlockOperator if ops[0].blocked_source else BlockColumnOperator) if ops[0].blocked_range
                          else BlockRowOperator)
         if len(ops) > 1:
             for (i, j) in np.ndindex(shape):
-                operators_ij = [op._blocks[i, j] for op in ops]
+                operators_ij = [op.blocks[i, j] for op in ops]
                 blocks[i, j] = assemble_lincomb(operators_ij, coefficients,
                                                 solver_options=self.solver_options, name=self.name)
                 if blocks[i, j] is None:
@@ -163,7 +163,7 @@ class AssembleLincombRules(RuleTable):
             if c == 1:
                 return ops[0]
             for (i, j) in np.ndindex(shape):
-                blocks[i, j] = ops[0]._blocks[i, j] * c
+                blocks[i, j] = ops[0].blocks[i, j] * c
             return operator_type(blocks)
 
     @match_always

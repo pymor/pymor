@@ -6,6 +6,7 @@ import weakref
 
 import numpy as np
 
+from pymor.grids.boundaryinfos import GenericBoundaryInfo
 from pymor.grids.interfaces import AffineGridInterface
 
 
@@ -17,9 +18,9 @@ class SubGrid(AffineGridInterface):
 
     Parameters
     ----------
-    grid
+    parent_grid
         |Grid| of which a subgrid is to be created.
-    entities
+    parent_entities
         |NumPy array| of global indices of the codim-0 entities which
         are to be contained in the subgrid.
 
@@ -33,28 +34,32 @@ class SubGrid(AffineGridInterface):
 
     reference_element = None
 
-    def __init__(self, grid, entities):
-        assert isinstance(grid, AffineGridInterface)
-        self.dim = grid.dim
-        self.reference_element = grid.reference_element
+    def __init__(self, parent_grid, parent_entities):
+        assert parent_grid is not None, \
+            'parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n' \
+            'on a SubGrid for which the parent grid has been destroyed?'
+        assert isinstance(parent_grid, AffineGridInterface)
+        self.dim = parent_grid.dim
+        self.reference_element = parent_grid.reference_element
 
-        parent_indices = [np.array(np.unique(entities), dtype=np.int32)]
-        assert len(parent_indices[0] == len(entities))
+        parent_indices = [np.array(np.unique(parent_entities), dtype=np.int32)]
+        assert len(parent_indices[0] == len(parent_entities))
 
         subentities = [np.arange(len(parent_indices[0]), dtype=np.int32).reshape((-1, 1))]
 
         for codim in range(1, self.dim + 1):
-            SUBE = grid.subentities(0, codim)[parent_indices[0]]
+            SUBE = parent_grid.subentities(0, codim)[parent_indices[0]]
             if np.any(SUBE < 0):
                 raise NotImplementedError
             UI, UI_inv = np.unique(SUBE, return_inverse=True)
             subentities.append(np.array(UI_inv.reshape(SUBE.shape), dtype=np.int32))
             parent_indices.append(np.array(UI, dtype=np.int32))
 
-        self.__parent_grid = weakref.ref(grid)
+        self.parent_entities = parent_entities
+        self.__parent_grid = weakref.ref(parent_grid)
         self.__parent_indices = parent_indices
         self.__subentities = subentities
-        embeddings = grid.embeddings(0)
+        embeddings = parent_grid.embeddings(0)
         self.__embeddings = (embeddings[0][parent_indices[0]], embeddings[1][parent_indices[0]])
 
     @property
@@ -103,3 +108,48 @@ class SubGrid(AffineGridInterface):
         d = self.__dict__.copy()
         del d['_SubGrid__parent_grid']
         return d
+
+
+def make_sub_grid_boundary_info(sub_grid, parent_grid, parent_grid_boundary_info, new_boundary_type=None):
+    """Derives a |BoundaryInfo| for a :class:`~pymor.grids.subgrid.SubGrid`.
+
+    Parameters
+    ----------
+    sub_grid
+        The :class:`~pymor.grids.subgrid.SubGrid` for which a |BoundaryInfo| is created.
+    parent_grid
+        The parent |Grid|.
+    parent_grid_boundary_info
+        The |BoundaryInfo| of the parent |Grid| from which to derive the |BoundaryInfo|
+    new_boundary_type
+        The boundary type which is assigned to the new boundaries of `subgrid`. If
+        `None`, no boundary type is assigned.
+
+    Returns
+    -------
+    |BoundaryInfo| associated with sub_grid.
+    """
+    boundary_types = parent_grid_boundary_info.boundary_types
+
+    masks = {}
+    for codim in range(1, sub_grid.dim + 1):
+        parent_indices = sub_grid.parent_indices(codim)[sub_grid.boundaries(codim)]
+        new_boundaries = np.where(np.logical_not(parent_grid.boundary_mask(codim)[parent_indices]))
+        new_boundaries_sg_indices = sub_grid.boundaries(codim)[new_boundaries]
+        for t in boundary_types:
+            m = parent_grid_boundary_info.mask(t, codim)[sub_grid.parent_indices(codim)]
+            if t == new_boundary_type:
+                m[new_boundaries_sg_indices] = True
+            if codim == 1:
+                masks[t] = [m]
+            else:
+                masks[t].append(m)
+        if new_boundary_type is not None and new_boundary_type not in boundary_types:
+            m = np.zeros(sub_grid.size(codim), dtype=np.bool)
+            m[new_boundaries_sg_indices] = True
+            if codim == 1:
+                masks[new_boundary_type] = [m]
+            else:
+                masks[new_boundary_type].append(m)
+
+    return GenericBoundaryInfo(sub_grid, masks)

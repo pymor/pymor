@@ -38,6 +38,8 @@ class CubicParameterSpace(ParameterSpaceInterface):
         assert minimum is None or minimum < maximum
         parameter_type = ParameterType(parameter_type)
         self.parameter_type = parameter_type
+        self.minimum = minimum
+        self.maximum = maximum
         self.ranges = {k: (minimum, maximum) for k in parameter_type} if ranges is None else ranges
 
     def parse_parameter(self, mu):

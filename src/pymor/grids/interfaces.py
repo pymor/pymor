@@ -6,6 +6,7 @@ import numpy as np
 
 from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
+from pymor.domaindescriptions.interfaces import KNOWN_BOUNDARY_TYPES
 from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
                                      ReferenceElementDefaultImplementations,
                                      AffineGridDefaultImplementations,)
@@ -336,6 +337,10 @@ class BoundaryInfoInterface(CacheableInterface):
         return np.equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 0)
 
     def check_boundary_types(self, assert_unique_type=(1,), assert_some_type=()):
+        for bt in self.boundary_types:
+            if bt not in KNOWN_BOUNDARY_TYPES:
+                self.logger.warning(f'Unknown boundary type: {bt}')
+
         if assert_unique_type:
             for codim in assert_unique_type:
                 assert np.all(self.unique_boundary_type_mask(codim))

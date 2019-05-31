@@ -14,8 +14,8 @@ class BlockOperatorBase(OperatorBase):
 
     def _operators(self):
         """Iterator over operators."""
-        for (i, j) in np.ndindex(self._blocks.shape):
-            yield self._blocks[i, j]
+        for (i, j) in np.ndindex(self.blocks.shape):
+            yield self.blocks[i, j]
 
     def __init__(self, blocks):
         blocks = np.array(blocks)
@@ -28,7 +28,7 @@ class BlockOperatorBase(OperatorBase):
         else:
             if blocks.ndim == 1:
                 blocks.shape = (len(blocks), 1)
-        self._blocks = blocks
+        self.blocks = blocks
         assert all(isinstance(op, OperatorInterface) or op is None for op in self._operators())
 
         # check if every row/column contains at least one operator
@@ -50,7 +50,7 @@ class BlockOperatorBase(OperatorBase):
         # turn Nones to ZeroOperators
         for (i, j) in np.ndindex(blocks.shape):
             if blocks[i, j] is None:
-                self._blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
+                self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
         self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
         self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
@@ -61,13 +61,13 @@ class BlockOperatorBase(OperatorBase):
 
     @property
     def H(self):
-        return self.adjoint_type(np.vectorize(lambda op: op.H if op else None)(self._blocks.T))
+        return self.adjoint_type(np.vectorize(lambda op: op.H if op else None)(self.blocks.T))
 
     def apply(self, U, mu=None):
         assert U in self.source
 
         V_blocks = [None for i in range(self.num_range_blocks)]
-        for (i, j), op in np.ndenumerate(self._blocks):
+        for (i, j), op in np.ndenumerate(self.blocks):
             Vi = op.apply(U.block(j) if self.blocked_source else U, mu=mu)
             if V_blocks[i] is None:
                 V_blocks[i] = Vi
@@ -80,7 +80,7 @@ class BlockOperatorBase(OperatorBase):
         assert V in self.range
 
         U_blocks = [None for j in range(self.num_source_blocks)]
-        for (i, j), op in np.ndenumerate(self._blocks):
+        for (i, j), op in np.ndenumerate(self.blocks):
             Uj = op.apply_adjoint(V.block(i) if self.blocked_range else V, mu=mu)
             if U_blocks[j] is None:
                 U_blocks[j] = Uj
@@ -90,10 +90,10 @@ class BlockOperatorBase(OperatorBase):
         return self.source.make_array(U_blocks) if self.blocked_source else U_blocks[0]
 
     def assemble(self, mu=None):
-        blocks = np.empty(self._blocks.shape, dtype=object)
-        for (i, j) in np.ndindex(self._blocks.shape):
-            blocks[i, j] = self._blocks[i, j].assemble(mu)
-        if np.all(blocks == self._blocks):
+        blocks = np.empty(self.blocks.shape, dtype=object)
+        for (i, j) in np.ndindex(self.blocks.shape):
+            blocks[i, j] = self.blocks[i, j].assemble(mu)
+        if np.all(blocks == self.blocks):
             return self
         else:
             return self.__class__(blocks)
@@ -108,7 +108,7 @@ class BlockOperatorBase(OperatorBase):
             return R
 
         subspaces = self.range.subspaces if self.blocked_range else [self.range]
-        blocks = [process_row(row, space) for row, space in zip(self._blocks, subspaces)]
+        blocks = [process_row(row, space) for row, space in zip(self.blocks, subspaces)]
         return self.range.make_array(blocks) if self.blocked_range else blocks[0]
 
     def as_source_array(self, mu=None):
@@ -121,7 +121,7 @@ class BlockOperatorBase(OperatorBase):
             return R
 
         subspaces = self.source.subspaces if self.blocked_source else [self.source]
-        blocks = [process_col(col, space) for col, space in zip(self._blocks.T, subspaces)]
+        blocks = [process_col(col, space) for col, space in zip(self.blocks.T, subspaces)]
         return self.source.make_array(blocks) if self.blocked_source else blocks[0]
 
 
@@ -198,23 +198,23 @@ class BlockDiagonalOperator(BlockOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V_blocks = [self._blocks[i, i].apply(U.block(i), mu=mu) for i in range(self.num_range_blocks)]
+        V_blocks = [self.blocks[i, i].apply(U.block(i), mu=mu) for i in range(self.num_range_blocks)]
         return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [self._blocks[i, i].apply_adjoint(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
+        U_blocks = [self.blocks[i, i].apply_adjoint(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        U_blocks = [self._blocks[i, i].apply_inverse(V.block(i), mu=mu, least_squares=least_squares)
+        U_blocks = [self.blocks[i, i].apply_inverse(V.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
-        V_blocks = [self._blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu, least_squares=least_squares)
+        V_blocks = [self.blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
         return self.range.make_array(V_blocks)
 
@@ -222,8 +222,8 @@ class BlockDiagonalOperator(BlockOperator):
         blocks = np.empty((self.num_source_blocks,), dtype=object)
         assembled = True
         for i in range(self.num_source_blocks):
-            block_i = self._blocks[i, i].assemble(mu)
-            assembled = assembled and block_i == self._blocks[i, i]
+            block_i = self.blocks[i, i].assemble(mu)
+            assembled = assembled and block_i == self.blocks[i, i]
             blocks[i] = block_i
         if assembled:
             return self

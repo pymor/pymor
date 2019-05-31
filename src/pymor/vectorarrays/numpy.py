@@ -341,9 +341,9 @@ class NumpyVectorSpace(VectorSpaceInterface):
         See :attr:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id`.
     """
 
-    def __init__(self, dim, id_=None):
+    def __init__(self, dim, id=None):
         self.dim = dim
-        self.id = id_
+        self.id = id
 
     def __eq__(self, other):
         return type(other) is type(self) and self.dim == other.dim and self.id == other.id
@@ -377,23 +377,23 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj, id_=None):
-        return cls._array_factory(obj, id_=id_)
+    def make_array(cls, obj, id=None):
+        return cls._array_factory(obj, id=id)
 
     @make_array.instancemethod
     def make_array(self, obj):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data, id_=None, ensure_copy=False):
-        return cls._array_factory(data.copy() if ensure_copy else data, id_=id_)
+    def from_numpy(cls, data, id=None, ensure_copy=False):
+        return cls._array_factory(data.copy() if ensure_copy else data, id=id)
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
         return self._array_factory(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
-    def from_file(cls, path, key=None, single_vector=False, transpose=False, id_=None):
+    def from_file(cls, path, key=None, single_vector=False, transpose=False, id=None):
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
         array = load_matrix(path, key=key)
@@ -406,14 +406,14 @@ class NumpyVectorSpace(VectorSpaceInterface):
             array = array.reshape((1, -1))
         if transpose:
             array = array.T
-        return cls.make_array(array, id_=id_)
+        return cls.make_array(array, id=id)
 
     @from_file.instancemethod
     def from_file(self, path, key=None, single_vector=False, transpose=False):
-        return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose, id_=self.id)
+        return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose, id=self.id)
 
     @classmethod
-    def _array_factory(cls, array, space=None, id_=None):
+    def _array_factory(cls, array, space=None, id=None):
         if type(array) is np.ndarray:
             pass
         elif issparse(array):
@@ -424,7 +424,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
             assert array.ndim == 1
             array = np.reshape(array, (1, -1))
         if space is None:
-            return NumpyVectorArray(array, cls(array.shape[1], id_))
+            return NumpyVectorArray(array, cls(array.shape[1], id))
         else:
             assert array.shape[1] == space.dim
             return NumpyVectorArray(array, space)

@@ -116,9 +116,9 @@ if config.HAVE_FENICS:
 
     class FenicsVectorSpace(ListVectorSpace):
 
-        def __init__(self, V, id_='STATE'):
+        def __init__(self, V, id='STATE'):
             self.V = V
-            self.id = id_
+            self.id = id
 
         @property
         def dim(self):
@@ -156,6 +156,8 @@ if config.HAVE_FENICS:
 
         def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
             assert matrix.rank() == 2
+            self.source_space = source_space
+            self.range_space = range_space
             self.source = FenicsVectorSpace(source_space)
             self.range = FenicsVectorSpace(range_space)
             self.matrix = matrix

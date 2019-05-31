@@ -13,8 +13,8 @@ from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def CGVectorSpace(grid, id_='STATE'):
-    return NumpyVectorSpace(grid.size(grid.dim), id_)
+def CGVectorSpace(grid, id='STATE'):
+    return NumpyVectorSpace(grid.size(grid.dim), id)
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):

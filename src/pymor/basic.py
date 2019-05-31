@@ -47,7 +47,7 @@ from pymor.discretizers.fv import discretize_stationary_fv, discretize_instation
 from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction, LincombFunction
 from pymor.functions.bitmap import BitmapFunction
 
-from pymor.grids.boundaryinfos import EmptyBoundaryInfo, BoundaryInfoFromIndicators, AllDirichletBoundaryInfo
+from pymor.grids.boundaryinfos import EmptyBoundaryInfo, GenericBoundaryInfo, AllDirichletBoundaryInfo
 from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid

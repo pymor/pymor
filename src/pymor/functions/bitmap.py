@@ -34,6 +34,7 @@ class BitmapFunction(FunctionBase):
         if not img.mode == "L":
             self.logger.warning("Image " + filename + " not in grayscale mode. Convertig to grayscale.")
             img = img.convert('L')
+        self.filename = filename
         self.bitmap = np.array(img).T[:, ::-1]
         self.bounding_box = bounding_box
         self.lower_left = np.array(bounding_box[0])

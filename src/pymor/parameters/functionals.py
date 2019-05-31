@@ -35,6 +35,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
             component_shape = () if component_shape == 0 else (component_shape,)
         self.build_parameter_type({component_name: component_shape})
         self.component_name = component_name
+        self.component_shape = component_shape
         self.coordinates = coordinates
         assert len(coordinates) == len(component_shape)
         assert not component_shape or coordinates < component_shape
@@ -64,12 +65,12 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
 
     def __init__(self, mapping, parameter_type, name=None):
         self.name = name
-        self._mapping = mapping
+        self.mapping = mapping
         self.build_parameter_type(parameter_type)
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
-        value = self._mapping(mu)
+        value = self.mapping(mu)
         # ensure that we return a number not an array
         if isinstance(value, np.ndarray):
             return value.item()

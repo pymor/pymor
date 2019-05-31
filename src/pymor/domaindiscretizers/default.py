@@ -7,7 +7,7 @@ import numpy as np
 
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
 from pymor.domaindescriptions.polygonal import PolygonalDomain
-from pymor.grids.boundaryinfos import BoundaryInfoFromIndicators, EmptyBoundaryInfo
+from pymor.grids.boundaryinfos import GenericBoundaryInfo, EmptyBoundaryInfo
 from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
@@ -83,7 +83,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
         indicators = {bt: indicator_factory(domain_description, bt)
                       for bt in domain_description.boundary_types}
-        bi = BoundaryInfoFromIndicators(grid, indicators)
+        bi = GenericBoundaryInfo.from_indicators(grid, indicators)
 
         return grid, bi
 
@@ -109,7 +109,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
         indicators = {bt: indicator_factory(domain_description, bt)
                       for bt in domain_description.boundary_types}
-        bi = BoundaryInfoFromIndicators(grid, indicators)
+        bi = GenericBoundaryInfo.from_indicators(grid, indicators)
 
         return grid, bi
 
@@ -142,7 +142,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
         indicators = {bt: indicator_factory(domain_description, bt)
                       for bt in domain_description.boundary_types}
-        bi = BoundaryInfoFromIndicators(grid, indicators)
+        bi = GenericBoundaryInfo.from_indicators(grid, indicators)
 
         return grid, bi
 
@@ -170,9 +170,9 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         else:
             return discretize_TorusDomain()
     elif isinstance(domain_description, PolygonalDomain):
-        from pymor.grids.gmsh import GmshGrid
+        from pymor.grids.unstructured import UnstructuredTriangleGrid
         from pymor.domaindiscretizers.gmsh import discretize_gmsh
-        assert grid_type is None or grid_type is GmshGrid
+        assert grid_type is None or grid_type is UnstructuredTriangleGrid
         return discretize_gmsh(domain_description, clscale=diameter)
     else:
         grid_type = grid_type or OnedGrid

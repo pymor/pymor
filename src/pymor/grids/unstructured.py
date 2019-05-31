@@ -12,23 +12,37 @@ from pymor.grids._unstructured import compute_edges
 class UnstructuredTriangleGrid(AffineGridInterface):
     """A generic unstructured, triangular grid.
 
-    Parameters
-    ----------
-    vertices
-        A (num_vertices, 2)-shaped |array| containing the coordinates
-        of all vertices in the grid. The row numbers in the array will
-        be the global indices of the given vertices (codim 2 entities).
-    faces
-        A (num_faces, 3)-shaped |array| containing the global indices
-        of the vertices which define a given triangle in the grid.
-        The row numbers in the array will be the global indices of the
-        given triangles (codim 0 entities).
+    Use :meth:`~UnstructuredTriangleGrid.from_vertices` to instantiate
+    the grid from vertex coordinates and connectivity data.
     """
 
     dim = 2
     reference_element = triangle
 
-    def __init__(self, vertices, faces):
+    def __init__(self, sizes, subentity_data, embedding_data):
+        self.sizes = sizes
+        self.subentity_data = subentity_data
+        self.embedding_data = embedding_data
+        vertices = self.centers(2)
+        self.domain = np.array([[np.min(vertices[:, 0]), np.min(vertices[:, 1])],
+                                [np.max(vertices[:, 0]), np.max(vertices[:, 1])]])
+
+    @classmethod
+    def from_vertices(cls, vertices, faces):
+        """Instantiate grid from vertex coordinates and connectivity data.
+
+        Parameters
+        ----------
+        vertices
+            A (num_vertices, 2)-shaped |array| containing the coordinates
+            of all vertices in the grid. The row numbers in the array will
+            be the global indices of the given vertices (codim 2 entities).
+        faces
+            A (num_faces, 3)-shaped |array| containing the global indices
+            of the vertices which define a given triangle in the grid.
+            The row numbers in the array will be the global indices of the
+            given triangles (codim 0 entities).
+        """
         assert faces.shape[1] == 3
         assert np.min(faces) == 0
         assert np.max(faces) == len(vertices) - 1
@@ -42,15 +56,15 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         TRANS = COORDS[:, 1:, :] - SHIFTS[:, np.newaxis, :]
         TRANS = TRANS.swapaxes(1, 2)
 
-        self.__embeddings = (TRANS, SHIFTS)
-        self.__subentities = (np.arange(len(faces), dtype=np.int32).reshape(-1, 1), edges, faces)
-        self.__sizes = (len(faces), num_edges, len(vertices))
-        self.domain = np.array([[np.min(vertices[:, 0]), np.min(vertices[:, 1])],
-                                [np.max(vertices[:, 0]), np.max(vertices[:, 1])]])
+        sizes = (len(faces), num_edges, len(vertices))
+        subentity_data = (np.arange(len(faces), dtype=np.int32).reshape(-1, 1), edges, faces)
+        embedding_data = (TRANS, SHIFTS)
+
+        return cls(sizes, subentity_data, embedding_data)
 
     def size(self, codim=0):
         assert 0 <= codim <= 2, 'Invalid codimension'
-        return self.__sizes[codim]
+        return self.sizes[codim]
 
     def subentities(self, codim=0, subentity_codim=None):
         assert 0 <= codim <= 2, 'Invalid codimension'
@@ -58,13 +72,13 @@ class UnstructuredTriangleGrid(AffineGridInterface):
             subentity_codim = codim + 1
         assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimensoin'
         if codim == 0:
-            return self.__subentities[subentity_codim]
+            return self.subentity_data[subentity_codim]
         else:
             return super().subentities(codim, subentity_codim)
 
     def embeddings(self, codim=0):
         if codim == 0:
-            return self.__embeddings
+            return self.embedding_data
         else:
             return super().embeddings(codim)
 
@@ -97,4 +111,4 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
 
     def __str__(self):
-        return 'UnstructuredTriangleGrid with {} triangles, {} edges, {} vertices'.format(*self.__sizes)
+        return 'UnstructuredTriangleGrid with {} triangles, {} edges, {} vertices'.format(*self.sizes)

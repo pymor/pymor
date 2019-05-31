@@ -66,24 +66,24 @@ class ConstantFunction(FunctionBase):
         assert dim_domain > 0
         assert isinstance(value, (Number, np.ndarray))
         value = np.array(value)
-        self._value = value
+        self.value = value
         self.dim_domain = dim_domain
         self.shape_range = value.shape
         self.name = name
 
     def __str__(self):
-        return f'{self.name}: x -> {self._value}'
+        return f'{self.name}: x -> {self.value}'
 
     def __repr__(self):
-        return f'ConstantFunction({repr(self._value)}, {self.dim_domain})'
+        return f'ConstantFunction({repr(self.value)}, {self.dim_domain})'
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
         if x.ndim == 1:
-            return np.array(self._value)
+            return np.array(self.value)
         else:
-            return np.tile(self._value, x.shape[:-1] + (1,) * len(self.shape_range))
+            return np.tile(self.value, x.shape[:-1] + (1,) * len(self.shape_range))
 
 
 class GenericFunction(FunctionBase):
@@ -120,12 +120,12 @@ class GenericFunction(FunctionBase):
         self.dim_domain = dim_domain
         self.shape_range = shape_range if isinstance(shape_range, tuple) else (shape_range,)
         self.name = name
-        self._mapping = mapping
+        self.mapping = mapping
         if parameter_type is not None:
             self.build_parameter_type(parameter_type)
 
     def __str__(self):
-        return f'{self.name}: x -> {self._mapping}'
+        return f'{self.name}: x -> {self.mapping}'
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
@@ -133,9 +133,9 @@ class GenericFunction(FunctionBase):
 
         if self.parametric:
             mu = self.parse_parameter(mu)
-            v = self._mapping(x, mu)
+            v = self.mapping(x, mu)
         else:
-            v = self._mapping(x)
+            v = self.mapping(x)
 
         if v.shape != x.shape[:-1] + self.shape_range:
             assert v.shape[:len(x.shape) - 1] == x.shape[:-1]

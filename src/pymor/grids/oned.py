@@ -26,24 +26,24 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
     def __init__(self, domain=(0, 1), num_intervals=4, identify_left_right=False):
         assert domain[0] < domain[1]
         self.reference_element = line
-        self._domain = np.array(domain)
-        self._num_intervals = num_intervals
-        self._identify_left_right = identify_left_right
+        self.domain = np.array(domain)
+        self.num_intervals = num_intervals
+        self.identify_left_right = identify_left_right
         self._sizes = [num_intervals, num_intervals] if identify_left_right else [num_intervals, num_intervals + 1]
-        self._width = np.abs(self._domain[1] - self._domain[0]) / self._num_intervals
-        self.__subentities = np.vstack((np.arange(self._num_intervals, dtype=np.int32),
-                                        np.arange(self._num_intervals, dtype=np.int32) + 1))
+        self._width = np.abs(self.domain[1] - self.domain[0]) / self.num_intervals
+        self.__subentities = np.vstack((np.arange(self.num_intervals, dtype=np.int32),
+                                        np.arange(self.num_intervals, dtype=np.int32) + 1))
         if identify_left_right:
             self.__subentities[-1, -1] = 0
-        self.__A = np.ones(self._num_intervals, dtype=np.int32)[:, np.newaxis, np.newaxis] * self._width
-        self.__B = (self._domain[0] + self._width * (np.arange(self._num_intervals, dtype=np.int32)))[:, np.newaxis]
+        self.__A = np.ones(self.num_intervals, dtype=np.int32)[:, np.newaxis, np.newaxis] * self._width
+        self.__B = (self.domain[0] + self._width * (np.arange(self.num_intervals, dtype=np.int32)))[:, np.newaxis]
 
     def __reduce__(self):
         return (OnedGrid,
-                (self._domain, self._num_intervals, self._identify_left_right))
+                (self.domain, self.num_intervals, self.identify_left_right))
 
     def __str__(self):
-        return (f'OnedGrid, domain [{self._domain[0]},{self._domain[1]}], '
+        return (f'OnedGrid, domain [{self.domain[0]},{self.domain[1]}], '
                 f'{self.size(0)} elements, {self.size(1)} vertices')
 
     def __repr__(self):
@@ -71,7 +71,7 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
             return super().embeddings(codim)
 
     def bounding_box(self):
-        return np.array(self._domain).reshape((2, 1))
+        return np.array(self.domain).reshape((2, 1))
 
     def orthogonal_centers(self):
         return self.centers(0)
