@@ -309,7 +309,7 @@ class ImmutableMeta(UberMeta):
         assert all(hasattr(instance, arg) for arg in instance._init_arguments), \
             (f'__init__ arguments {[arg for arg in instance._init_arguments if not hasattr(instance,arg)]} '
              f'of class {self.__name__} not available as instance attributes\n'
-             f'(all __init__ args need to be attributes for _with to work).')
+             f'(all __init__ args need to be attributes for with_ to work).')
         instance._locked = True
         return instance
 
