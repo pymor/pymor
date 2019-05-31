@@ -451,6 +451,26 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
         return self
 
 
+def autoassign(init_function):
+
+    signature = inspect.signature(init_function)
+
+    @wraps(init_function)
+    def wrapped_init(self, *args, **kwargs):
+        bound_args = signature.bind(self, *args, **kwargs)
+        ret_val = init_function(self, *args, **kwargs)
+
+        for param in signature.parameters.values():
+            if param.name == 'self':
+                continue
+            if param.name not in self.__dict__:
+                setattr(self, param.name, bound_args.arguments.get(param.name, param.default))
+
+        return ret_val
+
+    return wrapped_init
+
+
 def generate_sid(obj, debug=False):
     """Generate a unique |state id| for the current state of the given object.
 

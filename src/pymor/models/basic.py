@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.timestepping import TimeStepperInterface
+from pymor.core.interfaces import autoassign
 from pymor.models.interfaces import ModelInterface
 from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.operators.interfaces import OperatorInterface
@@ -15,14 +16,12 @@ class ModelBase(ModelInterface):
 
     sid_ignore = ModelInterface.sid_ignore | {'visualizer'}
 
+    @autoassign
     def __init__(self, products=None, estimator=None, visualizer=None,
                  cache_region=None, name=None, **kwargs):
 
         self.products = FrozenDict(products or {})
-        self.estimator = estimator
-        self.visualizer = visualizer
         self.enable_caching(cache_region)
-        self.name = name
 
         if products:
             for k, v in products.items():
@@ -110,24 +109,22 @@ class StationaryModel(ModelBase):
         Dict of all product |Operators| associated with the model.
     """
 
+    @autoassign
     def __init__(self, operator, rhs, outputs=None, products=None,
                  parameter_space=None, estimator=None, visualizer=None, cache_region=None, name=None):
 
         if isinstance(rhs, VectorArrayInterface):
             assert rhs in operator.range
-            rhs = VectorOperator(rhs, name='rhs')
+            self.rhs = rhs = VectorOperator(rhs, name='rhs')
 
         assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
 
         super().__init__(products=products,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
-        self.operator = operator
-        self.rhs = rhs
         self.outputs = FrozenDict(outputs or {})
-        self.solution_space = self.operator.source
+        self.solution_space = operator.source
         self.build_parameter_type(operator, rhs)
-        self.parameter_space = parameter_space
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -219,16 +216,17 @@ class InstationaryModel(ModelBase):
         Dict of all product |Operators| associated with the model.
     """
 
+    @autoassign
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
                  outputs=None, products=None, parameter_space=None, estimator=None, visualizer=None,
                  cache_region=None, name=None):
 
         if isinstance(rhs, VectorArrayInterface):
             assert rhs in operator.range
-            rhs = VectorOperator(rhs, name='rhs')
+            self.rhs = rhs = VectorOperator(rhs, name='rhs')
         if isinstance(initial_data, VectorArrayInterface):
             assert initial_data in operator.source
-            initial_data = VectorOperator(initial_data, name='initial_data')
+            self.initial_data = initial_data = VectorOperator(initial_data, name='initial_data')
 
         assert isinstance(time_stepper, TimeStepperInterface)
         assert initial_data.source.is_scalar
@@ -240,17 +238,9 @@ class InstationaryModel(ModelBase):
 
         super().__init__(products=products, estimator=estimator,
                          visualizer=visualizer, cache_region=cache_region, name=name)
-        self.T = T
-        self.initial_data = initial_data
-        self.operator = operator
-        self.rhs = rhs
-        self.mass = mass
-        self.solution_space = self.operator.source
-        self.time_stepper = time_stepper
-        self.num_values = num_values
+        self.solution_space = operator.source
         self.outputs = FrozenDict(outputs or {})
-        self.build_parameter_type(self.initial_data, self.operator, self.rhs, self.mass, provides={'_t': 0})
-        self.parameter_space = parameter_space
+        self.build_parameter_type(initial_data, operator, rhs, mass, provides={'_t': 0})
 
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))

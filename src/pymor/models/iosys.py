@@ -10,6 +10,7 @@ from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
+from pymor.core.interfaces import autoassign
 from pymor.models.basic import ModelBase
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
@@ -23,12 +24,10 @@ SPARSE_MIN_SIZE = 1000  # minimal sparse problem size for which to warn about co
 class InputOutputModel(ModelBase):
     """Base class for input-output systems."""
 
+    @autoassign
     def __init__(self, input_space, output_space, cont_time=True,
                  estimator=None, visualizer=None, cache_region='memory', name=None):
-        self.input_space = input_space
-        self.output_space = output_space
         super().__init__(estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
-        self.cont_time = cont_time
 
     @property
     def input_dim(self):
@@ -116,11 +115,11 @@ class InputOutputModel(ModelBase):
 class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
 
+    @autoassign
     def __init__(self, input_space, solution_space, output_space, cont_time=True,
                  estimator=None, visualizer=None, cache_region='memory', name=None):
         super().__init__(input_space, output_space, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
-        self.solution_space = solution_space
 
     @property
     def order(self):
@@ -194,6 +193,7 @@ class LTIModel(InputStateOutputModel):
         The |Operator| E.
     """
 
+    @autoassign
     def __init__(self, A, B, C, D=None, E=None, cont_time=True,
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -222,12 +222,8 @@ class LTIModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
-        self.solver_options = solver_options
+        self.D = D  # can't use autoassign since D might have been modified above
+        self.E = E  # can't use autoassign since E might have been modified above
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
@@ -1008,6 +1004,7 @@ class SecondOrderModel(InputStateOutputModel):
         The |Operator| D.
     """
 
+    @autoassign
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
                  solver_options=None, estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -1030,14 +1027,8 @@ class SecondOrderModel(InputStateOutputModel):
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
-        self.M = M
-        self.E = E
-        self.K = K
-        self.B = B
-        self.Cp = Cp
-        self.Cv = Cv
-        self.D = D
-        self.solver_options = solver_options
+        self.Cv = Cv  # can't use autoassign since Cv might have been modified above
+        self.D = D    # can't use autoassign since D might have been modified above
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
@@ -1581,6 +1572,7 @@ class LinearDelayModel(InputStateOutputModel):
         The |Operator| E.
     """
 
+    @autoassign
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True,
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -1604,13 +1596,8 @@ class LinearDelayModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.Ad = Ad
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
-        self.tau = tau
+        self.D = D  # can't use autoassign since D might have been modified above
+        self.E = E  # can't use autoassign since E might have been modified above
         self.q = len(Ad)
 
     def __add__(self, other):
@@ -1940,6 +1927,7 @@ class LinearStochasticModel(InputStateOutputModel):
         The |Operator| E.
     """
 
+    @autoassign
     def __init__(self, A, As, B, C, D=None, E=None, cont_time=True,
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -1962,12 +1950,8 @@ class LinearStochasticModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.As = As
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
+        self.D = D  # can't use autoassign since D might have been modified above
+        self.E = E  # can't use autoassign since E might have been modified above
         self.q = len(As)
 
 
@@ -2054,6 +2038,7 @@ class BilinearModel(InputStateOutputModel):
         The |Operator| E.
     """
 
+    @autoassign
     def __init__(self, A, N, B, C, D, E=None, cont_time=True,
                  estimator=None, visualizer=None,
                  cache_region='memory', name=None):
@@ -2076,10 +2061,6 @@ class BilinearModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.N = N
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
+        self.D = D  # can't use autoassign since D might have been modified above
+        self.E = E  # can't use autoassign since E might have been modified above
         self.linear = False
