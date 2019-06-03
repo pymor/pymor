@@ -15,7 +15,23 @@ jobs:
     inputs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
-
+  - script: |
+        curl -o D:\opengl32.dll.7z --retry 5 --retry-connrefused --retry-delay 30 -v https://pymor.github.io/dist/opengl32.dll.7z
+    displayName: download OpenGL Library
+  - task: ExtractFiles@1
+    inputs:
+        archiveFilePatterns: D:\opengl32.dll.7z
+        destinationFolder: D:\tmp\
+        cleanDestinationFolder: false
+  - task: CopyFiles@2
+    inputs:
+        sourceFolder: D:\tmp\
+        contents: 'opengl32.dll*'
+        targetFolder: C:\Windows\SysWOW64\mesadrv.dll
+        overWrite: true
+  - script: |
+        REG IMPORT .ci\azure\replace_opengl_imp.reg
+    displayName: 'Install OpenGL Library'
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: conda create --yes --quiet --name pyMORenv
@@ -33,25 +49,8 @@ jobs:
         pip install -r requirements-optional.txt
         pip install -r requirements.txt
         pip install pytest-azurepipelines
-        curl --retry 5 --retry-connrefused --retry-delay 30 -v https://pymor.github.io/dist/opengl32.dll.7z -o D:\opengl32.dll.7z
-    displayName: Install Anaconda packages
-  - task: ExtractFiles@1
-    inputs:
-        archiveFilePatterns: D:\opengl32.dll.7z
-        destinationFolder: D:\tmp\
-        cleanDestinationFolder: false
-  - task: CopyFiles@2
-    inputs:
-        sourceFolder: D:\tmp\
-        contents: 'opengl32.dll*'
-        targetFolder: C:\Windows\SysWOW64\mesadrv.dll
-        overWrite: true
-  - script: |
-        REG IMPORT .ci\azure\replace_opengl_imp.reg
-        call activate pyMORenv
         python -c "import numpy"
         python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_RENDERER)); print(gl.glGetString(gl.GL_VERSION))"
-
         python setup.py build_ext -i
         py.test -r sxX -k "thermalblock_adaptive"
     displayName: 'Tests'
