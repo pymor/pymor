@@ -247,6 +247,29 @@ class BasicInterface(metaclass=UberMeta):
             self._uid = UID()
         return self._uid.uid
 
+    def __repr__(self):
+        init_sig = inspect.signature(self.__init__)
+        args = []
+        vals = []
+        for arg, description in init_sig.parameters.items():
+            if arg == 'self':
+                continue
+            vals.append(repr(getattr(self, arg, '??')))
+            if description.default == description.empty:
+                args.append('')
+            else:
+                args.append(f'{arg}=')
+        if any('\n' in val for val in vals):
+            reprs = []
+            for arg, val in zip(args, vals):
+                vs = val.split('\n')
+                reprs.append('\n'.join([f'    {arg}{vs[0]}'] + [' ' * (4+len(arg)) + v for v in vs[1:]]))
+            sep = ",\n"
+            return f'''{type(self).__name__}(
+{sep.join(reprs)}
+)'''
+        return f'{type(self).__name__}({", ".join(reprs)})'
+
 
 abstractmethod = abc.abstractmethod
 abstractproperty = abc.abstractproperty
