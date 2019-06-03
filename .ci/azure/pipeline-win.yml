@@ -33,7 +33,7 @@ jobs:
         pip install -r requirements-optional.txt
         pip install -r requirements.txt
         pip install pytest-azurepipelines
-        curl https://pymor.github.io/dist/opengl32.dll.7z -o D:\opengl32.dll.7z
+        curl --retry 5 --retry-connrefused --retry-delay 30 -v https://pymor.github.io/dist/opengl32.dll.7z -o D:\opengl32.dll.7z
     displayName: Install Anaconda packages
   - task: ExtractFiles@1
     inputs:
