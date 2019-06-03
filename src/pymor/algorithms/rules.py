@@ -327,7 +327,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
             3. `a` is an `iterable` and each of its elements is either an |Operator| or `None`.
         """
         children = set()
-        for k in obj.with_arguments:
+        for k in obj._init_arguments:
             try:
                 v = getattr(obj, k)
                 if (isinstance(v, OperatorInterface)

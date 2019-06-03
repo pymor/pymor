@@ -150,7 +150,7 @@ _OperatorToWrap = namedtuple('_OperatorToWrap', 'operator mpi_range mpi_source')
 def _mpi_wrap_model_manage_operators(obj_id, mpi_spaces, use_with, base_type):
     m = mpi.get_object(obj_id)
 
-    attributes_to_consider = m.with_arguments if use_with else base_type._init_arguments
+    attributes_to_consider = m._init_arguments if use_with else base_type._init_arguments
     attributes = {k: getattr(m, k) for k in attributes_to_consider}
 
     def process_attribute(v):
