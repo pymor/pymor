@@ -780,10 +780,10 @@ class TransferFunction(InputOutputModel):
         The input |VectorSpace|. Typically `NumpyVectorSpace(m)` where m is the number of inputs.
     output_space
         The output |VectorSpace|. Typically `NumpyVectorSpace(p)` where p is the number of outputs.
-    H
+    tf
         The transfer function defined at least on the open right complex half-plane.
         `H(s)` is a |NumPy array| of shape `(p, m)`.
-    dH
+    dtf
         The complex derivative of `H`.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
@@ -800,11 +800,11 @@ class TransferFunction(InputOutputModel):
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, input_space, output_space, H, dH, cont_time=True, cache_region='memory', name=None):
+    def __init__(self, input_space, output_space, tf, dtf, cont_time=True, cache_region='memory', name=None):
         assert cont_time in (True, False)
 
-        self.tf = self.H = H
-        self.dtf = self.dH = dH
+        self.tf = tf
+        self.dtf = dtf
         super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name)
 
     def eval_tf(self, s):
@@ -819,9 +819,9 @@ class TransferFunction(InputOutputModel):
         assert self.input_space == other.input_space
         assert self.output_space == other.output_space
 
-        H = lambda s: self.eval_tf(s) + other.eval_tf(s)
-        dH = lambda s: self.eval_dtf(s) + other.eval_dtf(s)
-        return self.with_(H=H, dH=dH)
+        tf = lambda s: self.eval_tf(s) + other.eval_tf(s)
+        dtf = lambda s: self.eval_dtf(s) + other.eval_dtf(s)
+        return self.with_(tf=tf, dtf=dtf)
 
     __radd__ = __add__
 
@@ -831,9 +831,9 @@ class TransferFunction(InputOutputModel):
         assert self.input_space == other.input_space
         assert self.output_space == other.output_space
 
-        H = lambda s: self.eval_tf(s) - other.eval_tf(s)
-        dH = lambda s: self.eval_dtf(s) - other.eval_dtf(s)
-        return self.with_(H=H, dH=dH)
+        tf = lambda s: self.eval_tf(s) - other.eval_tf(s)
+        dtf = lambda s: self.eval_dtf(s) - other.eval_dtf(s)
+        return self.with_(tf=tf, dtf=dtf)
 
     def __rsub__(self, other):
         assert isinstance(other, InputOutputModel)
@@ -841,32 +841,32 @@ class TransferFunction(InputOutputModel):
         assert self.input_space == other.input_space
         assert self.output_space == other.output_space
 
-        H = lambda s: other.eval_tf(s) - self.eval_tf(s)
-        dH = lambda s: other.eval_dtf(s) - self.eval_dtf(s)
-        return self.with_(H=H, dH=dH)
+        tf = lambda s: other.eval_tf(s) - self.eval_tf(s)
+        dtf = lambda s: other.eval_dtf(s) - self.eval_dtf(s)
+        return self.with_(tf=tf, dtf=dtf)
 
     def __neg__(self):
-        H = lambda s: -self.eval_tf(s)
-        dH = lambda s: -self.eval_dtf(s)
-        return self.with_(H=H, dH=dH)
+        tf = lambda s: -self.eval_tf(s)
+        dtf = lambda s: -self.eval_dtf(s)
+        return self.with_(tf=tf, dtf=dtf)
 
     def __mul__(self, other):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
         assert self.input_space == other.output_space
 
-        H = lambda s: self.eval_tf(s) @ other.eval_tf(s)
-        dH = lambda s: self.eval_dtf(s) @ other.eval_dtf(s)
-        return self.with_(H=H, dH=dH)
+        tf = lambda s: self.eval_tf(s) @ other.eval_tf(s)
+        dtf = lambda s: self.eval_dtf(s) @ other.eval_dtf(s)
+        return self.with_(tf=tf, dtf=dtf)
 
     def __rmul__(self, other):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
         assert self.output_space == other.input_space
 
-        H = lambda s: other.eval_tf(s) @ self.eval_tf(s)
-        dH = lambda s: other.eval_dtf(s) @ self.eval_dtf(s)
-        return self.with_(H=H, dH=dH)
+        tf = lambda s: other.eval_tf(s) @ self.eval_tf(s)
+        dtf = lambda s: other.eval_dtf(s) @ self.eval_dtf(s)
+        return self.with_(tf=tf, dtf=dtf)
 
     @cached
     def h2_norm(self, return_norm_only=True, **quad_kwargs):
