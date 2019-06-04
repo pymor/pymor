@@ -5,7 +5,6 @@
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.models.interfaces import ModelInterface
 from pymor.operators.constructions import VectorOperator, induced_norm
-from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
