@@ -5,7 +5,6 @@
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.models.interfaces import ModelInterface
 from pymor.operators.constructions import VectorOperator, induced_norm
-from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
@@ -126,6 +125,7 @@ class StationaryModel(ModelBase):
         self.rhs = rhs
         self.outputs = FrozenDict(outputs or {})
         self.solution_space = self.operator.source
+        self.linear = operator.linear and all(output.linear for output in self.outputs.values())
         self.build_parameter_type(operator, rhs)
         self.parameter_space = parameter_space
 
@@ -249,6 +249,7 @@ class InstationaryModel(ModelBase):
         self.time_stepper = time_stepper
         self.num_values = num_values
         self.outputs = FrozenDict(outputs or {})
+        self.linear = operator.linear and all(output.linear for output in self.outputs.values())
         self.build_parameter_type(self.initial_data, self.operator, self.rhs, self.mass, provides={'_t': 0})
         self.parameter_space = parameter_space
 
