@@ -48,7 +48,7 @@ full-test:
 	@echo
 	@echo "--------------------------------------------------------------------------------"
 	@echo
-	py.test --flakes --pep8 --cov=pymor --cov-report=html --cov-report=xml src/pymortests
+	py.test --flakes --pep8 --cov=src/pymor --cov-report=html --cov-report=xml src/pymortests
 
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
