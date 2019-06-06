@@ -11,23 +11,47 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.models.basic import ModelBase
-from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
-                                   SecondOrderModelOperator)
-from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
+from pymor.operators.block import (
+    BlockOperator,
+    BlockRowOperator,
+    BlockColumnOperator,
+    BlockDiagonalOperator,
+    SecondOrderModelOperator,
+)
+from pymor.operators.constructions import (
+    IdentityOperator,
+    LincombOperator,
+    ZeroOperator,
+)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 
-SPARSE_MIN_SIZE = 1000  # minimal sparse problem size for which to warn about converting to dense
+SPARSE_MIN_SIZE = (
+    1000
+)  # minimal sparse problem size for which to warn about converting to dense
 
 
 class InputOutputModel(ModelBase):
     """Base class for input-output systems."""
 
-    def __init__(self, input_space, output_space, cont_time=True,
-                 estimator=None, visualizer=None, cache_region='memory', name=None):
+    def __init__(
+        self,
+        input_space,
+        output_space,
+        cont_time=True,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
         self.input_space = input_space
         self.output_space = output_space
-        super().__init__(estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
+        super().__init__(
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
         self.cont_time = cont_time
 
     @property
@@ -95,6 +119,7 @@ class InputOutputModel(ModelBase):
         """
         if ax is None:
             import matplotlib.pyplot as plt
+
             ax = plt.gca()
 
         freq = w / (2 * np.pi) if Hz else w
@@ -104,11 +129,11 @@ class InputOutputModel(ModelBase):
         else:
             out = ax.loglog(freq, mag, **mpl_kwargs)
 
-        ax.set_title('Magnitude Bode Plot')
-        freq_unit = ' (Hz)' if Hz else ' (rad/s)'
-        ax.set_xlabel('Frequency' + freq_unit)
-        mag_unit = ' (dB)' if dB else ''
-        ax.set_ylabel('Magnitude' + mag_unit)
+        ax.set_title("Magnitude Bode Plot")
+        freq_unit = " (Hz)" if Hz else " (rad/s)"
+        ax.set_xlabel("Frequency" + freq_unit)
+        mag_unit = " (dB)" if dB else ""
+        ax.set_ylabel("Magnitude" + mag_unit)
 
         return out
 
@@ -116,10 +141,26 @@ class InputOutputModel(ModelBase):
 class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
 
-    def __init__(self, input_space, solution_space, output_space, cont_time=True,
-                 estimator=None, visualizer=None, cache_region='memory', name=None):
-        super().__init__(input_space, output_space, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
+    def __init__(
+        self,
+        input_space,
+        solution_space,
+        output_space,
+        cont_time=True,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
+        super().__init__(
+            input_space,
+            output_space,
+            cont_time=cont_time,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
         self.solution_space = solution_space
 
     @property
@@ -194,9 +235,20 @@ class LTIModel(InputStateOutputModel):
         The |Operator| E.
     """
 
-    def __init__(self, A, B, C, D=None, E=None, cont_time=True,
-                 solver_options=None, estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+    def __init__(
+        self,
+        A,
+        B,
+        C,
+        D=None,
+        E=None,
+        cont_time=True,
+        solver_options=None,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
 
         assert A.linear
         assert A.source == A.range
@@ -216,11 +268,21 @@ class LTIModel(InputStateOutputModel):
         assert E.source == A.source
 
         assert cont_time in (True, False)
-        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
+        assert solver_options is None or solver_options.keys() <= {
+            "lyap_lrcf",
+            "lyap_dense",
+        }
 
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+        super().__init__(
+            B.source,
+            A.source,
+            C.range,
+            cont_time=cont_time,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
 
         self.A = A
         self.B = B
@@ -230,9 +292,21 @@ class LTIModel(InputStateOutputModel):
         self.solver_options = solver_options
 
     @classmethod
-    def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
-                      state_id='STATE', solver_options=None, estimator=None,
-                      visualizer=None, cache_region='memory', name=None):
+    def from_matrices(
+        cls,
+        A,
+        B,
+        C,
+        D=None,
+        E=None,
+        cont_time=True,
+        state_id="STATE",
+        solver_options=None,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
         """Create |LTIModel| from matrices.
 
         Parameters
@@ -286,14 +360,36 @@ class LTIModel(InputStateOutputModel):
         if E is not None:
             E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
 
-        return cls(A, B, C, D, E, cont_time=cont_time,
-                   solver_options=solver_options, estimator=estimator, visualizer=visualizer,
-                   cache_region=cache_region, name=name)
+        return cls(
+            A,
+            B,
+            C,
+            D,
+            E,
+            cont_time=cont_time,
+            solver_options=solver_options,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
 
     @classmethod
-    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True,
-                   state_id='STATE', solver_options=None, estimator=None, visualizer=None,
-                   cache_region='memory', name=None):
+    def from_files(
+        cls,
+        A_file,
+        B_file,
+        C_file,
+        D_file=None,
+        E_file=None,
+        cont_time=True,
+        state_id="STATE",
+        solver_options=None,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -340,15 +436,33 @@ class LTIModel(InputStateOutputModel):
         D = load_matrix(D_file) if D_file is not None else None
         E = load_matrix(E_file) if E_file is not None else None
 
-        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 state_id=state_id, solver_options=solver_options,
-                                 estimator=estimator, visualizer=visualizer,
-                                 cache_region=cache_region, name=name)
+        return cls.from_matrices(
+            A,
+            B,
+            C,
+            D,
+            E,
+            cont_time=cont_time,
+            state_id=state_id,
+            solver_options=solver_options,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
 
     @classmethod
-    def from_mat_file(cls, file_name, cont_time=True,
-                      state_id='STATE', solver_options=None, estimator=None,
-                      visualizer=None, cache_region='memory', name=None):
+    def from_mat_file(
+        cls,
+        file_name,
+        cont_time=True,
+        state_id="STATE",
+        solver_options=None,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
         """Create |LTIModel| from matrices stored in a .mat file.
 
         Parameters
@@ -381,25 +495,44 @@ class LTIModel(InputStateOutputModel):
             The |LTIModel| with operators A, B, C, D, and E.
         """
         import scipy.io as spio
+
         mat_dict = spio.loadmat(file_name)
 
-        assert 'A' in mat_dict and 'B' in mat_dict and 'C' in mat_dict
+        assert "A" in mat_dict and "B" in mat_dict and "C" in mat_dict
 
-        A = mat_dict['A']
-        B = mat_dict['B']
-        C = mat_dict['C']
-        D = mat_dict['D'] if 'D' in mat_dict else None
-        E = mat_dict['E'] if 'E' in mat_dict else None
+        A = mat_dict["A"]
+        B = mat_dict["B"]
+        C = mat_dict["C"]
+        D = mat_dict["D"] if "D" in mat_dict else None
+        E = mat_dict["E"] if "E" in mat_dict else None
 
-        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 state_id=state_id, solver_options=solver_options,
-                                 estimator=estimator, visualizer=visualizer,
-                                 cache_region=cache_region, name=name)
+        return cls.from_matrices(
+            A,
+            B,
+            C,
+            D,
+            E,
+            cont_time=cont_time,
+            state_id=state_id,
+            solver_options=solver_options,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
 
     @classmethod
-    def from_abcde_files(cls, files_basename, cont_time=True,
-                         state_id='STATE', solver_options=None, estimator=None,
-                         visualizer=None, cache_region='memory', name=None):
+    def from_abcde_files(
+        cls,
+        files_basename,
+        cont_time=True,
+        state_id="STATE",
+        solver_options=None,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
         """Create |LTIModel| from matrices stored in a .[ABCDE] files.
 
         Parameters
@@ -433,16 +566,34 @@ class LTIModel(InputStateOutputModel):
         from pymor.tools.io import load_matrix
         import os.path
 
-        A = load_matrix(files_basename + '.A')
-        B = load_matrix(files_basename + '.B')
-        C = load_matrix(files_basename + '.C')
-        D = load_matrix(files_basename + '.D') if os.path.isfile(files_basename + '.D') else None
-        E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
+        A = load_matrix(files_basename + ".A")
+        B = load_matrix(files_basename + ".B")
+        C = load_matrix(files_basename + ".C")
+        D = (
+            load_matrix(files_basename + ".D")
+            if os.path.isfile(files_basename + ".D")
+            else None
+        )
+        E = (
+            load_matrix(files_basename + ".E")
+            if os.path.isfile(files_basename + ".E")
+            else None
+        )
 
-        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
-                                 state_id=state_id, solver_options=solver_options,
-                                 estimator=estimator, visualizer=visualizer,
-                                 cache_region=cache_region, name=name)
+        return cls.from_matrices(
+            A,
+            B,
+            C,
+            D,
+            E,
+            cont_time=cont_time,
+            state_id=state_id,
+            solver_options=solver_options,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
 
     def __add__(self, other):
         """Add an |LTIModel|."""
@@ -457,8 +608,12 @@ class LTIModel(InputStateOutputModel):
         B = BlockColumnOperator([self.B, other.B])
         C = BlockRowOperator([self.C, other.C])
         D = self.D + other.D
-        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        if isinstance(self.E, IdentityOperator) and isinstance(
+            other.E, IdentityOperator
+        ):
+            E = IdentityOperator(
+                BlockVectorSpace([self.solution_space, other.solution_space])
+            )
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
@@ -479,8 +634,12 @@ class LTIModel(InputStateOutputModel):
             D = ZeroOperator(self.output_space, self.input_space)
         else:
             D = self.D - other.D
-        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        if isinstance(self.E, IdentityOperator) and isinstance(
+            other.E, IdentityOperator
+        ):
+            E = IdentityOperator(
+                BlockVectorSpace([self.solution_space, other.solution_space])
+            )
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
@@ -497,8 +656,7 @@ class LTIModel(InputStateOutputModel):
         if not isinstance(other, LTIModel):
             return NotImplemented
 
-        A = BlockOperator([[self.A, self.B @ other.C],
-                           [None, other.A]])
+        A = BlockOperator([[self.A, self.B @ other.C], [None, other.A]])
         B = BlockColumnOperator([self.B @ other.D, other.B])
         C = BlockRowOperator([self.C, self.D @ other.C])
         D = self.D @ other.D
@@ -518,13 +676,19 @@ class LTIModel(InputStateOutputModel):
         """
         if self.order >= SPARSE_MIN_SIZE:
             if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
-                self.logger.warning('Converting operator A to a NumPy array.')
-            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse)
-                    or isinstance(self.E, IdentityOperator)):
-                self.logger.warning('Converting operator E to a NumPy array.')
+                self.logger.warning("Converting operator A to a NumPy array.")
+            if not (
+                (isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse)
+                or isinstance(self.E, IdentityOperator)
+            ):
+                self.logger.warning("Converting operator E to a NumPy array.")
 
-        A = to_matrix(self.A, format='dense')
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
+        A = to_matrix(self.A, format="dense")
+        E = (
+            None
+            if isinstance(self.E, IdentityOperator)
+            else to_matrix(self.E, format="dense")
+        )
         return spla.eigvals(A, E)
 
     def eval_tf(self, s):
@@ -560,9 +724,13 @@ class LTIModel(InputStateOutputModel):
         if self.input_dim <= self.output_dim:
             tfs = C.apply(sEmA.apply_inverse(B.as_range_array())).to_numpy().T
         else:
-            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
+            tfs = (
+                B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array()))
+                .to_numpy()
+                .conj()
+            )
         if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense')
+            tfs += to_matrix(D, format="dense")
         return tfs
 
     def eval_dtf(self, s):
@@ -595,10 +763,23 @@ class LTIModel(InputStateOutputModel):
 
         sEmA = (s * E - A).assemble()
         if self.input_dim <= self.output_dim:
-            dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.as_range_array())))).to_numpy().T
+            dtfs = (
+                -C.apply(
+                    sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.as_range_array())))
+                )
+                .to_numpy()
+                .T
+            )
         else:
-            dtfs = -B.apply_adjoint(sEmA.apply_inverse_adjoint(E.apply_adjoint(sEmA.apply_inverse_adjoint(
-                C.as_source_array())))).to_numpy().conj()
+            dtfs = (
+                -B.apply_adjoint(
+                    sEmA.apply_inverse_adjoint(
+                        E.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array()))
+                    )
+                )
+                .to_numpy()
+                .conj()
+            )
         return dtfs
 
     @cached
@@ -636,26 +817,42 @@ class LTIModel(InputStateOutputModel):
         B = self.B
         C = self.C
         E = self.E if not isinstance(self.E, IdentityOperator) else None
-        options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
-        options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
+        options_lrcf = (
+            self.solver_options.get("lyap_lrcf") if self.solver_options else None
+        )
+        options_dense = (
+            self.solver_options.get("lyap_dense") if self.solver_options else None
+        )
 
-        if typ == 'c_lrcf':
-            return solve_lyap_lrcf(A, E, B.as_range_array(), trans=False, options=options_lrcf)
-        elif typ == 'o_lrcf':
-            return solve_lyap_lrcf(A, E, C.as_source_array(), trans=True, options=options_lrcf)
-        elif typ == 'c_dense':
-            return solve_lyap_dense(to_matrix(A, format='dense'),
-                                    to_matrix(E, format='dense') if E else None,
-                                    to_matrix(B, format='dense'),
-                                    trans=False, options=options_dense)
-        elif typ == 'o_dense':
-            return solve_lyap_dense(to_matrix(A, format='dense'),
-                                    to_matrix(E, format='dense') if E else None,
-                                    to_matrix(C, format='dense'),
-                                    trans=True, options=options_dense)
+        if typ == "c_lrcf":
+            return solve_lyap_lrcf(
+                A, E, B.as_range_array(), trans=False, options=options_lrcf
+            )
+        elif typ == "o_lrcf":
+            return solve_lyap_lrcf(
+                A, E, C.as_source_array(), trans=True, options=options_lrcf
+            )
+        elif typ == "c_dense":
+            return solve_lyap_dense(
+                to_matrix(A, format="dense"),
+                to_matrix(E, format="dense") if E else None,
+                to_matrix(B, format="dense"),
+                trans=False,
+                options=options_dense,
+            )
+        elif typ == "o_dense":
+            return solve_lyap_dense(
+                to_matrix(A, format="dense"),
+                to_matrix(E, format="dense") if E else None,
+                to_matrix(C, format="dense"),
+                trans=True,
+                options=options_dense,
+            )
         else:
-            raise NotImplementedError(f"Only 'c_lrcf', 'o_lrcf', 'c_dense', and 'o_dense' types are possible "
-                                      f"({typ} was given).")
+            raise NotImplementedError(
+                f"Only 'c_lrcf', 'o_lrcf', 'c_dense', and 'o_dense' types are possible "
+                f"({typ} was given)."
+            )
 
     @cached
     def _hsv_U_V(self):
@@ -673,10 +870,10 @@ class LTIModel(InputStateOutputModel):
         Vh
             |NumPy array| of right singluar vectors.
         """
-        cf = self.gramian('c_lrcf')
-        of = self.gramian('o_lrcf')
+        cf = self.gramian("c_lrcf")
+        of = self.gramian("o_lrcf")
 
-        U, hsv, Vh = spla.svd(self.E.apply2(of, cf), lapack_driver='gesvd')
+        U, hsv, Vh = spla.svd(self.E.apply2(of, cf), lapack_driver="gesvd")
         return hsv, U.T, Vh
 
     def hsv(self):
@@ -702,10 +899,10 @@ class LTIModel(InputStateOutputModel):
         if not self.cont_time:
             raise NotImplementedError
         if self.input_dim <= self.output_dim:
-            cf = self.gramian('c_lrcf')
+            cf = self.gramian("c_lrcf")
             return np.sqrt(self.C.apply(cf).l2_norm2().sum())
         else:
-            of = self.gramian('o_lrcf')
+            of = self.gramian("o_lrcf")
             return np.sqrt(self.B.apply_adjoint(of).l2_norm2().sum())
 
     @cached
@@ -734,25 +931,49 @@ class LTIModel(InputStateOutputModel):
             raise NotImplementedError
 
         if self.order >= SPARSE_MIN_SIZE:
-            for op_name in ['A', 'B', 'C']:
-                if not (isinstance(getattr(self, op_name), NumpyMatrixOperator)
-                        and not getattr(self, op_name).sparse):
-                    self.logger.warning('Converting operator ' + op_name + ' to a NumPy array.')
-            if not ((isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse)
-                    or isinstance(self.D, ZeroOperator)):
-                self.logger.warning('Converting operator D to a NumPy array.')
-            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse)
-                    or isinstance(self.E, IdentityOperator)):
-                self.logger.warning('Converting operator E to a NumPy array.')
+            for op_name in ["A", "B", "C"]:
+                if not (
+                    isinstance(getattr(self, op_name), NumpyMatrixOperator)
+                    and not getattr(self, op_name).sparse
+                ):
+                    self.logger.warning(
+                        "Converting operator " + op_name + " to a NumPy array."
+                    )
+            if not (
+                (isinstance(self.D, NumpyMatrixOperator) and not self.D.sparse)
+                or isinstance(self.D, ZeroOperator)
+            ):
+                self.logger.warning("Converting operator D to a NumPy array.")
+            if not (
+                (isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse)
+                or isinstance(self.E, IdentityOperator)
+            ):
+                self.logger.warning("Converting operator E to a NumPy array.")
 
         from slycot import ab13dd
-        dico = 'C' if self.cont_time else 'D'
-        jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
-        equil = 'S' if ab13dd_equilibrate else 'N'
-        jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
-        A, B, C, D, E = map(lambda op: to_matrix(op, format='dense'),
-                            (self.A, self.B, self.C, self.D, self.E))
-        norm, fpeak = ab13dd(dico, jobe, equil, jobd, self.order, self.input_dim, self.output_dim, A, E, B, C, D)
+
+        dico = "C" if self.cont_time else "D"
+        jobe = "I" if isinstance(self.E, IdentityOperator) else "G"
+        equil = "S" if ab13dd_equilibrate else "N"
+        jobd = "Z" if isinstance(self.D, ZeroOperator) else "D"
+        A, B, C, D, E = map(
+            lambda op: to_matrix(op, format="dense"),
+            (self.A, self.B, self.C, self.D, self.E),
+        )
+        norm, fpeak = ab13dd(
+            dico,
+            jobe,
+            equil,
+            jobd,
+            self.order,
+            self.input_dim,
+            self.output_dim,
+            A,
+            E,
+            B,
+            C,
+            D,
+        )
 
         if return_fpeak:
             return norm, fpeak
@@ -800,12 +1021,27 @@ class TransferFunction(InputOutputModel):
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, input_space, output_space, tf, dtf, cont_time=True, cache_region='memory', name=None):
+    def __init__(
+        self,
+        input_space,
+        output_space,
+        tf,
+        dtf,
+        cont_time=True,
+        cache_region="memory",
+        name=None,
+    ):
         assert cont_time in (True, False)
 
         self.tf = tf
         self.dtf = dtf
-        super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name)
+        super().__init__(
+            input_space,
+            output_space,
+            cont_time=cont_time,
+            cache_region=cache_region,
+            name=name,
+        )
 
     def eval_tf(self, s):
         return self.tf(s)
@@ -900,11 +1136,15 @@ class TransferFunction(InputOutputModel):
             raise NotImplementedError
 
         import scipy.integrate as spint
-        if 'epsabs' not in quad_kwargs:
-            quad_kwargs['epsabs'] = 0
-        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
-                              -np.inf, np.inf,
-                              **quad_kwargs)
+
+        if "epsabs" not in quad_kwargs:
+            quad_kwargs["epsabs"] = 0
+        quad_out = spint.quad(
+            lambda w: spla.norm(self.eval_tf(w * 1j)) ** 2,
+            -np.inf,
+            np.inf,
+            **quad_kwargs,
+        )
         norm = np.sqrt(quad_out[0] / (2 * np.pi))
         if return_norm_only:
             return norm
@@ -1008,9 +1248,22 @@ class SecondOrderModel(InputStateOutputModel):
         The |Operator| D.
     """
 
-    def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
-                 solver_options=None, estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+    def __init__(
+        self,
+        M,
+        E,
+        K,
+        B,
+        Cp,
+        Cv=None,
+        D=None,
+        cont_time=True,
+        solver_options=None,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
 
         assert M.linear and M.source == M.range
         assert E.linear and E.source == E.range == M.source
@@ -1025,11 +1278,21 @@ class SecondOrderModel(InputStateOutputModel):
         assert D.linear and D.source == B.source and D.range == Cp.range
 
         assert cont_time in (True, False)
-        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
+        assert solver_options is None or solver_options.keys() <= {
+            "lyap_lrcf",
+            "lyap_dense",
+        }
 
-        super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+        super().__init__(
+            B.source,
+            M.source,
+            Cp.range,
+            cont_time=cont_time,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
         self.M = M
         self.E = E
         self.K = K
@@ -1040,9 +1303,23 @@ class SecondOrderModel(InputStateOutputModel):
         self.solver_options = solver_options
 
     @classmethod
-    def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
-                      state_id='STATE', solver_options=None, estimator=None,
-                      visualizer=None, cache_region='memory', name=None):
+    def from_matrices(
+        cls,
+        M,
+        E,
+        K,
+        B,
+        Cp,
+        Cv=None,
+        D=None,
+        cont_time=True,
+        state_id="STATE",
+        solver_options=None,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
         """Create a second order system from matrices.
 
         Parameters
@@ -1101,9 +1378,21 @@ class SecondOrderModel(InputStateOutputModel):
         if D is not None:
             D = NumpyMatrixOperator(D)
 
-        return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
-                   solver_options=solver_options, estimator=estimator, visualizer=visualizer,
-                   cache_region=cache_region, name=name)
+        return cls(
+            M,
+            E,
+            K,
+            B,
+            Cp,
+            Cv,
+            D,
+            cont_time=cont_time,
+            solver_options=solver_options,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
 
     @cached
     def to_lti(self):
@@ -1154,16 +1443,23 @@ class SecondOrderModel(InputStateOutputModel):
         lti
             |LTIModel| equivalent to the second-order model.
         """
-        return LTIModel(A=SecondOrderModelOperator(self.E, self.K),
-                        B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
-                        C=BlockRowOperator([self.Cp, self.Cv]),
-                        D=self.D,
-                        E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source]))
-                           if isinstance(self.M, IdentityOperator) else
-                           BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
-                        cont_time=self.cont_time,
-                        solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
-                        cache_region=self.cache_region, name=self.name + '_first_order')
+        return LTIModel(
+            A=SecondOrderModelOperator(self.E, self.K),
+            B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
+            C=BlockRowOperator([self.Cp, self.Cv]),
+            D=self.D,
+            E=(
+                IdentityOperator(BlockVectorSpace([self.M.source, self.M.source]))
+                if isinstance(self.M, IdentityOperator)
+                else BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])
+            ),
+            cont_time=self.cont_time,
+            solver_options=self.solver_options,
+            estimator=self.estimator,
+            visualizer=self.visualizer,
+            cache_region=self.cache_region,
+            name=self.name + "_first_order",
+        )
 
     def __add__(self, other):
         """Add a |SecondOrderModel| or an |LTIModel|."""
@@ -1240,10 +1536,8 @@ class SecondOrderModel(InputStateOutputModel):
             return NotImplemented
 
         M = BlockDiagonalOperator([self.M, other.M])
-        E = BlockOperator([[self.E, -(self.B @ other.Cv)],
-                           [None, other.E]])
-        K = BlockOperator([[self.K, -(self.B @ other.Cp)],
-                           [None, other.K]])
+        E = BlockOperator([[self.E, -(self.B @ other.Cv)], [None, other.E]])
+        K = BlockOperator([[self.K, -(self.B @ other.Cp)], [None, other.K]])
         B = BlockColumnOperator([self.B @ other.D, other.B])
         Cp = BlockRowOperator([self.Cp, self.D @ other.Cp])
         Cv = BlockRowOperator([self.Cv, self.D @ other.Cv])
@@ -1301,15 +1595,22 @@ class SecondOrderModel(InputStateOutputModel):
         Cv = self.Cv
         D = self.D
 
-        s2MpsEpK = s**2 * M + s * E + K
+        s2MpsEpK = s ** 2 * M + s * E + K
         if self.input_dim <= self.output_dim:
             CppsCv = Cp + s * Cv
             tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T
         else:
-            tfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(
-                Cp.as_source_array() + Cv.as_source_array() * s.conjugate())).to_numpy().conj()
+            tfs = (
+                B.apply_adjoint(
+                    s2MpsEpK.apply_inverse_adjoint(
+                        Cp.as_source_array() + Cv.as_source_array() * s.conjugate()
+                    )
+                )
+                .to_numpy()
+                .conj()
+            )
         if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense')
+            tfs += to_matrix(D, format="dense")
         return tfs
 
     def eval_dtf(self, s):
@@ -1342,18 +1643,41 @@ class SecondOrderModel(InputStateOutputModel):
         Cp = self.Cp
         Cv = self.Cv
 
-        s2MpsEpK = (s**2 * M + s * E + K).assemble()
+        s2MpsEpK = (s ** 2 * M + s * E + K).assemble()
         sM2pE = 2 * s * M + E
         if self.input_dim <= self.output_dim:
             dtfs = Cv.apply(s2MpsEpK.apply_inverse(B.as_range_array())).to_numpy().T * s
             CppsCv = Cp + s * Cv
-            dtfs -= CppsCv.apply(s2MpsEpK.apply_inverse(sM2pE.apply(s2MpsEpK.apply_inverse(
-                B.as_range_array())))).to_numpy().T
+            dtfs -= (
+                CppsCv.apply(
+                    s2MpsEpK.apply_inverse(
+                        sM2pE.apply(s2MpsEpK.apply_inverse(B.as_range_array()))
+                    )
+                )
+                .to_numpy()
+                .T
+            )
         else:
-            dtfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(Cv.as_source_array())).to_numpy().conj() * s
-            dtfs -= B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(sM2pE.apply_adjoint(
-                s2MpsEpK.apply_inverse_adjoint(Cp.as_source_array()
-                                               + Cv.as_source_array() * s.conjugate())))).to_numpy().conj()
+            dtfs = (
+                B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(Cv.as_source_array()))
+                .to_numpy()
+                .conj()
+                * s
+            )
+            dtfs -= (
+                B.apply_adjoint(
+                    s2MpsEpK.apply_inverse_adjoint(
+                        sM2pE.apply_adjoint(
+                            s2MpsEpK.apply_inverse_adjoint(
+                                Cp.as_source_array()
+                                + Cv.as_source_array() * s.conjugate()
+                            )
+                        )
+                    )
+                )
+                .to_numpy()
+                .conj()
+            )
         return dtfs
 
     @cached
@@ -1386,20 +1710,30 @@ class SecondOrderModel(InputStateOutputModel):
         If typ is `'pc_dense'`, `'vc_dense'`, `'po_dense'` or `'vo_dense'`, then the Gramian as a
         |NumPy array|.
         """
-        if typ not in ['pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',
-                       'pc_dense', 'vc_dense', 'po_dense', 'vo_dense']:
-            raise NotImplementedError(f"Only 'pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',"
-                                      f" 'pc_dense', 'vc_dense', 'po_dense', and 'vo_dense' types are possible"
-                                      f" ({typ} was given).")
+        if typ not in [
+            "pc_lrcf",
+            "vc_lrcf",
+            "po_lrcf",
+            "vo_lrcf",
+            "pc_dense",
+            "vc_dense",
+            "po_dense",
+            "vo_dense",
+        ]:
+            raise NotImplementedError(
+                f"Only 'pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',"
+                f" 'pc_dense', 'vc_dense', 'po_dense', and 'vo_dense' types are possible"
+                f" ({typ} was given)."
+            )
 
-        if typ.endswith('lrcf'):
-            return self.to_lti().gramian(typ[1:]).block(0 if typ.startswith('p') else 1)
+        if typ.endswith("lrcf"):
+            return self.to_lti().gramian(typ[1:]).block(0 if typ.startswith("p") else 1)
         else:
             g = self.to_lti().gramian(typ[1:])
-            if typ.startswith('p'):
-                return g[:self.order, :self.order]
+            if typ.startswith("p"):
+                return g[: self.order, : self.order]
             else:
-                return g[self.order:, self.order:]
+                return g[self.order :, self.order :]
 
     def psv(self):
         """Position singular values.
@@ -1411,7 +1745,7 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('po_lrcf').inner(self.gramian('pc_lrcf')))
+        return spla.svdvals(self.gramian("po_lrcf").inner(self.gramian("pc_lrcf")))
 
     def vsv(self):
         """Velocity singular values.
@@ -1423,7 +1757,9 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('vo_lrcf').inner(self.gramian('vc_lrcf'), product=self.M))
+        return spla.svdvals(
+            self.gramian("vo_lrcf").inner(self.gramian("vc_lrcf"), product=self.M)
+        )
 
     def pvsv(self):
         """Position-velocity singular values.
@@ -1435,7 +1771,9 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('vo_lrcf').inner(self.gramian('pc_lrcf'), product=self.M))
+        return spla.svdvals(
+            self.gramian("vo_lrcf").inner(self.gramian("pc_lrcf"), product=self.M)
+        )
 
     def vpsv(self):
         """Velocity-position singular values.
@@ -1447,7 +1785,7 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('po_lrcf').inner(self.gramian('vc_lrcf')))
+        return spla.svdvals(self.gramian("po_lrcf").inner(self.gramian("vc_lrcf")))
 
     @cached
     def h2_norm(self):
@@ -1479,8 +1817,9 @@ class SecondOrderModel(InputStateOutputModel):
         fpeak
             Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
-        return self.to_lti().hinf_norm(return_fpeak=return_fpeak,
-                                       ab13dd_equilibrate=ab13dd_equilibrate)
+        return self.to_lti().hinf_norm(
+            return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate
+        )
 
     @cached
     def hankel_norm(self):
@@ -1581,14 +1920,30 @@ class LinearDelayModel(InputStateOutputModel):
         The |Operator| E.
     """
 
-    def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True,
-                 estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+    def __init__(
+        self,
+        A,
+        Ad,
+        tau,
+        B,
+        C,
+        D=None,
+        E=None,
+        cont_time=True,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
 
         assert A.linear and A.source == A.range
         assert isinstance(Ad, tuple) and len(Ad) > 0
         assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in Ad)
-        assert isinstance(tau, tuple) and len(tau) == len(Ad) and all(taui > 0 for taui in tau)
+        assert (
+            isinstance(tau, tuple)
+            and len(tau) == len(Ad)
+            and all(taui > 0 for taui in tau)
+        )
         assert B.linear and B.range == A.source
         assert C.linear and C.source == A.range
 
@@ -1600,9 +1955,16 @@ class LinearDelayModel(InputStateOutputModel):
 
         assert cont_time in (True, False)
 
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+        super().__init__(
+            B.source,
+            A.source,
+            C.range,
+            cont_time=cont_time,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
 
         self.A = A
         self.Ad = Ad
@@ -1623,22 +1985,35 @@ class LinearDelayModel(InputStateOutputModel):
             other = other.to_lti()
 
         if isinstance(other, LTIModel):
-            Ad = tuple(BlockDiagonalOperator([op, ZeroOperator(other.solution_space, other.solution_space)])
-                       for op in self.Ad)
+            Ad = tuple(
+                BlockDiagonalOperator(
+                    [op, ZeroOperator(other.solution_space, other.solution_space)]
+                )
+                for op in self.Ad
+            )
             tau = self.tau
         elif isinstance(other, LinearDelayModel):
             tau = tuple(set(self.tau).union(set(other.tau)))
             Ad = [None for _ in tau]
             for i, taui in enumerate(tau):
                 if taui in self.tau and taui in other.tau:
-                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
-                                                   other.Ad[other.tau.index(taui)]])
+                    Ad[i] = BlockDiagonalOperator(
+                        [self.Ad[self.tau.index(taui)], other.Ad[other.tau.index(taui)]]
+                    )
                 elif taui in self.tau:
-                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
-                                                   ZeroOperator(other.solution_space, other.solution_space)])
+                    Ad[i] = BlockDiagonalOperator(
+                        [
+                            self.Ad[self.tau.index(taui)],
+                            ZeroOperator(other.solution_space, other.solution_space),
+                        ]
+                    )
                 else:
-                    Ad[i] = BlockDiagonalOperator([ZeroOperator(self.solution_space, self.solution_space),
-                                                   other.Ad[other.tau.index(taui)]])
+                    Ad[i] = BlockDiagonalOperator(
+                        [
+                            ZeroOperator(self.solution_space, self.solution_space),
+                            other.Ad[other.tau.index(taui)],
+                        ]
+                    )
             Ad = tuple(Ad)
         else:
             return NotImplemented
@@ -1669,22 +2044,35 @@ class LinearDelayModel(InputStateOutputModel):
             other = other.to_lti()
 
         if isinstance(other, LTIModel):
-            Ad = tuple(BlockDiagonalOperator([op, ZeroOperator(other.solution_space, other.solution_space)])
-                       for op in self.Ad)
+            Ad = tuple(
+                BlockDiagonalOperator(
+                    [op, ZeroOperator(other.solution_space, other.solution_space)]
+                )
+                for op in self.Ad
+            )
             tau = self.tau
         elif isinstance(other, LinearDelayModel):
             tau = tuple(set(self.tau).union(set(other.tau)))
             Ad = [None for _ in tau]
             for i, taui in enumerate(tau):
                 if taui in self.tau and taui in other.tau:
-                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
-                                                   other.Ad[other.tau.index(taui)]])
+                    Ad[i] = BlockDiagonalOperator(
+                        [self.Ad[self.tau.index(taui)], other.Ad[other.tau.index(taui)]]
+                    )
                 elif taui in self.tau:
-                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
-                                                   ZeroOperator(other.solution_space, other.solution_space)])
+                    Ad[i] = BlockDiagonalOperator(
+                        [
+                            self.Ad[self.tau.index(taui)],
+                            ZeroOperator(other.solution_space, other.solution_space),
+                        ]
+                    )
                 else:
-                    Ad[i] = BlockDiagonalOperator([ZeroOperator(self.solution_space, self.solution_space),
-                                                   other.Ad[other.tau.index(taui)]])
+                    Ad[i] = BlockDiagonalOperator(
+                        [
+                            ZeroOperator(self.solution_space, self.solution_space),
+                            other.Ad[other.tau.index(taui)],
+                        ]
+                    )
             Ad = tuple(Ad)
         else:
             return NotImplemented
@@ -1719,29 +2107,41 @@ class LinearDelayModel(InputStateOutputModel):
             other = other.to_lti()
 
         if isinstance(other, LTIModel):
-            Ad = tuple(BlockDiagonalOperator([op, ZeroOperator(other.solution_space, other.solution_space)])
-                       for op in self.Ad)
+            Ad = tuple(
+                BlockDiagonalOperator(
+                    [op, ZeroOperator(other.solution_space, other.solution_space)]
+                )
+                for op in self.Ad
+            )
             tau = self.tau
         elif isinstance(other, LinearDelayModel):
             tau = tuple(set(self.tau).union(set(other.tau)))
             Ad = [None for _ in tau]
             for i, taui in enumerate(tau):
                 if taui in self.tau and taui in other.tau:
-                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
-                                                   other.Ad[other.tau.index(taui)]])
+                    Ad[i] = BlockDiagonalOperator(
+                        [self.Ad[self.tau.index(taui)], other.Ad[other.tau.index(taui)]]
+                    )
                 elif taui in self.tau:
-                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
-                                                   ZeroOperator(other.solution_space, other.solution_space)])
+                    Ad[i] = BlockDiagonalOperator(
+                        [
+                            self.Ad[self.tau.index(taui)],
+                            ZeroOperator(other.solution_space, other.solution_space),
+                        ]
+                    )
                 else:
-                    Ad[i] = BlockDiagonalOperator([ZeroOperator(self.solution_space, self.solution_space),
-                                                   other.Ad[other.tau.index(taui)]])
+                    Ad[i] = BlockDiagonalOperator(
+                        [
+                            ZeroOperator(self.solution_space, self.solution_space),
+                            other.Ad[other.tau.index(taui)],
+                        ]
+                    )
             Ad = tuple(Ad)
         else:
             return NotImplemented
 
         E = BlockDiagonalOperator([self.E, other.E])
-        A = BlockOperator([[self.A, self.B @ other.C],
-                           [None, other.A]])
+        A = BlockOperator([[self.A, self.B @ other.C], [None, other.A]])
         B = BlockColumnOperator([self.B @ other.D, other.B])
         C = BlockRowOperator([self.C, self.D @ other.C])
         D = self.D @ other.D
@@ -1757,10 +2157,13 @@ class LinearDelayModel(InputStateOutputModel):
 
         if isinstance(other, LTIModel):
             E = BlockDiagonalOperator([other.E, self.E])
-            A = BlockOperator([[other.A, other.B @ self.C],
-                               [None, self.A]])
-            Ad = tuple(BlockDiagonalOperator([ZeroOperator(other.solution_space, other.solution_space), op])
-                       for op in self.Ad)
+            A = BlockOperator([[other.A, other.B @ self.C], [None, self.A]])
+            Ad = tuple(
+                BlockDiagonalOperator(
+                    [ZeroOperator(other.solution_space, other.solution_space), op]
+                )
+                for op in self.Ad
+            )
             B = BlockColumnOperator([other.B @ self.D, self.B])
             C = BlockRowOperator([other.C, other.D @ self.C])
             D = other.D @ self.D
@@ -1800,13 +2203,19 @@ class LinearDelayModel(InputStateOutputModel):
         D = self.D
         E = self.E
 
-        middle = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
+        middle = LincombOperator(
+            (E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)
+        )
         if self.input_dim <= self.output_dim:
             tfs = C.apply(middle.apply_inverse(B.as_range_array())).to_numpy().T
         else:
-            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).to_numpy().conj()
+            tfs = (
+                B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array()))
+                .to_numpy()
+                .conj()
+            )
         if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense')
+            tfs += to_matrix(D, format="dense")
         return tfs
 
     def eval_dtf(self, s):
@@ -1843,15 +2252,34 @@ class LinearDelayModel(InputStateOutputModel):
         C = self.C
         E = self.E
 
-        left_and_right = LincombOperator((E, A) + Ad,
-                                         (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)).assemble()
-        middle = LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
+        left_and_right = LincombOperator(
+            (E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)
+        ).assemble()
+        middle = LincombOperator(
+            (E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau)
+        )
         if self.input_dim <= self.output_dim:
-            dtfs = -C.apply(left_and_right.apply_inverse(middle.apply(left_and_right.apply_inverse(
-                B.as_range_array())))).to_numpy().T
+            dtfs = (
+                -C.apply(
+                    left_and_right.apply_inverse(
+                        middle.apply(left_and_right.apply_inverse(B.as_range_array()))
+                    )
+                )
+                .to_numpy()
+                .T
+            )
         else:
-            dtfs = -B.apply_adjoint(left_and_right.apply_inverse_adjoint(middle.apply_adjoint(
-                left_and_right.apply_inverse_adjoint(C.as_source_array())))).to_numpy().conj()
+            dtfs = (
+                -B.apply_adjoint(
+                    left_and_right.apply_inverse_adjoint(
+                        middle.apply_adjoint(
+                            left_and_right.apply_inverse_adjoint(C.as_source_array())
+                        )
+                    )
+                )
+                .to_numpy()
+                .conj()
+            )
         return dtfs
 
 
@@ -1940,9 +2368,20 @@ class LinearStochasticModel(InputStateOutputModel):
         The |Operator| E.
     """
 
-    def __init__(self, A, As, B, C, D=None, E=None, cont_time=True,
-                 estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+    def __init__(
+        self,
+        A,
+        As,
+        B,
+        C,
+        D=None,
+        E=None,
+        cont_time=True,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
 
         assert A.linear and A.source == A.range
         assert isinstance(As, tuple) and len(As) > 0
@@ -1958,9 +2397,16 @@ class LinearStochasticModel(InputStateOutputModel):
 
         assert cont_time in (True, False)
 
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+        super().__init__(
+            B.source,
+            A.source,
+            C.range,
+            cont_time=cont_time,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
 
         self.A = A
         self.As = As
@@ -2054,9 +2500,20 @@ class BilinearModel(InputStateOutputModel):
         The |Operator| E.
     """
 
-    def __init__(self, A, N, B, C, D, E=None, cont_time=True,
-                 estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+    def __init__(
+        self,
+        A,
+        N,
+        B,
+        C,
+        D,
+        E=None,
+        cont_time=True,
+        estimator=None,
+        visualizer=None,
+        cache_region="memory",
+        name=None,
+    ):
 
         assert A.linear and A.source == A.range
         assert B.linear and B.range == A.source
@@ -2072,9 +2529,16 @@ class BilinearModel(InputStateOutputModel):
 
         assert cont_time in (True, False)
 
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+        super().__init__(
+            B.source,
+            A.source,
+            C.range,
+            cont_time=cont_time,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
 
         self.A = A
         self.N = N

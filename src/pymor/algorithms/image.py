@@ -6,16 +6,26 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import Concatenation, LincombOperator, SelectionOperator
+from pymor.operators.constructions import (
+    Concatenation,
+    LincombOperator,
+    SelectionOperator,
+)
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def estimate_image(operators=(), vectors=(),
-                   domain=None, extends=False, orthonormalize=True, product=None,
-                   riesz_representatives=False):
+def estimate_image(
+    operators=(),
+    vectors=(),
+    domain=None,
+    extends=False,
+    orthonormalize=True,
+    product=None,
+    riesz_representatives=False,
+):
     """Estimate the image of given |Operators| for all mu.
 
     Let `operators` be a list of |Operators| with common source and range, and let
@@ -68,16 +78,24 @@ def estimate_image(operators=(), vectors=(),
     """
     assert operators or vectors
     domain_space = operators[0].source if operators else None
-    image_space = operators[0].range if operators \
-        else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
+    image_space = (
+        operators[0].range
+        if operators
+        else vectors[0].space
+        if isinstance(vectors[0], VectorArrayInterface)
         else vectors[0].range
-    assert all(op.source == domain_space and op.range == image_space for op in operators)
+    )
     assert all(
-        isinstance(v, VectorArrayInterface) and (
-            v in image_space
-        )
-        or isinstance(v, OperatorInterface) and (
-            v.range == image_space and isinstance(v.source, NumpyVectorSpace) and v.linear
+        op.source == domain_space and op.range == image_space for op in operators
+    )
+    assert all(
+        isinstance(v, VectorArrayInterface)
+        and (v in image_space)
+        or isinstance(v, OperatorInterface)
+        and (
+            v.range == image_space
+            and isinstance(v.source, NumpyVectorSpace)
+            and v.linear
         )
         for v in vectors
     )
@@ -111,8 +129,15 @@ def estimate_image(operators=(), vectors=(),
     return image
 
 
-def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=None,
-                                orthonormalize=True, product=None, riesz_representatives=False):
+def estimate_image_hierarchical(
+    operators=(),
+    vectors=(),
+    domain=None,
+    extends=None,
+    orthonormalize=True,
+    product=None,
+    riesz_representatives=False,
+):
     """Estimate the image of given |Operators| for all mu.
 
     This is an extended version of :func:`estimate_image`, which calls
@@ -166,16 +191,24 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
     """
     assert operators or vectors
     domain_space = operators[0].source if operators else None
-    image_space = operators[0].range if operators \
-        else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
+    image_space = (
+        operators[0].range
+        if operators
+        else vectors[0].space
+        if isinstance(vectors[0], VectorArrayInterface)
         else vectors[0].range
-    assert all(op.source == domain_space and op.range == image_space for op in operators)
+    )
     assert all(
-        isinstance(v, VectorArrayInterface) and (
-            v in image_space
-        )
-        or isinstance(v, OperatorInterface) and (
-            v.range == image_space and isinstance(v.source, NumpyVectorSpace) and v.linear
+        op.source == domain_space and op.range == image_space for op in operators
+    )
+    assert all(
+        isinstance(v, VectorArrayInterface)
+        and (v in image_space)
+        or isinstance(v, OperatorInterface)
+        and (
+            v.range == image_space
+            and isinstance(v.source, NumpyVectorSpace)
+            and v.linear
         )
         for v in vectors
     )
@@ -183,7 +216,7 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
     assert product is None or product.source == product.range == image_space
     assert extends is None or len(extends) == 2
 
-    logger = getLogger('pymor.algorithms.image.estimate_image_hierarchical')
+    logger = getLogger("pymor.algorithms.image.estimate_image_hierarchical")
 
     if operators and domain is None:
         domain = domain_space.empty()
@@ -191,28 +224,46 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
     if extends:
         image = extends[0]
         image_dims = extends[1]
-        ind_range = range(len(image_dims) - 1, len(domain)) if operators else range(len(image_dims) - 1, 0)
+        ind_range = (
+            range(len(image_dims) - 1, len(domain))
+            if operators
+            else range(len(image_dims) - 1, 0)
+        )
     else:
         image = image_space.empty()
         image_dims = []
         ind_range = range(-1, len(domain)) if operators else [-1]
 
     for i in ind_range:
-        logger.info(f'Estimating image for basis vector {i} ...')
+        logger.info(f"Estimating image for basis vector {i} ...")
         if i == -1:
-            new_image = estimate_image(operators, vectors, None, extends=False,
-                                       orthonormalize=False, product=product,
-                                       riesz_representatives=riesz_representatives)
+            new_image = estimate_image(
+                operators,
+                vectors,
+                None,
+                extends=False,
+                orthonormalize=False,
+                product=product,
+                riesz_representatives=riesz_representatives,
+            )
         else:
-            new_image = estimate_image(operators, [], domain[i], extends=True,
-                                       orthonormalize=False, product=product,
-                                       riesz_representatives=riesz_representatives)
+            new_image = estimate_image(
+                operators,
+                [],
+                domain[i],
+                extends=True,
+                orthonormalize=False,
+                product=product,
+                riesz_representatives=riesz_representatives,
+            )
 
         gram_schmidt_offset = len(image)
         image.append(new_image, remove_from_other=True)
         if orthonormalize:
-            with logger.block('Orthonormalizing ...'):
-                gram_schmidt(image, offset=gram_schmidt_offset, product=product, copy=False)
+            with logger.block("Orthonormalizing ..."):
+                gram_schmidt(
+                    image, offset=gram_schmidt_offset, product=product, copy=False
+                )
             image_dims.append(len(image))
 
     return image, image_dims
@@ -223,8 +274,7 @@ class CollectOperatorRangeRules(RuleTable):
 
     def __init__(self, source, image, extends):
         super().__init__(use_caching=True)
-        self.source, self.image, self.extends = \
-            source, image, extends
+        self.source, self.image, self.extends = source, image, extends
 
     @match_generic(lambda op: op.linear and not op.parametric)
     def action_apply_operator(self, op):
@@ -236,7 +286,7 @@ class CollectOperatorRangeRules(RuleTable):
 
     @match_class(EmpiricalInterpolatedOperator)
     def action_EmpiricalInterpolatedOperator(self, op):
-        if hasattr(op, 'collateral_basis') and not self.extends:
+        if hasattr(op, "collateral_basis") and not self.extends:
             self.image.append(op.collateral_basis)
 
     @match_class(Concatenation)
@@ -246,7 +296,9 @@ class CollectOperatorRangeRules(RuleTable):
         else:
             firstrange = op.operators[-1].range.empty()
             type(self)(self.source, firstrange, self.extends).apply(op.operators[-1])
-            type(self)(firstrange, self.image, self.extends).apply(op.with_(operators=op.operators[:-1]))
+            type(self)(firstrange, self.image, self.extends).apply(
+                op.with_(operators=op.operators[:-1])
+            )
 
 
 class CollectVectorRangeRules(RuleTable):
@@ -275,4 +327,6 @@ class CollectVectorRangeRules(RuleTable):
         else:
             firstrange = op.operators[-1].range.empty()
             self.apply(op.first, firstrange)
-            CollectOperatorRangeRules(firstrange, image, False).apply(op.with_(operators=op.operators[:-1]))
+            CollectOperatorRangeRules(firstrange, image, False).apply(
+                op.with_(operators=op.operators[:-1])
+            )

@@ -31,7 +31,11 @@ def flatten_grid(grid):
         grid to the indices of the corresponding entities in the original grid.
     """
     # special handling of known flat grids
-    if isinstance(grid, (RectGrid, TriaGrid)) and not grid.identify_left_right and not grid.identify_bottom_top:
+    if (
+        isinstance(grid, (RectGrid, TriaGrid))
+        and not grid.identify_left_right
+        and not grid.identify_bottom_top
+    ):
         subentities = grid.subentities(0, grid.dim)
         coordinates = grid.centers(grid.dim)
         entity_map = np.arange(grid.size(grid.dim), dtype=np.int32)
@@ -46,9 +50,19 @@ def flatten_grid(grid):
     superentity_indices = grid.superentity_indices(dim, 0)
     A, B = grid.embeddings(0)
     ref_el_coordinates = grid.reference_element.subentity_embedding(dim)[1]
-    local_coordinates = np.einsum('eij,vj->evi', A, ref_el_coordinates) + B[:, np.newaxis, :]
-    critical_vertices = np.unique(subentities[np.logical_not(np.all(float_cmp(global_coordinates[subentities],
-                                                                              local_coordinates), axis=2))])
+    local_coordinates = (
+        np.einsum("eij,vj->evi", A, ref_el_coordinates) + B[:, np.newaxis, :]
+    )
+    critical_vertices = np.unique(
+        subentities[
+            np.logical_not(
+                np.all(
+                    float_cmp(global_coordinates[subentities], local_coordinates),
+                    axis=2,
+                )
+            )
+        ]
+    )
     del A
     del B
 
@@ -65,11 +79,21 @@ def flatten_grid(grid):
         entity_map = np.empty((0,), dtype=np.int32)
         for i in range(new_points.shape[1]):
             for j in range(i):
-                new_points[:, i] = np.where(supe[:, i] == -1, new_points[:, i],
-                                            np.where(np.all(float_cmp(coord[:, i], coord[:, j]), axis=1),
-                                                     new_points[:, j], new_points[:, i]))
-            new_point_inds = np.where(np.logical_and(new_points[:, i] == -1, supe[:, i] != -1))[0]
-            new_points[new_point_inds, i] = np.arange(num_points, num_points + len(new_point_inds))
+                new_points[:, i] = np.where(
+                    supe[:, i] == -1,
+                    new_points[:, i],
+                    np.where(
+                        np.all(float_cmp(coord[:, i], coord[:, j]), axis=1),
+                        new_points[:, j],
+                        new_points[:, i],
+                    ),
+                )
+            new_point_inds = np.where(
+                np.logical_and(new_points[:, i] == -1, supe[:, i] != -1)
+            )[0]
+            new_points[new_point_inds, i] = np.arange(
+                num_points, num_points + len(new_point_inds)
+            )
             num_points += len(new_point_inds)
             entity_map = np.hstack((entity_map, critical_vertices[new_point_inds]))
 
@@ -90,7 +114,9 @@ def flatten_grid(grid):
         else:
             new_points[supe == -1] = subentities[-1, -1]
         subentities[supe, supi] = new_points
-        super_entities, superentity_indices = inverse_relation(subentities, size_rhs=num_points, with_indices=True)
+        super_entities, superentity_indices = inverse_relation(
+            subentities, size_rhs=num_points, with_indices=True
+        )
         coordinates = local_coordinates[super_entities[:, 0], superentity_indices[:, 0]]
     else:
         coordinates = global_coordinates

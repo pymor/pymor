@@ -18,17 +18,21 @@ class NetworkFilesystemRegion(CacheRegion):
 
     persistent = True
 
-    def __init__(self, server_path, secret=''):
+    def __init__(self, server_path, secret=""):
         self.server = xmlrpc.client.ServerProxy(server_path)
         self.secret = secret
 
     def get(self, key):
         key = base64.b64encode(key)
         response = self.server.get(self.secret, key)
-        assert len(response) == 2 and isinstance(response[0], bool) and isinstance(response[1], str)
+        assert (
+            len(response) == 2
+            and isinstance(response[0], bool)
+            and isinstance(response[1], str)
+        )
         if response[0]:
             file_path = response[1]
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 value = load(f)
             return True, value
         else:
@@ -37,40 +41,47 @@ class NetworkFilesystemRegion(CacheRegion):
     def set(self, key, value):
         key = base64.b64encode(key)
         response = self.server.set(self.secret, key)
-        assert len(response) == 2 and isinstance(response[0], bool) and isinstance(response[1], str)
+        assert (
+            len(response) == 2
+            and isinstance(response[0], bool)
+            and isinstance(response[1], str)
+        )
         if response[0]:
-            with open(response[1], 'wb') as f:
+            with open(response[1], "wb") as f:
                 dump(value, f)
                 file_size = f.tell()
             response = self.server.set_finished(self.secret, key, file_size)
             assert isinstance(response, bool) and response
         else:
             from pymor.core.logger import getLogger
-            getLogger('pymor.core.network_cache.NetworkFilesystemRegion')\
-                .warn('Key already present in cache region, ignoring.')
+
+            getLogger("pymor.core.network_cache.NetworkFilesystemRegion").warn(
+                "Key already present in cache region, ignoring."
+            )
 
     def clear(self):
         raise NotImplementedError
 
 
 class NetworkFilesystemRegionServer(BasicInterface):
-
     def __init__(self, addr, path, secret=None):
         self.server = server = SimpleXMLRPCServer(addr)
-        server.register_function(self._get, 'get')
-        server.register_function(self._set, 'set')
-        server.register_function(self._set_finished, 'set_finished')
+        server.register_function(self._get, "get")
+        server.register_function(self._set, "set")
+        server.register_function(self._set_finished, "set_finished")
         self.path = path
         self.secret = secret
         if not os.path.exists(path):
             os.mkdir(path)
-            self.conn = conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
+            self.conn = conn = sqlite3.connect(os.path.join(path, "pymor_cache.db"))
             c = conn.cursor()
-            c.execute('''CREATE TABLE entries
-                         (id INTEGER PRIMARY KEY, key TEXT UNIQUE, filename TEXT, size INT)''')
+            c.execute(
+                """CREATE TABLE entries
+                         (id INTEGER PRIMARY KEY, key TEXT UNIQUE, filename TEXT, size INT)"""
+            )
             conn.commit()
         else:
-            self.conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
+            self.conn = sqlite3.connect(os.path.join(path, "pymor_cache.db"))
         now = datetime.datetime.now()
         self.prefix = now.isoformat()
         self.created = 0
@@ -83,29 +94,31 @@ class NetworkFilesystemRegionServer(BasicInterface):
             return
         c = self.conn.cursor()
         t = (key,)
-        c.execute('SELECT filename FROM entries WHERE key=?', t)
+        c.execute("SELECT filename FROM entries WHERE key=?", t)
         result = c.fetchall()
         if len(result) == 0:
-            return False, ''
+            return False, ""
         elif len(result) == 1:
             file_path = os.path.join(self.path, result[0][0])
             return True, file_path
         else:
-            raise RuntimeError('Cache is corrupt!')
+            raise RuntimeError("Cache is corrupt!")
 
     def _set(self, secret, key):
         if self.secret and secret != self.secret:
             return
-        filename = f'{self.prefix}-{self.created+1:0>6}.dat'
+        filename = f"{self.prefix}-{self.created+1:0>6}.dat"
         file_path = os.path.join(self.path, filename)
         conn = self.conn
         c = conn.cursor()
         try:
-            c.execute(f"INSERT INTO entries(key, filename, size) VALUES ('{key}', '{filename}', {-1})")
+            c.execute(
+                f"INSERT INTO entries(key, filename, size) VALUES ('{key}', '{filename}', {-1})"
+            )
             conn.commit()
         except sqlite3.IntegrityError:
             conn.commit()
-            return (False, '')
+            return (False, "")
         self.created += 1
         return (True, file_path)
 
@@ -115,7 +128,7 @@ class NetworkFilesystemRegionServer(BasicInterface):
         conn = self.conn
         c = conn.cursor()
         t = (key,)
-        c.execute('SELECT filename, size FROM entries WHERE key=?', t)
+        c.execute("SELECT filename, size FROM entries WHERE key=?", t)
         result = c.fetchall()
         if len(result) == 0:
             return False
@@ -128,7 +141,7 @@ class NetworkFilesystemRegionServer(BasicInterface):
                 c.execute(f"UPDATE entries SET size='{file_size}' WHERE key='{key}'")
                 conn.commit()
             except sqlite3.IntegrityError:
-                raise RuntimeError('Cache is corrupt!')
+                raise RuntimeError("Cache is corrupt!")
             return True
         else:
-            raise RuntimeError('Cache is corrupt!')
+            raise RuntimeError("Cache is corrupt!")

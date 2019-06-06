@@ -9,17 +9,26 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.operators.interfaces import OperatorInterface
 
-_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = 'pymess'
+_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = "pymess"
 
-_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                           'slycot' if config.HAVE_SLYCOT else
-                                           'scipy')
+_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = (
+    "pymess" if config.HAVE_PYMESS else "slycot" if config.HAVE_SLYCOT else "scipy"
+)
 
 
-@defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
-def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
-                    default_sparse_solver_backend=_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND,
-                    default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
+@defaults("default_sparse_solver_backend", "default_dense_solver_backend")
+def solve_ricc_lrcf(
+    A,
+    E,
+    B,
+    C,
+    R=None,
+    S=None,
+    trans=False,
+    options=None,
+    default_sparse_solver_backend=_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND,
+    default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND,
+):
     """Compute an approximate low-rank solution of a Riccati equation.
 
     Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T`
@@ -110,32 +119,41 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
     if options:
-        solver = options if isinstance(options, str) else options['type']
-        backend = solver.split('_')[0]
+        solver = options if isinstance(options, str) else options["type"]
+        backend = solver.split("_")[0]
     else:
         if A.source.dim >= mat_eqn_sparse_min_size():
             backend = default_sparse_solver_backend
         else:
             backend = default_dense_solver_backend
-    if backend == 'scipy':
+    if backend == "scipy":
         from pymor.bindings.scipy import solve_ricc_lrcf as solve_ricc_impl
-    elif backend == 'slycot':
+    elif backend == "slycot":
         from pymor.bindings.slycot import solve_ricc_lrcf as solve_ricc_impl
-    elif backend == 'pymess':
+    elif backend == "pymess":
         from pymor.bindings.pymess import solve_ricc_lrcf as solve_ricc_impl
     else:
-        raise ValueError(f'Unknown solver backend ({backend}).')
+        raise ValueError(f"Unknown solver backend ({backend}).")
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
 
 
-_DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                               'slycot' if config.HAVE_SLYCOT else
-                                               'scipy')
+_DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = (
+    "pymess" if config.HAVE_PYMESS else "slycot" if config.HAVE_SLYCOT else "scipy"
+)
 
 
-@defaults('default_dense_solver_backend')
-def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
-                        default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
+@defaults("default_dense_solver_backend")
+def solve_pos_ricc_lrcf(
+    A,
+    E,
+    B,
+    C,
+    R=None,
+    S=None,
+    trans=False,
+    options=None,
+    default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND,
+):
     """Compute an approximate low-rank solution of a positive Riccati equation.
 
     Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T`
@@ -203,18 +221,18 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
     if options:
-        solver = options if isinstance(options, str) else options['type']
-        backend = solver.split('_')[0]
+        solver = options if isinstance(options, str) else options["type"]
+        backend = solver.split("_")[0]
     else:
         backend = default_dense_solver_backend
-    if backend == 'scipy':
+    if backend == "scipy":
         from pymor.bindings.scipy import solve_pos_ricc_lrcf as solve_ricc_impl
-    elif backend == 'slycot':
+    elif backend == "slycot":
         from pymor.bindings.slycot import solve_pos_ricc_lrcf as solve_ricc_impl
-    elif backend == 'pymess':
+    elif backend == "pymess":
         from pymor.bindings.pymess import solve_pos_ricc_lrcf as solve_ricc_impl
     else:
-        raise ValueError(f'Unknown solver backend ({backend}).')
+        raise ValueError(f"Unknown solver backend ({backend}).")
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
 
 

@@ -49,7 +49,7 @@ class OperatorBase(OperatorInterface):
         if self.parametric:
             from pymor.operators.constructions import FixedParameterOperator
 
-            return FixedParameterOperator(self, mu=mu, name=self.name + '_assembled')
+            return FixedParameterOperator(self, mu=mu, name=self.name + "_assembled")
         else:
             return self
 
@@ -57,69 +57,84 @@ class OperatorBase(OperatorInterface):
         if not isinstance(other, OperatorInterface):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
+
         if isinstance(other, LincombOperator):
             return NotImplemented
         else:
-            return LincombOperator([self, other], [1., -1.])
+            return LincombOperator([self, other], [1.0, -1.0])
 
     def __add__(self, other):
         if not isinstance(other, OperatorInterface):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
+
         if isinstance(other, LincombOperator):
             return NotImplemented
         else:
-            return LincombOperator([self, other], [1., 1.])
+            return LincombOperator([self, other], [1.0, 1.0])
 
     def __mul__(self, other):
         if not isinstance(other, (Number, ParameterFunctionalInterface)):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
+
         return LincombOperator([self], [other])
 
     def __matmul__(self, other):
         if not isinstance(other, OperatorInterface):
             return NotImplemented
         from pymor.operators.constructions import Concatenation
+
         if isinstance(other, Concatenation):
             return NotImplemented
         else:
             return Concatenation((self, other))
 
     def __str__(self):
-        return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
-               f'(parameter type: {self.parameter_type}, class: {self.__class__.__name__})'
+        return (
+            f"{self.name}: R^{self.source.dim} --> R^{self.range.dim}  "
+            f"(parameter type: {self.parameter_type}, class: {self.__class__.__name__})"
+        )
 
     def apply_adjoint(self, V, mu=None):
         if self.linear:
             raise NotImplementedError
         else:
-            raise LinAlgError('Operator not linear.')
+            raise LinAlgError("Operator not linear.")
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
+
         assembled_op = self.assemble(mu)
-        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+        if assembled_op != self and not isinstance(
+            assembled_op, FixedParameterOperator
+        ):
             return assembled_op.apply_inverse(V, least_squares=least_squares)
         elif self.linear:
-            options = self.solver_options.get('inverse') if self.solver_options else None
-            return genericsolvers.apply_inverse(assembled_op, V, options=options, least_squares=least_squares)
+            options = (
+                self.solver_options.get("inverse") if self.solver_options else None
+            )
+            return genericsolvers.apply_inverse(
+                assembled_op, V, options=options, least_squares=least_squares
+            )
         else:
             from pymor.algorithms.newton import newton
             from pymor.core.exceptions import NewtonError
 
-            options = self.solver_options.get('inverse') if self.solver_options else None
+            options = (
+                self.solver_options.get("inverse") if self.solver_options else None
+            )
             if options:
                 if isinstance(options, str):
-                    assert options == 'newton'
+                    assert options == "newton"
                     options = {}
                 else:
-                    assert options['type'] == 'newton'
+                    assert options["type"] == "newton"
                     options = options.copy()
-                    options.pop('type')
+                    options.pop("type")
             else:
                 options = {}
-            options['least_squares'] = least_squares
+            options["least_squares"] = least_squares
 
             R = V.empty(reserve=len(V))
             for i in range(len(V)):
@@ -131,16 +146,26 @@ class OperatorBase(OperatorInterface):
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
+
         if not self.linear:
-            raise LinAlgError('Operator not linear.')
+            raise LinAlgError("Operator not linear.")
         assembled_op = self.assemble(mu)
-        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+        if assembled_op != self and not isinstance(
+            assembled_op, FixedParameterOperator
+        ):
             return assembled_op.apply_inverse_adjoint(U, least_squares=least_squares)
         else:
             # use generic solver for the adjoint operator
             from pymor.operators.constructions import AdjointOperator
-            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
-            adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
+
+            options = {
+                "inverse": self.solver_options.get("inverse_adjoint")
+                if self.solver_options
+                else None
+            }
+            adjoint_op = AdjointOperator(
+                self, with_apply_inverse=False, solver_options=options
+            )
             return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def as_range_array(self, mu=None):
@@ -179,18 +204,29 @@ class ProjectedOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None):
+    def __init__(
+        self, operator, range_basis, source_basis, product=None, solver_options=None
+    ):
         assert isinstance(operator, OperatorInterface)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
-        assert (product is None
-                or (isinstance(product, OperatorInterface)
-                    and range_basis is not None
-                    and operator.range == product.source
-                    and product.range == product.source))
+        assert product is None or (
+            isinstance(product, OperatorInterface)
+            and range_basis is not None
+            and operator.range == product.source
+            and product.range == product.source
+        )
         self.build_parameter_type(operator)
-        self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
-        self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
+        self.source = (
+            NumpyVectorSpace(len(source_basis))
+            if source_basis is not None
+            else operator.source
+        )
+        self.range = (
+            NumpyVectorSpace(len(range_basis))
+            if range_basis is not None
+            else operator.range
+        )
         self.solver_options = solver_options
         self.name = operator.name
         self.operator = operator
@@ -204,9 +240,20 @@ class ProjectedOperator(OperatorBase):
         if self.product:
             return super().H
         else:
-            options = {'inverse': self.solver_options.get('inverse_adjoint'),
-                       'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
-            return ProjectedOperator(self.operator.H, self.source_basis, self.range_basis, solver_options=options)
+            options = (
+                {
+                    "inverse": self.solver_options.get("inverse_adjoint"),
+                    "inverse_adjoint": self.solver_options.get("inverse"),
+                }
+                if self.solver_options
+                else None
+            )
+            return ProjectedOperator(
+                self.operator.H,
+                self.source_basis,
+                self.range_basis,
+                solver_options=options,
+            )
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -214,7 +261,9 @@ class ProjectedOperator(OperatorBase):
             if self.range_basis is None:
                 return self.operator.apply(U, mu=mu)
             elif self.product is None:
-                return self.range.make_array(self.operator.apply2(self.range_basis, U, mu=mu).T)
+                return self.range.make_array(
+                    self.operator.apply2(self.range_basis, U, mu=mu).T
+                )
             else:
                 V = self.operator.apply(U, mu=mu)
                 return self.range.make_array(self.product.apply2(V, self.range_basis))
@@ -223,7 +272,9 @@ class ProjectedOperator(OperatorBase):
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
             elif self.product is None:
-                return self.range.make_array(self.operator.apply2(self.range_basis, UU, mu=mu).T)
+                return self.range.make_array(
+                    self.operator.apply2(self.range_basis, UU, mu=mu).T
+                )
             else:
                 V = self.operator.apply(UU, mu=mu)
                 return self.range.make_array(self.product.apply2(V, self.range_basis))
@@ -238,21 +289,34 @@ class ProjectedOperator(OperatorBase):
         else:
             J = self.operator.jacobian(self.source_basis.lincomb(U.to_numpy()), mu=mu)
         from pymor.algorithms.projection import project
-        pop = project(J, range_basis=self.range_basis, source_basis=self.source_basis,
-                      product=self.product, name=self.name + '_jacobian')
+
+        pop = project(
+            J,
+            range_basis=self.range_basis,
+            source_basis=self.source_basis,
+            product=self.product,
+            name=self.name + "_jacobian",
+        )
         if self.solver_options:
-            options = self.solver_options.get('jacobian')
+            options = self.solver_options.get("jacobian")
             if options:
                 pop = pop.with_(solver_options=options)
         return pop
 
     def assemble(self, mu=None):
         op = self.operator.assemble(mu=mu)
-        if op == self.operator:  # avoid infinite recursion in apply_inverse default impl
+        if (
+            op == self.operator
+        ):  # avoid infinite recursion in apply_inverse default impl
             return self
         from pymor.algorithms.projection import project
-        pop = project(op, range_basis=self.range_basis, source_basis=self.source_basis,
-                      product=self.product)
+
+        pop = project(
+            op,
+            range_basis=self.range_basis,
+            source_basis=self.source_basis,
+            product=self.product,
+        )
         if self.solver_options:
             pop = pop.with_(solver_options=self.solver_options)
         return pop

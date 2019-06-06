@@ -68,7 +68,7 @@ class ParameterType(OrderedDict):
             t = {}
         elif isinstance(t, ParameterType):
             pass
-        elif hasattr(t, 'parameter_type'):
+        elif hasattr(t, "parameter_type"):
             assert isinstance(t.parameter_type, ParameterType)
             t = t.parameter_type
         else:
@@ -78,10 +78,14 @@ class ParameterType(OrderedDict):
                     assert isinstance(v, Number)
                     t[k] = () if v == 0 else (v,)
         super().__init__(sorted(t.items()))
-        self.clear = self.__setitem__ = self.__delitem__ = self.pop = self.popitem = self.update = self._is_immutable
+        self.clear = (
+            self.__setitem__
+        ) = (
+            self.__delitem__
+        ) = self.pop = self.popitem = self.update = self._is_immutable
 
     def _is_immutable(*args, **kwargs):
-        raise ValueError('ParameterTypes cannot be modified')
+        raise ValueError("ParameterTypes cannot be modified")
 
     def copy(self):
         return ParameterType(self)
@@ -93,11 +97,11 @@ class ParameterType(OrderedDict):
         return str(dict(self))
 
     def __repr__(self):
-        return 'ParameterType(' + str(self) + ')'
+        return "ParameterType(" + str(self) + ")"
 
     @property
     def sid(self):
-        sid = getattr(self, '__sid', None)
+        sid = getattr(self, "__sid", None)
         if sid:
             return sid
         else:
@@ -149,8 +153,10 @@ class Parameter(dict):
     def __init__(self, v):
         if v is None:
             v = {}
-        i = iter(v.items()) if hasattr(v, 'items') else v
-        dict.__init__(self, {k: np.array(v) if not isinstance(v, np.ndarray) else v for k, v in i})
+        i = iter(v.items()) if hasattr(v, "items") else v
+        dict.__init__(
+            self, {k: np.array(v) if not isinstance(v, np.ndarray) else v for k, v in i}
+        )
 
     @classmethod
     def from_parameter_type(cls, mu, parameter_type=None):
@@ -192,11 +198,13 @@ class Parameter(dict):
             else:
                 mu = (mu,)
             if len(mu) != len(parameter_type):
-                raise ValueError('Parameter length does not match.')
+                raise ValueError("Parameter length does not match.")
             mu = dict(zip(sorted(parameter_type), mu))
         elif set(mu.keys()) != set(parameter_type.keys()):
-            raise ValueError(f'Provided parameter with keys {list(mu.keys())} does not match '
-                             f'parameter type {parameter_type}.')
+            raise ValueError(
+                f"Provided parameter with keys {list(mu.keys())} does not match "
+                f"parameter type {parameter_type}."
+            )
 
         def parse_value(k, v):
             if not isinstance(v, np.ndarray):
@@ -204,11 +212,15 @@ class Parameter(dict):
                 try:
                     v = v.reshape(parameter_type[k])
                 except ValueError:
-                    raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
-                                     f'expected {parameter_type[k]}')
+                    raise ValueError(
+                        f"Shape mismatch for parameter component {k}: got {v.shape}, "
+                        f"expected {parameter_type[k]}"
+                    )
             if v.shape != parameter_type[k]:
-                raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
-                                 f'expected {parameter_type[k]}')
+                raise ValueError(
+                    f"Shape mismatch for parameter component {k}: got {v.shape}, "
+                    f"expected {parameter_type[k]}"
+                )
             return v
 
         return cls({k: parse_value(k, v) for k, v in mu.items()})
@@ -280,7 +292,7 @@ class Parameter(dict):
 
     @property
     def sid(self):
-        sid = getattr(self, '__sid', None)
+        sid = getattr(self, "__sid", None)
         if sid:
             return sid
         else:
@@ -289,16 +301,16 @@ class Parameter(dict):
 
     def __str__(self):
         np.set_string_function(format_array, repr=False)
-        s = '{'
+        s = "{"
         for k in sorted(self.keys()):
             v = self[k]
             if v.ndim > 1:
                 v = v.ravel()
-            if s == '{':
-                s += f'{k}: {v}'
+            if s == "{":
+                s += f"{k}: {v}"
             else:
-                s += f', {k}: {v}'
-        s += '}'
+                s += f", {k}: {v}"
+        s += "}"
         np.set_string_function(None, repr=False)
         return s
 
@@ -357,14 +369,16 @@ class Parametric:
             The input to parse as a |Parameter|.
         """
         if mu is None:
-            assert not self.parameter_type, \
-                f'Given parameter is None but expected parameter of type {self.parameter_type}'
+            assert (
+                not self.parameter_type
+            ), f"Given parameter is None but expected parameter of type {self.parameter_type}"
             return Parameter({})
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert not self.parameter_type or all(getattr(mu.get(k, None), 'shape', None) == v
-                                              for k, v in self.parameter_type.items()), \
-            f'Given parameter of type {mu.parameter_type} does not match expected parameter type {self.parameter_type}'
+        assert not self.parameter_type or all(
+            getattr(mu.get(k, None), "shape", None) == v
+            for k, v in self.parameter_type.items()
+        ), f"Given parameter of type {mu.parameter_type} does not match expected parameter type {self.parameter_type}"
         return mu
 
     def strip_parameter(self, mu):
@@ -377,7 +391,10 @@ class Parametric:
         """
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.items())
+        assert all(
+            getattr(mu.get(k, None), "shape", None) == v
+            for k, v in self.parameter_type.items()
+        )
         return Parameter({k: mu[k] for k in self.parameter_type})
 
     def build_parameter_type(self, *args, provides=None, **kwargs):
@@ -421,26 +438,33 @@ class Parametric:
             if type(shape2) is not tuple:
                 assert isinstance(shape2, Number)
                 shape2 = () if shape2 == 0 else (shape2,)
-            assert shape1 == shape2, \
-                (f'Dimension mismatch for parameter component {component} '
-                 f'(got {my_parameter_type[component]} and {shape})')
+            assert shape1 == shape2, (
+                f"Dimension mismatch for parameter component {component} "
+                f"(got {my_parameter_type[component]} and {shape})"
+            )
             return True
 
         for arg in args:
-            if hasattr(arg, 'parameter_type'):
+            if hasattr(arg, "parameter_type"):
                 arg = arg.parameter_type
             if arg is None:
                 continue
             for component, shape in arg.items():
-                assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
+                assert component not in my_parameter_type or check_shapes(
+                    my_parameter_type[component], shape
+                )
                 my_parameter_type[component] = shape
 
         for component, shape in kwargs.items():
-            assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
+            assert component not in my_parameter_type or check_shapes(
+                my_parameter_type[component], shape
+            )
             my_parameter_type[component] = shape
 
         for component, shape in provides.items():
-            assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
+            assert component not in my_parameter_type or check_shapes(
+                my_parameter_type[component], shape
+            )
             my_parameter_type.pop(component, None)
 
         self.parameter_type = ParameterType(my_parameter_type)

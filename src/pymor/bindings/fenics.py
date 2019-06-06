@@ -38,7 +38,7 @@ if config.HAVE_FENICS:
 
         def _axpy(self, alpha, x):
             if x is self:
-                self.scal(1. + alpha)
+                self.scal(1.0 + alpha)
             else:
                 self.impl.axpy(alpha, x.impl)
 
@@ -46,16 +46,16 @@ if config.HAVE_FENICS:
             return self.impl.inner(other.impl)
 
         def l1_norm(self):
-            return self.impl.norm('l1')
+            return self.impl.norm("l1")
 
         def l2_norm(self):
-            return self.impl.norm('l2')
+            return self.impl.norm("l2")
 
         def l2_norm2(self):
-            return self.impl.norm('l2') ** 2
+            return self.impl.norm("l2") ** 2
 
         def sup_norm(self):
-            return self.impl.norm('linf')
+            return self.impl.norm("linf")
 
         def dofs(self, dof_indices):
             dof_indices = np.array(dof_indices, dtype=np.intc)
@@ -74,6 +74,7 @@ if config.HAVE_FENICS:
             max_ind_on_rank = np.argmax(A)
             max_val_on_rank = A[max_ind_on_rank]
             from pymor.tools import mpi
+
             if not mpi.parallel:
                 return max_ind_on_rank, max_val_on_rank
             else:
@@ -81,8 +82,8 @@ if config.HAVE_FENICS:
                 comm = self.impl.mpi_comm()
                 comm_size = comm.Get_size()
 
-                max_inds = np.empty(comm_size, dtype='i')
-                comm.Allgather(np.array(max_global_ind_on_rank, dtype='i'), max_inds)
+                max_inds = np.empty(comm_size, dtype="i")
+                comm.Allgather(np.array(max_global_ind_on_rank, dtype="i"), max_inds)
 
                 max_vals = np.empty(comm_size, dtype=np.float64)
                 comm.Allgather(np.array(max_val_on_rank), max_vals)
@@ -115,8 +116,7 @@ if config.HAVE_FENICS:
             return FenicsVector(-self.impl)
 
     class FenicsVectorSpace(ListVectorSpace):
-
-        def __init__(self, V, id='STATE'):
+        def __init__(self, V, id="STATE"):
             self.V = V
             self.id = id
 
@@ -125,7 +125,11 @@ if config.HAVE_FENICS:
             return df.Function(self.V).vector().size()
 
         def __eq__(self, other):
-            return type(other) is FenicsVectorSpace and self.V == other.V and self.id == other.id
+            return (
+                type(other) is FenicsVectorSpace
+                and self.V == other.V
+                and self.id == other.id
+            )
 
         # since we implement __eq__, we also need to implement __hash__
         def __hash__(self):
@@ -142,7 +146,9 @@ if config.HAVE_FENICS:
 
         def random_vector(self, distribution, random_state, **kwargs):
             impl = df.Function(self.V).vector()
-            values = _create_random_values(impl.local_size(), distribution, random_state, **kwargs)
+            values = _create_random_values(
+                impl.local_size(), distribution, random_state, **kwargs
+            )
             impl[:] = values
             return FenicsVector(impl)
 
@@ -154,7 +160,9 @@ if config.HAVE_FENICS:
 
         linear = True
 
-        def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
+        def __init__(
+            self, matrix, source_space, range_space, solver_options=None, name=None
+        ):
             assert matrix.rank() == 2
             self.source_space = source_space
             self.range_space = range_space
@@ -175,7 +183,9 @@ if config.HAVE_FENICS:
             assert V in self.range
             U = self.source.zeros(len(V))
             for v, u in zip(V._list, U._list):
-                self.matrix.transpmult(v.impl, u.impl)  # there are no complex numbers in FEniCS
+                self.matrix.transpmult(
+                    v.impl, u.impl
+                )  # there are no complex numbers in FEniCS
             return U
 
         def apply_inverse(self, V, mu=None, least_squares=False):
@@ -183,12 +193,21 @@ if config.HAVE_FENICS:
             if least_squares:
                 raise NotImplementedError
             R = self.source.zeros(len(V))
-            options = self.solver_options.get('inverse') if self.solver_options else None
+            options = (
+                self.solver_options.get("inverse") if self.solver_options else None
+            )
             for r, v in zip(R._list, V._list):
                 _apply_inverse(self.matrix, r.impl, v.impl, options)
             return R
 
-        def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+        def _assemble_lincomb(
+            self,
+            operators,
+            coefficients,
+            identity_shift=0.0,
+            solver_options=None,
+            name=None,
+        ):
             if not all(isinstance(op, FenicsMatrixOperator) for op in operators):
                 return None
             if identity_shift != 0:
@@ -205,14 +224,14 @@ if config.HAVE_FENICS:
 
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V, name=name)
 
-    @defaults('solver', 'preconditioner')
-    def _solver_options(solver='bicgstab', preconditioner='amg'):
-        return {'solver': solver, 'preconditioner': preconditioner}
+    @defaults("solver", "preconditioner")
+    def _solver_options(solver="bicgstab", preconditioner="amg"):
+        return {"solver": solver, "preconditioner": preconditioner}
 
     def _apply_inverse(matrix, r, v, options=None):
         options = options or _solver_options()
-        solver = options.get('solver')
-        preconditioner = options.get('preconditioner')
+        solver = options.get("solver")
+        preconditioner = options.get("preconditioner")
         # preconditioner argument may only be specified for iterative solvers:
         options = (solver, preconditioner) if preconditioner else (solver,)
         df.solve(matrix, r, v, *options)
@@ -229,8 +248,16 @@ if config.HAVE_FENICS:
         def __init__(self, space):
             self.space = space
 
-        def visualize(self, U, m, title='', legend=None, filename=None, block=True,
-                      separate_colorbars=True):
+        def visualize(
+            self,
+            U,
+            m,
+            title="",
+            legend=None,
+            filename=None,
+            block=True,
+            separate_colorbars=True,
+        ):
             """Visualize the provided data.
 
             Parameters
@@ -269,8 +296,15 @@ if config.HAVE_FENICS:
             else:
                 from matplotlib import pyplot as plt
 
-                assert U in self.space and len(U) == 1 \
-                    or (isinstance(U, tuple) and all(u in self.space for u in U) and all(len(u) == 1 for u in U))
+                assert (
+                    U in self.space
+                    and len(U) == 1
+                    or (
+                        isinstance(U, tuple)
+                        and all(u in self.space for u in U)
+                        and all(len(u) == 1 for u in U)
+                    )
+                )
                 if not isinstance(U, tuple):
                     U = (U,)
                 if isinstance(legend, str):
@@ -289,7 +323,7 @@ if config.HAVE_FENICS:
                     function = df.Function(self.space.V)
                     function.vector()[:] = u._list[0].impl
                     if legend:
-                        tit = title + ' -- ' if title else ''
+                        tit = title + " -- " if title else ""
                         tit += legend[i]
                     else:
                         tit = title
@@ -298,6 +332,5 @@ if config.HAVE_FENICS:
                         df.plot(function, title=tit)
                     else:
                         plt.figure()
-                        df.plot(function, title=tit,
-                                range_min=vmin, range_max=vmax)
+                        df.plot(function, title=tit, range_min=vmin, range_max=vmax)
                 plt.show(block=block)

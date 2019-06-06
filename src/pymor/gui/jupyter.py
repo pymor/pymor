@@ -18,8 +18,17 @@ from pymor.gui.matplotlib import MatplotlibPatchAxes
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, columns=2):
+def visualize_patch(
+    grid,
+    U,
+    bounding_box=([0, 0], [1, 1]),
+    codim=2,
+    title=None,
+    legend=None,
+    separate_colorbars=False,
+    rescale_colorbars=False,
+    columns=2,
+):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -52,17 +61,21 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         at the same time.
     """
 
-    assert isinstance(U, VectorArrayInterface) \
-        or (isinstance(U, tuple)
-            and all(isinstance(u, VectorArrayInterface) for u in U)
-            and all(len(u) == len(U[0]) for u in U))
-    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArrayInterface) else \
-        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+    assert isinstance(U, VectorArrayInterface) or (
+        isinstance(U, tuple)
+        and all(isinstance(u, VectorArrayInterface) for u in U)
+        and all(len(u) == len(U[0]) for u in U)
+    )
+    U = (
+        (U.to_numpy().astype(np.float64, copy=False),)
+        if isinstance(U, VectorArrayInterface)
+        else tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+    )
 
     if not config.HAVE_MATPLOTLIB:
-        raise ImportError('cannot visualize: import of matplotlib failed')
+        raise ImportError("cannot visualize: import of matplotlib failed")
     if not config.HAVE_IPYWIDGETS and len(U[0]) > 1:
-        raise ImportError('cannot visualize: import of ipywidgets failed')
+        raise ImportError("cannot visualize: import of ipywidgets failed")
 
     if isinstance(legend, str):
         legend = (legend,)
@@ -71,7 +84,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         columns = 1
 
     class Plot:
-
         def __init__(self):
             if separate_colorbars:
                 if rescale_colorbars:
@@ -96,10 +108,19 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             self.plots = plots = []
             axes = []
             for i, (vmin, vmax) in enumerate(zip(self.vmins, self.vmaxs)):
-                ax = figure.add_subplot(rows, columns, i+1)
+                ax = figure.add_subplot(rows, columns, i + 1)
                 axes.append(ax)
-                plots.append(MatplotlibPatchAxes(figure, grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
-                                                 codim=codim, colorbar=separate_colorbars))
+                plots.append(
+                    MatplotlibPatchAxes(
+                        figure,
+                        grid,
+                        bounding_box=bounding_box,
+                        vmin=vmin,
+                        vmax=vmax,
+                        codim=codim,
+                        colorbar=separate_colorbars,
+                    )
+                )
                 if legend:
                     ax.set_title(legend[i])
 
@@ -129,6 +150,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         def set_time(t):
             plot.set(U, t)
 
-        interact(set_time, t=IntSlider(min=0, max=len(U[0])-1, step=1, value=0))
+        interact(set_time, t=IntSlider(min=0, max=len(U[0]) - 1, step=1, value=0))
 
     return plot

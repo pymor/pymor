@@ -10,7 +10,11 @@ if config.HAVE_SLYCOT:
     import slycot
 
     from pymor.algorithms.genericsolvers import _parse_options
-    from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args, _solve_lyap_dense_check_args, _chol
+    from pymor.algorithms.lyapunov import (
+        _solve_lyap_lrcf_check_args,
+        _solve_lyap_dense_check_args,
+        _chol,
+    )
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
     from pymor.core.logger import getLogger
@@ -23,7 +27,7 @@ if config.HAVE_SLYCOT:
         A dict of available solvers with default solver options.
         """
 
-        return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
+        return {"slycot_bartels-stewart": {"type": "slycot_bartels-stewart"}}
 
     def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         """Compute an approximate low-rank solution of a Lyapunov equation.
@@ -61,16 +65,23 @@ if config.HAVE_SLYCOT:
         """
 
         _solve_lyap_lrcf_check_args(A, E, B, trans)
-        options = _parse_options(options, lyap_lrcf_solver_options(), 'slycot_bartels-stewart', None, False)
+        options = _parse_options(
+            options, lyap_lrcf_solver_options(), "slycot_bartels-stewart", None, False
+        )
 
-        if options['type'] == 'slycot_bartels-stewart':
-            X = solve_lyap_dense(to_matrix(A, format='dense'),
-                                 to_matrix(E, format='dense') if E else None,
-                                 B.to_numpy().T if not trans else B.to_numpy(),
-                                 trans=trans, options=options)
+        if options["type"] == "slycot_bartels-stewart":
+            X = solve_lyap_dense(
+                to_matrix(A, format="dense"),
+                to_matrix(E, format="dense") if E else None,
+                B.to_numpy().T if not trans else B.to_numpy(),
+                trans=trans,
+                options=options,
+            )
             Z = _chol(X)
         else:
-            raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
+            raise ValueError(
+                f"Unexpected Lyapunov equation solver ({options['type']})."
+            )
 
         return A.source.from_numpy(Z.T)
 
@@ -82,7 +93,7 @@ if config.HAVE_SLYCOT:
         A dict of available solvers with default solver options.
         """
 
-        return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
+        return {"slycot_bartels-stewart": {"type": "slycot_bartels-stewart"}}
 
     def solve_lyap_dense(A, E, B, trans=False, options=None):
         """Compute the solution of a Lyapunov equation.
@@ -116,38 +127,46 @@ if config.HAVE_SLYCOT:
         """
 
         _solve_lyap_dense_check_args(A, E, B, trans)
-        options = _parse_options(options, lyap_dense_solver_options(), 'slycot_bartels-stewart', None, False)
+        options = _parse_options(
+            options, lyap_dense_solver_options(), "slycot_bartels-stewart", None, False
+        )
 
-        if options['type'] == 'slycot_bartels-stewart':
+        if options["type"] == "slycot_bartels-stewart":
             n = A.shape[0]
             C = -B.dot(B.T) if not trans else -B.T.dot(B)
-            trana = 'T' if not trans else 'N'
-            dico = 'C'
-            job = 'B'
+            trana = "T" if not trans else "N"
+            dico = "C"
+            job = "B"
             if E is None:
                 U = np.zeros((n, n))
-                X, scale, sep, ferr, _ = slycot.sb03md(n, C, A, U, dico, job=job, trana=trana)
-                _solve_check(A.dtype, 'slycot.sb03md', sep, ferr)
+                X, scale, sep, ferr, _ = slycot.sb03md(
+                    n, C, A, U, dico, job=job, trana=trana
+                )
+                _solve_check(A.dtype, "slycot.sb03md", sep, ferr)
             else:
-                fact = 'N'
-                uplo = 'L'
+                fact = "N"
+                uplo = "L"
                 Q = np.zeros((n, n))
                 Z = np.zeros((n, n))
-                _, _, _, _, X, scale, sep, ferr, _, _, _ = slycot.sg03ad(dico, job, fact, trana, uplo,
-                                                                         n, A, E,
-                                                                         Q, Z, C)
-                _solve_check(A.dtype, 'slycot.sg03ad', sep, ferr)
+                _, _, _, _, X, scale, sep, ferr, _, _, _ = slycot.sg03ad(
+                    dico, job, fact, trana, uplo, n, A, E, Q, Z, C
+                )
+                _solve_check(A.dtype, "slycot.sg03ad", sep, ferr)
             X /= scale
         else:
-            raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
+            raise ValueError(
+                f"Unexpected Lyapunov equation solver ({options['type']})."
+            )
 
         return X
 
     def _solve_check(dtype, solver, sep, ferr):
         if ferr > 1e-1:
             logger = getLogger(solver)
-            logger.warning(f'Estimated forward relative error bound is large (ferr={ferr:e}, sep={sep:e}). '
-                           f'Result may not be accurate.')
+            logger.warning(
+                f"Estimated forward relative error bound is large (ferr={ferr:e}, sep={sep:e}). "
+                f"Result may not be accurate."
+            )
 
     def ricc_lrcf_solver_options():
         """Returns available Riccati equation solvers with default solver options for the SciPy backend.
@@ -157,7 +176,7 @@ if config.HAVE_SLYCOT:
         A dict of available solvers with default solver options.
         """
 
-        return {'slycot': {'type': 'slycot'}}
+        return {"slycot": {"type": "slycot"}}
 
     def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a Riccati equation.
@@ -202,30 +221,40 @@ if config.HAVE_SLYCOT:
         """
 
         _solve_ricc_check_args(A, E, B, C, R, S, trans)
-        options = _parse_options(options, ricc_lrcf_solver_options(), 'slycot', None, False)
-        if options['type'] != 'slycot':
+        options = _parse_options(
+            options, ricc_lrcf_solver_options(), "slycot", None, False
+        )
+        if options["type"] != "slycot":
             raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
 
         A_source = A.source
-        A = to_matrix(A, format='dense')
-        E = to_matrix(E, format='dense') if E else None
+        A = to_matrix(A, format="dense")
+        E = to_matrix(E, format="dense") if E else None
         B = B.to_numpy().T
         C = C.to_numpy()
         S = S.to_numpy().T if S else None
 
         n = A.shape[0]
-        dico = 'C'
+        dico = "C"
 
         if E is None:
             if S is None:
                 if not trans:
                     A = A.T
-                    G = C.T.dot(C) if R is None else slycot.sb02mt(n, C.shape[0], C.T, R)[-1]
+                    G = (
+                        C.T.dot(C)
+                        if R is None
+                        else slycot.sb02mt(n, C.shape[0], C.T, R)[-1]
+                    )
                 else:
-                    G = B.dot(B.T) if R is None else slycot.sb02mt(n, B.shape[1], B, R)[-1]
+                    G = (
+                        B.dot(B.T)
+                        if R is None
+                        else slycot.sb02mt(n, B.shape[1], B, R)[-1]
+                    )
                 Q = B.dot(B.T) if not trans else C.T.dot(C)
                 X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
-                _ricc_rcond_check('slycot.sb02md', rcond)
+                _ricc_rcond_check("slycot.sb02md", rcond)
             else:
                 m = C.shape[0] if not trans else B.shape[1]
                 p = B.shape[1] if not trans else C.shape[0]
@@ -234,16 +263,16 @@ if config.HAVE_SLYCOT:
                 if not trans:
                     A = A.T
                     B, C = C.T, B.T
-                X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
-                _ricc_rcond_check('slycot.sb02od', rcond)
+                X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact="C")[:2]
+                _ricc_rcond_check("slycot.sb02od", rcond)
         else:
-            jobb = 'B'
-            fact = 'C'
-            uplo = 'U'
-            jobl = 'Z' if S is None else 'N'
-            scal = 'N'
-            sort = 'S'
-            acc = 'R'
+            jobb = "B"
+            fact = "C"
+            uplo = "U"
+            jobl = "Z" if S is None else "N"
+            scal = "N"
+            sort = "S"
+            acc = "R"
             m = C.shape[0] if not trans else B.shape[1]
             p = B.shape[1] if not trans else C.shape[0]
             if R is None:
@@ -254,20 +283,22 @@ if config.HAVE_SLYCOT:
                 A = A.T
                 E = E.T
                 B, C = C.T, B.T
-            out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                                n, m, p,
-                                A, E, B, C, R, S)
+            out = slycot.sg02ad(
+                dico, jobb, fact, uplo, jobl, scal, sort, acc, n, m, p, A, E, B, C, R, S
+            )
             X = out[1]
             rcond = out[0]
-            _ricc_rcond_check('slycot.sg02ad', rcond)
+            _ricc_rcond_check("slycot.sg02ad", rcond)
 
         return A_source.from_numpy(_chol(X).T)
 
     def _ricc_rcond_check(solver, rcond):
         if rcond < np.finfo(np.float64).eps:
             logger = getLogger(solver)
-            logger.warning(f'Estimated reciprocal condition number is small (rcond={rcond:e}). '
-                           f'Result may not be accurate.')
+            logger.warning(
+                f"Estimated reciprocal condition number is small (rcond={rcond:e}). "
+                f"Result may not be accurate."
+            )
 
     def pos_ricc_lrcf_solver_options():
         """Returns available positive Riccati equation solvers with default solver options for the SciPy backend.
@@ -277,7 +308,7 @@ if config.HAVE_SLYCOT:
         A dict of available solvers with default solver options.
         """
 
-        return {'slycot': {'type': 'slycot'}}
+        return {"slycot": {"type": "slycot"}}
 
     def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a positive Riccati equation.
@@ -322,9 +353,13 @@ if config.HAVE_SLYCOT:
         """
 
         _solve_ricc_check_args(A, E, B, C, R, S, trans)
-        options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'slycot', None, False)
-        if options['type'] != 'slycot':
-            raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
+        options = _parse_options(
+            options, pos_ricc_lrcf_solver_options(), "slycot", None, False
+        )
+        if options["type"] != "slycot":
+            raise ValueError(
+                f"Unexpected positive Riccati equation solver ({options['type']})."
+            )
 
         if R is None:
             R = np.eye(len(C) if not trans else len(B))

@@ -15,16 +15,26 @@ from pymor.grids.referenceelements import triangle, square
 
 
 class MatplotlibPatchAxes:
-
-    def __init__(self, figure, grid, bounding_box=None, vmin=None, vmax=None, codim=2,
-                 colorbar=True):
+    def __init__(
+        self,
+        figure,
+        grid,
+        bounding_box=None,
+        vmin=None,
+        vmax=None,
+        codim=2,
+        colorbar=True,
+    ):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
 
         subentities, coordinates, entity_map = flatten_grid(grid)
-        self.subentities = subentities if grid.reference_element is triangle \
+        self.subentities = (
+            subentities
+            if grid.reference_element is triangle
             else np.vstack((subentities[:, 0:3], subentities[:, [2, 3, 0]]))
+        )
         self.coordinates = coordinates
         self.entity_map = entity_map
         self.reference_element = grid.reference_element
@@ -33,13 +43,25 @@ class MatplotlibPatchAxes:
         self.codim = codim
         a = figure.gca()
         if self.codim == 2:
-            self.p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
-                                 np.zeros(len(self.coordinates)),
-                                 vmin=self.vmin, vmax=self.vmax, shading='gouraud')
+            self.p = a.tripcolor(
+                self.coordinates[:, 0],
+                self.coordinates[:, 1],
+                self.subentities,
+                np.zeros(len(self.coordinates)),
+                vmin=self.vmin,
+                vmax=self.vmax,
+                shading="gouraud",
+            )
         else:
-            self.p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
-                                 facecolors=np.zeros(len(self.subentities)),
-                                 vmin=self.vmin, vmax=self.vmax, shading='flat')
+            self.p = a.tripcolor(
+                self.coordinates[:, 0],
+                self.coordinates[:, 1],
+                self.subentities,
+                facecolors=np.zeros(len(self.subentities)),
+                vmin=self.vmin,
+                vmax=self.vmax,
+                shading="flat",
+            )
         if colorbar:
             figure.colorbar(self.p, ax=a)
 
@@ -61,9 +83,10 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
     from Qt.QtWidgets import QSizePolicy
 
     import Qt
-    if Qt.__qt_version__[0] == '4':
+
+    if Qt.__qt_version__[0] == "4":
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-    elif Qt.__qt_version__[0] == '5':
+    elif Qt.__qt_version__[0] == "5":
         from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     else:
         raise NotImplementedError
@@ -74,9 +97,18 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
 
     # noinspection PyShadowingNames
     class Matplotlib1DWidget(FigureCanvas):
-
-        def __init__(self, parent, grid, count, vmin=None, vmax=None, legend=None, codim=1,
-                     separate_plots=False, dpi=100):
+        def __init__(
+            self,
+            parent,
+            grid,
+            count,
+            vmin=None,
+            vmax=None,
+            legend=None,
+            codim=1,
+            separate_plots=False,
+            dpi=100,
+        ):
             assert isinstance(grid, OnedGrid)
             assert codim in (0, 1)
 
@@ -115,7 +147,9 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             super().__init__(figure)
             self.setParent(parent)
             self.setMinimumSize(300, 300)
-            self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+            self.setSizePolicy(
+                QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            )
 
         def set(self, U, ind):
             for l, u in zip(self.lines, U):
@@ -129,8 +163,16 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             self.draw()
 
     class MatplotlibPatchWidget(FigureCanvas):
-
-        def __init__(self, parent, grid, bounding_box=None, vmin=None, vmax=None, codim=2, dpi=100):
+        def __init__(
+            self,
+            parent,
+            grid,
+            bounding_box=None,
+            vmin=None,
+            vmax=None,
+            codim=2,
+            dpi=100,
+        ):
             assert grid.reference_element in (triangle, square)
             assert grid.dim == 2
             assert codim in (0, 2)
@@ -140,13 +182,18 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
 
             self.setParent(parent)
             self.setMinimumSize(300, 300)
-            self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+            self.setSizePolicy(
+                QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            )
 
-            self.patch_axes = MatplotlibPatchAxes(self.figure, grid, bounding_box, vmin, vmax, codim)
+            self.patch_axes = MatplotlibPatchAxes(
+                self.figure, grid, bounding_box, vmin, vmax, codim
+            )
 
         def set(self, U, vmin=None, vmax=None):
             self.patch_axes.set(U, vmin, vmax)
             self.draw()
+
 
 else:
 

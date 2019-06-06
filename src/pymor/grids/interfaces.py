@@ -7,12 +7,16 @@ import numpy as np
 from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
 from pymor.domaindescriptions.interfaces import KNOWN_BOUNDARY_TYPES
-from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
-                                     ReferenceElementDefaultImplementations,
-                                     AffineGridDefaultImplementations,)
+from pymor.grids.defaultimpl import (
+    ConformalTopologicalGridDefaultImplementations,
+    ReferenceElementDefaultImplementations,
+    AffineGridDefaultImplementations,
+)
 
 
-class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, CacheableInterface):
+class ConformalTopologicalGridInterface(
+    ConformalTopologicalGridDefaultImplementations, CacheableInterface
+):
     """A topological grid without hanging nodes.
 
     The grid is completely determined via the subentity relation given by
@@ -27,7 +31,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         The dimension of the grid.
     """
 
-    cache_region = 'memory'
+    cache_region = "memory"
 
     @abstractmethod
     def size(self, codim):
@@ -96,7 +100,9 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         return self._boundaries(codim)
 
 
-class ReferenceElementInterface(ReferenceElementDefaultImplementations, CacheableInterface):
+class ReferenceElementInterface(
+    ReferenceElementDefaultImplementations, CacheableInterface
+):
     """Defines a reference element.
 
     All reference elements have the property that all subentities of a given codimension are of the
@@ -113,7 +119,7 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
 
     dim = None
     volume = None
-    cache_region = 'memory'
+    cache_region = "memory"
 
     @abstractmethod
     def size(self, codim):
@@ -168,7 +174,7 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
         pass
 
     @abstractmethod
-    def quadrature(self, order=None, npoints=None, quadrature_type='default'):
+    def quadrature(self, order=None, npoints=None, quadrature_type="default"):
         """Returns tuple `(P, W)` where `P` is an array of quadrature points with
         corresponding weights `W`.
 
@@ -189,7 +195,9 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
         return frozenset(o.keys())
 
 
-class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopologicalGridInterface):
+class AffineGridInterface(
+    AffineGridDefaultImplementations, ConformalTopologicalGridInterface
+):
     """Topological grid with geometry where each codim-0 entity is affinely mapped to the same |ReferenceElement|.
 
     The grid is completely determined via the subentity relation given by
@@ -271,7 +279,9 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         """`retval[e]` is the diameter of the codim-`codim` entity with global index `e`."""
         return self._diameters(codim)
 
-    def quadrature_points(self, codim, order=None, npoints=None, quadrature_type='default'):
+    def quadrature_points(
+        self, codim, order=None, npoints=None, quadrature_type="default"
+    ):
         """`retval[e]` is an array of quadrature points in global coordinates
         for the codim-`codim` entity with global index `e`.
 
@@ -316,7 +326,7 @@ class BoundaryInfoInterface(CacheableInterface):
     """
 
     boundary_types = frozenset()
-    cache_region = 'memory'
+    cache_region = "memory"
 
     def mask(self, boundary_type, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is
@@ -328,18 +338,28 @@ class BoundaryInfoInterface(CacheableInterface):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is
         associated to one and only one boundary type.
         """
-        return np.less_equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 1)
+        return np.less_equal(
+            sum(
+                self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types
+            ),
+            1,
+        )
 
     def no_boundary_type_mask(self, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is
         associated to no boundary type.
         """
-        return np.equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 0)
+        return np.equal(
+            sum(
+                self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types
+            ),
+            0,
+        )
 
     def check_boundary_types(self, assert_unique_type=(1,), assert_some_type=()):
         for bt in self.boundary_types:
             if bt not in KNOWN_BOUNDARY_TYPES:
-                self.logger.warning(f'Unknown boundary type: {bt}')
+                self.logger.warning(f"Unknown boundary type: {bt}")
 
         if assert_unique_type:
             for codim in assert_unique_type:
@@ -350,37 +370,37 @@ class BoundaryInfoInterface(CacheableInterface):
 
     @property
     def has_dirichlet(self):
-        return 'dirichlet' in self.boundary_types
+        return "dirichlet" in self.boundary_types
 
     @property
     def has_neumann(self):
-        return 'neumann' in self.boundary_types
+        return "neumann" in self.boundary_types
 
     @property
     def has_robin(self):
-        return 'robin' in self.boundary_types
+        return "robin" in self.boundary_types
 
     def dirichlet_mask(self, codim):
-        return self.mask('dirichlet', codim)
+        return self.mask("dirichlet", codim)
 
     def neumann_mask(self, codim):
-        return self.mask('neumann', codim)
+        return self.mask("neumann", codim)
 
     def robin_mask(self, codim):
-        return self.mask('robin', codim)
+        return self.mask("robin", codim)
 
     @cached
     def _boundaries(self, boundary_type, codim):
-        return np.where(self.mask(boundary_type, codim))[0].astype('int32')
+        return np.where(self.mask(boundary_type, codim))[0].astype("int32")
 
     def boundaries(self, boundary_type, codim):
         return self._boundaries(boundary_type, codim)
 
     def dirichlet_boundaries(self, codim):
-        return self._boundaries('dirichlet', codim)
+        return self._boundaries("dirichlet", codim)
 
     def neumann_boundaries(self, codim):
-        return self._boundaries('neumann', codim)
+        return self._boundaries("neumann", codim)
 
     def robin_boundaries(self, codim):
-        return self._boundaries('robin', codim)
+        return self._boundaries("robin", codim)

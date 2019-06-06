@@ -22,9 +22,12 @@ def convert_to_numpy_list_vector_array(m):
         elif not op.parametric:
             op = op.assemble()
             if isinstance(op, NumpyMatrixOperator):
-                return NumpyListVectorArrayMatrixOperator(op.matrix,
-                                                          source_id=op.source.id, range_id=op.range.id,
-                                                          name=op.name)
+                return NumpyListVectorArrayMatrixOperator(
+                    op.matrix,
+                    source_id=op.source.id,
+                    range_id=op.range.id,
+                    name=op.name,
+                )
             else:
                 raise NotImplementedError
         else:

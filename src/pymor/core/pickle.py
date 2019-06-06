@@ -17,6 +17,7 @@ implementation details of CPython to achieve its goals.
 import marshal
 import opcode
 from types import CodeType, FunctionType, ModuleType
+
 try:
     import cPickle as pickle
 except ImportError:
@@ -33,7 +34,7 @@ PROTOCOL = pickle.HIGHEST_PROTOCOL
 
 # on CPython provide pickling methods which use
 # dumps_function in case pickling of a function fails
-if platform.python_implementation() == 'CPython':
+if platform.python_implementation() == "CPython":
 
     def dump(obj, file, protocol=None):
         pickler = pickle.Pickler(file, protocol=PROTOCOL)
@@ -58,8 +59,10 @@ if platform.python_implementation() == 'CPython':
         unpickler.persistent_load = _function_unpickling_handler
         return unpickler.load()
 
+
 else:
     from functools import partial
+
     dump = partial(pickle.dump, protocol=PROTOCOL)
     dumps = partial(pickle.dumps, protocol=PROTOCOL)
     load = pickle.load
@@ -68,15 +71,14 @@ else:
 
 def _generate_opcode(code_object):
     import dis
+
     for ins in dis.get_instructions(code_object):
         yield (ins.opcode, ins.arg)
 
 
-
-
 def _global_names(code_object):
-    '''Return all names in code_object.co_names which are used in a LOAD_GLOBAL statement.'''
-    LOAD_GLOBAL = opcode.opmap['LOAD_GLOBAL']
+    """Return all names in code_object.co_names which are used in a LOAD_GLOBAL statement."""
+    LOAD_GLOBAL = opcode.opmap["LOAD_GLOBAL"]
     indices = {i for o, i in _generate_opcode(code_object) if o == LOAD_GLOBAL}
     names = code_object.co_names
     result = {names[i] for i in indices}
@@ -95,12 +97,11 @@ def _global_names(code_object):
 
 
 class Module:
-
     def __init__(self, mod):
         self.mod = mod
 
     def __getstate__(self):
-        if not hasattr(self.mod, '__package__'):
+        if not hasattr(self.mod, "__package__"):
             raise PicklingError
         return self.mod.__package__
 
@@ -109,7 +110,7 @@ class Module:
 
 
 def dumps_function(function):
-    '''Tries hard to pickle a function object:
+    """Tries hard to pickle a function object:
 
         1. The function's code object is serialized using the :mod:`marshal` module.
         2. For all global names used in the function's code object the corresponding
@@ -120,8 +121,12 @@ def dumps_function(function):
 
     Note that also this is heavily implementation specific and will probably only
     work with CPython. If possible, avoid using this method.
-    '''
-    closure = None if function.__closure__ is None else [c.cell_contents for c in function.__closure__]
+    """
+    closure = (
+        None
+        if function.__closure__ is None
+        else [c.cell_contents for c in function.__closure__]
+    )
     code = marshal.dumps(function.__code__)
     func_globals = function.__globals__
 
@@ -129,25 +134,44 @@ def dumps_function(function):
         return Module(x) if isinstance(x, ModuleType) else x
 
     # note that global names in function.func_code can also refer to builtins ...
-    globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.__code__) if k in func_globals}
+    globals_ = {
+        k: wrap_modules(func_globals[k])
+        for k in _global_names(function.__code__)
+        if k in func_globals
+    }
 
-    return dumps((function.__name__, code, globals_, function.__defaults__, closure, function.__dict__,
-                  function.__doc__, function.__qualname__, function.__kwdefaults__, function.__annotations__))
+    return dumps(
+        (
+            function.__name__,
+            code,
+            globals_,
+            function.__defaults__,
+            closure,
+            function.__dict__,
+            function.__doc__,
+            function.__qualname__,
+            function.__kwdefaults__,
+            function.__annotations__,
+        )
+    )
 
 
 def loads_function(s):
-    '''Restores a function serialized with :func:`dumps_function`.'''
-    name, code, globals_, defaults, closure, func_dict, doc, qualname, kwdefaults, annotations = loads(s)
+    """Restores a function serialized with :func:`dumps_function`."""
+    name, code, globals_, defaults, closure, func_dict, doc, qualname, kwdefaults, annotations = loads(
+        s
+    )
     code = marshal.loads(code)
     for k, v in globals_.items():
         if isinstance(v, Module):
             globals_[k] = v.mod
     if closure is not None:
         import ctypes
+
         ctypes.pythonapi.PyCell_New.restype = ctypes.py_object
         ctypes.pythonapi.PyCell_New.argtypes = [ctypes.py_object]
         closure = tuple(ctypes.pythonapi.PyCell_New(c) for c in closure)
-    globals_['__builtins__'] = __builtins__
+    globals_["__builtins__"] = __builtins__
     r = FunctionType(code, globals_, name, defaults, closure)
     r.__dict__ = func_dict
     r.__doc__ = doc
@@ -159,22 +183,22 @@ def loads_function(s):
 
 def _function_pickling_handler(f):
     if f.__class__ is FunctionType:
-        if f.__module__ != '__main__':
+        if f.__module__ != "__main__":
             try:
-                return b'A' + pickle.dumps(f)
+                return b"A" + pickle.dumps(f)
             except (AttributeError, TypeError, PicklingError):
-                return b'B' + dumps_function(f)
+                return b"B" + dumps_function(f)
         else:
-            return b'B' + dumps_function(f)
+            return b"B" + dumps_function(f)
     else:
         return None
 
 
 def _function_unpickling_handler(persid):
     mode, data = persid[0], persid[1:]
-    if mode == b'A'[0]:
+    if mode == b"A"[0]:
         return pickle.loads(data)
-    elif mode == b'B'[0]:
+    elif mode == b"B"[0]:
         return loads_function(data)
     else:
         raise UnpicklingError

@@ -4,7 +4,10 @@
 
 import numpy as np
 
-from pymor.domaindescriptions.interfaces import DomainDescriptionInterface, KNOWN_BOUNDARY_TYPES
+from pymor.domaindescriptions.interfaces import (
+    DomainDescriptionInterface,
+    KNOWN_BOUNDARY_TYPES,
+)
 
 
 class RectDomain(DomainDescriptionInterface):
@@ -37,13 +40,19 @@ class RectDomain(DomainDescriptionInterface):
 
     dim = 2
 
-    def __init__(self, domain=([0, 0], [1, 1]), left='dirichlet', right='dirichlet',
-                 top='dirichlet', bottom='dirichlet'):
+    def __init__(
+        self,
+        domain=([0, 0], [1, 1]),
+        left="dirichlet",
+        right="dirichlet",
+        top="dirichlet",
+        bottom="dirichlet",
+    ):
         assert domain[0][0] <= domain[1][0]
         assert domain[0][1] <= domain[1][1]
         for bt in (left, right, top, bottom):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
-                self.logger.warning(f'Unknown boundary type: {bt}')
+                self.logger.warning(f"Unknown boundary type: {bt}")
         self.boundary_types = frozenset({left, right, top, bottom})
         self.left = left
         self.right = right
@@ -76,12 +85,12 @@ class RectDomain(DomainDescriptionInterface):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
     def __repr__(self):
-        left = ', left=' + repr(self.left) if self.left != 'dirichlet' else ''
-        right = ', right=' + repr(self.right) if self.right != 'dirichlet' else ''
-        top = ', top=' + repr(self.top) if self.top != 'dirichlet' else ''
-        bottom = ', bottom=' + repr(self.bottom) if self.bottom != 'dirichlet' else ''
-        domain = str(self.domain).replace('\n', ',')
-        return f'RectDomain({domain}{left}{right}{top}{bottom})'
+        left = ", left=" + repr(self.left) if self.left != "dirichlet" else ""
+        right = ", right=" + repr(self.right) if self.right != "dirichlet" else ""
+        top = ", top=" + repr(self.top) if self.top != "dirichlet" else ""
+        bottom = ", bottom=" + repr(self.bottom) if self.bottom != "dirichlet" else ""
+        domain = str(self.domain).replace("\n", ",")
+        return f"RectDomain({domain}{left}{right}{top}{bottom})"
 
 
 class CylindricalDomain(DomainDescriptionInterface):
@@ -108,12 +117,12 @@ class CylindricalDomain(DomainDescriptionInterface):
 
     dim = 2
 
-    def __init__(self, domain=([0, 0], [1, 1]), top='dirichlet', bottom='dirichlet'):
+    def __init__(self, domain=([0, 0], [1, 1]), top="dirichlet", bottom="dirichlet"):
         assert domain[0][0] <= domain[1][0]
         assert domain[0][1] <= domain[1][1]
         for bt in (top, bottom):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
-                self.logger.warning(f'Unknown boundary type: {bt}')
+                self.logger.warning(f"Unknown boundary type: {bt}")
         self.boundary_types = frozenset({top, bottom})
         self.top = top
         self.bottom = bottom
@@ -144,10 +153,10 @@ class CylindricalDomain(DomainDescriptionInterface):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
     def __repr__(self):
-        top = ', top=' + repr(self.top) if self.top != 'dirichlet' else ''
-        bottom = ', bottom=' + repr(self.bottom) if self.bottom != 'dirichlet' else ''
-        domain = str(self.domain).replace('\n', ',')
-        return f'CylindricalDomain({domain}{top}{bottom})'
+        top = ", top=" + repr(self.top) if self.top != "dirichlet" else ""
+        bottom = ", bottom=" + repr(self.bottom) if self.bottom != "dirichlet" else ""
+        domain = str(self.domain).replace("\n", ",")
+        return f"CylindricalDomain({domain}{top}{bottom})"
 
 
 class TorusDomain(DomainDescriptionInterface):
@@ -199,7 +208,7 @@ class TorusDomain(DomainDescriptionInterface):
 
     def __repr__(self):
         domain = str(self.domain).replace("\n", ",")
-        return f'TorusDomain({domain})'
+        return f"TorusDomain({domain})"
 
 
 class LineDomain(DomainDescriptionInterface):
@@ -225,11 +234,11 @@ class LineDomain(DomainDescriptionInterface):
 
     dim = 1
 
-    def __init__(self, domain=(0, 1), left='dirichlet', right='dirichlet'):
+    def __init__(self, domain=(0, 1), left="dirichlet", right="dirichlet"):
         assert domain[0] <= domain[1]
         for bt in (left, right):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
-                self.logger.warning(f'Unknown boundary type: {bt}')
+                self.logger.warning(f"Unknown boundary type: {bt}")
         self.boundary_types = frozenset({left, right})
         self.left = left
         self.right = right
@@ -240,9 +249,9 @@ class LineDomain(DomainDescriptionInterface):
         return self.domain[1] - self.domain[0]
 
     def __repr__(self):
-        left = ', left=' + repr(self.left) if self.left != 'dirichlet' else ''
-        right = ', right=' + repr(self.right) if self.right != 'dirichlet' else ''
-        return f'LineDomain({self.domain}{left}{right})'
+        left = ", left=" + repr(self.left) if self.left != "dirichlet" else ""
+        right = ", right=" + repr(self.right) if self.right != "dirichlet" else ""
+        return f"LineDomain({self.domain}{left}{right})"
 
 
 class CircleDomain(DomainDescriptionInterface):
@@ -270,4 +279,4 @@ class CircleDomain(DomainDescriptionInterface):
         return self.domain[1] - self.domain[0]
 
     def __repr__(self):
-        return f'CircleDomain({self.domain})'
+        return f"CircleDomain({self.domain})"

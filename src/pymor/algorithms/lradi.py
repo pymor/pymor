@@ -15,13 +15,20 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.tools.random import get_random_state
 
 
-@defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_init_maxiter',
-          'projection_shifts_init_seed')
-def lyap_lrcf_solver_options(lradi_tol=1e-10,
-                             lradi_maxiter=500,
-                             lradi_shifts='projection_shifts',
-                             projection_shifts_init_maxiter=20,
-                             projection_shifts_init_seed=None):
+@defaults(
+    "lradi_tol",
+    "lradi_maxiter",
+    "lradi_shifts",
+    "projection_shifts_init_maxiter",
+    "projection_shifts_init_seed",
+)
+def lyap_lrcf_solver_options(
+    lradi_tol=1e-10,
+    lradi_maxiter=500,
+    lradi_shifts="projection_shifts",
+    projection_shifts_init_maxiter=20,
+    projection_shifts_init_seed=None,
+):
     """Returns available Lyapunov equation solvers with default solver options.
 
     Parameters
@@ -41,14 +48,21 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
     -------
     A dict of available solvers with default solver options.
     """
-    return {'lradi': {'type': 'lradi',
-                      'tol': lradi_tol,
-                      'maxiter': lradi_maxiter,
-                      'shifts': lradi_shifts,
-                      'shift_options':
-                      {'projection_shifts': {'type': 'projection_shifts',
-                                             'init_maxiter': projection_shifts_init_maxiter,
-                                             'init_seed': projection_shifts_init_seed}}}}
+    return {
+        "lradi": {
+            "type": "lradi",
+            "tol": lradi_tol,
+            "maxiter": lradi_maxiter,
+            "shifts": lradi_shifts,
+            "shift_options": {
+                "projection_shifts": {
+                    "type": "projection_shifts",
+                    "init_maxiter": projection_shifts_init_maxiter,
+                    "init_seed": projection_shifts_init_seed,
+                }
+            },
+        }
+    }
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, options=None):
@@ -83,20 +97,20 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     """
 
     _solve_lyap_lrcf_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_lrcf_solver_options(), 'lradi', None, False)
-    logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')
+    options = _parse_options(options, lyap_lrcf_solver_options(), "lradi", None, False)
+    logger = getLogger("pymor.algorithms.lradi.solve_lyap_lrcf")
 
-    shift_options = options['shift_options'][options['shifts']]
-    if shift_options['type'] == 'projection_shifts':
+    shift_options = options["shift_options"][options["shifts"]]
+    if shift_options["type"] == "projection_shifts":
         init_shifts = projection_shifts_init
         iteration_shifts = projection_shifts
     else:
-        raise ValueError('Unknown lradi shift strategy.')
+        raise ValueError("Unknown lradi shift strategy.")
 
     if E is None:
         E = IdentityOperator(A.source)
 
-    Z = A.source.empty(reserve=len(B) * options['maxiter'])
+    Z = A.source.empty(reserve=len(B) * options["maxiter"])
     W = B.copy()
 
     j = 0
@@ -104,9 +118,9 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     shifts = init_shifts(A, E, W, shift_options)
     res = np.linalg.norm(W.gramian(), ord=2)
     init_res = res
-    Btol = res * options['tol']
+    Btol = res * options["tol"]
 
-    while res > Btol and j < options['maxiter']:
+    while res > Btol and j < options["maxiter"]:
         if shifts[j_shift].imag == 0:
             AaE = A + shifts[j_shift].real * E
             if not trans:
@@ -129,18 +143,21 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
                 W += E.apply_adjoint(V.real + V.imag * d) * gs
             g = np.sqrt(gs)
             Z.append((V.real + V.imag * d) * g)
-            Z.append(V.imag * (g * np.sqrt(d**2 + 1)))
+            Z.append(V.imag * (g * np.sqrt(d ** 2 + 1)))
             j += 2
         j_shift += 1
         res = np.linalg.norm(W.gramian(), ord=2)
-        logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
+        logger.info(f"Relative residual at step {j}: {res/init_res:.5e}")
         if j_shift >= shifts.size:
             shifts = iteration_shifts(A, E, V, shifts)
             j_shift = 0
 
     if res > Btol:
-        logger.warning(f'Prescribed relative residual tolerance was not achieved '
-                       f'({res/init_res:e} > {options["tol"]:e}) after ' f'{options["maxiter"]} ADI steps.')
+        logger.warning(
+            f"Prescribed relative residual tolerance was not achieved "
+            f'({res/init_res:e} > {options["tol"]:e}) after '
+            f'{options["maxiter"]} ADI steps.'
+        )
 
     return Z
 
@@ -167,17 +184,17 @@ def projection_shifts_init(A, E, B, shift_options):
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-    random_state = get_random_state(seed=shift_options['init_seed'])
-    for i in range(shift_options['init_maxiter']):
+    random_state = get_random_state(seed=shift_options["init_seed"])
+    for i in range(shift_options["init_maxiter"]):
         Q = gram_schmidt(B, atol=0, rtol=0)
         shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
         shifts = shifts[shifts.real < 0]
         if shifts.size == 0:
             # use random subspace instead of span{B} (with same dimensions)
-            B = B.random(len(B), distribution='normal', random_state=random_state)
+            B = B.random(len(B), distribution="normal", random_state=random_state)
         else:
             return shifts
-    raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')
+    raise RuntimeError("Could not generate initial shifts for low-rank ADI iteration.")
 
 
 def projection_shifts(A, E, V, prev_shifts):

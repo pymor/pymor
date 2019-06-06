@@ -9,7 +9,6 @@ from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
 
 
 class DummyPool(WorkerPoolInterface):
-
     def __len__(self):
         return 1
 
@@ -17,7 +16,9 @@ class DummyPool(WorkerPoolInterface):
         if isinstance(obj, ImmutableInterface):
             return DummyRemoteObject(obj)
         else:
-            return DummyRemoteObject(deepcopy(obj))  # ensure we make a deep copy of the data
+            return DummyRemoteObject(
+                deepcopy(obj)
+            )  # ensure we make a deep copy of the data
 
     def scatter_array(self, U, copy=True):
         if copy:
@@ -29,7 +30,10 @@ class DummyPool(WorkerPoolInterface):
         return DummyRemoteObject(l)
 
     def _map_kwargs(self, kwargs):
-        return {k: (v.obj if isinstance(v, DummyRemoteObject) else v) for k, v in kwargs.items()}
+        return {
+            k: (v.obj if isinstance(v, DummyRemoteObject) else v)
+            for k, v in kwargs.items()
+        }
 
     def apply(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)
@@ -52,7 +56,6 @@ dummy_pool = DummyPool()
 
 
 class DummyRemoteObject(RemoteObjectInterface):
-
     def __init__(self, obj):
         self.obj = obj
 

@@ -11,29 +11,42 @@ from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 
 
-@defaults('lgmres_tol', 'lgmres_maxiter',
-          'lgmres_inner_m', 'lgmres_outer_k', 'least_squares_lsmr_damp',
-          'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
-          'least_squares_lsmr_maxiter', 'least_squares_lsmr_show',
-          'least_squares_lsqr_atol', 'least_squares_lsqr_btol', 'least_squares_lsqr_conlim',
-          'least_squares_lsqr_iter_lim', 'least_squares_lsqr_show',
-          sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show'))
-def solver_options(lgmres_tol=1e-5,
-                   lgmres_maxiter=1000,
-                   lgmres_inner_m=39,
-                   lgmres_outer_k=3,
-                   least_squares_lsmr_damp=0.0,
-                   least_squares_lsmr_atol=1e-6,
-                   least_squares_lsmr_btol=1e-6,
-                   least_squares_lsmr_conlim=1e8,
-                   least_squares_lsmr_maxiter=None,
-                   least_squares_lsmr_show=False,
-                   least_squares_lsqr_damp=0.0,
-                   least_squares_lsqr_atol=1e-6,
-                   least_squares_lsqr_btol=1e-6,
-                   least_squares_lsqr_conlim=1e8,
-                   least_squares_lsqr_iter_lim=None,
-                   least_squares_lsqr_show=False):
+@defaults(
+    "lgmres_tol",
+    "lgmres_maxiter",
+    "lgmres_inner_m",
+    "lgmres_outer_k",
+    "least_squares_lsmr_damp",
+    "least_squares_lsmr_atol",
+    "least_squares_lsmr_btol",
+    "least_squares_lsmr_conlim",
+    "least_squares_lsmr_maxiter",
+    "least_squares_lsmr_show",
+    "least_squares_lsqr_atol",
+    "least_squares_lsqr_btol",
+    "least_squares_lsqr_conlim",
+    "least_squares_lsqr_iter_lim",
+    "least_squares_lsqr_show",
+    sid_ignore=("least_squares_lsmr_show", "least_squares_lsqr_show"),
+)
+def solver_options(
+    lgmres_tol=1e-5,
+    lgmres_maxiter=1000,
+    lgmres_inner_m=39,
+    lgmres_outer_k=3,
+    least_squares_lsmr_damp=0.0,
+    least_squares_lsmr_atol=1e-6,
+    least_squares_lsmr_btol=1e-6,
+    least_squares_lsmr_conlim=1e8,
+    least_squares_lsmr_maxiter=None,
+    least_squares_lsmr_show=False,
+    least_squares_lsqr_damp=0.0,
+    least_squares_lsqr_atol=1e-6,
+    least_squares_lsqr_btol=1e-6,
+    least_squares_lsqr_conlim=1e8,
+    least_squares_lsqr_iter_lim=None,
+    least_squares_lsqr_show=False,
+):
     """Returns available solvers with default |solver_options|.
 
     Parameters
@@ -76,30 +89,45 @@ def solver_options(lgmres_tol=1e-5,
     A dict of available solvers with default |solver_options|.
     """
 
-    return {'generic_lgmres': {'type': 'generic_lgmres',
-                               'tol': lgmres_tol,
-                               'maxiter': lgmres_maxiter,
-                               'inner_m': lgmres_inner_m,
-                               'outer_k': lgmres_outer_k},
-            'generic_least_squares_lsmr': {'type': 'generic_least_squares_lsmr',
-                                           'damp': least_squares_lsmr_damp,
-                                           'atol': least_squares_lsmr_atol,
-                                           'btol': least_squares_lsmr_btol,
-                                           'conlim': least_squares_lsmr_conlim,
-                                           'maxiter': least_squares_lsmr_maxiter,
-                                           'show': least_squares_lsmr_show},
-            'generic_least_squares_lsqr': {'type': 'generic_least_squares_lsqr',
-                                           'damp': least_squares_lsqr_damp,
-                                           'atol': least_squares_lsqr_atol,
-                                           'btol': least_squares_lsqr_btol,
-                                           'conlim': least_squares_lsqr_conlim,
-                                           'iter_lim': least_squares_lsqr_iter_lim,
-                                           'show': least_squares_lsqr_show}}
+    return {
+        "generic_lgmres": {
+            "type": "generic_lgmres",
+            "tol": lgmres_tol,
+            "maxiter": lgmres_maxiter,
+            "inner_m": lgmres_inner_m,
+            "outer_k": lgmres_outer_k,
+        },
+        "generic_least_squares_lsmr": {
+            "type": "generic_least_squares_lsmr",
+            "damp": least_squares_lsmr_damp,
+            "atol": least_squares_lsmr_atol,
+            "btol": least_squares_lsmr_btol,
+            "conlim": least_squares_lsmr_conlim,
+            "maxiter": least_squares_lsmr_maxiter,
+            "show": least_squares_lsmr_show,
+        },
+        "generic_least_squares_lsqr": {
+            "type": "generic_least_squares_lsqr",
+            "damp": least_squares_lsqr_damp,
+            "atol": least_squares_lsqr_atol,
+            "btol": least_squares_lsqr_btol,
+            "conlim": least_squares_lsqr_conlim,
+            "iter_lim": least_squares_lsqr_iter_lim,
+            "show": least_squares_lsqr_show,
+        },
+    }
 
 
-@defaults('check_finite', 'default_solver', 'default_least_squares_solver')
-def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
-                  default_solver='generic_lgmres', default_least_squares_solver='generic_least_squares_lsmr'):
+@defaults("check_finite", "default_solver", "default_least_squares_solver")
+def apply_inverse(
+    op,
+    rhs,
+    options=None,
+    least_squares=False,
+    check_finite=True,
+    default_solver="generic_lgmres",
+    default_least_squares_solver="generic_least_squares_lsmr",
+):
     """Solve linear equation system.
 
     Applies the inverse of `op` to the vectors in `rhs` using a generic iterative solver.
@@ -127,77 +155,115 @@ def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
     |VectorArray| of the solution vectors.
     """
 
-    options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
+    options = _parse_options(
+        options,
+        solver_options(),
+        default_solver,
+        default_least_squares_solver,
+        least_squares,
+    )
 
     R = op.source.empty(reserve=len(rhs))
 
-    if options['type'] == 'generic_lgmres':
+    if options["type"] == "generic_lgmres":
         for i in range(len(rhs)):
-            r, info = lgmres(op, rhs[i],
-                             tol=options['tol'],
-                             maxiter=options['maxiter'],
-                             inner_m=options['inner_m'],
-                             outer_k=options['outer_k'])
+            r, info = lgmres(
+                op,
+                rhs[i],
+                tol=options["tol"],
+                maxiter=options["maxiter"],
+                inner_m=options["inner_m"],
+                outer_k=options["outer_k"],
+            )
             if info > 0:
-                raise InversionError(f'lgmres failed to converge after {info} iterations')
+                raise InversionError(
+                    f"lgmres failed to converge after {info} iterations"
+                )
             assert info == 0
             R.append(r)
-    elif options['type'] == 'generic_least_squares_lsmr':
+    elif options["type"] == "generic_least_squares_lsmr":
         for i in range(len(rhs)):
-            r, info, itn, _, _, _, _, _ = lsmr(op, rhs[i],
-                                               damp=options['damp'],
-                                               atol=options['atol'],
-                                               btol=options['btol'],
-                                               conlim=options['conlim'],
-                                               maxiter=options['maxiter'],
-                                               show=options['show'])
+            r, info, itn, _, _, _, _, _ = lsmr(
+                op,
+                rhs[i],
+                damp=options["damp"],
+                atol=options["atol"],
+                btol=options["btol"],
+                conlim=options["conlim"],
+                maxiter=options["maxiter"],
+                show=options["show"],
+            )
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError(f'lsmr failed to converge after {itn} iterations')
-            getLogger('pymor.algorithms.genericsolvers.lsmr').info(f'Converged after {itn} iterations')
+                raise InversionError(f"lsmr failed to converge after {itn} iterations")
+            getLogger("pymor.algorithms.genericsolvers.lsmr").info(
+                f"Converged after {itn} iterations"
+            )
             R.append(r)
-    elif options['type'] == 'generic_least_squares_lsqr':
+    elif options["type"] == "generic_least_squares_lsqr":
         for i in range(len(rhs)):
-            r, info, itn, _, _, _, _, _, _ = lsqr(op, rhs[i],
-                                                  damp=options['damp'],
-                                                  atol=options['atol'],
-                                                  btol=options['btol'],
-                                                  conlim=options['conlim'],
-                                                  iter_lim=options['iter_lim'],
-                                                  show=options['show'])
+            r, info, itn, _, _, _, _, _, _ = lsqr(
+                op,
+                rhs[i],
+                damp=options["damp"],
+                atol=options["atol"],
+                btol=options["btol"],
+                conlim=options["conlim"],
+                iter_lim=options["iter_lim"],
+                show=options["show"],
+            )
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError(f'lsmr failed to converge after {itn} iterations')
-            getLogger('pymor.algorithms.genericsolvers.lsqr').info(f'Converged after {itn} iterations')
+                raise InversionError(f"lsmr failed to converge after {itn} iterations")
+            getLogger("pymor.algorithms.genericsolvers.lsqr").info(
+                f"Converged after {itn} iterations"
+            )
             R.append(r)
     else:
-        raise ValueError('Unknown solver type')
+        raise ValueError("Unknown solver type")
 
     if check_finite:
         if not np.isfinite(np.all(R.l2_norm())):
-            raise InversionError('Result contains non-finite values')
+            raise InversionError("Result contains non-finite values")
 
     return R
 
 
-def _parse_options(options, default_options, default_solver, default_least_squares_solver, least_squares):
+def _parse_options(
+    options,
+    default_options,
+    default_solver,
+    default_least_squares_solver,
+    least_squares,
+):
     if options is None:
-        options = default_options[default_least_squares_solver] if least_squares else default_options[default_solver]
+        options = (
+            default_options[default_least_squares_solver]
+            if least_squares
+            else default_options[default_solver]
+        )
     elif isinstance(options, str):
         options = default_options[options]
     else:
-        assert 'type' in options and options['type'] in default_options \
-            and options.keys() <= default_options[options['type']].keys()
+        assert (
+            "type" in options
+            and options["type"] in default_options
+            and options.keys() <= default_options[options["type"]].keys()
+        )
         user_options = options
-        options = default_options[user_options['type']]
+        options = default_options[user_options["type"]]
         options.update(user_options)
 
-    if least_squares != ('least_squares' in options['type']):
-        logger = getLogger('foo')
+    if least_squares != ("least_squares" in options["type"]):
+        logger = getLogger("foo")
         if least_squares:
-            logger.warning('Non-least squares solver selected for least squares problem.')
+            logger.warning(
+                "Non-least squares solver selected for least squares problem."
+            )
         else:
-            logger.warning('Least squares solver selected for non-least squares problem.')
+            logger.warning(
+                "Least squares solver selected for non-least squares problem."
+            )
 
     return options
 
@@ -210,11 +276,23 @@ def _parse_options(options, default_options, default_solver, default_least_squar
 # Distributed under the same license as Scipy.
 
 
-def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
-           inner_m=30, outer_k=3, outer_v=None, store_outer_Av=True):
+def lgmres(
+    A,
+    b,
+    x0=None,
+    tol=1e-5,
+    maxiter=1000,
+    M=None,
+    callback=None,
+    inner_m=30,
+    outer_k=3,
+    outer_v=None,
+    store_outer_Av=True,
+):
     if A.source != A.range:
         raise InversionError
     from scipy.linalg.basic import lstsq
+
     x = A.source.zeros() if x0 is None else x0.copy()
 
     # psolve = M.matvec
@@ -239,15 +317,17 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
             break
 
         # -- inner LGMRES iteration
-        vs0 = -r_outer   # -psolve(r_outer)
+        vs0 = -r_outer  # -psolve(r_outer)
         inner_res_0 = vs0.l2_norm()[0]
 
         if inner_res_0 == 0:
             rnorm = r_outer.l2_norm()[0]
-            raise RuntimeError("Preconditioner returned a zero vector; "
-                               "|v| ~ %.1g, |M v| = 0" % rnorm)
+            raise RuntimeError(
+                "Preconditioner returned a zero vector; "
+                "|v| ~ %.1g, |M v| = 0" % rnorm
+            )
 
-        vs0.scal(1.0/inner_res_0)
+        vs0.scal(1.0 / inner_res_0)
         hs = []
         vs = [vs0]
         ws = []
@@ -291,7 +371,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
             #     ++ evaluate
             v_new = None
             if j < len(outer_v) + 1:
-                z, v_new = outer_v[j-1]
+                z, v_new = outer_v[j - 1]
             elif j == len(outer_v) + 1:
                 z = vs0
             else:
@@ -321,7 +401,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
                 bailout = True
             else:
                 bailout = False
-                v_new.scal(1.0/hcur[-1])
+                v_new.scal(1.0 / hcur[-1])
 
             vs.append(v_new)
             hs.append(hcur)
@@ -335,11 +415,11 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
                 continue
 
             # -- GMRES optimization problem
-            hess = np.zeros((j+1, j))
-            e1 = np.zeros((j+1,))
+            hess = np.zeros((j + 1, j))
+            e1 = np.zeros((j + 1,))
             e1[0] = inner_res_0
             for q in range(j):
-                hess[:(q+2), q] = hs[q]
+                hess[: (q + 2), q] = hs[q]
 
             y, resids, rank, s = lstsq(hess, e1)
             inner_res = np.linalg.norm(np.dot(hess, y) - e1)
@@ -349,7 +429,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
                 break
 
         # -- GMRES terminated: eval solution
-        dx = ws[0]*y[0]
+        dx = ws[0] * y[0]
         for w, yc in zip(ws[1:], y[1:]):
             dx.axpy(yc, w)  # dx += w*yc
 
@@ -357,12 +437,12 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
         nx = dx.l2_norm()[0]
         if store_outer_Av:
             q = np.dot(hess, y)
-            ax = vs[0]*q[0]
+            ax = vs[0] * q[0]
             for v, qc in zip(vs[1:], q[1:]):
                 ax.axpy(qc, v)
-            outer_v.append((dx * (1./nx), ax * (1./nx)))
+            outer_v.append((dx * (1.0 / nx), ax * (1.0 / nx)))
         else:
-            outer_v.append((dx * (1./nx), None))
+            outer_v.append((dx * (1.0 / nx), None))
 
         # -- Retain only a finite number of augmentation vectors
         while len(outer_v) > outer_k:
@@ -374,7 +454,9 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
         # didn't converge ...
         return x, maxiter
 
-    getLogger('pymor.algorithms.genericsolvers.lgmres').info(f'Converged after {k_outer+1} iterations')
+    getLogger("pymor.algorithms.genericsolvers.lgmres").info(
+        f"Converged after {k_outer+1} iterations"
+    )
 
     return x, 0
 
@@ -445,34 +527,35 @@ def _sym_ortho(a, b):
         r = b / s
     else:
         tau = b / a
-        c = np.sign(a) / np.sqrt(1+tau*tau)
+        c = np.sign(a) / np.sqrt(1 + tau * tau)
         s = c * tau
         r = a / c
     return c, s, r
 
 
-def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
-         iter_lim=None, show=False):
+def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8, iter_lim=None, show=False):
     m, n = A.range.dim, A.source.dim
     if iter_lim is None:
         iter_lim = 2 * n
 
-    msg = ('The exact solution is  x = 0                              ',
-           'Ax - b is small enough, given atol, btol                  ',
-           'The least-squares solution is good enough, given atol     ',
-           'The estimate of cond(Abar) has exceeded conlim            ',
-           'Ax - b is small enough for this machine                   ',
-           'The least-squares solution is good enough for this machine',
-           'Cond(Abar) seems to be too large for this machine         ',
-           'The iteration limit has been reached                      ')
+    msg = (
+        "The exact solution is  x = 0                              ",
+        "Ax - b is small enough, given atol, btol                  ",
+        "The least-squares solution is good enough, given atol     ",
+        "The estimate of cond(Abar) has exceeded conlim            ",
+        "Ax - b is small enough for this machine                   ",
+        "The least-squares solution is good enough for this machine",
+        "Cond(Abar) seems to be too large for this machine         ",
+        "The iteration limit has been reached                      ",
+    )
 
     if show:
-        print(' ')
-        print('LSQR            Least-squares solution of  Ax = b')
-        str1 = f'The matrix A has {m:8g} rows  and {n:8g} cols'
-        str2 = 'damp = %20.14e  ' % (damp)
-        str3 = f'atol = {atol:8.2e}                 conlim = {conlim:8.2e}'
-        str4 = f'btol = {btol:8.2e}               iter_lim = {iter_lim:8g}'
+        print(" ")
+        print("LSQR            Least-squares solution of  Ax = b")
+        str1 = f"The matrix A has {m:8g} rows  and {n:8g} cols"
+        str2 = "damp = %20.14e  " % (damp)
+        str3 = f"atol = {atol:8.2e}                 conlim = {conlim:8.2e}"
+        str4 = f"btol = {btol:8.2e}               iter_lim = {iter_lim:8g}"
         print(str1)
         print(str2)
         print(str3)
@@ -483,10 +566,10 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
     # nstop = 0
     ctol = 0
     if conlim > 0:
-        ctol = 1/conlim
+        ctol = 1 / conlim
     anorm = 0
     acond = 0
-    dampsq = damp**2
+    dampsq = damp ** 2
     ddnorm = 0
     res2 = 0
     xnorm = 0
@@ -509,12 +592,12 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
     w = A.source.zeros()
 
     if beta > 0:
-        u.scal(1/beta)
+        u.scal(1 / beta)
         v = A.apply_adjoint(u)
         alfa = v.l2_norm()[0]
 
     if alfa > 0:
-        v.scal(1/alfa)
+        v.scal(1 / alfa)
         w = v.copy()
 
     rhobar = alfa
@@ -531,17 +614,17 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         print(msg[0])
         return x, istop, itn, r1norm, r2norm, anorm, acond, arnorm, xnorm
 
-    head1 = '   Itn      x[0]       r1norm     r2norm '
-    head2 = ' Compatible    LS      Norm A   Cond A'
+    head1 = "   Itn      x[0]       r1norm     r2norm "
+    head2 = " Compatible    LS      Norm A   Cond A"
 
     if show:
-        print(' ')
+        print(" ")
         print(head1, head2)
         test1 = 1
         test2 = alfa / beta
-        str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
-        str2 = f' {r1norm:10.3e} {r2norm:10.3e}'
-        str3 = f'  {test1:8.1e} {test2:8.1e}'
+        str1 = f"{itn:6g} {x.dofs([0])[0]:12.5e}"
+        str2 = f" {r1norm:10.3e} {r2norm:10.3e}"
+        str3 = f"  {test1:8.1e} {test2:8.1e}"
         print(str1, str2, str3)
 
     # Main iteration loop.
@@ -557,8 +640,8 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         beta = u.l2_norm()[0]
 
         if beta > 0:
-            u.scal(1/beta)
-            anorm = np.sqrt(anorm**2 + alfa**2 + beta**2 + damp**2)
+            u.scal(1 / beta)
+            anorm = np.sqrt(anorm ** 2 + alfa ** 2 + beta ** 2 + damp ** 2)
             v = A.apply_adjoint(u) - v * beta
             alfa = v.l2_norm()[0]
             if alfa > 0:
@@ -566,7 +649,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
         # Use a plane rotation to eliminate the damping parameter.
         # This alters the diagonal (rhobar) of the lower-bidiagonal matrix.
-        rhobar1 = np.sqrt(rhobar**2 + damp**2)
+        rhobar1 = np.sqrt(rhobar ** 2 + damp ** 2)
         cs1 = rhobar / rhobar1
         sn1 = damp / rhobar1
         psi = sn1 * phibar
@@ -598,19 +681,19 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         gambar = -cs2 * rho
         rhs = phi - delta * z
         zbar = rhs / gambar
-        xnorm = np.sqrt(xxnorm + zbar**2)
-        gamma = np.sqrt(gambar**2 + theta**2)
+        xnorm = np.sqrt(xxnorm + zbar ** 2)
+        gamma = np.sqrt(gambar ** 2 + theta ** 2)
         cs2 = gambar / gamma
         sn2 = theta / gamma
         z = rhs / gamma
-        xxnorm = xxnorm + z**2
+        xxnorm = xxnorm + z ** 2
 
         # Test for convergence.
         # First, estimate the condition of the matrix  Abar,
         # and the norms of  rbar  and  Abar'rbar.
         acond = anorm * np.sqrt(ddnorm)
-        res1 = phibar**2
-        res2 = res2 + psi**2
+        res1 = phibar ** 2
+        res2 = res2 + psi ** 2
         rnorm = np.sqrt(res1 + res2)
         arnorm = alfa * abs(tau)
 
@@ -621,7 +704,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         #    Estimate r1norm from
         #    r1norm = sqrt(r2norm^2 - damp^2*||x||^2).
         # Although there is cancellation, it might be accurate enough.
-        r1sq = rnorm**2 - dampsq * xxnorm
+        r1sq = rnorm ** 2 - dampsq * xxnorm
         r1norm = np.sqrt(abs(r1sq))
         if r1sq < 0:
             r1norm = -r1norm
@@ -663,24 +746,24 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
             prnt = True
         if itn <= 10:
             prnt = True
-        if itn >= iter_lim-10:
+        if itn >= iter_lim - 10:
             prnt = True
         # if itn%10 == 0: prnt = True
-        if test3 <= 2*ctol:
+        if test3 <= 2 * ctol:
             prnt = True
-        if test2 <= 10*atol:
+        if test2 <= 10 * atol:
             prnt = True
-        if test1 <= 10*rtol:
+        if test1 <= 10 * rtol:
             prnt = True
         if istop != 0:
             prnt = True
 
         if prnt:
             if show:
-                str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
-                str2 = f' {r1norm:10.3e} {r2norm:10.3e}'
-                str3 = f'  {test1:8.1e} {test2:8.1e}'
-                str4 = f' {anorm:8.1e} {acond:8.1e}'
+                str1 = f"{itn:6g} {x.dofs([0])[0]:12.5e}"
+                str2 = f" {r1norm:10.3e} {r2norm:10.3e}"
+                str3 = f"  {test1:8.1e} {test2:8.1e}"
+                str4 = f" {anorm:8.1e} {acond:8.1e}"
                 print(str1, str2, str3, str4)
 
         if istop != 0:
@@ -689,17 +772,17 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
     # End of iteration loop.
     # Print the stopping condition.
     if show:
-        print(' ')
-        print('LSQR finished')
+        print(" ")
+        print("LSQR finished")
         print(msg[istop])
-        print(' ')
-        str1 = f'istop ={istop:8g}   r1norm ={r1norm:8.1e}'
-        str2 = f'anorm ={anorm:8.1e}   arnorm ={arnorm:8.1e}'
-        str3 = f'itn   ={itn:8g}   r2norm ={r2norm:8.1e}'
-        str4 = f'acond ={acond:8.1e}   xnorm  ={xnorm:8.1e}'
-        print(str1 + '   ' + str2)
-        print(str3 + '   ' + str4)
-        print(' ')
+        print(" ")
+        str1 = f"istop ={istop:8g}   r1norm ={r1norm:8.1e}"
+        str2 = f"anorm ={anorm:8.1e}   arnorm ={arnorm:8.1e}"
+        str3 = f"itn   ={itn:8g}   r2norm ={r2norm:8.1e}"
+        str4 = f"acond ={acond:8.1e}   xnorm  ={xnorm:8.1e}"
+        print(str1 + "   " + str2)
+        print(str3 + "   " + str4)
+        print(" ")
 
     return x, istop, itn, r1norm, r2norm, anorm, acond, arnorm, xnorm
 
@@ -724,22 +807,23 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 # Dept of MS&E, Stanford University.
 
 
-def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
-         maxiter=None, show=False):
+def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, maxiter=None, show=False):
 
-    msg = ('The exact solution is  x = 0                              ',
-           'Ax - b is small enough, given atol, btol                  ',
-           'The least-squares solution is good enough, given atol     ',
-           'The estimate of cond(Abar) has exceeded conlim            ',
-           'Ax - b is small enough for this machine                   ',
-           'The least-squares solution is good enough for this machine',
-           'Cond(Abar) seems to be too large for this machine         ',
-           'The iteration limit has been reached                      ')
+    msg = (
+        "The exact solution is  x = 0                              ",
+        "Ax - b is small enough, given atol, btol                  ",
+        "The least-squares solution is good enough, given atol     ",
+        "The estimate of cond(Abar) has exceeded conlim            ",
+        "Ax - b is small enough for this machine                   ",
+        "The least-squares solution is good enough for this machine",
+        "Cond(Abar) seems to be too large for this machine         ",
+        "The iteration limit has been reached                      ",
+    )
 
-    hdg1 = '   itn      x(1)       norm r    norm A''r'
-    hdg2 = ' compatible   LS      norm A   cond A'
-    pfreq = 20   # print frequency (for repeating the heading)
-    pcount = 0   # print counter
+    hdg1 = "   itn      x(1)       norm r    norm A" "r"
+    hdg2 = " compatible   LS      norm A   cond A"
+    pfreq = 20  # print frequency (for repeating the heading)
+    pcount = 0  # print counter
 
     m, n = A.range.dim, A.source.dim
 
@@ -750,12 +834,12 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         maxiter = minDim
 
     if show:
-        print(' ')
-        print('LSMR            Least-squares solution of  Ax = b\n')
-        print(f'The matrix A has {m:8g} rows  and {n:8g} cols')
-        print('damp = %20.14e\n' % (damp))
-        print(f'atol = {atol:8.2e}                 conlim = {conlim:8.2e}\n')
-        print(f'btol = {btol:8.2e}             maxiter = {maxiter:8g}\n')
+        print(" ")
+        print("LSMR            Least-squares solution of  Ax = b\n")
+        print(f"The matrix A has {m:8g} rows  and {n:8g} cols")
+        print("damp = %20.14e\n" % (damp))
+        print(f"atol = {atol:8.2e}                 conlim = {conlim:8.2e}\n")
+        print(f"btol = {btol:8.2e}             maxiter = {maxiter:8g}\n")
 
     u = b.copy()
     beta = u.l2_norm()[0]
@@ -799,7 +883,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     normA2 = alpha * alpha
     maxrbar = 0
-    minrbar = 1e+100
+    minrbar = 1e100
     normA = np.sqrt(normA2)
     condA = 1
     normx = 0
@@ -821,14 +905,14 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         return x, istop, itn, normr, normar, normA, condA, normx
 
     if show:
-        print(' ')
+        print(" ")
         print(hdg1, hdg2)
         test1 = 1
         test2 = alpha / beta
-        str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
-        str2 = f' {normr:10.3e} {normar:10.3e}'
-        str3 = f'  {test1:8.1e} {test2:8.1e}'
-        print(''.join([str1, str2, str3]))
+        str1 = f"{itn:6g} {x.dofs([0])[0]:12.5e}"
+        str2 = f" {normr:10.3e} {normar:10.3e}"
+        str3 = f"  {test1:8.1e} {test2:8.1e}"
+        print("".join([str1, str2, str3]))
 
     # Main iteration loop.
     while itn < maxiter:
@@ -859,8 +943,8 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
         rhoold = rho
         c, s, rho = _sym_ortho(alphahat, beta)
-        thetanew = s*alpha
-        alphabar = c*alpha
+        thetanew = s * alpha
+        alphabar = c * alpha
 
         # Use a plane rotation (Qbar_i) to turn R_i^T to R_i^bar
 
@@ -870,7 +954,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         rhotemp = cbar * rho
         cbar, sbar, rhobar = _sym_ortho(cbar * rho, thetanew)
         zeta = cbar * zetabar
-        zetabar = - sbar * zetabar
+        zetabar = -sbar * zetabar
 
         # Update h, h_hat, x.
 
@@ -895,7 +979,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         ctildeold, stildeold, rhotildeold = _sym_ortho(rhodold, thetabar)
         thetatilde = stildeold * rhobar
         rhodold = ctildeold * rhobar
-        betad = - stildeold * betad + ctildeold * betahat
+        betad = -stildeold * betad + ctildeold * betahat
 
         # betad   = betad_k here.
         # rhodold = rhod_k  here.
@@ -903,7 +987,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         tautildeold = (zetaold - thetatildeold * tautildeold) / rhotildeold
         taud = (zeta - thetatilde * tautildeold) / rhodold
         d = d + betacheck * betacheck
-        normr = np.sqrt(d + (betad - taud)**2 + betadd * betadd)
+        normr = np.sqrt(d + (betad - taud) ** 2 + betadd * betadd)
 
         # Estimate ||A||.
         normA2 = normA2 + beta * beta
@@ -961,21 +1045,27 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         # See if it is time to print something.
 
         if show:
-            if (n <= 40) or (itn <= 10) or (itn >= maxiter - 10) or \
-               (itn % 10 == 0) or (test3 <= 1.1 * ctol) or \
-               (test2 <= 1.1 * atol) or (test1 <= 1.1 * rtol) or \
-               (istop != 0):
+            if (
+                (n <= 40)
+                or (itn <= 10)
+                or (itn >= maxiter - 10)
+                or (itn % 10 == 0)
+                or (test3 <= 1.1 * ctol)
+                or (test2 <= 1.1 * atol)
+                or (test1 <= 1.1 * rtol)
+                or (istop != 0)
+            ):
 
                 if pcount >= pfreq:
                     pcount = 0
-                    print(' ')
+                    print(" ")
                     print(hdg1, hdg2)
                 pcount = pcount + 1
-                str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
-                str2 = f' {normr:10.3e} {normar:10.3e}'
-                str3 = f'  {test1:8.1e} {test2:8.1e}'
-                str4 = f' {normA:8.1e} {condA:8.1e}'
-                print(''.join([str1, str2, str3, str4]))
+                str1 = f"{itn:6g} {x.dofs([0])[0]:12.5e}"
+                str2 = f" {normr:10.3e} {normar:10.3e}"
+                str3 = f"  {test1:8.1e} {test2:8.1e}"
+                str4 = f" {normA:8.1e} {condA:8.1e}"
+                print("".join([str1, str2, str3, str4]))
 
         if istop > 0:
             break
@@ -983,13 +1073,13 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
     # Print the stopping condition.
 
     if show:
-        print(' ')
-        print('LSMR finished')
+        print(" ")
+        print("LSMR finished")
         print(msg[istop])
-        print(f'istop ={istop:8g}    normr ={normr:8.1e}')
-        print(f'    normA ={normA:8.1e}    normAr ={normar:8.1e}')
-        print(f'itn   ={itn:8g}    condA ={condA:8.1e}')
-        print('    normx =%8.1e' % (normx))
+        print(f"istop ={istop:8g}    normr ={normr:8.1e}")
+        print(f"    normA ={normA:8.1e}    normAr ={normar:8.1e}")
+        print(f"itn   ={itn:8g}    condA ={condA:8.1e}")
+        print("    normx =%8.1e" % (normx))
         print(str1, str2)
         print(str3, str4)
 

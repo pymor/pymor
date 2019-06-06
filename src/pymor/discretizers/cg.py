@@ -4,7 +4,10 @@
 
 from functools import partial
 
-from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
+from pymor.algorithms.timestepping import (
+    ExplicitEulerTimeStepper,
+    ImplicitEulerTimeStepper,
+)
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.instationary import InstationaryProblem
@@ -14,18 +17,32 @@ from pymor.functions.basic import ConstantFunction, LincombFunction
 from pymor.grids.boundaryinfos import EmptyBoundaryInfo
 from pymor.grids.referenceelements import line, triangle, square
 from pymor.gui.visualizers import PatchVisualizer, OnedVisualizer
-from pymor.operators.cg import (DiffusionOperatorP1, DiffusionOperatorQ1,
-                                AdvectionOperatorP1, AdvectionOperatorQ1,
-                                L2ProductP1, L2ProductQ1,
-                                L2ProductFunctionalP1, L2ProductFunctionalQ1,
-                                BoundaryL2ProductFunctional,
-                                BoundaryDirichletFunctional, RobinBoundaryOperator, InterpolationOperator)
+from pymor.operators.cg import (
+    DiffusionOperatorP1,
+    DiffusionOperatorQ1,
+    AdvectionOperatorP1,
+    AdvectionOperatorQ1,
+    L2ProductP1,
+    L2ProductQ1,
+    L2ProductFunctionalP1,
+    L2ProductFunctionalQ1,
+    BoundaryL2ProductFunctional,
+    BoundaryDirichletFunctional,
+    RobinBoundaryOperator,
+    InterpolationOperator,
+)
 from pymor.operators.constructions import LincombOperator
 
 
-def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
-                             grid_type=None, grid=None, boundary_info=None,
-                             preassemble=True):
+def discretize_stationary_cg(
+    analytical_problem,
+    diameter=None,
+    domain_discretizer=None,
+    grid_type=None,
+    grid=None,
+    boundary_info=None,
+    preassemble=True,
+):
     """Discretizes a |StationaryProblem| using finite elements.
 
     Parameters
@@ -71,11 +88,13 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     p = analytical_problem
 
-    if not (p.nonlinear_advection
-            == p.nonlinear_advection_derivative
-            == p.nonlinear_reaction
-            == p.nonlinear_reaction_derivative
-            is None):
+    if not (
+        p.nonlinear_advection
+        == p.nonlinear_advection_derivative
+        == p.nonlinear_reaction
+        == p.nonlinear_reaction_derivative
+        is None
+    ):
         raise NotImplementedError
 
     if grid is None:
@@ -92,76 +111,140 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     if grid.reference_element is square:
         DiffusionOperator = DiffusionOperatorQ1
         AdvectionOperator = AdvectionOperatorQ1
-        ReactionOperator  = L2ProductQ1
+        ReactionOperator = L2ProductQ1
         L2Functional = L2ProductFunctionalQ1
         BoundaryL2Functional = BoundaryL2ProductFunctional
     else:
         DiffusionOperator = DiffusionOperatorP1
         AdvectionOperator = AdvectionOperatorP1
-        ReactionOperator  = L2ProductP1
+        ReactionOperator = L2ProductP1
         L2Functional = L2ProductFunctionalP1
         BoundaryL2Functional = BoundaryL2ProductFunctional
 
-    Li = [DiffusionOperator(grid, boundary_info, diffusion_constant=0, name='boundary_part')]
-    coefficients = [1.]
+    Li = [
+        DiffusionOperator(
+            grid, boundary_info, diffusion_constant=0, name="boundary_part"
+        )
+    ]
+    coefficients = [1.0]
 
     # diffusion part
     if isinstance(p.diffusion, LincombFunction):
-        Li += [DiffusionOperator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
-                                 name=f'diffusion_{i}')
-               for i, df in enumerate(p.diffusion.functions)]
+        Li += [
+            DiffusionOperator(
+                grid,
+                boundary_info,
+                diffusion_function=df,
+                dirichlet_clear_diag=True,
+                name=f"diffusion_{i}",
+            )
+            for i, df in enumerate(p.diffusion.functions)
+        ]
         coefficients += list(p.diffusion.coefficients)
     elif p.diffusion is not None:
-        Li += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion,
-                                 dirichlet_clear_diag=True, name='diffusion')]
-        coefficients.append(1.)
+        Li += [
+            DiffusionOperator(
+                grid,
+                boundary_info,
+                diffusion_function=p.diffusion,
+                dirichlet_clear_diag=True,
+                name="diffusion",
+            )
+        ]
+        coefficients.append(1.0)
 
     # advection part
     if isinstance(p.advection, LincombFunction):
-        Li += [AdvectionOperator(grid, boundary_info, advection_function=af, dirichlet_clear_diag=True,
-                                 name=f'advection_{i}')
-               for i, af in enumerate(p.advection.functions)]
+        Li += [
+            AdvectionOperator(
+                grid,
+                boundary_info,
+                advection_function=af,
+                dirichlet_clear_diag=True,
+                name=f"advection_{i}",
+            )
+            for i, af in enumerate(p.advection.functions)
+        ]
         coefficients += list(p.advection.coefficients)
     elif p.advection is not None:
-        Li += [AdvectionOperator(grid, boundary_info, advection_function=p.advection,
-                                 dirichlet_clear_diag=True, name='advection')]
-        coefficients.append(1.)
+        Li += [
+            AdvectionOperator(
+                grid,
+                boundary_info,
+                advection_function=p.advection,
+                dirichlet_clear_diag=True,
+                name="advection",
+            )
+        ]
+        coefficients.append(1.0)
 
     # reaction part
     if isinstance(p.reaction, LincombFunction):
-        Li += [ReactionOperator(grid, boundary_info, coefficient_function=rf, dirichlet_clear_diag=True,
-                                name=f'reaction_{i}')
-               for i, rf in enumerate(p.reaction.functions)]
+        Li += [
+            ReactionOperator(
+                grid,
+                boundary_info,
+                coefficient_function=rf,
+                dirichlet_clear_diag=True,
+                name=f"reaction_{i}",
+            )
+            for i, rf in enumerate(p.reaction.functions)
+        ]
         coefficients += list(p.reaction.coefficients)
     elif p.reaction is not None:
-        Li += [ReactionOperator(grid, boundary_info, coefficient_function=p.reaction,
-                                dirichlet_clear_diag=True, name='reaction')]
-        coefficients.append(1.)
+        Li += [
+            ReactionOperator(
+                grid,
+                boundary_info,
+                coefficient_function=p.reaction,
+                dirichlet_clear_diag=True,
+                name="reaction",
+            )
+        ]
+        coefficients.append(1.0)
 
     # robin boundaries
     if p.robin_data is not None:
-        Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name='robin')]
-        coefficients.append(1.)
+        Li += [
+            RobinBoundaryOperator(
+                grid, boundary_info, robin_data=p.robin_data, name="robin"
+            )
+        ]
+        coefficients.append(1.0)
 
-    L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
+    L = LincombOperator(
+        operators=Li, coefficients=coefficients, name="ellipticOperator"
+    )
 
     # right-hand side
-    rhs = p.rhs or ConstantFunction(0., dim_domain=p.domain.dim)
+    rhs = p.rhs or ConstantFunction(0.0, dim_domain=p.domain.dim)
     F = L2Functional(grid, rhs, dirichlet_clear_dofs=True, boundary_info=boundary_info)
 
     if p.neumann_data is not None and boundary_info.has_neumann:
-        F += BoundaryL2Functional(grid, -p.neumann_data, boundary_info=boundary_info,
-                                  boundary_type='neumann', dirichlet_clear_dofs=True)
+        F += BoundaryL2Functional(
+            grid,
+            -p.neumann_data,
+            boundary_info=boundary_info,
+            boundary_type="neumann",
+            dirichlet_clear_dofs=True,
+        )
 
     if p.robin_data is not None and boundary_info.has_robin:
-        F += BoundaryL2Functional(grid, p.robin_data[0] * p.robin_data[1], boundary_info=boundary_info,
-                                  boundary_type='robin', dirichlet_clear_dofs=True)
+        F += BoundaryL2Functional(
+            grid,
+            p.robin_data[0] * p.robin_data[1],
+            boundary_info=boundary_info,
+            boundary_type="robin",
+            dirichlet_clear_dofs=True,
+        )
 
     if p.dirichlet_data is not None and boundary_info.has_dirichlet:
         F += BoundaryDirichletFunctional(grid, p.dirichlet_data, boundary_info)
 
     if grid.reference_element in (triangle, square):
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)
+        visualizer = PatchVisualizer(
+            grid=grid, bounding_box=grid.bounding_box(), codim=2
+        )
     elif grid.reference_element is line:
         visualizer = OnedVisualizer(grid=grid, codim=1)
     else:
@@ -169,44 +252,70 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     Prod = L2ProductQ1 if grid.reference_element is square else L2ProductP1
     empty_bi = EmptyBoundaryInfo(grid)
-    l2_product = Prod(grid, empty_bi, name='l2')
-    l2_0_product = Prod(grid, boundary_info, dirichlet_clear_columns=True, name='l2_0')
-    h1_semi_product = DiffusionOperator(grid, empty_bi, name='h1_semi')
-    h1_0_semi_product = DiffusionOperator(grid, boundary_info, dirichlet_clear_columns=True, name='h1_0_semi')
-    products = {'h1': l2_product + h1_semi_product,
-                'h1_semi': h1_semi_product,
-                'l2': l2_product,
-                'h1_0': l2_0_product + h1_0_semi_product,
-                'h1_0_semi': h1_0_semi_product,
-                'l2_0': l2_0_product}
+    l2_product = Prod(grid, empty_bi, name="l2")
+    l2_0_product = Prod(grid, boundary_info, dirichlet_clear_columns=True, name="l2_0")
+    h1_semi_product = DiffusionOperator(grid, empty_bi, name="h1_semi")
+    h1_0_semi_product = DiffusionOperator(
+        grid, boundary_info, dirichlet_clear_columns=True, name="h1_0_semi"
+    )
+    products = {
+        "h1": l2_product + h1_semi_product,
+        "h1_semi": h1_semi_product,
+        "l2": l2_product,
+        "h1_0": l2_0_product + h1_0_semi_product,
+        "h1_0_semi": h1_0_semi_product,
+        "l2_0": l2_0_product,
+    }
 
     # assemble additionals functionals
     if p.functionals:
-        if any(v[0] not in ('l2', 'l2_boundary') for v in p.functionals.values()):
+        if any(v[0] not in ("l2", "l2_boundary") for v in p.functionals.values()):
             raise NotImplementedError
-        functionals = {k + '_functional': (L2Functional(grid, v[1], dirichlet_clear_dofs=False).H if v[0] == 'l2' else
-                                           BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
-                       for k, v in p.functionals.items()}
+        functionals = {
+            k
+            + "_functional": (
+                L2Functional(grid, v[1], dirichlet_clear_dofs=False).H
+                if v[0] == "l2"
+                else BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H
+            )
+            for k, v in p.functionals.items()
+        }
     else:
         functionals = None
 
-    parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
+    parameter_space = p.parameter_space if hasattr(p, "parameter_space") else None
 
-    m  = StationaryModel(L, F, outputs=functionals, products=products, visualizer=visualizer,
-                         parameter_space=parameter_space, name=f'{p.name}_CG')
+    m = StationaryModel(
+        L,
+        F,
+        outputs=functionals,
+        products=products,
+        visualizer=visualizer,
+        parameter_space=parameter_space,
+        name=f"{p.name}_CG",
+    )
 
-    data = {'grid': grid, 'boundary_info': boundary_info}
+    data = {"grid": grid, "boundary_info": boundary_info}
 
     if preassemble:
-        data['unassembled_m'] = m
+        data["unassembled_m"] = m
         m = preassemble_(m)
 
     return m, data
 
 
-def discretize_instationary_cg(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
-                               grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
-                               preassemble=True):
+def discretize_instationary_cg(
+    analytical_problem,
+    diameter=None,
+    domain_discretizer=None,
+    grid_type=None,
+    grid=None,
+    boundary_info=None,
+    num_values=None,
+    time_stepper=None,
+    nt=None,
+    preassemble=True,
+):
     """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
     using finite elements.
 
@@ -263,13 +372,19 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     p = analytical_problem
 
-    m, data = discretize_stationary_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
-                                       grid_type=grid_type, grid=grid, boundary_info=boundary_info)
+    m, data = discretize_stationary_cg(
+        p.stationary_part,
+        diameter=diameter,
+        domain_discretizer=domain_discretizer,
+        grid_type=grid_type,
+        grid=grid,
+        boundary_info=boundary_info,
+    )
 
     if p.initial_data.parametric:
-        I = InterpolationOperator(data['grid'], p.initial_data)
+        I = InterpolationOperator(data["grid"], p.initial_data)
     else:
-        I = p.initial_data.evaluate(data['grid'].centers(data['grid'].dim))
+        I = p.initial_data.evaluate(data["grid"].centers(data["grid"].dim))
         I = m.solution_space.make_array(I)
 
     if time_stepper is None:
@@ -280,16 +395,23 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     mass = m.l2_0_product
 
-    m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=mass, initial_data=I, T=p.T,
-                          products=m.products,
-                          outputs=m.outputs,
-                          time_stepper=time_stepper,
-                          parameter_space=p.parameter_space,
-                          visualizer=m.visualizer,
-                          num_values=num_values, name=f'{p.name}_CG')
+    m = InstationaryModel(
+        operator=m.operator,
+        rhs=m.rhs,
+        mass=mass,
+        initial_data=I,
+        T=p.T,
+        products=m.products,
+        outputs=m.outputs,
+        time_stepper=time_stepper,
+        parameter_space=p.parameter_space,
+        visualizer=m.visualizer,
+        num_values=num_values,
+        name=f"{p.name}_CG",
+    )
 
     if preassemble:
-        data['unassembled_m'] = m
+        data["unassembled_m"] = m
         m = preassemble_(m)
 
     return m, data

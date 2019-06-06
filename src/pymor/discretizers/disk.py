@@ -84,7 +84,9 @@ def discretize_stationary_from_disk(parameter_file):
     m
         The |StationaryModel| that has been generated.
     """
-    assert ".ini" == parameter_file[-4:], f'Given file is not an .ini file: {parameter_file}'
+    assert (
+        ".ini" == parameter_file[-4:]
+    ), f"Given file is not an .ini file: {parameter_file}"
     assert os.path.isfile(parameter_file)
     base_path = os.path.dirname(parameter_file)
 
@@ -94,13 +96,13 @@ def discretize_stationary_from_disk(parameter_file):
     config.read(parameter_file)
 
     # Assert that all needed entries given
-    assert 'system-matrices' in config.sections()
-    assert 'rhs-vectors' in config.sections()
-    assert 'parameter' in config.sections()
+    assert "system-matrices" in config.sections()
+    assert "rhs-vectors" in config.sections()
+    assert "parameter" in config.sections()
 
-    system_mat = config.items('system-matrices')
-    rhs_vec = config.items('rhs-vectors')
-    parameter = config.items('parameter')
+    system_mat = config.items("system-matrices")
+    rhs_vec = config.items("rhs-vectors")
+    parameter = config.items("parameter")
 
     # Dict of parameters types and ranges
     parameter_type = {}
@@ -109,13 +111,17 @@ def discretize_stationary_from_disk(parameter_file):
     # get parameters
     for i in range(len(parameter)):
         parameter_name = parameter[i][0]
-        parameter_list = tuple(float(j) for j in parameter[i][1].replace(" ", "").split(','))
+        parameter_list = tuple(
+            float(j) for j in parameter[i][1].replace(" ", "").split(",")
+        )
         parameter_range[parameter_name] = parameter_list
         # Assume scalar parameter dependence
         parameter_type[parameter_name] = 0
 
     # Create parameter space
-    parameter_space = CubicParameterSpace(parameter_type=parameter_type, ranges=parameter_range)
+    parameter_space = CubicParameterSpace(
+        parameter_type=parameter_type, ranges=parameter_range
+    )
 
     # Assemble operators
     system_operators, system_functionals = [], []
@@ -124,11 +130,17 @@ def discretize_stationary_from_disk(parameter_file):
     for i in range(len(system_mat)):
         path = os.path.join(base_path, system_mat[i][0])
         expr = system_mat[i][1]
-        parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        system_operators.append(NumpyMatrixOperator.from_file(path, source_id='STATE', range_id='STATE'))
+        parameter_functional = ExpressionParameterFunctional(
+            expr, parameter_type=parameter_type
+        )
+        system_operators.append(
+            NumpyMatrixOperator.from_file(path, source_id="STATE", range_id="STATE")
+        )
         system_functionals.append(parameter_functional)
 
-    system_lincombOperator = LincombOperator(system_operators, coefficients=system_functionals)
+    system_lincombOperator = LincombOperator(
+        system_operators, coefficients=system_functionals
+    )
 
     # get rhs vectors
     rhs_operators, rhs_functionals = [], []
@@ -136,8 +148,10 @@ def discretize_stationary_from_disk(parameter_file):
     for i in range(len(rhs_vec)):
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
-        parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        op = NumpyMatrixOperator.from_file(path, range_id='STATE')
+        parameter_functional = ExpressionParameterFunctional(
+            expr, parameter_type=parameter_type
+        )
+        op = NumpyMatrixOperator.from_file(path, range_id="STATE")
         assert isinstance(op.matrix, np.ndarray)
         op = op.with_(matrix=op.matrix.reshape((-1, 1)))
         rhs_operators.append(op)
@@ -146,22 +160,30 @@ def discretize_stationary_from_disk(parameter_file):
     rhs_lincombOperator = LincombOperator(rhs_operators, coefficients=rhs_functionals)
 
     # get products if given
-    if 'products' in config.sections():
-        product = config.items('products')
+    if "products" in config.sections():
+        product = config.items("products")
         products = {}
         for i in range(len(product)):
             product_name = product[i][0]
             product_path = os.path.join(base_path, product[i][1])
-            products[product_name] = NumpyMatrixOperator.from_file(product_path, source_id='STATE', range_id='STATE')
+            products[product_name] = NumpyMatrixOperator.from_file(
+                product_path, source_id="STATE", range_id="STATE"
+            )
     else:
         products = None
 
     # Create and return stationary model
-    return StationaryModel(operator=system_lincombOperator, rhs=rhs_lincombOperator,
-                           parameter_space=parameter_space, products=products)
+    return StationaryModel(
+        operator=system_lincombOperator,
+        rhs=rhs_lincombOperator,
+        parameter_space=parameter_space,
+        products=products,
+    )
 
 
-def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=None, time_stepper=None):
+def discretize_instationary_from_disk(
+    parameter_file, T=None, steps=None, u0=None, time_stepper=None
+):
     """Load a linear affinely decomposed |InstationaryModel| from file.
 
     Similarly to :func:`discretize_stationary_from_disk`, the model is
@@ -230,15 +252,15 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     config.read(parameter_file)
 
     # Assert that all needed entries given
-    assert 'system-matrices' in config.sections()
-    assert 'mass-matrix' in config.sections()
-    assert 'rhs-vectors' in config.sections()
-    assert 'parameter' in config.sections()
+    assert "system-matrices" in config.sections()
+    assert "mass-matrix" in config.sections()
+    assert "rhs-vectors" in config.sections()
+    assert "parameter" in config.sections()
 
-    system_mat = config.items('system-matrices')
-    mass_mat = config.items('mass-matrix')
-    rhs_vec = config.items('rhs-vectors')
-    parameter = config.items('parameter')
+    system_mat = config.items("system-matrices")
+    mass_mat = config.items("mass-matrix")
+    rhs_vec = config.items("rhs-vectors")
+    parameter = config.items("parameter")
 
     # Dict of parameters types and ranges
     parameter_type = {}
@@ -247,13 +269,17 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     # get parameters
     for i in range(len(parameter)):
         parameter_name = parameter[i][0]
-        parameter_list = tuple(float(j) for j in parameter[i][1].replace(" ", "").split(','))
+        parameter_list = tuple(
+            float(j) for j in parameter[i][1].replace(" ", "").split(",")
+        )
         parameter_range[parameter_name] = parameter_list
         # Assume scalar parameter dependence
         parameter_type[parameter_name] = 0
 
     # Create parameter space
-    parameter_space = CubicParameterSpace(parameter_type=parameter_type, ranges=parameter_range)
+    parameter_space = CubicParameterSpace(
+        parameter_type=parameter_type, ranges=parameter_range
+    )
 
     # Assemble operators
     system_operators, system_functionals = [], []
@@ -262,11 +288,17 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     for i in range(len(system_mat)):
         path = os.path.join(base_path, system_mat[i][0])
         expr = system_mat[i][1]
-        parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        system_operators.append(NumpyMatrixOperator.from_file(path, source_id='STATE', range_id='STATE'))
+        parameter_functional = ExpressionParameterFunctional(
+            expr, parameter_type=parameter_type
+        )
+        system_operators.append(
+            NumpyMatrixOperator.from_file(path, source_id="STATE", range_id="STATE")
+        )
         system_functionals.append(parameter_functional)
 
-    system_lincombOperator = LincombOperator(system_operators, coefficients=system_functionals)
+    system_lincombOperator = LincombOperator(
+        system_operators, coefficients=system_functionals
+    )
 
     # get rhs vectors
     rhs_operators, rhs_functionals = [], []
@@ -274,8 +306,10 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     for i in range(len(rhs_vec)):
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
-        parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        op = NumpyMatrixOperator.from_file(path, range_id='STATE')
+        parameter_functional = ExpressionParameterFunctional(
+            expr, parameter_type=parameter_type
+        )
+        op = NumpyMatrixOperator.from_file(path, range_id="STATE")
         assert isinstance(op.matrix, np.ndarray)
         op = op.with_(matrix=op.matrix.reshape((-1, 1)))
         rhs_operators.append(op)
@@ -285,35 +319,39 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
 
     # get mass matrix
     path = os.path.join(base_path, mass_mat[0][1])
-    mass_operator = NumpyMatrixOperator.from_file(path, source_id='STATE', range_id='STATE')
+    mass_operator = NumpyMatrixOperator.from_file(
+        path, source_id="STATE", range_id="STATE"
+    )
 
     # Obtain initial solution if not given
     if u0 is None:
-        u_0 = config.items('initial-solution')
+        u_0 = config.items("initial-solution")
         path = os.path.join(base_path, u_0[0][1])
-        op = NumpyMatrixOperator.from_file(path, range_id='STATE')
+        op = NumpyMatrixOperator.from_file(path, range_id="STATE")
         assert isinstance(op.matrix, np.ndarray)
         u0 = op.with_(matrix=op.matrix.reshape((-1, 1)))
 
     # get products if given
-    if 'products' in config.sections():
-        product = config.items('products')
+    if "products" in config.sections():
+        product = config.items("products")
         products = {}
         for i in range(len(product)):
             product_name = product[i][0]
             product_path = os.path.join(base_path, product[i][1])
-            products[product_name] = NumpyMatrixOperator.from_file(product_path, source_id='STATE', range_id='STATE')
+            products[product_name] = NumpyMatrixOperator.from_file(
+                product_path, source_id="STATE", range_id="STATE"
+            )
     else:
         products = None
 
     # Further specifications
-    if 'time' in config.sections():
+    if "time" in config.sections():
         if T is None:
-            assert 'T' in config.options('time')
-            T = float(config.get('time', 'T'))
+            assert "T" in config.options("time")
+            T = float(config.get("time", "T"))
         if steps is None:
-            assert 'steps' in config.options('time')
-            steps = int(config.get('time', 'steps'))
+            assert "steps" in config.options("time")
+            steps = int(config.get("time", "steps"))
 
     # Use implicit euler time stepper if no time-stepper given
     if time_stepper is None:
@@ -322,6 +360,13 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         time_stepper = time_stepper(steps)
 
     # Create and return instationary model
-    return InstationaryModel(operator=system_lincombOperator, rhs=rhs_lincombOperator,
-                             parameter_space=parameter_space, initial_data=u0, T=T,
-                             time_stepper=time_stepper, mass=mass_operator, products=products)
+    return InstationaryModel(
+        operator=system_lincombOperator,
+        rhs=rhs_lincombOperator,
+        parameter_space=parameter_space,
+        initial_data=u0,
+        T=T,
+        time_stepper=time_stepper,
+        mass=mass_operator,
+        products=products,
+    )

@@ -49,54 +49,65 @@ class MPIVectorArray(VectorArrayInterface):
         self.space = space
 
     def __len__(self):
-        return mpi.call(mpi.method_call, self.obj_id, '__len__')
+        return mpi.call(mpi.method_call, self.obj_id, "__len__")
 
     def __getitem__(self, ind):
-        U = type(self)(mpi.call(mpi.method_call_manage, self.obj_id, '__getitem__', ind),
-                       self.space)
+        U = type(self)(
+            mpi.call(mpi.method_call_manage, self.obj_id, "__getitem__", ind),
+            self.space,
+        )
         U.is_view = True
         return U
 
     def __delitem__(self, ind):
-        mpi.call(mpi.method_call, self.obj_id, '__delitem__', ind)
+        mpi.call(mpi.method_call, self.obj_id, "__delitem__", ind)
 
     def copy(self, deep=False):
-        return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'copy', deep=deep),
-                          self.space)
+        return type(self)(
+            mpi.call(mpi.method_call_manage, self.obj_id, "copy", deep=deep), self.space
+        )
 
     def append(self, other, remove_from_other=False):
-        mpi.call(mpi.method_call, self.obj_id, 'append', other.obj_id, remove_from_other=remove_from_other)
+        mpi.call(
+            mpi.method_call,
+            self.obj_id,
+            "append",
+            other.obj_id,
+            remove_from_other=remove_from_other,
+        )
 
     def scal(self, alpha):
-        mpi.call(mpi.method_call, self.obj_id, 'scal', alpha)
+        mpi.call(mpi.method_call, self.obj_id, "scal", alpha)
 
     def axpy(self, alpha, x):
         mpi.call(_MPIVectorArray_axpy, self.obj_id, alpha, x.obj_id)
 
     def dot(self, other):
-        return mpi.call(mpi.method_call, self.obj_id, 'dot', other.obj_id)
+        return mpi.call(mpi.method_call, self.obj_id, "dot", other.obj_id)
 
     def pairwise_dot(self, other):
-        return mpi.call(mpi.method_call, self.obj_id, 'pairwise_dot', other.obj_id)
+        return mpi.call(mpi.method_call, self.obj_id, "pairwise_dot", other.obj_id)
 
     def lincomb(self, coefficients):
-        return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'lincomb', coefficients),
-                          self.space)
+        return type(self)(
+            mpi.call(mpi.method_call_manage, self.obj_id, "lincomb", coefficients),
+            self.space,
+        )
 
     def l1_norm(self):
-        return mpi.call(mpi.method_call, self.obj_id, 'l1_norm')
+        return mpi.call(mpi.method_call, self.obj_id, "l1_norm")
 
     def l2_norm(self):
-        return mpi.call(mpi.method_call, self.obj_id, 'l2_norm')
+        return mpi.call(mpi.method_call, self.obj_id, "l2_norm")
 
     def l2_norm2(self):
-        return mpi.call(mpi.method_call, self.obj_id, 'l2_norm2')
+        return mpi.call(mpi.method_call, self.obj_id, "l2_norm2")
 
     def dofs(self, dof_indices):
-        return mpi.call(mpi.method_call, self.obj_id, 'dofs', dof_indices)
+        return mpi.call(mpi.method_call, self.obj_id, "dofs", dof_indices)
 
     def amax(self):
-        return mpi.call(mpi.method_call, self.obj_id, 'amax')
+        return mpi.call(mpi.method_call, self.obj_id, "amax")
 
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
@@ -136,15 +147,15 @@ class MPIVectorSpace(VectorSpaceInterface):
         -------
         The newly created :class:`MPIVectorArray`.
         """
-        assert mpi.call(_MPIVectorSpace_check_local_spaces,
-                        self.local_spaces, obj_id)
+        assert mpi.call(_MPIVectorSpace_check_local_spaces, self.local_spaces, obj_id)
         return self.array_type(obj_id, self)
 
     def zeros(self, count=1, reserve=0):
         return self.array_type(
-            mpi.call(_MPIVectorSpace_zeros,
-                     self.local_spaces, count=count, reserve=reserve),
-            self
+            mpi.call(
+                _MPIVectorSpace_zeros, self.local_spaces, count=count, reserve=reserve
+            ),
+            self,
         )
 
     @property
@@ -152,18 +163,19 @@ class MPIVectorSpace(VectorSpaceInterface):
         return mpi.call(_MPIVectorSpace_dim, self.local_spaces)
 
     def __eq__(self, other):
-        return type(other) is MPIVectorSpace and \
-            len(self.local_spaces) == len(other.local_spaces) and \
-            all(ls == ols for ls, ols in zip(self.local_spaces, other.local_spaces))
+        return (
+            type(other) is MPIVectorSpace
+            and len(self.local_spaces) == len(other.local_spaces)
+            and all(ls == ols for ls, ols in zip(self.local_spaces, other.local_spaces))
+        )
 
     def __repr__(self):
-        return f'{self.__class__}({self.local_spaces}, {self.id})'
+        return f"{self.__class__}({self.local_spaces}, {self.id})"
 
 
 class RegisteredLocalSpace(int):
-
     def __repr__(self):
-        return f'{_local_space_registry[self]} (id: {int(self)})'
+        return f"{_local_space_registry[self]} (id: {int(self)})"
 
 
 _local_space_registry = {}
@@ -290,14 +302,14 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
         return mpi.call(_MPIVectorArrayAutoComm_l2_norm2, self.obj_id)
 
     def dofs(self, dof_indices):
-        offsets = getattr(self, '_offsets', None)
+        offsets = getattr(self, "_offsets", None)
         if offsets is None:
             offsets = self.space._get_dims()[1]
         dof_indices = np.array(dof_indices)
         return mpi.call(_MPIVectorArrayAutoComm_dofs, self.obj_id, offsets, dof_indices)
 
     def amax(self):
-        offsets = getattr(self, '_offsets', None)
+        offsets = getattr(self, "_offsets", None)
         if offsets is None:
             offsets = self.space._get_dims()[1]
         inds, vals = mpi.call(_MPIVectorArrayAutoComm_amax, self.obj_id)
@@ -305,8 +317,10 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
         max_inds = np.argmax(vals, axis=0)
         # np.choose does not work due to
         # https://github.com/numpy/numpy/issues/3259
-        return (np.array([inds[max_inds[i], i] for i in range(len(max_inds))]),
-                np.array([vals[max_inds[i], i] for i in range(len(max_inds))]))
+        return (
+            np.array([inds[max_inds[i], i] for i in range(len(max_inds))]),
+            np.array([vals[max_inds[i], i] for i in range(len(max_inds))]),
+        )
 
 
 class MPIVectorSpaceAutoComm(MPIVectorSpace):
@@ -316,7 +330,7 @@ class MPIVectorSpaceAutoComm(MPIVectorSpace):
 
     @property
     def dim(self):
-        dim = getattr(self, '_dim', None)
+        dim = getattr(self, "_dim", None)
         if dim is None:
             dim = self._get_dims()[0]
         return dim
@@ -340,7 +354,11 @@ def _MPIVectorArrayAutoComm_dot(self, other):
     other = mpi.get_object(other)
     local_results = self.dot(other)
     assert local_results.dtype == np.float64
-    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    results = (
+        np.empty((mpi.size,) + local_results.shape, dtype=np.float64)
+        if mpi.rank0
+        else None
+    )
     mpi.comm.Gather(local_results, results, root=0)
     if mpi.rank0:
         return np.sum(results, axis=0)
@@ -351,7 +369,11 @@ def _MPIVectorArrayAutoComm_pairwise_dot(self, other):
     other = mpi.get_object(other)
     local_results = self.pairwise_dot(other)
     assert local_results.dtype == np.float64
-    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    results = (
+        np.empty((mpi.size,) + local_results.shape, dtype=np.float64)
+        if mpi.rank0
+        else None
+    )
     mpi.comm.Gather(local_results, results, root=0)
     if mpi.rank0:
         return np.sum(results, axis=0)
@@ -361,7 +383,11 @@ def _MPIVectorArrayAutoComm_l1_norm(self):
     self = mpi.get_object(self)
     local_results = self.l1_norm()
     assert local_results.dtype == np.float64
-    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    results = (
+        np.empty((mpi.size,) + local_results.shape, dtype=np.float64)
+        if mpi.rank0
+        else None
+    )
     mpi.comm.Gather(local_results, results, root=0)
     if mpi.rank0:
         return np.sum(results, axis=0)
@@ -371,7 +397,11 @@ def _MPIVectorArrayAutoComm_l2_norm(self):
     self = mpi.get_object(self)
     local_results = self.l2_norm2()
     assert local_results.dtype == np.float64
-    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    results = (
+        np.empty((mpi.size,) + local_results.shape, dtype=np.float64)
+        if mpi.rank0
+        else None
+    )
     mpi.comm.Gather(local_results, results, root=0)
     if mpi.rank0:
         return np.sqrt(np.sum(results, axis=0))
@@ -381,7 +411,11 @@ def _MPIVectorArrayAutoComm_l2_norm2(self):
     self = mpi.get_object(self)
     local_results = self.l2_norm2()
     assert local_results.dtype == np.float64
-    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    results = (
+        np.empty((mpi.size,) + local_results.shape, dtype=np.float64)
+        if mpi.rank0
+        else None
+    )
     mpi.comm.Gather(local_results, results, root=0)
     if mpi.rank0:
         return np.sum(results, axis=0)
@@ -395,7 +429,11 @@ def _MPIVectorArrayAutoComm_dofs(self, offsets, dof_indices):
     local_results = np.zeros((len(self), len(dof_indices)))
     local_results[:, my_indices] = self.dofs(dof_indices[my_indices] - offset)
     assert local_results.dtype == np.float64
-    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    results = (
+        np.empty((mpi.size,) + local_results.shape, dtype=np.float64)
+        if mpi.rank0
+        else None
+    )
     mpi.comm.Gather(local_results, results, root=0)
     if mpi.rank0:
         return np.sum(results, axis=0)
@@ -406,8 +444,14 @@ def _MPIVectorArrayAutoComm_amax(self):
     local_inds, local_vals = self.amax()
     assert local_inds.dtype == np.int64
     assert local_vals.dtype == np.float64
-    inds = np.empty((mpi.size,) + local_inds.shape, dtype=np.int64) if mpi.rank0 else None
-    vals = np.empty((mpi.size,) + local_inds.shape, dtype=np.float64) if mpi.rank0 else None
+    inds = (
+        np.empty((mpi.size,) + local_inds.shape, dtype=np.int64) if mpi.rank0 else None
+    )
+    vals = (
+        np.empty((mpi.size,) + local_inds.shape, dtype=np.float64)
+        if mpi.rank0
+        else None
+    )
     mpi.comm.Gather(local_inds, inds, root=0)
     mpi.comm.Gather(local_vals, vals, root=0)
     if mpi.rank0:

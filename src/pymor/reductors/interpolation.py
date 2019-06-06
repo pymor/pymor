@@ -10,7 +10,12 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
-from pymor.reductors.basic import ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor, DelayLTIPGReductor
+from pymor.reductors.basic import (
+    ProjectionBasedReductor,
+    LTIPGReductor,
+    SOLTIPGReductor,
+    DelayLTIPGReductor,
+)
 
 
 class GenericBHIReductor(BasicInterface):
@@ -50,7 +55,7 @@ class GenericBHIReductor(BasicInterface):
     def _K_apply_inverse_adjoint(self, s, V):
         raise NotImplementedError
 
-    def reduce(self, sigma, b, c, projection='orth'):
+    def reduce(self, sigma, b, c, projection="orth"):
         """Bitangential Hermite interpolation.
 
         Parameters
@@ -76,7 +81,7 @@ class GenericBHIReductor(BasicInterface):
         r = len(sigma)
         assert b in self.fom.input_space and len(b) == r
         assert c in self.fom.output_space and len(c) == r
-        assert projection in ('orth', 'biorth')
+        assert projection in ("orth", "biorth")
 
         # rescale tangential directions (to avoid overflow or underflow)
         if b.dim > 1:
@@ -108,14 +113,16 @@ class GenericBHIReductor(BasicInterface):
                 w = self._K_apply_inverse_adjoint(sigma[i], CTc)
                 self.W.append(w.real)
                 self.W.append(w.imag)
-        if projection == 'orth':
+        if projection == "orth":
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-        elif projection == 'biorth':
+        elif projection == "biorth":
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
 
         # find reduced-order model
-        self._pg_reductor = self._PGReductor(self.fom, self.W, self.V, projection == 'biorth')
+        self._pg_reductor = self._PGReductor(
+            self.fom, self.W, self.V, projection == "biorth"
+        )
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -154,7 +161,7 @@ class LTIBHIReductor(GenericBHIReductor):
         sEmA = s * self.fom.E - self.fom.A
         return sEmA.apply_inverse_adjoint(V)
 
-    def reduce(self, sigma, b, c, projection='orth'):
+    def reduce(self, sigma, b, c, projection="orth"):
         """Bitangential Hermite interpolation.
 
         Parameters
@@ -179,7 +186,7 @@ class LTIBHIReductor(GenericBHIReductor):
         rom
             Reduced-order model.
         """
-        if projection != 'arnoldi':
+        if projection != "arnoldi":
             return super().reduce(sigma, b, c, projection=projection)
 
         assert self.fom.input_dim == 1 and self.fom.output_dim == 1
@@ -222,11 +229,11 @@ class SOBHIReductor(GenericBHIReductor):
         return x + y * s.conjugate()
 
     def _K_apply_inverse(self, s, V):
-        s2MpsEpK = s**2 * self.fom.M + s * self.fom.E + self.fom.K
+        s2MpsEpK = s ** 2 * self.fom.M + s * self.fom.E + self.fom.K
         return s2MpsEpK.apply_inverse(V)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        s2MpsEpK = s**2 * self.fom.M + s * self.fom.E + self.fom.K
+        s2MpsEpK = s ** 2 * self.fom.M + s * self.fom.E + self.fom.K
         return s2MpsEpK.apply_inverse_adjoint(V)
 
 
@@ -253,13 +260,17 @@ class DelayBHIReductor(GenericBHIReductor):
         return self.fom.C.apply_adjoint(V)
 
     def _K_apply_inverse(self, s, V):
-        Ks = LincombOperator((self.fom.E, self.fom.A) + self.fom.Ad,
-                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau))
+        Ks = LincombOperator(
+            (self.fom.E, self.fom.A) + self.fom.Ad,
+            (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau),
+        )
         return Ks.apply_inverse(V)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        Ks = LincombOperator((self.fom.E, self.fom.A) + self.fom.Ad,
-                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau))
+        Ks = LincombOperator(
+            (self.fom.E, self.fom.A) + self.fom.Ad,
+            (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau),
+        )
         return Ks.apply_inverse_adjoint(V)
 
 
@@ -273,6 +284,7 @@ class TFBHIReductor(BasicInterface):
     fom
         The |Model| with `eval_tf` and `eval_dtf` methods.
     """
+
     def __init__(self, fom):
         self.fom = fom
 
@@ -321,8 +333,12 @@ class TFBHIReductor(BasicInterface):
         for i in range(r):
             for j in range(r):
                 if i != j:
-                    Er[i, j] = -c[:, i].dot((Hs[i] - Hs[j]).dot(b[:, j])) / (sigma[i] - sigma[j])
-                    Ar[i, j] = -c[:, i].dot((sigma[i] * Hs[i] - sigma[j] * Hs[j])).dot(b[:, j]) / (sigma[i] - sigma[j])
+                    Er[i, j] = -c[:, i].dot((Hs[i] - Hs[j]).dot(b[:, j])) / (
+                        sigma[i] - sigma[j]
+                    )
+                    Ar[i, j] = -c[:, i].dot((sigma[i] * Hs[i] - sigma[j] * Hs[j])).dot(
+                        b[:, j]
+                    ) / (sigma[i] - sigma[j])
                 else:
                     Er[i, i] = -c[:, i].dot(dHs[i].dot(b[:, i]))
                     Ar[i, i] = -c[:, i].dot((Hs[i] + sigma[i] * dHs[i]).dot(b[:, i]))
@@ -335,7 +351,9 @@ class TFBHIReductor(BasicInterface):
             if sigma[i].imag == 0:
                 T[i, i] = 1
             else:
-                indices = np.nonzero(np.isclose(sigma[i + 1:], sigma[i].conjugate()))[0]
+                indices = np.nonzero(np.isclose(sigma[i + 1 :], sigma[i].conjugate()))[
+                    0
+                ]
                 if len(indices) > 0:
                     j = i + 1 + indices[0]
                     T[i, i] = 1
@@ -347,8 +365,12 @@ class TFBHIReductor(BasicInterface):
         Br = (T.dot(Br)).real
         Cr = (Cr.dot(T.conj().T)).real
 
-        return LTIModel.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=self.fom.cont_time)
+        return LTIModel.from_matrices(
+            Ar, Br, Cr, D=None, E=Er, cont_time=self.fom.cont_time
+        )
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        raise TypeError(f'The reconstruct method is not available for {self.__class__.__name__}.')
+        raise TypeError(
+            f"The reconstruct method is not available for {self.__class__.__name__}."
+        )

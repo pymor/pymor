@@ -79,39 +79,59 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
     }
     """
 
-    @defaults('name', sid_ignore=('name',))
-    def colormap_texture(name='viridis'):
+    @defaults("name", sid_ignore=("name",))
+    def colormap_texture(name="viridis"):
         resolution = min(gl.GL_MAX_TEXTURE_SIZE, 1024)
         colormap_id = gl.glGenTextures(1)
         gl.glBindTexture(gl.GL_TEXTURE_1D, colormap_id)
         gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
         gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
         gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
-        colormap = np.empty((resolution, 4), dtype='f4')
+        colormap = np.empty((resolution, 4), dtype="f4")
         from matplotlib.pyplot import get_cmap
+
         try:
             cmap = get_cmap(name)
         except ValueError:
             from pymor.core.logger import getLogger
+
             # this is our default which might not exist for older matplotlib so a warning would be annoying
-            if name != 'viridis':
-                msg = f'Unknown colormap {name}, using default colormap'
-                getLogger('pymor.gui.gl.colormap_texture').warn(msg)
+            if name != "viridis":
+                msg = f"Unknown colormap {name}, using default colormap"
+                getLogger("pymor.gui.gl.colormap_texture").warn(msg)
             cmap = get_cmap()
-        colormap[:] = cmap(np.linspace(0., 1., resolution))
-        gl.glTexImage1D(gl.GL_TEXTURE_1D, 0, gl.GL_RGBA, resolution, 0, gl.GL_RGBA, gl.GL_FLOAT, colormap)
+        colormap[:] = cmap(np.linspace(0.0, 1.0, resolution))
+        gl.glTexImage1D(
+            gl.GL_TEXTURE_1D,
+            0,
+            gl.GL_RGBA,
+            resolution,
+            0,
+            gl.GL_RGBA,
+            gl.GL_FLOAT,
+            colormap,
+        )
         gl.glBindTexture(gl.GL_TEXTURE_1D, 0)
         return colormap_id
 
     class GLPatchWidget(QGLWidget):
-
-        def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=([0, 0], [1, 1]), codim=2):
+        def __init__(
+            self,
+            parent,
+            grid,
+            vmin=None,
+            vmax=None,
+            bounding_box=([0, 0], [1, 1]),
+            codim=2,
+        ):
             assert grid.reference_element in (triangle, square)
             assert grid.dim == 2
             assert codim in (0, 2)
             super().__init__(parent)
             self.setMinimumSize(300, 300)
-            self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+            self.setSizePolicy(
+                QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            )
 
             subentities, coordinates, entity_map = flatten_grid(grid)
 
@@ -126,30 +146,40 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             bb = self.bounding_box
             self.size = np.array([bb[1][0] - bb[0][0], bb[1][1] - bb[0][1]])
             self.scale = 2 / self.size
-            self.shift = - np.array(bb[0]) - self.size / 2
+            self.shift = -np.array(bb[0]) - self.size / 2
 
             # setup buffers
             if self.reference_element == triangle:
                 if codim == 2:
-                    self.vertex_data = np.empty(len(coordinates),
-                                                dtype=[('position', 'f4', 2), ('color', 'f4', 1)])
+                    self.vertex_data = np.empty(
+                        len(coordinates),
+                        dtype=[("position", "f4", 2), ("color", "f4", 1)],
+                    )
                     self.indices = subentities
                 else:
-                    self.vertex_data = np.empty(len(subentities) * 3,
-                                                dtype=[('position', 'f4', 2), ('color', 'f4', 1)])
+                    self.vertex_data = np.empty(
+                        len(subentities) * 3,
+                        dtype=[("position", "f4", 2), ("color", "f4", 1)],
+                    )
                     self.indices = np.arange(len(subentities) * 3, dtype=np.uint32)
             else:
                 if codim == 2:
-                    self.vertex_data = np.empty(len(coordinates),
-                                                dtype=[('position', 'f4', 2), ('color', 'f4', 1)])
-                    self.indices = np.vstack((subentities[:, 0:3], subentities[:, [0, 2, 3]]))
+                    self.vertex_data = np.empty(
+                        len(coordinates),
+                        dtype=[("position", "f4", 2), ("color", "f4", 1)],
+                    )
+                    self.indices = np.vstack(
+                        (subentities[:, 0:3], subentities[:, [0, 2, 3]])
+                    )
                 else:
-                    self.vertex_data = np.empty(len(subentities) * 6,
-                                                dtype=[('position', 'f4', 2), ('color', 'f4', 1)])
+                    self.vertex_data = np.empty(
+                        len(subentities) * 6,
+                        dtype=[("position", "f4", 2), ("color", "f4", 1)],
+                    )
                     self.indices = np.arange(len(subentities) * 6, dtype=np.uint32)
             self.indices = np.ascontiguousarray(self.indices)
 
-            self.vertex_data['color'] = 1
+            self.vertex_data["color"] = 1
 
             self.set_coordinates(coordinates)
             self.set(np.zeros(grid.size(codim)))
@@ -162,8 +192,9 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
         def initializeGL(self):
             gl.glClearColor(1.0, 1.0, 1.0, 1.0)
 
-            self.shaders_program = link_shader_program([compile_shader(VS, vertex=True),
-                                                        compile_shader(FS, vertex=False)])
+            self.shaders_program = link_shader_program(
+                [compile_shader(VS, vertex=True), compile_shader(FS, vertex=False)]
+            )
             gl.glUseProgram(self.shaders_program)
 
             self.vertices_id = gl.glGenBuffers(1)
@@ -177,12 +208,16 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
 
             self.colormap_id = colormap_texture()
-            self.colormap_location = gl.glGetUniformLocation(self.shaders_program, 'colormap')
+            self.colormap_location = gl.glGetUniformLocation(
+                self.shaders_program, "colormap"
+            )
 
         def paintGL(self):
             if self.update_vbo:
                 gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertices_id)
-                gl.glBufferData(gl.GL_ARRAY_BUFFER, self.vertex_data, gl.GL_DYNAMIC_DRAW)
+                gl.glBufferData(
+                    gl.GL_ARRAY_BUFFER, self.vertex_data, gl.GL_DYNAMIC_DRAW
+                )
                 gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
                 self.update_vbo = False
 
@@ -198,28 +233,34 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
 
             gl.glVertexPointer(3, gl.GL_FLOAT, 0, c_void_p(None))
             gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
-            gl.glDrawElements(gl.GL_TRIANGLES, self.indices.size, gl.GL_UNSIGNED_INT, None)
+            gl.glDrawElements(
+                gl.GL_TRIANGLES, self.indices.size, gl.GL_UNSIGNED_INT, None
+            )
             gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
             gl.glPopClientAttrib()
 
         def set_coordinates(self, coordinates):
             if self.codim == 2:
-                self.vertex_data['position'][:, 0:2] = coordinates
-                self.vertex_data['position'][:, 0:2] += self.shift
-                self.vertex_data['position'][:, 0:2] *= self.scale
+                self.vertex_data["position"][:, 0:2] = coordinates
+                self.vertex_data["position"][:, 0:2] += self.shift
+                self.vertex_data["position"][:, 0:2] *= self.scale
             elif self.reference_element == triangle:
                 VERTEX_POS = coordinates[self.subentities]
                 VERTEX_POS += self.shift
                 VERTEX_POS *= self.scale
-                self.vertex_data['position'][:, 0:2] = VERTEX_POS.reshape((-1, 2))
+                self.vertex_data["position"][:, 0:2] = VERTEX_POS.reshape((-1, 2))
             else:
                 num_entities = len(self.subentities)
                 VERTEX_POS = coordinates[self.subentities]
                 VERTEX_POS += self.shift
                 VERTEX_POS *= self.scale
-                self.vertex_data['position'][0:num_entities * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
-                self.vertex_data['position'][num_entities * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
+                self.vertex_data["position"][0 : num_entities * 3, 0:2] = VERTEX_POS[
+                    :, 0:3, :
+                ].reshape((-1, 2))
+                self.vertex_data["position"][num_entities * 3 :, 0:2] = VERTEX_POS[
+                    :, [0, 2, 3], :
+                ].reshape((-1, 2))
             self.update_vbo = True
             self.update()
 
@@ -227,7 +268,7 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             self.vmin = self.vmin if vmin is None else vmin
             self.vmax = self.vmax if vmax is None else vmax
 
-            U_buffer = self.vertex_data['color']
+            U_buffer = self.vertex_data["color"]
             if self.codim == 2:
                 U_buffer[:] = U[self.entity_map]
             elif self.reference_element == triangle:
@@ -246,7 +287,6 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             self.update()
 
     class ColorBarWidget(QGLWidget):
-
         def __init__(self, parent, U=None, vmin=None, vmax=None):
             super().__init__(parent)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding))
@@ -260,26 +300,35 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
 
         def initializeGL(self):
             gl.glClearColor(1.0, 1.0, 1.0, 1.0)
-            self.shaders_program = link_shader_program([compile_shader(VS, vertex=True),
-                                                        compile_shader(FS, vertex=False)])
+            self.shaders_program = link_shader_program(
+                [compile_shader(VS, vertex=True), compile_shader(FS, vertex=False)]
+            )
             gl.glUseProgram(self.shaders_program)
 
             self.colormap_id = colormap_texture()
-            self.colormap_location = gl.glGetUniformLocation(self.shaders_program, 'colormap')
+            self.colormap_location = gl.glGetUniformLocation(
+                self.shaders_program, "colormap"
+            )
 
         def set(self, U=None, vmin=None, vmax=None):
             # normalize U
             fm = QFontMetrics(self.font())
-            self.vmin = vmin if vmin is not None else (np.min(U) if U is not None else 0.)
-            self.vmax = vmax if vmax is not None else (np.max(U) if U is not None else 1.)
+            self.vmin = (
+                vmin if vmin is not None else (np.min(U) if U is not None else 0.0)
+            )
+            self.vmax = (
+                vmax if vmax is not None else (np.max(U) if U is not None else 1.0)
+            )
             difference = abs(self.vmin - self.vmax)
             if difference == 0:
                 precision = 3
             else:
-                precision = m.log(max(abs(self.vmin), abs(self.vmax)) / difference, 10) + 1
+                precision = (
+                    m.log(max(abs(self.vmin), abs(self.vmax)) / difference, 10) + 1
+                )
                 precision = int(min(max(precision, 3), 8))
-            self.vmin_str = format(('{:.' + str(precision) + '}').format(self.vmin))
-            self.vmax_str = format(('{:.' + str(precision) + '}').format(self.vmax))
+            self.vmin_str = format(("{:." + str(precision) + "}").format(self.vmin))
+            self.vmax_str = format(("{:." + str(precision) + "}").format(self.vmax))
             self.vmin_width = fm.width(self.vmin_str)
             self.vmax_width = fm.width(self.vmax_str)
             self.text_height = fm.height() * 1.5
@@ -303,14 +352,20 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             for i in range(steps + 1):
                 y = i * (1 / steps)
                 # gl.glColor(y, 0, 0)
-                gl.glVertex(-0.5, (bar_height*y + bar_start), y)
-                gl.glVertex(0.5, (bar_height*y + bar_start), y)
+                gl.glVertex(-0.5, (bar_height * y + bar_start), y)
+                gl.glVertex(0.5, (bar_height * y + bar_start), y)
             gl.glEnd()
             p = QPainter(self)
-            p.drawText((self.width() - self.vmax_width)/2, self.text_ascent, self.vmax_str)
-            p.drawText((self.width() - self.vmin_width)/2, self.height() - self.text_height + self.text_ascent,
-                       self.vmin_str)
+            p.drawText(
+                (self.width() - self.vmax_width) / 2, self.text_ascent, self.vmax_str
+            )
+            p.drawText(
+                (self.width() - self.vmin_width) / 2,
+                self.height() - self.text_height + self.text_ascent,
+                self.vmin_str,
+            )
             p.end()
+
 
 else:
 

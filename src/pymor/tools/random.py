@@ -31,7 +31,7 @@ def get_random_state(random_state=None, seed=None):
         return default_random_state()
 
 
-@defaults('seed')
+@defaults("seed")
 def default_random_state(seed=42):
     """Returns the default |NumPy| :class:`~numpy.random.RandomState`.
 

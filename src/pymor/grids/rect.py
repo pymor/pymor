@@ -45,8 +45,13 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
     dim = 2
     reference_element = square
 
-    def __init__(self, num_intervals=(2, 2), domain=([0, 0], [1, 1]),
-                 identify_left_right=False, identify_bottom_top=False):
+    def __init__(
+        self,
+        num_intervals=(2, 2),
+        domain=([0, 0], [1, 1]),
+        identify_left_right=False,
+        identify_bottom_top=False,
+    ):
         if identify_left_right:
             assert num_intervals[0] > 1
         if identify_bottom_top:
@@ -72,30 +77,51 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         # TOPOLOGY
 
         # mapping of structured indices to global indices
-        structured_to_global_0 = np.arange(ni0 * ni1, dtype=np.int32).reshape((ni1, ni0)).swapaxes(0, 1)
-        structured_to_global_2 = (np.arange((ni0 + 1) * (ni1 + 1), dtype=np.int32)
-                                  .reshape(((ni1 + 1), (ni0 + 1))).swapaxes(0, 1))
-        self._structured_to_global = [structured_to_global_0, None, structured_to_global_2]
+        structured_to_global_0 = (
+            np.arange(ni0 * ni1, dtype=np.int32).reshape((ni1, ni0)).swapaxes(0, 1)
+        )
+        structured_to_global_2 = (
+            np.arange((ni0 + 1) * (ni1 + 1), dtype=np.int32)
+            .reshape(((ni1 + 1), (ni0 + 1)))
+            .swapaxes(0, 1)
+        )
+        self._structured_to_global = [
+            structured_to_global_0,
+            None,
+            structured_to_global_2,
+        ]
         global_to_structured_0 = np.empty((ni0 * ni1, 2), dtype=np.int32)
         global_to_structured_0[:, 0] = np.tile(np.arange(ni0, dtype=np.int32), ni1)
         global_to_structured_0[:, 1] = np.repeat(np.arange(ni1, dtype=np.int32), ni0)
         global_to_structured_1 = np.empty(((ni0 + 1) * (ni1 + 1), 2), dtype=np.int32)
-        global_to_structured_1[:, 0] = np.tile(np.arange(ni0 + 1, dtype=np.int32), ni1 + 1)
-        global_to_structured_1[:, 1] = np.repeat(np.arange(ni1 + 1, dtype=np.int32), ni0 + 1)
-        self._global_to_structured = [global_to_structured_0, None, global_to_structured_1]
+        global_to_structured_1[:, 0] = np.tile(
+            np.arange(ni0 + 1, dtype=np.int32), ni1 + 1
+        )
+        global_to_structured_1[:, 1] = np.repeat(
+            np.arange(ni1 + 1, dtype=np.int32), ni0 + 1
+        )
+        self._global_to_structured = [
+            global_to_structured_0,
+            None,
+            global_to_structured_1,
+        ]
 
         # calculate subentities -- codim-0
         codim1_subentities = np.empty((ni1, ni0, 4), dtype=np.int32)
         if identify_left_right:
-            codim1_subentities[:, :,  3] = np.arange(ni0 * ni1).reshape((ni1, ni0))
-            codim1_subentities[:, :,  1] = codim1_subentities[:, :, 3] + 1
+            codim1_subentities[:, :, 3] = np.arange(ni0 * ni1).reshape((ni1, ni0))
+            codim1_subentities[:, :, 1] = codim1_subentities[:, :, 3] + 1
             codim1_subentities[:, -1, 1] = codim1_subentities[:, 0, 3]
         else:
-            codim1_subentities[:, :,  3] = (np.arange(ni0)[np.newaxis, :]
-                                            + (np.arange(ni1) * (ni0 + 1))[:, np.newaxis])
-            codim1_subentities[:, :,  1] = codim1_subentities[:, :, 3] + 1
+            codim1_subentities[:, :, 3] = (
+                np.arange(ni0)[np.newaxis, :]
+                + (np.arange(ni1) * (ni0 + 1))[:, np.newaxis]
+            )
+            codim1_subentities[:, :, 1] = codim1_subentities[:, :, 3] + 1
         offset = np.max(codim1_subentities[:, :, [1, 3]]) + 1
-        codim1_subentities[:, :, 0] = (np.arange(ni0 * ni1) + offset).reshape((ni1, ni0))
+        codim1_subentities[:, :, 0] = (np.arange(ni0 * ni1) + offset).reshape(
+            (ni1, ni0)
+        )
         codim1_subentities[:, :, 2] = codim1_subentities[:, :, 0] + num_intervals[0]
         if identify_bottom_top:
             codim1_subentities[-1, :, 2] = codim1_subentities[0, :, 0]
@@ -104,17 +130,19 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         # calculate subentities -- codim-1
         codim2_subentities = np.empty((ni1, ni0, 4), dtype=np.int32)
         if identify_left_right:
-            codim2_subentities[:, :,  0] = np.arange(ni0 * ni1).reshape((ni1, ni0))
-            codim2_subentities[:, :,  1] = codim2_subentities[:, :, 0] + 1
+            codim2_subentities[:, :, 0] = np.arange(ni0 * ni1).reshape((ni1, ni0))
+            codim2_subentities[:, :, 1] = codim2_subentities[:, :, 0] + 1
             codim2_subentities[:, -1, 1] = codim2_subentities[:, 0, 0]
-            codim2_subentities[:, :,  3] = codim2_subentities[:, :, 0] + ni0
-            codim2_subentities[:, :,  2] = codim2_subentities[:, :, 1] + ni0
+            codim2_subentities[:, :, 3] = codim2_subentities[:, :, 0] + ni0
+            codim2_subentities[:, :, 2] = codim2_subentities[:, :, 1] + ni0
         else:
-            codim2_subentities[:, :,  0] = (np.arange(ni0)[np.newaxis, :]
-                                            + (np.arange(ni1) * (ni0 + 1))[:, np.newaxis])
-            codim2_subentities[:, :,  1] = codim2_subentities[:, :, 0] + 1
-            codim2_subentities[:, :,  3] = codim2_subentities[:, :, 0] + (ni0 + 1)
-            codim2_subentities[:, :,  2] = codim2_subentities[:, :, 0] + (ni0 + 2)
+            codim2_subentities[:, :, 0] = (
+                np.arange(ni0)[np.newaxis, :]
+                + (np.arange(ni1) * (ni0 + 1))[:, np.newaxis]
+            )
+            codim2_subentities[:, :, 1] = codim2_subentities[:, :, 0] + 1
+            codim2_subentities[:, :, 3] = codim2_subentities[:, :, 0] + (ni0 + 1)
+            codim2_subentities[:, :, 2] = codim2_subentities[:, :, 0] + (ni0 + 2)
         if identify_bottom_top:
             codim2_subentities[-1, :, 3] = codim2_subentities[0, :, 0]
             codim2_subentities[-1, :, 2] = codim2_subentities[0, :, 1]
@@ -123,43 +151,58 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         self.__subentities = (codim1_subentities, codim2_subentities)
 
         # calculate number of elements
-        self.__sizes = (n_elements,
-                        np.max(codim1_subentities) + 1,
-                        np.max(codim2_subentities) + 1)
+        self.__sizes = (
+            n_elements,
+            np.max(codim1_subentities) + 1,
+            np.max(codim2_subentities) + 1,
+        )
 
         # GEOMETRY
 
         # embeddings
-        x0_shifts = np.arange(self.x0_num_intervals) * self.x0_diameter + self.x0_range[0]
-        x1_shifts = np.arange(self.x1_num_intervals) * self.x1_diameter + self.x1_range[0]
+        x0_shifts = (
+            np.arange(self.x0_num_intervals) * self.x0_diameter + self.x0_range[0]
+        )
+        x1_shifts = (
+            np.arange(self.x1_num_intervals) * self.x1_diameter + self.x1_range[0]
+        )
         shifts = np.array(np.meshgrid(x0_shifts, x1_shifts)).reshape((2, -1))
         A = np.tile(np.diag([self.x0_diameter, self.x1_diameter]), (n_elements, 1, 1))
         B = shifts.T
         self.__embeddings = (A, B)
 
     def __reduce__(self):
-        return (RectGrid,
-                (self.num_intervals, self.domain, self.identify_left_right, self.identify_bottom_top))
+        return (
+            RectGrid,
+            (
+                self.num_intervals,
+                self.domain,
+                self.identify_left_right,
+                self.identify_bottom_top,
+            ),
+        )
 
     def __str__(self):
-        return (f'Rect-Grid on domain '
-                f'[{self.x0_range[0]},{self.x0_range[1]}] x [{self.x1_range[0]},{self.x1_range[1]}]\n'
-                f'x0-intervals: {self.x0_num_intervals}, x1-intervals: {self.x1_num_intervals}\n'
-                f'faces: {self.size(0)}, edges: {self.size(1)}, vertices: {self.size(2)}')
+        return (
+            f"Rect-Grid on domain "
+            f"[{self.x0_range[0]},{self.x0_range[1]}] x [{self.x1_range[0]},{self.x1_range[1]}]\n"
+            f"x0-intervals: {self.x0_num_intervals}, x1-intervals: {self.x1_num_intervals}\n"
+            f"faces: {self.size(0)}, edges: {self.size(1)}, vertices: {self.size(2)}"
+        )
 
     def __repr__(self):
-        return f'RectGrid({self.num_intervals}, {self.domain}, {self.identify_left_right}, {self.identify_bottom_top})'
+        return f"RectGrid({self.num_intervals}, {self.domain}, {self.identify_left_right}, {self.identify_bottom_top})"
 
     def size(self, codim=0):
-        assert 0 <= codim <= 2, 'Invalid codimension'
+        assert 0 <= codim <= 2, "Invalid codimension"
         return self.__sizes[codim]
 
     def subentities(self, codim, subentity_codim):
-        assert 0 <= codim <= 2, 'Invalid codimension'
-        assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimension'
+        assert 0 <= codim <= 2, "Invalid codimension"
+        assert codim <= subentity_codim <= self.dim, "Invalid subentity codimension"
         if codim == 0:
             if subentity_codim == 0:
-                return np.arange(self.size(0), dtype='int32')[:, np.newaxis]
+                return np.arange(self.size(0), dtype="int32")[:, np.newaxis]
             else:
                 return self.__subentities[subentity_codim - 1]
         else:
@@ -202,7 +245,9 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
            centers(2)[structured_to_global(2)[i, j]] == np.array([vertex_coordinates(0)[i], vertex_coordinates(1)[j]])
         """
         assert 0 <= dim < 2
-        return np.linspace(self.domain[0, dim], self.domain[1, dim], self.num_intervals[dim] + 1)
+        return np.linspace(
+            self.domain[0, dim], self.domain[1, dim], self.num_intervals[dim] + 1
+        )
 
     def orthogonal_centers(self):
         return self.centers(0)
@@ -225,12 +270,17 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         from pymor.gui.qt import visualize_patch
         from pymor.vectorarrays.interfaces import VectorArrayInterface
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
+
         if isinstance(U, (np.ndarray, VectorArrayInterface)):
             U = (U,)
         assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
-        U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
-                  u if isinstance(u, NumpyVectorArray) else
-                  NumpyVectorSpace.make_array(u.to_numpy())
-                  for u in U)
-        bounding_box = kwargs.pop('bounding_box', self.domain)
+        U = tuple(
+            NumpyVectorSpace.make_array(u)
+            if isinstance(u, np.ndarray)
+            else u
+            if isinstance(u, NumpyVectorArray)
+            else NumpyVectorSpace.make_array(u.to_numpy())
+            for u in U
+        )
+        bounding_box = kwargs.pop("bounding_box", self.domain)
         visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)

@@ -29,33 +29,68 @@ from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.analyticalproblems.text import text_problem
 
 from pymor.core.cache import clear_caches, enable_caching, disable_caching
-from pymor.core.defaults import print_defaults, write_defaults_to_file, load_defaults_from_file, set_defaults
+from pymor.core.defaults import (
+    print_defaults,
+    write_defaults_to_file,
+    load_defaults_from_file,
+    set_defaults,
+)
 from pymor.core.logger import set_log_levels, getLogger
 from pymor.core.pickle import dump, dumps, load, loads
 
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.models.iosys import LTIModel, SecondOrderModel, TransferFunction
 
-from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
-from pymor.domaindescriptions.polygonal import DiscDomain, CircularSectorDomain, PolygonalDomain
+from pymor.domaindescriptions.basic import (
+    RectDomain,
+    CylindricalDomain,
+    TorusDomain,
+    LineDomain,
+    CircleDomain,
+)
+from pymor.domaindescriptions.polygonal import (
+    DiscDomain,
+    CircularSectorDomain,
+    PolygonalDomain,
+)
 
 from pymor.domaindiscretizers.default import discretize_domain_default
 
 from pymor.discretizers.cg import discretize_stationary_cg, discretize_instationary_cg
 from pymor.discretizers.fv import discretize_stationary_fv, discretize_instationary_fv
 
-from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction, LincombFunction
+from pymor.functions.basic import (
+    ConstantFunction,
+    GenericFunction,
+    ExpressionFunction,
+    LincombFunction,
+)
 from pymor.functions.bitmap import BitmapFunction
 
-from pymor.grids.boundaryinfos import EmptyBoundaryInfo, GenericBoundaryInfo, AllDirichletBoundaryInfo
+from pymor.grids.boundaryinfos import (
+    EmptyBoundaryInfo,
+    GenericBoundaryInfo,
+    AllDirichletBoundaryInfo,
+)
 from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 
-from pymor.operators.constructions import (LincombOperator, Concatenation, ComponentProjection, IdentityOperator,
-                                           ConstantOperator, ZeroOperator, VectorArrayOperator, VectorOperator,
-                                           VectorFunctional, FixedParameterOperator, AdjointOperator,
-                                           SelectionOperator, induced_norm)
+from pymor.operators.constructions import (
+    LincombOperator,
+    Concatenation,
+    ComponentProjection,
+    IdentityOperator,
+    ConstantOperator,
+    ZeroOperator,
+    VectorArrayOperator,
+    VectorOperator,
+    VectorFunctional,
+    FixedParameterOperator,
+    AdjointOperator,
+    SelectionOperator,
+    induced_norm,
+)
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 
@@ -63,18 +98,32 @@ from pymor.parallel.default import new_parallel_pool
 from pymor.parallel.manager import RemoteObjectManager
 
 from pymor.parameters.base import Parameter
-from pymor.parameters.functionals import (ProjectionParameterFunctional, GenericParameterFunctional,
-                                          ExpressionParameterFunctional)
+from pymor.parameters.functionals import (
+    ProjectionParameterFunctional,
+    GenericParameterFunctional,
+    ExpressionParameterFunctional,
+)
 from pymor.parameters.spaces import CubicParameterSpace
 
-from pymor.reductors.basic import StationaryRBReductor, InstationaryRBReductor, LTIPGReductor, SOLTIPGReductor
+from pymor.reductors.basic import (
+    StationaryRBReductor,
+    InstationaryRBReductor,
+    LTIPGReductor,
+    SOLTIPGReductor,
+)
 from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 from pymor.reductors.h2 import IRKAReductor, TSIAReductor, TFIRKAReductor
 from pymor.reductors.interpolation import LTIBHIReductor, SOBHIReductor, TFBHIReductor
 from pymor.reductors.parabolic import ParabolicRBReductor
-from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor, SOBTfvReductor,
-                                  SOBTReductor)
+from pymor.reductors.sobt import (
+    SOBTpReductor,
+    SOBTvReductor,
+    SOBTpvReductor,
+    SOBTvpReductor,
+    SOBTfvReductor,
+    SOBTReductor,
+)
 from pymor.reductors.sor_irka import SORIRKAReductor
 
 from pymor.tools.random import default_random_state

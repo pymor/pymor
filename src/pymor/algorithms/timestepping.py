@@ -36,7 +36,17 @@ class TimeStepperInterface(ImmutableInterface):
     """
 
     @abstractmethod
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def solve(
+        self,
+        initial_time,
+        end_time,
+        initial_data,
+        operator,
+        rhs=None,
+        mass=None,
+        mu=None,
+        num_values=None,
+    ):
         """Apply time-stepper to the equation ::
 
             M * d_t u + A(u, mu, t) = F(mu, t).
@@ -88,13 +98,33 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
         M (resp. A) are used.
     """
 
-    def __init__(self, nt, solver_options='operator'):
+    def __init__(self, nt, solver_options="operator"):
         self.nt = nt
         self.solver_options = solver_options
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
-        return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu, num_values,
-                              solver_options=self.solver_options)
+    def solve(
+        self,
+        initial_time,
+        end_time,
+        initial_data,
+        operator,
+        rhs=None,
+        mass=None,
+        mu=None,
+        num_values=None,
+    ):
+        return implicit_euler(
+            operator,
+            rhs,
+            mass,
+            initial_data,
+            initial_time,
+            end_time,
+            self.nt,
+            mu,
+            num_values,
+            solver_options=self.solver_options,
+        )
 
 
 class ExplicitEulerTimeStepper(TimeStepperInterface):
@@ -113,13 +143,27 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
     def __init__(self, nt):
         self.nt = nt
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def solve(
+        self,
+        initial_time,
+        end_time,
+        initial_data,
+        operator,
+        rhs=None,
+        mass=None,
+        mu=None,
+        num_values=None,
+    ):
         if mass is not None:
             raise NotImplementedError
-        return explicit_euler(operator, rhs, initial_data, initial_time, end_time, self.nt, mu, num_values)
+        return explicit_euler(
+            operator, rhs, initial_data, initial_time, end_time, self.nt, mu, num_values
+        )
 
 
-def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
+def implicit_euler(
+    A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options="operator"
+):
     assert isinstance(A, OperatorInterface)
     assert isinstance(F, (type(None), OperatorInterface, VectorArrayInterface))
     assert isinstance(M, (type(None), OperatorInterface))
@@ -133,7 +177,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     elif isinstance(F, OperatorInterface):
         assert F.source.dim == 1
         assert F.range == A.range
-        F_time_dep = F.parametric and '_t' in F.parameter_type
+        F_time_dep = F.parametric and "_t" in F.parameter_type
         if not F_time_dep:
             dt_F = F.as_vector(mu) * dt
     else:
@@ -144,6 +188,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
 
     if M is None:
         from pymor.operators.constructions import IdentityOperator
+
         M = IdentityOperator(A.source)
 
     assert A.source == M.source == M.range
@@ -151,14 +196,18 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     assert U0 in A.source
     assert len(U0) == 1
 
-    A_time_dep = A.parametric and '_t' in A.parameter_type
+    A_time_dep = A.parametric and "_t" in A.parameter_type
 
-    R = A.source.empty(reserve=nt+1)
+    R = A.source.empty(reserve=nt + 1)
     R.append(U0)
 
-    options = A.solver_options if solver_options == 'operator' else \
-              M.solver_options if solver_options == 'mass' else \
-              solver_options
+    options = (
+        A.solver_options
+        if solver_options == "operator"
+        else M.solver_options
+        if solver_options == "mass"
+        else solver_options
+    )
     M_dt_A = (M + A * dt).with_(solver_options=options)
     if not A_time_dep:
         M_dt_A = M_dt_A.assemble(mu)
@@ -168,7 +217,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
 
     for n in range(nt):
         t += dt
-        mu['_t'] = t
+        mu["_t"] = t
         rhs = M.apply(U)
         if F_time_dep:
             dt_F = F.as_vector(mu) * dt
@@ -190,7 +239,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     if isinstance(F, OperatorInterface):
         assert F.source.dim == 1
         assert F.range == A.range
-        F_time_dep = F.parametric and '_t' in F.parameter_type
+        F_time_dep = F.parametric and "_t" in F.parameter_type
         if not F_time_dep:
             F_ass = F.as_vector(mu)
     elif isinstance(F, VectorArrayInterface):
@@ -202,7 +251,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     assert len(U0) == 1
     assert U0 in A.source
 
-    A_time_dep = A.parametric and '_t' in A.parameter_type
+    A_time_dep = A.parametric and "_t" in A.parameter_type
     if not A_time_dep:
         A = A.assemble(mu)
 
@@ -217,14 +266,14 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     if F is None:
         for n in range(nt):
             t += dt
-            mu['_t'] = t
+            mu["_t"] = t
             U.axpy(-dt, A.apply(U, mu=mu))
             while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
     else:
         for n in range(nt):
             t += dt
-            mu['_t'] = t
+            mu["_t"] = t
             if F_time_dep:
                 F_ass = F.as_vector(mu)
             U.axpy(dt, F_ass - A.apply(U, mu=mu))

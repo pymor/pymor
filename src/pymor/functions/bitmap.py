@@ -24,16 +24,20 @@ class BitmapFunction(FunctionBase):
     shape_range = ()
 
     def __init__(self, filename, bounding_box=None, range=None):
-        bounding_box = bounding_box or [[0., 0.], [1., 1.]]
-        range = range or [0., 1.]
+        bounding_box = bounding_box or [[0.0, 0.0], [1.0, 1.0]]
+        range = range or [0.0, 1.0]
         try:
             from PIL import Image
         except ImportError:
-            raise ImportError("PIL is needed for loading images. Try 'pip install pillow'")
+            raise ImportError(
+                "PIL is needed for loading images. Try 'pip install pillow'"
+            )
         img = Image.open(filename)
         if not img.mode == "L":
-            self.logger.warning("Image " + filename + " not in grayscale mode. Convertig to grayscale.")
-            img = img.convert('L')
+            self.logger.warning(
+                "Image " + filename + " not in grayscale mode. Convertig to grayscale."
+            )
+            img = img.convert("L")
         self.filename = filename
         self.bitmap = np.array(img).T[:, ::-1]
         self.bounding_box = bounding_box
@@ -42,9 +46,18 @@ class BitmapFunction(FunctionBase):
         self.range = range
 
     def evaluate(self, x, mu=None):
-        indices = np.maximum(np.floor((x - self.lower_left) * np.array(self.bitmap.shape) / self.size).astype(int), 0)
-        F = (self.bitmap[np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
-                         np.minimum(indices[..., 1], self.bitmap.shape[1] - 1)]
-             * ((self.range[1] - self.range[0]) / 255.)
-             + self.range[0])
+        indices = np.maximum(
+            np.floor(
+                (x - self.lower_left) * np.array(self.bitmap.shape) / self.size
+            ).astype(int),
+            0,
+        )
+        F = (
+            self.bitmap[
+                np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
+                np.minimum(indices[..., 1], self.bitmap.shape[1] - 1),
+            ]
+            * ((self.range[1] - self.range[0]) / 255.0)
+            + self.range[0]
+        )
         return F

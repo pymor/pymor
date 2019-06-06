@@ -9,28 +9,33 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.operators.interfaces import OperatorInterface
 
-_DEFAULT_LYAP_LRCF_SPARSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                            'lradi')
+_DEFAULT_LYAP_LRCF_SPARSE_SOLVER_BACKEND = "pymess" if config.HAVE_PYMESS else "lradi"
 
-_DEFAULT_LYAP_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                           'slycot' if config.HAVE_SLYCOT else
-                                           'scipy')
+_DEFAULT_LYAP_LRCF_DENSE_SOLVER_BACKEND = (
+    "pymess" if config.HAVE_PYMESS else "slycot" if config.HAVE_SLYCOT else "scipy"
+)
 
-_DEFAULT_LYAP_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                      'slycot' if config.HAVE_SLYCOT else
-                                      'scipy')
+_DEFAULT_LYAP_DENSE_SOLVER_BACKEND = (
+    "pymess" if config.HAVE_PYMESS else "slycot" if config.HAVE_SLYCOT else "scipy"
+)
 
 
-@defaults('value')
+@defaults("value")
 def mat_eqn_sparse_min_size(value=1000):
     """Returns minimal size for which a sparse solver will be used by default."""
     return value
 
 
-@defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
-def solve_lyap_lrcf(A, E, B, trans=False, options=None,
-                    default_sparse_solver_backend=_DEFAULT_LYAP_LRCF_SPARSE_SOLVER_BACKEND,
-                    default_dense_solver_backend=_DEFAULT_LYAP_LRCF_DENSE_SOLVER_BACKEND):
+@defaults("default_sparse_solver_backend", "default_dense_solver_backend")
+def solve_lyap_lrcf(
+    A,
+    E,
+    B,
+    trans=False,
+    options=None,
+    default_sparse_solver_backend=_DEFAULT_LYAP_LRCF_SPARSE_SOLVER_BACKEND,
+    default_dense_solver_backend=_DEFAULT_LYAP_LRCF_DENSE_SOLVER_BACKEND,
+):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
     Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T`
@@ -111,23 +116,23 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
 
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     if options:
-        solver = options if isinstance(options, str) else options['type']
-        backend = solver.split('_')[0]
+        solver = options if isinstance(options, str) else options["type"]
+        backend = solver.split("_")[0]
     else:
         if A.source.dim >= mat_eqn_sparse_min_size():
             backend = default_sparse_solver_backend
         else:
             backend = default_dense_solver_backend
-    if backend == 'scipy':
+    if backend == "scipy":
         from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
-    elif backend == 'slycot':
+    elif backend == "slycot":
         from pymor.bindings.slycot import solve_lyap_lrcf as solve_lyap_impl
-    elif backend == 'pymess':
+    elif backend == "pymess":
         from pymor.bindings.pymess import solve_lyap_lrcf as solve_lyap_impl
-    elif backend == 'lradi':
+    elif backend == "lradi":
         from pymor.algorithms.lradi import solve_lyap_lrcf as solve_lyap_impl
     else:
-        raise ValueError(f'Unknown solver backend ({backend}).')
+        raise ValueError(f"Unknown solver backend ({backend}).")
     return solve_lyap_impl(A, E, B, trans=trans, options=options)
 
 
@@ -141,9 +146,15 @@ def _solve_lyap_lrcf_check_args(A, E, B, trans):
     assert B in A.source
 
 
-@defaults('default_solver_backend')
-def solve_lyap_dense(A, E, B, trans=False, options=None,
-                     default_solver_backend=_DEFAULT_LYAP_DENSE_SOLVER_BACKEND):
+@defaults("default_solver_backend")
+def solve_lyap_dense(
+    A,
+    E,
+    B,
+    trans=False,
+    options=None,
+    default_solver_backend=_DEFAULT_LYAP_DENSE_SOLVER_BACKEND,
+):
     """Compute the solution of a Lyapunov equation.
 
     Returns the solution :math:`X` of a (generalized) continuous-time
@@ -210,18 +221,18 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
 
     _solve_lyap_dense_check_args(A, E, B, trans)
     if options:
-        solver = options if isinstance(options, str) else options['type']
-        backend = solver.split('_')[0]
+        solver = options if isinstance(options, str) else options["type"]
+        backend = solver.split("_")[0]
     else:
         backend = default_solver_backend
-    if backend == 'scipy':
+    if backend == "scipy":
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
-    elif backend == 'slycot':
+    elif backend == "slycot":
         from pymor.bindings.slycot import solve_lyap_dense as solve_lyap_impl
-    elif backend == 'pymess':
+    elif backend == "pymess":
         from pymor.bindings.pymess import solve_lyap_dense as solve_lyap_impl
     else:
-        raise ValueError(f'Unknown solver backend ({backend}).')
+        raise ValueError(f"Unknown solver backend ({backend}).")
     return solve_lyap_impl(A, E, B, trans, options=options)
 
 
@@ -256,6 +267,6 @@ def _chol(A):
     assert isinstance(A, np.ndarray) and A.ndim == 2
     assert A.shape[0] == A.shape[1]
 
-    U, s, _ = spla.svd(A, lapack_driver='gesvd')
+    U, s, _ = spla.svd(A, lapack_driver="gesvd")
     L = U.dot(np.diag(np.sqrt(s)))
     return L

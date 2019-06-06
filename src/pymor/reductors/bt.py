@@ -21,6 +21,7 @@ class GenericBTReductor(BasicInterface):
     fom
         The full-order |LTIModel| to reduce.
     """
+
     def __init__(self, fom):
         assert isinstance(fom, LTIModel)
         self.fom = fom
@@ -37,7 +38,7 @@ class GenericBTReductor(BasicInterface):
         """Return singular values and vectors."""
         if self._sv_U_V_cache is None:
             cf, of = self._gramians()
-            U, sv, Vh = spla.svd(self.fom.E.apply2(of, cf), lapack_driver='gesvd')
+            U, sv, Vh = spla.svd(self.fom.E.apply2(of, cf), lapack_driver="gesvd")
             self._sv_U_V_cache = (sv, U.T, Vh)
         return self._sv_U_V_cache
 
@@ -45,7 +46,7 @@ class GenericBTReductor(BasicInterface):
         """Returns error bounds for all possible reduced orders."""
         raise NotImplementedError
 
-    def reduce(self, r=None, tol=None, projection='bfsr'):
+    def reduce(self, r=None, tol=None, projection="bfsr"):
         """Generic Balanced Truncation.
 
         Parameters
@@ -71,7 +72,7 @@ class GenericBTReductor(BasicInterface):
         """
         assert r is not None or tol is not None
         assert r is None or 0 < r < self.fom.order
-        assert projection in ('sr', 'bfsr', 'biorth')
+        assert projection in ("sr", "bfsr", "biorth")
 
         cf, of = self._gramians()
         sv, sU, sV = self._sv_U_V()
@@ -82,23 +83,25 @@ class GenericBTReductor(BasicInterface):
             r_tol = np.argmax(error_bounds <= tol) + 1
             r = r_tol if r is None else min(r, r_tol)
         if r > min(len(cf), len(of)):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
+            raise ValueError("r needs to be smaller than the sizes of Gramian factors.")
 
         # compute projection matrices
         self.V = cf.lincomb(sV[:r])
         self.W = of.lincomb(sU[:r])
-        if projection == 'sr':
+        if projection == "sr":
             alpha = 1 / np.sqrt(sv[:r])
             self.V.scal(alpha)
             self.W.scal(alpha)
-        elif projection == 'bfsr':
+        elif projection == "bfsr":
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-        elif projection == 'biorth':
+        elif projection == "biorth":
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.E)
 
         # find reduced-order model
-        self._pg_reductor = LTIPGReductor(self.fom, self.W, self.V, projection in ('sr', 'biorth'))
+        self._pg_reductor = LTIPGReductor(
+            self.fom, self.W, self.V, projection in ("sr", "biorth")
+        )
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -117,8 +120,9 @@ class BTReductor(GenericBTReductor):
     fom
         The full-order |LTIModel| to reduce.
     """
+
     def _gramians(self):
-        return self.fom.gramian('c_lrcf'), self.fom.gramian('o_lrcf')
+        return self.fom.gramian("c_lrcf"), self.fom.gramian("o_lrcf")
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]
@@ -137,6 +141,7 @@ class LQGBTReductor(GenericBTReductor):
     solver_options
         The solver options to use to solve the Riccati equations.
     """
+
     def __init__(self, fom, solver_options=None):
         super().__init__(fom)
         self.solver_options = solver_options
@@ -148,15 +153,17 @@ class LQGBTReductor(GenericBTReductor):
         E = self.fom.E if not isinstance(self.fom.E, IdentityOperator) else None
         options = self.solver_options
 
-        cf = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                             trans=False, options=options)
-        of = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                             trans=True, options=options)
+        cf = solve_ricc_lrcf(
+            A, E, B.as_range_array(), C.as_source_array(), trans=False, options=options
+        )
+        of = solve_ricc_lrcf(
+            A, E, B.as_range_array(), C.as_source_array(), trans=True, options=options
+        )
         return cf, of
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]
-        return 2 * (sv[:0:-1] / np.sqrt(1 + sv[:0:-1]**2)).cumsum()[::-1]
+        return 2 * (sv[:0:-1] / np.sqrt(1 + sv[:0:-1] ** 2)).cumsum()[::-1]
 
 
 class BRBTReductor(GenericBTReductor):
@@ -173,6 +180,7 @@ class BRBTReductor(GenericBTReductor):
     solver_options
         The solver options to use to solve the positive Riccati equations.
     """
+
     def __init__(self, fom, gamma=1, solver_options=None):
         super().__init__(fom)
         self.gamma = gamma
@@ -185,12 +193,26 @@ class BRBTReductor(GenericBTReductor):
         E = self.fom.E if not isinstance(self.fom.E, IdentityOperator) else None
         options = self.solver_options
 
-        cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(self.fom.output_dim) if self.gamma != 1 else None,
-                                 trans=False, options=options)
-        of = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(self.fom.input_dim) if self.gamma != 1 else None,
-                                 trans=True, options=options)
+        cf = solve_pos_ricc_lrcf(
+            A,
+            E,
+            B.as_range_array(),
+            C.as_source_array(),
+            R=self.gamma ** 2 * np.eye(self.fom.output_dim)
+            if self.gamma != 1
+            else None,
+            trans=False,
+            options=options,
+        )
+        of = solve_pos_ricc_lrcf(
+            A,
+            E,
+            B.as_range_array(),
+            C.as_source_array(),
+            R=self.gamma ** 2 * np.eye(self.fom.input_dim) if self.gamma != 1 else None,
+            trans=True,
+            options=options,
+        )
         return cf, of
 
     def error_bounds(self):

@@ -68,16 +68,28 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     assert isinstance(A, OperatorInterface) and A.linear and A.source == A.range
     assert isinstance(Ar, OperatorInterface) and Ar.linear and Ar.source == Ar.range
 
-    assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+    assert (
+        E is None
+        or isinstance(E, OperatorInterface)
+        and E.linear
+        and E.source == E.range == A.source
+    )
     if E is None:
         E = IdentityOperator(A.source)
-    assert Er is None or isinstance(Er, OperatorInterface) and Er.linear and Er.source == Er.range == Ar.source
+    assert (
+        Er is None
+        or isinstance(Er, OperatorInterface)
+        and Er.linear
+        and Er.source == Er.range == Ar.source
+    )
 
     compute_V = B is not None and Br is not None
     compute_W = C is not None and Cr is not None
 
     if not compute_V and not compute_W:
-        raise ValueError('Not enough parameters are given to solve a Sylvester equation.')
+        raise ValueError(
+            "Not enough parameters are given to solve a Sylvester equation."
+        )
 
     if compute_V:
         assert isinstance(B, OperatorInterface) and B.linear and B.range == A.source
@@ -86,21 +98,23 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
 
     if compute_W:
         assert isinstance(C, OperatorInterface) and C.linear and C.source == A.source
-        assert isinstance(Cr, OperatorInterface) and Cr.linear and Cr.source == Ar.source
+        assert (
+            isinstance(Cr, OperatorInterface) and Cr.linear and Cr.source == Ar.source
+        )
         assert C.range == Cr.range
 
     # convert reduced operators
-    Ar = to_matrix(Ar, format='dense')
+    Ar = to_matrix(Ar, format="dense")
     r = Ar.shape[0]
     if Er is not None:
-        Er = to_matrix(Er, format='dense')
+        Er = to_matrix(Er, format="dense")
 
     # (Generalized) Schur decomposition
     if Er is None:
-        TAr, Z = spla.schur(Ar, output='complex')
+        TAr, Z = spla.schur(Ar, output="complex")
         Q = Z
     else:
-        TAr, TEr, Q, Z = spla.qz(Ar, Er, output='complex')
+        TAr, TEr, Q, Z = spla.qz(Ar, Er, output="complex")
 
     # solve for V, from the last column to the first
     if compute_V:

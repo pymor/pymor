@@ -53,7 +53,7 @@ class Timer:
 
     def __exit__(self, type_, value, traceback):
         self.stop()
-        self._log.info('Execution of %s took %f (s)', self._section, self.dt)
+        self._log.info("Execution of %s took %f (s)", self._section, self.dt)
 
     def __call__(self, func):
         func.decorated = self
@@ -62,6 +62,7 @@ class Timer:
         def new_func(*args, **kwargs):
             with self:
                 return func(*args, **kwargs)
+
         return new_func
 
 

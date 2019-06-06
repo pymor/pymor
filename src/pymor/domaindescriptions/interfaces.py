@@ -5,7 +5,7 @@
 from pymor.core.interfaces import ImmutableInterface
 
 
-KNOWN_BOUNDARY_TYPES = {'dirichlet', 'neumann', 'robin'}
+KNOWN_BOUNDARY_TYPES = {"dirichlet", "neumann", "robin"}
 
 
 class DomainDescriptionInterface(ImmutableInterface):
@@ -24,12 +24,12 @@ class DomainDescriptionInterface(ImmutableInterface):
 
     @property
     def has_dirichlet(self):
-        return 'dirichlet' in self.boundary_types
+        return "dirichlet" in self.boundary_types
 
     @property
     def has_neumann(self):
-        return 'neumann' in self.boundary_types
+        return "neumann" in self.boundary_types
 
     @property
     def has_robin(self):
-        return 'robin' in self.boundary_types
+        return "robin" in self.boundary_types

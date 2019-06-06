@@ -15,7 +15,7 @@ class MPIPool(WorkerPoolBase):
 
     def __init__(self):
         super().__init__()
-        self.logger.info(f'Connected to {mpi.size} ranks')
+        self.logger.info(f"Connected to {mpi.size} ranks")
         self._payload = mpi.call(mpi.function_call_manage, _setup_worker)
         self._apply(os.chdir, os.getcwd())
 
@@ -29,13 +29,17 @@ class MPIPool(WorkerPoolBase):
         return mpi.call(mpi.function_call_manage, _push_object, obj)
 
     def _apply(self, function, *args, **kwargs):
-        return mpi.call(mpi.function_call, _worker_call_function, function, *args, **kwargs)
+        return mpi.call(
+            mpi.function_call, _worker_call_function, function, *args, **kwargs
+        )
 
     def _apply_only(self, function, worker, *args, **kwargs):
         payload = mpi.get_object(self._payload)
         payload[0] = (function, args, kwargs)
         try:
-            result = mpi.call(mpi.function_call, _single_worker_call_function, self._payload, worker)
+            result = mpi.call(
+                mpi.function_call, _single_worker_call_function, self._payload, worker
+            )
         finally:
             payload[0] = None
         return result
@@ -44,7 +48,13 @@ class MPIPool(WorkerPoolBase):
         payload = mpi.get_object(self._payload)
         payload[0] = chunks
         try:
-            result = mpi.call(mpi.function_call, _worker_map_function, self._payload, function, **kwargs)
+            result = mpi.call(
+                mpi.function_call,
+                _worker_map_function,
+                self._payload,
+                function,
+                **kwargs,
+            )
         finally:
             payload[0] = None
         return result
@@ -94,8 +104,9 @@ def _setup_worker():
     if not mpi.rank0:
         from pymor.tools import random
         import numpy as np
+
         state = random.default_random_state()
-        new_state = np.random.RandomState(state.randint(0, 2**16) + mpi.rank)
+        new_state = np.random.RandomState(state.randint(0, 2 ** 16) + mpi.rank)
         random._default_random_state = new_state
     return [None]
 

@@ -50,8 +50,13 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
     dim = 2
     reference_element = triangle
 
-    def __init__(self, num_intervals=(2, 2), domain=([0, 0], [1, 1]),
-                 identify_left_right=False, identify_bottom_top=False):
+    def __init__(
+        self,
+        num_intervals=(2, 2),
+        domain=([0, 0], [1, 1]),
+        identify_left_right=False,
+        identify_bottom_top=False,
+    ):
         if identify_left_right:
             assert num_intervals[0] > 1
         if identify_bottom_top:
@@ -72,18 +77,26 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         n_elements = x0_num_intervals * x1_num_intervals * 4
 
         # TOPOLOGY
-        n_outer_vertices = (x0_num_intervals + 1 - identify_left_right) * (x1_num_intervals + 1 - identify_bottom_top)
-        self.__sizes = (n_elements,
-                        ((x0_num_intervals + 1 - identify_left_right) * x1_num_intervals
-                         + (x1_num_intervals + 1 - identify_bottom_top) * x0_num_intervals
-                         + n_elements),
-                        n_outer_vertices + int(n_elements / 4))
+        n_outer_vertices = (x0_num_intervals + 1 - identify_left_right) * (
+            x1_num_intervals + 1 - identify_bottom_top
+        )
+        self.__sizes = (
+            n_elements,
+            (
+                (x0_num_intervals + 1 - identify_left_right) * x1_num_intervals
+                + (x1_num_intervals + 1 - identify_bottom_top) * x0_num_intervals
+                + n_elements
+            ),
+            n_outer_vertices + int(n_elements / 4),
+        )
 
         # calculate subentities -- codim-1
         V_EDGE_H_INDICES = np.arange(x0_num_intervals + 1, dtype=np.int32)
         if identify_left_right:
             V_EDGE_H_INDICES[-1] = 0
-        V_EDGE_V_INDICES = np.arange(x1_num_intervals, dtype=np.int32) * (x0_num_intervals + 1 - identify_left_right)
+        V_EDGE_V_INDICES = np.arange(x1_num_intervals, dtype=np.int32) * (
+            x0_num_intervals + 1 - identify_left_right
+        )
         V_EDGE_INDICES = V_EDGE_V_INDICES[:, np.newaxis] + V_EDGE_H_INDICES
         num_v_edges = x1_num_intervals * (x0_num_intervals + 1 - identify_left_right)
 
@@ -92,26 +105,30 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         if identify_bottom_top:
             H_EDGE_V_INDICES[-1] = 0
         H_EDGE_V_INDICES *= x0_num_intervals
-        H_EDGE_INDICES = H_EDGE_V_INDICES[:, np.newaxis] + H_EDGE_H_INDICES + num_v_edges
+        H_EDGE_INDICES = (
+            H_EDGE_V_INDICES[:, np.newaxis] + H_EDGE_H_INDICES + num_v_edges
+        )
         num_h_edges = x0_num_intervals * (x1_num_intervals + 1 - identify_bottom_top)
 
-        D_EDGE_LL_INDICES = np.arange(n_elements / 4, dtype=np.int32) + (num_v_edges + num_h_edges)
+        D_EDGE_LL_INDICES = np.arange(n_elements / 4, dtype=np.int32) + (
+            num_v_edges + num_h_edges
+        )
         D_EDGE_UR_INDICES = D_EDGE_LL_INDICES + int(n_elements / 4)
         D_EDGE_UL_INDICES = D_EDGE_UR_INDICES + int(n_elements / 4)
         D_EDGE_LR_INDICES = D_EDGE_UL_INDICES + int(n_elements / 4)
 
-        E0 = np.array([H_EDGE_INDICES[:-1, :].ravel(),
-                       D_EDGE_LR_INDICES,
-                       D_EDGE_LL_INDICES]).T
-        E1 = np.array([V_EDGE_INDICES[:, 1:].ravel(),
-                       D_EDGE_UR_INDICES,
-                       D_EDGE_LR_INDICES]).T
-        E2 = np.array([H_EDGE_INDICES[1:, :].ravel(),
-                       D_EDGE_UL_INDICES,
-                       D_EDGE_UR_INDICES]).T
-        E3 = np.array([V_EDGE_INDICES[:, :-1].ravel(),
-                       D_EDGE_LL_INDICES,
-                       D_EDGE_UL_INDICES]).T
+        E0 = np.array(
+            [H_EDGE_INDICES[:-1, :].ravel(), D_EDGE_LR_INDICES, D_EDGE_LL_INDICES]
+        ).T
+        E1 = np.array(
+            [V_EDGE_INDICES[:, 1:].ravel(), D_EDGE_UR_INDICES, D_EDGE_LR_INDICES]
+        ).T
+        E2 = np.array(
+            [H_EDGE_INDICES[1:, :].ravel(), D_EDGE_UL_INDICES, D_EDGE_UR_INDICES]
+        ).T
+        E3 = np.array(
+            [V_EDGE_INDICES[:, :-1].ravel(), D_EDGE_LL_INDICES, D_EDGE_UL_INDICES]
+        ).T
 
         codim1_subentities = np.vstack((E0, E1, E2, E3))
 
@@ -124,20 +141,39 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
             VERTEX_V_INDICES[-1] = 0
         VERTEX_V_INDICES *= x0_num_intervals + 1 - identify_left_right
         VERTEX_NUMERS = VERTEX_V_INDICES[:, np.newaxis] + VERTEX_H_INDICES
-        VERTEX_CENTER_NUMBERS = np.arange(x0_num_intervals * x1_num_intervals, dtype=np.int32) + n_outer_vertices
+        VERTEX_CENTER_NUMBERS = (
+            np.arange(x0_num_intervals * x1_num_intervals, dtype=np.int32)
+            + n_outer_vertices
+        )
 
-        V0 = np.array([VERTEX_CENTER_NUMBERS,
-                       VERTEX_NUMERS[:-1, :-1].ravel(),
-                       VERTEX_NUMERS[:-1, 1:].ravel()]).T
-        V1 = np.array([VERTEX_CENTER_NUMBERS,
-                       VERTEX_NUMERS[:-1, 1:].ravel(),
-                       VERTEX_NUMERS[1:, 1:].ravel()]).T
-        V2 = np.array([VERTEX_CENTER_NUMBERS,
-                       VERTEX_NUMERS[1:, 1:].ravel(),
-                       VERTEX_NUMERS[1:, :-1].ravel()]).T
-        V3 = np.array([VERTEX_CENTER_NUMBERS,
-                       VERTEX_NUMERS[1:, :-1].ravel(),
-                       VERTEX_NUMERS[:-1, :-1].ravel()]).T
+        V0 = np.array(
+            [
+                VERTEX_CENTER_NUMBERS,
+                VERTEX_NUMERS[:-1, :-1].ravel(),
+                VERTEX_NUMERS[:-1, 1:].ravel(),
+            ]
+        ).T
+        V1 = np.array(
+            [
+                VERTEX_CENTER_NUMBERS,
+                VERTEX_NUMERS[:-1, 1:].ravel(),
+                VERTEX_NUMERS[1:, 1:].ravel(),
+            ]
+        ).T
+        V2 = np.array(
+            [
+                VERTEX_CENTER_NUMBERS,
+                VERTEX_NUMERS[1:, 1:].ravel(),
+                VERTEX_NUMERS[1:, :-1].ravel(),
+            ]
+        ).T
+        V3 = np.array(
+            [
+                VERTEX_CENTER_NUMBERS,
+                VERTEX_NUMERS[1:, :-1].ravel(),
+                VERTEX_NUMERS[:-1, :-1].ravel(),
+            ]
+        ).T
 
         codim2_subentities = np.vstack((V0, V1, V2, V3))
         self.__subentities = (codim1_subentities, codim2_subentities)
@@ -145,19 +181,40 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         # GEOMETRY
 
         # embeddings
-        x0_shifts = np.arange(x0_num_intervals) * self.x0_diameter + (self.x0_range[0] + 0.5 * self.x0_diameter)
-        x1_shifts = np.arange(x1_num_intervals) * self.x1_diameter + (self.x1_range[0] + 0.5 * self.x1_diameter)
-        B = np.tile(np.array(np.meshgrid(x0_shifts, x1_shifts)).reshape((2, -1)).T,
-                    (4, 1))
+        x0_shifts = np.arange(x0_num_intervals) * self.x0_diameter + (
+            self.x0_range[0] + 0.5 * self.x0_diameter
+        )
+        x1_shifts = np.arange(x1_num_intervals) * self.x1_diameter + (
+            self.x1_range[0] + 0.5 * self.x1_diameter
+        )
+        B = np.tile(
+            np.array(np.meshgrid(x0_shifts, x1_shifts)).reshape((2, -1)).T, (4, 1)
+        )
 
-        ROT45  = np.array([[1./np.sqrt(2.),   -1./np.sqrt(2.)],
-                           [1./np.sqrt(2.),    1./np.sqrt(2.)]])
-        ROT135 = np.array([[-1./np.sqrt(2.),  -1./np.sqrt(2.)],
-                           [1./np.sqrt(2.),   -1./np.sqrt(2.)]])
-        ROT225 = np.array([[-1./np.sqrt(2.),   1./np.sqrt(2.)],
-                           [-1./np.sqrt(2.),  -1./np.sqrt(2.)]])
-        ROT315 = np.array([[1./np.sqrt(2.),    1./np.sqrt(2.)],
-                           [-1./np.sqrt(2.),   1./np.sqrt(2.)]])
+        ROT45 = np.array(
+            [
+                [1.0 / np.sqrt(2.0), -1.0 / np.sqrt(2.0)],
+                [1.0 / np.sqrt(2.0), 1.0 / np.sqrt(2.0)],
+            ]
+        )
+        ROT135 = np.array(
+            [
+                [-1.0 / np.sqrt(2.0), -1.0 / np.sqrt(2.0)],
+                [1.0 / np.sqrt(2.0), -1.0 / np.sqrt(2.0)],
+            ]
+        )
+        ROT225 = np.array(
+            [
+                [-1.0 / np.sqrt(2.0), 1.0 / np.sqrt(2.0)],
+                [-1.0 / np.sqrt(2.0), -1.0 / np.sqrt(2.0)],
+            ]
+        )
+        ROT315 = np.array(
+            [
+                [1.0 / np.sqrt(2.0), 1.0 / np.sqrt(2.0)],
+                [-1.0 / np.sqrt(2.0), 1.0 / np.sqrt(2.0)],
+            ]
+        )
         SCAL = np.diag([self.x0_diameter / np.sqrt(2), self.x1_diameter / np.sqrt(2)])
         A0 = np.tile(SCAL.dot(ROT225), (int(n_elements / 4), 1, 1))
         A1 = np.tile(SCAL.dot(ROT315), (int(n_elements / 4), 1, 1))
@@ -167,31 +224,42 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         self.__embeddings = (A, B)
 
     def __reduce__(self):
-        return (TriaGrid,
-                (self.num_intervals, self.domain, self.identify_left_right, self.identify_bottom_top))
+        return (
+            TriaGrid,
+            (
+                self.num_intervals,
+                self.domain,
+                self.identify_left_right,
+                self.identify_bottom_top,
+            ),
+        )
 
     def __str__(self):
-        return (f'Tria-Grid on domain '
-                f'[{self.x0_range[0]},{self.x0_range[1]}] x [{self.x1_range[0]},{self.x1_range[1]}]\n'
-                f'x0-intervals: {self.x0_num_intervals}, x1-intervals: {self.x1_num_intervals}\n'
-                f'elements: {self.size(0)}, edges: {self.size(1)}, vertices: {self.size(2)}')
+        return (
+            f"Tria-Grid on domain "
+            f"[{self.x0_range[0]},{self.x0_range[1]}] x [{self.x1_range[0]},{self.x1_range[1]}]\n"
+            f"x0-intervals: {self.x0_num_intervals}, x1-intervals: {self.x1_num_intervals}\n"
+            f"elements: {self.size(0)}, edges: {self.size(1)}, vertices: {self.size(2)}"
+        )
 
     def __repr__(self):
-        return 'TriaGrid({}, {}, {}, {})'.format(
-            self.num_intervals, self.domain,
-            self.identify_left_right, self.identify_bottom_top
+        return "TriaGrid({}, {}, {}, {})".format(
+            self.num_intervals,
+            self.domain,
+            self.identify_left_right,
+            self.identify_bottom_top,
         )
 
     def size(self, codim=0):
-        assert 0 <= codim <= 2, 'Invalid codimension'
+        assert 0 <= codim <= 2, "Invalid codimension"
         return self.__sizes[codim]
 
     def subentities(self, codim, subentity_codim):
-        assert 0 <= codim <= 2, 'Invalid codimension'
-        assert codim <= subentity_codim <= 2, 'Invalid subentity codimension'
+        assert 0 <= codim <= 2, "Invalid codimension"
+        assert codim <= subentity_codim <= 2, "Invalid subentity codimension"
         if codim == 0:
             if subentity_codim == 0:
-                return np.arange(self.size(0), dtype='int32')[:, np.newaxis]
+                return np.arange(self.size(0), dtype="int32")[:, np.newaxis]
             else:
                 return self.__subentities[subentity_codim - 1]
         else:
@@ -212,14 +280,23 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         ne4 = len(embeddings[0]) // 4
         if self.x0_diameter > self.x1_diameter:
             x0_fac = (self.x1_diameter / 2) ** 2 / (3 * (self.x0_diameter / 2) ** 2)
-            x1_fac = 1./3.
+            x1_fac = 1.0 / 3.0
         else:
             x1_fac = (self.x0_diameter / 2) ** 2 / (3 * (self.x1_diameter / 2) ** 2)
-            x0_fac = 1./3.
+            x0_fac = 1.0 / 3.0
         C0 = embeddings[0][:ne4].dot(np.array([x1_fac, x1_fac])) + embeddings[1][:ne4]
-        C1 = embeddings[0][ne4:2*ne4].dot(np.array([x0_fac, x0_fac])) + embeddings[1][ne4:2*ne4]
-        C2 = embeddings[0][2*ne4:3*ne4].dot(np.array([x1_fac, x1_fac])) + embeddings[1][2*ne4:3*ne4]
-        C3 = embeddings[0][3*ne4:4*ne4].dot(np.array([x0_fac, x0_fac])) + embeddings[1][3*ne4:4*ne4]
+        C1 = (
+            embeddings[0][ne4 : 2 * ne4].dot(np.array([x0_fac, x0_fac]))
+            + embeddings[1][ne4 : 2 * ne4]
+        )
+        C2 = (
+            embeddings[0][2 * ne4 : 3 * ne4].dot(np.array([x1_fac, x1_fac]))
+            + embeddings[1][2 * ne4 : 3 * ne4]
+        )
+        C3 = (
+            embeddings[0][3 * ne4 : 4 * ne4].dot(np.array([x0_fac, x0_fac]))
+            + embeddings[1][3 * ne4 : 4 * ne4]
+        )
         return np.concatenate((C0, C1, C2, C3), axis=0)
 
     def visualize(self, U, codim=2, **kwargs):
@@ -240,12 +317,17 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         from pymor.gui.qt import visualize_patch
         from pymor.vectorarrays.interfaces import VectorArrayInterface
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
+
         if isinstance(U, (np.ndarray, VectorArrayInterface)):
             U = (U,)
         assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
-        U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
-                  u if isinstance(u, NumpyVectorArray) else
-                  NumpyVectorSpace.make_array(u.to_numpy())
-                  for u in U)
-        bounding_box = kwargs.pop('bounding_box', self.domain)
+        U = tuple(
+            NumpyVectorSpace.make_array(u)
+            if isinstance(u, np.ndarray)
+            else u
+            if isinstance(u, NumpyVectorArray)
+            else NumpyVectorSpace.make_array(u.to_numpy())
+            for u in U
+        )
+        bounding_box = kwargs.pop("bounding_box", self.domain)
         visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)

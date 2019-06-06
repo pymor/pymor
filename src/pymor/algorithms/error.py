@@ -12,12 +12,23 @@ from pymor.models.basic import StationaryModel
 from pymor.parallel.dummy import dummy_pool
 
 
-def reduction_error_analysis(rom, fom, reductor,
-                             test_mus=10, basis_sizes=0, random_seed=None,
-                             estimator=True, condition=False, error_norms=(), error_norm_names=None,
-                             estimator_norm_index=0, custom=(),
-                             plot=False, plot_custom_logarithmic=True,
-                             pool=dummy_pool):
+def reduction_error_analysis(
+    rom,
+    fom,
+    reductor,
+    test_mus=10,
+    basis_sizes=0,
+    random_seed=None,
+    estimator=True,
+    condition=False,
+    error_norms=(),
+    error_norm_names=None,
+    estimator_norm_index=0,
+    custom=(),
+    plot=False,
+    plot_custom_logarithmic=True,
+    pool=dummy_pool,
+):
     """Analyze the model reduction error.
 
     The maximum model reduction error is estimated by solving the reduced
@@ -163,14 +174,13 @@ def reduction_error_analysis(rom, fom, reductor,
 
     assert not error_norms or (fom and reductor)
     assert error_norm_names is None or len(error_norm_names) == len(error_norms)
-    assert not condition \
-        or isinstance(rom, StationaryModel) and rom.operator.linear
+    assert not condition or isinstance(rom, StationaryModel) and rom.operator.linear
 
-    logger = getLogger('pymor.algorithms.error')
+    logger = getLogger("pymor.algorithms.error")
     if pool is None or pool is dummy_pool:
         pool = dummy_pool
     else:
-        logger.info(f'Using pool of {len(pool)} workers for error analysis')
+        logger.info(f"Using pool of {len(pool)} workers for error analysis")
 
     tic = time.time()
 
@@ -183,89 +193,141 @@ def reduction_error_analysis(rom, fom, reductor,
             if basis_sizes == 0:
                 basis_sizes = rom.solution_space.dim + 1
             basis_sizes = min(rom.solution_space.dim + 1, basis_sizes)
-            basis_sizes = np.linspace(0, rom.solution_space.dim, basis_sizes).astype(int)
+            basis_sizes = np.linspace(0, rom.solution_space.dim, basis_sizes).astype(
+                int
+            )
     if error_norm_names is None:
         error_norm_names = tuple(norm.name for norm in error_norms)
 
-    norms, estimates, errors, conditions, custom_values = \
-        list(zip(*pool.map(_compute_errors, test_mus, fom=fom, reductor=reductor, estimator=estimator,
-                           error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes)))
+    norms, estimates, errors, conditions, custom_values = list(
+        zip(
+            *pool.map(
+                _compute_errors,
+                test_mus,
+                fom=fom,
+                reductor=reductor,
+                estimator=estimator,
+                error_norms=error_norms,
+                condition=condition,
+                custom=custom,
+                basis_sizes=basis_sizes,
+            )
+        )
+    )
     print()
 
     result = {}
-    result['mus'] = test_mus = np.array(test_mus)
-    result['basis_sizes'] = basis_sizes
+    result["mus"] = test_mus = np.array(test_mus)
+    result["basis_sizes"] = basis_sizes
 
-    summary = [('number of samples', str(len(test_mus)))]
+    summary = [("number of samples", str(len(test_mus)))]
 
     if error_norms:
-        result['norms'] = norms = np.array(norms)
-        result['max_norms'] = max_norms = np.max(norms, axis=0)
-        result['max_norm_mus'] = max_norm_mus = test_mus[np.argmax(norms, axis=0)]
-        result['errors'] = errors = np.array(errors)
-        result['max_errors'] = max_errors = np.max(errors, axis=0)
-        result['max_error_mus'] = max_error_mus = test_mus[np.argmax(errors, axis=0)]
-        result['rel_errors'] = rel_errors = errors / norms[:, :, np.newaxis]
-        result['max_rel_errors'] = np.max(rel_errors, axis=0)
-        result['max_rel_error_mus'] = test_mus[np.argmax(rel_errors, axis=0)]
-        for name, norm, norm_mu, error, error_mu in zip(error_norm_names,
-                                                        max_norms, max_norm_mus,
-                                                        max_errors[:, -1], max_error_mus[:, -1]):
-            summary.append((f'maximum {name}-norm',
-                            f'{norm:.7e} (mu = {error_mu})'))
-            summary.append((f'maximum {name}-error',
-                            f'{error:.7e} (mu = {error_mu})'))
-        result['error_norm_names'] = error_norm_names
+        result["norms"] = norms = np.array(norms)
+        result["max_norms"] = max_norms = np.max(norms, axis=0)
+        result["max_norm_mus"] = max_norm_mus = test_mus[np.argmax(norms, axis=0)]
+        result["errors"] = errors = np.array(errors)
+        result["max_errors"] = max_errors = np.max(errors, axis=0)
+        result["max_error_mus"] = max_error_mus = test_mus[np.argmax(errors, axis=0)]
+        result["rel_errors"] = rel_errors = errors / norms[:, :, np.newaxis]
+        result["max_rel_errors"] = np.max(rel_errors, axis=0)
+        result["max_rel_error_mus"] = test_mus[np.argmax(rel_errors, axis=0)]
+        for name, norm, norm_mu, error, error_mu in zip(
+            error_norm_names,
+            max_norms,
+            max_norm_mus,
+            max_errors[:, -1],
+            max_error_mus[:, -1],
+        ):
+            summary.append((f"maximum {name}-norm", f"{norm:.7e} (mu = {error_mu})"))
+            summary.append((f"maximum {name}-error", f"{error:.7e} (mu = {error_mu})"))
+        result["error_norm_names"] = error_norm_names
 
     if estimator:
-        result['estimates'] = estimates = np.array(estimates)
-        result['max_estimates'] = max_estimates = np.max(estimates, axis=0)
-        result['max_estimate_mus'] = max_estimate_mus = test_mus[np.argmax(estimates, axis=0)]
-        summary.append(('maximum estimated error',
-                        f'{max_estimates[-1]:.7e} (mu = {max_estimate_mus[-1]})'))
+        result["estimates"] = estimates = np.array(estimates)
+        result["max_estimates"] = max_estimates = np.max(estimates, axis=0)
+        result["max_estimate_mus"] = max_estimate_mus = test_mus[
+            np.argmax(estimates, axis=0)
+        ]
+        summary.append(
+            (
+                "maximum estimated error",
+                f"{max_estimates[-1]:.7e} (mu = {max_estimate_mus[-1]})",
+            )
+        )
 
     if estimator and error_norms:
-        result['effectivities'] = effectivities = errors[:, estimator_norm_index, :] / estimates
-        result['max_effectivities'] = max_effectivities = np.max(effectivities, axis=0)
-        result['max_effectivity_mus'] = max_effectivity_mus = test_mus[np.argmax(effectivities, axis=0)]
-        result['min_effectivities'] = min_effectivities = np.min(effectivities, axis=0)
-        result['min_effectivity_mus'] = min_effectivity_mus = test_mus[np.argmin(effectivities, axis=0)]
-        summary.append(('minimum estimator effectivity',
-                        f'{min_effectivities[-1]:.7e} (mu = {min_effectivity_mus[-1]})'))
-        summary.append(('maximum estimator effectivity',
-                        f'{max_effectivities[-1]:.7e} (mu = {max_effectivity_mus[-1]})'))
+        result["effectivities"] = effectivities = (
+            errors[:, estimator_norm_index, :] / estimates
+        )
+        result["max_effectivities"] = max_effectivities = np.max(effectivities, axis=0)
+        result["max_effectivity_mus"] = max_effectivity_mus = test_mus[
+            np.argmax(effectivities, axis=0)
+        ]
+        result["min_effectivities"] = min_effectivities = np.min(effectivities, axis=0)
+        result["min_effectivity_mus"] = min_effectivity_mus = test_mus[
+            np.argmin(effectivities, axis=0)
+        ]
+        summary.append(
+            (
+                "minimum estimator effectivity",
+                f"{min_effectivities[-1]:.7e} (mu = {min_effectivity_mus[-1]})",
+            )
+        )
+        summary.append(
+            (
+                "maximum estimator effectivity",
+                f"{max_effectivities[-1]:.7e} (mu = {max_effectivity_mus[-1]})",
+            )
+        )
 
     if condition:
-        result['conditions'] = conditions = np.array(conditions)
-        result['max_conditions'] = max_conditions = np.max(conditions, axis=0)
-        result['max_condition_mus'] = max_condition_mus = test_mus[np.argmax(conditions, axis=0)]
-        summary.append(('maximum system matrix condition',
-                        f'{max_conditions[-1]:.7e} (mu = {max_condition_mus[-1]})'))
+        result["conditions"] = conditions = np.array(conditions)
+        result["max_conditions"] = max_conditions = np.max(conditions, axis=0)
+        result["max_condition_mus"] = max_condition_mus = test_mus[
+            np.argmax(conditions, axis=0)
+        ]
+        summary.append(
+            (
+                "maximum system matrix condition",
+                f"{max_conditions[-1]:.7e} (mu = {max_condition_mus[-1]})",
+            )
+        )
 
     if custom:
-        result['custom_values'] = custom_values = np.array(custom_values)
-        result['max_custom_values'] = max_custom_values = np.max(custom_values, axis=0)
-        result['max_custom_values_mus'] = max_custom_values_mus = test_mus[np.argmax(custom_values, axis=0)]
-        for i, (value, mu) in enumerate(zip(max_custom_values[:, -1], max_custom_values_mus[:, -1])):
-            summary.append((f'maximum custom value {i}',
-                            f'{value:.7e} (mu = {mu})'))
+        result["custom_values"] = custom_values = np.array(custom_values)
+        result["max_custom_values"] = max_custom_values = np.max(custom_values, axis=0)
+        result["max_custom_values_mus"] = max_custom_values_mus = test_mus[
+            np.argmax(custom_values, axis=0)
+        ]
+        for i, (value, mu) in enumerate(
+            zip(max_custom_values[:, -1], max_custom_values_mus[:, -1])
+        ):
+            summary.append((f"maximum custom value {i}", f"{value:.7e} (mu = {mu})"))
 
     toc = time.time()
-    result['time'] = toc - tic
-    summary.append(('elapsed time', str(toc - tic)))
+    result["time"] = toc - tic
+    summary.append(("elapsed time", str(toc - tic)))
 
     summary_fields, summary_values = list(zip(*summary))
     summary_field_width = np.max(list(map(len, summary_fields))) + 2
-    summary_lines = [f'    {field+":":{summary_field_width}} {value}'
-                     for field, value in zip(summary_fields, summary_values)]
-    summary = 'Stochastic error estimation:\n' + '\n'.join(summary_lines)
-    result['summary'] = summary
+    summary_lines = [
+        f'    {field+":":{summary_field_width}} {value}'
+        for field, value in zip(summary_fields, summary_values)
+    ]
+    summary = "Stochastic error estimation:\n" + "\n".join(summary_lines)
+    result["summary"] = summary
 
     if plot:
         import matplotlib.pyplot as plt
+
         fig = plt.figure()
-        num_plots = (int(bool(error_norms) or estimator) + int(bool(error_norms) and estimator)
-                     + int(condition) + int(bool(custom)))
+        num_plots = (
+            int(bool(error_norms) or estimator)
+            + int(bool(error_norms) and estimator)
+            + int(condition)
+            + int(bool(custom))
+        )
         current_plot = 1
 
         if bool(error_norms) or estimator:
@@ -277,23 +339,23 @@ def reduction_error_analysis(rom, fom, reductor,
                     legend.append(name)
             if estimator:
                 ax.semilogy(basis_sizes, max_estimates)
-                legend.append('estimator')
+                legend.append("estimator")
             ax.legend(legend)
-            ax.set_title('maximum errors')
+            ax.set_title("maximum errors")
             current_plot += 1
 
         if bool(error_norms) and estimator:
             ax = fig.add_subplot(1, num_plots, current_plot)
             ax.semilogy(basis_sizes, min_effectivities)
             ax.semilogy(basis_sizes, max_effectivities)
-            ax.legend(('min', 'max'))
-            ax.set_title('estimator effectivities')
+            ax.legend(("min", "max"))
+            ax.set_title("estimator effectivities")
             current_plot += 1
 
         if condition:
             ax = fig.add_subplot(1, num_plots, current_plot)
             ax.semilogy(basis_sizes, max_conditions)
-            ax.set_title('maximum condition')
+            ax.set_title("maximum condition")
             current_plot += 1
 
         if custom:
@@ -304,20 +366,22 @@ def reduction_error_analysis(rom, fom, reductor,
                     ax.semilogy(basis_sizes, values)
                 else:
                     ax.plot(basis_sizes, values)
-                legend.append('value ' + str(i))
+                legend.append("value " + str(i))
             ax.legend(legend)
-            ax.set_title('maximum custom values')
+            ax.set_title("maximum custom values")
             current_plot += 1
 
-        result['figure'] = fig
+        result["figure"] = fig
 
     return result
 
 
-def _compute_errors(mu, fom, reductor, estimator, error_norms, condition, custom, basis_sizes):
+def _compute_errors(
+    mu, fom, reductor, estimator, error_norms, condition, custom, basis_sizes
+):
     import sys
 
-    print('.', end='')
+    print(".", end="")
     sys.stdout.flush()
 
     estimates = np.empty(len(basis_sizes)) if estimator else None
@@ -333,7 +397,7 @@ def _compute_errors(mu, fom, reductor, estimator, error_norms, condition, custom
         fom.disable_logging(logging_disabled)
         for i_norm, norm in enumerate(error_norms):
             n = norm(U)
-            n = n[0] if hasattr(n, '__len__') else n
+            n = n[0] if hasattr(n, "__len__") else n
             norms[i_norm] = n
 
     for i_N, N in enumerate(basis_sizes):
@@ -341,23 +405,21 @@ def _compute_errors(mu, fom, reductor, estimator, error_norms, condition, custom
         u = rom.solve(mu)
         if estimator:
             e = rom.estimate(u, mu)
-            e = e[0] if hasattr(e, '__len__') else e
+            e = e[0] if hasattr(e, "__len__") else e
             estimates[i_N] = e
         if fom and reductor:
             URB = reductor.reconstruct(u)
             for i_norm, norm in enumerate(error_norms):
                 e = norm(U - URB)
-                e = e[0] if hasattr(e, '__len__') else e
+                e = e[0] if hasattr(e, "__len__") else e
                 errors[i_norm, i_N] = e
         if condition:
-            conditions[i_N] = np.linalg.cond(rom.operator.assemble(mu).matrix) if N > 0 else 0.
+            conditions[i_N] = (
+                np.linalg.cond(rom.operator.assemble(mu).matrix) if N > 0 else 0.0
+            )
         for i_custom, cust in enumerate(custom):
-            c = cust(rom=rom,
-                     fom=fom,
-                     reductor=reductor,
-                     mu=mu,
-                     dim=N)
-            c = c[0] if hasattr(c, '__len__') else c
+            c = cust(rom=rom, fom=fom, reductor=reductor, mu=mu, dim=N)
+            c = c[0] if hasattr(c, "__len__") else c
             custom_values[i_custom, i_N] = c
 
     return norms, estimates, errors, conditions, custom_values

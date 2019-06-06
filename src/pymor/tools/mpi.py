@@ -62,27 +62,32 @@ from pymor.core.pickle import dumps, loads
 if config.HAVE_MPI:
     import mpi4py
     from mpi4py import MPI
+
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
     finished = False
     mpi4py_version = Version(mpi4py.__version__)
-    if mpi4py_version > Version('2.0'):
+    if mpi4py_version > Version("2.0"):
         import pymor.core.pickle
-        MPI.pickle.__init__(pymor.core.pickle.dumps, pymor.core.pickle.loads, pymor.core.pickle.PROTOCOL)
-    elif mpi4py_version == Version('2.0'):
+
+        MPI.pickle.__init__(
+            pymor.core.pickle.dumps, pymor.core.pickle.loads, pymor.core.pickle.PROTOCOL
+        )
+    elif mpi4py_version == Version("2.0"):
         import pymor.core.pickle
+
         MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
         MPI.pickle.loads = pymor.core.pickle.loads
         MPI.pickle.dumps = pymor.core.pickle.dumps
 else:
-    mpi4py_version = Version('0.0')
+    mpi4py_version = Version("0.0")
     rank = 0
     size = 1
     finished = True
 
 rank0 = rank == 0
-parallel = (size > 1)
+parallel = size > 1
 
 _managed_objects = {}
 _object_counter = 0
@@ -91,7 +96,7 @@ _object_counter = 0
 ################################################################################
 
 
-@defaults('auto_launch')
+@defaults("auto_launch")
 def event_loop_settings(auto_launch=True):
     """Settings for pyMOR's MPI event loop.
 
@@ -101,10 +106,11 @@ def event_loop_settings(auto_launch=True):
         If `True`, automatically execute :func:`event_loop` on
         all MPI ranks (except 0) when pyMOR is imported.
     """
-    return {'auto_launch': auto_launch}
+    return {"auto_launch": auto_launch}
 
 
-if mpi4py_version == Version('2.0'):
+if mpi4py_version == Version("2.0"):
+
     def event_loop():
         """Launches an MPI-based event loop.
 
@@ -116,12 +122,13 @@ if mpi4py_version == Version('2.0'):
         while True:
             try:
                 method, args, kwargs = comm.bcast(None)
-                if method == 'QUIT':
+                if method == "QUIT":
                     break
                 else:
                     method(*args, **kwargs)
             except:
                 import traceback
+
                 print(f"Caught exception on MPI rank {rank}:")
                 traceback.print_exception(*sys.exc_info())
 
@@ -159,8 +166,9 @@ if mpi4py_version == Version('2.0'):
         MPI ranks.
         """
         global finished
-        comm.bcast(('QUIT', None, None))
+        comm.bcast(("QUIT", None, None))
         finished = True
+
 
 else:
     # for older mpi4py versions we have to pickle manually to ensure
@@ -178,12 +186,13 @@ else:
         while True:
             try:
                 method, args, kwargs = loads(comm.bcast(None))
-                if method == 'QUIT':
+                if method == "QUIT":
                     break
                 else:
                     method(*args, **kwargs)
             except:
                 import traceback
+
                 print(f"Caught exception on MPI rank {rank}:")
                 traceback.print_exception(*sys.exc_info())
 
@@ -221,7 +230,7 @@ else:
         MPI ranks.
         """
         global finished
-        comm.bcast(dumps(('QUIT', None, None)))
+        comm.bcast(dumps(("QUIT", None, None)))
         finished = True
 
 
@@ -235,7 +244,7 @@ def mpi_info():
     """
     data = comm.gather((rank, MPI.Get_processor_name()), root=0)
     if rank0:
-        print('\n'.join(f'{rank}: {processor}' for rank, processor in data))
+        print("\n".join(f"{rank}: {processor}" for rank, processor in data))
 
 
 def run_code(code):
@@ -261,8 +270,10 @@ def function_call(f, *args, **kwargs):
     Arguments of type :class:`ObjectId` are transparently
     mapped to the object they refer to.
     """
-    return f(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-             **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()})
+    return f(
+        *((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
+        **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()},
+    )
 
 
 def function_call_manage(f, *args, **kwargs):
@@ -297,8 +308,10 @@ def method_call(obj_id, name_, *args, **kwargs):
         Keyword arguments for the method.
     """
     obj = get_object(obj_id)
-    return getattr(obj, name_)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-                                **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()})
+    return getattr(obj, name_)(
+        *((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
+        **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()},
+    )
 
 
 def method_call_manage(obj_id, name_, *args, **kwargs):
@@ -330,6 +343,7 @@ def method_call_manage(obj_id, name_, *args, **kwargs):
 
 class ObjectId(int):
     """A handle to an MPI distributed object."""
+
     pass
 
 
@@ -355,21 +369,24 @@ def remove_object(obj_id):
 ################################################################################
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     assert config.HAVE_MPI
     if rank0:
         if len(sys.argv) >= 2:
             filename = sys.argv[1]
             sys.argv = sys.argv[:1] + sys.argv[2:]
-            exec(compile(open(filename, 'rt').read(), filename, 'exec'))
+            exec(compile(open(filename, "rt").read(), filename, "exec"))
             import pymor.tools.mpi  # this is different from __main__
+
             pymor.tools.mpi.quit()  # change global state in the right module
         else:
             try:
                 import IPython
+
                 IPython.start_kernel()  # only start a kernel since mpirun messes up the terminal
             except ImportError:
                 import code
+
                 code.interact()
     else:
         event_loop()

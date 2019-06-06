@@ -9,10 +9,20 @@ from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 
 
-@defaults('atol', 'rtol', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
-def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset=0,
-                 reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
-                 copy=True):
+@defaults("atol", "rtol", "reiterate", "reiteration_threshold", "check", "check_tol")
+def gram_schmidt(
+    A,
+    product=None,
+    return_R=False,
+    atol=1e-13,
+    rtol=1e-13,
+    offset=0,
+    reiterate=True,
+    reiteration_threshold=1e-1,
+    check=True,
+    check_tol=1e-3,
+    copy=True,
+):
     """Orthonormalize a |VectorArray| using the modified Gram-Schmidt algorithm.
 
     Parameters
@@ -53,7 +63,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         The upper-triangular/trapezoidal matrix (if `compute_R` is `True`).
     """
 
-    logger = getLogger('pymor.algorithms.gram_schmidt.gram_schmidt')
+    logger = getLogger("pymor.algorithms.gram_schmidt.gram_schmidt")
 
     if copy:
         A = A.copy()
@@ -110,8 +120,8 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         R = np.delete(R, remove, axis=0)
 
     if check:
-        error_matrix = A[offset:len(A)].inner(A, product)
-        error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
+        error_matrix = A[offset : len(A)].inner(A, product)
+        error_matrix[: len(A) - offset, offset : len(A)] -= np.eye(len(A) - offset)
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
@@ -123,9 +133,16 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         return A
 
 
-def gram_schmidt_biorth(V, W, product=None,
-                        reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
-                        copy=True):
+def gram_schmidt_biorth(
+    V,
+    W,
+    product=None,
+    reiterate=True,
+    reiteration_threshold=1e-1,
+    check=True,
+    check_tol=1e-3,
+    copy=True,
+):
     """Biorthonormalize a pair of |VectorArrays| using the biorthonormal Gram-Schmidt process.
 
     See Algorithm 1 in [BKS11]_.
@@ -158,7 +175,7 @@ def gram_schmidt_biorth(V, W, product=None,
     assert V.space == W.space
     assert len(V) == len(W)
 
-    logger = getLogger('pymor.algorithms.gram_schmidt.gram_schmidt_biorth')
+    logger = getLogger("pymor.algorithms.gram_schmidt.gram_schmidt_biorth")
 
     if copy:
         V = V.copy()

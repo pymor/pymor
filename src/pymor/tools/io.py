@@ -28,9 +28,9 @@ def _loadmat(path, key=None):
     data = [v for v in data.values() if isinstance(v, np.ndarray) or issparse(v)]
 
     if len(data) == 0:
-        raise IOError(f'No matrix data contained in MATLAB file {path}')
+        raise IOError(f"No matrix data contained in MATLAB file {path}")
     elif len(data) > 1:
-        raise IOError(f'More than one matrix object stored in MATLAB file {path}')
+        raise IOError(f"More than one matrix object stored in MATLAB file {path}")
     else:
         return data[0]
 
@@ -57,15 +57,17 @@ def _load(path, key=None):
             except KeyError:
                 raise IOError(f'"{key}" not found in NPY file {path}')
         elif len(data) == 0:
-            raise IOError(f'No data contained in NPY file {path}')
+            raise IOError(f"No data contained in NPY file {path}")
         elif len(data) > 1:
-            raise IOError(f'More than one object stored in NPY file {path} for key {key}')
+            raise IOError(
+                f"More than one object stored in NPY file {path} for key {key}"
+            )
         else:
             matrix = next(iter(data.values()))
     else:
         matrix = data
     if not isinstance(matrix, np.ndarray) and not issparse(matrix):
-        raise IOError(f'Loaded data is not a matrix in NPY file {path}')
+        raise IOError(f"Loaded data is not a matrix in NPY file {path}")
     return matrix
 
 
@@ -80,30 +82,36 @@ def _loadtxt(path, key=None):
 
 def load_matrix(path, key=None):
 
-    logger = getLogger('pymor.tools.io.load_matrix')
-    logger.info('Loading matrix from file ' + path)
+    logger = getLogger("pymor.tools.io.load_matrix")
+    logger.info("Loading matrix from file " + path)
 
-    path_parts = path.split('.')
+    path_parts = path.split(".")
     if len(path_parts[-1]) == 3:
         extension = path_parts[-1].lower()
-    elif path_parts[-1].lower() == 'gz' and len(path_parts) >= 2 and len(path_parts[-2]) == 3:
-        extension = '.'.join(path_parts[-2:]).lower()
+    elif (
+        path_parts[-1].lower() == "gz"
+        and len(path_parts) >= 2
+        and len(path_parts[-2]) == 3
+    ):
+        extension = ".".join(path_parts[-2:]).lower()
     else:
         extension = None
 
-    file_format_map = {'mat': ('MATLAB', _loadmat),
-                       'mtx': ('Matrix Market', _mmread),
-                       'mtz.gz': ('Matrix Market', _mmread),
-                       'npy': ('NPY/NPZ', _load),
-                       'npz': ('NPY/NPZ', _load),
-                       'txt': ('Text', _loadtxt)}
+    file_format_map = {
+        "mat": ("MATLAB", _loadmat),
+        "mtx": ("Matrix Market", _mmread),
+        "mtz.gz": ("Matrix Market", _mmread),
+        "npy": ("NPY/NPZ", _load),
+        "npz": ("NPY/NPZ", _load),
+        "txt": ("Text", _loadtxt),
+    }
 
     if extension in file_format_map:
         file_type, loader = file_format_map[extension]
-        logger.info(file_type + ' file detected.')
+        logger.info(file_type + " file detected.")
         return loader(path, key)
 
-    logger.warning('Could not detect file format. Trying all loaders ...')
+    logger.warning("Could not detect file format. Trying all loaders ...")
 
     loaders = [_loadmat, _mmread, _loadtxt, _load]
     for loader in loaders:
@@ -112,7 +120,7 @@ def load_matrix(path, key=None):
         except IOError:
             pass
 
-    raise IOError(f'Could not load file {path} (key = {key})')
+    raise IOError(f"Could not load file {path} (key = {key})")
 
 
 @contextmanager
@@ -124,7 +132,7 @@ def SafeTemporaryFileName(name=None, parent_dir=None):
     dir: the parent dir of the new tmp dir. defaults to tempfile.gettempdir()
     """
     parent_dir = parent_dir or tempfile.gettempdir()
-    name = name or 'temp_file'
+    name = name or "temp_file"
     dirname = tempfile.mkdtemp(dir=parent_dir)
     path = os.path.join(dirname, name)
     yield path

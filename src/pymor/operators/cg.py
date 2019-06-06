@@ -13,7 +13,7 @@ from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def CGVectorSpace(grid, id='STATE'):
+def CGVectorSpace(grid, id="STATE"):
     return NumpyVectorSpace(grid.size(grid.dim), id)
 
 
@@ -38,7 +38,9 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, name=None):
+    def __init__(
+        self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, name=None
+    ):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == ()
         assert not dirichlet_clear_dofs or boundary_info
@@ -63,20 +65,22 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         if g.dim == 1:
             SF = np.array((1 - q[..., 0], q[..., 0]))
         elif g.dim == 2:
-            SF = np.array(((1 - np.sum(q, axis=-1)),
-                           q[..., 0],
-                           q[..., 1]))
+            SF = np.array(((1 - np.sum(q, axis=-1)), q[..., 0], q[..., 1]))
         else:
             raise NotImplementedError
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
-        SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
+        SF_INTS = np.einsum("e,pi,e,i->ep", F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
         # FIXME This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
-        I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
+        I = (
+            coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim)))
+            .toarray()
+            .ravel()
+        )
 
         if self.dirichlet_clear_dofs and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
@@ -109,7 +113,15 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_type=None, dirichlet_clear_dofs=False, boundary_info=None, name=None):
+    def __init__(
+        self,
+        grid,
+        function,
+        boundary_type=None,
+        dirichlet_clear_dofs=False,
+        boundary_info=None,
+        name=None,
+    ):
         assert grid.reference_element(0) in {line, triangle, square}
         assert function.shape_range == ()
         assert not (boundary_type or dirichlet_clear_dofs) or boundary_info
@@ -126,7 +138,11 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
         g = self.grid
         bi = self.boundary_info
 
-        NI = bi.boundaries(self.boundary_type, 1) if self.boundary_type else g.boundaries(1)
+        NI = (
+            bi.boundaries(self.boundary_type, 1)
+            if self.boundary_type
+            else g.boundaries(1)
+        )
         if g.dim == 1:
             I = np.zeros(self.range.dim)
             I[NI] = self.function(g.centers(1)[NI])
@@ -136,9 +152,17 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
             # remove last dimension of q, as line coordinates are one dimensional
             q = q[:, 0]
             SF = np.array([1 - q, q])
-            SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
+            SF_INTS = np.einsum(
+                "e,pi,e,i->ep", F, SF, g.integration_elements(1)[NI], w
+            ).ravel()
             SF_I = g.subentities(1, 2)[NI].ravel()
-            I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
+            I = (
+                coo_matrix(
+                    (SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))
+                )
+                .toarray()
+                .ravel()
+            )
 
         if self.dirichlet_clear_dofs and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
@@ -206,7 +230,9 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, name=None):
+    def __init__(
+        self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, name=None
+    ):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == ()
         assert not dirichlet_clear_dofs or boundary_info
@@ -229,21 +255,29 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         # element -> shape = (number of shape functions, number of quadrature points)
         q, w = g.reference_element.quadrature(order=1)
         if g.dim == 2:
-            SF = np.array(((1 - q[..., 0]) * (1 - q[..., 1]),
-                           (1 - q[..., 1]) * (q[..., 0]),
-                           (q[..., 0]) * (q[..., 1]),
-                           (q[..., 1]) * (1 - q[..., 0])))
+            SF = np.array(
+                (
+                    (1 - q[..., 0]) * (1 - q[..., 1]),
+                    (1 - q[..., 1]) * (q[..., 0]),
+                    (q[..., 0]) * (q[..., 1]),
+                    (q[..., 1]) * (1 - q[..., 0]),
+                )
+            )
         else:
             raise NotImplementedError
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
-        SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
+        SF_INTS = np.einsum("e,pi,e,i->ep", F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
         # FIXME This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
-        I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
+        I = (
+            coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim)))
+            .toarray()
+            .ravel()
+        )
 
         if self.dirichlet_clear_dofs and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
@@ -282,8 +316,17 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
-                 dirichlet_clear_diag=False, coefficient_function=None, solver_options=None, name=None):
+    def __init__(
+        self,
+        grid,
+        boundary_info,
+        dirichlet_clear_rows=True,
+        dirichlet_clear_columns=False,
+        dirichlet_clear_diag=False,
+        coefficient_function=None,
+        solver_options=None,
+        name=None,
+    ):
         assert grid.reference_element in (line, triangle)
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
@@ -302,13 +345,14 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 
         # our shape functions
         if g.dim == 2:
-            SF = [lambda X: 1 - X[..., 0] - X[..., 1],
-                  lambda X: X[..., 0],
-                  lambda X: X[..., 1]]
+            SF = [
+                lambda X: 1 - X[..., 0] - X[..., 1],
+                lambda X: X[..., 0],
+                lambda X: X[..., 1],
+            ]
             q, w = triangle.quadrature(order=2)
         elif g.dim == 1:
-            SF = [lambda X: 1 - X[..., 0],
-                  lambda X: X[..., 0]]
+            SF = [lambda X: 1 - X[..., 0], lambda X: X[..., 0]]
             q, w = line.quadrature(order=2)
         else:
             raise NotImplementedError
@@ -316,33 +360,43 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         # evaluate the shape functions on the quadrature points
         SFQ = np.array(tuple(f(q) for f in SF))
 
-        self.logger.info('Integrate the products of the shape functions on each element')
+        self.logger.info(
+            "Integrate the products of the shape functions on each element"
+        )
         # -> shape = (g.size(0), number of shape functions ** 2)
         if self.coefficient_function is not None:
             C = self.coefficient_function(self.grid.centers(0), mu=mu)
-            SF_INTS = np.einsum('iq,jq,q,e,e->eij', SFQ, SFQ, w, g.integration_elements(0), C).ravel()
+            SF_INTS = np.einsum(
+                "iq,jq,q,e,e->eij", SFQ, SFQ, w, g.integration_elements(0), C
+            ).ravel()
             del C
         else:
-            SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
+            SF_INTS = np.einsum(
+                "iq,jq,q,e->eij", SFQ, SFQ, w, g.integration_elements(0)
+            ).ravel()
 
         del SFQ
 
-        self.logger.info('Determine global dofs ...')
+        self.logger.info("Determine global dofs ...")
         SF_I0 = np.repeat(g.subentities(0, g.dim), g.dim + 1, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, g.dim + 1]).ravel()
 
-        self.logger.info('Boundary treatment ...')
+        self.logger.info("Boundary treatment ...")
         if bi.has_dirichlet:
             if self.dirichlet_clear_rows:
                 SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I0], 0, SF_INTS)
             if self.dirichlet_clear_columns:
                 SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I1], 0, SF_INTS)
-            if not self.dirichlet_clear_diag and (self.dirichlet_clear_rows or self.dirichlet_clear_columns):
-                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size)))
+            if not self.dirichlet_clear_diag and (
+                self.dirichlet_clear_rows or self.dirichlet_clear_columns
+            ):
+                SF_INTS = np.hstack(
+                    (SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size))
+                )
                 SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(g.dim)))
                 SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(g.dim)))
 
-        self.logger.info('Assemble system matrix ...')
+        self.logger.info("Assemble system matrix ...")
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
@@ -380,8 +434,17 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
-                 dirichlet_clear_diag=False, coefficient_function=None, solver_options=None, name=None):
+    def __init__(
+        self,
+        grid,
+        boundary_info,
+        dirichlet_clear_rows=True,
+        dirichlet_clear_columns=False,
+        dirichlet_clear_diag=False,
+        coefficient_function=None,
+        solver_options=None,
+        name=None,
+    ):
         assert grid.reference_element in {square}
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
@@ -400,10 +463,12 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
 
         # our shape functions
         if g.dim == 2:
-            SF = [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
-                  lambda X: (1 - X[..., 1]) * (X[..., 0]),
-                  lambda X: (X[..., 0]) * (X[..., 1]),
-                  lambda X: (1 - X[..., 0]) * (X[..., 1])]
+            SF = [
+                lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
+                lambda X: (1 - X[..., 1]) * (X[..., 0]),
+                lambda X: (X[..., 0]) * (X[..., 1]),
+                lambda X: (1 - X[..., 0]) * (X[..., 1]),
+            ]
         else:
             raise NotImplementedError
 
@@ -412,33 +477,43 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         # evaluate the shape functions on the quadrature points
         SFQ = np.array(tuple(f(q) for f in SF))
 
-        self.logger.info('Integrate the products of the shape functions on each element')
+        self.logger.info(
+            "Integrate the products of the shape functions on each element"
+        )
         # -> shape = (g.size(0), number of shape functions ** 2)
         if self.coefficient_function is not None:
             C = self.coefficient_function(self.grid.centers(0), mu=mu)
-            SF_INTS = np.einsum('iq,jq,q,e,e->eij', SFQ, SFQ, w, g.integration_elements(0), C).ravel()
+            SF_INTS = np.einsum(
+                "iq,jq,q,e,e->eij", SFQ, SFQ, w, g.integration_elements(0), C
+            ).ravel()
             del C
         else:
-            SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
+            SF_INTS = np.einsum(
+                "iq,jq,q,e->eij", SFQ, SFQ, w, g.integration_elements(0)
+            ).ravel()
 
         del SFQ
 
-        self.logger.info('Determine global dofs ...')
+        self.logger.info("Determine global dofs ...")
         SF_I0 = np.repeat(g.subentities(0, g.dim), 4, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, 4]).ravel()
 
-        self.logger.info('Boundary treatment ...')
+        self.logger.info("Boundary treatment ...")
         if bi.has_dirichlet:
             if self.dirichlet_clear_rows:
                 SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I0], 0, SF_INTS)
             if self.dirichlet_clear_columns:
                 SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I1], 0, SF_INTS)
-            if not self.dirichlet_clear_diag and (self.dirichlet_clear_rows or self.dirichlet_clear_columns):
-                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size)))
+            if not self.dirichlet_clear_diag and (
+                self.dirichlet_clear_rows or self.dirichlet_clear_columns
+            ):
+                SF_INTS = np.hstack(
+                    (SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size))
+                )
                 SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(g.dim)))
                 SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(g.dim)))
 
-        self.logger.info('Assemble system matrix ...')
+        self.logger.info("Assemble system matrix ...")
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
@@ -482,15 +557,27 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
-                 dirichlet_clear_columns=False, dirichlet_clear_diag=False,
-                 solver_options=None, name=None):
-        assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
-        assert diffusion_function is None \
-            or (isinstance(diffusion_function, FunctionInterface)
-                and diffusion_function.dim_domain == grid.dim
-                and diffusion_function.shape_range == ()
-                or diffusion_function.shape_range == (grid.dim,) * 2)
+    def __init__(
+        self,
+        grid,
+        boundary_info,
+        diffusion_function=None,
+        diffusion_constant=None,
+        dirichlet_clear_columns=False,
+        dirichlet_clear_diag=False,
+        solver_options=None,
+        name=None,
+    ):
+        assert grid.reference_element(0) in {
+            triangle,
+            line,
+        }, "A simplicial grid is expected!"
+        assert diffusion_function is None or (
+            isinstance(diffusion_function, FunctionInterface)
+            and diffusion_function.dim_domain == grid.dim
+            and diffusion_function.shape_range == ()
+            or diffusion_function.shape_range == (grid.dim,) * 2
+        )
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
@@ -509,51 +596,61 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
         # gradients of shape functions
         if g.dim == 2:
-            SF_GRAD = np.array(([-1., -1.],
-                                [1., 0.],
-                                [0., 1.]))
+            SF_GRAD = np.array(([-1.0, -1.0], [1.0, 0.0], [0.0, 1.0]))
         elif g.dim == 1:
-            SF_GRAD = np.array(([-1.],
-                                [1., ]))
+            SF_GRAD = np.array(([-1.0], [1.0]))
         else:
             raise NotImplementedError
 
-        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
-        SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
+        self.logger.info(
+            "Calulate gradients of shape functions transformed by reference map ..."
+        )
+        SF_GRADS = np.einsum("eij,pj->epi", g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
-        if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
+        self.logger.info("Calculate all local scalar products beween gradients ...")
+        if (
+            self.diffusion_function is not None
+            and self.diffusion_function.shape_range == ()
+        ):
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
-            SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
+            SF_INTS = np.einsum(
+                "epi,eqi,e,e->epq", SF_GRADS, SF_GRADS, g.volumes(0), D
+            ).ravel()
             del D
         elif self.diffusion_function is not None:
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
-            SF_INTS = np.einsum('epi,eqj,e,eij->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
+            SF_INTS = np.einsum(
+                "epi,eqj,e,eij->epq", SF_GRADS, SF_GRADS, g.volumes(0), D
+            ).ravel()
             del D
         else:
-            SF_INTS = np.einsum('epi,eqi,e->epq', SF_GRADS, SF_GRADS, g.volumes(0)).ravel()
+            SF_INTS = np.einsum(
+                "epi,eqi,e->epq", SF_GRADS, SF_GRADS, g.volumes(0)
+            ).ravel()
 
         del SF_GRADS
 
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
 
-        self.logger.info('Determine global dofs ...')
+        self.logger.info("Determine global dofs ...")
         SF_I0 = np.repeat(g.subentities(0, g.dim), g.dim + 1, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, g.dim + 1]).ravel()
 
-        self.logger.info('Boundary treatment ...')
+        self.logger.info("Boundary treatment ...")
         if bi.has_dirichlet:
             SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I0], 0, SF_INTS)
             if self.dirichlet_clear_columns:
                 SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I1], 0, SF_INTS)
 
             if not self.dirichlet_clear_diag:
-                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size)))
+                SF_INTS = np.hstack(
+                    (SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size))
+                )
                 SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(g.dim)))
                 SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(g.dim)))
 
-        self.logger.info('Assemble system matrix ...')
+        self.logger.info("Assemble system matrix ...")
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()
@@ -603,15 +700,24 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
-                 dirichlet_clear_columns=False, dirichlet_clear_diag=False,
-                 solver_options=None, name=None):
-        assert grid.reference_element(0) in {square}, 'A square grid is expected!'
-        assert diffusion_function is None \
-            or (isinstance(diffusion_function, FunctionInterface)
-                and diffusion_function.dim_domain == grid.dim
-                and diffusion_function.shape_range == ()
-                or diffusion_function.shape_range == (grid.dim,) * 2)
+    def __init__(
+        self,
+        grid,
+        boundary_info,
+        diffusion_function=None,
+        diffusion_constant=None,
+        dirichlet_clear_columns=False,
+        dirichlet_clear_diag=False,
+        solver_options=None,
+        name=None,
+    ):
+        assert grid.reference_element(0) in {square}, "A square grid is expected!"
+        assert diffusion_function is None or (
+            isinstance(diffusion_function, FunctionInterface)
+            and diffusion_function.dim_domain == grid.dim
+            and diffusion_function.shape_range == ()
+            or diffusion_function.shape_range == (grid.dim,) * 2
+        )
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
@@ -631,50 +737,77 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         # gradients of shape functions
         if g.dim == 2:
             q, w = g.reference_element.quadrature(order=2)
-            SF_GRAD = np.array(([q[..., 1] - 1., q[..., 0] - 1.],
-                                [1. - q[..., 1], -q[..., 0]],
-                                [q[..., 1], q[..., 0]],
-                                [-q[..., 1], 1. - q[..., 0]]))
+            SF_GRAD = np.array(
+                (
+                    [q[..., 1] - 1.0, q[..., 0] - 1.0],
+                    [1.0 - q[..., 1], -q[..., 0]],
+                    [q[..., 1], q[..., 0]],
+                    [-q[..., 1], 1.0 - q[..., 0]],
+                )
+            )
         else:
             raise NotImplementedError
 
-        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
-        SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
+        self.logger.info(
+            "Calulate gradients of shape functions transformed by reference map ..."
+        )
+        SF_GRADS = np.einsum("eij,pjc->epic", g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
-        if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
+        self.logger.info("Calculate all local scalar products beween gradients ...")
+        if (
+            self.diffusion_function is not None
+            and self.diffusion_function.shape_range == ()
+        ):
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
-            SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+            SF_INTS = np.einsum(
+                "epic,eqic,c,e,e->epq",
+                SF_GRADS,
+                SF_GRADS,
+                w,
+                g.integration_elements(0),
+                D,
+            ).ravel()
             del D
         elif self.diffusion_function is not None:
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
-            SF_INTS = np.einsum('epic,eqjc,c,e,eij->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+            SF_INTS = np.einsum(
+                "epic,eqjc,c,e,eij->epq",
+                SF_GRADS,
+                SF_GRADS,
+                w,
+                g.integration_elements(0),
+                D,
+            ).ravel()
             del D
         else:
-            SF_INTS = np.einsum('epic,eqic,c,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0)).ravel()
+            SF_INTS = np.einsum(
+                "epic,eqic,c,e->epq", SF_GRADS, SF_GRADS, w, g.integration_elements(0)
+            ).ravel()
 
         del SF_GRADS
 
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
 
-        self.logger.info('Determine global dofs ...')
+        self.logger.info("Determine global dofs ...")
 
         SF_I0 = np.repeat(g.subentities(0, g.dim), 4, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, 4]).ravel()
 
-        self.logger.info('Boundary treatment ...')
+        self.logger.info("Boundary treatment ...")
         if bi.has_dirichlet:
             SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I0], 0, SF_INTS)
             if self.dirichlet_clear_columns:
                 SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I1], 0, SF_INTS)
 
             if not self.dirichlet_clear_diag:
-                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size)))
+                SF_INTS = np.hstack(
+                    (SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size))
+                )
                 SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(g.dim)))
                 SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(g.dim)))
 
-        self.logger.info('Assemble system matrix ...')
+        self.logger.info("Assemble system matrix ...")
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()
@@ -723,14 +856,26 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, advection_function=None, advection_constant=None,
-                 dirichlet_clear_columns=False, dirichlet_clear_diag=False,
-                 solver_options=None, name=None):
-        assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
-        assert advection_function is None \
-            or (isinstance(advection_function, FunctionInterface)
-                and advection_function.dim_domain == grid.dim
-                and advection_function.shape_range == (grid.dim,))
+    def __init__(
+        self,
+        grid,
+        boundary_info,
+        advection_function=None,
+        advection_constant=None,
+        dirichlet_clear_columns=False,
+        dirichlet_clear_diag=False,
+        solver_options=None,
+        name=None,
+    ):
+        assert grid.reference_element(0) in {
+            triangle,
+            line,
+        }, "A simplicial grid is expected!"
+        assert advection_function is None or (
+            isinstance(advection_function, FunctionInterface)
+            and advection_function.dim_domain == grid.dim
+            and advection_function.shape_range == (grid.dim,)
+        )
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
@@ -749,50 +894,56 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
 
         # gradients of shape functions
         if g.dim == 2:
-            SF_GRAD = np.array(([-1., -1.],
-                                [1., 0.],
-                                [0., 1.]))
-            SF = [lambda X: 1 - X[..., 0] - X[..., 1],
-                  lambda X: X[..., 0],
-                  lambda X: X[..., 1]]
+            SF_GRAD = np.array(([-1.0, -1.0], [1.0, 0.0], [0.0, 1.0]))
+            SF = [
+                lambda X: 1 - X[..., 0] - X[..., 1],
+                lambda X: X[..., 0],
+                lambda X: X[..., 1],
+            ]
             # SF_GRAD(function, component)
         else:
             raise NotImplementedError
 
         q, w = g.reference_element.quadrature(order=1)
 
-        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
-        SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
+        self.logger.info(
+            "Calulate gradients of shape functions transformed by reference map ..."
+        )
+        SF_GRADS = np.einsum("eij,pj->epi", g.jacobian_inverse_transposed(0), SF_GRAD)
         # SF_GRADS(element, function, component)
 
         SFQ = np.array(tuple(f(q) for f in SF))
         # SFQ(function, quadraturepoint)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info("Calculate all local scalar products beween gradients ...")
         D = self.advection_function(self.grid.centers(0), mu=mu)
-        SF_INTS = - np.einsum('pc,eqi,c,e,ec->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
+        SF_INTS = -np.einsum(
+            "pc,eqi,c,e,ec->eqp", SFQ, SF_GRADS, w, g.integration_elements(0), D
+        ).ravel()
         del D
         del SF_GRADS
 
         if self.advection_constant is not None:
             SF_INTS *= self.advection_constant
 
-        self.logger.info('Determine global dofs ...')
+        self.logger.info("Determine global dofs ...")
         SF_I0 = np.repeat(g.subentities(0, g.dim), g.dim + 1, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, g.dim + 1]).ravel()
 
-        self.logger.info('Boundary treatment ...')
+        self.logger.info("Boundary treatment ...")
         if bi.has_dirichlet:
             SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I0], 0, SF_INTS)
             if self.dirichlet_clear_columns:
                 SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I1], 0, SF_INTS)
 
             if not self.dirichlet_clear_diag:
-                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size)))
+                SF_INTS = np.hstack(
+                    (SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size))
+                )
                 SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(g.dim)))
                 SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(g.dim)))
 
-        self.logger.info('Assemble system matrix ...')
+        self.logger.info("Assemble system matrix ...")
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()
@@ -841,14 +992,23 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, advection_function=None, advection_constant=None,
-                 dirichlet_clear_columns=False, dirichlet_clear_diag=False,
-                 solver_options=None, name=None):
-        assert grid.reference_element(0) in {square}, 'A square grid is expected!'
-        assert advection_function is None \
-            or (isinstance(advection_function, FunctionInterface)
-                and advection_function.dim_domain == grid.dim
-                and advection_function.shape_range == (grid.dim,))
+    def __init__(
+        self,
+        grid,
+        boundary_info,
+        advection_function=None,
+        advection_constant=None,
+        dirichlet_clear_columns=False,
+        dirichlet_clear_diag=False,
+        solver_options=None,
+        name=None,
+    ):
+        assert grid.reference_element(0) in {square}, "A square grid is expected!"
+        assert advection_function is None or (
+            isinstance(advection_function, FunctionInterface)
+            and advection_function.dim_domain == grid.dim
+            and advection_function.shape_range == (grid.dim,)
+        )
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
@@ -868,52 +1028,64 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
         # gradients of shape functions
         if g.dim == 2:
             q, w = g.reference_element.quadrature(order=2)
-            SF_GRAD = np.array(([q[..., 1] - 1., q[..., 0] - 1.],
-                                [1. - q[..., 1], -q[..., 0]],
-                                [q[..., 1], q[..., 0]],
-                                [-q[..., 1], 1. - q[..., 0]]))
+            SF_GRAD = np.array(
+                (
+                    [q[..., 1] - 1.0, q[..., 0] - 1.0],
+                    [1.0 - q[..., 1], -q[..., 0]],
+                    [q[..., 1], q[..., 0]],
+                    [-q[..., 1], 1.0 - q[..., 0]],
+                )
+            )
             # SF_GRAD(function, component, quadraturepoint)
-            SF = [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
-                  lambda X: (1 - X[..., 1]) * (X[..., 0]),
-                  lambda X: (X[..., 0]) * (X[..., 1]),
-                  lambda X: (1 - X[..., 0]) * (X[..., 1])]
+            SF = [
+                lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
+                lambda X: (1 - X[..., 1]) * (X[..., 0]),
+                lambda X: (X[..., 0]) * (X[..., 1]),
+                lambda X: (1 - X[..., 0]) * (X[..., 1]),
+            ]
         else:
             raise NotImplementedError
 
-        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
-        SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
+        self.logger.info(
+            "Calulate gradients of shape functions transformed by reference map ..."
+        )
+        SF_GRADS = np.einsum("eij,pjc->epic", g.jacobian_inverse_transposed(0), SF_GRAD)
         # SF_GRADS(element,function,component,quadraturepoint)
 
         SFQ = np.array(tuple(f(q) for f in SF))
         # SFQ(function, quadraturepoint)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info("Calculate all local scalar products beween gradients ...")
 
         D = self.advection_function(self.grid.centers(0), mu=mu)
-        SF_INTS = - np.einsum('pc,eqic,c,e,ei->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
+        SF_INTS = -np.einsum(
+            "pc,eqic,c,e,ei->eqp", SFQ, SF_GRADS, w, g.integration_elements(0), D
+        ).ravel()
         del D
         del SF_GRADS
 
         if self.advection_constant is not None:
             SF_INTS *= self.advection_constant
 
-        self.logger.info('Determine global dofs ...')
+        self.logger.info("Determine global dofs ...")
 
         SF_I0 = np.repeat(g.subentities(0, g.dim), 4, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, 4]).ravel()
 
-        self.logger.info('Boundary treatment ...')
+        self.logger.info("Boundary treatment ...")
         if bi.has_dirichlet:
             SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I0], 0, SF_INTS)
             if self.dirichlet_clear_columns:
                 SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I1], 0, SF_INTS)
 
             if not self.dirichlet_clear_diag:
-                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size)))
+                SF_INTS = np.hstack(
+                    (SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size))
+                )
                 SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(g.dim)))
                 SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(g.dim)))
 
-        self.logger.info('Assemble system matrix ...')
+        self.logger.info("Assemble system matrix ...")
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()
@@ -957,13 +1129,20 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, robin_data=None, solver_options=None, name=None):
-        assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
-        assert robin_data is None or all([isinstance(f, FunctionInterface)
-                                          and f.dim_domain == grid.dim
-                                          and (f.shape_range == ()
-                                               or f.shape_range == (grid.dim,))
-                                          for f in robin_data])
+    def __init__(
+        self, grid, boundary_info, robin_data=None, solver_options=None, name=None
+    ):
+        assert robin_data is None or (
+            isinstance(robin_data, tuple) and len(robin_data) == 2
+        )
+        assert robin_data is None or all(
+            [
+                isinstance(f, FunctionInterface)
+                and f.dim_domain == grid.dim
+                and (f.shape_range == () or f.shape_range == (grid.dim,))
+                for f in robin_data
+            ]
+        )
         self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
@@ -998,17 +1177,21 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
                 robin_indices = g.superentity_indices(1, 0)[RI, 0]
                 normals = g.unit_outer_normals()[robin_elements, robin_indices]
                 robin_values = self.robin_data[0](xref, mu=mu)
-                robin_c = np.einsum('ei,eqi->eq', normals, robin_values)
+                robin_c = np.einsum("ei,eqi->eq", normals, robin_values)
 
             # robin_c(robin-index, quadraturepoint-index)
             q, w = line.quadrature(order=2)
             # remove last dimension of q, as line coordinates are one dimensional
             q = q[:, 0]
             SF = np.array([1 - q, q])
-            SF_INTS = np.einsum('e,pi,pj,e,p->eij', robin_c, SF, SF, g.integration_elements(1)[RI], w).ravel()
+            SF_INTS = np.einsum(
+                "e,pi,pj,e,p->eij", robin_c, SF, SF, g.integration_elements(1)[RI], w
+            ).ravel()
             SF_I0 = np.repeat(g.subentities(1, g.dim)[RI], 2).ravel()
             SF_I1 = np.tile(g.subentities(1, g.dim)[RI], [1, 2]).ravel()
-            I = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+            I = coo_matrix(
+                (SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim))
+            )
             return csc_matrix(I).copy()
 
 
@@ -1035,4 +1218,6 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
-        return self.function.evaluate(self.grid.centers(self.grid.dim), mu=mu).reshape((-1, 1))
+        return self.function.evaluate(self.grid.centers(self.grid.dim), mu=mu).reshape(
+            (-1, 1)
+        )

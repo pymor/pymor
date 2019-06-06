@@ -37,13 +37,15 @@ class InstationaryProblem(ImmutableInterface):
     name
     """
 
-    def __init__(self, stationary_part, initial_data, T=1., parameter_space=None, name=None):
+    def __init__(
+        self, stationary_part, initial_data, T=1.0, parameter_space=None, name=None
+    ):
 
         self.stationary_part = stationary_part
         self.initial_data = initial_data
         self.T = T
         self.parameter_space = parameter_space or stationary_part.parameter_space
-        self.name = name or ('instationary_' + stationary_part.name)
+        self.name = name or ("instationary_" + stationary_part.name)
 
     def with_stationary_part(self, **kwargs):
         return self.with_(stationary_part=self.stationary_part.with_(**kwargs))

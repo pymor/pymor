@@ -8,17 +8,17 @@ import numpy as np
 
 try:
     import sympy
+
     HAVE_SYMPY = True
 except ImportError:
     HAVE_SYMPY = False
 
 
 class ExpressionFunction(BasicInterface):
-
-    def __init__(self, expressions, variables='x y z'):
+    def __init__(self, expressions, variables="x y z"):
         if not HAVE_SYMPY:
-            raise ImportError('could not import sympy')
-        variables = variables.split(' ')
+            raise ImportError("could not import sympy")
+        variables = variables.split(" ")
         self._variables = sympy.symbols(variables)
         self._var_string = variables
         self._expressions = [sympy.sympify(e) for e in expressions]
@@ -30,11 +30,12 @@ class ExpressionFunction(BasicInterface):
 
 
 if __name__ == "__main__":
-    A = ExpressionFunction(['x**2'], 'x')
-    B = ExpressionFunction(['sin(y)', 'x'], 'x y')
+    A = ExpressionFunction(["x**2"], "x")
+    B = ExpressionFunction(["sin(y)", "x"], "x y")
     import pylab
+
     for f in range(-2, 4):
-        pylab.plot(f, A([f]), 'x')
-        pylab.plot(f, B([f, f])[0], '|')
-        pylab.plot(f, B([f, f])[1], '-')
+        pylab.plot(f, A([f]), "x")
+        pylab.plot(f, B([f, f])[0], "|")
+        pylab.plot(f, B([f, f])[1], "-")
     pylab.show()

@@ -24,6 +24,7 @@ class GenericSOBTpvReductor(BasicInterface):
     fom
         The full-order |SecondOrderModel| to reduce.
     """
+
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
@@ -39,7 +40,7 @@ class GenericSOBTpvReductor(BasicInterface):
         """Return projection matrices and singular values."""
         raise NotImplementedError
 
-    def reduce(self, r, projection='bfsr'):
+    def reduce(self, r, projection="bfsr"):
         """Reduce using GenericSOBTpv.
 
         Parameters
@@ -62,28 +63,32 @@ class GenericSOBTpvReductor(BasicInterface):
             Reduced-order |SecondOrderModel|.
         """
         assert 0 < r < self.fom.order
-        assert projection in ('sr', 'bfsr', 'biorth')
+        assert projection in ("sr", "bfsr", "biorth")
 
         # compute all necessary Gramian factors
         gramians = self._gramians()
 
         if r > min(len(g) for g in gramians):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
+            raise ValueError("r needs to be smaller than the sizes of Gramian factors.")
 
         # compute projection matrices
-        self.V, self.W, singular_values = self._projection_matrices_and_singular_values(r, gramians)
-        if projection == 'sr':
+        self.V, self.W, singular_values = self._projection_matrices_and_singular_values(
+            r, gramians
+        )
+        if projection == "sr":
             alpha = 1 / np.sqrt(singular_values[:r])
             self.V.scal(alpha)
             self.W.scal(alpha)
-        elif projection == 'bfsr':
+        elif projection == "bfsr":
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
-        elif projection == 'biorth':
+        elif projection == "biorth":
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.M)
 
         # find the reduced model
-        self._pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
+        self._pg_reductor = SOLTIPGReductor(
+            self.fom, self.W, self.V, projection == "biorth"
+        )
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -102,11 +107,12 @@ class SOBTpReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     """
+
     def _gramians(self):
-        pcf = self.fom.gramian('pc_lrcf')
-        pof = self.fom.gramian('po_lrcf')
-        vcf = self.fom.gramian('vc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        pcf = self.fom.gramian("pc_lrcf")
+        pof = self.fom.gramian("po_lrcf")
+        vcf = self.fom.gramian("vc_lrcf")
+        vof = self.fom.gramian("vo_lrcf")
         return pcf, pof, vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -127,9 +133,10 @@ class SOBTvReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     """
+
     def _gramians(self):
-        vcf = self.fom.gramian('vc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        vcf = self.fom.gramian("vc_lrcf")
+        vof = self.fom.gramian("vo_lrcf")
         return vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -149,9 +156,10 @@ class SOBTpvReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     """
+
     def _gramians(self):
-        pcf = self.fom.gramian('pc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        pcf = self.fom.gramian("pc_lrcf")
+        vof = self.fom.gramian("vo_lrcf")
         return pcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -171,10 +179,11 @@ class SOBTvpReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     """
+
     def _gramians(self):
-        pof = self.fom.gramian('po_lrcf')
-        vcf = self.fom.gramian('vc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        pof = self.fom.gramian("po_lrcf")
+        vcf = self.fom.gramian("vc_lrcf")
+        vof = self.fom.gramian("vo_lrcf")
         return pof, vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -195,6 +204,7 @@ class SOBTfvReductor(BasicInterface):
     fom
         The full-order |SecondOrderModel| to reduce.
     """
+
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
@@ -202,7 +212,7 @@ class SOBTfvReductor(BasicInterface):
         self.V = None
         self.W = None
 
-    def reduce(self, r, projection='bfsr'):
+    def reduce(self, r, projection="bfsr"):
         """Reduce using SOBTfv.
 
         Parameters
@@ -225,31 +235,33 @@ class SOBTfvReductor(BasicInterface):
             Reduced-order |SecondOrderModel|.
         """
         assert 0 < r < self.fom.order
-        assert projection in ('sr', 'bfsr', 'biorth')
+        assert projection in ("sr", "bfsr", "biorth")
 
         # compute all necessary Gramian factors
-        pcf = self.fom.gramian('pc_lrcf')
-        pof = self.fom.gramian('po_lrcf')
+        pcf = self.fom.gramian("pc_lrcf")
+        pof = self.fom.gramian("po_lrcf")
 
         if r > min(len(pcf), len(pof)):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
+            raise ValueError("r needs to be smaller than the sizes of Gramian factors.")
 
         # find necessary SVDs
         _, sp, Vp = spla.svd(pof.inner(pcf))
 
         # compute projection matrices
         self.V = pcf.lincomb(Vp[:r])
-        if projection == 'sr':
+        if projection == "sr":
             alpha = 1 / np.sqrt(sp[:r])
             self.V.scal(alpha)
-        elif projection == 'bfsr':
+        elif projection == "bfsr":
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
-        elif projection == 'biorth':
+        elif projection == "biorth":
             self.V = gram_schmidt(self.V, product=self.fom.M, atol=0, rtol=0)
         self.W = self.V
 
         # find the reduced model
-        self._pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
+        self._pg_reductor = SOLTIPGReductor(
+            self.fom, self.W, self.V, projection == "biorth"
+        )
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -268,6 +280,7 @@ class SOBTReductor(BasicInterface):
     fom
         The full-order |SecondOrderModel| to reduce.
     """
+
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
@@ -276,7 +289,7 @@ class SOBTReductor(BasicInterface):
         self.V2 = None
         self.W2 = None
 
-    def reduce(self, r, projection='bfsr'):
+    def reduce(self, r, projection="bfsr"):
         """Reduce using SOBT.
 
         Parameters
@@ -299,16 +312,16 @@ class SOBTReductor(BasicInterface):
             Reduced-order |SecondOrderModel|.
         """
         assert 0 < r < self.fom.order
-        assert projection in ('sr', 'bfsr', 'biorth')
+        assert projection in ("sr", "bfsr", "biorth")
 
         # compute all necessary Gramian factors
-        pcf = self.fom.gramian('pc_lrcf')
-        pof = self.fom.gramian('po_lrcf')
-        vcf = self.fom.gramian('vc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        pcf = self.fom.gramian("pc_lrcf")
+        pof = self.fom.gramian("po_lrcf")
+        vcf = self.fom.gramian("vc_lrcf")
+        vof = self.fom.gramian("vo_lrcf")
 
         if r > min(len(pcf), len(pof), len(vcf), len(vof)):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
+            raise ValueError("r needs to be smaller than the sizes of Gramian factors.")
 
         # find necessary SVDs
         Up, sp, Vp = spla.svd(pof.inner(pcf))
@@ -321,7 +334,7 @@ class SOBTReductor(BasicInterface):
         self.W1 = pof.lincomb(Up[:r])
         self.V2 = vcf.lincomb(Vv[:r])
         self.W2 = vof.lincomb(Uv[:r])
-        if projection == 'sr':
+        if projection == "sr":
             alpha1 = 1 / np.sqrt(sp[:r])
             self.V1.scal(alpha1)
             self.W1.scal(alpha1)
@@ -329,43 +342,47 @@ class SOBTReductor(BasicInterface):
             self.V2.scal(alpha2)
             self.W2.scal(alpha2)
             W1TV1invW1TV2 = self.W1.inner(self.V2)
-            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
-        elif projection == 'bfsr':
+            projected_ops = {"M": IdentityOperator(NumpyVectorSpace(r))}
+        elif projection == "bfsr":
             self.V1 = gram_schmidt(self.V1, atol=0, rtol=0)
             self.W1 = gram_schmidt(self.W1, atol=0, rtol=0)
             self.V2 = gram_schmidt(self.V2, atol=0, rtol=0)
             self.W2 = gram_schmidt(self.W2, atol=0, rtol=0)
             W1TV1invW1TV2 = spla.solve(self.W1.inner(self.V1), self.W1.inner(self.V2))
-            projected_ops = {'M': project(self.fom.M, range_basis=self.W2, source_basis=self.V2)}
-        elif projection == 'biorth':
+            projected_ops = {
+                "M": project(self.fom.M, range_basis=self.W2, source_basis=self.V2)
+            }
+        elif projection == "biorth":
             self.V1, self.W1 = gram_schmidt_biorth(self.V1, self.W1)
             self.V2, self.W2 = gram_schmidt_biorth(self.V2, self.W2, product=self.fom.M)
             W1TV1invW1TV2 = self.W1.inner(self.V2)
-            projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
+            projected_ops = {"M": IdentityOperator(NumpyVectorSpace(r))}
 
-        projected_ops.update({
-            'E': project(self.fom.E,
-                         range_basis=self.W2,
-                         source_basis=self.V2),
-            'K': project(self.fom.K,
-                         range_basis=self.W2,
-                         source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
-            'B': project(self.fom.B,
-                         range_basis=self.W2,
-                         source_basis=None),
-            'Cp': project(self.fom.Cp,
-                          range_basis=None,
-                          source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
-            'Cv': project(self.fom.Cv,
-                          range_basis=None,
-                          source_basis=self.V2),
-            'D': self.fom.D,
-        })
+        projected_ops.update(
+            {
+                "E": project(self.fom.E, range_basis=self.W2, source_basis=self.V2),
+                "K": project(
+                    self.fom.K,
+                    range_basis=self.W2,
+                    source_basis=self.V1.lincomb(W1TV1invW1TV2.T),
+                ),
+                "B": project(self.fom.B, range_basis=self.W2, source_basis=None),
+                "Cp": project(
+                    self.fom.Cp,
+                    range_basis=None,
+                    source_basis=self.V1.lincomb(W1TV1invW1TV2.T),
+                ),
+                "Cv": project(self.fom.Cv, range_basis=None, source_basis=self.V2),
+                "D": self.fom.D,
+            }
+        )
 
-        rom = SecondOrderModel(name=self.fom.name + '_reduced', **projected_ops)
+        rom = SecondOrderModel(name=self.fom.name + "_reduced", **projected_ops)
         rom.disable_logging()
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        raise TypeError(f'The reconstruct method is not available for {self.__class__.__name__}.')
+        raise TypeError(
+            f"The reconstruct method is not available for {self.__class__.__name__}."
+        )

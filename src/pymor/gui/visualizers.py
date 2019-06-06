@@ -30,7 +30,9 @@ class PatchVisualizer(BasicInterface):
         If `True`, block execution until the plot window is closed.
     """
 
-    def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False):
+    def __init__(
+        self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False
+    ):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
@@ -39,15 +41,26 @@ class PatchVisualizer(BasicInterface):
         self.codim = codim
         if backend is None:
             import sys
-            if 'matplotlib' in sys.modules:
-                matplotlib = sys.modules['matplotlib']
-                if matplotlib.get_backend() == 'nbAgg':
-                    backend = 'jupyter'
+
+            if "matplotlib" in sys.modules:
+                matplotlib = sys.modules["matplotlib"]
+                if matplotlib.get_backend() == "nbAgg":
+                    backend = "jupyter"
         self.backend = backend
         self.block = block
 
-    def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
-                  rescale_colorbars=False, block=None, filename=None, columns=2):
+    def visualize(
+        self,
+        U,
+        m,
+        title=None,
+        legend=None,
+        separate_colorbars=False,
+        rescale_colorbars=False,
+        block=None,
+        filename=None,
+        columns=2,
+    ):
         """Visualize the provided data.
 
         Parameters
@@ -78,29 +91,49 @@ class PatchVisualizer(BasicInterface):
             The number of columns in the visualizer GUI in case multiple plots are displayed
             at the same time.
         """
-        assert isinstance(U, VectorArrayInterface) \
-            or (isinstance(U, tuple)
-                and all(isinstance(u, VectorArrayInterface) for u in U)
-                and all(len(u) == len(U[0]) for u in U))
+        assert isinstance(U, VectorArrayInterface) or (
+            isinstance(U, tuple)
+            and all(isinstance(u, VectorArrayInterface) for u in U)
+            and all(len(u) == len(U[0]) for u in U)
+        )
         if filename:
             if not isinstance(U, tuple):
                 write_vtk(self.grid, U, filename, codim=self.codim)
             else:
                 for i, u in enumerate(U):
-                    write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
+                    write_vtk(self.grid, u, f"{filename}-{i}", codim=self.codim)
         else:
-            if self.backend == 'jupyter':
+            if self.backend == "jupyter":
                 from pymor.gui.jupyter import visualize_patch
-                visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                                legend=legend, separate_colorbars=separate_colorbars,
-                                rescale_colorbars=rescale_colorbars, columns=columns)
+
+                visualize_patch(
+                    self.grid,
+                    U,
+                    bounding_box=self.bounding_box,
+                    codim=self.codim,
+                    title=title,
+                    legend=legend,
+                    separate_colorbars=separate_colorbars,
+                    rescale_colorbars=rescale_colorbars,
+                    columns=columns,
+                )
             else:
                 block = self.block if block is None else block
                 from pymor.gui.qt import visualize_patch
-                visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                                legend=legend, separate_colorbars=separate_colorbars,
-                                rescale_colorbars=rescale_colorbars, backend=self.backend, block=block,
-                                columns=columns)
+
+                visualize_patch(
+                    self.grid,
+                    U,
+                    bounding_box=self.bounding_box,
+                    codim=self.codim,
+                    title=title,
+                    legend=legend,
+                    separate_colorbars=separate_colorbars,
+                    rescale_colorbars=rescale_colorbars,
+                    backend=self.backend,
+                    block=block,
+                    columns=columns,
+                )
 
 
 class OnedVisualizer(BasicInterface):
@@ -149,4 +182,7 @@ class OnedVisualizer(BasicInterface):
         """
         block = self.block if block is None else block
         from pymor.gui.qt import visualize_matplotlib_1d
-        visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend, block=block)
+
+        visualize_matplotlib_1d(
+            self.grid, U, codim=self.codim, title=title, legend=legend, block=block
+        )

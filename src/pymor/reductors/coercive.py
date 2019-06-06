@@ -38,22 +38,44 @@ class CoerciveRBReductor(StationaryRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
-                 check_orthonormality=None, check_tol=None):
-        super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
-                         check_tol=check_tol)
+    def __init__(
+        self,
+        fom,
+        RB=None,
+        product=None,
+        coercivity_estimator=None,
+        check_orthonormality=None,
+        check_tol=None,
+    ):
+        super().__init__(
+            fom,
+            RB,
+            product=product,
+            check_orthonormality=check_orthonormality,
+            check_tol=check_tol,
+        )
         self.coercivity_estimator = coercivity_estimator
-        self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
-                                                  product=product, riesz_representatives=True)
+        self.residual_reductor = ResidualReductor(
+            self.bases["RB"],
+            self.fom.operator,
+            self.fom.rhs,
+            product=product,
+            riesz_representatives=True,
+        )
 
     def assemble_estimator(self):
         residual = self.residual_reductor.reduce()
-        estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
-                                        self.coercivity_estimator)
+        estimator = CoerciveRBEstimator(
+            residual,
+            tuple(self.residual_reductor.residual_range_dims),
+            self.coercivity_estimator,
+        )
         return estimator
 
     def assemble_estimator_for_subbasis(self, dims):
-        return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
+        return self._last_rom.estimator.restricted_to_subbasis(
+            dims["RB"], m=self._last_rom
+        )
 
 
 class CoerciveRBEstimator(ImmutableInterface):
@@ -75,13 +97,18 @@ class CoerciveRBEstimator(ImmutableInterface):
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims:
-            residual_range_dims = self.residual_range_dims[:dim + 1]
+            residual_range_dims = self.residual_range_dims[: dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
-            return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator)
+            return CoerciveRBEstimator(
+                residual, residual_range_dims, self.coercivity_estimator
+            )
         else:
-            self.logger.warning('Cannot efficiently reduce to subbasis')
-            return CoerciveRBEstimator(self.residual.projected_to_subbasis(None, dim), None,
-                                       self.coercivity_estimator)
+            self.logger.warning("Cannot efficiently reduce to subbasis")
+            return CoerciveRBEstimator(
+                self.residual.projected_to_subbasis(None, dim),
+                None,
+                self.coercivity_estimator,
+            )
 
 
 class SimpleCoerciveRBReductor(StationaryRBReductor):
@@ -112,8 +139,15 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
-                 check_orthonormality=None, check_tol=None):
+    def __init__(
+        self,
+        fom,
+        RB=None,
+        product=None,
+        coercivity_estimator=None,
+        check_orthonormality=None,
+        check_tol=None,
+    ):
         assert fom.operator.linear and fom.rhs.linear
         assert isinstance(fom.operator, LincombOperator)
         assert all(not op.parametric for op in fom.operator.operators)
@@ -121,15 +155,21 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
             assert isinstance(fom.rhs, LincombOperator)
             assert all(not op.parametric for op in fom.rhs.operators)
 
-        super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
-                         check_tol=check_tol)
+        super().__init__(
+            fom,
+            RB,
+            product=product,
+            check_orthonormality=check_orthonormality,
+            check_tol=check_tol,
+        )
         self.coercivity_estimator = coercivity_estimator
-        self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
-                                                  product=product)
+        self.residual_reductor = ResidualReductor(
+            self.bases["RB"], self.fom.operator, self.fom.rhs, product=product
+        )
         self.extends = None
 
     def assemble_estimator(self):
-        fom, RB, extends = self.fom, self.bases['RB'], self.extends
+        fom, RB, extends = self.fom, self.bases["RB"], self.extends
         if extends:
             old_RB_size = extends[0]
             old_data = extends[1]
@@ -141,10 +181,10 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
 
         # compute the Riesz representative of (U, .)_L2 with respect to product
         def riesz_representative(U):
-            if self.products['RB'] is None:
+            if self.products["RB"] is None:
                 return U.copy()
             else:
-                return self.products['RB'].apply_inverse(U)
+                return self.products["RB"].apply_inverse(U)
 
         def append_vector(U, R, RR):
             RR.append(riesz_representative(U), remove_from_other=True)
@@ -152,7 +192,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
 
         # compute all components of the residual
         if extends:
-            R_R, RR_R = old_data['R_R'], old_data['RR_R']
+            R_R, RR_R = old_data["R_R"], old_data["RR_R"]
         elif not fom.rhs.parametric:
             R_R = space.empty(reserve=1)
             RR_R = space.empty(reserve=1)
@@ -172,11 +212,20 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
             for i in range(len(RB)):
                 append_vector(-fom.operator.apply(RB[i]), R_Os[0], RR_Os[0])
         else:
-            R_Os = [space.empty(reserve=len(RB)) for _ in range(len(fom.operator.operators))]
-            RR_Os = [space.empty(reserve=len(RB)) for _ in range(len(fom.operator.operators))]
+            R_Os = [
+                space.empty(reserve=len(RB)) for _ in range(len(fom.operator.operators))
+            ]
+            RR_Os = [
+                space.empty(reserve=len(RB)) for _ in range(len(fom.operator.operators))
+            ]
             if old_RB_size > 0:
-                for op, R_O, RR_O, old_R_O, old_RR_O in zip(fom.operator.operators, R_Os, RR_Os,
-                                                            old_data['R_Os'], old_data['RR_Os']):
+                for op, R_O, RR_O, old_R_O, old_RR_O in zip(
+                    fom.operator.operators,
+                    R_Os,
+                    RR_Os,
+                    old_data["R_Os"],
+                    old_data["RR_Os"],
+                ):
                     R_O.append(old_R_O)
                     RR_O.append(old_RR_O)
             for op, R_O, RR_O in zip(fom.operator.operators, R_Os, RR_Os):
@@ -189,20 +238,24 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         R_OO = np.vstack([np.hstack([RR_O.dot(R_O) for R_O in R_Os]) for RR_O in RR_Os])
 
         estimator_matrix = np.empty((len(R_RR) + len(R_OO),) * 2)
-        estimator_matrix[:len(R_RR), :len(R_RR)] = R_RR
-        estimator_matrix[len(R_RR):, len(R_RR):] = R_OO
-        estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
-        estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
+        estimator_matrix[: len(R_RR), : len(R_RR)] = R_RR
+        estimator_matrix[len(R_RR) :, len(R_RR) :] = R_OO
+        estimator_matrix[: len(R_RR), len(R_RR) :] = R_RO
+        estimator_matrix[len(R_RR) :, : len(R_RR)] = R_RO.T
 
         estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
-        estimator = SimpleCoerciveRBEstimator(estimator_matrix, self.coercivity_estimator)
+        estimator = SimpleCoerciveRBEstimator(
+            estimator_matrix, self.coercivity_estimator
+        )
         self.extends = (len(RB), dict(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os))
 
         return estimator
 
     def assemble_estimator_for_subbasis(self, dims):
-        return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
+        return self._last_rom.estimator.restricted_to_subbasis(
+            dims["RB"], m=self._last_rom
+        )
 
 
 class SimpleCoerciveRBEstimator(ImmutableInterface):
@@ -242,8 +295,15 @@ class SimpleCoerciveRBEstimator(ImmutableInterface):
         co = 1 if not m.operator.parametric else len(m.operator.operators)
         old_dim = m.operator.source.dim
 
-        indices = np.concatenate((np.arange(cr),
-                                 ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() + cr))
+        indices = np.concatenate(
+            (
+                np.arange(cr),
+                ((np.arange(co) * old_dim)[..., np.newaxis] + np.arange(dim)).ravel()
+                + cr,
+            )
+        )
         matrix = self.estimator_matrix.matrix[indices, :][:, indices]
 
-        return SimpleCoerciveRBEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator)
+        return SimpleCoerciveRBEstimator(
+            NumpyMatrixOperator(matrix), self.coercivity_estimator
+        )

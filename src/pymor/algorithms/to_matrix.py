@@ -9,8 +9,15 @@ import scipy.sparse.linalg as spsla
 
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.operators.block import BlockOperatorBase
-from pymor.operators.constructions import (AdjointOperator, ComponentProjection, Concatenation, IdentityOperator,
-                                           LincombOperator, VectorArrayOperator, ZeroOperator)
+from pymor.operators.constructions import (
+    AdjointOperator,
+    ComponentProjection,
+    Concatenation,
+    IdentityOperator,
+    LincombOperator,
+    VectorArrayOperator,
+    ZeroOperator,
+)
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
@@ -34,13 +41,21 @@ def to_matrix(op, format=None, mu=None):
     res
         The matrix equivalent to `op`.
     """
-    assert format is None or format in ('dense', 'bsr', 'coo', 'csc', 'csr', 'dia', 'dok', 'lil')
+    assert format is None or format in (
+        "dense",
+        "bsr",
+        "coo",
+        "csc",
+        "csr",
+        "dia",
+        "dok",
+        "lil",
+    )
     op = op.assemble(mu)
     return ToMatrixRules(format, mu).apply(op)
 
 
 class ToMatrixRules(RuleTable):
-
     def __init__(self, format, mu):
         super().__init__()
         self.format, self.mu = format, mu
@@ -50,14 +65,14 @@ class ToMatrixRules(RuleTable):
         format = self.format
         if format is None:
             return op.matrix
-        elif format == 'dense':
+        elif format == "dense":
             if not op.sparse:
                 return op.matrix
             else:
                 return op.matrix.toarray()
         else:
             if not op.sparse:
-                return getattr(sps, format + '_matrix')(op.matrix)
+                return getattr(sps, format + "_matrix")(op.matrix)
             else:
                 return op.matrix.asformat(format)
 
@@ -73,7 +88,7 @@ class ToMatrixRules(RuleTable):
                 if sps.issparse(mat_ij):
                     is_dense = False
                 mat_blocks[i].append(mat_ij)
-        if format is None and is_dense or format == 'dense':
+        if format is None and is_dense or format == "dense":
             return np.asarray(np.bmat(mat_blocks))
         else:
             return sps.bmat(mat_blocks, format=format)
@@ -94,14 +109,14 @@ class ToMatrixRules(RuleTable):
                 res = spla.solve(source_product, res)
             else:
                 res = spsla.spsolve(source_product, res)
-        if format is not None and format != 'dense':
-            res = getattr(sps, format + '_matrix')(res)
+        if format is not None and format != "dense":
+            res = getattr(sps, format + "_matrix")(res)
         return res
 
     @match_class(ComponentProjection)
     def action_ComponentProjection(self, op):
         format = self.format
-        if format == 'dense':
+        if format == "dense":
             res = np.zeros((op.range.dim, op.source.dim))
             for i, j in enumerate(op.components):
                 res[i, j] = 1
@@ -110,14 +125,18 @@ class ToMatrixRules(RuleTable):
             i = np.arange(op.range.dim)
             j = op.components
             res = sps.coo_matrix((data, (i, j)), shape=(op.range.dim, op.source.dim))
-            res = res.asformat(format if format else 'csc')
+            res = res.asformat(format if format else "csc")
         return res
 
     @match_class(Concatenation)
     def action_Concatenation(self, op):
         mats = [self.apply(o) for o in op.operators]
         while len(mats) > 1:
-            if self.format is None and not sps.issparse(mats[-2]) and sps.issparse(mats[-1]):
+            if (
+                self.format is None
+                and not sps.issparse(mats[-2])
+                and sps.issparse(mats[-1])
+            ):
                 mats = mats[:-2] + [mats[-1].T.dot(mats[-2].T).T]
             else:
                 mats = mats[:-2] + [mats[-2].dot(mats[-1])]
@@ -126,10 +145,10 @@ class ToMatrixRules(RuleTable):
     @match_class(IdentityOperator)
     def action_IdentityOperator(self, op):
         format = self.format
-        if format == 'dense':
+        if format == "dense":
             return np.eye(op.source.dim)
         else:
-            return sps.eye(op.source.dim, format=format if format else 'csc')
+            return sps.eye(op.source.dim, format=format if format else "csc")
 
     @match_class(LincombOperator)
     def action_LincombOperator(self, op):
@@ -143,8 +162,8 @@ class ToMatrixRules(RuleTable):
     def action_VectorArrayOperator(self, op):
         format = self.format
         res = op.array.conj().to_numpy() if op.adjoint else op.array.to_numpy().T
-        if format is not None and format != 'dense':
-            res = getattr(sps, format + '_matrix')(res)
+        if format is not None and format != "dense":
+            res = getattr(sps, format + "_matrix")(res)
         return res
 
     @match_class(ZeroOperator)
@@ -152,7 +171,7 @@ class ToMatrixRules(RuleTable):
         format = self.format
         if format is None:
             return sps.csc_matrix((op.range.dim, op.source.dim))
-        elif format == 'dense':
+        elif format == "dense":
             return np.zeros((op.range.dim, op.source.dim))
         else:
-            return getattr(sps, format + '_matrix')((op.range.dim, op.source.dim))
+            return getattr(sps, format + "_matrix")((op.range.dim, op.source.dim))

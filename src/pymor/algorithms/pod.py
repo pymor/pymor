@@ -14,9 +14,21 @@ from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-@defaults('rtol', 'atol', 'l2_err', 'symmetrize', 'orthonormalize', 'check', 'check_tol')
-def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
-        symmetrize=False, orthonormalize=True, check=True, check_tol=1e-10):
+@defaults(
+    "rtol", "atol", "l2_err", "symmetrize", "orthonormalize", "check", "check_tol"
+)
+def pod(
+    A,
+    modes=None,
+    product=None,
+    rtol=4e-8,
+    atol=0.0,
+    l2_err=0.0,
+    symmetrize=False,
+    orthonormalize=True,
+    check=True,
+    check_tol=1e-10,
+):
     """Proper orthogonal decomposition of `A`.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix,
@@ -69,17 +81,19 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
     assert modes is None or modes <= len(A)
     assert product is None or isinstance(product, OperatorInterface)
 
-    logger = getLogger('pymor.algorithms.pod.pod')
+    logger = getLogger("pymor.algorithms.pod.pod")
 
-    with logger.block(f'Computing Gramian ({len(A)} vectors) ...'):
+    with logger.block(f"Computing Gramian ({len(A)} vectors) ..."):
         B = A.gramian(product)
 
-        if symmetrize:     # according to rbmatlab this is necessary due to rounding
+        if symmetrize:  # according to rbmatlab this is necessary due to rounding
             B = B + B.T
             B *= 0.5
 
-    with logger.block('Computing eigenvalue decomposition ...'):
-        eigvals = None if (modes is None or l2_err > 0.) else (len(B) - modes, len(B) - 1)
+    with logger.block("Computing eigenvalue decomposition ..."):
+        eigvals = (
+            None if (modes is None or l2_err > 0.0) else (len(B) - modes, len(B) - 1)
+        )
 
         EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
         EVALS = EVALS[::-1]
@@ -91,8 +105,8 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
             return A.space.empty(), np.array([])
         last_above_tol = above_tol[-1]
 
-        errs = np.concatenate((np.cumsum(EVALS[::-1])[::-1], [0.]))
-        below_err = np.where(errs <= l2_err**2)[0]
+        errs = np.concatenate((np.cumsum(EVALS[::-1])[::-1], [0.0]))
+        below_err = np.where(errs <= l2_err ** 2)[0]
         first_below_err = below_err[0]
 
         selected_modes = min(first_below_err, last_above_tol + 1)
@@ -102,19 +116,21 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
         SVALS = np.sqrt(EVALS[:selected_modes])
         EVECS = EVECS[:selected_modes]
 
-    with logger.block(f'Computing left-singular vectors ({len(EVECS)} vectors) ...'):
+    with logger.block(f"Computing left-singular vectors ({len(EVECS)} vectors) ..."):
         POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
 
     if orthonormalize:
-        with logger.block('Re-orthonormalizing POD modes ...'):
+        with logger.block("Re-orthonormalizing POD modes ..."):
             POD = gram_schmidt(POD, product=product, copy=False)
 
     if check:
-        logger.info('Checking orthonormality ...')
-        if not float_cmp_all(POD.inner(POD, product), np.eye(len(POD)), atol=check_tol, rtol=0.):
+        logger.info("Checking orthonormality ...")
+        if not float_cmp_all(
+            POD.inner(POD, product), np.eye(len(POD)), atol=check_tol, rtol=0.0
+        ):
             err = np.max(np.abs(POD.inner(POD, product) - np.eye(len(POD))))
-            raise AccuracyError(f'result not orthogonal (max err={err})')
+            raise AccuracyError(f"result not orthogonal (max err={err})")
         if len(POD) < len(EVECS):
-            raise AccuracyError('additional orthonormalization removed basis vectors')
+            raise AccuracyError("additional orthonormalization removed basis vectors")
 
     return POD, SVALS

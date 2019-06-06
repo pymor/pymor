@@ -9,11 +9,25 @@ from pymor.core.exceptions import InversionError, NewtonError
 from pymor.core.logger import getLogger
 
 
-@defaults('miniter', 'maxiter', 'rtol', 'atol', 'stagnation_window', 'stagnation_threshold')
-def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
-           miniter=0, maxiter=100, rtol=-1., atol=-1.,
-           stagnation_window=3, stagnation_threshold=0.9,
-           return_stages=False, return_residuals=False):
+@defaults(
+    "miniter", "maxiter", "rtol", "atol", "stagnation_window", "stagnation_threshold"
+)
+def newton(
+    operator,
+    rhs,
+    initial_guess=None,
+    mu=None,
+    error_norm=None,
+    least_squares=False,
+    miniter=0,
+    maxiter=100,
+    rtol=-1.0,
+    atol=-1.0,
+    stagnation_window=3,
+    stagnation_threshold=0.9,
+    return_stages=False,
+    return_residuals=False,
+):
     """Basic Newton algorithm.
 
     This method solves the nonlinear equation ::
@@ -76,7 +90,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     NewtonError
         Raised if the Netwon algorithm failed to converge.
     """
-    logger = getLogger('pymor.algorithms.newton')
+    logger = getLogger("pymor.algorithms.newton")
 
     data = {}
 
@@ -84,54 +98,61 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         initial_guess = operator.source.zeros()
 
     if return_stages:
-        data['stages'] = operator.source.empty()
+        data["stages"] = operator.source.empty()
 
     if return_residuals:
-        data['residuals'] = operator.range.empty()
+        data["residuals"] = operator.range.empty()
 
     U = initial_guess.copy()
     residual = rhs - operator.apply(U, mu=mu)
 
     err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
-    logger.info(f'      Initial Residual: {err:5e}')
+    logger.info(f"      Initial Residual: {err:5e}")
 
     iteration = 0
     error_sequence = [err]
     while True:
         if iteration >= miniter:
             if err <= atol:
-                logger.info(f'Absolute limit of {atol} reached. Stopping.')
+                logger.info(f"Absolute limit of {atol} reached. Stopping.")
                 break
-            if err/error_sequence[0] <= rtol:
-                logger.info(f'Prescribed total reduction of {rtol} reached. Stopping.')
+            if err / error_sequence[0] <= rtol:
+                logger.info(f"Prescribed total reduction of {rtol} reached. Stopping.")
                 break
-            if (len(error_sequence) >= stagnation_window + 1
-                    and err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
-                logger.info(f'Error is stagnating (threshold: {stagnation_threshold:5e}, window: {stagnation_window}). '
-                            f'Stopping.')
+            if (
+                len(error_sequence) >= stagnation_window + 1
+                and err / max(error_sequence[-stagnation_window - 1 :])
+                >= stagnation_threshold
+            ):
+                logger.info(
+                    f"Error is stagnating (threshold: {stagnation_threshold:5e}, window: {stagnation_window}). "
+                    f"Stopping."
+                )
                 break
             if iteration >= maxiter:
-                raise NewtonError('Failed to converge')
+                raise NewtonError("Failed to converge")
         if iteration > 0 and return_stages:
-            data['stages'].append(U)
+            data["stages"].append(U)
         if return_residuals:
-            data['residuals'].append(residual)
+            data["residuals"].append(residual)
         iteration += 1
         jacobian = operator.jacobian(U, mu=mu)
         try:
             correction = jacobian.apply_inverse(residual, least_squares=least_squares)
         except InversionError:
-            raise NewtonError('Could not invert jacobian')
+            raise NewtonError("Could not invert jacobian")
         U += correction
         residual = rhs - operator.apply(U, mu=mu)
 
         err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
-        logger.info(f'Iteration {iteration:2}: Residual: {err:5e},  '
-                    f'Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}')
+        logger.info(
+            f"Iteration {iteration:2}: Residual: {err:5e},  "
+            f"Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}"
+        )
         error_sequence.append(err)
         if not np.isfinite(err):
-            raise NewtonError('Failed to converge')
+            raise NewtonError("Failed to converge")
 
-    data['error_sequence'] = np.array(error_sequence)
+    data["error_sequence"] = np.array(error_sequence)
 
     return U, data

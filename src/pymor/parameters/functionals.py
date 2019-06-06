@@ -99,28 +99,65 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         The name of the functional.
     """
 
-    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
-                                             'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-                                             'exp', 'exp2', 'log', 'log2', 'log10', 'sqrt', 'array',
-                                             'min', 'minimum', 'max', 'maximum', 'pi', 'e',
-                                             'sum', 'prod', 'abs', 'sign', 'zeros', 'ones'}}
-    functions['norm'] = np.linalg.norm
-    functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
-    functions['np'] = np
+    functions = {
+        k: getattr(np, k)
+        for k in {
+            "sin",
+            "cos",
+            "tan",
+            "arcsin",
+            "arccos",
+            "arctan",
+            "arctan2",
+            "sinh",
+            "cosh",
+            "tanh",
+            "arcsinh",
+            "arccosh",
+            "arctanh",
+            "exp",
+            "exp2",
+            "log",
+            "log2",
+            "log10",
+            "sqrt",
+            "array",
+            "min",
+            "minimum",
+            "max",
+            "maximum",
+            "pi",
+            "e",
+            "sum",
+            "prod",
+            "abs",
+            "sign",
+            "zeros",
+            "ones",
+        }
+    }
+    functions["norm"] = np.linalg.norm
+    functions["polar"] = lambda x: (
+        np.linalg.norm(x, axis=-1),
+        np.arctan2(x[..., 1], x[..., 0]) % (2 * np.pi),
+    )
+    functions["np"] = np
 
     def __init__(self, expression, parameter_type, name=None):
         self.expression = expression
-        code = compile(expression, '<expression>', 'eval')
+        code = compile(expression, "<expression>", "eval")
         functions = self.functions
         mapping = lambda mu: eval(code, functions, mu)
         super().__init__(mapping, parameter_type, name)
 
     def __repr__(self):
-        return f'ExpressionParameterFunctional({self.expression}, {repr(self.parameter_type)})'
+        return f"ExpressionParameterFunctional({self.expression}, {repr(self.parameter_type)})"
 
     def __reduce__(self):
-        return (ExpressionParameterFunctional,
-                (self.expression, self.parameter_type, getattr(self, '_name', None)))
+        return (
+            ExpressionParameterFunctional,
+            (self.expression, self.parameter_type, getattr(self, "_name", None)),
+        )
 
 
 class ProductParameterFunctional(ParameterFunctionalInterface):
@@ -136,11 +173,17 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
 
     def __init__(self, factors, name=None):
         assert len(factors) > 0
-        assert all(isinstance(f, (ParameterFunctionalInterface, Number)) for f in factors)
+        assert all(
+            isinstance(f, (ParameterFunctionalInterface, Number)) for f in factors
+        )
         self.name = name
         self.factors = tuple(factors)
-        self.build_parameter_type(*(f for f in factors if isinstance(f, ParameterFunctionalInterface)))
+        self.build_parameter_type(
+            *(f for f in factors if isinstance(f, ParameterFunctionalInterface))
+        )
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
-        return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
+        return np.array(
+            [f.evaluate(mu) if hasattr(f, "evaluate") else f for f in self.factors]
+        ).prod()

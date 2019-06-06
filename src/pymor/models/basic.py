@@ -12,10 +12,17 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 class ModelBase(ModelInterface):
     """Base class for |Models| providing some common functionality."""
 
-    sid_ignore = ModelInterface.sid_ignore | {'visualizer'}
+    sid_ignore = ModelInterface.sid_ignore | {"visualizer"}
 
-    def __init__(self, products=None, estimator=None, visualizer=None,
-                 cache_region=None, name=None, **kwargs):
+    def __init__(
+        self,
+        products=None,
+        estimator=None,
+        visualizer=None,
+        cache_region=None,
+        name=None,
+        **kwargs,
+    ):
 
         self.products = FrozenDict(products or {})
         self.estimator = estimator
@@ -25,8 +32,8 @@ class ModelBase(ModelInterface):
 
         if products:
             for k, v in products.items():
-                setattr(self, f'{k}_product', v)
-                setattr(self, f'{k}_norm', induced_norm(v))
+                setattr(self, f"{k}_product", v)
+                setattr(self, f"{k}_norm", induced_norm(v))
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
@@ -43,13 +50,13 @@ class ModelBase(ModelInterface):
         if self.visualizer is not None:
             self.visualizer.visualize(U, self, **kwargs)
         else:
-            raise NotImplementedError('Model has no visualizer.')
+            raise NotImplementedError("Model has no visualizer.")
 
     def estimate(self, U, mu=None):
         if self.estimator is not None:
             return self.estimator.estimate(U, mu=mu, m=self)
         else:
-            raise NotImplementedError('Model has no estimator.')
+            raise NotImplementedError("Model has no estimator.")
 
 
 class StationaryModel(ModelBase):
@@ -109,23 +116,39 @@ class StationaryModel(ModelBase):
         Dict of all product |Operators| associated with the model.
     """
 
-    def __init__(self, operator, rhs, outputs=None, products=None,
-                 parameter_space=None, estimator=None, visualizer=None, cache_region=None, name=None):
+    def __init__(
+        self,
+        operator,
+        rhs,
+        outputs=None,
+        products=None,
+        parameter_space=None,
+        estimator=None,
+        visualizer=None,
+        cache_region=None,
+        name=None,
+    ):
 
         if isinstance(rhs, VectorArrayInterface):
             assert rhs in operator.range
-            rhs = VectorOperator(rhs, name='rhs')
+            rhs = VectorOperator(rhs, name="rhs")
 
         assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
 
-        super().__init__(products=products,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+        super().__init__(
+            products=products,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
         self.operator = operator
         self.rhs = rhs
         self.outputs = FrozenDict(outputs or {})
         self.solution_space = self.operator.source
-        self.linear = operator.linear and all(output.linear for output in self.outputs.values())
+        self.linear = operator.linear and all(
+            output.linear for output in self.outputs.values()
+        )
         self.build_parameter_type(operator, rhs)
         self.parameter_space = parameter_space
 
@@ -134,7 +157,7 @@ class StationaryModel(ModelBase):
 
         # explicitly checking if logging is disabled saves the str(mu) call
         if not self.logging_disabled:
-            self.logger.info(f'Solving {self.name} for {mu} ...')
+            self.logger.info(f"Solving {self.name} for {mu} ...")
 
         return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
@@ -219,27 +242,51 @@ class InstationaryModel(ModelBase):
         Dict of all product |Operators| associated with the model.
     """
 
-    def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
-                 outputs=None, products=None, parameter_space=None, estimator=None, visualizer=None,
-                 cache_region=None, name=None):
+    def __init__(
+        self,
+        T,
+        initial_data,
+        operator,
+        rhs,
+        mass=None,
+        time_stepper=None,
+        num_values=None,
+        outputs=None,
+        products=None,
+        parameter_space=None,
+        estimator=None,
+        visualizer=None,
+        cache_region=None,
+        name=None,
+    ):
 
         if isinstance(rhs, VectorArrayInterface):
             assert rhs in operator.range
-            rhs = VectorOperator(rhs, name='rhs')
+            rhs = VectorOperator(rhs, name="rhs")
         if isinstance(initial_data, VectorArrayInterface):
             assert initial_data in operator.source
-            initial_data = VectorOperator(initial_data, name='initial_data')
+            initial_data = VectorOperator(initial_data, name="initial_data")
 
         assert isinstance(time_stepper, TimeStepperInterface)
         assert initial_data.source.is_scalar
         assert operator.source == initial_data.range
-        assert rhs is None \
-            or rhs.linear and rhs.range == operator.range and rhs.source.is_scalar
-        assert mass is None \
-            or mass.linear and mass.source == mass.range == operator.source
+        assert (
+            rhs is None
+            or rhs.linear
+            and rhs.range == operator.range
+            and rhs.source.is_scalar
+        )
+        assert (
+            mass is None or mass.linear and mass.source == mass.range == operator.source
+        )
 
-        super().__init__(products=products, estimator=estimator,
-                         visualizer=visualizer, cache_region=cache_region, name=name)
+        super().__init__(
+            products=products,
+            estimator=estimator,
+            visualizer=visualizer,
+            cache_region=cache_region,
+            name=name,
+        )
         self.T = T
         self.initial_data = initial_data
         self.operator = operator
@@ -249,8 +296,12 @@ class InstationaryModel(ModelBase):
         self.time_stepper = time_stepper
         self.num_values = num_values
         self.outputs = FrozenDict(outputs or {})
-        self.linear = operator.linear and all(output.linear for output in self.outputs.values())
-        self.build_parameter_type(self.initial_data, self.operator, self.rhs, self.mass, provides={'_t': 0})
+        self.linear = operator.linear and all(
+            output.linear for output in self.outputs.values()
+        )
+        self.build_parameter_type(
+            self.initial_data, self.operator, self.rhs, self.mass, provides={"_t": 0}
+        )
         self.parameter_space = parameter_space
 
     def with_time_stepper(self, **kwargs):
@@ -261,12 +312,20 @@ class InstationaryModel(ModelBase):
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
-            self.logger.info(f'Solving {self.name} for {mu} ...')
+            self.logger.info(f"Solving {self.name} for {mu} ...")
 
-        mu['_t'] = 0
+        mu["_t"] = 0
         U0 = self.initial_data.as_range_array(mu)
-        return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
-                                       initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
+        return self.time_stepper.solve(
+            operator=self.operator,
+            rhs=self.rhs,
+            initial_data=U0,
+            mass=self.mass,
+            initial_time=0,
+            end_time=self.T,
+            mu=mu,
+            num_values=self.num_values,
+        )
 
     def to_lti(self):
         """Convert model to |LTIModel|.
@@ -281,16 +340,17 @@ class InstationaryModel(ModelBase):
             self.mass              -> E
         """
         if len(self.outputs) == 0:
-            raise ValueError('No outputs defined.')
+            raise ValueError("No outputs defined.")
         if len(self.outputs) > 1:
-            raise NotImplementedError('Only one output supported.')
-        A = - self.operator
+            raise NotImplementedError("Only one output supported.")
+        A = -self.operator
         B = self.rhs
         C = next(iter(self.outputs.values()))
         E = self.mass
 
         if not all(op.linear for op in [A, B, C, E]):
-            raise ValueError('Operators not linear.')
+            raise ValueError("Operators not linear.")
 
         from pymor.models.iosys import LTIModel
+
         return LTIModel(A, B, C, E=E, visualizer=self.visualizer)

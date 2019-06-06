@@ -5,8 +5,13 @@
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.models.interfaces import ModelInterface
 from pymor.operators.basic import ProjectedOperator
-from pymor.operators.constructions import (LincombOperator, Concatenation,
-                                           AffineOperator, AdjointOperator, SelectionOperator)
+from pymor.operators.constructions import (
+    LincombOperator,
+    Concatenation,
+    AffineOperator,
+    AdjointOperator,
+    SelectionOperator,
+)
 from pymor.operators.interfaces import OperatorInterface
 
 
@@ -21,7 +26,6 @@ def preassemble(obj):
 
 
 class PreAssembleRules(RuleTable):
-
     def __init__(self):
         super().__init__(use_caching=True)
 
@@ -47,7 +51,7 @@ class PreAssembleRules(RuleTable):
         else:
             return op.with_(operator=new_operator)
 
-    @match_generic(lambda op: not op.parametric, 'non-parametric operator')
+    @match_generic(lambda op: not op.parametric, "non-parametric operator")
     def action_assemble(self, op):
         return op.assemble()
 

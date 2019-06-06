@@ -32,23 +32,32 @@ class CubicParameterSpace(ParameterSpaceInterface):
     """
 
     def __init__(self, parameter_type, minimum=None, maximum=None, ranges=None):
-        assert ranges is None or (minimum is None and maximum is None), 'Must specify minimum, maximum or ranges'
-        assert ranges is not None or (minimum is not None and maximum is not None),\
-            'Must specify minimum, maximum or ranges'
+        assert ranges is None or (
+            minimum is None and maximum is None
+        ), "Must specify minimum, maximum or ranges"
+        assert ranges is not None or (
+            minimum is not None and maximum is not None
+        ), "Must specify minimum, maximum or ranges"
         assert minimum is None or minimum < maximum
         parameter_type = ParameterType(parameter_type)
         self.parameter_type = parameter_type
         self.minimum = minimum
         self.maximum = maximum
-        self.ranges = {k: (minimum, maximum) for k in parameter_type} if ranges is None else ranges
+        self.ranges = (
+            {k: (minimum, maximum) for k in parameter_type}
+            if ranges is None
+            else ranges
+        )
 
     def parse_parameter(self, mu):
         return Parameter.from_parameter_type(mu, self.parameter_type)
 
     def contains(self, mu):
         mu = self.parse_parameter(mu)
-        return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
-                   for k in self.parameter_type)
+        return all(
+            np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
+            for k in self.parameter_type
+        )
 
     def sample_uniformly(self, counts):
         """Uniformly sample |Parameters| from the space."""
@@ -58,12 +67,25 @@ class CubicParameterSpace(ParameterSpaceInterface):
             counts = {k: c for k, c in zip(self.parameter_type, counts)}
         else:
             counts = {k: counts for k in self.parameter_type}
-        linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameter_type)
-        iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
-                      for ls, sps in zip(linspaces, self.parameter_type.values()))
-        return [Parameter(((k, np.array(v).reshape(shp))
-                           for k, v, shp in zip(self.parameter_type, i, self.parameter_type.values())))
-                for i in product(*iters)]
+        linspaces = tuple(
+            np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k])
+            for k in self.parameter_type
+        )
+        iters = tuple(
+            product(ls, repeat=max(1, np.zeros(sps).size))
+            for ls, sps in zip(linspaces, self.parameter_type.values())
+        )
+        return [
+            Parameter(
+                (
+                    (k, np.array(v).reshape(shp))
+                    for k, v, shp in zip(
+                        self.parameter_type, i, self.parameter_type.values()
+                    )
+                )
+            )
+            for i in product(*iters)
+        ]
 
     def sample_randomly(self, count=None, random_state=None, seed=None):
         """Randomly sample |Parameters| from the space.
@@ -89,23 +111,37 @@ class CubicParameterSpace(ParameterSpaceInterface):
         assert not random_state or seed is None
         ranges = self.ranges
         random_state = get_random_state(random_state, seed)
-        get_param = lambda: Parameter(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
-                                       for k, shp in self.parameter_type.items()))
+        get_param = lambda: Parameter(
+            (
+                (k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
+                for k, shp in self.parameter_type.items()
+            )
+        )
         if count is None:
+
             def param_generator():
                 while True:
                     yield get_param()
+
             return param_generator()
         else:
             return [get_param() for _ in range(count)]
 
     def __str__(self):
-        rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.items()]
+        rows = [
+            (k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.items()
+        ]
         column_widths = [max(map(len, c)) for c in zip(*rows)]
-        return ('CubicParameterSpace\n'
-                + '\n'.join(('key: {:' + str(column_widths[0] + 2)
-                             + '} shape: {:' + str(column_widths[1] + 2)
-                             + '} range: {}').format(c1 + ',', c2 + ',', c3) for (c1, c2, c3) in rows))
+        return "CubicParameterSpace\n" + "\n".join(
+            (
+                "key: {:"
+                + str(column_widths[0] + 2)
+                + "} shape: {:"
+                + str(column_widths[1] + 2)
+                + "} range: {}"
+            ).format(c1 + ",", c2 + ",", c3)
+            for (c1, c2, c3) in rows
+        )
 
     def __repr__(self):
-        return f'CubicParameterSpace({repr(self.parameter_type)}, ranges={repr(self.ranges)})'
+        return f"CubicParameterSpace({repr(self.parameter_type)}, ranges={repr(self.ranges)})"

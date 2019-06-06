@@ -9,7 +9,7 @@ from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
 
 
-@defaults('ipython_num_engines', 'ipython_profile', 'allow_mpi')
+@defaults("ipython_num_engines", "ipython_profile", "allow_mpi")
 def new_parallel_pool(ipython_num_engines=None, ipython_profile=None, allow_mpi=True):
     """Creates a new default |WorkerPool|.
 
@@ -27,27 +27,34 @@ def new_parallel_pool(ipython_num_engines=None, ipython_profile=None, allow_mpi=
 
     global _pool
     if _pool:
-        logger = getLogger('pymor.parallel.default.new_parallel_pool')
-        logger.warning('new_parallel_pool already called; returning old pool (this might not be what you want).')
+        logger = getLogger("pymor.parallel.default.new_parallel_pool")
+        logger.warning(
+            "new_parallel_pool already called; returning old pool (this might not be what you want)."
+        )
         return _pool[1]
     if ipython_num_engines or ipython_profile:
         from pymor.parallel.ipython import new_ipcluster_pool
-        nip = new_ipcluster_pool(profile=ipython_profile, num_engines=ipython_num_engines)
+
+        nip = new_ipcluster_pool(
+            profile=ipython_profile, num_engines=ipython_num_engines
+        )
         pool = nip.__enter__()
-        _pool = ('ipython', pool, nip)
+        _pool = ("ipython", pool, nip)
         return pool
     elif allow_mpi:
         from pymor.tools import mpi
+
         if mpi.parallel:
             from pymor.parallel.mpi import MPIPool
+
             pool = MPIPool()
-            _pool = ('mpi', pool)
+            _pool = ("mpi", pool)
             return pool
         else:
-            _pool = ('dummy', dummy_pool)
+            _pool = ("dummy", dummy_pool)
             return dummy_pool
     else:
-        _pool = ('dummy', dummy_pool)
+        _pool = ("dummy", dummy_pool)
         return dummy_pool
 
 
@@ -57,6 +64,6 @@ _pool = None
 @atexit.register
 def _cleanup():
     global _pool
-    if _pool and _pool[0] == 'ipython':
+    if _pool and _pool[0] == "ipython":
         _pool[2].__exit__(None, None, None)
     _pool = None

@@ -59,41 +59,60 @@ class ResidualReductor(BasicInterface):
         If `True` compute the Riesz representative of the residual.
     """
 
-    def __init__(self, RB, operator, rhs=None, product=None, riesz_representatives=False):
+    def __init__(
+        self, RB, operator, rhs=None, product=None, riesz_representatives=False
+    ):
         assert RB in operator.source
-        assert rhs is None \
-            or (rhs.source.is_scalar and rhs.range == operator.range and rhs.linear)
+        assert rhs is None or (
+            rhs.source.is_scalar and rhs.range == operator.range and rhs.linear
+        )
         assert product is None or product.source == product.range == operator.range
 
-        self.RB, self.operator, self.rhs, self.product, self.riesz_representatives = \
-            RB, operator, rhs, product, riesz_representatives
+        self.RB, self.operator, self.rhs, self.product, self.riesz_representatives = (
+            RB,
+            operator,
+            rhs,
+            product,
+            riesz_representatives,
+        )
         self.residual_range = operator.range.empty()
         self.residual_range_dims = []
 
     def reduce(self):
         if self.residual_range is not False:
-            with self.logger.block('Estimating residual range ...'):
+            with self.logger.block("Estimating residual range ..."):
                 try:
-                    self.residual_range, self.residual_range_dims = \
-                        estimate_image_hierarchical([self.operator], [self.rhs],
-                                                    self.RB,
-                                                    (self.residual_range, self.residual_range_dims),
-                                                    orthonormalize=True, product=self.product,
-                                                    riesz_representatives=self.riesz_representatives)
+                    self.residual_range, self.residual_range_dims = estimate_image_hierarchical(
+                        [self.operator],
+                        [self.rhs],
+                        self.RB,
+                        (self.residual_range, self.residual_range_dims),
+                        orthonormalize=True,
+                        product=self.product,
+                        riesz_representatives=self.riesz_representatives,
+                    )
                 except ImageCollectionError as e:
-                    self.logger.warning(f'Cannot compute range of {e.op}. Evaluation will be slow.')
+                    self.logger.warning(
+                        f"Cannot compute range of {e.op}. Evaluation will be slow."
+                    )
                     self.residual_range = False
 
         if self.residual_range is False:
             operator = project(self.operator, None, self.RB)
-            return NonProjectedResidualOperator(operator, self.rhs, self.riesz_representatives, self.product)
+            return NonProjectedResidualOperator(
+                operator, self.rhs, self.riesz_representatives, self.product
+            )
 
-        with self.logger.block('Projecting residual operator ...'):
+        with self.logger.block("Projecting residual operator ..."):
             if self.riesz_representatives:
-                operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product cancels out.
+                operator = project(
+                    self.operator, self.residual_range, self.RB, product=None
+                )  # the product cancels out.
                 rhs = project(self.rhs, self.residual_range, None, product=None)
             else:
-                operator = project(self.operator, self.residual_range, self.RB, product=self.product)
+                operator = project(
+                    self.operator, self.residual_range, self.RB, product=self.product
+                )
                 rhs = project(self.rhs, self.residual_range, None, product=self.product)
 
         return ResidualOperator(operator, rhs)
@@ -107,7 +126,7 @@ class ResidualReductor(BasicInterface):
             else:
                 return u
         else:
-            return self.residual_range[:u.dim].lincomb(u.to_numpy())
+            return self.residual_range[: u.dim].lincomb(u.to_numpy())
 
 
 class ResidualOperator(OperatorBase):
@@ -127,15 +146,17 @@ class ResidualOperator(OperatorBase):
         if self.rhs:
             F = self.rhs_vector or self.rhs.as_range_array(mu)
             if len(V) > 1:
-                V -= F[[0]*len(V)]
+                V -= F[[0] * len(V)]
             else:
                 V -= F
         return V
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        return ResidualOperator(project_to_subbasis(self.operator, dim_range, dim_source),
-                                project_to_subbasis(self.rhs, dim_range, None),
-                                name=name)
+        return ResidualOperator(
+            project_to_subbasis(self.operator, dim_range, dim_source),
+            project_to_subbasis(self.rhs, dim_range, None),
+            name=name,
+        )
 
 
 class NonProjectedResidualOperator(ResidualOperator):
@@ -154,13 +175,13 @@ class NonProjectedResidualOperator(ResidualOperator):
             if self.riesz_representatives:
                 R_riesz = self.product.apply_inverse(R)
                 # divide by norm, except when norm is zero:
-                inversel2 = 1./R_riesz.l2_norm()
+                inversel2 = 1.0 / R_riesz.l2_norm()
                 inversel2 = np.nan_to_num(inversel2)
                 R_riesz.scal(np.sqrt(R_riesz.pairwise_dot(R)) * inversel2)
                 return R_riesz
             else:
                 # divide by norm, except when norm is zero:
-                inversel2 = 1./R.l2_norm()
+                inversel2 = 1.0 / R.l2_norm()
                 inversel2 = np.nan_to_num(inversel2)
                 R.scal(np.sqrt(self.product.pairwise_apply2(R, R)) * inversel2)
                 return R
@@ -214,10 +235,15 @@ class ImplicitEulerResidualReductor(BasicInterface):
     product
         Inner product |Operator| w.r.t. which to compute the Riesz representatives.
     """
+
     def __init__(self, RB, operator, mass, dt, rhs=None, product=None):
         assert RB in operator.source
-        assert rhs is None \
-            or rhs.source.is_scalar and rhs.range == operator.range and rhs.linear
+        assert (
+            rhs is None
+            or rhs.source.is_scalar
+            and rhs.range == operator.range
+            and rhs.linear
+        )
         assert product is None or product.source == product.range == operator.range
 
         self.RB = RB
@@ -231,25 +257,34 @@ class ImplicitEulerResidualReductor(BasicInterface):
 
     def reduce(self):
         if self.residual_range is not False:
-            with self.logger.block('Estimating residual range ...'):
+            with self.logger.block("Estimating residual range ..."):
                 try:
-                    self.residual_range, self.residual_range_dims = \
-                        estimate_image_hierarchical([self.operator, self.mass], [self.rhs],
-                                                    self.RB,
-                                                    (self.residual_range, self.residual_range_dims),
-                                                    orthonormalize=True, product=self.product,
-                                                    riesz_representatives=True)
+                    self.residual_range, self.residual_range_dims = estimate_image_hierarchical(
+                        [self.operator, self.mass],
+                        [self.rhs],
+                        self.RB,
+                        (self.residual_range, self.residual_range_dims),
+                        orthonormalize=True,
+                        product=self.product,
+                        riesz_representatives=True,
+                    )
                 except ImageCollectionError as e:
-                    self.logger.warning(f'Cannot compute range of {e.op}. Evaluation will be slow.')
+                    self.logger.warning(
+                        f"Cannot compute range of {e.op}. Evaluation will be slow."
+                    )
                     self.residual_range = False
 
         if self.residual_range is False:
             operator = project(self.operator, None, self.RB)
             mass = project(self.mass, None, self.RB)
-            return NonProjectedImplicitEulerResidualOperator(operator, mass, self.rhs, self.dt, self.product)
+            return NonProjectedImplicitEulerResidualOperator(
+                operator, mass, self.rhs, self.dt, self.product
+            )
 
-        with self.logger.block('Projecting residual operator ...'):
-            operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product always cancels out.
+        with self.logger.block("Projecting residual operator ..."):
+            operator = project(
+                self.operator, self.residual_range, self.RB, product=None
+            )  # the product always cancels out.
             mass = project(self.mass, self.residual_range, self.RB, product=None)
             rhs = project(self.rhs, self.residual_range, None, product=None)
 
@@ -264,7 +299,7 @@ class ImplicitEulerResidualReductor(BasicInterface):
             else:
                 return u
         else:
-            return self.residual_range[:u.dim].lincomb(u.to_numpy())
+            return self.residual_range[: u.dim].lincomb(u.to_numpy())
 
 
 class ImplicitEulerResidualOperator(OperatorBase):
@@ -283,22 +318,24 @@ class ImplicitEulerResidualOperator(OperatorBase):
 
     def apply(self, U, U_old, mu=None):
         V = self.operator.apply(U, mu=mu)
-        V.axpy(1./self.dt, self.mass.apply(U, mu=mu))
-        V.axpy(-1./self.dt, self.mass.apply(U_old, mu=mu))
+        V.axpy(1.0 / self.dt, self.mass.apply(U, mu=mu))
+        V.axpy(-1.0 / self.dt, self.mass.apply(U_old, mu=mu))
         if self.rhs:
             F = self.rhs_vector or self.rhs.as_range_array(mu)
             if len(V) > 1:
-                V -= F[[0]*len(V)]
+                V -= F[[0] * len(V)]
             else:
                 V -= F
         return V
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        return ImplicitEulerResidualOperator(project_to_subbasis(self.operator, dim_range, dim_source),
-                                             project_to_subbasis(self.mass, dim_range, dim_source),
-                                             project_to_subbasis(self.rhs, dim_range, None),
-                                             self.dt,
-                                             name=name)
+        return ImplicitEulerResidualOperator(
+            project_to_subbasis(self.operator, dim_range, dim_source),
+            project_to_subbasis(self.mass, dim_range, dim_source),
+            project_to_subbasis(self.rhs, dim_range, None),
+            self.dt,
+            name=name,
+        )
 
 
 class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
@@ -316,7 +353,7 @@ class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
         if self.product:
             R_riesz = self.product.apply_inverse(R)
             # divide by norm, except when norm is zero:
-            inversel2 = 1./R_riesz.l2_norm()
+            inversel2 = 1.0 / R_riesz.l2_norm()
             inversel2 = np.nan_to_num(inversel2)
             R_riesz.scal(np.sqrt(R_riesz.pairwise_dot(R)) * inversel2)
             return R_riesz
@@ -324,5 +361,7 @@ class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
             return R
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        return self.with_(operator=project_to_subbasis(self.operator, None, dim_source),
-                          mass=project_to_subbasis(self.mass, None, dim_source))
+        return self.with_(
+            operator=project_to_subbasis(self.operator, None, dim_source),
+            mass=project_to_subbasis(self.mass, None, dim_source),
+        )

@@ -96,7 +96,7 @@ class VectorArrayInterface(BasicInterface):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to one.
         """
-        return self.space.full(1., count, reserve)
+        return self.space.full(1.0, count, reserve)
 
     def full(self, value, count=1, reserve=0):
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
@@ -118,7 +118,15 @@ class VectorArrayInterface(BasicInterface):
         """
         return self.space.full(value, count, reserve=reserve)
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(
+        self,
+        count=1,
+        distribution="uniform",
+        random_state=None,
+        seed=None,
+        reserve=0,
+        **kwargs,
+    ):
         """Create a |VectorArray| of vectors with random entries.
 
         This is a shorthand for
@@ -207,7 +215,7 @@ class VectorArrayInterface(BasicInterface):
         raise NotImplementedError
 
     @property
-    @Deprecated('to_numpy')
+    @Deprecated("to_numpy")
     def data(self):
         return self.to_numpy()
 
@@ -384,7 +392,7 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
-    @defaults('tol', 'raise_complex')
+    @defaults("tol", "raise_complex")
     def norm(self, product=None, tol=1e-10, raise_complex=True):
         """Norm w.r.t. given inner product |Operator|.
 
@@ -399,10 +407,10 @@ class VectorArrayInterface(BasicInterface):
         else:
             norm_squared = product.pairwise_apply2(self, self)
             if raise_complex and np.any(np.abs(norm_squared.imag) > tol):
-                raise ValueError(f'norm is complex (square = {norm_squared})')
+                raise ValueError(f"norm is complex (square = {norm_squared})")
             return np.sqrt(norm_squared.real)
 
-    @defaults('tol', 'raise_complex')
+    @defaults("tol", "raise_complex")
     def norm2(self, product=None, tol=1e-10, raise_complex=True):
         """Squared norm w.r.t. given inner product |Operator|.
 
@@ -417,7 +425,7 @@ class VectorArrayInterface(BasicInterface):
         else:
             norm_squared = product.pairwise_apply2(self, self)
             if raise_complex and np.any(np.abs(norm_squared.imag) > tol):
-                raise ValueError(f'norm is complex (square = {norm_squared})')
+                raise ValueError(f"norm is complex (square = {norm_squared})")
             return norm_squared.real
 
     @abstractmethod
@@ -557,42 +565,57 @@ class VectorArrayInterface(BasicInterface):
     def check_ind(self, ind):
         """Check if `ind` is an admissible list of indices in the sense of the class documentation."""
         l = len(self)
-        return (type(ind) is slice
-                or isinstance(ind, Number) and -l <= ind < l
-                or isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
+        return (
+            type(ind) is slice
+            or isinstance(ind, Number)
+            and -l <= ind < l
+            or isinstance(ind, (list, np.ndarray))
+            and all(-l <= i < l for i in ind)
+        )
 
     def check_ind_unique(self, ind):
         """Check if `ind` is an admissible list of non-repeated indices in the sense of the class documentation."""
         l = len(self)
-        return (type(ind) is slice
-                or isinstance(ind, Number) and -l <= ind < l
-                or isinstance(ind, (list, np.ndarray))
-                and len(set(i if i >= 0 else l+i for i in ind if -l <= i < l)) == len(ind))
+        return (
+            type(ind) is slice
+            or isinstance(ind, Number)
+            and -l <= ind < l
+            or isinstance(ind, (list, np.ndarray))
+            and len(set(i if i >= 0 else l + i for i in ind if -l <= i < l)) == len(ind)
+        )
 
     def len_ind(self, ind):
         """Return the number of given indices."""
         l = len(self)
-        return (len(range(*ind.indices(l))) if type(ind) is slice else
-                1 if not hasattr(ind, '__len__') else
-                len(ind))
+        return (
+            len(range(*ind.indices(l)))
+            if type(ind) is slice
+            else 1
+            if not hasattr(ind, "__len__")
+            else len(ind)
+        )
 
     def len_ind_unique(self, ind):
         """Return the number of specified unique indices."""
         l = len(self)
-        return (len(range(*ind.indices(l))) if type(ind) is slice else
-                1 if isinstance(ind, Number) else
-                len({i if i >= 0 else l+i for i in ind}))
+        return (
+            len(range(*ind.indices(l)))
+            if type(ind) is slice
+            else 1
+            if isinstance(ind, Number)
+            else len({i if i >= 0 else l + i for i in ind})
+        )
 
     def normalize_ind(self, ind):
         """Normalize given indices such that they are independent of the array length."""
         if type(ind) is slice:
             return slice(*ind.indices(len(self)))
-        elif not hasattr(ind, '__len__'):
-            ind = ind if 0 <= ind else len(self)+ind
-            return slice(ind, ind+1)
+        elif not hasattr(ind, "__len__"):
+            ind = ind if 0 <= ind else len(self) + ind
+            return slice(ind, ind + 1)
         else:
             l = len(self)
-            return [i if 0 <= i else l+i for i in ind]
+            return [i if 0 <= i else l + i for i in ind]
 
     def sub_index(self, ind, ind_ind):
         """Return indices corresponding to the view `self[ind][ind_ind]`"""
@@ -601,16 +624,16 @@ class VectorArrayInterface(BasicInterface):
             if type(ind_ind) is slice:
                 result = ind[ind_ind]
                 return slice(result.start, result.stop, result.step)
-            elif hasattr(ind_ind, '__len__'):
+            elif hasattr(ind_ind, "__len__"):
                 return [ind[i] for i in ind_ind]
             else:
                 return [ind[ind_ind]]
         else:
-            if not hasattr(ind, '__len__'):
+            if not hasattr(ind, "__len__"):
                 ind = [ind]
             if type(ind_ind) is slice:
                 return ind[ind_ind]
-            elif hasattr(ind_ind, '__len__'):
+            elif hasattr(ind_ind, "__len__"):
                 return [ind[i] for i in ind_ind]
             else:
                 return [ind[ind_ind]]
@@ -708,7 +731,7 @@ class VectorSpaceInterface(ImmutableInterface):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to one.
         """
-        return self.full(1., count, reserve)
+        return self.full(1.0, count, reserve)
 
     def full(self, value, count=1, reserve=0):
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
@@ -728,7 +751,15 @@ class VectorSpaceInterface(ImmutableInterface):
         """
         return self.from_numpy(np.full((count, self.dim), value))
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(
+        self,
+        count=1,
+        distribution="uniform",
+        random_state=None,
+        seed=None,
+        reserve=0,
+        **kwargs,
+    ):
         """Create a |VectorArray| of vectors with random entries.
 
         Supported random distributions::
@@ -767,7 +798,9 @@ class VectorSpaceInterface(ImmutableInterface):
         """
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
-        values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
+        values = _create_random_values(
+            (count, self.dim), distribution, random_state, **kwargs
+        )
         return self.from_numpy(values)
 
     def empty(self, reserve=0):
@@ -807,7 +840,7 @@ class VectorSpaceInterface(ImmutableInterface):
         """
         raise NotImplementedError
 
-    @Deprecated('from_numpy')
+    @Deprecated("from_numpy")
     def from_data(self, data):
         return self.from_numpy(data)
 
@@ -818,32 +851,32 @@ class VectorSpaceInterface(ImmutableInterface):
         return not (self == other)
 
     def __contains__(self, other):
-        return self == getattr(other, 'space', None)
+        return self == getattr(other, "space", None)
 
     def __hash__(self):
         return hash(self.id)
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.id})'
+        return f"{self.__class__.__name__}({self.id})"
 
 
 def _create_random_values(shape, distribution, random_state, **kwargs):
-    if distribution not in ('uniform', 'normal'):
+    if distribution not in ("uniform", "normal"):
         raise NotImplementedError
 
-    if distribution == 'uniform':
-        if not kwargs.keys() <= {'low', 'high'}:
+    if distribution == "uniform":
+        if not kwargs.keys() <= {"low", "high"}:
             raise ValueError
-        low = kwargs.get('low', 0.)
-        high = kwargs.get('high', 1.)
+        low = kwargs.get("low", 0.0)
+        high = kwargs.get("high", 1.0)
         if high <= low:
             raise ValueError
         return random_state.uniform(low, high, shape)
-    elif distribution == 'normal':
-        if not kwargs.keys() <= {'loc', 'scale'}:
+    elif distribution == "normal":
+        if not kwargs.keys() <= {"loc", "scale"}:
             raise ValueError
-        loc = kwargs.get('loc', 0.)
-        scale = kwargs.get('scale', 1.)
+        loc = kwargs.get("loc", 0.0)
+        scale = kwargs.get("scale", 1.0)
         return random_state.normal(loc, scale, shape)
     else:
         assert False

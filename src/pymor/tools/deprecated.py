@@ -14,7 +14,7 @@ class Deprecated:
     when the function is used.
     """
 
-    def __init__(self, alt='no alternative given'):
+    def __init__(self, alt="no alternative given"):
         self._alt = alt
 
     def __call__(self, func):
@@ -23,11 +23,14 @@ class Deprecated:
         @functools.wraps(func)
         def new_func(*args, **kwargs):
             frame = inspect.currentframe().f_back
-            msg = f'DeprecationWarning. Call to deprecated function {func.__name__,} in ' \
-                  f'{frame.f_code.co_filename}:{frame.f_code.co_firstlineno}\n' \
-                  f'Use {self._alt} instead'
+            msg = (
+                f"DeprecationWarning. Call to deprecated function {func.__name__,} in "
+                f"{frame.f_code.co_filename}:{frame.f_code.co_firstlineno}\n"
+                f"Use {self._alt} instead"
+            )
             warnings.warn(msg, DeprecationWarning)
             return func(*args, **kwargs)
+
         return new_func
 
     def __get__(self, obj, ownerClass=None):

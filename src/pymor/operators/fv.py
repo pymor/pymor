@@ -21,7 +21,7 @@ from pymor.tools.quadratures import GaussQuadratures
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def FVVectorSpace(grid, id='STATE'):
+def FVVectorSpace(grid, id="STATE"):
     return NumpyVectorSpace(grid.size(0), id)
 
 
@@ -87,8 +87,10 @@ class LaxFriedrichsFlux(NumericalConvectiveFluxInterface):
 
     def evaluate_stage2(self, stage1_data, unit_outer_normals, volumes, mu=None):
         U, F = stage1_data
-        return (np.sum(np.sum(F, axis=1) * unit_outer_normals, axis=1) * 0.5
-                + (U[..., 0] - U[..., 1]) * (0.5 / self.lxf_lambda)) * volumes
+        return (
+            np.sum(np.sum(F, axis=1) * unit_outer_normals, axis=1) * 0.5
+            + (U[..., 0] - U[..., 1]) * (0.5 / self.lxf_lambda)
+        ) * volumes
 
 
 class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
@@ -112,7 +114,10 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
         self.build_parameter_type(flux, flux_derivative)
 
     def evaluate_stage1(self, U, mu=None):
-        return self.flux(U[..., np.newaxis], mu), self.flux_derivative(U[..., np.newaxis], mu)
+        return (
+            self.flux(U[..., np.newaxis], mu),
+            self.flux_derivative(U[..., np.newaxis], mu),
+        )
 
     def evaluate_stage2(self, stage1_data, unit_outer_normals, volumes, mu=None):
         F_edge, F_d_edge = stage1_data
@@ -163,20 +168,35 @@ class EngquistOsherFlux(NumericalConvectiveFluxInterface):
         self.build_parameter_type(flux, flux_derivative)
         points, weights = GaussQuadratures.quadrature(npoints=self.gausspoints)
         points = points / intervals
-        points = ((np.arange(self.intervals, dtype=np.float)[:, np.newaxis] * (1 / intervals))
-                  + points[np.newaxis, :]).ravel()
+        points = (
+            (np.arange(self.intervals, dtype=np.float)[:, np.newaxis] * (1 / intervals))
+            + points[np.newaxis, :]
+        ).ravel()
         weights = np.tile(weights, intervals) * (1 / intervals)
         self.points = points
         self.weights = weights
 
     def evaluate_stage1(self, U, mu=None):
         int_els = np.abs(U)[:, np.newaxis, np.newaxis]
-        return [np.concatenate([self.flux_derivative(U[:, np.newaxis] * p, mu)[:, np.newaxis, :] * int_els * w
-                               for p, w in zip(self.points, self.weights)], axis=1)]
+        return [
+            np.concatenate(
+                [
+                    self.flux_derivative(U[:, np.newaxis] * p, mu)[:, np.newaxis, :]
+                    * int_els
+                    * w
+                    for p, w in zip(self.points, self.weights)
+                ],
+                axis=1,
+            )
+        ]
 
     def evaluate_stage2(self, stage1_data, unit_outer_normals, volumes, mu=None):
-        F0 = np.sum(self.flux.evaluate(np.array([[0.]]), mu=mu) * unit_outer_normals, axis=1)
-        Fs = np.sum(stage1_data[0] * unit_outer_normals[:, np.newaxis, np.newaxis, :], axis=3)
+        F0 = np.sum(
+            self.flux.evaluate(np.array([[0.0]]), mu=mu) * unit_outer_normals, axis=1
+        )
+        Fs = np.sum(
+            stage1_data[0] * unit_outer_normals[:, np.newaxis, np.newaxis, :], axis=3
+        )
         Fs[:, 0, :] = np.maximum(Fs[:, 0, :], 0)
         Fs[:, 1, :] = np.minimum(Fs[:, 1, :], 0)
         Fs = np.sum(np.sum(Fs, axis=2), axis=1) + F0
@@ -184,9 +204,9 @@ class EngquistOsherFlux(NumericalConvectiveFluxInterface):
         return Fs
 
 
-@defaults('delta')
+@defaults("delta")
 def jacobian_options(delta=1e-7):
-    return {'delta': delta}
+    return {"delta": delta}
 
 
 class NonlinearAdvectionOperator(OperatorBase):
@@ -213,12 +233,20 @@ class NonlinearAdvectionOperator(OperatorBase):
         The name of the operator.
     """
 
-    sid_ignore = OperatorBase.sid_ignore | {'_grid_data'}
+    sid_ignore = OperatorBase.sid_ignore | {"_grid_data"}
 
     linear = False
 
-    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None,
-                 space_id='STATE', name=None):
+    def __init__(
+        self,
+        grid,
+        boundary_info,
+        numerical_flux,
+        dirichlet_data=None,
+        solver_options=None,
+        space_id="STATE",
+        name=None,
+    ):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
 
         self.grid = grid
@@ -228,9 +256,14 @@ class NonlinearAdvectionOperator(OperatorBase):
         self.solver_options = solver_options
         self.space_id = space_id
         self.name = name
-        if (isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet
-                and not dirichlet_data.parametric):
-            self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
+        if (
+            isinstance(dirichlet_data, FunctionInterface)
+            and boundary_info.has_dirichlet
+            and not dirichlet_data.parametric
+        ):
+            self._dirichlet_values = self.dirichlet_data(
+                grid.centers(1)[boundary_info.dirichlet_boundaries(1)]
+            )
             self._dirichlet_values = self._dirichlet_values.ravel()
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.build_parameter_type(numerical_flux, dirichlet_data)
@@ -240,13 +273,21 @@ class NonlinearAdvectionOperator(OperatorBase):
         return self.with_(numerical_flux=self.numerical_flux.with_(**kwargs))
 
     def restricted(self, dofs):
-        source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[dofs].ravel(), dofs),
-                                   np.array([-1], dtype=np.int32),
-                                   assume_unique=True)
+        source_dofs = np.setdiff1d(
+            np.union1d(self.grid.neighbours(0, 0)[dofs].ravel(), dofs),
+            np.array([-1], dtype=np.int32),
+            assume_unique=True,
+        )
         sub_grid = SubGrid(self.grid, source_dofs)
-        sub_boundary_info = make_sub_grid_boundary_info(sub_grid, self.grid, self.boundary_info)
-        op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id=None,
-                        name=f'{self.name}_restricted')
+        sub_boundary_info = make_sub_grid_boundary_info(
+            sub_grid, self.grid, self.boundary_info
+        )
+        op = self.with_(
+            grid=sub_grid,
+            boundary_info=sub_boundary_info,
+            space_id=None,
+            name=f"{self.name}_restricted",
+        )
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.range)
         return proj @ op, sub_grid.parent_indices(0)
@@ -255,22 +296,29 @@ class NonlinearAdvectionOperator(OperatorBase):
         # pre-fetch all grid-associated data to avoid searching the cache for each operator application
         g = self.grid
         bi = self.boundary_info
-        self._grid_data = dict(SUPE=g.superentities(1, 0),
-                               SUPI=g.superentity_indices(1, 0),
-                               VOLS0=g.volumes(0),
-                               VOLS1=g.volumes(1),
-                               BOUNDARIES=g.boundaries(1),
-                               CENTERS=g.centers(1),
-                               DIRICHLET_BOUNDARIES=bi.dirichlet_boundaries(1) if bi.has_dirichlet else None,
-                               NEUMANN_BOUNDARIES=bi.neumann_boundaries(1) if bi.has_neumann else None)
-        self._grid_data.update(UNIT_OUTER_NORMALS=g.unit_outer_normals()[self._grid_data['SUPE'][:, 0],
-                                                                         self._grid_data['SUPI'][:, 0]])
+        self._grid_data = dict(
+            SUPE=g.superentities(1, 0),
+            SUPI=g.superentity_indices(1, 0),
+            VOLS0=g.volumes(0),
+            VOLS1=g.volumes(1),
+            BOUNDARIES=g.boundaries(1),
+            CENTERS=g.centers(1),
+            DIRICHLET_BOUNDARIES=bi.dirichlet_boundaries(1)
+            if bi.has_dirichlet
+            else None,
+            NEUMANN_BOUNDARIES=bi.neumann_boundaries(1) if bi.has_neumann else None,
+        )
+        self._grid_data.update(
+            UNIT_OUTER_NORMALS=g.unit_outer_normals()[
+                self._grid_data["SUPE"][:, 0], self._grid_data["SUPI"][:, 0]
+            ]
+        )
 
     def apply(self, U, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)
 
-        if not hasattr(self, '_grid_data'):
+        if not hasattr(self, "_grid_data"):
             self._fetch_grid_data()
 
         U = U.to_numpy()
@@ -278,20 +326,22 @@ class NonlinearAdvectionOperator(OperatorBase):
 
         bi = self.boundary_info
         gd = self._grid_data
-        SUPE = gd['SUPE']
-        VOLS0 = gd['VOLS0']
-        VOLS1 = gd['VOLS1']
-        BOUNDARIES = gd['BOUNDARIES']
-        CENTERS = gd['CENTERS']
-        DIRICHLET_BOUNDARIES = gd['DIRICHLET_BOUNDARIES']
-        NEUMANN_BOUNDARIES = gd['NEUMANN_BOUNDARIES']
-        UNIT_OUTER_NORMALS = gd['UNIT_OUTER_NORMALS']
+        SUPE = gd["SUPE"]
+        VOLS0 = gd["VOLS0"]
+        VOLS1 = gd["VOLS1"]
+        BOUNDARIES = gd["BOUNDARIES"]
+        CENTERS = gd["CENTERS"]
+        DIRICHLET_BOUNDARIES = gd["DIRICHLET_BOUNDARIES"]
+        NEUMANN_BOUNDARIES = gd["NEUMANN_BOUNDARIES"]
+        UNIT_OUTER_NORMALS = gd["UNIT_OUTER_NORMALS"]
 
         if bi.has_dirichlet:
-            if hasattr(self, '_dirichlet_values'):
+            if hasattr(self, "_dirichlet_values"):
                 dirichlet_values = self._dirichlet_values
             elif self.dirichlet_data is not None:
-                dirichlet_values = self.dirichlet_data(CENTERS[DIRICHLET_BOUNDARIES], mu=mu)
+                dirichlet_values = self.dirichlet_data(
+                    CENTERS[DIRICHLET_BOUNDARIES], mu=mu
+                )
             else:
                 dirichlet_values = np.zeros_like(DIRICHLET_BOUNDARIES)
             F_dirichlet = self.numerical_flux.evaluate_stage1(dirichlet_values, mu)
@@ -309,7 +359,9 @@ class NonlinearAdvectionOperator(OperatorBase):
                 for f, f_d in zip(F_edge, F_dirichlet):
                     f[DIRICHLET_BOUNDARIES, 1] = f_d
 
-            NUM_FLUX = self.numerical_flux.evaluate_stage2(F_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
+            NUM_FLUX = self.numerical_flux.evaluate_stage2(
+                F_edge, UNIT_OUTER_NORMALS, VOLS1, mu
+            )
 
             if bi.has_neumann:
                 NUM_FLUX[NEUMANN_BOUNDARIES] = 0
@@ -325,7 +377,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         assert U in self.source and len(U) == 1
         mu = self.parse_parameter(mu)
 
-        if not hasattr(self, '_grid_data'):
+        if not hasattr(self, "_grid_data"):
             self._fetch_grid_data()
 
         U = U.to_numpy().ravel()
@@ -333,26 +385,28 @@ class NonlinearAdvectionOperator(OperatorBase):
         g = self.grid
         bi = self.boundary_info
         gd = self._grid_data
-        SUPE = gd['SUPE']
-        VOLS0 = gd['VOLS0']
-        VOLS1 = gd['VOLS1']
-        BOUNDARIES = gd['BOUNDARIES']
-        CENTERS = gd['CENTERS']
-        DIRICHLET_BOUNDARIES = gd['DIRICHLET_BOUNDARIES']
-        NEUMANN_BOUNDARIES = gd['NEUMANN_BOUNDARIES']
-        UNIT_OUTER_NORMALS = gd['UNIT_OUTER_NORMALS']
+        SUPE = gd["SUPE"]
+        VOLS0 = gd["VOLS0"]
+        VOLS1 = gd["VOLS1"]
+        BOUNDARIES = gd["BOUNDARIES"]
+        CENTERS = gd["CENTERS"]
+        DIRICHLET_BOUNDARIES = gd["DIRICHLET_BOUNDARIES"]
+        NEUMANN_BOUNDARIES = gd["NEUMANN_BOUNDARIES"]
+        UNIT_OUTER_NORMALS = gd["UNIT_OUTER_NORMALS"]
         INNER = np.setdiff1d(np.arange(g.size(1)), BOUNDARIES)
 
         solver_options = self.solver_options
-        delta = solver_options.get('jacobian_delta') if solver_options else None
+        delta = solver_options.get("jacobian_delta") if solver_options else None
         if delta is None:
-            delta = jacobian_options()['delta']
+            delta = jacobian_options()["delta"]
 
         if bi.has_dirichlet:
-            if hasattr(self, '_dirichlet_values'):
+            if hasattr(self, "_dirichlet_values"):
                 dirichlet_values = self._dirichlet_values
             elif self.dirichlet_data is not None:
-                dirichlet_values = self.dirichlet_data(CENTERS[DIRICHLET_BOUNDARIES], mu=mu)
+                dirichlet_values = self.dirichlet_data(
+                    CENTERS[DIRICHLET_BOUNDARIES], mu=mu
+                )
             else:
                 dirichlet_values = np.zeros_like(DIRICHLET_BOUNDARIES)
             F_dirichlet = self.numerical_flux.evaluate_stage1(dirichlet_values, mu)
@@ -376,7 +430,9 @@ class NonlinearAdvectionOperator(OperatorBase):
         if bi.has_dirichlet:
             for f, f_d in zip(F0P_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
-        NUM_FLUX_0P = self.numerical_flux.evaluate_stage2(F0P_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
+        NUM_FLUX_0P = self.numerical_flux.evaluate_stage2(
+            F0P_edge, UNIT_OUTER_NORMALS, VOLS1, mu
+        )
         del F0P_edge
 
         F0M_edge = [f.copy() for f in F_edge]
@@ -386,11 +442,13 @@ class NonlinearAdvectionOperator(OperatorBase):
         if bi.has_dirichlet:
             for f, f_d in zip(F0M_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
-        NUM_FLUX_0M = self.numerical_flux.evaluate_stage2(F0M_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
+        NUM_FLUX_0M = self.numerical_flux.evaluate_stage2(
+            F0M_edge, UNIT_OUTER_NORMALS, VOLS1, mu
+        )
         del F0M_edge
 
-        D_NUM_FLUX_0 = (NUM_FLUX_0P - NUM_FLUX_0M)
-        D_NUM_FLUX_0 /= (2 * delta)
+        D_NUM_FLUX_0 = NUM_FLUX_0P - NUM_FLUX_0M
+        D_NUM_FLUX_0 /= 2 * delta
         if bi.has_neumann:
             D_NUM_FLUX_0[NEUMANN_BOUNDARIES] = 0
         del NUM_FLUX_0P, NUM_FLUX_0M
@@ -402,7 +460,9 @@ class NonlinearAdvectionOperator(OperatorBase):
         if bi.has_dirichlet:
             for f, f_d in zip(F1P_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
-        NUM_FLUX_1P = self.numerical_flux.evaluate_stage2(F1P_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
+        NUM_FLUX_1P = self.numerical_flux.evaluate_stage2(
+            F1P_edge, UNIT_OUTER_NORMALS, VOLS1, mu
+        )
         del F1P_edge, FP_edge
 
         F1M_edge = F_edge
@@ -412,45 +472,103 @@ class NonlinearAdvectionOperator(OperatorBase):
         if bi.has_dirichlet:
             for f, f_d in zip(F1M_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
-        NUM_FLUX_1M = self.numerical_flux.evaluate_stage2(F1M_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
+        NUM_FLUX_1M = self.numerical_flux.evaluate_stage2(
+            F1M_edge, UNIT_OUTER_NORMALS, VOLS1, mu
+        )
         del F1M_edge, FM_edge
-        D_NUM_FLUX_1 = (NUM_FLUX_1P - NUM_FLUX_1M)
-        D_NUM_FLUX_1 /= (2 * delta)
+        D_NUM_FLUX_1 = NUM_FLUX_1P - NUM_FLUX_1M
+        D_NUM_FLUX_1 /= 2 * delta
         if bi.has_neumann:
             D_NUM_FLUX_1[NEUMANN_BOUNDARIES] = 0
         del NUM_FLUX_1P, NUM_FLUX_1M
 
-        I1 = np.hstack([SUPE[INNER, 0], SUPE[INNER, 0], SUPE[INNER, 1], SUPE[INNER, 1], SUPE[BOUNDARIES, 0]])
-        I0 = np.hstack([SUPE[INNER, 0], SUPE[INNER, 1], SUPE[INNER, 0], SUPE[INNER, 1], SUPE[BOUNDARIES, 0]])
-        V = np.hstack([D_NUM_FLUX_0[INNER], -D_NUM_FLUX_0[INNER], D_NUM_FLUX_1[INNER], -D_NUM_FLUX_1[INNER],
-                       D_NUM_FLUX_0[BOUNDARIES]])
+        I1 = np.hstack(
+            [
+                SUPE[INNER, 0],
+                SUPE[INNER, 0],
+                SUPE[INNER, 1],
+                SUPE[INNER, 1],
+                SUPE[BOUNDARIES, 0],
+            ]
+        )
+        I0 = np.hstack(
+            [
+                SUPE[INNER, 0],
+                SUPE[INNER, 1],
+                SUPE[INNER, 0],
+                SUPE[INNER, 1],
+                SUPE[BOUNDARIES, 0],
+            ]
+        )
+        V = np.hstack(
+            [
+                D_NUM_FLUX_0[INNER],
+                -D_NUM_FLUX_0[INNER],
+                D_NUM_FLUX_1[INNER],
+                -D_NUM_FLUX_1[INNER],
+                D_NUM_FLUX_0[BOUNDARIES],
+            ]
+        )
 
         A = coo_matrix((V, (I0, I1)), shape=(g.size(0), g.size(0)))
-        A = csc_matrix(A).copy()   # See pymor.operators.cg.DiffusionOperatorP1 for why copy() is necessary
-        A = dia_matrix(([1. / VOLS0], [0]), shape=(g.size(0),) * 2) * A
+        A = csc_matrix(
+            A
+        ).copy()  # See pymor.operators.cg.DiffusionOperatorP1 for why copy() is necessary
+        A = dia_matrix(([1.0 / VOLS0], [0]), shape=(g.size(0),) * 2) * A
 
         return NumpyMatrixOperator(A, source_id=self.source.id, range_id=self.range.id)
 
 
-def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
-                                                dirichlet_data=None, solver_options=None, name=None):
+def nonlinear_advection_lax_friedrichs_operator(
+    grid,
+    boundary_info,
+    flux,
+    lxf_lambda=1.0,
+    dirichlet_data=None,
+    solver_options=None,
+    name=None,
+):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`LaxFriedrichsFlux`."""
     num_flux = LaxFriedrichsFlux(flux, lxf_lambda)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
+    return NonlinearAdvectionOperator(
+        grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name
+    )
 
 
-def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
-                                                           dirichlet_data=None, solver_options=None, name=None):
+def nonlinear_advection_simplified_engquist_osher_operator(
+    grid,
+    boundary_info,
+    flux,
+    flux_derivative,
+    dirichlet_data=None,
+    solver_options=None,
+    name=None,
+):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
+    return NonlinearAdvectionOperator(
+        grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name
+    )
 
 
-def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_derivative, gausspoints=5, intervals=1,
-                                                dirichlet_data=None, solver_options=None, name=None):
+def nonlinear_advection_engquist_osher_operator(
+    grid,
+    boundary_info,
+    flux,
+    flux_derivative,
+    gausspoints=5,
+    intervals=1,
+    dirichlet_data=None,
+    solver_options=None,
+    name=None,
+):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`EngquistOsherFlux`."""
-    num_flux = EngquistOsherFlux(flux, flux_derivative, gausspoints=gausspoints, intervals=intervals)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
+    num_flux = EngquistOsherFlux(
+        flux, flux_derivative, gausspoints=gausspoints, intervals=intervals
+    )
+    return NonlinearAdvectionOperator(
+        grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name
+    )
 
 
 class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
@@ -478,7 +596,15 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         The name of the operator.
     """
 
-    def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver_options=None, name=None):
+    def __init__(
+        self,
+        grid,
+        boundary_info,
+        velocity_field,
+        lxf_lambda=1.0,
+        solver_options=None,
+        name=None,
+    ):
         self.grid = grid
         self.boundary_info = boundary_info
         self.velocity_field = velocity_field
@@ -497,17 +623,43 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         edge_volumes = g.volumes(1)
         boundary_edges = g.boundaries(1)
         inner_edges = np.setdiff1d(np.arange(g.size(1)), boundary_edges)
-        dirichlet_edges = bi.dirichlet_boundaries(1) if bi.has_dirichlet else np.array([], ndmin=1, dtype=np.int)
-        neumann_edges = bi.neumann_boundaries(1) if bi.has_neumann else np.array([], ndmin=1, dtype=np.int)
-        outflow_edges = np.setdiff1d(boundary_edges, np.hstack([dirichlet_edges, neumann_edges]))
-        normal_velocities = np.einsum('ei,ei->e',
-                                      self.velocity_field(g.centers(1), mu=mu),
-                                      g.unit_outer_normals()[SUPE[:, 0], SUPI[:, 0]])
+        dirichlet_edges = (
+            bi.dirichlet_boundaries(1)
+            if bi.has_dirichlet
+            else np.array([], ndmin=1, dtype=np.int)
+        )
+        neumann_edges = (
+            bi.neumann_boundaries(1)
+            if bi.has_neumann
+            else np.array([], ndmin=1, dtype=np.int)
+        )
+        outflow_edges = np.setdiff1d(
+            boundary_edges, np.hstack([dirichlet_edges, neumann_edges])
+        )
+        normal_velocities = np.einsum(
+            "ei,ei->e",
+            self.velocity_field(g.centers(1), mu=mu),
+            g.unit_outer_normals()[SUPE[:, 0], SUPI[:, 0]],
+        )
 
         nv_inner = normal_velocities[inner_edges]
-        l_inner = np.ones_like(nv_inner) * (1. / self.lxf_lambda)
-        I0_inner = np.hstack([SUPE[inner_edges, 0], SUPE[inner_edges, 0], SUPE[inner_edges, 1], SUPE[inner_edges, 1]])
-        I1_inner = np.hstack([SUPE[inner_edges, 0], SUPE[inner_edges, 1], SUPE[inner_edges, 0], SUPE[inner_edges, 1]])
+        l_inner = np.ones_like(nv_inner) * (1.0 / self.lxf_lambda)
+        I0_inner = np.hstack(
+            [
+                SUPE[inner_edges, 0],
+                SUPE[inner_edges, 0],
+                SUPE[inner_edges, 1],
+                SUPE[inner_edges, 1],
+            ]
+        )
+        I1_inner = np.hstack(
+            [
+                SUPE[inner_edges, 0],
+                SUPE[inner_edges, 1],
+                SUPE[inner_edges, 0],
+                SUPE[inner_edges, 1],
+            ]
+        )
         V_inner = np.hstack([nv_inner, nv_inner, -nv_inner, -nv_inner])
         V_inner += np.hstack([l_inner, -l_inner, -l_inner, l_inner])
         V_inner *= np.tile(0.5 * edge_volumes[inner_edges], 4)
@@ -516,15 +668,19 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         V_out = edge_volumes[outflow_edges] * normal_velocities[outflow_edges]
 
         I_dir = SUPE[dirichlet_edges, 0]
-        V_dir = edge_volumes[dirichlet_edges] * (0.5 * normal_velocities[dirichlet_edges] + 0.5 / self.lxf_lambda)
+        V_dir = edge_volumes[dirichlet_edges] * (
+            0.5 * normal_velocities[dirichlet_edges] + 0.5 / self.lxf_lambda
+        )
 
         I0 = np.hstack([I0_inner, I_out, I_dir])
         I1 = np.hstack([I1_inner, I_out, I_dir])
         V = np.hstack([V_inner, V_out, V_dir])
 
         A = coo_matrix((V, (I0, I1)), shape=(g.size(0), g.size(0)))
-        A = csc_matrix(A).copy()   # See pymor.operators.cg.DiffusionOperatorP1 for why copy() is necessary
-        A = dia_matrix(([1. / g.volumes(0)], [0]), shape=(g.size(0),) * 2) * A
+        A = csc_matrix(
+            A
+        ).copy()  # See pymor.operators.cg.DiffusionOperatorP1 for why copy() is necessary
+        A = dia_matrix(([1.0 / g.volumes(0)], [0]), shape=(g.size(0),) * 2) * A
 
         return A
 
@@ -579,7 +735,10 @@ class ReactionOperator(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, reaction_coefficient, solver_options=None, name=None):
-        assert reaction_coefficient.dim_domain == grid.dim and reaction_coefficient.shape_range == ()
+        assert (
+            reaction_coefficient.dim_domain == grid.dim
+            and reaction_coefficient.shape_range == ()
+        )
         self.source = self.range = FVVectorSpace(grid)
         self.grid = grid
         self.reaction_coefficient = reaction_coefficient
@@ -589,8 +748,10 @@ class ReactionOperator(NumpyMatrixBasedOperator):
 
     def _assemble(self, mu=None):
 
-        A = dia_matrix((self.reaction_coefficient.evaluate(self.grid.centers(0), mu=mu), [0]),
-                       shape=(self.grid.size(0),) * 2)
+        A = dia_matrix(
+            (self.reaction_coefficient.evaluate(self.grid.centers(0), mu=mu), [0]),
+            shape=(self.grid.size(0),) * 2,
+        )
 
         return A
 
@@ -599,7 +760,14 @@ class NonlinearReactionOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, grid, reaction_function, reaction_function_derivative=None, space_id='STATE', name=None):
+    def __init__(
+        self,
+        grid,
+        reaction_function,
+        reaction_function_derivative=None,
+        space_id="STATE",
+        name=None,
+    ):
         self.grid = grid
         self.reaction_function = reaction_function
         self.reaction_function_derivative = reaction_function_derivative
@@ -621,8 +789,15 @@ class NonlinearReactionOperator(OperatorBase):
             raise NotImplementedError
 
         U = U.to_numpy()
-        A = dia_matrix((self.reaction_function_derivative.evaluate(U.reshape(U.shape + (1,)), mu=mu), [0]),
-                       shape=(self.grid.size(0),) * 2)
+        A = dia_matrix(
+            (
+                self.reaction_function_derivative.evaluate(
+                    U.reshape(U.shape + (1,)), mu=mu
+                ),
+                [0],
+            ),
+            shape=(self.grid.size(0),) * 2,
+        )
 
         return NumpyMatrixOperator(A, source_id=self.source.id, range_id=self.range.id)
 
@@ -663,8 +838,18 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
     source = NumpyVectorSpace(1)
     sparse = False
 
-    def __init__(self, grid, function=None, boundary_info=None, dirichlet_data=None, diffusion_function=None,
-                 diffusion_constant=None, neumann_data=None, order=1, name=None):
+    def __init__(
+        self,
+        grid,
+        function=None,
+        boundary_info=None,
+        dirichlet_data=None,
+        diffusion_function=None,
+        diffusion_constant=None,
+        neumann_data=None,
+        order=1,
+        name=None,
+    ):
         assert function is None or function.shape_range == ()
         self.range = FVVectorSpace(grid)
         self.grid = grid
@@ -676,7 +861,9 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         self.neumann_data = neumann_data
         self.order = order
         self.name = name
-        self.build_parameter_type(function, dirichlet_data, diffusion_function, neumann_data)
+        self.build_parameter_type(
+            function, dirichlet_data, diffusion_function, neumann_data
+        )
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -690,12 +877,16 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
 
             # integrate the products of the function with the shape functions on each element
             # -> shape = (g.size(0), number of shape functions)
-            F_INTS = np.einsum('ei,e,i->e', F, g.integration_elements(0), w).ravel()
+            F_INTS = np.einsum("ei,e,i->e", F, g.integration_elements(0), w).ravel()
         else:
             F_INTS = np.zeros(g.size(0))
 
-        if bi is not None and (bi.has_dirichlet and self.dirichlet_data is not None
-                               or bi.has_neumann and self.neumann_data):
+        if bi is not None and (
+            bi.has_dirichlet
+            and self.dirichlet_data is not None
+            or bi.has_neumann
+            and self.neumann_data
+        ):
             centers = g.centers(1)
             superentities = g.superentities(1, 0)
             superentity_indices = g.superentity_indices(1, 0)
@@ -706,20 +897,32 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
             if bi.has_dirichlet and self.dirichlet_data is not None:
                 dirichlet_mask = bi.dirichlet_mask(1)
                 SE_I0_D = SE_I0[dirichlet_mask]
-                boundary_normals = g.unit_outer_normals()[SE_I0_D, superentity_indices[:, 0][dirichlet_mask]]
-                BOUNDARY_DISTS = np.sum((centers[dirichlet_mask, :] - g.orthogonal_centers()[SE_I0_D, :])
-                                        * boundary_normals,
-                                        axis=-1)
-                DIRICHLET_FLUXES = VOLS[dirichlet_mask] * self.dirichlet_data(centers[dirichlet_mask]) / BOUNDARY_DISTS
+                boundary_normals = g.unit_outer_normals()[
+                    SE_I0_D, superentity_indices[:, 0][dirichlet_mask]
+                ]
+                BOUNDARY_DISTS = np.sum(
+                    (centers[dirichlet_mask, :] - g.orthogonal_centers()[SE_I0_D, :])
+                    * boundary_normals,
+                    axis=-1,
+                )
+                DIRICHLET_FLUXES = (
+                    VOLS[dirichlet_mask]
+                    * self.dirichlet_data(centers[dirichlet_mask])
+                    / BOUNDARY_DISTS
+                )
                 if self.diffusion_function is not None:
-                    DIRICHLET_FLUXES *= self.diffusion_function(centers[dirichlet_mask], mu=mu)
+                    DIRICHLET_FLUXES *= self.diffusion_function(
+                        centers[dirichlet_mask], mu=mu
+                    )
                 if self.diffusion_constant is not None:
                     DIRICHLET_FLUXES *= self.diffusion_constant
                 FLUXES[dirichlet_mask] = DIRICHLET_FLUXES
 
             if bi.has_neumann and self.neumann_data is not None:
                 neumann_mask = bi.neumann_mask(1)
-                FLUXES[neumann_mask] -= VOLS[neumann_mask] * self.neumann_data(centers[neumann_mask], mu=mu)
+                FLUXES[neumann_mask] -= VOLS[neumann_mask] * self.neumann_data(
+                    centers[neumann_mask], mu=mu
+                )
 
             F_INTS += np.bincount(SE_I0, weights=FLUXES, minlength=len(F_INTS))
 
@@ -753,14 +956,22 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver_options=None,
-                 name=None):
+    def __init__(
+        self,
+        grid,
+        boundary_info,
+        diffusion_function=None,
+        diffusion_constant=None,
+        solver_options=None,
+        name=None,
+    ):
         super().__init__()
         assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
-        assert (diffusion_function is None
-                or (isinstance(diffusion_function, FunctionInterface)
-                    and diffusion_function.dim_domain == grid.dim
-                    and diffusion_function.shape_range == ()))
+        assert diffusion_function is None or (
+            isinstance(diffusion_function, FunctionInterface)
+            and diffusion_function.dim_domain == grid.dim
+            and diffusion_function.shape_range == ()
+        )
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_function = diffusion_function
@@ -777,9 +988,14 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         # compute the local coordinates of the codim-1 subentity centers in the reference element
         reference_element = grid.reference_element(0)
         subentity_embedding = reference_element.subentity_embedding(1)
-        subentity_centers = (np.einsum('eij,j->ei',
-                                       subentity_embedding[0], reference_element.sub_reference_element(1).center())
-                             + subentity_embedding[1])
+        subentity_centers = (
+            np.einsum(
+                "eij,j->ei",
+                subentity_embedding[0],
+                reference_element.sub_reference_element(1).center(),
+            )
+            + subentity_embedding[1]
+        )
 
         # compute shift for periodic boundaries
         embeddings = grid.embeddings(0)
@@ -792,22 +1008,32 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         SE_I0_I = SE_I0[inner_mask]
         SE_I1_I = SE_I1[inner_mask]
 
-        SHIFTS = (np.einsum('eij,ej->ei',
-                            embeddings[0][SE_I0_I, :, :],
-                            subentity_centers[superentity_indices[:, 0][inner_mask]])
-                  + embeddings[1][SE_I0_I, :])
-        SHIFTS -= (np.einsum('eij,ej->ei',
-                             embeddings[0][SE_I1_I, :, :],
-                             subentity_centers[superentity_indices[:, 1][inner_mask]])
-                   + embeddings[1][SE_I1_I, :])
+        SHIFTS = (
+            np.einsum(
+                "eij,ej->ei",
+                embeddings[0][SE_I0_I, :, :],
+                subentity_centers[superentity_indices[:, 0][inner_mask]],
+            )
+            + embeddings[1][SE_I0_I, :]
+        )
+        SHIFTS -= (
+            np.einsum(
+                "eij,ej->ei",
+                embeddings[0][SE_I1_I, :, :],
+                subentity_centers[superentity_indices[:, 1][inner_mask]],
+            )
+            + embeddings[1][SE_I1_I, :]
+        )
 
         # comute distances for gradient approximations
         centers = grid.centers(1)
         orthogonal_centers = grid.orthogonal_centers()
         VOLS = grid.volumes(1)
 
-        INNER_DISTS = np.linalg.norm(orthogonal_centers[SE_I0_I, :] - orthogonal_centers[SE_I1_I, :] - SHIFTS,
-                                     axis=1)
+        INNER_DISTS = np.linalg.norm(
+            orthogonal_centers[SE_I0_I, :] - orthogonal_centers[SE_I1_I, :] - SHIFTS,
+            axis=1,
+        )
         del SHIFTS
 
         # assemble matrix
@@ -825,13 +1051,20 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         if self.boundary_info.has_dirichlet:
             dirichlet_mask = self.boundary_info.dirichlet_mask(1)
             SE_I0_D = SE_I0[dirichlet_mask]
-            boundary_normals = grid.unit_outer_normals()[SE_I0_D, superentity_indices[:, 0][dirichlet_mask]]
-            BOUNDARY_DISTS = np.sum((centers[dirichlet_mask, :] - orthogonal_centers[SE_I0_D, :]) * boundary_normals,
-                                    axis=-1)
+            boundary_normals = grid.unit_outer_normals()[
+                SE_I0_D, superentity_indices[:, 0][dirichlet_mask]
+            ]
+            BOUNDARY_DISTS = np.sum(
+                (centers[dirichlet_mask, :] - orthogonal_centers[SE_I0_D, :])
+                * boundary_normals,
+                axis=-1,
+            )
 
             DIRICHLET_FLUXES = VOLS[dirichlet_mask] / BOUNDARY_DISTS
             if self.diffusion_function is not None:
-                DIRICHLET_FLUXES *= self.diffusion_function(centers[dirichlet_mask], mu=mu)
+                DIRICHLET_FLUXES *= self.diffusion_function(
+                    centers[dirichlet_mask], mu=mu
+                )
             if self.diffusion_constant is not None:
                 DIRICHLET_FLUXES *= self.diffusion_constant
 
@@ -839,7 +1072,11 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
             FLUXES_I0 = np.concatenate((FLUXES_I0, SE_I0_D))
             FLUXES_I1 = np.concatenate((FLUXES_I1, SE_I0_D))
 
-        A = coo_matrix((FLUXES, (FLUXES_I0, FLUXES_I1)), shape=(self.source.dim, self.source.dim))
-        A = (dia_matrix(([1. / grid.volumes(0)], [0]), shape=(grid.size(0),) * 2) * A).tocsc()
+        A = coo_matrix(
+            (FLUXES, (FLUXES_I0, FLUXES_I1)), shape=(self.source.dim, self.source.dim)
+        )
+        A = (
+            dia_matrix(([1.0 / grid.volumes(0)], [0]), shape=(grid.size(0),) * 2) * A
+        ).tocsc()
 
         return A

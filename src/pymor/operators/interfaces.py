@@ -58,6 +58,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
     @property
     def H(self):
         from pymor.operators.constructions import AdjointOperator
+
         return AdjointOperator(self)
 
     @abstractmethod
@@ -309,13 +310,17 @@ class OperatorInterface(ImmutableInterface, Parametric):
             |VectorArray| of length 1 containing the vector representation.
         """
         if not self.linear:
-            raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
+            raise TypeError(
+                "This nonlinear operator does not represent a vector or linear functional."
+            )
         if self.source.is_scalar:
             return self.as_range_array(mu)
         elif self.range.is_scalar:
             return self.as_source_array(mu)
         else:
-            raise TypeError('This operator does not represent a vector or linear functional.')
+            raise TypeError(
+                "This operator does not represent a vector or linear functional."
+            )
 
     @abstractmethod
     def assemble(self, mu=None):
@@ -339,7 +344,14 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(
+        self,
+        operators,
+        coefficients,
+        identity_shift=0.0,
+        solver_options=None,
+        name=None,
+    ):
         """Try to assemble a linear combination of the given operators.
 
         Returns a new |Operator| which represents the sum ::
@@ -415,7 +427,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     def __sub__(self, other):
-        return self + (- other)
+        return self + (-other)
 
     @abstractmethod
     def __mul__(self, other):
@@ -431,4 +443,4 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     def __neg__(self):
-        return self * (-1.)
+        return self * (-1.0)

@@ -6,7 +6,10 @@ from functools import partial
 
 import numpy as np
 
-from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
+from pymor.algorithms.timestepping import (
+    ExplicitEulerTimeStepper,
+    ImplicitEulerTimeStepper,
+)
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.algorithms.preassemble import preassemble as preassemble_
@@ -17,17 +20,33 @@ from pymor.grids.referenceelements import line, triangle, square
 from pymor.gui.visualizers import PatchVisualizer, OnedVisualizer
 from pymor.operators.constructions import LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyGenericOperator
-from pymor.operators.fv import (DiffusionOperator, LinearAdvectionLaxFriedrichs, ReactionOperator,
-                                nonlinear_advection_lax_friedrichs_operator,
-                                nonlinear_advection_engquist_osher_operator,
-                                nonlinear_advection_simplified_engquist_osher_operator,
-                                NonlinearReactionOperator, L2Product, L2ProductFunctional)
+from pymor.operators.fv import (
+    DiffusionOperator,
+    LinearAdvectionLaxFriedrichs,
+    ReactionOperator,
+    nonlinear_advection_lax_friedrichs_operator,
+    nonlinear_advection_engquist_osher_operator,
+    nonlinear_advection_simplified_engquist_osher_operator,
+    NonlinearReactionOperator,
+    L2Product,
+    L2ProductFunctional,
+)
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
-                             num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
-                             grid=None, boundary_info=None, preassemble=True):
+def discretize_stationary_fv(
+    analytical_problem,
+    diameter=None,
+    domain_discretizer=None,
+    grid_type=None,
+    num_flux="lax_friedrichs",
+    lxf_lambda=1.0,
+    eo_gausspoints=5,
+    eo_intervals=1,
+    grid=None,
+    boundary_info=None,
+    preassemble=True,
+):
     """Discretizes a |StationaryProblem| using the finite volume method.
 
     Parameters
@@ -98,115 +117,197 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
         if diameter is None:
             grid, boundary_info = domain_discretizer(analytical_problem.domain)
         else:
-            grid, boundary_info = domain_discretizer(analytical_problem.domain, diameter=diameter)
+            grid, boundary_info = domain_discretizer(
+                analytical_problem.domain, diameter=diameter
+            )
 
     L, L_coefficients = [], []
     F, F_coefficients = [], []
 
     if p.rhs is not None or p.neumann_data is not None:
-        F += [L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)]
-        F_coefficients += [1.]
+        F += [
+            L2ProductFunctional(
+                grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data
+            )
+        ]
+        F_coefficients += [1.0]
 
     # diffusion part
     if isinstance(p.diffusion, LincombFunction):
-        L += [DiffusionOperator(grid, boundary_info, diffusion_function=df, name=f'diffusion_{i}')
-              for i, df in enumerate(p.diffusion.functions)]
+        L += [
+            DiffusionOperator(
+                grid, boundary_info, diffusion_function=df, name=f"diffusion_{i}"
+            )
+            for i, df in enumerate(p.diffusion.functions)
+        ]
         L_coefficients += p.diffusion.coefficients
         if p.dirichlet_data is not None:
-            F += [L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
-                                      diffusion_function=df, name=f'dirichlet_{i}')
-                  for i, df in enumerate(p.diffusion.functions)]
+            F += [
+                L2ProductFunctional(
+                    grid,
+                    None,
+                    boundary_info=boundary_info,
+                    dirichlet_data=p.dirichlet_data,
+                    diffusion_function=df,
+                    name=f"dirichlet_{i}",
+                )
+                for i, df in enumerate(p.diffusion.functions)
+            ]
             F_coefficients += p.diffusion.coefficients
 
     elif p.diffusion is not None:
-        L += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion, name='diffusion')]
-        L_coefficients += [1.]
+        L += [
+            DiffusionOperator(
+                grid, boundary_info, diffusion_function=p.diffusion, name="diffusion"
+            )
+        ]
+        L_coefficients += [1.0]
         if p.dirichlet_data is not None:
-            F += [L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
-                                      diffusion_function=p.diffusion, name='dirichlet')]
-            F_coefficients += [1.]
+            F += [
+                L2ProductFunctional(
+                    grid,
+                    None,
+                    boundary_info=boundary_info,
+                    dirichlet_data=p.dirichlet_data,
+                    diffusion_function=p.diffusion,
+                    name="dirichlet",
+                )
+            ]
+            F_coefficients += [1.0]
 
     # advection part
     if isinstance(p.advection, LincombFunction):
-        L += [LinearAdvectionLaxFriedrichs(grid, boundary_info, af, name=f'advection_{i}')
-              for i, af in enumerate(p.advection.functions)]
+        L += [
+            LinearAdvectionLaxFriedrichs(grid, boundary_info, af, name=f"advection_{i}")
+            for i, af in enumerate(p.advection.functions)
+        ]
         L_coefficients += list(p.advection.coefficients)
     elif p.advection is not None:
-        L += [LinearAdvectionLaxFriedrichs(grid, boundary_info, p.advection, name='advection')]
-        L_coefficients.append(1.)
+        L += [
+            LinearAdvectionLaxFriedrichs(
+                grid, boundary_info, p.advection, name="advection"
+            )
+        ]
+        L_coefficients.append(1.0)
 
     # nonlinear advection part
     if p.nonlinear_advection is not None:
-        if num_flux == 'lax_friedrichs':
-            L += [nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, p.nonlinear_advection,
-                                                              dirichlet_data=p.dirichlet_data, lxf_lambda=lxf_lambda)]
-        elif num_flux == 'engquist_osher':
-            L += [nonlinear_advection_engquist_osher_operator(grid, boundary_info, p.nonlinear_advection,
-                                                              p.nonlinear_advection_derivative,
-                                                              gausspoints=eo_gausspoints, intervals=eo_intervals,
-                                                              dirichlet_data=p.dirichlet_data)]
-        elif num_flux == 'simplified_engquist_osher':
-            L += [nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, p.nonlinear_advection,
-                                                                         p.nonlinear_advection_derivative,
-                                                                         dirichlet_data=p.dirichlet_data)]
+        if num_flux == "lax_friedrichs":
+            L += [
+                nonlinear_advection_lax_friedrichs_operator(
+                    grid,
+                    boundary_info,
+                    p.nonlinear_advection,
+                    dirichlet_data=p.dirichlet_data,
+                    lxf_lambda=lxf_lambda,
+                )
+            ]
+        elif num_flux == "engquist_osher":
+            L += [
+                nonlinear_advection_engquist_osher_operator(
+                    grid,
+                    boundary_info,
+                    p.nonlinear_advection,
+                    p.nonlinear_advection_derivative,
+                    gausspoints=eo_gausspoints,
+                    intervals=eo_intervals,
+                    dirichlet_data=p.dirichlet_data,
+                )
+            ]
+        elif num_flux == "simplified_engquist_osher":
+            L += [
+                nonlinear_advection_simplified_engquist_osher_operator(
+                    grid,
+                    boundary_info,
+                    p.nonlinear_advection,
+                    p.nonlinear_advection_derivative,
+                    dirichlet_data=p.dirichlet_data,
+                )
+            ]
         else:
             raise NotImplementedError
-        L_coefficients.append(1.)
+        L_coefficients.append(1.0)
 
     # reaction part
     if isinstance(p.reaction, LincombFunction):
         raise NotImplementedError
     elif p.reaction is not None:
-        L += [ReactionOperator(grid, p.reaction, name='reaction')]
-        L_coefficients += [1.]
+        L += [ReactionOperator(grid, p.reaction, name="reaction")]
+        L_coefficients += [1.0]
 
     # nonlinear reaction part
     if p.nonlinear_reaction is not None:
-        L += [NonlinearReactionOperator(grid, p.nonlinear_reaction, p.nonlinear_reaction_derivative)]
-        L_coefficients += [1.]
+        L += [
+            NonlinearReactionOperator(
+                grid, p.nonlinear_reaction, p.nonlinear_reaction_derivative
+            )
+        ]
+        L_coefficients += [1.0]
 
     # system operator
-    if len(L_coefficients) == 1 and L_coefficients[0] == 1.:
+    if len(L_coefficients) == 1 and L_coefficients[0] == 1.0:
         L = L[0]
     else:
-        L = LincombOperator(operators=L, coefficients=L_coefficients, name='elliptic_operator')
+        L = LincombOperator(
+            operators=L, coefficients=L_coefficients, name="elliptic_operator"
+        )
 
     # rhs
     if len(F_coefficients) == 0:
         F = ZeroOperator(L.range, NumpyVectorSpace(1))
-    elif len(F_coefficients) == 1 and F_coefficients[0] == 1.:
+    elif len(F_coefficients) == 1 and F_coefficients[0] == 1.0:
         F = F[0]
     else:
-        F = LincombOperator(operators=F, coefficients=F_coefficients, name='rhs')
+        F = LincombOperator(operators=F, coefficients=F_coefficients, name="rhs")
 
     if grid.reference_element in (triangle, square):
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=0)
+        visualizer = PatchVisualizer(
+            grid=grid, bounding_box=grid.bounding_box(), codim=0
+        )
     elif grid.reference_element is line:
         visualizer = OnedVisualizer(grid=grid, codim=0)
     else:
         visualizer = None
 
-    l2_product = L2Product(grid, name='l2')
-    products = {'l2': l2_product}
+    l2_product = L2Product(grid, name="l2")
+    products = {"l2": l2_product}
 
-    parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
+    parameter_space = p.parameter_space if hasattr(p, "parameter_space") else None
 
-    m = StationaryModel(L, F, products=products, visualizer=visualizer,
-                        parameter_space=parameter_space, name=f'{p.name}_FV')
+    m = StationaryModel(
+        L,
+        F,
+        products=products,
+        visualizer=visualizer,
+        parameter_space=parameter_space,
+        name=f"{p.name}_FV",
+    )
 
-    data = {'grid': grid, 'boundary_info': boundary_info}
+    data = {"grid": grid, "boundary_info": boundary_info}
 
     if preassemble:
-        data['unassembled_m'] = m
+        data["unassembled_m"] = m
         m = preassemble_(m)
 
     return m, data
 
 
-def discretize_instationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
-                               num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
-                               grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
-                               preassemble=True):
+def discretize_instationary_fv(
+    analytical_problem,
+    diameter=None,
+    domain_discretizer=None,
+    grid_type=None,
+    num_flux="lax_friedrichs",
+    lxf_lambda=1.0,
+    eo_gausspoints=5,
+    eo_intervals=1,
+    grid=None,
+    boundary_info=None,
+    num_values=None,
+    time_stepper=None,
+    nt=None,
+    preassemble=True,
+):
     """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
     using the finite volume method.
 
@@ -277,23 +378,44 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     p = analytical_problem
 
-    m, data = discretize_stationary_fv(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
-                                       grid_type=grid_type, num_flux=num_flux, lxf_lambda=lxf_lambda,
-                                       eo_gausspoints=eo_gausspoints, eo_intervals=eo_intervals, grid=grid,
-                                       boundary_info=boundary_info)
-    grid = data['grid']
+    m, data = discretize_stationary_fv(
+        p.stationary_part,
+        diameter=diameter,
+        domain_discretizer=domain_discretizer,
+        grid_type=grid_type,
+        num_flux=num_flux,
+        lxf_lambda=lxf_lambda,
+        eo_gausspoints=eo_gausspoints,
+        eo_intervals=eo_intervals,
+        grid=grid,
+        boundary_info=boundary_info,
+    )
+    grid = data["grid"]
 
     if p.initial_data.parametric:
+
         def initial_projection(U, mu):
-            I = p.initial_data.evaluate(grid.quadrature_points(0, order=2), mu).squeeze()
-            I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
+            I = p.initial_data.evaluate(
+                grid.quadrature_points(0, order=2), mu
+            ).squeeze()
+            I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (
+                1.0 / grid.reference_element.volume
+            )
             I = m.solution_space.make_array(I)
             return I.lincomb(U).to_numpy()
-        I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True, range_id=m.solution_space.id,
-                                 parameter_type=p.initial_data.parameter_type)
+
+        I = NumpyGenericOperator(
+            initial_projection,
+            dim_range=grid.size(0),
+            linear=True,
+            range_id=m.solution_space.id,
+            parameter_type=p.initial_data.parameter_type,
+        )
     else:
         I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
-        I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
+        I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (
+            1.0 / grid.reference_element.volume
+        )
         I = m.solution_space.make_array(I)
 
     if time_stepper is None:
@@ -304,13 +426,22 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     rhs = None if isinstance(m.rhs, ZeroOperator) else m.rhs
 
-    m = InstationaryModel(operator=m.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
-                          products=m.products, time_stepper=time_stepper,
-                          parameter_space=p.parameter_space, visualizer=m.visualizer,
-                          num_values=num_values, name=f'{p.name}_FV')
+    m = InstationaryModel(
+        operator=m.operator,
+        rhs=rhs,
+        mass=None,
+        initial_data=I,
+        T=p.T,
+        products=m.products,
+        time_stepper=time_stepper,
+        parameter_space=p.parameter_space,
+        visualizer=m.visualizer,
+        num_values=num_values,
+        name=f"{p.name}_FV",
+    )
 
     if preassemble:
-        data['unassembled_m'] = m
+        data["unassembled_m"] = m
         m = preassemble_(m)
 
     return m, data

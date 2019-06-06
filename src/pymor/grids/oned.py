@@ -29,36 +29,53 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
         self.domain = np.array(domain)
         self.num_intervals = num_intervals
         self.identify_left_right = identify_left_right
-        self._sizes = [num_intervals, num_intervals] if identify_left_right else [num_intervals, num_intervals + 1]
+        self._sizes = (
+            [num_intervals, num_intervals]
+            if identify_left_right
+            else [num_intervals, num_intervals + 1]
+        )
         self._width = np.abs(self.domain[1] - self.domain[0]) / self.num_intervals
-        self.__subentities = np.vstack((np.arange(self.num_intervals, dtype=np.int32),
-                                        np.arange(self.num_intervals, dtype=np.int32) + 1))
+        self.__subentities = np.vstack(
+            (
+                np.arange(self.num_intervals, dtype=np.int32),
+                np.arange(self.num_intervals, dtype=np.int32) + 1,
+            )
+        )
         if identify_left_right:
             self.__subentities[-1, -1] = 0
-        self.__A = np.ones(self.num_intervals, dtype=np.int32)[:, np.newaxis, np.newaxis] * self._width
-        self.__B = (self.domain[0] + self._width * (np.arange(self.num_intervals, dtype=np.int32)))[:, np.newaxis]
+        self.__A = (
+            np.ones(self.num_intervals, dtype=np.int32)[:, np.newaxis, np.newaxis]
+            * self._width
+        )
+        self.__B = (
+            self.domain[0]
+            + self._width * (np.arange(self.num_intervals, dtype=np.int32))
+        )[:, np.newaxis]
 
     def __reduce__(self):
-        return (OnedGrid,
-                (self.domain, self.num_intervals, self.identify_left_right))
+        return (OnedGrid, (self.domain, self.num_intervals, self.identify_left_right))
 
     def __str__(self):
-        return (f'OnedGrid, domain [{self.domain[0]},{self.domain[1]}], '
-                f'{self.size(0)} elements, {self.size(1)} vertices')
+        return (
+            f"OnedGrid, domain [{self.domain[0]},{self.domain[1]}], "
+            f"{self.size(0)} elements, {self.size(1)} vertices"
+        )
 
     def __repr__(self):
-        return f'OnedGrid({self.domain}, {self.num_intervals}, {self.identify_left_right})'
+        return (
+            f"OnedGrid({self.domain}, {self.num_intervals}, {self.identify_left_right})"
+        )
 
     def size(self, codim=0):
-        assert 0 <= codim <= 1, f'codim has to be between 0 and {self.dim}!'
+        assert 0 <= codim <= 1, f"codim has to be between 0 and {self.dim}!"
         return self._sizes[codim]
 
     def subentities(self, codim, subentity_codim):
-        assert 0 <= codim <= 1, 'Invalid codimension'
-        assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimension'
+        assert 0 <= codim <= 1, "Invalid codimension"
+        assert codim <= subentity_codim <= self.dim, "Invalid subentity codimension"
         if codim == 0:
             if subentity_codim == 0:
-                return np.arange(self.size(0), dtype='int32')[:, np.newaxis]
+                return np.arange(self.size(0), dtype="int32")[:, np.newaxis]
             else:
                 return self.__subentities.T
         else:
@@ -94,11 +111,16 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
         from pymor.gui.qt import visualize_matplotlib_1d
         from pymor.vectorarrays.interfaces import VectorArrayInterface
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
+
         if isinstance(U, (np.ndarray, VectorArrayInterface)):
             U = (U,)
         assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
-        U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
-                  u if isinstance(u, NumpyVectorArray) else
-                  NumpyVectorSpace.make_array(u.to_numpy())
-                  for u in U)
+        U = tuple(
+            NumpyVectorSpace.make_array(u)
+            if isinstance(u, np.ndarray)
+            else u
+            if isinstance(u, NumpyVectorArray)
+            else NumpyVectorSpace.make_array(u.to_numpy())
+            for u in U
+        )
         visualize_matplotlib_1d(self, U, codim=codim, **kwargs)

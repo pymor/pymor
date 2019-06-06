@@ -5,7 +5,10 @@
 import numpy as np
 
 import collections
-from pymor.domaindescriptions.interfaces import DomainDescriptionInterface, KNOWN_BOUNDARY_TYPES
+from pymor.domaindescriptions.interfaces import (
+    DomainDescriptionInterface,
+    KNOWN_BOUNDARY_TYPES,
+)
 
 
 class PolygonalDomain(DomainDescriptionInterface):
@@ -48,18 +51,23 @@ class PolygonalDomain(DomainDescriptionInterface):
             for ps_d in points_deque:
                 ps_d.rotate(-1)
             # compute edge centers.
-            centers = [[(p0[0]+p1[0])/2, (p0[1]+p1[1])/2] for ps, ps_d in zip(points, points_deque)
-                       for p0, p1 in zip(ps, ps_d)]
+            centers = [
+                [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2]
+                for ps, ps_d in zip(points, points_deque)
+                for p0, p1 in zip(ps, ps_d)
+            ]
             # evaluate the boundary at the edge centers and save the boundary types together with the
             # corresponding edge id.
-            self.boundary_types = dict(zip([boundary_types(centers)], [list(range(1, len(centers)+1))]))
+            self.boundary_types = dict(
+                zip([boundary_types(centers)], [list(range(1, len(centers) + 1))])
+            )
 
         for bt in self.boundary_types.keys():
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
-                self.logger.warning(f'Unknown boundary type: {bt}')
+                self.logger.warning(f"Unknown boundary type: {bt}")
 
     def __repr__(self):
-        return f'PolygonalDomain({repr(self.points)}, {repr(self.boundary_types)}, {repr(self.holes)})'
+        return f"PolygonalDomain({repr(self.points)}, {repr(self.boundary_types)}, {repr(self.holes)})"
 
 
 class CircularSectorDomain(PolygonalDomain):
@@ -88,22 +96,30 @@ class CircularSectorDomain(PolygonalDomain):
     num_points
     """
 
-    def __init__(self, angle, radius, arc='dirichlet', radii='dirichlet', num_points=100):
+    def __init__(
+        self, angle, radius, arc="dirichlet", radii="dirichlet", num_points=100
+    ):
         self.angle = angle
         self.radius = radius
         self.arc = arc
         self.radii = radii
         self.num_points = num_points
-        assert (0 < self.angle) and (self.angle < 2*np.pi)
+        assert (0 < self.angle) and (self.angle < 2 * np.pi)
         assert self.radius > 0
         assert self.num_points > 0
 
-        points = [[0., 0.]]
-        points.extend([[self.radius*np.cos(t), self.radius*np.sin(t)] for t in
-                       np.linspace(start=0, stop=angle, num=self.num_points, endpoint=True)])
+        points = [[0.0, 0.0]]
+        points.extend(
+            [
+                [self.radius * np.cos(t), self.radius * np.sin(t)]
+                for t in np.linspace(
+                    start=0, stop=angle, num=self.num_points, endpoint=True
+                )
+            ]
+        )
 
         if self.arc == self.radii:
-            boundary_types = {self.arc: list(range(1, len(points)+1))}
+            boundary_types = {self.arc: list(range(1, len(points) + 1))}
         else:
             boundary_types = {self.arc: list(range(2, len(points)))}
             boundary_types.update({self.radii: [1, len(points)]})
@@ -114,8 +130,10 @@ class CircularSectorDomain(PolygonalDomain):
         super().__init__(points, boundary_types)
 
     def __repr__(self):
-        return f'PieDomain({repr(self.angle)}, {repr(self.radius)}, {repr(self.arc)}, {repr(self.radii)}, ' \
-               f'{repr(self.num_points)})'
+        return (
+            f"PieDomain({repr(self.angle)}, {repr(self.radius)}, {repr(self.arc)}, {repr(self.radii)}, "
+            f"{repr(self.num_points)})"
+        )
 
 
 class DiscDomain(PolygonalDomain):
@@ -137,18 +155,24 @@ class DiscDomain(PolygonalDomain):
     num_points
     """
 
-    def __init__(self, radius, boundary='dirichlet', num_points=100):
+    def __init__(self, radius, boundary="dirichlet", num_points=100):
         self.radius = radius
         self.boundary = boundary
         self.num_points = num_points
         assert self.radius > 0
         assert self.num_points > 0
 
-        points = [[self.radius*np.cos(t), self.radius*np.sin(t)] for t in
-                  np.linspace(start=0, stop=2*np.pi, num=num_points, endpoint=False)]
-        boundary_types = {} if self.boundary is None else {boundary: list(range(1, len(points)+1))}
+        points = [
+            [self.radius * np.cos(t), self.radius * np.sin(t)]
+            for t in np.linspace(
+                start=0, stop=2 * np.pi, num=num_points, endpoint=False
+            )
+        ]
+        boundary_types = (
+            {} if self.boundary is None else {boundary: list(range(1, len(points) + 1))}
+        )
 
         super().__init__(points, boundary_types)
 
     def __repr__(self):
-        return f'DiscDomain({repr(self.radius)}, {repr(self.boundary)}, {repr(self.num_points)})'
+        return f"DiscDomain({repr(self.radius)}, {repr(self.boundary)}, {repr(self.num_points)})"

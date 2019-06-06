@@ -16,12 +16,23 @@ from pymor.parameters.base import Parameter
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-def adaptive_greedy(fom, reductor, parameter_space=None,
-                    use_estimator=True, error_norm=None,
-                    target_error=None, max_extensions=None,
-                    validation_mus=0, rho=1.1, gamma=0.2, theta=0.,
-                    extension_params=None, visualize=False, visualize_vertex_size=80,
-                    pool=dummy_pool):
+def adaptive_greedy(
+    fom,
+    reductor,
+    parameter_space=None,
+    use_estimator=True,
+    error_norm=None,
+    target_error=None,
+    max_extensions=None,
+    validation_mus=0,
+    rho=1.1,
+    gamma=0.2,
+    theta=0.0,
+    extension_params=None,
+    visualize=False,
+    visualize_vertex_size=80,
+    pool=dummy_pool,
+):
     """Greedy basis generation algorithm with adaptively refined training set.
 
     This method extends pyMOR's default :func:`~pymor.algorithms.greedy.greedy`
@@ -101,17 +112,24 @@ def adaptive_greedy(fom, reductor, parameter_space=None,
         if use_estimator:
             errors = pool.map(_estimate, mus, rom=rom)
         else:
-            errors = pool.map(_estimate, mus, rom=rom, fom=fom, reductor=reductor, error_norm=error_norm)
+            errors = pool.map(
+                _estimate,
+                mus,
+                rom=rom,
+                fom=fom,
+                reductor=reductor,
+                error_norm=error_norm,
+            )
         # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
         # if necessary
-        return np.array([x[0] if hasattr(x, '__len__') else x for x in errors])
+        return np.array([x[0] if hasattr(x, "__len__") else x for x in errors])
 
-    logger = getLogger('pymor.algorithms.adaptivegreedy.adaptive_greedy')
+    logger = getLogger("pymor.algorithms.adaptivegreedy.adaptive_greedy")
 
     if pool is None or pool is dummy_pool:
         pool = dummy_pool
     else:
-        logger.info(f'Using pool of {len(pool)} workers for parallel greedy search')
+        logger.info(f"Using pool of {len(pool)} workers for parallel greedy search")
 
     with RemoteObjectManager() as rom:
         # Push everything we need during the greedy search to the workers.
@@ -126,12 +144,16 @@ def adaptive_greedy(fom, reductor, parameter_space=None,
         parameter_space = parameter_space or fom.parameter_space
         sample_set = AdaptiveSampleSet(parameter_space)
         if validation_mus <= 0:
-            validation_set = sample_set.center_mus + parameter_space.sample_randomly(-validation_mus)
+            validation_set = sample_set.center_mus + parameter_space.sample_randomly(
+                -validation_mus
+            )
         else:
             validation_set = parameter_space.sample_randomly(validation_mus)
         if visualize and sample_set.dim not in (2, 3):
             raise NotImplementedError
-        logger.info(f'Training set size: {len(sample_set.vertex_mus)}. Validation set size: {len(validation_set)}')
+        logger.info(
+            f"Training set size: {len(sample_set.vertex_mus)}. Validation set size: {len(validation_set)}"
+        )
 
         extensions = 0
         max_errs = []
@@ -142,76 +164,145 @@ def adaptive_greedy(fom, reductor, parameter_space=None,
         training_set_sizes = []
 
         while True:  # main loop
-            with logger.block('Reducing ...'):
+            with logger.block("Reducing ..."):
                 rom = reductor.reduce()
 
             current_refinements = 0
-            while True:  # estimate reduction errors and refine training set until no overfitting is detected
+            while (
+                True
+            ):  # estimate reduction errors and refine training set until no overfitting is detected
 
                 # estimate on training set
-                with logger.block('Estimating errors ...'):
+                with logger.block("Estimating errors ..."):
                     errors = estimate(sample_set.vertex_mus)
                 max_err_ind = np.argmax(errors)
-                max_err, max_err_mu = errors[max_err_ind], sample_set.vertex_mus[max_err_ind]
-                logger.info(f'Maximum error after {extensions} extensions: {max_err} (mu = {max_err_mu})')
+                max_err, max_err_mu = (
+                    errors[max_err_ind],
+                    sample_set.vertex_mus[max_err_ind],
+                )
+                logger.info(
+                    f"Maximum error after {extensions} extensions: {max_err} (mu = {max_err_mu})"
+                )
 
                 # estimate on validation set
                 val_errors = estimate(validation_set)
                 max_val_err_ind = np.argmax(val_errors)
-                max_val_err, max_val_err_mu = val_errors[max_val_err_ind], validation_set[max_val_err_ind]
-                logger.info(f'Maximum validation error: {max_val_err}')
-                logger.info(f'Validation error to training error ratio: {max_val_err/max_err:.3e}')
+                max_val_err, max_val_err_mu = (
+                    val_errors[max_val_err_ind],
+                    validation_set[max_val_err_ind],
+                )
+                logger.info(f"Maximum validation error: {max_val_err}")
+                logger.info(
+                    f"Validation error to training error ratio: {max_val_err/max_err:.3e}"
+                )
 
                 if max_val_err >= max_err * rho:  # overfitting?
 
                     # compute element indicators for training set refinement
                     if current_refinements == 0:
-                        logger.info2('Overfitting detected. Computing element indicators ...')
+                        logger.info2(
+                            "Overfitting detected. Computing element indicators ..."
+                        )
                     else:
-                        logger.info3('Overfitting detected after refinement. Computing element indicators ...')
+                        logger.info3(
+                            "Overfitting detected after refinement. Computing element indicators ..."
+                        )
                     vertex_errors = np.max(errors[sample_set.vertex_ids], axis=1)
                     center_errors = estimate(sample_set.center_mus)
-                    indicators_age_part = (gamma * sample_set.volumes / sample_set.total_volume
-                                           * (sample_set.refinement_count - sample_set.creation_times))
-                    indicators_error_part = np.max([vertex_errors, center_errors], axis=0) / max_err
+                    indicators_age_part = (
+                        gamma
+                        * sample_set.volumes
+                        / sample_set.total_volume
+                        * (sample_set.refinement_count - sample_set.creation_times)
+                    )
+                    indicators_error_part = (
+                        np.max([vertex_errors, center_errors], axis=0) / max_err
+                    )
                     indicators = indicators_age_part + indicators_error_part
 
                     # select elements
                     sorted_indicators_inds = np.argsort(indicators)[::-1]
-                    refinement_elements = sorted_indicators_inds[:max(int(len(sorted_indicators_inds) * theta), 1)]
-                    logger.info(f'Refining {len(refinement_elements)} elements: {refinement_elements}')
+                    refinement_elements = sorted_indicators_inds[
+                        : max(int(len(sorted_indicators_inds) * theta), 1)
+                    ]
+                    logger.info(
+                        f"Refining {len(refinement_elements)} elements: {refinement_elements}"
+                    )
 
                     # visualization
                     if visualize:
                         from mpl_toolkits.mplot3d import Axes3D  # NOQA
                         import matplotlib.pyplot as plt
+
                         plt.figure()
-                        plt.subplot(2, 2, 1, projection=None if sample_set.dim == 2 else '3d')
-                        plt.title('estimated errors')
-                        sample_set.visualize(vertex_data=errors, center_data=center_errors, new_figure=False)
-                        plt.subplot(2, 2, 2, projection=None if sample_set.dim == 2 else '3d')
-                        plt.title('indicators_error_part')
-                        vmax = np.max([indicators_error_part, indicators_age_part, indicators])
-                        data = {('volume_data' if sample_set.dim == 2 else 'center_data'): indicators_error_part}
-                        sample_set.visualize(vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False,
-                                             **data)
-                        plt.subplot(2, 2, 3, projection=None if sample_set.dim == 2 else '3d')
-                        plt.title('indicators_age_part')
-                        data = {('volume_data' if sample_set.dim == 2 else 'center_data'): indicators_age_part}
-                        sample_set.visualize(vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False,
-                                             **data)
-                        plt.subplot(2, 2, 4, projection=None if sample_set.dim == 2 else '3d')
+                        plt.subplot(
+                            2, 2, 1, projection=None if sample_set.dim == 2 else "3d"
+                        )
+                        plt.title("estimated errors")
+                        sample_set.visualize(
+                            vertex_data=errors,
+                            center_data=center_errors,
+                            new_figure=False,
+                        )
+                        plt.subplot(
+                            2, 2, 2, projection=None if sample_set.dim == 2 else "3d"
+                        )
+                        plt.title("indicators_error_part")
+                        vmax = np.max(
+                            [indicators_error_part, indicators_age_part, indicators]
+                        )
+                        data = {
+                            (
+                                "volume_data" if sample_set.dim == 2 else "center_data"
+                            ): indicators_error_part
+                        }
+                        sample_set.visualize(
+                            vertex_size=visualize_vertex_size,
+                            vmin=0,
+                            vmax=vmax,
+                            new_figure=False,
+                            **data,
+                        )
+                        plt.subplot(
+                            2, 2, 3, projection=None if sample_set.dim == 2 else "3d"
+                        )
+                        plt.title("indicators_age_part")
+                        data = {
+                            (
+                                "volume_data" if sample_set.dim == 2 else "center_data"
+                            ): indicators_age_part
+                        }
+                        sample_set.visualize(
+                            vertex_size=visualize_vertex_size,
+                            vmin=0,
+                            vmax=vmax,
+                            new_figure=False,
+                            **data,
+                        )
+                        plt.subplot(
+                            2, 2, 4, projection=None if sample_set.dim == 2 else "3d"
+                        )
                         if sample_set.dim == 2:
-                            plt.title('indicators')
-                            sample_set.visualize(volume_data=indicators,
-                                                 center_data=np.zeros(len(refinement_elements)),
-                                                 center_inds=refinement_elements,
-                                                 vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False)
+                            plt.title("indicators")
+                            sample_set.visualize(
+                                volume_data=indicators,
+                                center_data=np.zeros(len(refinement_elements)),
+                                center_inds=refinement_elements,
+                                vertex_size=visualize_vertex_size,
+                                vmin=0,
+                                vmax=vmax,
+                                new_figure=False,
+                            )
                         else:
-                            plt.title('selected cells')
-                            sample_set.visualize(center_data=np.zeros(len(refinement_elements)),
-                                                 center_inds=refinement_elements,
-                                                 vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False)
+                            plt.title("selected cells")
+                            sample_set.visualize(
+                                center_data=np.zeros(len(refinement_elements)),
+                                center_inds=refinement_elements,
+                                vertex_size=visualize_vertex_size,
+                                vmin=0,
+                                vmax=vmax,
+                                new_figure=False,
+                            )
                         plt.show()
 
                     # refine training set
@@ -220,12 +311,17 @@ def adaptive_greedy(fom, reductor, parameter_space=None,
 
                     # update validation set if needed
                     if validation_mus <= 0:
-                        validation_set = sample_set.center_mus + parameter_space.sample_randomly(-validation_mus)
+                        validation_set = (
+                            sample_set.center_mus
+                            + parameter_space.sample_randomly(-validation_mus)
+                        )
 
-                    logger.info(f'New training set size: {len(sample_set.vertex_mus)}. '
-                                f'New validation set size: {len(validation_set)}')
-                    logger.info(f'Number of refinements: {sample_set.refinement_count}')
-                    logger.info('')
+                    logger.info(
+                        f"New training set size: {len(sample_set.vertex_mus)}. "
+                        f"New validation set size: {len(validation_set)}"
+                    )
+                    logger.info(f"Number of refinements: {sample_set.refinement_count}")
+                    logger.info("")
                 else:
                     break  # no overfitting, leave the refinement loop
 
@@ -238,36 +334,44 @@ def adaptive_greedy(fom, reductor, parameter_space=None,
 
             # break if traget error reached
             if target_error is not None and max_err <= target_error:
-                logger.info(f'Reached maximal error on snapshots of {max_err} <= {target_error}')
+                logger.info(
+                    f"Reached maximal error on snapshots of {max_err} <= {target_error}"
+                )
                 break
 
             # basis extension
-            with logger.block(f'Computing solution snapshot for mu = {max_err_mu} ...'):
+            with logger.block(f"Computing solution snapshot for mu = {max_err_mu} ..."):
                 U = fom.solve(max_err_mu)
-            with logger.block('Extending basis with solution snapshot ...'):
+            with logger.block("Extending basis with solution snapshot ..."):
                 try:
                     reductor.extend_basis(U, copy_U=False, **extension_params)
                 except ExtensionError:
-                    logger.info('Extension failed. Stopping now.')
+                    logger.info("Extension failed. Stopping now.")
                     break
             extensions += 1
 
-            logger.info('')
+            logger.info("")
 
             # break if prescribed basis size reached
             if max_extensions is not None and extensions >= max_extensions:
-                logger.info(f'Maximum number of {max_extensions} extensions reached.')
-                with logger.block('Reducing once more ...'):
+                logger.info(f"Maximum number of {max_extensions} extensions reached.")
+                with logger.block("Reducing once more ..."):
                     rom = reductor.reduce()
                 break
 
     tictoc = time.time() - tic
-    logger.info(f'Greedy search took {tictoc} seconds')
-    return {'rom': rom,
-            'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
-            'max_val_errs': max_val_errs, 'max_val_err_mus': max_val_err_mus,
-            'refinements': refinements, 'training_set_sizes': training_set_sizes,
-            'time': tictoc}
+    logger.info(f"Greedy search took {tictoc} seconds")
+    return {
+        "rom": rom,
+        "max_errs": max_errs,
+        "max_err_mus": max_err_mus,
+        "extensions": extensions,
+        "max_val_errs": max_val_errs,
+        "max_val_err_mus": max_val_err_mus,
+        "refinements": refinements,
+        "training_set_sizes": training_set_sizes,
+        "time": tictoc,
+    }
 
 
 def _estimate(mu, rom=None, fom=None, reductor=None, error_norm=None):
@@ -290,9 +394,16 @@ class AdaptiveSampleSet(BasicInterface):
         assert isinstance(parameter_space, CubicParameterSpace)
         self.parameter_space = parameter_space
         self.parameter_type = parameter_space.parameter_type
-        self.ranges = np.concatenate([np.tile(np.array(parameter_space.ranges[k])[np.newaxis, :],
-                                              [np.prod(shape), 1])
-                                      for k, shape in parameter_space.parameter_type.items()], axis=0)
+        self.ranges = np.concatenate(
+            [
+                np.tile(
+                    np.array(parameter_space.ranges[k])[np.newaxis, :],
+                    [np.prod(shape), 1],
+                )
+                for k, shape in parameter_space.parameter_type.items()
+            ],
+            axis=0,
+        )
         self.dimensions = self.ranges[:, 1] - self.ranges[:, 0]
         self.total_volume = np.prod(self.dimensions)
         self.dim = len(self.dimensions)
@@ -319,13 +430,29 @@ class AdaptiveSampleSet(BasicInterface):
             mu[k] = np.array(head).reshape(shape)
         return mu
 
-    def visualize(self, vertex_data=None, vertex_inds=None, center_data=None, center_inds=None, volume_data=None,
-                  vertex_size=80, vmin=None, vmax=None, new_figure=True):
+    def visualize(
+        self,
+        vertex_data=None,
+        vertex_inds=None,
+        center_data=None,
+        center_inds=None,
+        volume_data=None,
+        vertex_size=80,
+        vmin=None,
+        vmax=None,
+        new_figure=True,
+    ):
         if self.dim not in (2, 3):
-            raise ValueError('Can only visualize samples of dimension 2, 3')
+            raise ValueError("Can only visualize samples of dimension 2, 3")
 
-        vertices = np.array(self.vertices).astype(float) * self.dimensions[np.newaxis, :] + self.ranges[:, 0]
-        centers = np.array(self.centers).astype(float) * self.dimensions[np.newaxis, :] + self.ranges[:, 0]
+        vertices = (
+            np.array(self.vertices).astype(float) * self.dimensions[np.newaxis, :]
+            + self.ranges[:, 0]
+        )
+        centers = (
+            np.array(self.centers).astype(float) * self.dimensions[np.newaxis, :]
+            + self.ranges[:, 0]
+        )
         if vmin is None:
             vmin = np.inf
             if vertex_data is not None:
@@ -348,6 +475,7 @@ class AdaptiveSampleSet(BasicInterface):
             import matplotlib.pyplot as plt
             from matplotlib.collections import PatchCollection
             from matplotlib.patches import Rectangle
+
             if new_figure:
                 plt.figure()
             plt.xlim(self.ranges[0])
@@ -356,10 +484,17 @@ class AdaptiveSampleSet(BasicInterface):
             # draw volumes
             rects = []
             for leaf, level in zip(self.vertex_ids, self.levels):
-                size = 1. / 2**level
+                size = 1.0 / 2 ** level
                 ll = self.vertices[leaf[0]] * self.dimensions + self.ranges[:, 0]
-                rects.append(Rectangle(ll, size * self.dimensions[0], size * self.dimensions[1],
-                                       facecolor='white', zorder=-1))
+                rects.append(
+                    Rectangle(
+                        ll,
+                        size * self.dimensions[0],
+                        size * self.dimensions[1],
+                        facecolor="white",
+                        zorder=-1,
+                    )
+                )
             if volume_data is not None:
                 coll = PatchCollection(rects, match_original=False)
                 coll.set_array(volume_data)
@@ -372,14 +507,32 @@ class AdaptiveSampleSet(BasicInterface):
             # draw vertex data
             if vertex_data is not None:
                 vtx = vertices[vertex_inds] if vertex_inds is not None else vertices
-                plt.scatter(vtx[:, 0], vtx[:, 1], c=vertex_data, vmin=vmin, vmax=vmax, s=vertex_size)
+                plt.scatter(
+                    vtx[:, 0],
+                    vtx[:, 1],
+                    c=vertex_data,
+                    vmin=vmin,
+                    vmax=vmax,
+                    s=vertex_size,
+                )
 
             # draw center data
             if center_data is not None:
                 cts = centers[center_inds] if center_inds is not None else centers
-                plt.scatter(cts[:, 0], cts[:, 1], c=center_data, vmin=vmin, vmax=vmax, s=vertex_size)
+                plt.scatter(
+                    cts[:, 0],
+                    cts[:, 1],
+                    c=center_data,
+                    vmin=vmin,
+                    vmax=vmax,
+                    s=vertex_size,
+                )
 
-            if volume_data is not None or center_data is not None or vertex_data is not None:
+            if (
+                volume_data is not None
+                or center_data is not None
+                or vertex_data is not None
+            ):
                 plt.colorbar()
             if new_figure:
                 plt.show()
@@ -388,49 +541,68 @@ class AdaptiveSampleSet(BasicInterface):
             if volume_data is not None:
                 raise NotImplementedError
 
-            cube = np.array([[0., 0., 0.],
-                             [1., 0., 0.],
-                             [1., 1., 0.],
-                             [0., 1., 0.],
-                             [0., 0., 0.],
-                             [0., 0., 1.],
-                             [1., 0., 1.],
-                             [1., 0., 0.],
-                             [1., 0., 1.],
-                             [1., 1., 1.],
-                             [1., 1., 0.],
-                             [1., 1., 1.],
-                             [0., 1., 1.],
-                             [0., 1., 0.],
-                             [0., 1., 1.],
-                             [0., 0., 1.]])
+            cube = np.array(
+                [
+                    [0.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [1.0, 1.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0],
+                    [1.0, 0.0, 1.0],
+                    [1.0, 0.0, 0.0],
+                    [1.0, 0.0, 1.0],
+                    [1.0, 1.0, 1.0],
+                    [1.0, 1.0, 0.0],
+                    [1.0, 1.0, 1.0],
+                    [0.0, 1.0, 1.0],
+                    [0.0, 1.0, 0.0],
+                    [0.0, 1.0, 1.0],
+                    [0.0, 0.0, 1.0],
+                ]
+            )
 
             from mpl_toolkits.mplot3d import Axes3D  # NOQA
             import matplotlib.pyplot as plt
+
             if new_figure:
                 plt.figure()
-                plt.gca().add_subplot(111, projection='3d')
+                plt.gca().add_subplot(111, projection="3d")
             ax = plt.gca()
 
             # draw cells
             for leaf, level in zip(self.vertex_ids, self.levels):
-                size = 1. / 2**level
+                size = 1.0 / 2 ** level
                 ll = self.vertices[leaf[0]] * self.dimensions + self.ranges[:, 0]
                 c = cube * self.dimensions * size + ll
-                ax.plot3D(c[:, 0], c[:, 1], c[:, 2], color='lightgray', zorder=-1)
+                ax.plot3D(c[:, 0], c[:, 1], c[:, 2], color="lightgray", zorder=-1)
 
             p = None
             # draw vertex data
             if vertex_data is not None:
                 vtx = vertices[vertex_inds] if vertex_inds is not None else vertices
-                p = ax.scatter(vtx[:, 0], vtx[:, 1], vtx[:, 2],
-                               c=vertex_data, vmin=vmin, vmax=vmax, s=vertex_size)
+                p = ax.scatter(
+                    vtx[:, 0],
+                    vtx[:, 1],
+                    vtx[:, 2],
+                    c=vertex_data,
+                    vmin=vmin,
+                    vmax=vmax,
+                    s=vertex_size,
+                )
 
             # draw center data
             if center_data is not None:
                 cts = centers[center_inds] if center_inds is not None else centers
-                p = ax.scatter(cts[:, 0], cts[:, 1], cts[:, 2],
-                               c=center_data, vmin=vmin, vmax=vmax, s=vertex_size)
+                p = ax.scatter(
+                    cts[:, 0],
+                    cts[:, 1],
+                    cts[:, 2],
+                    c=center_data,
+                    vmin=vmin,
+                    vmax=vmax,
+                    s=vertex_size,
+                )
 
             if p is not None:
                 plt.colorbar(p)
@@ -452,10 +624,16 @@ class AdaptiveSampleSet(BasicInterface):
         return walk(self.element_tree)
 
     def _update(self):
-        self.levels, self.centers, vertex_ids, creation_times = \
-            list(zip(*((node.level, node.center, node.vertex_ids, node.creation_time) for node in self._iter_leafs())))
+        self.levels, self.centers, vertex_ids, creation_times = list(
+            zip(
+                *(
+                    (node.level, node.center, node.vertex_ids, node.creation_time)
+                    for node in self._iter_leafs()
+                )
+            )
+        )
         self.levels = np.array(self.levels)
-        self.volumes = self.total_volume / ((2**self.dim)**self.levels)
+        self.volumes = self.total_volume / ((2 ** self.dim) ** self.levels)
         self.vertex_ids = np.array(vertex_ids)
         self.center_mus = [self.map_vertex_to_mu(v) for v in self.centers]
         self.creation_times = np.array(creation_times)
@@ -470,18 +648,22 @@ class AdaptiveSampleSet(BasicInterface):
         return v_id
 
     class Element:
-        __slots__ = ['level', 'center', 'vertex_ids', 'children', 'creation_time']
+        __slots__ = ["level", "center", "vertex_ids", "children", "creation_time"]
 
         def __init__(self, level, center, sample_set):
-            self.level, self.center, self.creation_time = level, center, sample_set.refinement_count
+            self.level, self.center, self.creation_time = (
+                level,
+                center,
+                sample_set.refinement_count,
+            )
             vertex_ids = []
-            lower_corner = [x - Fraction(1, 2**(level + 1)) for x in center]
-            for x in range(2**len(center)):
+            lower_corner = [x - Fraction(1, 2 ** (level + 1)) for x in center]
+            for x in range(2 ** len(center)):
                 v = list(lower_corner)
                 for d in range(len(center)):
                     y, x = x % 2, x // 2
                     if y:
-                        v[d] += Fraction(1, 2**level)
+                        v[d] += Fraction(1, 2 ** level)
                 vertex_ids.append(sample_set._add_vertex(tuple(v)))
 
             self.vertex_ids = vertex_ids
@@ -490,9 +672,11 @@ class AdaptiveSampleSet(BasicInterface):
         def refine(self, sample_set):
             level = self.level
             center = self.center
-            for x in range(2**len(center)):
+            for x in range(2 ** len(center)):
                 v = list(center)
                 for d in range(len(center)):
                     y, x = x % 2, x // 2
-                    v[d] += Fraction(1, 2**(level+2)) * (y * 2 - 1)
-                self.children.append(AdaptiveSampleSet.Element(level + 1, tuple(v), sample_set))
+                    v[d] += Fraction(1, 2 ** (level + 2)) * (y * 2 - 1)
+                self.children.append(
+                    AdaptiveSampleSet.Element(level + 1, tuple(v), sample_set)
+                )

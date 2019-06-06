@@ -11,29 +11,46 @@ if config.HAVE_PYMESS:
     import pymess
 
     from pymor.algorithms.genericsolvers import _parse_options
-    from pymor.algorithms.lyapunov import (mat_eqn_sparse_min_size, _solve_lyap_lrcf_check_args,
-                                           _solve_lyap_dense_check_args, _chol)
+    from pymor.algorithms.lyapunov import (
+        mat_eqn_sparse_min_size,
+        _solve_lyap_lrcf_check_args,
+        _solve_lyap_dense_check_args,
+        _chol,
+    )
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
     from pymor.core.defaults import defaults
     from pymor.core.logger import getLogger
     from pymor.operators.constructions import IdentityOperator
 
-    @defaults('adi_maxit', 'adi_memory_usage', 'adi_output', 'adi_rel_change_tol', 'adi_res2_tol', 'adi_res2c_tol',
-              'adi_shifts_arp_m', 'adi_shifts_arp_p', 'adi_shifts_b0', 'adi_shifts_l0', 'adi_shifts_p',
-              'adi_shifts_paratype')
-    def lradi_solver_options(adi_maxit=500,
-                             adi_memory_usage=pymess.MESS_MEMORY_MID,
-                             adi_output=1,
-                             adi_rel_change_tol=1e-10,
-                             adi_res2_tol=1e-10,
-                             adi_res2c_tol=1e-11,
-                             adi_shifts_arp_m=32,
-                             adi_shifts_arp_p=48,
-                             adi_shifts_b0=None,
-                             adi_shifts_l0=16,
-                             adi_shifts_p=None,
-                             adi_shifts_paratype=pymess.MESS_LRCFADI_PARA_ADAPTIVE_V):
+    @defaults(
+        "adi_maxit",
+        "adi_memory_usage",
+        "adi_output",
+        "adi_rel_change_tol",
+        "adi_res2_tol",
+        "adi_res2c_tol",
+        "adi_shifts_arp_m",
+        "adi_shifts_arp_p",
+        "adi_shifts_b0",
+        "adi_shifts_l0",
+        "adi_shifts_p",
+        "adi_shifts_paratype",
+    )
+    def lradi_solver_options(
+        adi_maxit=500,
+        adi_memory_usage=pymess.MESS_MEMORY_MID,
+        adi_output=1,
+        adi_rel_change_tol=1e-10,
+        adi_res2_tol=1e-10,
+        adi_res2c_tol=1e-11,
+        adi_shifts_arp_m=32,
+        adi_shifts_arp_p=48,
+        adi_shifts_b0=None,
+        adi_shifts_l0=16,
+        adi_shifts_p=None,
+        adi_shifts_paratype=pymess.MESS_LRCFADI_PARA_ADAPTIVE_V,
+    ):
         """Returns available adi solver options with default values for the pymess backend.
 
         Parameters
@@ -94,11 +111,12 @@ if config.HAVE_PYMESS:
         A dict of available solvers with default solver options.
         """
 
-        return {'pymess_glyap': {'type': 'pymess_glyap'},
-                'pymess_lradi': {'type': 'pymess_lradi',
-                                 'opts': lradi_solver_options()}}
+        return {
+            "pymess_glyap": {"type": "pymess_glyap"},
+            "pymess_lradi": {"type": "pymess_lradi", "opts": lradi_solver_options()},
+        }
 
-    @defaults('default_solver')
+    @defaults("default_solver")
     def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
         """Compute an approximate low-rank solution of a Lyapunov equation.
 
@@ -148,22 +166,33 @@ if config.HAVE_PYMESS:
 
         _solve_lyap_lrcf_check_args(A, E, B, trans)
         if default_solver is None:
-            default_solver = 'pymess_lradi' if A.source.dim >= mat_eqn_sparse_min_size() else 'pymess_glyap'
-        options = _parse_options(options, lyap_lrcf_solver_options(), default_solver, None, False)
+            default_solver = (
+                "pymess_lradi"
+                if A.source.dim >= mat_eqn_sparse_min_size()
+                else "pymess_glyap"
+            )
+        options = _parse_options(
+            options, lyap_lrcf_solver_options(), default_solver, None, False
+        )
 
-        if options['type'] == 'pymess_glyap':
-            X = solve_lyap_dense(to_matrix(A, format='dense'),
-                                 to_matrix(E, format='dense') if E else None,
-                                 B.to_numpy().T if not trans else B.to_numpy(),
-                                 trans=trans, options=options)
+        if options["type"] == "pymess_glyap":
+            X = solve_lyap_dense(
+                to_matrix(A, format="dense"),
+                to_matrix(E, format="dense") if E else None,
+                B.to_numpy().T if not trans else B.to_numpy(),
+                trans=trans,
+                options=options,
+            )
             Z = _chol(X)
-        elif options['type'] == 'pymess_lradi':
-            opts = options['opts']
+        elif options["type"] == "pymess_lradi":
+            opts = options["opts"]
             opts.type = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             eqn = LyapunovEquation(opts, A, E, B)
             Z, status = pymess.lradi(eqn, opts)
         else:
-            raise ValueError(f'Unexpected Lyapunov equation solver ({options["type"]}).')
+            raise ValueError(
+                f'Unexpected Lyapunov equation solver ({options["type"]}).'
+            )
 
         return A.source.from_numpy(Z.T)
 
@@ -175,7 +204,7 @@ if config.HAVE_PYMESS:
         A dict of available solvers with default solver options.
         """
 
-        return {'pymess_glyap': {'type': 'pymess_glyap'}}
+        return {"pymess_glyap": {"type": "pymess_glyap"}}
 
     def solve_lyap_dense(A, E, B, trans=False, options=None):
         """Compute the solution of a Lyapunov equation.
@@ -207,23 +236,25 @@ if config.HAVE_PYMESS:
         """
 
         _solve_lyap_dense_check_args(A, E, B, trans)
-        options = _parse_options(options, lyap_lrcf_solver_options(), 'pymess_glyap', None, False)
+        options = _parse_options(
+            options, lyap_lrcf_solver_options(), "pymess_glyap", None, False
+        )
 
-        if options['type'] == 'pymess_glyap':
+        if options["type"] == "pymess_glyap":
             Y = B.dot(B.T) if not trans else B.T.dot(B)
             op = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             X = pymess.glyap(A, E, Y, op=op)[0]
         else:
-            raise ValueError(f'Unexpected Lyapunov equation solver ({options["type"]}).')
+            raise ValueError(
+                f'Unexpected Lyapunov equation solver ({options["type"]}).'
+            )
 
         return X
 
-    @defaults('linesearch', 'maxit', 'absres_tol', 'relres_tol', 'nrm')
-    def dense_nm_gmpcare_solver_options(linesearch=False,
-                                        maxit=50,
-                                        absres_tol=1e-11,
-                                        relres_tol=1e-12,
-                                        nrm=0):
+    @defaults("linesearch", "maxit", "absres_tol", "relres_tol", "nrm")
+    def dense_nm_gmpcare_solver_options(
+        linesearch=False, maxit=50, absres_tol=1e-11, relres_tol=1e-12, nrm=0
+    ):
         """Returns available Riccati equation solvers with default solver options for the pymess backend.
 
         Also see :func:`lradi_solver_options`.
@@ -246,21 +277,32 @@ if config.HAVE_PYMESS:
         A dict of available solvers with default solver options.
         """
 
-        return {'linesearch': linesearch,
-                'maxit':      maxit,
-                'absres_tol': absres_tol,
-                'relres_tol': relres_tol,
-                'nrm':        nrm}
+        return {
+            "linesearch": linesearch,
+            "maxit": maxit,
+            "absres_tol": absres_tol,
+            "relres_tol": relres_tol,
+            "nrm": nrm,
+        }
 
-    @defaults('newton_gstep', 'newton_k0', 'newton_linesearch', 'newton_maxit', 'newton_output', 'newton_res2_tol',
-              'newton_singleshifts')
-    def lrnm_solver_options(newton_gstep=0,
-                            newton_k0=None,
-                            newton_linesearch=0,
-                            newton_maxit=30,
-                            newton_output=1,
-                            newton_res2_tol=1e-10,
-                            newton_singleshifts=0):
+    @defaults(
+        "newton_gstep",
+        "newton_k0",
+        "newton_linesearch",
+        "newton_maxit",
+        "newton_output",
+        "newton_res2_tol",
+        "newton_singleshifts",
+    )
+    def lrnm_solver_options(
+        newton_gstep=0,
+        newton_k0=None,
+        newton_linesearch=0,
+        newton_maxit=30,
+        newton_output=1,
+        newton_res2_tol=1e-10,
+        newton_singleshifts=0,
+    ):
         """Returns available adi solver options with default values for the pymess backend.
 
         Parameters
@@ -307,13 +349,18 @@ if config.HAVE_PYMESS:
         A dict of available solvers with default solver options.
         """
 
-        return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
-                                            'opts': dense_nm_gmpcare_solver_options()},
-                'pymess_lrnm':             {'type': 'pymess_lrnm',
-                                            'opts': lrnm_solver_options()}}
+        return {
+            "pymess_dense_nm_gmpcare": {
+                "type": "pymess_dense_nm_gmpcare",
+                "opts": dense_nm_gmpcare_solver_options(),
+            },
+            "pymess_lrnm": {"type": "pymess_lrnm", "opts": lrnm_solver_options()},
+        }
 
-    @defaults('default_solver')
-    def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None, default_solver=None):
+    @defaults("default_solver")
+    def solve_ricc_lrcf(
+        A, E, B, C, R=None, S=None, trans=False, options=None, default_solver=None
+    ):
         """Compute an approximate low-rank solution of a Riccati equation.
 
         See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
@@ -369,24 +416,35 @@ if config.HAVE_PYMESS:
 
         _solve_ricc_check_args(A, E, B, C, R, S, trans)
         if default_solver is None:
-            default_solver = 'pymess_lrnm' if A.source.dim >= mat_eqn_sparse_min_size() else 'pymess_dense_nm_gmpcare'
-        options = _parse_options(options, ricc_lrcf_solver_options(), default_solver, None, False)
+            default_solver = (
+                "pymess_lrnm"
+                if A.source.dim >= mat_eqn_sparse_min_size()
+                else "pymess_dense_nm_gmpcare"
+            )
+        options = _parse_options(
+            options, ricc_lrcf_solver_options(), default_solver, None, False
+        )
 
-        if options['type'] == 'pymess_dense_nm_gmpcare':
-            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=False)
+        if options["type"] == "pymess_dense_nm_gmpcare":
+            X = _call_pymess_dense_nm_gmpare(
+                A, E, B, C, R, S, trans=trans, options=options["opts"], plus=False
+            )
             Z = _chol(X)
-        elif options['type'] == 'pymess_lrnm':
+        elif options["type"] == "pymess_lrnm":
             if S is not None:
                 raise NotImplementedError
             if R is not None:
                 import scipy.linalg as spla
-                Rc = spla.cholesky(R)                                 # R = Rc^T * Rc
-                Rci = spla.solve_triangular(Rc, np.eye(Rc.shape[0]))  # R^{-1} = Rci * Rci^T
+
+                Rc = spla.cholesky(R)  # R = Rc^T * Rc
+                Rci = spla.solve_triangular(
+                    Rc, np.eye(Rc.shape[0])
+                )  # R^{-1} = Rci * Rci^T
                 if not trans:
                     C = C.lincomb(Rci.T)  # C <- Rci^T * C = (C^T * Rci)^T
                 else:
                     B = B.lincomb(Rci.T)  # B <- B * Rci
-            opts = options['opts']
+            opts = options["opts"]
             opts.type = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             eqn = RiccatiEquation(opts, A, E, B, C)
             Z, status = pymess.lrnm(eqn, opts)
@@ -403,8 +461,12 @@ if config.HAVE_PYMESS:
         A dict of available solvers with default solver options.
         """
 
-        return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
-                                            'opts': dense_nm_gmpcare_solver_options()}}
+        return {
+            "pymess_dense_nm_gmpcare": {
+                "type": "pymess_dense_nm_gmpcare",
+                "opts": dense_nm_gmpcare_solver_options(),
+            }
+        }
 
     def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a positive Riccati equation.
@@ -443,20 +505,32 @@ if config.HAVE_PYMESS:
         """
 
         _solve_ricc_check_args(A, E, B, C, R, S, trans)
-        options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'pymess_dense_nm_gmpcare', None, False)
+        options = _parse_options(
+            options,
+            pos_ricc_lrcf_solver_options(),
+            "pymess_dense_nm_gmpcare",
+            None,
+            False,
+        )
 
-        if options['type'] == 'pymess_dense_nm_gmpcare':
-            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=True)
+        if options["type"] == "pymess_dense_nm_gmpcare":
+            X = _call_pymess_dense_nm_gmpare(
+                A, E, B, C, R, S, trans=trans, options=options["opts"], plus=True
+            )
             Z = _chol(X)
         else:
-            raise ValueError(f'Unexpected positive Riccati equation solver ({options["type"]}).')
+            raise ValueError(
+                f'Unexpected positive Riccati equation solver ({options["type"]}).'
+            )
 
         return A.source.from_numpy(Z.T)
 
-    def _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=False, options=None, plus=False):
+    def _call_pymess_dense_nm_gmpare(
+        A, E, B, C, R, S, trans=False, options=None, plus=False
+    ):
         """Return the solution from pymess.dense_nm_gmpare solver."""
-        A = to_matrix(A, format='dense')
-        E = to_matrix(E, format='dense') if E else None
+        A = to_matrix(A, format="dense")
+        E = to_matrix(E, format="dense") if E else None
         B = B.to_numpy().T
         C = C.to_numpy()
         S = S.to_numpy().T if S else None
@@ -485,22 +559,32 @@ if config.HAVE_PYMESS:
                 else:
                     A += RinvBT.T.dot(S.T)
                     Q += S.dot(RinvST)
-        X, absres, relres = pymess.dense_nm_gmpare(None,
-                                                   A, E, Q, G,
-                                                   plus=plus, trans=pymess_trans,
-                                                   linesearch=options['linesearch'],
-                                                   maxit=options['maxit'],
-                                                   absres_tol=options['absres_tol'],
-                                                   relres_tol=options['relres_tol'],
-                                                   nrm=options['nrm'])
-        if absres > options['absres_tol']:
-            logger = getLogger('pymess.dense_nm_gmpcare')
-            logger.warning(f'Desired absolute residual tolerance was not achieved '
-                           f'({absres:e} > {options["absres_tol"]:e}).')
-        if relres > options['relres_tol']:
-            logger = getLogger('pymess.dense_nm_gmpcare')
-            logger.warning(f'Desired relative residual tolerance was not achieved '
-                           f'({relres:e} > {options["relres_tol"]:e}).')
+        X, absres, relres = pymess.dense_nm_gmpare(
+            None,
+            A,
+            E,
+            Q,
+            G,
+            plus=plus,
+            trans=pymess_trans,
+            linesearch=options["linesearch"],
+            maxit=options["maxit"],
+            absres_tol=options["absres_tol"],
+            relres_tol=options["relres_tol"],
+            nrm=options["nrm"],
+        )
+        if absres > options["absres_tol"]:
+            logger = getLogger("pymess.dense_nm_gmpcare")
+            logger.warning(
+                f"Desired absolute residual tolerance was not achieved "
+                f'({absres:e} > {options["absres_tol"]:e}).'
+            )
+        if relres > options["relres_tol"]:
+            logger = getLogger("pymess.dense_nm_gmpcare")
+            logger.warning(
+                f"Desired relative residual tolerance was not achieved "
+                f'({relres:e} > {options["relres_tol"]:e}).'
+            )
 
         return X
 
@@ -541,8 +625,9 @@ if config.HAVE_PYMESS:
         B
             The operator B as a |VectorArray| from `A.source`.
         """
+
         def __init__(self, opt, A, E, B):
-            super().__init__(name='LyapunovEquation', opt=opt, dim=A.source.dim)
+            super().__init__(name="LyapunovEquation", opt=opt, dim=A.source.dim)
             self.a = A
             self.e = E
             self.rhs = B.to_numpy().T
@@ -658,8 +743,9 @@ if config.HAVE_PYMESS:
         C
             The operator C as a |VectorArray| from `A.source`.
         """
+
         def __init__(self, opt, A, E, B, C):
-            super().__init__(name='RiccatiEquation', opt=opt, dim=A.source.dim)
+            super().__init__(name="RiccatiEquation", opt=opt, dim=A.source.dim)
             self.a = A
             self.e = E
             self.b = B.to_numpy().T

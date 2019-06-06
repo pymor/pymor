@@ -34,7 +34,7 @@ class MPIModel:
 
     def _solve(self, mu=None):
         return self.solution_space.make_array(
-            mpi.call(mpi.method_call_manage, self.obj_id, 'solve', mu=mu)
+            mpi.call(mpi.method_call_manage, self.obj_id, "solve", mu=mu)
         )
 
     def visualize(self, U, **kwargs):
@@ -45,7 +45,6 @@ class MPIModel:
 
 
 class MPIVisualizer(ImmutableInterface):
-
     def __init__(self, m_obj_id):
         self.m_obj_id = m_obj_id
 
@@ -66,9 +65,15 @@ def _MPIVisualizer_visualize(m, U, **kwargs):
     m.visualize(U, **kwargs)
 
 
-def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_apply2=False,
-                   pickle_local_spaces=True, space_type=MPIVectorSpace,
-                   base_type=None):
+def mpi_wrap_model(
+    local_models,
+    mpi_spaces=("STATE",),
+    use_with=True,
+    with_apply2=False,
+    pickle_local_spaces=True,
+    space_type=MPIVectorSpace,
+    base_type=None,
+):
     """Wrap MPI distributed local |Models| to a global |Model| on rank 0.
 
     Given MPI distributed local |Models| referred to by the
@@ -121,20 +126,29 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
     if not isinstance(local_models, mpi.ObjectId):
         local_models = mpi.call(mpi.function_call_manage, local_models)
 
-    attributes = mpi.call(_mpi_wrap_model_manage_operators, local_models, mpi_spaces, use_with, base_type)
+    attributes = mpi.call(
+        _mpi_wrap_model_manage_operators, local_models, mpi_spaces, use_with, base_type
+    )
 
     wrapped_attributes = {
-        k: _map_children(lambda v: mpi_wrap_operator(*v, with_apply2=with_apply2,
-                                                     pickle_local_spaces=pickle_local_spaces,
-                                                     space_type=space_type) if isinstance(v, _OperatorToWrap) else v,
-                         v)
+        k: _map_children(
+            lambda v: mpi_wrap_operator(
+                *v,
+                with_apply2=with_apply2,
+                pickle_local_spaces=pickle_local_spaces,
+                space_type=space_type
+            )
+            if isinstance(v, _OperatorToWrap)
+            else v,
+            v,
+        )
         for k, v in attributes.items()
     }
 
     if use_with:
         m = mpi.get_object(local_models)
         if m.visualizer:
-            wrapped_attributes['visualizer'] = MPIVisualizer(local_models)
+            wrapped_attributes["visualizer"] = MPIVisualizer(local_models)
         return m.with_(cache_region=None, **wrapped_attributes)
     else:
 
@@ -144,13 +158,15 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
         return MPIWrappedModel(local_models, **wrapped_attributes)
 
 
-_OperatorToWrap = namedtuple('_OperatorToWrap', 'operator mpi_range mpi_source')
+_OperatorToWrap = namedtuple("_OperatorToWrap", "operator mpi_range mpi_source")
 
 
 def _mpi_wrap_model_manage_operators(obj_id, mpi_spaces, use_with, base_type):
     m = mpi.get_object(obj_id)
 
-    attributes_to_consider = m._init_arguments if use_with else base_type._init_arguments
+    attributes_to_consider = (
+        m._init_arguments if use_with else base_type._init_arguments
+    )
     attributes = {k: getattr(m, k) for k in attributes_to_consider}
 
     def process_attribute(v):
@@ -164,8 +180,11 @@ def _mpi_wrap_model_manage_operators(obj_id, mpi_spaces, use_with, base_type):
         else:
             return v
 
-    managed_attributes = {k: _map_children(process_attribute, v)
-                          for k, v in sorted(attributes.items()) if k not in {'cache_region', 'visualizer'}}
+    managed_attributes = {
+        k: _map_children(process_attribute, v)
+        for k, v in sorted(attributes.items())
+        if k not in {"cache_region", "visualizer"}
+    }
     if mpi.rank0:
         return managed_attributes
 

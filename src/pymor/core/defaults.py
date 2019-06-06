@@ -84,7 +84,9 @@ class DefaultContainer:
     def __new__(cls):
         global _default_container
         if _default_container is not None:
-            raise ValueError('DefaultContainer is a singleton! Use pymor.core.defaults._default_container.')
+            raise ValueError(
+                "DefaultContainer is a singleton! Use pymor.core.defaults._default_container."
+            )
         else:
             return object.__new__(cls)
 
@@ -96,12 +98,15 @@ class DefaultContainer:
 
         if func.__doc__ is not None:
             new_docstring = inspect.cleandoc(func.__doc__)
-            new_docstring += '''
+            new_docstring += """
 
 Defaults
 --------
-'''
-            new_docstring += '\n'.join(textwrap.wrap(', '.join(args), 80)) + '\n(see :mod:`pymor.core.defaults`)'
+"""
+            new_docstring += (
+                "\n".join(textwrap.wrap(", ".join(args), 80))
+                + "\n(see :mod:`pymor.core.defaults`)"
+            )
             func.__doc__ = new_docstring
 
         params = OrderedDict(inspect.signature(func).parameters)
@@ -112,22 +117,26 @@ Defaults
             if p is None:
                 raise ValueError(f"Decorated function has no argument '{n}'")
             if p.default is p.empty:
-                raise ValueError(f"Decorated function has no default for argument '{n}'")
+                raise ValueError(
+                    f"Decorated function has no default for argument '{n}'"
+                )
             defaultsdict[n] = p.default
 
-        path = func.__module__ + '.' + getattr(func, '__qualname__', func.__name__)
+        path = func.__module__ + "." + getattr(func, "__qualname__", func.__name__)
         if path in self.registered_functions:
-            raise ValueError(f'Function with name {path} already registered for default values!')
+            raise ValueError(
+                f"Function with name {path} already registered for default values!"
+            )
         self.registered_functions.add(path)
         for k, v in defaultsdict.items():
-            self._data[path + '.' + k]['func'] = func
-            self._data[path + '.' + k]['code'] = v
-            self._data[path + '.' + k]['sid_ignore'] = k in sid_ignore
+            self._data[path + "." + k]["func"] = func
+            self._data[path + "." + k]["code"] = v
+            self._data[path + "." + k]["sid_ignore"] = k in sid_ignore
 
         defaultsdict = {}
         for k in self._data:
-            if k.startswith(path + '.'):
-                defaultsdict[k.split('.')[-1]] = self.get(k)[0]
+            if k.startswith(path + "."):
+                defaultsdict[k.split(".")[-1]] = self.get(k)[0]
 
         func.argnames = argnames
         func.defaultsdict = defaultsdict
@@ -140,26 +149,26 @@ Defaults
             params[n] = params[n].replace(default=v)
         func.__signature__ = sig.replace(parameters=params.values())
 
-    def update(self, defaults, type='user'):
-        if hasattr(self, '_sid'):
+    def update(self, defaults, type="user"):
+        if hasattr(self, "_sid"):
             del self._sid
-        assert type in ('user', 'file')
+        assert type in ("user", "file")
 
         functions_to_update = set()
 
         for k, v in defaults.items():
-            k_parts = k.split('.')
+            k_parts = k.split(".")
 
-            func = self._data[k].get('func', None)
+            func = self._data[k].get("func", None)
             if not func:
                 head = k_parts[:-2]
                 while head:
                     try:
-                        importlib.import_module('.'.join(head))
+                        importlib.import_module(".".join(head))
                         break
                     except ImportError:
                         head = head[:-1]
-            func = self._data[k].get('func', None)
+            func = self._data[k].get("func", None)
             if not func:
                 del self._data[k]
                 raise KeyError(k)
@@ -174,14 +183,14 @@ Defaults
 
     def get(self, key):
         values = self._data[key]
-        if 'user' in values:
-            return values['user'], 'user', values['sid_ignore']
-        elif 'file' in values:
-            return values['file'], 'file', values['sid_ignore']
-        elif 'code' in values:
-            return values['code'], 'code', values['sid_ignore']
+        if "user" in values:
+            return values["user"], "user", values["sid_ignore"]
+        elif "file" in values:
+            return values["file"], "file", values["sid_ignore"]
+        elif "code" in values:
+            return values["code"], "code", values["sid_ignore"]
         else:
-            raise ValueError('No default value matching the specified criteria')
+            raise ValueError("No default value matching the specified criteria")
 
     def __getitem__(self, key):
         assert isinstance(key, str)
@@ -191,17 +200,21 @@ Defaults
         return self._data.keys()
 
     def import_all(self):
-        packages = {k.split('.')[0] for k in self._data.keys()}.union({'pymor'})
+        packages = {k.split(".")[0] for k in self._data.keys()}.union({"pymor"})
         for package in packages:
             _import_all(package)
 
     @property
     def sid(self):
-        sid = getattr(self, '_sid', None)
+        sid = getattr(self, "_sid", None)
         if not sid:
             from pymor.core.interfaces import generate_sid
-            user_dict = {k: v['user'] if 'user' in v else v['file']
-                         for k, v in self._data.items() if 'user' in v or 'file' in v and not v['sid_ignore']}
+
+            user_dict = {
+                k: v["user"] if "user" in v else v["file"]
+                for k, v in self._data.items()
+                if "user" in v or "file" in v and not v["sid_ignore"]
+            }
             self._sid = sid = generate_sid(user_dict)
         return sid
 
@@ -246,16 +259,22 @@ def defaults(*args, sid_ignore=()):
             return func
 
         global _default_container
-        _default_container._add_defaults_for_function(func, args=args, sid_ignore=sid_ignore)
+        _default_container._add_defaults_for_function(
+            func, args=args, sid_ignore=sid_ignore
+        )
 
         @functools.wraps(func, updated=())  # ensure that __signature__ is not copied
         def wrapper(*wrapper_args, **wrapper_kwargs):
             for k, v in zip(func.argnames, wrapper_args):
                 if k in wrapper_kwargs:
-                    raise TypeError(f"{func.__name__} got multiple values for argument '{k}'")
+                    raise TypeError(
+                        f"{func.__name__} got multiple values for argument '{k}'"
+                    )
                 wrapper_kwargs[k] = v
-            wrapper_kwargs = {k: v if v is not None else func.defaultsdict.get(k, None)
-                              for k, v in wrapper_kwargs.items()}
+            wrapper_kwargs = {
+                k: v if v is not None else func.defaultsdict.get(k, None)
+                for k, v in wrapper_kwargs.items()
+            }
             wrapper_kwargs = dict(func.defaultsdict, **wrapper_kwargs)
             return func(**wrapper_kwargs)
 
@@ -264,23 +283,28 @@ def defaults(*args, sid_ignore=()):
     return the_decorator
 
 
-def _import_all(package_name='pymor'):
+def _import_all(package_name="pymor"):
 
     package = importlib.import_module(package_name)
 
-    if hasattr(package, '__path__'):
+    if hasattr(package, "__path__"):
+
         def onerror(name):
             from pymor.core.logger import getLogger
-            logger = getLogger('pymor.core.defaults._import_all')
-            logger.warning('Failed to import ' + name)
 
-        for p in pkgutil.walk_packages(package.__path__, package_name + '.', onerror=onerror):
+            logger = getLogger("pymor.core.defaults._import_all")
+            logger.warning("Failed to import " + name)
+
+        for p in pkgutil.walk_packages(
+            package.__path__, package_name + ".", onerror=onerror
+        ):
             try:
                 importlib.import_module(p[1])
             except ImportError:
                 from pymor.core.logger import getLogger
-                logger = getLogger('pymor.core.defaults._import_all')
-                logger.warning('Failed to import ' + p[1])
+
+                logger = getLogger("pymor.core.defaults._import_all")
+                logger.warning("Failed to import " + p[1])
 
 
 def print_defaults(import_all=True, shorten_paths=2):
@@ -309,18 +333,22 @@ def print_defaults(import_all=True, shorten_paths=2):
 
     for k in sorted(_default_container.keys()):
         v, c, i = _default_container.get(k)
-        k_parts = k.split('.')
+        k_parts = k.split(".")
         if len(k_parts) >= shorten_paths + 2:
-            keys[int(i)].append('.'.join(k_parts[shorten_paths:]))
+            keys[int(i)].append(".".join(k_parts[shorten_paths:]))
         else:
-            keys[int(i)].append('.'.join(k_parts))
+            keys[int(i)].append(".".join(k_parts))
         values[int(i)].append(repr(v))
         comments[int(i)].append(c)
-    key_string = 'path (shortened)' if shorten_paths else 'path'
+    key_string = "path (shortened)" if shorten_paths else "path"
 
     for i, (ks, vls, cs) in enumerate(zip(keys, values, comments)):
-        description = 'defaults not affecting state id calculation' if i else 'defaults affecting state id calcuation'
-        rows = [[key_string, 'value', 'source']] + list(zip(ks, vls, cs))
+        description = (
+            "defaults not affecting state id calculation"
+            if i
+            else "defaults affecting state id calcuation"
+        )
+        rows = [[key_string, "value", "source"]] + list(zip(ks, vls, cs))
         print(format_table(rows, title=description))
         if not i:
             print()
@@ -328,7 +356,7 @@ def print_defaults(import_all=True, shorten_paths=2):
         print()
 
 
-def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
+def write_defaults_to_file(filename="./pymor_defaults.py", packages=("pymor",)):
     """Write the currently set |default| values to a configuration file.
 
     The resulting file is an ordinary Python script and can be modified
@@ -358,53 +386,68 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
         v, c, i = _default_container.get(k)
         keys[int(i)].append("'" + k + "'")
         values[int(i)].append(repr(v))
-        as_comment[int(i)].append(c == 'code')
+        as_comment[int(i)].append(c == "code")
     key_width = max(max([0] + list(map(len, ks))) for ks in keys)
 
-    with open(filename, 'wt') as f:
-        print('''
+    with open(filename, "wt") as f:
+        print(
+            """
 # pyMOR defaults config file
 # This file has been automatically created by pymor.core.defaults.write_defaults_to_file'.
 
 d = {}
-'''[1:], file=f)
+"""[
+                1:
+            ],
+            file=f,
+        )
 
         for i, (ks, vls, cs) in enumerate(zip(keys, values, as_comment)):
 
             if i:
-                print('''
+                print(
+                    """
 ########################################################################
 #                                                                      #
 # SETTING THE FOLLOWING DEFAULTS WILL NOT AFFECT STATE ID CALCULATION. #
 #                                                                      #
 ########################################################################
-'''[1:], file=f)
+"""[
+                        1:
+                    ],
+                    file=f,
+                )
             else:
-                print('''
+                print(
+                    """
 ########################################################################
 #                                                                      #
 # SETTING THE FOLLOWING DEFAULTS WILL AFFECT STATE ID CALCULATION.     #
 #                                                                      #
 ########################################################################
-'''[1:], file=f)
+"""[
+                        1:
+                    ],
+                    file=f,
+                )
 
-            lks = ks[0].split('.')[:-1] if ks else ''
+            lks = ks[0].split(".")[:-1] if ks else ""
             for c, k, v in zip(cs, ks, vls):
-                ks = k.split('.')[:-1]
+                ks = k.split(".")[:-1]
                 if lks != ks:
-                    print('', file=f)
+                    print("", file=f)
                 lks = ks
 
-                comment = '# ' if c else ''
-                print(f'{comment}d[{k:{key_width}}] = {v}', file=f)
+                comment = "# " if c else ""
+                print(f"{comment}d[{k:{key_width}}] = {v}", file=f)
 
             print(file=f)
             print(file=f)
 
-    print('Written defaults to file ' + filename)
+    print("Written defaults to file " + filename)
 
 
-def load_defaults_from_file(filename='./pymor_defaults.py'):
+def load_defaults_from_file(filename="./pymor_defaults.py"):
     """Loads |default| values defined in configuration file.
 
     Suitable configuration files can be created via :func:`write_defaults_to_file`.
@@ -422,11 +465,13 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
         Path of the configuration file.
     """
     env = {}
-    exec(open(filename, 'rt').read(), env)
+    exec(open(filename, "rt").read(), env)
     try:
-        _default_container.update(env['d'], type='file')
+        _default_container.update(env["d"], type="file")
     except KeyError as e:
-        raise KeyError(f'Error loading defaults from file. Key {e} does not correspond to a default')
+        raise KeyError(
+            f"Error loading defaults from file. Key {e} does not correspond to a default"
+        )
 
 
 def set_defaults(defaults):
@@ -447,9 +492,11 @@ def set_defaults(defaults):
         values (see :func:`defaults`).
     """
     try:
-        _default_container.update(defaults, type='user')
+        _default_container.update(defaults, type="user")
     except KeyError as e:
-        raise KeyError(f'Error setting defaults. Key {e} does not correspond to a default')
+        raise KeyError(
+            f"Error setting defaults. Key {e} does not correspond to a default"
+        )
 
 
 def defaults_sid():

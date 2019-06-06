@@ -21,18 +21,18 @@ class FunctionBase(FunctionInterface):
         elif not isinstance(other, FunctionInterface):
             other = np.array(other)
             assert other.shape == self.shape_range
-            if np.all(other == 0.):
+            if np.all(other == 0.0):
                 return self
             other = ConstantFunction(other, dim_domain=self.dim_domain)
-        return LincombFunction([self, other], [1., 1.])
+        return LincombFunction([self, other], [1.0, 1.0])
 
     __radd__ = __add__
 
     def __sub__(self, other):
         if isinstance(other, FunctionInterface):
-            return LincombFunction([self, other], [1., -1.])
+            return LincombFunction([self, other], [1.0, -1.0])
         else:
-            return self + (- np.array(other))
+            return self + (-np.array(other))
 
     def __mul__(self, other):
         if isinstance(other, (Number, ParameterFunctionalInterface)):
@@ -44,7 +44,7 @@ class FunctionBase(FunctionInterface):
     __rmul__ = __mul__
 
     def __neg__(self):
-        return LincombFunction([self], [-1.])
+        return LincombFunction([self], [-1.0])
 
 
 class ConstantFunction(FunctionBase):
@@ -72,10 +72,10 @@ class ConstantFunction(FunctionBase):
         self.name = name
 
     def __str__(self):
-        return f'{self.name}: x -> {self.value}'
+        return f"{self.name}: x -> {self.value}"
 
     def __repr__(self):
-        return f'ConstantFunction({repr(self.value)}, {self.dim_domain})'
+        return f"ConstantFunction({repr(self.value)}, {self.dim_domain})"
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
@@ -114,18 +114,22 @@ class GenericFunction(FunctionBase):
         The name of the function.
     """
 
-    def __init__(self, mapping, dim_domain=1, shape_range=(), parameter_type=None, name=None):
+    def __init__(
+        self, mapping, dim_domain=1, shape_range=(), parameter_type=None, name=None
+    ):
         assert dim_domain > 0
         assert isinstance(shape_range, (Number, tuple))
         self.dim_domain = dim_domain
-        self.shape_range = shape_range if isinstance(shape_range, tuple) else (shape_range,)
+        self.shape_range = (
+            shape_range if isinstance(shape_range, tuple) else (shape_range,)
+        )
         self.name = name
         self.mapping = mapping
         if parameter_type is not None:
             self.build_parameter_type(parameter_type)
 
     def __str__(self):
-        return f'{self.name}: x -> {self.mapping}'
+        return f"{self.name}: x -> {self.mapping}"
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
@@ -138,7 +142,7 @@ class GenericFunction(FunctionBase):
             v = self.mapping(x)
 
         if v.shape != x.shape[:-1] + self.shape_range:
-            assert v.shape[:len(x.shape) - 1] == x.shape[:-1]
+            assert v.shape[: len(x.shape) - 1] == x.shape[:-1]
             v = v.reshape(x.shape[:-1] + self.shape_range)
 
         return v
@@ -175,21 +179,46 @@ class ExpressionFunction(GenericFunction):
 
     functions = ExpressionParameterFunctional.functions
 
-    def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, values=None, name=None):
+    def __init__(
+        self,
+        expression,
+        dim_domain=1,
+        shape_range=(),
+        parameter_type=None,
+        values=None,
+        name=None,
+    ):
         self.expression = expression
         self.values = values or {}
-        code = compile(expression, '<expression>', 'eval')
-        super().__init__(lambda x, mu={}: eval(code, dict(self.functions, **self.values), dict(mu, x=x, mu=mu)),
-                         dim_domain, shape_range, parameter_type, name)
+        code = compile(expression, "<expression>", "eval")
+        super().__init__(
+            lambda x, mu={}: eval(
+                code, dict(self.functions, **self.values), dict(mu, x=x, mu=mu)
+            ),
+            dim_domain,
+            shape_range,
+            parameter_type,
+            name,
+        )
 
     def __repr__(self):
-        return f'ExpressionFunction({self.expression}, {repr(self.parameter_type)}, {self.shape_range}, ' \
-               f'{self.parameter_type}, {self.values})'
+        return (
+            f"ExpressionFunction({self.expression}, {repr(self.parameter_type)}, {self.shape_range}, "
+            f"{self.parameter_type}, {self.values})"
+        )
 
     def __reduce__(self):
-        return (ExpressionFunction,
-                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.values,
-                 getattr(self, '_name', None)))
+        return (
+            ExpressionFunction,
+            (
+                self.expression,
+                self.dim_domain,
+                self.shape_range,
+                self.parameter_type,
+                self.values,
+                getattr(self, "_name", None),
+            ),
+        )
 
 
 class LincombFunction(FunctionBase):
@@ -218,7 +247,9 @@ class LincombFunction(FunctionBase):
         assert len(functions) > 0
         assert len(functions) == len(coefficients)
         assert all(isinstance(f, FunctionInterface) for f in functions)
-        assert all(isinstance(c, (ParameterFunctionalInterface, Number)) for c in coefficients)
+        assert all(
+            isinstance(c, (ParameterFunctionalInterface, Number)) for c in coefficients
+        )
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
         self.dim_domain = functions[0].dim_domain
@@ -226,13 +257,23 @@ class LincombFunction(FunctionBase):
         self.functions = functions
         self.coefficients = coefficients
         self.name = name
-        self.build_parameter_type(*chain(functions,
-                                         (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
+        self.build_parameter_type(
+            *chain(
+                functions,
+                (
+                    f
+                    for f in coefficients
+                    if isinstance(f, ParameterFunctionalInterface)
+                ),
+            )
+        )
 
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients for a given |Parameter| `mu`."""
         mu = self.parse_parameter(mu)
-        return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
+        return np.array(
+            [c.evaluate(mu) if hasattr(c, "evaluate") else c for c in self.coefficients]
+        )
 
     def evaluate(self, x, mu=None):
         mu = self.parse_parameter(mu)

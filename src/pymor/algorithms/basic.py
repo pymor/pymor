@@ -11,7 +11,7 @@ from pymor.core.defaults import defaults
 from pymor.operators.constructions import induced_norm
 
 
-@defaults('rtol', 'atol')
+@defaults("rtol", "atol")
 def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
     """Compare U and V for almost equality.
 
@@ -47,13 +47,13 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
     """
 
     assert product is None or norm is None
-    assert not isinstance(norm, str) or norm in ('l1', 'l2', 'sup')
+    assert not isinstance(norm, str) or norm in ("l1", "l2", "sup")
     norm = induced_norm(product) if product is not None else norm
     if norm is None:
-        norm = 'l2'
+        norm = "l2"
     if isinstance(norm, str):
         norm_str = norm
-        norm = lambda U: getattr(U, norm_str + '_norm')()
+        norm = lambda U: getattr(U, norm_str + "_norm")()
 
     X = V.copy()
     V_norm = norm(X)
@@ -99,5 +99,7 @@ def project_array(U, basis, product=None, orthonormal=True):
     else:
         gramian = basis.gramian(product)
         rhs = basis.inner(U, product)
-        coeffs = scipy.linalg.solve(gramian, rhs, sym_pos=True, overwrite_a=True, overwrite_b=True).T
+        coeffs = scipy.linalg.solve(
+            gramian, rhs, sym_pos=True, overwrite_a=True, overwrite_b=True
+        ).T
         return basis.lincomb(coeffs)

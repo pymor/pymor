@@ -11,17 +11,18 @@ from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
 
 
 class WorkerPoolDefaultImplementations:
-
     def scatter_array(self, U, copy=True):
         slice_len = len(U) // len(self) + (1 if len(U) % len(self) else 0)
         if copy:
             slices = []
             for i in range(len(self)):
-                slices.append(U[i*slice_len:min((i+1)*slice_len, len(U))].copy())
+                slices.append(
+                    U[i * slice_len : min((i + 1) * slice_len, len(U))].copy()
+                )
         else:
             slices = [U.empty() for _ in range(len(self))]
             for s in slices:
-                s.append(U[:min(slice_len, len(U))], remove_from_other=True)
+                s.append(U[: min(slice_len, len(U))], remove_from_other=True)
         remote_U = self.push(U.empty())
         del U
         self.map(_append_array_slice, slices, U=remote_U)
@@ -31,7 +32,7 @@ class WorkerPoolDefaultImplementations:
         slice_len = len(l) // len(self) + (1 if len(l) % len(self) else 0)
         slices = []
         for i in range(len(self)):
-            slices.append(l[i*slice_len:(i+1)*slice_len])
+            slices.append(l[i * slice_len : (i + 1) * slice_len])
         del l
         remote_l = self.push([])
         self.map(_append_list_slice, slices, l=remote_l)
@@ -39,7 +40,6 @@ class WorkerPoolDefaultImplementations:
 
 
 class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
-
     def __init__(self):
         self._pushed_immutable_objects = {}
 
@@ -59,10 +59,16 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
 
     def _map_kwargs(self, kwargs):
         pushed_immutable_objects = self._pushed_immutable_objects
-        return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableInterface) else
-                    v.remote_id if isinstance(v, RemoteObject) else
-                    v)
-                for k, v in kwargs.items()}
+        return {
+            k: (
+                pushed_immutable_objects.get(v.uid, (v, 0))[0]
+                if isinstance(v, ImmutableInterface)
+                else v.remote_id
+                if isinstance(v, RemoteObject)
+                else v
+            )
+            for k, v in kwargs.items()
+        }
 
     def apply(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)
@@ -88,7 +94,9 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
             for _ in range(count):
                 chunk, arg = arg[:chunk_size], arg[chunk_size:]
                 yield chunk
+
         from itertools import chain
+
         for arg in args:
             assert list(chain(*split_arg(arg))) == arg
         chunks = tuple(list(split_arg(arg)) for arg in args)
@@ -96,7 +104,6 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
 
 
 class RemoteObject(RemoteObjectInterface):
-
     def __init__(self, pool, remote_id, uid=None):
         self.pool = weakref.ref(pool)
         self.remote_id = remote_id
@@ -107,7 +114,10 @@ class RemoteObject(RemoteObjectInterface):
         if self.uid is not None:
             remote_id, ref_count = pool._pushed_immutable_objects.pop(self.uid)
             if ref_count > 1:
-                pool._pushed_immutable_objects[self.remote_id] = (remote_id, ref_count - 1)
+                pool._pushed_immutable_objects[self.remote_id] = (
+                    remote_id,
+                    ref_count - 1,
+                )
             else:
                 pool._remove_object(remote_id)
         else:

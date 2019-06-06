@@ -6,9 +6,18 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, classinstancemethod
+from pymor.core.interfaces import (
+    BasicInterface,
+    abstractmethod,
+    abstractclassmethod,
+    classinstancemethod,
+)
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values
+from pymor.vectorarrays.interfaces import (
+    VectorArrayInterface,
+    VectorSpaceInterface,
+    _create_random_values,
+)
 
 
 class VectorInterface(BasicInterface):
@@ -95,7 +104,6 @@ class VectorInterface(BasicInterface):
 
 
 class CopyOnWriteVector(VectorInterface):
-
     @abstractclassmethod
     def from_instance(cls, instance):
         pass
@@ -250,17 +258,19 @@ class ListVectorArray(VectorArrayInterface):
 
     def __delitem__(self, ind):
         assert self.check_ind(ind)
-        if hasattr(ind, '__len__'):
+        if hasattr(ind, "__len__"):
             thelist = self._list
             l = len(thelist)
-            remaining = sorted(set(range(l)) - {i if 0 <= i else l+i for i in ind})
+            remaining = sorted(set(range(l)) - {i if 0 <= i else l + i for i in ind})
             self._list = [thelist[i] for i in remaining]
         else:
             del self._list[ind]
 
     def append(self, other, remove_from_other=False):
         assert other.space == self.space
-        assert not remove_from_other or (other is not self and getattr(other, 'base', None) is not self)
+        assert not remove_from_other or (
+            other is not self and getattr(other, "base", None) is not self
+        )
 
         if not remove_from_other:
             self._list.extend([v.copy() for v in other._list])
@@ -275,8 +285,11 @@ class ListVectorArray(VectorArrayInterface):
         return ListVectorArray([v.copy(deep=deep) for v in self._list], self.space)
 
     def scal(self, alpha):
-        assert isinstance(alpha, Number) \
-            or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
+        assert (
+            isinstance(alpha, Number)
+            or isinstance(alpha, np.ndarray)
+            and alpha.shape == (len(self),)
+        )
 
         if type(alpha) is np.ndarray:
             for a, v in zip(alpha, self._list):
@@ -289,8 +302,11 @@ class ListVectorArray(VectorArrayInterface):
         assert self.space == x.space
         len_x = len(x)
         assert len(self) == len_x or len_x == 1
-        assert isinstance(alpha, Number) \
-            or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
+        assert (
+            isinstance(alpha, Number)
+            or isinstance(alpha, np.ndarray)
+            and alpha.shape == (len(self),)
+        )
 
         if np.all(alpha == 0):
             return
@@ -370,9 +386,15 @@ class ListVectorArray(VectorArrayInterface):
             return np.array([v.sup_norm() for v in self._list])
 
     def dofs(self, dof_indices):
-        assert isinstance(dof_indices, list) and (len(dof_indices) == 0 or min(dof_indices) >= 0) \
-            or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
-                and (len(dof_indices) == 0 or np.min(dof_indices) >= 0))
+        assert (
+            isinstance(dof_indices, list)
+            and (len(dof_indices) == 0 or min(dof_indices) >= 0)
+            or (
+                isinstance(dof_indices, np.ndarray)
+                and dof_indices.ndim == 1
+                and (len(dof_indices) == 0 or np.min(dof_indices) >= 0)
+            )
+        )
 
         R = np.empty((len(self), len(dof_indices)))
 
@@ -395,7 +417,7 @@ class ListVectorArray(VectorArrayInterface):
         return MI, MV
 
     def __str__(self):
-        return f'ListVectorArray of {len(self._list)} of space {self.space}'
+        return f"ListVectorArray of {len(self._list)} of space {self.space}"
 
 
 class ListVectorSpace(VectorSpaceInterface):
@@ -408,7 +430,7 @@ class ListVectorSpace(VectorSpaceInterface):
         pass
 
     def ones_vector(self):
-        return self.full_vector(1.)
+        return self.full_vector(1.0)
 
     def full_vector(self, value):
         return self.vector_from_numpy(np.full(self.dim, value))
@@ -444,12 +466,27 @@ class ListVectorSpace(VectorSpaceInterface):
         assert count >= 0 and reserve >= 0
         return ListVectorArray([self.full_vector(value) for _ in range(count)], self)
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(
+        self,
+        count=1,
+        distribution="uniform",
+        random_state=None,
+        seed=None,
+        reserve=0,
+        **kwargs,
+    ):
         assert count >= 0 and reserve >= 0
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
-        return ListVectorArray([self.random_vector(distribution=distribution, random_state=random_state, **kwargs)
-                                for _ in range(count)], self)
+        return ListVectorArray(
+            [
+                self.random_vector(
+                    distribution=distribution, random_state=random_state, **kwargs
+                )
+                for _ in range(count)
+            ],
+            self,
+        )
 
     @classinstancemethod
     def make_array(cls, obj, id=None):
@@ -463,21 +500,28 @@ class ListVectorSpace(VectorSpaceInterface):
 
     @classinstancemethod
     def from_numpy(cls, data, id=None, ensure_copy=False):
-        return cls.space_from_dim(data.shape[1], id=id).from_numpy(data, ensure_copy=ensure_copy)
+        return cls.space_from_dim(data.shape[1], id=id).from_numpy(
+            data, ensure_copy=ensure_copy
+        )
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
-        return ListVectorArray([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
+        return ListVectorArray(
+            [self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self
+        )
 
 
 class NumpyListVectorSpace(ListVectorSpace):
-
     def __init__(self, dim, id=None):
         self.dim = dim
         self.id = id
 
     def __eq__(self, other):
-        return type(other) is NumpyListVectorSpace and self.dim == other.dim and self.id == other.id
+        return (
+            type(other) is NumpyListVectorSpace
+            and self.dim == other.dim
+            and self.id == other.id
+        )
 
     @classmethod
     def space_from_vector_obj(cls, vec, id):
@@ -515,7 +559,7 @@ class ListVectorArrayView(ListVectorArray):
         self.ind = base.normalize_ind(ind)
         if type(ind) is slice:
             self._list = base._list[ind]
-        elif hasattr(ind, '__len__'):
+        elif hasattr(ind, "__len__"):
             _list = base._list
             self._list = [_list[i] for i in ind]
         else:
@@ -529,10 +573,10 @@ class ListVectorArrayView(ListVectorArray):
         return self.base[self.base.sub_index(self.ind, ind)]
 
     def __delitem__(self, ind):
-        raise TypeError('Cannot remove from ListVectorArrayView')
+        raise TypeError("Cannot remove from ListVectorArrayView")
 
     def append(self, other, remove_from_other=False):
-        raise TypeError('Cannot append to ListVectorArrayView')
+        raise TypeError("Cannot append to ListVectorArrayView")
 
     def scal(self, alpha):
         assert self.base.check_ind_unique(self.ind)
@@ -545,11 +589,10 @@ class ListVectorArrayView(ListVectorArray):
         super().axpy(alpha, x)
 
     def __str__(self):
-        return f'ListVectorArrayView of {len(self._list)} {str(self.vector_type)}s of dimension {self.dim}'
+        return f"ListVectorArrayView of {len(self._list)} {str(self.vector_type)}s of dimension {self.dim}"
 
 
 class ListVectorArrayNumpyView:
-
     def __init__(self, array):
         self.array = array
 
@@ -560,4 +603,4 @@ class ListVectorArrayNumpyView:
         return self.array._list[i].to_numpy()
 
     def __repr__(self):
-        return '[' + ',\n '.join(repr(v) for v in self) + ']'
+        return "[" + ",\n ".join(repr(v) for v in self) + "]"

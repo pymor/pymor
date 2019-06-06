@@ -35,9 +35,10 @@ class SubGrid(AffineGridInterface):
     reference_element = None
 
     def __init__(self, parent_grid, parent_entities):
-        assert parent_grid is not None, \
-            'parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n' \
-            'on a SubGrid for which the parent grid has been destroyed?'
+        assert parent_grid is not None, (
+            "parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n"
+            "on a SubGrid for which the parent grid has been destroyed?"
+        )
         assert isinstance(parent_grid, AffineGridInterface)
         self.dim = parent_grid.dim
         self.reference_element = parent_grid.reference_element
@@ -45,7 +46,9 @@ class SubGrid(AffineGridInterface):
         parent_indices = [np.array(np.unique(parent_entities), dtype=np.int32)]
         assert len(parent_indices[0] == len(parent_entities))
 
-        subentities = [np.arange(len(parent_indices[0]), dtype=np.int32).reshape((-1, 1))]
+        subentities = [
+            np.arange(len(parent_indices[0]), dtype=np.int32).reshape((-1, 1))
+        ]
 
         for codim in range(1, self.dim + 1):
             SUBE = parent_grid.subentities(0, codim)[parent_indices[0]]
@@ -60,7 +63,10 @@ class SubGrid(AffineGridInterface):
         self.__parent_indices = parent_indices
         self.__subentities = subentities
         embeddings = parent_grid.embeddings(0)
-        self.__embeddings = (embeddings[0][parent_indices[0]], embeddings[1][parent_indices[0]])
+        self.__embeddings = (
+            embeddings[0][parent_indices[0]],
+            embeddings[1][parent_indices[0]],
+        )
 
     @property
     def parent_grid(self):
@@ -68,7 +74,7 @@ class SubGrid(AffineGridInterface):
 
     def parent_indices(self, codim):
         """`retval[e]` is the index of the `e`-th codim-`codim` entity in the parent grid."""
-        assert 0 <= codim <= self.dim, 'Invalid codimension'
+        assert 0 <= codim <= self.dim, "Invalid codimension"
         return self.__parent_indices[codim]
 
     def indices_from_parent_indices(self, ind, codim):
@@ -79,21 +85,24 @@ class SubGrid(AffineGridInterface):
         ValueError
             Not all provided indices correspond to entities contained in the subgrid.
         """
-        assert 0 <= codim <= self.dim, 'Invalid codimension'
+        assert 0 <= codim <= self.dim, "Invalid codimension"
         ind = ind.ravel()
         # TODO Find better implementation of the following
-        R = np.argmax(ind[:, np.newaxis] - self.__parent_indices[codim][np.newaxis, :] == 0, axis=1)
+        R = np.argmax(
+            ind[:, np.newaxis] - self.__parent_indices[codim][np.newaxis, :] == 0,
+            axis=1,
+        )
         if not np.all(self.__parent_indices[codim][R] == ind):
-            raise ValueError('Not all parent indices found')
+            raise ValueError("Not all parent indices found")
         return np.array(R, dtype=np.int32)
 
     def size(self, codim):
-        assert 0 <= codim <= self.dim, 'Invalid codimension'
+        assert 0 <= codim <= self.dim, "Invalid codimension"
         return len(self.__parent_indices[codim])
 
     def subentities(self, codim, subentity_codim):
         if codim == 0:
-            assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimension'
+            assert codim <= subentity_codim <= self.dim, "Invalid subentity codimension"
             return self.__subentities[subentity_codim]
         else:
             return super().subentities(codim, subentity_codim)
@@ -106,11 +115,13 @@ class SubGrid(AffineGridInterface):
 
     def __getstate__(self):
         d = self.__dict__.copy()
-        del d['_SubGrid__parent_grid']
+        del d["_SubGrid__parent_grid"]
         return d
 
 
-def make_sub_grid_boundary_info(sub_grid, parent_grid, parent_grid_boundary_info, new_boundary_type=None):
+def make_sub_grid_boundary_info(
+    sub_grid, parent_grid, parent_grid_boundary_info, new_boundary_type=None
+):
     """Derives a |BoundaryInfo| for a :class:`~pymor.grids.subgrid.SubGrid`.
 
     Parameters
@@ -134,7 +145,9 @@ def make_sub_grid_boundary_info(sub_grid, parent_grid, parent_grid_boundary_info
     masks = {}
     for codim in range(1, sub_grid.dim + 1):
         parent_indices = sub_grid.parent_indices(codim)[sub_grid.boundaries(codim)]
-        new_boundaries = np.where(np.logical_not(parent_grid.boundary_mask(codim)[parent_indices]))
+        new_boundaries = np.where(
+            np.logical_not(parent_grid.boundary_mask(codim)[parent_indices])
+        )
         new_boundaries_sg_indices = sub_grid.boundaries(codim)[new_boundaries]
         for t in boundary_types:
             m = parent_grid_boundary_info.mask(t, codim)[sub_grid.parent_indices(codim)]

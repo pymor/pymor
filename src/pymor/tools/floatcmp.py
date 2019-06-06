@@ -7,7 +7,7 @@ import numpy as np
 from pymor.core.defaults import defaults
 
 
-@defaults('rtol', 'atol')
+@defaults("rtol", "atol")
 def float_cmp(x, y, rtol=1e-14, atol=1e-14):
     """Compare x and y component-wise for almost equality.
 

@@ -64,13 +64,16 @@ if config.HAVE_NGSOLVE:
             return max_ind, max_val
 
     class NGSolveVectorSpace(ListVectorSpace):
-
-        def __init__(self, V, id='STATE'):
+        def __init__(self, V, id="STATE"):
             self.V = V
             self.id = id
 
         def __eq__(self, other):
-            return type(other) is NGSolveVectorSpace and self.V == other.V and self.id == other.id
+            return (
+                type(other) is NGSolveVectorSpace
+                and self.V == other.V
+                and self.id == other.id
+            )
 
         def __hash__(self):
             return hash(self.V) + hash(self.id)
@@ -130,12 +133,16 @@ if config.HAVE_NGSOLVE:
                 mat.Mult(v.impl.vec, u.impl.vec)
             return U
 
-        @defaults('default_solver')
-        def apply_inverse(self, V, mu=None, least_squares=False, default_solver=''):
+        @defaults("default_solver")
+        def apply_inverse(self, V, mu=None, least_squares=False, default_solver=""):
             assert V in self.range
             if least_squares:
                 raise NotImplementedError
-            solver = self.solver_options.get('inverse', default_solver) if self.solver_options else default_solver
+            solver = (
+                self.solver_options.get("inverse", default_solver)
+                if self.solver_options
+                else default_solver
+            )
             R = self.source.zeros(len(V))
             with ngs.TaskManager():
                 inv = self.matrix.Inverse(self.source.V.FreeDofs(), inverse=solver)
@@ -143,7 +150,14 @@ if config.HAVE_NGSOLVE:
                     r.impl.vec.data = inv * v.impl.vec
             return R
 
-        def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+        def _assemble_lincomb(
+            self,
+            operators,
+            coefficients,
+            identity_shift=0.0,
+            solver_options=None,
+            name=None,
+        ):
             if not all(isinstance(op, NGSolveMatrixOperator) for op in operators):
                 return None
             if identity_shift != 0:
@@ -153,7 +167,13 @@ if config.HAVE_NGSOLVE:
             matrix.AsVector().data = float(coefficients[0]) * matrix.AsVector()
             for op, c in zip(operators[1:], coefficients[1:]):
                 matrix.AsVector().data += float(c) * op.matrix.AsVector()
-            return NGSolveMatrixOperator(matrix, self.range, self.source, solver_options=solver_options, name=name)
+            return NGSolveMatrixOperator(
+                matrix,
+                self.range,
+                self.source,
+                solver_options=solver_options,
+                name=name,
+            )
 
         def as_vector(self, copy=True):
             vec = self.matrix.AsVector().FV().NumPy()
@@ -176,11 +196,13 @@ if config.HAVE_NGSOLVE:
                 raise NotImplementedError
 
             if legend is None:
-                legend = [f'VectorArray{i}' for i in range(len(U))]
+                legend = [f"VectorArray{i}" for i in range(len(U))]
             if isinstance(legend, str):
                 legend = [legend]
             assert len(legend) == len(U)
-            legend = [l.replace(' ', '_') for l in legend]  # NGSolve GUI will fail otherwise
+            legend = [
+                l.replace(" ", "_") for l in legend
+            ]  # NGSolve GUI will fail otherwise
 
             if not separate_colorbars:
                 raise NotImplementedError

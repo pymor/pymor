@@ -5,7 +5,13 @@
 import math as m
 import numpy as np
 
-from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
+from pymor.domaindescriptions.basic import (
+    RectDomain,
+    CylindricalDomain,
+    TorusDomain,
+    LineDomain,
+    CircleDomain,
+)
 from pymor.domaindescriptions.polygonal import PolygonalDomain
 from pymor.grids.boundaryinfos import GenericBoundaryInfo, EmptyBoundaryInfo
 from pymor.grids.oned import OnedGrid
@@ -79,10 +85,13 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
                 LR = np.logical_or(L, R)
                 TB = np.logical_or(T, B)
                 return np.logical_or(LR, TB)
+
             return indicator
 
-        indicators = {bt: indicator_factory(domain_description, bt)
-                      for bt in domain_description.boundary_types}
+        indicators = {
+            bt: indicator_factory(domain_description, bt)
+            for bt in domain_description.boundary_types
+        }
         bi = GenericBoundaryInfo.from_indicators(grid, indicators)
 
         return grid, bi
@@ -96,8 +105,11 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
             x1i = int(m.ceil(domain_description.height / diameter))
         else:
             raise NotImplementedError
-        grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i),
-                         identify_left_right=True)
+        grid = grid_type(
+            domain=domain_description.domain,
+            num_intervals=(x0i, x1i),
+            identify_left_right=True,
+        )
 
         def indicator_factory(dd, bt):
             def indicator(X):
@@ -105,10 +117,13 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
                 B = np.logical_and(float_cmp(X[:, 1], dd.domain[0, 1]), dd.bottom == bt)
                 TB = np.logical_or(T, B)
                 return TB
+
             return indicator
 
-        indicators = {bt: indicator_factory(domain_description, bt)
-                      for bt in domain_description.boundary_types}
+        indicators = {
+            bt: indicator_factory(domain_description, bt)
+            for bt in domain_description.boundary_types
+        }
         bi = GenericBoundaryInfo.from_indicators(grid, indicators)
 
         return grid, bi
@@ -122,8 +137,12 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
             x1i = int(m.ceil(domain_description.height / diameter))
         else:
             raise NotImplementedError
-        grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i),
-                         identify_left_right=True, identify_bottom_top=True)
+        grid = grid_type(
+            domain=domain_description.domain,
+            num_intervals=(x0i, x1i),
+            identify_left_right=True,
+            identify_bottom_top=True,
+        )
 
         bi = EmptyBoundaryInfo(grid)
 
@@ -138,33 +157,53 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
                 L = np.logical_and(float_cmp(X[:, 0], dd.domain[0]), dd.left == bt)
                 R = np.logical_and(float_cmp(X[:, 0], dd.domain[1]), dd.right == bt)
                 return np.logical_or(L, R)
+
             return indicator
 
-        indicators = {bt: indicator_factory(domain_description, bt)
-                      for bt in domain_description.boundary_types}
+        indicators = {
+            bt: indicator_factory(domain_description, bt)
+            for bt in domain_description.boundary_types
+        }
         bi = GenericBoundaryInfo.from_indicators(grid, indicators)
 
         return grid, bi
 
     def discretize_CircleDomain():
         ni = int(m.ceil(domain_description.width / diameter))
-        grid = OnedGrid(domain=domain_description.domain, num_intervals=ni, identify_left_right=True)
+        grid = OnedGrid(
+            domain=domain_description.domain, num_intervals=ni, identify_left_right=True
+        )
         bi = EmptyBoundaryInfo(grid)
 
         return grid, bi
 
-    if not isinstance(domain_description,
-                      (RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain, PolygonalDomain)):
-        raise NotImplementedError(f'I do not know how to discretize {domain_description}')
+    if not isinstance(
+        domain_description,
+        (
+            RectDomain,
+            CylindricalDomain,
+            TorusDomain,
+            LineDomain,
+            CircleDomain,
+            PolygonalDomain,
+        ),
+    ):
+        raise NotImplementedError(
+            f"I do not know how to discretize {domain_description}"
+        )
     if isinstance(domain_description, RectDomain):
         grid_type = grid_type or TriaGrid
         if grid_type not in (TriaGrid, RectGrid):
-            raise NotImplementedError(f'I do not know how to discretize RectDomain with {grid_type}')
+            raise NotImplementedError(
+                f"I do not know how to discretize RectDomain with {grid_type}"
+            )
         return discretize_RectDomain()
     elif isinstance(domain_description, (CylindricalDomain, TorusDomain)):
         grid_type = grid_type or TriaGrid
         if grid_type not in (TriaGrid, RectGrid):
-            raise NotImplementedError(f'I do not know how to discretize {type(domain_description)} with {grid_type}')
+            raise NotImplementedError(
+                f"I do not know how to discretize {type(domain_description)} with {grid_type}"
+            )
         if isinstance(domain_description, CylindricalDomain):
             return discretize_CylindricalDomain()
         else:
@@ -172,10 +211,17 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
     elif isinstance(domain_description, PolygonalDomain):
         from pymor.grids.unstructured import UnstructuredTriangleGrid
         from pymor.domaindiscretizers.gmsh import discretize_gmsh
+
         assert grid_type is None or grid_type is UnstructuredTriangleGrid
         return discretize_gmsh(domain_description, clscale=diameter)
     else:
         grid_type = grid_type or OnedGrid
         if grid_type is not OnedGrid:
-            raise NotImplementedError(f'I do not know hot to discretize {type(domain_description)} with {grid_type}')
-        return discretize_LineDomain() if isinstance(domain_description, LineDomain) else discretize_CircleDomain()
+            raise NotImplementedError(
+                f"I do not know hot to discretize {type(domain_description)} with {grid_type}"
+            )
+        return (
+            discretize_LineDomain()
+            if isinstance(domain_description, LineDomain)
+            else discretize_CircleDomain()
+        )

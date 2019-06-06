@@ -7,9 +7,21 @@ import numpy as np
 from packaging.version import Version
 import scipy.version
 from scipy.linalg import solve, solve_continuous_lyapunov, solve_continuous_are
-from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
+from scipy.sparse.linalg import (
+    bicgstab,
+    spsolve,
+    splu,
+    spilu,
+    lgmres,
+    lsqr,
+    LinearOperator,
+)
 
-from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args, _solve_lyap_dense_check_args, _chol
+from pymor.algorithms.lyapunov import (
+    _solve_lyap_lrcf_check_args,
+    _solve_lyap_dense_check_args,
+    _chol,
+)
 from pymor.algorithms.riccati import _solve_ricc_check_args
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.to_matrix import to_matrix
@@ -20,39 +32,58 @@ from pymor.core.logger import getLogger
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
-@defaults('bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
-          'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec', 'spsolve_permc_spec',
-          'spsolve_keep_factorization',
-          'lgmres_tol', 'lgmres_maxiter', 'lgmres_inner_m', 'lgmres_outer_k', 'least_squares_lsmr_damp',
-          'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
-          'least_squares_lsmr_maxiter', 'least_squares_lsmr_show', 'least_squares_lsqr_atol',
-          'least_squares_lsqr_btol', 'least_squares_lsqr_conlim', 'least_squares_lsqr_iter_lim',
-          'least_squares_lsqr_show',
-          sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show'))
-def solver_options(bicgstab_tol=1e-15,
-                   bicgstab_maxiter=None,
-                   spilu_drop_tol=1e-4,
-                   spilu_fill_factor=10,
-                   spilu_drop_rule=None,
-                   spilu_permc_spec='COLAMD',
-                   spsolve_permc_spec='COLAMD',
-                   spsolve_keep_factorization=True,
-                   lgmres_tol=1e-5,
-                   lgmres_maxiter=1000,
-                   lgmres_inner_m=39,
-                   lgmres_outer_k=3,
-                   least_squares_lsmr_damp=0.0,
-                   least_squares_lsmr_atol=1e-6,
-                   least_squares_lsmr_btol=1e-6,
-                   least_squares_lsmr_conlim=1e8,
-                   least_squares_lsmr_maxiter=None,
-                   least_squares_lsmr_show=False,
-                   least_squares_lsqr_damp=0.0,
-                   least_squares_lsqr_atol=1e-6,
-                   least_squares_lsqr_btol=1e-6,
-                   least_squares_lsqr_conlim=1e8,
-                   least_squares_lsqr_iter_lim=None,
-                   least_squares_lsqr_show=False):
+@defaults(
+    "bicgstab_tol",
+    "bicgstab_maxiter",
+    "spilu_drop_tol",
+    "spilu_fill_factor",
+    "spilu_drop_rule",
+    "spilu_permc_spec",
+    "spsolve_permc_spec",
+    "spsolve_keep_factorization",
+    "lgmres_tol",
+    "lgmres_maxiter",
+    "lgmres_inner_m",
+    "lgmres_outer_k",
+    "least_squares_lsmr_damp",
+    "least_squares_lsmr_atol",
+    "least_squares_lsmr_btol",
+    "least_squares_lsmr_conlim",
+    "least_squares_lsmr_maxiter",
+    "least_squares_lsmr_show",
+    "least_squares_lsqr_atol",
+    "least_squares_lsqr_btol",
+    "least_squares_lsqr_conlim",
+    "least_squares_lsqr_iter_lim",
+    "least_squares_lsqr_show",
+    sid_ignore=("least_squares_lsmr_show", "least_squares_lsqr_show"),
+)
+def solver_options(
+    bicgstab_tol=1e-15,
+    bicgstab_maxiter=None,
+    spilu_drop_tol=1e-4,
+    spilu_fill_factor=10,
+    spilu_drop_rule=None,
+    spilu_permc_spec="COLAMD",
+    spsolve_permc_spec="COLAMD",
+    spsolve_keep_factorization=True,
+    lgmres_tol=1e-5,
+    lgmres_maxiter=1000,
+    lgmres_inner_m=39,
+    lgmres_outer_k=3,
+    least_squares_lsmr_damp=0.0,
+    least_squares_lsmr_atol=1e-6,
+    least_squares_lsmr_btol=1e-6,
+    least_squares_lsmr_conlim=1e8,
+    least_squares_lsmr_maxiter=None,
+    least_squares_lsmr_show=False,
+    least_squares_lsqr_damp=0.0,
+    least_squares_lsqr_atol=1e-6,
+    least_squares_lsqr_btol=1e-6,
+    least_squares_lsqr_conlim=1e8,
+    least_squares_lsqr_iter_lim=None,
+    least_squares_lsqr_show=False,
+):
     """Returns available solvers with default |solver_options| for the SciPy backend.
 
     Parameters
@@ -111,47 +142,68 @@ def solver_options(bicgstab_tol=1e-15,
     A dict of available solvers with default |solver_options|.
     """
 
-    opts = {'scipy_bicgstab_spilu':     {'type': 'scipy_bicgstab_spilu',
-                                         'tol': bicgstab_tol,
-                                         'maxiter': bicgstab_maxiter,
-                                         'spilu_drop_tol': spilu_drop_tol,
-                                         'spilu_fill_factor': spilu_fill_factor,
-                                         'spilu_drop_rule': spilu_drop_rule,
-                                         'spilu_permc_spec': spilu_permc_spec},
-            'scipy_bicgstab':           {'type': 'scipy_bicgstab',
-                                         'tol': bicgstab_tol,
-                                         'maxiter': bicgstab_maxiter},
-            'scipy_spsolve':            {'type': 'scipy_spsolve',
-                                         'permc_spec': spsolve_permc_spec,
-                                         'keep_factorization': spsolve_keep_factorization},
-            'scipy_lgmres':             {'type': 'scipy_lgmres',
-                                         'tol': lgmres_tol,
-                                         'maxiter': lgmres_maxiter,
-                                         'inner_m': lgmres_inner_m,
-                                         'outer_k': lgmres_outer_k},
-            'scipy_least_squares_lsqr': {'type': 'scipy_least_squares_lsqr',
-                                         'damp': least_squares_lsqr_damp,
-                                         'atol': least_squares_lsqr_atol,
-                                         'btol': least_squares_lsqr_btol,
-                                         'conlim': least_squares_lsqr_conlim,
-                                         'iter_lim': least_squares_lsqr_iter_lim,
-                                         'show': least_squares_lsqr_show}}
+    opts = {
+        "scipy_bicgstab_spilu": {
+            "type": "scipy_bicgstab_spilu",
+            "tol": bicgstab_tol,
+            "maxiter": bicgstab_maxiter,
+            "spilu_drop_tol": spilu_drop_tol,
+            "spilu_fill_factor": spilu_fill_factor,
+            "spilu_drop_rule": spilu_drop_rule,
+            "spilu_permc_spec": spilu_permc_spec,
+        },
+        "scipy_bicgstab": {
+            "type": "scipy_bicgstab",
+            "tol": bicgstab_tol,
+            "maxiter": bicgstab_maxiter,
+        },
+        "scipy_spsolve": {
+            "type": "scipy_spsolve",
+            "permc_spec": spsolve_permc_spec,
+            "keep_factorization": spsolve_keep_factorization,
+        },
+        "scipy_lgmres": {
+            "type": "scipy_lgmres",
+            "tol": lgmres_tol,
+            "maxiter": lgmres_maxiter,
+            "inner_m": lgmres_inner_m,
+            "outer_k": lgmres_outer_k,
+        },
+        "scipy_least_squares_lsqr": {
+            "type": "scipy_least_squares_lsqr",
+            "damp": least_squares_lsqr_damp,
+            "atol": least_squares_lsqr_atol,
+            "btol": least_squares_lsqr_btol,
+            "conlim": least_squares_lsqr_conlim,
+            "iter_lim": least_squares_lsqr_iter_lim,
+            "show": least_squares_lsqr_show,
+        },
+    }
 
     if config.HAVE_SCIPY_LSMR:
-        opts['scipy_least_squares_lsmr'] = {'type': 'scipy_least_squares_lsmr',
-                                            'damp': least_squares_lsmr_damp,
-                                            'atol': least_squares_lsmr_atol,
-                                            'btol': least_squares_lsmr_btol,
-                                            'conlim': least_squares_lsmr_conlim,
-                                            'maxiter': least_squares_lsmr_maxiter,
-                                            'show': least_squares_lsmr_show}
+        opts["scipy_least_squares_lsmr"] = {
+            "type": "scipy_least_squares_lsmr",
+            "damp": least_squares_lsmr_damp,
+            "atol": least_squares_lsmr_atol,
+            "btol": least_squares_lsmr_btol,
+            "conlim": least_squares_lsmr_conlim,
+            "maxiter": least_squares_lsmr_maxiter,
+            "show": least_squares_lsmr_show,
+        }
 
     return opts
 
 
-@defaults('check_finite', 'default_solver', 'default_least_squares_solver')
-def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
-                  default_solver='scipy_spsolve', default_least_squares_solver='scipy_least_squares_lsmr'):
+@defaults("check_finite", "default_solver", "default_least_squares_solver")
+def apply_inverse(
+    op,
+    V,
+    options=None,
+    least_squares=False,
+    check_finite=True,
+    default_solver="scipy_spsolve",
+    default_least_squares_solver="scipy_least_squares_lsmr",
+):
     """Solve linear equation system.
 
     Applies the inverse of `op` to the vectors in `rhs` using SciPy.
@@ -186,130 +238,189 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
         matrix = op.matrix
     else:
         from pymor.algorithms.to_matrix import to_matrix
+
         matrix = to_matrix(op)
 
-    options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
+    options = _parse_options(
+        options,
+        solver_options(),
+        default_solver,
+        default_least_squares_solver,
+        least_squares,
+    )
 
     V = V.to_numpy()
     promoted_type = np.promote_types(matrix.dtype, V.dtype)
     R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
 
-    if options['type'] == 'scipy_bicgstab':
+    if options["type"] == "scipy_bicgstab":
         for i, VV in enumerate(V):
-            R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'])
+            R[i], info = bicgstab(
+                matrix, VV, tol=options["tol"], maxiter=options["maxiter"]
+            )
             if info != 0:
                 if info > 0:
-                    raise InversionError(f'bicgstab failed to converge after {info} iterations')
+                    raise InversionError(
+                        f"bicgstab failed to converge after {info} iterations"
+                    )
                 else:
-                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                         format(info))
-    elif options['type'] == 'scipy_bicgstab_spilu':
-        if Version(scipy.version.version) >= Version('0.19'):
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                        drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
+                    raise InversionError(
+                        "bicgstab failed with error code {} (illegal input or breakdown)".format(
+                            info
+                        )
+                    )
+    elif options["type"] == "scipy_bicgstab_spilu":
+        if Version(scipy.version.version) >= Version("0.19"):
+            ilu = spilu(
+                matrix,
+                drop_tol=options["spilu_drop_tol"],
+                fill_factor=options["spilu_fill_factor"],
+                drop_rule=options["spilu_drop_rule"],
+                permc_spec=options["spilu_permc_spec"],
+            )
         else:
-            if options['spilu_drop_rule']:
-                logger = getLogger('pymor.operators.numpy._apply_inverse')
+            if options["spilu_drop_rule"]:
+                logger = getLogger("pymor.operators.numpy._apply_inverse")
                 logger.error("ignoring drop_rule in ilu factorization due to old SciPy")
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                        permc_spec=options['spilu_permc_spec'])
+            ilu = spilu(
+                matrix,
+                drop_tol=options["spilu_drop_tol"],
+                fill_factor=options["spilu_fill_factor"],
+                permc_spec=options["spilu_permc_spec"],
+            )
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i, VV in enumerate(V):
-            R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'], M=precond)
+            R[i], info = bicgstab(
+                matrix, VV, tol=options["tol"], maxiter=options["maxiter"], M=precond
+            )
             if info != 0:
                 if info > 0:
-                    raise InversionError(f'bicgstab failed to converge after {info} iterations')
+                    raise InversionError(
+                        f"bicgstab failed to converge after {info} iterations"
+                    )
                 else:
-                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                         format(info))
-    elif options['type'] == 'scipy_spsolve':
+                    raise InversionError(
+                        "bicgstab failed with error code {} (illegal input or breakdown)".format(
+                            info
+                        )
+                    )
+    elif options["type"] == "scipy_spsolve":
         try:
             # maybe remove unusable factorization:
-            if hasattr(matrix, 'factorization'):
+            if hasattr(matrix, "factorization"):
                 fdtype = matrix.factorizationdtype
-                if not np.can_cast(V.dtype, fdtype, casting='safe'):
+                if not np.can_cast(V.dtype, fdtype, casting="safe"):
                     del matrix.factorization
 
-            if Version(scipy.version.version) >= Version('0.14'):
-                if hasattr(matrix, 'factorization'):
+            if Version(scipy.version.version) >= Version("0.14"):
+                if hasattr(matrix, "factorization"):
                     # we may use a complex factorization of a real matrix to
                     # apply it to a real vector. In that case, we downcast
                     # the result here, removing the imaginary part,
                     # which should be zero.
-                    R = matrix.factorization.solve(V.T).T.astype(promoted_type, copy=False)
-                elif options['keep_factorization']:
+                    R = matrix.factorization.solve(V.T).T.astype(
+                        promoted_type, copy=False
+                    )
+                elif options["keep_factorization"]:
                     # the matrix is always converted to the promoted type.
                     # if matrix.dtype == promoted_type, this is a no_op
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
-                                                permc_spec=options['permc_spec'])
+                    matrix.factorization = splu(
+                        matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                        permc_spec=options["permc_spec"],
+                    )
                     matrix.factorizationdtype = promoted_type
                     R = matrix.factorization.solve(V.T).T
                 else:
                     # the matrix is always converted to the promoted type.
                     # if matrix.dtype == promoted_type, this is a no_op
-                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).T
+                    R = spsolve(
+                        matrix_astype_nocopy(matrix, promoted_type),
+                        V.T,
+                        permc_spec=options["permc_spec"],
+                    ).T
             else:
                 # see if-part for documentation
-                if hasattr(matrix, 'factorization'):
+                if hasattr(matrix, "factorization"):
                     for i, VV in enumerate(V):
-                        R[i] = matrix.factorization.solve(VV).astype(promoted_type, copy=False)
-                elif options['keep_factorization']:
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
-                                                permc_spec=options['permc_spec'])
+                        R[i] = matrix.factorization.solve(VV).astype(
+                            promoted_type, copy=False
+                        )
+                elif options["keep_factorization"]:
+                    matrix.factorization = splu(
+                        matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                        permc_spec=options["permc_spec"],
+                    )
                     matrix.factorizationdtype = promoted_type
                     for i, VV in enumerate(V):
                         R[i] = matrix.factorization.solve(VV)
                 elif len(V) > 1:
-                    factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
-                                         permc_spec=options['permc_spec'])
+                    factorization = splu(
+                        matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                        permc_spec=options["permc_spec"],
+                    )
                     for i, VV in enumerate(V):
                         R[i] = factorization.solve(VV)
                 else:
-                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T,
-                                permc_spec=options['permc_spec']).reshape((1, -1))
+                    R = spsolve(
+                        matrix_astype_nocopy(matrix, promoted_type),
+                        V.T,
+                        permc_spec=options["permc_spec"],
+                    ).reshape((1, -1))
         except RuntimeError as e:
             raise InversionError(e)
-    elif options['type'] == 'scipy_lgmres':
+    elif options["type"] == "scipy_lgmres":
         for i, VV in enumerate(V):
-            R[i], info = lgmres(matrix, VV,
-                                tol=options['tol'],
-                                maxiter=options['maxiter'],
-                                inner_m=options['inner_m'],
-                                outer_k=options['outer_k'])
+            R[i], info = lgmres(
+                matrix,
+                VV,
+                tol=options["tol"],
+                maxiter=options["maxiter"],
+                inner_m=options["inner_m"],
+                outer_k=options["outer_k"],
+            )
             if info > 0:
-                raise InversionError(f'lgmres failed to converge after {info} iterations')
+                raise InversionError(
+                    f"lgmres failed to converge after {info} iterations"
+                )
             assert info == 0
-    elif options['type'] == 'scipy_least_squares_lsmr':
+    elif options["type"] == "scipy_least_squares_lsmr":
         from scipy.sparse.linalg import lsmr
+
         for i, VV in enumerate(V):
-            R[i], info, itn, _, _, _, _, _ = lsmr(matrix, VV,
-                                                  damp=options['damp'],
-                                                  atol=options['atol'],
-                                                  btol=options['btol'],
-                                                  conlim=options['conlim'],
-                                                  maxiter=options['maxiter'],
-                                                  show=options['show'])
+            R[i], info, itn, _, _, _, _, _ = lsmr(
+                matrix,
+                VV,
+                damp=options["damp"],
+                atol=options["atol"],
+                btol=options["btol"],
+                conlim=options["conlim"],
+                maxiter=options["maxiter"],
+                show=options["show"],
+            )
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError(f'lsmr failed to converge after {itn} iterations')
-    elif options['type'] == 'scipy_least_squares_lsqr':
+                raise InversionError(f"lsmr failed to converge after {itn} iterations")
+    elif options["type"] == "scipy_least_squares_lsqr":
         for i, VV in enumerate(V):
-            R[i], info, itn, _, _, _, _, _, _, _ = lsqr(matrix, VV,
-                                                        damp=options['damp'],
-                                                        atol=options['atol'],
-                                                        btol=options['btol'],
-                                                        conlim=options['conlim'],
-                                                        iter_lim=options['iter_lim'],
-                                                        show=options['show'])
+            R[i], info, itn, _, _, _, _, _, _, _ = lsqr(
+                matrix,
+                VV,
+                damp=options["damp"],
+                atol=options["atol"],
+                btol=options["btol"],
+                conlim=options["conlim"],
+                iter_lim=options["iter_lim"],
+                show=options["show"],
+            )
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError(f'lsmr failed to converge after {itn} iterations')
+                raise InversionError(f"lsmr failed to converge after {itn} iterations")
     else:
-        raise ValueError('Unknown solver type')
+        raise ValueError("Unknown solver type")
 
     if check_finite:
         if not np.isfinite(np.sum(R)):
-            raise InversionError('Result contains non-finite values')
+            raise InversionError("Result contains non-finite values")
 
     return op.source.from_numpy(R)
 
@@ -331,7 +442,7 @@ def lyap_lrcf_solver_options():
     A dict of available solvers with default solver options.
     """
 
-    return {'scipy': {'type': 'scipy'}}
+    return {"scipy": {"type": "scipy"}}
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, options=None):
@@ -373,12 +484,15 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     """
 
     _solve_lyap_lrcf_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
+    options = _parse_options(options, lyap_lrcf_solver_options(), "scipy", None, False)
 
-    X = solve_lyap_dense(to_matrix(A, format='dense'),
-                         to_matrix(E, format='dense') if E else None,
-                         B.to_numpy().T if not trans else B.to_numpy(),
-                         trans=trans, options=options)
+    X = solve_lyap_dense(
+        to_matrix(A, format="dense"),
+        to_matrix(E, format="dense") if E else None,
+        B.to_numpy().T if not trans else B.to_numpy(),
+        trans=trans,
+        options=options,
+    )
     return A.source.from_numpy(_chol(X).T)
 
 
@@ -390,7 +504,7 @@ def lyap_dense_solver_options():
     A dict of available solvers with default solver options.
     """
 
-    return {'scipy': {'type': 'scipy'}}
+    return {"scipy": {"type": "scipy"}}
 
 
 def solve_lyap_dense(A, E, B, trans=False, options=None):
@@ -428,9 +542,9 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
     """
 
     _solve_lyap_dense_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_dense_solver_options(), 'scipy', None, False)
+    options = _parse_options(options, lyap_dense_solver_options(), "scipy", None, False)
 
-    if options['type'] == 'scipy':
+    if options["type"] == "scipy":
         if E is not None:
             A = solve(E, A) if not trans else solve(E.T, A.T).T
             B = solve(E, B) if not trans else solve(E.T, B.T).T
@@ -452,7 +566,7 @@ def ricc_lrcf_solver_options():
     A dict of available solvers with default solver options.
     """
 
-    return {'scipy': {'type': 'scipy'}}
+    return {"scipy": {"type": "scipy"}}
 
 
 def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
@@ -496,13 +610,13 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     """
 
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
-    if options['type'] != 'scipy':
+    options = _parse_options(options, ricc_lrcf_solver_options(), "scipy", None, False)
+    if options["type"] != "scipy":
         raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
 
     A_source = A.source
-    A = to_matrix(A, format='dense')
-    E = to_matrix(E, format='dense') if E else None
+    A = to_matrix(A, format="dense")
+    E = to_matrix(E, format="dense") if E else None
     B = B.to_numpy().T
     C = C.to_numpy()
     S = S.to_numpy().T if S else None
@@ -526,7 +640,7 @@ def pos_ricc_lrcf_solver_options():
     A dict of available solvers with default solver options.
     """
 
-    return {'scipy': {'type': 'scipy'}}
+    return {"scipy": {"type": "scipy"}}
 
 
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
@@ -571,9 +685,13 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     """
 
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'scipy', None, False)
-    if options['type'] != 'scipy':
-        raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
+    options = _parse_options(
+        options, pos_ricc_lrcf_solver_options(), "scipy", None, False
+    )
+    if options["type"] != "scipy":
+        raise ValueError(
+            f"Unexpected positive Riccati equation solver ({options['type']})."
+        )
 
     if R is None:
         R = np.eye(len(C) if not trans else len(B))

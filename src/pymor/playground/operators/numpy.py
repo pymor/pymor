@@ -13,8 +13,16 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
     """Variant of |NumpyMatrixOperator| using |ListVectorArray| instead of |NumpyVectorArray|."""
 
-    def __init__(self, matrix, source_id=None, range_id=None, solver_options=None, name=None):
-        super().__init__(matrix, source_id=source_id, range_id=range_id, solver_options=solver_options, name=name)
+    def __init__(
+        self, matrix, source_id=None, range_id=None, solver_options=None, name=None
+    ):
+        super().__init__(
+            matrix,
+            source_id=source_id,
+            range_id=range_id,
+            solver_options=solver_options,
+            name=name,
+        )
         functional = self.range_id is None
         vector = self.source_id is None
         if functional and vector:
@@ -40,7 +48,9 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         V = [self.matrix.dot(v._array) for v in U._list]
 
         if self.functional:
-            return self.range.make_array(np.array(V)) if len(V) > 0 else self.range.empty()
+            return (
+                self.range.make_array(np.array(V)) if len(V) > 0 else self.range.empty()
+            )
         else:
             return self.range.make_array(V)
 
@@ -53,10 +63,17 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
 
         adj_op = NumpyMatrixOperator(self.matrix).H
 
-        U = [adj_op.apply(adj_op.source.make_array(v._array)).to_numpy().ravel() for v in V._list]
+        U = [
+            adj_op.apply(adj_op.source.make_array(v._array)).to_numpy().ravel()
+            for v in V._list
+        ]
 
         if self.vector:
-            return self.source.make_array(np.array(U)) if len(U) > 0 else self.source.empty()
+            return (
+                self.source.make_array(np.array(U))
+                if len(U) > 0
+                else self.source.empty()
+            )
         else:
             return self.source.from_numpy(U)
 
@@ -72,9 +89,16 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
 
         op = NumpyMatrixOperator(self.matrix, solver_options=self.solver_options)
 
-        return self.source.make_array([op.apply_inverse(NumpyVectorSpace.make_array(v._array),
-                                                        least_squares=least_squares).to_numpy().ravel()
-                                       for v in V._list])
+        return self.source.make_array(
+            [
+                op.apply_inverse(
+                    NumpyVectorSpace.make_array(v._array), least_squares=least_squares
+                )
+                .to_numpy()
+                .ravel()
+                for v in V._list
+            ]
+        )
 
     def as_range_array(self, mu=None):
         assert not self.sparse
@@ -84,10 +108,22 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         assert not self.sparse
         return self.source.make_array(list(self.matrix.copy()))
 
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(
+        self,
+        operators,
+        coefficients,
+        identity_shift=0.0,
+        solver_options=None,
+        name=None,
+    ):
         lincomb = super()._assemble_lincomb(operators, coefficients, identity_shift)
         if lincomb is None:
             return None
         else:
-            return NumpyListVectorArrayMatrixOperator(lincomb.matrix, source_id=self.source.id, range_id=self.range.id,
-                                                      solver_options=solver_options, name=name)
+            return NumpyListVectorArrayMatrixOperator(
+                lincomb.matrix,
+                source_id=self.source.id,
+                range_id=self.range.id,
+                solver_options=solver_options,
+                name=name,
+            )

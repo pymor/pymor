@@ -14,9 +14,9 @@ from pymor.vectorarrays.mpi import MPIVectorSpaceAutoComm
 def random_array(dims, length, seed):
     if isinstance(dims, Number):
         dims = (dims,)
-    return MPIVectorSpaceAutoComm(tuple(NumpyVectorSpace(dim) for dim in dims)).make_array(
-        mpi.call(_random_array, dims, length, seed)
-    )
+    return MPIVectorSpaceAutoComm(
+        tuple(NumpyVectorSpace(dim) for dim in dims)
+    ).make_array(mpi.call(_random_array, dims, length, seed))
 
 
 def _random_array(dims, length, seed):

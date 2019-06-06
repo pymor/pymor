@@ -58,8 +58,15 @@ class MPIOperator(OperatorBase):
         and :class:`~pymor.vectorarrays.mpi.MPIVectorSpaceNoComm`.
     """
 
-    def __init__(self, obj_id, mpi_range, mpi_source, with_apply2=False, pickle_local_spaces=True,
-                 space_type=MPIVectorSpace):
+    def __init__(
+        self,
+        obj_id,
+        mpi_range,
+        mpi_source,
+        with_apply2=False,
+        pickle_local_spaces=True,
+        space_type=MPIVectorSpace,
+    ):
         assert mpi_source or mpi_range
         self.obj_id = obj_id
         self.mpi_source = mpi_source
@@ -72,14 +79,18 @@ class MPIOperator(OperatorBase):
         self.name = op.name
         self.build_parameter_type(op)
         if mpi_source:
-            local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, True, pickle_local_spaces)
+            local_spaces = mpi.call(
+                _MPIOperator_get_local_spaces, obj_id, True, pickle_local_spaces
+            )
             if all(ls == local_spaces[0] for ls in local_spaces):
                 local_spaces = (local_spaces[0],)
             self.source = space_type(local_spaces)
         else:
             self.source = op.source
         if mpi_range:
-            local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, False, pickle_local_spaces)
+            local_spaces = mpi.call(
+                _MPIOperator_get_local_spaces, obj_id, False, pickle_local_spaces
+            )
             if all(ls == local_spaces[0] for ls in local_spaces):
                 local_spaces = (local_spaces[0],)
             self.range = space_type(local_spaces)
@@ -91,17 +102,23 @@ class MPIOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         U = U.obj_id if self.mpi_source else U
         if self.mpi_range:
-            return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply', U, mu=mu))
+            return self.range.make_array(
+                mpi.call(mpi.method_call_manage, self.obj_id, "apply", U, mu=mu)
+            )
         else:
-            return mpi.call(mpi.method_call, self.obj_id, 'apply', U, mu=mu)
+            return mpi.call(mpi.method_call, self.obj_id, "apply", U, mu=mu)
 
     def as_range_array(self, mu=None):
         mu = self.parse_parameter(mu)
-        return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_range_array', mu=mu))
+        return self.range.make_array(
+            mpi.call(mpi.method_call_manage, self.obj_id, "as_range_array", mu=mu)
+        )
 
     def as_source_array(self, mu=None):
         mu = self.parse_parameter(mu)
-        return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_source_array', mu=mu))
+        return self.source.make_array(
+            mpi.call(mpi.method_call_manage, self.obj_id, "as_source_array", mu=mu)
+        )
 
     def apply2(self, V, U, mu=None):
         if not self.with_apply2:
@@ -111,7 +128,7 @@ class MPIOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         U = U.obj_id if self.mpi_source else U
         V = V.obj_id if self.mpi_range else V
-        return mpi.call(mpi.method_call, self.obj_id, 'apply2', V, U, mu=mu)
+        return mpi.call(mpi.method_call, self.obj_id, "apply2", V, U, mu=mu)
 
     def pairwise_apply2(self, V, U, mu=None):
         if not self.with_apply2:
@@ -121,7 +138,7 @@ class MPIOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         U = U.obj_id if self.mpi_source else U
         V = V.obj_id if self.mpi_range else V
-        return mpi.call(mpi.method_call, self.obj_id, 'pairwise_apply2', V, U, mu=mu)
+        return mpi.call(mpi.method_call, self.obj_id, "pairwise_apply2", V, U, mu=mu)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -129,42 +146,77 @@ class MPIOperator(OperatorBase):
         V = V.obj_id if self.mpi_range else V
         if self.mpi_source:
             return self.source.make_array(
-                mpi.call(mpi.method_call_manage, self.obj_id, 'apply_adjoint', V, mu=mu)
+                mpi.call(mpi.method_call_manage, self.obj_id, "apply_adjoint", V, mu=mu)
             )
         else:
-            return mpi.call(mpi.method_call, self.obj_id, 'apply_adjoint', V, mu=mu)
+            return mpi.call(mpi.method_call, self.obj_id, "apply_adjoint", V, mu=mu)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
         assert V in self.range
         mu = self.parse_parameter(mu)
-        return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
-                                               V.obj_id, mu=mu, least_squares=least_squares))
+        return self.source.make_array(
+            mpi.call(
+                mpi.method_call_manage,
+                self.obj_id,
+                "apply_inverse",
+                V.obj_id,
+                mu=mu,
+                least_squares=least_squares,
+            )
+        )
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
         assert U in self.source
         mu = self.parse_parameter(mu)
-        return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse_adjoint',
-                                               U.obj_id, mu=mu, least_squares=least_squares))
+        return self.source.make_array(
+            mpi.call(
+                mpi.method_call_manage,
+                self.obj_id,
+                "apply_inverse_adjoint",
+                U.obj_id,
+                mu=mu,
+                least_squares=least_squares,
+            )
+        )
 
     def jacobian(self, U, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)
-        return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'jacobian', U.obj_id, mu=mu))
+        return self.with_(
+            obj_id=mpi.call(
+                mpi.method_call_manage, self.obj_id, "jacobian", U.obj_id, mu=mu
+            )
+        )
 
     def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
-        return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
+        return self.with_(
+            obj_id=mpi.call(mpi.method_call_manage, self.obj_id, "assemble", mu=mu)
+        )
 
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(
+        self,
+        operators,
+        coefficients,
+        identity_shift=0.0,
+        solver_options=None,
+        name=None,
+    ):
         if not all(isinstance(op, MPIOperator) for op in operators):
             return None
         assert solver_options is None
         operators = [op.obj_id for op in operators]
-        obj_id = mpi.call(_MPIOperator_assemble_lincomb, operators, coefficients, identity_shift, name=name)
+        obj_id = mpi.call(
+            _MPIOperator_assemble_lincomb,
+            operators,
+            coefficients,
+            identity_shift,
+            name=name,
+        )
         op = mpi.get_object(obj_id)
         if op is None:
             mpi.call(mpi.remove_object, obj_id)
@@ -173,7 +225,7 @@ class MPIOperator(OperatorBase):
             return self.with_(obj_id=obj_id)
 
     def restricted(self, dofs):
-        return mpi.call(mpi.method_call, self.obj_id, 'restricted', dofs)
+        return mpi.call(mpi.method_call, self.obj_id, "restricted", dofs)
 
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
@@ -191,11 +243,21 @@ def _MPIOperator_get_local_spaces(self, source, pickle_local_spaces):
 
 def _MPIOperator_assemble_lincomb(operators, coefficients, identity_shift, name):
     operators = [mpi.get_object(op) for op in operators]
-    return mpi.manage_object(operators[0]._assemble_lincomb(operators, coefficients, identity_shift, name=name))
+    return mpi.manage_object(
+        operators[0]._assemble_lincomb(
+            operators, coefficients, identity_shift, name=name
+        )
+    )
 
 
-def mpi_wrap_operator(obj_id, mpi_range, mpi_source, with_apply2=False, pickle_local_spaces=True,
-                      space_type=MPIVectorSpace):
+def mpi_wrap_operator(
+    obj_id,
+    mpi_range,
+    mpi_source,
+    with_apply2=False,
+    pickle_local_spaces=True,
+    space_type=MPIVectorSpace,
+):
     """Wrap MPI distributed local |Operators| to a global |Operator| on rank 0.
 
     Given MPI distributed local |Operators| referred to by the
@@ -216,18 +278,38 @@ def mpi_wrap_operator(obj_id, mpi_range, mpi_source, with_apply2=False, pickle_l
     op = mpi.get_object(obj_id)
     if isinstance(op, LincombOperator):
         obj_ids = mpi.call(_mpi_wrap_operator_LincombOperator_manage_operators, obj_id)
-        return LincombOperator([mpi_wrap_operator(o, mpi_range, mpi_source, with_apply2, pickle_local_spaces,
-                                                  space_type)
-                                for o in obj_ids], op.coefficients, name=op.name)
+        return LincombOperator(
+            [
+                mpi_wrap_operator(
+                    o,
+                    mpi_range,
+                    mpi_source,
+                    with_apply2,
+                    pickle_local_spaces,
+                    space_type,
+                )
+                for o in obj_ids
+            ],
+            op.coefficients,
+            name=op.name,
+        )
     elif isinstance(op, VectorArrayOperator):
-        array_obj_id, local_spaces = mpi.call(_mpi_wrap_operator_VectorArrayOperator_manage_array,
-                                              obj_id, pickle_local_spaces)
+        array_obj_id, local_spaces = mpi.call(
+            _mpi_wrap_operator_VectorArrayOperator_manage_array,
+            obj_id,
+            pickle_local_spaces,
+        )
         if all(ls == local_spaces[0] for ls in local_spaces):
             local_spaces = (local_spaces[0],)
-        return VectorArrayOperator(space_type(local_spaces).make_array(array_obj_id),
-                                   adjoint=op.adjoint, name=op.name)
+        return VectorArrayOperator(
+            space_type(local_spaces).make_array(array_obj_id),
+            adjoint=op.adjoint,
+            name=op.name,
+        )
     else:
-        return MPIOperator(obj_id, mpi_range, mpi_source, with_apply2, pickle_local_spaces, space_type)
+        return MPIOperator(
+            obj_id, mpi_range, mpi_source, with_apply2, pickle_local_spaces, space_type
+        )
 
 
 def _mpi_wrap_operator_LincombOperator_manage_operators(obj_id):

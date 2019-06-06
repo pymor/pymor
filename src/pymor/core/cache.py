@@ -76,6 +76,7 @@ from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.interfaces import ImmutableInterface, generate_sid
 from pymor.core.logger import getLogger
 
+
 @atexit.register
 def cleanup_non_persisten_regions():
     for region in cache_regions.values():
@@ -84,7 +85,7 @@ def cleanup_non_persisten_regions():
 
 
 def _safe_filename(old_name):
-    return ''.join(x for x in old_name if (x.isalnum() or x in '._- '))
+    return "".join(x for x in old_name if (x.isalnum() or x in "._- "))
 
 
 class CacheRegion:
@@ -144,18 +145,22 @@ class MemoryRegion(CacheRegion):
             return False, None
         else:
             from pymor.vectorarrays.interfaces import VectorArrayInterface
+
             if isinstance(value, VectorArrayInterface):
                 value = value.copy()
             return True, value
 
     def set(self, key, value):
         if key in self._cache:
-            getLogger('pymor.core.cache.MemoryRegion').warn('Key already present in cache region, ignoring.')
+            getLogger("pymor.core.cache.MemoryRegion").warn(
+                "Key already present in cache region, ignoring."
+            )
             return
         if len(self._cache) == self.max_keys:
             self._cache.popitem(last=False)
 
         import numpy as np
+
         if isinstance(value, np.ndarray):
             value.setflags(write=False)
         self._cache[key] = value
@@ -165,13 +170,12 @@ class MemoryRegion(CacheRegion):
 
 
 class DiskRegion(CacheRegion):
-
     def __init__(self, path, max_size, persistent):
         self.path = path
         self.max_size = max_size
         self.persistent = persistent
         self._cache = diskcache.Cache(path)
-        self._cache.reset('size_limit', int(max_size))
+        self._cache.reset("size_limit", int(max_size))
 
         if not persistent:
             self.clear()
@@ -183,7 +187,9 @@ class DiskRegion(CacheRegion):
     def set(self, key, value):
         has_key = key in self._cache
         if has_key:
-            getLogger('pymor.core.cache.DiskRegion').warn('Key already present in cache region, ignoring.')
+            getLogger("pymor.core.cache.DiskRegion").warn(
+                "Key already present in cache region, ignoring."
+            )
             return
         self._cache.set(key, value)
 
@@ -191,40 +197,65 @@ class DiskRegion(CacheRegion):
         self._cache.clear()
 
 
-@defaults('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys',
-          sid_ignore=('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys'))
-def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
-                    disk_max_size=1024 ** 3,
-                    persistent_path=os.path.join(tempfile.gettempdir(), 'pymor.persistent.cache.' + getpass.getuser()),
-                    persistent_max_size=1024 ** 3,
-                    memory_max_keys=1000):
+@defaults(
+    "disk_path",
+    "disk_max_size",
+    "persistent_path",
+    "persistent_max_size",
+    "memory_max_keys",
+    sid_ignore=(
+        "disk_path",
+        "disk_max_size",
+        "persistent_path",
+        "persistent_max_size",
+        "memory_max_keys",
+    ),
+)
+def default_regions(
+    disk_path=os.path.join(tempfile.gettempdir(), "pymor.cache." + getpass.getuser()),
+    disk_max_size=1024 ** 3,
+    persistent_path=os.path.join(
+        tempfile.gettempdir(), "pymor.persistent.cache." + getpass.getuser()
+    ),
+    persistent_max_size=1024 ** 3,
+    memory_max_keys=1000,
+):
 
-    parse_size_string = lambda size: \
-        int(size[:-1]) * 1024 if size[-1] == 'K' else \
-        int(size[:-1]) * 1024 ** 2 if size[-1] == 'M' else \
-        int(size[:-1]) * 1024 ** 3 if size[-1] == 'G' else \
-        int(size)
+    parse_size_string = (
+        lambda size: int(size[:-1]) * 1024
+        if size[-1] == "K"
+        else int(size[:-1]) * 1024 ** 2
+        if size[-1] == "M"
+        else int(size[:-1]) * 1024 ** 3
+        if size[-1] == "G"
+        else int(size)
+    )
 
     if isinstance(disk_max_size, str):
         disk_max_size = parse_size_string(disk_max_size)
 
-    cache_regions['disk'] = DiskRegion(path=disk_path, max_size=disk_max_size, persistent=False)
-    cache_regions['persistent'] = DiskRegion(path=persistent_path, max_size=persistent_max_size, persistent=True)
-    cache_regions['memory'] = MemoryRegion(memory_max_keys)
+    cache_regions["disk"] = DiskRegion(
+        path=disk_path, max_size=disk_max_size, persistent=False
+    )
+    cache_regions["persistent"] = DiskRegion(
+        path=persistent_path, max_size=persistent_max_size, persistent=True
+    )
+    cache_regions["memory"] = MemoryRegion(memory_max_keys)
 
 
 cache_regions = {}
 
-_caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
+_caching_disabled = int(os.environ.get("PYMOR_CACHE_DISABLE", 0)) == 1
 if _caching_disabled:
     from pymor.core.logger import getLogger
-    getLogger('pymor.core.cache').warn('caching globally disabled by environment')
+
+    getLogger("pymor.core.cache").warn("caching globally disabled by environment")
 
 
 def enable_caching():
     """Globally enable caching."""
     global _caching_disabled
-    _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
+    _caching_disabled = int(os.environ.get("PYMOR_CACHE_DISABLE", 0)) == 1
 
 
 def disable_caching():
@@ -250,13 +281,13 @@ class CacheableInterface(ImmutableInterface):
         is disabled.
     """
 
-    sid_ignore = ImmutableInterface.sid_ignore | {'cache_region'}
+    sid_ignore = ImmutableInterface.sid_ignore | {"cache_region"}
 
     cache_region = None
 
     def disable_caching(self):
         """Disable caching for this instance."""
-        self.__dict__['cache_region'] = None
+        self.__dict__["cache_region"] = None
 
     def enable_caching(self, region):
         """Enable caching for this instance.
@@ -271,10 +302,10 @@ class CacheableInterface(ImmutableInterface):
             the :attr:`cache_regions` dict. If `None` or `'none'`, caching
             is disabled.
         """
-        if region in (None, 'none'):
-            self.__dict__['cache_region'] = None
+        if region in (None, "none"):
+            self.__dict__["cache_region"] = None
         else:
-            self.__dict__['cache_region'] = region
+            self.__dict__["cache_region"] = region
             r = cache_regions.get(region, None)
             if r and r.persistent:
                 self.generate_sid()
@@ -312,38 +343,42 @@ class CacheableInterface(ImmutableInterface):
         return self._cached_method_call(method, False, argnames, defaults, args, kwargs)
 
     def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
-            if not cache_regions:
-                default_regions()
-            try:
-                region = cache_regions[self.cache_region]
-            except KeyError:
-                raise KeyError(f'No cache region "{self.cache_region}" found')
+        if not cache_regions:
+            default_regions()
+        try:
+            region = cache_regions[self.cache_region]
+        except KeyError:
+            raise KeyError(f'No cache region "{self.cache_region}" found')
 
-            # compute id for self
-            if region.persistent:
-                self_id = getattr(self, 'sid')
-                if not self_id:     # this can happen when cache_region is already set by the class to
-                                    # a persistent region
-                    self_id = self.generate_sid()
-            else:
-                self_id = self.uid
+        # compute id for self
+        if region.persistent:
+            self_id = getattr(self, "sid")
+            if (
+                not self_id
+            ):  # this can happen when cache_region is already set by the class to
+                # a persistent region
+                self_id = self.generate_sid()
+        else:
+            self_id = self.uid
 
-            # ensure that passing a value as positional or keyword argument does not matter
-            kwargs.update(zip(argnames, args))
+        # ensure that passing a value as positional or keyword argument does not matter
+        kwargs.update(zip(argnames, args))
 
-            # ensure the values of optional parameters enter the cache key
-            if defaults:
-                kwargs = dict(defaults, **kwargs)
+        # ensure the values of optional parameters enter the cache key
+        if defaults:
+            kwargs = dict(defaults, **kwargs)
 
-            key = generate_sid((method.__name__, self_id, kwargs, defaults_sid()))
-            found, value = region.get(key)
-            if found:
-                return value
-            else:
-                self.logger.debug(f'creating new cache entry for {self.__class__.__name__}.{method.__name__}')
-                value = method(self, **kwargs) if pass_self else method(**kwargs)
-                region.set(key, value)
-                return value
+        key = generate_sid((method.__name__, self_id, kwargs, defaults_sid()))
+        found, value = region.get(key)
+        if found:
+            return value
+        else:
+            self.logger.debug(
+                f"creating new cache entry for {self.__class__.__name__}.{method.__name__}"
+            )
+            value = method(self, **kwargs) if pass_self else method(**kwargs)
+            region.set(key, value)
+            return value
 
 
 def cached(function):
@@ -359,6 +394,8 @@ def cached(function):
     def wrapper(self, *args, **kwargs):
         if _caching_disabled or self.cache_region is None:
             return function(self, *args, **kwargs)
-        return self._cached_method_call(function, True, argnames, defaults, args, kwargs)
+        return self._cached_method_call(
+            function, True, argnames, defaults, args, kwargs
+        )
 
     return wrapper

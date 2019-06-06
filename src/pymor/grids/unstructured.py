@@ -24,8 +24,12 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         self.subentity_data = subentity_data
         self.embedding_data = embedding_data
         vertices = self.centers(2)
-        self.domain = np.array([[np.min(vertices[:, 0]), np.min(vertices[:, 1])],
-                                [np.max(vertices[:, 0]), np.max(vertices[:, 1])]])
+        self.domain = np.array(
+            [
+                [np.min(vertices[:, 0]), np.min(vertices[:, 1])],
+                [np.max(vertices[:, 0]), np.max(vertices[:, 1])],
+            ]
+        )
 
     @classmethod
     def from_vertices(cls, vertices, faces):
@@ -57,20 +61,24 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         TRANS = TRANS.swapaxes(1, 2)
 
         sizes = (len(faces), num_edges, len(vertices))
-        subentity_data = (np.arange(len(faces), dtype=np.int32).reshape(-1, 1), edges, faces)
+        subentity_data = (
+            np.arange(len(faces), dtype=np.int32).reshape(-1, 1),
+            edges,
+            faces,
+        )
         embedding_data = (TRANS, SHIFTS)
 
         return cls(sizes, subentity_data, embedding_data)
 
     def size(self, codim=0):
-        assert 0 <= codim <= 2, 'Invalid codimension'
+        assert 0 <= codim <= 2, "Invalid codimension"
         return self.sizes[codim]
 
     def subentities(self, codim=0, subentity_codim=None):
-        assert 0 <= codim <= 2, 'Invalid codimension'
+        assert 0 <= codim <= 2, "Invalid codimension"
         if subentity_codim is None:
             subentity_codim = codim + 1
-        assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimensoin'
+        assert codim <= subentity_codim <= self.dim, "Invalid subentity codimensoin"
         if codim == 0:
             return self.subentity_data[subentity_codim]
         else:
@@ -100,15 +108,22 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         from pymor.gui.qt import visualize_patch
         from pymor.vectorarrays.interfaces import VectorArrayInterface
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
+
         if isinstance(U, (np.ndarray, VectorArrayInterface)):
             U = (U,)
         assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
-        U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
-                  u if isinstance(u, NumpyVectorArray) else
-                  NumpyVectorSpace.make_array(u.to_numpy())
-                  for u in U)
-        bounding_box = kwargs.pop('bounding_box', self.domain)
+        U = tuple(
+            NumpyVectorSpace.make_array(u)
+            if isinstance(u, np.ndarray)
+            else u
+            if isinstance(u, NumpyVectorArray)
+            else NumpyVectorSpace.make_array(u.to_numpy())
+            for u in U
+        )
+        bounding_box = kwargs.pop("bounding_box", self.domain)
         visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
 
     def __str__(self):
-        return 'UnstructuredTriangleGrid with {} triangles, {} edges, {} vertices'.format(*self.sizes)
+        return "UnstructuredTriangleGrid with {} triangles, {} edges, {} vertices".format(
+            *self.sizes
+        )

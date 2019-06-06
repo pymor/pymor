@@ -42,38 +42,47 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
     """
 
     def parameter_functional_factory(ix, iy):
-        return ProjectionParameterFunctional(component_name='diffusion',
-                                             component_shape=(num_blocks[1], num_blocks[0]),
-                                             coordinates=(num_blocks[1] - iy - 1, ix),
-                                             name=f'diffusion_{ix}_{iy}')
+        return ProjectionParameterFunctional(
+            component_name="diffusion",
+            component_shape=(num_blocks[1], num_blocks[0]),
+            coordinates=(num_blocks[1] - iy - 1, ix),
+            name=f"diffusion_{ix}_{iy}",
+        )
 
     def diffusion_function_factory(ix, iy):
         if ix + 1 < num_blocks[0]:
-            X = '(x[..., 0] >= ix * dx) * (x[..., 0] < (ix + 1) * dx)'
+            X = "(x[..., 0] >= ix * dx) * (x[..., 0] < (ix + 1) * dx)"
         else:
-            X = '(x[..., 0] >= ix * dx)'
+            X = "(x[..., 0] >= ix * dx)"
         if iy + 1 < num_blocks[1]:
-            Y = '(x[..., 1] >= iy * dy) * (x[..., 1] < (iy + 1) * dy)'
+            Y = "(x[..., 1] >= iy * dy) * (x[..., 1] < (iy + 1) * dy)"
         else:
-            Y = '(x[..., 1] >= iy * dy)'
-        return ExpressionFunction(f'{X} * {Y} * 1.',
-                                  2, (), {}, {'ix': ix, 'iy': iy, 'dx': 1. / num_blocks[0], 'dy': 1. / num_blocks[1]},
-                                  name=f'diffusion_{ix}_{iy}')
+            Y = "(x[..., 1] >= iy * dy)"
+        return ExpressionFunction(
+            f"{X} * {Y} * 1.",
+            2,
+            (),
+            {},
+            {"ix": ix, "iy": iy, "dx": 1.0 / num_blocks[0], "dy": 1.0 / num_blocks[1]},
+            name=f"diffusion_{ix}_{iy}",
+        )
 
     return StationaryProblem(
-
         domain=RectDomain(),
-
-        rhs=ConstantFunction(dim_domain=2, value=1.),
-
-        diffusion=LincombFunction([diffusion_function_factory(ix, iy)
-                                   for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))],
-                                  [parameter_functional_factory(ix, iy)
-                                   for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))],
-                                  name='diffusion'),
-
-        parameter_space=CubicParameterSpace({'diffusion': (num_blocks[1], num_blocks[0])}, *parameter_range),
-
-        name=f'ThermalBlock({num_blocks})'
-
+        rhs=ConstantFunction(dim_domain=2, value=1.0),
+        diffusion=LincombFunction(
+            [
+                diffusion_function_factory(ix, iy)
+                for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))
+            ],
+            [
+                parameter_functional_factory(ix, iy)
+                for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))
+            ],
+            name="diffusion",
+        ),
+        parameter_space=CubicParameterSpace(
+            {"diffusion": (num_blocks[1], num_blocks[0])}, *parameter_range
+        ),
+        name=f"ThermalBlock({num_blocks})",
     )

@@ -74,7 +74,9 @@ class BlockVectorArray(VectorArrayInterface):
             block.append(other_block, remove_from_other=remove_from_other)
 
     def copy(self, deep=False):
-        return BlockVectorArray([block.copy(deep) for block in self._blocks], self.space)
+        return BlockVectorArray(
+            [block.copy(deep) for block in self._blocks], self.space
+        )
 
     def scal(self, alpha):
         for block in self._blocks:
@@ -82,8 +84,11 @@ class BlockVectorArray(VectorArrayInterface):
 
     def axpy(self, alpha, x):
         assert x in self.space
-        assert isinstance(alpha, Number) \
-            or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
+        assert (
+            isinstance(alpha, Number)
+            or isinstance(alpha, np.ndarray)
+            and alpha.shape == (len(self),)
+        )
         if len(x) > 0:
             for block, x_block in zip(self._blocks, x._blocks):
                 block.axpy(alpha, x_block)
@@ -92,7 +97,10 @@ class BlockVectorArray(VectorArrayInterface):
 
     def dot(self, other):
         assert other in self.space
-        dots = [block.dot(other_block) for block, other_block in zip(self._blocks, other._blocks)]
+        dots = [
+            block.dot(other_block)
+            for block, other_block in zip(self._blocks, other._blocks)
+        ]
         assert all([dot.shape == dots[0].shape for dot in dots])
         common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
         ret = np.zeros(dots[0].shape, dtype=common_dtype)
@@ -102,8 +110,10 @@ class BlockVectorArray(VectorArrayInterface):
 
     def pairwise_dot(self, other):
         assert other in self.space
-        dots = [block.pairwise_dot(other_block)
-                for block, other_block in zip(self._blocks, other._blocks)]
+        dots = [
+            block.pairwise_dot(other_block)
+            for block, other_block in zip(self._blocks, other._blocks)
+        ]
         assert all([dot.shape == dots[0].shape for dot in dots])
         common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
         ret = np.zeros(dots[0].shape, dtype=common_dtype)
@@ -119,7 +129,9 @@ class BlockVectorArray(VectorArrayInterface):
         return np.sum(np.array([block.l1_norm() for block in self._blocks]), axis=0)
 
     def l2_norm(self):
-        return np.sqrt(np.sum(np.array([block.l2_norm2() for block in self._blocks]), axis=0))
+        return np.sqrt(
+            np.sum(np.array([block.l2_norm2() for block in self._blocks]), axis=0)
+        )
 
     def l2_norm2(self):
         return np.sum(np.array([block.l2_norm2() for block in self._blocks]), axis=0)
@@ -137,8 +149,9 @@ class BlockVectorArray(VectorArrayInterface):
         dof_indices -= self._bins[block_inds]
         block_inds = self._bin_map[block_inds]
         blocks = self._blocks
-        return np.array([blocks[bi].dofs([ci])[:, 0]
-                         for bi, ci in zip(block_inds, dof_indices)]).T
+        return np.array(
+            [blocks[bi].dofs([ci])[:, 0] for bi, ci in zip(block_inds, dof_indices)]
+        ).T
 
     def amax(self):
         self._compute_bins()
@@ -154,7 +167,7 @@ class BlockVectorArray(VectorArrayInterface):
         return all([len(block) == len(self._blocks[0]) for block in self._blocks])
 
     def _compute_bins(self):
-        if not hasattr(self, '_bins'):
+        if not hasattr(self, "_bins"):
             dims = np.array([subspace.dim for subspace in self.space.subspaces])
             self._bin_map = bin_map = np.where(dims > 0)[0]
             self._bins = np.cumsum(np.hstack(([0], dims[bin_map])))
@@ -177,13 +190,20 @@ class BlockVectorSpace(VectorSpaceInterface):
 
     def __init__(self, subspaces):
         subspaces = tuple(subspaces)
-        assert all([isinstance(subspace, VectorSpaceInterface) for subspace in subspaces])
+        assert all(
+            [isinstance(subspace, VectorSpaceInterface) for subspace in subspaces]
+        )
         self.subspaces = subspaces
 
     def __eq__(self, other):
-        return (type(other) is BlockVectorSpace
-                and len(self.subspaces) == len(other.subspaces)
-                and all(space == other_space for space, other_space in zip(self.subspaces, other.subspaces)))
+        return (
+            type(other) is BlockVectorSpace
+            and len(self.subspaces) == len(other.subspaces)
+            and all(
+                space == other_space
+                for space, other_space in zip(self.subspaces, other.subspaces)
+            )
+        )
 
     def __hash__(self):
         return sum(hash(s) for s in self.subspaces)
@@ -193,7 +213,13 @@ class BlockVectorSpace(VectorSpaceInterface):
         return sum(subspace.dim for subspace in self.subspaces)
 
     def zeros(self, count=1, reserve=0):
-        return BlockVectorArray([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
+        return BlockVectorArray(
+            [
+                subspace.zeros(count=count, reserve=reserve)
+                for subspace in self.subspaces
+            ],
+            self,
+        )
 
     @classinstancemethod
     def make_array(cls, obj):
@@ -211,15 +237,29 @@ class BlockVectorSpace(VectorSpaceInterface):
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
         U = self.empty(reserve=sum(len(UU) for UU in obj))
         for i, UU in enumerate(obj):
-            U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))
+            U.append(
+                self.make_array(
+                    [
+                        s.zeros(len(UU)) if j != i else UU
+                        for j, s in enumerate(self.subspaces)
+                    ]
+                )
+            )
         return U
 
     def from_numpy(self, data, ensure_copy=False):
         if data.ndim == 1:
             data = data.reshape(1, -1)
         data_ind = np.cumsum([0] + [subspace.dim for subspace in self.subspaces])
-        return BlockVectorArray([subspace.from_numpy(data[:, data_ind[i]:data_ind[i + 1]], ensure_copy=ensure_copy)
-                                 for i, subspace in enumerate(self.subspaces)], self)
+        return BlockVectorArray(
+            [
+                subspace.from_numpy(
+                    data[:, data_ind[i] : data_ind[i + 1]], ensure_copy=ensure_copy
+                )
+                for i, subspace in enumerate(self.subspaces)
+            ],
+            self,
+        )
 
 
 class BlockVectorArrayView(BlockVectorArray):

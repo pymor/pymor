@@ -11,7 +11,6 @@ from pymor.vectorarrays.block import BlockVectorSpace
 
 
 class BlockOperatorBase(OperatorBase):
-
     def _operators(self):
         """Iterator over operators."""
         for (i, j) in np.ndindex(self.blocks.shape):
@@ -29,13 +28,19 @@ class BlockOperatorBase(OperatorBase):
             if blocks.ndim == 1:
                 blocks.shape = (len(blocks), 1)
         self.blocks = blocks
-        assert all(isinstance(op, OperatorInterface) or op is None for op in self._operators())
+        assert all(
+            isinstance(op, OperatorInterface) or op is None for op in self._operators()
+        )
 
         # check if every row/column contains at least one operator
-        assert all(any(blocks[i, j] is not None for j in range(blocks.shape[1]))
-                   for i in range(blocks.shape[0]))
-        assert all(any(blocks[i, j] is not None for i in range(blocks.shape[0]))
-                   for j in range(blocks.shape[1]))
+        assert all(
+            any(blocks[i, j] is not None for j in range(blocks.shape[1]))
+            for i in range(blocks.shape[0])
+        )
+        assert all(
+            any(blocks[i, j] is not None for i in range(blocks.shape[0]))
+            for j in range(blocks.shape[1])
+        )
 
         # find source/range spaces for every column/row
         source_spaces = [None for j in range(blocks.shape[1])]
@@ -52,8 +57,12 @@ class BlockOperatorBase(OperatorBase):
             if blocks[i, j] is None:
                 self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
-        self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
-        self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
+        self.source = (
+            BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
+        )
+        self.range = (
+            BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
+        )
         self.num_source_blocks = len(source_spaces)
         self.num_range_blocks = len(range_spaces)
         self.linear = all(op.linear for op in self._operators())
@@ -61,7 +70,9 @@ class BlockOperatorBase(OperatorBase):
 
     @property
     def H(self):
-        return self.adjoint_type(np.vectorize(lambda op: op.H if op else None)(self.blocks.T))
+        return self.adjoint_type(
+            np.vectorize(lambda op: op.H if op else None)(self.blocks.T)
+        )
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -99,7 +110,6 @@ class BlockOperatorBase(OperatorBase):
             return self.__class__(blocks)
 
     def as_range_array(self, mu=None):
-
         def process_row(row, space):
             R = space.empty()
             for op in row:
@@ -112,7 +122,6 @@ class BlockOperatorBase(OperatorBase):
         return self.range.make_array(blocks) if self.blocked_range else blocks[0]
 
     def as_source_array(self, mu=None):
-
         def process_col(col, space):
             R = space.empty()
             for op in col:
@@ -121,7 +130,9 @@ class BlockOperatorBase(OperatorBase):
             return R
 
         subspaces = self.source.subspaces if self.blocked_source else [self.source]
-        blocks = [process_col(col, space) for col, space in zip(self.blocks.T, subspaces)]
+        blocks = [
+            process_col(col, space) for col, space in zip(self.blocks.T, subspaces)
+        ]
         return self.source.make_array(blocks) if self.blocked_source else blocks[0]
 
 
@@ -143,12 +154,14 @@ class BlockOperator(BlockOperatorBase):
 
 class BlockRowOperator(BlockOperatorBase):
     """A row vector of arbitrary |Operators|."""
+
     blocked_source = True
     blocked_range = False
 
 
 class BlockColumnOperator(BlockOperatorBase):
     """A column vector of arbitrary |Operators|."""
+
     blocked_source = False
     blocked_range = True
 
@@ -159,22 +172,24 @@ BlockColumnOperator.adjoint_type = BlockRowOperator
 
 
 class BlockProjectionOperator(BlockRowOperator):
-
     def __init__(self, block_space, component):
         assert isinstance(block_space, BlockVectorSpace)
         assert 0 <= component < len(block_space.subspaces)
-        blocks = [ZeroOperator(space, space) if i != component else IdentityOperator(space)
-                  for i, space in enumerate(block_space.subspaces)]
+        blocks = [
+            ZeroOperator(space, space) if i != component else IdentityOperator(space)
+            for i, space in enumerate(block_space.subspaces)
+        ]
         super().__init__(blocks)
 
 
 class BlockEmbeddingOperator(BlockColumnOperator):
-
     def __init__(self, block_space, component):
         assert isinstance(block_space, BlockVectorSpace)
         assert 0 <= component < len(block_space.subspaces)
-        blocks = [ZeroOperator(space, space) if i != component else IdentityOperator(space)
-                  for i, space in enumerate(block_space.subspaces)]
+        blocks = [
+            ZeroOperator(space, space) if i != component else IdentityOperator(space)
+            for i, space in enumerate(block_space.subspaces)
+        ]
         super().__init__(blocks)
 
 
@@ -198,24 +213,38 @@ class BlockDiagonalOperator(BlockOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V_blocks = [self.blocks[i, i].apply(U.block(i), mu=mu) for i in range(self.num_range_blocks)]
+        V_blocks = [
+            self.blocks[i, i].apply(U.block(i), mu=mu)
+            for i in range(self.num_range_blocks)
+        ]
         return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [self.blocks[i, i].apply_adjoint(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
+        U_blocks = [
+            self.blocks[i, i].apply_adjoint(V.block(i), mu=mu)
+            for i in range(self.num_source_blocks)
+        ]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        U_blocks = [self.blocks[i, i].apply_inverse(V.block(i), mu=mu, least_squares=least_squares)
-                    for i in range(self.num_source_blocks)]
+        U_blocks = [
+            self.blocks[i, i].apply_inverse(
+                V.block(i), mu=mu, least_squares=least_squares
+            )
+            for i in range(self.num_source_blocks)
+        ]
         return self.source.make_array(U_blocks)
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
-        V_blocks = [self.blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu, least_squares=least_squares)
-                    for i in range(self.num_source_blocks)]
+        V_blocks = [
+            self.blocks[i, i].apply_inverse_adjoint(
+                U.block(i), mu=mu, least_squares=least_squares
+            )
+            for i in range(self.num_source_blocks)
+        ]
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):
@@ -274,35 +303,44 @@ class SecondOrderModelOperator(BlockOperator):
     """
 
     def __init__(self, E, K):
-        super().__init__([[None, IdentityOperator(E.source)],
-                          [K * (-1), E * (-1)]])
+        super().__init__([[None, IdentityOperator(E.source)], [K * (-1), E * (-1)]])
         self.E = E
         self.K = K
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V_blocks = [U.block(1),
-                    -self.K.apply(U.block(0), mu=mu) - self.E.apply(U.block(1), mu=mu)]
+        V_blocks = [
+            U.block(1),
+            -self.K.apply(U.block(0), mu=mu) - self.E.apply(U.block(1), mu=mu),
+        ]
         return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [-self.K.apply_adjoint(V.block(1), mu=mu),
-                    V.block(0) - self.E.apply_adjoint(V.block(1), mu=mu)]
+        U_blocks = [
+            -self.K.apply_adjoint(V.block(1), mu=mu),
+            V.block(0) - self.E.apply_adjoint(V.block(1), mu=mu),
+        ]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        U_blocks = [-self.K.apply_inverse(self.E.apply(V.block(0), mu=mu) + V.block(1), mu=mu,
-                                          least_squares=least_squares),
-                    V.block(0)]
+        U_blocks = [
+            -self.K.apply_inverse(
+                self.E.apply(V.block(0), mu=mu) + V.block(1),
+                mu=mu,
+                least_squares=least_squares,
+            ),
+            V.block(0),
+        ]
         return self.source.make_array(U_blocks)
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
-        KitU0 = self.K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
-        V_blocks = [-self.E.apply_adjoint(KitU0, mu=mu) + U.block(1),
-                    -KitU0]
+        KitU0 = self.K.apply_inverse_adjoint(
+            U.block(0), mu=mu, least_squares=least_squares
+        )
+        V_blocks = [-self.E.apply_adjoint(KitU0, mu=mu) + U.block(1), -KitU0]
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):
@@ -365,8 +403,12 @@ class ShiftedSecondOrderModelOperator(BlockOperator):
     """
 
     def __init__(self, M, E, K, a, b):
-        super().__init__([[IdentityOperator(M.source) * a, IdentityOperator(M.source) * b],
-                          [((-b) * K).assemble(), (a * M - b * E).assemble()]])
+        super().__init__(
+            [
+                [IdentityOperator(M.source) * a, IdentityOperator(M.source) * b],
+                [((-b) * K).assemble(), (a * M - b * E).assemble()],
+            ]
+        )
         self.M = M
         self.E = E
         self.K = K
@@ -375,44 +417,64 @@ class ShiftedSecondOrderModelOperator(BlockOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V_blocks = [U.block(0) * self.a
-                    + U.block(1) * self.b,
-                    self.K.apply(U.block(0), mu=mu) * (-self.b)
-                    + self.M.apply(U.block(1), mu=mu) * self.a
-                    - self.E.apply(U.block(1), mu=mu) * self.b]
+        V_blocks = [
+            U.block(0) * self.a + U.block(1) * self.b,
+            self.K.apply(U.block(0), mu=mu) * (-self.b)
+            + self.M.apply(U.block(1), mu=mu) * self.a
+            - self.E.apply(U.block(1), mu=mu) * self.b,
+        ]
         return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [V.block(0) * self.a.conjugate()
-                    - self.K.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate(),
-                    V.block(0) * self.b.conjugate()
-                    + self.M.apply_adjoint(V.block(1), mu=mu) * self.a.conjugate()
-                    - self.E.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate()]
+        U_blocks = [
+            V.block(0) * self.a.conjugate()
+            - self.K.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate(),
+            V.block(0) * self.b.conjugate()
+            + self.M.apply_adjoint(V.block(1), mu=mu) * self.a.conjugate()
+            - self.E.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate(),
+        ]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        aMmbEV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.E.apply(V.block(0), mu=mu) * self.b
+        aMmbEV0 = (
+            self.M.apply(V.block(0), mu=mu) * self.a
+            - self.E.apply(V.block(0), mu=mu) * self.b
+        )
         KV0 = self.K.apply(V.block(0), mu=mu)
-        a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
-        a2MmabEpb2KiV1 = a2MmabEpb2K.apply_inverse(V.block(1), mu=mu, least_squares=least_squares)
-        U_blocks = [a2MmabEpb2K.apply_inverse(aMmbEV0, mu=mu, least_squares=least_squares)
-                    - a2MmabEpb2KiV1 * self.b,
-                    a2MmabEpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) * self.b
-                    + a2MmabEpb2KiV1 * self.a]
+        a2MmabEpb2K = (
+            self.a ** 2 * self.M - self.a * self.b * self.E + self.b ** 2 * self.K
+        ).assemble(mu=mu)
+        a2MmabEpb2KiV1 = a2MmabEpb2K.apply_inverse(
+            V.block(1), mu=mu, least_squares=least_squares
+        )
+        U_blocks = [
+            a2MmabEpb2K.apply_inverse(aMmbEV0, mu=mu, least_squares=least_squares)
+            - a2MmabEpb2KiV1 * self.b,
+            a2MmabEpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) * self.b
+            + a2MmabEpb2KiV1 * self.a,
+        ]
         return self.source.make_array(U_blocks)
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         assert U in self.source
-        a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
-        a2MmabEpb2KitU0 = a2MmabEpb2K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
-        a2MmabEpb2KitU1 = a2MmabEpb2K.apply_inverse_adjoint(U.block(1), mu=mu, least_squares=least_squares)
-        V_blocks = [self.M.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.a.conjugate()
-                    - self.E.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.b.conjugate()
-                    + self.K.apply_adjoint(a2MmabEpb2KitU1, mu=mu) * self.b.conjugate(),
-                    -a2MmabEpb2KitU0 * self.b.conjugate()
-                    + a2MmabEpb2KitU1 * self.a.conjugate()]
+        a2MmabEpb2K = (
+            self.a ** 2 * self.M - self.a * self.b * self.E + self.b ** 2 * self.K
+        ).assemble(mu=mu)
+        a2MmabEpb2KitU0 = a2MmabEpb2K.apply_inverse_adjoint(
+            U.block(0), mu=mu, least_squares=least_squares
+        )
+        a2MmabEpb2KitU1 = a2MmabEpb2K.apply_inverse_adjoint(
+            U.block(1), mu=mu, least_squares=least_squares
+        )
+        V_blocks = [
+            self.M.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.a.conjugate()
+            - self.E.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.b.conjugate()
+            + self.K.apply_adjoint(a2MmabEpb2KitU1, mu=mu) * self.b.conjugate(),
+            -a2MmabEpb2KitU0 * self.b.conjugate()
+            + a2MmabEpb2KitU1 * self.a.conjugate(),
+        ]
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):

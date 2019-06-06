@@ -5,7 +5,12 @@
 from collections import Iterable, Mapping, OrderedDict
 
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
-from pymor.core.interfaces import BasicInterface, UberMeta, abstractmethod, classinstancemethod
+from pymor.core.interfaces import (
+    BasicInterface,
+    UberMeta,
+    abstractmethod,
+    classinstancemethod,
+)
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.table import format_table
 
@@ -59,34 +64,35 @@ class rule:
             from pygments import highlight
             from pygments.lexers import PythonLexer
             from pygments.formatters import Terminal256Formatter
+
             return highlight(self.source, PythonLexer(), Terminal256Formatter())
         except ImportError:
             return self.source
 
     @property
     def action_description(self):
-        return self.action.__doc__ or self.action.__name__[len('action_'):]
+        return self.action.__doc__ or self.action.__name__[len("action_") :]
 
     @property
     def source(self):
         from inspect import getsourcelines
-        return ''.join(getsourcelines(self.action)[0])
+
+        return "".join(getsourcelines(self.action)[0])
 
 
 class match_class_base(rule):
-
     def __init__(self, *classes):
         super().__init__()
         if not classes:
-            raise ValueError('At least one class is required')
+            raise ValueError("At least one class is required")
         self.classes = classes
-        self.condition_description = ', '.join(c.__name__ for c in classes)
+        self.condition_description = ", ".join(c.__name__ for c in classes)
 
 
 class match_class(match_class_base):
     """|rule| that matches when obj is instance of one of the given classes."""
 
-    condition_type = 'CLASS'
+    condition_type = "CLASS"
 
     def _matches(self, obj):
         return isinstance(obj, self.classes)
@@ -95,7 +101,7 @@ class match_class(match_class_base):
 class match_class_all(match_class_base):
     """|rule| that matches when each item of obj is instance of one of the given classes."""
 
-    condition_type = 'ALLCLASSES'
+    condition_type = "ALLCLASSES"
 
     def _matches(self, obj):
         return all(isinstance(o, self.classes) for o in obj)
@@ -104,7 +110,7 @@ class match_class_all(match_class_base):
 class match_class_any(match_class_base):
     """|rule| that matches when any item of obj is instance of one of the given classes."""
 
-    condition_type = 'ANYCLASS'
+    condition_type = "ANYCLASS"
 
     def _matches(self, obj):
         return any(isinstance(o, self.classes) for o in obj)
@@ -113,7 +119,7 @@ class match_class_any(match_class_base):
 class match_always(rule):
     """|rule| that always matches."""
 
-    condition_type = 'ALWAYS'
+    condition_type = "ALWAYS"
 
     def __init__(self, action):
         self(action)
@@ -135,12 +141,12 @@ class match_generic(rule):
         `condition`.
     """
 
-    condition_type = 'GENERIC'
+    condition_type = "GENERIC"
 
     def __init__(self, condition, condition_description=None):
         super().__init__()
         self.condition = condition
-        self.condition_description = condition_description or 'n.a.'
+        self.condition_description = condition_description or "n.a."
 
     def _matches(self, obj):
         return self.condition(obj)
@@ -148,30 +154,45 @@ class match_generic(rule):
 
 class RuleTableMeta(UberMeta):
     """Meta class for |RuleTable|."""
+
     def __new__(cls, name, parents, dct):
-        assert 'rules' not in dct
+        assert "rules" not in dct
         rules = []
-        if not {p.__name__ for p in parents} <= {'RuleTable', 'BasicInterface'}:
-            raise NotImplementedError('Inheritance for RuleTables not implemented yet.')
+        if not {p.__name__ for p in parents} <= {"RuleTable", "BasicInterface"}:
+            raise NotImplementedError("Inheritance for RuleTables not implemented yet.")
         for k, v in dct.items():
             if isinstance(v, rule):
-                if not k.startswith('action_'):
-                    raise ValueError('Rule definition names have to start with "action_"')
+                if not k.startswith("action_"):
+                    raise ValueError(
+                        'Rule definition names have to start with "action_"'
+                    )
                 v.name = k
                 rules.append(v)
         # note: since Python 3.6, the definition order is preserved in dct, so rules has the right order
-        dct['rules'] = rules
+        dct["rules"] = rules
 
         return super().__new__(cls, name, parents, dct)
 
     def __repr__(cls):
-        rows = [['Pos', 'Match Type', 'Condition', 'Action Name / Action Description', 'Stop']]
+        rows = [
+            [
+                "Pos",
+                "Match Type",
+                "Condition",
+                "Action Name / Action Description",
+                "Stop",
+            ]
+        ]
         for i, r in enumerate(cls.rules):
             for ii in range(r.num_rules):
-                rows.append(['' if ii else str(i),
-                             r.condition_type,
-                             r.condition_description,
-                             '' if ii else r.action_description])
+                rows.append(
+                    [
+                        "" if ii else str(i),
+                        r.condition_type,
+                        r.condition_description,
+                        "" if ii else r.action_description,
+                    ]
+                )
                 r = r.next_rule
         return format_table(rows)
 
@@ -299,7 +320,9 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         for child in children:
             c = getattr(obj, child)
             if isinstance(c, Mapping):
-                result[child] = {k: self.apply(v) if v is not None else v for k, v in c.items()}
+                result[child] = {
+                    k: self.apply(v) if v is not None else v for k, v in c.items()
+                }
             elif isinstance(c, Iterable):
                 result[child] = tuple(self.apply(v) if v is not None else v for v in c)
             else:
@@ -330,11 +353,17 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         for k in obj._init_arguments:
             try:
                 v = getattr(obj, k)
-                if (isinstance(v, OperatorInterface)
-                    or isinstance(v, Mapping) and all(isinstance(vv, OperatorInterface)
-                                                      or vv is None for vv in v.values())
-                    or isinstance(v, Iterable) and type(v) is not str and all(isinstance(vv, OperatorInterface)
-                                                                              or vv is None for vv in v)):
+                if (
+                    isinstance(v, OperatorInterface)
+                    or isinstance(v, Mapping)
+                    and all(
+                        isinstance(vv, OperatorInterface) or vv is None
+                        for vv in v.values()
+                    )
+                    or isinstance(v, Iterable)
+                    and type(v) is not str
+                    and all(isinstance(vv, OperatorInterface) or vv is None for vv in v)
+                ):
                     children.add(k)
             except AttributeError:
                 pass
@@ -343,21 +372,34 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
 
 def print_children(obj):
     def build_tree(obj):
-
         def process_child(child):
             c = getattr(obj, child)
             if isinstance(c, Mapping):
-                return child, OrderedDict((k + ': ' + v.name, build_tree(v)) for k, v in sorted(c.items()))
+                return (
+                    child,
+                    OrderedDict(
+                        (k + ": " + v.name, build_tree(v)) for k, v in sorted(c.items())
+                    ),
+                )
             elif isinstance(c, Iterable):
-                return child, OrderedDict((str(i) + ': ' + v.name, build_tree(v)) for i, v in enumerate(c))
+                return (
+                    child,
+                    OrderedDict(
+                        (str(i) + ": " + v.name, build_tree(v)) for i, v in enumerate(c)
+                    ),
+                )
             else:
-                return child + ': ' + c.name, build_tree(c)
+                return child + ": " + c.name, build_tree(c)
 
-        return OrderedDict(process_child(child) for child in sorted(RuleTable.get_children(obj)))
+        return OrderedDict(
+            process_child(child) for child in sorted(RuleTable.get_children(obj))
+        )
 
     try:
         from asciitree import LeftAligned
+
         print(LeftAligned()({obj.name: build_tree(obj)}))
     except ImportError:
         from pprint import pprint
+
         pprint({obj.name: build_tree(obj)})

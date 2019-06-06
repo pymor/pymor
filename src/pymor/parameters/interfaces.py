@@ -42,6 +42,7 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
 
     def __mul__(self, other):
         from pymor.parameters.functionals import ProductParameterFunctional
+
         if not isinstance(other, (Number, ParameterFunctionalInterface)):
             return NotImplemented
         return ProductParameterFunctional([self, other])
@@ -49,4 +50,4 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
     __rmul__ = __mul__
 
     def __neg__(self):
-        return self * (-1.)
+        return self * (-1.0)

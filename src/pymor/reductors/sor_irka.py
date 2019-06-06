@@ -7,7 +7,11 @@ import numpy as np
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import SecondOrderModel
 from pymor.reductors.interpolation import SOBHIReductor
-from pymor.reductors.h2 import IRKAReductor, _poles_and_tangential_directions, _convergence_criterion
+from pymor.reductors.h2 import (
+    IRKAReductor,
+    _poles_and_tangential_directions,
+    _convergence_criterion,
+)
 
 
 class SORIRKAReductor(BasicInterface):
@@ -18,6 +22,7 @@ class SORIRKAReductor(BasicInterface):
     fom
         The full-order |SecondOrderModel| to reduce.
     """
+
     def __init__(self, fom):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
@@ -30,9 +35,22 @@ class SORIRKAReductor(BasicInterface):
         self.L = None
         self.errors = None
 
-    def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1,
-               force_sigma_in_rhp=False, projection='orth', conv_crit='sigma', compute_errors=False,
-               irka_options=None):
+    def reduce(
+        self,
+        r,
+        sigma=None,
+        b=None,
+        c=None,
+        rom0=None,
+        tol=1e-4,
+        maxit=100,
+        num_prev=1,
+        force_sigma_in_rhp=False,
+        projection="orth",
+        conv_crit="sigma",
+        compute_errors=False,
+        irka_options=None,
+    ):
         r"""Reduce using SOR-IRKA.
 
         It uses IRKA as the intermediate reductor, to reduce from 2r to
@@ -119,8 +137,8 @@ class SORIRKAReductor(BasicInterface):
             raise NotImplementedError
         assert 0 < r < fom.order
         assert isinstance(num_prev, int) and num_prev >= 1
-        assert projection in ('orth', 'biorth')
-        assert conv_crit in ('sigma', 'h2')
+        assert projection in ("orth", "biorth")
+        assert conv_crit in ("sigma", "h2")
         assert irka_options is None or isinstance(irka_options, dict)
         if not irka_options:
             irka_options = {}
@@ -129,18 +147,24 @@ class SORIRKAReductor(BasicInterface):
         assert sigma is None or isinstance(sigma, int) or len(sigma) == r
         assert b is None or isinstance(b, int) or b in fom.B.source and len(b) == r
         assert c is None or isinstance(c, int) or c in fom.Cp.range and len(c) == r
-        assert (rom0 is None
-                or isinstance(rom0, SecondOrderModel)
-                and rom0.order == r and rom0.B.source == fom.B.source and rom0.Cp.range == fom.Cp.range)
+        assert (
+            rom0 is None
+            or isinstance(rom0, SecondOrderModel)
+            and rom0.order == r
+            and rom0.B.source == fom.B.source
+            and rom0.Cp.range == fom.Cp.range
+        )
         assert sigma is None or rom0 is None
         assert b is None or rom0 is None
         assert c is None or rom0 is None
         if rom0 is not None:
-            with self.logger.block('Intermediate reduction ...'):
+            with self.logger.block("Intermediate reduction ..."):
                 irka_reductor = IRKAReductor(rom0.to_lti())
                 rom_r = irka_reductor.reduce(r, **irka_options)
             poles, b, c = _poles_and_tangential_directions(rom_r)
-            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
+            sigma = (
+                np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
+            )
         else:
             if sigma is None:
                 sigma = np.logspace(-1, 1, r)
@@ -150,13 +174,13 @@ class SORIRKAReductor(BasicInterface):
             if b is None:
                 b = fom.B.source.ones(r)
             elif isinstance(b, int):
-                b = fom.B.source.random(r, distribution='normal', seed=b)
+                b = fom.B.source.random(r, distribution="normal", seed=b)
             if c is None:
                 c = fom.Cp.range.ones(r)
             elif isinstance(c, int):
-                c = fom.Cp.range.random(r, distribution='normal', seed=c)
+                c = fom.Cp.range.random(r, distribution="normal", seed=c)
 
-        self.logger.info('Starting SOR-IRKA')
+        self.logger.info("Starting SOR-IRKA")
         self.conv_crit = []
         self.sigmas = [np.array(sigma)]
         self.R = [b]
@@ -169,22 +193,26 @@ class SORIRKAReductor(BasicInterface):
             rom = self._pg_reductor.reduce(sigma, b, c, projection=projection)
 
             # reduction to a system with r poles
-            with self.logger.block('Intermediate reduction ...'):
+            with self.logger.block("Intermediate reduction ..."):
                 irka_reductor = IRKAReductor(rom.to_lti())
                 rom_r = irka_reductor.reduce(r, **irka_options)
 
             # new interpolation points and tangential directions
             poles, b, c = _poles_and_tangential_directions(rom_r)
-            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
+            sigma = (
+                np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
+            )
             self.sigmas.append(sigma)
             self.R.append(b)
             self.L.append(c)
 
             # compute convergence criterion
-            if conv_crit == 'sigma':
-                dist = _convergence_criterion(self.sigmas[:-num_prev-2:-1], conv_crit)
+            if conv_crit == "sigma":
+                dist = _convergence_criterion(
+                    self.sigmas[: -num_prev - 2 : -1], conv_crit
+                )
                 self.conv_crit.append(dist)
-            elif conv_crit == 'h2':
+            elif conv_crit == "h2":
                 if it == 0:
                     rom_list = (num_prev + 1) * [None]
                     rom_list[0] = rom
@@ -196,7 +224,9 @@ class SORIRKAReductor(BasicInterface):
                     self.conv_crit.append(dist)
 
             # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
+            self.logger.info(
+                f"Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}"
+            )
             if compute_errors:
                 if np.max(rom.poles().real) < 0:
                     err = fom - rom
@@ -205,7 +235,9 @@ class SORIRKAReductor(BasicInterface):
                     rel_H2_err = np.inf
                 self.errors.append(rel_H2_err)
 
-                self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
+                self.logger.info(
+                    f"Relative H2-error in iteration {it + 1}: {rel_H2_err:e}"
+                )
 
             # check if convergence criterion is satisfied
             if self.conv_crit[-1] < tol:
