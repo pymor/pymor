@@ -22,10 +22,13 @@ class IRKAReductor(BasicInterface):
     ----------
     fom
         The full-order |LTIModel| to reduce.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
         self.fom = fom
+        self.mu = fom.parse_parameter(mu)
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -160,7 +163,7 @@ class IRKAReductor(BasicInterface):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        self._pg_reductor = LTIBHIReductor(fom)
+        self._pg_reductor = LTIBHIReductor(fom, mu=self.mu)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
@@ -227,12 +230,15 @@ class OneSidedIRKAReductor(BasicInterface):
 
         - `'V'`: Galerkin projection using the input Krylov subspace,
         - `'W'`: Galerkin projection using the output Krylov subspace.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom, version):
+    def __init__(self, fom, version, mu=None):
         assert isinstance(fom, LTIModel)
         assert version in ('V', 'W')
         self.fom = fom
         self.version = version
+        self.mu = fom.parse_parameter(mu)
         self.V = None
         self._pg_reductor = None
         self.conv_crit = None
@@ -419,23 +425,23 @@ class OneSidedIRKAReductor(BasicInterface):
             W = fom.A.source.empty(reserve=r)
         for i in range(r):
             if sigma[i].imag == 0:
-                sEmA = sigma[i].real * self.fom.E - self.fom.A
+                sEmA = sigma[i].real * fom.E - fom.A
                 if self.version == 'V':
-                    Bb = fom.B.apply(b.real[i])
+                    Bb = fom.B.apply(b.real[i], mu=self.mu)
                     V.append(sEmA.apply_inverse(Bb))
                 else:
-                    CTc = fom.C.apply_adjoint(c.real[i])
-                    W.append(sEmA.apply_inverse_adjoint(CTc))
+                    CTc = fom.C.apply_adjoint(c.real[i], mu=self.mu)
+                    W.append(sEmA.apply_inverse_adjoint(CTc, mu=self.mu))
             elif sigma[i].imag > 0:
-                sEmA = sigma[i] * self.fom.E - self.fom.A
+                sEmA = sigma[i] * fom.E - fom.A
                 if self.version == 'V':
-                    Bb = fom.B.apply(b[i])
-                    v = sEmA.apply_inverse(Bb)
+                    Bb = fom.B.apply(b[i], mu=self.mu)
+                    v = sEmA.apply_inverse(Bb, mu=self.mu)
                     V.append(v.real)
                     V.append(v.imag)
                 else:
-                    CTc = fom.C.apply_adjoint(c[i].conj())
-                    w = sEmA.apply_inverse_adjoint(CTc)
+                    CTc = fom.C.apply_adjoint(c[i].conj(), mu=self.mu)
+                    w = sEmA.apply_inverse_adjoint(CTc, mu=self.mu)
                     W.append(w.real)
                     W.append(w.imag)
 
@@ -458,10 +464,13 @@ class TSIAReductor(BasicInterface):
     ----------
     fom
         The full-order |LTIModel| to reduce.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
         self.fom = fom
+        self.mu = fom.parse_parameter(mu)
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -572,11 +581,18 @@ class TSIAReductor(BasicInterface):
         return rom
 
     def _projection_matrices(self, rom, projection):
-        fom = self.fom
+        if self.fom.parametric:
+            fom = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
+                                    for op in ['A', 'B', 'C', 'D', 'E']},
+                                 parameter_space=None)
+        else:
+            fom = self.fom
+
         self.V, self.W = solve_sylv_schur(fom.A, rom.A,
                                           E=fom.E, Er=rom.E,
                                           B=fom.B, Br=rom.B,
                                           C=fom.C, Cr=rom.C)
+
         if projection == 'orth':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
@@ -599,9 +615,12 @@ class TFIRKAReductor(BasicInterface):
     ----------
     fom
         The full-order |Model| with `eval_tf` and `eval_dtf` methods.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         self.fom = fom
+        self.mu = fom.parse_parameter(mu)
         self.conv_crit = None
         self.sigmas = None
         self.R = None
@@ -712,7 +731,7 @@ class TFIRKAReductor(BasicInterface):
         self.sigmas = [np.array(sigma)]
         self.R = [b]
         self.L = [c]
-        interp_reductor = TFBHIReductor(fom)
+        interp_reductor = TFBHIReductor(fom, mu=self.mu)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model

@@ -23,10 +23,13 @@ class GenericSOBTpvReductor(BasicInterface):
     ----------
     fom
         The full-order |SecondOrderModel| to reduce.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
+        self.mu = fom.parse_parameter(mu)
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -83,7 +86,13 @@ class GenericSOBTpvReductor(BasicInterface):
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.M)
 
         # find the reduced model
-        self._pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
+        if self.fom.parametric:
+            fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
+                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']},
+                                    parameter_space=None)
+        else:
+            fom_mu = self.fom
+        self._pg_reductor = SOLTIPGReductor(fom_mu, self.W, self.V, projection == 'biorth')
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -101,12 +110,14 @@ class SOBTpReductor(GenericSOBTpvReductor):
     ----------
     fom
         The full-order |SecondOrderModel| to reduce.
+    mu
+        |Parameter|.
     """
     def _gramians(self):
-        pcf = self.fom.gramian('pc_lrcf')
-        pof = self.fom.gramian('po_lrcf')
-        vcf = self.fom.gramian('vc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
+        pof = self.fom.gramian('po_lrcf', mu=self.mu)
+        vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
+        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
         return pcf, pof, vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -126,10 +137,12 @@ class SOBTvReductor(GenericSOBTpvReductor):
     ----------
     fom
         The full-order |SecondOrderModel| to reduce.
+    mu
+        |Parameter|.
     """
     def _gramians(self):
-        vcf = self.fom.gramian('vc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
+        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
         return vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -148,10 +161,12 @@ class SOBTpvReductor(GenericSOBTpvReductor):
     ----------
     fom
         The full-order |SecondOrderModel| to reduce.
+    mu
+        |Parameter|.
     """
     def _gramians(self):
-        pcf = self.fom.gramian('pc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
+        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
         return pcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -170,11 +185,13 @@ class SOBTvpReductor(GenericSOBTpvReductor):
     ----------
     fom
         The full-order |SecondOrderModel| to reduce.
+    mu
+        |Parameter|.
     """
     def _gramians(self):
-        pof = self.fom.gramian('po_lrcf')
-        vcf = self.fom.gramian('vc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        pof = self.fom.gramian('po_lrcf', mu=self.mu)
+        vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
+        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
         return pof, vcf, vof
 
     def _projection_matrices_and_singular_values(self, r, gramians):
@@ -194,13 +211,16 @@ class SOBTfvReductor(BasicInterface):
     ----------
     fom
         The full-order |SecondOrderModel| to reduce.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
-        self._pg_reductor = None
+        self.mu = fom.parse_parameter(mu)
         self.V = None
         self.W = None
+        self._pg_reductor = None
 
     def reduce(self, r, projection='bfsr'):
         """Reduce using SOBTfv.
@@ -228,8 +248,8 @@ class SOBTfvReductor(BasicInterface):
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
-        pcf = self.fom.gramian('pc_lrcf')
-        pof = self.fom.gramian('po_lrcf')
+        pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
+        pof = self.fom.gramian('po_lrcf', mu=self.mu)
 
         if r > min(len(pcf), len(pof)):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
@@ -249,7 +269,13 @@ class SOBTfvReductor(BasicInterface):
         self.W = self.V
 
         # find the reduced model
-        self._pg_reductor = SOLTIPGReductor(self.fom, self.W, self.V, projection == 'biorth')
+        if self.fom.parametric:
+            fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
+                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']},
+                                    parameter_space=None)
+        else:
+            fom_mu = self.fom
+        self._pg_reductor = SOLTIPGReductor(fom_mu, self.W, self.V, projection == 'biorth')
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -267,10 +293,13 @@ class SOBTReductor(BasicInterface):
     ----------
     fom
         The full-order |SecondOrderModel| to reduce.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
+        self.mu = fom.parse_parameter(mu)
         self.V1 = None
         self.W1 = None
         self.V2 = None
@@ -302,10 +331,10 @@ class SOBTReductor(BasicInterface):
         assert projection in ('sr', 'bfsr', 'biorth')
 
         # compute all necessary Gramian factors
-        pcf = self.fom.gramian('pc_lrcf')
-        pof = self.fom.gramian('po_lrcf')
-        vcf = self.fom.gramian('vc_lrcf')
-        vof = self.fom.gramian('vo_lrcf')
+        pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
+        pof = self.fom.gramian('po_lrcf', mu=self.mu)
+        vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
+        vof = self.fom.gramian('vo_lrcf', mu=self.mu)
 
         if r > min(len(pcf), len(pof), len(vcf), len(vof)):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
@@ -344,22 +373,22 @@ class SOBTReductor(BasicInterface):
             projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
 
         projected_ops.update({
-            'E': project(self.fom.E,
+            'E': project(self.fom.E.assemble(mu=self.mu),
                          range_basis=self.W2,
                          source_basis=self.V2),
-            'K': project(self.fom.K,
+            'K': project(self.fom.K.assemble(mu=self.mu),
                          range_basis=self.W2,
                          source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
-            'B': project(self.fom.B,
+            'B': project(self.fom.B.assemble(mu=self.mu),
                          range_basis=self.W2,
                          source_basis=None),
-            'Cp': project(self.fom.Cp,
+            'Cp': project(self.fom.Cp.assemble(mu=self.mu),
                           range_basis=None,
                           source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
-            'Cv': project(self.fom.Cv,
+            'Cv': project(self.fom.Cv.assemble(mu=self.mu),
                           range_basis=None,
                           source_basis=self.V2),
-            'D': self.fom.D,
+            'D': self.fom.D.assemble(mu=self.mu),
         })
 
         rom = SecondOrderModel(name=self.fom.name + '_reduced', **projected_ops)

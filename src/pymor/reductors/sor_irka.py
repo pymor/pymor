@@ -17,10 +17,13 @@ class SORIRKAReductor(BasicInterface):
     ----------
     fom
         The full-order |SecondOrderModel| to reduce.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
+        self.mu = fom.parse_parameter(mu)
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -162,7 +165,7 @@ class SORIRKAReductor(BasicInterface):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        self._pg_reductor = SOBHIReductor(fom)
+        self._pg_reductor = SOBHIReductor(fom, mu=self.mu)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model

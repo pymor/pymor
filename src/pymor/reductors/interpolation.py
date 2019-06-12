@@ -27,12 +27,15 @@ class GenericBHIReductor(BasicInterface):
     ----------
     fom
         The full-order |Model| to reduce.
+    mu
+        |Parameter|.
     """
 
     _PGReductor = ProjectionBasedReductor
 
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         self.fom = fom
+        self.mu = fom.parse_parameter(mu)
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -48,6 +51,9 @@ class GenericBHIReductor(BasicInterface):
         raise NotImplementedError
 
     def _K_apply_inverse_adjoint(self, s, V):
+        raise NotImplementedError
+
+    def _fom_assemble(self):
         raise NotImplementedError
 
     def reduce(self, sigma, b, c, projection='orth'):
@@ -115,7 +121,7 @@ class GenericBHIReductor(BasicInterface):
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
 
         # find reduced-order model
-        self._pg_reductor = self._PGReductor(self.fom, self.W, self.V, projection == 'biorth')
+        self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V, projection == 'biorth')
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -131,28 +137,37 @@ class LTIBHIReductor(GenericBHIReductor):
     ----------
     fom
         The full-order |LTIModel| to reduce.
+    mu
+        |Parameter|.
     """
 
     _PGReductor = LTIPGReductor
 
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
-        super().__init__(fom)
+        super().__init__(fom, mu=mu)
         self._product = fom.E
 
     def _B_apply(self, s, V):
-        return self.fom.B.apply(V)
+        return self.fom.B.apply(V, mu=self.mu)
 
     def _C_apply_adjoint(self, s, V):
-        return self.fom.C.apply_adjoint(V)
+        return self.fom.C.apply_adjoint(V, mu=self.mu)
 
     def _K_apply_inverse(self, s, V):
         sEmA = s * self.fom.E - self.fom.A
-        return sEmA.apply_inverse(V)
+        return sEmA.apply_inverse(V, mu=self.mu)
 
     def _K_apply_inverse_adjoint(self, s, V):
         sEmA = s * self.fom.E - self.fom.A
-        return sEmA.apply_inverse_adjoint(V)
+        return sEmA.apply_inverse_adjoint(V, mu=self.mu)
+
+    def _fom_assemble(self):
+        if self.fom.parametric:
+            return self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
+                                     for op in ['A', 'B', 'C', 'D', 'E']},
+                                  parameter_space=None)
+        return self.fom
 
     def reduce(self, sigma, b, c, projection='orth'):
         """Bitangential Hermite interpolation.
@@ -192,7 +207,7 @@ class LTIBHIReductor(GenericBHIReductor):
         self.W = arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True)
 
         # find reduced-order model
-        self._pg_reductor = self._PGReductor(self.fom, self.W, self.V)
+        self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V)
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -204,30 +219,39 @@ class SOBHIReductor(GenericBHIReductor):
     ----------
     fom
         The full-order |SecondOrderModel| to reduce.
+    mu
+        |Parameter|.
     """
 
     _PGReductor = SOLTIPGReductor
 
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
-        super().__init__(fom)
+        super().__init__(fom, mu=mu)
         self._product = fom.M
 
     def _B_apply(self, s, V):
-        return self.fom.B.apply(V)
+        return self.fom.B.apply(V, mu=self.mu)
 
     def _C_apply_adjoint(self, s, V):
-        x = self.fom.Cp.apply_adjoint(V)
-        y = self.fom.Cv.apply_adjoint(V)
+        x = self.fom.Cp.apply_adjoint(V, mu=self.mu)
+        y = self.fom.Cv.apply_adjoint(V, mu=self.mu)
         return x + y * s.conjugate()
 
     def _K_apply_inverse(self, s, V):
         s2MpsEpK = s**2 * self.fom.M + s * self.fom.E + self.fom.K
-        return s2MpsEpK.apply_inverse(V)
+        return s2MpsEpK.apply_inverse(V, mu=self.mu)
 
     def _K_apply_inverse_adjoint(self, s, V):
         s2MpsEpK = s**2 * self.fom.M + s * self.fom.E + self.fom.K
-        return s2MpsEpK.apply_inverse_adjoint(V)
+        return s2MpsEpK.apply_inverse_adjoint(V, mu=self.mu)
+
+    def _fom_assemble(self):
+        if self.fom.parametric:
+            return self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
+                                     for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv', 'D']},
+                                  parameter_space=None)
+        return self.fom
 
 
 class DelayBHIReductor(GenericBHIReductor):
@@ -237,30 +261,40 @@ class DelayBHIReductor(GenericBHIReductor):
     ----------
     fom
         The full-order |LinearDelayModel| to reduce.
+    mu
+        |Parameter|.
     """
 
     _PGReductor = DelayLTIPGReductor
 
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, LinearDelayModel)
-        super().__init__(fom)
+        super().__init__(fom, mu=mu)
         self._product = fom.E
 
     def _B_apply(self, s, V):
-        return self.fom.B.apply(V)
+        return self.fom.B.apply(V, mu=self.mu)
 
     def _C_apply_adjoint(self, s, V):
-        return self.fom.C.apply_adjoint(V)
+        return self.fom.C.apply_adjoint(V, mu=self.mu)
 
     def _K_apply_inverse(self, s, V):
         Ks = LincombOperator((self.fom.E, self.fom.A) + self.fom.Ad,
                              (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau))
-        return Ks.apply_inverse(V)
+        return Ks.apply_inverse(V, mu=self.mu)
 
     def _K_apply_inverse_adjoint(self, s, V):
         Ks = LincombOperator((self.fom.E, self.fom.A) + self.fom.Ad,
                              (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau))
-        return Ks.apply_inverse_adjoint(V)
+        return Ks.apply_inverse_adjoint(V, mu=self.mu)
+
+    def _fom_assemble(self):
+        if self.fom.parametric:
+            return self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
+                                     for op in ['A', 'B', 'C', 'D', 'E']},
+                                  Ad=tuple(op.assemble(mu=self.mu) for op in self.fom.Ad),
+                                  parameter_space=None)
+        return self.fom
 
 
 class TFBHIReductor(BasicInterface):
@@ -272,9 +306,12 @@ class TFBHIReductor(BasicInterface):
     ----------
     fom
         The |Model| with `eval_tf` and `eval_dtf` methods.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         self.fom = fom
+        self.mu = fom.parse_parameter(mu)
 
     def reduce(self, sigma, b, c):
         """Realization-independent tangential Hermite interpolation.
@@ -315,8 +352,8 @@ class TFBHIReductor(BasicInterface):
         Br = np.empty((r, self.fom.input_dim), dtype=complex)
         Cr = np.empty((self.fom.output_dim, r), dtype=complex)
 
-        Hs = [self.fom.eval_tf(s) for s in sigma]
-        dHs = [self.fom.eval_dtf(s) for s in sigma]
+        Hs = [self.fom.eval_tf(s, mu=self.mu) for s in sigma]
+        dHs = [self.fom.eval_dtf(s, mu=self.mu) for s in sigma]
 
         for i in range(r):
             for j in range(r):

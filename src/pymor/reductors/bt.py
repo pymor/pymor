@@ -20,10 +20,13 @@ class GenericBTReductor(BasicInterface):
     ----------
     fom
         The full-order |LTIModel| to reduce.
+    mu
+        |Parameter|.
     """
-    def __init__(self, fom):
+    def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
         self.fom = fom
+        self.mu = fom.parse_parameter(mu)
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -37,7 +40,7 @@ class GenericBTReductor(BasicInterface):
         """Return singular values and vectors."""
         if self._sv_U_V_cache is None:
             cf, of = self._gramians()
-            U, sv, Vh = spla.svd(self.fom.E.apply2(of, cf), lapack_driver='gesvd')
+            U, sv, Vh = spla.svd(self.fom.E.apply2(of, cf, mu=self.mu), lapack_driver='gesvd')
             self._sv_U_V_cache = (sv, U.T, Vh)
         return self._sv_U_V_cache
 
@@ -98,7 +101,13 @@ class GenericBTReductor(BasicInterface):
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.E)
 
         # find reduced-order model
-        self._pg_reductor = LTIPGReductor(self.fom, self.W, self.V, projection in ('sr', 'biorth'))
+        if self.fom.parametric:
+            fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
+                                       for op in ['A', 'B', 'C', 'D', 'E']},
+                                    parameter_space=None)
+        else:
+            fom_mu = self.fom
+        self._pg_reductor = LTIPGReductor(fom_mu, self.W, self.V, projection in ('sr', 'biorth'))
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -116,9 +125,11 @@ class BTReductor(GenericBTReductor):
     ----------
     fom
         The full-order |LTIModel| to reduce.
+    mu
+        |Parameter|.
     """
     def _gramians(self):
-        return self.fom.gramian('c_lrcf'), self.fom.gramian('o_lrcf')
+        return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]
@@ -134,18 +145,20 @@ class LQGBTReductor(GenericBTReductor):
     ----------
     fom
         The full-order |LTIModel| to reduce.
+    mu
+        |Parameter|.
     solver_options
         The solver options to use to solve the Riccati equations.
     """
-    def __init__(self, fom, solver_options=None):
-        super().__init__(fom)
+    def __init__(self, fom, mu=None, solver_options=None):
+        super().__init__(fom, mu=mu)
         self.solver_options = solver_options
 
     def _gramians(self):
-        A = self.fom.A
-        B = self.fom.B
-        C = self.fom.C
-        E = self.fom.E if not isinstance(self.fom.E, IdentityOperator) else None
+        A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
+                      for op in ['A', 'B', 'C', 'E'])
+        if isinstance(E, IdentityOperator):
+            E = None
         options = self.solver_options
 
         cf = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
@@ -170,19 +183,21 @@ class BRBTReductor(GenericBTReductor):
         The full-order |LTIModel| to reduce.
     gamma
         Upper bound for the :math:`\mathcal{H}_\infty`-norm.
+    mu
+        |Parameter|.
     solver_options
         The solver options to use to solve the positive Riccati equations.
     """
-    def __init__(self, fom, gamma=1, solver_options=None):
-        super().__init__(fom)
+    def __init__(self, fom, gamma=1, mu=None, solver_options=None):
+        super().__init__(fom, mu=mu)
         self.gamma = gamma
         self.solver_options = solver_options
 
     def _gramians(self):
-        A = self.fom.A
-        B = self.fom.B
-        C = self.fom.C
-        E = self.fom.E if not isinstance(self.fom.E, IdentityOperator) else None
+        A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
+                      for op in ['A', 'B', 'C', 'E'])
+        if isinstance(E, IdentityOperator):
+            E = None
         options = self.solver_options
 
         cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),

@@ -22,7 +22,7 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              lradi_shifts='projection_shifts',
                              projection_shifts_init_maxiter=20,
                              projection_shifts_init_seed=None):
-    """Returns available Lyapunov equation solvers with default solver options.
+    """Return available Lyapunov solvers with default options.
 
     Parameters
     ----------
@@ -63,9 +63,9 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     Parameters
     ----------
     A
-        The |Operator| A.
+        The non-parametric |Operator| A.
     E
-        The |Operator| E or `None`.
+        The non-parametric |Operator| E or `None`.
     B
         The operator B as a |VectorArray| from `A.source`.
     trans
