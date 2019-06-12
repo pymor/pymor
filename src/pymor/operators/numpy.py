@@ -392,3 +392,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         if hasattr(self.matrix, 'factorization'):  # remove unplicklable SuperLU factorization
             del self.matrix.factorization
         return self.__dict__
+
+    def _format_repr(self, max_width):
+        if self.sparse:
+            matrix_repr = f'<{self.range.dim}x{self.source.dim} sparse, {self.matrix.nnz} nnz>'
+        else:
+            matrix_repr = f'<{self.range.dim}x{self.source.dim} dense>'
+        return super()._format_repr(max_width, override={'matrix': matrix_repr})

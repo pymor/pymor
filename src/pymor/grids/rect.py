@@ -147,9 +147,6 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
                 f'x0-intervals: {self.x0_num_intervals}, x1-intervals: {self.x1_num_intervals}\n'
                 f'faces: {self.size(0)}, edges: {self.size(1)}, vertices: {self.size(2)}')
 
-    def __repr__(self):
-        return f'RectGrid({self.num_intervals}, {self.domain}, {self.identify_left_right}, {self.identify_bottom_top})'
-
     def size(self, codim=0):
         assert 0 <= codim <= 2, 'Invalid codimension'
         return self.__sizes[codim]

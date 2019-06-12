@@ -259,8 +259,8 @@ class NumpyVectorArray(VectorArrayInterface):
     def __str__(self):
         return self._array[:self._len].__str__()
 
-    def __repr__(self):
-        return f'NumpyVectorArray({self._array[:self._len].__str__()}, {self.space})'
+    def _format_repr(self, max_width):
+        return super()._format_repr(max_width, override={'array': str(self._array[:self._len].__str__())})
 
     def __del__(self):
         self._refcount[0] -= 1
@@ -432,10 +432,6 @@ class NumpyVectorSpace(VectorSpaceInterface):
     @property
     def is_scalar(self):
         return self.dim == 1 and self.id is None
-
-    def __repr__(self):
-        return f'NumpyVectorSpace({self.dim})' if self.id is None \
-            else f'NumpyVectorSpace({self.dim}, {self.id})'
 
 
 class NumpyVectorArrayView(NumpyVectorArray):

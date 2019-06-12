@@ -106,6 +106,3 @@ class CubicParameterSpace(ParameterSpaceInterface):
                 + '\n'.join(('key: {:' + str(column_widths[0] + 2)
                              + '} shape: {:' + str(column_widths[1] + 2)
                              + '} range: {}').format(c1 + ',', c2 + ',', c3) for (c1, c2, c3) in rows))
-
-    def __repr__(self):
-        return f'CubicParameterSpace({repr(self.parameter_type)}, ranges={repr(self.ranges)})'
