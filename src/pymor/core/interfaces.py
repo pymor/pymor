@@ -387,7 +387,7 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
         self.__dict__['_sid_contains_cycles'] = has_cycles
         return sid
 
-    def with_(self, **kwargs):
+    def with_(self, new_type=None, **kwargs):
         """Returns a copy with changed attributes.
 
         A a new class instance is created with the given keyword arguments as
@@ -397,6 +397,8 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
 
         Parameters
         ----------
+        new_type
+            If not None, return an instance of this class (instead of `type(self)`).
         `**kwargs`
             Names of attributes to change with their new values. Each attribute name
             has to be an argument to `__init__`.
@@ -406,7 +408,7 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
         Copy of `self` with changed attributes.
         """
         # fill missing __init__ arguments using instance attributes of same name
-        for arg in self._init_arguments:
+        for arg in (self._init_arguments if new_type is None else new_type._init_arguments):
             if arg not in kwargs:
                 try:
                     kwargs[arg] = getattr(self, arg)
@@ -414,7 +416,7 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
                     raise ValueError(f"Cannot find missing __init__ argument '{arg}' for '{self.__class__}' "
                                      f"as attribute of '{self}'")
 
-        c = type(self)(**kwargs)
+        c = (type(self) if new_type is None else new_type)(**kwargs)
 
         if self.logging_disabled:
             c.disable_logging()

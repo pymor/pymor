@@ -4,12 +4,14 @@
 
 import importlib
 import pytest
+import numpy as np
 
 from pymor.core.interfaces import (ImmutableInterface, abstractstaticmethod, abstractclassmethod)
 from pymor.core import exceptions
 from pymortests.base import TestInterface, runmodule, subclassForImplemetorsOf
 from pymortests.core.dummies import *   # NOQA
 from pymor.grids.rect import RectGrid
+from pymor.grids.tria import TriaGrid
 from pymor.tools import timing
 import pymor.core
 
@@ -79,6 +81,16 @@ class WithcopyInterface(TestInterface):
 def test_withcopy_implementors():
     for TestType in subclassForImplemetorsOf(ImmutableInterface, WithcopyInterface):
         TestType().test_with_()
+
+
+def test_with_newtype():
+    g = RectGrid(num_intervals=(99, 99))
+    g2 = g.with_(new_type=TriaGrid, domain=([0, 0], [2, 2]))
+
+    assert isinstance(g2, TriaGrid)
+    assert g2.num_intervals == (99, 99)
+    assert np.all(g2.domain == ([0, 0], [2, 2]))
+
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
