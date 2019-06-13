@@ -1,4 +1,4 @@
-PYMOR_DOCKER_TAG?=3.6
+DOCKER_COMPOSE=docker-compose -f .binder/docker-compose.yml -p pymor
 PYMOR_PYTEST_MARKER?=None
 PANDOC_MAJOR=$(shell pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)
 ifeq ($(PANDOC_MAJOR),1)
@@ -25,13 +25,12 @@ flake8:
 test:
 	python setup.py test
 
-docker:
-	docker run --rm -it -v $(shell pwd):/src -e PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) pymor/testing:$(PYMOR_DOCKER_TAG) $(CMD)
-
-dockerrun: CMD="bash"
-dockerrun: docker
-dockertest: CMD="./.ci/gitlab/script.bash"
-dockertest: docker
+dockerrun:
+	$(DOCKER_COMPOSE) run jupyter bash
+dockertest:
+	PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) $(DOCKER_COMPOSE) up pytest
+jupyter_server:
+	$(DOCKER_COMPOSE) up jupyter
 
 fasttest:
 	PYMOR_PYTEST_MARKER="not slow" python setup.py test

@@ -8,7 +8,7 @@ version: '3'
 # and connect to the server at http://localhost:9180/?token=${PYMOR_JUPYTER_TOKEN}
 
 services:
-  pymor_notebooks:
+  jupyter:
     build:
         context: ../
         dockerfile: .binder/Dockerfile
@@ -27,3 +27,12 @@ services:
     entrypoint: /usr/local/bin/dev-entrypoint.bash
     command: >
         bash -c "cd notebooks && jupyter notebook --ip 0.0.0.0 --no-browser"
+
+  pytest:
+    image: pymor/testing:3.6
+    environment:
+      - PYMOR_PYTEST_MARKER=${PYMOR_PYTEST_MARKER}
+    volumes:
+        - ./..:/src
+    restart: "no"
+    command: "/src/.ci/gitlab/script.bash"
