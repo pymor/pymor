@@ -14,9 +14,20 @@ def _pymess(rev, major, minor, marker=True):
         return '{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'.format(url=url, major=major, minor=minor)
     return url
 
+# for pyproject.toml we require equality to build compatible wheels in pep 517 mode
+def setup_requires(toml=False):
+    NUMPY = '1.12.1'
+    # numpy versions with filters according to minimal version with a wheel
+    numpys = [f'numpy>={NUMPY};python_version == "3.6"',
+      'numpy>=1.14.4;python_version == "3.7"',
+      f'numpy>={NUMPY};python_version != "3.6" and python_version != "3.7"',]
+    other = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.20.1', 'packaging',]
+    if toml:
+        numpys = [f.replace('numpy>=', 'numpy==') for f in numpys]
+    return numpys + other
+
 tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker']
-install_requires = ['numpy>=1.12', 'scipy>=0.13.3', 'Qt.py', 'packaging', 'Sphinx>=1.4.0','diskcache']
-setup_requires = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.20.1', 'numpy>=1.12', 'packaging',]
+install_requires = ['scipy>=0.13.3', 'Qt.py', 'packaging', 'Sphinx>=1.4.0','diskcache'] + setup_requires()
 install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'ipyparallel': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',
@@ -43,7 +54,6 @@ import_names = {'ipython': 'IPython',
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = [_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7),
                     'slycot==0.3.3', 'mpi4py']
-
 
 def strip_markers(name):
     for m in ';<>=':
@@ -106,7 +116,7 @@ if __name__ == '__main__':
     import itertools
     with open(os.path.join(os.path.dirname(__file__), 'requirements.txt'), 'wt') as req:
         req.write(note+'\n')
-        for module in sorted(set(itertools.chain(install_requires, setup_requires))):
+        for module in sorted(set(itertools.chain(install_requires, setup_requires()))):
             req.write(module+'\n')
     with open(os.path.join(os.path.dirname(__file__), 'requirements-optional.txt'), 'wt') as req:
         req.write(note+'\n')
@@ -121,4 +131,4 @@ if __name__ == '__main__':
             req.write(module+'\n')
     with open(os.path.join(os.path.dirname(__file__), 'pyproject.toml'), 'wt') as toml:
         toml.write(note)
-        toml.write(toml_tpl.format(str(setup_requires)))
+        toml.write(toml_tpl.format(str(setup_requires(toml=True))))
