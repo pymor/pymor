@@ -19,7 +19,7 @@ import dependencies
 
 tests_require = dependencies.tests_require
 install_requires = dependencies.install_requires
-setup_requires = dependencies.setup_requires
+setup_requires = dependencies.setup_requires()
 install_suggests = dependencies.install_suggests
 
 

@@ -3,7 +3,9 @@ Qt.py
 Sphinx>=1.4.0
 cython>=0.20.1
 diskcache
-numpy>=1.12
+numpy>=1.12.1;python_version != "3.6" and python_version != "3.7"
+numpy>=1.12.1;python_version == "3.6"
+numpy>=1.14.4;python_version == "3.7"
 packaging
 pytest-runner>=2.9
 scipy>=0.13.3
