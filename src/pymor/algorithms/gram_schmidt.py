@@ -59,7 +59,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         A = A.copy()
 
     # main loop
-    R = np.eye(len(A))
+    R = np.eye(len(A), dtype=A.dtype)
     remove = []  # indices of to be removed vectors
     for i in range(offset, len(A)):
         # first calculate norm
@@ -84,8 +84,6 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
                         continue
                     p = A[j].pairwise_inner(A[i], product)[0]
                     A[i].axpy(-p, A[j])
-                    common_dtype = np.promote_types(R.dtype, type(p))
-                    R = R.astype(common_dtype)
                     R[j, i] += p
 
                 # calculate new norm
