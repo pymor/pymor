@@ -132,7 +132,7 @@ repo2docker:
         - docker push ${IMAGE}
         - cd .binder
         - docker-compose build
-        - docker-compose run pymor_notebooks ${CMD}
+        - docker-compose run jupyter ${CMD}
 
 .wheel:
     extends: .docker-in-docker
