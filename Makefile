@@ -25,11 +25,13 @@ flake8:
 test:
 	python setup.py test
 
-dockerrun:
+image:
+	$(DOCKER_COMPOSE) build
+dockerrun: image
 	$(DOCKER_COMPOSE) run jupyter bash
-dockertest:
+dockertest: image
 	PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) $(DOCKER_COMPOSE) up pytest
-jupyter_server:
+jupyter_server: image
 	$(DOCKER_COMPOSE) up jupyter
 
 fasttest:
