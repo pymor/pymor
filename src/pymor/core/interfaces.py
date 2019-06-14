@@ -75,14 +75,12 @@ import os
 import time
 from types import FunctionType, BuiltinFunctionType
 import uuid
-import textwrap
 
 import numpy as np
 
 from pymor.core import logger
-from pymor.core.defaults import defaults
 from pymor.core.exceptions import ConstError, SIDGenerationError
-from pymor.tools.frozendict import FrozenDict
+from pymor.tools.formatrepr import format_repr, _format_generic
 
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
 NoneType = type(None)
@@ -250,98 +248,13 @@ class BasicInterface(metaclass=UberMeta):
             self._uid = UID()
         return self._uid.uid
 
-    @staticmethod
-    def _indent_value(val, indent):
-        if '\n' in val:
-            return textwrap.indent(val, ' ' * indent)[indent:]
-        else:
-            return val
-
-    @staticmethod
-    def _format_list_tuple(val, max_width):
-        brackets = '()' if type(val) is tuple else '[]'
-        reprs = [repr(v) for v in val]
-        if any('\n' in r for r in reprs) or sum(len(r) + 2 for r in reprs) + 2 > max_width:
-            reprs = ',\n '.join(BasicInterface._indent_value(r, 1) for r in reprs)
-            return brackets[0] + reprs + brackets[1]
-        else:
-            return brackets[0] + ', '.join(reprs) + brackets[1]
-
-    @staticmethod
-    def _format_dict(val, max_width):
-        if not val:
-            return '{}'
-        keys, vals = zip(*val.items())
-        reprs = [repr(v) for v in vals]
-        if any('\n' in r for r in reprs) or sum(len(k) + len(r) + 4 for k, r in zip(keys, reprs)) + 2 > max_width:
-            reprs = ',\n '.join(BasicInterface._indent_value(f'{k}: {r}', 1) for k, r in zip(keys, reprs))
-            return '{' + reprs + '}'
-        else:
-            return '{' + ', '.join(f'{k}: {r}' for k, r in zip(keys, reprs)) + '}'
-
-    @staticmethod
-    def _format_array(val, max_width):
-        r = repr(val)
-        if len(r) <= max_width * 3 and '\n' in r:
-            r_one_line = ' '.join(rr.strip() for rr in r.split('\n'))
-            if len(r_one_line) <= max_width:
-                return r_one_line
-            else:
-                return r
-        else:
-            return r
-
-    @staticmethod
-    @defaults('value', sid_ignore=('value'))
-    def repr_max_width(value=120):
-        return value
-
-    def _format_repr(self, max_width, override={}):
-        init_sig = inspect.signature(self.__init__)
-        keys, vals = [], []
-        for arg, description in init_sig.parameters.items():
-            if description.default == description.empty:
-                key = ''
-            else:
-                key = f'{arg}='
-            if arg == 'self':
-                continue
-            if arg in override:
-                vals.append(override[arg])
-            else:
-                val = getattr(self, arg, '??')
-                try:
-                    if val == description.default:
-                        continue
-                except ValueError:  # comparison of numpy arrays
-                    pass
-                if arg == 'name' and val == type(self).__name__:
-                    continue
-                repr_max_width = max_width - len(key) - 4
-                if type(val) in (list, tuple):
-                    vals.append(self._format_list_tuple(val, repr_max_width))
-                elif type(val) in (dict, FrozenDict):
-                    vals.append(self._format_dict(val, repr_max_width))
-                elif isinstance(val, np.ndarray):
-                    vals.append(self._format_array(val, repr_max_width))
-                elif isinstance(val, BasicInterface):
-                    vals.append(val._format_repr(repr_max_width))
-                else:
-                    vals.append(repr(val))
-            keys.append(key)
-
-        if (sum(len(k) + len(v) + 2 for k, v in zip(keys, vals)) + len(type(self).__name__) > max_width
-                or any('\n' in v for v in vals)):
-            args = [f'    {k}{self._indent_value(v, len(k) + 4)}' for k, v in zip(keys, vals)]
-            args = ",\n".join(args)
-            return f'''{type(self).__name__}(
-{args})'''
-        else:
-            args = [f'{k}{v}' for k, v in zip(keys, vals)]
-            return f'{type(self).__name__}({", ".join(args)})'
+    def _format_repr(self, max_width, verbosity, override={}):
+        if verbosity < 3 and self.name == type(self).__name__ and 'name' not in override:
+            override = dict(override, name=None)
+        return _format_generic(self, max_width, verbosity, override=override)
 
     def __repr__(self):
-        return self._format_repr(self.repr_max_width())
+        return format_repr(self)
 
 
 abstractmethod = abc.abstractmethod

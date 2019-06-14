@@ -393,9 +393,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             del self.matrix.factorization
         return self.__dict__
 
-    def _format_repr(self, max_width):
+    def _format_repr(self, max_width, verbosity):
         if self.sparse:
             matrix_repr = f'<{self.range.dim}x{self.source.dim} sparse, {self.matrix.nnz} nnz>'
         else:
             matrix_repr = f'<{self.range.dim}x{self.source.dim} dense>'
-        return super()._format_repr(max_width, override={'matrix': matrix_repr})
+        return super()._format_repr(max_width, verbosity, override={'matrix': matrix_repr})
