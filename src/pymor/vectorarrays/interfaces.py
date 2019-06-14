@@ -1,7 +1,7 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
+import functools
 from numbers import Number
 
 import numpy as np
@@ -849,3 +849,13 @@ def _create_random_values(shape, distribution, random_state, **kwargs):
         return random_state.normal(loc, scale, shape)
     else:
         assert False
+
+
+def invalidates_dtype(function):
+    """Put this decorator on |VectorArray| functions that might mutate the arrays' dtype."""
+    @functools.wraps(function)
+    def wrapper(self, *args, **kwargs):
+        ret = function(self, *args, **kwargs)
+        self._dtype_invalid = True
+        return ret
+    return wrapper

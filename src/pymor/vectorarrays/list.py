@@ -5,10 +5,12 @@ from functools import reduce
 from numbers import Number
 
 import numpy as np
+from pymor.core.cache import cached
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values, \
+    invalidates_dtype
 
 
 class VectorInterface(BasicInterface):
@@ -230,11 +232,22 @@ class ListVectorArray(VectorArrayInterface):
 
     _NONE = ()
 
+    _dtype_invalid = True  # force setting dtype on first access
+
+    @invalidates_dtype
     def __init__(self, vectors, space):
         self._list = vectors
         self.space = space
-        if len(vectors): # else defaults to base class
-            self.dtype = reduce(np.promote_types, (v.dtype for v in vectors))
+
+    @property
+    def dtype(self):
+        if self._dtype_invalid:
+            if len(self._list): # else defaults to base class
+                self._cached_dtype = reduce(np.promote_types, (v.dtype for v in self._list))
+            else:
+                self._cached_dtype = VectorArrayInterface.dtype
+            self._dtype_invalid = False
+        return self._cached_dtype
 
     def to_numpy(self, ensure_copy=False):
         if len(self._list) > 0:
@@ -253,6 +266,7 @@ class ListVectorArray(VectorArrayInterface):
     def __getitem__(self, ind):
         return ListVectorArrayView(self, ind)
 
+    @invalidates_dtype
     def __delitem__(self, ind):
         assert self.check_ind(ind)
         if hasattr(ind, '__len__'):
@@ -263,6 +277,7 @@ class ListVectorArray(VectorArrayInterface):
         else:
             del self._list[ind]
 
+    @invalidates_dtype
     def append(self, other, remove_from_other=False):
         assert other.space == self.space
         assert not remove_from_other or (other is not self and getattr(other, 'base', None) is not self)
@@ -279,6 +294,7 @@ class ListVectorArray(VectorArrayInterface):
     def copy(self, deep=False):
         return ListVectorArray([v.copy(deep=deep) for v in self._list], self.space)
 
+    @invalidates_dtype
     def scal(self, alpha):
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
@@ -290,6 +306,7 @@ class ListVectorArray(VectorArrayInterface):
             for v in self._list:
                 v.scal(alpha)
 
+    @invalidates_dtype
     def axpy(self, alpha, x):
         assert self.space == x.space
         len_x = len(x)

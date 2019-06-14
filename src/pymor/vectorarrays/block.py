@@ -7,7 +7,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.interfaces import classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, invalidates_dtype
 
 
 class BlockVectorArray(VectorArrayInterface):
@@ -21,11 +21,23 @@ class BlockVectorArray(VectorArrayInterface):
     :class:`~pymor.operators.block.BlockOperator`.
     """
 
+    _dtype_invalid = True # force setting dtype on first access
+
+    @invalidates_dtype
     def __init__(self, blocks, space):
         self._blocks = tuple(blocks)
         self.space = space
-        self.dtype = reduce(np.promote_types, (v.dtype for v in self._blocks))
         assert self._blocks_are_valid()
+
+    @property
+    def dtype(self):
+        if self._dtype_invalid:
+            if len(self._blocks): # else defaults to base class
+                self._cached_dtype = reduce(np.promote_types, (v.dtype for v in self._blocks))
+            else:
+                self._cached_dtype = VectorArrayInterface.dtype
+            self._dtype_invalid = False
+        return self._cached_dtype
 
     def to_numpy(self, ensure_copy=False):
         return np.hstack([block.to_numpy() for block in self._blocks])
@@ -63,11 +75,13 @@ class BlockVectorArray(VectorArrayInterface):
     def __getitem__(self, ind):
         return BlockVectorArrayView(self, ind)
 
+    @invalidates_dtype
     def __delitem__(self, ind):
         assert self.check_ind(ind)
         for block in self._blocks:
             del block[ind]
 
+    @invalidates_dtype
     def append(self, other, remove_from_other=False):
         assert self._blocks_are_valid()
         assert other in self.space
@@ -77,10 +91,12 @@ class BlockVectorArray(VectorArrayInterface):
     def copy(self, deep=False):
         return BlockVectorArray([block.copy(deep) for block in self._blocks], self.space)
 
+    @invalidates_dtype
     def scal(self, alpha):
         for block in self._blocks:
             block.scal(alpha)
 
+    @invalidates_dtype
     def axpy(self, alpha, x):
         assert x in self.space
         assert isinstance(alpha, Number) \
