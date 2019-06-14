@@ -19,7 +19,7 @@ def setup_requires(toml=False):
     NUMPY = '1.12.1'
     # numpy versions with filters according to minimal version with a wheel
     numpys = [f'numpy>={NUMPY};python_version == "3.6"',
-      'numpy>=1.14.4;python_version == "3.7"',
+      'numpy>=1.15.4;python_version == "3.7"',
       f'numpy>={NUMPY};python_version != "3.6" and python_version != "3.7"',]
     other = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.20.1', 'packaging',]
     if toml:
