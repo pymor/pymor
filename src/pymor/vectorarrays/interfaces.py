@@ -542,10 +542,12 @@ class VectorArrayInterface(BasicInterface):
         result.scal(-1)
         return result
 
+    @property
     def real(self):
         """Real part."""
         return self.copy()
 
+    @property
     def imag(self):
         """Imaginary part."""
         return self.zeros(len(self))
