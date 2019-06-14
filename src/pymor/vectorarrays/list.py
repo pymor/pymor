@@ -546,6 +546,10 @@ class ListVectorArrayView(ListVectorArray):
             self._list = [base._list[ind]]
 
     @property
+    def dtype(self):
+        return self.base.dtype
+
+    @property
     def space(self):
         return self.base.space
 
