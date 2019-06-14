@@ -241,6 +241,11 @@ class BasicInterface(metaclass=UberMeta):
             self._uid = UID()
         return self._uid.uid
 
+    def autoassign(self, cls, locals_):
+        for arg in cls._init_arguments:
+            if arg not in self.__dict__:
+                setattr(self, arg, locals_[arg])
+
 
 abstractmethod = abc.abstractmethod
 abstractproperty = abc.abstractproperty

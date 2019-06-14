@@ -25,10 +25,8 @@ class InputOutputModel(ModelBase):
 
     def __init__(self, input_space, output_space, cont_time=True,
                  estimator=None, visualizer=None, cache_region='memory', name=None):
-        self.input_space = input_space
-        self.output_space = output_space
         super().__init__(estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
-        self.cont_time = cont_time
+        self.autoassign(__class__, locals())
 
     @property
     def input_dim(self):
@@ -120,7 +118,7 @@ class InputStateOutputModel(InputOutputModel):
                  estimator=None, visualizer=None, cache_region='memory', name=None):
         super().__init__(input_space, output_space, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
-        self.solution_space = solution_space
+        self.autoassign(__class__, locals())
 
     @property
     def order(self):
@@ -221,13 +219,7 @@ class LTIModel(InputStateOutputModel):
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
-
-        self.A = A
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
-        self.solver_options = solver_options
+        self.autoassign(__class__, locals())
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
@@ -1030,14 +1022,7 @@ class SecondOrderModel(InputStateOutputModel):
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
-        self.M = M
-        self.E = E
-        self.K = K
-        self.B = B
-        self.Cp = Cp
-        self.Cv = Cv
-        self.D = D
-        self.solver_options = solver_options
+        self.autoassign(__class__, locals())
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
@@ -1604,13 +1589,7 @@ class LinearDelayModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.Ad = Ad
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
-        self.tau = tau
+        self.autoassign(__class__, locals())
         self.q = len(Ad)
 
     def __add__(self, other):
@@ -1962,12 +1941,7 @@ class LinearStochasticModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.As = As
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
+        self.autoassign(__class__, locals())
         self.q = len(As)
 
 
@@ -2076,10 +2050,5 @@ class BilinearModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.N = N
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
+        self.autoassign(__class__, locals())
         self.linear = False

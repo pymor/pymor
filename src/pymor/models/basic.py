@@ -17,16 +17,15 @@ class ModelBase(ModelInterface):
     def __init__(self, products=None, estimator=None, visualizer=None,
                  cache_region=None, name=None, **kwargs):
 
-        self.products = FrozenDict(products or {})
-        self.estimator = estimator
-        self.visualizer = visualizer
-        self.enable_caching(cache_region)
-        self.name = name
+        products = FrozenDict(products or {})
 
         if products:
             for k, v in products.items():
                 setattr(self, f'{k}_product', v)
                 setattr(self, f'{k}_norm', induced_norm(v))
+
+        self.autoassign(__class__, locals())
+        self.enable_caching(cache_region)
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
@@ -117,17 +116,16 @@ class StationaryModel(ModelBase):
             rhs = VectorOperator(rhs, name='rhs')
 
         assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
+        outputs = FrozenDict(outputs or {})
 
         super().__init__(products=products,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
-        self.operator = operator
-        self.rhs = rhs
-        self.outputs = FrozenDict(outputs or {})
-        self.solution_space = self.operator.source
-        self.linear = operator.linear and all(output.linear for output in self.outputs.values())
+
         self.build_parameter_type(operator, rhs)
-        self.parameter_space = parameter_space
+        self.autoassign(__class__, locals())
+        self.solution_space = operator.source
+        self.linear = operator.linear and all(output.linear for output in self.outputs.values())
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -237,21 +235,15 @@ class InstationaryModel(ModelBase):
             or rhs.linear and rhs.range == operator.range and rhs.source.is_scalar
         assert mass is None \
             or mass.linear and mass.source == mass.range == operator.source
+        outputs = FrozenDict(outputs or {})
 
         super().__init__(products=products, estimator=estimator,
                          visualizer=visualizer, cache_region=cache_region, name=name)
-        self.T = T
-        self.initial_data = initial_data
-        self.operator = operator
-        self.rhs = rhs
-        self.mass = mass
-        self.solution_space = self.operator.source
-        self.time_stepper = time_stepper
-        self.num_values = num_values
-        self.outputs = FrozenDict(outputs or {})
+
+        self.build_parameter_type(initial_data, operator, rhs, mass, provides={'_t': 0})
+        self.autoassign(__class__, locals())
+        self.solution_space = operator.source
         self.linear = operator.linear and all(output.linear for output in self.outputs.values())
-        self.build_parameter_type(self.initial_data, self.operator, self.rhs, self.mass, provides={'_t': 0})
-        self.parameter_space = parameter_space
 
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
