@@ -163,7 +163,6 @@ def setup_package():
         python_requires='>=3.6',
         long_description=open('README.md').read(),
         long_description_content_type='text/markdown',
-        setup_requires=setup_requires,
         tests_require=tests_require,
         install_requires=install_requires,
         extras_require = dependencies.extras(),
