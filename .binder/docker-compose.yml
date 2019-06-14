@@ -29,7 +29,7 @@ services:
         bash -c "cd notebooks && jupyter notebook --ip 0.0.0.0 --no-browser"
 
   pytest:
-    image: pymor/testing:3.6
+    image: pymor/testing:3.7
     environment:
       - PYMOR_PYTEST_MARKER=${PYMOR_PYTEST_MARKER}
     volumes:
