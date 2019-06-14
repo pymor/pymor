@@ -7,7 +7,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.interfaces import classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, invalidates_dtype
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface
 
 
 class BlockVectorArray(VectorArrayInterface):
@@ -74,28 +74,27 @@ class BlockVectorArray(VectorArrayInterface):
     def __getitem__(self, ind):
         return BlockVectorArrayView(self, ind)
 
-    @invalidates_dtype
     def __delitem__(self, ind):
         assert self.check_ind(ind)
         for block in self._blocks:
             del block[ind]
+        self._dtype_invalid = True
 
-    @invalidates_dtype
     def append(self, other, remove_from_other=False):
         assert self._blocks_are_valid()
         assert other in self.space
         for block, other_block in zip(self._blocks, other._blocks):
             block.append(other_block, remove_from_other=remove_from_other)
+        self._dtype_invalid = True
 
     def copy(self, deep=False):
         return BlockVectorArray([block.copy(deep) for block in self._blocks], self.space)
 
-    @invalidates_dtype
     def scal(self, alpha):
         for block in self._blocks:
             block.scal(alpha)
+        self._dtype_invalid = True
 
-    @invalidates_dtype
     def axpy(self, alpha, x):
         assert x in self.space
         assert isinstance(alpha, Number) \
@@ -103,6 +102,7 @@ class BlockVectorArray(VectorArrayInterface):
         if len(x) > 0:
             for block, x_block in zip(self._blocks, x._blocks):
                 block.axpy(alpha, x_block)
+            self._dtype_invalid = True
         else:
             assert len(self) == 0
 

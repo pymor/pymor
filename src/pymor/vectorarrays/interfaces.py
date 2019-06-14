@@ -849,13 +849,3 @@ def _create_random_values(shape, distribution, random_state, **kwargs):
         return random_state.normal(loc, scale, shape)
     else:
         assert False
-
-
-def invalidates_dtype(function):
-    """Put this decorator on |VectorArray| functions that might mutate the arrays' dtype."""
-    @functools.wraps(function)
-    def wrapper(self, *args, **kwargs):
-        ret = function(self, *args, **kwargs)
-        self._dtype_invalid = True
-        return ret
-    return wrapper
