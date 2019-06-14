@@ -127,6 +127,15 @@ submit numpy 3.6:
         PYMOR_PYTEST_MARKER: "numpy"
     script: .ci/gitlab/submit.bash
 
+# this step makes sure that on older python our install fails with
+# a nice message ala "python too old" instead of "SyntaxError"
+verify setup.py:
+    extends: .test_base
+    image: python:3.5-alpine
+    stage: deploy
+    script:
+        - python setup.py egg_info
+
 .docker-in-docker:
     retry:
         max: 2

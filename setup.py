@@ -3,6 +3,8 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+# DO NOT use any python features here that require 3.6 or newer
+
 import sys
 import os
 
