@@ -157,7 +157,10 @@ class NumpyVector(CopyOnWriteVector):
 
     def __init__(self, array):
         self._array = array
-        self.dtype = array.dtype
+
+    @property
+    def dtype(self):
+        return self._array.dtype
 
     @classmethod
     def from_instance(cls, instance):
