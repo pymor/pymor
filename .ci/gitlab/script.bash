@@ -16,7 +16,7 @@ set -eux
 ${SUDO} pip install -U pip
 
 # check if requirements files are up-to-date
-./dependencies.py && git diff --exit-code requirements*
+./dependencies.py && git diff --exit-code requirements* pyproject.toml
 
 # most of these should be baked into the docker image already
 ${SUDO} pip install -r requirements.txt
