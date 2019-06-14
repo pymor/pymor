@@ -7,9 +7,11 @@ from numbers import Number
 
 import pytest
 import numpy as np
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 from pymor.algorithms.basic import almost_equal
 from pymor.vectorarrays.interfaces import VectorSpaceInterface
+from pymor.vectorarrays.list import ListVectorArray, NumpyVector
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair,
@@ -1140,3 +1142,25 @@ def test_pairwise_dot_wrong_ind(compatible_vector_array_pair):
 
 def test_pickle(picklable_vector_array):
     assert_picklable_without_dumps_function(picklable_vector_array)
+
+
+def test_mutable_dtype():
+    sz = 1
+    spc = NumpyVectorSpace(dim=sz)
+    one = NumpyVector(np.ones(sz, dtype=np.float_))
+    assert one.dtype == np.float_
+    cplx_one = NumpyVector(np.ones(1, dtype=np.complex_))
+    assert cplx_one.dtype == np.complex_
+    v = ListVectorArray([one for _ in range(4)], space=spc)
+    assert v.dtype == np.float_
+    vc = v.copy()
+    vc.scal(1j)
+    assert vc.dtype == np.complex_
+    vc = v.copy()
+    vc.axpy(1j, vc)
+    assert vc.dtype == np.complex_
+    vc = v.copy()
+    vc.append(ListVectorArray([cplx_one], space=spc))
+    assert vc.dtype == np.complex_
+    del vc[-1]
+    assert vc.dtype == np.float_
