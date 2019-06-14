@@ -237,7 +237,6 @@ class ListVectorArray(VectorArrayInterface):
 
     _dtype_invalid = True  # force setting dtype on first access
 
-    @invalidates_dtype
     def __init__(self, vectors, space):
         self._list = vectors
         self.space = space

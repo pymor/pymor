@@ -23,7 +23,6 @@ class BlockVectorArray(VectorArrayInterface):
 
     _dtype_invalid = True # force setting dtype on first access
 
-    @invalidates_dtype
     def __init__(self, blocks, space):
         self._blocks = tuple(blocks)
         self.space = space
