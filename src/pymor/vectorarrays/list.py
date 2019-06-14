@@ -181,6 +181,10 @@ class NumpyVector(CopyOnWriteVector):
         self._array = self._array.copy()
 
     def _scal(self, alpha):
+        alpha_type = type(alpha)
+        alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
+        if self._array.dtype != alpha_dtype:
+            self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
         self._array *= alpha
 
     def _axpy(self, alpha, x):
@@ -192,6 +196,10 @@ class NumpyVector(CopyOnWriteVector):
         elif alpha == -1:
             self._array -= x._array
         else:
+            alpha_type = type(alpha)
+            alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
+            if self._array.dtype != alpha_dtype:
+                self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
             self._array += x._array * alpha
 
     def dot(self, other):
