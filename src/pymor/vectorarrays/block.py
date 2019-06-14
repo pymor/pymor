@@ -147,7 +147,7 @@ class BlockVectorArray(VectorArrayInterface):
     def dofs(self, dof_indices):
         dof_indices = np.array(dof_indices)
         if not len(dof_indices):
-            return np.zeros((len(self), 0))
+            return np.zeros((len(self), 0), dtype=self.dtype)
 
         self._compute_bins()
         block_inds = np.digitize(dof_indices, self._bins) - 1
@@ -155,7 +155,7 @@ class BlockVectorArray(VectorArrayInterface):
         block_inds = self._bin_map[block_inds]
         blocks = self._blocks
         return np.array([blocks[bi].dofs([ci])[:, 0]
-                         for bi, ci in zip(block_inds, dof_indices)]).T
+                         for bi, ci in zip(block_inds, dof_indices)], dtype=self.dtype).T
 
     def amax(self):
         self._compute_bins()
