@@ -111,7 +111,8 @@ class BlockVectorArray(VectorArrayInterface):
         dots = [block.dot(other_block) for block, other_block in zip(self._blocks, other._blocks)]
         assert all([dot.shape == dots[0].shape for dot in dots])
         common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
-        ret = np.zeros(dots[0].shape, dtype=common_dtype)
+        assert common_dtype == self.dtype
+        ret = np.zeros(dots[0].shape, dtype=self.dtype)
         for dot in dots:
             ret += dot
         return ret

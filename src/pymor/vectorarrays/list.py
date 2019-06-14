@@ -340,7 +340,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def dot(self, other):
         assert self.space == other.space
-        R = np.empty((len(self._list), len(other)))
+        R = np.empty((len(self._list), len(other)), dtype=self.dtype)
         for i, a in enumerate(self._list):
             for j, b in enumerate(other._list):
                 R[i, j] = a.dot(b)
@@ -398,7 +398,7 @@ class ListVectorArray(VectorArrayInterface):
             or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
                 and (len(dof_indices) == 0 or np.min(dof_indices) >= 0))
 
-        R = np.empty((len(self), len(dof_indices)))
+        R = np.empty((len(self), len(dof_indices)), dtype=self.dtype)
 
         assert len(self) > 0 or len(dof_indices) == 0 or max(dof_indices) < self.dim
 
