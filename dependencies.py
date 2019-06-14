@@ -3,6 +3,8 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+# DO NOT use any python features here that require 3.6 or newer
+
 _PYTEST = 'pytest>=4.4'
 
 def _pymess(rev, major, minor, marker=True):
@@ -18,9 +20,9 @@ def _pymess(rev, major, minor, marker=True):
 def setup_requires(toml=False):
     NUMPY = '1.12.1'
     # numpy versions with filters according to minimal version with a wheel
-    numpys = [f'numpy>={NUMPY};python_version == "3.6"',
+    numpys = ['numpy>={};python_version == "3.6"'.format(NUMPY),
       'numpy>=1.15.4;python_version == "3.7"',
-      f'numpy>={NUMPY};python_version != "3.6" and python_version != "3.7"',]
+      'numpy>={};python_version != "3.6" and python_version != "3.7"'.format(NUMPY),]
     other = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.20.1', 'packaging',]
     if toml:
         numpys = [f.replace('numpy>=', 'numpy==') for f in numpys]
