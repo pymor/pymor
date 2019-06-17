@@ -7,6 +7,7 @@ import warnings
 import IPython
 import numpy as np
 from ipywidgets import IntSlider, interact, widgets, Play
+from k3d.helpers import array_to_binary
 from k3d.objects import Mesh
 from k3d.plot import Plot as k3dPlot
 from k3d.transform import process_transform_arguments
@@ -22,25 +23,26 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 class VectorArrayPlot(k3dPlot):
     def __init__(self, U, grid, codim, color_map, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'transform' in kwargs.keys():
-            raise RuntimeError('supplying transforms is currently not supported for time series Data')
 
         self.subentities, self.coordinates, entity_map = flatten_grid(grid)
-        self.data = (U.to_numpy() if codim == 0 else U.to_numpy()[:, entity_map].copy()).astype(np.float32)
-
         if grid.dim == 2:
             # pad 0 in z dimension
             self.vertices = np.zeros((len(self.coordinates), 3))
             self.vertices[:,:-1] = self.coordinates
+        data = (U.to_numpy() if codim == 0 else U.to_numpy()[:, entity_map].copy()).astype(np.float32)
+        self.size = data.shape[0]
+        self.data = {i/self.size: data[i] for i in range(self.size)}
+        vert = np.array(self.vertices, np.float32)
+        ind = np.array(self.subentities, np.uint32)
 
-        self.idx = 0
-        self.mesh = process_transform_arguments(Mesh(vertices=np.array(self.vertices, np.float32),
-             indices=np.array(self.subentities, np.uint32),
+        self.time = 0
+        self.mesh = process_transform_arguments(Mesh(vertices=vert,
+             indices=ind,
              color=0x0000FF,
              opacity=1.0,
-             attribute=self.data[self.idx],
-             color_range=(np.nanmin(self.data), np.nanmax(self.data)),
-             color_map=np.array(color_map, np.float32),
+             attribute=self.data,
+             color_range=(np.nanmin(data), np.nanmax(data)),
+             color_map=np.array(color_map, np.float32) ,
              wireframe=False,
              compression_level=0))
         self += self.mesh
@@ -52,8 +54,8 @@ class VectorArrayPlot(k3dPlot):
         if idx > len(self.data) or idx < 0:
             warnings.warn(f'Index {idx} outside data range for VectorArrayPlot', RuntimeWarning)
             return
-        self.idx = idx
-        self.mesh.attribute = self.data[self.idx]
+        self.time = idx/self.size
+        # self.mesh.attribute = self.data[self.idx]
 
     def dec(self):
         self._goto_idx(self.idx-1)
@@ -116,8 +118,8 @@ def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, l
     plot.display()
     # could be replaced with testing if the widget is'ready'
     time.sleep(0.5)
-    plot.grid_visible = False
-    plot.menu_visibility = False
+    plot.grid_visible = True
+    plot.menu_visibility = True
     # guesstimate
     fov_angle = 30
     absx = np.abs(combined_bounds[0] - combined_bounds[3])
