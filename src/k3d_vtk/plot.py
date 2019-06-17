@@ -20,7 +20,8 @@ class VectorArrayPlot(k3dPlot):
             raise RuntimeError('supplying transforms is currently not supported for time series Data')
 
         self.subentities, self.coordinates, entity_map = flatten_grid(grid)
-        self.data = U.to_numpy() if codim == 0 else U.to_numpy()[:, entity_map].copy()
+        self.data = (U.to_numpy() if codim == 0 else U.to_numpy()[:, entity_map].copy()).astype(np.float32)
+
         if grid.dim == 2:
             # pad 0 in z dimension
             self.vertices = np.zeros((len(self.coordinates), 3))
@@ -31,7 +32,7 @@ class VectorArrayPlot(k3dPlot):
              indices=np.array(self.subentities, np.uint32),
              color=k3d.k3d._default_color,
              opacity=1.0,
-             attribute=np.array(self.data[self.idx], np.float32),
+             attribute=self.data[self.idx],
              color_range=(np.nanmin(self.data), np.nanmax(self.data)),
              color_map=np.array(color_map, np.float32),
              wireframe=False,
@@ -46,7 +47,7 @@ class VectorArrayPlot(k3dPlot):
             warnings.warn(f'Index {idx} outside data range for VectorArrayPlot', RuntimeWarning)
             return
         self.idx = idx
-        self.mesh.attribute = np.array(self.data[self.idx], np.float32)
+        self.mesh.attribute = self.data[self.idx]
 
     def dec(self):
         self._goto_idx(self.idx-1)
