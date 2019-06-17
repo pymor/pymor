@@ -18,9 +18,6 @@ from pymor.core.config import config
 from pymor.core.logger import ColoredFormatter
 from pymor.gui.matplotlib import MatplotlibPatchAxes
 from pymor.vectorarrays.interfaces import VectorArrayInterface
-from pymor.tools.vtkio import write_vtk
-from pymor.vectorarrays.numpy import NumpyVectorSpace
-# from IPython.core.debugger import set_trace
 from ipywidgets import IntProgress, HTML, VBox
 import ipywidgets
 import logging
@@ -140,54 +137,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         interact(set_time, t=IntSlider(min=0, max=len(U[0])-1, step=1, value=0))
 
     return plot
-
-
-def visualize_k3d_vtk(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, columns=2):
-    """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
-
-    The grid's |ReferenceElement| must be the triangle or square. The data can either
-    be attached to the faces or vertices of the grid.
-
-    Parameters
-    ----------
-    grid
-        The underlying |Grid|.
-    U
-        |VectorArray| of the data to visualize. If `len(U) 1`, the data is visualized
-        as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
-        provided, in which case a subplot is created for each entry of the tuple. The
-        lengths of all arrays have to agree.
-    bounding_box
-        A bounding box in which the grid is contained.
-    codim
-        The codimension of the entities the data in `U` is attached to (either 0 or 2).
-    title
-        Title of the plot.
-    legend
-        Description of the data that is plotted. Most useful if `U` is a tuple in which
-        case `legend` has to be a tuple of strings of the same length.
-    separate_colorbars
-        If `True`, use separate colorbars for each subplot.
-    rescale_colorbars
-        If `True`, rescale colorbars to data in each frame.
-    columns
-        The number of columns in the visualizer GUI in case multiple plots are displayed
-        at the same time.
-    """
-
-    assert isinstance(U, VectorArrayInterface) \
-        or (isinstance(U, tuple)
-            and all(isinstance(u, VectorArrayInterface) for u in U)
-            and all(len(u) == len(U[0]) for u in U))
-    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArrayInterface) else \
-        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
-
-    filename_base = 'foo'
-    write_vtk(grid, NumpyVectorSpace.make_array(U[0]), filename_base, codim=codim)
-
-    from k3d_vtk.plot import plot
-    return plot(f'{filename_base}.pvd', color_attribute_name='Data')
 
 
 def progress_bar(sequence, every=None, size=None, name='Parameters'):
