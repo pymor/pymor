@@ -89,7 +89,7 @@ class PatchVisualizer(BasicInterface):
                     write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
         else:
             if self.backend == 'jupyter':
-                from pymor.gui.jupyter.plot import visualize_k3d
+                from pymor.gui.jupyter.visualizer import visualize_k3d
                 return visualize_k3d(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                   legend=legend, separate_colorbars=separate_colorbars,
                                   rescale_colorbars=rescale_colorbars, columns=columns)
