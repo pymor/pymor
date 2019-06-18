@@ -1,1 +1,0 @@
-c.IPKernelApp.extensions = ['pymor.gui.jupyter']
