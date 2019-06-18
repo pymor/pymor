@@ -45,11 +45,11 @@ if os.environ.get('READTHEDOCS', None) == 'True':
                     'docopt',
                     'Qt', 'Qt.QtGui', 'Qt.QtCore', 'Qt.QtOpenGL', 'Qt.QtWidgets',
                     'OpenGL', 'OpenGL.GL', 'psutil',
-                    'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg',
+                    'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.cm',
                     'matplotlib.backends.backend_qt5agg', 'matplotlib.figure', 'matplotlib.pyplot',
-                    'pyvtk',
-                    'IPython',
-                    'IPython.parallel',
+                    'matplotlib.colors', 'pyvtk',
+                    'IPython', 'IPtyhon.core',
+                    'IPython.parallel', 'ipywidgets', 'pyvis',
                     'sympy',
                     'pytest']
 
