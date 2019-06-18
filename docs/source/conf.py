@@ -49,7 +49,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
                     'matplotlib.backends.backend_qt5agg', 'matplotlib.figure', 'matplotlib.pyplot',
                     'matplotlib.colors', 'pyvtk',
                     'IPython', 'IPtyhon.core',
-                    'IPython.parallel', 'ipywidgets', 'pyvis',
+                    'IPython.parallel', 'ipywidgets', 'k3d', 'k3d.objects', 'k3d.plot', 'k3d.transform', 'pyvis',
                     'sympy',
                     'pytest']
 
