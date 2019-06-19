@@ -167,4 +167,4 @@ class ConjugateParameterFunctional(ParameterFunctionalInterface):
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
-        return self.functional.evaluate(mu).conj()
+        return np.conj(self.functional.evaluate(mu))
