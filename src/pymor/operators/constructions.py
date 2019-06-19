@@ -16,6 +16,7 @@ from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.base import Parametric
+from pymor.parameters.functionals import ConjugateParameterFunctional
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -62,6 +63,9 @@ class LincombOperator(OperatorBase):
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
                    'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
         return self.with_(operators=[op.H for op in self.operators], solver_options=options,
+                          coefficients=[ConjugateParameterFunctional(c) if isinstance(c, ParameterFunctionalInterface)
+                                        else np.conj(c)
+                                        for c in self.coefficients],
                           name=self.name + '_adjoint')
 
     def evaluate_coefficients(self, mu):
@@ -116,9 +120,9 @@ class LincombOperator(OperatorBase):
     def apply_adjoint(self, V, mu=None):
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply_adjoint(V, mu=mu)
-        R.scal(coeffs[0])
+        R.scal(np.conj(coeffs[0]))
         for op, c in zip(self.operators[1:], coeffs[1:]):
-            R.axpy(c, op.apply_adjoint(V, mu=mu))
+            R.axpy(np.conj(c), op.apply_adjoint(V, mu=mu))
         return R
 
     def assemble(self, mu=None):
