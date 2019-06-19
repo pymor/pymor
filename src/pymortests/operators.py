@@ -8,9 +8,9 @@ import pytest
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
 from pymor.core.exceptions import InversionError, LinAlgError
-from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseAdjointOperator
+from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseAdjointOperator, LincombOperator
 from pymor.parameters.base import ParameterType
-from pymor.parameters.functionals import GenericParameterFunctional
+from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymortests.algorithms.stuff import MonomOperator
 from pymortests.fixtures.operator import (operator, operator_with_arrays, operator_with_arrays_and_products,
@@ -73,6 +73,18 @@ def test_lincomb_op():
         projected = project(p, basis, basis)
         pa = projected.apply(vx)
         assert almost_equal(pa, p.apply(vx)).all()
+
+
+def test_lincomb_adjoint():
+    op = LincombOperator([NumpyMatrixOperator(np.eye(10)), NumpyMatrixOperator(np.eye(10))],
+                         [1+3j, ExpressionParameterFunctional('c + 3', {'c': ()})])
+    mu = op.parse_parameter(1j)
+    U = op.range.random()
+    V = op.apply_adjoint(U, mu=mu)
+    VV = op.H.apply(U, mu=mu)
+    assert np.all(almost_equal(V, VV))
+    VVV = op.apply(U, mu=mu).conj()
+    assert np.all(almost_equal(V, VVV))
 
 
 def test_pickle(operator):
