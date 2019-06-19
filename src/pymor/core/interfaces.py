@@ -74,6 +74,7 @@ import numpy as np
 
 from pymor.core import logger
 from pymor.core.exceptions import ConstError, SIDGenerationError
+from pymor.tools.formatrepr import format_repr, _format_generic
 
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
 NoneType = type(None)
@@ -240,6 +241,14 @@ class BasicInterface(metaclass=UberMeta):
         if self._uid is None:
             self._uid = UID()
         return self._uid.uid
+
+    def _format_repr(self, max_width, verbosity, override={}):
+        if verbosity < 3 and self.name == type(self).__name__ and 'name' not in override:
+            override = dict(override, name=None)
+        return _format_generic(self, max_width, verbosity, override=override)
+
+    def __repr__(self):
+        return format_repr(self)
 
 
 abstractmethod = abc.abstractmethod

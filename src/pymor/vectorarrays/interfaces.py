@@ -825,9 +825,6 @@ class VectorSpaceInterface(ImmutableInterface):
     def __hash__(self):
         return hash(self.id)
 
-    def __repr__(self):
-        return f'{self.__class__.__name__}({self.id})'
-
 
 def _create_random_values(shape, distribution, random_state, **kwargs):
     if distribution not in ('uniform', 'normal'):

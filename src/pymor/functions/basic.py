@@ -74,9 +74,6 @@ class ConstantFunction(FunctionBase):
     def __str__(self):
         return f'{self.name}: x -> {self.value}'
 
-    def __repr__(self):
-        return f'ConstantFunction({repr(self.value)}, {self.dim_domain})'
-
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
@@ -181,10 +178,6 @@ class ExpressionFunction(GenericFunction):
         code = compile(expression, '<expression>', 'eval')
         super().__init__(lambda x, mu={}: eval(code, dict(self.functions, **self.values), dict(mu, x=x, mu=mu)),
                          dim_domain, shape_range, parameter_type, name)
-
-    def __repr__(self):
-        return f'ExpressionFunction({self.expression}, {repr(self.parameter_type)}, {self.shape_range}, ' \
-               f'{self.parameter_type}, {self.values})'
 
     def __reduce__(self):
         return (ExpressionFunction,
