@@ -854,7 +854,7 @@ class TransferFunction(InputOutputModel):
         The transfer function defined at least on the open right complex half-plane.
         `tf(s, mu)` is a |NumPy array| of shape `(p, m)`.
     dtf
-        The complex derivative of `tf`.
+        The complex derivative of `H` with respect to `s`.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     parameter_space
