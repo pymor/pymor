@@ -58,9 +58,6 @@ class PolygonalDomain(DomainDescriptionInterface):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
 
-    def __repr__(self):
-        return f'PolygonalDomain({repr(self.points)}, {repr(self.boundary_types)}, {repr(self.holes)})'
-
 
 class CircularSectorDomain(PolygonalDomain):
     """Describes a circular sector domain of variable radius.
@@ -113,10 +110,6 @@ class CircularSectorDomain(PolygonalDomain):
 
         super().__init__(points, boundary_types)
 
-    def __repr__(self):
-        return f'PieDomain({repr(self.angle)}, {repr(self.radius)}, {repr(self.arc)}, {repr(self.radii)}, ' \
-               f'{repr(self.num_points)})'
-
 
 class DiscDomain(PolygonalDomain):
     """Describes a disc domain of variable radius.
@@ -149,6 +142,3 @@ class DiscDomain(PolygonalDomain):
         boundary_types = {} if self.boundary is None else {boundary: list(range(1, len(points)+1))}
 
         super().__init__(points, boundary_types)
-
-    def __repr__(self):
-        return f'DiscDomain({repr(self.radius)}, {repr(self.boundary)}, {repr(self.num_points)})'
