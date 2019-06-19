@@ -75,14 +75,6 @@ class RectDomain(DomainDescriptionInterface):
     def diameter(self):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
-    def __repr__(self):
-        left = ', left=' + repr(self.left) if self.left != 'dirichlet' else ''
-        right = ', right=' + repr(self.right) if self.right != 'dirichlet' else ''
-        top = ', top=' + repr(self.top) if self.top != 'dirichlet' else ''
-        bottom = ', bottom=' + repr(self.bottom) if self.bottom != 'dirichlet' else ''
-        domain = str(self.domain).replace('\n', ',')
-        return f'RectDomain({domain}{left}{right}{top}{bottom})'
-
 
 class CylindricalDomain(DomainDescriptionInterface):
     """Describes a cylindrical domain.
@@ -143,12 +135,6 @@ class CylindricalDomain(DomainDescriptionInterface):
     def diameter(self):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
-    def __repr__(self):
-        top = ', top=' + repr(self.top) if self.top != 'dirichlet' else ''
-        bottom = ', bottom=' + repr(self.bottom) if self.bottom != 'dirichlet' else ''
-        domain = str(self.domain).replace('\n', ',')
-        return f'CylindricalDomain({domain}{top}{bottom})'
-
 
 class TorusDomain(DomainDescriptionInterface):
     """Describes a domain with the topology of a torus.
@@ -197,10 +183,6 @@ class TorusDomain(DomainDescriptionInterface):
     def diameter(self):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
-    def __repr__(self):
-        domain = str(self.domain).replace("\n", ",")
-        return f'TorusDomain({domain})'
-
 
 class LineDomain(DomainDescriptionInterface):
     """Describes an interval domain.
@@ -239,11 +221,6 @@ class LineDomain(DomainDescriptionInterface):
     def width(self):
         return self.domain[1] - self.domain[0]
 
-    def __repr__(self):
-        left = ', left=' + repr(self.left) if self.left != 'dirichlet' else ''
-        right = ', right=' + repr(self.right) if self.right != 'dirichlet' else ''
-        return f'LineDomain({self.domain}{left}{right})'
-
 
 class CircleDomain(DomainDescriptionInterface):
     """Describes a domain with the topology of a circle, i.e. a line with
@@ -268,6 +245,3 @@ class CircleDomain(DomainDescriptionInterface):
     @property
     def width(self):
         return self.domain[1] - self.domain[0]
-
-    def __repr__(self):
-        return f'CircleDomain({self.domain})'
