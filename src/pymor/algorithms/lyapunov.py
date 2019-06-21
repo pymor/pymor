@@ -259,5 +259,5 @@ def _chol(A):
     assert A.shape[0] == A.shape[1]
 
     U, s, _ = spla.svd(A, lapack_driver='gesvd')
-    L = U.dot(np.diag(np.sqrt(s)))
+    L = U * np.sqrt(s)
     return L
