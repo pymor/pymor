@@ -10,6 +10,7 @@ from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
+from pymor.core.defaults import defaults
 from pymor.models.basic import ModelBase
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
@@ -17,7 +18,11 @@ from pymor.operators.constructions import IdentityOperator, LincombOperator, Zer
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 
-SPARSE_MIN_SIZE = 1000  # minimal sparse problem size for which to warn about converting to dense
+
+@defaults('value')
+def sparse_min_size(value=1000):
+    """Return minimal sparse problem size for which to warn about converting to dense."""
+    return value
 
 
 class InputOutputModel(ModelBase):
@@ -534,7 +539,7 @@ class LTIModel(InputStateOutputModel):
         A = self.A.assemble(mu=mu)
         E = self.E.assemble(mu=mu)
 
-        if self.order >= SPARSE_MIN_SIZE:
+        if self.order >= sparse_min_size():
             if not isinstance(A, NumpyMatrixOperator) or A.sparse:
                 self.logger.warning('Converting operator A to a NumPy array.')
             if not isinstance(E, IdentityOperator):
@@ -802,7 +807,7 @@ class LTIModel(InputStateOutputModel):
         mu = self.parse_parameter(mu)
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
-        if self.order >= SPARSE_MIN_SIZE:
+        if self.order >= sparse_min_size():
             for op_name in ['A', 'B', 'C', 'D', 'E']:
                 op = locals()[op_name]
                 if not isinstance(op, NumpyMatrixOperator) or op.sparse:
