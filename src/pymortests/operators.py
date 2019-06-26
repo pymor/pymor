@@ -9,11 +9,13 @@ from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.exceptions import InversionError, LinAlgError
+from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
                                            LincombOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
+from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 from pymortests.algorithms.stuff import MonomOperator
 from pymortests.fixtures.operator import (operator, operator_with_arrays, operator_with_arrays_and_products,
@@ -112,6 +114,20 @@ def test_identity_numpy_lincomb():
             mat1 = alpha * np.eye(n) + beta * np.ones((n, n))
             mat2 = to_matrix(idop.assemble(), format='dense')
             assert np.array_equal(mat1, mat2)
+
+
+def test_block_identity_lincomb():
+    space = NumpyVectorSpace(10)
+    space2 = BlockVectorSpace([space, space])
+    identity = BlockDiagonalOperator([IdentityOperator(space), IdentityOperator(space)])
+    identity2 = IdentityOperator(space2)
+    ones = space.ones()
+    ones2 = space2.make_array([ones, ones])
+    idid = identity + identity2
+    assert almost_equal(ones2 * 2, idid.apply(ones2))
+    assert almost_equal(ones2 * 2, idid.apply_adjoint(ones2))
+    assert almost_equal(ones2 * 0.5, idid.apply_inverse(ones2))
+    assert almost_equal(ones2 * 0.5, idid.apply_inverse_adjoint(ones2))
 
 
 def test_pickle(operator):
