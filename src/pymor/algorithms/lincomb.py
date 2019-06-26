@@ -81,9 +81,11 @@ class AssembleLincombRules(RuleTable):
     @match_class_any(BlockOperatorBase)
     @match_class_any(IdentityOperator)
     def action_BlockSpaceIdentityOperator(self, ops):
-        new_ops = [BlockDiagonalOperator([IdentityOperator(s) for s in op.source.subspaces])
-                   if isinstance(op, IdentityOperator) else op
-                   for op in ops if not isinstance(op, ZeroOperator)]
+        new_ops = tuple(
+            BlockDiagonalOperator([IdentityOperator(s) for s in op.source.subspaces])
+            if isinstance(op, IdentityOperator) else op
+            for op in ops if not isinstance(op, ZeroOperator)
+        )
         return self.apply(new_ops)
 
     @match_class_all(VectorArrayOperator)
