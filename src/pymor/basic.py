@@ -70,7 +70,7 @@ from pymor.parameters.spaces import CubicParameterSpace
 from pymor.reductors.basic import StationaryRBReductor, InstationaryRBReductor, LTIPGReductor, SOLTIPGReductor
 from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
-from pymor.reductors.h2 import IRKAReductor, TSIAReductor, TFIRKAReductor
+from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor, TFIRKAReductor
 from pymor.reductors.interpolation import LTIBHIReductor, SOBHIReductor, TFBHIReductor
 from pymor.reductors.parabolic import ParabolicRBReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor, SOBTfvReductor,
