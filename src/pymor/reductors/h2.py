@@ -418,7 +418,12 @@ class OneSidedIRKAReductor(BasicInterface):
         return rom
 
     def _projection_matrix(self, r, sigma, b, c, projection):
-        fom = self.fom
+        if self.fom.parametric:
+            fom = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
+                                    for op in ['A', 'B', 'C', 'D', 'E']},
+                                 parameter_space=None)
+        else:
+            fom = self.fom
         if self.version == 'V':
             V = fom.A.source.empty(reserve=r)
         else:
@@ -427,29 +432,27 @@ class OneSidedIRKAReductor(BasicInterface):
             if sigma[i].imag == 0:
                 sEmA = sigma[i].real * fom.E - fom.A
                 if self.version == 'V':
-                    Bb = fom.B.apply(b.real[i], mu=self.mu)
+                    Bb = fom.B.apply(b.real[i])
                     V.append(sEmA.apply_inverse(Bb))
                 else:
-                    CTc = fom.C.apply_adjoint(c.real[i], mu=self.mu)
-                    W.append(sEmA.apply_inverse_adjoint(CTc, mu=self.mu))
+                    CTc = fom.C.apply_adjoint(c.real[i])
+                    W.append(sEmA.apply_inverse_adjoint(CTc))
             elif sigma[i].imag > 0:
                 sEmA = sigma[i] * fom.E - fom.A
                 if self.version == 'V':
-                    Bb = fom.B.apply(b[i], mu=self.mu)
-                    v = sEmA.apply_inverse(Bb, mu=self.mu)
+                    Bb = fom.B.apply(b[i])
+                    v = sEmA.apply_inverse(Bb)
                     V.append(v.real)
                     V.append(v.imag)
                 else:
-                    CTc = fom.C.apply_adjoint(c[i].conj(), mu=self.mu)
-                    w = sEmA.apply_inverse_adjoint(CTc, mu=self.mu)
+                    CTc = fom.C.apply_adjoint(c[i].conj())
+                    w = sEmA.apply_inverse_adjoint(CTc)
                     W.append(w.real)
                     W.append(w.imag)
-
         if self.version == 'V':
             self.V = gram_schmidt(V, atol=0, rtol=0, product=None if projection == 'orth' else fom.E)
         else:
             self.V = gram_schmidt(W, atol=0, rtol=0, product=None if projection == 'orth' else fom.E)
-
         self._pg_reductor = LTIPGReductor(fom, self.V, self.V, projection == 'Eorth')
 
     def reconstruct(self, u):
