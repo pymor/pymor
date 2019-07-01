@@ -141,3 +141,28 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
+
+
+class ConjugateParameterFunctional(ParameterFunctionalInterface):
+    """Conjugate of a given |ParameterFunctional|
+
+    Evaluates a given |ParameterFunctional| and returns the complex
+    conjugate of the value.
+
+    Parameters
+    ----------
+    functional
+        The |ParameterFunctional| of which the complex conjuate is
+        taken.
+    name
+        Name of the functional.
+    """
+
+    def __init__(self, functional, name=None):
+        self.functional = functional
+        self.name = name or f'{functional.name}_conj'
+        self.build_parameter_type(functional)
+
+    def evaluate(self, mu=None):
+        mu = self.parse_parameter(mu)
+        return np.conj(self.functional.evaluate(mu))
