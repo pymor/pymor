@@ -42,7 +42,7 @@ def _format_generic(obj, max_width, verbosity, override={}):
 
     if verbosity > 0 and (sum(len(k) + len(v) + 2 for k, v in zip(keys, vals)) + len(type(obj).__name__) > max_width
                           or any('\n' in v for v in vals)):
-        args = [f'    {k}{_indent_value(v, len(k) + 4)}' for k, v in zip(keys, vals)]
+        args = [f'    {k}{indent_value(v, len(k) + 4)}' for k, v in zip(keys, vals)]
         args = ",\n".join(args)
         return f'''{type(obj).__name__}(
 {args})'''
@@ -55,7 +55,7 @@ def _format_list_tuple(val, max_width, verbosity):
     brackets = '()' if type(val) is tuple else '[]'
     reprs = [repr(v) for v in val]
     if verbosity > 0 and (any('\n' in r for r in reprs) or sum(len(r) + 2 for r in reprs) + 2 > max_width):
-        reprs = ',\n '.join(_indent_value(r, 1) for r in reprs)
+        reprs = ',\n '.join(indent_value(r, 1) for r in reprs)
         return brackets[0] + reprs + brackets[1]
     else:
         return brackets[0] + ', '.join(reprs) + brackets[1]
@@ -68,7 +68,7 @@ def _format_dict(val, max_width, verbosity):
     reprs = [repr(v) for v in vals]
     if verbosity > 0 and (any('\n' in r for r in reprs)
                           or sum(len(k) + len(r) + 4 for k, r in zip(keys, reprs)) + 2 > max_width):
-        reprs = ',\n '.join(_indent_value(f'{k}: {r}', 1) for k, r in zip(keys, reprs))
+        reprs = ',\n '.join(indent_value(f'{k}: {r}', 1) for k, r in zip(keys, reprs))
         return '{' + reprs + '}'
     else:
         return '{' + ', '.join(f'{k}: {r}' for k, r in zip(keys, reprs)) + '}'
@@ -115,7 +115,7 @@ def format_repr(obj, max_width=120, verbosity=1):
     return _recurse(obj, max_width, verbosity)
 
 
-def _indent_value(val, indent):
+def indent_value(val, indent):
     if '\n' in val:
         return textwrap.indent(val, ' ' * indent)[indent:]
     else:
