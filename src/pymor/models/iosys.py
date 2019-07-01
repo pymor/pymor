@@ -15,6 +15,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.tools.formatrepr import indent_value
 from pymor.vectorarrays.block import BlockVectorSpace
 
 SPARSE_MIN_SIZE = 1000  # minimal sparse problem size for which to warn about converting to dense
@@ -242,12 +243,13 @@ class LTIModel(InputStateOutputModel):
         return (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
-            f'    parameter type: {self.parameter_type}\n'
-            f'    linear time-invariant\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.input_dim}\n'
-            f'    number of outputs:   {self.output_dim}'
+            f'    number of outputs:   {self.output_dim}\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    linear time-invariant\n'
+            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
+            f'    solution_space:  {self.solution_space}'
         )
 
     @classmethod
@@ -900,11 +902,12 @@ class TransferFunction(InputOutputModel):
         return (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
-            f'    parameter type: {self.parameter_type}\n'
-            f'    linear time-invariant\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    number of inputs:  {self.input_dim}\n'
-            f'    number of outputs: {self.output_dim}'
+            f'    number of outputs: {self.output_dim}\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    linear time-invariant\n'
+            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
+            f'    solution_space:  {self.solution_space}'
         )
 
     def eval_tf(self, s, mu=None):
@@ -1154,13 +1157,14 @@ class SecondOrderModel(InputStateOutputModel):
         return (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
-            f'    parameter type: {self.parameter_type}\n'
-            f'    linear time-invariant\n'
-            f'    second-order\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.input_dim}\n'
-            f'    number of outputs:   {self.output_dim}'
+            f'    number of outputs:   {self.output_dim}\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    second-order\n'
+            f'    linear time-invariant\n'
+            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
+            f'    solution_space:  {self.solution_space}'
         )
 
     @classmethod
@@ -1820,13 +1824,14 @@ class LinearDelayModel(InputStateOutputModel):
         return (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
-            f'    parameter type: {self.parameter_type}\n'
-            f'    linear time-invariant\n'
-            f'    time-delay\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.input_dim}\n'
-            f'    number of outputs:   {self.output_dim}'
+            f'    number of outputs:   {self.output_dim}\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    time-delay\n'
+            f'    linear time-invariant\n'
+            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
+            f'    solution_space:  {self.solution_space}'
         )
 
     def __add__(self, other):
@@ -2206,13 +2211,14 @@ class LinearStochasticModel(InputStateOutputModel):
         return (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
-            f'    parameter type: {self.parameter_type}\n'
-            f'    linear time-invariant\n'
-            f'    stochastic\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.input_dim}\n'
             f'    number of outputs:   {self.output_dim}\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    stochastic\n'
+            f'    linear time-invariant\n'
+            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
+            f'    solution_space:  {self.solution_space}'
         )
 
 
@@ -2333,10 +2339,11 @@ class BilinearModel(InputStateOutputModel):
         return (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
-            f'    parameter type: {self.parameter_type}\n'
-            f'    bilinear time-invariant\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.input_dim}\n'
-            f'    number of outputs:   {self.output_dim}'
+            f'    number of outputs:   {self.output_dim}\n'
+            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
+            f'    bilinear time-invariant\n'
+            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
+            f'    solution_space:  {self.solution_space}'
         )
