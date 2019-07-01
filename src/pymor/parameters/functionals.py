@@ -162,7 +162,7 @@ class ConjugateParameterFunctional(ParameterFunctionalInterface):
 
     def __init__(self, functional, name=None):
         self.functional = functional
-        self.name = name or f'{functional.name}_conj'
+        self.name = name or functional.name + '_conj'
         self.build_parameter_type(functional)
 
     def evaluate(self, mu=None):
