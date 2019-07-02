@@ -1541,7 +1541,10 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('po_lrcf', mu=mu).inner(self.gramian('pc_lrcf', mu=mu)))
+        return spla.svdvals(
+            self.gramian('po_lrcf', mu=mu)[:self.order]
+            .inner(self.gramian('pc_lrcf', mu=mu)[:self.order])
+        )
 
     def vsv(self, mu=None):
         """Velocity singular values.
@@ -1558,8 +1561,10 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('vo_lrcf', mu=mu).inner(self.gramian('vc_lrcf', mu=mu),
-                                                                 product=self.M))
+        return spla.svdvals(
+            self.gramian('vo_lrcf', mu=mu)[:self.order]
+            .inner(self.gramian('vc_lrcf', mu=mu)[:self.order], product=self.M)
+        )
 
     def pvsv(self, mu=None):
         """Position-velocity singular values.
@@ -1576,8 +1581,10 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('vo_lrcf', mu=mu).inner(self.gramian('pc_lrcf', mu=mu),
-                                                                 product=self.M))
+        return spla.svdvals(
+            self.gramian('vo_lrcf', mu=mu)[:self.order]
+            .inner(self.gramian('pc_lrcf', mu=mu)[:self.order], product=self.M)
+        )
 
     def vpsv(self, mu=None):
         """Velocity-position singular values.
@@ -1594,7 +1601,10 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of singular values.
         """
-        return spla.svdvals(self.gramian('po_lrcf', mu=mu).inner(self.gramian('vc_lrcf', mu=mu)))
+        return spla.svdvals(
+            self.gramian('po_lrcf', mu=mu)[:self.order]
+            .inner(self.gramian('vc_lrcf', mu=mu)[:self.order])
+        )
 
     @cached
     def h2_norm(self, mu=None):
