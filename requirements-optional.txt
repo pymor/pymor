@@ -18,3 +18,4 @@ pyopengl
 pytest-cov
 pytest>=4.4
 slycot==0.3.3
+sympy

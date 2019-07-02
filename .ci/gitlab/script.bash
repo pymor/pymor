@@ -52,9 +52,7 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
 elif [ "${PYMOR_PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
 elif [ "${PYMOR_PYTEST_MARKER}" == "NOTEBOOKS" ] ; then
-      for fn in notebooks/*.ipynb ; do
-        jupyter nbconvert --to notebook --execute ${fn}
-      done
+      xvfb-run -a py.test --cov=src/pymor -r sxX --junitxml=test_results.xml notebooks/test.py
 elif [ "${PYMOR_PYTEST_MARKER}" == "NUMPY" ] ; then
     ${SUDO} pip uninstall -y numpy
     ${SUDO} pip install git+https://github.com/numpy/numpy@master
