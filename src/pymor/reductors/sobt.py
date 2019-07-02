@@ -122,8 +122,8 @@ class SOBTpReductor(GenericSOBTpvReductor):
 
     def _projection_matrices_and_singular_values(self, r, gramians):
         pcf, pof, vcf, vof = gramians
-        _, sp, Vp = spla.svd(pof.inner(pcf))
-        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.fom.M))
+        _, sp, Vp = spla.svd(pof.inner(pcf), lapack_driver='gesvd')
+        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.fom.M), lapack_driver='gesvd')
         Uv = Uv.T
         return pcf.lincomb(Vp[:r]), vof.lincomb(Uv[:r]), sp
 
@@ -147,7 +147,7 @@ class SOBTvReductor(GenericSOBTpvReductor):
 
     def _projection_matrices_and_singular_values(self, r, gramians):
         vcf, vof = gramians
-        Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.fom.M))
+        Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.fom.M), lapack_driver='gesvd')
         Uv = Uv.T
         return vcf.lincomb(Vv[:r]), vof.lincomb(Uv[:r]), sv
 
@@ -171,7 +171,7 @@ class SOBTpvReductor(GenericSOBTpvReductor):
 
     def _projection_matrices_and_singular_values(self, r, gramians):
         pcf, vof = gramians
-        Upv, spv, Vpv = spla.svd(vof.inner(pcf, product=self.fom.M))
+        Upv, spv, Vpv = spla.svd(vof.inner(pcf, product=self.fom.M), lapack_driver='gesvd')
         Upv = Upv.T
         return pcf.lincomb(Vpv[:r]), vof.lincomb(Upv[:r]), spv
 
@@ -196,9 +196,9 @@ class SOBTvpReductor(GenericSOBTpvReductor):
 
     def _projection_matrices_and_singular_values(self, r, gramians):
         pof, vcf, vof = gramians
-        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.fom.M))
+        Uv, _, _ = spla.svd(vof.inner(vcf, product=self.fom.M), lapack_driver='gesvd')
         Uv = Uv.T
-        _, svp, Vvp = spla.svd(pof.inner(vcf))
+        _, svp, Vvp = spla.svd(pof.inner(vcf), lapack_driver='gesvd')
         return vcf.lincomb(Vvp[:r]), vof.lincomb(Uv[:r]), svp
 
 
@@ -255,7 +255,7 @@ class SOBTfvReductor(BasicInterface):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # find necessary SVDs
-        _, sp, Vp = spla.svd(pof.inner(pcf))
+        _, sp, Vp = spla.svd(pof.inner(pcf), lapack_driver='gesvd')
 
         # compute projection matrices
         self.V = pcf.lincomb(Vp[:r])
@@ -340,9 +340,9 @@ class SOBTReductor(BasicInterface):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # find necessary SVDs
-        Up, sp, Vp = spla.svd(pof.inner(pcf))
+        Up, sp, Vp = spla.svd(pof.inner(pcf), lapack_driver='gesvd')
         Up = Up.T
-        Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.fom.M))
+        Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.fom.M), lapack_driver='gesvd')
         Uv = Uv.T
 
         # compute projection matrices and find the reduced model
