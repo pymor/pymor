@@ -7,4 +7,5 @@ pytest-cov
 pytest-xdist
 readme_renderer[md]
 rstcheck
+testipynb
 twine
