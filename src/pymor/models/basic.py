@@ -5,6 +5,7 @@
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.models.interfaces import ModelInterface
 from pymor.operators.constructions import VectorOperator, induced_norm
+from pymor.tools.formatrepr import indent_value
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
@@ -129,6 +130,15 @@ class StationaryModel(ModelBase):
         self.build_parameter_type(operator, rhs)
         self.parameter_space = parameter_space
 
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    {"linear" if self.linear else "non-linear"}\n'
+            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
+            f'    solution_space:  {self.solution_space}\n'
+        )
+
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
 
@@ -252,6 +262,16 @@ class InstationaryModel(ModelBase):
         self.linear = operator.linear and all(output.linear for output in self.outputs.values())
         self.build_parameter_type(self.initial_data, self.operator, self.rhs, self.mass, provides={'_t': 0})
         self.parameter_space = parameter_space
+
+    def __str__(self):
+        return (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    {"linear" if self.linear else "non-linear"}\n'
+            f'    T: {self.T}\n'
+            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
+            f'    solution_space:  {self.solution_space}\n'
+        )
 
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
