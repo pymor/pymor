@@ -9,6 +9,7 @@ from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseAdjointOperator, LincombOperator
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorArray
@@ -79,7 +80,7 @@ def test_lincomb_adjoint():
     op = LincombOperator([NumpyMatrixOperator(np.eye(10)), NumpyMatrixOperator(np.eye(10))],
                          [1+3j, ExpressionParameterFunctional('c + 3', {'c': ()})])
     mu = op.parse_parameter(1j)
-    U = op.range.random()
+    U = op.range.from_numpy(np.random.random((1, op.range.dim)))
     V = op.apply_adjoint(U, mu=mu)
     VV = op.H.apply(U, mu=mu)
     assert np.all(almost_equal(V, VV))
