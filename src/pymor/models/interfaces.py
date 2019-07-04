@@ -19,7 +19,10 @@ class ModelInterface(CacheableInterface, Parametric):
     Attributes
     ----------
     solution_space
-        |VectorSpace| of the |VectorArrays| returned by :meth:`solve`.
+        |VectorSpace| of the solution |VectorArrays| returned by :meth:`solve`.
+    output_space
+        |VectorSpace| of the model output |VectorArrays| returned by
+        :meth:`output` (typically `NumpyVectorSpace(k)` where `k` is a small).
     linear
         `True` if the model describes a linear problem.
     products
@@ -27,15 +30,16 @@ class ModelInterface(CacheableInterface, Parametric):
     """
 
     solution_space = None
+    output_space = None
     linear = False
     products = dict()
 
     @abstractmethod
-    def _solve(self, mu=None):
+    def _solve(self, mu=None, return_solution=True, return_output=False, **kwargs):
         """Perform the actual solving."""
         pass
 
-    def solve(self, mu=None, **kwargs):
+    def solve(self, mu=None, return_solution=True, return_output=False, **kwargs):
         """Solve the discrete problem for the |Parameter| `mu`.
 
         The result will be :mod:`cached <pymor.core.cache>`
@@ -45,13 +49,39 @@ class ModelInterface(CacheableInterface, Parametric):
         ----------
         mu
             |Parameter| for which to solve.
+        return_solution
+            If `True`, the solution (state) for the given |Parameter| `mu` is
+            returned as a |VectorArray| from :attr:`solution_space`.
+        return_output
+            If `True`, the model output for the given |Parameter| `mu` is
+            returned as a |VectorArray| from :attr:`output_space`.
 
         Returns
         -------
-        The solution given as a |VectorArray|.
+        See `return_solution` and `return_output`. If both are `True`,
+        the solution is returned as first value and the output is returned
+        as second value.
         """
         mu = self.parse_parameter(mu)
-        return self.cached_method_call(self._solve, mu=mu, **kwargs)
+        return self.cached_method_call(self._solve, mu=mu, return_solution=return_solution,
+                                       return_output=return_output, **kwargs)
+
+    def output(self, U, mu=None, **kwargs):
+        """Return the model output for given solution state U and |Parameter| `mu`.
+
+        Parameters
+        ----------
+        U
+            The solution (state) |VectorArray| from :attr:`solution_space` for which
+            to compute the output.
+        mu
+            |Parameter| for which to compute the output.
+
+        Returns
+        -------
+        The computed model output as a |VectorArray| from `output_space`.
+        """
+        raise NotImplementedError
 
     def estimate(self, U, mu=None):
         """Estimate the model error for a given solution.

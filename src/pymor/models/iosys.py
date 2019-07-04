@@ -124,6 +124,9 @@ class InputOutputModel(ModelBase):
 
         return out
 
+    def _solve_for_solution(self, mu=None):
+        raise NotImplementedError
+
 
 class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
