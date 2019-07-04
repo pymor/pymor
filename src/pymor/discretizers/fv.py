@@ -88,7 +88,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     if analytical_problem.robin_data is not None:
         raise NotImplementedError
-    if p.functionals:
+    if p.outputs:
         raise NotImplementedError
 
     if grid is None:

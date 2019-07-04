@@ -180,19 +180,24 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 'h1_0_semi': h1_0_semi_product,
                 'l2_0': l2_0_product}
 
-    # assemble additionals functionals
-    if p.functionals:
-        if any(v[0] not in ('l2', 'l2_boundary') for v in p.functionals.values()):
+    # assemble additionals output functionals
+    if p.outputs:
+        if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
             raise NotImplementedError
-        functionals = {k + '_functional': (L2Functional(grid, v[1], dirichlet_clear_dofs=False).H if v[0] == 'l2' else
-                                           BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
-                       for k, v in p.functionals.items()}
+        outputs = [L2Functional(grid, v[1], dirichlet_clear_dofs=False).H if v[0] == 'l2' else
+                   BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H
+                   for v in p.outputs]
+        if len(outputs) > 1:
+            from pymor.operators.block import BlockColumnOperator
+            output_operator = BlockColumnOperator(outputs)
+        else:
+            output_operator = outputs[0]
     else:
-        functionals = None
+        output_operator = None
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    m  = StationaryModel(L, F, outputs=functionals, products=products, visualizer=visualizer,
+    m  = StationaryModel(L, F, output_operator=output_operator, products=products, visualizer=visualizer,
                          parameter_space=parameter_space, name=f'{p.name}_CG')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
@@ -282,7 +287,7 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=mass, initial_data=I, T=p.T,
                           products=m.products,
-                          outputs=m.outputs,
+                          output_operator=m.output_operator,
                           time_stepper=time_stepper,
                           parameter_space=p.parameter_space,
                           visualizer=m.visualizer,
