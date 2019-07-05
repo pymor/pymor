@@ -10,6 +10,7 @@ sudo pip install -U pip
 # check if requirements files are up-to-date
 ./dependencies.py && git diff --exit-code requirements*
 
+sudo pip uninstall -y pytest-xdist
 # most of these should be baked into the docker image already
 sudo pip install -r requirements.txt
 sudo pip install -r requirements-travis.txt
