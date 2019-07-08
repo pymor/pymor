@@ -57,7 +57,7 @@ if __name__ == '__main__':
     w = np.logspace(-4, 2, 200)
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the full model')
+    ax.set_title('Magnitude plot of the full model')
     plt.show()
 
     psv = so_sys.psv()
@@ -104,12 +104,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     rom_sobtp.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and SOBTp reduced model')
+    ax.set_title('Magnitude plot of the full and SOBTp reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     err_sobtp.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the SOBTp error system')
+    ax.set_title('Magnitude plot of the SOBTp error system')
     plt.show()
 
     # Velocity Second-Order Balanced Truncation (SOBTv)
@@ -134,12 +134,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     rom_sobtv.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and SOBTv reduced model')
+    ax.set_title('Magnitude plot of the full and SOBTv reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     err_sobtv.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the SOBTv error system')
+    ax.set_title('Magnitude plot of the SOBTv error system')
     plt.show()
 
     # Position-Velocity Second-Order Balanced Truncation (SOBTpv)
@@ -164,12 +164,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     rom_sobtpv.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and SOBTpv reduced model')
+    ax.set_title('Magnitude plot of the full and SOBTpv reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     err_sobtpv.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the SOBTpv error system')
+    ax.set_title('Magnitude plot of the SOBTpv error system')
     plt.show()
 
     # Velocity-Position Second-Order Balanced Truncation (SOBTvp)
@@ -194,12 +194,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     rom_sobtvp.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and SOBTvp reduced model')
+    ax.set_title('Magnitude plot of the full and SOBTvp reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     err_sobtvp.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the SOBTvp error system')
+    ax.set_title('Magnitude plot of the SOBTvp error system')
     plt.show()
 
     # Free-Velocity Second-Order Balanced Truncation (SOBTfv)
@@ -224,12 +224,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     rom_sobtfv.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and SOBTfv reduced model')
+    ax.set_title('Magnitude plot of the full and SOBTfv reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     err_sobtfv.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the SOBTfv error system')
+    ax.set_title('Magnitude plot of the SOBTfv error system')
     plt.show()
 
     # Second-Order Balanced Truncation (SOBT)
@@ -254,12 +254,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     rom_sobt.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and SOBT reduced model')
+    ax.set_title('Magnitude plot of the full and SOBT reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     err_sobt.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the SOBT error system')
+    ax.set_title('Magnitude plot of the SOBT error system')
     plt.show()
 
     # Balanced Truncation (BT)
@@ -284,12 +284,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     rom_bt.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and BT reduced model')
+    ax.set_title('Magnitude plot of the full and BT reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     err_bt.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the BT error system')
+    ax.set_title('Magnitude plot of the BT error system')
     plt.show()
 
     # Iterative Rational Krylov Algorithm (IRKA)
@@ -319,12 +319,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     rom_irka.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and IRKA reduced model')
+    ax.set_title('Magnitude plot of the full and IRKA reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     err_irka.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the IRKA error system')
+    ax.set_title('Magnitude plot of the IRKA error system')
     plt.show()
 
     # Second-Order Reduced Iterative Rational Krylov Algorithm (SOR-IRKA)
@@ -354,10 +354,10 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     so_sys.mag_plot(w, ax=ax)
     rom_sor_irka.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and SOR-IRKA reduced model')
+    ax.set_title('Magnitude plot of the full and SOR-IRKA reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     err_sor_irka.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the SOR-IRKA error system')
+    ax.set_title('Magnitude plot of the SOR-IRKA error system')
     plt.show()

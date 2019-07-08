@@ -45,12 +45,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     tf.mag_plot(w, ax=ax)
     rom.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Magnitude Bode plots of the full and reduced model')
+    ax.set_title('Magnitude plots of the full and reduced model')
     plt.show()
 
     fig, ax = plt.subplots()
     (tf - rom).mag_plot(w, ax=ax)
-    ax.set_title('Magnitude Bode plots of the error system')
+    ax.set_title('Magnitude plots of the error system')
     plt.show()
 
     # step response

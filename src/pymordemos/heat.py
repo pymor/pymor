@@ -63,11 +63,11 @@ if __name__ == '__main__':
     ax.set_title('System poles')
     plt.show()
 
-    # Bode plot of the full model
+    # Magnitude plot of the full model
     w = np.logspace(-1, 3, 100)
     fig, ax = plt.subplots()
     lti.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the full model')
+    ax.set_title('Magnitude plot of the full model')
     plt.show()
 
     # Hankel singular values
@@ -97,17 +97,17 @@ if __name__ == '__main__':
         print('Skipped H_inf-norm calculation due to missing slycot.')
     print(f'BT relative Hankel-error: {err_bt.hankel_norm() / lti.hankel_norm():e}')
 
-    # Bode plot of the full and BT reduced model
+    # Magnitude plot of the full and BT reduced model
     fig, ax = plt.subplots()
     lti.mag_plot(w, ax=ax)
     rom_bt.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and BT reduced model')
+    ax.set_title('Magnitude plot of the full and BT reduced model')
     plt.show()
 
-    # Bode plot of the BT error system
+    # Magnitude plot of the BT error system
     fig, ax = plt.subplots()
     err_bt.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the BT error system')
+    ax.set_title('Magnitude plot of the BT error system')
     plt.show()
 
     # Iterative Rational Krylov Algorithm
@@ -129,15 +129,15 @@ if __name__ == '__main__':
         print('Skipped H_inf-norm calculation due to missing slycot.')
     print(f'IRKA relative Hankel-error: {err_irka.hankel_norm() / lti.hankel_norm():e}')
 
-    # Bode plot of the full and IRKA reduced model
+    # Magnitude plot of the full and IRKA reduced model
     fig, ax = plt.subplots()
     lti.mag_plot(w, ax=ax)
     rom_irka.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Bode plot of the full and IRKA reduced model')
+    ax.set_title('Magnitude plot of the full and IRKA reduced model')
     plt.show()
 
-    # Bode plot of the IRKA error system
+    # Magnitude plot of the IRKA error system
     fig, ax = plt.subplots()
     err_irka.mag_plot(w, ax=ax)
-    ax.set_title('Bode plot of the IRKA error system')
+    ax.set_title('Magnitude plot of the IRKA error system')
     plt.show()
