@@ -57,7 +57,7 @@ class InputOutputModel(ModelBase):
         raise NotImplementedError
 
     @cached
-    def bode(self, w, mu=None):
+    def freq_resp(self, w, mu=None):
         """Evaluate the transfer function on the imaginary axis.
 
         Parameters
@@ -80,7 +80,7 @@ class InputOutputModel(ModelBase):
         return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
 
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
-        """Draw the magnitude Bode plot.
+        """Draw the magnitude plot.
 
         Parameters
         ----------
@@ -110,7 +110,7 @@ class InputOutputModel(ModelBase):
             ax = plt.gca()
 
         freq = w / (2 * np.pi) if Hz else w
-        mag = spla.norm(self.bode(w, mu=mu), ord=ord, axis=(1, 2))
+        mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
         if dB:
             out = ax.semilogx(freq, 20 * np.log2(mag), **mpl_kwargs)
         else:
