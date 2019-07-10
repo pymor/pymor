@@ -16,4 +16,4 @@ pyevtk>=1.1
 pyopengl
 pytest-cov
 pytest>=3.3
-slycot>=0.3.3
+slycot==0.3.3
