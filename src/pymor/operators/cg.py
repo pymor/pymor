@@ -42,12 +42,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == ()
         assert not dirichlet_clear_dofs or boundary_info
+        self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.function = function
-        self.dirichlet_clear_dofs = dirichlet_clear_dofs
-        self.boundary_info = boundary_info
-        self.name = name
         self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
@@ -113,13 +109,8 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
         assert grid.reference_element(0) in {line, triangle, square}
         assert function.shape_range == ()
         assert not (boundary_type or dirichlet_clear_dofs) or boundary_info
+        self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.function = function
-        self.boundary_type = boundary_type
-        self.dirichlet_clear_dofs = dirichlet_clear_dofs
-        self.boundary_info = boundary_info
-        self.name = name
         self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
@@ -167,11 +158,8 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, dirichlet_data, boundary_info, name=None):
         assert grid.reference_element(0) in {line, triangle, square}
+        self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.dirichlet_data = dirichlet_data
-        self.boundary_info = boundary_info
-        self.name = name
         self.build_parameter_type(dirichlet_data)
 
     def _assemble(self, mu=None):
@@ -210,12 +198,8 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == ()
         assert not dirichlet_clear_dofs or boundary_info
+        self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.function = function
-        self.dirichlet_clear_dofs = dirichlet_clear_dofs
-        self.boundary_info = boundary_info
-        self.name = name
         self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
@@ -285,15 +269,8 @@ class L2ProductP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, coefficient_function=None, solver_options=None, name=None):
         assert grid.reference_element in (line, triangle)
+        self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.boundary_info = boundary_info
-        self.dirichlet_clear_rows = dirichlet_clear_rows
-        self.dirichlet_clear_columns = dirichlet_clear_columns
-        self.dirichlet_clear_diag = dirichlet_clear_diag
-        self.coefficient_function = coefficient_function
-        self.solver_options = solver_options
-        self.name = name
         self.build_parameter_type(coefficient_function)
 
     def _assemble(self, mu=None):
@@ -383,15 +360,8 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, coefficient_function=None, solver_options=None, name=None):
         assert grid.reference_element in {square}
+        self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.boundary_info = boundary_info
-        self.dirichlet_clear_rows = dirichlet_clear_rows
-        self.dirichlet_clear_columns = dirichlet_clear_columns
-        self.dirichlet_clear_diag = dirichlet_clear_diag
-        self.coefficient_function = coefficient_function
-        self.solver_options = solver_options
-        self.name = name
         self.build_parameter_type(coefficient_function)
 
     def _assemble(self, mu=None):
@@ -491,15 +461,8 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
                 and diffusion_function.dim_domain == grid.dim
                 and diffusion_function.shape_range == ()
                 or diffusion_function.shape_range == (grid.dim,) * 2)
+        self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.boundary_info = boundary_info
-        self.diffusion_constant = diffusion_constant
-        self.diffusion_function = diffusion_function
-        self.dirichlet_clear_columns = dirichlet_clear_columns
-        self.dirichlet_clear_diag = dirichlet_clear_diag
-        self.solver_options = solver_options
-        self.name = name
         if diffusion_function is not None:
             self.build_parameter_type(diffusion_function)
 
@@ -612,15 +575,8 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
                 and diffusion_function.dim_domain == grid.dim
                 and diffusion_function.shape_range == ()
                 or diffusion_function.shape_range == (grid.dim,) * 2)
+        self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.boundary_info = boundary_info
-        self.diffusion_constant = diffusion_constant
-        self.diffusion_function = diffusion_function
-        self.dirichlet_clear_columns = dirichlet_clear_columns
-        self.dirichlet_clear_diag = dirichlet_clear_diag
-        self.solver_options = solver_options
-        self.name = name
         if diffusion_function is not None:
             self.build_parameter_type(diffusion_function)
 
@@ -731,15 +687,8 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
             or (isinstance(advection_function, FunctionInterface)
                 and advection_function.dim_domain == grid.dim
                 and advection_function.shape_range == (grid.dim,))
+        self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.boundary_info = boundary_info
-        self.advection_constant = advection_constant
-        self.advection_function = advection_function
-        self.dirichlet_clear_columns = dirichlet_clear_columns
-        self.dirichlet_clear_diag = dirichlet_clear_diag
-        self.solver_options = solver_options
-        self.name = name
         if advection_function is not None:
             self.build_parameter_type(advection_function)
 
@@ -849,15 +798,8 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
             or (isinstance(advection_function, FunctionInterface)
                 and advection_function.dim_domain == grid.dim
                 and advection_function.shape_range == (grid.dim,))
+        self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.boundary_info = boundary_info
-        self.advection_constant = advection_constant
-        self.advection_function = advection_function
-        self.dirichlet_clear_columns = dirichlet_clear_columns
-        self.dirichlet_clear_diag = dirichlet_clear_diag
-        self.solver_options = solver_options
-        self.name = name
         if advection_function is not None:
             self.build_parameter_type(advection_function)
 
@@ -964,12 +906,8 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
                                           and (f.shape_range == ()
                                                or f.shape_range == (grid.dim,))
                                           for f in robin_data])
+        self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        self.grid = grid
-        self.boundary_info = boundary_info
-        self.robin_data = robin_data
-        self.solver_options = solver_options
-        self.name = name
         if self.robin_data is not None:
             self.build_parameter_type(self.robin_data[0])
 
@@ -1029,8 +967,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
     def __init__(self, grid, function):
         assert function.dim_domain == grid.dim
         assert function.shape_range == ()
-        self.grid = grid
-        self.function = function
+        self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
         self.build_parameter_type(function)
 

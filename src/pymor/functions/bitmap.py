@@ -34,12 +34,10 @@ class BitmapFunction(FunctionBase):
         if not img.mode == "L":
             self.logger.warning("Image " + filename + " not in grayscale mode. Convertig to grayscale.")
             img = img.convert('L')
-        self.filename = filename
+        self.__auto_init(locals())
         self.bitmap = np.array(img).T[:, ::-1]
-        self.bounding_box = bounding_box
         self.lower_left = np.array(bounding_box[0])
         self.size = np.array(bounding_box[1] - self.lower_left)
-        self.range = range
 
     def evaluate(self, x, mu=None):
         indices = np.maximum(np.floor((x - self.lower_left) * np.array(self.bitmap.shape) / self.size).astype(int), 0)

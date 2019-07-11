@@ -61,13 +61,9 @@ class MPIOperator(OperatorBase):
     def __init__(self, obj_id, mpi_range, mpi_source, with_apply2=False, pickle_local_spaces=True,
                  space_type=MPIVectorSpace):
         assert mpi_source or mpi_range
-        self.obj_id = obj_id
-        self.mpi_source = mpi_source
-        self.mpi_range = mpi_range
+
+        self.__auto_init(locals())
         self.op = op = mpi.get_object(obj_id)
-        self.with_apply2 = with_apply2
-        self.pickle_local_spaces = pickle_local_spaces
-        self.space_type = space_type
         self.linear = op.linear
         self.name = op.name
         self.build_parameter_type(op)

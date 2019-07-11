@@ -18,7 +18,7 @@ class BlockOperatorBase(OperatorBase):
             yield self.blocks[i, j]
 
     def __init__(self, blocks):
-        blocks = np.array(blocks)
+        self.blocks = blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
         if self.blocked_source and self.blocked_range:
             assert blocks.ndim == 2
@@ -28,7 +28,6 @@ class BlockOperatorBase(OperatorBase):
         else:
             if blocks.ndim == 1:
                 blocks.shape = (len(blocks), 1)
-        self.blocks = blocks
         assert all(isinstance(op, OperatorInterface) or op is None for op in self._operators())
 
         # check if every row/column contains at least one operator
@@ -276,8 +275,7 @@ class SecondOrderModelOperator(BlockOperator):
     def __init__(self, E, K):
         super().__init__([[None, IdentityOperator(E.source)],
                           [K * (-1), E * (-1)]])
-        self.E = E
-        self.K = K
+        self.__auto_init(locals())
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -367,11 +365,7 @@ class ShiftedSecondOrderModelOperator(BlockOperator):
     def __init__(self, M, E, K, a, b):
         super().__init__([[IdentityOperator(M.source) * a, IdentityOperator(M.source) * b],
                           [((-b) * K).assemble(), (a * M - b * E).assemble()]])
-        self.M = M
-        self.E = E
-        self.K = K
-        self.a = a
-        self.b = b
+        self.__auto_init(locals())
 
     def apply(self, U, mu=None):
         assert U in self.source

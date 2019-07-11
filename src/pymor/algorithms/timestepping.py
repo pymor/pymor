@@ -89,8 +89,7 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
     """
 
     def __init__(self, nt, solver_options='operator'):
-        self.nt = nt
-        self.solver_options = solver_options
+        self.__auto_init(locals())
 
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu, num_values,
@@ -111,7 +110,7 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
     """
 
     def __init__(self, nt):
-        self.nt = nt
+        self.__auto_init(locals())
 
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if mass is not None:

@@ -48,12 +48,7 @@ class new_ipcluster_pool(BasicInterface):
     """
 
     def __init__(self, profile=None, cluster_id=None, num_engines=None, ipython_dir=None, min_wait=1, timeout=60):
-        self.profile = profile
-        self.cluster_id = cluster_id
-        self.num_engines = num_engines
-        self.ipython_dir = ipython_dir
-        self.min_wait = min_wait
-        self.timeout = timeout
+        self.__auto_init(locals())
 
     def __enter__(self):
         args = []

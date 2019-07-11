@@ -53,8 +53,7 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
 class AssembleLincombRules(RuleTable):
     def __init__(self, coefficients, solver_options, name):
         super().__init__(use_caching=False)
-        self.coefficients, self.solver_options, self.name \
-            = coefficients, solver_options, name
+        self.__auto_init(locals())
 
     @match_class_any(ZeroOperator)
     def action_ZeroOperator(self, ops):

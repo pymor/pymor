@@ -159,17 +159,14 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
                  projected_collateral_basis, triangular, solver_options=None, name=None):
+
+        name = name or f'{restricted_operator.name}_projected'
+
+        self.__auto_init(locals())
         self.source = NumpyVectorSpace(len(source_basis_dofs))
         self.range = projected_collateral_basis.space
         self.linear = restricted_operator.linear
         self.build_parameter_type(restricted_operator)
-        self.restricted_operator = restricted_operator
-        self.interpolation_matrix = interpolation_matrix
-        self.source_basis_dofs = source_basis_dofs
-        self.projected_collateral_basis = projected_collateral_basis
-        self.triangular = triangular
-        self.solver_options = solver_options
-        self.name = name or f'{restricted_operator.name}_projected'
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)

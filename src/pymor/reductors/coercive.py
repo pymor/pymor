@@ -63,9 +63,7 @@ class CoerciveRBEstimator(ImmutableInterface):
     """
 
     def __init__(self, residual, residual_range_dims, coercivity_estimator):
-        self.residual = residual
-        self.residual_range_dims = residual_range_dims
-        self.coercivity_estimator = coercivity_estimator
+        self.__auto_init(locals())
 
     def estimate(self, U, mu, m):
         est = self.residual.apply(U, mu=mu).l2_norm()
@@ -212,8 +210,7 @@ class SimpleCoerciveRBEstimator(ImmutableInterface):
     """
 
     def __init__(self, estimator_matrix, coercivity_estimator):
-        self.estimator_matrix = estimator_matrix
-        self.coercivity_estimator = coercivity_estimator
+        self.__auto_init(locals())
         self.norm = induced_norm(estimator_matrix)
 
     def estimate(self, U, mu, m):

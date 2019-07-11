@@ -96,11 +96,7 @@ class ParabolicRBEstimator(ImmutableInterface):
 
     def __init__(self, residual, residual_range_dims, initial_residual, initial_residual_range_dims,
                  coercivity_estimator):
-        self.residual = residual
-        self.residual_range_dims = residual_range_dims
-        self.initial_residual = initial_residual
-        self.initial_residual_range_dims = initial_residual_range_dims
-        self.coercivity_estimator = coercivity_estimator
+        self.__auto_init(locals())
 
     def estimate(self, U, mu, m, return_error_sequence=False):
         dt = m.T / m.time_stepper.nt

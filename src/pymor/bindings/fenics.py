@@ -117,8 +117,7 @@ if config.HAVE_FENICS:
     class FenicsVectorSpace(ListVectorSpace):
 
         def __init__(self, V, id='STATE'):
-            self.V = V
-            self.id = id
+            self.__auto_init(locals())
 
         @property
         def dim(self):
@@ -156,13 +155,9 @@ if config.HAVE_FENICS:
 
         def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
             assert matrix.rank() == 2
-            self.source_space = source_space
-            self.range_space = range_space
+            self.__auto_init(locals())
             self.source = FenicsVectorSpace(source_space)
             self.range = FenicsVectorSpace(range_space)
-            self.matrix = matrix
-            self.solver_options = solver_options
-            self.name = name
 
         def apply(self, U, mu=None):
             assert U in self.source

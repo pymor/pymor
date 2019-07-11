@@ -11,7 +11,7 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
     """|BoundaryInfo| with no boundary types attached to any boundary."""
 
     def __init__(self, grid):
-        self.grid = grid
+        self.__auto_init(locals())
         self.boundary_types = frozenset()
 
     def mask(self, boundary_type, codim):
@@ -21,11 +21,8 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
 class GenericBoundaryInfo(BoundaryInfoInterface):
     """Generic |BoundaryInfo| storing entity masks per boundary type."""
 
-    def __init__(self, grid, masks, assert_unique_type=None, assert_some_type=None):
-        self.assert_unique_type = assert_unique_type if assert_unique_type else [1]
-        self.assert_some_type = assert_some_type if assert_some_type else []
-        self.grid = grid
-        self.masks = masks
+    def __init__(self, grid, masks, assert_unique_type=(1,), assert_some_type=()):
+        self.__auto_init(locals())
         self.boundary_types = frozenset(masks)
         self.check_boundary_types(assert_unique_type=self.assert_unique_type, assert_some_type=self.assert_some_type)
 
@@ -58,7 +55,7 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
     """|BoundaryInfo| where the boundary type 'dirichlet' is attached to each boundary entity."""
 
     def __init__(self, grid):
-        self.grid = grid
+        self.__auto_init(locals())
         self.boundary_types = frozenset({'dirichlet'})
 
     def mask(self, boundary_type, codim):

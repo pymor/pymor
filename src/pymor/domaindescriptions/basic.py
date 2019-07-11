@@ -44,12 +44,9 @@ class RectDomain(DomainDescriptionInterface):
         for bt in (left, right, top, bottom):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
+        domain = np.array(domain)
+        self.__auto_init(locals())
         self.boundary_types = frozenset({left, right, top, bottom})
-        self.left = left
-        self.right = right
-        self.top = top
-        self.bottom = bottom
-        self.domain = np.array(domain)
 
     @property
     def lower_left(self):
@@ -106,10 +103,9 @@ class CylindricalDomain(DomainDescriptionInterface):
         for bt in (top, bottom):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
+        domain = np.array(domain)
+        self.__auto_init(locals())
         self.boundary_types = frozenset({top, bottom})
-        self.top = top
-        self.bottom = bottom
-        self.domain = np.array(domain)
 
     @property
     def lower_left(self):
@@ -212,10 +208,9 @@ class LineDomain(DomainDescriptionInterface):
         for bt in (left, right):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
+        domain = np.array(domain)
+        self.__auto_init(locals())
         self.boundary_types = frozenset({left, right})
-        self.left = left
-        self.right = right
-        self.domain = np.array(domain)
 
     @property
     def width(self):

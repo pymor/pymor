@@ -34,11 +34,9 @@ class PolygonalDomain(DomainDescriptionInterface):
 
     def __init__(self, points, boundary_types, holes=None):
         holes = holes or []
-        self.points = points
-        self.holes = holes
 
         if isinstance(boundary_types, dict):
-            self.boundary_types = boundary_types
+            pass
         # if the boundary types are not given as a dict, try to evaluate at the edge centers to get a dict.
         else:
             points = [points]
@@ -52,11 +50,13 @@ class PolygonalDomain(DomainDescriptionInterface):
                        for p0, p1 in zip(ps, ps_d)]
             # evaluate the boundary at the edge centers and save the boundary types together with the
             # corresponding edge id.
-            self.boundary_types = dict(zip([boundary_types(centers)], [list(range(1, len(centers)+1))]))
+            boundary_types = dict(zip([boundary_types(centers)], [list(range(1, len(centers)+1))]))
 
-        for bt in self.boundary_types.keys():
+        for bt in boundary_types.keys():
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
+
+        self.__auto_init(locals())
 
 
 class CircularSectorDomain(PolygonalDomain):
@@ -86,29 +86,25 @@ class CircularSectorDomain(PolygonalDomain):
     """
 
     def __init__(self, angle, radius, arc='dirichlet', radii='dirichlet', num_points=100):
-        self.angle = angle
-        self.radius = radius
-        self.arc = arc
-        self.radii = radii
-        self.num_points = num_points
-        assert (0 < self.angle) and (self.angle < 2*np.pi)
-        assert self.radius > 0
-        assert self.num_points > 0
+        assert (0 < angle) and (angle < 2*np.pi)
+        assert radius > 0
+        assert num_points > 0
 
         points = [[0., 0.]]
-        points.extend([[self.radius*np.cos(t), self.radius*np.sin(t)] for t in
-                       np.linspace(start=0, stop=angle, num=self.num_points, endpoint=True)])
+        points.extend([[radius*np.cos(t), radius*np.sin(t)] for t in
+                       np.linspace(start=0, stop=angle, num=num_points, endpoint=True)])
 
-        if self.arc == self.radii:
-            boundary_types = {self.arc: list(range(1, len(points)+1))}
+        if arc == radii:
+            boundary_types = {arc: list(range(1, len(points)+1))}
         else:
-            boundary_types = {self.arc: list(range(2, len(points)))}
-            boundary_types.update({self.radii: [1, len(points)]})
+            boundary_types = {arc: list(range(2, len(points)))}
+            boundary_types.update({radii: [1, len(points)]})
 
         if None in boundary_types:
             del boundary_types[None]
 
         super().__init__(points, boundary_types)
+        self.__auto_init(locals())
 
 
 class DiscDomain(PolygonalDomain):
@@ -131,14 +127,12 @@ class DiscDomain(PolygonalDomain):
     """
 
     def __init__(self, radius, boundary='dirichlet', num_points=100):
-        self.radius = radius
-        self.boundary = boundary
-        self.num_points = num_points
-        assert self.radius > 0
-        assert self.num_points > 0
+        assert radius > 0
+        assert num_points > 0
 
-        points = [[self.radius*np.cos(t), self.radius*np.sin(t)] for t in
+        points = [[radius*np.cos(t), radius*np.sin(t)] for t in
                   np.linspace(start=0, stop=2*np.pi, num=num_points, endpoint=False)]
-        boundary_types = {} if self.boundary is None else {boundary: list(range(1, len(points)+1))}
+        boundary_types = {} if boundary is None else {boundary: list(range(1, len(points)+1))}
 
         super().__init__(points, boundary_types)
+        self.__auto_init(locals())

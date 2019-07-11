@@ -65,19 +65,9 @@ class NumpyGenericOperator(OperatorBase):
 
     def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
                  source_id=None, range_id=None, solver_options=None, name=None):
+        self.__auto_init(locals())
         self.source = NumpyVectorSpace(dim_source, source_id)
         self.range = NumpyVectorSpace(dim_range, range_id)
-        self.solver_options = solver_options
-        self.name = name
-        self.mapping = mapping
-        self.adjoint_mapping = adjoint_mapping
-        self.dim_source = dim_source
-        self.dim_range = dim_range
-        self.linear = linear
-        if parameter_type is not None:
-            self.build_parameter_type(parameter_type)
-        self.source_id = source_id  # needed for with_
-        self.range_id = range_id
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -195,13 +185,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             matrix.setflags(write=False)  # make numpy arrays read-only
         except AttributeError:
             pass
+
+        self.__auto_init(locals())
         self.source = NumpyVectorSpace(matrix.shape[1], source_id)
         self.range = NumpyVectorSpace(matrix.shape[0], range_id)
-        self.solver_options = solver_options
-        self.name = name
-        self.matrix = matrix
-        self.source_id = source_id
-        self.range_id = range_id
         self.sparse = issparse(matrix)
 
     @classmethod

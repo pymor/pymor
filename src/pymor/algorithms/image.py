@@ -223,8 +223,7 @@ class CollectOperatorRangeRules(RuleTable):
 
     def __init__(self, source, image, extends):
         super().__init__(use_caching=True)
-        self.source, self.image, self.extends = \
-            source, image, extends
+        self.__auto_init(locals())
 
     @match_generic(lambda op: op.linear and not op.parametric)
     def action_apply_operator(self, op):

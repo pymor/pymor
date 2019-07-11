@@ -56,10 +56,8 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
             assert num_intervals[0] > 1
         if identify_bottom_top:
             assert num_intervals[1] > 1
-        self.num_intervals = num_intervals
-        self.domain = np.array(domain)
-        self.identify_left_right = identify_left_right
-        self.identify_bottom_top = identify_bottom_top
+        domain = np.array(domain)
+        self.__auto_init(locals())
 
         self.x0_num_intervals = x0_num_intervals = num_intervals[0]
         self.x1_num_intervals = x1_num_intervals = num_intervals[1]
