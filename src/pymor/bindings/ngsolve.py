@@ -66,8 +66,7 @@ if config.HAVE_NGSOLVE:
     class NGSolveVectorSpace(ListVectorSpace):
 
         def __init__(self, V, id='STATE'):
-            self.V = V
-            self.id = id
+            self.__auto_init(locals())
 
         def __eq__(self, other):
             return type(other) is NGSolveVectorSpace and self.V == other.V and self.id == other.id
@@ -109,11 +108,7 @@ if config.HAVE_NGSOLVE:
         linear = True
 
         def __init__(self, matrix, range, source, solver_options=None, name=None):
-            self.range = range
-            self.source = source
-            self.matrix = matrix
-            self.solver_options = solver_options
-            self.name = name
+            self.__auto_init(locals())
 
         def apply(self, U, mu=None):
             assert U in self.source
@@ -163,8 +158,7 @@ if config.HAVE_NGSOLVE:
         """Visualize an NGSolve grid function."""
 
         def __init__(self, mesh, fespace):
-            self.mesh = mesh
-            self.fespace = fespace
+            self.__auto_init(locals())
             self.space = NGSolveVectorSpace(fespace)
 
         def visualize(self, U, m, legend=None, separate_colorbars=True, block=True):

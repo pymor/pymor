@@ -44,11 +44,9 @@ class ProjectionBasedReductor(BasicInterface):
     @defaults('check_orthonormality', 'check_tol')
     def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3):
         assert products.keys() <= bases.keys()
-        self.fom = fom
-        self.bases = dict(bases)
-        self.products = dict(products)
-        self.check_orthonormality = check_orthonormality
-        self.check_tol = check_tol
+        bases = dict(bases)
+        products = dict(products)
+        self.__auto_init(locals())
         self._last_rom = None
 
         if check_orthonormality:

@@ -35,11 +35,8 @@ class PatchVisualizer(BasicInterface):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
-        self.grid = grid
-        self.bounding_box = bounding_box
-        self.codim = codim
-        self.backend = backend or 'jupyter' if is_jupyter() else None
-        self.block = block
+        backend or 'jupyter' if is_jupyter() else None
+        self.__auto_init(locals())
 
     def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
                   rescale_colorbars=False, block=None, filename=None, columns=2):
@@ -117,9 +114,7 @@ class OnedVisualizer(BasicInterface):
     def __init__(self, grid, codim=1, block=False):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
-        self.grid = grid
-        self.codim = codim
-        self.block = block
+        self.__auto_init(locals())
 
     def visualize(self, U, m, title=None, legend=None, block=None):
         """Visualize the provided data.

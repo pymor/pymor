@@ -188,16 +188,15 @@ class ProjectedOperator(OperatorBase):
                     and range_basis is not None
                     and operator.range == product.source
                     and product.range == product.source))
+        if source_basis is not None:
+            source_basis = source_basis.copy()
+        if range_basis is not None:
+            range_basis = range_basis.copy()
+        self.__auto_init(locals())
         self.build_parameter_type(operator)
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
-        self.solver_options = solver_options
-        self.name = operator.name
-        self.operator = operator
-        self.source_basis = source_basis.copy() if source_basis is not None else None
-        self.range_basis = range_basis.copy() if range_basis is not None else None
         self.linear = operator.linear
-        self.product = product
 
     @property
     def H(self):

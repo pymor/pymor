@@ -33,9 +33,7 @@ class InputOutputModel(ModelBase):
                  estimator=None, visualizer=None, cache_region='memory', name=None):
         assert cont_time in (True, False)
         super().__init__(estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
-        self.input_space = input_space
-        self.output_space = output_space
-        self.cont_time = cont_time
+        self.__auto_init(locals())
 
     @property
     def input_dim(self):
@@ -132,7 +130,7 @@ class InputStateOutputModel(InputOutputModel):
                  estimator=None, visualizer=None, cache_region='memory', name=None):
         super().__init__(input_space, output_space, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
-        self.solution_space = solution_space
+        self.__auto_init(locals())
 
     @property
     def order(self):
@@ -234,15 +232,8 @@ class LTIModel(InputStateOutputModel):
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
-
-        self.A = A
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
-        self.solver_options = solver_options
         self.build_parameter_type(A, B, C, D, E)
-        self.parameter_space = parameter_space
+        self.__auto_init(locals())
 
     def __str__(self):
         return (
@@ -898,10 +889,8 @@ class TransferFunction(InputOutputModel):
     def __init__(self, input_space, output_space, tf, dtf, cont_time=True, parameter_space=None,
                  cache_region='memory', name=None):
         super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name)
-        self.tf = tf
-        self.dtf = dtf
         self.parameter_type = parameter_space.parameter_type if parameter_space else None
-        self.parameter_space = parameter_space
+        self.__auto_init(locals())
 
     def __str__(self):
         return (
@@ -1147,16 +1136,8 @@ class SecondOrderModel(InputStateOutputModel):
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
-        self.M = M
-        self.E = E
-        self.K = K
-        self.B = B
-        self.Cp = Cp
-        self.Cv = Cv
-        self.D = D
-        self.solver_options = solver_options
         self.build_parameter_type(M, E, K, B, Cp, Cv, D)
-        self.parameter_space = parameter_space
+        self.__auto_init(locals())
 
     def __str__(self):
         return (
@@ -1823,17 +1804,10 @@ class LinearDelayModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.Ad = Ad
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
-        self.tau = tau
+        self.build_parameter_type(A, *Ad, B, C, D, E)
+        self.__auto_init(locals())
         self.q = len(Ad)
         self.solution_space = A.source
-        self.build_parameter_type(A, *Ad, B, C, D, E)
-        self.parameter_space = parameter_space
 
     def __str__(self):
         return (
@@ -2214,12 +2188,7 @@ class LinearStochasticModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.As = As
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
+        self.__auto_init(locals())
         self.q = len(As)
 
     def __str__(self):
@@ -2342,12 +2311,7 @@ class BilinearModel(InputStateOutputModel):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
 
-        self.A = A
-        self.N = N
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
+        self.__auto_init(locals())
         self.linear = False
 
     def __str__(self):

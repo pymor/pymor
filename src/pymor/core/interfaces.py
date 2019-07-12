@@ -146,6 +146,25 @@ class UberMeta(abc.ABCMeta):
                                 base_doc = doc
                             item.__doc__ = base_doc
 
+        def __auto_init(self, locals_):
+            """Automatically assign __init__ arguments.
+
+            This method is used in __init__ to automatically assign __init__ arguments to equally
+            named object attributes. The values are provided by the `locals_` dict. Usually,
+            `__auto_init` is called as::
+
+                self.__auto_init(locals())
+
+            where `locals()` returns a dictionary of all local variables in the current scope.
+            Only attributes which have not already been set by the user are initialized by
+            `__auto_init`.
+            """
+            for arg in c._init_arguments:
+                if arg not in self.__dict__:
+                    setattr(self, arg, locals_[arg])
+
+        classdict[f'_{classname}__auto_init'] = __auto_init
+
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
 
         # getargspec is deprecated and does not work with keyword only args

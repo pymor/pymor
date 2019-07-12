@@ -71,8 +71,7 @@ class ProjectRules(RuleTable):
 
     def __init__(self, range_basis, source_basis, product):
         super().__init__(use_caching=True)
-        self.range_basis, self.source_basis, self.product = \
-            range_basis, source_basis, product
+        self.__auto_init(locals())
 
     @match_class(ZeroOperator)
     def action_ZeroOperator(self, op):
@@ -244,7 +243,7 @@ class ProjectToSubbasisRules(RuleTable):
 
     def __init__(self, dim_range, dim_source):
         super().__init__(use_caching=True)
-        self.dim_range, self.dim_source = dim_range, dim_source
+        self.__auto_init(locals())
 
     @match_class(LincombOperator)
     def action_recurse(self, op):

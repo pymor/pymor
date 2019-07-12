@@ -65,8 +65,7 @@ class ResidualReductor(BasicInterface):
             or (rhs.source.is_scalar and rhs.range == operator.range and rhs.linear)
         assert product is None or product.source == product.range == operator.range
 
-        self.RB, self.operator, self.rhs, self.product, self.riesz_representatives = \
-            RB, operator, rhs, product, riesz_representatives
+        self.__auto_init(locals())
         self.residual_range = operator.range.empty()
         self.residual_range_dims = []
 
@@ -114,13 +113,11 @@ class ResidualOperator(OperatorBase):
     """Instantiated by :class:`ResidualReductor`."""
 
     def __init__(self, operator, rhs, name=None):
+        self.__auto_init(locals())
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
-        self.operator = operator
-        self.rhs = rhs
         self.rhs_vector = rhs.as_range_array() if rhs and not rhs.parametric else None
-        self.name = name
 
     def apply(self, U, mu=None):
         V = self.operator.apply(U, mu=mu)
@@ -146,7 +143,7 @@ class NonProjectedResidualOperator(ResidualOperator):
 
     def __init__(self, operator, rhs, riesz_representatives, product):
         super().__init__(operator, rhs)
-        self.riesz_representatives, self.product = riesz_representatives, product
+        self.__auto_init(locals())
 
     def apply(self, U, mu=None):
         R = super().apply(U, mu=mu)
@@ -220,12 +217,7 @@ class ImplicitEulerResidualReductor(BasicInterface):
             or rhs.source.is_scalar and rhs.range == operator.range and rhs.linear
         assert product is None or product.source == product.range == operator.range
 
-        self.RB = RB
-        self.operator = operator
-        self.mass = mass
-        self.dt = dt
-        self.rhs = rhs
-        self.product = product
+        self.__auto_init(locals())
         self.residual_range = operator.range.empty()
         self.residual_range_dims = []
 
@@ -271,15 +263,11 @@ class ImplicitEulerResidualOperator(OperatorBase):
     """Instantiated by :class:`ImplicitEulerResidualReductor`."""
 
     def __init__(self, operator, mass, rhs, dt, name=None):
+        self.__auto_init(locals())
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
-        self.operator = operator
-        self.mass = mass
-        self.rhs = rhs
         self.rhs_vector = rhs.as_range_array() if rhs and not rhs.parametric else None
-        self.dt = dt
-        self.name = name
 
     def apply(self, U, U_old, mu=None):
         V = self.operator.apply(U, mu=mu)

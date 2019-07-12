@@ -112,18 +112,6 @@ class StationaryProblem(ImmutableInterface):
                 or all(isinstance(v, tuple) and len(v) == 2 and v[0] in ('l2', 'l2_boundary')
                        and v[1].dim_domain == domain.dim and v[1].shape_range == () for v in functionals.values()))
 
-        self.domain = domain
-        self.rhs = rhs
-        self.diffusion = diffusion
-        self.advection = advection
-        self.nonlinear_advection = nonlinear_advection
-        self.nonlinear_advection_derivative = nonlinear_advection_derivative
-        self.reaction = reaction
-        self.nonlinear_reaction = nonlinear_reaction
-        self.nonlinear_reaction_derivative = nonlinear_reaction_derivative
-        self.dirichlet_data = dirichlet_data
-        self.neumann_data = neumann_data
-        self.robin_data = robin_data
-        self.functionals = FrozenDict(functionals) if functionals is not None else None
-        self.parameter_space = parameter_space
-        self.name = name
+        functionals = FrozenDict(functionals) if functionals is not None else None
+
+        self.__auto_init(locals())

@@ -48,13 +48,13 @@ class LincombOperator(OperatorBase):
         assert all(isinstance(c, (ParameterFunctionalInterface, Number)) for c in coefficients)
         assert all(op.source == operators[0].source for op in operators[1:])
         assert all(op.range == operators[0].range for op in operators[1:])
+        operators = tuple(operators)
+        coefficients = tuple(coefficients)
+
+        self.__auto_init(locals())
         self.source = operators[0].source
         self.range = operators[0].range
-        self.operators = tuple(operators)
         self.linear = all(op.linear for op in operators)
-        self.coefficients = tuple(coefficients)
-        self.solver_options = solver_options
-        self.name = name
         self.build_parameter_type(*chain(operators,
                                          (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
 
@@ -268,13 +268,13 @@ class Concatenation(OperatorBase):
     def __init__(self, operators, solver_options=None, name=None):
         assert all(isinstance(op, OperatorInterface) for op in operators)
         assert all(operators[i].source == operators[i+1].range for i in range(len(operators)-1))
-        self.operators = tuple(operators)
+        operators = tuple(operators)
+
+        self.__auto_init(locals())
         self.build_parameter_type(*operators)
         self.source = operators[-1].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
-        self.solver_options = solver_options
-        self.name = name
 
     @property
     def H(self):
@@ -359,10 +359,10 @@ class ComponentProjection(OperatorBase):
 
     def __init__(self, components, source, name=None):
         assert all(0 <= c < source.dim for c in components)
-        self.components = np.array(components, dtype=np.int32)
+        components = np.array(components, dtype=np.int32)
+
+        self.__auto_init(locals())
         self.range = NumpyVectorSpace(len(components))
-        self.source = source
-        self.name = name
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -392,9 +392,8 @@ class IdentityOperator(OperatorBase):
     linear = True
 
     def __init__(self, space, name=None):
+        self.__auto_init(locals())
         self.source = self.range = space
-        self.space = space
-        self.name = name
 
     @property
     def H(self):
@@ -443,10 +442,10 @@ class ConstantOperator(OperatorBase):
     def __init__(self, value, source, name=None):
         assert isinstance(value, VectorArrayInterface)
         assert len(value) == 1
-        self.source = source
+        value = value.copy()
+
+        self.__auto_init(locals())
         self.range = value.space
-        self.name = name
-        self.value = value.copy()
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -486,9 +485,7 @@ class ZeroOperator(OperatorBase):
     def __init__(self, range, source, name=None):
         assert isinstance(range, VectorSpaceInterface)
         assert isinstance(source, VectorSpaceInterface)
-        self.source = source
-        self.range = range
-        self.name = name
+        self.__auto_init(locals())
 
     @property
     def H(self):
@@ -546,16 +543,15 @@ class VectorArrayOperator(OperatorBase):
     linear = True
 
     def __init__(self, array, adjoint=False, space_id=None, name=None):
-        self.array = array.copy()
+        array = array.copy()
+
+        self.__auto_init(locals())
         if adjoint:
             self.source = array.space
             self.range = NumpyVectorSpace(len(array), space_id)
         else:
             self.source = NumpyVectorSpace(len(array), space_id)
             self.range = array.space
-        self.adjoint = adjoint
-        self.space_id = space_id
-        self.name = name
 
     @property
     def H(self):
@@ -690,11 +686,10 @@ class ProxyOperator(OperatorBase):
 
     def __init__(self, operator, name=None):
         assert isinstance(operator, OperatorInterface)
+        self.__auto_init(locals())
         self.source = operator.source
         self.range = operator.range
-        self.operator = operator
         self.linear = operator.linear
-        self.name = name
         self.build_parameter_type(operator)
 
     @property
@@ -791,12 +786,13 @@ class InverseOperator(OperatorBase):
 
     def __init__(self, operator, name=None):
         assert isinstance(operator, OperatorInterface)
-        self.build_parameter_type(operator)
+        name or operator.name + '_inverse'
+
+        self.__auto_init(locals())
         self.source = operator.range
         self.range = operator.source
-        self.operator = operator
         self.linear = operator.linear
-        self.name = name or operator.name + '_inverse'
+        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -835,11 +831,12 @@ class InverseAdjointOperator(OperatorBase):
     def __init__(self, operator, name=None):
         assert isinstance(operator, OperatorInterface)
         assert operator.linear
-        self.build_parameter_type(operator)
+        name = name or operator.name + '_inverse_adjoint'
+
+        self.__auto_init(locals())
         self.source = operator.source
         self.range = operator.range
-        self.operator = operator
-        self.name = name or operator.name + '_inverse_adjoint'
+        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -909,15 +906,12 @@ class AdjointOperator(OperatorBase):
         assert isinstance(operator, OperatorInterface)
         assert operator.linear
         assert not with_apply_inverse or solver_options is None
-        self.build_parameter_type(operator)
+        name or operator.name + '_adjoint'
+
+        self.__auto_init(locals())
         self.source = operator.range
         self.range = operator.source
-        self.operator = operator
-        self.source_product = source_product
-        self.range_product = range_product
-        self.name = name or operator.name + '_adjoint'
-        self.with_apply_inverse = with_apply_inverse
-        self.solver_options = solver_options
+        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -1005,16 +999,14 @@ class SelectionOperator(OperatorBase):
         assert all(isinstance(op, OperatorInterface) for op in operators)
         assert all(op.source == operators[0].source for op in operators[1:])
         assert all(op.range == operators[0].range for op in operators[1:])
+        operators = tuple(operators)
+        boundaries = tuple(boundaries)
+
+        self.__auto_init(locals())
         self.source = operators[0].source
         self.range = operators[0].range
-        self.operators = tuple(operators)
         self.linear = all(op.linear for op in operators)
-
-        self.name = name
         self.build_parameter_type(parameter_functional, *operators)
-
-        self.boundaries = tuple(boundaries)
-        self.parameter_functional = parameter_functional
 
     @property
     def H(self):
@@ -1095,10 +1087,8 @@ class InducedNorm(ImmutableInterface, Parametric):
     """Instantiated by :func:`induced_norm`. Do not use directly."""
 
     def __init__(self, product, raise_negative, tol, name):
-        self.product = product
-        self.raise_negative = raise_negative
-        self.tol = tol
-        self.name = name or product.name
+        name = name or product.name
+        self.__auto_init(locals())
         self.build_parameter_type(product)
 
     def __call__(self, U, mu=None):

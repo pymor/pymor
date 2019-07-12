@@ -43,7 +43,7 @@ class ToMatrixRules(RuleTable):
 
     def __init__(self, format, mu):
         super().__init__()
-        self.format, self.mu = format, mu
+        self.__auto_init(locals())
 
     @match_class(NumpyMatrixOperator)
     def action_NumpyMatrixOperator(self, op):
