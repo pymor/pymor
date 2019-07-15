@@ -29,7 +29,7 @@ stages:
         expire_in: 3 months
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
-            - .coverage
+            - coverage.xml
         reports:
             junit: test_results.xml
 
