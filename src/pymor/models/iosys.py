@@ -114,7 +114,7 @@ class InputOutputModel(ModelBase):
         else:
             out = ax.loglog(freq, mag, **mpl_kwargs)
 
-        ax.set_title('Magnitude Bode Plot')
+        ax.set_title('Magnitude plot')
         freq_unit = ' (Hz)' if Hz else ' (rad/s)'
         ax.set_xlabel('Frequency' + freq_unit)
         mag_unit = ' (dB)' if dB else ''
