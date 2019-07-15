@@ -10,7 +10,7 @@ export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
 SUDO="sudo -E -H"
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
-
+COVERAGE_OPTS="--cov=src/pymor --cov-report=xml"
 # any failure here should fail the whole test
 set -eux
 ${SUDO} pip install -U pip
@@ -47,7 +47,7 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     pushd ${SDIST_DIR}
     ${SUDO} pip install $(ls ${SDIST_DIR})
     popd
-    xvfb-run -a py.test --cov=src/pymor -r sxX --pyargs pymortests -c .ci/installed_pytest.ini |& grep -v 'pymess/lrnm.py:82: PendingDeprecationWarning'
+    xvfb-run -a py.test ${COVERAGE_OPTS} -r sxX --pyargs pymortests -c .ci/installed_pytest.ini |& grep -v 'pymess/lrnm.py:82: PendingDeprecationWarning'
     pymor-demo -h
 elif [ "${PYMOR_PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
@@ -56,8 +56,8 @@ elif [ "${PYMOR_PYTEST_MARKER}" == "NUMPY" ] ; then
     ${SUDO} pip install git+https://github.com/numpy/numpy@master
     # there seems to be no way of really overwriting -p no:warnings from setup.cfg
     sed -i -e 's/\-p\ no\:warnings//g' setup.cfg
-    xvfb-run -a py.test --cov=src/pymor -W once::DeprecationWarning -W once::PendingDeprecationWarning -r sxX --junitxml=test_results_${PYMOR_VERSION}.xml
+    xvfb-run -a py.test ${COVERAGE_OPTS} -W once::DeprecationWarning -W once::PendingDeprecationWarning -r sxX --junitxml=test_results_${PYMOR_VERSION}.xml
 else
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a py.test --cov=src/pymor -r sxX --junitxml=test_results.xml
+    xvfb-run -a py.test ${COVERAGE_OPTS} --cov-report=xml -r sxX --junitxml=test_results.xml
 fi

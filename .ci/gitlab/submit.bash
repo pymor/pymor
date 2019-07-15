@@ -11,7 +11,7 @@ pip install codecov
 
 codecov -v --required \
   --token "${PYMOR_CODECOV_TOKEN}" \
-  --file .coverage \
+  --file coverage.xml \
   --flags "${PYMOR_PYTEST_MARKER}" \
   --root "${PYMOR_ROOT}" \
   -X detect \
