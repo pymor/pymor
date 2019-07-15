@@ -35,7 +35,7 @@ class PatchVisualizer(BasicInterface):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
-        backend or 'jupyter' if is_jupyter() else None
+        backend = backend or ('jupyter' if is_jupyter() else None)
         self.__auto_init(locals())
 
     def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
