@@ -10,7 +10,7 @@ export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
 SUDO="sudo -E -H"
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
-COVERAGE_OPTS="--cov=src/pymor --cov-report=xml  --memprof-top-n 50"
+COVERAGE_OPTS="--cov=src/pymor --cov-report=xml  --memprof-top-n 50 --memprof-csv-file=memory_usage.txt"
 # any failure here should fail the whole test
 set -eux
 ${SUDO} pip install -U pip
