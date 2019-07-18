@@ -98,6 +98,8 @@ verify setup.py:
         - python setup.py egg_info
 
 .docker-in-docker:
+    tags:
+      - docker-in-docker
     retry:
         max: 2
         when:
