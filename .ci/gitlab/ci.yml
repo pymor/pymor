@@ -18,6 +18,8 @@ stages:
 .pytest:
     extends: .test_base
     script: .ci/gitlab/script.bash
+    tags:
+      - long execution time
     environment:
         name: unsafe
     after_script:
