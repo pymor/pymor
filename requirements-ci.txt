@@ -4,6 +4,7 @@ check-manifest
 codecov
 nbconvert
 pytest-cov
+pytest-memprof
 pytest-xdist
 readme_renderer[md]
 rstcheck
