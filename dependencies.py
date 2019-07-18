@@ -44,7 +44,7 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
-               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine',
+               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'testipynb']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
