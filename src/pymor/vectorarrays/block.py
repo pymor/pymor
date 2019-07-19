@@ -244,5 +244,10 @@ class BlockVectorArrayView(BlockVectorArray):
     is_view = True
 
     def __init__(self, base, ind):
+        self.base = base
         self._blocks = tuple(block[ind] for block in base._blocks)
         self.space = base.space
+
+    @property
+    def dtype(self):
+        return self.base.dtype
