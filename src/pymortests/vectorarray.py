@@ -7,6 +7,7 @@ from numbers import Number
 
 import pytest
 import numpy as np
+
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 from pymor.algorithms.basic import almost_equal
@@ -1164,3 +1165,30 @@ def test_mutable_dtype():
     assert vc.dtype == np.complex_
     del vc[-1]
     assert vc.dtype == np.float_
+
+
+def test_views_dtype(vector_array):
+    original = vector_array.copy()
+    if len(original) == 0:
+        return
+    view = original[0]
+    assert original.dtype == view.dtype
+
+    # skip imp that don't support complex
+    from pymor.core.config import config
+    if config.HAVE_FENICS:
+        from pymor.bindings.fenics import FenicsVectorSpace
+        if type(original.space) is FenicsVectorSpace:
+            return
+    if config.HAVE_NGSOLVE:
+        from pymor.bindings.ngsolve import NGSolveVectorSpace
+        if type(original.space) is NGSolveVectorSpace:
+            return
+    view.scal(1j)
+    assert original.dtype == view.dtype
+    original = vector_array.copy()
+    view = original[0]
+    cplx = original.space.ones()
+    cplx.scal(1j)
+    original.append(cplx)
+    assert original.dtype == view.dtype
