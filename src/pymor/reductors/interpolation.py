@@ -360,20 +360,15 @@ class TFBHIReductor(BasicInterface):
             function of `fom`.
         """
         r = len(sigma)
-        assert isinstance(b, np.ndarray) and b.shape == (self.fom.input_dim, r)
-        assert isinstance(c, np.ndarray) and c.shape == (self.fom.output_dim, r)
+        assert b in self.fom.input_space and len(b) == r
+        assert c in self.fom.output_space and len(c) == r
 
         # rescale tangential directions (to avoid overflow or underflow)
-        if b.shape[0] > 1:
-            for i in range(r):
-                b[:, i] /= spla.norm(b[:, i])
-        else:
-            b = np.ones((1, r))
-        if c.shape[0] > 1:
-            for i in range(r):
-                c[:, i] /= spla.norm(c[:, i])
-        else:
-            c = np.ones((1, r))
+        b = b * (1 / b.l2_norm()) if b.dim > 1 else self.fom.input_space.ones(r)
+        c = c * (1 / c.l2_norm()) if c.dim > 1 else self.fom.output_space.ones(r)
+
+        b = b.to_numpy()
+        c = c.to_numpy()
 
         # matrices of the interpolatory LTI system
         Er = np.empty((r, r), dtype=complex)
@@ -387,13 +382,14 @@ class TFBHIReductor(BasicInterface):
         for i in range(r):
             for j in range(r):
                 if i != j:
-                    Er[i, j] = -c[:, i].dot((Hs[i] - Hs[j]).dot(b[:, j])) / (sigma[i] - sigma[j])
-                    Ar[i, j] = -c[:, i].dot((sigma[i] * Hs[i] - sigma[j] * Hs[j])).dot(b[:, j]) / (sigma[i] - sigma[j])
+                    Er[i, j] = -c[i] @ (Hs[i] - Hs[j]) @ b[j] / (sigma[i] - sigma[j])
+                    Ar[i, j] = (-c[i] @ (sigma[i] * Hs[i] - sigma[j] * Hs[j]) @ b[j]
+                                / (sigma[i] - sigma[j]))
                 else:
-                    Er[i, i] = -c[:, i].dot(dHs[i].dot(b[:, i]))
-                    Ar[i, i] = -c[:, i].dot((Hs[i] + sigma[i] * dHs[i]).dot(b[:, i]))
-            Br[i, :] = Hs[i].T.dot(c[:, i])
-            Cr[:, i] = Hs[i].dot(b[:, i])
+                    Er[i, i] = -c[i] @ dHs[i] @ b[i]
+                    Ar[i, i] = -c[i] @ (Hs[i] + sigma[i] * dHs[i]) @ b[i]
+            Br[i, :] = Hs[i].T @ c[i]
+            Cr[:, i] = Hs[i] @ b[i]
 
         # transform the system to have real matrices
         T = np.zeros((r, r), dtype=complex)
