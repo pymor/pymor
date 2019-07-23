@@ -84,6 +84,7 @@ common = '''
 
 .. |OperatorBase| replace:: :class:`~pymor.operators.basic.OperatorBase`
 .. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixOperator`
+.. |NumpyMatrixOperators| replace:: :class:`NumpyMatrixOperators <pymor.operators.numpy.NumpyMatrixOperator>`
 .. |NumpyMatrixBasedOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixBasedOperator`
 .. |NumpyMatrixBasedOperators| replace:: :class:`NumpyMatrixBasedOperators <pymor.operators.numpy.NumpyMatrixBasedOperator>`
 .. |NumpyGenericOperator| replace:: :class:`~pymor.operators.numpy.NumpyGenericOperator`
