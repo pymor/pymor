@@ -17,11 +17,28 @@ class GenericBHIReductor(BasicInterface):
     r"""Generic bitangential Hermite interpolation reductor.
 
     This is a generic reductor for reducing any linear
-    :class:`~pymor.models.iosys.InputStateOutputModel` with the transfer function which can be
-    written in the generalized coprime factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
-    \mathcal{B}(s)` as in [BG09]_.
-    The interpolation here is limited to only up to the first derivative.
-    Hence, interpolation points are assumed to be pairwise distinct.
+    :class:`~pymor.models.iosys.InputStateOutputModel` with the transfer
+    function which can be written in the generalized coprime
+    factorization :math:`H(s) = \mathcal{C}(s) \mathcal{K}(s)^{-1}
+    \mathcal{B}(s)` as in [BG09]_. The interpolation here is limited to
+    only up to the first derivative. Interpolation points are assumed to
+    be pairwise distinct.
+
+    In particular, given interpolation points :math:`\sigma_i`, right
+    tangential directions :math:`b_i`, and left tangential directions
+    :math:`c_i`, for :math:`i = 1, 2, \ldots, r`, which are closed under
+    conjugation (if :math:`\sigma_i` is real, then so are :math:`b_i`
+    and :math:`c_i`; if :math:`\sigma_i` is complex, there is
+    :math:`\sigma_j` such that :math:`\sigma_j = \overline{\sigma_i}`,
+    :math:`b_j = \overline{b_i}`, :math:`c_j = \overline{c_i}`), this
+    reductor finds a transfer function :math:`\widehat{H}` such that
+
+    .. math::
+        H(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i, \\
+        c_i^T H(\sigma_i) & = c_i^T \widehat{H}(\sigma_i) b_i, \\
+        c_i^T H'(\sigma_i) b_i & = c_i^T \widehat{H}'(\sigma_i) b_i,
+
+    for all :math:`i = 1, 2, \ldots, r`.
 
     Parameters
     ----------
@@ -62,17 +79,21 @@ class GenericBHIReductor(BasicInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of length `r`.
+            Interpolation points (closed under conjugation), sequence of
+            length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r` from `self.fom.input_space`.
+            Right tangential directions, |VectorArray| of length `r`
+            from `self.fom.input_space`.
         c
-            Left tangential directions, |VectorArray| of length `r` from `self.fom.output_space`.
+            Left tangential directions, |VectorArray| of length `r` from
+            `self.fom.output_space`.
         projection
             Projection method:
 
-            - `'orth'`: projection matrices are orthogonalized with respect to the Euclidean inner
-              product
-            - `'biorth'`: projection matrices are biorthogolized with respect to the E product
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogolized with
+              respect to the E product
 
         Returns
         -------
@@ -175,19 +196,23 @@ class LTIBHIReductor(GenericBHIReductor):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of length `r`.
+            Interpolation points (closed under conjugation), sequence of
+            length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r` from `self.fom.input_space`.
+            Right tangential directions, |VectorArray| of length `r`
+            from `self.fom.input_space`.
         c
-            Left tangential directions, |VectorArray| of length `r` from `self.fom.output_space`.
+            Left tangential directions, |VectorArray| of length `r` from
+            `self.fom.output_space`.
         projection
             Projection method:
 
-            - `'orth'`: projection matrices are orthogonalized with respect to the Euclidean inner
-              product
-            - `'biorth'`: projection matrices are biorthogolized with respect to the E product
-            - `'arnoldi'`: projection matrices are orthogonalized using the Arnoldi process
-              (available only for SISO systems).
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogolized with
+              respect to the E product
+            - `'arnoldi'`: projection matrices are orthogonalized using
+              the Arnoldi process (available only for SISO systems).
 
         Returns
         -------
@@ -319,16 +344,20 @@ class TFBHIReductor(BasicInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of length `r`.
+            Interpolation points (closed under conjugation), sequence of
+            length `r`.
         b
-            Right tangential directions, |NumPy array| of shape `(fom.input_dim, r)`.
+            Right tangential directions, |VectorArray| from
+            `fom.input_space` of length `r`.
         c
-            Left tangential directions, |NumPy array| of shape `(fom.output_dim, r)`.
+            Left tangential directions, |VectorArray| from
+            `fom.output_space` of length `r`.
 
         Returns
         -------
         lti
-            The reduced-order |LTIModel| interpolating the transfer function of `fom`.
+            The reduced-order |LTIModel| interpolating the transfer
+            function of `fom`.
         """
         r = len(sigma)
         assert isinstance(b, np.ndarray) and b.shape == (self.fom.input_dim, r)
