@@ -115,10 +115,10 @@ class GenericBHIReductor(BasicInterface):
                 self.W.append(w.real)
                 self.W.append(w.imag)
         if projection == 'orth':
-            self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.W = gram_schmidt(self.W, atol=0, rtol=0)
+            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
+            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
+            gram_schmidt_biorth(self.V, self.W, product=self._product, copy=False)
 
         # find reduced-order model
         self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V, projection == 'biorth')
