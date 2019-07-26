@@ -414,6 +414,75 @@ class LowRankOperator(OperatorBase):
         return self.right.lincomb(U.T)
 
 
+class LowRankUpdatedOperator(LincombOperator):
+    r"""|Operator| plus :class:`LowRankOperator`.
+
+    Represents a linear combination of an |Operator| and
+    :class:`LowRankOperator`. Uses the Sherman-Morrison-Woodbury formula
+    in `apply_inverse` and `apply_inverse_adjoint`:
+
+    .. math::
+        \left(\alpha A + \beta L M^{-1} R^H \right)^{-1}
+        = \alpha^{-1} A^{-1}
+            - \alpha^{-1} \beta A^{-1} L
+            \left(\alpha M + \beta R^H A^{-1} L \right)^{-1}
+            R^H A^{-1}
+
+    Parameters
+    ----------
+    operator
+        |Operator|.
+    lr_operator
+        :class:`LowRankOperator`.
+    coeff
+        A linear coefficient for `operator`. Can either be a fixed
+        number or a |ParameterFunctional|.
+    lr_coeff
+        A linear coefficient for `low_rank_operator`. Can either be a
+        fixed number or a |ParameterFunctional|.
+    solver_options
+        The |solver_options| for the operator.
+    name
+        Name of the operator.
+    """
+
+    def __init__(self, operator, lr_operator, coeff, lr_coeff,
+                 solver_options=None, name=None):
+        assert isinstance(lr_operator, LowRankOperator)
+        super().__init__([operator, lr_operator], [coeff, lr_coeff],
+                         solver_options=solver_options, name=name)
+
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        A, LR = self.operators
+        L, M, R = LR.left, LR.middle, LR.right
+        if M is None:
+            M = np.eye(len(L))
+        alpha, beta = self.evaluate_coefficients(mu)
+        AinvV = A.apply_inverse(V)
+        AinvL = A.apply_inverse(L)
+        mat = alpha * M + beta * R.dot(AinvL)
+        RhAinvV = R.dot(AinvV)
+        U = AinvV
+        U.axpy(-beta, AinvL.lincomb(spla.solve(mat, RhAinvV).T))
+        U.scal(1 / alpha)
+        return U
+
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+        A, LR = self.operators
+        L, M, R = LR.left, LR.middle, LR.right
+        if M is None:
+            M = np.eye(len(L))
+        alpha, beta = [c.conjugate() for c in self.evaluate_coefficients(mu)]
+        AinvhU = A.apply_inverse_adjoint(U)
+        AinvhR = A.apply_inverse_adjoint(R)
+        mat = alpha * M.T.conj() + beta * L.dot(AinvhR)
+        LhAinvhU = L.dot(AinvhU)
+        V = AinvhU
+        V.axpy(-beta, AinvhR.lincomb(spla.solve(mat, LhAinvhU).T))
+        V.scal(1 / alpha)
+        return V
+
+
 class ComponentProjection(OperatorBase):
     """|Operator| representing the projection of a |VectorArray| onto some of its components.
 
