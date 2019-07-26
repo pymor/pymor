@@ -9,6 +9,7 @@ from itertools import chain
 from numbers import Number
 
 import numpy as np
+import scipy.linalg as spla
 
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
@@ -350,6 +351,67 @@ class Concatenation(OperatorBase):
             operators = (other,) + self.operators
 
         return Concatenation(operators, solver_options=other.solver_options)
+
+
+class LowRankOperator(OperatorBase):
+    """Non-parametric low-rank operator.
+
+    Represents an operator of the form :math:`L M^{-1} R^H`, where
+    :math:`L` and :math:`R` are |VectorArrays| of column vectors and
+    :math:`M` a 2D |NumPy array|.
+
+    Parameters
+    ----------
+    left, right
+        |VectorArrays| of equal lengths representing :math:`U` and
+         :math:`V`.
+    middle
+        |NumPy array| representing :math:`M`. If `None`, it is assumed
+         to be identity.
+    solver_options
+        The |solver_options| for the operator.
+    name
+        Name of the operator.
+    """
+
+    linear = True
+
+    def __init__(self, left, right, middle=None, solver_options=None, name=None):
+        assert len(left) == len(right)
+        assert (middle is None
+                or isinstance(middle, np.ndarray)
+                and middle.ndim == 2
+                and middle.shape[0] == middle.shape[1] == len(left))
+
+        self.__auto_init(locals())
+        self.source = right.space
+        self.range = left.space
+
+    @property
+    def H(self):
+        options = {
+            'inverse': self.solver_options.get('inverse_adjoint'),
+            'inverse_adjoint': self.solver_options.get('inverse'),
+        } if self.solver_options else None
+        return type(self)(self.right,
+                          self.left,
+                          None if self.middle is None else self.middle.T.conj(),
+                          solver_options=options,
+                          name=self.name + '_adjoint')
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        V = self.right.dot(U)
+        if self.middle is not None:
+            V = spla.solve(self.middle, V)
+        return self.left.lincomb(V.T)
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        U = self.left.dot(V)
+        if self.middle is not None:
+            U = spla.solve(self.middle.T.conj(), U)
+        return self.right.lincomb(U.T)
 
 
 class ComponentProjection(OperatorBase):
