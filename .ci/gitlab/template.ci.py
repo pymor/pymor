@@ -113,6 +113,8 @@ verify setup.py:
         DOCKER_DRIVER: overlay2
     before_script:
         - apk --update add openssh-client rsync git file bash python3
+        # hotfix for https://github.com/jupyter/repo2docker/issues/755
+        - pip3 install ruamel.yaml==0.15.100
         - pip3 install jinja2 jupyter-repo2docker docker-compose
         - 'export SHARED_PATH="${CI_PROJECT_DIR}/shared"'
         - mkdir -p ${SHARED_PATH}
