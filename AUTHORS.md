@@ -11,6 +11,7 @@
 ## pyMOR 2019.2
 
 * Linus Balicki, linus.balicki@ovgu.de
+    * low-rank RADI method for Riccati equations in algorithms.lrradi
     * improve projection shifts for low-rank ADI method for Lyapunov equations
 
 * Dennis Eickhorn, d.eickhorn@uni-muenster.de
