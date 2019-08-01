@@ -9,7 +9,8 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.operators.interfaces import OperatorInterface
 
-_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = 'pymess'
+_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
+                                            'lrradi')
 
 _DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
                                            'slycot' if config.HAVE_SLYCOT else
@@ -63,6 +64,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
       :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`)
 
       1. `pymess` (see :func:`pymor.bindings.pymess.solve_ricc_lrcf`),
+      2. `lrradi` (see :func:`pymor.algorithms.lrradi.solve_ricc_lrcf`),
 
     - for dense problems (smaller than
       :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`)
@@ -95,9 +97,10 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         - :func:`pymor.bindings.scipy.ricc_lrcf_solver_options`,
         - :func:`pymor.bindings.slycot.ricc_lrcf_solver_options`,
         - :func:`pymor.bindings.pymess.ricc_lrcf_solver_options`.
+        - :func:`pymor.algorithms.lrradi.ricc_lrcf_solver_options`.
 
     default_sparse_solver_backend
-        Default sparse solver backend to use (pymess).
+        Default sparse solver backend to use (pymess, lrradi).
     default_dense_solver_backend
         Default dense solver backend to use (pymess, slycot, scipy).
 
@@ -123,6 +126,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         from pymor.bindings.slycot import solve_ricc_lrcf as solve_ricc_impl
     elif backend == 'pymess':
         from pymor.bindings.pymess import solve_ricc_lrcf as solve_ricc_impl
+    elif backend == 'lrradi':
+        from pymor.algorithms.lrradi import solve_ricc_lrcf as solve_ricc_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)

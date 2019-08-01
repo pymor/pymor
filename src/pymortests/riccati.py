@@ -24,6 +24,7 @@ ricc_lrcf_solver_list_small = [
 ]
 ricc_lrcf_solver_list_big = [
     'pymess_lrnm',
+    'lrradi'
 ]
 
 

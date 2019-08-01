@@ -12,6 +12,10 @@ Bibliography
            Efficient Modeling and Control of Large-Scale Systems,
            Springer-Verlag, 2010.
 
+.. [BBKS18] P. Benner, Z. Bujanović, P. Kürschner, J. Saak, RADI: a low-rank
+            ADI-type algorithm for large scale algebraic Riccati equations,
+            Numerische Mathematik, Springer-Verlag, 2018.
+
 .. [BG09] C. A. Beattie, S. Gugercin, Interpolatory projection
           methods for structure-preserving model reduction,
           Systems & Control Letters 58, 2009
@@ -33,8 +37,8 @@ Bibliography
             Equations, Proceedings of the 11th World Congress on Computational
             Mechanics, 2014.
 
-.. [BS18] A. Buhr, K. Smetana, 
-          Randomized Local Model Order Reduction. 
+.. [BS18] A. Buhr, K. Smetana,
+          Randomized Local Model Order Reduction.
           SIAM Journal on Scientific Computing, 40(4), A2120–A2151, 2018.
 
 .. [CLVV06] Y. Chahlaoui, D. Lemonnier, A. Vandendorpe, P. Van
@@ -66,7 +70,7 @@ Bibliography
 .. [HMT11] N. Halko, P. G. Martinsson and J. A. Tropp,
            Finding structure with randomness: probabilistic
            algorithms for constructing approximate matrix
-           decompositions, 
+           decompositions,
            SIAM Review, 53(2), 217–288, 2011.
 
 .. [HLR18] C. Himpe, T. Leibner, S. Rave,
