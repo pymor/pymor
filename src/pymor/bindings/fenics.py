@@ -18,43 +18,101 @@ if config.HAVE_FENICS:
     class FenicsVector(CopyOnWriteVector):
         """Wraps a FEniCS vector to make it usable with ListVectorArray."""
 
-        def __init__(self, impl):
+        def __init__(self, impl, imag=None):
             self.impl = impl
+            self._imag = imag
 
         @classmethod
         def from_instance(cls, instance):
-            return cls(instance.impl)
+            return cls(instance.impl, imag=instance._imag)
 
         def _copy_data(self):
             self.impl = self.impl.copy()
+            if self._imag is not None:
+                self._imag = self._imag.copy()
 
         def to_numpy(self, ensure_copy=False):
             if ensure_copy:
-                return self.impl.copy().get_local()
-            return self.impl.get_local()
+                impl = self.impl.copy().get_local()
+                imag = None if self._imag is None else self._imag.copy().get_local()
+            else:
+                impl = self.impl.get_local()
+                imag = None if self._imag is None else self._imag.get_local()
+            if imag is None:
+                result = impl
+            else:
+                result = impl + imag * 1j
+            return result
 
         def _scal(self, alpha):
-            self.impl *= alpha
+            if self._imag is None:
+                if alpha.imag != 0:
+                    self._imag = alpha.imag * self.impl
+                self.impl *= alpha.real
+            else:
+                if alpha.imag == 0:
+                    self.impl *= alpha.real
+                    self._imag *= alpha.real
+                else:
+                    self.impl, self._imag = (
+                        alpha.real * self.impl - alpha.imag * self._imag,
+                        alpha.imag * self.impl + alpha.real * self._imag
+                    )
 
         def _axpy(self, alpha, x):
             if x is self:
                 self.scal(1. + alpha)
             else:
-                self.impl.axpy(alpha, x.impl)
+                # real part
+                self.impl.axpy(alpha.real, x.impl)
+                if x._imag is not None:
+                    self.impl.axpy(-alpha.imag, x._imag)
+
+                # imaginary part
+                if self._imag is None:
+                    if alpha.imag != 0 and x._imag is None:
+                        self._imag = alpha.imag * x.impl
+                    elif alpha.imag == 0 and x._imag is not None:
+                        self._imag = alpha.real * x._imag
+                    elif alpha.imag != 0 and x._imag is not None:
+                        self._imag = alpha.imag * x.impl
+                        self._imag.axpy(alpha.real, x._imag)
+                else:
+                    if alpha.imag != 0:
+                        self._imag.axpy(alpha.imag, x.impl)
+                    if x._imag is not None:
+                        self._imag.axpy(alpha.real, x._imag)
 
         def dot(self, other):
-            return self.impl.inner(other.impl)
+            result = self.impl.inner(other.impl)
+            if self._imag is not None:
+                result += self._imag.inner(other.impl) * (-1j)
+            elif other._imag is not None:
+                result += self.impl.inner(other._imag) * 1j
+            elif self._imag is not None and other._imag is not None:
+                result += self._imag.inner(other._imag)
+            return result
 
         def l1_norm(self):
+            if self._imag is not None:
+                raise NotImplementedError
             return self.impl.norm('l1')
 
         def l2_norm(self):
-            return self.impl.norm('l2')
+            result = self.impl.norm('l2')
+            if self._imag is not None:
+                result = np.linalg.norm([result, self._imag.norm('l2')])
+            return result
 
         def l2_norm2(self):
-            return self.impl.norm('l2') ** 2
+            result = self.impl.norm('l2') ** 2
+            if self._imag is not None:
+                result += self._imag.norm('l2') ** 2
+            return result
 
         def sup_norm(self):
+            if self._imag is not None:
+                raise NotImplementedError
             return self.impl.norm('linf')
 
         def dofs(self, dof_indices):
@@ -64,12 +122,17 @@ if config.HAVE_FENICS:
             assert 0 <= np.min(dof_indices)
             assert np.max(dof_indices) < self.impl.size()
             dofs = self.impl.gather(dof_indices)
+            if self._imag is not None:
+                dofs += self._imag.gather(dof_indices)
             # in the mpi distributed case, gather returns the values
             # at the *global* dof_indices on each rank
             return dofs
 
         def amax(self):
-            A = np.abs(self.impl.get_local())
+            if self._imag is None:
+                A = np.abs(self.impl.get_local())
+            else:
+                A = np.abs(self.impl.get_local() + self._imag.get_local() * 1j)
             # there seems to be no way in the interface to compute amax without making a copy.
             max_ind_on_rank = np.argmax(A)
             max_val_on_rank = A[max_ind_on_rank]
@@ -91,28 +154,85 @@ if config.HAVE_FENICS:
                 return max_inds[i], max_vals[i]
 
         def __add__(self, other):
-            return FenicsVector(self.impl + other.impl)
+            impl = self.impl + other.impl
+            imag = None
+            if self._imag is not None and other._imag is None:
+                imag = self._imag.copy()
+            elif self._imag is None and other._imag is not None:
+                imag = other._imag.copy()
+            elif self._imag is not None and other._imag is not None:
+                imag = self._imag + other._imag
+            return FenicsVector(impl, imag=imag)
 
         def __iadd__(self, other):
             self._copy_data_if_needed()
             self.impl += other.impl
+            if self._imag is None and other._imag is not None:
+                self._imag = other._imag.copy()
+            elif self._imag is not None and other._imag is not None:
+                self._imag += other._imag
             return self
 
         __radd__ = __add__
 
         def __sub__(self, other):
-            return FenicsVector(self.impl - other.impl)
+            impl = self.impl - other.impl
+            imag = None
+            if self._imag is not None and other._imag is None:
+                imag = self._imag.copy()
+            elif self._imag is None and other._imag is not None:
+                imag = -other._imag.copy()
+            elif self._imag is not None and other._imag is not None:
+                imag = self._imag - other._imag
+            return FenicsVector(impl, imag=imag)
 
         def __isub__(self, other):
             self._copy_data_if_needed()
             self.impl -= other.impl
+            if self._imag is None and other._imag is not None:
+                self._imag = -other._imag.copy()
+            elif self._imag is not None and other._imag is not None:
+                self._imag -= other._imag
             return self
 
         def __mul__(self, other):
-            return FenicsVector(self.impl * other)
+            impl = self.impl.copy()
+            imag = None if self._imag is None else self._imag.copy()
+            if imag is None:
+                if other.imag != 0:
+                    imag = other.imag * impl
+                impl *= other.real
+            else:
+                if other.imag == 0:
+                    impl *= other.real
+                    imag *= other.real
+                else:
+                    impl, imag = (
+                        other.real * impl - other.imag * imag,
+                        other.imag * impl + other.real * imag
+                    )
+            return FenicsVector(impl, imag=imag)
 
         def __neg__(self):
-            return FenicsVector(-self.impl)
+            return FenicsVector(-self.impl,
+                                imag=None if self._imag is None else -self._imag)
+
+        @property
+        def real(self):
+            return FenicsVector(self.impl.copy())
+
+        @property
+        def imag(self):
+            if self._imag is None:
+                return FenicsVector(self.impl * 0)
+            else:
+                return FenicsVector(self._imag.copy())
+
+        def conj(self):
+            if self._imag is None:
+                return self.copy()
+            else:
+                return FenicsVector(self.impl.copy(), imag=-self._imag)
 
     class FenicsVectorSpace(ListVectorSpace):
 
