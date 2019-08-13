@@ -12,6 +12,7 @@ if config.HAVE_FENICS:
     from pymor.core.defaults import defaults
     from pymor.core.interfaces import BasicInterface
     from pymor.operators.basic import OperatorBase
+    from pymor.operators.complex import ComplexOperator
     from pymor.vectorarrays.interfaces import _create_random_values
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
@@ -273,8 +274,9 @@ if config.HAVE_FENICS:
 
         linear = True
 
-        def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
+        def __init__(self, matrix, source_space, range_space, solver_options=None, name=None, imag=None):
             assert matrix.rank() == 2
+            assert imag is None or imag.rank() == 2
             self.__auto_init(locals())
             self.source = FenicsVectorSpace(source_space)
             self.range = FenicsVectorSpace(range_space)
@@ -283,24 +285,69 @@ if config.HAVE_FENICS:
             assert U in self.source
             R = self.range.zeros(len(U))
             for u, r in zip(U._list, R._list):
+                # real part
                 self.matrix.mult(u.impl, r.impl)
+                if self.imag is not None and u._imag is not None:
+                    vec = self.range.zero_vector().impl
+                    self.imag.mult(u._imag, vec)
+                    r.impl.axpy(-1, vec)
+                # imaginary part
+                if self.imag is not None or u._imag is not None:
+                    if u._imag is not None:
+                        r._imag = self.range.zero_vector().impl
+                        self.matrix.mult(u._imag, r._imag)
+                    if self.imag is not None:
+                        if r._imag is None:
+                            r._imag = self.range.zero_vector().impl
+                            self.imag.mult(u.impl, r._imag)
+                        else:
+                            vec = self.range.zero_vector().impl
+                            self.imag.mult(u.impl, vec)
+                            r._imag.axpy(1, vec)
             return R
 
         def apply_adjoint(self, V, mu=None):
             assert V in self.range
-            U = self.source.zeros(len(V))
-            for v, u in zip(V._list, U._list):
-                self.matrix.transpmult(v.impl, u.impl)  # there are no complex numbers in FEniCS
-            return U
+            R = self.source.zeros(len(V))
+            for v, r in zip(V._list, R._list):
+                # real part
+                self.matrix.transpmult(v.impl, r.impl)
+                if self.imag is not None and v._imag is not None:
+                    vec = self.range.zero_vector().impl
+                    self.imag.transpmult(v._imag, vec)
+                    r.impl.axpy(1, vec)
+                # imaginary part
+                if self.imag is not None or v._imag is not None:
+                    if v._imag is not None:
+                        r._imag = self.range.zero_vector().impl
+                        self.matrix.transpmult(v._imag, r._imag)
+                    if self.imag is not None:
+                        if r._imag is None:
+                            r._imag = self.range.zero_vector().impl
+                            self.imag.transpmult(v.impl, r._imag)
+                            r._imag.scal(-1)
+                        else:
+                            vec = self.range.zero_vector().impl
+                            self.imag.transpmult(v.impl, vec)
+                            r._imag.axpy(-1, vec)
+            return R
 
         def apply_inverse(self, V, mu=None, least_squares=False):
             assert V in self.range
             if least_squares:
                 raise NotImplementedError
-            R = self.source.zeros(len(V))
-            options = self.solver_options.get('inverse') if self.solver_options else None
-            for r, v in zip(R._list, V._list):
-                _apply_inverse(self.matrix, r.impl, v.impl, options)
+            if self.imag is None:
+                R = self.source.zeros(len(V))
+                options = self.solver_options.get('inverse') if self.solver_options else None
+                for r, v in zip(R._list, V._list):
+                    _apply_inverse(self.matrix, r.impl, v.impl, options)
+                    if v._imag is not None:
+                        r._imag = self.range.zero_vector().impl
+                        _apply_inverse(self.matrix, r._imag, v._imag, options)
+            else:
+                real = FenicsMatrixOperator(self.matrix, self.source.V, self.range.V)
+                imag = FenicsMatrixOperator(self.imag, self.source.V, self.range.V)
+                R = ComplexOperator(real, imag).apply_inverse(V)
             return R
 
         def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
@@ -312,13 +359,34 @@ if config.HAVE_FENICS:
 
             if coefficients[0] == 1:
                 matrix = operators[0].matrix.copy()
+                imag = None if operators[0].imag is None else operators[0].imag.copy()
+            elif coefficients[0].imag == 0:
+                matrix = operators[0].matrix * coefficients[0].real
+                imag = None if operators[0].imag is None else operators[0].imag * coefficients[0].real
             else:
-                matrix = operators[0].matrix * coefficients[0]
+                matrix = operators[0].matrix * coefficients[0].real
+                imag = operators[0].matrix * coefficients[0].imag
+                if operators[0].imag is not None:
+                    matrix.axpy(-coefficients[0].imag, operators[0].imag, False)
+                    imag.axpy(coefficients[0].real, operators[0].imag, False)
             for op, c in zip(operators[1:], coefficients[1:]):
-                matrix.axpy(c, op.matrix, False)
-                # in general, we cannot assume the same nonzero pattern for # all matrices. how to improve this?
+                matrix.axpy(c.real, op.matrix, False)
+                if c.imag != 0 and op.imag is not None:
+                    matrix.axpy(-c.imag, op.imag, False)
+                if c.imag != 0:
+                    if imag is None:
+                        imag = op.matrix * c.imag
+                    else:
+                        imag.axpy(c.imag, op.matrix, False)
+                if op.imag is not None:
+                    if imag is None:
+                        imag = op.imag * c.real
+                    else:
+                        imag.axpy(c.real, op.imag, False)
+                # in general, we cannot assume the same nonzero pattern for
+                # all matrices. how to improve this?
 
-            return FenicsMatrixOperator(matrix, self.source.V, self.range.V, name=name)
+            return FenicsMatrixOperator(matrix, self.source.V, self.range.V, name=name, imag=imag)
 
     @defaults('solver', 'preconditioner')
     def _solver_options(solver='bicgstab', preconditioner='amg'):
