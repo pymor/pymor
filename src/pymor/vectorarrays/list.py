@@ -93,6 +93,17 @@ class VectorInterface(BasicInterface):
         result.scal(-1)
         return result
 
+    @property
+    def real(self):
+        pass
+
+    @property
+    def imag(self):
+        pass
+
+    def conj(self):
+        pass
+
 
 class CopyOnWriteVector(VectorInterface):
 
@@ -208,6 +219,17 @@ class NumpyVector(CopyOnWriteVector):
         max_val = A[max_ind]
         return max_ind, max_val
 
+    @property
+    def real(self):
+        return self.__class__(self._array.real.copy())
+
+    @property
+    def imag(self):
+        return self.__class__(self._array.imag.copy())
+
+    def conj(self):
+        return self.__class__(self._array.conj())
+
 
 class ListVectorArray(VectorArrayInterface):
     """|VectorArray| implemented as a Python list of vectors.
@@ -316,11 +338,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def dot(self, other):
         assert self.space == other.space
-        R = np.empty((len(self._list), len(other)))
-        for i, a in enumerate(self._list):
-            for j, b in enumerate(other._list):
-                R[i, j] = a.dot(b)
-        return R
+        return np.array([[a.dot(b) for b in other._list] for a in self._list])
 
     def pairwise_dot(self, other):
         assert self.space == other.space
@@ -331,11 +349,15 @@ class ListVectorArray(VectorArrayInterface):
         if product is not None:
             return super().gramian(product)
         l = len(self._list)
-        R = np.empty((l, l))
+        R = [[0.] * l for _ in range(l)]
         for i in range(l):
             for j in range(i, l):
-                R[i, j] = self._list[i].dot(self._list[j])
-                R[j, i] = R[i, j]
+                R[i][j] = self._list[i].dot(self._list[j])
+                if i == j:
+                    R[i][j] = R[i][j].real
+                else:
+                    R[j][i] = R[i][j].conj()
+        R = np.array(R)
         return R
 
     def lincomb(self, coefficients):
@@ -393,6 +415,17 @@ class ListVectorArray(VectorArrayInterface):
             MI[k], MV[k] = v.amax()
 
         return MI, MV
+
+    @property
+    def real(self):
+        return self.__class__([v.real for v in self._list], self.space)
+
+    @property
+    def imag(self):
+        return self.__class__([v.imag for v in self._list], self.space)
+
+    def conj(self):
+        return self.__class__([v.conj() for v in self._list], self.space)
 
     def __str__(self):
         return f'ListVectorArray of {len(self._list)} of space {self.space}'
