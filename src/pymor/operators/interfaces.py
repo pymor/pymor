@@ -240,6 +240,23 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
+    @abstractmethod
+    def mu_derivative(self, component, coordinates=None):
+        """Return the operators derivative with respect to a coordinate of a parameter component
+
+        Parameters
+        ----------
+        component
+            Parameter component
+        coordinate
+            coordinate in the parameter component
+
+        Returns
+        -------
+        New |Operator| with partial derivatives of the coefficients
+        """
+        pass
+
     def as_range_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its range space.
 

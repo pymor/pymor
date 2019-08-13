@@ -149,6 +149,11 @@ class OperatorBase(OperatorInterface):
     def as_source_array(self, mu=None):
         return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
+    def mu_derivative(self, component, coordinates=None):
+        if self.parametric:
+            return NotImplemented
+        else:
+            return ZeroOperator(self.range, self.source)
 
 class ProjectedOperator(OperatorBase):
     """Generic |Operator| representing the projection of an |Operator| to a subspace.
