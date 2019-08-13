@@ -37,6 +37,11 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
         """Evaluate the functional for the given |Parameter| `mu`."""
         pass
 
+    @abstractmethod
+    def partial_derivative(self, component, coordinates=None):
+        """returns the derivative of the functional as a new ParameterFunctional."""
+        pass
+
     def __call__(self, mu=None):
         return self.evaluate(mu)
 

@@ -42,6 +42,14 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         mu = self.parse_parameter(mu)
         return mu[self.component_name].item(self.index)
 
+    def partial_derivative(self, component, coordinates=None):
+        if not isinstance(coordinates, tuple):
+            coordinates = (coordinates,)
+        if component == self.component_name and coordinates == self.coordinates:
+            return ExpressionParameterFunctional('1', self.parameter_type, 'partial_derivative')
+        else:
+            return ExpressionParameterFunctional('0', self.parameter_type, 'partial_derivative')
+
 
 class GenericParameterFunctional(ParameterFunctionalInterface):
     """A wrapper making an arbitrary Python function a |ParameterFunctional|
@@ -59,9 +67,11 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         The |ParameterType| of the |Parameters| the functional expects.
     name
         The name of the functional.
+    derivative_mapping
+        The partial derivative function to wrap
     """
 
-    def __init__(self, mapping, parameter_type, name=None):
+    def __init__(self, mapping, parameter_type, name=None, derivative_mappings=None):
         self.__auto_init(locals())
         self.build_parameter_type(parameter_type)
 
@@ -73,6 +83,13 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
             return value.item()
         else:
             return value
+
+    def partial_derivative(self, component, coordinates=None):
+        if self.derivative_mappings is None:
+            raise ValueError('You must provide a dict of expressions for the partial derivatives')
+        else:
+            return GenericParameterFunctional(self.derivative_mappings[component][coordinates], self.parameter_type,
+                                              'partial_derivative')
 
 
 class ExpressionParameterFunctional(GenericParameterFunctional):
@@ -94,6 +111,9 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         The |ParameterType| of the |Parameters| the functional expects.
     name
         The name of the functional.
+
+    jacobian_expression
+        A dict of lists of Python expression for the partial derivative of each parameter component
     """
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
@@ -105,16 +125,47 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
     functions['np'] = np
 
-    def __init__(self, expression, parameter_type, name=None):
-        self.expression = expression
-        code = compile(expression, '<expression>', 'eval')
-        functions = self.functions
-        mapping = lambda mu: eval(code, functions, mu)
-        super().__init__(mapping, parameter_type, name)
+    def __init__(self, expression, parameter_type, name=None, derivative_expressions=None):
+        if derivative_expressions is None:
+            self.expression = expression
+            code = compile(expression, '<expression>', 'eval')
+            functions = self.functions
+            mapping = lambda mu: eval(code, functions, mu)
+            super().__init__(mapping, parameter_type, name)
+            self.__auto_init(locals())
+        else:
+            self.expression = expression
+            self.derivative_expressions = derivative_expressions
+            functions = self.functions
+            code_exp = compile(expression, '<expression>', 'eval')
+            exp_mapping = lambda mu: eval(code_exp, functions, mu)
+            derivative_mappings = {}
+            def get_lambda(exp_code):
+                return lambda mu: eval(exp_code, functions, mu)
+            for (key,exp) in derivative_expressions.items():
+                exp_array = np.array(exp, dtype=object)
+                mappings = np.empty(exp_array.shape, dtype=object)
+                if exp_array.shape == ():
+                    exp_code = compile(exp, '<expression>', 'eval')
+                    mapping = get_lambda(exp_code)
+                    mappings = np.array(mapping)
+                elif np.shape(exp_array.shape) == (1,):
+                    for x, exp_value in np.ndenumerate(exp_array):
+                        exp_code = compile(exp_value, '<expression>', 'eval')
+                        mapping = get_lambda(exp_code)
+                        mappings[x] = mapping
+                elif np.shape(exp_array.shape) == (2,):
+                    for (x,y), exp_value in np.ndenumerate(exp_array):
+                        exp_code = compile(exp_value, '<expression>', 'eval')
+                        mapping = get_lambda(exp_code)
+                        mappings[x][y] = mapping
+                derivative_mappings[key] = mappings
+            super().__init__(exp_mapping, parameter_type, name, derivative_mappings)
+            self.__auto_init(locals())
 
     def __reduce__(self):
         return (ExpressionParameterFunctional,
-                (self.expression, self.parameter_type, getattr(self, '_name', None)))
+                (self.expression, self.parameter_type, getattr(self, '_name', None), self.derivative_expressions))
 
 
 class ProductParameterFunctional(ParameterFunctionalInterface):
@@ -138,6 +189,8 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
         mu = self.parse_parameter(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
+    def partial_derivative(self, component, coordinates=None):
+        return NotImplemented
 
 class ConjugateParameterFunctional(ParameterFunctionalInterface):
     """Conjugate of a given |ParameterFunctional|
@@ -162,3 +215,6 @@ class ConjugateParameterFunctional(ParameterFunctionalInterface):
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
         return np.conj(self.functional.evaluate(mu))
+
+    def partial_derivative(self, component, coordinates=None):
+        return NotImplemented
