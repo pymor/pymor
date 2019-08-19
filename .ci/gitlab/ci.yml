@@ -34,7 +34,7 @@ stages:
         reports:
             junit: test_results.xml
 
-numpy 3.6:
+numpy 3 6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
@@ -51,37 +51,37 @@ docs:
         expire_in: 3 months
         paths:
             - docs/_build/html
-Vanilla 3.6:
+Vanilla 3 6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
-PIP_ONLY 3.6:
+PIP_ONLY 3 6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
-NOTEBOOKS 3.6:
+NOTEBOOKS 3 6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
-Vanilla 3.7:
+Vanilla 3 7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
-PIP_ONLY 3.7:
+PIP_ONLY 3 7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
-NOTEBOOKS 3.7:
+NOTEBOOKS 3 7:
     extends: .pytest
     image: pymor/testing:3.7
     stage: test
@@ -97,14 +97,14 @@ NOTEBOOKS 3.7:
         - /^github\/PR_.*$/
     stage: deploy
     script: .ci/gitlab/submit.bash
-submit Vanilla 3.6:
+submit Vanilla 3 6:
     extends: .submit
     image: pymor/python:3.6
     dependencies:
         - Vanilla 3.6
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
-submit Vanilla 3.7:
+submit Vanilla 3 7:
     extends: .submit
     image: pymor/python:3.7
     dependencies:
@@ -112,7 +112,7 @@ submit Vanilla 3.7:
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
 
-submit numpy 3.6:
+submit numpy 3 6:
     extends: .submit
     image: pymor/python:3.6
     dependencies:
@@ -151,22 +151,22 @@ verify setup.py:
         - docker:dind
     environment:
         name: unsafe
-pip debian stretch:
+pip 1/4:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_stretch/Dockerfile .
 
-pip debian buster:
+pip 2/4:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_buster/Dockerfile .
 
-pip debian testing:
+pip 3/4:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
 
-pip centos 7:
+pip 4/4:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/centos_7/Dockerfile .
@@ -200,26 +200,26 @@ repo2docker:
         # cannot use exported var from env here
         - ${CI_PROJECT_DIR}/shared/pymor*manylinux*whl
         expire_in: 1 week
-wheel 1 3.6:
+wheel 1 py3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
     script: bash .ci/gitlab/wheels.bash 1
 
-wheel 2010 3.6:
+wheel 2010 py3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
     script: bash .ci/gitlab/wheels.bash 2010
 
 
-wheel 1 3.7:
+wheel 1 py3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"
     script: bash .ci/gitlab/wheels.bash 1
 
-wheel 2010 3.7:
+wheel 2010 py3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"

@@ -36,7 +36,7 @@ stages:
         reports:
             junit: test_results.xml
 
-numpy 3.6:
+numpy 3 6:
     extends: .pytest
     image: pymor/testing:3.6
     stage: test
@@ -55,7 +55,7 @@ docs:
             - docs/_build/html
 
 {%- for py, m in matrix %}
-{{m}} {{py}}:
+{{m}} {{py[0]}} {{py[2]}}:
     extends: .pytest
     image: pymor/testing:{{py}}
     stage: test
@@ -74,7 +74,7 @@ docs:
     script: .ci/gitlab/submit.bash
 
 {%- for py, m in matrix if m == 'Vanilla' %}
-submit {{m}} {{py}}:
+submit {{m}} {{py[0]}} {{py[2]}}:
     extends: .submit
     image: pymor/python:{{py}}
     dependencies:
@@ -83,7 +83,7 @@ submit {{m}} {{py}}:
         PYMOR_PYTEST_MARKER: "{{m}}"
 {%- endfor %}
 
-submit numpy 3.6:
+submit numpy 3 6:
     extends: .submit
     image: pymor/python:3.6
     dependencies:
@@ -124,7 +124,7 @@ verify setup.py:
         name: unsafe
 
 {%- for OS in testos %}
-pip {{OS.replace('_', ' ')}}:
+pip {{loop.index}}/{{loop.length}}:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/{{OS}}/Dockerfile .
@@ -161,7 +161,7 @@ repo2docker:
 
 {%- for PY in pythons %}
 {%- for ML in [1, 2010] %}
-wheel {{ML}} {{PY}}:
+wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
     extends: .wheel
     variables:
         PYVER: "{{PY}}"
