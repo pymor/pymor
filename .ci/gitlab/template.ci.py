@@ -16,6 +16,8 @@ stages:
             - stuck_or_timeout_failure
             - api_failure
     only: ['branches', 'tags', 'triggers', 'merge-requests']
+    except:
+        - /^staging/.*$/i
 
 .pytest:
     extends: .test_base
@@ -70,6 +72,7 @@ docs:
         name: safe
     except:
         - /^github\/PR_.*$/
+        - /^staging/.*$/i
     stage: deploy
     script: .ci/gitlab/submit.bash
 
@@ -78,7 +81,7 @@ submit {{m}} {{py[0]}} {{py[2]}}:
     extends: .submit
     image: pymor/python:{{py}}
     dependencies:
-        - {{m}} {{py}}
+        - {{m}} {{py[0]}} {{py[2]}}
     variables:
         PYMOR_PYTEST_MARKER: "{{m}}"
 {%- endfor %}
@@ -87,7 +90,7 @@ submit numpy 3 6:
     extends: .submit
     image: pymor/python:3.6
     dependencies:
-        - numpy 3.6
+        - numpy 3 6
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
 
@@ -103,6 +106,7 @@ verify setup.py:
 .docker-in-docker:
     tags:
       - docker-in-docker
+    extends: .test_base
     retry:
         max: 2
         when:
