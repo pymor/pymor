@@ -40,7 +40,7 @@ if __name__ == '__main__':
             domain=RectDomain([[0., 0.], [1., 1.]], left='robin', right='robin', top='robin', bottom='robin'),
             diffusion=ConstantFunction(1., 2),
             robin_data=(ConstantFunction(1., 2), ExpressionFunction('(x[...,0] < 1e-10) * 1.', 2)),
-            functionals={'output': ('l2_boundary', ExpressionFunction('(x[...,0] > (1 - 1e-10)) * 1.', 2))}
+            outputs=[('l2_boundary', ExpressionFunction('(x[...,0] > (1 - 1e-10)) * 1.', 2))]
         ),
         ConstantFunction(0., 2),
         T=1.

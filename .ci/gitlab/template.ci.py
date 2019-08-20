@@ -188,4 +188,4 @@ pythons = ['3.6', '3.7']
 marker = ["Vanilla", "PIP_ONLY", "NOTEBOOKS"]
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = list(product(pythons, marker))
-    yml.write(tpl.render(matrix=matrix,testos=['debian_stretch', 'debian_buster', 'debian_testing', 'centos_7'], pythons=pythons))
+    yml.write(tpl.render(matrix=matrix,testos=['debian_buster', 'debian_testing', 'centos_7'], pythons=pythons))
