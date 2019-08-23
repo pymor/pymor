@@ -6,6 +6,7 @@
 
 import cython
 cimport numpy as np
+from scipy.sparse import csr_matrix
 
 
 @cython.boundscheck(False)
@@ -56,3 +57,73 @@ def isub_masked(U, V, np.ndarray[np.int32_t, ndim=1] U_ind):
             raise IndexError('Index is too large!')
         for k in xrange(dim):
             UU[<unsigned int> indi, k] -= VV[i, k]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def set_unit_rows_cols(mat, np.ndarray[np.int32_t] indices):
+
+    if not isinstance(mat, csr_matrix):
+        raise NotImplementedError('Only csr_matrices are supported!')
+
+    M, N = mat.shape
+    if M != N:
+        raise ValueError('matrix has to be square')
+
+    result = _set_unit_rows_cols_csr(mat.data, mat.indices, mat.indptr, M, N, indices)
+
+    if result == -1:
+        raise ValueError('matrix has to be square')
+    elif result == -2:
+        raise IndexError('missing diagonal entry in sparsity pattern')
+    elif result != 0:
+        raise RuntimeError('unknown problem occurred')
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef int _set_unit_rows_cols_csr(
+        np.ndarray[np.double_t] data, np.ndarray[np.int32_t] indcs, np.ndarray[np.int32_t] indptr,
+        np.int32_t M, np.int32_t N,
+        np.ndarray[np.int32_t] indices):
+
+    if M != N:
+        return -1
+
+    cdef np.int32_t i, j, m, n, index, len_indices
+    cdef bint clear_row, clear_col, diagonal_found
+    len_indices = indices.shape[0]
+
+    for m in range(M):
+        clear_row = False
+        for i in range(len_indices):
+            index = indices[i]
+            if m == index:
+                clear_row = True
+                break
+        if clear_row:
+            diagonal_found = False
+            for j in range(indptr[m], indptr[m + 1]):
+                n = indcs[j]
+                if n == m:
+                    data[j] = 1.
+                    diagonal_found = True
+                else:
+                    data[j] = 0.
+            if not diagonal_found:
+                return -2
+        else: # we still need to clear all column entries in this row which are in indices
+            for j in range(indptr[m], indptr[m + 1]):
+                n = indcs[j]
+                clear_col = False
+                for i in range(len_indices):
+                    index = indices[i]
+                    if n == index:
+                        clear_col = True
+                        break
+                if clear_col:
+                    if n == m:
+                        data[j] = 1.
+                    else:
+                        data[j] = 0.
+    return 0
