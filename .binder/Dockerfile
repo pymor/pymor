@@ -25,10 +25,13 @@ USER root
 RUN useradd -d /home/pymor --shell /bin/bash -u ${NB_UID} -o -c "" -m ${NB_USER} && \
     chown -R ${NB_USER} /home/pymor /pymor/
 
+# the vispy/pythreejs/k3d need npm/nodejs installed for the jupter lab extension
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
+    &&  apt update && apt install nodejs
+
 # at this point setup.py exists only in image_binder
 # for the dev image it's only available via the mount at runtime
 ADD requirements*.txt /tmp/
-ADD .binder/ipython_kernel_config.py /etc/ipython/
 RUN /bin/bash -c "pip install jupyterlab && \
     pip install -r /tmp/requirements-optional.txt && \
     jupyter nbextension install --py --symlink --sys-prefix pythreejs && \
@@ -36,6 +39,7 @@ RUN /bin/bash -c "pip install jupyterlab && \
     jupyter labextension install jupyter-threejs && \
     [[ -e /pymor/setup.py ]] && pip install /pymor || echo 'no install needed'"
 ADD .binder/dev-entrypoint.bash /usr/local/bin/
+ADD .binder/ipython_kernel_config.py /etc/ipython/
 USER ${NB_USER}
 
 ENV JUPYTER_TOKEN=${PYMOR_JUPYTER_TOKEN} \
