@@ -462,11 +462,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def dot(self, other):
         assert self.space == other.space
-        R = np.empty((len(self._list), len(other)))
-        for i, a in enumerate(self._list):
-            for j, b in enumerate(other._list):
-                R[i, j] = a.dot(b)
-        return R
+        return np.array([[a.dot(b) for b in other._list] for a in self._list]).reshape((len(self), len(other)))
 
     def pairwise_dot(self, other):
         assert self.space == other.space
@@ -477,11 +473,15 @@ class ListVectorArray(VectorArrayInterface):
         if product is not None:
             return super().gramian(product)
         l = len(self._list)
-        R = np.empty((l, l))
+        R = [[0.] * l for _ in range(l)]
         for i in range(l):
             for j in range(i, l):
-                R[i, j] = self._list[i].dot(self._list[j])
-                R[j, i] = R[i, j]
+                R[i][j] = self._list[i].dot(self._list[j])
+                if i == j:
+                    R[i][j] = R[i][j].real
+                else:
+                    R[j][i] = R[i][j].conjugate()
+        R = np.array(R)
         return R
 
     def lincomb(self, coefficients):
@@ -519,15 +519,8 @@ class ListVectorArray(VectorArrayInterface):
         assert isinstance(dof_indices, list) and (len(dof_indices) == 0 or min(dof_indices) >= 0) \
             or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
                 and (len(dof_indices) == 0 or np.min(dof_indices) >= 0))
-
-        R = np.empty((len(self), len(dof_indices)))
-
         assert len(self) > 0 or len(dof_indices) == 0 or max(dof_indices) < self.dim
-
-        for k, v in enumerate(self._list):
-            R[k] = v.dofs(dof_indices)
-
-        return R
+        return np.array([v.dofs(dof_indices) for v in self._list]).reshape((len(self), len(dof_indices)))
 
     def amax(self):
         assert self.dim > 0
