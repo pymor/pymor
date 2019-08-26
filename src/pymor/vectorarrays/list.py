@@ -613,7 +613,7 @@ class ListVectorSpace(VectorSpaceInterface):
 
     @make_array.instancemethod
     def make_array(self, obj):
-        return ListVectorArray([self.make_vector(v) for v in obj], self)
+        return ListVectorArray([v if isinstance(v, VectorInterface) else self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
     def from_numpy(cls, data, id=None, ensure_copy=False):
