@@ -14,7 +14,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
 
     For given parameter `mu`, this functional evaluates to ::
 
-        mu[component_name][coordinates]
+        mu[component_name][index]
 
 
     Parameters
@@ -23,24 +23,24 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         The name of the parameter component to return.
     component_shape
         The shape of the parameter component.
-    coordinates
+    index
         See above.
     name
         Name of the functional.
     """
 
-    def __init__(self, component_name, component_shape, coordinates=(), name=None):
+    def __init__(self, component_name, component_shape, index=(), name=None):
         if isinstance(component_shape, Number):
             component_shape = () if component_shape == 0 else (component_shape,)
-        assert len(coordinates) == len(component_shape)
-        assert not component_shape or coordinates < component_shape
+        assert len(index) == len(component_shape)
+        assert not component_shape or index < component_shape
 
         self.__auto_init(locals())
         self.build_parameter_type({component_name: component_shape})
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
-        return mu[self.component_name].item(self.coordinates)
+        return mu[self.component_name].item(self.index)
 
 
 class GenericParameterFunctional(ParameterFunctionalInterface):

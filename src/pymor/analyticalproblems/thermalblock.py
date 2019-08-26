@@ -44,7 +44,7 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
     def parameter_functional_factory(ix, iy):
         return ProjectionParameterFunctional(component_name='diffusion',
                                              component_shape=(num_blocks[1], num_blocks[0]),
-                                             coordinates=(num_blocks[1] - iy - 1, ix),
+                                             index=(num_blocks[1] - iy - 1, ix),
                                              name=f'diffusion_{ix}_{iy}')
 
     def diffusion_function_factory(ix, iy):
