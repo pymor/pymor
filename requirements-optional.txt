@@ -17,5 +17,6 @@ pygmsh
 pyopengl
 pytest-cov
 pytest>=4.4
+pythreejs
 slycot==0.3.3
 sympy

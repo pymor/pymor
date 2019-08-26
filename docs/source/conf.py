@@ -48,8 +48,8 @@ if os.environ.get('READTHEDOCS', None) == 'True':
                     'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.cm',
                     'matplotlib.backends.backend_qt5agg', 'matplotlib.figure', 'matplotlib.pyplot',
                     'matplotlib.colors', 'pyvtk',
-                    'IPython', 'IPtyhon.core',
-                    'IPython.parallel', 'ipywidgets', 'pyvis',
+                    'IPython', 'IPtyhon.core', 'IPython.display',
+                    'IPython.parallel', 'ipywidgets', 'pyvis', 'pythreejs', 'pythreejs._version',
                     'sympy',
                     'pytest']
 

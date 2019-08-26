@@ -31,6 +31,9 @@ ADD requirements*.txt /tmp/
 ADD .binder/ipython_kernel_config.py /etc/ipython/
 RUN /bin/bash -c "pip install jupyterlab && \
     pip install -r /tmp/requirements-optional.txt && \
+    jupyter nbextension install --py --symlink --sys-prefix pythreejs && \
+    jupyter nbextension enable --py --sys-prefix pythreejs && \
+    jupyter labextension install jupyter-threejs && \
     [[ -e /pymor/setup.py ]] && pip install /pymor || echo 'no install needed'"
 ADD .binder/dev-entrypoint.bash /usr/local/bin/
 USER ${NB_USER}
