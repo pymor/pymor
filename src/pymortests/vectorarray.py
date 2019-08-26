@@ -863,9 +863,9 @@ def test_amax(vector_array):
         return
     for ind in valid_inds(v):
         max_inds, max_vals = v[ind].amax()
-        assert np.allclose(np.abs(max_vals), v[ind].sup_norm())
+        assert np.allclose(max_vals, v[ind].sup_norm())
         for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals):
-            assert np.allclose(max_val, v[[i]].dofs([max_ind]))
+            assert np.allclose(max_val, np.abs(v[[i]].dofs([max_ind])))
 
 
 # def test_amax_zero_dim(zero_dimensional_vector_space):
