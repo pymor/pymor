@@ -339,7 +339,10 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
             e1 = np.zeros((j+1,))
             e1[0] = inner_res_0
             for q in range(j):
-                hess[:(q+2), q] = hs[q]
+                hsq = np.array(hs[q])
+                common_dtype = np.promote_types(hess.dtype, hsq.dtype)
+                hess = hess.astype(common_dtype, copy=False)
+                hess[:(q+2), q] = hsq
 
             y, resids, rank, s = lstsq(hess, e1)
             inner_res = np.linalg.norm(np.dot(hess, y) - e1)
