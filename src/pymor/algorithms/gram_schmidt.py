@@ -85,7 +85,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
                     p = A[j].pairwise_inner(A[i], product)[0]
                     A[i].axpy(-p, A[j])
                     common_dtype = np.promote_types(R.dtype, type(p))
-                    R = R.astype(common_dtype)
+                    R = R.astype(common_dtype, copy=False)
                     R[j, i] += p
 
                 # calculate new norm
