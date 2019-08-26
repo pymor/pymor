@@ -23,12 +23,18 @@ def random_integers(count, seed):
 
 def numpy_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
-    return NumpyVectorSpace.from_numpy(np.random.random((length, dim)))
+    if np.random.randint(2):
+        return NumpyVectorSpace.from_numpy(np.random.random((length, dim)))
+    else:
+        return NumpyVectorSpace.from_numpy(np.random.random((length, dim)) + np.random.random((length, dim)) * 1j)
 
 
 def numpy_list_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
-    return NumpyListVectorSpace.from_numpy(np.random.random((length, dim)))
+    if np.random.randint(2):
+        return NumpyListVectorSpace.from_numpy(np.random.random((length, dim)))
+    else:
+        return NumpyListVectorSpace.from_numpy(np.random.random((length, dim)) + np.random.random((length, dim)) * 1j)
 
 
 def block_vector_array_factory(length, dims, seed):
@@ -44,12 +50,18 @@ if config.HAVE_FENICS:
                      for ni in [1, 10, 32, 100]]
 
     def fenics_vector_array_factory(length, space, seed):
-        V = fenics_spaces[space]
-        U = FenicsVectorSpace(V).zeros(length)
-        dim = U.dim
+        V = FenicsVectorSpace(fenics_spaces[space])
+        U = V.zeros(length)
+        dim = V.dim
         np.random.seed(seed)
         for v, a in zip(U._list, np.random.random((length, dim))):
-            v.impl[:] = a
+            v.real_part.impl[:] = a
+        if np.random.randint(2):
+            UU = V.zeros(length)
+            for v, a in zip(UU._list, np.random.random((length, dim))):
+                v.real_part.impl[:] = a
+            for u, uu in zip(U._list, UU._list):
+                u.imag_part = uu.real_part
         return U
 
     fenics_vector_array_factory_arguments = \
@@ -98,6 +110,12 @@ if config.HAVE_NGSOLVE:
         np.random.seed(seed)
         for v, a in zip(U._list, np.random.random((length, dim))):
             v.to_numpy()[:] = a
+        if np.random.randint(2):
+            UU = NGSOLVE_spaces[dim].zeros(length)
+            for v, a in zip(UU._list, np.random.random((length, dim))):
+                v.real_part.to_numpy()[:] = a
+            for u, uu in zip(U._list, UU._list):
+                u.imag_part = uu.real_part
         return U
 
 
