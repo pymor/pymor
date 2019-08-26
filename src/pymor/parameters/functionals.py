@@ -126,40 +126,27 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     functions['np'] = np
 
     def __init__(self, expression, parameter_type, name=None, derivative_expressions=None):
+        self.expression = expression
+        code = compile(expression, '<expression>', 'eval')
+        functions = self.functions
+
+        def get_lambda(exp_code):
+            return lambda mu: eval(exp_code, functions, mu)
+
+        exp_mapping = get_lambda(code)
         if derivative_expressions is None:
-            self.expression = expression
-            code = compile(expression, '<expression>', 'eval')
-            functions = self.functions
-            mapping = lambda mu: eval(code, functions, mu)
-            super().__init__(mapping, parameter_type, name)
+            super().__init__(exp_mapping, parameter_type, name)
             self.__auto_init(locals())
         else:
-            self.expression = expression
             self.derivative_expressions = derivative_expressions
-            functions = self.functions
-            code_exp = compile(expression, '<expression>', 'eval')
-            exp_mapping = lambda mu: eval(code_exp, functions, mu)
-            derivative_mappings = {}
-            def get_lambda(exp_code):
-                return lambda mu: eval(exp_code, functions, mu)
-            for (key,exp) in derivative_expressions.items():
+            derivative_mappings = derivative_expressions.copy()
+            for (key,exp) in derivative_mappings.items():
                 exp_array = np.array(exp, dtype=object)
-                mappings = np.empty(exp_array.shape, dtype=object)
-                if exp_array.shape == ():
-                    exp_code = compile(exp, '<expression>', 'eval')
+                for exp in np.nditer(exp_array, op_flags=['readwrite'], flags= ['refs_ok']):
+                    exp_code = compile(str(exp), '<expression>', 'eval')
                     mapping = get_lambda(exp_code)
-                    mappings = np.array(mapping)
-                elif np.shape(exp_array.shape) == (1,):
-                    for x, exp_value in np.ndenumerate(exp_array):
-                        exp_code = compile(exp_value, '<expression>', 'eval')
-                        mapping = get_lambda(exp_code)
-                        mappings[x] = mapping
-                elif np.shape(exp_array.shape) == (2,):
-                    for (x,y), exp_value in np.ndenumerate(exp_array):
-                        exp_code = compile(exp_value, '<expression>', 'eval')
-                        mapping = get_lambda(exp_code)
-                        mappings[x][y] = mapping
-                derivative_mappings[key] = mappings
+                    exp[...] = mapping
+                derivative_mappings[key] = exp_array
             super().__init__(exp_mapping, parameter_type, name, derivative_mappings)
             self.__auto_init(locals())
 
