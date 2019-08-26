@@ -29,7 +29,13 @@ def test_almost_equal(compatible_vector_array_pair):
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)):
             for n, o in [('sup', np.inf), ('l1', 1), ('l2', 2)]:
-                r = almost_equal(v1[ind1], v2[ind2], norm=n)
+                try:
+                    r = almost_equal(v1[ind1], v2[ind2], norm=n)
+                except NotImplementedError as e:
+                    if n == 'l1':
+                        pytest.xfail('l1_norm not implemented')
+                    else:
+                        raise e
                 assert isinstance(r, np.ndarray)
                 assert r.shape == (v1.len_ind(ind1),)
                 if dv1 is not None:
@@ -67,7 +73,13 @@ def test_almost_equal_self(vector_array):
     for ind in valid_inds(v):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)):
             for n in ['sup', 'l1', 'l2']:
-                r = almost_equal(v[ind], v[ind], norm=n)
+                try:
+                    r = almost_equal(v[ind], v[ind], norm=n)
+                except NotImplementedError as e:
+                    if n == 'l1':
+                        pytest.xfail('l1_norm not implemented')
+                    else:
+                        raise e
                 assert isinstance(r, np.ndarray)
                 assert r.shape == (v.len_ind(ind),)
                 assert np.all(r)

@@ -486,7 +486,6 @@ def test_axpy(compatible_vector_array_pair):
             assert np.all(almost_equal(c1[ind1_complement], v1[ind1_complement]))
             assert np.all(almost_equal(c2, v2))
             assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * (1. + 1e-10))
-            assert np.all(c1[ind1].l1_norm() <= (v1[ind1].l1_norm() + abs(a) * v2[ind2].l1_norm()) * (1. + 1e-10))
             assert np.all(c1[ind1].l2_norm() <= (v1[ind1].l2_norm() + abs(a) * v2[ind2].l2_norm()) * (1. + 1e-10))
             try:
                 x = v1.to_numpy(True)
@@ -531,7 +530,6 @@ def test_axpy_one_x(compatible_vector_array_pair):
             assert np.all(almost_equal(c1[ind1_complement], v1[ind1_complement]))
             assert np.all(almost_equal(c2, v2))
             assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * (1. + 1e-10))
-            assert np.all(c1[ind1].l1_norm() <= (v1[ind1].l1_norm() + abs(a) * v2[ind2].l1_norm()) * (1. + 1e-10))
             assert np.all(c1[ind1].l2_norm() <= (v1[ind1].l2_norm() + abs(a) * v2[ind2].l2_norm()) * (1. + 1e-10))
             try:
                 x = v1.to_numpy(True)
@@ -574,7 +572,6 @@ def test_axpy_self(vector_array):
             assert len(c) == len(v)
             assert np.all(almost_equal(c[ind1_complement], v[ind1_complement]))
             assert np.all(c[ind1].sup_norm() <= v[ind1].sup_norm() + abs(a) * v[ind2].sup_norm() * (1. + 1e-10))
-            assert np.all(c[ind1].l1_norm() <= (v[ind1].l1_norm() + abs(a) * v[ind2].l1_norm()) * (1. + 1e-10))
             try:
                 x = v.to_numpy(True)
                 if isinstance(ind1, Number):
@@ -722,7 +719,10 @@ def test_l1_norm(vector_array):
     v = vector_array
     for ind in valid_inds(v):
         c = v.copy()
-        norm = c[ind].l1_norm()
+        try:
+            norm = c[ind].l1_norm()
+        except NotImplementedError:
+            pytest.xfail('l1_norm not implemented')
         assert isinstance(norm, np.ndarray)
         assert norm.shape == (v.len_ind(ind),)
         assert np.all(norm >= 0)
