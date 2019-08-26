@@ -93,6 +93,17 @@ class VectorInterface(BasicInterface):
         result.scal(-1)
         return result
 
+    @property
+    def real(self):
+        return self.copy()
+
+    @property
+    def imag(self):
+        return None
+
+    def conj(self):
+        return self.copy()
+
 
 class CopyOnWriteVector(VectorInterface):
 
@@ -207,6 +218,17 @@ class NumpyVector(CopyOnWriteVector):
         max_ind = np.argmax(A)
         max_val = A[max_ind]
         return max_ind, max_val
+
+    @property
+    def real(self):
+        return self.__class__(self._array.real.copy())
+
+    @property
+    def imag(self):
+        return self.__class__(self._array.imag.copy())
+
+    def conj(self):
+        return self.__class__(self._array.conj())
 
 
 class ListVectorArray(VectorArrayInterface):
@@ -393,6 +415,21 @@ class ListVectorArray(VectorArrayInterface):
             MI[k], MV[k] = v.amax()
 
         return MI, MV
+
+    @property
+    def real(self):
+        return self.__class__([v.real for v in self._list], self.space)
+
+    @property
+    def imag(self):
+        # note that VectorInterface.imag is allowed to return None in case
+        # of a real vector, so we have to check for that.
+        # returning None is allowed as ComplexifiedVector does not know
+        # how to create a new zero vector.
+        return self.__class__([v.imag or self.space.zero_vector() for v in self._list], self.space)
+
+    def conj(self):
+        return self.__class__([v.conj() for v in self._list], self.space)
 
     def __str__(self):
         return f'ListVectorArray of {len(self._list)} of space {self.space}'
