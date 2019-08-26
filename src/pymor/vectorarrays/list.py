@@ -296,22 +296,34 @@ class NumpyVector(CopyOnWriteVector):
         self._array = self._array.copy()
 
     def _scal(self, alpha):
-        self._array *= alpha
+        try:
+            self._array *= alpha
+        except TypeError:  # e.g. when scaling real array by complex alpha
+            self._array = self._array * alpha
 
     def _axpy(self, alpha, x):
         assert self.dim == x.dim
         if alpha == 0:
             return
         if alpha == 1:
-            self._array += x._array
+            try:
+                self._array += x._array
+            except TypeError:
+                self._array = self._array + x._array
         elif alpha == -1:
-            self._array -= x._array
+            try:
+                self._array -= x._array
+            except TypeError:
+                self._array = self._array - x._array
         else:
-            self._array += x._array * alpha
+            try:
+                self._array += x._array * alpha
+            except TypeError:
+                self._array = self._array + x._array * alpha
 
     def dot(self, other):
         assert self.dim == other.dim
-        return np.sum(self._array * other._array)
+        return np.sum(self._array.conj() * other._array)
 
     def l1_norm(self):
         return np.sum(np.abs(self._array))
@@ -329,7 +341,7 @@ class NumpyVector(CopyOnWriteVector):
         A = np.abs(self._array)
         max_ind = np.argmax(A)
         max_val = A[max_ind]
-        return max_ind, max_val
+        return max_ind, np.abs(max_val)
 
     @property
     def real(self):
