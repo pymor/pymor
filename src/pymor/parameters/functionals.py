@@ -218,3 +218,26 @@ class ConjugateParameterFunctional(ParameterFunctionalInterface):
 
     def partial_derivative(self, component, coordinates=None):
         return NotImplemented
+
+
+class ConstantParameterFunctional(ParameterFunctionalInterface):
+    """|ParameterFunctional| returning a constant value for each parameter.
+
+
+    Parameters
+    ----------
+    constant_value
+        value of the functional
+    name
+        Name of the functional.
+    """
+
+    def __init__(self, constant_value, name=None):
+        self.constant_value = constant_value
+        self.__auto_init(locals())
+
+    def evaluate(self, mu=None):
+        return self.constant_value
+
+    def d_mu(self, component, index=()):
+        return self.with_(constant_value=0, name=self.name + '_d_mu')
