@@ -70,6 +70,18 @@ def set_unit_rows_cols(mat, np.ndarray[np.int32_t] indices):
     if M != N:
         raise ValueError('matrix has to be square')
 
+    cdef np.int32_t i, index, min_index, max_index
+    min_index = 1
+    max_index = -1
+    for i in range(indices.shape[0]):
+        index = indices[i]
+        min_index = min(min_index, index)
+        max_index = max(max_index, index)
+    if min_index < 0:
+        raise ValueError('indices have to be positive')
+    if max_index > M:
+        raise ValueError('indices to large')
+
     result = _set_unit_rows_cols_csr(mat.data, mat.indices, mat.indptr, M, N, indices)
 
     if result == -1:
@@ -96,7 +108,7 @@ cdef int _set_unit_rows_cols_csr(
 
     for m in range(M):
         clear_row = False
-        for i in range(len_indices):
+        for i in range(len_indices): # not optimal, order n log(n), increment m and i simultaneously
             index = indices[i]
             if m == index:
                 clear_row = True
@@ -116,7 +128,7 @@ cdef int _set_unit_rows_cols_csr(
             for j in range(indptr[m], indptr[m + 1]):
                 n = indcs[j]
                 clear_col = False
-                for i in range(len_indices):
+                for i in range(len_indices): # not optimal, see above
                     index = indices[i]
                     if n == index:
                         clear_col = True
