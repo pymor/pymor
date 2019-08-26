@@ -201,7 +201,7 @@ def discretize_ngsolve():
     h1_0_op = op.assemble([1] * len(coeffs)).with_(name='h1_0_semi')
 
     F = space.zeros()
-    F._list[0].impl.vec.data = f.vec
+    F._list[0].real_part.impl.vec.data = f.vec
     F = VectorOperator(F)
 
     return StationaryModel(op, F, visualizer=NGSolveVisualizer(mesh, V),
