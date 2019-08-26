@@ -38,7 +38,7 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def partial_derivative(self, component, coordinates=None):
+    def d_mu(self, component, index=()):
         """returns the derivative of the functional as a new ParameterFunctional."""
         pass
 

@@ -42,13 +42,13 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         mu = self.parse_parameter(mu)
         return mu[self.component_name].item(self.index)
 
-    def partial_derivative(self, component, coordinates=None):
-        if not isinstance(coordinates, tuple):
-            coordinates = (coordinates,)
-        if component == self.component_name and coordinates == self.coordinates:
-            return ExpressionParameterFunctional('1', self.parameter_type, 'partial_derivative')
+    def d_mu(self, component, index=()):
+        if not isinstance(index, tuple):
+            index = (index,)
+        if component == self.component_name and index == self.coordinates:
+            return ConstantParameterFunctional(1, name=self.name + '_d_mu')
         else:
-            return ExpressionParameterFunctional('0', self.parameter_type, 'partial_derivative')
+            return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
 
 class GenericParameterFunctional(ParameterFunctionalInterface):
@@ -84,11 +84,11 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         else:
             return value
 
-    def partial_derivative(self, component, coordinates=None):
+    def d_mu(self, component, index=()):
         if self.derivative_mappings is None:
             raise ValueError('You must provide a dict of expressions for the partial derivatives')
         else:
-            return GenericParameterFunctional(self.derivative_mappings[component][coordinates], self.parameter_type,
+            return GenericParameterFunctional(self.derivative_mappings[component][index], self.parameter_type,
                                               'partial_derivative')
 
 
@@ -112,7 +112,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     name
         The name of the functional.
 
-    jacobian_expression
+    derivative_expressions
         A dict of lists of Python expression for the partial derivative of each parameter component
     """
 
@@ -176,8 +176,8 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
         mu = self.parse_parameter(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
-    def partial_derivative(self, component, coordinates=None):
-        return NotImplemented
+    def d_mu(self, component, index=()):
+        raise NotImplementedError
 
 class ConjugateParameterFunctional(ParameterFunctionalInterface):
     """Conjugate of a given |ParameterFunctional|
@@ -203,8 +203,8 @@ class ConjugateParameterFunctional(ParameterFunctionalInterface):
         mu = self.parse_parameter(mu)
         return np.conj(self.functional.evaluate(mu))
 
-    def partial_derivative(self, component, coordinates=None):
-        return NotImplemented
+    def d_mu(self, component, index=()):
+        raise NotImplementedError
 
 
 class ConstantParameterFunctional(ParameterFunctionalInterface):

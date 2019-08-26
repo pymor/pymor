@@ -149,9 +149,9 @@ class OperatorBase(OperatorInterface):
     def as_source_array(self, mu=None):
         return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
-    def mu_derivative(self, component, coordinates=None):
+    def d_mu(self, component, index=()):
         if self.parametric:
-            return NotImplemented
+            raise NotImplementedError
         else:
             return ZeroOperator(self.range, self.source)
 
