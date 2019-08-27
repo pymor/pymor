@@ -67,8 +67,9 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         The |ParameterType| of the |Parameters| the functional expects.
     name
         The name of the functional.
-    derivative_mapping
-        The partial derivative function to wrap
+    derivative_mappings
+        A dict containing all partial derivative of each component and index in the
+        |ParameterType| with the signature `derivative_mappings[component][index](mu)`
     """
 
     def __init__(self, mapping, parameter_type, name=None, derivative_mappings=None):
@@ -134,11 +135,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
             return lambda mu: eval(exp_code, functions, mu)
 
         exp_mapping = get_lambda(code)
-        if derivative_expressions is None:
-            super().__init__(exp_mapping, parameter_type, name)
-            self.__auto_init(locals())
-        else:
-            self.derivative_expressions = derivative_expressions
+        if derivative_expressions is not None:
             derivative_mappings = derivative_expressions.copy()
             for (key,exp) in derivative_mappings.items():
                 exp_array = np.array(exp, dtype=object)
@@ -147,8 +144,10 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
                     mapping = get_lambda(exp_code)
                     exp[...] = mapping
                 derivative_mappings[key] = exp_array
-            super().__init__(exp_mapping, parameter_type, name, derivative_mappings)
-            self.__auto_init(locals())
+        else:
+            derivative_mappings = None
+        super().__init__(exp_mapping, parameter_type, name, derivative_mappings)
+        self.__auto_init(locals())
 
     def __reduce__(self):
         return (ExpressionParameterFunctional,

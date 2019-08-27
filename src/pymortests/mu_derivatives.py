@@ -99,8 +99,8 @@ def test_d_mu_of_LincombOperator():
 
     operator = LincombOperator(operators, coefficients)
 
-    op_sensitivity_to_first_mu = operator.d_mu('mu', (0,))
-    op_sensitivity_to_second_mu = operator.d_mu('mu', (1,))
+    op_sensitivity_to_first_mu = operator.d_mu('mu', 0)
+    op_sensitivity_to_second_mu = operator.d_mu('mu', 1)
     op_sensitivity_to_nu = operator.d_mu('nu', ())
 
     eval_mu_1 = op_sensitivity_to_first_mu.evaluate_coefficients(mu)

@@ -153,7 +153,7 @@ class OperatorBase(OperatorInterface):
         if self.parametric:
             raise NotImplementedError
         else:
-            return ZeroOperator(self.range, self.source)
+            return ZeroOperator(self.range, self.source, name=self.name + '_d_mu')
 
 class ProjectedOperator(OperatorBase):
     """Generic |Operator| representing the projection of an |Operator| to a subspace.
