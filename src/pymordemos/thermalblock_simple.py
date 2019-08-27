@@ -117,7 +117,7 @@ def _discretize_fenics():
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
     parameter_functionals = [ProjectionParameterFunctional(component_name='diffusion',
                                                            component_shape=(YBLOCKS, XBLOCKS),
-                                                           coordinates=(YBLOCKS - y - 1, x))
+                                                           index=(YBLOCKS - y - 1, x))
                              for x in range(XBLOCKS) for y in range(YBLOCKS)]
 
     # wrap operators
