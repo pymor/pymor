@@ -55,3 +55,18 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
 
     def __neg__(self):
         return self * (-1.)
+
+    def _check_and_parse_input(self, component, index):
+        # check whether component is in parameter_type
+        if not component in self.parameter_type:
+            return False, None
+        # check whether index has the correct shape
+        if isinstance(index, Number):
+            index = (index,)
+        index = tuple(index)
+        for idx in index:
+            assert isinstance(idx, Number)
+        shape = self.parameter_type[component]
+        for i,idx in enumerate(index):
+            assert idx < shape[i], 'wrong input `index` given'
+        return True, index

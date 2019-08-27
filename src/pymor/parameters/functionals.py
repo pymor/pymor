@@ -43,12 +43,11 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         return mu[self.component_name].item(self.index)
 
     def d_mu(self, component, index=()):
-        if not isinstance(index, tuple):
-            index = (index,)
-        if component == self.component_name and index == self.coordinates:
-            return ConstantParameterFunctional(1, name=self.name + '_d_mu')
-        else:
-            return ConstantParameterFunctional(0, name=self.name + '_d_mu')
+        check, index = self._check_and_parse_input(component, index)
+        if check:
+            if component == self.component_name and index == self.coordinates:
+                return ConstantParameterFunctional(1, name=self.name + '_d_mu')
+        return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
 
 class GenericParameterFunctional(ParameterFunctionalInterface):
@@ -86,11 +85,18 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
             return value
 
     def d_mu(self, component, index=()):
-        if self.derivative_mappings is None:
-            raise ValueError('You must provide a dict of expressions for the partial derivatives')
-        else:
-            return GenericParameterFunctional(self.derivative_mappings[component][index], self.parameter_type,
-                                              'partial_derivative')
+        check, index = self._check_and_parse_input(component, index)
+        if check:
+            if self.derivative_mappings is None:
+                raise ValueError('You must provide a dict of expressions for all \
+                                  partial derivatives in self.parameter_type')
+            else:
+                if component in self.derivative_mappings:
+                    return GenericParameterFunctional(self.derivative_mappings[component][index],
+                                                      self.parameter_type, name=self.name + '_d_mu')
+                else:
+                    raise ValueError('derivative mappings does not contain item {}'.format(component))
+        return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
 
 class ExpressionParameterFunctional(GenericParameterFunctional):
