@@ -155,6 +155,18 @@ class LincombOperator(OperatorBase):
         else:
             return jac
 
+    def d_mu(self, component, index=()):
+        for op in self.operators:
+            if op.parametric:
+                raise NotImplementedError
+        derivative_coefficients = []
+        for coef in self.coefficients:
+            if isinstance(coef,Parametric):
+                derivative_coefficients.append(coef.d_mu(component, index))
+            else:
+                derivative_coefficients.append(0.)
+        return self.with_(coefficients=derivative_coefficients, name=self.name + '_d_mu')
+
     def apply_inverse(self, V, mu=None, least_squares=False):
         if len(self.operators) == 1:
             if self.coefficients[0] == 0.:
