@@ -15,6 +15,8 @@ class Deprecated:
     """
 
     def __init__(self, alt='no alternative given'):
+        if hasattr(alt, '__qualname__'):
+            alt = f'{alt.__module__}.{alt.__qualname__}'
         self._alt = alt
 
     def __call__(self, func):
@@ -22,11 +24,12 @@ class Deprecated:
 
         @functools.wraps(func)
         def new_func(*args, **kwargs):
+            func_name = f'{func.__module__}.{func.__qualname__}'
             frame = inspect.currentframe().f_back
-            msg = f'DeprecationWarning. Call to deprecated function {func.__name__,} in ' \
+            msg = f'DeprecationWarning. Call to deprecated function {func_name}  in ' \
                   f'{frame.f_code.co_filename}:{frame.f_code.co_firstlineno}\n' \
                   f'Use {self._alt} instead'
-            warnings.warn(msg, DeprecationWarning)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
             return func(*args, **kwargs)
         return new_func
 
