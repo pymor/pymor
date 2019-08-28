@@ -18,6 +18,7 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 # we should try to limit ourselves to webgl 1.0 here since 2.0 (draft) is not as widely supported
 # https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#Browser_compatibility
+# version directives and such are preprended by threejs
 EL_VS = """
     // Attribute variable that contains coordinates of the vertices.
     attribute float vertex_index;
@@ -27,12 +28,8 @@ EL_VS = """
 
     void main()
     {
-        int vi = int(vertex_index);
-        ivec2 coord = ivec2(vi, 0.);
-        // texcoord = texelFetch(data, coord, 0);
         texcoord = data;
-        //texcoord = vertex_index; 
-         gl_Position =  projectionMatrix * 
+        gl_Position =  projectionMatrix * 
                         modelViewMatrix * 
                         vec4(position,1.0);
     }
@@ -49,6 +46,13 @@ EL_FS = """
     """
 
 
+def _normalize(u):
+    # rescale to be in [0,1], scale nan to be the smallest value
+    u -= np.nanmin(u)
+    u /= np.nanmax(u)
+    return np.nan_to_num(u)
+
+
 def _make_rendere(U, grid, render_size, color_map, title, vmin=None, vmax=None,
              bounding_box=([0, 0], [1, 1]), codim=2,
              ):
@@ -63,16 +67,14 @@ def _make_rendere(U, grid, render_size, color_map, title, vmin=None, vmax=None,
     combined_bounds = np.hstack(bounding_box)
 
     absx = np.abs(combined_bounds[0] - combined_bounds[3])
-    c_dist = np.sin((90 - fov_angle) * np.pi / 180) * absx / (2 * np.sin(fov_angle * np.pi / 180))
+    not_mathematical_distance_scaling = 1.2
+    c_dist = np.sin((90 - fov_angle/2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle/2 * np.pi / 180)
+    c_dist *= not_mathematical_distance_scaling
     xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
     yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
     zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
-    print(f'x{xhalf} - y{yhalf} - z{zhalf} - c {c_dist}')
 
     subentities, coordinates, entity_map = flatten_grid(grid)
-
-    bb = bounding_box
-    vsize = np.array([bb[1][0] - bb[0][0], bb[1][1] - bb[0][1]])
     data = (U if codim == 0 else U[:, entity_map]).astype(np.float32)
 
     if codim == 2:
@@ -90,12 +92,7 @@ def _make_rendere(U, grid, render_size, color_map, title, vmin=None, vmax=None,
 
     buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
     buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
-    def _normalize(u):
-        # rescale to be in [0,1], scale nan to be the smallest value
-        u -= np.nanmin(u)
-        u /= np.nanmax(u)
-        return np.nan_to_num(u)
-
+    data_attributes = [p3js.BufferAttribute(_normalize(u), normalized=True) for u in data]
 
     geo = p3js.BufferGeometry(
         index=buffer_faces,
@@ -108,27 +105,22 @@ def _make_rendere(U, grid, render_size, color_map, title, vmin=None, vmax=None,
     max_tex_size = 512
     cm = color_map(np.linspace(0,1, max_tex_size)).astype(np.float32)
     cm.resize((max_tex_size, 1, 4))
-    print(f' cm shape {cm.shape} {cm.dtype} -- {np.min(cm)} || {np.max(cm)}')
     color_map = p3js.DataTexture(cm, format='RGBAFormat',  width=max_tex_size, height=1, type='FloatType')
     uniforms=dict(
         colormap={'value': color_map, 'type': 'sampler2D'},
     )
-    material = p3js.ShaderMaterial(vertexShader=EL_VS, fragmentShader=EL_FS,
-                              uniforms=uniforms)
-    mesh = p3js.Mesh(position=[-xhalf, -yhalf, -zhalf],
-       geometry=geo,
-       material=material)
-
-    cam = p3js.PerspectiveCamera(aspect=render_size[0]/render_size[1], position=[xhalf, yhalf, zhalf + c_dist])
-    cam.lookAt([xhalf, yhalf, zhalf])
+    material = p3js.ShaderMaterial(vertexShader=EL_VS, fragmentShader=EL_FS, uniforms=uniforms)
+    mesh = p3js.Mesh( geometry=geo, material=material)
+    cam = p3js.PerspectiveCamera(aspect=render_size[0]/render_size[1], position=[xhalf, yhalf, zhalf + c_dist],
+                                 fov_angle=fov_angle)
     scene = p3js.Scene(
         children=([mesh, cam, p3js.AmbientLight(color='white', intensity=0.8)]),
-        background='blue')
-    assert np.allclose(vertices[:,-1], 0)
-    # print(repr(cam))
-
+        background='white')
+    controller = p3js.OrbitControls(controlling=cam, position=[xhalf, yhalf, zhalf + c_dist])
+    controller.target = [xhalf, yhalf, zhalf]
+    controller.exec_three_obj_method('update')
     renderer = p3js.Renderer(camera=cam, scene=scene,
-                             controls=[p3js.OrbitControls(controlling=cam)],
+                             controls=[controller],
                              width=render_size[0], height=render_size[1])
     return renderer
 
