@@ -242,7 +242,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def d_mu(self, component, index=()):
-        """Return the operators derivative with respect to a coordinate of a parameter component
+        """Return the operator's derivative with respect to an index of a parameter component.
 
         Parameters
         ----------
@@ -253,7 +253,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         Returns
         -------
-        New |Operator| with partial derivatives of the coefficients
+        New |Operator| representing the partial derivative.
         """
         pass
 

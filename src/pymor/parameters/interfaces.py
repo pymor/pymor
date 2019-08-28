@@ -39,7 +39,19 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def d_mu(self, component, index=()):
-        """returns the derivative of the functional as a new ParameterFunctional."""
+        """Return the functionals's derivative with respect to an index of a parameter component.
+
+        Parameters
+        ----------
+        component
+            Parameter component
+        index
+            index in the parameter component
+
+        Returns
+        -------
+        New |Parameter| functional representing the partial derivative.
+        """
         pass
 
     def __call__(self, mu=None):
@@ -58,7 +70,7 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric):
 
     def _check_and_parse_input(self, component, index):
         # check whether component is in parameter_type
-        if not component in self.parameter_type:
+        if component not in self.parameter_type:
             return False, None
         # check whether index has the correct shape
         if isinstance(index, Number):

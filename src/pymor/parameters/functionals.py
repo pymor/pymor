@@ -45,7 +45,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
     def d_mu(self, component, index=()):
         check, index = self._check_and_parse_input(component, index)
         if check:
-            if component == self.component_name and index == self.coordinates:
+            if component == self.component_name and index == self.index:
                 return ConstantParameterFunctional(1, name=self.name + '_d_mu')
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
@@ -67,7 +67,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
     name
         The name of the functional.
     derivative_mappings
-        A dict containing all partial derivative of each component and index in the
+        A dict containing all partial derivativess of each component and index in the
         |ParameterType| with the signature `derivative_mappings[component][index](mu)`
     """
 
@@ -120,7 +120,8 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         The name of the functional.
 
     derivative_expressions
-        A dict of lists of Python expression for the partial derivative of each parameter component
+        A dict containing a Python expression for the partial derivatives of each
+        parameter component.
     """
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
