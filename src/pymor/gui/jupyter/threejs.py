@@ -90,38 +90,18 @@ def _make_rendere(U, grid, render_size, color_map, title, vmin=None, vmax=None,
 
     buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
     buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
-    normalize_data_tex = False
-
     def _normalize(u):
         # rescale to be in [0,1], scale nan to be the smallest value
         u -= np.nanmin(u)
         u /= np.nanmax(u)
         return np.nan_to_num(u)
 
-    def _apply_map(u):
-        tex_len=len(u)
-        u = _normalize(u)
-        u.resize((tex_len, 1, 1))
-        print(f' data {u.shape}')
-        assert u.shape == (tex_len, 1, 1)
-        return p3js.DataTexture(data=u, type="FloatType", format='AlphaFormat',
-                                width=tex_len, height=1, normalized=normalize_data_tex)
-
-    data_textures = [_apply_map(u) for u in data]
-    # data_textures = [_apply_map(data[0])]
-    # vertex attributes cannot be integers
-    vi = indices.astype(np.float32).ravel()
-    if normalize_data_tex:
-        vi = _normalize(vi)
-    # pprint(vi)
-    buffer_index = p3js.BufferAttribute(vi, normalized=normalize_data_tex)
 
     geo = p3js.BufferGeometry(
         index=buffer_faces,
         attributes=dict(
             position=buffer_vertices,
-            vertex_index=buffer_index,
-            data=p3js.BufferAttribute(_normalize(data[0]), normalized=True)
+            data=data_attributes[0]
         )
     )
 
@@ -132,7 +112,6 @@ def _make_rendere(U, grid, render_size, color_map, title, vmin=None, vmax=None,
     color_map = p3js.DataTexture(cm, format='RGBAFormat',  width=max_tex_size, height=1, type='FloatType')
     uniforms=dict(
         colormap={'value': color_map, 'type': 'sampler2D'},
-        # data={'value':data_textures[0], 'type': 'sampler2D'}
     )
     material = p3js.ShaderMaterial(vertexShader=EL_VS, fragmentShader=EL_FS,
                               uniforms=uniforms)
