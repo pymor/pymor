@@ -207,7 +207,7 @@ class VectorArrayInterface(BasicInterface):
         raise NotImplementedError
 
     @property
-    @Deprecated('to_numpy')
+    @Deprecated(to_numpy)
     def data(self):
         return self.to_numpy()
 
