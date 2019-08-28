@@ -32,6 +32,10 @@ Bibliography
            from http://www.mpi-magdeburg.mpg.de/preprints/,
            2011.
 
+.. [BCDDPW11] P. Binev, A. Cohen, W. Dahmen, R. DeVore, G. Petrova, P. Wojtaszczyk,
+              Convergence rates for greedy algorithms in reduced basis methods,
+              SIAM J. Math. Anal., 43(3), 2011.
+
 .. [BEOR14] A. Buhr, C. Engwer, M. Ohlberger, S. Rave, A Numerically Stable A
             Posteriori Error Estimator for Reduced Basis Approximations of Elliptic
             Equations, Proceedings of the 11th World Congress on Computational
