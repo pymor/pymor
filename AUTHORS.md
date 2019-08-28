@@ -18,6 +18,9 @@
     * randomized range approximation algorithms in algorithms.randrangefinder
     * fixed complex norms in vectorarrays.interfaces
 
+* Tim Keil, tim.keil@uni-muenster.de
+    * partial derivatives for parameters d_mu
+
 
 ## pyMOR 0.5
 
