@@ -86,7 +86,7 @@ import time
 import numpy as np
 from pymor.tools.docopt import docopt
 
-from pymor.algorithms.greedy import greedy
+from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.ei import interpolate_operators
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.fv import discretize_instationary_fv
@@ -193,10 +193,10 @@ def main(args):
 
     reductor = InstationaryRBReductor(eim)
 
-    greedy_data = greedy(fom, reductor, fom.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                         use_estimator=False, error_norm=lambda U: np.max(fom.l2_norm(U)),
-                         extension_params={'method': 'pod'}, max_extensions=args['RBSIZE'],
-                         pool=pool)
+    greedy_data = rb_greedy(fom, reductor, fom.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                            use_estimator=False, error_norm=lambda U: np.max(fom.l2_norm(U)),
+                            extension_params={'method': 'pod'}, max_extensions=args['RBSIZE'],
+                            pool=pool)
 
     rom = greedy_data['rom']
 

@@ -388,14 +388,14 @@ def reduce_naive(fom, reductor, basis_size):
 def reduce_greedy(fom, reductor, snapshots_per_block,
                   extension_alg_name, max_extensions, use_estimator, pool):
 
-    from pymor.algorithms.greedy import greedy
+    from pymor.algorithms.greedy import rb_greedy
 
     # run greedy
     training_set = fom.parameter_space.sample_uniformly(snapshots_per_block)
-    greedy_data = greedy(fom, reductor, training_set,
-                         use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
-                         extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
-                         pool=pool)
+    greedy_data = rb_greedy(fom, reductor, training_set,
+                            use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
+                            extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
+                            pool=pool)
     rom = greedy_data['rom']
 
     # generate summary
@@ -417,13 +417,13 @@ def reduce_adaptive_greedy(fom, reductor, validation_mus,
                            extension_alg_name, max_extensions, use_estimator,
                            rho, gamma, theta, pool):
 
-    from pymor.algorithms.adaptivegreedy import adaptive_greedy
+    from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy
 
     # run greedy
-    greedy_data = adaptive_greedy(fom, reductor, validation_mus=-validation_mus,
-                                  use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
-                                  extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
-                                  rho=rho, gamma=gamma, theta=theta, pool=pool)
+    greedy_data = rb_adaptive_greedy(fom, reductor, validation_mus=-validation_mus,
+                                     use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
+                                     extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
+                                     rho=rho, gamma=gamma, theta=theta, pool=pool)
     rom = greedy_data['rom']
 
     # generate summary

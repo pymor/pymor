@@ -71,7 +71,7 @@ import sys
 
 from pymor.tools.docopt import docopt
 
-from pymor.algorithms.adaptivegreedy import adaptive_greedy
+from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dump
@@ -142,7 +142,7 @@ def thermalblock_demo(args):
     reductor = reductors[args['--reductor']]
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
-    greedy_data = adaptive_greedy(
+    greedy_data = rb_adaptive_greedy(
         fom, reductor,
         validation_mus=args['--validation-mus'],
         rho=args['--rho'],
