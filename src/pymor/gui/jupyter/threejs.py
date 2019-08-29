@@ -1,13 +1,13 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+from time import sleep
 from pprint import pprint
 
 import numpy as np
 
 import IPython
 import numpy as np
-import skimage
 from ipywidgets import IntSlider, interact, widgets, Play
 import pythreejs as p3js
 from matplotlib.cm import get_cmap
@@ -53,77 +53,90 @@ def _normalize(u):
     return np.nan_to_num(u)
 
 
-def _make_rendere(U, grid, render_size, color_map, title, vmin=None, vmax=None,
-             bounding_box=([0, 0], [1, 1]), codim=2,
-             ):
-    assert grid.reference_element in (triangle, square)
-    assert grid.dim == 2
-    assert codim in (0, 2)
-    fov_angle = 60
-    if len(bounding_box[0]) == 2:
-        lower = np.array([bounding_box[0][0], bounding_box[0][1], 0])
-        upper = np.array([bounding_box[1][0], bounding_box[1][1], 0])
-        bounding_box = (lower, upper)
-    combined_bounds = np.hstack(bounding_box)
+class Renderer(widgets.VBox):
+    def __init__(self, U, grid, render_size, color_map, title, vmin=None, vmax=None,
+                 bounding_box=([0, 0], [1, 1]), codim=2,
+                 ):
+        assert grid.reference_element in (triangle, square)
+        assert grid.dim == 2
+        assert codim in (0, 2)
+        fov_angle = 60
+        if len(bounding_box[0]) == 2:
+            lower = np.array([bounding_box[0][0], bounding_box[0][1], 0])
+            upper = np.array([bounding_box[1][0], bounding_box[1][1], 0])
+            bounding_box = (lower, upper)
+        combined_bounds = np.hstack(bounding_box)
 
-    absx = np.abs(combined_bounds[0] - combined_bounds[3])
-    not_mathematical_distance_scaling = 1.2
-    c_dist = np.sin((90 - fov_angle/2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle/2 * np.pi / 180)
-    c_dist *= not_mathematical_distance_scaling
-    xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
-    yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
-    zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
+        absx = np.abs(combined_bounds[0] - combined_bounds[3])
+        not_mathematical_distance_scaling = 1.2
+        c_dist = np.sin((90 - fov_angle/2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle/2 * np.pi / 180)
+        c_dist *= not_mathematical_distance_scaling
+        xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
+        yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
+        zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
 
-    subentities, coordinates, entity_map = flatten_grid(grid)
-    data = (U if codim == 0 else U[:, entity_map]).astype(np.float32)
+        subentities, coordinates, entity_map = flatten_grid(grid)
+        data = (U if codim == 0 else U[:, entity_map]).astype(np.float32)
 
-    if codim == 2:
-        if grid.dim == 2:
-            # zero-pad in Z direction
-            vertices = np.zeros((len(coordinates), 3))
-            vertices[:, :-1] = coordinates
-        elif grid.dim == 3:
-            vertices = coordinates
+        if codim == 2:
+            if grid.dim == 2:
+                # zero-pad in Z direction
+                vertices = np.zeros((len(coordinates), 3))
+                vertices[:, :-1] = coordinates
+            elif grid.dim == 3:
+                vertices = coordinates
+            else:
+                raise NotImplementedError
+            indices = subentities
         else:
             raise NotImplementedError
-        indices = subentities
-    else:
-        raise NotImplementedError
 
-    buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
-    buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
-    data_attributes = [p3js.BufferAttribute(_normalize(u), normalized=True) for u in data]
-
-    geo = p3js.BufferGeometry(
-        index=buffer_faces,
-        attributes=dict(
-            position=buffer_vertices,
-            data=data_attributes[0]
+        max_tex_size = 512
+        cm = color_map(np.linspace(0,1, max_tex_size)).astype(np.float32)
+        cm.resize((max_tex_size, 1, 4))
+        color_map = p3js.DataTexture(cm, format='RGBAFormat',  width=max_tex_size, height=1, type='FloatType')
+        uniforms=dict(
+            colormap={'value': color_map, 'type': 'sampler2D'},
         )
-    )
+        self.material = p3js.ShaderMaterial(vertexShader=EL_VS, fragmentShader=EL_FS, uniforms=uniforms,
+                                            morphTargets=True, )
 
-    max_tex_size = 512
-    cm = color_map(np.linspace(0,1, max_tex_size)).astype(np.float32)
-    cm.resize((max_tex_size, 1, 4))
-    color_map = p3js.DataTexture(cm, format='RGBAFormat',  width=max_tex_size, height=1, type='FloatType')
-    uniforms=dict(
-        colormap={'value': color_map, 'type': 'sampler2D'},
-    )
-    material = p3js.ShaderMaterial(vertexShader=EL_VS, fragmentShader=EL_FS, uniforms=uniforms)
-    mesh = p3js.Mesh( geometry=geo, material=material)
-    cam = p3js.PerspectiveCamera(aspect=render_size[0]/render_size[1], position=[xhalf, yhalf, zhalf + c_dist],
-                                 fov_angle=fov_angle)
-    scene = p3js.Scene(
-        children=([mesh, cam, p3js.AmbientLight(color='white', intensity=0.8)]),
-        background='white')
-    controller = p3js.OrbitControls(controlling=cam, position=[xhalf, yhalf, zhalf + c_dist])
-    controller.target = [xhalf, yhalf, zhalf]
-    controller.exec_three_obj_method('update')
-    renderer = p3js.Renderer(camera=cam, scene=scene,
-                             controls=[controller],
-                             width=render_size[0], height=render_size[1])
-    return renderer
+        self.buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
+        self.buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
+        self.meshes = []
+        for u in data:
+            data = p3js.BufferAttribute(_normalize(u), normalized=True)
+            geo = p3js.BufferGeometry(
+                index=self.buffer_faces,
+                attributes=dict(
+                    position=self.buffer_vertices,
+                    data=data
+                )
+            )
+            mesh = p3js.Mesh(geometry=geo, material=self.material)
+            mesh.visible = False
+            self.meshes.append(mesh)
+        self.cam = p3js.PerspectiveCamera(aspect=render_size[0]/render_size[1], position=[xhalf, yhalf, zhalf + c_dist],
+                                     fov_angle=fov_angle)
+        self.scene = p3js.Scene(
+            children=(self.meshes +[self.cam, p3js.AmbientLight(color='white', intensity=1.0)]),
+            background='white')
+        self.controller = p3js.OrbitControls(controlling=self.cam, position=[xhalf, yhalf, zhalf + c_dist])
+        self.controller.target = [xhalf, yhalf, zhalf]
+        self.controller.exec_three_obj_method('update')
+        self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
+                                 controls=[self.controller],
+                                 width=render_size[0], height=render_size[1])
+        super().__init__(children=[self.renderer, ])
+        self._last_idx = 0
+        self.meshes[0].visible = True
 
+    def goto(self, idx):
+        if idx != self._last_idx:
+            self.meshes[idx].visible = True
+            self.meshes[self._last_idx].visible = False
+            self.renderer.render(self.scene, self.cam)
+            self._last_idx = idx
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2,
@@ -186,16 +199,16 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             vmins = (min(np.min(u) for u in U),) * len(U)
             vmaxs = (max(np.max(u) for u in U),) * len(U)
 
-    render_size=(480,480)
-    renderer = [_make_rendere(u, grid, render_size, color_map, title, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
+    render_size=(400,400)
+    renderer = [Renderer(u, grid, render_size, color_map, title, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
                 for u, vmin, vmax in zip(U, vmins, vmaxs)]
     r_hbox = widgets.HBox(renderer)
     if size > 1:
-        # def _goto_idx(idx):
-        #     for c, u in zip(renderer, U):
-        #         c.canvas.set(u[idx])
+        def _goto_idx(idx):
+            for c in renderer:
+                c.goto(idx)
         play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:')
-        # interact(idx=play).widget(_goto_idx)
+        interact(idx=play).widget(_goto_idx)
         slider = IntSlider(min=0, max=size - 1, step=1, value=0, description='Timestep:')
         widgets.jslink((play, 'value'), (slider, 'value'))
         controls = widgets.HBox([play, slider])
