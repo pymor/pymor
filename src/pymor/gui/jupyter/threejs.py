@@ -1,6 +1,7 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+import asyncio
 from time import sleep
 from pprint import pprint
 
@@ -55,25 +56,10 @@ def _normalize(u):
 
 class Renderer(widgets.VBox):
     def __init__(self, U, grid, render_size, color_map, title, vmin=None, vmax=None,
-                 bounding_box=([0, 0], [1, 1]), codim=2,
-                 ):
+                 bounding_box=([0, 0], [1, 1]), codim=2):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
-        fov_angle = 60
-        if len(bounding_box[0]) == 2:
-            lower = np.array([bounding_box[0][0], bounding_box[0][1], 0])
-            upper = np.array([bounding_box[1][0], bounding_box[1][1], 0])
-            bounding_box = (lower, upper)
-        combined_bounds = np.hstack(bounding_box)
-
-        absx = np.abs(combined_bounds[0] - combined_bounds[3])
-        not_mathematical_distance_scaling = 1.2
-        c_dist = np.sin((90 - fov_angle/2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle/2 * np.pi / 180)
-        c_dist *= not_mathematical_distance_scaling
-        xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
-        yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
-        zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
 
         subentities, coordinates, entity_map = flatten_grid(grid)
         data = (U if codim == 0 else U[:, entity_map]).astype(np.float32)
@@ -103,40 +89,73 @@ class Renderer(widgets.VBox):
 
         self.buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
         self.buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
+        self._setup_scene(bounding_box, render_size)
+        self.load = asyncio.ensure_future(self._load_data(data))
+        self._last_idx = None
         self.meshes = []
-        for u in data:
-            data = p3js.BufferAttribute(_normalize(u), normalized=True)
-            geo = p3js.BufferGeometry(
-                index=self.buffer_faces,
-                attributes=dict(
-                    position=self.buffer_vertices,
-                    data=data
-                )
-            )
-            mesh = p3js.Mesh(geometry=geo, material=self.material)
-            mesh.visible = False
-            self.meshes.append(mesh)
-        self.cam = p3js.PerspectiveCamera(aspect=render_size[0]/render_size[1], position=[xhalf, yhalf, zhalf + c_dist],
-                                     fov_angle=fov_angle)
-        self.scene = p3js.Scene(
-            children=(self.meshes +[self.cam, p3js.AmbientLight(color='white', intensity=1.0)]),
-            background='white')
-        self.controller = p3js.OrbitControls(controlling=self.cam, position=[xhalf, yhalf, zhalf + c_dist])
-        self.controller.target = [xhalf, yhalf, zhalf]
-        self.controller.exec_three_obj_method('update')
-        self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
-                                 controls=[self.controller],
-                                 width=render_size[0], height=render_size[1])
         super().__init__(children=[self.renderer, ])
-        self._last_idx = 0
-        self.meshes[0].visible = True
+        print('done init')
+
+    def _get_mesh(self, u):
+        future = asyncio.Future()
+        data = p3js.BufferAttribute(_normalize(u), normalized=True)
+        geo = p3js.BufferGeometry(
+            index=self.buffer_faces,
+            attributes=dict(
+                position=self.buffer_vertices,
+                data=data
+            )
+        )
+        mesh = p3js.Mesh(geometry=geo, material=self.material)
+        mesh.visible = False
+        future.set_result(mesh)
+        return future
+
+    async def _load_data(self, data):
+        for u in data:
+            m = await self._get_mesh(u)
+            self.scene.add(m)
+            if len(self.meshes) == 0:
+                m.visible = True
+            self.meshes.append(m)
+        print('done loading')
 
     def goto(self, idx):
         if idx != self._last_idx:
             self.meshes[idx].visible = True
-            self.meshes[self._last_idx].visible = False
+            if self._last_idx:
+                self.meshes[self._last_idx].visible = False
             self.renderer.render(self.scene, self.cam)
             self._last_idx = idx
+
+    def _setup_scene(self, bounding_box, render_size):
+        fov_angle = 60
+        if len(bounding_box[0]) == 2:
+            lower = np.array([bounding_box[0][0], bounding_box[0][1], 0])
+            upper = np.array([bounding_box[1][0], bounding_box[1][1], 0])
+            bounding_box = (lower, upper)
+        combined_bounds = np.hstack(bounding_box)
+
+        absx = np.abs(combined_bounds[0] - combined_bounds[3])
+        not_mathematical_distance_scaling = 1.2
+        c_dist = np.sin((90 - fov_angle / 2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle / 2 * np.pi / 180)
+        c_dist *= not_mathematical_distance_scaling
+        xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
+        yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
+        zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
+
+        self.cam = p3js.PerspectiveCamera(aspect=render_size[0] / render_size[1],
+                                          position=[xhalf, yhalf, zhalf + c_dist],
+                                          fov_angle=fov_angle)
+        self.light = p3js.AmbientLight(color='white', intensity=1.0)
+        self.scene = p3js.Scene(children=([self.cam, self.light]), background='white')
+        self.controller = p3js.OrbitControls(controlling=self.cam, position=[xhalf, yhalf, zhalf + c_dist])
+        self.controller.target = [xhalf, yhalf, zhalf]
+        self.controller.exec_three_obj_method('update')
+        self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
+                                      controls=[self.controller],
+                                      width=render_size[0], height=render_size[1])
+
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2,
