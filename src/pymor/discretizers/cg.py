@@ -157,11 +157,11 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     Fi = []
     coefficients_F = []
     if isinstance(p.rhs, LincombFunction):
-        Fi += [L2Functional(grid, rhs, dirichlet_clear_dofs=True, boundary_info=boundary_info, name=f'rhs_{i}')
-               for i, rhs in enumerate(p.rhs.functions)]
+        Fi += [L2Functional(grid, rh, dirichlet_clear_dofs=True, boundary_info=boundary_info, name=f'rhs_{i}')
+               for i, rh in enumerate(p.rhs.functions)]
         coefficients_F += list(p.rhs.coefficients)
     else:
-        Fi += [L2Functional(grid, p.rhs, dirichlet_clear_dofs=True, boundary_info=boundary_info, name='rhs')]
+        Fi += [L2Functional(grid, rhs, dirichlet_clear_dofs=True, boundary_info=boundary_info, name='rhs')]
         coefficients_F.append(1.)
 
     if p.neumann_data is not None and boundary_info.has_neumann:
