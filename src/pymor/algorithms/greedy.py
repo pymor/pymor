@@ -17,7 +17,7 @@ from pymor.tools.deprecated import Deprecated
 def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=None, pool=None):
     """Weak greedy basis generation algorithm [BCDDPW11]_.
 
-    This algorithm generates an approximation basis for a given set vectors
+    This algorithm generates an approximation basis for a given set of vectors
     associated with a training set of parameters by iteratively evaluating a
     :class:`surrogate <WeakGreedySurrogate>` for the approximation error on
     the training set and adding the worst approximated vector (according to
