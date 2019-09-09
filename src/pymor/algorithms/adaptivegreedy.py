@@ -86,7 +86,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
     if pool is None or pool is dummy_pool:
         pool = dummy_pool
     else:
-        logger.info(f'Using pool of {len(pool)} workers for parallel greedy search')
+        logger.info(f'Using pool of {len(pool)} workers for parallel greedy search.')
 
     tic = time.time()
 

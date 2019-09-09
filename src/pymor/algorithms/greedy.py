@@ -57,7 +57,7 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
     """
     logger = getLogger('pymor.algorithms.greedy.weak_greedy')
     training_set = list(training_set)
-    logger.info(f'Started greedy search on training set of size {len(training_set)}')
+    logger.info(f'Started greedy search on training set of size {len(training_set)}.')
 
     tic = time.time()
     if not training_set:
@@ -68,7 +68,7 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
     if pool is None:
         pool = dummy_pool
     elif pool is not dummy_pool:
-        logger.info(f'Using pool of {len(pool)} workers for parallel greedy search')
+        logger.info(f'Using pool of {len(pool)} workers for parallel greedy search.')
 
     # Distribute the training set evenly among the workers.
     if pool:
