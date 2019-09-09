@@ -140,25 +140,62 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     # robin boundaries
     if p.robin_data is not None:
-        Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name='robin')]
-        coefficients.append(1.)
+        assert isinstance(p.robin_data, tuple) and len(p.robin_data) == 2
+        if isinstance(p.robin_data[0], LincombFunction):
+            for i, rd in enumerate(p.robin_data[0].functions):
+                robin_tuple = (rd, p.robin_data[1])
+                Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=robin_tuple, name=f'robin_{i}')]
+            coefficients += list(p.robin_data[0].coefficients)
+        else:
+            Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name=f'robin')]
+            coefficients.append(1.)
 
     L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
 
     # right-hand side
     rhs = p.rhs or ConstantFunction(0., dim_domain=p.domain.dim)
-    F = L2Functional(grid, rhs, dirichlet_clear_dofs=True, boundary_info=boundary_info)
+    Fi = []
+    coefficients_F = []
+    if isinstance(p.rhs, LincombFunction):
+        Fi += [L2Functional(grid, rh, dirichlet_clear_dofs=True, boundary_info=boundary_info, name=f'rhs_{i}')
+               for i, rh in enumerate(p.rhs.functions)]
+        coefficients_F += list(p.rhs.coefficients)
+    else:
+        Fi += [L2Functional(grid, rhs, dirichlet_clear_dofs=True, boundary_info=boundary_info, name='rhs')]
+        coefficients_F.append(1.)
 
     if p.neumann_data is not None and boundary_info.has_neumann:
-        F += BoundaryL2Functional(grid, -p.neumann_data, boundary_info=boundary_info,
-                                  boundary_type='neumann', dirichlet_clear_dofs=True)
+        if isinstance(p.neumann_data, LincombFunction):
+            Fi += [BoundaryL2Functional(grid, -ne, boundary_info=boundary_info,
+                                      boundary_type='neumann', dirichlet_clear_dofs=True, name=f'neumann_{i}')
+                   for i, ne in enumerate(p.neumann_data.functions)]
+            coefficients_F += list(p.neumann_data.coefficients)
+        else:
+            Fi += [BoundaryL2Functional(grid, -p.neumann_data, boundary_info=boundary_info,
+                                      boundary_type='neumann', dirichlet_clear_dofs=True)]
+            coefficients_F.append(1.)
 
     if p.robin_data is not None and boundary_info.has_robin:
-        F += BoundaryL2Functional(grid, p.robin_data[0] * p.robin_data[1], boundary_info=boundary_info,
-                                  boundary_type='robin', dirichlet_clear_dofs=True)
+        if isinstance(p.robin_data[0], LincombFunction):
+            Fi += [BoundaryL2Functional(grid, rob * p.robin_data[1], boundary_info=boundary_info,
+                                      boundary_type='robin', dirichlet_clear_dofs=True, name=f'robin_{i}')
+                   for i, rob in enumerate(p.robin_data[0].functions)]
+            coefficients_F += list(p.robin_data[0].coefficients)
+        else:
+            Fi += [BoundaryL2Functional(grid, p.robin_data[0] * p.robin_data[1], boundary_info=boundary_info,
+                                      boundary_type='robin', dirichlet_clear_dofs=True)]
+            coefficients_F.append(1.)
 
     if p.dirichlet_data is not None and boundary_info.has_dirichlet:
-        F += BoundaryDirichletFunctional(grid, p.dirichlet_data, boundary_info)
+        if isinstance(p.dirichlet_data, LincombFunction):
+            Fi += [BoundaryDirichletFunctional(grid, di, boundary_info, name=f'dirichlet{i}')
+                   for i, di in enumerate(p.dirichlet_data.functions)]
+            coefficients_F += list(p.dirichlet_data.coefficients)
+        else:
+            Fi += [BoundaryDirichletFunctional(grid, p.dirichlet_data, boundary_info)]
+            coefficients_F.append(1.)
+
+    F = LincombOperator(operators=Fi, coefficients=coefficients_F, name='rhsOperator')
 
     if grid.reference_element in (triangle, square):
         visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)

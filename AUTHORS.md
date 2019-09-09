@@ -20,7 +20,7 @@
 
 * Tim Keil, tim.keil@uni-muenster.de
     * partial derivatives for parameters d_mu
-
+    * affine decomposition of robin operator and rhs functionals
 
 ## pyMOR 0.5
 
