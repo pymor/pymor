@@ -85,6 +85,12 @@ NOTEBOOKS 3 6:
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
+MPI 3 6:
+    extends: .pytest
+    image: pymor/testing:3.6
+    stage: test
+    variables:
+        PYMOR_PYTEST_MARKER: "MPI"
 Vanilla 3 7:
     extends: .pytest
     image: pymor/testing:3.7
@@ -103,6 +109,12 @@ NOTEBOOKS 3 7:
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
+MPI 3 7:
+    extends: .pytest
+    image: pymor/testing:3.7
+    stage: test
+    variables:
+        PYMOR_PYTEST_MARKER: "MPI"
 
 
 .submit:
