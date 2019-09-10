@@ -242,10 +242,10 @@ def reduce_greedy(fom, reductor, snapshots, basis_size):
     training_set = fom.parameter_space.sample_uniformly(snapshots)
     pool = new_parallel_pool()
 
-    greedy_data = greedy(fom, reductor, training_set,
-                         extension_params={'method': 'gram_schmidt'},
-                         max_extensions=basis_size,
-                         pool=pool)
+    greedy_data = rb_greedy(fom, reductor, training_set,
+                            extension_params={'method': 'gram_schmidt'},
+                            max_extensions=basis_size,
+                            pool=pool)
 
     return greedy_data['rom']
 
@@ -254,10 +254,10 @@ def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
 
     pool = new_parallel_pool()
 
-    greedy_data = adaptive_greedy(fom, reductor, validation_mus=-validation_mus,
-                                  extension_params={'method': 'gram_schmidt'},
-                                  max_extensions=basis_size,
-                                  pool=pool)
+    greedy_data = rb_adaptive_greedy(fom, reductor, validation_mus=-validation_mus,
+                                     extension_params={'method': 'gram_schmidt'},
+                                     max_extensions=basis_size,
+                                     pool=pool)
 
     return greedy_data['rom']
 

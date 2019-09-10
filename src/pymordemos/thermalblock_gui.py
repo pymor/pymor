@@ -48,7 +48,7 @@ try:
     from Qt import QtWidgets
 except ImportError as e:
     raise QtMissing()
-from pymor.algorithms.greedy import greedy
+from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
@@ -166,10 +166,10 @@ class ReducedSim(SimBase):
         product = self.m.h1_0_semi_product if args['--product'] == 'h1' else None
         reductor = CoerciveRBReductor(self.m, product=product)
 
-        greedy_data = greedy(self.m, reductor,
-                             self.m.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                             use_estimator=True, error_norm=self.m.h1_0_semi_norm,
-                             max_extensions=args['RBSIZE'])
+        greedy_data = rb_greedy(self.m, reductor,
+                                self.m.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                                use_estimator=True, error_norm=self.m.h1_0_semi_norm,
+                                max_extensions=args['RBSIZE'])
         self.rom, self.reductor = greedy_data['rom'], reductor
         self.first = False
 

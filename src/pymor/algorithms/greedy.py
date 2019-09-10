@@ -7,22 +7,149 @@ import time
 import numpy as np
 
 from pymor.core.exceptions import ExtensionError
+from pymor.core.interfaces import BasicInterface, abstractmethod
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
-from pymor.parallel.manager import RemoteObjectManager
+from pymor.parallel.interfaces import RemoteObjectInterface
+from pymor.tools.deprecated import Deprecated
 
 
-def greedy(fom, reductor, samples, use_estimator=True, error_norm=None,
-           atol=None, rtol=None, max_extensions=None, extension_params=None, pool=None):
-    """Greedy basis generation algorithm.
+def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=None, pool=None):
+    """Weak greedy basis generation algorithm [BCDDPW11]_.
 
-    This algorithm generates a reduced basis by iteratively adding the
-    worst approximated solution snapshot for a given training set to the
-    reduced basis. The approximation error is computed either by directly
-    comparing the reduced solution to the detailed solution or by using
-    an error estimator (`use_estimator == True`). The reduction and basis
-    extension steps are performed by calling the methods provided by the
-    `reductor` and `extension_algorithm` arguments.
+    This algorithm generates an approximation basis for a given set of vectors
+    associated with a training set of parameters by iteratively evaluating a
+    :class:`surrogate <WeakGreedySurrogate>` for the approximation error on
+    the training set and adding the worst approximated vector (according to
+    the surrogate) to the basis.
+
+    The constructed basis is extracted from the surrogate after termination
+    of the algorithm.
+
+    Parameters
+    ----------
+    surrogate
+        An instance of :class:`WeakGreedySurrogate` representing the surrogate
+        for the approximation error.
+    training_set
+        The set of parameter samples on which to perform the greedy search.
+    atol
+        If not `None`, stop the algorithm if the maximum (estimated) error
+        on the training set drops below this value.
+    rtol
+        If not `None`, stop the algorithm if the maximum (estimated)
+        relative error on the training set drops below this value.
+    max_extensions
+        If not `None`, stop the algorithm after `max_extensions` extension
+        steps.
+    pool
+        If not `None`, a |WorkerPool| to use for parallelization. Parallelization
+        needs to be supported by `surrogate`.
+
+    Returns
+    -------
+    Dict with the following fields:
+
+        :max_errs:               Sequence of maximum estimated errors during the greedy run.
+        :max_err_mus:            The parameters corresponding to `max_errs`.
+        :extensions:             Number of performed basis extensions.
+        :time:                   Total runtime of the algorithm.
+    """
+    logger = getLogger('pymor.algorithms.greedy.weak_greedy')
+    training_set = list(training_set)
+    logger.info(f'Started greedy search on training set of size {len(training_set)}.')
+
+    tic = time.time()
+    if not training_set:
+        logger.info('There is nothing else to do for an empty training set.')
+        return {'max_errs': [], 'max_err_mus': [], 'extensions': 0,
+                'time': time.time() - tic}
+
+    if pool is None:
+        pool = dummy_pool
+    elif pool is not dummy_pool:
+        logger.info(f'Using pool of {len(pool)} workers for parallel greedy search.')
+
+    # Distribute the training set evenly among the workers.
+    if pool:
+        training_set = pool.scatter_list(training_set)
+
+    extensions = 0
+    max_errs = []
+    max_err_mus = []
+
+    while True:
+        with logger.block('Estimating errors ...'):
+            max_err, max_err_mu = surrogate.evaluate(training_set)
+            max_errs.append(max_err)
+            max_err_mus.append(max_err_mu)
+
+        logger.info(f'Maximum error after {extensions} extensions: {max_err} (mu = {max_err_mu})')
+
+        if atol is not None and max_err <= atol:
+            logger.info(f'Absolute error tolerance ({atol}) reached! Stoping extension loop.')
+            break
+
+        if rtol is not None and max_err / max_errs[0] <= rtol:
+            logger.info(f'Relative error tolerance ({rtol}) reached! Stoping extension loop.')
+            break
+
+        with logger.block(f'Extending surrogate for mu = {max_err_mu} ...'):
+            try:
+                surrogate.extend(max_err_mu)
+            except ExtensionError:
+                logger.info('Extension failed. Stopping now.')
+                break
+            extensions += 1
+
+        logger.info('')
+
+        if max_extensions is not None and extensions >= max_extensions:
+            logger.info(f'Maximum number of {max_extensions} extensions reached.')
+            break
+
+    tictoc = time.time() - tic
+    logger.info(f'Greedy search took {tictoc} seconds')
+    return {'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
+            'time': tictoc}
+
+
+class WeakGreedySurrogate(BasicInterface):
+    """Surrogate for the approximation error in :func:`weak_greedy`."""
+
+    @abstractmethod
+    def evaluate(self, mus, return_all_values=False):
+        """Evaluate the surrogate for given parameters.
+
+        Parameters
+        ----------
+        mus
+            List of parameters for which to estimate the approximation
+            error. When parallelization is used, `mus` can be a |RemoteObject|.
+        return_all_values
+            See below.
+
+        Returns
+        -------
+        If `return_all_values` is `True`, an |array| of the estimated errors.
+        If `return_all_values` is `False`, the maximum estimated error as first
+        return value and the corresponding parameter as second return value.
+        """
+        pass
+
+    @abstractmethod
+    def extend(self, mu):
+        pass
+
+
+def rb_greedy(fom, reductor, training_set, use_estimator=True, error_norm=None,
+              atol=None, rtol=None, max_extensions=None, extension_params=None, pool=None):
+    """Weak Greedy basis generation using the RB approximation error as surrogate.
+
+    This algorithm generates a reduced basis using the :func:`weak greedy <weak_greedy>`
+    algorithm [BCDDPW11]_, where the approximation error is estimated from computing
+    solutions of the reduced order model for the current reduced basis and then estimating
+    the model reduction error.
 
     Parameters
     ----------
@@ -35,28 +162,25 @@ def greedy(fom, reductor, samples, use_estimator=True, error_norm=None,
         such that `reductor.extend_basis(U, copy_U=False, **extension_params)`
         extends the current reduced basis by the vectors contained in `U`.
         For an example see :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
-    samples
-        The set of |Parameter| samples on which to perform the greedy search.
+    training_set
+        The training set of |Parameters| on which to perform the greedy search.
     use_estimator
-        If `True`, use `rom.estimate()` to estimate the errors on the
-        sample set. Otherwise `fom.solve()` is called to compute the exact
-        model reduction error.
+        If `False`, exactly compute the model reduction error by also computing
+        the solution of `fom` for each training set |Parameter|. This is mainly
+        useful when no estimator for the model reduction error is available.
     error_norm
-        If `use_estimator == False`, use this function to calculate the
+        If `use_estimator` is `False`, use this function to calculate the
         norm of the error. If `None`, the Euclidean norm is used.
     atol
-        If not `None`, stop the algorithm if the maximum (estimated) error
-        on the sample set drops below this value.
+        See :func:`weak_greedy`.
     rtol
-        If not `None`, stop the algorithm if the maximum (estimated)
-        relative error on the sample set drops below this value.
+        See :func:`weak_greedy`.
     max_extensions
-        If not `None`, stop the algorithm after `max_extensions` extension
-        steps.
+        See :func:`weak_greedy`.
     extension_params
         `dict` of parameters passed to the `reductor.extend_basis` method.
     pool
-        If not `None`, the |WorkerPool| to use for parallelization.
+        See :func:`weak_greedy`.
 
     Returns
     -------
@@ -70,100 +194,89 @@ def greedy(fom, reductor, samples, use_estimator=True, error_norm=None,
         :time:                   Total runtime of the algorithm.
     """
 
-    logger = getLogger('pymor.algorithms.greedy.greedy')
-    samples = list(samples)
-    sample_count = len(samples)
-    extension_params = extension_params or {}
-    logger.info(f'Started greedy search on {sample_count} samples')
-    if pool is None or pool is dummy_pool:
-        pool = dummy_pool
-    else:
-        logger.info(f'Using pool of {len(pool)} workers for parallel greedy search')
+    surrogate = RBSurrogate(fom, reductor, use_estimator, error_norm, extension_params, pool or dummy_pool)
 
-    with RemoteObjectManager() as rom:
-        # Push everything we need during the greedy search to the workers.
-        # Distribute the training set evenly among the workes.
-        if not use_estimator:
-            rom.manage(pool.push(fom))
-            if error_norm:
-                rom.manage(pool.push(error_norm))
-        samples = rom.manage(pool.scatter_list(samples))
+    result = weak_greedy(surrogate, training_set, atol=atol, rtol=rtol, max_extensions=max_extensions, pool=pool)
+    result['rom'] = surrogate.rom
 
-        tic = time.time()
-        extensions = 0
-        max_errs = []
-        max_err_mus = []
-
-        while True:
-            with logger.block('Reducing ...'):
-                rom = reductor.reduce()
-
-            if sample_count == 0:
-                logger.info('There is nothing else to do for empty samples.')
-                return {'rom': rom,
-                        'max_errs': [], 'max_err_mus': [], 'extensions': 0,
-                        'time': time.time() - tic}
-
-            with logger.block('Estimating errors ...'):
-                if use_estimator:
-                    errors, mus = list(zip(*pool.apply(_estimate, rom=rom, fom=None, reductor=None,
-                                                       samples=samples, error_norm=None)))
-                else:
-                    errors, mus = list(zip(*pool.apply(_estimate, rom=rom, fom=fom, reductor=reductor,
-                                                       samples=samples, error_norm=error_norm)))
-            max_err_ind = np.argmax(errors)
-            max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
-
-            max_errs.append(max_err)
-            max_err_mus.append(max_err_mu)
-            logger.info(f'Maximum error after {extensions} extensions: {max_err} (mu = {max_err_mu})')
-
-            if atol is not None and max_err <= atol:
-                logger.info(f'Absolute error tolerance ({atol}) reached! Stoping extension loop.')
-                break
-
-            if rtol is not None and max_err / max_errs[0] <= rtol:
-                logger.info(f'Relative error tolerance ({rtol}) reached! Stoping extension loop.')
-                break
-
-            with logger.block(f'Computing solution snapshot for mu = {max_err_mu} ...'):
-                U = fom.solve(max_err_mu)
-            with logger.block('Extending basis with solution snapshot ...'):
-                try:
-                    reductor.extend_basis(U, copy_U=False, **extension_params)
-                except ExtensionError:
-                    logger.info('Extension failed. Stopping now.')
-                    break
-            extensions += 1
-
-            logger.info('')
-
-            if max_extensions is not None and extensions >= max_extensions:
-                logger.info(f'Maximum number of {max_extensions} extensions reached.')
-                with logger.block('Reducing once more ...'):
-                    rom = reductor.reduce()
-                break
-
-        tictoc = time.time() - tic
-        logger.info(f'Greedy search took {tictoc} seconds')
-        return {'rom': rom,
-                'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
-                'time': tictoc}
+    return result
 
 
-def _estimate(rom=None, fom=None, reductor=None, samples=None, error_norm=None):
-    if not samples:
-        return -1., None
+class RBSurrogate(WeakGreedySurrogate):
+    """Surrogate for the :func:`weak_greedy` error used in :func:`rb_greedy`.
+
+    Not intended to be used directly.
+    """
+
+    def __init__(self, fom, reductor, use_estimator, error_norm, extension_params, pool):
+        extension_params = extension_params or {}
+        self.__auto_init(locals())
+        if use_estimator:
+            self.remote_fom, self.remote_error_norm, self.remote_reductor = None, None, None
+        else:
+            self.remote_fom, self.remote_error_norm, self.remote_reductor = \
+                pool.push(fom), pool.push(error_norm), pool.push(reductor)
+        self.rom = None
+
+    def evaluate(self, mus, return_all_values=False):
+        if self.rom is None:
+            with self.logger.block('Reducing ...'):
+                self.rom = self.reductor.reduce()
+
+        if not isinstance(mus, RemoteObjectInterface):
+            mus = self.pool.scatter_list(mus)
+
+        result = self.pool.apply(_rb_surrogate_evaluate,
+                                 rom=self.rom,
+                                 fom=self.remote_fom,
+                                 reductor=self.remote_reductor,
+                                 mus=mus,
+                                 error_norm=self.remote_error_norm,
+                                 return_all_values=return_all_values)
+        if return_all_values:
+            return np.hstack(result)
+        else:
+            errs, max_err_mus = list(zip(*result))
+            max_err_ind = np.argmax(errs)
+            return errs[max_err_ind], max_err_mus[max_err_ind]
+
+    def extend(self, mu):
+        with self.logger.block(f'Computing solution snapshot for mu = {mu} ...'):
+            U = self.fom.solve(mu)
+        with self.logger.block('Extending basis with solution snapshot ...'):
+            self.reductor.extend_basis(U, copy_U=False, **self.extension_params)
+            if not self.use_estimator:
+                self.remote_reductor = self.pool.push(self.reductor)
+        with self.logger.block('Reducing ...'):
+            self.rom = self.reductor.reduce()
+
+
+def _rb_surrogate_evaluate(rom=None, fom=None, reductor=None, mus=None, error_norm=None, return_all_values=False):
+    if not mus:
+        if return_all_values:
+            return []
+        else:
+            return -1., None
 
     if fom is None:
-        errors = [rom.estimate(rom.solve(mu), mu) for mu in samples]
+        errors = [rom.estimate(rom.solve(mu), mu) for mu in mus]
     elif error_norm is not None:
-        errors = [error_norm(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))) for mu in samples]
+        errors = [error_norm(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))) for mu in mus]
     else:
-        errors = [(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))).l2_norm() for mu in samples]
+        errors = [(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))).l2_norm() for mu in mus]
     # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
     # if necessary
     errors = [x[0] if hasattr(x, '__len__') else x for x in errors]
-    max_err_ind = np.argmax(errors)
+    if return_all_values:
+        return errors
+    else:
+        max_err_ind = np.argmax(errors)
+        return errors[max_err_ind], mus[max_err_ind]
 
-    return errors[max_err_ind], samples[max_err_ind]
+
+@Deprecated(rb_greedy)
+def greedy(*args, **kwargs):
+    if 'samples' in kwargs:
+        training_set = kwargs.pop('samples')
+        kwargs['training_set'] = training_set
+    return rb_greedy(*args, **kwargs)
