@@ -46,6 +46,25 @@ EL_FS = """
     }
     """
 
+CL_VS = """
+    varying float texcoord;
+
+    void main()
+    {
+        texcoord = position.y;
+        gl_Position =  projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+    """
+
+CL_FS = """
+    uniform sampler2D colormap;
+    varying float texcoord;
+
+    void main()
+    {
+        gl_FragColor = texture2D(colormap, vec2(texcoord, 0.));
+    }
+    """
 
 def _normalize(u):
     # rescale to be in [0,1], scale nan to be the smallest value
@@ -157,6 +176,64 @@ class Renderer(widgets.VBox):
                                       width=render_size[0], height=render_size[1])
 
 
+class ColorBarRenderer(widgets.VBox):
+    def __init__(self, render_size, color_map, vmin=None, vmax=None):
+
+        max_tex_size = 512
+        normal_vmax = (vmax-vmin)/vmax
+        cm = color_map(np.linspace(0, normal_vmax, max_tex_size)).astype(np.float32)
+        cm.resize((max_tex_size, 1, 4))
+        color_map = p3js.DataTexture(cm, format='RGBAFormat',  width=max_tex_size, height=1, type='FloatType')
+        uniforms=dict(
+            colormap={'value': color_map, 'type': 'sampler2D'},
+        )
+        self.material = p3js.ShaderMaterial(vertexShader=CL_VS, fragmentShader=CL_FS, uniforms=uniforms)
+        fov_angle = 60
+        bounding_box = [(0,0), (1,1)]
+        lower = np.array([bounding_box[0][0], bounding_box[0][1], 0])
+        upper = np.array([bounding_box[1][0], bounding_box[1][1], 0])
+        bounding_box = (lower, upper)
+        combined_bounds = np.hstack(bounding_box)
+
+        absx = np.abs(combined_bounds[0] - combined_bounds[3])
+        not_mathematical_distance_scaling = 1.2
+        c_dist = np.sin((90 - fov_angle / 2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle / 2 * np.pi / 180)
+        c_dist *= not_mathematical_distance_scaling
+        xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
+        yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
+        zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
+
+        self.cam = p3js.PerspectiveCamera(aspect=render_size[0] / render_size[1],
+                                          position=[xhalf, yhalf, zhalf + c_dist],
+                                          fov_angle=fov_angle)
+        self.light = p3js.AmbientLight(color='white', intensity=1.0)
+
+        self.controller = p3js.OrbitControls(controlling=self.cam, position=[xhalf, yhalf, zhalf + c_dist])
+        self.controller.target = [xhalf, yhalf, zhalf]
+        self.controller.exec_three_obj_method('update')
+        self.freeze_camera(True)
+
+        geo = p3js.PlaneGeometry(width=1, height=2)
+
+        self.mesh = p3js.Mesh(geometry=geo, material=self.material)
+        # text = p3js.TextGeometry()
+
+        self.scene = p3js.Scene(children=([self.cam, self.light, self.mesh]), background='white')
+        self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
+                                      controls=[self.controller],
+                                      width=render_size[0], height=render_size[1])
+
+        super().__init__(children=[self.renderer, ])
+
+    def freeze_camera(self, freeze=True):
+        self.controller.enablePan = not freeze
+        self.controller.enableZoom = not freeze
+        self.controller.enableRotate = not freeze
+
+    def goto(self, _):
+        pass
+
+
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2,
          color_map=get_cmap('viridis')):
@@ -221,6 +298,12 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     render_size=(400,400)
     renderer = [Renderer(u, grid, render_size, color_map, title, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
                 for u, vmin, vmax in zip(U, vmins, vmaxs)]
+    if not separate_colorbars:
+        renderer.append(ColorBarRenderer(render_size=(50, render_size[1]), vmin=vmins[0], vmax=vmaxs[0], color_map=color_map))
+    else:
+        for i, (vmin, vmax) in enumerate(zip(vmins, vmaxs)):
+            cr = ColorBarRenderer(render_size=(50, render_size[1]), vmin=vmin, vmax=vmax, color_map=color_map)
+            renderer.insert(2*i+1, cr)
     r_hbox = widgets.HBox(renderer)
     if size > 1:
         def _goto_idx(idx):
