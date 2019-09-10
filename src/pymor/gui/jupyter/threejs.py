@@ -2,11 +2,6 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import asyncio
-from time import sleep
-from pprint import pprint
-
-import numpy as np
-
 import IPython
 import numpy as np
 from ipywidgets import IntSlider, interact, widgets, Play
@@ -20,23 +15,18 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 # we should try to limit ourselves to webgl 1.0 here since 2.0 (draft) is not as widely supported
 # https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#Browser_compatibility
 # version directives and such are preprended by threejs
-EL_VS = """
-    // Attribute variable that contains coordinates of the vertices.
-    attribute float vertex_index;
+RENDER_VERTEX_SHADER = """
     attribute float data;
-    //uniform sampler2D data;
     varying float texcoord;
 
     void main()
     {
         texcoord = data;
-        gl_Position =  projectionMatrix * 
-                        modelViewMatrix * 
-                        vec4(position,1.0);
+        gl_Position =  projectionMatrix * modelViewMatrix * vec4(position,1.0);
     }
     """
 
-EL_FS = """
+RENDER_FRAGMENT_SHADER = """
     uniform sampler2D colormap;
     varying float texcoord;
 
@@ -46,7 +36,7 @@ EL_FS = """
     }
     """
 
-CL_VS = """
+COLORBAR_VERTEX_SHADER = """
     varying float texcoord;
 
     void main()
@@ -56,7 +46,7 @@ CL_VS = """
     }
     """
 
-CL_FS = """
+COLORBAR_FRAGMENT_SHADER = """
     uniform sampler2D colormap;
     varying float texcoord;
 
@@ -74,8 +64,7 @@ def _normalize(u):
 
 
 class Renderer(widgets.VBox):
-    def __init__(self, U, grid, render_size, color_map, title, vmin=None, vmax=None,
-                 bounding_box=([0, 0], [1, 1]), codim=2):
+    def __init__(self, U, grid, render_size, color_map, title, bounding_box=([0, 0], [1, 1]), codim=2):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
@@ -103,8 +92,7 @@ class Renderer(widgets.VBox):
         uniforms=dict(
             colormap={'value': color_map, 'type': 'sampler2D'},
         )
-        self.material = p3js.ShaderMaterial(vertexShader=EL_VS, fragmentShader=EL_FS, uniforms=uniforms,
-                                            morphTargets=True, )
+        self.material = p3js.ShaderMaterial(vertexShader=RENDER_VERTEX_SHADER, fragmentShader=RENDER_FRAGMENT_SHADER, uniforms=uniforms, )
 
         self.buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
         self.buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
@@ -113,7 +101,6 @@ class Renderer(widgets.VBox):
         self._last_idx = None
         self.meshes = []
         super().__init__(children=[self.renderer, ])
-        print('done init')
 
     def _get_mesh(self, u):
         future = asyncio.Future()
@@ -137,7 +124,6 @@ class Renderer(widgets.VBox):
             if len(self.meshes) == 0:
                 m.visible = True
             self.meshes.append(m)
-        print('done loading')
 
     def goto(self, idx):
         if idx != self._last_idx:
@@ -146,6 +132,11 @@ class Renderer(widgets.VBox):
                 self.meshes[self._last_idx].visible = False
             self.renderer.render(self.scene, self.cam)
             self._last_idx = idx
+
+    def freeze_camera(self, freeze=True):
+        self.controller.enablePan = not freeze
+        self.controller.enableZoom = not freeze
+        self.controller.enableRotate = not freeze
 
     def _setup_scene(self, bounding_box, render_size):
         fov_angle = 60
@@ -171,6 +162,7 @@ class Renderer(widgets.VBox):
         self.controller = p3js.OrbitControls(controlling=self.cam, position=[xhalf, yhalf, zhalf + c_dist])
         self.controller.target = [xhalf, yhalf, zhalf]
         self.controller.exec_three_obj_method('update')
+        self.freeze_camera(True)
         self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
                                       controls=[self.controller],
                                       width=render_size[0], height=render_size[1])
@@ -187,7 +179,7 @@ class ColorBarRenderer(widgets.VBox):
         uniforms=dict(
             colormap={'value': color_map, 'type': 'sampler2D'},
         )
-        self.material = p3js.ShaderMaterial(vertexShader=CL_VS, fragmentShader=CL_FS, uniforms=uniforms)
+        self.material = p3js.ShaderMaterial(vertexShader=COLORBAR_VERTEX_SHADER, fragmentShader=COLORBAR_FRAGMENT_SHADER, uniforms=uniforms)
         fov_angle = 60
         bounding_box = [(0,0), (1,1)]
         lower = np.array([bounding_box[0][0], bounding_box[0][1], 0])
@@ -296,7 +288,7 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             vmaxs = (max(np.max(u) for u in U),) * len(U)
 
     render_size=(400,400)
-    renderer = [Renderer(u, grid, render_size, color_map, title, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
+    renderer = [Renderer(u, grid, render_size, color_map, title, bounding_box=bounding_box, codim=codim)
                 for u, vmin, vmax in zip(U, vmins, vmaxs)]
     if not separate_colorbars:
         renderer.append(ColorBarRenderer(render_size=(50, render_size[1]), vmin=vmins[0], vmax=vmaxs[0], color_map=color_map))
