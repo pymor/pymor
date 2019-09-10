@@ -67,7 +67,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
     name
         The name of the functional.
     derivative_mappings
-        A dict containing all partial derivativess of each component and index in the
+        A dict containing all partial derivatives of each component and index in the
         |ParameterType| with the signature `derivative_mappings[component][index](mu)`
     """
 
