@@ -153,6 +153,7 @@ class OperatorBase(OperatorInterface):
         if self.parametric:
             raise NotImplementedError
         else:
+            from pymor.operators.constructions import ZeroOperator
             return ZeroOperator(self.range, self.source, name=self.name + '_d_mu')
 
 class ProjectedOperator(OperatorBase):
