@@ -2,9 +2,11 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import asyncio
+from tempfile import NamedTemporaryFile
+
 import IPython
 import numpy as np
-from ipywidgets import IntSlider, interact, widgets, Play
+from ipywidgets import IntSlider, interact, widgets, Play, Layout
 import pythreejs as p3js
 from matplotlib.cm import get_cmap
 
@@ -170,16 +172,10 @@ class Renderer(widgets.VBox):
 
 class ColorBarRenderer(widgets.VBox):
     def __init__(self, render_size, color_map, vmin=None, vmax=None):
+        self.render_size = render_size
+        self.color_map = color_map
+        self.vmin, self.vmax = vmin, vmax
 
-        max_tex_size = 512
-        normal_vmax = (vmax-vmin)/vmax
-        cm = color_map(np.linspace(0, normal_vmax, max_tex_size)).astype(np.float32)
-        cm.resize((max_tex_size, 1, 4))
-        color_map = p3js.DataTexture(cm, format='RGBAFormat',  width=max_tex_size, height=1, type='FloatType')
-        uniforms=dict(
-            colormap={'value': color_map, 'type': 'sampler2D'},
-        )
-        self.material = p3js.ShaderMaterial(vertexShader=COLORBAR_VERTEX_SHADER, fragmentShader=COLORBAR_FRAGMENT_SHADER, uniforms=uniforms)
         fov_angle = 60
         bounding_box = [(0,0), (1,1)]
         lower = np.array([bounding_box[0][0], bounding_box[0][1], 0])
@@ -204,17 +200,11 @@ class ColorBarRenderer(widgets.VBox):
         self.controller.target = [xhalf, yhalf, zhalf]
         self.controller.exec_three_obj_method('update')
         self.freeze_camera(True)
-
-        geo = p3js.PlaneGeometry(width=1, height=2)
-
-        self.mesh = p3js.Mesh(geometry=geo, material=self.material)
-        # text = p3js.TextGeometry()
-
-        self.scene = p3js.Scene(children=([self.cam, self.light, self.mesh]), background='white')
+        self.sprite = self._gen_sprite()
+        self.scene = p3js.Scene(children=([self.cam, self.light, self.sprite]), background='white')
         self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
                                       controls=[self.controller],
                                       width=render_size[0], height=render_size[1])
-
         super().__init__(children=[self.renderer, ])
 
     def freeze_camera(self, freeze=True):
@@ -224,6 +214,54 @@ class ColorBarRenderer(widgets.VBox):
 
     def goto(self, _):
         pass
+
+    def _gen_sprite(self):
+        from PIL import Image, ImageFont, ImageDraw
+        # upsacle to pow2
+        sprite_size = (self.render_size[0], self.render_size[1])
+        image = Image.new('RGBA', sprite_size, color=(255,255,255,255))
+        draw = ImageDraw.Draw(image)
+        ttf = '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'
+        font_size = 12
+        font = ImageFont.truetype(ttf, font_size)
+        bar_width = 25
+        bar_padding = font_size // 2
+        bar_height = sprite_size[1] - (2*bar_padding)
+        # we have to flip the Y coord cause PIL's coordinate system is different from OGL
+        for i in range(bar_height):
+            cl = tuple((np.array(self.color_map(bar_height-i))*255).astype(np.int_))
+            draw.line([(0, bar_padding+i), (bar_width, bar_padding+i)], cl, width=1)
+
+        text_x = bar_width + 4
+        text_color = (0,0,0,255)
+        text_fmt = '{:+1.3e}'
+        draw.text((text_x, 0), text_fmt.format(self.vmax), font=font, fill=text_color)
+        draw.text((text_x, (bar_height-bar_padding)//2), text_fmt.format((self.vmax+self.vmin)/2), font=font, fill=text_color)
+        draw.text((text_x, bar_height-bar_padding), text_fmt.format(self.vmin), font=font, fill=text_color)
+
+        # with NamedTemporaryFile(suffix='.png') as ntmp:
+        ntmp = 'foo.png'
+        image.save(ntmp)
+        texture = p3js.ImageTexture(imageUri=ntmp)
+        # tx = ld.load(ntmp)
+        mat = p3js.SpriteMaterial( map=texture, color='white')
+        return p3js.Sprite( mat )
+
+    def _bar_mesh(self):
+        """currently unused due to pythreejs missing a TextGeometry implementation"""
+        max_tex_size = 512
+        normal_vmax = (self.vmax - self.vmin) / self.vmax
+        cm = self.color_map(np.linspace(0, normal_vmax, max_tex_size)).astype(np.float32)
+        cm.resize((max_tex_size, 1, 4))
+        color_map = p3js.DataTexture(cm, format='RGBAFormat', width=max_tex_size, height=1, type='FloatType')
+        uniforms = dict(
+            colormap={'value': color_map, 'type': 'sampler2D'},
+        )
+        self.material = p3js.ShaderMaterial(vertexShader=COLORBAR_VERTEX_SHADER,
+                                            fragmentShader=COLORBAR_FRAGMENT_SHADER, uniforms=uniforms)
+        geo = p3js.PlaneGeometry(width=1, height=2)
+
+        return p3js.Mesh(geometry=geo, material=self.material)
 
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
@@ -290,13 +328,14 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     render_size=(400,400)
     renderer = [Renderer(u, grid, render_size, color_map, title, bounding_box=bounding_box, codim=codim)
                 for u, vmin, vmax in zip(U, vmins, vmaxs)]
+    bar_size = (100, render_size[1])
     if not separate_colorbars:
-        renderer.append(ColorBarRenderer(render_size=(50, render_size[1]), vmin=vmins[0], vmax=vmaxs[0], color_map=color_map))
+        renderer.append(ColorBarRenderer(render_size=bar_size, vmin=vmins[0], vmax=vmaxs[0], color_map=color_map))
     else:
         for i, (vmin, vmax) in enumerate(zip(vmins, vmaxs)):
-            cr = ColorBarRenderer(render_size=(50, render_size[1]), vmin=vmin, vmax=vmax, color_map=color_map)
+            cr = ColorBarRenderer(render_size=bar_size, vmin=vmin, vmax=vmax, color_map=color_map)
             renderer.insert(2*i+1, cr)
-    r_hbox = widgets.HBox(renderer)
+    r_hbox = widgets.HBox(renderer, layout=Layout(padding='0 20px 0 20px'))
     if size > 1:
         def _goto_idx(idx):
             for c in renderer:
