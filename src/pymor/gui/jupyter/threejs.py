@@ -2,6 +2,7 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import asyncio
+from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 import IPython
@@ -175,42 +176,11 @@ class ColorBarRenderer(widgets.VBox):
         self.render_size = render_size
         self.color_map = color_map
         self.vmin, self.vmax = vmin, vmax
-
-        fov_angle = 60
-        bounding_box = [(0,0), (1,1)]
-        lower = np.array([bounding_box[0][0], bounding_box[0][1], 0])
-        upper = np.array([bounding_box[1][0], bounding_box[1][1], 0])
-        bounding_box = (lower, upper)
-        combined_bounds = np.hstack(bounding_box)
-
-        absx = np.abs(combined_bounds[0] - combined_bounds[3])
-        not_mathematical_distance_scaling = 1.2
-        c_dist = np.sin((90 - fov_angle / 2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle / 2 * np.pi / 180)
-        c_dist *= not_mathematical_distance_scaling
-        xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
-        yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
-        zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
-
-        self.cam = p3js.PerspectiveCamera(aspect=render_size[0] / render_size[1],
-                                          position=[xhalf, yhalf, zhalf + c_dist],
-                                          fov_angle=fov_angle)
-        self.light = p3js.AmbientLight(color='white', intensity=1.0)
-
-        self.controller = p3js.OrbitControls(controlling=self.cam, position=[xhalf, yhalf, zhalf + c_dist])
-        self.controller.target = [xhalf, yhalf, zhalf]
-        self.controller.exec_three_obj_method('update')
-        self.freeze_camera(True)
-        self.sprite = self._gen_sprite()
-        self.scene = p3js.Scene(children=([self.cam, self.light, self.sprite]), background='white')
-        self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
-                                      controls=[self.controller],
-                                      width=render_size[0], height=render_size[1])
-        super().__init__(children=[self.renderer, ])
+        self.image = self._gen_sprite()
+        super().__init__(children=[self.image, ])
 
     def freeze_camera(self, freeze=True):
-        self.controller.enablePan = not freeze
-        self.controller.enableZoom = not freeze
-        self.controller.enableRotate = not freeze
+        pass
 
     def goto(self, _):
         pass
@@ -239,29 +209,15 @@ class ColorBarRenderer(widgets.VBox):
         draw.text((text_x, (bar_height-bar_padding)//2), text_fmt.format((self.vmax+self.vmin)/2), font=font, fill=text_color)
         draw.text((text_x, bar_height-bar_padding), text_fmt.format(self.vmin), font=font, fill=text_color)
 
-        # with NamedTemporaryFile(suffix='.png') as ntmp:
-        ntmp = 'foo.png'
-        image.save(ntmp)
-        texture = p3js.ImageTexture(imageUri=ntmp)
-        # tx = ld.load(ntmp)
-        mat = p3js.SpriteMaterial( map=texture, color='white')
-        return p3js.Sprite( mat )
-
-    def _bar_mesh(self):
-        """currently unused due to pythreejs missing a TextGeometry implementation"""
-        max_tex_size = 512
-        normal_vmax = (self.vmax - self.vmin) / self.vmax
-        cm = self.color_map(np.linspace(0, normal_vmax, max_tex_size)).astype(np.float32)
-        cm.resize((max_tex_size, 1, 4))
-        color_map = p3js.DataTexture(cm, format='RGBAFormat', width=max_tex_size, height=1, type='FloatType')
-        uniforms = dict(
-            colormap={'value': color_map, 'type': 'sampler2D'},
+        of = BytesIO()
+        image.save(of, format='png')
+        of.seek(0)
+        return widgets.Image(
+            value=of.read(),
+            format='png',
+            width=self.render_size[0],
+            height=self.render_size[1],
         )
-        self.material = p3js.ShaderMaterial(vertexShader=COLORBAR_VERTEX_SHADER,
-                                            fragmentShader=COLORBAR_FRAGMENT_SHADER, uniforms=uniforms)
-        geo = p3js.PlaneGeometry(width=1, height=2)
-
-        return p3js.Mesh(geometry=geo, material=self.material)
 
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
