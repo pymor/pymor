@@ -11,7 +11,7 @@
  1. [ ] Wait for CI build to finish (this will upload sdist+wheels to pypi, conda builds to conda cloud)
  1. [ ] Make a github release. Zenodo is hooked into that.
  1. [ ] update morwiki https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/PyMOR
- 1. [ ] update researchgate https://www.researchgate.net/project/pyMOR-Sustainable-Software-for-Model-Order-Reduction
+ 1. [ ] update researchgate https://www.researchgate.net/project/pyMOR-Model-Order-Reduction-with-Python
  1. [ ] Submit release to NA-digest: http://icl.utk.edu/na-digest/websubmit.html
  1. [ ] Send release announcement to pymor-dev
  
