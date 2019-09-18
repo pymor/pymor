@@ -155,6 +155,8 @@ verify setup.py:
         - docker:dind
     environment:
         name: unsafe
+
+
 pip 1/3:
     extends: .docker-in-docker
     stage: deploy
@@ -187,6 +189,36 @@ repo2docker:
         - cd .binder
         - docker-compose build
         - docker-compose run jupyter ${CMD}
+
+
+trigger_binder 1/2:
+    extends: .test_base
+    stage: deploy
+    # there's no need to run this if repo2docker fails already
+    needs: "repo2docker"
+    only: ['branches', 'tags']
+    except:
+        - /^github/.*$/i
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests eventlet
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://gke.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 2/2:
+    extends: .test_base
+    stage: deploy
+    # there's no need to run this if repo2docker fails already
+    needs: "repo2docker"
+    only: ['branches', 'tags']
+    except:
+        - /^github/.*$/i
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests eventlet
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://ovh.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
 
 .wheel:
     extends: .docker-in-docker
