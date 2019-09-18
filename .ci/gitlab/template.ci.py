@@ -127,7 +127,7 @@ verify setup.py:
     environment:
         name: unsafe
 
-{%- for OS in testos %}
+{% for OS in testos %}
 pip {{loop.index}}/{{loop.length}}:
     extends: .docker-in-docker
     stage: deploy
@@ -150,6 +150,22 @@ repo2docker:
         - cd .binder
         - docker-compose build
         - docker-compose run jupyter ${CMD}
+
+{% for url in binder_urls %}
+trigger_binder {{loop.index}}/{{loop.length}}:
+    extends: .test_base
+    stage: deploy
+    # there's no need to run this if repo2docker fails already
+    needs: "repo2docker"
+    only: ['branches', 'tags']
+    except:
+        - /^github/.*$/i
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests eventlet
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "{{url}}/${CI_COMMIT_REF}"
+{% endfor %}
 
 .wheel:
     extends: .docker-in-docker
@@ -185,7 +201,11 @@ import sys
 from itertools import product
 tpl = jinja2.Template(tpl)
 pythons = ['3.6', '3.7']
+# these should be all instances in the federation
+binder_urls = ['https://gke.mybinder.org/build/gh/pymor/pymor',
+               'https://ovh.mybinder.org/build/gh/pymor/pymor']
 marker = ["Vanilla", "PIP_ONLY", "NOTEBOOKS"]
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = list(product(pythons, marker))
-    yml.write(tpl.render(matrix=matrix,testos=['debian_buster', 'debian_testing', 'centos_7'], pythons=pythons))
+    yml.write(tpl.render(matrix=matrix,testos=['debian_buster', 'debian_testing', 'centos_7'], pythons=pythons,
+                         binder_urls=binder_urls))
