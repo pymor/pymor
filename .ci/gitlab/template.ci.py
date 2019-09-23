@@ -64,9 +64,9 @@ pages:
     image: pymor/testing:3.6
     stage: test
     script: .ci/gitlab/test_docs.bash
-    except:
-        - /^github\/PR_.*$/
-        - /^staging/.*$/i
+    only:
+      - master
+      - tags
     artifacts:
         paths:
             - public

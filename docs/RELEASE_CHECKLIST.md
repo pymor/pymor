@@ -1,6 +1,7 @@
 
  1. [ ] (Create release branch)
  1. [ ] With each 20XX.1 release, update Copyright notices accordingly
+ 1. [ ] Update docs/public_root/index.html to point to new release
  1. [ ] Check wheel install on debian stretch produces an OK error message due to too old python
  1. [ ] Write Release Notes
  1. [ ] Update Readme
