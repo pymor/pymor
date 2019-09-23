@@ -156,10 +156,10 @@ trigger_binder {{loop.index}}/{{loop.length}}:
     extends: .test_base
     stage: deploy
     # there's no need to run this if repo2docker fails already
-    needs: "repo2docker"
-    only: ['branches', 'tags']
-    except:
-        - /^github/.*$/i
+    #needs: "repo2docker"
+    only: 
+        - master
+        - tags
     before_script:
         - apk --update add bash python3
         - pip3 install requests eventlet
