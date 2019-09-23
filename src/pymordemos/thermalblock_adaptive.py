@@ -16,54 +16,35 @@ Arguments:
 
 Options:
   -h, --help                 Show this message.
-
   --without-estimator        Do not use error estimator for basis generation.
-
   --extension-alg=ALG        Basis extension algorithm (trivial, gram_schmidt)
                              to be used [default: gram_schmidt].
-
   --grid=NI                  Use grid with 2*NI*NI elements [default: 100].
-
   --pickle=PREFIX            Pickle reduced discretizaion, as well as reductor and high-dimensional
                              model to files with this prefix.
-
   -p, --plot-err             Plot error.
-
   --plot-solutions           Plot some example solutions.
-
   --plot-error-sequence      Plot reduction error vs. basis size.
-
   --product=PROD             Product (euclidean, h1) w.r.t. which to orthonormalize
                              and calculate Riesz representatives [default: h1].
-
   --reductor=RED             Reductor (error estimator) to choose (traditional, residual_basis)
                              [default: residual_basis]
-
   --test=COUNT               Use COUNT snapshots for stochastic error estimation
                              [default: 10].
-
   --ipython-engines=COUNT    If positive, the number of IPython cluster engines to use for
                              parallel greedy search. If zero, no parallelization is performed.
                              [default: 0]
-
   --ipython-profile=PROFILE  IPython profile to use for parallelization.
-
   --cache-region=REGION      Name of cache region to use for caching solution snapshots
                              (NONE, MEMORY, DISK, PERSISTENT)
                              [default: NONE]
-
   --list-vector-array        Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
-
   --no-visualize-refinement  Do not visualize the training set refinement indicators.
-
   --validation-mus=VALUE     Size of validation set. [default: 0]
-
   --rho=VALUE                Maximum allowed ratio between error on validation set and on
                              training set [default: 1.1].
-
   --gamma=VALUE              Weight factor for age penalty term in refinement indicators
                              [default: 0.2].
-
   --theta=VALUE              Ratio of elements to refine [default: 0.].
 """
 

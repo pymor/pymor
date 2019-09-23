@@ -11,32 +11,21 @@ Usage:
   burgers.py [-h] [--grid=NI] [--grid-type=TYPE] [--initial-data=TYPE] [--lxf-lambda=VALUE] [--nt=COUNT]
              [--not-periodic] [--num-flux=FLUX] [--vx=XSPEED] [--vy=YSPEED] EXP
 
-
 Arguments:
   EXP                    Exponent
 
-
 Options:
   --grid=NI              Use grid with (2*NI)*NI elements [default: 60].
-
   --grid-type=TYPE       Type of grid to use (rect, tria) [default: rect].
-
   --initial-data=TYPE    Select the initial data (sin, bump) [default: sin]
-
   --lxf-lambda=VALUE     Parameter lambda in Lax-Friedrichs flux [default: 1].
-
   --nt=COUNT             Number of time steps [default: 100].
-
   --not-periodic         Solve with dirichlet boundary conditions on left
                          and bottom boundary.
-
   --num-flux=FLUX        Numerical flux to use (lax_friedrichs, engquist_osher)
                          [default: engquist_osher].
-
   -h, --help             Show this message.
-
   --vx=XSPEED            Speed in x-direction [default: 1].
-
   --vy=YSPEED            Speed in y-direction [default: 1].
 """
 

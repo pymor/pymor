@@ -10,12 +10,10 @@ Usage:
 
 Arguments:
     PROBLEM-NUMBER    {0,1}, selects the problem to solve
-
     N                 Triangle count per direction
 
 Options:
     -h, --help   Show this message.
-
     --fv         Use finite volume discretization instead of finite elements.
 """
 
