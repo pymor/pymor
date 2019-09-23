@@ -12,18 +12,12 @@ with empirical operator interpolation.
 Usage:
   burgers_ei.py [options] EXP_MIN EXP_MAX EI_SNAPSHOTS EISIZE SNAPSHOTS RBSIZE
 
-
 Arguments:
   EXP_MIN       Minimal exponent
-
   EXP_MAX       Maximal exponent
-
   EI_SNAPSHOTS  Number of snapshots for empirical interpolation.
-
   EISIZE        Number of interpolation DOFs.
-
   SNAPSHOTS     Number of snapshots for basis generation.
-
   RBSIZE        Size of the reduced basis
 
 
@@ -31,51 +25,31 @@ Options:
   --cache-region=REGION           Name of cache region to use for caching solution snapshots
                                   (NONE, MEMORY, DISK, PERSISTENT)
                                   [default: DISK]
-
   --ei-alg=ALG                    Interpolation algorithm to use (EI_GREEDY, DEIM)
                                   [default: EI_GREEDY].
-
   --grid=NI                       Use grid with (2*NI)*NI elements [default: 60].
-
   --grid-type=TYPE                Type of grid to use (rect, tria) [default: rect].
-
   --initial-data=TYPE             Select the initial data (sin, bump) [default: sin]
-
   --lxf-lambda=VALUE              Parameter lambda in Lax-Friedrichs flux [default: 1].
-
   --not-periodic                  Solve with dirichlet boundary conditions on left
                                   and bottom boundary.
-
   --nt=COUNT                      Number of time steps [default: 100].
-
   --num-flux=FLUX                 Numerical flux to use (lax_friedrichs, engquist_osher)
                                   [default: engquist_osher].
-
   -h, --help                      Show this message.
-
   -p, --plot-err                  Plot error.
-
   --plot-ei-err                   Plot empirical interpolation error.
-
   --plot-error-landscape          Calculate and show plot of reduction error vs. basis sizes.
-
   --plot-error-landscape-N=COUNT  Number of basis sizes to test [default: 10]
-
   --plot-error-landscape-M=COUNT  Number of collateral basis sizes to test [default: 10]
-
   --plot-solutions                Plot some example solutions.
-
   --test=COUNT                    Use COUNT snapshots for stochastic error estimation
                                   [default: 10].
-
   --vx=XSPEED                     Speed in x-direction [default: 1].
-
   --vy=YSPEED                     Speed in y-direction [default: 1].
-
   --ipython-engines=COUNT         If positive, the number of IPython cluster engines to use
                                   for parallel greedy search. If zero, no parallelization
                                   is performed. [default: 0]
-
   --ipython-profile=PROFILE       IPython profile to use for parallelization.
 """
 

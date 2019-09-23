@@ -12,71 +12,45 @@ Usage:
 
 Arguments:
   XBLOCKS    Number of blocks in x direction.
-
   YBLOCKS    Number of blocks in y direction.
-
   SNAPSHOTS  naive:           ignored
-
              greedy/pod:      Number of training_set parameters per block
                               (in total SNAPSHOTS^(XBLOCKS * YBLOCKS)
                               parameters).
-
              adaptive_greedy: size of validation set.
-
   RBSIZE     Size of the reduced basis
-
 
 Options:
   --adaptive-greedy-rho=RHO       See pymor.algorithms.adaptivegreedy [default: 1.1].
-
   --adaptive-greedy-gamma=GAMMA   See pymor.algorithms.adaptivegreedy [default: 0.2].
-
   --adaptive-greedy-theta=THETA   See pymor.algorithms.adaptivegreedy [default: 0.]
-
   --alg=ALG                       The model reduction algorithm to use
                                   (naive, greedy, adaptive_greedy, pod) [default: greedy].
-
   --cache-region=REGION           Name of cache region to use for caching solution snapshots
                                   (none, memory, disk, persistent) [default: none].
-
   --extension-alg=ALG             Basis extension algorithm (trivial, gram_schmidt)
                                   to be used [default: gram_schmidt].
-
   --fenics                        Use FEniCS model.
-
   --grid=NI                       Use grid with 4*NI*NI elements [default: 100].
-
   -h, --help                      Show this message.
-
   --ipython-engines=COUNT         If positive, the number of IPython cluster engines to use for
                                   parallel greedy search. If zero, no parallelization is performed.
                                   [default: 0]
-
   --ipython-profile=PROFILE       IPython profile to use for parallelization.
-
   --list-vector-array             Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
-
   --order=ORDER                   Polynomial order of the Lagrange finite elements to use in FEniCS
                                   model [default: 1].
-
   --pickle=PREFIX                 Pickle reduced model, as well as reductor and high-dimensional
                                   model to files with this prefix.
-
   --plot-err                      Plot error.
-
   --plot-solutions                Plot some example solutions.
-
   --plot-error-sequence           Plot reduction error vs. basis size.
-
   --product=PROD                  Product (euclidean, h1) w.r.t. which to orthonormalize
                                   and calculate Riesz representatives [default: h1].
-
   --reductor=RED                  Reductor (error estimator) to choose (traditional, residual_basis)
                                   [default: residual_basis]
-
   --test=COUNT                    Use COUNT snapshots for stochastic error estimation
                                   [default: 10].
-
   --greedy-without-estimator      Do not use error estimator for basis generation.
 """
 

@@ -13,11 +13,8 @@ Usage:
 
 Arguments:
     ANGLE        The angle of the circular sector.
-
     NUM_POINTS   The number of points that form the arc of the circular sector.
-
     CLSCALE      Mesh element size scaling factor.
-
 
 Options:
     -h, --help   Show this message.

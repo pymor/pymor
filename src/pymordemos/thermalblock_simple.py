@@ -10,20 +10,14 @@ Usage:
 
 Arguments:
   MODEL      High-dimensional model (pymor, fenics, ngsolve, pymor-text).
-
   ALG        The model reduction algorithm to use
              (naive, greedy, adaptive_greedy, pod).
-
   SNAPSHOTS  naive:           ignored
-
              greedy/pod:      Number of training_set parameters per block
                               (in total SNAPSHOTS^(XBLOCKS * YBLOCKS)
                               parameters).
-
              adaptive_greedy: size of validation set.
-
   RBSIZE     Size of the reduced basis.
-
   TEST       Number of parameters for stochastic error estimation.
 """
 

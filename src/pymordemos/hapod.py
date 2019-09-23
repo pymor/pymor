@@ -16,20 +16,13 @@ Arguments:
   DIST                   Number of slices for distributed HAPOD.
   INC                    Number of steps for incremental HAPOD.
 
-
 Options:
   --grid=NI              Use grid with (2*NI)*NI elements [default: 60].
-
   -h, --help             Show this message.
-
   --nt=COUNT             Number of time steps [default: 100].
-
   --omega=OMEGA          Parameter omega from HAPOD algorithm [default: 0.9].
-
   --procs=PROCS          Number of processes to use for parallelization [default: 0].
-
   --snap=SNAP            Number of snapshot trajectories to compute [default: 20].
-
   --threads=THREADS      Number of threads to use for parallelization [default: 0].
 """
 

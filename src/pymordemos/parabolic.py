@@ -15,13 +15,9 @@ Arguments:
 
 Options:
     -h, --help   Show this message.
-
     --fv         Use finite volume discretization instead of finite elements.
-
     --rect       Use RectGrid instead of TriaGrid.
-
     --grid=NI    Use grid with NIxNI intervals [default: 100].
-
     --nt=COUNT   Number of time steps [default: 100].
 """
 
