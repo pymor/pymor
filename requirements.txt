@@ -3,6 +3,7 @@ Qt.py
 Sphinx>=1.4.0
 cython>=0.20.1
 diskcache
+docopt-ng
 numpy>=1.12.1;python_version != "3.6" and python_version != "3.7"
 numpy>=1.12.1;python_version == "3.6"
 numpy>=1.15.4;python_version == "3.7"

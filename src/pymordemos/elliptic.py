@@ -28,7 +28,7 @@ Options:
     --rect       Use RectGrid instead of TriaGrid.
 """
 
-from pymor.tools.docopt import docopt
+from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems.elliptic import StationaryProblem
