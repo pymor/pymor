@@ -18,7 +18,7 @@ def _pymess(rev, major, minor, marker=True):
 
 # for pyproject.toml we require equality to build compatible wheels in pep 517 mode
 def setup_requires(toml=False):
-    NUMPY = '1.12.1'
+    NUMPY = '1.16.0'
     # numpy versions with filters according to minimal version with a wheel
     numpys = ['numpy>={};python_version == "3.6"'.format(NUMPY),
       'numpy>=1.15.4;python_version == "3.7"',
