@@ -98,7 +98,7 @@ def extras():
 
     return {
         'full': list(_candidates(blacklist=[])),
-        'ci':  ci_requires,
+        'ci':  ci_requires + doc_requires,
         'docs': doc_requires,
     }
 

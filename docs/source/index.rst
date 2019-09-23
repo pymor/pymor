@@ -19,6 +19,7 @@ provided for getting started quickly.
     environment
     release_notes
     bibliography
+    notebooks
 
 API Documentation
 *****************
