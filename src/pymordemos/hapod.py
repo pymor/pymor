@@ -36,7 +36,7 @@ Options:
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from time import time
 
-from pymor.tools.docopt import docopt
+from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems.burgers import burgers_problem_2d

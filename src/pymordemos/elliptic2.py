@@ -19,7 +19,7 @@ Options:
     --fv         Use finite volume discretization instead of finite elements.
 """
 
-from pymor.tools.docopt import docopt
+from docopt import docopt
 
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.cg import discretize_stationary_cg

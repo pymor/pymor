@@ -69,7 +69,7 @@ Options:
 
 import sys
 
-from pymor.tools.docopt import docopt
+from docopt import docopt
 
 from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy
 from pymor.algorithms.error import reduction_error_analysis

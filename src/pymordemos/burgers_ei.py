@@ -84,7 +84,7 @@ import math
 import time
 
 import numpy as np
-from pymor.tools.docopt import docopt
+from docopt import docopt
 
 from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.ei import interpolate_operators
