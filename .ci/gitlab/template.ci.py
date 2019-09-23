@@ -59,16 +59,17 @@ minimal_cpp_demo:
     stage: test
     script: ./.ci/gitlab/cpp_demo.bash
 
-docs:
+pages:
     extends: .test_base
     image: pymor/testing:3.6
     stage: test
     script: .ci/gitlab/test_docs.bash
+    except:
+        - /^github\/PR_.*$/
+        - /^staging/.*$/i
     artifacts:
-        name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
-        expire_in: 3 months
         paths:
-            - docs/_build/html
+            - public
 
 {%- for py, m in matrix %}
 {{m}} {{py[0]}} {{py[2]}}:
