@@ -91,6 +91,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
+              'sphinx.ext.mathjax',
+              'nbsphinx',
               'pymordocstring'
               ]
 try:
@@ -137,6 +139,7 @@ default_role = "literal"
 # List of directories, relative to source directories, that shouldn't be searched
 # for source files.
 exclude_dirs = []
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
