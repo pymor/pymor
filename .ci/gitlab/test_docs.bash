@@ -27,3 +27,6 @@ python setup.py build_ext -i
 
 export READTHEDOCS='True'
 make docs
+
+mkdir -p public/${CI_COMMIT_REF_SLUG}/
+mv docs/_build/html/* public/${CI_COMMIT_REF_SLUG}/
