@@ -6,6 +6,7 @@ codecov
 cython>=0.20.1
 nbconvert
 nbsphinx
+nbsphinx_link
 numpy>=1.12.1;python_version != "3.6" and python_version != "3.7"
 numpy>=1.12.1;python_version == "3.6"
 numpy>=1.15.4;python_version == "3.7"
