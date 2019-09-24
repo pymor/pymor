@@ -32,6 +32,7 @@ services:
     image: pymor/testing:3.7
     environment:
       - PYMOR_PYTEST_MARKER=${PYMOR_PYTEST_MARKER}
+      - CI_PROJECT_DIR=/src
     volumes:
         - ./..:/src
     restart: "no"
