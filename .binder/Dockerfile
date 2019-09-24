@@ -34,6 +34,7 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 ADD requirements*.txt /tmp/
 RUN /bin/bash -c "pip install jupyterlab && \
     pip install -r /tmp/requirements-optional.txt && \
+    pip install -r /tmp/requirements-ci.txt && \
     jupyter nbextension install --py --symlink --sys-prefix pythreejs && \
     jupyter nbextension enable --py --sys-prefix pythreejs && \
     jupyter labextension install jupyter-threejs && \

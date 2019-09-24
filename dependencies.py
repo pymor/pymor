@@ -6,6 +6,13 @@
 # DO NOT use any python features here that require 3.6 or newer
 
 _PYTEST = 'pytest>=4.4'
+_CYTHON = 'cython>=0.20.1'
+_SPHINX = 'Sphinx>=1.5.0'
+_NUMPY = '1.12.1'
+# numpy versions with filters according to minimal version with a wheel
+_NUMPYS = ['numpy>={};python_version == "3.6"'.format(_NUMPY),
+  'numpy>=1.15.4;python_version == "3.7"',
+  'numpy>={};python_version != "3.6" and python_version != "3.7"'.format(_NUMPY),]
 
 def _pymess(rev, major, minor, marker=True):
     url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
@@ -25,8 +32,8 @@ def setup_requires(toml=False):
       'numpy>={};python_version != "3.6" and python_version != "3.7"'.format(NUMPY),]
     other = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.27', 'packaging',]
     if toml:
-        numpys = [f.replace('numpy>=', 'numpy==') for f in numpys]
-    return numpys + other
+        return [f.replace('numpy>=', 'numpy==') for f in _NUMPYS] + other
+    return _NUMPYS + other
 
 tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker']
 install_requires = ['scipy>=1.1', 'Qt.py', 'packaging', 'Sphinx>=1.4.0','diskcache', 'docopt-ng'] + setup_requires()
@@ -44,7 +51,7 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
                     'pillow': 'image library used for bitmap data functions'}
-doc_requires = ['sphinx>=1.5', 'cython', 'numpy', 'nbsphinx']
+doc_requires = [_SPHINX, _CYTHON, 'nbsphinx'] + _NUMPYS
 ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'testipynb']
@@ -134,7 +141,7 @@ if __name__ == '__main__':
     with open(os.path.join(os.path.dirname(__file__), 'requirements-ci.txt'), 'wt') as req:
         req.write('-r requirements.txt\n')
         req.write(note+'\n')
-        for module in sorted(ci_requires):
+        for module in sorted(ci_requires + doc_requires):
             req.write(module+'\n')
     with open(os.path.join(os.path.dirname(__file__), 'pyproject.toml'), 'wt') as toml:
         toml.write(note)
