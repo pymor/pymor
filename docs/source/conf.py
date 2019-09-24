@@ -88,6 +88,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx.ext.mathjax',
               'nbsphinx',
+              'nbsphinx_link',
               'pymordocstring',
               'nb2plots'
               ]

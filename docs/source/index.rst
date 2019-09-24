@@ -38,3 +38,4 @@ Demo Applications
     :glob:
 
     generated/pymordemos
+    notebooks/*
