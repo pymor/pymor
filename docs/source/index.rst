@@ -38,4 +38,9 @@ Demo Applications
     :glob:
 
     generated/pymordemos
-    notebooks/*
+
+.. toctree::
+    :maxdepth: 2
+    :glob:
+
+    notebooks/delay
