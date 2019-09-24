@@ -60,13 +60,19 @@ minimal_cpp_demo:
     script: ./.ci/gitlab/cpp_demo.bash
 
 pages:
-    extends: .test_base
-    image: pymor/testing:3.6
-    stage: test
-    script: .ci/gitlab/test_docs.bash
-    only:
-      - master
-      - tags
+# this needs to use a semaphore to avoid races on the docker images
+# should become available with gitlab 12.6 (Dez. 17)
+    extends: .docker-in-docker
+    stage: deploy
+    variables:
+        IMAGE: ${CI_REGISTRY_IMAGE}/docs:latest
+    script:
+        - apk --update add make
+        - .ci/gitlab/deploy_docs.bash
+
+    # only:
+    #   - master
+    #   - tags
     artifacts:
         paths:
             - public

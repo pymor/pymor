@@ -22,12 +22,7 @@ ${SUDO} pip install -r requirements.txt
 ${SUDO} pip install -r requirements-ci.txt
 ${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
-${SUDO} pip install .[docs]
+${SUDO} pip install -U jupyterlab
 python setup.py build_ext -i
 
-export READTHEDOCS='True'
 make docs
-
-mkdir -p public/${CI_COMMIT_REF_SLUG}/
-mv docs/_build/html/* public/${CI_COMMIT_REF_SLUG}/
-cp -r docs/public_root/* public/
