@@ -65,7 +65,7 @@ elif [ "${PYMOR_PYTEST_MARKER}" == "OLDEST" ] ; then
 
     pip freeze
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a py.test -r sxX --junitxml=test_results.xml
+    xvfb-run -a py.test ${COVERAGE_OPTS} --cov-report=xml -r sxX --junitxml=test_results.xml
 elif [ "${PYMOR_PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
 elif [ "${PYMOR_PYTEST_MARKER}" == "NOTEBOOKS" ] ; then
