@@ -55,19 +55,13 @@ jobs:
     - stage: test_top
       env: PYMOR_PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.5" PYMOR_TEST_HALF="TOP"
     - stage: test_top
-      env: PYMOR_PYTEST_MARKER="MPI" DOCKER_TAG="3.5" PYMOR_TEST_HALF="TOP"
-    - stage: test_top
       env: PYMOR_PYTEST_MARKER="None" DOCKER_TAG="3.6" PYMOR_TEST_HALF="TOP"
     - stage: test_top
       env: PYMOR_PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.6" PYMOR_TEST_HALF="TOP"
     - stage: test_top
-      env: PYMOR_PYTEST_MARKER="MPI" DOCKER_TAG="3.6" PYMOR_TEST_HALF="TOP"
-    - stage: test_top
       env: PYMOR_PYTEST_MARKER="None" DOCKER_TAG="3.7" PYMOR_TEST_HALF="TOP"
     - stage: test_top
       env: PYMOR_PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.7" PYMOR_TEST_HALF="TOP"
-    - stage: test_top
-      env: PYMOR_PYTEST_MARKER="MPI" DOCKER_TAG="3.7" PYMOR_TEST_HALF="TOP"
 
     - stage: test_bottom
       env: PYMOR_PYTEST_MARKER="NUMPY" DOCKER_TAG="3.6" PYMOR_TEST_HALF="BOTTOM"
@@ -76,19 +70,13 @@ jobs:
     - stage: test_bottom
       env: PYMOR_PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.5" PYMOR_TEST_HALF="BOTTOM"
     - stage: test_bottom
-      env: PYMOR_PYTEST_MARKER="MPI" DOCKER_TAG="3.5" PYMOR_TEST_HALF="BOTTOM"
-    - stage: test_bottom
       env: PYMOR_PYTEST_MARKER="None" DOCKER_TAG="3.6" PYMOR_TEST_HALF="BOTTOM"
     - stage: test_bottom
       env: PYMOR_PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.6" PYMOR_TEST_HALF="BOTTOM"
     - stage: test_bottom
-      env: PYMOR_PYTEST_MARKER="MPI" DOCKER_TAG="3.6" PYMOR_TEST_HALF="BOTTOM"
-    - stage: test_bottom
       env: PYMOR_PYTEST_MARKER="None" DOCKER_TAG="3.7" PYMOR_TEST_HALF="BOTTOM"
     - stage: test_bottom
       env: PYMOR_PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.7" PYMOR_TEST_HALF="BOTTOM"
-    - stage: test_bottom
-      env: PYMOR_PYTEST_MARKER="MPI" DOCKER_TAG="3.7" PYMOR_TEST_HALF="BOTTOM"
 
     - stage: install_check
       script: docker build -f .ci/docker/install_checks/debian_stable/Dockerfile .
