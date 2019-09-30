@@ -3,7 +3,6 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import asyncio
 from io import BytesIO
-from tempfile import NamedTemporaryFile
 
 import IPython
 import numpy as np
@@ -39,25 +38,6 @@ RENDER_FRAGMENT_SHADER = """
     }
     """
 
-COLORBAR_VERTEX_SHADER = """
-    varying float texcoord;
-
-    void main()
-    {
-        texcoord = position.y;
-        gl_Position =  projectionMatrix * modelViewMatrix * vec4(position,1.0);
-    }
-    """
-
-COLORBAR_FRAGMENT_SHADER = """
-    uniform sampler2D colormap;
-    varying float texcoord;
-
-    void main()
-    {
-        gl_FragColor = texture2D(colormap, vec2(texcoord, 0.));
-    }
-    """
 
 def _normalize(u):
     # rescale to be in [0,1], scale nan to be the smallest value
@@ -220,6 +200,45 @@ class ColorBarRenderer(widgets.VBox):
         )
 
 
+class ThreeJSPlot(widgets.VBox):
+    def __init__(self,grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size):
+        render_size = (400, 400)
+        self.renderer = [Renderer(u, grid, render_size, color_map, title, bounding_box=bounding_box, codim=codim)
+                    for u, vmin, vmax in zip(U, vmins, vmaxs)]
+        bar_size = (100, render_size[1])
+        if not separate_colorbars:
+            self.colorbars = [ColorBarRenderer(render_size=bar_size, vmin=vmins[0], vmax=vmaxs[0], color_map=color_map)]
+            self.r_hbox_items = self.renderer + self.colorbars
+        else:
+            self.r_hbox_items = self.renderer
+            self.colorbars = []
+            for i, (vmin, vmax) in enumerate(zip(vmins, vmaxs)):
+                cr = ColorBarRenderer(render_size=bar_size, vmin=vmin, vmax=vmax, color_map=color_map)
+                self.r_hbox_items.insert(2 * i + 1, cr)
+                self.colorbars.append(cr)
+        children = [widgets.HBox(self.r_hbox_items, layout=Layout(padding='0 20px 0 20px'))]
+        if size > 1:
+            def _goto_idx(idx):
+                for c in self.renderer:
+                    c.goto(idx)
+            play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:')
+            interact(idx=play).widget(_goto_idx)
+            slider = IntSlider(min=0, max=size - 1, step=1, value=0, description='Timestep:')
+            widgets.jslink((play, 'value'), (slider, 'value'))
+            controls = widgets.HBox([play, slider])
+            children.append(controls)
+
+        super().__init__(children=children)
+
+    async def finish_loading(self):
+        # async def _wait():
+        while not all(r.load.done() for r in self.renderer):
+            print('waiting ')
+        # sys.exit(-1)
+        #     sleep(1)
+        # task = asyncio.ensure_future(_wait)
+        # await task
+
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2,
          color_map=get_cmap('viridis')):
@@ -281,26 +300,7 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             vmins = (min(np.min(u) for u in U),) * len(U)
             vmaxs = (max(np.max(u) for u in U),) * len(U)
 
-    render_size=(400,400)
-    renderer = [Renderer(u, grid, render_size, color_map, title, bounding_box=bounding_box, codim=codim)
-                for u, vmin, vmax in zip(U, vmins, vmaxs)]
-    bar_size = (100, render_size[1])
-    if not separate_colorbars:
-        renderer.append(ColorBarRenderer(render_size=bar_size, vmin=vmins[0], vmax=vmaxs[0], color_map=color_map))
-    else:
-        for i, (vmin, vmax) in enumerate(zip(vmins, vmaxs)):
-            cr = ColorBarRenderer(render_size=bar_size, vmin=vmin, vmax=vmax, color_map=color_map)
-            renderer.insert(2*i+1, cr)
-    r_hbox = widgets.HBox(renderer, layout=Layout(padding='0 20px 0 20px'))
-    if size > 1:
-        def _goto_idx(idx):
-            for c in renderer:
-                c.goto(idx)
-        play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:')
-        interact(idx=play).widget(_goto_idx)
-        slider = IntSlider(min=0, max=size - 1, step=1, value=0, description='Timestep:')
-        widgets.jslink((play, 'value'), (slider, 'value'))
-        controls = widgets.HBox([play, slider])
-        r_hbox = widgets.VBox([r_hbox, controls])
-    IPython.display.display(r_hbox)
-    return r_hbox
+    plot = ThreeJSPlot(grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size)
+    IPython.display.display(plot)
+    # await plot.finish_loading()
+    return plot
