@@ -51,7 +51,7 @@ oldest 3.6:
     stage: test
     variables:
         PYMOR_PYTEST_MARKER: "OLDEST"
-        
+
 docs:
     extends: .test_base
     image: pymor/testing:3.6
@@ -178,12 +178,12 @@ trigger_binder {{loop.index}}/{{loop.length}}:
     stage: deploy
     # there's no need to run this if repo2docker fails already
     #needs: "repo2docker"
-    only: 
+    only:
         - master
         - tags
     before_script:
         - apk --update add bash python3
-        - pip3 install requests eventlet
+        - pip3 install requests
     script:
         - python3 .ci/gitlab/trigger_binder.py "{{url}}/${CI_COMMIT_REF}"
 {% endfor %}
