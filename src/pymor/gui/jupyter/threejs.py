@@ -107,6 +107,7 @@ class Renderer(widgets.VBox):
             if len(self.meshes) == 0:
                 m.visible = True
             self.meshes.append(m)
+        self.cam.lookAt(self.mesh_center)
 
     def goto(self, idx):
         if idx != self._last_idx:
@@ -136,15 +137,15 @@ class Renderer(widgets.VBox):
         xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
         yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
         zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
+        self.mesh_center = (xhalf, yhalf, zhalf)
 
         self.cam = p3js.PerspectiveCamera(aspect=render_size[0] / render_size[1],
                                           position=[xhalf, yhalf, zhalf + c_dist],
                                           fov_angle=fov_angle)
         self.light = p3js.AmbientLight(color='white', intensity=1.0)
         self.scene = p3js.Scene(children=([self.cam, self.light]), background='white')
-        self.controller = p3js.OrbitControls(controlling=self.cam, position=[xhalf, yhalf, zhalf + c_dist])
-        self.controller.target = [xhalf, yhalf, zhalf]
-        self.controller.exec_three_obj_method('update')
+        self.controller = p3js.OrbitControls(controlling=self.cam, position=[xhalf, yhalf, zhalf + c_dist],
+                                             target=[xhalf, yhalf, zhalf])
         self.freeze_camera(True)
         self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
                                       controls=[self.controller],
