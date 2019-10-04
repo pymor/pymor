@@ -63,6 +63,14 @@ def is_jupyter():
     return type(get_ipython()).__module__.startswith('ipykernel.')
 
 
+def is_nbconvert():
+    """In some visualization cases we need to be able to detect if a notebook
+    is executed with nbconvert to disable async loading
+    """
+    from os import environ
+    return is_jupyter() and bool(environ.get('PYMOR_NBCONVERT', False))
+
+
 _PACKAGES = {
     'CYTHON': lambda: import_module('cython').__version__,
     'DEALII': lambda: import_module('pydealii'),

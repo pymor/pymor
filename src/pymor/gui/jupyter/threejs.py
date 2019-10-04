@@ -12,6 +12,7 @@ from ipywidgets import IntSlider, interact, widgets, Play, Layout
 import pythreejs as p3js
 from matplotlib.cm import get_cmap
 
+from pymor.core import config
 from pymor.grids.referenceelements import triangle, square
 from pymor.grids.constructions import flatten_grid
 from pymor.vectorarrays.interfaces import VectorArrayInterface
@@ -81,15 +82,22 @@ class Renderer(widgets.VBox):
 
         self.buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
         self.buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
-
-        self.load = asyncio.ensure_future(self._load_data(data))
-        self._setup_scene(bounding_box, render_size)
-        self._last_idx = None
         self.meshes = []
+        self._setup_scene(bounding_box, render_size)
+        if config.is_nbconvert():
+            # need to ensure all data is loaded before cell execution is over
+            class LoadDummy:
+                def done(self): return True
+            self._load_data(data)
+            self.load = LoadDummy()
+        else:
+            self.load = asyncio.ensure_future(self._async_load_data(data))
+
+        self._last_idx = None
         super().__init__(children=[self.renderer, ])
 
     def _get_mesh(self, u):
-        future = asyncio.Future()
+
         data = p3js.BufferAttribute(_normalize(u), normalized=True)
         geo = p3js.BufferGeometry(
             index=self.buffer_faces,
@@ -102,12 +110,14 @@ class Renderer(widgets.VBox):
         mesh.visible = False
         # translate to origin where the camera is looking by default, avoids camera not updating in nbconvert run
         mesh.position = tuple(p-i for p,i in zip(mesh.position, self.mesh_center))
-        future.set_result(mesh)
-        return future
+        return mesh
 
-    async def _load_data(self, data):
+    async def _async_load_data(self, data):
+        self._load_data(data)
+
+    def _load_data(self, data):
         for u in data:
-            m = await self._get_mesh(u)
+            m = self._get_mesh(u)
             self.scene.add(m)
             if len(self.meshes) == 0:
                 m.visible = True
@@ -234,13 +244,9 @@ class ThreeJSPlot(widgets.VBox):
         super().__init__(children=children)
 
     async def finish_loading(self):
-        # async def _wait():
         while not all(r.load.done() for r in self.renderer):
-            print('waiting ')
-        # sys.exit(-1)
-        #     sleep(1)
-        # task = asyncio.ensure_future(_wait)
-        # await task
+            await asyncio.sleep(1)
+
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2,
