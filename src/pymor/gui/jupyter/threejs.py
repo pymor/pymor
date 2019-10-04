@@ -2,6 +2,8 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import asyncio
+import sys
+from time import sleep
 from io import BytesIO
 
 import IPython
@@ -79,8 +81,9 @@ class Renderer(widgets.VBox):
 
         self.buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
         self.buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
-        self._setup_scene(bounding_box, render_size)
+
         self.load = asyncio.ensure_future(self._load_data(data))
+        self._setup_scene(bounding_box, render_size)
         self._last_idx = None
         self.meshes = []
         super().__init__(children=[self.renderer, ])
@@ -97,6 +100,8 @@ class Renderer(widgets.VBox):
         )
         mesh = p3js.Mesh(geometry=geo, material=self.material)
         mesh.visible = False
+        # translate to origin where the camera is looking by default, avoids camera not updating in nbconvert run
+        mesh.position = tuple(p-i for p,i in zip(mesh.position, self.mesh_center))
         future.set_result(mesh)
         return future
 
@@ -107,7 +112,6 @@ class Renderer(widgets.VBox):
             if len(self.meshes) == 0:
                 m.visible = True
             self.meshes.append(m)
-        self.cam.lookAt(self.mesh_center)
 
     def goto(self, idx):
         if idx != self._last_idx:
@@ -132,20 +136,18 @@ class Renderer(widgets.VBox):
 
         absx = np.abs(combined_bounds[0] - combined_bounds[3])
         not_mathematical_distance_scaling = 1.2
-        c_dist = np.sin((90 - fov_angle / 2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle / 2 * np.pi / 180)
-        c_dist *= not_mathematical_distance_scaling
+        self.camera_distance = np.sin((90 - fov_angle / 2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle / 2 * np.pi / 180)
+        self.camera_distance *= not_mathematical_distance_scaling
         xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
         yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
         zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
         self.mesh_center = (xhalf, yhalf, zhalf)
-
         self.cam = p3js.PerspectiveCamera(aspect=render_size[0] / render_size[1],
-                                          position=[xhalf, yhalf, zhalf + c_dist],
-                                          fov_angle=fov_angle)
+                                          position=[0, 0, 0 + self.camera_distance])
         self.light = p3js.AmbientLight(color='white', intensity=1.0)
-        self.scene = p3js.Scene(children=([self.cam, self.light]), background='white')
-        self.controller = p3js.OrbitControls(controlling=self.cam, position=[xhalf, yhalf, zhalf + c_dist],
-                                             target=[xhalf, yhalf, zhalf])
+        self.scene = p3js.Scene(children=[self.cam, self.light], background='white')
+        self.controller = p3js.OrbitControls(controlling=self.cam, position=[0, 0, 0 + self.camera_distance],
+                                             target=[0,0,0])
         self.freeze_camera(True)
         self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
                                       controls=[self.controller],
