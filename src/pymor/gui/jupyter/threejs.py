@@ -54,6 +54,7 @@ class Renderer(widgets.VBox):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
+        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='0px 0px 0px 20px ')
 
         subentities, coordinates, entity_map = flatten_grid(grid)
         data = (U if codim == 0 else U[:, entity_map]).astype(np.float32)
@@ -137,6 +138,8 @@ class Renderer(widgets.VBox):
         self.controller.enableRotate = not freeze
 
     def _setup_scene(self, bounding_box, render_size):
+        self.min_width = render_size[0]
+        self.min_height = render_size[1]
         fov_angle = 60
         if len(bounding_box[0]) == 2:
             lower = np.array([bounding_box[0][0], bounding_box[0][1], 0])
@@ -167,6 +170,7 @@ class Renderer(widgets.VBox):
 class ColorBarRenderer(widgets.VBox):
     def __init__(self, render_size, color_map, vmin=None, vmax=None):
         self.render_size = render_size
+        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='0px 0px 0px 20px ')
         self.color_map = color_map
         self.vmin, self.vmax = vmin, vmax
         self.image = self._gen_sprite()
@@ -229,7 +233,8 @@ class ThreeJSPlot(widgets.VBox):
                 cr = ColorBarRenderer(render_size=bar_size, vmin=vmin, vmax=vmax, color_map=color_map)
                 self.r_hbox_items.insert(2 * i + 1, cr)
                 self.colorbars.append(cr)
-        children = [widgets.HBox(self.r_hbox_items, layout=Layout(padding='0 20px 0 20px'))]
+        children = [widgets.HBox(self.r_hbox_items, layout=Layout(overflow='auto',
+                                                                  overflow_x='auto'))]
         if size > 1:
             def _goto_idx(idx):
                 for c in self.renderer:
@@ -311,5 +316,4 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
     plot = ThreeJSPlot(grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size)
     IPython.display.display(plot)
-    # await plot.finish_loading()
     return plot
