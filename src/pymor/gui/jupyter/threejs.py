@@ -55,22 +55,33 @@ class Renderer(widgets.VBox):
         assert grid.dim == 2
         assert codim in (0, 2)
         self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='0px 0px 0px 20px ')
+        self.grid = grid
+        self.codim = codim
 
-        subentities, coordinates, entity_map = flatten_grid(grid)
-        data = (U if codim == 0 else U[:, entity_map]).astype(np.float32)
+        subentities, coordinates, self.entity_map = flatten_grid(grid)
 
-        if codim == 2:
-            if grid.dim == 2:
-                # zero-pad in Z direction
+        if grid.reference_element == triangle:
+            if codim == 2:
                 vertices = np.zeros((len(coordinates), 3))
                 vertices[:, :-1] = coordinates
-            elif grid.dim == 3:
-                vertices = coordinates
+                indices = subentities
             else:
-                raise NotImplementedError
-            indices = subentities
+                vertices = np.zeros((len(subentities) * 3, 3))
+                VERTEX_POS = coordinates[subentities]
+                vertices[:, 0:2] = VERTEX_POS.reshape((-1, 2))
+                indices = np.arange(len(subentities) * 3, dtype=np.uint32)
         else:
-            raise NotImplementedError
+            if codim == 2:
+                vertices = np.zeros((len(coordinates), 3))
+                vertices[:, :-1] = coordinates
+                indices = np.vstack((subentities[:, 0:3], subentities[:, [0, 2, 3]]))
+            else:
+                vertices = np.zeros((len(subentities) * 6))
+                num_entities = len(self.subentities)
+                VERTEX_POS = coordinates[self.subentities]
+                vertices[0:num_entities * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
+                vertices[num_entities * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
+                indices = np.arange(len(subentities) * 6, dtype=np.uint32)
 
         max_tex_size = 512
         cm = color_map(np.linspace(0,1, max_tex_size)).astype(np.float32)
@@ -89,16 +100,22 @@ class Renderer(widgets.VBox):
             # need to ensure all data is loaded before cell execution is over
             class LoadDummy:
                 def done(self): return True
-            self._load_data(data)
+            self._load_data(U)
             self.load = LoadDummy()
         else:
-            self.load = asyncio.ensure_future(self._async_load_data(data))
+            self.load = asyncio.ensure_future(self._async_load_data(U))
 
         self._last_idx = None
         super().__init__(children=[self.renderer, ])
 
     def _get_mesh(self, u):
-
+        if self.codim == 2:
+            u = u[self.entity_map]
+            pass
+        elif self.grid.reference_element == triangle:
+            u = np.repeat(u, 3)
+        else:
+            u = np.tile(np.repeat(u, 3), 2)
         data = p3js.BufferAttribute(_normalize(u), normalized=True)
         geo = p3js.BufferGeometry(
             index=self.buffer_faces,
@@ -294,10 +311,10 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                and all(len(u) == len(U[0]) for u in U))
     if isinstance(U, VectorArrayInterface):
         size = len(U)
-        U = (U.to_numpy().astype(np.float64, copy=False),)
+        U = (U.to_numpy().astype(np.float32, copy=False),)
     else:
         size = len(U[0])
-        U = tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+        U = tuple(u.to_numpy().astype(np.float32, copy=False) for u in U)
 
     if separate_colorbars:
         if rescale_colorbars:
@@ -316,4 +333,4 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
     plot = ThreeJSPlot(grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size)
     IPython.display.display(plot)
-    return plot
+    return None
