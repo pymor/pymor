@@ -47,3 +47,34 @@ void DiffusionOperator::apply(const Vector& U, Vector& R) const {
     }
   }
 }
+
+#include <pybind11/functional.h>
+#include <pybind11/numpy.h>
+#include <pybind11/operators.h>
+#include <pybind11/pybind11.h>
+
+PYBIND11_MODULE(model, m)
+{
+    namespace py = pybind11;
+
+    py::class_<DiffusionOperator> op(m, "DiffusionOperator", "DiffusionOperator Docstring");
+    op.def(py::init([](int n, double left, double right) { return std::make_unique<DiffusionOperator>(n, left, right); }));
+    op.def_readonly("dim_source", &DiffusionOperator::dim_source);
+    op.def_readonly("dim_range", &DiffusionOperator::dim_range);
+    op.def("apply", &DiffusionOperator::apply);
+
+    py::class_<Vector> vec(m, "Vector", "Vector Docstring", py::buffer_protocol());
+    vec.def(py::init([](int size, double value) { return std::make_unique<Vector>(size, value); }));
+    vec.def(py::init([](const Vector& other) { return std::make_unique<Vector>(other); }));
+
+    vec.def_readonly("dim", &Vector::dim);
+    vec.def("scal", &Vector::scal);
+    vec.def("axpy", &Vector::axpy);
+    vec.def("dot", &Vector::dot);
+    vec.def("data", &Vector::data);
+
+    vec.def_buffer([](Vector& vec) -> py::buffer_info {
+        return py::buffer_info(
+            vec.data(), sizeof(double), py::format_descriptor<double>::format(), 1, {vec.dim}, {sizeof(double)});
+    });
+}

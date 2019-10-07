@@ -21,7 +21,7 @@ class WrappedVector(CopyOnWriteVector):
         return cls(instance._impl)
 
     def to_numpy(self, ensure_copy=False):
-        result = np.frombuffer(self._impl.data(), dtype=np.float)
+        result = np.frombuffer(self._impl, dtype=np.float)
         if ensure_copy:
             result = result.copy()
         return result
@@ -75,7 +75,7 @@ class WrappedVectorSpace(ListVectorSpace):
 class WrappedDiffusionOperator(OperatorBase):
     def __init__(self, op):
         assert isinstance(op, DiffusionOperator)
-        self._impl = op
+        self.op = op
         self.source = WrappedVectorSpace(op.dim_source)
         self.range = WrappedVectorSpace(op.dim_range)
         self.linear = True
@@ -89,7 +89,7 @@ class WrappedDiffusionOperator(OperatorBase):
 
         def apply_one_vector(u):
             v = Vector(self.range.dim, 0)
-            self._impl.apply(u._impl, v)
+            self.op.apply(u._impl, v)
             return v
 
         return self.range.make_array([apply_one_vector(u) for u in U._list])
