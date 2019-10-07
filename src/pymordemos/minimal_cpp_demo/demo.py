@@ -12,10 +12,10 @@ from pymor.gui.visualizers import OnedVisualizer
 from pymor.operators.constructions import VectorOperator, LincombOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
-from pymor.reductors.basic import GenericRBReductor
+from pymor.reductors.basic import InstationaryRBReductor
 
 # import wrapped classes
-from wrapper import WrappedDiffusionOperator
+from pymordemos.minimal_cpp_demo.wrapper import WrappedDiffusionOperator
 
 
 def discretize(n, nt, blocks):
@@ -61,7 +61,7 @@ for mu in fom.parameter_space.sample_uniformly(2):
 reduced_basis = pod(snapshots, 4)[0]
 
 # reduce the model
-reductor = GenericRBReductor(fom, reduced_basis, basis_is_orthonormal=True)
+reductor = InstationaryRBReductor(fom, reduced_basis, check_orthonormality=True)
 rom = reductor.reduce()
 
 # stochastic error estimation
