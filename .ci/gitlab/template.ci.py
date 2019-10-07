@@ -52,6 +52,12 @@ oldest 3.6:
     variables:
         PYMOR_PYTEST_MARKER: "OLDEST"
 
+minimal_cpp_demo:
+    extends: .pytest
+    image: pymor/testing:3.7
+    stage: test
+    script: ./.ci/gitlab/cpp_demo.bash
+
 docs:
     extends: .test_base
     image: pymor/testing:3.6
