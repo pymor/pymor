@@ -78,5 +78,8 @@ for mu in fom.parameter_space.sample_randomly(10):
 # visualize maximum error solution
 U_RB = (reductor.reconstruct(rom.solve(mu_max)))
 U = fom.solve(mu_max)
-fom.visualize((U_RB, U), title=f'mu = {mu}', legend=('reduced', 'detailed'))
-fom.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))
+
+# avoid blocking in CI run
+if __name__ == '__main__':
+    fom.visualize((U_RB, U), title=f'mu = {mu}', legend=('reduced', 'detailed'))
+    fom.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))
