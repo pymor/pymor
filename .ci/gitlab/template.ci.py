@@ -81,6 +81,10 @@ docs:
 {# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
 .submit:
     extends: .test_base
+    retry:
+        max: 2
+        when:
+            - always
     environment:
         name: safe
     except:
