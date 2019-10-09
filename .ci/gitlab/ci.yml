@@ -106,6 +106,10 @@ NOTEBOOKS 3 7:
 
 .submit:
     extends: .test_base
+    retry:
+        max: 2
+        when:
+            - always
     environment:
         name: safe
     except:
