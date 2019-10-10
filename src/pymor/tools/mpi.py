@@ -61,7 +61,16 @@ from pymor.core.pickle import dumps, loads
 
 if config.HAVE_MPI:
     import mpi4py
+    import os
     from mpi4py import MPI
+    if not MPI.Is_initialized():
+        from pymor.core.logger import getLogger
+        logger = getLogger(__file__)
+        required_level = os.environ.get('PYMOR_MPI_INIT_THREAD', MPI.THREAD_MULTIPLE)
+        logger.info(f'initializing MPI with threading level {required_level}')
+        supported_lvl = MPI.Init_thread(required_level)
+        if supported_lvl < required_level:
+            logger.error(f'MPI does support threading level {required_level}, running with {supported_lvl} instead')
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
