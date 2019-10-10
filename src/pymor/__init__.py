@@ -4,12 +4,31 @@
 
 import os
 
-# this solves sporadic mpi calls happening after finalize
-try:
-    import petsc4py
-    petsc4py.init()
-except ImportError:
-    pass
+
+def _init_mpi():
+    """provides a way to manually set the thread init mode for MPI if necessary.
+    Needs to happen as early as possible, otherwise mpi4py might auto-init somewhere else.
+    """
+    try:
+        import mpi4py
+    except ImportError:
+        return
+    mpi4py.rc(initialize=False)
+    from mpi4py import MPI
+    if not MPI.Is_initialized():
+        required_level = int(os.environ.get('PYMOR_MPI_INIT_THREAD', MPI.THREAD_MULTIPLE))
+        supported_lvl = MPI.Init_thread(required_level)
+        if supported_lvl < required_level:
+            print(f'MPI does support threading level {required_level}, running with {supported_lvl} instead', flush=True)
+    try:
+        # this solves sporadic mpi calls happening after finalize
+        import petsc4py
+        petsc4py.init()
+    except ImportError:
+        return
+
+
+_init_mpi()
 
 from pymor.core.config import config
 from pymor.core.defaults import load_defaults_from_file
@@ -45,7 +64,6 @@ else:
 from pymor.core.logger import set_log_levels, set_log_format
 set_log_levels()
 set_log_format()
-
 
 from pymor.tools import mpi
 if mpi.parallel and mpi.event_loop_settings()['auto_launch']:
