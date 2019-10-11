@@ -61,7 +61,7 @@ class InputOutputModel(ModelBase):
         Parameters
         ----------
         w
-            Angular frequencies at which to compute the transfer function.
+            A sequence of angular frequencies at which to compute the transfer function.
         mu
             |Parameter| for which to evaluate the transfer function.
 
