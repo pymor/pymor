@@ -83,7 +83,7 @@ class InputOutputModel(ModelBase):
         Parameters
         ----------
         w
-            Angular frequencies at which to evaluate the transfer function.
+            A sequence of angular frequencies at which to compute the transfer function.
         mu
             |Parameter| for which to evaluate the transfer function.
         ax
@@ -107,6 +107,7 @@ class InputOutputModel(ModelBase):
             import matplotlib.pyplot as plt
             ax = plt.gca()
 
+        w = np.asarray(w)
         freq = w / (2 * np.pi) if Hz else w
         mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
         if dB:
