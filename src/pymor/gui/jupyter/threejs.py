@@ -42,21 +42,26 @@ RENDER_FRAGMENT_SHADER = """
     """
 
 
-def _normalize(u):
-    # rescale to be in [0,1], scale nan to be the smallest value
-    u -= np.nanmin(u)
-    u /= np.nanmax(u)
+def _normalize(u, vmin=None, vmax=None):
+    # rescale to be in [max(0,vmin), min(1,vmax)], scale nan to be the smallest value
+    vmin = np.nanmin(u) if vmin is None else vmin
+    vmax = np.nanmax(u) if vmax is None else vmax
+    u -= vmin
+    if (vmax - vmin) > 0:
+        u /= float(vmax - vmin)
     return np.nan_to_num(u)
 
 
 class Renderer(widgets.VBox):
-    def __init__(self, U, grid, render_size, color_map, title, bounding_box=([0, 0], [1, 1]), codim=2):
+    def __init__(self, U, grid, render_size, color_map, title, bounding_box=([0, 0], [1, 1]), codim=2,
+                 vmin=None, vmax=None):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
         self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='0px 0px 0px 20px ')
         self.grid = grid
         self.codim = codim
+        self.vmin, self.vmax = vmin, vmax
 
         subentities, coordinates, self.entity_map = flatten_grid(grid)
 
@@ -111,12 +116,11 @@ class Renderer(widgets.VBox):
     def _get_mesh(self, u):
         if self.codim == 2:
             u = u[self.entity_map]
-            pass
         elif self.grid.reference_element == triangle:
             u = np.repeat(u, 3)
         else:
             u = np.tile(np.repeat(u, 3), 2)
-        data = p3js.BufferAttribute(_normalize(u), normalized=True)
+        data = p3js.BufferAttribute(_normalize(u, self.vmin, self.vmax), normalized=True)
         geo = p3js.BufferGeometry(
             index=self.buffer_faces,
             attributes=dict(
@@ -237,8 +241,9 @@ class ColorBarRenderer(widgets.VBox):
 class ThreeJSPlot(widgets.VBox):
     def __init__(self,grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size):
         render_size = (400, 400)
-        self.renderer = [Renderer(u, grid, render_size, color_map, title, bounding_box=bounding_box, codim=codim)
-                    for u, vmin, vmax in zip(U, vmins, vmaxs)]
+        self.renderer = [Renderer(u, grid, render_size, color_map, title, bounding_box=bounding_box, codim=codim,
+                                  vmin=vmin, vmax=vmax)
+                         for u, vmin, vmax in zip(U, vmins, vmaxs)]
         bar_size = (100, render_size[1])
         if not separate_colorbars:
             self.colorbars = [ColorBarRenderer(render_size=bar_size, vmin=vmins[0], vmax=vmaxs[0], color_map=color_map)]
