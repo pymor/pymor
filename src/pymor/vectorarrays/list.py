@@ -535,7 +535,7 @@ class ListVectorArray(VectorArrayInterface):
 
     @property
     def real(self):
-        return self.__class__([v.real for v in self._list], self.space)
+        return ListVectorArray([v.real for v in self._list], self.space)
 
     @property
     def imag(self):
@@ -543,7 +543,7 @@ class ListVectorArray(VectorArrayInterface):
         # of a real vector, so we have to check for that.
         # returning None is allowed as ComplexifiedVector does not know
         # how to create a new zero vector.
-        return self.__class__([v.imag or self.space.zero_vector() for v in self._list], self.space)
+        return ListVectorArray([v.imag or self.space.zero_vector() for v in self._list], self.space)
 
     def conj(self):
         return self.__class__([v.conj() for v in self._list], self.space)
