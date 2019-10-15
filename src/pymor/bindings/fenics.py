@@ -15,7 +15,7 @@ if config.HAVE_FENICS:
     from pymor.vectorarrays.interfaces import _create_random_values
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 
-    class RealFenicsVector(CopyOnWriteVector):
+    class FenicsVector(CopyOnWriteVector):
         """Wraps a FEniCS vector to make it usable with ListVectorArray."""
 
         def __init__(self, impl):
@@ -72,7 +72,7 @@ if config.HAVE_FENICS:
             raise NotImplementedError  # is implemented for complexified vector
 
         def __add__(self, other):
-            return RealFenicsVector(self.impl + other.impl)
+            return FenicsVector(self.impl + other.impl)
 
         def __iadd__(self, other):
             self._copy_data_if_needed()
@@ -82,7 +82,7 @@ if config.HAVE_FENICS:
         __radd__ = __add__
 
         def __sub__(self, other):
-            return RealFenicsVector(self.impl - other.impl)
+            return FenicsVector(self.impl - other.impl)
 
         def __isub__(self, other):
             self._copy_data_if_needed()
@@ -90,10 +90,10 @@ if config.HAVE_FENICS:
             return self
 
         def __mul__(self, other):
-            return RealFenicsVector(self.impl * other)
+            return FenicsVector(self.impl * other)
 
         def __neg__(self):
-            return RealFenicsVector(-self.impl)
+            return FenicsVector(-self.impl)
 
     class ComplexifiedFenicsVector(ComplexifiedVector):
 
@@ -142,21 +142,21 @@ if config.HAVE_FENICS:
 
         def real_zero_vector(self):
             impl = df.Function(self.V).vector()
-            return RealFenicsVector(impl)
+            return FenicsVector(impl)
 
         def real_full_vector(self, value):
             impl = df.Function(self.V).vector()
             impl += value
-            return RealFenicsVector(impl)
+            return FenicsVector(impl)
 
         def real_random_vector(self, distribution, random_state, **kwargs):
             impl = df.Function(self.V).vector()
             values = _create_random_values(impl.local_size(), distribution, random_state, **kwargs)
             impl[:] = values
-            return RealFenicsVector(impl)
+            return FenicsVector(impl)
 
         def real_make_vector(self, obj):
-            return RealFenicsVector(obj)
+            return FenicsVector(obj)
 
     class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         """Wraps a FEniCS matrix as an |Operator|."""
