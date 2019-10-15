@@ -28,7 +28,7 @@ if config.HAVE_NGSOLVE:
         def dofs(self, dof_indices):
             return self.to_numpy()[dof_indices]
 
-    class RealNGSolveVector(NGSolveVectorCommon, CopyOnWriteVector):
+    class NGSolveVector(NGSolveVectorCommon, CopyOnWriteVector):
         """Wraps a NGSolve BaseVector to make it usable with ListVectorArray."""
 
         def __init__(self, impl):
@@ -64,12 +64,12 @@ if config.HAVE_NGSOLVE:
         def l2_norm2(self):
             return self.impl.vec.Norm() ** 2
 
-    class NGSolveVector(NGSolveVectorCommon, ComplexifiedVector):
+    class ComplexifiedNGSolveVector(NGSolveVectorCommon, ComplexifiedVector):
         pass
 
     class NGSolveVectorSpace(ComplexifiedListVectorSpace):
 
-        complexified_vector_type = NGSolveVector
+        complexified_vector_type = ComplexifiedNGSolveVector
 
         def __init__(self, V, id='STATE'):
             self.__auto_init(locals())
@@ -98,10 +98,10 @@ if config.HAVE_NGSOLVE:
 
         def real_zero_vector(self):
             impl = ngs.GridFunction(self.V)
-            return RealNGSolveVector(impl)
+            return NGSolveVector(impl)
 
         def real_make_vector(self, obj):
-            return RealNGSolveVector(obj)
+            return NGSolveVector(obj)
 
         def real_vector_from_numpy(self, data, ensure_copy=False):
             v = self.zero_vector()
