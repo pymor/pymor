@@ -143,13 +143,13 @@ class ProjectRules(RuleTable):
 
         if source_basis is not None and first.linear and not first.parametric:
             V = first.apply(source_basis)
-            return type(self)(range_basis, V).apply(op.with_(operators=op.operators[:-1]))
+            return project(op.with_(operators=op.operators[:-1]), range_basis, V)
         elif range_basis is not None and last.linear and not last.parametric:
             V = last.apply_adjoint(range_basis)
-            return type(self)(V, source_basis).apply(op.with_(operators=op.operators[1:]))
+            return project(op.with_(operators=op.operators[1:]), V, source_basis)
         else:
-            projected_first = type(self)(None, source_basis).apply(first)
-            projected_last = type(self)(range_basis, None).apply(last)
+            projected_first = project(first, None, source_basis)
+            projected_last = project(last, range_basis, None)
             return Concatenation((projected_last,) + op.operators[1:-1] + (projected_first,), name=op.name)
 
     @match_class(AdjointOperator)
@@ -162,7 +162,7 @@ class ProjectRules(RuleTable):
         if source_basis is not None and op.range_product:
             source_basis = op.range_product.apply(source_basis)
 
-        operator = type(self)(source_basis, range_basis).apply(op.operator)
+        operator = project(op.operator, source_basis, range_basis)
         range_product = op.range_product if source_basis is None else None
         source_product = op.source_product if range_basis is None else None
         return AdjointOperator(operator, source_product=source_product, range_product=range_product,
