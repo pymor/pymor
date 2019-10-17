@@ -201,22 +201,22 @@ class ProjectRules(RuleTable):
     def action_BlockOperatorBase(self, op):
         if op.blocked_range:
             if self.range_basis is not None:
-                range_basis = self.range_basis._blocks
+                range_bases = self.range_basis._blocks
             else:
-                range_basis = [None] * len(op.range.subspaces)
+                range_bases = [None] * len(op.range.subspaces)
         else:
-            range_basis = [self.range_basis]
+            range_bases = [self.range_basis]
         if op.blocked_source:
             if self.source_basis is not None:
-                source_basis = self.source_basis._blocks
+                source_bases = self.source_basis._blocks
             else:
-                source_basis = [None] * len(op.source.subspaces)
+                source_bases = [None] * len(op.source.subspaces)
         else:
-            source_basis = [self.source_basis]
+            source_bases = [self.source_basis]
 
         projected_ops = np.array([[project(op.blocks[i, j], rb, sb)
-                                   for j, sb in enumerate(source_basis)]
-                                  for i, rb in enumerate(range_basis)])
+                                   for j, sb in enumerate(source_bases)]
+                                  for i, rb in enumerate(range_bases)])
         if self.range_basis is None and op.blocked_range:
             return BlockColumnOperator(np.sum(projected_ops, axis=1))
         elif self.source_basis is None and op.blocked_source:
