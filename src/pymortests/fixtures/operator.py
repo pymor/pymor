@@ -340,38 +340,58 @@ def misc_operator_with_arrays_and_products_factory(n):
         return op, _, U, V, sp, rp
     elif n == 9:
         from pymor.operators.block import BlockDiagonalOperator, BlockOperator
-        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
-        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
-        op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        from pymor.parameters.functionals import ProjectionParameterFunctional
+        op0a, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
+        op0b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
+        op0c, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
+        op1, _, U1, V1, sp1, rp1  = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
+        op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op0 = (op0a * ProjectionParameterFunctional('p', (3,), (0,))
+               + op0b * ProjectionParameterFunctional('p', (3,), (1,))
+               + op0c * ProjectionParameterFunctional('p', (3,), (1,)))
+        op2 = (op2a * ProjectionParameterFunctional('p', (3,), (0,))
+               + op2b * ProjectionParameterFunctional('q', (), ()))
         op = BlockOperator([[op0, op2],
                             [None, op1]])
+        mu = op.parse_parameter({'p': [1, 2, 3], 'q': 4})
         sp = BlockDiagonalOperator([sp0, sp1])
         rp = BlockDiagonalOperator([rp0, rp1])
         U = op.source.make_array([U0, U1])
         V = op.range.make_array([V0, V1])
-        return op, None, U, V, sp, rp
+        return op, mu, U, V, sp, rp
     elif n == 10:
         from pymor.operators.block import BlockDiagonalOperator, BlockColumnOperator
+        from pymor.parameters.functionals import ProjectionParameterFunctional
         op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
         op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
-        op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op2 = (op2a * ProjectionParameterFunctional('p', (3,), (0,))
+               + op2b * ProjectionParameterFunctional('q', (), ()))
         op = BlockColumnOperator([op2, op1])
+        mu = op.parse_parameter({'p': [1, 2, 3], 'q': 4})
         sp = sp1
         rp = BlockDiagonalOperator([rp0, rp1])
         U = U1
         V = op.range.make_array([V0, V1])
-        return op, None, U, V, sp, rp
+        return op, mu, U, V, sp, rp
     elif n == 11:
         from pymor.operators.block import BlockDiagonalOperator, BlockRowOperator
+        from pymor.parameters.functionals import ProjectionParameterFunctional
         op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
         op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
-        op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op2 = (op2a * ProjectionParameterFunctional('p', (3,), (0,))
+               + op2b * ProjectionParameterFunctional('q', (), ()))
         op = BlockRowOperator([op0, op2])
+        mu = op.parse_parameter({'p': [1, 2, 3], 'q': 4})
         sp = BlockDiagonalOperator([sp0, sp1])
         rp = rp0
         U = op.source.make_array([U0, U1])
         V = V0
-        return op, None, U, V, sp, rp
+        return op, mu, U, V, sp, rp
     else:
         assert False
 
