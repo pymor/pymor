@@ -21,7 +21,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
 
     .. math::
         \left[ C_a^{-1}(\mu)\|e_N(\mu)\|^2 + \sum_{n=1}^{N} \Delta t\|e_n(\mu)\|^2_e \right]^{1/2}
-            \leq \left[ C_a^{-1}(\mu)\Delta t \sum_{n=1}^{N}\|\mathcal{R}^n(u_n(\mu), \mu)\|^2_{e,-1}
+            \leq \left[ C_a^{-2}(\mu)\Delta t \sum_{n=1}^{N}\|\mathcal{R}^n(u_n(\mu), \mu)\|^2_{e,-1}
                         + C_a^{-1}(\mu)\|e_0\|^2 \right]^{1/2}
 
     Here, :math:`\|\cdot\|` denotes the norm induced by the problem's mass matrix
