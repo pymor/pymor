@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.algorithms.rules import RuleTable, match_class, match_generic
+from pymor.algorithms.rules import RuleTable, match_class, match_generic, match_always
 from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.basic import ProjectedOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation, ConstantOperator,
@@ -73,6 +73,13 @@ class ProjectRules(RuleTable):
         super().__init__(use_caching=True)
         self.__auto_init(locals())
 
+    @match_always
+    def action_no_bases(self, op):
+        if self.range_basis is None and self.source_basis is None:
+            return op
+        else:
+            raise RuleNotMatchingError
+
     @match_class(ZeroOperator)
     def action_ZeroOperator(self, op):
         range_basis, source_basis = self.range_basis, self.source_basis
@@ -101,19 +108,16 @@ class ProjectRules(RuleTable):
     def action_apply_basis(self, op):
         range_basis, source_basis, product = self.range_basis, self.source_basis, self.product
         if source_basis is None:
-            if range_basis is None:
-                return op
+            try:
+                V = op.apply_adjoint(product.apply(range_basis) if product else range_basis)
+            except NotImplementedError:
+                raise RuleNotMatchingError('apply_adjoint not implemented')
+            if isinstance(op.source, NumpyVectorSpace):
+                from pymor.operators.numpy import NumpyMatrixOperator
+                return NumpyMatrixOperator(V.to_numpy(), source_id=op.source.id, name=op.name)
             else:
-                try:
-                    V = op.apply_adjoint(product.apply(range_basis) if product else range_basis)
-                except NotImplementedError:
-                    raise RuleNotMatchingError('apply_adjoint not implemented')
-                if isinstance(op.source, NumpyVectorSpace):
-                    from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(V.to_numpy(), source_id=op.source.id, name=op.name)
-                else:
-                    from pymor.operators.constructions import VectorArrayOperator
-                    return VectorArrayOperator(V, adjoint=True, name=op.name)
+                from pymor.operators.constructions import VectorArrayOperator
+                return VectorArrayOperator(V, adjoint=True, name=op.name)
         else:
             if range_basis is None:
                 V = op.apply(source_basis)
