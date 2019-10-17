@@ -58,7 +58,7 @@ def discretize_pymor():
                  ExpressionParameterFunctional('top - 1.', {'top': 0})]
             ),
 
-            rhs=ConstantFunction(value=0., dim_domain=2),
+            rhs=ConstantFunction(value=100., dim_domain=2) * ExpressionParameterFunctional('sin(10*pi*_t)', {'_t': ()}),
 
             dirichlet_data=ConstantFunction(value=0., dim_domain=2),
 
