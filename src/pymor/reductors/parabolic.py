@@ -111,8 +111,7 @@ class ParabolicRBEstimator(ImmutableInterface):
                 mu['_t'] = t
                 est[n] = self.residual.apply(U[n], U[n-1], mu=mu).l2_norm2()
         else:
-            est[1:] = self.residual.apply(U[1:len(U)], U[0:len(U)-1],
-                                          mu=mu).l2_norm2()
+            est[1:] = self.residual.apply(U[1:], U[:-1], mu=mu).l2_norm2()
         est[1:] *= (dt/C**2)
         est = np.sqrt(np.cumsum(est))
 
