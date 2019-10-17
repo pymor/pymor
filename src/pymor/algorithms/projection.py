@@ -7,6 +7,7 @@ import numpy as np
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
 from pymor.operators.basic import ProjectedOperator
+from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation, ConstantOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
                                            IdentityOperator)
@@ -195,6 +196,33 @@ class ProjectRules(RuleTable):
     @match_class(SelectionOperator)
     def action_SelectionOperator(self, op):
         return self.replace_children(op)
+
+    @match_class(BlockOperatorBase)
+    def action_BlockOperatorBase(self, op):
+        if op.blocked_range:
+            if self.range_basis is not None:
+                range_bases = self.range_basis._blocks
+            else:
+                range_bases = [None] * len(op.range.subspaces)
+        else:
+            range_bases = [self.range_basis]
+        if op.blocked_source:
+            if self.source_basis is not None:
+                source_bases = self.source_basis._blocks
+            else:
+                source_bases = [None] * len(op.source.subspaces)
+        else:
+            source_bases = [self.source_basis]
+
+        projected_ops = np.array([[project(op.blocks[i, j], rb, sb)
+                                   for j, sb in enumerate(source_bases)]
+                                  for i, rb in enumerate(range_bases)])
+        if self.range_basis is None and op.blocked_range:
+            return BlockColumnOperator(np.sum(projected_ops, axis=1))
+        elif self.source_basis is None and op.blocked_source:
+            return BlockRowOperator(np.sum(projected_ops, axis=0))
+        else:
+            return np.sum(projected_ops)
 
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):

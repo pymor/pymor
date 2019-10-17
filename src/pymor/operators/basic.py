@@ -63,6 +63,8 @@ class OperatorBase(OperatorInterface):
             return LincombOperator([self, other], [1., -1.])
 
     def __add__(self, other):
+        if other == 0:
+            return self
         if not isinstance(other, OperatorInterface):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
@@ -70,6 +72,8 @@ class OperatorBase(OperatorInterface):
             return NotImplemented
         else:
             return LincombOperator([self, other], [1., 1.])
+
+    __radd__ = __add__
 
     def __mul__(self, other):
         if not isinstance(other, (Number, ParameterFunctionalInterface)):
