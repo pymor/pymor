@@ -79,8 +79,9 @@ class StationaryModel(ModelBase):
         This is not required, however.
     products
         A dict of inner product |Operators| defined on the discrete space the
-        problem is posed on. For each product a corresponding norm
-        is added as a method of the model.
+        problem is posed on. For each product with key `'x'` a corresponding
+        attribute `x_product`, as well as a norm method `x_norm` is added to
+        the model.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
@@ -188,8 +189,9 @@ class InstationaryModel(ModelBase):
         This is not required, however.
     products
         A dict of product |Operators| defined on the discrete space the
-        problem is posed on. For each product a corresponding norm
-        is added as a method of the model.
+        problem is posed on. For each product with key `'x'` a corresponding
+        attribute `x_product`, as well as a norm method `x_norm` is added to
+        the model.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
