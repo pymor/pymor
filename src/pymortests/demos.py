@@ -161,11 +161,11 @@ def _test_demo(demo):
             import pygmsh
             gmsh_major = pygmsh.get_gmsh_major_version()
             if gmsh_major != 2:
-                pytest.xfail(f'GMSH installed in incompatible major {gmsh_major}')
+                pytest.xfail('GMSH installed in incompatible major {}'.format(gmsh_major))
             else:
                 raise ge
         except (ImportError, FileNotFoundError):
-            pytest.xfail(f'GMSH not intalled')
+            pytest.xfail('GMSH not installed')
         else:
             raise ge
     finally:
