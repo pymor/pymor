@@ -33,6 +33,7 @@ install_requires = ['scipy>=1.1', 'Qt.py', 'packaging', 'Sphinx>=1.4.0','diskcac
 install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'ipyparallel': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',
+                    'meshio': 'needed to import Gmsh grids',
                     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
                     'pyamg': 'algebraic multigrid solvers',
                     'pyevtk>=1.1': 'writing vtk output',

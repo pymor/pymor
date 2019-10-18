@@ -9,6 +9,7 @@ ipyparallel
 ipython>=5.0
 ipywidgets
 matplotlib
+meshio
 mpi4py
 pillow
 pyamg

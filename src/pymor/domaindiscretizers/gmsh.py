@@ -185,7 +185,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         logger.info(f'Gmsh took {t_gmsh} s')
 
         # Create |GmshGrid| and |GmshBoundaryInfo| form the just created MSH-file.
-        grid, bi = load_gmsh(open(msh_file_path))
+        grid, bi = load_gmsh(msh_file_path)
     finally:
         # delete tempfiles if they were created beforehand.
         if isinstance(geo_file, tempfile._TemporaryFileWrapper):
