@@ -14,9 +14,9 @@ from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-@defaults('rtol', 'atol', 'l2_err', 'symmetrize', 'orthonormalize', 'check', 'check_tol')
+@defaults('rtol', 'atol', 'l2_err', 'orthonormalize', 'check', 'check_tol')
 def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
-        symmetrize=False, orthonormalize=True, check=True, check_tol=1e-10):
+        orthonormalize=True, check=True, check_tol=1e-10):
     """Proper orthogonal decomposition of `A`.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix,
@@ -46,8 +46,6 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
             argmin_N { sum_{n=N+1}^{infty} s_n^2 <= l2_err^2 }
 
         where `s_n` denotes the n-th singular value.
-    symmetrize
-        If `True`, symmetrize the Gramian again before proceeding.
     orthonormalize
         If `True`, orthonormalize the computed POD modes again using
         the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt` algorithm.
@@ -73,10 +71,6 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
 
     with logger.block(f'Computing Gramian ({len(A)} vectors) ...'):
         B = A.gramian(product)
-
-        if symmetrize:     # according to rbmatlab this is necessary due to rounding
-            B = B + B.T
-            B *= 0.5
 
     with logger.block('Computing eigenvalue decomposition ...'):
         eigvals = None if (modes is None or l2_err > 0.) else (len(B) - modes, len(B) - 1)
