@@ -11,9 +11,9 @@ if config.HAVE_FENICS:
 
     from pymor.core.defaults import defaults
     from pymor.core.interfaces import BasicInterface
-    from pymor.operators.basic import OperatorBase
+    from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase
     from pymor.vectorarrays.interfaces import _create_random_values
-    from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
+    from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 
     class FenicsVector(CopyOnWriteVector):
         """Wraps a FEniCS vector to make it usable with ListVectorArray."""
@@ -69,26 +69,7 @@ if config.HAVE_FENICS:
             return dofs
 
         def amax(self):
-            A = np.abs(self.impl.get_local())
-            # there seems to be no way in the interface to compute amax without making a copy.
-            max_ind_on_rank = np.argmax(A)
-            max_val_on_rank = A[max_ind_on_rank]
-            from pymor.tools import mpi
-            if not mpi.parallel:
-                return max_ind_on_rank, max_val_on_rank
-            else:
-                max_global_ind_on_rank = max_ind_on_rank + self.impl.local_range()[0]
-                comm = self.impl.mpi_comm()
-                comm_size = comm.Get_size()
-
-                max_inds = np.empty(comm_size, dtype='i')
-                comm.Allgather(np.array(max_global_ind_on_rank, dtype='i'), max_inds)
-
-                max_vals = np.empty(comm_size, dtype=np.float64)
-                comm.Allgather(np.array(max_val_on_rank), max_vals)
-
-                i = np.argmax(max_inds)
-                return max_inds[i], max_vals[i]
+            raise NotImplementedError  # is implemented for complexified vector
 
         def __add__(self, other):
             return FenicsVector(self.impl + other.impl)
@@ -114,7 +95,36 @@ if config.HAVE_FENICS:
         def __neg__(self):
             return FenicsVector(-self.impl)
 
-    class FenicsVectorSpace(ListVectorSpace):
+    class ComplexifiedFenicsVector(ComplexifiedVector):
+
+        def amax(self):
+            if self.imag_part is None:
+                A = np.abs(self.real_part.impl.get_local())
+            else:
+                A = np.abs(self.real_part.impl.get_local() + self.imag_part.impl.get_local() * 1j)
+            # there seems to be no way in the interface to compute amax without making a copy.
+            max_ind_on_rank = np.argmax(A)
+            max_val_on_rank = A[max_ind_on_rank]
+            from pymor.tools import mpi
+            if not mpi.parallel:
+                return max_ind_on_rank, max_val_on_rank
+            else:
+                max_global_ind_on_rank = max_ind_on_rank + self.impl.local_range()[0]
+                comm = self.impl.mpi_comm()
+                comm_size = comm.Get_size()
+
+                max_inds = np.empty(comm_size, dtype='i')
+                comm.Allgather(np.array(max_global_ind_on_rank, dtype='i'), max_inds)
+
+                max_vals = np.empty(comm_size, dtype=np.float64)
+                comm.Allgather(np.array(max_val_on_rank), max_vals)
+
+                i = np.argmax(max_inds)
+                return max_inds[i], max_vals[i]
+
+    class FenicsVectorSpace(ComplexifiedListVectorSpace):
+
+        complexified_vector_type = ComplexifiedFenicsVector
 
         def __init__(self, V, id='STATE'):
             self.__auto_init(locals())
@@ -130,28 +140,26 @@ if config.HAVE_FENICS:
         def __hash__(self):
             return id(self.V) + hash(self.id)
 
-        def zero_vector(self):
+        def real_zero_vector(self):
             impl = df.Function(self.V).vector()
             return FenicsVector(impl)
 
-        def full_vector(self, value):
+        def real_full_vector(self, value):
             impl = df.Function(self.V).vector()
             impl += value
             return FenicsVector(impl)
 
-        def random_vector(self, distribution, random_state, **kwargs):
+        def real_random_vector(self, distribution, random_state, **kwargs):
             impl = df.Function(self.V).vector()
             values = _create_random_values(impl.local_size(), distribution, random_state, **kwargs)
             impl[:] = values
             return FenicsVector(impl)
 
-        def make_vector(self, obj):
+        def real_make_vector(self, obj):
             return FenicsVector(obj)
 
-    class FenicsMatrixOperator(OperatorBase):
+    class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         """Wraps a FEniCS matrix as an |Operator|."""
-
-        linear = True
 
         def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
             assert matrix.rank() == 2
@@ -159,34 +167,30 @@ if config.HAVE_FENICS:
             self.source = FenicsVectorSpace(source_space)
             self.range = FenicsVectorSpace(range_space)
 
-        def apply(self, U, mu=None):
-            assert U in self.source
-            R = self.range.zeros(len(U))
-            for u, r in zip(U._list, R._list):
-                self.matrix.mult(u.impl, r.impl)
-            return R
+        def _real_apply_one_vector(self, u, mu=None, prepare_data=None):
+            r = self.range.real_zero_vector()
+            self.matrix.mult(u.impl, r.impl)
+            return r
 
-        def apply_adjoint(self, V, mu=None):
-            assert V in self.range
-            U = self.source.zeros(len(V))
-            for v, u in zip(V._list, U._list):
-                self.matrix.transpmult(v.impl, u.impl)  # there are no complex numbers in FEniCS
-            return U
+        def _real_apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
+            r = self.source.real_zero_vector()
+            self.matrix.transpmult(v.impl, r.impl)
+            return r
 
-        def apply_inverse(self, V, mu=None, least_squares=False):
-            assert V in self.range
+        def _real_apply_inverse_one_vector(self, v, mu=None, least_squares=False, prepare_data=None):
             if least_squares:
                 raise NotImplementedError
-            R = self.source.zeros(len(V))
+            r = self.source.real_zero_vector()
             options = self.solver_options.get('inverse') if self.solver_options else None
-            for r, v in zip(R._list, V._list):
-                _apply_inverse(self.matrix, r.impl, v.impl, options)
-            return R
+            _apply_inverse(self.matrix, r.impl, v.impl, options)
+            return r
 
         def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
             if not all(isinstance(op, FenicsMatrixOperator) for op in operators):
                 return None
             if identity_shift != 0:
+                return None
+            if np.iscomplexobj(coefficients):
                 return None
             assert not solver_options
 
@@ -259,7 +263,9 @@ if config.HAVE_FENICS:
                 if legend:
                     function.rename(legend, legend)
                 for u in U._list:
-                    function.vector()[:] = u.impl
+                    if u.imag_part is not None:
+                        raise NotImplementedError
+                    function.vector()[:] = u.real_part.impl
                     f << function
             else:
                 from matplotlib import pyplot as plt
@@ -276,13 +282,15 @@ if config.HAVE_FENICS:
                     vmin = np.inf
                     vmax = -np.inf
                     for u in U:
-                        vec = u._list[0].impl
+                        vec = u._list[0].real_part.impl
                         vmin = min(vmin, vec.min())
                         vmax = max(vmax, vec.max())
 
                 for i, u in enumerate(U):
+                    if u._list[0].imag_part is not None:
+                        raise NotImplementedError
                     function = df.Function(self.space.V)
-                    function.vector()[:] = u._list[0].impl
+                    function.vector()[:] = u._list[0].real_part.impl
                     if legend:
                         tit = title + ' -- ' if title else ''
                         tit += legend[i]

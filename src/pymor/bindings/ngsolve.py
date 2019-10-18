@@ -10,12 +10,25 @@ if config.HAVE_NGSOLVE:
     import numpy as np
 
     from pymor.core.interfaces import ImmutableInterface
-    from pymor.operators.basic import OperatorBase
+    from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase
     from pymor.vectorarrays.interfaces import VectorArrayInterface
     from pymor.vectorarrays.numpy import NumpyVectorSpace
-    from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
+    from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 
-    class NGSolveVector(CopyOnWriteVector):
+    class NGSolveVectorCommon:
+        def l1_norm(self):
+            return np.linalg.norm(self.to_numpy(), ord=1)
+
+        def amax(self):
+            A = np.abs(self.to_numpy())
+            max_ind = np.argmax(A)
+            max_val = A[max_ind]
+            return max_ind, max_val
+
+        def dofs(self, dof_indices):
+            return self.to_numpy()[dof_indices]
+
+    class NGSolveVector(NGSolveVectorCommon, CopyOnWriteVector):
         """Wraps a NGSolve BaseVector to make it usable with ListVectorArray."""
 
         def __init__(self, impl):
@@ -45,25 +58,18 @@ if config.HAVE_NGSOLVE:
         def dot(self, other):
             return self.impl.vec.InnerProduct(other.impl.vec)
 
-        def l1_norm(self):
-            return np.linalg.norm(self.to_numpy(), ord=1)
-
         def l2_norm(self):
             return self.impl.vec.Norm()
 
         def l2_norm2(self):
             return self.impl.vec.Norm() ** 2
 
-        def dofs(self, dof_indices):
-            return self.to_numpy()[dof_indices]
+    class ComplexifiedNGSolveVector(NGSolveVectorCommon, ComplexifiedVector):
+        pass
 
-        def amax(self):
-            A = np.abs(self.to_numpy())
-            max_ind = np.argmax(A)
-            max_val = A[max_ind]
-            return max_ind, max_val
+    class NGSolveVectorSpace(ComplexifiedListVectorSpace):
 
-    class NGSolveVectorSpace(ListVectorSpace):
+        complexified_vector_type = ComplexifiedNGSolveVector
 
         def __init__(self, V, id='STATE'):
             self.__auto_init(locals())
@@ -90,53 +96,49 @@ if config.HAVE_NGSOLVE:
         def space_from_vector_obj(cls, vec, id):
             return cls(vec.space, id)
 
-        def zero_vector(self):
+        def real_zero_vector(self):
             impl = ngs.GridFunction(self.V)
             return NGSolveVector(impl)
 
-        def make_vector(self, obj):
+        def real_make_vector(self, obj):
             return NGSolveVector(obj)
 
-        def vector_from_numpy(self, data, ensure_copy=False):
+        def real_vector_from_numpy(self, data, ensure_copy=False):
             v = self.zero_vector()
             v.to_numpy()[:] = data
             return v
 
-    class NGSolveMatrixOperator(OperatorBase):
+    class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         """Wraps a NGSolve matrix as an |Operator|."""
-
-        linear = True
 
         def __init__(self, matrix, range, source, solver_options=None, name=None):
             self.__auto_init(locals())
 
-        def apply(self, U, mu=None):
-            assert U in self.source
-            R = self.range.zeros(len(U))
-            for u, r in zip(U._list, R._list):
-                self.matrix.Mult(u.impl.vec, r.impl.vec)
-            return R
-
-        def apply_adjoint(self, V, mu=None):
-            assert V in self.range
-            U = self.source.zeros(len(V))
-            mat = self.matrix.Transpose()  # untested in complex case
-            for v, u in zip(V._list, U._list):
-                mat.Mult(v.impl.vec, u.impl.vec)
-            return U
-
         @defaults('default_solver')
-        def apply_inverse(self, V, mu=None, least_squares=False, default_solver=''):
-            assert V in self.range
-            if least_squares:
-                raise NotImplementedError
-            solver = self.solver_options.get('inverse', default_solver) if self.solver_options else default_solver
-            R = self.source.zeros(len(V))
-            with ngs.TaskManager():
+        def _prepare_apply(self, U, mu, kind, least_squares=False, default_solver=''):
+            if kind == 'apply_inverse':
+                if least_squares:
+                    raise NotImplementedError
+                solver = self.solver_options.get('inverse', default_solver) if self.solver_options else default_solver
                 inv = self.matrix.Inverse(self.source.V.FreeDofs(), inverse=solver)
-                for r, v in zip(R._list, V._list):
-                    r.impl.vec.data = inv * v.impl.vec
-            return R
+                return inv
+
+        def _real_apply_one_vector(self, u, mu=None, prepare_data=None):
+            r = self.range.real_zero_vector()
+            self.matrix.Mult(u.impl.vec, r.impl.vec)
+            return r
+
+        def _real_apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
+            u = self.source.real_zero_vector()
+            mat = self.matrix.Transpose()
+            mat.Mult(v.impl.vec, u.impl.vec)
+            return u
+
+        def _real_apply_inverse_one_vector(self, v, mu=None, least_squares=False, prepare_data=None):
+            inv = prepare_data
+            r = self.source.real_zero_vector()
+            r.impl.vec.data = inv * v.impl.vec
+            return r
 
         def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
             if not all(isinstance(op, NGSolveMatrixOperator) for op in operators):
@@ -168,6 +170,8 @@ if config.HAVE_NGSOLVE:
             assert all(u in self.space for u in U)
             if any(len(u) != 1 for u in U):
                 raise NotImplementedError
+            if any(u._list[0].imag_part is not None for u in U):
+                raise NotImplementedError
 
             if legend is None:
                 legend = [f'VectorArray{i}' for i in range(len(U))]
@@ -180,4 +184,4 @@ if config.HAVE_NGSOLVE:
                 raise NotImplementedError
 
             for u, name in zip(U, legend):
-                ngs.Draw(u._list[0].impl, self.mesh, name=name)
+                ngs.Draw(u._list[0].real_part.impl, self.mesh, name=name)

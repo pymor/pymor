@@ -93,6 +93,17 @@ class VectorInterface(BasicInterface):
         result.scal(-1)
         return result
 
+    @property
+    def real(self):
+        return self.copy()
+
+    @property
+    def imag(self):
+        return None
+
+    def conj(self):
+        return self.copy()
+
 
 class CopyOnWriteVector(VectorInterface):
 
@@ -148,6 +159,118 @@ class CopyOnWriteVector(VectorInterface):
             self._refcount = [1]
 
 
+class ComplexifiedVector(VectorInterface):
+
+    def __init__(self, real_part, imag_part):
+        self.real_part, self.imag_part = real_part, imag_part
+
+    def copy(self, deep=False):
+        real_part = self.real_part.copy(deep=deep)
+        imag_part = self.imag_part.copy(deep=deep) if self.imag_part is not None else None
+        return type(self)(real_part, imag_part)
+
+    def scal(self, alpha):
+        if self.imag_part is None:
+            self.real_part.scal(alpha.real)
+            if alpha.imag != 0:
+                self.imag_part = self.real_part * alpha.imag
+        else:
+            if alpha.imag == 0:
+                self.real_part.scal(alpha.real)
+                self.imag_part.scal(alpha.real)
+            else:
+                old_real_part = self.real_part.copy()
+                self.real_part.scal(alpha.real)
+                self.real_part.axpy(-alpha.imag, self.imag_part)
+                self.imag_part.scal(alpha.real)
+                self.imag_part.axpy(alpha.imag, old_real_part)
+
+    def axpy(self, alpha, x):
+        if x is self:
+            self.scal(1. + alpha)
+            return
+
+        # real part
+        self.real_part.axpy(alpha.real, x.real_part)
+        if x.imag_part is not None:
+            self.real_part.axpy(-alpha.imag, x.imag_part)
+
+        # imaginary part
+        if alpha.imag != 0:
+            if self.imag_part is None:
+                self.imag_part = x.real_part * alpha.imag
+            else:
+                self.imag_part.axpy(alpha.imag, x.real_part)
+        if x.imag_part is not None:
+            if self.imag_part is None:
+                self.imag_part = x.imag_part * alpha.real
+            else:
+                self.imag_part.axpy(alpha.real, x.imag_part)
+
+    def dot(self, other):
+        result = self.real_part.dot(other.real_part)
+        if self.imag_part is not None:
+            result += self.imag_part.dot(other.real_part) * (-1j)
+        if other.imag_part is not None:
+            result += self.real_part.dot(other.imag_part) * 1j
+        if self.imag_part is not None and other.imag_part is not None:
+            result += self.imag_part.dot(other.imag_part)
+        return result
+
+    def l1_norm(self):
+        if self.imag_part is not None:
+            raise NotImplementedError
+        return self.real_part.l1_norm()
+
+    def l2_norm(self):
+        result = self.real_part.l2_norm()
+        if self.imag_part is not None:
+            result = np.linalg.norm([result, self.imag_part.l2_norm()])
+        return result
+
+    def l2_norm2(self):
+        result = self.real_part.l2_norm2()
+        if self.imag_part is not None:
+            result += self.imag_part.l2_norm2()
+        return result
+
+    def sup_norm(self):
+        if self.imag_part is not None:
+            # we cannot compute the sup_norm from the sup_norms of real_part and imag_part
+            return self.amax()[1]
+        return self.real_part.sup_norm()
+
+    def dofs(self, dof_indices):
+        values = self.real_part.dofs(dof_indices)
+        if self.imag_part is not None:
+            imag_values = self.imag_part.dofs(dof_indices)
+            return values + imag_values * 1j
+        else:
+            return values
+
+    def amax(self):
+        if self.imag_part is not None:
+            raise NotImplementedError
+        return self.real_part.amax()
+
+    def to_numpy(self, ensure_copy=False):
+        if self.imag_part is not None:
+            return self.real_part.to_numpy(ensure_copy=False) + self.imag_part.to_numpy(ensure_copy=False) * 1j
+        else:
+            return self.real_part.to_numpy(ensure_copy=ensure_copy)
+
+    @property
+    def real(self):
+        return type(self)(self.real_part.copy(), None)
+
+    @property
+    def imag(self):
+        return type(self)(self.imag_part.copy(), None) if self.imag_part is not None else None
+
+    def conj(self):
+        return type(self)(self.real_part.copy(), -self.imag_part if self.imag_part is not None else None)
+
+
 class NumpyVector(CopyOnWriteVector):
     """Vector stored in a NumPy 1D-array."""
 
@@ -173,22 +296,34 @@ class NumpyVector(CopyOnWriteVector):
         self._array = self._array.copy()
 
     def _scal(self, alpha):
-        self._array *= alpha
+        try:
+            self._array *= alpha
+        except TypeError:  # e.g. when scaling real array by complex alpha
+            self._array = self._array * alpha
 
     def _axpy(self, alpha, x):
         assert self.dim == x.dim
         if alpha == 0:
             return
         if alpha == 1:
-            self._array += x._array
+            try:
+                self._array += x._array
+            except TypeError:
+                self._array = self._array + x._array
         elif alpha == -1:
-            self._array -= x._array
+            try:
+                self._array -= x._array
+            except TypeError:
+                self._array = self._array - x._array
         else:
-            self._array += x._array * alpha
+            try:
+                self._array += x._array * alpha
+            except TypeError:
+                self._array = self._array + x._array * alpha
 
     def dot(self, other):
         assert self.dim == other.dim
-        return np.sum(self._array * other._array)
+        return np.sum(self._array.conj() * other._array)
 
     def l1_norm(self):
         return np.sum(np.abs(self._array))
@@ -206,7 +341,18 @@ class NumpyVector(CopyOnWriteVector):
         A = np.abs(self._array)
         max_ind = np.argmax(A)
         max_val = A[max_ind]
-        return max_ind, max_val
+        return max_ind, np.abs(max_val)
+
+    @property
+    def real(self):
+        return self.__class__(self._array.real.copy())
+
+    @property
+    def imag(self):
+        return self.__class__(self._array.imag.copy())
+
+    def conj(self):
+        return self.__class__(self._array.conj())
 
 
 class ListVectorArray(VectorArrayInterface):
@@ -316,11 +462,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def dot(self, other):
         assert self.space == other.space
-        R = np.empty((len(self._list), len(other)))
-        for i, a in enumerate(self._list):
-            for j, b in enumerate(other._list):
-                R[i, j] = a.dot(b)
-        return R
+        return np.array([[a.dot(b) for b in other._list] for a in self._list]).reshape((len(self), len(other)))
 
     def pairwise_dot(self, other):
         assert self.space == other.space
@@ -331,11 +473,15 @@ class ListVectorArray(VectorArrayInterface):
         if product is not None:
             return super().gramian(product)
         l = len(self._list)
-        R = np.empty((l, l))
+        R = [[0.] * l for _ in range(l)]
         for i in range(l):
             for j in range(i, l):
-                R[i, j] = self._list[i].dot(self._list[j])
-                R[j, i] = R[i, j]
+                R[i][j] = self._list[i].dot(self._list[j])
+                if i == j:
+                    R[i][j] = R[i][j].real
+                else:
+                    R[j][i] = R[i][j].conjugate()
+        R = np.array(R)
         return R
 
     def lincomb(self, coefficients):
@@ -373,15 +519,8 @@ class ListVectorArray(VectorArrayInterface):
         assert isinstance(dof_indices, list) and (len(dof_indices) == 0 or min(dof_indices) >= 0) \
             or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
                 and (len(dof_indices) == 0 or np.min(dof_indices) >= 0))
-
-        R = np.empty((len(self), len(dof_indices)))
-
         assert len(self) > 0 or len(dof_indices) == 0 or max(dof_indices) < self.dim
-
-        for k, v in enumerate(self._list):
-            R[k] = v.dofs(dof_indices)
-
-        return R
+        return np.array([v.dofs(dof_indices) for v in self._list]).reshape((len(self), len(dof_indices)))
 
     def amax(self):
         assert self.dim > 0
@@ -393,6 +532,21 @@ class ListVectorArray(VectorArrayInterface):
             MI[k], MV[k] = v.amax()
 
         return MI, MV
+
+    @property
+    def real(self):
+        return ListVectorArray([v.real for v in self._list], self.space)
+
+    @property
+    def imag(self):
+        # note that VectorInterface.imag is allowed to return None in case
+        # of a real vector, so we have to check for that.
+        # returning None is allowed as ComplexifiedVector does not know
+        # how to create a new zero vector.
+        return ListVectorArray([v.imag or self.space.zero_vector() for v in self._list], self.space)
+
+    def conj(self):
+        return self.__class__([v.conj() for v in self._list], self.space)
 
     def __str__(self):
         return f'ListVectorArray of {len(self._list)} of space {self.space}'
@@ -459,7 +613,7 @@ class ListVectorSpace(VectorSpaceInterface):
 
     @make_array.instancemethod
     def make_array(self, obj):
-        return ListVectorArray([self.make_vector(v) for v in obj], self)
+        return ListVectorArray([v if isinstance(v, VectorInterface) else self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
     def from_numpy(cls, data, id=None, ensure_copy=False):
@@ -468,6 +622,50 @@ class ListVectorSpace(VectorSpaceInterface):
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
         return ListVectorArray([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
+
+
+class ComplexifiedListVectorSpace(ListVectorSpace):
+
+    complexified_vector_type = ComplexifiedVector
+
+    @abstractmethod
+    def real_zero_vector(self):
+        pass
+
+    def zero_vector(self):
+        return self.complexified_vector_type(self.real_zero_vector(), None)
+
+    def real_full_vector(self, value):
+        return self.real_vector_from_numpy(np.full(self.dim, value))
+
+    def full_vector(self, value):
+        return self.complexified_vector_type(self.real_full_vector(value), None)
+
+    def real_random_vector(self, distribution, random_state, **kwargs):
+        values = _create_random_values(self.dim, distribution, random_state, **kwargs)
+        return self.real_vector_from_numpy(values)
+
+    def random_vector(self, distribution, random_state, **kwargs):
+        return self.complexified_vector_type(self.real_random_vector(distribution, random_state, **kwargs), None)
+
+    @abstractmethod
+    def real_make_vector(self, obj):
+        pass
+
+    def make_vector(self, obj):
+        return self.complexified_vector_type(self.real_make_vector(obj), None)
+
+    def real_vector_from_numpy(self, data, ensure_copy=False):
+        raise NotImplementedError
+
+    def vector_from_numpy(self, data, ensure_copy=False):
+        if np.iscomplexobj(data):
+            real_part = self.real_vector_from_numpy(data.real)
+            imag_part = self.real_vector_from_numpy(data.imag)
+        else:
+            real_part = self.real_vector_from_numpy(data, ensure_copy=ensure_copy)
+            imag_part = None
+        return self.complexified_vector_type(real_part, imag_part)
 
 
 class NumpyListVectorSpace(ListVectorSpace):
