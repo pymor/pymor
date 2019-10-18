@@ -5,6 +5,7 @@ stages:
   - test
   - check install
   - deploy
+  - update
 
 .test_base:
     retry:
@@ -224,9 +225,8 @@ repo2docker:
 
 trigger_binder 1/2:
     extends: .test_base
-    stage: deploy
-    # there's no need to run this if repo2docker fails already
-    #needs: "repo2docker"
+    stage: update
+    image: alpine:3.10
     only:
         - master
         - tags
@@ -238,9 +238,8 @@ trigger_binder 1/2:
 
 trigger_binder 2/2:
     extends: .test_base
-    stage: deploy
-    # there's no need to run this if repo2docker fails already
-    #needs: "repo2docker"
+    stage: update
+    image: alpine:3.10
     only:
         - master
         - tags
