@@ -179,6 +179,10 @@ def rb_greedy(fom, reductor, training_set, use_estimator=True, error_norm=None,
         See :func:`weak_greedy`.
     extension_params
         `dict` of parameters passed to the `reductor.extend_basis` method.
+        If `None`, `'gram_schmidt'` basis extension will be used as a default
+        for stationary problems (`fom.solve` returns `VectorArrays` of length 1)
+        and `'pod'` basis extension (adding a single POD mode) for instationary
+        problems.
     pool
         See :func:`weak_greedy`.
 
@@ -209,7 +213,6 @@ class RBSurrogate(WeakGreedySurrogate):
     """
 
     def __init__(self, fom, reductor, use_estimator, error_norm, extension_params, pool):
-        extension_params = extension_params or {}
         self.__auto_init(locals())
         if use_estimator:
             self.remote_fom, self.remote_error_norm, self.remote_reductor = None, None, None
@@ -244,7 +247,10 @@ class RBSurrogate(WeakGreedySurrogate):
         with self.logger.block(f'Computing solution snapshot for mu = {mu} ...'):
             U = self.fom.solve(mu)
         with self.logger.block('Extending basis with solution snapshot ...'):
-            self.reductor.extend_basis(U, copy_U=False, **self.extension_params)
+            extension_params = self.extension_params
+            if len(U) > 1 and extension_params is None:
+                extension_params = {'method': 'pod'}
+            self.reductor.extend_basis(U, copy_U=False, **(extension_params or {}))
             if not self.use_estimator:
                 self.remote_reductor = self.pool.push(self.reductor)
         with self.logger.block('Reducing ...'):
