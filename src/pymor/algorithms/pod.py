@@ -2,21 +2,16 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-from scipy.linalg import eigh
-
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.core.defaults import defaults
-from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 from pymor.operators.interfaces import OperatorInterface
-from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-@defaults('rtol', 'atol', 'l2_err', 'orthonormalize', 'check', 'check_tol')
-def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
-        orthonormalize=True, check=True, check_tol=1e-10):
+@defaults('rtol', 'atol', 'l2_err', 'method')
+def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
+        method='method_of_snapshots', svd_params=None):
     """Proper orthogonal decomposition of `A`.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix,
@@ -29,11 +24,11 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
     ----------
     A
         The |VectorArray| for which the POD is to be computed.
+    product
+        Inner product |Operator| w.r.t. which the POD is computed.
     modes
         If not `None`, only the first `modes` POD modes (singular vectors) are
         returned.
-    product
-        Inner product |Operator| w.r.t. which the POD is computed.
     rtol
         Singular values smaller than this value multiplied by the largest singular
         value are ignored.
@@ -46,13 +41,12 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
             argmin_N { sum_{n=N+1}^{infty} s_n^2 <= l2_err^2 }
 
         where `s_n` denotes the n-th singular value.
-    orthonormalize
-        If `True`, orthonormalize the computed POD modes again using
-        the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt` algorithm.
-    check
-        If `True`, check the computed POD modes for orthonormality.
-    check_tol
-        Tolerance for the orthonormality check.
+    method
+        Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
+        (`'method_of_snapshots'` or `'qr_svd'`).
+    svd_params
+        `dict` of parameters passed to the SVD method (see
+        :mod:`pymor.algorithms.svd_va`).
 
     Returns
     -------
@@ -61,54 +55,16 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
     SVALS
         Sequence of singular values.
     """
-
     assert isinstance(A, VectorArrayInterface)
-    assert len(A) > 0
-    assert modes is None or modes <= len(A)
     assert product is None or isinstance(product, OperatorInterface)
+    assert modes is None or modes <= len(A)
+    assert method in ('method_of_snapshots', 'qr_svd')
 
     logger = getLogger('pymor.algorithms.pod.pod')
 
-    with logger.block(f'Computing Gramian ({len(A)} vectors) ...'):
-        B = A.gramian(product)
-
-    with logger.block('Computing eigenvalue decomposition ...'):
-        eigvals = None if (modes is None or l2_err > 0.) else (len(B) - modes, len(B) - 1)
-
-        EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
-        EVALS = EVALS[::-1]
-        EVECS = EVECS.T[::-1, :]  # is this a view? yes it is!
-
-        tol = max(rtol ** 2 * EVALS[0], atol ** 2)
-        above_tol = np.where(EVALS >= tol)[0]
-        if len(above_tol) == 0:
-            return A.space.empty(), np.array([])
-        last_above_tol = above_tol[-1]
-
-        errs = np.concatenate((np.cumsum(EVALS[::-1])[::-1], [0.]))
-        below_err = np.where(errs <= l2_err**2)[0]
-        first_below_err = below_err[0]
-
-        selected_modes = min(first_below_err, last_above_tol + 1)
-        if modes is not None:
-            selected_modes = min(selected_modes, modes)
-
-        SVALS = np.sqrt(EVALS[:selected_modes])
-        EVECS = EVECS[:selected_modes]
-
-    with logger.block(f'Computing left-singular vectors ({len(EVECS)} vectors) ...'):
-        POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
-
-    if orthonormalize:
-        with logger.block('Re-orthonormalizing POD modes ...'):
-            POD = gram_schmidt(POD, product=product, copy=False)
-
-    if check:
-        logger.info('Checking orthonormality ...')
-        if not float_cmp_all(POD.inner(POD, product), np.eye(len(POD)), atol=check_tol, rtol=0.):
-            err = np.max(np.abs(POD.inner(POD, product) - np.eye(len(POD))))
-            raise AccuracyError(f'result not orthogonal (max err={err})')
-        if len(POD) < len(EVECS):
-            raise AccuracyError('additional orthonormalization removed basis vectors')
+    svd_va = method_of_snapshots if method == 'method_of_snapshots' else qr_svd
+    with logger.block('Computing SVD ...'):
+        POD, SVALS, _ = svd_va(A, product=product, modes=modes, rtol=rtol, atol=atol,
+                               l2_err=l2_err, **svd_params)
 
     return POD, SVALS
