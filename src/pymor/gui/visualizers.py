@@ -82,8 +82,8 @@ class PatchVisualizer(BasicInterface):
                     write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
         else:
             if self.backend == 'jupyter':
-                from pymor.gui.jupyter import default_visualizer
-                return default_visualizer(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                from pymor.gui.jupyter import get_visualizer
+                return get_visualizer()(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                 legend=legend, separate_colorbars=separate_colorbars,
                                 rescale_colorbars=rescale_colorbars, columns=columns)
             else:

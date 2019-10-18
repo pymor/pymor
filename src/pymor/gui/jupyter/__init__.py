@@ -12,14 +12,18 @@ inside the given notebook.
 """
 import IPython
 
+from pymor.core.defaults import defaults
 from pymor.gui.jupyter.patch import visualize_patch
 from pymor.core.config import config
 
-if config.HAVE_PYTHREEJS:
-    from pymor.gui.jupyter.threejs import visualize_py3js
-    default_visualizer = visualize_py3js
-else:
-    default_visualizer = visualize_patch
+
+@defaults('backend')
+def get_visualizer(backend='py3js'):
+    if backend == 'py3js' and config.HAVE_PYTHREEJS:
+        from pymor.gui.jupyter.threejs import visualize_py3js
+        return visualize_py3js
+    else:
+        return visualize_patch
 
 
 def progress_bar(sequence, every=None, size=None, name='Parameters'):
