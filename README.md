@@ -124,7 +124,7 @@ Documentation is available online at [Read the Docs](https://pymor.readthedocs.o
 or you can build it yourself from inside the root directory of the pyMOR source tree
 by executing:
 
-    make doc
+    make docs
 
 This will generate HTML documentation in `docs/_build/html`.
 
