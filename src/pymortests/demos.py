@@ -11,7 +11,7 @@ from tempfile import mkdtemp
 import shutil
 
 from pymortests.base import runmodule, check_results
-from pymor.core.exceptions import QtMissing
+from pymor.core.exceptions import QtMissing, GmshError
 from pymor.gui.qt import stop_gui_processes
 from pymor.core.config import is_windows_platform
 from pymor.tools.mpi import parallel
@@ -169,6 +169,19 @@ def _test_demo(demo):
         result = demo()
     except QtMissing:
         pytest.xfail("Qt missing")
+    except GmshError as ge:
+        # this error is ok if gmsh isn't installed at all, or in the wrong version
+        try:
+            import pygmsh
+            gmsh_major = pygmsh.get_gmsh_major_version()
+            if gmsh_major != 2:
+                pytest.xfail(f'GMSH installed in incompatible major {gmsh_major}')
+            else:
+                raise ge
+        except (ImportError, FileNotFoundError):
+            pytest.xfail(f'GMSH not intalled')
+        else:
+            raise ge
     finally:
         stop_gui_processes()
         from pymor.parallel.default import _cleanup
