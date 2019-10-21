@@ -11,7 +11,7 @@ from tempfile import mkdtemp
 import shutil
 
 from pymortests.base import runmodule, check_results
-from pymor.core.exceptions import QtMissing, GmshError
+from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing
 from pymor.gui.qt import stop_gui_processes
 from pymor.core.config import is_windows_platform
 from pymor.tools.mpi import parallel
@@ -169,8 +169,10 @@ def _test_demo(demo):
         result = demo()
     except QtMissing:
         pytest.xfail("Qt missing")
-    except GmshError:
-        pytest.xfail(f'GMSH not intalled')
+    except GmshMissing:
+        pytest.xfail(f'Gmsh not intalled')
+    except MeshioMissing:
+        pytest.xfail(f'meshio not intalled')
     finally:
         stop_gui_processes()
         from pymor.parallel.default import _cleanup

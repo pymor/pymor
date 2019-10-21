@@ -41,8 +41,12 @@ class SIDGenerationError(Exception):
     """Is raised when generate_sid fails."""
 
 
-class GmshError(Exception):
-    """Is raised when a Gmsh related error occurs."""
+class GmshMissing(Exception):
+    """Is raised when a Gmsh is not found."""
+
+
+class MeshioMissing(Exception):
+    """Is raised when meshio is not available."""
 
 
 class ImageCollectionError(Exception):
