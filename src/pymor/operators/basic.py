@@ -357,7 +357,7 @@ class ProjectedOperator(OperatorBase):
             J = self.operator.jacobian(self.source_basis.lincomb(U.to_numpy()), mu=mu)
         from pymor.algorithms.projection import project
         pop = project(J, range_basis=self.range_basis, source_basis=self.source_basis,
-                      product=self.product, name=self.name + '_jacobian')
+                      product=self.product)
         if self.solver_options:
             options = self.solver_options.get('jacobian')
             if options:
