@@ -11,7 +11,7 @@ import time
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.domaindescriptions.polygonal import PolygonalDomain
 from pymor.grids.gmsh import load_gmsh
-from pymor.core.exceptions import GmshError
+from pymor.core.exceptions import GmshMissing
 from pymor.core.logger import getLogger
 
 
@@ -63,8 +63,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     try:
         version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT, env=env).decode()
     except (subprocess.CalledProcessError, OSError):
-        raise GmshError('Could not find Gmsh.'
-                        ' Please ensure that the gmsh binary (http://geuz.org/gmsh/) is in your PATH.')
+        raise GmshMissing('Could not find Gmsh.'
+                          ' Please ensure that the gmsh binary (http://geuz.org/gmsh/) is in your PATH.')
 
     logger.info('Found version ' + version.strip())
 
@@ -185,7 +185,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         logger.info(f'Gmsh took {t_gmsh} s')
 
         # Create |GmshGrid| and |GmshBoundaryInfo| form the just created MSH-file.
-        grid, bi = load_gmsh(open(msh_file_path))
+        grid, bi = load_gmsh(msh_file_path)
     finally:
         # delete tempfiles if they were created beforehand.
         if isinstance(geo_file, tempfile._TemporaryFileWrapper):

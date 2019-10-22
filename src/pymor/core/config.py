@@ -70,6 +70,7 @@ _PACKAGES = {
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYTHON': _get_ipython_version,
     'MATPLOTLIB': _get_matplotib_version,
+    'MESHIO': lambda: import_module('meshio').__version__,
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: bool(import_module('ngsolve')),
