@@ -83,14 +83,17 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                 self.restricted_operator, self.source_dofs = operator.restricted(interpolation_dofs)
             except NotImplementedError:
                 self.logger.warning('Operator has no "restricted" method. The full operator will be evaluated.')
-                self.operator = operator
+                self._operator = operator
             interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
             self.interpolation_matrix = interpolation_matrix
             self.collateral_basis = collateral_basis.copy()
 
     @property
     def operator(self):
-        return self._operator()
+        if hasattr(self, 'restricted_operator'):
+            return self._operator()
+        else:
+            return self._operator
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
