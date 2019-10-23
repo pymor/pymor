@@ -35,7 +35,7 @@ def _format_generic(obj, max_width, verbosity, override={}):
             try:
                 if verbosity < 3 and val == description.default:
                     continue
-            except ValueError:  # comparison of numpy arrays
+            except (ValueError, TypeError):  # comparison of numpy arrays, NGSolve FESpaces
                 pass
             vals.append(_recurse(val, max_width - len(key) - 4, verbosity))
         keys.append(key)
