@@ -9,10 +9,10 @@ from pymor.core.exceptions import InversionError, NewtonError
 from pymor.core.logger import getLogger
 
 
-@defaults('miniter', 'maxiter', 'rtol', 'atol', 'stagnation_window', 'stagnation_threshold')
+@defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
-           miniter=0, maxiter=100, rtol=-1., atol=-1.,
-           stagnation_window=3, stagnation_threshold=0.9,
+           miniter=0, maxiter=100, rtol=-1., atol=-1., relax=1.,
+           stagnation_window=3, stagnation_threshold=np.inf,
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
 
@@ -48,6 +48,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         norm of the initial residual.
     atol
         Finish when the residual norm is below this threshold.
+    relax
+        Relaxation factor for Newton updates.
     stagnation_window
         Finish when the residual norm has not been reduced by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
@@ -122,7 +124,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
             correction = jacobian.apply_inverse(residual, least_squares=least_squares)
         except InversionError:
             raise NewtonError('Could not invert jacobian')
-        U += correction
+        U.axpy(relax, correction)
         residual = rhs - operator.apply(U, mu=mu)
 
         err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
