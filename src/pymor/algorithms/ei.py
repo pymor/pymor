@@ -17,7 +17,7 @@ import numpy as np
 from scipy.linalg import solve
 
 from pymor.core.logger import getLogger
-from pymor.algorithms.pod import pod
+from pymor.algorithms.pod import pod as pod_alg
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interfaces import RemoteObjectInterface
@@ -153,7 +153,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     return interpolation_dofs, collateral_basis, data
 
 
-def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
+def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_options={}):
     """Generate data for empirical interpolation using DEIM algorithm.
 
     Given a |VectorArray| `U`, this method generates a collateral basis and
@@ -169,6 +169,9 @@ def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
         A |VectorArray| of vectors to interpolate.
     modes
         Dimension of the collateral basis i.e. number of POD modes of the vectors in `U`.
+    pod
+        If `True`, perform a POD of `U` to obtain the collateral basis. If `False`, `U`
+        is used as collateral basis.
     atol
         Absolute POD tolerance.
     rtol
@@ -195,7 +198,13 @@ def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
     logger = getLogger('pymor.algorithms.ei.deim')
     logger.info('Generating Interpolation Data ...')
 
-    collateral_basis, svals = pod(U, modes=modes, atol=atol, rtol=rtol, product=product, **pod_options)
+    data = {}
+
+    if pod:
+        collateral_basis, svals = pod_alg(U, modes=modes, atol=atol, rtol=rtol, product=product, **pod_options)
+        data['svals'] = svals
+    else:
+        collateral_basis = U
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     interpolation_matrix = np.zeros((0, 0))
@@ -207,10 +216,9 @@ def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
             coefficients = solve(interpolation_matrix,
                                  collateral_basis[i].dofs(interpolation_dofs).T).T
             U_interpolated = collateral_basis[:len(interpolation_dofs)].lincomb(coefficients)
-            ERR = collateral_basis[i].copy()
-            ERR -= U_interpolated
+            ERR = collateral_basis[i] - U_interpolated
         else:
-            ERR = collateral_basis[i].copy()
+            ERR = collateral_basis[i]
 
         # compute new interpolation dof and collateral basis vector
         new_dof = ERR.amax()[0][0]
@@ -226,8 +234,6 @@ def deim(U, modes=None, atol=None, rtol=None, product=None, pod_options={}):
         del collateral_basis[len(interpolation_dofs):len(collateral_basis)]
 
     logger.info('Finished.')
-
-    data = {'svals': svals}
 
     return interpolation_dofs, collateral_basis, data
 
