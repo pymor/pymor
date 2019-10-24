@@ -104,7 +104,7 @@ if config.HAVE_NGSOLVE:
             return NGSolveVector(obj)
 
         def real_vector_from_numpy(self, data, ensure_copy=False):
-            v = self.zero_vector()
+            v = self.real_zero_vector()
             v.to_numpy()[:] = data
             return v
 
