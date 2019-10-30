@@ -53,7 +53,7 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
 
     def __repr__(self):
         return 'OnedGrid({}, {}, {})'.format(
-            self.domain, self.num_intervals, self.identify_left_right
+            self._domain, self._num_intervals, self._identify_left_right
         )
 
     def size(self, codim=0):
