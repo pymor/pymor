@@ -356,18 +356,20 @@ class Concatenation(OperatorBase):
 class LowRankOperator(OperatorBase):
     """Non-parametric low-rank operator.
 
-    Represents an operator of the form :math:`L M^{-1} R^H`, where
-    :math:`L` and :math:`R` are |VectorArrays| of column vectors and
-    :math:`M` a 2D |NumPy array|.
+    Represents an operator of the form :math:`L R^H`, :math:`L C R^H`,
+    or :math:`L C^{-1} R^H` where :math:`L` and :math:`R` are
+    |VectorArrays| of column vectors and :math:`C` a 2D |NumPy array|.
 
     Parameters
     ----------
     left, right
-        |VectorArrays| of equal lengths representing :math:`U` and
-         :math:`V`.
-    middle
-        |NumPy array| representing :math:`M`. If `None`, it is assumed
-         to be identity.
+        |VectorArrays| of equal lengths representing :math:`L` and
+        :math:`R`.
+    core
+        |NumPy array| representing :math:`C`. If `None`, it is assumed
+        to be identity.
+    inverted
+        Whether :math:`C` is inverted.
     solver_options
         The |solver_options| for the operator.
     name
@@ -376,12 +378,12 @@ class LowRankOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, left, right, middle=None, solver_options=None, name=None):
+    def __init__(self, left, right, core=None, inverted=False, solver_options=None, name=None):
         assert len(left) == len(right)
-        assert (middle is None
-                or isinstance(middle, np.ndarray)
-                and middle.ndim == 2
-                and middle.shape[0] == middle.shape[1] == len(left))
+        assert (core is None
+                or isinstance(core, np.ndarray)
+                and core.ndim == 2
+                and core.shape[0] == core.shape[1] == len(left))
 
         self.__auto_init(locals())
         self.source = right.space
@@ -395,22 +397,29 @@ class LowRankOperator(OperatorBase):
         } if self.solver_options else None
         return type(self)(self.right,
                           self.left,
-                          None if self.middle is None else self.middle.T.conj(),
+                          None if self.core is None else self.core.T.conj(),
+                          inverted=self.inverted,
                           solver_options=options,
                           name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         assert U in self.source
         V = self.right.dot(U)
-        if self.middle is not None:
-            V = spla.solve(self.middle, V)
+        if self.core is not None:
+            if self.inverted:
+                V = spla.solve(self.core, V)
+            else:
+                V = self.core @ V
         return self.left.lincomb(V.T)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         U = self.left.dot(V)
-        if self.middle is not None:
-            U = spla.solve(self.middle.T.conj(), U)
+        if self.core is not None:
+            if self.inverted:
+                U = spla.solve(self.core.T.conj(), U)
+            else:
+                U = self.core.T.conj() @ U
         return self.right.lincomb(U.T)
 
 
@@ -422,11 +431,16 @@ class LowRankUpdatedOperator(LincombOperator):
     in `apply_inverse` and `apply_inverse_adjoint`:
 
     .. math::
-        \left(\alpha A + \beta L M^{-1} R^H \right)^{-1}
-        = \alpha^{-1} A^{-1}
+        \left(\alpha A + \beta L C R^H \right)^{-1}
+        & = \alpha^{-1} A^{-1}
+            - \alpha^{-1} \beta A^{-1} L C
+            \left(\alpha C + \beta C R^H A^{-1} L C \right)^{-1}
+            C R^H A^{-1}, \\
+        \left(\alpha A + \beta L C^{-1} R^H \right)^{-1}
+        & = \alpha^{-1} A^{-1}
             - \alpha^{-1} \beta A^{-1} L
-            \left(\alpha M + \beta R^H A^{-1} L \right)^{-1}
-            R^H A^{-1}
+            \left(\alpha C + \beta R^H A^{-1} L \right)^{-1}
+            R^H A^{-1}.
 
     Parameters
     ----------
@@ -438,8 +452,8 @@ class LowRankUpdatedOperator(LincombOperator):
         A linear coefficient for `operator`. Can either be a fixed
         number or a |ParameterFunctional|.
     lr_coeff
-        A linear coefficient for `low_rank_operator`. Can either be a
-        fixed number or a |ParameterFunctional|.
+        A linear coefficient for `lr_operator`. Can either be a fixed
+        number or a |ParameterFunctional|.
     solver_options
         The |solver_options| for the operator.
     name
@@ -454,13 +468,16 @@ class LowRankUpdatedOperator(LincombOperator):
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         A, LR = self.operators
-        L, M, R = LR.left, LR.middle, LR.right
-        if M is None:
-            M = np.eye(len(L))
+        L, C, R = LR.left, LR.core, LR.right
+        if not self.inverted and C is not None:
+            L = L.lincomb(C.T)
+            R = R.lincomb(C.conj())
+        if C is None:
+            C = np.eye(len(L))
         alpha, beta = self.evaluate_coefficients(mu)
         AinvV = A.apply_inverse(V)
         AinvL = A.apply_inverse(L)
-        mat = alpha * M + beta * R.dot(AinvL)
+        mat = alpha * C + beta * R.dot(AinvL)
         RhAinvV = R.dot(AinvV)
         U = AinvV
         U.axpy(-beta, AinvL.lincomb(spla.solve(mat, RhAinvV).T))
@@ -469,13 +486,16 @@ class LowRankUpdatedOperator(LincombOperator):
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         A, LR = self.operators
-        L, M, R = LR.left, LR.middle, LR.right
-        if M is None:
-            M = np.eye(len(L))
-        alpha, beta = [c.conjugate() for c in self.evaluate_coefficients(mu)]
+        L, C, R = LR.left, LR.core, LR.right
+        if not self.inverted and C is not None:
+            L = L.lincomb(C.T)
+            R = R.lincomb(C.conj())
+        if C is None:
+            C = np.eye(len(L))
+        alpha, beta = (c.conjugate() for c in self.evaluate_coefficients(mu))
         AinvhU = A.apply_inverse_adjoint(U)
         AinvhR = A.apply_inverse_adjoint(R)
-        mat = alpha * M.T.conj() + beta * L.dot(AinvhR)
+        mat = alpha * C.T.conj() + beta * L.dot(AinvhR)
         LhAinvhU = L.dot(AinvhU)
         V = AinvhU
         V.axpy(-beta, AinvhR.lincomb(spla.solve(mat, LhAinvhU).T))
