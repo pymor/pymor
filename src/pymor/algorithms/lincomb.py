@@ -3,12 +3,15 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import scipy.linalg as spla
 
 from pymor.algorithms.rules import RuleTable, match_generic, match_class_all, match_class_any, match_always
 from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockOperatorBase,
                                    BlockDiagonalOperator, SecondOrderModelOperator, ShiftedSecondOrderModelOperator)
-from pymor.operators.constructions import ZeroOperator, IdentityOperator, VectorArrayOperator, LincombOperator
+from pymor.operators.constructions import (ZeroOperator, IdentityOperator, VectorArrayOperator, LincombOperator,
+                                           LowRankOperator, LowRankUpdatedOperator)
+from pymor.vectorarrays.constructions import cat_arrays
 
 
 def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
@@ -180,6 +183,39 @@ class AssembleLincombRules(RuleTable):
             for (i, j) in np.ndindex(shape):
                 blocks[i, j] = ops[0].blocks[i, j] * c
             return operator_type(blocks)
+
+    @match_generic(lambda ops: len(op for op in ops if isinstance(op, LowRankOperator)) >= 2)
+    def action_merge_low_rank_operators(self, ops):
+        low_rank = []
+        not_low_rank = []
+        for op, coeff in zip(ops, self.coefficients):
+            if isinstance(op, LowRankOperator):
+                low_rank.append((op, coeff))
+            else:
+                not_low_rank.append((op, coeff))
+        inverted = [op.inverted for op in low_rank if op.core is not None]
+        if len(inverted) >= 2 and any(inverted) and any([not _ for _ in inverted]):
+            raise RuleNotMatchingError
+        inverted = inverted[0] if inverted else False
+        left = cat_arrays([op.left for op in low_rank])
+        right = cat_arrays([op.right for op in low_rank])
+        core = []
+        for op, coeff in zip(*low_rank):
+            core.append(op.core)
+            if core[-1] is None:
+                core[-1] = np.eye(len(op.left))
+            if inverted:
+                core[-1] /= coeff
+            else:
+                core[-1] *= coeff
+        core = spla.block_diag(*core)
+        new_low_rank_op = LowRankOperator(left, right, core=core, inverted=inverted)
+        if len(not_low_rank) == 0:
+            return new_low_rank_op
+        else:
+            new_ops, new_coeffs = zip(*not_low_rank)
+            return assemble_lincomb(new_ops + [new_low_rank_op], new_coeffs + [1],
+                                    solver_options=self.solver_options, name=self.name)
 
     @match_always
     def action_call_assemble_lincomb_method(self, ops):
