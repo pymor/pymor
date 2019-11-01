@@ -162,7 +162,7 @@ class LincombOperator(OperatorBase):
                 raise NotImplementedError
         derivative_coefficients = []
         for coef in self.coefficients:
-            if isinstance(coef,Parametric):
+            if isinstance(coef, Parametric):
                 derivative_coefficients.append(coef.d_mu(component, index))
             else:
                 derivative_coefficients.append(0.)
