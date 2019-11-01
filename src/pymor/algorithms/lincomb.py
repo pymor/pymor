@@ -55,6 +55,20 @@ class AssembleLincombRules(RuleTable):
         super().__init__(use_caching=False)
         self.__auto_init(locals())
 
+    @match_always
+    def action_zero_coeff(self, ops):
+        if all(coeff != 0 for coeff in self.coefficients):
+            raise RuleNotMatchingError
+        without_zero = [(op, coeff)
+                        for op, coeff in zip(ops, self.coefficients)
+                        if coeff != 0]
+        if len(without_zero) == 0:
+            return ZeroOperator(ops[0].range, ops[0].source, name=self.name)
+        else:
+            new_ops, new_coeffs = zip(*without_zero)
+            return assemble_lincomb(new_ops, new_coeffs,
+                                    solver_options=self.solver_options, name=self.name)
+
     @match_class_any(ZeroOperator)
     def action_ZeroOperator(self, ops):
         without_zero = [(op, coeff)
