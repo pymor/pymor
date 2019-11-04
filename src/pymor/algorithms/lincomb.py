@@ -184,7 +184,7 @@ class AssembleLincombRules(RuleTable):
                 blocks[i, j] = ops[0].blocks[i, j] * c
             return operator_type(blocks)
 
-    @match_generic(lambda ops: len(op for op in ops if isinstance(op, LowRankOperator)) >= 2)
+    @match_generic(lambda ops: sum(1 for op in ops if isinstance(op, LowRankOperator)) >= 2)
     def action_merge_low_rank_operators(self, ops):
         low_rank = []
         not_low_rank = []
@@ -193,14 +193,14 @@ class AssembleLincombRules(RuleTable):
                 low_rank.append((op, coeff))
             else:
                 not_low_rank.append((op, coeff))
-        inverted = [op.inverted for op in low_rank if op.core is not None]
+        inverted = [op.inverted for op, _ in low_rank if op.core is not None]
         if len(inverted) >= 2 and any(inverted) and any([not _ for _ in inverted]):
             raise RuleNotMatchingError
         inverted = inverted[0] if inverted else False
-        left = cat_arrays([op.left for op in low_rank])
-        right = cat_arrays([op.right for op in low_rank])
+        left = cat_arrays([op.left for op, _ in low_rank])
+        right = cat_arrays([op.right for op, _ in low_rank])
         core = []
-        for op, coeff in zip(*low_rank):
+        for op, coeff in low_rank:
             core.append(op.core)
             if core[-1] is None:
                 core[-1] = np.eye(len(op.left))
