@@ -2,6 +2,8 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+"""Module for computing (rational) Krylov subspaces' bases."""
+
 from pymor.algorithms.gram_schmidt import gram_schmidt
 
 
@@ -100,4 +102,88 @@ def rational_arnoldi(A, E, b, sigma, trans=False):
             gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 2, copy=False)
         v = V[-1]
 
+    return V
+
+
+def tangential_rational_krylov(A, E, B, b, sigma, trans=False, orth=True):
+    r"""Tangential Rational Krylov subspace.
+
+    If `trans == False`, computes a real basis for the rational Krylov
+    subspace
+
+    .. math::
+        \mathrm{span}\{
+            (\sigma_1 E - A)^{-1} B b_1,
+            (\sigma_2 E - A)^{-1} B b_2,
+            \ldots,
+            (\sigma_r E - A)^{-1} B b_r
+        \},
+
+    otherwise, computes the same for
+
+    .. math::
+        \mathrm{span}\{
+            (\sigma_1 E - A)^{-T} B^T b_1,
+            (\sigma_2 E - A)^{-T} B^T b_2,
+            \ldots,
+            (\sigma_r E - A)^{-T} B^T b_r
+        \}.
+
+    Interpolation points in `sigma` are assumed to be pairwise distinct.
+
+    Parameters
+    ----------
+    A
+        Real |Operator| A.
+    E
+        Real |Operator| E.
+    B
+        Real |Operator| B.
+    b
+        |VectorArray| from `B.source`, if `trans == False`, or
+         `B.range`, if `trans == True`.
+    sigma
+        Sequence of interpolation points (closed under conjugation), of
+        the same length as `b`.
+    trans
+        Boolean, see above.
+    orth
+        If `True`, orthonormalizes the basis using
+        :meth:`pymor.algorithms.gram_schmidt.gram_schmidt`.
+
+    Returns
+    -------
+    V
+        Optionally orthonormal basis for the Krylov subspace |VectorArray|.
+    """
+    assert A.source == A.range
+    assert E.source == A.source
+    assert E.range == A.source
+    assert (B.range if not trans else B.source) == A.source
+    assert b in (B.source if not trans else B.range)
+    assert len(b) == len(sigma)
+
+    r = len(sigma)
+    V = A.source.empty(reserve=r)
+    for i in range(r):
+        if sigma[i].imag == 0:
+            sEmA = sigma[i].real * E - A
+            if not trans:
+                Bb = B.apply(b.real[i])
+                V.append(sEmA.apply_inverse(Bb))
+            else:
+                BTb = B.apply_adjoint(b.real[i])
+                V.append(sEmA.apply_inverse_adjoint(BTb))
+        elif sigma[i].imag > 0:
+            sEmA = sigma[i] * E - A
+            if not trans:
+                Bb = B.apply(b[i])
+                v = sEmA.apply_inverse(Bb)
+            else:
+                BTb = B.apply_adjoint(b[i].conj())
+                v = sEmA.apply_inverse_adjoint(BTb)
+            V.append(v.real)
+            V.append(v.imag)
+    if orth:
+        gram_schmidt(V, atol=0, rtol=0, copy=False)
     return V
