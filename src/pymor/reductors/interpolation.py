@@ -5,7 +5,7 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.arnoldi import arnoldi
+from pymor.algorithms.krylov import rational_arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
@@ -212,7 +212,8 @@ class LTIBHIReductor(GenericBHIReductor):
             - `'biorth'`: projection matrices are biorthogolized with
               respect to the E product
             - `'arnoldi'`: projection matrices are orthogonalized using
-              the Arnoldi process (available only for SISO systems).
+              the rational Arnoldi process (available only for SISO
+              systems).
 
         Returns
         -------
@@ -228,8 +229,8 @@ class LTIBHIReductor(GenericBHIReductor):
         assert c in self.fom.C.range and len(c) == r
 
         # compute projection matrices
-        self.V = arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma)
-        self.W = arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True)
+        self.V = rational_arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma)
+        self.W = rational_arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True)
 
         # find reduced-order model
         self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V)
