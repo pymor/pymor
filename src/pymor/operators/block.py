@@ -60,7 +60,7 @@ class BlockOperatorBase(OperatorBase):
 
     @property
     def H(self):
-        return self.adjoint_type(np.vectorize(lambda op: op.H if op else None)(self.blocks.T))
+        return self.adjoint_type(np.vectorize(lambda op: op.H)(self.blocks.T))
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -102,8 +102,7 @@ class BlockOperatorBase(OperatorBase):
         def process_row(row, space):
             R = space.empty()
             for op in row:
-                if op is not None:
-                    R.append(op.as_range_array(mu))
+                R.append(op.as_range_array(mu))
             return R
 
         subspaces = self.range.subspaces if self.blocked_range else [self.range]
@@ -115,8 +114,7 @@ class BlockOperatorBase(OperatorBase):
         def process_col(col, space):
             R = space.empty()
             for op in col:
-                if op is not None:
-                    R.append(op.as_source_array(mu))
+                R.append(op.as_source_array(mu))
             return R
 
         subspaces = self.source.subspaces if self.blocked_source else [self.source]
