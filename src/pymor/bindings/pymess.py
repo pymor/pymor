@@ -162,6 +162,11 @@ if config.HAVE_PYMESS:
             opts.type = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             eqn = LyapunovEquation(opts, A, E, B)
             Z, status = pymess.lradi(eqn, opts)
+            relres = status.res2_norm / status.res2_0
+            if relres > opts.adi.res2_tol:
+                logger = getLogger('pymess.lradi')
+                logger.warning(f'Desired relative residual tolerance was not achieved '
+                               f'({relres:e} > {opts.adi.res2_tol:e}).')
         else:
             raise ValueError(f'Unexpected Lyapunov equation solver ({options["type"]}).')
 
@@ -390,6 +395,11 @@ if config.HAVE_PYMESS:
             opts.type = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             eqn = RiccatiEquation(opts, A, E, B, C)
             Z, status = pymess.lrnm(eqn, opts)
+            relres = status.res2_norm / status.res2_0
+            if relres > opts.adi.res2_tol:
+                logger = getLogger('pymess.lrnm')
+                logger.warning(f'Desired relative residual tolerance was not achieved '
+                               f'({relres:e} > {opts.adi.res2_tol:e}).')
         else:
             raise ValueError(f'Unexpected Riccati equation solver ({options["type"]}).')
 
