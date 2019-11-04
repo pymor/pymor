@@ -5,7 +5,7 @@
 from pymor.algorithms.gram_schmidt import gram_schmidt
 
 
-def arnoldi(A, E, b, sigma, trans=False):
+def rational_arnoldi(A, E, b, sigma, trans=False):
     r"""Rational Arnoldi algorithm.
 
     If `trans == False`, using Arnoldi process, computes a real
