@@ -81,6 +81,77 @@ class InputOutputModel(Model):
         assert self.parameters.assert_compatible(mu)
         return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
 
+    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
+        """Draw the Bode plot for all input-output pairs.
+
+        Parameters
+        ----------
+        w
+            A sequence of angular frequencies at which to compute the transfer function.
+        mu
+            |Parameter| for which to evaluate the transfer function.
+        ax
+            Axis of shape (2 * `self.output_dim`, `self.input_dim`) to which to plot.
+            If not given, `matplotlib.pyplot.gcf` is used to get the figure and create axis.
+        Hz
+            Should the frequency be in Hz on the plot.
+        dB
+            Should the magnitude be in dB on the plot.
+        deg
+            Should the phase be in degrees (otherwise in radians).
+        mpl_kwargs
+            Keyword arguments used in the matplotlib plot function.
+
+        Returns
+        -------
+        artists
+            List of matplotlib artists added.
+        """
+        if ax is None:
+            import matplotlib.pyplot as plt
+            fig = plt.gcf()
+            ax = fig.subplots(2 * self.output_dim, self.input_dim, sharex=True, squeeze=False)
+        else:
+            assert isinstance(ax, np.ndarray) and ax.shape == (2 * self.output_dim, self.input_dim)
+            fig = ax[0, 0].get_figure()
+
+        w = np.asarray(w)
+        freq = w / (2 * np.pi) if Hz else w
+        mag = np.abs(self.freq_resp(w, mu=mu))
+        phase = np.angle(self.freq_resp(w, mu=mu))
+        for i in range(self.output_dim):
+            for j in range(self.input_dim):
+                for k in range(1, len(w)):
+                    while phase[k, i, j] > phase[k - 1, i, j] + np.pi:
+                        phase[k, i, j] -= 2 * np.pi
+                    while phase[k, i, j] <= phase[k - 1, i, j] - np.pi:
+                        phase[k, i, j] += 2 * np.pi
+        if deg:
+            phase *= 180 / np.pi
+
+        artists = np.empty_like(ax)
+        freq_label = f'Frequency ({"Hz" if Hz else "rad/s"})'
+        mag_label = f'Magnitude{" (dB)" if dB else ""}'
+        phase_label = f'Phase ({"deg" if deg else "rad"})'
+        for i in range(self.output_dim):
+            for j in range(self.input_dim):
+                if dB:
+                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log2(mag[:, i, j]),
+                                                              **mpl_kwargs)
+                else:
+                    artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, i, j],
+                                                            **mpl_kwargs)
+                artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, i, j],
+                                                                  **mpl_kwargs)
+        for i in range(self.output_dim):
+            ax[2 * i, 0].set_ylabel(mag_label)
+            ax[2 * i + 1, 0].set_ylabel(phase_label)
+        for j in range(self.input_dim):
+            ax[-1, j].set_xlabel(freq_label)
+        fig.suptitle('Bode plot')
+
+        return artists
+
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
         """Draw the magnitude plot.
 
