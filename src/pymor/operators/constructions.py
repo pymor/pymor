@@ -465,6 +465,7 @@ class LowRankUpdatedOperator(LincombOperator):
         assert isinstance(lr_operator, LowRankOperator)
         super().__init__([operator, lr_operator], [coeff, lr_coeff],
                          solver_options=solver_options, name=name)
+        self.__auto_init(locals())
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         A, LR = self.operators
