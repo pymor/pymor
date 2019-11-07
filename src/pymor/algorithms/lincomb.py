@@ -2,6 +2,8 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import chain
+
 import numpy as np
 import scipy.linalg as spla
 
@@ -195,7 +197,7 @@ class AssembleLincombRules(RuleTable):
                 not_low_rank.append((op, coeff))
         inverted = [op.inverted for op, _ in low_rank if op.core is not None]
         if len(inverted) >= 2 and any(inverted) and any([not _ for _ in inverted]):
-            raise RuleNotMatchingError
+            return None
         inverted = inverted[0] if inverted else False
         left = cat_arrays([op.left for op, _ in low_rank])
         right = cat_arrays([op.right for op, _ in low_rank])
@@ -214,8 +216,35 @@ class AssembleLincombRules(RuleTable):
             return new_low_rank_op
         else:
             new_ops, new_coeffs = zip(*not_low_rank)
-            return assemble_lincomb(new_ops + [new_low_rank_op], new_coeffs + [1],
+            return assemble_lincomb(chain(new_ops, [new_low_rank_op]), chain(new_coeffs, [1]),
                                     solver_options=self.solver_options, name=self.name)
+
+    @match_generic(lambda ops: len(ops) >= 2)
+    @match_generic(lambda ops: sum(1 for op in ops if isinstance(op, (LowRankOperator, LowRankUpdatedOperator))) >= 1)
+    def action_merge_into_low_rank_updated_operator(self, ops):
+        new_ops = []
+        new_lr_ops = []
+        new_coeffs = []
+        new_lr_coeffs = []
+        for op, coeff in zip(ops, self.coefficients):
+            if isinstance(op, LowRankOperator):
+                new_lr_ops.append(op)
+                new_lr_coeffs.append(coeff)
+            elif isinstance(op, LowRankUpdatedOperator):
+                new_ops.append(op.operators[0])
+                new_coeffs.append(coeff * op.coefficients[0])
+                new_lr_ops.append(op.operators[1])
+                new_lr_coeffs.append(coeff * op.coefficients[1])
+            else:
+                new_ops.append(op)
+                new_coeffs.append(coeff)
+        lru_op = assemble_lincomb(new_ops, new_coeffs)
+        lru_lr_op = assemble_lincomb(new_lr_ops, new_lr_coeffs)
+        lru_lr_coeff = 1
+        if isinstance(lru_lr_op, LincombOperator):
+            lru_lr_op, lru_lr_coeff = lru_lr_op.operators[0], lru_lr_op.coefficients[0]
+        return LowRankUpdatedOperator(lru_op, lru_lr_op, 1, lru_lr_coeff,
+                                      solver_options=self.solver_options, name=self.name)
 
     @match_always
     def action_call_assemble_lincomb_method(self, ops):
