@@ -32,9 +32,9 @@ if __name__ == '__main__':
     tf_irka_reductor = TFIRKAReductor(tf)
     rom = tf_irka_reductor.reduce(r, maxit=1000)
 
-    sigmas = tf_irka_reductor.sigmas
+    sigma_list = tf_irka_reductor.sigma_list
     fig, ax = plt.subplots()
-    ax.plot(sigmas[-1].real, sigmas[-1].imag, '.')
+    ax.plot(sigma_list[-1].real, sigma_list[-1].imag, '.')
     ax.set_title('Final interpolation points of TF-IRKA')
     ax.set_xlabel('Re')
     ax.set_ylabel('Im')
@@ -77,9 +77,9 @@ if __name__ == '__main__':
     plt.show()
 
     # match steady state (add interpolation point at 0)
-    sigma_ss = list(sigmas[-1]) + [0]
-    b_ss = np.ones((1, r + 1))
-    c_ss = np.ones((1, r + 1))
+    sigma_ss = list(sigma_list[-1]) + [0]
+    b_ss = tf.input_space.ones(r + 1)
+    c_ss = tf.output_space.ones(r + 1)
     interp_reductor = TFBHIReductor(tf)
     rom_ss = interp_reductor.reduce(sigma_ss, b_ss, c_ss)
 

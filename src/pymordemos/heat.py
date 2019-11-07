@@ -111,9 +111,8 @@ if __name__ == '__main__':
     plt.show()
 
     # Iterative Rational Krylov Algorithm
-    sigma = np.logspace(-1, 3, r)
     irka_reductor = IRKAReductor(lti)
-    rom_irka = irka_reductor.reduce(r, sigma, compute_errors=True)
+    rom_irka = irka_reductor.reduce(r, compute_errors=True)
 
     # Shift distances
     fig, ax = plt.subplots()
