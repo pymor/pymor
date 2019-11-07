@@ -164,7 +164,7 @@ if config.HAVE_PYMESS:
             Z, status = pymess.lradi(eqn, opts)
             relres = status.res2_norm / status.res2_0
             if relres > opts.adi.res2_tol:
-                logger = getLogger('pymess.lradi')
+                logger = getLogger('pymor.bindings.pymess.solve_lyap_lrcf')
                 logger.warning(f'Desired relative residual tolerance was not achieved '
                                f'({relres:e} > {opts.adi.res2_tol:e}).')
         else:
@@ -378,7 +378,8 @@ if config.HAVE_PYMESS:
         options = _parse_options(options, ricc_lrcf_solver_options(), default_solver, None, False)
 
         if options['type'] == 'pymess_dense_nm_gmpcare':
-            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=False)
+            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=False,
+                                             method_name='solve_ricc_lrcf')
             Z = _chol(X)
         elif options['type'] == 'pymess_lrnm':
             if S is not None:
@@ -397,7 +398,7 @@ if config.HAVE_PYMESS:
             Z, status = pymess.lrnm(eqn, opts)
             relres = status.res2_norm / status.res2_0
             if relres > opts.adi.res2_tol:
-                logger = getLogger('pymess.lrnm')
+                logger = getLogger('pymor.bindings.pymess.solve_ricc_lrcf')
                 logger.warning(f'Desired relative residual tolerance was not achieved '
                                f'({relres:e} > {opts.adi.res2_tol:e}).')
         else:
@@ -456,14 +457,15 @@ if config.HAVE_PYMESS:
         options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'pymess_dense_nm_gmpcare', None, False)
 
         if options['type'] == 'pymess_dense_nm_gmpcare':
-            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=True)
+            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=True,
+                                             method_name='solve_pos_ricc_lrcf')
             Z = _chol(X)
         else:
             raise ValueError(f'Unexpected positive Riccati equation solver ({options["type"]}).')
 
         return A.source.from_numpy(Z.T)
 
-    def _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=False, options=None, plus=False):
+    def _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=False, options=None, plus=False, method_name=''):
         """Return the solution from pymess.dense_nm_gmpare solver."""
         A = to_matrix(A, format='dense')
         E = to_matrix(E, format='dense') if E else None
@@ -504,11 +506,11 @@ if config.HAVE_PYMESS:
                                                    relres_tol=options['relres_tol'],
                                                    nrm=options['nrm'])
         if absres > options['absres_tol']:
-            logger = getLogger('pymess.dense_nm_gmpcare')
+            logger = getLogger('pymor.bindings.pymess.' + method_name)
             logger.warning(f'Desired absolute residual tolerance was not achieved '
                            f'({absres:e} > {options["absres_tol"]:e}).')
         if relres > options['relres_tol']:
-            logger = getLogger('pymess.dense_nm_gmpcare')
+            logger = getLogger('pymor.bindings.pymess.' + method_name)
             logger.warning(f'Desired relative residual tolerance was not achieved '
                            f'({relres:e} > {options["relres_tol"]:e}).')
 
