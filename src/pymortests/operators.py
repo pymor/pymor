@@ -12,7 +12,7 @@ from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
                                            LincombOperator)
-from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
@@ -128,6 +128,20 @@ def test_block_identity_lincomb():
     assert almost_equal(ones2 * 2, idid.apply_adjoint(ones2))
     assert almost_equal(ones2 * 0.5, idid.apply_inverse(ones2))
     assert almost_equal(ones2 * 0.5, idid.apply_inverse_adjoint(ones2))
+
+
+def test_numpy_generic_operator_lincomb():
+    n = 2
+    I1 = NumpyMatrixOperator(np.eye(n))
+    I2 = NumpyGenericOperator(lambda x: x, dim_source=n, dim_range=n)
+    v = I1.source.from_numpy(np.ones(n))
+
+    try:
+        (I1 + I2).apply_inverse(v)
+    except NotImplementedError:  # NumpyGenericOperator.jacobian
+        pass
+    else:
+        assert False
 
 
 def test_pickle(operator):
