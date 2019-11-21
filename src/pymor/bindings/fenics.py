@@ -192,7 +192,6 @@ if config.HAVE_FENICS:
                 return None
             if np.iscomplexobj(coefficients):
                 return None
-            assert not solver_options
 
             if coefficients[0] == 1:
                 matrix = operators[0].matrix.copy()
@@ -202,7 +201,7 @@ if config.HAVE_FENICS:
                 matrix.axpy(c, op.matrix, False)
                 # in general, we cannot assume the same nonzero pattern for # all matrices. how to improve this?
 
-            return FenicsMatrixOperator(matrix, self.source.V, self.range.V, name=name)
+            return FenicsMatrixOperator(matrix, self.source.V, self.range.V, solver_options=solver_options, name=name)
 
     @defaults('solver', 'preconditioner')
     def _solver_options(solver='bicgstab', preconditioner='amg'):
