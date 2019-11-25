@@ -273,5 +273,5 @@ class CollectVectorRangeRules(RuleTable):
             self.apply(op.operators[0])
         else:
             firstrange = op.operators[-1].range.empty()
-            self.apply(op.first, firstrange)
-            CollectOperatorRangeRules(firstrange, image, False).apply(op.with_(operators=op.operators[:-1]))
+            CollectVectorRangeRules(firstrange).apply(op.operators[-1])
+            CollectOperatorRangeRules(firstrange, self.image, False).apply(op.with_(operators=op.operators[:-1]))
