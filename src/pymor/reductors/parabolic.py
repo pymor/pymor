@@ -53,7 +53,10 @@ class ParabolicRBReductor(InstationaryRBReductor):
     """
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
                  check_orthonormality=None, check_tol=None):
-        assert isinstance(fom.time_stepper, ImplicitEulerTimeStepper)
+        if not isinstance(fom.time_stepper, ImplicitEulerTimeStepper):
+            raise NotImplementedError
+        if fom.mass is not None and fom.mass.parametric and '_t' in fom.mass.parameter_type:
+            raise NotImplementedError
         super().__init__(fom, RB, product=product,
                          check_orthonormality=check_orthonormality, check_tol=check_tol)
         self.coercivity_estimator = coercivity_estimator
