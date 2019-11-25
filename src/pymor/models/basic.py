@@ -158,8 +158,7 @@ class InstationaryModel(ModelBase):
 
     for t in [0,T], where L is a (possibly non-linear) time-dependent
     |Operator|, F is a time-dependent vector-like |Operator|, and u_0 the
-    initial data. The mass |Operator| M is assumed to be linear,
-    time-independent and |Parameter|-independent.
+    initial data. The mass |Operator| M is assumed to be linear.
 
     Parameters
     ----------
