@@ -150,8 +150,6 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     assert U0 in A.source
     assert len(U0) == 1
 
-    A_time_dep = A.parametric and '_t' in A.parameter_type
-
     R = A.source.empty(reserve=nt+1)
     R.append(U0)
 
@@ -159,7 +157,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
               M.solver_options if solver_options == 'mass' else \
               solver_options
     M_dt_A = (M + A * dt).with_(solver_options=options)
-    if not A_time_dep:
+    if not M_dt_A.parametric or '_t' not in M_dt_A.parameter_type:
         M_dt_A = M_dt_A.assemble(mu)
 
     t = t0
