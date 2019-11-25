@@ -195,23 +195,21 @@ class AssembleLincombRules(RuleTable):
                 low_rank.append((op, coeff))
             else:
                 not_low_rank.append((op, coeff))
-        inverted = [op.inverted for op, _ in low_rank if op.core is not None]
-        if len(inverted) >= 2 and any(inverted) and any([not _ for _ in inverted]):
+        inverted = [op.inverted for op, _ in low_rank]
+        if len(inverted) >= 2 and any(inverted) and any(not _ for _ in inverted):
             return None
-        inverted = inverted[0] if inverted else False
+        inverted = inverted[0]
         left = cat_arrays([op.left for op, _ in low_rank])
         right = cat_arrays([op.right for op, _ in low_rank])
         core = []
         for op, coeff in low_rank:
             core.append(op.core)
-            if core[-1] is None:
-                core[-1] = np.eye(len(op.left))
             if inverted:
                 core[-1] /= coeff
             else:
                 core[-1] *= coeff
         core = spla.block_diag(*core)
-        new_low_rank_op = LowRankOperator(left, right, core=core, inverted=inverted)
+        new_low_rank_op = LowRankOperator(left, core, right, inverted=inverted)
         if len(not_low_rank) == 0:
             return new_low_rank_op
         else:
@@ -220,7 +218,8 @@ class AssembleLincombRules(RuleTable):
                                     solver_options=self.solver_options, name=self.name)
 
     @match_generic(lambda ops: len(ops) >= 2)
-    @match_generic(lambda ops: sum(1 for op in ops if isinstance(op, (LowRankOperator, LowRankUpdatedOperator))) >= 1)
+    @match_generic(lambda ops: any(isinstance(op, (LowRankOperator, LowRankUpdatedOperator))
+                                   for op in ops))
     def action_merge_into_low_rank_updated_operator(self, ops):
         new_ops = []
         new_lr_ops = []

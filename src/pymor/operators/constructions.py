@@ -356,18 +356,18 @@ class Concatenation(OperatorBase):
 class LowRankOperator(OperatorBase):
     """Non-parametric low-rank operator.
 
-    Represents an operator of the form :math:`L R^H`, :math:`L C R^H`,
-    or :math:`L C^{-1} R^H` where :math:`L` and :math:`R` are
+    Represents an operator of the form :math:`L C R^H` or
+    :math:`L C^{-1} R^H` where :math:`L` and :math:`R` are
     |VectorArrays| of column vectors and :math:`C` a 2D |NumPy array|.
 
     Parameters
     ----------
-    left, right
-        |VectorArrays| of equal lengths representing :math:`L` and
-        :math:`R`.
+    left
+        |VectorArray| representing :math:`L`.
     core
-        |NumPy array| representing :math:`C`. If `None`, it is assumed
-        to be identity.
+        |NumPy array| representing :math:`C`.
+    right
+        |VectorArray| representing :math:`R`.
     inverted
         Whether :math:`C` is inverted.
     solver_options
@@ -378,10 +378,11 @@ class LowRankOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, left, right, core=None, inverted=False, solver_options=None, name=None):
+    def __init__(self, left, core, right, inverted=False, solver_options=None, name=None):
+        assert isinstance(left, VectorArrayInterface)
+        assert isinstance(right, VectorArrayInterface)
         assert len(left) == len(right)
-        assert (core is None
-                or isinstance(core, np.ndarray)
+        assert (isinstance(core, np.ndarray)
                 and core.ndim == 2
                 and core.shape[0] == core.shape[1] == len(left))
 
@@ -396,8 +397,8 @@ class LowRankOperator(OperatorBase):
             'inverse_adjoint': self.solver_options.get('inverse'),
         } if self.solver_options else None
         return type(self)(self.right,
+                          self.core.T.conj(),
                           self.left,
-                          None if self.core is None else self.core.T.conj(),
                           inverted=self.inverted,
                           solver_options=options,
                           name=self.name + '_adjoint')
@@ -405,21 +406,19 @@ class LowRankOperator(OperatorBase):
     def apply(self, U, mu=None):
         assert U in self.source
         V = self.right.dot(U)
-        if self.core is not None:
-            if self.inverted:
-                V = spla.solve(self.core, V)
-            else:
-                V = self.core @ V
+        if self.inverted:
+            V = spla.solve(self.core, V)
+        else:
+            V = self.core @ V
         return self.left.lincomb(V.T)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         U = self.left.dot(V)
-        if self.core is not None:
-            if self.inverted:
-                U = spla.solve(self.core.T.conj(), U)
-            else:
-                U = self.core.T.conj() @ U
+        if self.inverted:
+            U = spla.solve(self.core.T.conj(), U)
+        else:
+            U = self.core.T.conj() @ U
         return self.right.lincomb(U.T)
 
 
@@ -470,11 +469,9 @@ class LowRankUpdatedOperator(LincombOperator):
     def apply_inverse(self, V, mu=None, least_squares=False):
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
-        if not self.inverted and C is not None:
+        if not self.inverted:
             L = L.lincomb(C.T)
             R = R.lincomb(C.conj())
-        if C is None:
-            C = np.eye(len(L))
         alpha, beta = self.evaluate_coefficients(mu)
         AinvV = A.apply_inverse(V)
         AinvL = A.apply_inverse(L)
@@ -488,11 +485,9 @@ class LowRankUpdatedOperator(LincombOperator):
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
-        if not self.inverted and C is not None:
+        if not self.inverted:
             L = L.lincomb(C.T)
             R = R.lincomb(C.conj())
-        if C is None:
-            C = np.eye(len(L))
         alpha, beta = (c.conjugate() for c in self.evaluate_coefficients(mu))
         AinvhU = A.apply_inverse_adjoint(U)
         AinvhR = A.apply_inverse_adjoint(R)
