@@ -8,13 +8,9 @@ from pymor.core.config import config
 from pymor.grids import referenceelements
 from pymor.grids.constructions import flatten_grid
 
-if config.HAVE_PYVTK:
-    try:
-        from evtk.hl import _addDataToFile, _appendDataToFile
-        from evtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
-    except ImportError:
-        from pyevtk.hl import _addDataToFile, _appendDataToFile
-        from pyevtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
+if config.HAVE_PYEVTK:
+    from pyevtk.hl import _addDataToFile, _appendDataToFile
+    from pyevtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
 
 
 def _write_vtu_series(grid, coordinates, connectivity, data, filename_base, last_step, is_cell_data):
@@ -93,7 +89,7 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     last_step
         if set must be <= len(data) to restrict output of timeseries
     """
-    if not config.HAVE_PYVTK:
+    if not config.HAVE_PYEVTK:
         raise ImportError('could not import pyevtk')
     if grid.dim != 2:
         raise NotImplementedError

@@ -14,6 +14,7 @@ def _can_import(module):
         pass
     return False
 
+
 def _get_fenics_version():
     import dolfin as df
     return df.__version__
@@ -62,6 +63,14 @@ def is_jupyter():
     return type(get_ipython()).__module__.startswith('ipykernel.')
 
 
+def is_nbconvert():
+    """In some visualization cases we need to be able to detect if a notebook
+    is executed with nbconvert to disable async loading
+    """
+    from os import environ
+    return is_jupyter() and bool(environ.get('PYMOR_NBCONVERT', False))
+
+
 _PACKAGES = {
     'CYTHON': lambda: import_module('cython').__version__,
     'DEALII': lambda: import_module('pydealii'),
@@ -78,7 +87,8 @@ _PACKAGES = {
     'PYAMG': lambda: import_module('pyamg.version').full_version,
     'PYMESS': lambda: bool(import_module('pymess')),
     'PYTEST': lambda: import_module('pytest').__version__,
-    'PYVTK': lambda: _can_import('evtk') or _can_import('pyevtk'),
+    'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
+    'PYEVTK': lambda: _can_import('pyevtk'),
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(import_module('Qt.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
