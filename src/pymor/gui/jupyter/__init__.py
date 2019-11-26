@@ -18,7 +18,7 @@ from pymor.core.config import config
 
 
 @defaults('backend')
-def get_visualizer(backend='py3js'):
+def get_visualizer(backend='matplotlib'):
     if backend == 'py3js' and config.HAVE_PYTHREEJS:
         from pymor.gui.jupyter.threejs import visualize_py3js
         return visualize_py3js
