@@ -13,7 +13,9 @@ def _init_mpi():
         import mpi4py
     except ImportError:
         return
-    mpi4py.rc(initialize=False)
+    # only change finalize setting if unset
+    finalize = (mpi4py.rc.finalize is None) or mpi4py.rc.finalize
+    mpi4py.rc(initialize=False, finalize=finalize)
     from mpi4py import MPI
     if not MPI.Is_initialized():
         required_level = int(os.environ.get('PYMOR_MPI_INIT_THREAD', MPI.THREAD_MULTIPLE))
