@@ -41,12 +41,10 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 
         QWidget = object
 
-    MOCK_MODULES = ['scipy', 'scipy.sparse', 'scipy.linalg', 'scipy.sparse.linalg', 'scipy.io', 'scipy.version', 'scipy.special',
-                    'docopt',
+    MOCK_MODULES = ['docopt',
                     'OpenGL', 'OpenGL.GL', 'psutil',
                     'pyvtk',
-                    'IPython', 'IPtyhon.core', 'IPython.display',
-                    'IPython.parallel', 'ipywidgets', 'pyvis', 'pythreejs', 'pythreejs._version',
+                    'pyvis', 'pythreejs', 'pythreejs._version',
                     'sympy',
                     'pytest']
 
