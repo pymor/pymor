@@ -439,3 +439,5 @@ def setup(app):
         return  # probably called by tests
 
     app.connect('autodoc-process-docstring', _process_docstring)
+
+    return {'parallel_read_safe': True}
