@@ -43,7 +43,7 @@ RUN /bin/bash -c "pip install jupyterlab && \
     jupyter nbextension enable codefolding/main && \
     jupyter nbextension enable notify/notify && \
     jupyter nbextension enable scroll_down/main && \
-    [[ -e /pymor/setup.py ]] && pip install /pymor || echo 'no install needed'"
+    ([[ -e /pymor/setup.py ]] && pip install /pymor[docs,ci,full] || echo 'no install needed')"
 ADD .binder/dev-entrypoint.bash /usr/local/bin/
 ADD .binder/ipython_kernel_config.py /etc/ipython/
 USER ${NB_USER}
