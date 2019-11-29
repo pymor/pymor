@@ -4,35 +4,8 @@
 Getting started
 ***************
 
-Installation
-------------
-
-pyMOR can be easily installed via `pip`::
-
-        pip install --upgrade pip  # make sure that pip is reasonably new
-        pip install pymor[full]
-
-For Linux we provide binary wheels, so no further system packages should
-be required. The following optional packages must be installed separately::
-
-        # for support of MPI distributed models and parallelization of
-        # greedy algorithms (requires MPI development headers and a C compiler)
-        pip install mpi4py
-
-        # dense matrix equation solver for system-theoretic MOR methods,
-        # required for H-infinity norm calculation (requires OpenBLAS headers and a Fortran compiler)
-        pip install slycot
-
-        # sparse matrix equation solver for system-theoretic MOR methods
-        # (other backends available)
-        open https://www.mpi-magdeburg.mpg.de/projects/mess
-        # download and install pymess wheel for your architecture
-
-We recommend installation of pyMOR in a `virtual environment <https://virtualenv.pypa.io/en/latest/>`_.
-Please take a look at our `README <https://github.com/pymor/pymor#installation-via-pip>`_
-file for more detailed installation instructions and a guide to setup a
-development environment for working on pyMOR itself.
-
+.. code-links::
+    :timeout: -1
 
 Trying it out
 -------------
@@ -122,13 +95,15 @@ inside the IPython shell.
 First, we will import the most commonly used methods and classes of pyMOR
 by executing:
 
->>> from pymor.basic import *
+.. nbplot::
+  >>> from pymor.basic import *
 
 Next we will instantiate a class describing the analytical problem
 we want so solve. In this case, a
 :meth:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`:
 
->>> p = thermal_block_problem(num_blocks=(3, 2))
+.. nbplot::
+  >>> p = thermal_block_problem(num_blocks=(3, 2))
 
 We want to discretize this problem using the finite element method.
 We could do this by hand, creating a |Grid|, instatiating
@@ -142,26 +117,25 @@ a :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`, we can use
 a predifined *discretizer* to do the work for us. In this case, we use
 :func:`~pymor.discretizers.cg.discretize_stationary_cg`:
 
->>> fom, fom_data = discretize_stationary_cg(p, diameter=1./100.)
+.. nbplot::
+  >>> fom, fom_data = discretize_stationary_cg(p, diameter=1./100.)
 
 ``fom`` is the |StationaryModel| which has been created for us,
 whereas ``fom_data`` contains some additional data, in particular the |Grid|
 and the |BoundaryInfo| which have been created during discretization. We
 can have a look at the grid,
 
->>> print(fom_data['grid'])
-Tria-Grid on domain [0,1] x [0,1]
-x0-intervals: 100, x1-intervals: 100
-elements: 40000, edges: 60200, vertices: 20201
+.. nbplot::
+  >>> print(fom_data['grid'])
 
 and, as always, we can display its class documentation using
 ``help(fom_data['grid'])``.
 
 Let's solve the thermal block problem and visualize the solution:
 
->>> U = fom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
->>> fom.visualize(U, title='Solution')
-00:35 StationaryModel: Solving ThermalBlock((3, 2))_CG for {diffusion: [1.0, 0.1, 0.3, 0.1, 0.2, 1.0]} ...
+.. nbplot::
+  >>> U = fom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
+  >>> fom.visualize(U, title='Solution')
 
 Each class in pyMOR that describes a |Parameter| dependent mathematical
 object, like the |StationaryModel| in our case, derives from
@@ -171,8 +145,8 @@ The resulting |ParameterType| is stored in the object's
 :attr:`~pymor.parameters.base.Parametric.parameter_type` attribute. Let us
 have a look:
 
->>> print(fom.parameter_type)
-{diffusion: (2, 3)}
+.. nbplot::
+  >>> print(fom.parameter_type)
 
 This tells us, that the |Parameter| which
 :meth:`~pymor.models.interfaces.ModelInterface.solve` expects
@@ -198,139 +172,79 @@ required for error estimation. Moreover, we have to provide
 the reductor with a |ParameterFunctional| which computes a lower bound for
 the coercivity of the problem for a given parameter.
 
->>> reductor = CoerciveRBReductor(
-...     fom,
-...     product=fom.h1_0_semi_product,
-...     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', fom.parameter_type)
-... )
+.. nbplot::
+  >>> reductor = CoerciveRBReductor(
+  ...     fom,
+  ...     product=fom.h1_0_semi_product,
+  ...     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', fom.parameter_type)
+  ... )
 
 Moreover, we need to select a |Parameter| training set. The model
 ``fom`` already comes with a |ParameterSpace| which it has inherited from the
 analytical problem. We can sample our parameters from this space, which is a
 :class:`~pymor.parameters.spaces.CubicParameterSpace`. E.g.:
 
->>> training_set = fom.parameter_space.sample_uniformly(4)
->>> print(training_set[0])
-{diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]}
+.. nbplot::
+  >>> training_set = fom.parameter_space.sample_uniformly(4)
+  >>> print(training_set[0])
 
 Now we start the basis generation:
 
->>> greedy_data = rb_greedy(fom, reductor, training_set, max_extensions=32)
-02:14 weak_greedy: Started greedy search on training set of size 4096.
-02:14 weak_greedy: Estimating errors ...
-02:14 |   RBSurrogate: Reducing ...
-02:14 |   |   CoerciveRBReductor: Operator projection ...
-02:14 |   |   CoerciveRBReductor: Assembling error estimator ...
-02:14 |   |   |   ResidualReductor: Estimating residual range ...
-02:14 |   |   |   |   estimate_image_hierarchical: Estimating image for basis vector -1 ...
-02:14 |   |   |   |   estimate_image_hierarchical: Orthonormalizing ...
-02:14 |   |   |   ResidualReductor: Projecting residual operator ...
-02:14 |   |   CoerciveRBReductor: Building ROM ...
-02:16 weak_greedy: Maximum error after 0 extensions: 1.874573182151557 (mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]})
-02:16 weak_greedy: Extending surrogate for mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
-02:16 |   RBSurrogate: Computing solution snapshot for mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
-02:16 |   |   StationaryModel: Solving ThermalBlock((3, 2))_CG for {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
-02:16 |   RBSurrogate: Extending basis with solution snapshot ...
-02:16 |   RBSurrogate: Reducing ...
-02:16 |   |   CoerciveRBReductor: Operator projection ...
-02:16 |   |   CoerciveRBReductor: Assembling error estimator ...
-02:16 |   |   |   ResidualReductor: Estimating residual range ...
-02:16 |   |   |   |   estimate_image_hierarchical: Estimating image for basis vector 0 ...
-02:16 |   |   |   |   estimate_image_hierarchical: Orthonormalizing ...
-02:16 |   |   |   |   |   gram_schmidt: Removing vector 1 of norm 0.0
-02:16 |   |   |   |   |   gram_schmidt: Removing linearly dependent vector 7
-02:17 |   |   |   ResidualReductor: Projecting residual operator ...
-02:17 |   |   CoerciveRBReductor: Building ROM ...
-                 ...
-                 ...
-03:59 weak_greedy: Estimating errors ...
-04:02 weak_greedy: Maximum error after 31 extensions: 0.031036281563735547 (mu = {diffusion: [0.1, 0.4, 0.1, 1.0, 0.4, 0.1]})
-04:02 weak_greedy: Extending surrogate for mu = {diffusion: [0.1, 0.4, 0.1, 1.0, 0.4, 0.1]} ...
-04:02 |   RBSurrogate: Computing solution snapshot for mu = {diffusion: [0.1, 0.4, 0.1, 1.0, 0.4, 0.1]} ...
-04:02 |   |   StationaryModel: Solving ThermalBlock((3, 2))_CG for {diffusion: [0.1, 0.4, 0.1, 1.0, 0.4, 0.1]} ...
-04:02 |   RBSurrogate: Extending basis with solution snapshot ...
-04:02 |   |   gram_schmidt: Orthonormalizing vector 31 again
-04:02 |   RBSurrogate: Reducing ...
-04:02 |   |   CoerciveRBReductor: Operator projection ...
-04:02 |   |   CoerciveRBReductor: Assembling error estimator ...
-04:02 |   |   |   ResidualReductor: Estimating residual range ...
-04:02 |   |   |   |   estimate_image_hierarchical: Estimating image for basis vector 31 ...
-04:02 |   |   |   |   estimate_image_hierarchical: Orthonormalizing ...
-04:02 |   |   |   |   |   gram_schmidt: Removing vector 180 of norm 1.670179097624966e-15
-04:02 |   |   |   |   |   gram_schmidt: Orthonormalizing vector 181 again
-04:02 |   |   |   |   |   gram_schmidt: Orthonormalizing vector 182 again
-04:02 |   |   |   |   |   gram_schmidt: Orthonormalizing vector 183 again
-04:03 |   |   |   |   |   gram_schmidt: Orthonormalizing vector 184 again
-04:03 |   |   |   |   |   gram_schmidt: Orthonormalizing vector 185 again
-04:03 |   |   |   |   |   gram_schmidt: Orthonormalizing vector 186 again
-04:03 |   |   |   ResidualReductor: Projecting residual operator ...
-04:03 |   |   CoerciveRBReductor: Building ROM ...
-04:03 weak_greedy: Maximum number of 32 extensions reached.
-04:03 weak_greedy: Greedy search took 109.13336181640625 seconds
-
-
+.. nbplot::
+  >>> greedy_data = rb_greedy(fom, reductor, training_set, max_extensions=32)
 
 The ``max_extensions`` parameter defines how many basis vectors we want to
 obtain. ``greedy_data`` is a dictionary containing various data that has
 been generated during the run of the algorithm:
 
->>> print(greedy_data.keys())
-dict_keys(['rom', 'max_errs', 'extensions', 'max_err_mus', 'time'])
+.. nbplot::
+  >>> print(greedy_data.keys())
 
 The most important items is ``'rom'`` which holds the reduced |Model|
 obtained from applying our reductor with the final reduced basis.
 
->>> rom = greedy_data['rom']
+.. nbplot::
+  >>> rom = greedy_data['rom']
 
 All vectors in pyMOR are stored in so called |VectorArrays|. For example
 the solution ``U`` computed above is given as a |VectorArray| of length 1.
 For the reduced basis we have:
 
->>> RB = reductor.bases['RB']
->>> print(type(RB))
-<class 'pymor.vectorarrays.numpy.NumpyVectorArray'>
->>> print(len(RB))
-32
->>> print(RB.dim)
-20201
+.. nbplot::
+  >>> RB = reductor.bases['RB']
+  >>> print(type(RB))
+  >>> print(len(RB))
+  >>> print(RB.dim)
 
 Let us check if the reduced basis really is orthonormal with respect to
 the H1-product. For this we use the :meth:`~pymor.operators.interfaces.OperatorInterface.apply2`
 method:
 
->>> import numpy as np
->>> gram_matrix = RB.gramian(fom.h1_0_semi_product)
->>> print(np.max(np.abs(gram_matrix - np.eye(32))))
-1.3736926228686067e-13
+.. nbplot::
+  >>> import numpy as np
+  >>> gram_matrix = RB.gramian(fom.h1_0_semi_product)
+  >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
 
 Looks good! We can now solve the reduced model for the same parameter as above.
 The result is a vector of coefficients w.r.t. the reduced basis, which is
 currently stored in ``rb``. To form the linear combination, we can use the
 `reconstruct` method of the reductor:
 
->>> u = rom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
->>> print(u)
-[[ 5.66075162e-01 -1.33690839e-01  2.42900421e-01 -1.26735678e-01
-  -1.50500532e-01 -5.44158631e-02  1.05816850e-01 -5.18375437e-02
-   1.25819087e-01  4.47997587e-02  1.97036013e-01  2.16171955e-02
-   1.47925585e-02 -1.20307244e-02 -3.45979550e-02 -1.17557331e-02
-  -1.87134380e-02 -6.38947282e-03 -1.41062909e-02  1.82350035e-02
-  -8.22668992e-04  8.07669959e-03 -1.65145068e-03 -4.26535407e-03
-  -3.03207875e-04 -4.79783929e-03 -1.97741447e-03  7.72000615e-03
-   4.05504068e-03  1.21861875e-03  3.82238121e-03 -5.76733834e-03]]
->>> U_red = reductor.reconstruct(u)
->>> print(U_red.dim)
-20201
+.. nbplot::
+  >>> u = rom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
+  >>> print(u)
+  >>> U_red = reductor.reconstruct(u)
+  >>> print(U_red.dim)
 
 Finally we compute the reduction error and display the reduced solution along with
 the detailed solution and the error:
 
->>> ERR = U - U_red
->>> print(ERR.norm(fom.h1_0_semi_product))
-[0.00536024]
->>> fom.visualize((U, U_red, ERR),
-...               legend=('Detailed', 'Reduced', 'Error'),
-...               separate_colorbars=True)
+.. nbplot::
+  >>> ERR = U - U_red
+  >>> print(ERR.norm(fom.h1_0_semi_product))
+  >>> #fom.visualize((U, U_red, ERR),
+  ... #              legend=('Detailed', 'Reduced', 'Error'),
+  ... #              separate_colorbars=True)
 
 We can nicely observe that, as expected, the error is maximized along the
 jumps of the diffusion coefficient.
