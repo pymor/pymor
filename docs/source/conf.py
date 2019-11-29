@@ -43,11 +43,8 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 
     MOCK_MODULES = ['scipy', 'scipy.sparse', 'scipy.linalg', 'scipy.sparse.linalg', 'scipy.io', 'scipy.version', 'scipy.special',
                     'docopt',
-                    'Qt', 'Qt.QtGui', 'Qt.QtCore', 'Qt.QtOpenGL', 'Qt.QtWidgets',
                     'OpenGL', 'OpenGL.GL', 'psutil',
-                    'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.cm',
-                    'matplotlib.backends.backend_qt5agg', 'matplotlib.figure', 'matplotlib.pyplot',
-                    'matplotlib.colors', 'pyvtk',
+                    'pyvtk',
                     'IPython', 'IPtyhon.core', 'IPython.display',
                     'IPython.parallel', 'ipywidgets', 'pyvis', 'pythreejs', 'pythreejs._version',
                     'sympy',
