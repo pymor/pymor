@@ -33,7 +33,8 @@ dockertest: image
 	PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) $(DOCKER_COMPOSE) up pytest
 jupyter_server: image
 	$(DOCKER_COMPOSE) up jupyter
-
+dockerdocs: image
+	$(DOCKER_COMPOSE) run jupyter make docs
 fasttest:
 	PYMOR_PYTEST_MARKER="not slow" python setup.py test
 

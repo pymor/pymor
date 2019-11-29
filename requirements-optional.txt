@@ -28,6 +28,6 @@ pytest>=4.4
 pythreejs
 setuptools>=40.8.0
 slycot==0.3.3
-sphinx>=1.5
+sphinx>=1.7
 sympy
 wheel
