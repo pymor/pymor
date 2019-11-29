@@ -29,7 +29,7 @@ def setup_requires(toml=False):
     return numpys + other
 
 tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker']
-install_requires = ['scipy>=1.1', 'Qt.py', 'packaging', 'Sphinx>=1.4.0','diskcache', 'docopt-ng'] + setup_requires()
+install_requires = ['scipy>=1.1', 'Qt.py', 'packaging','diskcache', 'docopt-ng'] + setup_requires()
 install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'ipyparallel': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',
@@ -44,7 +44,7 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
                     'pillow': 'image library used for bitmap data functions'}
-doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
+doc_requires = ['sphinx>=1.5', 'nb2plots'] + setup_requires()
 ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'testipynb']
@@ -129,7 +129,7 @@ if __name__ == '__main__':
         req.write(note+'\n')
         req.write('-r requirements.txt\n')
         for module in sorted(set(itertools.chain(tests_require, optional_requirements_file_only,
-                                                 install_suggests.keys()))):
+                                                 doc_requires, install_suggests.keys()))):
             req.write(module+'\n')
     with open(os.path.join(os.path.dirname(__file__), 'requirements-ci.txt'), 'wt') as req:
         req.write('-r requirements.txt\n')
