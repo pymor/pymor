@@ -118,7 +118,7 @@ a predifined *discretizer* to do the work for us. In this case, we use
 :func:`~pymor.discretizers.cg.discretize_stationary_cg`:
 
 .. nbplot::
-  >>> fom, fom_data = discretize_stationary_cg(p, diameter=1./100.)
+  >>> fom, fom_data = discretize_stationary_cg(p, diameter=1./50.)
 
 ``fom`` is the |StationaryModel| which has been created for us,
 whereas ``fom_data`` contains some additional data, in particular the |Grid|
