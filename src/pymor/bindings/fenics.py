@@ -355,9 +355,9 @@ if config.HAVE_FENICS:
                 )
                 if self.dirichlet_bc:
                     bc = self.dirichlet_bc
-                    if not bc.user_subdomain():
+                    if not bc.user_sub_domain():
                         raise NotImplementedError
-                    bc_r = df.DirichletBC(V_r_source, bc.value(), bc.user_subdomain(), bc.method())
+                    bc_r = df.DirichletBC(V_r_source, bc.value(), bc.user_sub_domain(), bc.method())
                 else:
                     bc_r = None
 
