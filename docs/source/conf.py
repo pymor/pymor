@@ -290,3 +290,5 @@ import substitutions
 rst_epilog = substitutions.substitutions
 
 modindex_common_prefix = ['pymor.']
+
+nbplot_render_output = True
