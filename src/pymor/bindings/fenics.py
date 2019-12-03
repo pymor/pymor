@@ -217,16 +217,10 @@ if config.HAVE_FENICS:
                      restriction_method='submesh', name=None):
             assert restriction_method in ('assemble_local', 'submesh')
             assert len(form.arguments()) == 1
-            self.form = form
+            self.__auto_init(locals())
             self.source = source_space
             self.range = range_space
-            self.source_function = source_function
-            self.dirichlet_bc = dirichlet_bc
-            self.parameter_setter = parameter_setter
             self.build_parameter_type(parameter_type)
-            self.solver_options = solver_options
-            self.restriction_method = restriction_method
-            self.name = name
 
         def _set_mu(self, mu=None):
             mu = self.parse_parameter(mu)
@@ -239,7 +233,9 @@ if config.HAVE_FENICS:
             R = []
             source_vec = self.source_function.vector()
             for u in U._list:
-                source_vec[:] = u.impl
+                if u.imag_part is not None:
+                    raise NotImplementedError
+                source_vec[:] = u.real_part.impl
                 r = df.assemble(self.form)
                 if self.dirichlet_bc:
                     self.dirichlet_bc.apply(r, source_vec)
@@ -248,9 +244,11 @@ if config.HAVE_FENICS:
 
         def jacobian(self, U, mu=None):
             assert U in self.source and len(U) == 1
+            if U._list[0].imag_part is not None:
+                raise NotImplementedError
             self._set_mu(mu)
             source_vec = self.source_function.vector()
-            source_vec[:] = U._list[0].impl
+            source_vec[:] = U._list[0].real_part.impl
             matrix = df.assemble(df.derivative(self.form, self.source_function))
             if self.dirichlet_bc:
                 self.dirichlet_bc.apply(matrix)
@@ -476,17 +474,17 @@ if config.HAVE_FENICS:
             assert U in self.source
             UU = self.op.source.zeros(len(U))
             for uu, u in zip(UU._list, U.data):
-                uu.impl[:] = u
+                uu.real_part.impl[:] = u
             VV = self.op.apply(UU, mu=mu)
             V = self.range.zeros(len(VV))
             for v, vv in zip(V.data, VV._list):
-                v[:] = vv.impl[self.restricted_range_dofs]
+                v[:] = vv.real_part.impl[self.restricted_range_dofs]
             return V
 
         def jacobian(self, U, mu=None):
             assert U in self.source and len(U) == 1
             UU = self.op.source.zeros()
-            UU._list[0].impl[:] = U.data[0]
+            UU._list[0].real_part.impl[:] = U.data[0]
             JJ = self.op.jacobian(UU, mu=mu)
             return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
 
