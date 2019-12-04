@@ -368,7 +368,7 @@ if config.HAVE_FENICS:
                     raise NotImplementedError
                 restricted_dofs.append(r_dof[0])
             restricted_dofs = np.array(restricted_dofs, dtype=np.int32)
-            assert len(set(restricted_dofs)) == len(restricted_dofs)
+            assert len(set(restricted_dofs)) == len(set(dofs))
             return restricted_dofs
 
     class RestrictedFenicsOperator(OperatorBase):
