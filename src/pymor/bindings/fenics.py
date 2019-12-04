@@ -272,8 +272,10 @@ if config.HAVE_FENICS:
                         continue
             affected_cell_indices = list(sorted(affected_cell_indices))
 
-            # increase stencil if needed
-            # TODO
+            if any(i.integral_type() not in ('cell', 'exterior_facet')
+                   for i in self.form.integrals()):
+                # enlarge affected_cell_indices if needed
+                raise NotImplementedError
 
             # determine source dofs
             self.logger.info('Computing source DOFs ...')
@@ -291,25 +293,9 @@ if config.HAVE_FENICS:
                 subdomain.set_value(ci, 1)
             submesh = df.SubMesh(mesh, subdomain, 1)
 
-            # build restricted form
             self.logger.info('Building UFL form on submesh ...')
-            V_r_source = df.FunctionSpace(submesh, self.source.V.ufl_element())
-            V_r_range = df.FunctionSpace(submesh, self.range.V.ufl_element())
-            assert V_r_source.dim() == len(source_dofs)
+            form_r, V_r_source, V_r_range, source_function_r = self._restrict_form(submesh, source_dofs)
 
-            if self.source.V != self.range.V:
-                assert all(arg.ufl_function_space() != self.source.V for arg in self.form.arguments())
-            args = tuple((df.function.argument.Argument(V_r_range, arg.number(), arg.part())
-                          if arg.ufl_function_space() == self.range.V else arg)
-                         for arg in self.form.arguments())
-            if any(isinstance(coeff, df.Function) and coeff != self.source_function for coeff in
-                   self.form.coefficients()):
-                raise NotImplementedError
-            source_function_r = df.Function(V_r_source)
-            form_r = ufl.replace_integral_domains(
-                self.form(*args, coefficients={self.source_function: source_function_r}),
-                submesh.ufl_domain()
-            )
             if not all(bc.user_sub_domain() for bc in self.dirichlet_bcs):
                 raise NotImplementedError
             bc_r = tuple(df.DirichletBC(V_r_source, bc.value(), bc.user_sub_domain(), bc.method())
@@ -358,6 +344,29 @@ if config.HAVE_FENICS:
 
             return (RestrictedFenicsOperator(op_r, restricted_range_dofs),
                     source_dofs[np.argsort(restricted_source_dofs)])
+
+        def _restrict_form(self, submesh, source_dofs):
+            V_r_source = df.FunctionSpace(submesh, self.source.V.ufl_element())
+            V_r_range = df.FunctionSpace(submesh, self.range.V.ufl_element())
+            assert V_r_source.dim() == len(source_dofs)
+
+            if self.source.V != self.range.V:
+                assert all(arg.ufl_function_space() != self.source.V for arg in self.form.arguments())
+            args = tuple((df.function.argument.Argument(V_r_range, arg.number(), arg.part())
+                          if arg.ufl_function_space() == self.range.V else arg)
+                         for arg in self.form.arguments())
+
+            if any(isinstance(coeff, df.Function) and coeff != self.source_function for coeff in
+                   self.form.coefficients()):
+                raise NotImplementedError
+
+            source_function_r = df.Function(V_r_source)
+            form_r = ufl.replace_integral_domains(
+                self.form(*args, coefficients={self.source_function: source_function_r}),
+                submesh.ufl_domain()
+            )
+
+            return form_r, V_r_source, V_r_range, source_function_r
 
     class RestrictedFenicsOperator(OperatorBase):
 
