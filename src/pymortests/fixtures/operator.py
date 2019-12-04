@@ -5,6 +5,7 @@
 import numpy as np
 import pytest
 
+from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
@@ -438,6 +439,49 @@ unpicklable_misc_operator_with_arrays_and_products_generators = \
      for n in range(num_unpicklable_misc_operators)]
 
 
+if config.HAVE_FENICS:
+    def fenics_nonlinear_operator_factory():
+        import dolfin as df
+        from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsMatrixOperator
+
+        class DirichletBoundary(df.SubDomain):
+            def inside(self, x, on_boundary):
+                return abs(x[0] - 1.0) < df.DOLFIN_EPS and on_boundary
+
+
+        mesh = df.UnitSquareMesh(10, 10)
+        V = df.FunctionSpace(mesh, "CG", 2)
+
+        g = df.Constant(1.0)
+        c = df.Constant(1.)
+        db = DirichletBoundary()
+        bc = df.DirichletBC(V, g, db)
+
+        u = df.Function(V)
+        w = df.TrialFunction(V)
+        v = df.TestFunction(V)
+        f = df.Expression("x[0]*sin(x[1])", degree=2)
+        F = df.inner((1 + c*u**2)*df.grad(u), df.grad(v))*df.dx - f*v*df.dx
+
+        space = FenicsVectorSpace(V)
+        op = FenicsOperator(F, space, space, u, bc,
+                            parameter_setter=lambda mu: c.assign(float(mu['c'])),
+                            parameter_type={'c': ()},
+                            solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}},
+                            restriction_method='submesh')
+
+        prod = FenicsMatrixOperator(df.assemble(v*w*df.dx), V, V)
+        return op, op.parse_parameter(42), op.source.random(), op.range.random(), prod, prod
+
+    fenics_with_arrays_and_products_generators = [lambda: fenics_nonlinear_operator_factory()]
+    fenics_with_arrays_generators = [lambda: fenics_nonlinear_operator_factory()[:4]]
+
+else:
+
+    fenics_with_arrays_and_products_generators = []
+    fenics_with_arrays_generators = []
+
+
 @pytest.fixture(params=(
     thermalblock_operator_with_arrays_and_products_generators
     + thermalblock_assemble_operator_with_arrays_and_products_generators
@@ -451,6 +495,7 @@ unpicklable_misc_operator_with_arrays_and_products_generators = \
     + thermalblock_fixedparam_operator_with_arrays_and_products_generators
     + misc_operator_with_arrays_and_products_generators
     + unpicklable_misc_operator_with_arrays_and_products_generators
+    + fenics_with_arrays_and_products_generators
 ))
 def operator_with_arrays_and_products(request):
     return request.param()
@@ -470,6 +515,7 @@ def operator_with_arrays_and_products(request):
     + thermalblock_fixedparam_operator_with_arrays_generators
     + misc_operator_with_arrays_generators
     + unpicklable_misc_operator_with_arrays_generators
+    + fenics_with_arrays_generators
 ))
 def operator_with_arrays(request):
     return request.param()
