@@ -34,7 +34,9 @@ def elliptic2_demo(args):
     args['N'] = int(args['N'])
 
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
-            ExpressionFunction('(x[..., 0] - 0.5)**2 * 1000', 2, ())]
+              LincombFunction(
+              [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1.,2)],
+              [ProjectionParameterFunctional('mu', 0), ExpressionParameterFunctional('0.1', {})])]
 
     dirichlets = [ExpressionFunction('zeros(x.shape[:-1])', 2, ()),
                   LincombFunction(
