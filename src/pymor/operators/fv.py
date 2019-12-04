@@ -677,7 +677,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
                 BOUNDARY_DISTS = np.sum((centers[dirichlet_mask, :] - g.orthogonal_centers()[SE_I0_D, :])
                                         * boundary_normals,
                                         axis=-1)
-                DIRICHLET_FLUXES = VOLS[dirichlet_mask] * self.dirichlet_data(centers[dirichlet_mask]) / BOUNDARY_DISTS
+                DIRICHLET_FLUXES = VOLS[dirichlet_mask] * self.dirichlet_data(centers[dirichlet_mask], mu=mu) / BOUNDARY_DISTS
                 if self.diffusion_function is not None:
                     DIRICHLET_FLUXES *= self.diffusion_function(centers[dirichlet_mask], mu=mu)
                 if self.diffusion_constant is not None:
