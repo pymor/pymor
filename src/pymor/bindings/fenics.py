@@ -256,9 +256,9 @@ if config.HAVE_FENICS:
             if len(dofs) == 0:
                 return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=np.int)
 
-            assert self.source.V.mesh().id() == self.range.V.mesh().id()
+            if self.source.V.mesh().id() != self.range.V.mesh().id():
+                raise NotImplementedError
 
-            # first determine affected cells
             self.logger.info('Computing affected cells ...')
             mesh = self.source.V.mesh()
             range_dofmap = self.range.V.dofmap()
@@ -277,7 +277,6 @@ if config.HAVE_FENICS:
                 # enlarge affected_cell_indices if needed
                 raise NotImplementedError
 
-            # determine source dofs
             self.logger.info('Computing source DOFs ...')
             source_dofmap = self.source.V.dofmap()
             source_dofs = set()
@@ -286,7 +285,6 @@ if config.HAVE_FENICS:
                 source_dofs.update(local_dofs)
             source_dofs = np.array(sorted(source_dofs), dtype=np.intc)
 
-            # generate restricted spaces
             self.logger.info('Building submesh ...')
             subdomain = df.MeshFunction('size_t', mesh, mesh.geometry().dim())
             for ci in affected_cell_indices:
@@ -299,42 +297,11 @@ if config.HAVE_FENICS:
             self.logger.info('Building DirichletBCs on submesh ...')
             bc_r = self._restrict_dirichlet_bcs(submesh, source_dofs, V_r_source)
 
-            # source dof mapping
             self.logger.info('Computing source DOF mapping ...')
-            u = df.Function(self.source.V)
-            u_vec = u.vector()
-            restricted_source_dofs = []
-            for source_dof in source_dofs:
-                u_vec.zero()
-                u_vec[source_dof] = 1
-                u_r = df.interpolate(u, V_r_source)
-                u_r = u_r.vector().get_local()
-                if not np.all(np.logical_or(np.abs(u_r) < 1e-10, np.abs(u_r - 1.) < 1e-10)):
-                    raise NotImplementedError
-                r_dof = np.where(np.abs(u_r - 1.) < 1e-10)[0]
-                if not len(r_dof) == 1:
-                    raise NotImplementedError
-                restricted_source_dofs.append(r_dof[0])
-            restricted_source_dofs = np.array(restricted_source_dofs, dtype=np.int32)
-            assert len(set(restricted_source_dofs)) == len(source_dofs)
+            restricted_source_dofs = self._build_dof_map(self.source.V, V_r_source, source_dofs)
 
-            # range dof mapping
             self.logger.info('Computing range DOF mapping ...')
-            u = df.Function(self.range.V)
-            u_vec = u.vector()
-            restricted_range_dofs = []
-            for range_dof in dofs:
-                u_vec.zero()
-                u_vec[range_dof] = 1
-                u_r = df.interpolate(u, V_r_range)
-                u_r = u_r.vector().get_local()
-                if not np.all(np.logical_or(np.abs(u_r) < 1e-10, np.abs(u_r - 1.) < 1e-10)):
-                    raise NotImplementedError
-                r_dof = np.where(np.abs(u_r - 1.) < 1e-10)[0]
-                if not len(r_dof) == 1:
-                    raise NotImplementedError
-                restricted_range_dofs.append(r_dof[0])
-            restricted_range_dofs = np.array(restricted_range_dofs, dtype=np.int32)
+            restricted_range_dofs = self._build_dof_map(self.range.V, V_r_range, dofs)
 
             op_r = FenicsOperator(form_r, FenicsVectorSpace(V_r_source), FenicsVectorSpace(V_r_range),
                                   source_function_r, dirichlet_bcs=bc_r, parameter_setter=self.parameter_setter,
@@ -383,6 +350,25 @@ if config.HAVE_FENICS:
                 return bc_r
 
             return tuple(restrict_dirichlet_bc(bc) for bc in self.dirichlet_bcs)
+
+        def _build_dof_map(self, V, V_r, dofs):
+            u = df.Function(V)
+            u_vec = u.vector()
+            restricted_dofs = []
+            for dof in dofs:
+                u_vec.zero()
+                u_vec[dof] = 1
+                u_r = df.interpolate(u, V_r)
+                u_r = u_r.vector().get_local()
+                if not np.all(np.logical_or(np.abs(u_r) < 1e-10, np.abs(u_r - 1.) < 1e-10)):
+                    raise NotImplementedError
+                r_dof = np.where(np.abs(u_r - 1.) < 1e-10)[0]
+                if not len(r_dof) == 1:
+                    raise NotImplementedError
+                restricted_dofs.append(r_dof[0])
+            restricted_dofs = np.array(restricted_dofs, dtype=np.int32)
+            assert len(set(restricted_dofs)) == len(restricted_dofs)
+            return restricted_dofs
 
     class RestrictedFenicsOperator(OperatorBase):
 
