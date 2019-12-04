@@ -296,10 +296,8 @@ if config.HAVE_FENICS:
             self.logger.info('Building UFL form on submesh ...')
             form_r, V_r_source, V_r_range, source_function_r = self._restrict_form(submesh, source_dofs)
 
-            if not all(bc.user_sub_domain() for bc in self.dirichlet_bcs):
-                raise NotImplementedError
-            bc_r = tuple(df.DirichletBC(V_r_source, bc.value(), bc.user_sub_domain(), bc.method())
-                         for bc in self.dirichlet_bcs)
+            self.logger.info('Building DirichletBCs on submesh ...')
+            bc_r = self._restrict_dirichlet_bcs(submesh, source_dofs, V_r_source)
 
             # source dof mapping
             self.logger.info('Computing source DOF mapping ...')
@@ -367,6 +365,24 @@ if config.HAVE_FENICS:
             )
 
             return form_r, V_r_source, V_r_range, source_function_r
+
+        def _restrict_dirichlet_bcs(self, submesh, source_dofs, V_r_source):
+            mesh = self.source.V.mesh()
+            parent_facet_indices = compute_parent_facet_indices(submesh, mesh)
+
+            def restrict_dirichlet_bc(bc):
+                # ensure that markers are initialized
+                bc.get_boundary_values()
+                facets = np.zeros(mesh.num_facets(), dtype=np.uint)
+                facets[bc.markers()] = 1
+                facets_r = facets[parent_facet_indices]
+                sub_domains = df.MeshFunction('size_t', submesh, mesh.topology().dim() - 1)
+                sub_domains.array()[:] = facets_r
+
+                bc_r = df.DirichletBC(V_r_source, bc.value(), sub_domains, 1, bc.method())
+                return bc_r
+
+            return tuple(restrict_dirichlet_bc(bc) for bc in self.dirichlet_bcs)
 
     class RestrictedFenicsOperator(OperatorBase):
 
@@ -511,3 +527,37 @@ if config.HAVE_FENICS:
                         df.plot(function, title=tit,
                                 range_min=vmin, range_max=vmax)
                 plt.show(block=block)
+
+    def compute_parent_facet_indices(submesh, mesh):
+        dim = mesh.topology().dim()
+        facet_dim = dim - 1
+        submesh.init(facet_dim)
+        mesh.init(facet_dim)
+
+        # Make sure we have vertex-facet connectivity for parent mesh
+        mesh.init(0, facet_dim)
+
+        parent_vertex_indices = submesh.data().array("parent_vertex_indices", 0)
+        # Create the fact map
+        parent_facet_indices = np.full(submesh.num_facets(), -1)
+
+        # Iterate over the edges and figure out their parent number
+        for local_facet in df.facets(submesh):
+
+            # Get parent indices for edge vertices
+            vs = local_facet.entities(0)
+            Vs = [df.Vertex(mesh, parent_vertex_indices[int(v)]) for v in vs]
+
+            # Get outgoing facets from the two parent vertices
+            facets = [set(V.entities(facet_dim)) for V in Vs]
+
+            # Check intersection
+            common_facets = facets[0]
+            for f in facets[1:]:
+                common_facets = common_facets.intersection(f)
+            assert len(common_facets) == 1
+            parent_facet_index = list(common_facets)[0]
+
+            # Set value
+            parent_facet_indices[local_facet.index()] = parent_facet_index
+        return parent_facet_indices
