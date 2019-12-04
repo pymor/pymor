@@ -515,6 +515,7 @@ if config.HAVE_FENICS:
                                 range_min=vmin, range_max=vmax)
                 plt.show(block=block)
 
+    # adapted from dolfin.mesh.ale.init_parent_edge_indices
     def compute_parent_facet_indices(submesh, mesh):
         dim = mesh.topology().dim()
         facet_dim = dim - 1
