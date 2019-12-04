@@ -467,8 +467,7 @@ if config.HAVE_FENICS:
         op = FenicsOperator(F, space, space, u, bc,
                             parameter_setter=lambda mu: c.assign(float(mu['c'])),
                             parameter_type={'c': ()},
-                            solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}},
-                            restriction_method='submesh')
+                            solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
 
         prod = FenicsMatrixOperator(df.assemble(v*w*df.dx), V, V)
         return op, op.parse_parameter(42), op.source.random(), op.range.random(), prod, prod
