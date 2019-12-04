@@ -44,7 +44,7 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'PyQt5': 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
                     'pillow': 'image library used for bitmap data functions'}
-doc_requires = ['sphinx>=1.7', 'pymor-nb2plots', 'matplotlib', 'PyQt5', 'ipyparallel', 'ipywidgets'] + install_requires
+doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.3', 'matplotlib', 'PyQt5', 'ipyparallel', 'ipywidgets'] + install_requires
 ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'testipynb']
