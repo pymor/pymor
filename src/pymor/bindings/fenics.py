@@ -212,7 +212,7 @@ if config.HAVE_FENICS:
 
         linear = False
 
-        def __init__(self, form, source_space, range_space, source_function, dirichlet_bc=None,
+        def __init__(self, form, source_space, range_space, source_function, dirichlet_bcs=(),
                      parameter_setter=None, parameter_type=None, solver_options=None, name=None):
             assert len(form.arguments()) == 1
             self.__auto_init(locals())
@@ -235,8 +235,8 @@ if config.HAVE_FENICS:
                     raise NotImplementedError
                 source_vec[:] = u.real_part.impl
                 r = df.assemble(self.form)
-                if self.dirichlet_bc:
-                    self.dirichlet_bc.apply(r, source_vec)
+                for bc in self.dirichlet_bcs:
+                    bc.apply(r, source_vec)
                 R.append(r)
             return self.range.make_array(R)
 
@@ -248,8 +248,8 @@ if config.HAVE_FENICS:
             source_vec = self.source_function.vector()
             source_vec[:] = U._list[0].real_part.impl
             matrix = df.assemble(df.derivative(self.form, self.source_function))
-            if self.dirichlet_bc:
-                self.dirichlet_bc.apply(matrix)
+            for bc in self.dirichlet_bcs:
+                bc.apply(matrix)
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V)
 
         def restricted(self, dofs):
@@ -310,13 +310,10 @@ if config.HAVE_FENICS:
                 self.form(*args, coefficients={self.source_function: source_function_r}),
                 submesh.ufl_domain()
             )
-            if self.dirichlet_bc:
-                bc = self.dirichlet_bc
-                if not bc.user_sub_domain():
-                    raise NotImplementedError
-                bc_r = df.DirichletBC(V_r_source, bc.value(), bc.user_sub_domain(), bc.method())
-            else:
-                bc_r = None
+            if not all(bc.user_sub_domain() for bc in self.dirichlet_bcs):
+                raise NotImplementedError
+            bc_r = tuple(df.DirichletBC(V_r_source, bc.value(), bc.user_sub_domain(), bc.method())
+                         for bc in self.dirichlet_bcs)
 
             # source dof mapping
             self.logger.info('Computing source DOF mapping ...')
@@ -356,7 +353,7 @@ if config.HAVE_FENICS:
             restricted_range_dofs = np.array(restricted_range_dofs, dtype=np.int32)
 
             op_r = FenicsOperator(form_r, FenicsVectorSpace(V_r_source), FenicsVectorSpace(V_r_range),
-                                  source_function_r, dirichlet_bc=bc_r, parameter_setter=self.parameter_setter,
+                                  source_function_r, dirichlet_bcs=bc_r, parameter_setter=self.parameter_setter,
                                   parameter_type=self.parameter_type)
 
             return (RestrictedFenicsOperator(op_r, restricted_range_dofs),

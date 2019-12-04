@@ -463,7 +463,7 @@ if config.HAVE_FENICS:
         F = df.inner((1 + c*w**2)*df.grad(w), df.grad(v))*df.dx - f*v*df.dx
 
         space = FenicsVectorSpace(V)
-        op = FenicsOperator(F, space, space, w, bc,
+        op = FenicsOperator(F, space, space, w, (bc,),
                             parameter_setter=lambda mu: c.assign(float(mu['c'])),
                             parameter_type={'c': ()},
                             solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
