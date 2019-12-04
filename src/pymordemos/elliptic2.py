@@ -54,18 +54,15 @@ def elliptic2_demo(args):
                 [ProjectionParameterFunctional('mu', 0), ExpressionParameterFunctional('1', {})]),
                  ConstantFunction(1.,2))]
 
-    if args['--fv']:
-        domains = [RectDomain(),
-                   RectDomain(right='neumann', top='dirichlet', bottom='dirichlet')]
-    else:
-        domains = [RectDomain(),
-                   RectDomain(right='neumann', top='dirichlet', bottom='robin')]
+    bottom = 'dirichlet' if args['--fv'] else 'robin'
+    domains = [RectDomain(),
+               RectDomain(right='neumann', top='dirichlet', bottom=bottom)]
 
     rhs = rhss[args['PROBLEM-NUMBER']]
     dirichlet = dirichlets[args['PROBLEM-NUMBER']]
     neumann = neumanns[args['PROBLEM-NUMBER']]
     domain = domains[args['PROBLEM-NUMBER']]
-    robin = robins[args['PROBLEM-NUMBER']] if args['--fv'] else None
+    robin = robins[args['PROBLEM-NUMBER']] if not args['--fv'] else None
 
     problem = StationaryProblem(
         domain=RectDomain(),
@@ -91,7 +88,7 @@ def elliptic2_demo(args):
     U = m.solution_space.empty()
     for mu in m.parameter_space.sample_uniformly(10):
         U.append(m.solve(mu))
-    m.visualize(U, title='Solution for diffusionl in [0.1, 1]')
+    m.visualize(U, title='Solution for mu in [0.1, 1]')
 
 
 if __name__ == '__main__':
