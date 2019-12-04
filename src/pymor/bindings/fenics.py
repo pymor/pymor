@@ -13,9 +13,10 @@ if config.HAVE_FENICS:
     from pymor.core.defaults import defaults
     from pymor.core.interfaces import BasicInterface
     from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase, OperatorBase
+    from pymor.operators.constructions import ZeroOperator
+    from pymor.operators.numpy import NumpyMatrixOperator
     from pymor.vectorarrays.interfaces import _create_random_values
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
-    from pymor.operators.numpy import NumpyMatrixOperator
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
     class FenicsVector(CopyOnWriteVector):
@@ -255,6 +256,9 @@ if config.HAVE_FENICS:
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V)
 
         def restricted(self, dofs):
+            if len(dofs) == 0:
+                return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=np.int)
+
             assert self.source.V.mesh().id() == self.range.V.mesh().id()
 
             # first determine affected cells
