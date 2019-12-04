@@ -253,62 +253,63 @@ if config.HAVE_FENICS:
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V)
 
         def restricted(self, dofs):
-            if len(dofs) == 0:
-                return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=np.int)
+            with self.logger.block(f'Restricting operator to {len(dofs)} dofs ...'):
+                if len(dofs) == 0:
+                    return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=np.int)
 
-            if self.source.V.mesh().id() != self.range.V.mesh().id():
-                raise NotImplementedError
+                if self.source.V.mesh().id() != self.range.V.mesh().id():
+                    raise NotImplementedError
 
-            self.logger.info('Computing affected cells ...')
-            mesh = self.source.V.mesh()
-            range_dofmap = self.range.V.dofmap()
-            affected_cell_indices = set()
-            for c in df.cells(mesh):
-                cell_index = c.index()
-                local_dofs = range_dofmap.cell_dofs(cell_index)
-                for ld in local_dofs:
-                    if ld in dofs:
-                        affected_cell_indices.add(cell_index)
-                        continue
-            affected_cell_indices = list(sorted(affected_cell_indices))
+                self.logger.info('Computing affected cells ...')
+                mesh = self.source.V.mesh()
+                range_dofmap = self.range.V.dofmap()
+                affected_cell_indices = set()
+                for c in df.cells(mesh):
+                    cell_index = c.index()
+                    local_dofs = range_dofmap.cell_dofs(cell_index)
+                    for ld in local_dofs:
+                        if ld in dofs:
+                            affected_cell_indices.add(cell_index)
+                            continue
+                affected_cell_indices = list(sorted(affected_cell_indices))
 
-            if any(i.integral_type() not in ('cell', 'exterior_facet')
-                   for i in self.form.integrals()):
-                # enlarge affected_cell_indices if needed
-                raise NotImplementedError
+                if any(i.integral_type() not in ('cell', 'exterior_facet')
+                       for i in self.form.integrals()):
+                    # enlarge affected_cell_indices if needed
+                    raise NotImplementedError
 
-            self.logger.info('Computing source DOFs ...')
-            source_dofmap = self.source.V.dofmap()
-            source_dofs = set()
-            for cell_index in affected_cell_indices:
-                local_dofs = source_dofmap.cell_dofs(cell_index)
-                source_dofs.update(local_dofs)
-            source_dofs = np.array(sorted(source_dofs), dtype=np.intc)
+                self.logger.info('Computing source DOFs ...')
+                source_dofmap = self.source.V.dofmap()
+                source_dofs = set()
+                for cell_index in affected_cell_indices:
+                    local_dofs = source_dofmap.cell_dofs(cell_index)
+                    source_dofs.update(local_dofs)
+                source_dofs = np.array(sorted(source_dofs), dtype=np.intc)
 
-            self.logger.info('Building submesh ...')
-            subdomain = df.MeshFunction('size_t', mesh, mesh.geometry().dim())
-            for ci in affected_cell_indices:
-                subdomain.set_value(ci, 1)
-            submesh = df.SubMesh(mesh, subdomain, 1)
+                self.logger.info('Building submesh ...')
+                subdomain = df.MeshFunction('size_t', mesh, mesh.geometry().dim())
+                for ci in affected_cell_indices:
+                    subdomain.set_value(ci, 1)
+                submesh = df.SubMesh(mesh, subdomain, 1)
 
-            self.logger.info('Building UFL form on submesh ...')
-            form_r, V_r_source, V_r_range, source_function_r = self._restrict_form(submesh, source_dofs)
+                self.logger.info('Building UFL form on submesh ...')
+                form_r, V_r_source, V_r_range, source_function_r = self._restrict_form(submesh, source_dofs)
 
-            self.logger.info('Building DirichletBCs on submesh ...')
-            bc_r = self._restrict_dirichlet_bcs(submesh, source_dofs, V_r_source)
+                self.logger.info('Building DirichletBCs on submesh ...')
+                bc_r = self._restrict_dirichlet_bcs(submesh, source_dofs, V_r_source)
 
-            self.logger.info('Computing source DOF mapping ...')
-            restricted_source_dofs = self._build_dof_map(self.source.V, V_r_source, source_dofs)
+                self.logger.info('Computing source DOF mapping ...')
+                restricted_source_dofs = self._build_dof_map(self.source.V, V_r_source, source_dofs)
 
-            self.logger.info('Computing range DOF mapping ...')
-            restricted_range_dofs = self._build_dof_map(self.range.V, V_r_range, dofs)
+                self.logger.info('Computing range DOF mapping ...')
+                restricted_range_dofs = self._build_dof_map(self.range.V, V_r_range, dofs)
 
-            op_r = FenicsOperator(form_r, FenicsVectorSpace(V_r_source), FenicsVectorSpace(V_r_range),
-                                  source_function_r, dirichlet_bcs=bc_r, parameter_setter=self.parameter_setter,
-                                  parameter_type=self.parameter_type)
+                op_r = FenicsOperator(form_r, FenicsVectorSpace(V_r_source), FenicsVectorSpace(V_r_range),
+                                      source_function_r, dirichlet_bcs=bc_r, parameter_setter=self.parameter_setter,
+                                      parameter_type=self.parameter_type)
 
-            return (RestrictedFenicsOperator(op_r, restricted_range_dofs),
-                    source_dofs[np.argsort(restricted_source_dofs)])
+                return (RestrictedFenicsOperator(op_r, restricted_range_dofs),
+                        source_dofs[np.argsort(restricted_source_dofs)])
 
         def _restrict_form(self, submesh, source_dofs):
             V_r_source = df.FunctionSpace(submesh, self.source.V.ufl_element())
