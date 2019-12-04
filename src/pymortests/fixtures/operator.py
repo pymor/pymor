@@ -448,28 +448,27 @@ if config.HAVE_FENICS:
             def inside(self, x, on_boundary):
                 return abs(x[0] - 1.0) < df.DOLFIN_EPS and on_boundary
 
-
         mesh = df.UnitSquareMesh(10, 10)
         V = df.FunctionSpace(mesh, "CG", 2)
 
-        g = df.Constant(1.0)
+        g = df.Constant(1.)
         c = df.Constant(1.)
         db = DirichletBoundary()
         bc = df.DirichletBC(V, g, db)
 
-        u = df.Function(V)
-        w = df.TrialFunction(V)
+        u = df.TrialFunction(V)
         v = df.TestFunction(V)
+        w = df.Function(V)
         f = df.Expression("x[0]*sin(x[1])", degree=2)
-        F = df.inner((1 + c*u**2)*df.grad(u), df.grad(v))*df.dx - f*v*df.dx
+        F = df.inner((1 + c*w**2)*df.grad(w), df.grad(v))*df.dx - f*v*df.dx
 
         space = FenicsVectorSpace(V)
-        op = FenicsOperator(F, space, space, u, bc,
+        op = FenicsOperator(F, space, space, w, bc,
                             parameter_setter=lambda mu: c.assign(float(mu['c'])),
                             parameter_type={'c': ()},
                             solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
 
-        prod = FenicsMatrixOperator(df.assemble(v*w*df.dx), V, V)
+        prod = FenicsMatrixOperator(df.assemble(u*v*df.dx), V, V)
         return op, op.parse_parameter(42), op.source.random(), op.range.random(), prod, prod
 
     fenics_with_arrays_and_products_generators = [lambda: fenics_nonlinear_operator_factory()]

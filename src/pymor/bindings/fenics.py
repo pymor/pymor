@@ -337,7 +337,7 @@ if config.HAVE_FENICS:
             restricted_source_dofs = np.array(restricted_source_dofs, dtype=np.int32)
             assert len(set(restricted_source_dofs)) == len(source_dofs)
 
-            # source dof mapping
+            # range dof mapping
             self.logger.info('Computing range DOF mapping ...')
             u = df.Function(self.range.V)
             u_vec = u.vector()
