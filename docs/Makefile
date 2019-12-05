@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build -j auto
+SPHINXBUILD   = PYMOR_FORCE_JUPYTER=1 sphinx-build -j auto -v
 PAPER         =
 BUILDDIR      = _build
 

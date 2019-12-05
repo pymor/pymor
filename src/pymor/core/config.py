@@ -63,6 +63,10 @@ def is_jupyter():
     :return: True if we believe to be running in a Jupyter Notebook or Lab
     """
     from IPython import get_ipython
+    from os import environ
+    force = environ.get('PYMOR_FORCE_JUPYTER', None)
+    if force is not None:
+        return bool(force)
     return type(get_ipython()).__module__.startswith('ipykernel.')
 
 
