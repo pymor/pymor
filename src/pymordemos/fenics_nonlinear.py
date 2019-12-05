@@ -20,13 +20,9 @@ Options:
 from docopt import docopt
 
 
-def fenics_nonlinear_demo(args):
+def discretize(DIM, N, ORDER):
     # ### problem definition
     import dolfin as df
-
-    DIM = int(args['DIM'])
-    N = int(args['N'])
-    ORDER = int(args['ORDER'])
 
     if DIM == 2:
         mesh = df.UnitSquareMesh(N, N)
@@ -71,6 +67,23 @@ def fenics_nonlinear_demo(args):
                           visualizer=FenicsVisualizer(space),
                           parameter_space=CubicParameterSpace({'c': ()}, 0., 1000.))
 
+    return fom
+
+
+def fenics_nonlinear_demo(args):
+    DIM = int(args['DIM'])
+    N = int(args['N'])
+    ORDER = int(args['ORDER'])
+
+    from pymor.tools import mpi
+
+    if mpi.parallel:
+        from pymor.models.mpi import mpi_wrap_model
+        local_models = mpi.call(mpi.function_call_manage, discretize, DIM, N, ORDER)
+        fom = mpi_wrap_model(local_models, use_with=True, pickle_local_spaces=False)
+    else:
+        fom = discretize(DIM, N, ORDER)
+
     # ### ROM generation (POD/DEIM)
     from pymor.algorithms.ei import ei_greedy
     from pymor.algorithms.newton import newton
@@ -81,19 +94,19 @@ def fenics_nonlinear_demo(args):
     U = fom.solution_space.empty()
     residuals = fom.solution_space.empty()
     for mu in fom.parameter_space.sample_uniformly(10):
-        UU, data = newton(op, rhs.as_vector(), mu=mu, rtol=1e-6, return_residuals=True)
+        UU, data = newton(fom.operator, fom.rhs.as_vector(), mu=mu, rtol=1e-6, return_residuals=True)
         U.append(UU)
         residuals.append(data['residuals'])
 
     dofs, cb, _ = ei_greedy(residuals, rtol=1e-7)
-    ei_op = EmpiricalInterpolatedOperator(op, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
+    ei_op = EmpiricalInterpolatedOperator(fom.operator, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
 
     rb, svals = pod(U, rtol=1e-7)
     fom_ei = fom.with_(operator=ei_op)
     reductor = StationaryRBReductor(fom_ei, rb)
     rom = reductor.reduce()
     # the reductor currently removes all solver_options so we need to add them again
-    rom = rom.with_(operator=rom.operator.with_(solver_options=op.solver_options))
+    rom = rom.with_(operator=rom.operator.with_(solver_options=fom.operator.solver_options))
 
     # ### ROM validation
     import time
