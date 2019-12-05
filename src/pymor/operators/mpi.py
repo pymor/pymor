@@ -81,6 +81,7 @@ class MPIOperator(OperatorBase):
             self.range = space_type(local_spaces)
         else:
             self.range = op.range
+        self.solver_options = op.solver_options
 
     def apply(self, U, mu=None):
         assert U in self.source
