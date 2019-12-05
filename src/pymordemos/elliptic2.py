@@ -54,16 +54,15 @@ def elliptic2_demo(args):
                 [ProjectionParameterFunctional('mu', 0), ExpressionParameterFunctional('1', {})]),
                  ConstantFunction(1.,2))]
 
-    bottom = 'dirichlet' if args['--fv'] else 'robin'
     domains = [RectDomain(),
-               RectDomain(right='neumann', top='dirichlet', bottom=bottom)]
+               RectDomain(right='neumann', top='dirichlet', bottom='robin')]
 
     rhs = rhss[args['PROBLEM-NUMBER']]
     dirichlet = dirichlets[args['PROBLEM-NUMBER']]
     neumann = neumanns[args['PROBLEM-NUMBER']]
     domain = domains[args['PROBLEM-NUMBER']]
-    robin = robins[args['PROBLEM-NUMBER']] if not args['--fv'] else None
-
+    robin = robins[args['PROBLEM-NUMBER']]
+    
     problem = StationaryProblem(
         domain=RectDomain(),
         rhs=rhs,
