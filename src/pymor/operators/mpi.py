@@ -170,7 +170,10 @@ class MPIOperator(OperatorBase):
             return self.with_(obj_id=obj_id)
 
     def restricted(self, dofs):
-        return mpi.call(mpi.method_call, self.obj_id, 'restricted', dofs)
+        retval = mpi.call(mpi.function_call, _MPIOperator_restriced, self.obj_id, dofs)
+        if retval is None:
+            raise NotImplementedError
+        return retval
 
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
@@ -189,6 +192,13 @@ def _MPIOperator_get_local_spaces(self, source, pickle_local_spaces):
 def _MPIOperator_assemble_lincomb(operators, coefficients, identity_shift, name):
     operators = [mpi.get_object(op) for op in operators]
     return mpi.manage_object(operators[0]._assemble_lincomb(operators, coefficients, identity_shift, name=name))
+
+
+def _MPIOperator_restriced(self, dofs):
+    try:
+        return self.restricted(dofs)
+    except NotImplementedError:
+        return None
 
 
 def mpi_wrap_operator(obj_id, mpi_range, mpi_source, with_apply2=False, pickle_local_spaces=True,
