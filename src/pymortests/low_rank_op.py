@@ -3,11 +3,116 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import scipy.linalg as spla
 
 from pymor.algorithms.lincomb import assemble_lincomb
 from pymor.operators.constructions import LowRankOperator, LowRankUpdatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+
+def test_low_rank_apply():
+    m = 15
+    n = 10
+    space_m = NumpyVectorSpace(m)
+    space_n = NumpyVectorSpace(n)
+    rng = np.random.RandomState(0)
+
+    r = 2
+    L = space_m.random(r, distribution='normal', random_state=rng)
+    C = rng.randn(r, r)
+    R = space_n.random(r, distribution='normal', random_state=rng)
+
+    k = 3
+    U = space_n.random(k, distribution='normal', random_state=rng)
+
+    LR = LowRankOperator(L, C, R)
+    V = LR.apply(U)
+    assert np.allclose(V.to_numpy().T, L.to_numpy().T @ C @ (R.to_numpy() @ U.to_numpy().T))
+
+    LR = LowRankOperator(L, C, R, inverted=True)
+    V = LR.apply(U)
+    assert np.allclose(V.to_numpy().T,
+                       L.to_numpy().T @ spla.solve(C, R.to_numpy() @ U.to_numpy().T))
+
+
+def test_low_rank_apply_adjoint():
+    m = 15
+    n = 10
+    space_m = NumpyVectorSpace(m)
+    space_n = NumpyVectorSpace(n)
+    rng = np.random.RandomState(0)
+
+    r = 2
+    L = space_m.random(r, distribution='normal', random_state=rng)
+    C = rng.randn(r, r)
+    R = space_n.random(r, distribution='normal', random_state=rng)
+
+    k = 3
+    V = space_m.random(k, distribution='normal', random_state=rng)
+
+    LR = LowRankOperator(L, C, R)
+    U = LR.apply_adjoint(V)
+    assert np.allclose(U.to_numpy().T, R.to_numpy().T @ C.T @ (L.to_numpy() @ V.to_numpy().T))
+
+    LR = LowRankOperator(L, C, R, inverted=True)
+    U = LR.apply_adjoint(V)
+    assert np.allclose(U.to_numpy().T,
+                       R.to_numpy().T @ spla.solve(C.T, L.to_numpy() @ V.to_numpy().T))
+
+
+def test_low_rank_updated_apply_inverse():
+    n = 10
+    space = NumpyVectorSpace(n)
+    rng = np.random.RandomState(0)
+    A = NumpyMatrixOperator(rng.randn(n, n))
+
+    r = 2
+    L = space.random(r, distribution='normal', random_state=rng)
+    C = rng.randn(r, r)
+    R = space.random(r, distribution='normal', random_state=rng)
+    LR = LowRankOperator(L, C, R)
+
+    k = 3
+    V = space.random(k, distribution='normal', random_state=rng)
+
+    op = LowRankUpdatedOperator(A, LR, 1, 1)
+    U = op.apply_inverse(V)
+    mat = A.matrix + L.to_numpy().T @ C @ R.to_numpy()
+    assert np.allclose(U.to_numpy().T, spla.solve(mat, V.to_numpy().T))
+
+    LR = LowRankOperator(L, C, R, inverted=True)
+    op = LowRankUpdatedOperator(A, LR, 1, 1)
+    U = op.apply_inverse(V)
+    mat = A.matrix + L.to_numpy().T @ spla.solve(C, R.to_numpy())
+    assert np.allclose(U.to_numpy().T, spla.solve(mat, V.to_numpy().T))
+
+
+def test_low_rank_updated_apply_inverse_adjoint():
+    n = 10
+    space = NumpyVectorSpace(n)
+    rng = np.random.RandomState(0)
+    A = NumpyMatrixOperator(rng.randn(n, n))
+
+    r = 2
+    L = space.random(r, distribution='normal', random_state=rng)
+    C = rng.randn(r, r)
+    R = space.random(r, distribution='normal', random_state=rng)
+    LR = LowRankOperator(L, C, R)
+
+    k = 3
+    U = space.random(k, distribution='normal', random_state=rng)
+
+    op = LowRankUpdatedOperator(A, LR, 1, 1)
+    V = op.apply_inverse_adjoint(U)
+    mat = A.matrix + L.to_numpy().T @ C @ R.to_numpy()
+    assert np.allclose(V.to_numpy().T, spla.solve(mat.T, U.to_numpy().T))
+
+    LR = LowRankOperator(L, C, R, inverted=True)
+    op = LowRankUpdatedOperator(A, LR, 1, 1)
+    V = op.apply_inverse_adjoint(U)
+    mat = A.matrix + L.to_numpy().T @ spla.solve(C, R.to_numpy())
+    assert np.allclose(V.to_numpy().T, spla.solve(mat.T, U.to_numpy().T))
 
 
 def test_low_rank_assemble():
