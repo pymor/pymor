@@ -253,6 +253,9 @@ if config.HAVE_FENICS:
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V)
 
         def restricted(self, dofs):
+            from pymor.tools.mpi import parallel
+            if parallel:
+                raise NotImplementedError('SubMesh does not work in parallel')
             with self.logger.block(f'Restricting operator to {len(dofs)} dofs ...'):
                 if len(dofs) == 0:
                     return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=np.int)
