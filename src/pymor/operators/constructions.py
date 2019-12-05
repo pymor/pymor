@@ -467,9 +467,11 @@ class LowRankUpdatedOperator(LincombOperator):
         self.__auto_init(locals())
 
     def apply_inverse(self, V, mu=None, least_squares=False):
+        if least_squares:
+            return super().apply_inverse(V, mu=mu, least_squares=True)
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
-        if not self.inverted:
+        if not LR.inverted:
             L = L.lincomb(C.T)
             R = R.lincomb(C.conj())
         alpha, beta = self.evaluate_coefficients(mu)
@@ -483,9 +485,11 @@ class LowRankUpdatedOperator(LincombOperator):
         return U
 
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+        if least_squares:
+            return super().apply_inverse_adjoint(U, mu=mu, least_squares=True)
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
-        if not self.inverted:
+        if not LR.inverted:
             L = L.lincomb(C.T)
             R = R.lincomb(C.conj())
         alpha, beta = (c.conjugate() for c in self.evaluate_coefficients(mu))
