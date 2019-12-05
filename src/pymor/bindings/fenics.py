@@ -113,8 +113,8 @@ if config.HAVE_FENICS:
             if not mpi.parallel:
                 return max_ind_on_rank, max_val_on_rank
             else:
-                max_global_ind_on_rank = max_ind_on_rank + self.impl.local_range()[0]
-                comm = self.impl.mpi_comm()
+                max_global_ind_on_rank = max_ind_on_rank + self.real_part.impl.local_range()[0]
+                comm = self.real_part.impl.mpi_comm()
                 comm_size = comm.Get_size()
 
                 max_inds = np.empty(comm_size, dtype='i')
@@ -123,7 +123,7 @@ if config.HAVE_FENICS:
                 max_vals = np.empty(comm_size, dtype=np.float64)
                 comm.Allgather(np.array(max_val_on_rank), max_vals)
 
-                i = np.argmax(max_inds)
+                i = np.argmax(max_vals)
                 return max_inds[i], max_vals[i]
 
     class FenicsVectorSpace(ComplexifiedListVectorSpace):
