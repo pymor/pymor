@@ -218,8 +218,7 @@ class AssembleLincombRules(RuleTable):
                                     solver_options=self.solver_options, name=self.name)
 
     @match_generic(lambda ops: len(ops) >= 2)
-    @match_generic(lambda ops: any(isinstance(op, (LowRankOperator, LowRankUpdatedOperator))
-                                   for op in ops))
+    @match_class_any(LowRankOperator, LowRankUpdatedOperator)
     def action_merge_into_low_rank_updated_operator(self, ops):
         new_ops = []
         new_lr_ops = []
