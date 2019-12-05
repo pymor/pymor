@@ -2,6 +2,9 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
@@ -9,9 +12,9 @@ from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-@defaults('rtol', 'atol', 'l2_err', 'method')
+@defaults('rtol', 'atol', 'l2_err', 'method', 'orth_tol')
 def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
-        method='method_of_snapshots', svd_params=None):
+        method='method_of_snapshots', orth_tol=np.inf):
     """Proper orthogonal decomposition of `A`.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix,
@@ -44,9 +47,9 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
     method
         Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
         (`'method_of_snapshots'` or `'qr_svd'`).
-    svd_params
-        `dict` of parameters passed to the SVD method (see
-        :mod:`pymor.algorithms.svd_va`).
+    orth_tol
+        POD modes are reorthogonalized if the orthogonality error is above this
+        value.
 
     Returns
     -------
@@ -64,7 +67,13 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
 
     svd_va = method_of_snapshots if method == 'method_of_snapshots' else qr_svd
     with logger.block('Computing SVD ...'):
-        POD, SVALS, _ = svd_va(A, product=product, modes=modes, rtol=rtol, atol=atol,
-                               l2_err=l2_err, **svd_params)
+        POD, SVALS, _ = svd_va(A, product=product, modes=modes, rtol=rtol, atol=atol, l2_err=l2_err)
+
+    if np.isfinite(orth_tol):
+        logger.info('Checking orthonormality ...')
+        err = np.max(np.abs(POD.inner(POD, product) - np.eye(len(POD))))
+        if err >= orth_tol:
+            logger.info('Reorthogonalizing POD modes ...')
+            gram_schmidt(POD, product=product, copy=False, check=False)
 
     return POD, SVALS

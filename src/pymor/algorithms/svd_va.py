@@ -9,15 +9,13 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
-from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-@defaults('rtol', 'atol', 'l2_err', 'orthonormalize', 'check', 'check_tol')
-def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
-                        orthonormalize=True, check=True, check_tol=1e-10):
+@defaults('rtol', 'atol', 'l2_err')
+def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     """Method of snapshots.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix,
@@ -47,14 +45,6 @@ def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=
             argmin_N { sum_{n=N+1}^{infty} s_n^2 <= l2_err^2 }
 
         where `s_n` denotes the n-th singular value.
-    orthonormalize
-        If `True`, orthonormalize the computed POD modes again using
-        the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt` algorithm.
-        If `False`, do not orthonormalize.
-    check
-        If `True`, check the computed POD modes for orthonormality.
-    check_tol
-        Tolerance for the orthonormality check.
 
     Returns
     -------
@@ -107,23 +97,11 @@ def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=
     with logger.block(f'Computing left-singular vectors ({len(V)} vectors) ...'):
         U = A.lincomb(V / s[:, np.newaxis])
 
-    if orthonormalize:
-        with logger.block('Re-orthonormalizing left singular vectors ...'):
-            gram_schmidt(U, product=product, copy=False, check=False)
-        if len(U) < len(s):
-            raise AccuracyError('additional orthonormalization removed basis vectors')
-
-    if check:
-        logger.info('Checking orthonormality ...')
-        err = np.max(np.abs(U.inner(U, product) - np.eye(len(U))))
-        if err >= check_tol:
-            raise AccuracyError(f'result not orthogonal (max err={err})')
-
     return U, s, Vh
 
 
-@defaults('rtol', 'atol', 'l2_err', 'check', 'check_tol')
-def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0., check=True, check_tol=1e-10):
+@defaults('rtol', 'atol', 'l2_err')
+def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     """SVD of a |VectorArray| using Gram-Schmidt process.
 
     If `product` is given, left singular vectors will be orthogonal with
@@ -152,10 +130,6 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0., check=Tru
             argmin_N { sum_{n=N+1}^{infty} s_n^2 <= l2_err^2 }
 
         where `s_n` denotes the n-th singular value.
-    check
-        If `True`, check the computed POD modes for orthonormality.
-    check_tol
-        Tolerance for the orthonormality check.
 
     Returns
     -------
@@ -202,11 +176,5 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0., check=Tru
 
     with logger.block(f'Computing left singular vectors ({selected_modes} modes) ...'):
         U = Q.lincomb(U2.T)
-
-    if check:
-        logger.info('Checking orthonormality ...')
-        err = np.max(np.abs(U.inner(U, product) - np.eye(len(U))))
-        if err >= check_tol:
-            raise AccuracyError(f'result not orthogonal (max err={err})')
 
     return U, s, Vh
