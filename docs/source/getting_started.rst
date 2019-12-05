@@ -137,7 +137,7 @@ Let's solve the thermal block problem and visualize the solution:
 
 .. nbplot::
   >>> U = fom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
-  >>> fom.visualize(U, title='Solution')
+  >>> _ = fom.visualize(U, title='Solution')
 
 Each class in pyMOR that describes a |Parameter| dependent mathematical
 object, like the |StationaryModel| in our case, derives from
@@ -244,9 +244,9 @@ the detailed solution and the error:
 .. nbplot::
   >>> ERR = U - U_red
   >>> print(ERR.norm(fom.h1_0_semi_product))
-  >>> #fom.visualize((U, U_red, ERR),
-  ... #              legend=('Detailed', 'Reduced', 'Error'),
-  ... #              separate_colorbars=True)
+  >>> _ = fom.visualize((U, U_red, ERR),
+  ...               legend=('Detailed', 'Reduced', 'Error'),
+  ...               separate_colorbars=True)
 
 We can nicely observe that, as expected, the error is maximized along the
 jumps of the diffusion coefficient.
