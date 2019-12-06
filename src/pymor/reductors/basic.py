@@ -472,7 +472,7 @@ def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod
     elif method == 'pod':
         U_proj_err = U - basis.lincomb(U.inner(basis, product))
 
-        basis.append(pod(U_proj_err, modes=pod_modes, product=product, orthonormalize=False)[0])
+        basis.append(pod(U_proj_err, modes=pod_modes, product=product, orth_tol=np.inf)[0])
 
         if pod_orthonormalize:
             gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
