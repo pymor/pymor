@@ -95,10 +95,10 @@ class GenericBTReductor(BasicInterface):
             self.V.scal(alpha)
             self.W.scal(alpha)
         elif projection == 'bfsr':
-            self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.W = gram_schmidt(self.W, atol=0, rtol=0)
+            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
+            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.E)
+            gram_schmidt_biorth(self.V, self.W, product=self.fom.E, copy=False)
 
         # find reduced-order model
         if self.fom.parametric:

@@ -2,20 +2,175 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+"""Reductors based on H2-norm."""
+
+from numbers import Integral, Real
+
 import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.interfaces import BasicInterface
-from pymor.models.iosys import LTIModel
+from pymor.models.iosys import InputOutputModel, LTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
 
 
-class IRKAReductor(BasicInterface):
+class GenericIRKAReductor(BasicInterface):
+    """Generic IRKA related reductor.
+
+    Parameters
+    ----------
+    fom
+        The full-order |Model| to reduce.
+    mu
+        |Parameter|.
+    """
+    def __init__(self, fom, mu=None):
+        self.fom = fom
+        self.mu = fom.parse_parameter(mu)
+        self.V = None
+        self.W = None
+        self._pg_reductor = None
+        self.sigma_list = []
+        self.b_list = []
+        self.c_list = []
+        self.conv_crit = []
+        self._conv_data = []
+        self.errors = []
+
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        return self._pg_reductor.reconstruct(u)
+
+    def _check_rom0_params(self, rom0_params):
+        if isinstance(rom0_params, Integral):
+            assert rom0_params > 0
+            if hasattr(self.fom, 'order'):  # self.fom can be a TransferFunction
+                assert rom0_params < self.fom.order
+        elif isinstance(rom0_params, np.ndarray):
+            assert rom0_params.ndim == 1
+        elif isinstance(rom0_params, dict):
+            assert ('sigma', 'b', 'c') in rom0_params
+            assert isinstance(rom0_params['sigma'], np.ndarray)
+            assert rom0_params['sigma'].ndim == 1
+            assert rom0_params['b'] in self.fom.input_space
+            assert rom0_params['c'] in self.fom.output_space
+            assert len(rom0_params['sigma']) == len(rom0_params['b'])
+            assert len(rom0_params['sigma']) == len(rom0_params['c'])
+        elif isinstance(rom0_params, LTIModel):
+            assert rom0_params.order > 0
+            if hasattr(self.fom, 'order'):  # self.fom can be a TransferFunction
+                assert rom0_params < self.fom.order
+            assert rom0_params.input_space == self.fom.input_space
+            assert rom0_params.output_space == self.fom.output_space
+        else:
+            raise ValueError(f'rom0_params is of wrong type ({type(rom0_params)}).')
+
+    @staticmethod
+    def _check_common_args(tol, maxit, num_prev, conv_crit):
+        assert isinstance(tol, Real) and tol > 0
+        assert isinstance(maxit, Integral) and maxit >= 1
+        assert isinstance(num_prev, Integral) and num_prev >= 1
+        assert conv_crit in ('sigma', 'h2')
+
+    def _order_to_sigma_b_c(self, r):
+        sigma = np.logspace(-1, 1, r)
+        b = (self.fom.input_space.ones(r)
+             if self.fom.input_dim == 1
+             else self.fom.input_space.random(r, distribution='normal', seed=0))
+        c = (self.fom.output_space.ones(r)
+             if self.fom.output_dim == 1
+             else self.fom.output_space.random(r, distribution='normal', seed=0))
+        return sigma, b, c
+
+    @staticmethod
+    def _rom_to_sigma_b_c(rom, force_sigma_in_rhp):
+        poles, b, c = _lti_to_poles_b_c(rom)
+        sigma = (np.abs(poles.real) + poles.imag * 1j
+                 if force_sigma_in_rhp
+                 else -poles)
+        return sigma, b, c
+
+    def _rom0_params_to_sigma_b_c(self, rom0_params, force_sigma_in_rhp):
+        self.logger.info('Generating initial interpolation data')
+        self._check_rom0_params(rom0_params)
+        if isinstance(rom0_params, Integral):
+            sigma, b, c = self._order_to_sigma_b_c(rom0_params)
+        elif isinstance(rom0_params, np.ndarray):
+            sigma = rom0_params
+            _, b, c = self._order_to_sigma_b_c(len(rom0_params))
+        elif isinstance(rom0_params, dict):
+            sigma = rom0_params['sigma']
+            b = rom0_params['b']
+            c = rom0_params['c']
+        else:
+            sigma, b, c = self._rom_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
+        return sigma, b, c
+
+    def _rom0_params_to_rom(self, rom0_params):
+        self.logger.info('Generating initial reduced-order model')
+        self._check_rom0_params(rom0_params)
+        if isinstance(rom0_params, Integral):
+            sigma, b, c = self._order_to_sigma_b_c(rom0_params)
+            rom0 = _poles_b_c_to_lti(-sigma, b, c)
+        elif isinstance(rom0_params, np.ndarray):
+            sigma = rom0_params
+            _, b, c = self._order_to_sigma_b_c(len(rom0_params))
+            rom0 = _poles_b_c_to_lti(-sigma, b, c)
+        elif isinstance(rom0_params, dict):
+            sigma = rom0_params['sigma']
+            b = rom0_params['b']
+            c = rom0_params['c']
+            rom0 = _poles_b_c_to_lti(-sigma, b, c)
+        else:
+            rom0 = rom0_params
+        return rom0
+
+    def _store_sigma_b_c(self, sigma, b, c):
+        if sigma is not None:
+            self.sigma_list.append(sigma)
+        if b is not None:
+            self.b_list.append(b)
+        if c is not None:
+            self.c_list.append(c)
+
+    def _update_conv_data(self, sigma, rom, conv_crit):
+        del self._conv_data[-1]
+        self._conv_data.insert(0, sigma if conv_crit == 'sigma' else rom)
+
+    def _compute_conv_crit(self, rom, conv_crit, it):
+        if conv_crit == 'sigma':
+            sigma = self._conv_data[0]
+            dist = min(spla.norm((sigma_old - sigma) / sigma_old, ord=np.inf)
+                       for sigma_old in self._conv_data[1:]
+                       if sigma_old is not None)
+        else:
+            if rom.poles().real.max() >= 0:
+                dist = np.inf
+            else:
+                dist = min((rom_old - rom).h2_norm() / rom_old.h2_norm()
+                           if rom_old is not None and rom_old.poles().real.max() < 0
+                           else np.inf
+                           for rom_old in self._conv_data[1:])
+        self.conv_crit.append(dist)
+        self.logger.info(f'Convergence criterion in iteration {it + 1}: {dist:e}')
+
+    def _compute_error(self, rom, it, compute_errors):
+        if not compute_errors:
+            return
+        rel_h2_err = ((self.fom - rom).h2_norm() / self.fom.h2_norm()
+                      if rom.poles().real.max() < 0
+                      else np.inf)
+        self.errors.append(rel_h2_err)
+        self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_h2_err:e}')
+
+
+class IRKAReductor(GenericIRKAReductor):
     """Iterative Rational Krylov Algorithm reductor.
 
     Parameters
@@ -27,58 +182,32 @@ class IRKAReductor(BasicInterface):
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
-        self.fom = fom
-        self.mu = fom.parse_parameter(mu)
-        self.V = None
-        self.W = None
-        self._pg_reductor = None
-        self.conv_crit = None
-        self.sigmas = None
-        self.R = None
-        self.L = None
-        self.errors = None
+        super().__init__(fom, mu=mu)
 
-    def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1,
-               force_sigma_in_rhp=False, projection='orth', conv_crit='sigma', compute_errors=False):
+    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1,
+               force_sigma_in_rhp=False, projection='orth', conv_crit='sigma',
+               compute_errors=False):
         r"""Reduce using IRKA.
 
         See [GAB08]_ (Algorithm 4.1) and [ABG10]_ (Algorithm 1).
 
         Parameters
         ----------
-        r
-            Order of the reduced order model.
-        sigma
-            Initial interpolation points (closed under conjugation).
+        rom0_params
+            Can be:
 
-            If `None`, interpolation points are log-spaced between 0.1
-            and 10. If `sigma` is an `int`, it is used as a seed to
-            generate it randomly. Otherwise, it needs to be a
-            one-dimensional array-like of length `r`.
+            - order of the reduced model (a positive integer),
+            - initial interpolation points (a 1D |NumPy array|),
+            - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
+              initial interpolation points (a 1D |NumPy array|), right
+              tangential directions (|VectorArray| from
+              `fom.input_space`), and left tangential directions
+              (|VectorArray| from `fom.output_space`), all of the same
+              length (the order of the reduced model),
+            - initial reduced-order model (|LTIModel|).
 
-            `sigma` and `rom0` cannot both be not `None`.
-        b
-            Initial right tangential directions.
-
-            If `None`, if is chosen as all ones. If `b` is an `int`, it
-            is used as a seed to generate it randomly. Otherwise, it
-            needs to be a |VectorArray| of length `r` from `fom.B.source`.
-
-            `b` and `rom0` cannot both be not `None`.
-        c
-            Initial left tangential directions.
-
-            If `None`, if is chosen as all ones. If `c` is an `int`, it
-            is used as a seed to generate it randomly. Otherwise, it
-            needs to be a |VectorArray| of length `r` from `fom.C.range`.
-
-            `c` and `rom0` cannot both be not `None`.
-        rom0
-            Initial reduced order model.
-
-            If `None`, then `sigma`, `b`, and `c` are used. Otherwise,
-            it needs to be an |LTIModel| of order `r` and it is used to
-            construct `sigma`, `b`, and `c`.
+            If the order of reduced model is given, initial
+            interpolation data is generated randomly.
         tol
             Tolerance for the convergence criterion.
         maxit
@@ -89,7 +218,7 @@ class IRKAReductor(BasicInterface):
             behavior of IRKA.
         force_sigma_in_rhp
             If `False`, new interpolation are reflections of the current
-            reduced order model's poles. Otherwise, only poles in the
+            reduced-order model's poles. Otherwise, only poles in the
             left half-plane are reflected.
         projection
             Projection method:
@@ -108,7 +237,7 @@ class IRKAReductor(BasicInterface):
               reduced-order models
         compute_errors
             Should the relative :math:`\mathcal{H}_2`-errors of
-            intermediate reduced order models be computed.
+            intermediate reduced-order models be computed.
 
             .. warning::
                 Computing :math:`\mathcal{H}_2`-errors is expensive. Use
@@ -119,106 +248,37 @@ class IRKAReductor(BasicInterface):
         rom
             Reduced |LTIModel| model.
         """
-        fom = self.fom
-        if not fom.cont_time:
+        if not self.fom.cont_time:
             raise NotImplementedError
-        assert 0 < r < fom.order
-        assert isinstance(num_prev, int) and num_prev >= 1
+
+        sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
+        self._store_sigma_b_c(sigma, b, c)
+        self._check_common_args(tol, maxit, num_prev, conv_crit)
         assert projection in ('orth', 'biorth', 'arnoldi')
         if projection == 'arnoldi':
-            assert fom.input_dim == fom.output_dim == 1
-        assert conv_crit in ('sigma', 'h2')
-
-        # initial interpolation points and tangential directions
-        assert sigma is None or isinstance(sigma, int) or len(sigma) == r
-        assert b is None or isinstance(b, int) or b in fom.B.source and len(b) == r
-        assert c is None or isinstance(c, int) or c in fom.C.range and len(c) == r
-        assert (rom0 is None
-                or isinstance(rom0, LTIModel)
-                and rom0.order == r and rom0.B.source == fom.B.source and rom0.C.range == fom.C.range)
-        assert sigma is None or rom0 is None
-        assert b is None or rom0 is None
-        assert c is None or rom0 is None
-        if rom0 is not None:
-            poles, b, c = _poles_and_tangential_directions(rom0)
-            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
-        else:
-            if sigma is None:
-                sigma = np.logspace(-1, 1, r)
-            elif isinstance(sigma, int):
-                np.random.seed(sigma)
-                sigma = np.abs(np.random.randn(r))
-            if b is None:
-                b = fom.B.source.ones(r)
-            elif isinstance(b, int):
-                b = fom.B.source.random(r, distribution='normal', seed=b)
-            if c is None:
-                c = fom.C.range.ones(r)
-            elif isinstance(c, int):
-                c = fom.C.range.random(r, distribution='normal', seed=c)
+            assert self.fom.input_dim == self.fom.output_dim == 1
 
         self.logger.info('Starting IRKA')
-        self.conv_crit = []
-        self.sigmas = [np.array(sigma)]
-        self.R = [b]
-        self.L = [c]
-        self.errors = [] if compute_errors else None
-        self._pg_reductor = LTIBHIReductor(fom, mu=self.mu)
-        # main loop
+        self._conv_data = (num_prev + 1) * [None]
+        if conv_crit == 'sigma':
+            self._conv_data[0] = sigma
+        self._pg_reductor = LTIBHIReductor(self.fom, mu=self.mu)
         for it in range(maxit):
-            # interpolatory reduced order model
             rom = self._pg_reductor.reduce(sigma, b, c, projection=projection)
-
-            # new interpolation points and tangential directions
-            poles, b, c = _poles_and_tangential_directions(rom)
-            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
-            self.sigmas.append(sigma)
-            self.R.append(b)
-            self.L.append(c)
-
-            # compute convergence criterion
-            if conv_crit == 'sigma':
-                dist = _convergence_criterion(self.sigmas[:-num_prev-2:-1], conv_crit)
-                self.conv_crit.append(dist)
-            elif conv_crit == 'h2':
-                if it == 0:
-                    rom_list = (num_prev + 1) * [None]
-                    rom_list[0] = rom
-                    self.conv_crit.append(np.inf)
-                else:
-                    rom_list[1:] = rom_list[:-1]
-                    rom_list[0] = rom
-                    dist = _convergence_criterion(rom_list, conv_crit)
-                    self.conv_crit.append(dist)
-
-            # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
-            if compute_errors:
-                if np.max(rom.poles().real) < 0:
-                    err = fom - rom
-                    rel_H2_err = err.h2_norm() / fom.h2_norm()
-                else:
-                    rel_H2_err = np.inf
-                self.errors.append(rel_H2_err)
-
-                self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
-
-            # check if convergence criterion is satisfied
+            sigma, b, c = self._rom_to_sigma_b_c(rom, force_sigma_in_rhp)
+            self._store_sigma_b_c(sigma, b, c)
+            self._update_conv_data(sigma, rom, conv_crit)
+            self._compute_conv_crit(rom, conv_crit, it)
+            self._compute_error(rom, it, compute_errors)
             if self.conv_crit[-1] < tol:
                 break
 
-        # final reduced order model
-        rom = self._pg_reductor.reduce(sigma, b, c, projection=projection)
         self.V = self._pg_reductor.V
         self.W = self._pg_reductor.W
         return rom
 
-    def reconstruct(self, u):
-        """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self._pg_reductor.reconstruct(u)
 
-
-class OneSidedIRKAReductor(BasicInterface):
+class OneSidedIRKAReductor(GenericIRKAReductor):
     """One-Sided Iterative Rational Krylov Algorithm reductor.
 
     Parameters
@@ -236,231 +296,122 @@ class OneSidedIRKAReductor(BasicInterface):
     def __init__(self, fom, version, mu=None):
         assert isinstance(fom, LTIModel)
         assert version in ('V', 'W')
-        self.fom = fom
+        super().__init__(fom, mu=mu)
         self.version = version
-        self.mu = fom.parse_parameter(mu)
-        self.V = None
-        self._pg_reductor = None
-        self.conv_crit = None
-        self.sigmas = None
-        self.R = None
-        self.L = None
-        self.errors = None
 
-    def reduce(self, r, sigma=None, b=None, c=None, rd0=None, tol=1e-4, maxit=100, num_prev=1,
+    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1,
                force_sigma_in_rhp=False, projection='orth', conv_crit='sigma',
                compute_errors=False):
         r"""Reduce using one-sided IRKA.
 
         Parameters
         ----------
-        r
-            Order of the reduced order model.
-        sigma
-            Initial interpolation points (closed under conjugation).
+        rom0_params
+            Can be:
 
-            If `None`, interpolation points are log-spaced between 0.1 and 10.
-            If `sigma` is an `int`, it is used as a seed to generate it randomly.
-            Otherwise, it needs to be a one-dimensional array-like of length `r`.
+            - order of the reduced model (a positive integer),
+            - initial interpolation points (a 1D |NumPy array|),
+            - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
+              initial interpolation points (a 1D |NumPy array|), right
+              tangential directions (|VectorArray| from
+              `fom.input_space`), and left tangential directions
+              (|VectorArray| from `fom.output_space`), all of the same
+              length (the order of the reduced model),
+            - initial reduced-order model (|LTIModel|).
 
-            `sigma` and `rd0` cannot both be not `None`.
-        b
-            Initial right tangential directions.
-
-            If `None`, if is chosen as all ones.
-            If `b` is an `int`, it is used as a seed to generate it randomly.
-            Otherwise, it needs to be a |VectorArray| of length `r` from `fom.B.source`.
-
-            `b` and `rd0` cannot both be not `None`.
-        c
-            Initial left tangential directions.
-
-            If `None`, if is chosen as all ones.
-            If `c` is an `int`, it is used as a seed to generate it randomly.
-            Otherwise, it needs to be a |VectorArray| of length `r` from `fom.C.range`.
-
-            `c` and `rd0` cannot both be not `None`.
-        rd0
-            Initial reduced order model.
-
-            If `None`, then `sigma`, `b`, and `c` are used.
-            Otherwise, it needs to be an |LTIModel| of order `r` and it is used to construct
-            `sigma`, `b`, and `c`.
+            If the order of reduced model is given, initial
+            interpolation data is generated randomly.
         tol
             Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
         num_prev
-            Number of previous iterations to compare the current iteration to.
-            A larger number can avoid occasional cyclic behavior.
+            Number of previous iterations to compare the current
+            iteration to. A larger number can avoid occasional cyclic
+            behavior.
         force_sigma_in_rhp
-            If 'False`, new interpolation are reflections of reduced order model's poles.
-            Otherwise, they are always in the right half-plane.
+            If `False`, new interpolation are reflections of the current
+            reduced-order model's poles. Otherwise, only poles in the
+            left half-plane are reflected.
         projection
             Projection method:
 
-            - `'orth'`: projection matrix is orthogonalized with respect to the Euclidean inner
-              product,
-            - `'Eorth'`: projection matrix is orthogonalized with respect to the E product.
+            - `'orth'`: projection matrix is orthogonalized with respect
+              to the Euclidean inner product,
+            - `'Eorth'`: projection matrix is orthogonalized with
+              respect to the E product.
         conv_crit
             Convergence criterion:
 
             - `'sigma'`: relative change in interpolation points,
-            - `'h2'`: relative :math:`\mathcal{H}_2` distance of reduced order models.
+            - `'h2'`: relative :math:`\mathcal{H}_2` distance of
+              reduced-order models.
         compute_errors
-            Should the relative :math:`\mathcal{H}_2`-errors of intermediate reduced order models be
-            computed.
+            Should the relative :math:`\mathcal{H}_2`-errors of
+            intermediate reduced-order models be computed.
 
             .. warning::
-                Computing :math:`\mathcal{H}_2`-errors is expensive.
-                Use this option only if necessary.
+                Computing :math:`\mathcal{H}_2`-errors is expensive. Use
+                this option only if necessary.
 
         Returns
         -------
         rom
             Reduced |LTIModel| model.
         """
-        fom = self.fom
-        if not fom.cont_time:
+        if not self.fom.cont_time:
             raise NotImplementedError
-        assert 0 < r < fom.order
-        assert isinstance(num_prev, int) and num_prev >= 1
-        assert projection in ('orth', 'Eorth')
-        assert conv_crit in ('sigma', 'h2')
 
-        # initial interpolation points and tangential directions
-        assert sigma is None or isinstance(sigma, int) or len(sigma) == r
-        assert b is None or isinstance(b, int) or b in fom.B.source and len(b) == r
-        assert c is None or isinstance(c, int) or c in fom.C.range and len(c) == r
-        assert (rd0 is None
-                or isinstance(rd0, LTIModel)
-                and rd0.order == r and rd0.input_space == fom.input_space and rd0.output_space == fom.output_space)
-        assert sigma is None or rd0 is None
-        assert b is None or rd0 is None
-        assert c is None or rd0 is None
-        if rd0 is not None:
-            poles, b, c = _poles_and_tangential_directions(rd0)
-            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
-        else:
-            if sigma is None:
-                sigma = np.logspace(-1, 1, r)
-            elif isinstance(sigma, int):
-                np.random.seed(sigma)
-                sigma = np.abs(np.random.randn(r))
-            if self.version == 'V':
-                if b is None:
-                    b = fom.B.source.ones(r)
-                elif isinstance(b, int):
-                    b = fom.B.source.random(r, distribution='normal', seed=b)
-            else:
-                if c is None:
-                    c = fom.C.range.ones(r)
-                elif isinstance(c, int):
-                    c = fom.C.range.random(r, distribution='normal', seed=c)
+        sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
+        self._store_sigma_b_c(sigma, b, c)
+        self._check_common_args(tol, maxit, num_prev, conv_crit)
+        assert projection in ('orth', 'Eorth')
 
         self.logger.info('Starting one-sided IRKA')
-        self.conv_crit = []
-        self.sigmas = [np.array(sigma)]
-        if self.version == 'V':
-            self.R = [b]
-        else:
-            self.L = [c]
-        self.errors = [] if compute_errors else None
-        # main loop
+        self._conv_data = (num_prev + 1) * [None]
+        if conv_crit == 'sigma':
+            self._conv_data[0] = sigma
         for it in range(maxit):
-            # interpolatory reduced order model
-            self._projection_matrix(r, sigma, b, c, projection)
+            self._set_V_reductor(sigma, b, c, projection)
             rom = self._pg_reductor.reduce()
-
-            # new interpolation points and tangential directions
-            poles, b, c = _poles_and_tangential_directions(rom)
-            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
-            self.sigmas.append(sigma)
-            if self.version == 'V':
-                self.R.append(b)
-            else:
-                self.L.append(c)
-
-            # compute convergence criterion
-            if conv_crit == 'sigma':
-                dist = _convergence_criterion(self.sigmas[:-num_prev-2:-1], conv_crit)
-                self.conv_crit.append(dist)
-            elif conv_crit == 'h2':
-                if it == 0:
-                    rom_list = (num_prev + 1) * [None]
-                    rom_list[0] = rom
-                    self.conv_crit.append(np.inf)
-                else:
-                    rom_list[1:] = rom_list[:-1]
-                    rom_list[0] = rom
-                    dist = _convergence_criterion(rom_list, conv_crit)
-                    self.conv_crit.append(dist)
-
-            # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
-            if compute_errors:
-                if np.max(rom.poles().real) < 0:
-                    err = fom - rom
-                    rel_H2_err = err.h2_norm() / fom.h2_norm()
-                else:
-                    rel_H2_err = np.inf
-                self.errors.append(rel_H2_err)
-
-                self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
-
-            # check if convergence criterion is satisfied
+            sigma, b, c = self._rom_to_sigma_b_c(rom, force_sigma_in_rhp)
+            self._store_sigma_b_c(sigma, b, c)
+            self._update_conv_data(sigma, rom, conv_crit)
+            self._compute_conv_crit(rom, conv_crit, it)
+            self._compute_error(rom, it, compute_errors)
             if self.conv_crit[-1] < tol:
                 break
 
-        # final reduced order model
-        self._projection_matrix(r, sigma, b, c, projection)
-        rom = self._pg_reductor.reduce()
         return rom
 
-    def _projection_matrix(self, r, sigma, b, c, projection):
-        if self.fom.parametric:
-            fom = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                    for op in ['A', 'B', 'C', 'D', 'E']},
-                                 parameter_space=None)
-        else:
-            fom = self.fom
+    def _set_V_reductor(self, sigma, b, c, projection):
+        fom = (
+            self.fom.with_(
+                **{op: getattr(self.fom, op).assemble(mu=self.mu)
+                   for op in ['A', 'B', 'C', 'D', 'E']},
+                parameter_space=None,
+            )
+            if self.fom.parametric
+            else self.fom
+        )
         if self.version == 'V':
-            V = fom.A.source.empty(reserve=r)
+            self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, b, sigma,
+                                                orth=False)
+            gram_schmidt(self.V, atol=0, rtol=0,
+                         product=None if projection == 'orth' else fom.E,
+                         copy=False)
         else:
-            W = fom.A.source.empty(reserve=r)
-        for i in range(r):
-            if sigma[i].imag == 0:
-                sEmA = sigma[i].real * fom.E - fom.A
-                if self.version == 'V':
-                    Bb = fom.B.apply(b.real[i])
-                    V.append(sEmA.apply_inverse(Bb))
-                else:
-                    CTc = fom.C.apply_adjoint(c.real[i])
-                    W.append(sEmA.apply_inverse_adjoint(CTc))
-            elif sigma[i].imag > 0:
-                sEmA = sigma[i] * fom.E - fom.A
-                if self.version == 'V':
-                    Bb = fom.B.apply(b[i])
-                    v = sEmA.apply_inverse(Bb)
-                    V.append(v.real)
-                    V.append(v.imag)
-                else:
-                    CTc = fom.C.apply_adjoint(c[i].conj())
-                    w = sEmA.apply_inverse_adjoint(CTc)
-                    W.append(w.real)
-                    W.append(w.imag)
-        if self.version == 'V':
-            self.V = gram_schmidt(V, atol=0, rtol=0, product=None if projection == 'orth' else fom.E)
-        else:
-            self.V = gram_schmidt(W, atol=0, rtol=0, product=None if projection == 'orth' else fom.E)
-        self._pg_reductor = LTIPGReductor(fom, self.V, self.V, projection == 'Eorth')
-
-    def reconstruct(self, u):
-        """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self._pg_reductor.reconstruct(u)
+            self.V = tangential_rational_krylov(fom.A, fom.E, fom.C, c, sigma, trans=True,
+                                                orth=False)
+            gram_schmidt(self.V, atol=0, rtol=0,
+                         product=None if projection == 'orth' else fom.E,
+                         copy=False)
+        self.W = self.V
+        self._pg_reductor = LTIPGReductor(fom, self.V, self.V,
+                                          projection == 'Eorth')
 
 
-class TSIAReductor(BasicInterface):
+class TSIAReductor(GenericIRKAReductor):
     """Two-Sided Iteration Algorithm reductor.
 
     Parameters
@@ -472,16 +423,10 @@ class TSIAReductor(BasicInterface):
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
-        self.fom = fom
-        self.mu = fom.parse_parameter(mu)
-        self.V = None
-        self.W = None
-        self._pg_reductor = None
-        self.conv_crit = None
-        self.errors = None
+        super().__init__(fom, mu=mu)
 
-    def reduce(self, rom0, tol=1e-4, maxit=100, num_prev=1, projection='orth', conv_crit='sigma',
-               compute_errors=False):
+    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1, projection='orth',
+               conv_crit='sigma', compute_errors=False):
         r"""Reduce using TSIA.
 
         See [XZ11]_ (Algorithm 1) and [BKS11]_.
@@ -495,8 +440,21 @@ class TSIAReductor(BasicInterface):
 
         Parameters
         ----------
-        rom0
-            Initial reduced order model.
+        rom0_params
+            Can be:
+
+            - order of the reduced model (a positive integer),
+            - initial interpolation points (a 1D |NumPy array|),
+            - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
+              initial interpolation points (a 1D |NumPy array|), right
+              tangential directions (|VectorArray| from
+              `fom.input_space`), and left tangential directions
+              (|VectorArray| from `fom.output_space`), all of the same
+              length (the order of the reduced model),
+            - initial reduced-order model (|LTIModel|).
+
+            If the order of reduced model is given, initial
+            interpolation data is generated randomly.
         tol
             Tolerance for the convergence criterion.
         maxit
@@ -520,7 +478,7 @@ class TSIAReductor(BasicInterface):
               reduced-order models
         compute_errors
             Should the relative :math:`\mathcal{H}_2`-errors of
-            intermediate reduced order models be computed.
+            intermediate reduced-order models be computed.
 
             .. warning::
                 Computing :math:`\mathcal{H}_2`-errors is expensive. Use
@@ -531,85 +489,53 @@ class TSIAReductor(BasicInterface):
         rom
             Reduced |LTIModel|.
         """
-        fom = self.fom
-        assert isinstance(rom0, LTIModel) and rom0.B.source == fom.B.source and rom0.C.range == fom.C.range
-        r = rom0.order
-        assert 0 < r < fom.order
-        assert isinstance(num_prev, int) and num_prev >= 1
+        if not self.fom.cont_time:
+            raise NotImplementedError
+
+        rom = self._rom0_params_to_rom(rom0_params)
+        self._check_common_args(tol, maxit, num_prev, conv_crit)
         assert projection in ('orth', 'biorth')
-        assert conv_crit in ('sigma', 'h2')
 
-        # begin logging
         self.logger.info('Starting TSIA')
-
-        # find initial projection matrices
-        self._projection_matrices(rom0, projection)
-
-        data = (num_prev + 1) * [None]
-        data[0] = rom0.poles() if conv_crit == 'sigma' else rom0
-        self.conv_crit = []
-        self.errors = [] if compute_errors else None
-        # main loop
+        self._conv_data = (num_prev + 1) * [None]
+        self._conv_data[0] = -rom.poles() if conv_crit == 'sigma' else rom
+        self._store_sigma_b_c(-rom.poles(), None, None)
         for it in range(maxit):
-            # project the full order model
+            self._set_V_W_reductor(rom, projection)
             rom = self._pg_reductor.reduce()
-
-            # compute convergence criterion
-            data[1:] = data[:-1]
-            data[0] = rom.poles() if conv_crit == 'sigma' else rom
-            dist = _convergence_criterion(data, conv_crit)
-            self.conv_crit.append(dist)
-
-            # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
-            if compute_errors:
-                if np.max(rom.poles().real) < 0:
-                    err = fom - rom
-                    rel_H2_err = err.h2_norm() / fom.h2_norm()
-                else:
-                    rel_H2_err = np.inf
-                self.errors.append(rel_H2_err)
-
-                self.logger.info(f'Relative H2-error in iteration {it + 1}: {rel_H2_err:e}')
-
-            # new projection matrices
-            self._projection_matrices(rom, projection)
-
-            # check convergence criterion
+            self._store_sigma_b_c(-rom.poles(), None, None)
+            self._update_conv_data(-rom.poles(), rom, conv_crit)
+            self._compute_conv_crit(rom, conv_crit, it)
+            self._compute_error(rom, it, compute_errors)
             if self.conv_crit[-1] < tol:
                 break
 
-        # final reduced order model
-        rom = self._pg_reductor.reduce()
         return rom
 
-    def _projection_matrices(self, rom, projection):
-        if self.fom.parametric:
-            fom = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                    for op in ['A', 'B', 'C', 'D', 'E']},
-                                 parameter_space=None)
-        else:
-            fom = self.fom
-
+    def _set_V_W_reductor(self, rom, projection):
+        fom = (
+            self.fom.with_(
+                **{op: getattr(self.fom, op).assemble(mu=self.mu)
+                   for op in ['A', 'B', 'C', 'D', 'E']},
+                parameter_space=None,
+            )
+            if self.fom.parametric
+            else self.fom
+        )
         self.V, self.W = solve_sylv_schur(fom.A, rom.A,
                                           E=fom.E, Er=rom.E,
                                           B=fom.B, Br=rom.B,
                                           C=fom.C, Cr=rom.C)
-
         if projection == 'orth':
-            self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.W = gram_schmidt(self.W, atol=0, rtol=0)
+            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
+            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=fom.E)
-
-        self._pg_reductor = LTIPGReductor(fom, self.W, self.V, projection == 'biorth')
-
-    def reconstruct(self, u):
-        """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self._pg_reductor.reconstruct(u)
+            gram_schmidt_biorth(self.V, self.W, product=fom.E, copy=False)
+        self._pg_reductor = LTIPGReductor(fom, self.W, self.V,
+                                          projection == 'biorth')
 
 
-class TFIRKAReductor(BasicInterface):
+class TFIRKAReductor(GenericIRKAReductor):
     """Realization-independent IRKA reductor.
 
     See [BG12]_.
@@ -622,52 +548,30 @@ class TFIRKAReductor(BasicInterface):
         |Parameter|.
     """
     def __init__(self, fom, mu=None):
-        self.fom = fom
-        self.mu = fom.parse_parameter(mu)
-        self.conv_crit = None
-        self.sigmas = None
-        self.R = None
-        self.L = None
+        assert isinstance(fom, InputOutputModel)
+        super().__init__(fom, mu=mu)
 
-    def reduce(self, r, sigma=None, b=None, c=None, rom0=None, tol=1e-4, maxit=100, num_prev=1,
-               force_sigma_in_rhp=False, conv_crit='sigma'):
+    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1,
+               force_sigma_in_rhp=False, conv_crit='sigma', compute_errors=False):
         r"""Reduce using TF-IRKA.
 
         Parameters
         ----------
-        r
-            Order of the reduced order model.
-        sigma
-            Initial interpolation points (closed under conjugation).
+        rom0_params
+            Can be:
 
-            If `None`, interpolation points are log-spaced between 0.1
-            and 10. If `sigma` is an `int`, it is used as a seed to
-            generate it randomly. Otherwise, it needs to be a
-            one-dimensional array-like of length `r`.
+            - order of the reduced model (a positive integer),
+            - initial interpolation points (a 1D |NumPy array|),
+            - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
+              initial interpolation points (a 1D |NumPy array|), right
+              tangential directions (|VectorArray| from
+              `fom.input_space`), and left tangential directions
+              (|VectorArray| from `fom.output_space`), all of the same
+              length (the order of the reduced model),
+            - initial reduced-order model (|LTIModel|).
 
-            `sigma` and `rom0` cannot both be not `None`.
-        b
-            Initial right tangential directions.
-
-            If `None`, if is chosen as all ones. If `b` is an `int`, it
-            is used as a seed to generate it randomly. Otherwise, it
-            needs to be a |NumPy array| of shape `(m, r)`.
-
-            `b` and `rom0` cannot both be not `None`.
-        c
-            Initial left tangential directions.
-
-            If `None`, if is chosen as all ones. If `c` is an `int`, it
-            is used as a seed to generate it randomly. Otherwise, it
-            needs to be a |NumPy array| of shape `(p, r)`.
-
-            `c` and `rom0` cannot both be not `None`.
-        rom0
-            Initial reduced order model.
-
-            If `None`, then `sigma`, `b`, and `c` are used. Otherwise,
-            it needs to be an |LTIModel| of order `r` and it is used to
-            construct `sigma`, `b`, and `c`.
+            If the order of reduced model is given, initial
+            interpolation data is generated randomly.
         tol
             Tolerance for the convergence criterion.
         maxit
@@ -678,137 +582,129 @@ class TFIRKAReductor(BasicInterface):
             behavior of TF-IRKA.
         force_sigma_in_rhp
             If `False`, new interpolation are reflections of the current
-            reduced order model's poles. Otherwise, only the poles in
-            the left half-plane are reflected.
+            reduced-order model's poles. Otherwise, only poles in the
+            left half-plane are reflected.
         conv_crit
             Convergence criterion:
 
             - `'sigma'`: relative change in interpolation points
             - `'h2'`: relative :math:`\mathcal{H}_2` distance of
               reduced-order models
+        compute_errors
+            Should the relative :math:`\mathcal{H}_2`-errors of
+            intermediate reduced-order models be computed.
+
+            .. warning::
+                Computing :math:`\mathcal{H}_2`-errors is expensive. Use
+                this option only if necessary.
 
         Returns
         -------
         rom
             Reduced |LTIModel| model.
         """
-        fom = self.fom
-        if not fom.cont_time:
+        if not self.fom.cont_time:
             raise NotImplementedError
-        assert r > 0
-        assert isinstance(num_prev, int) and num_prev >= 1
-        assert conv_crit in ('sigma', 'h2')
 
-        # initial interpolation points and tangential directions
-        assert sigma is None or isinstance(sigma, int) or len(sigma) == r
-        assert b is None or isinstance(b, int) or isinstance(b, np.ndarray) and b.shape == (fom.input_dim, r)
-        assert c is None or isinstance(c, int) or isinstance(c, np.ndarray) and c.shape == (fom.output_dim, r)
-        assert rom0 is None or rom0.order == r and rom0.input_dim == fom.input_dim and rom0.output_dim == fom.output_dim
-        assert sigma is None or rom0 is None
-        assert b is None or rom0 is None
-        assert c is None or rom0 is None
-        if rom0 is not None:
-            poles, b, c = _poles_and_tangential_directions(rom0)
-            b = b.to_numpy().T
-            c = c.to_numpy().T
-            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
-        else:
-            if sigma is None:
-                sigma = np.logspace(-1, 1, r)
-            elif isinstance(sigma, int):
-                np.random.seed(sigma)
-                sigma = np.abs(np.random.randn(r))
-            if b is None:
-                b = np.ones((fom.input_dim, r))
-            elif isinstance(b, int):
-                np.random.seed(b)
-                b = np.random.randn(fom.input_dim, r)
-            if c is None:
-                c = np.ones((fom.output_dim, r))
-            elif isinstance(c, int):
-                np.random.seed(c)
-                c = np.random.randn(fom.output_dim, r)
+        sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
+        self._store_sigma_b_c(sigma, b, c)
+        self._check_common_args(tol, maxit, num_prev, conv_crit)
 
         self.logger.info('Starting TF-IRKA')
-        self.conv_crit = []
-        self.sigmas = [np.array(sigma)]
-        self.R = [b]
-        self.L = [c]
-        interp_reductor = TFBHIReductor(fom, mu=self.mu)
-        # main loop
+        self._conv_data = (num_prev + 1) * [None]
+        if conv_crit == 'sigma':
+            self._conv_data[0] = sigma
+        interp_reductor = TFBHIReductor(self.fom, mu=self.mu)
         for it in range(maxit):
-            # interpolatory reduced order model
             rom = interp_reductor.reduce(sigma, b, c)
-
-            # new interpolation points and tangential directions
-            poles, b, c = _poles_and_tangential_directions(rom)
-            b = b.to_numpy().T
-            c = c.to_numpy().T
-            sigma = np.abs(poles.real) + poles.imag * 1j if force_sigma_in_rhp else -poles
-            self.sigmas.append(sigma)
-            self.R.append(b)
-            self.L.append(c)
-
-            # compute convergence criterion
-            if conv_crit == 'sigma':
-                dist = _convergence_criterion(self.sigmas[:-num_prev-2:-1], conv_crit)
-                self.conv_crit.append(dist)
-            elif conv_crit == 'h2':
-                if it == 0:
-                    rom_list = (num_prev + 1) * [None]
-                    rom_list[0] = rom
-                    self.conv_crit.append(np.inf)
-                else:
-                    rom_list[1:] = rom_list[:-1]
-                    rom_list[0] = rom
-                    dist = _convergence_criterion(rom_list, conv_crit)
-                    self.conv_crit.append(dist)
-
-            # report convergence
-            self.logger.info(f'Convergence criterion in iteration {it + 1}: {self.conv_crit[-1]:e}')
-
-            # check if convergence criterion is satisfied
+            sigma, b, c = self._rom_to_sigma_b_c(rom, force_sigma_in_rhp)
+            self._store_sigma_b_c(sigma, b, c)
+            self._update_conv_data(sigma, rom, conv_crit)
+            self._compute_conv_crit(rom, conv_crit, it)
+            self._compute_error(rom, it, compute_errors)
             if self.conv_crit[-1] < tol:
                 break
 
-        # final reduced order model
-        rom = interp_reductor.reduce(sigma, b, c)
         return rom
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        raise TypeError(f'The reconstruct method is not available for {self.__class__.__name__}.')
+        raise TypeError(
+            f'The reconstruct method is not available for {self.__class__.__name__}.'
+        )
 
 
-def _poles_and_tangential_directions(rom):
-    """Compute the poles and tangential directions of a reduced order model."""
+def _lti_to_poles_b_c(rom):
+    """Compute poles and residues.
+
+    Parameters
+    ----------
+    rom
+        Reduced |LTIModel| (consisting of |NumpyMatrixOperators|).
+
+    Returns
+    -------
+    poles
+        1D |NumPy array| of poles.
+    b
+        |VectorArray| from `rom.B.source`.
+    c
+        |VectorArray| from `rom.C.range`.
+    """
+    A = to_matrix(rom.A, format='dense')
+    B = to_matrix(rom.B, format='dense')
+    C = to_matrix(rom.C, format='dense')
     if isinstance(rom.E, IdentityOperator):
-        poles, Y, X = spla.eig(to_matrix(rom.A, format='dense'),
-                               left=True, right=True)
+        poles, X = spla.eig(A)
+        EX = X
     else:
-        poles, Y, X = spla.eig(to_matrix(rom.A, format='dense'), to_matrix(rom.E, format='dense'),
-                               left=True, right=True)
-    Y = rom.B.range.make_array(Y.conj().T)
-    X = rom.C.source.make_array(X.T)
-    b = rom.B.apply_adjoint(Y)
-    c = rom.C.apply(X)
+        E = to_matrix(rom.E, format='dense')
+        poles, X = spla.eig(A, E)
+        EX = E @ X
+    b = rom.B.source.from_numpy(spla.solve(EX, B))
+    c = rom.C.range.from_numpy((C @ X).T)
     return poles, b, c
 
 
-def _convergence_criterion(data, conv_crit):
-    """Compute the convergence criterion for given data."""
-    if conv_crit == 'sigma':
-        sigma = data[0]
-        dist_list = [spla.norm((sigma_old - sigma) / sigma_old, ord=np.inf)
-                     for sigma_old in data[1:] if sigma_old is not None]
-        return min(dist_list)
-    elif conv_crit == 'h2':
-        rom = data[0]
-        if np.max(rom.poles().real) >= 0:
-            return np.inf
-        dist_list = [np.inf]
-        for rom_old in data[1:]:
-            if rom_old is not None and np.max(rom_old.poles().real) < 0:
-                rom_diff = rom_old - rom
-                dist_list.append(rom_diff.h2_norm() / rom_old.h2_norm())
-        return min(dist_list)
+def _poles_b_c_to_lti(poles, b, c):
+    r"""Create an |LTIModel| from poles and residue rank-1 factors.
+
+    Returns an |LTIModel| with real matrices such that its transfer
+    function is
+
+    .. math::
+        \sum_{i = 1}^r \frac{c_i b_i^T}{s - \lambda_i}
+
+    where :math:`\lambda_i, b_i, c_i` are the poles and residue rank-1
+    factors.
+
+    Parameters
+    ----------
+    poles
+        Sequence of poles.
+    b
+        |VectorArray| of right residue rank-1 factors.
+    c
+        |VectorArray| of left residue rank-1 factors.
+
+    Returns
+    -------
+    |LTIModel|.
+    """
+    A, B, C = [], [], []
+    for i, pole in enumerate(poles):
+        if pole.imag == 0:
+            A.append(pole.real)
+            B.append(b[i].to_numpy().real)
+            C.append(c[i].to_numpy().real.T)
+        elif pole.imag > 0:
+            A.append([[pole.real, pole.imag],
+                      [-pole.imag, pole.real]])
+            bi = b[i].to_numpy()
+            B.append(np.vstack([2 * bi.real, -2 * bi.imag]))
+            ci = c[i].to_numpy()
+            C.append(np.hstack([ci.real.T, ci.imag.T]))
+    A = spla.block_diag(*A)
+    B = np.vstack(B)
+    C = np.hstack(C)
+    return LTIModel.from_matrices(A, B, C)

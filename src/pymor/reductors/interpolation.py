@@ -3,25 +3,42 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import scipy.linalg as spla
 
-from pymor.algorithms.arnoldi import arnoldi
+from pymor.algorithms.krylov import rational_arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.interfaces import BasicInterface
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
-from pymor.reductors.basic import ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor, DelayLTIPGReductor
+from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
+                                   DelayLTIPGReductor)
 
 
 class GenericBHIReductor(BasicInterface):
     r"""Generic bitangential Hermite interpolation reductor.
 
     This is a generic reductor for reducing any linear
-    :class:`~pymor.models.iosys.InputStateOutputModel` with the transfer function which can be
-    written in the generalized coprime factorization :math:`\mathcal{C}(s) \mathcal{K}(s)^{-1}
-    \mathcal{B}(s)` as in [BG09]_.
-    The interpolation here is limited to only up to the first derivative.
-    Hence, interpolation points are assumed to be pairwise distinct.
+    :class:`~pymor.models.iosys.InputStateOutputModel` with the transfer
+    function which can be written in the generalized coprime
+    factorization :math:`H(s) = \mathcal{C}(s) \mathcal{K}(s)^{-1}
+    \mathcal{B}(s)` as in [BG09]_. The interpolation here is limited to
+    only up to the first derivative. Interpolation points are assumed to
+    be pairwise distinct.
+
+    In particular, given interpolation points :math:`\sigma_i`, right
+    tangential directions :math:`b_i`, and left tangential directions
+    :math:`c_i`, for :math:`i = 1, 2, \ldots, r`, which are closed under
+    conjugation (if :math:`\sigma_i` is real, then so are :math:`b_i`
+    and :math:`c_i`; if :math:`\sigma_i` is complex, there is
+    :math:`\sigma_j` such that :math:`\sigma_j = \overline{\sigma_i}`,
+    :math:`b_j = \overline{b_i}`, :math:`c_j = \overline{c_i}`), this
+    reductor finds a transfer function :math:`\widehat{H}` such that
+
+    .. math::
+        H(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i, \\
+        c_i^T H(\sigma_i) & = c_i^T \widehat{H}(\sigma_i) b_i, \\
+        c_i^T H'(\sigma_i) b_i & = c_i^T \widehat{H}'(\sigma_i) b_i,
+
+    for all :math:`i = 1, 2, \ldots, r`.
 
     Parameters
     ----------
@@ -62,17 +79,21 @@ class GenericBHIReductor(BasicInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of length `r`.
+            Interpolation points (closed under conjugation), sequence of
+            length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r` from `self.fom.input_space`.
+            Right tangential directions, |VectorArray| of length `r`
+            from `self.fom.input_space`.
         c
-            Left tangential directions, |VectorArray| of length `r` from `self.fom.output_space`.
+            Left tangential directions, |VectorArray| of length `r` from
+            `self.fom.output_space`.
         projection
             Projection method:
 
-            - `'orth'`: projection matrices are orthogonalized with respect to the Euclidean inner
-              product
-            - `'biorth'`: projection matrices are biorthogolized with respect to the E product
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogolized with
+              respect to the E product
 
         Returns
         -------
@@ -85,14 +106,8 @@ class GenericBHIReductor(BasicInterface):
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
-        if b.dim > 1:
-            b.scal(1 / b.l2_norm())
-        else:
-            b = self.fom.input_space.ones(r)
-        if c.dim > 1:
-            c.scal(1 / c.l2_norm())
-        else:
-            c = self.fom.output_space.ones(r)
+        b = b * (1 / b.l2_norm()) if b.dim > 1 else self.fom.input_space.ones(r)
+        c = c * (1 / c.l2_norm()) if c.dim > 1 else self.fom.output_space.ones(r)
 
         # compute projection matrices
         self.V = self.fom.solution_space.empty(reserve=r)
@@ -115,13 +130,14 @@ class GenericBHIReductor(BasicInterface):
                 self.W.append(w.real)
                 self.W.append(w.imag)
         if projection == 'orth':
-            self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.W = gram_schmidt(self.W, atol=0, rtol=0)
+            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
+            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self._product)
+            gram_schmidt_biorth(self.V, self.W, product=self._product, copy=False)
 
         # find reduced-order model
-        self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V, projection == 'biorth')
+        self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V,
+                                             projection == 'biorth')
         rom = self._pg_reductor.reduce()
         return rom
 
@@ -164,9 +180,11 @@ class LTIBHIReductor(GenericBHIReductor):
 
     def _fom_assemble(self):
         if self.fom.parametric:
-            return self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                     for op in ['A', 'B', 'C', 'D', 'E']},
-                                  parameter_space=None)
+            return self.fom.with_(
+                **{op: getattr(self.fom, op).assemble(mu=self.mu)
+                   for op in ['A', 'B', 'C', 'D', 'E']},
+                parameter_space=None,
+            )
         return self.fom
 
     def reduce(self, sigma, b, c, projection='orth'):
@@ -175,19 +193,24 @@ class LTIBHIReductor(GenericBHIReductor):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of length `r`.
+            Interpolation points (closed under conjugation), sequence of
+            length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r` from `self.fom.input_space`.
+            Right tangential directions, |VectorArray| of length `r`
+            from `self.fom.input_space`.
         c
-            Left tangential directions, |VectorArray| of length `r` from `self.fom.output_space`.
+            Left tangential directions, |VectorArray| of length `r` from
+            `self.fom.output_space`.
         projection
             Projection method:
 
-            - `'orth'`: projection matrices are orthogonalized with respect to the Euclidean inner
-              product
-            - `'biorth'`: projection matrices are biorthogolized with respect to the E product
-            - `'arnoldi'`: projection matrices are orthogonalized using the Arnoldi process
-              (available only for SISO systems).
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogolized with
+              respect to the E product
+            - `'arnoldi'`: projection matrices are orthogonalized using
+              the rational Arnoldi process (available only for SISO
+              systems).
 
         Returns
         -------
@@ -203,8 +226,8 @@ class LTIBHIReductor(GenericBHIReductor):
         assert c in self.fom.C.range and len(c) == r
 
         # compute projection matrices
-        self.V = arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma)
-        self.W = arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True)
+        self.V = rational_arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma)
+        self.W = rational_arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True)
 
         # find reduced-order model
         self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V)
@@ -248,9 +271,11 @@ class SOBHIReductor(GenericBHIReductor):
 
     def _fom_assemble(self):
         if self.fom.parametric:
-            return self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                     for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv', 'D']},
-                                  parameter_space=None)
+            return self.fom.with_(
+                **{op: getattr(self.fom, op).assemble(mu=self.mu)
+                   for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv', 'D']},
+                parameter_space=None,
+            )
         return self.fom
 
 
@@ -279,21 +304,27 @@ class DelayBHIReductor(GenericBHIReductor):
         return self.fom.C.apply_adjoint(V, mu=self.mu)
 
     def _K_apply_inverse(self, s, V):
-        Ks = LincombOperator((self.fom.E, self.fom.A) + self.fom.Ad,
-                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau))
+        Ks = LincombOperator(
+            (self.fom.E, self.fom.A) + self.fom.Ad,
+            (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau),
+        )
         return Ks.apply_inverse(V, mu=self.mu)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        Ks = LincombOperator((self.fom.E, self.fom.A) + self.fom.Ad,
-                             (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau))
+        Ks = LincombOperator(
+            (self.fom.E, self.fom.A) + self.fom.Ad,
+            (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau),
+        )
         return Ks.apply_inverse_adjoint(V, mu=self.mu)
 
     def _fom_assemble(self):
         if self.fom.parametric:
-            return self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                     for op in ['A', 'B', 'C', 'D', 'E']},
-                                  Ad=tuple(op.assemble(mu=self.mu) for op in self.fom.Ad),
-                                  parameter_space=None)
+            return self.fom.with_(
+                **{op: getattr(self.fom, op).assemble(mu=self.mu)
+                   for op in ['A', 'B', 'C', 'D', 'E']},
+                Ad=tuple(op.assemble(mu=self.mu) for op in self.fom.Ad),
+                parameter_space=None,
+            )
         return self.fom
 
 
@@ -319,38 +350,37 @@ class TFBHIReductor(BasicInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of length `r`.
+            Interpolation points (closed under conjugation), sequence of
+            length `r`.
         b
-            Right tangential directions, |NumPy array| of shape `(fom.input_dim, r)`.
+            Right tangential directions, |VectorArray| from
+            `fom.input_space` of length `r`.
         c
-            Left tangential directions, |NumPy array| of shape `(fom.output_dim, r)`.
+            Left tangential directions, |VectorArray| from
+            `fom.output_space` of length `r`.
 
         Returns
         -------
         lti
-            The reduced-order |LTIModel| interpolating the transfer function of `fom`.
+            The reduced-order |LTIModel| interpolating the transfer
+            function of `fom`.
         """
         r = len(sigma)
-        assert isinstance(b, np.ndarray) and b.shape == (self.fom.input_dim, r)
-        assert isinstance(c, np.ndarray) and c.shape == (self.fom.output_dim, r)
+        assert b in self.fom.input_space and len(b) == r
+        assert c in self.fom.output_space and len(c) == r
 
         # rescale tangential directions (to avoid overflow or underflow)
-        if b.shape[0] > 1:
-            for i in range(r):
-                b[:, i] /= spla.norm(b[:, i])
-        else:
-            b = np.ones((1, r))
-        if c.shape[0] > 1:
-            for i in range(r):
-                c[:, i] /= spla.norm(c[:, i])
-        else:
-            c = np.ones((1, r))
+        b = b * (1 / b.l2_norm()) if b.dim > 1 else self.fom.input_space.ones(r)
+        c = c * (1 / c.l2_norm()) if c.dim > 1 else self.fom.output_space.ones(r)
+
+        b = b.to_numpy()
+        c = c.to_numpy()
 
         # matrices of the interpolatory LTI system
-        Er = np.empty((r, r), dtype=complex)
-        Ar = np.empty((r, r), dtype=complex)
-        Br = np.empty((r, self.fom.input_dim), dtype=complex)
-        Cr = np.empty((self.fom.output_dim, r), dtype=complex)
+        Er = np.empty((r, r), dtype=np.complex_)
+        Ar = np.empty((r, r), dtype=np.complex_)
+        Br = np.empty((r, self.fom.input_dim), dtype=np.complex_)
+        Cr = np.empty((self.fom.output_dim, r), dtype=np.complex_)
 
         Hs = [self.fom.eval_tf(s, mu=self.mu) for s in sigma]
         dHs = [self.fom.eval_dtf(s, mu=self.mu) for s in sigma]
@@ -358,33 +388,33 @@ class TFBHIReductor(BasicInterface):
         for i in range(r):
             for j in range(r):
                 if i != j:
-                    Er[i, j] = -c[:, i].dot((Hs[i] - Hs[j]).dot(b[:, j])) / (sigma[i] - sigma[j])
-                    Ar[i, j] = -c[:, i].dot((sigma[i] * Hs[i] - sigma[j] * Hs[j])).dot(b[:, j]) / (sigma[i] - sigma[j])
+                    Er[i, j] = -c[i] @ (Hs[i] - Hs[j]) @ b[j] / (sigma[i] - sigma[j])
+                    Ar[i, j] = (-c[i] @ (sigma[i] * Hs[i] - sigma[j] * Hs[j]) @ b[j]
+                                / (sigma[i] - sigma[j]))
                 else:
-                    Er[i, i] = -c[:, i].dot(dHs[i].dot(b[:, i]))
-                    Ar[i, i] = -c[:, i].dot((Hs[i] + sigma[i] * dHs[i]).dot(b[:, i]))
-            Br[i, :] = Hs[i].T.dot(c[:, i])
-            Cr[:, i] = Hs[i].dot(b[:, i])
+                    Er[i, i] = -c[i] @ dHs[i] @ b[i]
+                    Ar[i, i] = -c[i] @ (Hs[i] + sigma[i] * dHs[i]) @ b[i]
+            Br[i, :] = Hs[i].T @ c[i]
+            Cr[:, i] = Hs[i] @ b[i]
 
         # transform the system to have real matrices
-        T = np.zeros((r, r), dtype=complex)
+        T = np.zeros((r, r), dtype=np.complex_)
         for i in range(r):
             if sigma[i].imag == 0:
                 T[i, i] = 1
             else:
-                indices = np.nonzero(np.isclose(sigma[i + 1:], sigma[i].conjugate()))[0]
-                if len(indices) > 0:
-                    j = i + 1 + indices[0]
+                j = np.argmin(np.abs(sigma - sigma[i].conjugate()))
+                if i < j:
                     T[i, i] = 1
                     T[i, j] = 1
                     T[j, i] = -1j
                     T[j, j] = 1j
-        Er = (T.dot(Er).dot(T.conj().T)).real
-        Ar = (T.dot(Ar).dot(T.conj().T)).real
-        Br = (T.dot(Br)).real
-        Cr = (Cr.dot(T.conj().T)).real
+        Er = (T @ Er @ T.conj().T).real
+        Ar = (T @ Ar @ T.conj().T).real
+        Br = (T @ Br).real
+        Cr = (Cr @ T.conj().T).real
 
-        return LTIModel.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=self.fom.cont_time)
+        return LTIModel.from_matrices(Ar, Br, Cr, None, Er, cont_time=self.fom.cont_time)
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""

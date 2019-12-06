@@ -80,10 +80,10 @@ class GenericSOBTpvReductor(BasicInterface):
             self.V.scal(alpha)
             self.W.scal(alpha)
         elif projection == 'bfsr':
-            self.V = gram_schmidt(self.V, atol=0, rtol=0)
-            self.W = gram_schmidt(self.W, atol=0, rtol=0)
+            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
+            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
-            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.fom.M)
+            gram_schmidt_biorth(self.V, self.W, product=self.fom.M, copy=False)
 
         # find the reduced model
         if self.fom.parametric:
@@ -263,9 +263,9 @@ class SOBTfvReductor(BasicInterface):
             alpha = 1 / np.sqrt(sp[:r])
             self.V.scal(alpha)
         elif projection == 'bfsr':
-            self.V = gram_schmidt(self.V, atol=0, rtol=0)
+            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
-            self.V = gram_schmidt(self.V, product=self.fom.M, atol=0, rtol=0)
+            gram_schmidt(self.V, product=self.fom.M, atol=0, rtol=0, copy=False)
         self.W = self.V
 
         # find the reduced model
@@ -360,15 +360,15 @@ class SOBTReductor(BasicInterface):
             W1TV1invW1TV2 = self.W1.inner(self.V2)
             projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
         elif projection == 'bfsr':
-            self.V1 = gram_schmidt(self.V1, atol=0, rtol=0)
-            self.W1 = gram_schmidt(self.W1, atol=0, rtol=0)
-            self.V2 = gram_schmidt(self.V2, atol=0, rtol=0)
-            self.W2 = gram_schmidt(self.W2, atol=0, rtol=0)
+            gram_schmidt(self.V1, atol=0, rtol=0, copy=False)
+            gram_schmidt(self.W1, atol=0, rtol=0, copy=False)
+            gram_schmidt(self.V2, atol=0, rtol=0, copy=False)
+            gram_schmidt(self.W2, atol=0, rtol=0, copy=False)
             W1TV1invW1TV2 = spla.solve(self.W1.inner(self.V1), self.W1.inner(self.V2))
             projected_ops = {'M': project(self.fom.M, range_basis=self.W2, source_basis=self.V2)}
         elif projection == 'biorth':
-            self.V1, self.W1 = gram_schmidt_biorth(self.V1, self.W1)
-            self.V2, self.W2 = gram_schmidt_biorth(self.V2, self.W2, product=self.fom.M)
+            gram_schmidt_biorth(self.V1, self.W1, copy=False)
+            gram_schmidt_biorth(self.V2, self.W2, product=self.fom.M, copy=False)
             W1TV1invW1TV2 = self.W1.inner(self.V2)
             projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
 
