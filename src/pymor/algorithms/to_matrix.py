@@ -10,7 +10,8 @@ import scipy.sparse.linalg as spsla
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import (AdjointOperator, ComponentProjection, Concatenation, IdentityOperator,
-                                           LincombOperator, VectorArrayOperator, ZeroOperator)
+                                           LincombOperator, LowRankOperator, LowRankUpdatedOperator,
+                                           VectorArrayOperator, ZeroOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
@@ -138,6 +139,21 @@ class ToMatrixRules(RuleTable):
         for i in range(1, len(op.operators)):
             res = res + op_coefficients[i] * self.apply(op.operators[i])
         return res
+
+    @match_class(LowRankOperator)
+    def action_LowRankOperator(self, op):
+        format = self.format
+        if not op.inverted:
+            res = op.left.to_numpy().T @ op.core @ op.right.to_numpy()
+        else:
+            res = op.left.to_numpy().T @ spla.solve(op.core, op.right.to_numpy())
+        if format is not None and format != 'dense':
+            res = getattr(sps, format + '_matrix')(res)
+        return res
+
+    @match_class(LowRankUpdatedOperator)
+    def action_LowRankUpdatedOperator(self, op):
+        return op.coeff * self.apply(op.operator) + op.lr_coeff * self.apply(op.lr_operator)
 
     @match_class(VectorArrayOperator)
     def action_VectorArrayOperator(self, op):
