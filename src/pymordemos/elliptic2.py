@@ -23,7 +23,7 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.discretizers.fv import discretize_stationary_fv
 from pymor.domaindescriptions.basic import RectDomain
-from pymor.functions.basic import ExpressionFunction, LincombFunction
+from pymor.functions.basic import ExpressionFunction, LincombFunction, ConstantFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 
@@ -34,17 +34,46 @@ def elliptic2_demo(args):
     args['N'] = int(args['N'])
 
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
-            ExpressionFunction('(x[..., 0] - 0.5)**2 * 1000', 2, ())]
-    rhs = rhss[args['PROBLEM-NUMBER']]
+              LincombFunction(
+              [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1.,2)],
+              [ProjectionParameterFunctional('mu', 0), ExpressionParameterFunctional('0.1', {})])]
 
+    dirichlets = [ExpressionFunction('zeros(x.shape[:-1])', 2, ()),
+                  LincombFunction(
+                  [ExpressionFunction('2 * x[..., 0]', 2, ()), ConstantFunction(1.,2)],
+                  [ProjectionParameterFunctional('mu', 0), ExpressionParameterFunctional('0.5', {})])]
+
+    neumanns = [None,
+                  LincombFunction(
+                  [ExpressionFunction('1 - x[..., 1]', 2, ()), ConstantFunction(1.,2)],
+                  [ProjectionParameterFunctional('mu', 0), ExpressionParameterFunctional('0.5**2', {})])]
+
+    robins = [None,
+                (LincombFunction(
+                [ExpressionFunction('x[..., 1]', 2, ()), ConstantFunction(1.,2)],
+                [ProjectionParameterFunctional('mu', 0), ExpressionParameterFunctional('1', {})]),
+                 ConstantFunction(1.,2))]
+
+    domains = [RectDomain(),
+               RectDomain(right='neumann', top='dirichlet', bottom='robin')]
+
+    rhs = rhss[args['PROBLEM-NUMBER']]
+    dirichlet = dirichlets[args['PROBLEM-NUMBER']]
+    neumann = neumanns[args['PROBLEM-NUMBER']]
+    domain = domains[args['PROBLEM-NUMBER']]
+    robin = robins[args['PROBLEM-NUMBER']]
+    
     problem = StationaryProblem(
         domain=RectDomain(),
         rhs=rhs,
         diffusion=LincombFunction(
             [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],
-            [ProjectionParameterFunctional('diffusionl', 0), ExpressionParameterFunctional('1', {})]
+            [ProjectionParameterFunctional('mu', 0), ExpressionParameterFunctional('1', {})]
         ),
-        parameter_space=CubicParameterSpace({'diffusionl': 0}, 0.1, 1),
+        dirichlet_data=dirichlet,
+        neumann_data=neumann,
+        robin_data=robin,
+        parameter_space=CubicParameterSpace({'mu': 0}, 0.1, 1),
         name='2DProblem'
     )
 
@@ -58,7 +87,7 @@ def elliptic2_demo(args):
     U = m.solution_space.empty()
     for mu in m.parameter_space.sample_uniformly(10):
         U.append(m.solve(mu))
-    m.visualize(U, title='Solution for diffusionl in [0.1, 1]')
+    m.visualize(U, title='Solution for mu in [0.1, 1]')
 
 
 if __name__ == '__main__':
