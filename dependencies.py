@@ -5,6 +5,7 @@
 
 _PYTEST = 'pytest>=3.3'
 
+
 def _pymess(rev, major, minor, marker=True):
     url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
     # tmp workaround till next release
@@ -13,6 +14,7 @@ def _pymess(rev, major, minor, marker=True):
     if marker:
         return '{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'.format(url=url, major=major, minor=minor)
     return url
+
 
 tests_require = [_PYTEST, 'pytest-cov', 'envparse', 'docker']
 install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'Qt.py', 'packaging']
@@ -29,7 +31,8 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.5', 'cython', 'numpy']
 travis_requires = ['pytest-cov', 'check-manifest', 'pytest-travis-fold',
-                   'readme_renderer[md]', 'rstcheck', 'codecov', 'twine']
+                   'readme_renderer[md]', 'rstcheck', 'codecov', 'twine',
+                   'pyparsing<2.4']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
                 'pytest-instafail': 'pytest_instafail',
@@ -42,8 +45,8 @@ import_names = {'ipython': 'IPython',
                 _pymess('1.0.0', 3, 7, False): 'pymess',
                 'pyopengl': 'OpenGL'}
 # Slycot is pinned due to buildsystem changes + missing wheels
-optional_requirements_file_only = [_pymess('1.0.0', 3, 5),_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7),
-                    'slycot==0.3.3', 'mpi4py']
+optional_requirements_file_only = [_pymess('1.0.0', 3, 5), _pymess('1.0.0', 3, 6), _pymess('1.0.0', 3, 7),
+                                   'slycot==0.3.3', 'mpi4py']
 
 
 def strip_markers(name):
