@@ -66,7 +66,7 @@ def hapod_demo(args):
         U.append(m.solve(mu))
 
     tic = time()
-    pod_modes = pod(U, l2_err=tol * np.sqrt(len(U)), product=m.l2_product, check=False)[0]
+    pod_modes = pod(U, l2_err=tol * np.sqrt(len(U)), product=m.l2_product)[0]
     pod_time = time() - tic
 
     tic = time()
