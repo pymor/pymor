@@ -9,6 +9,7 @@ from itertools import chain
 from numbers import Number
 
 import numpy as np
+import scipy.linalg as spla
 
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
@@ -161,7 +162,7 @@ class LincombOperator(OperatorBase):
                 raise NotImplementedError
         derivative_coefficients = []
         for coef in self.coefficients:
-            if isinstance(coef,Parametric):
+            if isinstance(coef, Parametric):
                 derivative_coefficients.append(coef.d_mu(component, index))
             else:
                 derivative_coefficients.append(0.)
@@ -350,6 +351,156 @@ class Concatenation(OperatorBase):
             operators = (other,) + self.operators
 
         return Concatenation(operators, solver_options=other.solver_options)
+
+
+class LowRankOperator(OperatorBase):
+    """Non-parametric low-rank operator.
+
+    Represents an operator of the form :math:`L C R^H` or
+    :math:`L C^{-1} R^H` where :math:`L` and :math:`R` are
+    |VectorArrays| of column vectors and :math:`C` a 2D |NumPy array|.
+
+    Parameters
+    ----------
+    left
+        |VectorArray| representing :math:`L`.
+    core
+        |NumPy array| representing :math:`C`.
+    right
+        |VectorArray| representing :math:`R`.
+    inverted
+        Whether :math:`C` is inverted.
+    solver_options
+        The |solver_options| for the operator.
+    name
+        Name of the operator.
+    """
+
+    linear = True
+
+    def __init__(self, left, core, right, inverted=False, solver_options=None, name=None):
+        assert isinstance(left, VectorArrayInterface)
+        assert isinstance(right, VectorArrayInterface)
+        assert len(left) == len(right)
+        assert (isinstance(core, np.ndarray)
+                and core.ndim == 2
+                and core.shape[0] == core.shape[1] == len(left))
+
+        self.__auto_init(locals())
+        self.source = right.space
+        self.range = left.space
+
+    @property
+    def H(self):
+        options = {
+            'inverse': self.solver_options.get('inverse_adjoint'),
+            'inverse_adjoint': self.solver_options.get('inverse'),
+        } if self.solver_options else None
+        return type(self)(self.right,
+                          self.core.T.conj(),
+                          self.left,
+                          inverted=self.inverted,
+                          solver_options=options,
+                          name=self.name + '_adjoint')
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        V = self.right.dot(U)
+        if self.inverted:
+            V = spla.solve(self.core, V)
+        else:
+            V = self.core @ V
+        return self.left.lincomb(V.T)
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        U = self.left.dot(V)
+        if self.inverted:
+            U = spla.solve(self.core.T.conj(), U)
+        else:
+            U = self.core.T.conj() @ U
+        return self.right.lincomb(U.T)
+
+
+class LowRankUpdatedOperator(LincombOperator):
+    r"""|Operator| plus :class:`LowRankOperator`.
+
+    Represents a linear combination of an |Operator| and
+    :class:`LowRankOperator`. Uses the Sherman-Morrison-Woodbury formula
+    in `apply_inverse` and `apply_inverse_adjoint`:
+
+    .. math::
+        \left(\alpha A + \beta L C R^H \right)^{-1}
+        & = \alpha^{-1} A^{-1}
+            - \alpha^{-1} \beta A^{-1} L C
+            \left(\alpha C + \beta C R^H A^{-1} L C \right)^{-1}
+            C R^H A^{-1}, \\
+        \left(\alpha A + \beta L C^{-1} R^H \right)^{-1}
+        & = \alpha^{-1} A^{-1}
+            - \alpha^{-1} \beta A^{-1} L
+            \left(\alpha C + \beta R^H A^{-1} L \right)^{-1}
+            R^H A^{-1}.
+
+    Parameters
+    ----------
+    operator
+        |Operator|.
+    lr_operator
+        :class:`LowRankOperator`.
+    coeff
+        A linear coefficient for `operator`. Can either be a fixed
+        number or a |ParameterFunctional|.
+    lr_coeff
+        A linear coefficient for `lr_operator`. Can either be a fixed
+        number or a |ParameterFunctional|.
+    solver_options
+        The |solver_options| for the operator.
+    name
+        Name of the operator.
+    """
+
+    def __init__(self, operator, lr_operator, coeff, lr_coeff,
+                 solver_options=None, name=None):
+        assert isinstance(lr_operator, LowRankOperator)
+        super().__init__([operator, lr_operator], [coeff, lr_coeff],
+                         solver_options=solver_options, name=name)
+        self.__auto_init(locals())
+
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        if least_squares:
+            return super().apply_inverse(V, mu=mu, least_squares=True)
+        A, LR = self.operators
+        L, C, R = LR.left, LR.core, LR.right
+        if not LR.inverted:
+            L = L.lincomb(C.T)
+            R = R.lincomb(C.conj())
+        alpha, beta = self.evaluate_coefficients(mu)
+        AinvV = A.apply_inverse(V)
+        AinvL = A.apply_inverse(L)
+        mat = alpha * C + beta * R.dot(AinvL)
+        RhAinvV = R.dot(AinvV)
+        U = AinvV
+        U.axpy(-beta, AinvL.lincomb(spla.solve(mat, RhAinvV).T))
+        U.scal(1 / alpha)
+        return U
+
+    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+        if least_squares:
+            return super().apply_inverse_adjoint(U, mu=mu, least_squares=True)
+        A, LR = self.operators
+        L, C, R = LR.left, LR.core, LR.right
+        if not LR.inverted:
+            L = L.lincomb(C.T)
+            R = R.lincomb(C.conj())
+        alpha, beta = (c.conjugate() for c in self.evaluate_coefficients(mu))
+        AinvhU = A.apply_inverse_adjoint(U)
+        AinvhR = A.apply_inverse_adjoint(R)
+        mat = alpha * C.T.conj() + beta * L.dot(AinvhR)
+        LhAinvhU = L.dot(AinvhU)
+        V = AinvhU
+        V.axpy(-beta, AinvhR.lincomb(spla.solve(mat, LhAinvhU).T))
+        V.scal(1 / alpha)
+        return V
 
 
 class ComponentProjection(OperatorBase):
