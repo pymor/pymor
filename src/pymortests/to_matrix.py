@@ -8,8 +8,8 @@ import scipy.sparse as sps
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
-from pymor.operators.constructions import (AdjointOperator, ComponentProjection, IdentityOperator, VectorArrayOperator,
-                                           ZeroOperator)
+from pymor.operators.constructions import (AdjointOperator, ComponentProjection, IdentityOperator, LowRankOperator,
+                                           LowRankUpdatedOperator, VectorArrayOperator, ZeroOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -198,6 +198,42 @@ def test_to_matrix_LincombOperator():
     Bop = NumpyMatrixOperator(sps.csc_matrix(B))
     Cop = Aop * a + (Bop @ Bop.H) * b
     assert_type_and_allclose(C, Cop, 'sparse')
+
+
+def test_to_matrix_LowRankOperator():
+    np.random.seed(0)
+    m = 6
+    n = 5
+    r = 2
+    L = np.random.randn(m, r)
+    Lva = NumpyVectorSpace.make_array(L.T)
+    C = np.random.randn(r, r)
+    R = np.random.randn(n, r)
+    Rva = NumpyVectorSpace.make_array(R.T)
+
+    LR = LowRankOperator(Lva, C, Rva)
+    assert_type_and_allclose(L @ C @ R.T, LR, 'dense')
+
+    LR = LowRankOperator(Lva, C, Rva, inverted=True)
+    assert_type_and_allclose(L @ spla.solve(C, R.T), LR, 'dense')
+
+
+def test_to_matrix_LowRankUpdatedOperator():
+    np.random.seed(0)
+    m = 6
+    n = 5
+    r = 2
+    A = np.random.randn(m, n)
+    Aop = NumpyMatrixOperator(A)
+    L = np.random.randn(m, r)
+    Lva = NumpyVectorSpace.make_array(L.T)
+    C = np.random.randn(r, r)
+    R = np.random.randn(n, r)
+    Rva = NumpyVectorSpace.make_array(R.T)
+    LR = LowRankOperator(Lva, C, Rva)
+
+    op = LowRankUpdatedOperator(Aop, LR, 1, 1)
+    assert_type_and_allclose(A + L @ C @ R.T, op, 'dense')
 
 
 def test_to_matrix_VectorArrayOperator():
