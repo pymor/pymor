@@ -14,7 +14,7 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 @defaults('rtol', 'atol', 'l2_err', 'method', 'orth_tol')
 def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
-        method='method_of_snapshots', orth_tol=np.inf):
+        method='method_of_snapshots', orth_tol=1e-10):
     """Proper orthogonal decomposition of `A`.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix,
