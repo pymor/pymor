@@ -62,7 +62,7 @@ class DistHAPODTree(Tree):
 def default_pod_method(U, eps, is_root_node, product):
     return pod(U, atol=0., rtol=0.,
                l2_err=eps, product=product,
-               orthonormalize=is_root_node, check=False)
+               orth_tol=None if is_root_node else np.inf)
 
 
 def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_method,
