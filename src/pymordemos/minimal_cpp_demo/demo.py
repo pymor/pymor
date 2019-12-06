@@ -58,7 +58,7 @@ for mu in fom.parameter_space.sample_uniformly(2):
     snapshots.append(fom.solve(mu))
 
 # apply POD
-reduced_basis = pod(snapshots, 4)[0]
+reduced_basis = pod(snapshots, modes=4)[0]
 
 # reduce the model
 reductor = InstationaryRBReductor(fom, reduced_basis, check_orthonormality=True)
