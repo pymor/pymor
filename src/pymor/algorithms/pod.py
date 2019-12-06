@@ -2,6 +2,8 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from numbers import Number
+
 import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
@@ -58,6 +60,15 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
     SVALS
         Sequence of singular values.
     """
+
+    if isinstance(product, Number):
+        # old pod signature
+        assert modes is None
+        modes, product = product, None
+        import warnings
+        warnings.warn("pod signature has changed. Provide 'modes' as keyword argument.",
+                      DeprecationWarning, stacklevel=3)
+
     assert isinstance(A, VectorArrayInterface)
     assert product is None or isinstance(product, OperatorInterface)
     assert modes is None or modes <= len(A)
