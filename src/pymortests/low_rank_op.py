@@ -11,20 +11,21 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def test_low_rank_apply():
-    m = 15
-    n = 10
+def construct_operators_and_vectorarrays(m, n, r, k, seed=0):
     space_m = NumpyVectorSpace(m)
     space_n = NumpyVectorSpace(n)
-    rng = np.random.RandomState(0)
-
-    r = 2
+    rng = np.random.RandomState(seed)
+    A = NumpyMatrixOperator(rng.randn(m, n))
     L = space_m.random(r, distribution='normal', random_state=rng)
     C = rng.randn(r, r)
     R = space_n.random(r, distribution='normal', random_state=rng)
-
-    k = 3
     U = space_n.random(k, distribution='normal', random_state=rng)
+    V = space_m.random(k, distribution='normal', random_state=rng)
+    return A, L, C, R, U, V
+
+
+def test_low_rank_apply():
+    _, L, C, R, U, _ = construct_operators_and_vectorarrays(6, 5, 2, 3)
 
     LR = LowRankOperator(L, C, R)
     V = LR.apply(U)
@@ -37,19 +38,7 @@ def test_low_rank_apply():
 
 
 def test_low_rank_apply_adjoint():
-    m = 15
-    n = 10
-    space_m = NumpyVectorSpace(m)
-    space_n = NumpyVectorSpace(n)
-    rng = np.random.RandomState(0)
-
-    r = 2
-    L = space_m.random(r, distribution='normal', random_state=rng)
-    C = rng.randn(r, r)
-    R = space_n.random(r, distribution='normal', random_state=rng)
-
-    k = 3
-    V = space_m.random(k, distribution='normal', random_state=rng)
+    _, L, C, R, _, V = construct_operators_and_vectorarrays(6, 5, 2, 3)
 
     LR = LowRankOperator(L, C, R)
     U = LR.apply_adjoint(V)
@@ -62,20 +51,9 @@ def test_low_rank_apply_adjoint():
 
 
 def test_low_rank_updated_apply_inverse():
-    n = 10
-    space = NumpyVectorSpace(n)
-    rng = np.random.RandomState(0)
-    A = NumpyMatrixOperator(rng.randn(n, n))
+    A, L, C, R, _, V = construct_operators_and_vectorarrays(5, 5, 2, 3)
 
-    r = 2
-    L = space.random(r, distribution='normal', random_state=rng)
-    C = rng.randn(r, r)
-    R = space.random(r, distribution='normal', random_state=rng)
     LR = LowRankOperator(L, C, R)
-
-    k = 3
-    V = space.random(k, distribution='normal', random_state=rng)
-
     op = LowRankUpdatedOperator(A, LR, 1, 1)
     U = op.apply_inverse(V)
     mat = A.matrix + L.to_numpy().T @ C @ R.to_numpy()
@@ -89,20 +67,9 @@ def test_low_rank_updated_apply_inverse():
 
 
 def test_low_rank_updated_apply_inverse_adjoint():
-    n = 10
-    space = NumpyVectorSpace(n)
-    rng = np.random.RandomState(0)
-    A = NumpyMatrixOperator(rng.randn(n, n))
+    A, L, C, R, U, _ = construct_operators_and_vectorarrays(5, 5, 2, 3)
 
-    r = 2
-    L = space.random(r, distribution='normal', random_state=rng)
-    C = rng.randn(r, r)
-    R = space.random(r, distribution='normal', random_state=rng)
     LR = LowRankOperator(L, C, R)
-
-    k = 3
-    U = space.random(k, distribution='normal', random_state=rng)
-
     op = LowRankUpdatedOperator(A, LR, 1, 1)
     V = op.apply_inverse_adjoint(U)
     mat = A.matrix + L.to_numpy().T @ C @ R.to_numpy()
@@ -116,19 +83,9 @@ def test_low_rank_updated_apply_inverse_adjoint():
 
 
 def test_low_rank_assemble():
-    n = 10
-    space = NumpyVectorSpace(n)
-    rng = np.random.RandomState(0)
-
-    r1 = 2
-    L1 = space.random(r1, distribution='normal', random_state=rng)
-    C1 = rng.randn(r1, r1)
-    R1 = space.random(r1, distribution='normal', random_state=rng)
-
-    r2 = 3
-    L2 = space.random(r2, distribution='normal', random_state=rng)
-    C2 = rng.randn(r2, r2)
-    R2 = space.random(r2, distribution='normal', random_state=rng)
+    r1, r2 = 2, 3
+    _, L1, C1, R1, _, _ = construct_operators_and_vectorarrays(5, 5, r1, 0)
+    _, L2, C2, R2, _, _ = construct_operators_and_vectorarrays(5, 5, r2, 0, seed=1)
 
     LR1 = LowRankOperator(L1, C1, R1)
     LR2 = LowRankOperator(L2, C2, R2)
@@ -154,15 +111,7 @@ def test_low_rank_assemble():
 
 
 def test_low_rank_updated_assemble():
-    n = 10
-    space = NumpyVectorSpace(n)
-    rng = np.random.RandomState(0)
-    A = NumpyMatrixOperator(rng.randn(n, n))
-
-    r = 2
-    L = space.random(r, distribution='normal', random_state=rng)
-    C = rng.randn(r, r)
-    R = space.random(r, distribution='normal', random_state=rng)
+    A, L, C, R, _, _ = construct_operators_and_vectorarrays(5, 5, 2, 0)
     LR = LowRankOperator(L, C, R)
 
     op = (A + LR).assemble()
@@ -176,21 +125,11 @@ def test_low_rank_updated_assemble():
 
 
 def test_low_rank_updated_assemble_apply():
-    n = 10
-    space = NumpyVectorSpace(n)
-    rng = np.random.RandomState(0)
-    A = NumpyMatrixOperator(rng.randn(n, n))
+    A, L, C, R, U, _ = construct_operators_and_vectorarrays(5, 5, 2, 3)
 
-    r = 2
-    L = space.random(r, distribution='normal', random_state=rng)
-    C = rng.randn(r, r)
-    R = space.random(r, distribution='normal', random_state=rng)
     LR = LowRankOperator(L, C, R)
-
-    k = 3
-    U = space.random(k, distribution='normal', random_state=rng)
-
     op = (A + (A + LR).assemble() + LR).assemble()
     V = op.apply(U)
     assert np.allclose(V.to_numpy().T,
-                       2 * A.matrix @ U.to_numpy().T + 2 * L.to_numpy().T @ C @ (R.to_numpy() @ U.to_numpy().T))
+                       2 * A.matrix @ U.to_numpy().T
+                       + 2 * L.to_numpy().T @ C @ (R.to_numpy() @ U.to_numpy().T))
