@@ -173,3 +173,24 @@ def test_low_rank_updated_assemble():
 
     op = (A + (A + LR).assemble() + LR).assemble()
     assert isinstance(op, LowRankUpdatedOperator)
+
+
+def test_low_rank_updated_assemble_apply():
+    n = 10
+    space = NumpyVectorSpace(n)
+    rng = np.random.RandomState(0)
+    A = NumpyMatrixOperator(rng.randn(n, n))
+
+    r = 2
+    L = space.random(r, distribution='normal', random_state=rng)
+    C = rng.randn(r, r)
+    R = space.random(r, distribution='normal', random_state=rng)
+    LR = LowRankOperator(L, C, R)
+
+    k = 3
+    U = space.random(k, distribution='normal', random_state=rng)
+
+    op = (A + (A + LR).assemble() + LR).assemble()
+    V = op.apply(U)
+    assert np.allclose(V.to_numpy().T,
+                       2 * A.matrix @ U.to_numpy().T + 2 * L.to_numpy().T @ C @ (R.to_numpy() @ U.to_numpy().T))
