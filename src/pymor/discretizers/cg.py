@@ -217,13 +217,18 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 'h1_0_semi': h1_0_semi_product,
                 'l2_0': l2_0_product}
 
-    # assemble additionals output functionals
+    # assemble additional output functionals
     if p.outputs:
         if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
             raise NotImplementedError
-        outputs = [L2Functional(grid, v[1], dirichlet_clear_dofs=False).H if v[0] == 'l2' else
-                   BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H
-                   for v in p.outputs]
+        def make_functional(v):
+            Functional = L2Functional if v[0] == 'l2' else BoundaryL2Functional
+            if isinstance(v[1], LincombFunction):
+                return LincombOperator([Functional(grid, f, dirichlet_clear_dofs=False).H for f in v[1].functions],
+                                       v[1].coefficients)
+            else:
+                return Functional(grid, v[1], dirichlet_clear_dofs=False).H
+        outputs = [make_functional(v) for v in p.outputs]
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator
             output_functional = BlockColumnOperator(outputs)
