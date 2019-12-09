@@ -83,8 +83,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
         :basis_sizes:               The reduced basis dimensions which have been considered.
 
         :norms:                     |Array| of the norms of the high-dimensional solutions
-                                    w.r.t. all given test |Parameters|, reduced basis
-                                    dimensions and norms in `error_norms`.
+                                    w.r.t. all given test |Parameters| and norms in `error_norms`.
                                     (Only present when `error_norms` has been specified.)
 
         :max_norms:                 Maxima of `norms` over the given test |Parameters|.
