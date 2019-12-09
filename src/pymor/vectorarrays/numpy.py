@@ -312,6 +312,8 @@ class NumpyVectorArray(VectorArrayInterface):
     def __mul__(self, other):
         assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
+        if type(other) is np.ndarray:
+            other = other[:, np.newaxis]
         return NumpyVectorArray(self._array[:self._len] * other, self.space)
 
     def __imul__(self, other):
@@ -544,6 +546,8 @@ class NumpyVectorArrayView(NumpyVectorArray):
     def __mul__(self, other):
         assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
+        if type(other) is np.ndarray:
+            other = other[:, np.newaxis]
         return NumpyVectorArray(self.base._array[self.ind] * other, self.space)
 
     def __imul__(self, other):
