@@ -484,7 +484,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
         if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
@@ -597,7 +597,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
         if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
@@ -717,7 +717,7 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
         SFQ = np.array(tuple(f(q) for f in SF))
         # SFQ(function, quadraturepoint)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
         D = self.advection_function(self.grid.centers(0), mu=mu)
         SF_INTS = - np.einsum('pc,eqi,c,e,ec->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
         del D
@@ -829,7 +829,7 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
         SFQ = np.array(tuple(f(q) for f in SF))
         # SFQ(function, quadraturepoint)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
 
         D = self.advection_function(self.grid.centers(0), mu=mu)
         SF_INTS = - np.einsum('pc,eqic,c,e,ei->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
@@ -887,10 +887,10 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
     grid
         The |Grid| over which to assemble the operator.
     boundary_info
-        |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
+        |BoundaryInfo| defining the Robin boundary.
     robin_data
-        Tuple providing two |Functions| that represent the Robin parameter and boundary
-        value function. If `None`, the resulting operator is zero.
+        Tuple `(c, g)` providing two |Functions| that represent the Robin parameter `c` and boundary
+        value function `g`. If `None`, the resulting operator is zero.
     solver_options
         The |solver_options| for the operator.
     name
