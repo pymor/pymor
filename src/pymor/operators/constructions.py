@@ -133,7 +133,7 @@ class LincombOperator(OperatorBase):
         if op:
             return op
         else:
-            if self.parametric or operators != self.operators:
+            if self.parametric or tuple(operators) != self.operators:
                 return LincombOperator(operators, coefficients, solver_options=self.solver_options,
                                        name=self.name + '_assembled')
             else:

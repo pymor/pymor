@@ -7,12 +7,16 @@ import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.exceptions import InversionError, LinAlgError
-from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseAdjointOperator, LincombOperator
-from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.block import BlockDiagonalOperator
+from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
+                                           LincombOperator)
+from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.algorithms.stuff import MonomOperator
 from pymortests.fixtures.operator import (operator, operator_with_arrays, operator_with_arrays_and_products,
                                           picklable_operator)
@@ -86,6 +90,58 @@ def test_lincomb_adjoint():
     assert np.all(almost_equal(V, VV))
     VVV = op.apply(U, mu=mu).conj()
     assert np.all(almost_equal(V, VVV))
+
+
+def test_identity_lincomb():
+    space = NumpyVectorSpace(10)
+    identity = IdentityOperator(space)
+    ones = space.from_numpy(np.ones(10))
+    idid = (identity + identity)
+    assert almost_equal(ones * 2, idid.apply(ones))
+    assert almost_equal(ones * 2, idid.apply_adjoint(ones))
+    assert almost_equal(ones * 0.5, idid.apply_inverse(ones))
+    assert almost_equal(ones * 0.5, idid.apply_inverse_adjoint(ones))
+
+
+def test_identity_numpy_lincomb():
+    n = 2
+    space = NumpyVectorSpace(n)
+    identity = IdentityOperator(space)
+    numpy_operator = NumpyMatrixOperator(np.ones((n, n)))
+    for alpha in [-1, 0, 1]:
+        for beta in [-1, 0, 1]:
+            idop = alpha * identity + beta * numpy_operator
+            mat1 = alpha * np.eye(n) + beta * np.ones((n, n))
+            mat2 = to_matrix(idop.assemble(), format='dense')
+            assert np.array_equal(mat1, mat2)
+
+
+def test_block_identity_lincomb():
+    space = NumpyVectorSpace(10)
+    space2 = BlockVectorSpace([space, space])
+    identity = BlockDiagonalOperator([IdentityOperator(space), IdentityOperator(space)])
+    identity2 = IdentityOperator(space2)
+    ones = space.from_numpy(np.ones(10))
+    ones2 = space2.make_array([ones, ones])
+    idid = identity + identity2
+    assert almost_equal(ones2 * 2, idid.apply(ones2))
+    assert almost_equal(ones2 * 2, idid.apply_adjoint(ones2))
+    assert almost_equal(ones2 * 0.5, idid.apply_inverse(ones2))
+    assert almost_equal(ones2 * 0.5, idid.apply_inverse_adjoint(ones2))
+
+
+def test_numpy_generic_operator_lincomb():
+    n = 2
+    I1 = NumpyMatrixOperator(np.eye(n))
+    I2 = NumpyGenericOperator(lambda x: x, dim_source=n, dim_range=n)
+    v = I1.source.from_numpy(np.ones(n))
+
+    try:
+        (I1 + I2).apply_inverse(v)
+    except NotImplementedError:  # NumpyGenericOperator.jacobian
+        pass
+    else:
+        assert False
 
 
 def test_pickle(operator):
