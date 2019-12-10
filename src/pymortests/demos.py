@@ -121,7 +121,7 @@ def _skip_if_no_solver(param):
     demo, args = param
     from pymor.core.config import config
     for solver in ['fenics', 'ngsolve']:
-        needs_solver = len([f for f in args if solver in str(f)]) > 0
+        needs_solver = len([f for f in args if solver in str(f)]) > 0 or demo.find(solver) >= 0
         has_solver = getattr(config, 'HAVE_' + solver.upper())
         if needs_solver and not has_solver:
             if not os.environ.get('DOCKER_PYMOR', False):
