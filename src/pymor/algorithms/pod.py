@@ -80,7 +80,7 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
     with logger.block('Computing SVD ...'):
         POD, SVALS, _ = svd_va(A, product=product, modes=modes, rtol=rtol, atol=atol, l2_err=l2_err)
 
-    if np.isfinite(orth_tol):
+    if POD.dim > 0 and len(POD) > 0 and np.isfinite(orth_tol):
         logger.info('Checking orthonormality ...')
         err = np.max(np.abs(POD.inner(POD, product) - np.eye(len(POD))))
         if err >= orth_tol:
