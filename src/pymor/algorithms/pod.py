@@ -19,11 +19,12 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
         method='method_of_snapshots', orth_tol=1e-10):
     """Proper orthogonal decomposition of `A`.
 
-    Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix,
-    the return value of this method is the |VectorArray| of left-singular
-    vectors of the singular value decomposition of `A`, where the inner product
-    on R^(`dim(A)`) is given by `product` and the inner product on R^(`len(A)`)
-    is the Euclidean inner product.
+    Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the
+    return values of this method are the |VectorArray| of left singular
+    vectors and a |NumPy array| of singular values of the singular value
+    decomposition of `A`, where the inner product on R^(`dim(A)`) is
+    given by `product` and the inner product on R^(`len(A)`) is the
+    Euclidean inner product.
 
     Parameters
     ----------
@@ -32,16 +33,17 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
     product
         Inner product |Operator| w.r.t. which the POD is computed.
     modes
-        If not `None`, only the first `modes` POD modes (singular vectors) are
-        returned.
+        If not `None`, at most the first `modes` POD modes (singular
+        vectors) are returned.
     rtol
-        Singular values smaller than this value multiplied by the largest singular
-        value are ignored.
+        Singular values smaller than this value multiplied by the
+        largest singular value are ignored.
     atol
         Singular values smaller than this value are ignored.
     l2_err
-        Do not return more modes than needed to bound the l2-approximation
-        error by this value. I.e. the number of returned modes is at most ::
+        Do not return more modes than needed to bound the
+        l2-approximation error by this value. I.e. the number of
+        returned modes is at most ::
 
             argmin_N { sum_{n=N+1}^{infty} s_n^2 <= l2_err^2 }
 
@@ -50,15 +52,15 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
         Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
         (`'method_of_snapshots'` or `'qr_svd'`).
     orth_tol
-        POD modes are reorthogonalized if the orthogonality error is above this
-        value.
+        POD modes are reorthogonalized if the orthogonality error is
+        above this value.
 
     Returns
     -------
     POD
         |VectorArray| of POD modes.
     SVALS
-        Sequence of singular values.
+        One-dimensional |NumPy array| of singular values.
     """
 
     if isinstance(product, Number):
