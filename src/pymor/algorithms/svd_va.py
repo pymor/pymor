@@ -24,6 +24,11 @@ def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=
     and the inner product on R^(`len(A)`) is the Euclidean inner
     product.
 
+    .. warning::
+
+        The left singular vectors may not be numerically orthonormal for
+        ill-conditioned `A`.
+
     Parameters
     ----------
     A
