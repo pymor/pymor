@@ -16,31 +16,32 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 @defaults('rtol', 'atol', 'l2_err')
 def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
-    """Method of snapshots.
+    """SVD of a |VectorArray| using the method of snapshots.
 
-    Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix,
-    the return value of this method is the |VectorArray| of left-singular
-    vectors of the singular value decomposition of `A`, where the inner product
-    on R^(`dim(A)`) is given by `product` and the inner product on R^(`len(A)`)
-    is the Euclidean inner product.
+    Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the
+    return value of this method is the singular value decomposition of
+    `A`, where the inner product on R^(`dim(A)`) is given by `product`
+    and the inner product on R^(`len(A)`) is the Euclidean inner
+    product.
 
     Parameters
     ----------
     A
-        The |VectorArray| for which the POD is to be computed.
+        The |VectorArray| for which the SVD is to be computed.
     product
-        Inner product |Operator| w.r.t. which the POD is computed.
+        Inner product |Operator| w.r.t. which the SVD is computed.
     modes
-        If not `None`, only the first `modes` POD modes (singular vectors) are
-        returned.
+        If not `None`, at most the first `modes` singular values and
+        vectors are returned.
     rtol
-        Singular values smaller than this value multiplied by the largest singular
-        value are ignored.
+        Singular values smaller than this value multiplied by the
+        largest singular value are ignored.
     atol
         Singular values smaller than this value are ignored.
     l2_err
-        Do not return more modes than needed to bound the l2-approximation
-        error by this value. I.e. the number of returned modes is at most ::
+        Do not return more modes than needed to bound the
+        l2-approximation error by this value. I.e. the number of
+        returned modes is at most ::
 
             argmin_N { sum_{n=N+1}^{infty} s_n^2 <= l2_err^2 }
 
@@ -51,7 +52,7 @@ def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=
     U
         |VectorArray| of left singular vectors.
     s
-        Sequence of singular values.
+        One-dimensional |NumPy array| of singular values.
     Vh
         |NumPy array| of right singular vectors.
     """
@@ -102,30 +103,33 @@ def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=
 
 @defaults('rtol', 'atol', 'l2_err')
 def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
-    """SVD of a |VectorArray| using Gram-Schmidt process.
+    """SVD of a |VectorArray| using Gram-Schmidt orthogonalization.
 
-    If `product` is given, left singular vectors will be orthogonal with
-    respect to it. Otherwise, the Euclidean inner product is used.
+    Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the
+    return value of this method is the singular value decomposition of
+    `A`, where the inner product on R^(`dim(A)`) is given by `product`
+    and the inner product on R^(`len(A)`) is the Euclidean inner
+    product.
 
     Parameters
     ----------
     A
         The |VectorArray| for which the SVD is to be computed.
-        The vectors are interpreted as columns in a matrix.
     product
         Inner product |Operator| w.r.t. which the left singular vectors
         are computed.
     modes
-        If not `None`, only the first `modes` POD modes (singular vectors) are
-        returned.
+        If not `None`, at most the first `modes` singular values and
+        vectors are returned.
     rtol
-        Singular values smaller than this value multiplied by the largest singular
-        value are ignored.
+        Singular values smaller than this value multiplied by the
+        largest singular value are ignored.
     atol
         Singular values smaller than this value are ignored.
     l2_err
-        Do not return more modes than needed to bound the l2-approximation
-        error by this value. I.e. the number of returned modes is at most ::
+        Do not return more modes than needed to bound the
+        l2-approximation error by this value. I.e. the number of
+        returned modes is at most ::
 
             argmin_N { sum_{n=N+1}^{infty} s_n^2 <= l2_err^2 }
 
@@ -136,7 +140,7 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     U
         |VectorArray| of left singular vectors.
     s
-        Sequence of singular values.
+        One-dimensional |NumPy array| of singular values.
     Vh
         |NumPy array| of right singular vectors.
     """
