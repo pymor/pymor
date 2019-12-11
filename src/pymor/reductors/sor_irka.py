@@ -89,6 +89,8 @@ class SORIRKAReductor(GenericIRKAReductor):
         """
         if not self.fom.cont_time:
             raise NotImplementedError
+
+        self._clear_lists()
         sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
         self._store_sigma_b_c(sigma, b, c)
         self._check_common_args(tol, maxit, num_prev, conv_crit)
