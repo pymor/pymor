@@ -960,7 +960,7 @@ def test_mul_wrong_factor(vector_array):
 def test_rmul(vector_array):
     v = vector_array
     c = v.copy()
-    for a in (-1, -3, 0, 1, 23, np.arange(len(v))):
+    for a in (-1, -3, 0, 1, 23):
         cc = v.copy()
         cc.scal(a)
         assert np.all(almost_equal((a * v), cc))
