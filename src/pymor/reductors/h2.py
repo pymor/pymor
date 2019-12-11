@@ -30,18 +30,22 @@ class GenericIRKAReductor(BasicInterface):
     mu
         |Parameter|.
     """
-    def __init__(self, fom, mu=None):
-        self.fom = fom
-        self.mu = fom.parse_parameter(mu)
-        self.V = None
-        self.W = None
-        self._pg_reductor = None
+
+    def _clear_lists(self):
         self.sigma_list = []
         self.b_list = []
         self.c_list = []
         self.conv_crit = []
         self._conv_data = []
         self.errors = []
+
+    def __init__(self, fom, mu=None):
+        self.fom = fom
+        self.mu = fom.parse_parameter(mu)
+        self.V = None
+        self.W = None
+        self._pg_reductor = None
+        self._clear_lists()
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -251,6 +255,7 @@ class IRKAReductor(GenericIRKAReductor):
         if not self.fom.cont_time:
             raise NotImplementedError
 
+        self._clear_lists()
         sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
         self._store_sigma_b_c(sigma, b, c)
         self._check_common_args(tol, maxit, num_prev, conv_crit)
@@ -362,6 +367,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
         if not self.fom.cont_time:
             raise NotImplementedError
 
+        self._clear_lists()
         sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
         self._store_sigma_b_c(sigma, b, c)
         self._check_common_args(tol, maxit, num_prev, conv_crit)
@@ -492,6 +498,7 @@ class TSIAReductor(GenericIRKAReductor):
         if not self.fom.cont_time:
             raise NotImplementedError
 
+        self._clear_lists()
         rom = self._rom0_params_to_rom(rom0_params)
         self._check_common_args(tol, maxit, num_prev, conv_crit)
         assert projection in ('orth', 'biorth')
@@ -606,6 +613,7 @@ class TFIRKAReductor(GenericIRKAReductor):
         if not self.fom.cont_time:
             raise NotImplementedError
 
+        self._clear_lists()
         sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
         self._store_sigma_b_c(sigma, b, c)
         self._check_common_args(tol, maxit, num_prev, conv_crit)
