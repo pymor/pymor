@@ -172,7 +172,7 @@ Backward incompatible changes
 Dropped Python 3.5 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 - `[#553] increase minimal python version to 3.6 <https://github.com/pymor/pymor/pull/553>`_
-- `[#584] Simply implementation of RuleTable`_
+- `[#584] Simply implementation of RuleTable <https://github.com/pymor/pymor/pull/584>`_
 
 
 Global RandomState
