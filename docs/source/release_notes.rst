@@ -26,45 +26,45 @@ Release highlights
 
 Implement new models and reductors more easily
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#568] Rename Discretizations to Models <https://github.com/pymor/pymor/pull/568>`_ 
-- `[#592] Simplify Reductors and Models <https://github.com/pymor/pymor/pull/592>`_ 
+- `[#568] Rename Discretizations to Models <https://github.com/pymor/pymor/pull/568>`_
+- `[#592] Simplify Reductors and Models <https://github.com/pymor/pymor/pull/592>`_
 
 
 Extended VectorArray interface with generic complex number suppport
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#612] Implement VectorArrayInterface.ones and VectorArrayInterface.full <https://github.com/pymor/pymor/pull/612>`_ 
-- `[#618] Add 'random' method to VectorArrayInterface <https://github.com/pymor/pymor/pull/618>`_ 
-- `[#755] Complex arithmetic for PDE solvers 2 <https://github.com/pymor/pymor/pull/755>`_ 
+- `[#612] Implement VectorArrayInterface.ones and VectorArrayInterface.full <https://github.com/pymor/pymor/pull/612>`_
+- `[#618] Add 'random' method to VectorArrayInterface <https://github.com/pymor/pymor/pull/618>`_
+- `[#755] Complex arithmetic for PDE solvers 2 <https://github.com/pymor/pymor/pull/755>`_
 
 
 
 Improved and extended support for system-theoretic MOR methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#578] Rename system attributes n, m, p <https://github.com/pymor/pymor/pull/578>`_ 
-- `[#579] One-sided IRKA <https://github.com/pymor/pymor/pull/579>`_ 
-- `[#621] Various sys-mor fixes <https://github.com/pymor/pymor/pull/621>`_ 
-- `[#626] Parameterizing input-output models <https://github.com/pymor/pymor/pull/626>`_ 
-- `[#638] [algorithms.lradi] Remove options for ADI iteration shift parameters  <https://github.com/pymor/pymor/pull/638>`_ 
-- `[#643] [algorithms.lradi] Improve shift parameters for low-rank ADI iteration <https://github.com/pymor/pymor/pull/643>`_ 
-- `[#648] Remove state_space in input-output system classes <https://github.com/pymor/pymor/pull/648>`_ 
-- `[#651] Fix reconstruct method in sys-mor reductors <https://github.com/pymor/pymor/pull/651>`_ 
-- `[#656] sys-mor API changes <https://github.com/pymor/pymor/pull/656>`_ 
-- `[#657] Transfer function h2_norm <https://github.com/pymor/pymor/pull/657>`_ 
-- `[#658] Arithmetic operations for LinearDelayModel <https://github.com/pymor/pymor/pull/658>`_ 
-- `[#661] [sys-mor] various reductor improvements  <https://github.com/pymor/pymor/pull/661>`_ 
-- `[#701] [models.iosys] change H/dH to tf/dtf in TransferFunction <https://github.com/pymor/pymor/pull/701>`_ 
-- `[#720] [models.iosys] use defaults instead of constant <https://github.com/pymor/pymor/pull/720>`_ 
-- `[#724] [reductors.sobt] use lapack_driver='gesvd' in scipy.linalg.svd <https://github.com/pymor/pymor/pull/724>`_ 
-- `[#725] Fix the number of second-order singular values <https://github.com/pymor/pymor/pull/725>`_ 
-- `[#729] Rename bode and Bode plot <https://github.com/pymor/pymor/pull/729>`_ 
-- `[#736] Low-rank RADI solver for Riccati equations <https://github.com/pymor/pymor/pull/736>`_ 
-- `[#807] Refactor H2 reductors and related methods <https://github.com/pymor/pymor/pull/807>`_ 
+- `[#578] Rename system attributes n, m, p <https://github.com/pymor/pymor/pull/578>`_
+- `[#579] One-sided IRKA <https://github.com/pymor/pymor/pull/579>`_
+- `[#621] Various sys-mor fixes <https://github.com/pymor/pymor/pull/621>`_
+- `[#626] Parameterizing input-output models <https://github.com/pymor/pymor/pull/626>`_
+- `[#638] [algorithms.lradi] Remove options for ADI iteration shift parameters  <https://github.com/pymor/pymor/pull/638>`_
+- `[#643] [algorithms.lradi] Improve shift parameters for low-rank ADI iteration <https://github.com/pymor/pymor/pull/643>`_
+- `[#648] Remove state_space in input-output system classes <https://github.com/pymor/pymor/pull/648>`_
+- `[#651] Fix reconstruct method in sys-mor reductors <https://github.com/pymor/pymor/pull/651>`_
+- `[#656] sys-mor API changes <https://github.com/pymor/pymor/pull/656>`_
+- `[#657] Transfer function h2_norm <https://github.com/pymor/pymor/pull/657>`_
+- `[#658] Arithmetic operations for LinearDelayModel <https://github.com/pymor/pymor/pull/658>`_
+- `[#661] [sys-mor] various reductor improvements  <https://github.com/pymor/pymor/pull/661>`_
+- `[#701] [models.iosys] change H/dH to tf/dtf in TransferFunction <https://github.com/pymor/pymor/pull/701>`_
+- `[#720] [models.iosys] use defaults instead of constant <https://github.com/pymor/pymor/pull/720>`_
+- `[#724] [reductors.sobt] use lapack_driver='gesvd' in scipy.linalg.svd <https://github.com/pymor/pymor/pull/724>`_
+- `[#725] Fix the number of second-order singular values <https://github.com/pymor/pymor/pull/725>`_
+- `[#729] Rename bode and Bode plot <https://github.com/pymor/pymor/pull/729>`_
+- `[#736] Low-rank RADI solver for Riccati equations <https://github.com/pymor/pymor/pull/736>`_
+- `[#807] Refactor H2 reductors and related methods <https://github.com/pymor/pymor/pull/807>`_
 
 
 Model outputs and parameter sensitivities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#748] Add partial derivatives w.r.t. parameters <https://github.com/pymor/pymor/pull/748>`_ 
-- `[#750] Add notion of output to ModelInterface 2 <https://github.com/pymor/pymor/pull/750>`_ 
+- `[#748] Add partial derivatives w.r.t. parameters <https://github.com/pymor/pymor/pull/748>`_
+- `[#750] Add notion of output to ModelInterface 2 <https://github.com/pymor/pymor/pull/750>`_
 
 
 
@@ -74,59 +74,59 @@ Additional new features
 
 Extended FEniCS bindings
 ~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#819] Add support for nonlinear Operators in FEniCS bindings <https://github.com/pymor/pymor/pull/819>`_ 
-- `[#812] Handle solver_options in FenicsMatrixOperator._assemble_lincomb <https://github.com/pymor/pymor/pull/812>`_ 
-- `[#616] [FEniCS] Ensure that amax and dofs behave correctly in the MPI discributed case <https://github.com/pymor/pymor/pull/616>`_ 
+- `[#819] Add support for nonlinear Operators in FEniCS bindings <https://github.com/pymor/pymor/pull/819>`_
+- `[#812] Handle solver_options in FenicsMatrixOperator._assemble_lincomb <https://github.com/pymor/pymor/pull/812>`_
+- `[#616] [FEniCS] Ensure that amax and dofs behave correctly in the MPI discributed case <https://github.com/pymor/pymor/pull/616>`_
 
 Improved greedy algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#757] Refactor greedy algorithms <https://github.com/pymor/pymor/pull/757>`_ 
+- `[#757] Refactor greedy algorithms <https://github.com/pymor/pymor/pull/757>`_
 
 
 Numerical linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#665] adding randomized algorithms <https://github.com/pymor/pymor/pull/665>`_ 
-- `[#817] SVD for vectorarrays using Gram-Schmidt <https://github.com/pymor/pymor/pull/817>`_ 
-- `[#577] Gram-Schmidt with R <https://github.com/pymor/pymor/pull/577>`_ 
+- `[#665] adding randomized algorithms <https://github.com/pymor/pymor/pull/665>`_
+- `[#817] SVD for vectorarrays using Gram-Schmidt <https://github.com/pymor/pymor/pull/817>`_
+- `[#577] Gram-Schmidt with R <https://github.com/pymor/pymor/pull/577>`_
 
 
 Support for low-rank operators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#743] Low-rank updated operators and Sherman-Morrison-Woodbury formula <https://github.com/pymor/pymor/pull/743>`_ 
+- `[#743] Low-rank updated operators and Sherman-Morrison-Woodbury formula <https://github.com/pymor/pymor/pull/743>`_
 
 
 Improved string representations of pyMOR objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#652] __repr__ and __str__ for models <https://github.com/pymor/pymor/pull/652>`_ 
-- `[#706] Add generic __repr__ method to BasicInterface <https://github.com/pymor/pymor/pull/706>`_ 
+- `[#652] __repr__ and __str__ for models <https://github.com/pymor/pymor/pull/652>`_
+- `[#706] Add generic __repr__ method to BasicInterface <https://github.com/pymor/pymor/pull/706>`_
 
 
 Easier working with immutable objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#732] Add __auto_init method and use it where applicable <https://github.com/pymor/pymor/pull/732>`_ 
-- `[#705] Add new_type argument to with_ <https://github.com/pymor/pymor/pull/705>`_ 
-- `[#694] Ensure that with_ works for all immutable objects <https://github.com/pymor/pymor/pull/694>`_ 
+- `[#732] Add __auto_init method and use it where applicable <https://github.com/pymor/pymor/pull/732>`_
+- `[#705] Add new_type argument to with_ <https://github.com/pymor/pymor/pull/705>`_
+- `[#694] Ensure that with_ works for all immutable objects <https://github.com/pymor/pymor/pull/694>`_
 
 
 project and assemble_lincomb are easier to extend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#785] Simplify implementation of project <https://github.com/pymor/pymor/pull/785>`_ 
-- `[#619] Move all backend-agnostic assemble_lincomb logic to algorithms.lincomb <https://github.com/pymor/pymor/pull/619>`_ 
+- `[#785] Simplify implementation of project <https://github.com/pymor/pymor/pull/785>`_
+- `[#619] Move all backend-agnostic assemble_lincomb logic to algorithms.lincomb <https://github.com/pymor/pymor/pull/619>`_
 
 
 Improvements to pyMOR's discretization toolkit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#821] Enable to have parametric dirichlet in fv <https://github.com/pymor/pymor/pull/821>`_ 
-- `[#687] Discretizing robin boundary conditions on a RectGrid <https://github.com/pymor/pymor/pull/687>`_ 
-- `[#691] Remove 'order' arguments from CG operators <https://github.com/pymor/pymor/pull/691>`_ 
-- `[#760] [discretizers.cg] affine decomposition of robin operator and rhs functionals <https://github.com/pymor/pymor/pull/760>`_ 
+- `[#821] Enable to have parametric dirichlet in fv <https://github.com/pymor/pymor/pull/821>`_
+- `[#687] Discretizing robin boundary conditions on a RectGrid <https://github.com/pymor/pymor/pull/687>`_
+- `[#691] Remove 'order' arguments from CG operators <https://github.com/pymor/pymor/pull/691>`_
+- `[#760] [discretizers.cg] affine decomposition of robin operator and rhs functionals <https://github.com/pymor/pymor/pull/760>`_
 
 
 Infrastructure improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#818] Tutorial setup <https://github.com/pymor/pymor/pull/818>`_ 
-- `[#793] Use meshio for Gmsh file parsing <https://github.com/pymor/pymor/pull/793>`_ 
-- `[#607] Replace sqlite caching <https://github.com/pymor/pymor/pull/607>`_ 
+- `[#818] Tutorial setup <https://github.com/pymor/pymor/pull/818>`_
+- `[#793] Use meshio for Gmsh file parsing <https://github.com/pymor/pymor/pull/793>`_
+- `[#607] Replace sqlite caching <https://github.com/pymor/pymor/pull/607>`_
 
 
 
@@ -135,57 +135,57 @@ Backward incompatible changes
 
 Dropped Python 3.5 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#553] increase minimal python version to 3.6 <https://github.com/pymor/pymor/pull/553>`_ 
+- `[#553] increase minimal python version to 3.6 <https://github.com/pymor/pymor/pull/553>`_
 - `[#584] Simply implementation of RuleTable`_
 
 
 Global RandomState
 ~~~~~~~~~~~~~~~~~~
-- `[#620] introduce global default RandomState <https://github.com/pymor/pymor/pull/620>`_ 
+- `[#620] introduce global default RandomState <https://github.com/pymor/pymor/pull/620>`_
 
 
 Space id handling
 ~~~~~~~~~~~~~~~~~
-- `[#611] [models.iosys] remove space id handling except for factory methods <https://github.com/pymor/pymor/pull/611>`_ 
-- `[#613] Remove VectorSpace id handling from projection methods <https://github.com/pymor/pymor/pull/613>`_ 
-- `[#614] Remove id from BlockVectorSpace <https://github.com/pymor/pymor/pull/614>`_ 
-- `[#615] Remove 'space' parameter from as_vector <https://github.com/pymor/pymor/pull/615>`_ 
+- `[#611] [models.iosys] remove space id handling except for factory methods <https://github.com/pymor/pymor/pull/611>`_
+- `[#613] Remove VectorSpace id handling from projection methods <https://github.com/pymor/pymor/pull/613>`_
+- `[#614] Remove id from BlockVectorSpace <https://github.com/pymor/pymor/pull/614>`_
+- `[#615] Remove 'space' parameter from as_vector <https://github.com/pymor/pymor/pull/615>`_
 
 
 Changed defaults for newton algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#800] Minor improvements to newton algorithm <https://github.com/pymor/pymor/pull/800>`_ 
+- `[#800] Minor improvements to newton algorithm <https://github.com/pymor/pymor/pull/800>`_
 
 
 Signature change for ProjectionParameterFunctional
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#756] Rename parameter coordinates to index <https://github.com/pymor/pymor/pull/756>`_ 
+- `[#756] Rename parameter coordinates to index <https://github.com/pymor/pymor/pull/756>`_
 
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- `[#559] fix arnoldi when E is not identity <https://github.com/pymor/pymor/pull/559>`_ 
-- `[#569] Fix NonProjectedResidualOperator.apply <https://github.com/pymor/pymor/pull/569>`_ 
-- `[#585] implement MPIOperator.apply_inverse_adjoint <https://github.com/pymor/pymor/pull/585>`_ 
-- `[#608] [mpi] small tweaks to make MPI wrapping more flexible <https://github.com/pymor/pymor/pull/608>`_ 
-- `[#627] Fix as_source_array/as_range_array for BlockRowOperator/BlockColumnOperator <https://github.com/pymor/pymor/pull/627>`_ 
-- `[#644] Replace numpy.linalg.solve by scipy.linalg.solve <https://github.com/pymor/pymor/pull/644>`_ 
-- `[#663] [NumpyVectorSpace] fix issue 662 <https://github.com/pymor/pymor/pull/663>`_ 
-- `[#668] Fixed complex norms <https://github.com/pymor/pymor/pull/668>`_ 
-- `[#693] [parameters.functionals] implement __neg__ <https://github.com/pymor/pymor/pull/693>`_ 
-- `[#702] Add 'linear' attribute to StationaryModel and InstationaryModel <https://github.com/pymor/pymor/pull/702>`_ 
-- `[#716] Fix 643 <https://github.com/pymor/pymor/pull/716>`_ 
-- `[#786] Handle projection of parametric BlockOperators <https://github.com/pymor/pymor/pull/786>`_ 
-- `[#789] allow time-dep operator or rhs in ParabolicRBReductor <https://github.com/pymor/pymor/pull/789>`_ 
-- `[#790] Default to POD-Greedy for instationary problems <https://github.com/pymor/pymor/pull/790>`_ 
-- `[#791] Add rule to ProjectRules for the case that source_basis range basis are None <https://github.com/pymor/pymor/pull/791>`_ 
-- `[#802] Fix project call in ProjectedOperator.jacobian() <https://github.com/pymor/pymor/pull/802>`_ 
-- `[#804] Minor improvements to deim algorithm <https://github.com/pymor/pymor/pull/804>`_ 
-- `[#808] Add convergence check for pymess <https://github.com/pymor/pymor/pull/808>`_ 
-- `[#809] Avoid checking in BlockOperators if block is None <https://github.com/pymor/pymor/pull/809>`_ 
-- `[#814] [algorithms.image] fix CollectVectorRangeRules for ConcatenationOperator <https://github.com/pymor/pymor/pull/814>`_ 
-- `[#815] Make assumptions on mass Operator in InstationaryModel consistent <https://github.com/pymor/pymor/pull/815>`_ 
-- `[#824] Fix NumpyVectorArray.__mul__ when other is a NumPy array <https://github.com/pymor/pymor/pull/824>`_ 
+- `[#559] fix arnoldi when E is not identity <https://github.com/pymor/pymor/pull/559>`_
+- `[#569] Fix NonProjectedResidualOperator.apply <https://github.com/pymor/pymor/pull/569>`_
+- `[#585] implement MPIOperator.apply_inverse_adjoint <https://github.com/pymor/pymor/pull/585>`_
+- `[#608] [mpi] small tweaks to make MPI wrapping more flexible <https://github.com/pymor/pymor/pull/608>`_
+- `[#627] Fix as_source_array/as_range_array for BlockRowOperator/BlockColumnOperator <https://github.com/pymor/pymor/pull/627>`_
+- `[#644] Replace numpy.linalg.solve by scipy.linalg.solve <https://github.com/pymor/pymor/pull/644>`_
+- `[#663] [NumpyVectorSpace] fix issue 662 <https://github.com/pymor/pymor/pull/663>`_
+- `[#668] Fixed complex norms <https://github.com/pymor/pymor/pull/668>`_
+- `[#693] [parameters.functionals] implement __neg__ <https://github.com/pymor/pymor/pull/693>`_
+- `[#702] Add 'linear' attribute to StationaryModel and InstationaryModel <https://github.com/pymor/pymor/pull/702>`_
+- `[#716] Fix 643 <https://github.com/pymor/pymor/pull/716>`_
+- `[#786] Handle projection of parametric BlockOperators <https://github.com/pymor/pymor/pull/786>`_
+- `[#789] allow time-dep operator or rhs in ParabolicRBReductor <https://github.com/pymor/pymor/pull/789>`_
+- `[#790] Default to POD-Greedy for instationary problems <https://github.com/pymor/pymor/pull/790>`_
+- `[#791] Add rule to ProjectRules for the case that source_basis range basis are None <https://github.com/pymor/pymor/pull/791>`_
+- `[#802] Fix project call in ProjectedOperator.jacobian() <https://github.com/pymor/pymor/pull/802>`_
+- `[#804] Minor improvements to deim algorithm <https://github.com/pymor/pymor/pull/804>`_
+- `[#808] Add convergence check for pymess <https://github.com/pymor/pymor/pull/808>`_
+- `[#809] Avoid checking in BlockOperators if block is None <https://github.com/pymor/pymor/pull/809>`_
+- `[#814] [algorithms.image] fix CollectVectorRangeRules for ConcatenationOperator <https://github.com/pymor/pymor/pull/814>`_
+- `[#815] Make assumptions on mass Operator in InstationaryModel consistent <https://github.com/pymor/pymor/pull/815>`_
+- `[#824] Fix NumpyVectorArray.__mul__ when other is a NumPy array <https://github.com/pymor/pymor/pull/824>`_
 
 
 
