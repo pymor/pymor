@@ -26,15 +26,41 @@ Release highlights
 
 Implement new models and reductors more easily
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#568] Rename Discretizations to Models <https://github.com/pymor/pymor/pull/568>`_
-- `[#592] Simplify Reductors and Models <https://github.com/pymor/pymor/pull/592>`_
+As many users have been struggling with the notion of `Discretization` in pyMOR
+and to account for that fact that not every full order model needs to be a discretized
+PDE model, we have decided to rename `DiscretizationInterface` to
+:class:`~pymor.models.interfaces.ModelInterface` and all deriving classes accordingly
+`[#568] <https://github.com/pymor/pymor/pull/568>`_. Consequently the variable names
+`m`, `rom`, `fom` will now be found throughout pyMOR's code to refer to and arbitrary
+|Model|, a reduced order |Model| or a full order |Model|.
+
+Moreover, following the `Zen of Python's <https://www.python.org/dev/peps/pep-0020/>`_
+'Explicit is better than implicit' and 'Simple is better than complex.' we have
+completely reveamped the implementation of |Models| and :mod:`~pymor.reductors`
+to facilitate the implementation of new model types and reduction methods
+`[#592] <https://github.com/pymor/pymor/pull/592>`_. In particular, the complicated
+and error-prone approach of trying to automatically correctly project the |Operators|
+of any given |Model| in `GenericRBReductor` and `GenericPGReductor` has been replaced
+by simple |Model|-adapted reductors which explicitly state with which bases each
+|Operator| shall be projected. As a consequence, we could remove the `operators` dict
+and the notion of `special_operators` in :class:`~pymor.models.basic.ModelBase`,
+vastly simplifying its implementation and the definition of new |Model| classes.
 
 
 Extended VectorArray interface with generic complex number suppport
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#612] Implement VectorArrayInterface.ones and VectorArrayInterface.full <https://github.com/pymor/pymor/pull/612>`_
-- `[#618] Add 'random' method to VectorArrayInterface <https://github.com/pymor/pymor/pull/618>`_
-- `[#755] Complex arithmetic for PDE solvers 2 <https://github.com/pymor/pymor/pull/755>`_
+The :class:`~pymor.vectorarrays.interfaces.VectorArrayInterface` has been extended to
+allow the creation of non-zero vectors using the
+:meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.ones` and
+:meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.full` methods
+`[#612] <https://github.com/pymor/pymor/pull/612>`_. Vectors with random values can
+be created using the :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.random`
+method `[#618] <https://github.com/pymor/pymor/pull/618>`_. All |VectorArray|
+implementations shipped with pyMOR support these new interface methods.
+As an important step to improve the support for system-theoretic MOR methods with
+external PDE solvers, we have implemented facilities to provide generic support
+for complex valued |VectorArrays| even for PDE solvers that do not support complex
+vectors natively `[#755] <https://github.com/pymor/pymor/pull/755>`_. 
 
 
 
@@ -63,10 +89,20 @@ Improved and extended support for system-theoretic MOR methods
 
 Model outputs and parameter sensitivities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#748] Add partial derivatives w.r.t. parameters <https://github.com/pymor/pymor/pull/748>`_
-- `[#750] Add notion of output to ModelInterface 2 <https://github.com/pymor/pymor/pull/750>`_
+The notion of a |Model|'s output has been formally added to the
+:class:`~pymor.models.interfaces.ModelInterface` `[#750] <https://github.com/pymor/pymor/pull/750>`_:
+The output of a |Model| is defined to be a |VectorArray| of the model's
+:attr:`~pymor.models.interfaces.ModelInterface.output_space` |VectorSpace| and
+can be computed using the new :meth:`~pymor.models.interfaces.ModelInterface.output` method.
+Alternatively, :meth:`~pymor.models.interfaces.ModelInterface.solve` method can
+now be called with `return_output=True` to return the output alongside the state space
+solution.
 
-
+To compute parameter sensitivities, we have added `d_mu` methods to
+:meth:`OperatorInterface <pymor.operators.interfaces.OperatorInterface.d_mu>` and
+:meth:`ParameterFunctionalInterface <pymor.parameters.interfaces.ParameterFunctionalInterface.d_mu>`
+which return the partial derivative with respect to a given parameter component
+`[#748] <https://github.com/pymor/pymor/pull/748>`_.
 
 
 Additional new features
