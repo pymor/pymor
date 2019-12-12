@@ -36,7 +36,7 @@ PDE model, we have decided to rename `DiscretizationInterface` to
 
 Moreover, following the `Zen of Python's <https://www.python.org/dev/peps/pep-0020/>`_
 'Explicit is better than implicit' and 'Simple is better than complex', we have
-completely reveamped the implementation of |Models| and :mod:`~pymor.reductors`
+completely revamped the implementation of |Models| and :mod:`~pymor.reductors`
 to facilitate the implementation of new model types and reduction methods
 `[#592] <https://github.com/pymor/pymor/pull/592>`_. In particular, the complicated
 and error-prone approach of trying to automatically correctly project the |Operators|
@@ -136,7 +136,7 @@ Numerical linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 By specifying the `return_R=True` the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt`
 algorithm can now also be used to compute a QR decomposition of a given |VectorArray|
-`[#577] <https://github.com/pymor/pymor/pull/577>`_. Moreover, 
+`[#577] <https://github.com/pymor/pymor/pull/577>`_. Moreover,
 :func:`~pymor.algorithms.gram_schmidt.gram_schmidt` can be used as a more accurate
 (but often more expensive) alternative for computing the :func:`~pymor.algorithms.pod.pod` of
 a |Vectorarray|. Both, the older method-of-snapshots approach as well as the QR decomposition
@@ -184,9 +184,9 @@ project and assemble_lincomb are easier to extend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In pyMOR 0.5 we have introduced |RuleTables| to make central algorithms in pyMOR like
 the projection of an |Operator| via |project| easier to traceable and extendable.
-For pymor 2019.2 we have further simplified `project` by removing the `product`
+For pyMOR 2019.2 we have further simplified `project` by removing the `product`
 argument from the underlying |RuleTable| `[#785] <https://github.com/pymor/pymor/pull/785>`_.
-As the inheritance-based implementation of `assemble_lincomb` was showing simliar
+As the inheritance-based implementation of `assemble_lincomb` was showing similar
 complexity issues as the old inheritance-based implementation of `projected` we
 moved all backend-agnostic logic into the |RuleTable|-based free function
 :func:`~pymor.algorithms.lincomb.assemble_lincomb`, leaving the remaining backend
