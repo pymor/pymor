@@ -27,15 +27,15 @@ Release highlights
 Implement new models and reductors more easily
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 As many users have been struggling with the notion of `Discretization` in pyMOR
-and to account for that fact that not every full order model needs to be a discretized
+and to account for that fact that not every full-order model needs to be a discretized
 PDE model, we have decided to rename `DiscretizationInterface` to
 :class:`~pymor.models.interfaces.ModelInterface` and all deriving classes accordingly
 `[#568] <https://github.com/pymor/pymor/pull/568>`_. Consequently the variable names
-`m`, `rom`, `fom` will now be found throughout pyMOR's code to refer to and arbitrary
-|Model|, a reduced order |Model| or a full order |Model|.
+`m`, `rom`, `fom` will now be found throughout pyMOR's code to refer to an arbitrary
+|Model|, a reduced-order |Model| or a full-order |Model|.
 
 Moreover, following the `Zen of Python's <https://www.python.org/dev/peps/pep-0020/>`_
-'Explicit is better than implicit' and 'Simple is better than complex.' we have
+'Explicit is better than implicit' and 'Simple is better than complex', we have
 completely reveamped the implementation of |Models| and :mod:`~pymor.reductors`
 to facilitate the implementation of new model types and reduction methods
 `[#592] <https://github.com/pymor/pymor/pull/592>`_. In particular, the complicated
@@ -60,8 +60,7 @@ implementations shipped with pyMOR support these new interface methods.
 As an important step to improve the support for system-theoretic MOR methods with
 external PDE solvers, we have implemented facilities to provide generic support
 for complex valued |VectorArrays| even for PDE solvers that do not support complex
-vectors natively `[#755] <https://github.com/pymor/pymor/pull/755>`_. 
-
+vectors natively `[#755] <https://github.com/pymor/pymor/pull/755>`_.
 
 
 Improved and extended support for system-theoretic MOR methods
@@ -114,6 +113,7 @@ Extended FEniCS bindings
 - `[#812] Handle solver_options in FenicsMatrixOperator._assemble_lincomb <https://github.com/pymor/pymor/pull/812>`_
 - `[#616] [FEniCS] Ensure that amax and dofs behave correctly in the MPI discributed case <https://github.com/pymor/pymor/pull/616>`_
 
+
 Improved greedy algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 - `[#757] Refactor greedy algorithms <https://github.com/pymor/pymor/pull/757>`_
@@ -163,7 +163,6 @@ Infrastructure improvements
 - `[#818] Tutorial setup <https://github.com/pymor/pymor/pull/818>`_
 - `[#793] Use meshio for Gmsh file parsing <https://github.com/pymor/pymor/pull/793>`_
 - `[#607] Replace sqlite caching <https://github.com/pymor/pymor/pull/607>`_
-
 
 
 Backward incompatible changes
