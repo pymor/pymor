@@ -944,7 +944,7 @@ def test_neg(vector_array):
 def test_mul(vector_array):
     v = vector_array
     c = v.copy()
-    for a in (-1, -3, 0, 1, 23):
+    for a in (-1, -3, 0, 1, 23, np.arange(len(v))):
         cc = v.copy()
         cc.scal(a)
         assert np.all(almost_equal((v * a), cc))
@@ -969,7 +969,7 @@ def test_rmul(vector_array):
 
 def test_imul(vector_array):
     v = vector_array
-    for a in (-1, -3, 0, 1, 23):
+    for a in (-1, -3, 0, 1, 23, np.arange(len(v))):
         c = v.copy()
         cc = v.copy()
         c.scal(a)
