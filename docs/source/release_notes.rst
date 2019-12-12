@@ -273,8 +273,8 @@ Further notable improvements
 - `[#809] Avoid checking in BlockOperators if block is None <https://github.com/pymor/pymor/pull/809>`_
 - `[#814] [algorithms.image] fix CollectVectorRangeRules for ConcatenationOperator <https://github.com/pymor/pymor/pull/814>`_
 - `[#815] Make assumptions on mass Operator in InstationaryModel consistent <https://github.com/pymor/pymor/pull/815>`_
-- `[#818] Tutorial setup <https://github.com/pymor/pymor/pull/818>`_
 - `[#824] Fix NumpyVectorArray.__mul__ when other is a NumPy array <https://github.com/pymor/pymor/pull/824>`_
+- `[#827] Add Gitlab Pages hosting for docs + introduce nbplots for sphinx <https://github.com/pymor/pymor/pull/827>`_
 
 
 
