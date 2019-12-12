@@ -47,8 +47,8 @@ and the notion of `special_operators` in :class:`~pymor.models.basic.ModelBase`,
 vastly simplifying its implementation and the definition of new |Model| classes.
 
 
-Extended VectorArray interface with generic complex number suppport
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Extended VectorArray interface with generic complex number support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The :class:`~pymor.vectorarrays.interfaces.VectorArrayInterface` has been extended to
 allow the creation of non-zero vectors using the
 :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.ones` and
@@ -108,60 +108,101 @@ Additional new features
 
 Extended FEniCS bindings
 ~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#819] Add support for nonlinear Operators in FEniCS bindings <https://github.com/pymor/pymor/pull/819>`_
-- `[#812] Handle solver_options in FenicsMatrixOperator._assemble_lincomb <https://github.com/pymor/pymor/pull/812>`_
-- `[#616] [FEniCS] Ensure that amax and dofs behave correctly in the MPI discributed case <https://github.com/pymor/pymor/pull/616>`_
+FEniCS support has been improved by adding support for nonlinear |Operators| including
+an implementation of :meth:`~pymor.operators.interfaces.OperatorInterface.restricted`
+to enable fast local evaluation of the operator for efficient
+:class:`empirical interpolation <pymor.operators.ei.EmpiricalInterpolatedOperator>`
+`[#819] <https://github.com/pymor/pymor/pull/819>`_. Moreover the parallel implementations
+of :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.amax` and
+:meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dofs` have been fixed
+`[#616] <https://github.com/pymor/pymor/pull/616>`_ and
+:attr:`~pymor.operators.interfaces.OperatorInterface.solver_options` are now correctly
+handled in :meth:`~pymor.operators.interfaces.OperatorInterface._assemble_lincomb`
+`[#812] <https://github.com/pymor/pymor/pull/812>`_.
+
 
 
 Improved greedy algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#757] Refactor greedy algorithms <https://github.com/pymor/pymor/pull/757>`_
+pyMOR's greedy algorithms have been refactored into :func:`~pymor.algorithms.greedy.weak_greedy`
+and :func:`~pymor.algorithms.adaptivegreedy.adaptive_weak_greedy` functions that
+use a common :class:`~pymor.algorithms.greedy.WeakGreedySurrogate` to estimate
+the approximation error and extend the greedy bases. This allows these functions to be
+used more flexible, e.g. for goal-oriented basis generation, by implementing a new
+:class:`~pymor.algorithms.greedy.WeakGreedySurrogate` `[#757] <https://github.com/pymor/pymor/pull/757>`_.
 
 
 Numerical linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#665] adding randomized algorithms <https://github.com/pymor/pymor/pull/665>`_
-- `[#817] SVD for vectorarrays using Gram-Schmidt <https://github.com/pymor/pymor/pull/817>`_
-- `[#577] Gram-Schmidt with R <https://github.com/pymor/pymor/pull/577>`_
+By specifying the `return_R=True` the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt`
+algorithm can now also be used to compute a QR decomposition of a given |VectorArray|
+`[#577] <https://github.com/pymor/pymor/pull/577>`_. Moreover, 
+:func:`~pymor.algorithms.gram_schmidt.gram_schmidt` can be used as a more accurate
+(but often more expensive) alternative for computing the :func:`~pymor.algorithms.pod.pod` of
+a |Vectorarray|. Both, the older method-of-snapshots approach as well as the QR decomposition
+are now available for computing a truncated SVD of a |VectorArray| via the newly added
+:mod:`~pymor.algorithms.svd_va` module `[#718] <https://github.com/pymor/pymor/pull/817>`_.
+Basic randomized algorithms for approximating the image of a linear |Operator| are
+implemented in the :mod:`~pymor.algorithms.randrangefinder` module
+`[#665] <https://github.com/pymor/pymor/pull/665>`_.
 
 
 Support for low-rank operators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#743] Low-rank updated operators and Sherman-Morrison-Woodbury formula <https://github.com/pymor/pymor/pull/743>`_
+Low-rank |Operators| and as well as sums of arbitrary |Operators| with a low-rank
+|Operator| can now be represented by :class:`~pymor.operators.constructions.LowRankOperator`
+and :class:`~pymor.operators.constructions.LowRankUpdatedOperator`. For the latter,
+:meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse` and
+:meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_adjoint` are implemented
+via the Sherman-Morrison-Woodbury formula `[#743] <https://github.com/pymor/pymor/pull/743>`_.
 
 
 Improved string representations of pyMOR objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#652] __repr__ and __str__ for models <https://github.com/pymor/pymor/pull/652>`_
-- `[#706] Add generic __repr__ method to BasicInterface <https://github.com/pymor/pymor/pull/706>`_
+Custom  `__str__` special methods have been implemented for all |Model| classes shipped with
+pyMOR `[#652] <https://github.com/pymor/pymor/pull/652>`_. Moreover, we have added a generic
+`__repr__` implementation to |BasicInterface| which recursively prints all class attributes
+corresponding to an `__init__` argument (with a non-default value)
+`[#706] <https://github.com/pymor/pymor/pull/706>`_.
 
 
 Easier working with immutable objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#732] Add __auto_init method and use it where applicable <https://github.com/pymor/pymor/pull/732>`_
-- `[#705] Add new_type argument to with_ <https://github.com/pymor/pymor/pull/705>`_
-- `[#694] Ensure that with_ works for all immutable objects <https://github.com/pymor/pymor/pull/694>`_
+A new check in :class:`~pymor.core.interfaces.ImmutableMeta` enforces all `__init__` arguments
+of an |immutable| object to be available as object attributes, thus ensuring that
+:meth:`~pymor.core.interfaces.ImmutableInterface.with_` works reliably with all |immutable| objects
+in pyMOR `[#694] <https://github.com/pymor/pymor/pull/694>`_. To facilitate the initialization
+of these attributes in `__init__` the
+`__auto_init <https://github.com/pymor/pymor/pull/732/files#diff-9ff4f0e773ee7352ff323cb88a3adeabR149-R164>`_
+method has been added to |BasicInterface| `[#732] <https://github.com/pymor/pymor/pull/732>`_.
+Finally, :meth:`~pymor.core.interfaces.ImmutableInterface.with_` now has a `new_type` parameter
+which allows to change the class of the object returned by it
+`[#705] <https://github.com/pymor/pymor/pull/705>`_.
 
 
 project and assemble_lincomb are easier to extend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#785] Simplify implementation of project <https://github.com/pymor/pymor/pull/785>`_
-- `[#619] Move all backend-agnostic assemble_lincomb logic to algorithms.lincomb <https://github.com/pymor/pymor/pull/619>`_
+In pyMOR 0.5 we have introduced |RuleTables| to make central algorithms in pyMOR like
+the projection of an |Operator| via |project| easier to traceable and extendable.
+For pymor 2019.2 we have further simplified `project` by removing the `product`
+argument from the underlying |RuleTable| `[#785] <https://github.com/pymor/pymor/pull/785>`_.
+As the inheritance-based implementation of `assemble_lincomb` was showing simliar
+complexity issues as the old inheritance-based implementation of `projected` we
+moved all backend-agnostic logic into the |RuleTable|-based free function
+:func:`~pymor.algorithms.lincomb.assemble_lincomb`, leaving the remaining backend
+code in :meth:`~pymor.operators.interfaces.OperatorInterface._assemble_lincomb`
+`[#619] <https://github.com/pymor/pymor/pull/619>`_.
 
 
-Improvements to pyMOR's discretization toolkit
+Improvements to pyMOR's discretization toolbox
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyMOR's builtin discretization toolbox as seen multiple minor improvements:
+
 - `[#821] Enable to have parametric dirichlet in fv <https://github.com/pymor/pymor/pull/821>`_
 - `[#687] Discretizing robin boundary conditions on a RectGrid <https://github.com/pymor/pymor/pull/687>`_
 - `[#691] Remove 'order' arguments from CG operators <https://github.com/pymor/pymor/pull/691>`_
 - `[#760] [discretizers.cg] affine decomposition of robin operator and rhs functionals <https://github.com/pymor/pymor/pull/760>`_
-
-
-Infrastructure improvements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#818] Tutorial setup <https://github.com/pymor/pymor/pull/818>`_
 - `[#793] Use meshio for Gmsh file parsing <https://github.com/pymor/pymor/pull/793>`_
-- `[#607] Replace sqlite caching <https://github.com/pymor/pymor/pull/607>`_
 
 
 Backward incompatible changes
@@ -169,31 +210,43 @@ Backward incompatible changes
 
 Dropped Python 3.5 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#553] increase minimal python version to 3.6 <https://github.com/pymor/pymor/pull/553>`_
-- `[#584] Simply implementation of RuleTable <https://github.com/pymor/pymor/pull/584>`_
+As Python 3.6 or newer now ships with the current versions of all major Linux distributions
+we have decided to drop support for Python 3.6 in pyMOR 2019.2. This allows us to benefit
+from new language features, in particular f-strings and class attribute definition order
+preservation `[#553] <https://github.com/pymor/pymor/pull/553>`_,
+`[#584] <https://github.com/pymor/pymor/pull/553>`_.
 
 
 Global RandomState
 ~~~~~~~~~~~~~~~~~~
-- `[#620] introduce global default RandomState <https://github.com/pymor/pymor/pull/620>`_
+pyMOR now has a (mutable) global default :class:`~numpy.random.RandomState`. This means
+that when :meth:`~pymor.parameters.spaces.CubicParameterSpace.sample_randomly` is called
+repeatedly without specifying a `random_state` or `seed` argument, different |Parameter|
+samples will be returned in contrast to the (surprising) previous behavior where the
+same samples would have been returned. The same :class:`~numpy.random.RandomState` is
+used by the newly introduced :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.random`
+method of the :class:`~pymor.vectorarrays.interfaces.VectorArrayInterface`
+`[#620] <https://github.com/pymor/pymor/pull/620>`_.
 
 
 Space id handling
 ~~~~~~~~~~~~~~~~~
+The usage of |VectorSpace| :attr:`ids <pymor.vectorarrays.interfaces.VectorSpace.id>` in pyMOR
+has been reduced throughout pyMOR to avoid unwanted errors due to incompatible |VectorSpaces|
+(that only differ by their id):
+
 - `[#611] [models.iosys] remove space id handling except for factory methods <https://github.com/pymor/pymor/pull/611>`_
 - `[#613] Remove VectorSpace id handling from projection methods <https://github.com/pymor/pymor/pull/613>`_
 - `[#614] Remove id from BlockVectorSpace <https://github.com/pymor/pymor/pull/614>`_
 - `[#615] Remove 'space' parameter from as_vector <https://github.com/pymor/pymor/pull/615>`_
 
 
-Changed defaults for newton algorithm
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#800] Minor improvements to newton algorithm <https://github.com/pymor/pymor/pull/800>`_
-
-
-Signature change for ProjectionParameterFunctional
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#756] Rename parameter coordinates to index <https://github.com/pymor/pymor/pull/756>`_
+Further API Changes
+~~~~~~~~~~~~~~~~~~~
+- The stagnation criterion of the :func:`~pymor.algorithms.newton.newton` is disabled by default
+  (and a relaxation parameter has been added) `[#800] <https://github.com/pymor/pymor/pull/800>`_.
+- The `coordinates` parameter of :class:`~pymor.parameters.functionals.ProjectionParameterFunctional`
+  has been renamed to `index` `[#756] <https://github.com/pymor/pymor/pull/756>`_.
 
 
 Further notable improvements
@@ -201,6 +254,7 @@ Further notable improvements
 - `[#559] fix arnoldi when E is not identity <https://github.com/pymor/pymor/pull/559>`_
 - `[#569] Fix NonProjectedResidualOperator.apply <https://github.com/pymor/pymor/pull/569>`_
 - `[#585] implement MPIOperator.apply_inverse_adjoint <https://github.com/pymor/pymor/pull/585>`_
+- `[#607] Replace sqlite caching <https://github.com/pymor/pymor/pull/607>`_
 - `[#608] [mpi] small tweaks to make MPI wrapping more flexible <https://github.com/pymor/pymor/pull/608>`_
 - `[#627] Fix as_source_array/as_range_array for BlockRowOperator/BlockColumnOperator <https://github.com/pymor/pymor/pull/627>`_
 - `[#644] Replace numpy.linalg.solve by scipy.linalg.solve <https://github.com/pymor/pymor/pull/644>`_
@@ -219,7 +273,9 @@ Further notable improvements
 - `[#809] Avoid checking in BlockOperators if block is None <https://github.com/pymor/pymor/pull/809>`_
 - `[#814] [algorithms.image] fix CollectVectorRangeRules for ConcatenationOperator <https://github.com/pymor/pymor/pull/814>`_
 - `[#815] Make assumptions on mass Operator in InstationaryModel consistent <https://github.com/pymor/pymor/pull/815>`_
+- `[#818] Tutorial setup <https://github.com/pymor/pymor/pull/818>`_
 - `[#824] Fix NumpyVectorArray.__mul__ when other is a NumPy array <https://github.com/pymor/pymor/pull/824>`_
+
 
 
 
