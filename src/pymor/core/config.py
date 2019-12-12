@@ -17,6 +17,9 @@ def _can_import(module):
 
 def _get_fenics_version():
     import dolfin as df
+    if df.__version__ != '2019.1.0':
+        import warnings
+        warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 (installed: {df.__version__}).')
     return df.__version__
 
 

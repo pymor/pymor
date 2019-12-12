@@ -93,6 +93,11 @@ HAPOD_ARGS = (
     ('hapod', ['--snap=3', '--procs=2', 1e-2, 10, 100]),
 )
 
+FENICS_NONLINEAR_ARGS = (
+    ('fenics_nonlinear', [2, 10, 2]),
+    ('fenics_nonlinear', [3, 5, 1]),
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + THERMALBLOCK_ARGS
@@ -103,6 +108,7 @@ DEMO_ARGS = (
     + PARABOLIC_MOR_ARGS
     + SYS_MOR_ARGS
     + HAPOD_ARGS
+    + FENICS_NONLINEAR_ARGS
 )
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 
@@ -116,7 +122,7 @@ def _skip_if_no_solver(param):
     demo, args = param
     from pymor.core.config import config
     for solver in ['fenics', 'ngsolve']:
-        needs_solver = len([f for f in args if solver in str(f)]) > 0
+        needs_solver = len([f for f in args if solver in str(f)]) > 0 or demo.find(solver) >= 0
         has_solver = getattr(config, 'HAVE_' + solver.upper())
         if needs_solver and not has_solver:
             if not os.environ.get('DOCKER_PYMOR', False):
