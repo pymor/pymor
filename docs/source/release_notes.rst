@@ -6,6 +6,20 @@ Release Notes
 
 pyMOR 2019.2 (December XX, 2019)
 --------------------------------
+We are proud to announce the release of pyMOR 2019.2! For this release we have
+worked hard to make implementing new models and reduction algorithms with pyMOR
+even easier. Further highlights of this release are an extended VectorArray
+interface with generic support for complex numbers, vastly extended and
+improved systeme-theoretic MOR methods, as well as builtin support for model
+outputs and parameter sensitivities.
+
+Over 700 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2019.2.x...0.5.0>`__.
+
+pyMOR 2019.2 contains contributions by Linus Balicki, Dennis Eickhorn and Tim
+Keil. See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for
+more details.
+
 
 Release highlights
 ^^^^^^^^^^^^^^^^^^
