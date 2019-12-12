@@ -135,8 +135,8 @@ Backward incompatible changes
 
 Dropped Python 3.5 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#790] Default to POD-Greedy for instationary problems <https://github.com/pymor/pymor/pull/790>`_ 
 - `[#553] increase minimal python version to 3.6 <https://github.com/pymor/pymor/pull/553>`_ 
+- `[#584] Simply implementation of RuleTable`_
 
 
 Global RandomState
@@ -177,6 +177,7 @@ Further notable improvements
 - `[#716] Fix 643 <https://github.com/pymor/pymor/pull/716>`_ 
 - `[#786] Handle projection of parametric BlockOperators <https://github.com/pymor/pymor/pull/786>`_ 
 - `[#789] allow time-dep operator or rhs in ParabolicRBReductor <https://github.com/pymor/pymor/pull/789>`_ 
+- `[#790] Default to POD-Greedy for instationary problems <https://github.com/pymor/pymor/pull/790>`_ 
 - `[#791] Add rule to ProjectRules for the case that source_basis range basis are None <https://github.com/pymor/pymor/pull/791>`_ 
 - `[#802] Fix project call in ProjectedOperator.jacobian() <https://github.com/pymor/pymor/pull/802>`_ 
 - `[#804] Minor improvements to deim algorithm <https://github.com/pymor/pymor/pull/804>`_ 
