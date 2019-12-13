@@ -264,7 +264,7 @@ def reduce_pod(fom, reductor, snapshots, basis_size):
     for mu in training_set:
         snapshots.append(fom.solve(mu))
 
-    basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.product)
+    basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.products['RB'])
     reductor.extend_basis(basis, method='trivial')
 
     rom = reductor.reduce()
