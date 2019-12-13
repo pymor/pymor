@@ -4,7 +4,7 @@
 Release Notes
 *************
 
-pyMOR 2019.2 (December XX, 2019)
+pyMOR 2019.2 (December 16, 2019)
 --------------------------------
 We are proud to announce the release of pyMOR 2019.2! For this release we have
 worked hard to make implementing new models and reduction algorithms with pyMOR
