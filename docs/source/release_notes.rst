@@ -27,10 +27,10 @@ Release highlights
 Implement new models and reductors more easily
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 As many users have been struggling with the notion of `Discretization` in pyMOR
-and to account for that fact that not every full-order model needs to be a discretized
+and to account for the fact that not every full-order model needs to be a discretized
 PDE model, we have decided to rename `DiscretizationInterface` to
 :class:`~pymor.models.interfaces.ModelInterface` and all deriving classes accordingly
-`[#568] <https://github.com/pymor/pymor/pull/568>`_. Consequently the variable names
+`[#568] <https://github.com/pymor/pymor/pull/568>`_. Consequently, the variable names
 `m`, `rom`, `fom` will now be found throughout pyMOR's code to refer to an arbitrary
 |Model|, a reduced-order |Model| or a full-order |Model|.
 
@@ -59,7 +59,7 @@ method `[#618] <https://github.com/pymor/pymor/pull/618>`_. All |VectorArray|
 implementations shipped with pyMOR support these new interface methods.
 As an important step to improve the support for system-theoretic MOR methods with
 external PDE solvers, we have implemented facilities to provide generic support
-for complex valued |VectorArrays| even for PDE solvers that do not support complex
+for complex-valued |VectorArrays| even for PDE solvers that do not support complex
 vectors natively `[#755] <https://github.com/pymor/pymor/pull/755>`_.
 
 
@@ -137,14 +137,14 @@ used more flexible, e.g. for goal-oriented basis generation, by implementing a n
 
 Numerical linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-By specifying the `return_R=True` the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt`
+By specifying `return_R=True`, the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt`
 algorithm can now also be used to compute a QR decomposition of a given |VectorArray|
 `[#577] <https://github.com/pymor/pymor/pull/577>`_. Moreover,
 :func:`~pymor.algorithms.gram_schmidt.gram_schmidt` can be used as a more accurate
 (but often more expensive) alternative for computing the :func:`~pymor.algorithms.pod.pod` of
 a |Vectorarray|. Both, the older method-of-snapshots approach as well as the QR decomposition
 are now available for computing a truncated SVD of a |VectorArray| via the newly added
-:mod:`~pymor.algorithms.svd_va` module `[#718] <https://github.com/pymor/pymor/pull/817>`_.
+:mod:`~pymor.algorithms.svd_va` module `[#718] <https://github.com/pymor/pymor/pull/718>`_.
 Basic randomized algorithms for approximating the image of a linear |Operator| are
 implemented in the :mod:`~pymor.algorithms.randrangefinder` module
 `[#665] <https://github.com/pymor/pymor/pull/665>`_.
@@ -185,12 +185,13 @@ which allows to change the class of the object returned by it
 
 project and assemble_lincomb are easier to extend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In pyMOR 0.5 we have introduced |RuleTables| to make central algorithms in pyMOR like
-the projection of an |Operator| via |project| easier to traceable and extendable.
-For pyMOR 2019.2 we have further simplified `project` by removing the `product`
+In pyMOR 0.5, we have introduced |RuleTables| to make central algorithms in
+pyMOR, like the projection of an |Operator| via |project|, easier to trace and
+extend.
+For pyMOR 2019.2, we have further simplified |project| by removing the `product`
 argument from the underlying |RuleTable| `[#785] <https://github.com/pymor/pymor/pull/785>`_.
 As the inheritance-based implementation of `assemble_lincomb` was showing similar
-complexity issues as the old inheritance-based implementation of `projected` we
+complexity issues as the old inheritance-based implementation of `projected`, we
 moved all backend-agnostic logic into the |RuleTable|-based free function
 :func:`~pymor.algorithms.lincomb.assemble_lincomb`, leaving the remaining backend
 code in :meth:`~pymor.operators.interfaces.OperatorInterface._assemble_lincomb`
@@ -213,7 +214,7 @@ Backward incompatible changes
 
 Dropped Python 3.5 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-As Python 3.6 or newer now ships with the current versions of all major Linux distributions
+As Python 3.6 or newer now ships with the current versions of all major Linux distributions,
 we have decided to drop support for Python 3.6 in pyMOR 2019.2. This allows us to benefit
 from new language features, in particular f-strings and class attribute definition order
 preservation `[#553] <https://github.com/pymor/pymor/pull/553>`_,
