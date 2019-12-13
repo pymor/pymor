@@ -331,8 +331,8 @@ System-theoretic MOR methods
 
 With 386 commits, `[#464] <https://github.com/pymor/pymor/pull/464>`_ added
 systems-theoretic methods to pyMOR. Module :mod:`pymor.discretizations.iosys`
-contains new discretization classes for input-output systems, e.g. |LTISystem|,
-|SecondOrderSystem| and |TransferFunction|. At present, methods related to these
+contains new discretization classes for input-output systems, e.g. `LTISystem`,
+`SecondOrderSystem` and |TransferFunction|. At present, methods related to these
 classes mainly focus on continuous-time, non-parametric systems.
 
 Since matrix equation solvers are important tools in many system-theoretic
@@ -365,7 +365,7 @@ implemented. Balancing-based MOR methods are implemented in
 :class:`~pymor.reductors.interpolation.SO_BHIReductor` and Second-Order Reduced
 IRKA (SOR-IRKA) in :class:`~pymor.reductors.sor_irka.SOR_IRKAReductor`.
 
-For more general transfer functions, MOR methods which return |LTISystems| are
+For more general transfer functions, MOR methods which return `LTISystems` are
 also available. Bitangential Hermite interpolation is implemented in
 :class:`~pymor.reductors.interpolation.TFInterpReductor` and Transfer Function
 IRKA (TF-IRKA) in :class:`~pymor.reductors.h2.TF_IRKAReductor`.
@@ -493,7 +493,7 @@ Additional new features
   `[#362] <https://github.com/pymor/pymor/pull/362>`_,
   `[#447] <https://github.com/pymor/pymor/pull/447>`_
   for details. As a consequence of these changes, the `rhs` |Operator| in
-  |StationaryDiscretization| is now a vector-like |Operator| instead of a functional.
+  `StationaryDiscretization` is now a vector-like |Operator| instead of a functional.
 
 - The analytical problems and discretizers of pyMOR's discretization toolbox
   have been reorganized and improved. All problems are now implemented as
@@ -654,7 +654,7 @@ to benefit from existing MPI-based parallel HPC computing architectures
 
 Support classes for MPI distributed external PDE solvers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-While pyMOR's |VectorArray|, |Operator| and |Discretization|
+While pyMOR's |VectorArray|, |Operator| and `Discretization`
 interfaces are agnostic to the concrete (parallel) implementation
 of the corresponding objects in the PDE solver, external solvers
 are often integrated by creating wrapper classes directly corresponding
@@ -727,13 +727,13 @@ Improvements to pyMOR's discretizaion tookit
 - Basic support for parabolic problems has been added.
   The :meth:`~pymor.discretizers.parabolic.discretize_parabolic_cg` and
   :meth:`~pymor.discretizers.parabolic.discretize_parabolic_fv` methods can
-  be used to build continuous finite element or finite volume |Discretizations|
+  be used to build continuous finite element or finite volume `Discretizations`
   from a given :class:`pymor.analyticalproblems.parabolic.ParabolicProblem`.
   The :mod:`~pymordemos.parabolic` demo demonstrates the use of these methods
   `[#189] <https://github.com/pymor/pymor/issues/189>`_.
 
 - The :mod:`pymor.discretizers.disk` module contains methods to create stationary and
-  instationary affinely decomposed |Discretizations| from matrix data files
+  instationary affinely decomposed `Discretizations` from matrix data files
   and an `.ini` file defining the given problem.
 
 - :class:`EllipticProblems <pymor.analyticalproblems.elliptic.EllipticProblem>`
@@ -781,7 +781,7 @@ Caching improvements
   a change of the |state id| pyMOR's defaults dictionary, leading to cache
   misses. While this in general is desirable, as, for instance, changed linear
   solver default error tolerances might lead to different solutions for
-  the same |Discretization| object, it is clear for many I/O related defaults,
+  the same `Discretization` object, it is clear for many I/O related defaults,
   that these will not affect the outcome of any computation. For these defaults,
   the :meth:`~pymor.core.defaults.defaults` decorator now accepts a `sid_ignore`
   parameter, to exclude these defaults from |state id| computation, preventing
