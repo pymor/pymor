@@ -66,23 +66,26 @@ vectors natively `[#755] <https://github.com/pymor/pymor/pull/755>`_.
 Improved and extended support for system-theoretic MOR methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To increase compatibility between input-output models in
-:mod:`~pymor.models.iosys` and the
-:class:`~pymor.models.basic.InstationaryModel`,
-support for parametric operators was added
-`[#626] <https://github.com/pymor/pymor/pull/626>`_ and the `state_space`
-attribute was removed `[#648] <https://github.com/pymor/pymor/pull/648>`_.
-The system attributes `n`, `m`, and `p` were renamed to `order`, `input_dim`,
-and `output_dim` `[#578] <https://github.com/pymor/pymor/pull/578>`_ and the
-`bode` method to `freq_resp`
+:mod:`~pymor.models.iosys` and the |InstationaryModel|, support for models with
+parametric operators has been added
+`[#626] <https://github.com/pymor/pymor/pull/626>`_, which also enables
+implementation of parametric MOR methods for such models.
+Furthermore, the `state_space` attribute was removed in favor of
+`solution_space` `[#648] <https://github.com/pymor/pymor/pull/648>`_ to make
+more explicit the result of the
+:meth:`~pymor.models.interfaces.ModelInterface.solve` method.
+Further improvements in naming has been renaming attributes `n`, `m`, and `p` to
+`order`, `input_dim`, and `output_dim`
+`[#578] <https://github.com/pymor/pymor/pull/578>`_ and the `bode` method to
+:meth:`~pymor.models.iosys.InputOutputModel.freq_resp`
 `[#729] <https://github.com/pymor/pymor/pull/729>`_.
 Reductors in :mod:`~pymor.reductors.bt` and :mod:`~pymor.reductors.h2` received
-improvements (`[#656] <https://github.com/pymor/pymor/pull/656>`_,
+numerous improvements (`[#656] <https://github.com/pymor/pymor/pull/656>`_,
 `[#661] <https://github.com/pymor/pymor/pull/661>`_,
 `[#807] <https://github.com/pymor/pymor/pull/807>`_) and variants of one-sided
 IRKA have been added `[#579] <https://github.com/pymor/pymor/pull/579>`_.
-A low-rank solver for Riccati equations has been added
-`[#736] <https://github.com/pymor/pymor/pull/736>`_ as had been done for
-Lyapunov equations.
+As for Lyapunov equations, a low-rank solver for Riccati equations has been
+added `[#736] <https://github.com/pymor/pymor/pull/736>`_.
 
 
 Model outputs and parameter sensitivities
