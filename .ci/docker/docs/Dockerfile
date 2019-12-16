@@ -1,3 +1,3 @@
 FROM scratch
 
-COPY public /public/
+COPY public/* /public/
