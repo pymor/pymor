@@ -63,7 +63,7 @@ If you use pyMOR for academic work, please consider citing our
 Installation via pip
 --------------------
 
-We recommend installation of pyMOR in a [virtual environment](https://virtualenv.pypa.io/en/latest/>).
+We recommend installation of pyMOR in a [virtual environment](https://virtualenv.pypa.io/en/latest/).
 
 pyMOR can easily be installed with the [pip](https://pip.pypa.io/en/stable/)
 command:
@@ -111,7 +111,7 @@ might break (this is usually announced on our
 [mailing list](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install git+https://github.com/pymor/pymor@0.5.x#egg=pymor[full]
+    pip install git+https://github.com/pymor/pymor@2019.2.x#egg=pymor[full]
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
@@ -151,10 +151,8 @@ protocol.
 Whenever possible, we recommend to recompile the solver as a
 Python extension module which gives pyMOR direct access to the solver without
 any communication overhead. A basic example using
-[pybindgen](https://github.com/gjcarneiro/pybindgen) can be found in
-`src/pymordemos/minimal_cpp_demo`. A more elaborate nonlinear example
-using [Boost.Python](http://www.boost.org/) can be found
-[here](https://github.com/pymor/dune-burgers-demo). Moreover,
+[pybind11](https://github.com/pybind/pybind11) can be found in
+`src/pymordemos/minimal_cpp_demo`. Moreover,
 we provide bindings for the following solver libraries:
 
 * [FEniCS](https://fenicsproject.org)
@@ -210,15 +208,11 @@ Then, clone the pyMOR git repository using
 
 and, optionally, switch to the branch you are interested in, e.g.
 
-    git checkout 0.5.x
+    git checkout 2019.2.x
 
 Then, make an editable installation of pyMOR with
 
-    pip install -e .
-
-and pull in all optional dependencies by using
-
-    pip install -r requirements-optional.txt
+    pip install -e .[full]
 
 
 Tests
