@@ -21,11 +21,16 @@ docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 docker pull ${IMAGE}
 container=$(docker create --entrypoint / ${IMAGE})
 
-mkdir -p public/${CI_COMMIT_REF_SLUG}/
-rm -rf public/${CI_COMMIT_REF_SLUG}/
-docker cp ${container}:/public/ public/
+PUBLIC_DIR=/tmp/public
+mkdir -p ${PUBLIC_DIR}/${CI_COMMIT_REF_SLUG}/
+docker cp ${container}:/public/ ${PUBLIC_DIR}/
+du -sch ${PUBLIC_DIR}/*
+rm -rf ${PUBLIC_DIR}/${CI_COMMIT_REF_SLUG}/
 
-rsync -a docs/_build/html/ public/${CI_COMMIT_REF_SLUG}/
-cp -r docs/public_root/* public/
-docker build -t ${IMAGE} -f .ci/docker/docs/Dockerfile .
+rsync -a docs/_build/html/ ${PUBLIC_DIR}/${CI_COMMIT_REF_SLUG}/
+cp -r docs/public_root/* ${PUBLIC_DIR}
+du -sch ${PUBLIC_DIR}/*
+docker build -t ${IMAGE} -f .ci/docker/docs/Dockerfile ${PUBLIC_DIR}
 docker push ${IMAGE}
+# for automatic deploy gitlab uses ${PROJECT_DIR}/public
+mv ${PUBLIC_DIR} ${PYMOR_ROOT}/
