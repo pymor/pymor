@@ -113,6 +113,11 @@ Bibliography
           systems,
           Math. Comput. Model. Dyn. Syst., 2008, 14(5), 391-406
 
+.. [RM06] J. Rommes and N. Martins,
+          Efficient computation of multivariable transfer function dominant poles
+          using subspace acceleration.
+          IEEE Trans. on Power Systems 21 (4), pp. 1471-1483, 2006
+
 .. [W12] S. Wyatt,
          Issues in Interpolatory Model Reduction: Inexact Solves,
          Second Order Systems and DAEs,
