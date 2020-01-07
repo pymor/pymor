@@ -209,7 +209,7 @@ trigger_binder {{loop.index}}/{{loop.length}}:
         expire_in: 1 week
 
 {%- for PY in pythons %}
-{%- for ML in [1, 2010] %}
+{%- for ML in [1, 2010, 2014] %}
 wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
     extends: .wheel
     variables:
