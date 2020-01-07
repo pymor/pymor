@@ -276,6 +276,12 @@ wheel 2010 py3 6:
         PYVER: "3.6"
     script: bash .ci/gitlab/wheels.bash 2010
 
+wheel 2014 py3 6:
+    extends: .wheel
+    variables:
+        PYVER: "3.6"
+    script: bash .ci/gitlab/wheels.bash 2014
+
 
 wheel 1 py3 7:
     extends: .wheel
@@ -288,6 +294,12 @@ wheel 2010 py3 7:
     variables:
         PYVER: "3.7"
     script: bash .ci/gitlab/wheels.bash 2010
+
+wheel 2014 py3 7:
+    extends: .wheel
+    variables:
+        PYVER: "3.7"
+    script: bash .ci/gitlab/wheels.bash 2014
 
 
 
