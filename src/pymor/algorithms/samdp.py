@@ -5,7 +5,7 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.operators.constructions import IdentityOperator, ZeroOperator
+from pymor.operators.constructions import IdentityOperator
 from pymor.core.defaults import defaults
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
@@ -13,7 +13,7 @@ from pymor.core.logger import getLogger
 
 @defaults('tol', 'imagtol', 'conjtol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
           'rqi_maxiter')
-def samdp(A, E, B, C, D, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, conjtol=1e-8,
+def samdp(A, E, B, C, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, conjtol=1e-8,
           rqitol=1e-4, maxrestart=100, krestart=10, rqi_maxiter=10):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
@@ -37,8 +37,6 @@ def samdp(A, E, B, C, D, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, con
         The |Operator| B.
     C
         The |Operator| C.
-    D
-        The |Operator| D or `None`.
     nwanted
         The number of dominant poles that should be computed.
     init_shifts
@@ -75,9 +73,6 @@ def samdp(A, E, B, C, D, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, con
 
     if E is None:
         E = IdentityOperator(A.source)
-
-    if D is None:
-        D = ZeroOperator(C.range, B.source)
 
     B = B.as_range_array()
     C = C.as_source_array()
@@ -117,7 +112,7 @@ def samdp(A, E, B, C, D, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, con
 
         sEmA = st * E - A
         sEmAB = sEmA.apply_inverse(B_defl)
-        Hs = C_defl.dot(sEmAB)  # + D?
+        Hs = C_defl.dot(sEmAB)
 
         y_all, _, u_all = spla.svd(Hs)  # use scipy.sparse.linalg.svds(Hs, k=1) instead?
 
