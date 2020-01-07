@@ -71,6 +71,8 @@ command:
     pip install --upgrade pip  # make sure that pip is reasonably new
     pip install pymor[full]
 
+(Please note that pip must be at least version 9.0.0)
+
 This will install the latest release of pyMOR on your system with most optional
 dependencies.
 For Linux we provide binary wheels, so no further system packages should

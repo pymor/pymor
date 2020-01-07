@@ -76,15 +76,6 @@ def extras():
     import pkg_resources
     import itertools
 
-    def _ex(name):
-        # no environment specifiers or wheel URI etc are allowed in extras
-        name = strip_markers(name)
-        try:
-            next(pkg_resources.parse_requirements(name))
-        except pkg_resources.RequirementParseError:
-            name = import_names[name]
-        return name
-
     def _candidates(blacklist):
         # skip those which aren't needed in our current environment (py ver, platform)
         for pkg in set(itertools.chain(doc_requires, tests_require, install_suggests.keys())):
@@ -106,7 +97,7 @@ def extras():
                     continue
 
     return {
-        'full': [_ex(f) for f in _candidates(blacklist=[])],
+        'full': list(_candidates(blacklist=[])),
         'ci':  ci_requires,
         'docs': doc_requires,
     }
