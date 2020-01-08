@@ -16,7 +16,7 @@ class ModelBase(ModelInterface):
     sid_ignore = ModelInterface.sid_ignore | {'visualizer'}
 
     def __init__(self, products=None, estimator=None, visualizer=None,
-                 cache_region=None, name=None, **kwargs):
+                 name=None, **kwargs):
 
         products = FrozenDict(products or {})
 
@@ -26,7 +26,6 @@ class ModelBase(ModelInterface):
                 setattr(self, f'{k}_norm', induced_norm(v))
 
         self.__auto_init(locals())
-        self.enable_caching(cache_region)
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
@@ -95,14 +94,12 @@ class StationaryModel(ModelBase):
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
         to the model which forwards its arguments to the
         visualizer's `visualize` method.
-    cache_region
-        `None` or name of the |CacheRegion| to use.
     name
         Name of the model.
     """
 
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 parameter_space=None, estimator=None, visualizer=None, cache_region=None, name=None):
+                 parameter_space=None, estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArrayInterface):
             assert rhs in operator.range
@@ -111,9 +108,7 @@ class StationaryModel(ModelBase):
         assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
         assert output_functional is None or output_functional.source == operator.source
 
-        super().__init__(products=products,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+        super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
         self.build_parameter_type(operator, rhs, output_functional)
         self.__auto_init(locals())
@@ -204,15 +199,13 @@ class InstationaryModel(ModelBase):
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
         to the model which forwards its arguments to the
         visualizer's `visualize` method.
-    cache_region
-        `None` or name of the |CacheRegion| to use.
     name
         Name of the model.
     """
 
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
                  output_functional=None, products=None, parameter_space=None, estimator=None, visualizer=None,
-                 cache_region=None, name=None):
+                 name=None):
 
         if isinstance(rhs, VectorArrayInterface):
             assert rhs in operator.range
@@ -230,8 +223,7 @@ class InstationaryModel(ModelBase):
             or mass.linear and mass.source == mass.range == operator.source
         assert output_functional is None or output_functional.source == operator.source
 
-        super().__init__(products=products, estimator=estimator,
-                         visualizer=visualizer, cache_region=cache_region, name=name)
+        super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
         self.build_parameter_type(initial_data, operator, rhs, mass, output_functional, provides={'_t': 0})
         self.__auto_init(locals())
