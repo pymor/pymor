@@ -335,14 +335,17 @@ class CacheableInterface(ImmutableInterface):
             if defaults:
                 kwargs = dict(defaults, **kwargs)
 
-            key = generate_sid((method.__name__, self_id, kwargs, defaults_sid()))
+            key = generate_sid((method.__name__, self_id, kwargs))
             found, value = region.get(key)
             if found:
+                value, cached_defaults_sid = value
+                if cached_defaults_sid != defaults_sid():
+                    getLogger('pymor.core.cache').warn('pyMOR defaults have been changed. Cached result may be wrong.')
                 return value
             else:
                 self.logger.debug(f'creating new cache entry for {self.__class__.__name__}.{method.__name__}')
                 value = method(self, **kwargs) if pass_self else method(**kwargs)
-                region.set(key, value)
+                region.set(key, (value, defaults_sid()))
                 return value
 
 
