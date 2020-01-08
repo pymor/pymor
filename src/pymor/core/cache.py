@@ -247,36 +247,52 @@ class CacheableInterface(ImmutableInterface):
         Name of the :class:`CacheRegion` to use. Must correspond to a key in
         the :attr:`cache_regions` dict. If `None` or `'none'`, caching
         is disabled.
+    cache_id
+        Identifier for the object instance on which a cached method is called.
     """
 
     sid_ignore = ImmutableInterface.sid_ignore | {'cache_region'}
 
     cache_region = None
+    cache_id = None
 
     def disable_caching(self):
         """Disable caching for this instance."""
         self.__dict__['cache_region'] = None
+        self.__dict__['cache_id'] = None
 
-    def enable_caching(self, region):
+    def enable_caching(self, region, cache_id=None):
         """Enable caching for this instance.
 
         When setting the object's cache region to a :attr:`~CacheRegion.persistent`
         :class:`CacheRegion`, the object's |state id| will be computed.
 
+        .. warning::
+            Note that using :meth:`~pymor.core.interfaces.ImmutableInterface.with_`
+            will reset :attr:`cache_region` and :attr:`cache_id` to their class
+            defaults.
+
         Parameters
         ----------
         region
-            Name of the `CacheRegion` to use. Must correspond to a key in
+            Name of the |CacheRegion| to use. Must correspond to a key in
             the :attr:`cache_regions` dict. If `None` or `'none'`, caching
             is disabled.
+        cache_id
+            Identifier for the object instance on which a cached method is called.
+            Must be specified when `region` is :attr:`~CacheRegion.persistent`.
+            When `region` is not :attr:`~CacheRegion.persistent` and no `cache_id`
+            is given, the object's :attr:`~pymor.core.interfaces.BasicInterface.uid`
+            is used instead.
         """
+        self.__dict__['cache_id'] = cache_id
         if region in (None, 'none'):
             self.__dict__['cache_region'] = None
         else:
             self.__dict__['cache_region'] = region
             r = cache_regions.get(region, None)
-            if r and r.persistent:
-                self.generate_sid()
+            if r and r.persistent and cache_id is None:
+                raise ValueError('For persistent CacheRegions a cache_id has to be specified.')
 
     def cached_method_call(self, method, *args, **kwargs):
         """Call a given `method` and cache the return value.
@@ -318,14 +334,9 @@ class CacheableInterface(ImmutableInterface):
             except KeyError:
                 raise KeyError(f'No cache region "{self.cache_region}" found')
 
-            # compute id for self
-            if region.persistent:
-                self_id = getattr(self, 'sid')
-                if not self_id:     # this can happen when cache_region is already set by the class to
-                                    # a persistent region
-                    self_id = self.generate_sid()
-            else:
-                self_id = self.uid
+            # id for self
+            assert self.cache_id or not region.persistent
+            self_id = self.cache_id or self.uid
 
             # ensure that passing a value as positional or keyword argument does not matter
             kwargs.update(zip(argnames, args))

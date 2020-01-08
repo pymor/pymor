@@ -98,7 +98,9 @@ def thermalblock_demo(args):
         fom = convert_to_numpy_list_vector_array(fom)
 
     if args['--cache-region'] != 'none':
-        fom.enable_caching(args['--cache-region'])
+        # building a cache_id is only needed for persistent CacheRegions
+        cache_id = f"pymordemos.thermalblock_adaptive {args['--grid']}"
+        fom.enable_caching(args['--cache-region'], cache_id)
 
     if args['--plot-solutions']:
         print('Showing some solutions')
