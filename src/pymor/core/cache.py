@@ -72,7 +72,7 @@ import tempfile
 from types import MethodType
 import diskcache
 
-from pymor.core.defaults import defaults, defaults_sid
+from pymor.core.defaults import defaults, defaults_changes
 from pymor.core.interfaces import ImmutableInterface, generate_sid
 from pymor.core.logger import getLogger
 
@@ -338,14 +338,14 @@ class CacheableInterface(ImmutableInterface):
             key = generate_sid((method.__name__, self_id, kwargs))
             found, value = region.get(key)
             if found:
-                value, cached_defaults_sid = value
-                if cached_defaults_sid != defaults_sid():
+                value, cached_defaults_changes = value
+                if cached_defaults_changes != defaults_changes():
                     getLogger('pymor.core.cache').warn('pyMOR defaults have been changed. Cached result may be wrong.')
                 return value
             else:
                 self.logger.debug(f'creating new cache entry for {self.__class__.__name__}.{method.__name__}')
                 value = method(self, **kwargs) if pass_self else method(**kwargs)
-                region.set(key, (value, defaults_sid()))
+                region.set(key, (value, defaults_changes()))
                 return value
 
 
