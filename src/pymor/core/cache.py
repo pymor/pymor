@@ -66,15 +66,21 @@ import atexit
 from collections import OrderedDict
 import functools
 import getpass
+import hashlib
 import inspect
 import os
 import tempfile
 from types import MethodType
+
 import diskcache
+import numpy as np
 
 from pymor.core.defaults import defaults, defaults_changes
-from pymor.core.interfaces import ImmutableInterface, generate_sid
+from pymor.core.exceptions import CacheKeyGenerationError
+from pymor.core.interfaces import ImmutableInterface
 from pymor.core.logger import getLogger
+from pymor.core.pickle import dumps
+from pymor.parameters.base import Parameter, ParameterType
 
 @atexit.register
 def cleanup_non_persisten_regions():
@@ -345,8 +351,9 @@ class CacheableInterface(ImmutableInterface):
             if defaults:
                 kwargs = dict(defaults, **kwargs)
 
-            key = generate_sid((method.__name__, self_id, kwargs))
+            key = build_cache_key((method.__name__, self_id, kwargs))
             found, value = region.get(key)
+
             if found:
                 value, cached_defaults_changes = value
                 if cached_defaults_changes != defaults_changes():
@@ -375,3 +382,31 @@ def cached(function):
         return self._cached_method_call(function, True, argnames, defaults, args, kwargs)
 
     return wrapper
+
+
+NoneType = type(None)
+
+
+def build_cache_key(obj):
+
+    def transform_obj(obj):
+        t = type(obj)
+        if t in (NoneType, bool, int, float, str, bytes):
+            return obj
+        elif t is np.ndarray:
+            if t.dtype == object:
+                raise CacheKeyGenerationError('Cannot generate cache key for provided arguments')
+            return obj
+        elif t in (list, tuple):
+            return tuple(transform_obj(o) for o in obj)
+        elif t in (set, frozenset):
+            return tuple(transform_obj(o) for o in sorted(obj))
+        elif t in (dict, Parameter, ParameterType):
+            return tuple((transform_obj(k), transform_obj(v)) for k, v in sorted(obj.items()))
+        else:
+            raise CacheKeyGenerationError('Cannot generate cache key for provided arguments')
+
+    obj = transform_obj(obj)
+    key = hashlib.sha256(dumps(obj, protocol=-1)).hexdigest()
+
+    return key

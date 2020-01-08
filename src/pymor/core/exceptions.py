@@ -41,6 +41,10 @@ class SIDGenerationError(Exception):
     """Is raised when generate_sid fails."""
 
 
+class CacheKeyGenerationError(Exception):
+    """Is raised when cache key generation fails due to unspported arguments."""
+
+
 class GmshMissing(Exception):
     """Is raised when a Gmsh is not found."""
 
