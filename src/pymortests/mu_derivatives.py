@@ -19,21 +19,39 @@ def test_ProjectionParameterFunctional():
     derivative_to_first_index = pf.d_mu('mu', 0)
     derivative_to_second_index = pf.d_mu('mu', 1)
 
+    second_derivative_first_first = pf.d_mui_muj('mu', 'mu', 0, 0)
+    second_derivative_first_second = pf.d_mui_muj('mu', 'mu', 0, 1)
+    second_derivative_second_first = pf.d_mui_muj('mu', 'mu', 1, 0)
+    second_derivative_second_second = pf.d_mui_muj('mu', 'mu', 1, 1)
+
     der_mu_1 = derivative_to_first_index.evaluate(mu)
     der_mu_2 = derivative_to_second_index.evaluate(mu)
+
+    hes_mu_1_mu_1 = second_derivative_first_first.evaluate(mu)
+    hes_mu_1_mu_2 = second_derivative_first_second.evaluate(mu)
+    hes_mu_2_mu_1 = second_derivative_second_first.evaluate(mu)
+    hes_mu_2_mu_2 = second_derivative_second_second.evaluate(mu)
 
     assert pf.evaluate(mu) == 10
     assert der_mu_1 == 1
     assert der_mu_2 == 0
+    assert hes_mu_1_mu_1 == 0
+    assert hes_mu_1_mu_2 == 0
+    assert hes_mu_2_mu_1 == 0
+    assert hes_mu_2_mu_2 == 0
 
 
 def test_ExpressionParameterFunctional():
-    dict_of_d_mus = {'mu': ['100', '2'], 'nu': 'cos(nu)'}
+    dict_of_d_mus = {'mu': ['200 * mu[0]', '2 * mu[0]'], 'nu': 'cos(nu)'}
 
-    epf = ExpressionParameterFunctional('100 * mu[0] + 2 * mu[1] + sin(nu)',
+    dict_of_second_derivative = {'mu': [{'mu': ['200', '2'], 'nu': '0'},
+                              {'mu': ['2', '0'], 'nu': '0'}],
+                       'nu': {'mu': ['0', '0'], 'nu': '-sin(nu)'}}
+
+    epf = ExpressionParameterFunctional('100 * mu[0]**2 + 2 * mu[1] * mu[0] + sin(nu)',
                                         {'mu': (2,), 'nu': ()},
-                                        'functional_with_derivative',
-                                        dict_of_d_mus)
+                                        'functional_with_derivative_and_second_derivative',
+                                        dict_of_d_mus, dict_of_second_derivative)
 
     mu = {'mu': (10,2), 'nu': 0}
 
@@ -45,10 +63,39 @@ def test_ExpressionParameterFunctional():
     der_mu_2 = derivative_to_second_mu_index.evaluate(mu)
     der_nu = derivative_to_nu_index.evaluate(mu)
 
-    assert epf.evaluate(mu) == 100*10 + 2*2 + 0
-    assert der_mu_1 == 100
-    assert der_mu_2 == 2
+    second_derivative_first_mu_first_mu = epf.d_mui_muj('mu', 'mu', 0, 0)
+    second_derivative_first_mu_second_mu = epf.d_mui_muj('mu', 'mu', 0, 1)
+    second_derivative_first_mu_nu = epf.d_mui_muj('mu', 'nu', 0)
+    second_derivative_second_mu_first_mu = epf.d_mui_muj('mu', 'mu', 1, 0)
+    second_derivative_second_mu_second_mu = epf.d_mui_muj('mu', 'mu', 1, 1)
+    second_derivative_second_mu_nu = epf.d_mui_muj('mu', 'nu', 1)
+    second_derivative_nu_first_mu = epf.d_mui_muj('nu', 'mu', (), 0)
+    second_derivative_nu_second_mu = epf.d_mui_muj('nu', 'mu', (), 1)
+    second_derivative_nu_nu = epf.d_mui_muj('nu', 'nu')
+
+    hes_mu_1_mu_1 = second_derivative_first_mu_first_mu.evaluate(mu)
+    hes_mu_1_mu_2 = second_derivative_first_mu_second_mu.evaluate(mu)
+    hes_mu_1_nu = second_derivative_first_mu_nu.evaluate(mu)
+    hes_mu_2_mu_1 = second_derivative_second_mu_first_mu.evaluate(mu)
+    hes_mu_2_mu_2 = second_derivative_second_mu_second_mu.evaluate(mu)
+    hes_mu_2_nu = second_derivative_second_mu_nu.evaluate(mu)
+    hes_nu_mu_1 = second_derivative_nu_first_mu.evaluate(mu)
+    hes_nu_mu_2 = second_derivative_nu_second_mu.evaluate(mu)
+    hes_nu_nu = second_derivative_nu_nu.evaluate(mu)
+
+    assert epf.evaluate(mu) == 100*10**2 + 2*2*10 + 0
+    assert der_mu_1 == 200 * 10
+    assert der_mu_2 == 2 * 10
     assert der_nu == 1
+    assert hes_mu_1_mu_1 == 200
+    assert hes_mu_1_mu_2 == 2
+    assert hes_mu_1_nu == 0
+    assert hes_mu_2_mu_1 == 2
+    assert hes_mu_2_mu_2 == 0
+    assert hes_mu_2_nu == 0
+    assert hes_nu_mu_1 == 0
+    assert hes_nu_mu_2 == 0
+    assert hes_nu_nu == -0
 
 def test_ExpressionParameterFunctional_for_2d_array():
     dict_of_d_mus_2d = {'mu': [['10', '20'],['1', '2']], 'nu': 'cos(nu)'}
@@ -82,13 +129,17 @@ def test_ExpressionParameterFunctional_for_2d_array():
     assert der_nu == 1
 
 def test_d_mu_of_LincombOperator():
-    dict_of_d_mus = {'mu': ['100', '2'], 'nu': 'cos(nu)'}
+    dict_of_d_mus = {'mu': ['100', '2 * mu[0]'], 'nu': 'cos(nu)'}
+
+    dict_of_second_derivative = {'mu': [{'mu': ['0', '2'], 'nu': '0'},
+                              {'mu': ['2', '0'], 'nu': '0'}],
+                       'nu': {'mu': ['0', '0'], 'nu': '-sin(nu)'}}
 
     pf = ProjectionParameterFunctional('mu', (2,), (0,))
-    epf = ExpressionParameterFunctional('100 * mu[0] + 2 * mu[1] + sin(nu)',
+    epf = ExpressionParameterFunctional('100 * mu[0] + 2 * mu[1] * mu[0] + sin(nu)',
                                         {'mu': (2,), 'nu': ()},
                                         'functional_with_derivative',
-                                        dict_of_d_mus)
+                                        dict_of_d_mus, dict_of_second_derivative)
 
     mu = {'mu': (10,2), 'nu': 0}
 
@@ -107,7 +158,37 @@ def test_d_mu_of_LincombOperator():
     eval_mu_2 = op_sensitivity_to_second_mu.evaluate_coefficients(mu)
     eval_nu = op_sensitivity_to_nu.evaluate_coefficients(mu)
 
-    assert operator.evaluate_coefficients(mu) == [1., 10, 1004.]
+    second_derivative_first_mu_first_mu = operator.d_mui_muj('mu', 'mu', 0, 0)
+    second_derivative_first_mu_second_mu = operator.d_mui_muj('mu', 'mu', 0, 1)
+    second_derivative_first_mu_nu = operator.d_mui_muj('mu', 'nu', 0)
+    second_derivative_second_mu_first_mu = operator.d_mui_muj('mu', 'mu', 1, 0)
+    second_derivative_second_mu_second_mu = operator.d_mui_muj('mu', 'mu', 1, 1)
+    second_derivative_second_mu_nu = operator.d_mui_muj('mu', 'nu', 1)
+    second_derivative_nu_first_mu = operator.d_mui_muj('nu', 'mu', (), 0)
+    second_derivative_nu_second_mu = operator.d_mui_muj('nu', 'mu', (), 1)
+    second_derivative_nu_nu = operator.d_mui_muj('nu', 'nu')
+
+    hes_mu_1_mu_1 = second_derivative_first_mu_first_mu.evaluate_coefficients(mu)
+    hes_mu_1_mu_2 = second_derivative_first_mu_second_mu.evaluate_coefficients(mu)
+    hes_mu_1_nu = second_derivative_first_mu_nu.evaluate_coefficients(mu)
+    hes_mu_2_mu_1 = second_derivative_second_mu_first_mu.evaluate_coefficients(mu)
+    hes_mu_2_mu_2 = second_derivative_second_mu_second_mu.evaluate_coefficients(mu)
+    hes_mu_2_nu = second_derivative_second_mu_nu.evaluate_coefficients(mu)
+    hes_nu_mu_1 = second_derivative_nu_first_mu.evaluate_coefficients(mu)
+    hes_nu_mu_2 = second_derivative_nu_second_mu.evaluate_coefficients(mu)
+    hes_nu_nu = second_derivative_nu_nu.evaluate_coefficients(mu)
+
+    assert operator.evaluate_coefficients(mu) == [1., 10, 1040.]
     assert eval_mu_1 == [0., 1., 100.]
-    assert eval_mu_2 == [0., 0., 2.]
+    assert eval_mu_2 == [0., 0., 2. * 10]
     assert eval_nu == [0., 0., 1.]
+
+    assert hes_mu_1_mu_1 == [0. ,0. , 0.]
+    assert hes_mu_1_mu_2 == [0. ,0. ,2]
+    assert hes_mu_1_nu == [0. ,0. ,0]
+    assert hes_mu_2_mu_1 == [0. ,0. ,2]
+    assert hes_mu_2_mu_2 == [0. ,0. ,0]
+    assert hes_mu_2_nu == [0. ,0. ,0]
+    assert hes_nu_mu_1 == [0. ,0. ,0]
+    assert hes_nu_mu_2 == [0. ,0. ,0]
+    assert hes_nu_nu == [0. ,0. ,-0]
