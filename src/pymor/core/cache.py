@@ -256,8 +256,6 @@ class CacheableInterface(ImmutableInterface):
         Identifier for the object instance on which a cached method is called.
     """
 
-    sid_ignore = ImmutableInterface.sid_ignore | {'cache_region'}
-
     cache_region = None
     cache_id = None
 
@@ -268,9 +266,6 @@ class CacheableInterface(ImmutableInterface):
 
     def enable_caching(self, region, cache_id=None):
         """Enable caching for this instance.
-
-        When setting the object's cache region to a :attr:`~CacheRegion.persistent`
-        :class:`CacheRegion`, the object's |state id| will be computed.
 
         .. warning::
             Note that using :meth:`~pymor.core.interfaces.ImmutableInterface.with_`

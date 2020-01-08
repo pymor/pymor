@@ -37,10 +37,6 @@ class NewtonError(Exception):
     """Is raised if the Newton algorithm fails to converge."""
 
 
-class SIDGenerationError(Exception):
-    """Is raised when generate_sid fails."""
-
-
 class CacheKeyGenerationError(Exception):
     """Is raised when cache key generation fails due to unspported arguments."""
 

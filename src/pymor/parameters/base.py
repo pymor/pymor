@@ -39,7 +39,6 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.interfaces import generate_sid
 from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.pprint import format_array
 

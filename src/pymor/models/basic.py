@@ -13,8 +13,6 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 class ModelBase(ModelInterface):
     """Base class for |Models| providing some common functionality."""
 
-    sid_ignore = ModelInterface.sid_ignore | {'visualizer'}
-
     def __init__(self, products=None, estimator=None, visualizer=None,
                  name=None, **kwargs):
 
