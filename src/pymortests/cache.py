@@ -75,23 +75,6 @@ class TestCache(TestInterface):
             assert delta2 < 0.5 * SLEEP_DELTA, r
 
 
-    # def test_limit(self):
-    #     for c in [IamLimitedCached('memory'),
-    #               IamLimitedCached('disk')]:
-    #         for i in range(25):
-    #             c._cache_region.backend.print_limit()
-    #             c.me_takey_no_time(i)
-    #             c._cache_region.backend.print_limit()
-
-    # This test will now fail since x and y will have the same sid.
-    # def test_copy(self):
-    #     from copy import copy
-    #     x = IWillBeCopied()
-    #     x_id = x.my_id(1)
-    #     y = copy(x)
-    #     y_id = y.my_id(1)
-    #     self.assertNotEqual(x_id, y_id)
-
     def test_region_api(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             backends = [cache.MemoryRegion(100), cache.DiskRegion(path=os.path.join(tmpdir, str(uuid4())),

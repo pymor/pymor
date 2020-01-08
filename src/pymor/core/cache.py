@@ -16,12 +16,11 @@ instance.
 Making this assumption, the keys for cache lookup are created from
 the following data:
 
-    1. the instance's |state id| in case of a :attr:`~CacheRegion.persistent`
-       :class:`CacheRegion`, else the instance's
+    1. the instance's :attr:`~CacheableInterface.cache_id` in case of a
+       :attr:`~CacheRegion.persistent` :class:`CacheRegion`, else the instance's
        :attr:`~pymor.core.interfaces.BasicInterface.uid`,
     2. the method's `__name__`,
-    3. the |state id| of the arguments,
-    4. the |state id| of pyMOR's global |defaults|.
+    3. the method's arguments.
 
 Note that instances of |ImmutableInterface| are allowed to have mutable
 private attributes. It is the implementors responsibility not to break things.
@@ -82,8 +81,9 @@ from pymor.core.logger import getLogger
 from pymor.core.pickle import dumps
 from pymor.parameters.base import Parameter, ParameterType
 
+
 @atexit.register
-def cleanup_non_persisten_regions():
+def cleanup_non_persistent_regions():
     for region in cache_regions.values():
         if not region.persistent:
             region.clear()
@@ -222,7 +222,6 @@ cache_regions = {}
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
-    from pymor.core.logger import getLogger
     getLogger('pymor.core.cache').warn('caching globally disabled by environment')
 
 
