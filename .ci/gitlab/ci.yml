@@ -208,20 +208,15 @@ verify setup.py:
         name: unsafe
 
 
-pip 1/3:
+pip 1/2:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_buster/Dockerfile .
 
-pip 2/3:
+pip 2/2:
     extends: .docker-in-docker
     stage: deploy
     script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
-
-pip 3/3:
-    extends: .docker-in-docker
-    stage: deploy
-    script: docker build -f .ci/docker/install_checks/centos_7/Dockerfile .
 
 
 # this should ensure binderhubs can still build a runnable image from our repo
@@ -274,7 +269,7 @@ trigger_binder 2/2:
     stage: deploy
     only: ['branches', 'tags', 'triggers']
     variables:
-        TEST_OS: "debian_buster debian_testing centos_7"
+        TEST_OS: "debian_buster debian_testing"
     artifacts:
         paths:
         # cannot use exported var from env here
