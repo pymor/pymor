@@ -8,6 +8,11 @@
 
 # Contributors
 
+## pyMOR 2020.1
+
+* Tim Keil, tim.keil@uni-muenster.de
+    * second order derivatives for parameters d_mui_muj
+
 ## pyMOR 2019.2
 
 * Linus Balicki, linus.balicki@ovgu.de
