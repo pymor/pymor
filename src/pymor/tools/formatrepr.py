@@ -110,7 +110,7 @@ def _recurse(obj, max_width, verbosity):
         return repr(obj)
 
 
-@defaults('max_width', 'verbosity', sid_ignore=('max_width', 'all_arg_names'))
+@defaults('max_width', 'verbosity')
 def format_repr(obj, max_width=120, verbosity=1):
     return _recurse(obj, max_width, verbosity)
 

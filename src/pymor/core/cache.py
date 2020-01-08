@@ -191,8 +191,7 @@ class DiskRegion(CacheRegion):
         self._cache.clear()
 
 
-@defaults('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys',
-          sid_ignore=('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys'))
+@defaults('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys')
 def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
                     disk_max_size=1024 ** 3,
                     persistent_path=os.path.join(tempfile.gettempdir(), 'pymor.persistent.cache.' + getpass.getuser()),
