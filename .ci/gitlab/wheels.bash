@@ -24,8 +24,3 @@ docker pull ${BUILDER_IMAGE} 1> /dev/null
 docker run --rm  -t -e LOCAL_USER_ID=$(id -u)  \
     -v ${BUILDER_WHEELHOUSE}:/io/wheelhouse \
     -v ${PYMOR_ROOT}:/io/pymor ${BUILDER_IMAGE} /usr/local/bin/build-wheels.sh #1> /dev/null
-
-cp ${PYMOR_ROOT}/.ci/docker/deploy_checks/Dockerfile ${BUILDER_WHEELHOUSE}
-for os in ${TEST_OS} ; do
-    docker build --build-arg tag=${os} ${BUILDER_WHEELHOUSE}
-done
