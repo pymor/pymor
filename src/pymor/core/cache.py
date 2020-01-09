@@ -67,6 +67,7 @@ import functools
 import getpass
 import hashlib
 import inspect
+from numbers import Number
 import os
 import tempfile
 from types import MethodType
@@ -397,6 +398,9 @@ def build_cache_key(obj):
             return tuple(transform_obj(o) for o in sorted(obj))
         elif t in (dict, Parameter, ParameterType):
             return tuple((transform_obj(k), transform_obj(v)) for k, v in sorted(obj.items()))
+        elif isinstance(obj, Number):
+            # handle numpy number objects
+            return obj
         else:
             raise CacheKeyGenerationError('Cannot generate cache key for provided arguments')
 
