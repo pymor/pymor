@@ -11,9 +11,9 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
 
 
-@defaults('tol', 'imagtol', 'conjtol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
+@defaults('which', 'tol', 'imagtol', 'conjtol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
           'rqi_maxiter')
-def samdp(A, E, B, C, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, conjtol=1e-8,
+def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=1e-8, conjtol=1e-8,
           rqitol=1e-4, maxrestart=100, krestart=10, rqi_maxiter=10):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
@@ -41,6 +41,13 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, conjto
         The number of dominant poles that should be computed.
     init_shifts
         A |NumPy array| containing shifts which are injected after a new pole has been found.
+    which
+        A string specifying the strategy by which the dominant poles and residues are selected.
+        Possible values are:
+            'LR':   Select poles with largest ||residual|| / ||Re(pole)||
+            'LS':   Select poles with largest ||residual|| / ||pole||
+            'LM':   Select poles with largest ||residual||
+
     tol
         Tolerance for the residual of the poles.
     imagtol
@@ -97,7 +104,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, conjto
     poles = np.empty((1, 0))
 
     if init_shifts is None:
-        st = 0.  # does it make sense to initlize the shift?
+        st = 0.
         shift_nr = 0
         nr_shifts = 0
     else:
@@ -137,7 +144,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, conjto
             G = np.append(G, V[0:k-1].dot(EX[k-1]), axis=1)
         G = np.append(G, V[k-1].dot(EX), axis=0)
 
-        SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, E)
+        SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, E, which)
 
         found = True
         do_rqi = True
@@ -237,7 +244,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, conjto
                 if k > 0:
                     G = V.dot(E.apply(X))
                     H = V.dot(AX)
-                    SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, E)
+                    SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, E, which)
                     found = True
                 else:
                     G = np.empty((0, 1))
@@ -287,7 +294,16 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, conjto
                 leftev[i].scal(1 / (leftev[i].dot(E.apply(rightev[i].conj())))[0][0])
                 residues = np.dstack((residues, C.dot(rightev[i]) @ (leftev[i].dot(B))))
                 absres = np.append(absres, spla.norm(residues[:, :, i], 2))
-            idx = np.argsort(-absres)
+
+            if which == 'LR':
+                idx = np.argsort(-absres / np.abs(np.real(poles)))
+            elif which == 'LS':
+                idx = np.argsort(-absres / np.abs(poles))
+            elif which == 'LM':
+                idx = np.argsort(-absres)
+            else:
+                raise ValueError('Unknown samdp selection strategy.')
+
             residues = residues[:, :, idx]
             poles = poles[idx]
             rightev = rightev[idx]
@@ -384,7 +400,7 @@ def twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
         return x, y, theta, init_res
 
 
-def select_max_eig(H, G, X, V, B, C, E):
+def select_max_eig(H, G, X, V, B, C, E, which):
     """Compute poles sorted from largest to smallest residual.
 
     Parameters
@@ -403,11 +419,13 @@ def select_max_eig(H, G, X, V, B, C, E):
         The |VectorArray| C from the corresponding LTI system modified by deflation.
     E
         The |Operator| E from the corresponding LTI system.
+    which
+        A string that indicates which poles to select. See :func:`samdp`.
 
     Returns
     -------
     poles
-        A |NumPy array| containing poles sorted from largest to smallest residual.
+        A |NumPy array| containing poles sorted according to the chosen strategy.
     rightevs
         A |NumPy array| containing the right eigenvectors of the computed poles.
     leftevs
@@ -432,6 +450,13 @@ def select_max_eig(H, G, X, V, B, C, E):
         X[i].scal(1 / X[i].norm())
         residue = np.append(residue, spla.norm(C.dot(X[i]) @ V[i].dot(B), 2))
 
-    idx = np.argsort(-residue)
+    if which == 'LR':
+        idx = np.argsort(-residue / np.abs(np.real(DP)))
+    elif which == 'LS':
+        idx = np.argsort(-residue / np.abs(DP))
+    elif which == 'LM':
+        idx = np.argsort(-residue)
+    else:
+        raise ValueError('Unknown samdp selection strategy.')
 
     return np.diag(DP[idx]), Vs[:, idx], Vt[:, idx]
