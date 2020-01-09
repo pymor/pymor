@@ -389,7 +389,7 @@ def build_cache_key(obj):
         if t in (NoneType, bool, int, float, str, bytes):
             return obj
         elif t is np.ndarray:
-            if t.dtype == object:
+            if obj.dtype == object:
                 raise CacheKeyGenerationError('Cannot generate cache key for provided arguments')
             return obj
         elif t in (list, tuple):
