@@ -39,51 +39,51 @@ stages:
         reports:
             junit: test_results.xml
 
-numpy 3 6:
-    extends: .pytest
-    image: pymor/testing:3.6
-    stage: test
-    variables:
-        PYMOR_PYTEST_MARKER: "numpy"
+# numpy 3 6:
+#     extends: .pytest
+#     image: pymor/testing:3.6
+#     stage: test
+#     variables:
+#         PYMOR_PYTEST_MARKER: "numpy"
+#
+# oldest 3.6:
+#     extends: .pytest
+#     image: pymor/testing:3.6
+#     stage: test
+#     variables:
+#         PYMOR_PYTEST_MARKER: "OLDEST"
+#
+# minimal_cpp_demo:
+#     extends: .pytest
+#     image: pymor/testing:3.7
+#     stage: test
+#     script: ./.ci/gitlab/cpp_demo.bash
 
-oldest 3.6:
-    extends: .pytest
-    image: pymor/testing:3.6
-    stage: test
-    variables:
-        PYMOR_PYTEST_MARKER: "OLDEST"
-
-minimal_cpp_demo:
-    extends: .pytest
-    image: pymor/testing:3.7
-    stage: test
-    script: ./.ci/gitlab/cpp_demo.bash
-
-pages:
-# this needs to use a semaphore to avoid races on the docker images
-# should become available with gitlab 12.6 (Dez. 17)
-    extends: .docker-in-docker
-    stage: deploy
-    variables:
-        IMAGE: ${CI_REGISTRY_IMAGE}/docs:latest
-    script:
-        - apk --update add make
-        - .ci/gitlab/deploy_docs.bash
-
-    # only:
-    #   - master
-    #   - tags
-    artifacts:
-        paths:
-            - public
+# pages:
+# # this needs to use a semaphore to avoid races on the docker images
+# # should become available with gitlab 12.6 (Dez. 17)
+#     extends: .docker-in-docker
+#     stage: deploy
+#     variables:
+#         IMAGE: ${CI_REGISTRY_IMAGE}/docs:latest
+#     script:
+#         - apk --update add make
+#         - .ci/gitlab/deploy_docs.bash
+#
+#     # only:
+#     #   - master
+#     #   - tags
+#     artifacts:
+#         paths:
+#             - public
 
 {%- for py, m in matrix %}
-{{m}} {{py[0]}} {{py[2]}}:
-    extends: .pytest
-    image: pymor/testing:{{py}}
-    stage: test
-    variables:
-        PYMOR_PYTEST_MARKER: "{{m}}"
+# {{m}} {{py[0]}} {{py[2]}}:
+    # extends: .pytest
+    # image: pymor/testing:{{py}}
+    # stage: test
+    # variables:
+    #     PYMOR_PYTEST_MARKER: "{{m}}"
 {%- endfor %}
 
 {# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
@@ -102,45 +102,45 @@ pages:
     script: .ci/gitlab/submit.bash
 
 {%- for py, m in matrix if m == 'Vanilla' %}
-submit {{m}} {{py[0]}} {{py[2]}}:
-    extends: .submit
-    image: pymor/python:{{py}}
-    dependencies:
-        - {{m}} {{py[0]}} {{py[2]}}
-    variables:
-        PYMOR_PYTEST_MARKER: "{{m}}"
+# submit {{m}} {{py[0]}} {{py[2]}}:
+#     extends: .submit
+#     image: pymor/python:{{py}}
+#     dependencies:
+#         - {{m}} {{py[0]}} {{py[2]}}
+#     variables:
+#         PYMOR_PYTEST_MARKER: "{{m}}"
 {%- endfor %}
 
-submit numpy 3 6:
-    extends: .submit
-    image: pymor/python:3.6
-    dependencies:
-        - numpy 3 6
-    variables:
-        PYMOR_PYTEST_MARKER: "numpy"
+# submit numpy 3 6:
+#     extends: .submit
+#     image: pymor/python:3.6
+#     dependencies:
+#         - numpy 3 6
+#     variables:
+#         PYMOR_PYTEST_MARKER: "numpy"
 
-submit oldest 3.6:
-    extends: .test_base
-    image: pymor/python:3.6
-    stage: deploy
-    dependencies:
-        - oldest 3.6
-    environment:
-        name: safe
-    except:
-        - github/PR_.*
-    variables:
-        PYMOR_PYTEST_MARKER: "OLDEST"
-    script: .ci/gitlab/submit.bash
-
-# this step makes sure that on older python our install fails with
-# a nice message ala "python too old" instead of "SyntaxError"
-verify setup.py:
-    extends: .test_base
-    image: python:3.5-alpine
-    stage: deploy
-    script:
-        - python setup.py egg_info
+# submit oldest 3.6:
+#     extends: .test_base
+#     image: pymor/python:3.6
+#     stage: deploy
+#     dependencies:
+#         - oldest 3.6
+#     environment:
+#         name: safe
+#     except:
+#         - github/PR_.*
+#     variables:
+#         PYMOR_PYTEST_MARKER: "OLDEST"
+#     script: .ci/gitlab/submit.bash
+#
+# # this step makes sure that on older python our install fails with
+# # a nice message ala "python too old" instead of "SyntaxError"
+# verify setup.py:
+#     extends: .test_base
+#     image: python:3.5-alpine
+#     stage: deploy
+#     script:
+#         - python setup.py egg_info
 
 .docker-in-docker:
     tags:
@@ -167,42 +167,42 @@ verify setup.py:
         name: unsafe
 
 {% for OS in testos %}
-pip {{loop.index}}/{{loop.length}}:
-    extends: .docker-in-docker
-    stage: deploy
-    script: docker build -f .ci/docker/install_checks/{{OS}}/Dockerfile .
+# pip {{loop.index}}/{{loop.length}}:
+#     extends: .docker-in-docker
+#     stage: deploy
+#     script: docker build -f .ci/docker/install_checks/{{OS}}/Dockerfile .
 {% endfor %}
 
 # this should ensure binderhubs can still build a runnable image from our repo
-repo2docker:
-    extends: .docker-in-docker
-    stage: deploy
-    variables:
-        IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
-        CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
-        USER: juno
-    script:
-        - repo2docker --user-id 2000 --user-name ${USER} --no-run --debug --image-name ${IMAGE} .
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-        - docker run ${IMAGE} ${CMD}
-        - docker push ${IMAGE}
-        - cd .binder
-        - docker-compose build
-        - docker-compose run jupyter ${CMD}
+# repo2docker:
+#     extends: .docker-in-docker
+#     stage: deploy
+#     variables:
+#         IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
+#         CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
+#         USER: juno
+#     script:
+#         - repo2docker --user-id 2000 --user-name ${USER} --no-run --debug --image-name ${IMAGE} .
+#         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#         - docker run ${IMAGE} ${CMD}
+#         - docker push ${IMAGE}
+#         - cd .binder
+#         - docker-compose build
+#         - docker-compose run jupyter ${CMD}
 
 {% for url in binder_urls %}
-trigger_binder {{loop.index}}/{{loop.length}}:
-    extends: .test_base
-    stage: update
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "{{url}}/${CI_COMMIT_REF}"
+# trigger_binder {{loop.index}}/{{loop.length}}:
+#     extends: .test_base
+#     stage: update
+#     image: alpine:3.10
+#     only:
+#         - master
+#         - tags
+#     before_script:
+#         - apk --update add bash python3
+#         - pip3 install requests
+#     script:
+#         - python3 .ci/gitlab/trigger_binder.py "{{url}}/${CI_COMMIT_REF}"
 {% endfor %}
 
 .wheel:
