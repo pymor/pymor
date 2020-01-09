@@ -219,11 +219,11 @@ trigger_binder {{loop.index}}/{{loop.length}}:
 
 {%- for PY in pythons %}
 {%- for ML in [1, 2010] %}
-wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
-    extends: .wheel
-    variables:
-        PYVER: "{{PY}}"
-    script: bash .ci/gitlab/wheels.bash {{ML}}
+# wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
+#     extends: .wheel
+#     variables:
+#         PYVER: "{{PY}}"
+#     script: bash .ci/gitlab/wheels.bash {{ML}}
 {% endfor %}
 {% endfor %}
 
