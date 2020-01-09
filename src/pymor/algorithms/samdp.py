@@ -242,6 +242,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, tol=1e-10, imagtol=1e-8, conjto
                 else:
                     G = np.empty((0, 1))
                     H = np.empty((0, 1))
+                    found = False
 
                 if nr_converged < nwanted:
                     if found:
