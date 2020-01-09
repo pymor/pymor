@@ -42,7 +42,7 @@ used to specify the path of a configuration file. If empty or set to
 .. warning::
     Note that changing defaults may affect the result of a (cached)
     function call. pyMOR will emit a warning, when a result is retrieved
-    form the cache that has been computed using an earlier set of
+    from the cache that has been computed using an earlier set of
     |defaults| (see :func:`defaults_changes`).
 """
 
@@ -390,7 +390,7 @@ def defaults_changes():
     :func:`load_defaults_from_file` since the start of program execution.
 
     Since changing |defaults| may affect the result of a (cached) function
-    call, this value is used to warn when a result is retrieved form the cache
+    call, this value is used to warn when a result is retrieved from the cache
     that has been computed using an earlier set of |defaults|.
 
     .. warning::
