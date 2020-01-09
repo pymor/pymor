@@ -41,10 +41,10 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'sympy': 'symbolic mathematics',
                     'pythreejs': 'threejs bindings for python notebook  visualization',
                     _PYTEST: 'testing framework required to execute unit tests',
-                    'PyQt5<=5.13.2': 'solution visualization for builtin discretizations',
+                    'PySide2': 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
                     'pillow': 'image library used for bitmap data functions'}
-doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.3', 'matplotlib', 'PyQt5<=5.13.2', 'ipyparallel', 'ipywidgets'] + install_requires
+doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.3', 'matplotlib', 'PySide2', 'ipyparallel', 'ipywidgets'] + install_requires
 ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'testipynb']
