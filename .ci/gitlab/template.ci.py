@@ -219,11 +219,11 @@ trigger_binder {{loop.index}}/{{loop.length}}:
 
 {%- for PY in pythons %}
 {%- for ML in [1, 2010] %}
-wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
-    extends: .wheel
-    variables:
-        PYVER: "{{PY}}"
-    script: bash .ci/gitlab/wheels.bash {{ML}}
+# wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
+#     extends: .wheel
+#     variables:
+#         PYVER: "{{PY}}"
+#     script: bash .ci/gitlab/wheels.bash {{ML}}
 {% endfor %}
 {% endfor %}
 
@@ -245,5 +245,5 @@ binder_urls = ['https://gke.mybinder.org/build/gh/pymor/pymor',
                'https://ovh.mybinder.org/build/gh/pymor/pymor']
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = list(product(pythons, marker))
-    yml.write(tpl.render(matrix=matrix,testos=['debian_buster', 'debian_testing', 'centos_7'], pythons=pythons,
+    yml.write(tpl.render(matrix=matrix,testos=['debian_buster', 'debian_testing'], pythons=pythons,
                          binder_urls=binder_urls))

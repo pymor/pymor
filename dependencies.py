@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 # DO NOT use any python features here that require 3.6 or newer
@@ -41,10 +41,10 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'sympy': 'symbolic mathematics',
                     'pythreejs': 'threejs bindings for python notebook  visualization',
                     _PYTEST: 'testing framework required to execute unit tests',
-                    'PyQt5': 'solution visualization for builtin discretizations',
+                    'PyQt5<=5.13.2': 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
                     'pillow': 'image library used for bitmap data functions'}
-doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.3', 'matplotlib', 'PyQt5', 'ipyparallel', 'ipywidgets'] + install_requires
+doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.3', 'matplotlib', 'PyQt5<=5.13.2', 'ipyparallel', 'ipywidgets'] + install_requires
 ci_requires = ['pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'testipynb']
@@ -76,15 +76,6 @@ def extras():
     import pkg_resources
     import itertools
 
-    def _ex(name):
-        # no environment specifiers or wheel URI etc are allowed in extras
-        name = strip_markers(name)
-        try:
-            next(pkg_resources.parse_requirements(name))
-        except pkg_resources.RequirementParseError:
-            name = import_names[name]
-        return name
-
     def _candidates(blacklist):
         # skip those which aren't needed in our current environment (py ver, platform)
         for pkg in set(itertools.chain(doc_requires, tests_require, install_suggests.keys())):
@@ -106,7 +97,7 @@ def extras():
                     continue
 
     return {
-        'full': [_ex(f) for f in _candidates(blacklist=[])],
+        'full': list(_candidates(blacklist=[])),
         'ci':  ci_requires,
         'docs': doc_requires,
     }
