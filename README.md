@@ -136,7 +136,7 @@ Useful Links
 
 * [Latest Changelog](https://pymor.readthedocs.io/en/latest/release_notes.html)
 * [Getting Started](https://pymor.readthedocs.io/en/latest/getting_started.html)
-* [Dependencies](requirements.txt)
+* [Dependencies](https://github.com/pymor/pymor/blob/2019.2.x/requirements.txt)
 
 
 External PDE solvers
