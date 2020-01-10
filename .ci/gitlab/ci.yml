@@ -23,6 +23,7 @@ stages:
     script: .ci/gitlab/script.bash
     tags:
       - long execution time
+      - amm-only
     environment:
         name: unsafe
     after_script:
@@ -186,6 +187,7 @@ verify setup.py:
 .docker-in-docker:
     tags:
       - docker-in-docker
+      - amm-only
     extends: .test_base
     retry:
         max: 2
