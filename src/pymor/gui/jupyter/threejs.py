@@ -81,8 +81,8 @@ class Renderer(widgets.VBox):
                 vertices[:, :-1] = coordinates
                 indices = np.vstack((subentities[:, 0:3], subentities[:, [0, 2, 3]]))
             else:
-                vertices = np.zeros((len(subentities) * 6))
                 num_entities = len(subentities)
+                vertices = np.zeros((num_entities * 6, 3))
                 VERTEX_POS = coordinates[subentities]
                 vertices[0:num_entities * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
                 vertices[num_entities * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
