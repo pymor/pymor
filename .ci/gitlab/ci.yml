@@ -3,9 +3,9 @@
 
 stages:
   - test
+  - build
+  - install_checks
   - deploy
-  - update
-  - install
 
 .test_base:
     retry:
@@ -25,6 +25,7 @@ stages:
       - long execution time
     environment:
         name: unsafe
+    stage: test
     after_script:
       - .ci/gitlab/after_script.bash
     artifacts:
@@ -40,7 +41,6 @@ stages:
 numpy 3 6:
     extends: .pytest
     image: pymor/testing:3.6
-    stage: test
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
 
@@ -54,7 +54,6 @@ numpy 3 6:
 minimal_cpp_demo:
     extends: .pytest
     image: pymor/testing:3.7
-    stage: test
     script: ./.ci/gitlab/cpp_demo.bash
 
 pages:
@@ -77,49 +76,41 @@ pages:
 Vanilla 3 6:
     extends: .pytest
     image: pymor/testing:3.6
-    stage: test
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
 PIP_ONLY 3 6:
     extends: .pytest
     image: pymor/testing:3.6
-    stage: test
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
 NOTEBOOKS 3 6:
     extends: .pytest
     image: pymor/testing:3.6
-    stage: test
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
 MPI 3 6:
     extends: .pytest
     image: pymor/testing:3.6
-    stage: test
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
 Vanilla 3 7:
     extends: .pytest
     image: pymor/testing:3.7
-    stage: test
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
 PIP_ONLY 3 7:
     extends: .pytest
     image: pymor/testing:3.7
-    stage: test
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
 NOTEBOOKS 3 7:
     extends: .pytest
     image: pymor/testing:3.7
-    stage: test
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
 MPI 3 7:
     extends: .pytest
     image: pymor/testing:3.7
-    stage: test
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
 
@@ -179,7 +170,7 @@ submit numpy 3 6:
 verify setup.py:
     extends: .test_base
     image: python:3.5-alpine
-    stage: deploy
+    stage: install_checks
     script:
         - python setup.py egg_info
 
@@ -210,24 +201,24 @@ verify setup.py:
 
 pip 1/3:
     extends: .docker-in-docker
-    stage: deploy
+    stage: install_checks
     script: docker build -f .ci/docker/install_checks/centos_8/Dockerfile .
 
 pip 2/3:
     extends: .docker-in-docker
-    stage: deploy
+    stage: install_checks
     script: docker build -f .ci/docker/install_checks/debian_buster/Dockerfile .
 
 pip 3/3:
     extends: .docker-in-docker
-    stage: deploy
+    stage: install_checks
     script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
 
 
 # this should ensure binderhubs can still build a runnable image from our repo
 repo2docker:
     extends: .docker-in-docker
-    stage: deploy
+    stage: install_checks
     variables:
         IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
         CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
@@ -244,7 +235,7 @@ repo2docker:
 
 trigger_binder 1/2:
     extends: .test_base
-    stage: update
+    stage: deploy
     image: alpine:3.10
     only:
         - master
@@ -257,7 +248,7 @@ trigger_binder 1/2:
 
 trigger_binder 2/2:
     extends: .test_base
-    stage: update
+    stage: deploy
     image: alpine:3.10
     only:
         - master
@@ -321,7 +312,7 @@ wheel 2014 py3 7:
 
 .check_wheel:
     extends: .test_base
-    stage: install
+    stage: install_checks
     services:
       - pymor/devpi:1
     dependencies:
@@ -337,7 +328,6 @@ wheel 2014 py3 7:
       - devpi login root --password none
       - devpi upload --from-dir --formats=* ./shared
     only: ['branches', 'tags', 'triggers']
-    stage: install
     # the docker service adressing fails on other runners
     tags: [mike]
 
