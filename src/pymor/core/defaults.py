@@ -52,6 +52,7 @@ import importlib
 import inspect
 import pkgutil
 import textwrap
+import threading
 
 from pymor.tools.table import format_table
 
@@ -76,6 +77,7 @@ class DefaultContainer:
         self._data = defaultdict(dict)
         self.registered_functions = set()
         self.changes = 0
+        self.changes_lock = threading.Lock()
 
     def _add_defaults_for_function(self, func, args):
 
@@ -125,7 +127,8 @@ Defaults
         func.__signature__ = sig.replace(parameters=params.values())
 
     def update(self, defaults, type='user'):
-        self.changes += 1
+        with self.changes_lock:
+            self.changes += 1
         assert type in ('user', 'file')
 
         functions_to_update = set()
