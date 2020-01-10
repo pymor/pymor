@@ -4,8 +4,8 @@
 
 import numpy as np
 
-from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
-from pymor.grids.referenceelements import square
+from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCentersInterface
+from pymor.discretizers.builtin.grids.referenceelements import square
 
 
 class RectGrid(AffineGridWithOrthogonalCentersInterface):
@@ -215,9 +215,9 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).
         kwargs
-            See :func:`~pymor.gui.qt.visualize_patch`
+            See :func:`~pymor.discretizers.builtin.gui.qt.visualize_patch`
         """
-        from pymor.gui.qt import visualize_patch
+        from pymor.discretizers.builtin.gui.qt import visualize_patch
         from pymor.vectorarrays.interfaces import VectorArrayInterface
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArrayInterface)):

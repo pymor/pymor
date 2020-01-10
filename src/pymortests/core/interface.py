@@ -10,8 +10,7 @@ from pymor.core.interfaces import (ImmutableInterface, abstractstaticmethod, abs
 from pymor.core import exceptions
 from pymortests.base import TestInterface, runmodule, subclassForImplemetorsOf
 from pymortests.core.dummies import *   # NOQA
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
+from pymor.discretizers.builtin import RectGrid, TriaGrid
 from pymor.tools import timing
 import pymor.core
 

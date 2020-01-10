@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from pymor.core.exceptions import QtMissing
-from pymor.gui.qt import stop_gui_processes
+from pymor.discretizers.builtin.gui.qt import stop_gui_processes
 from pymortests.fixtures.grid import grid, grids_with_visualize
 from pymortests.pickling import assert_picklable_without_dumps_function
 

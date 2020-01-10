@@ -33,10 +33,9 @@ from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.fv import discretize_instationary_fv
+from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid
 from pymor.algorithms.hapod import dist_vectorarray_hapod, inc_vectorarray_hapod
 from pymor.algorithms.pod import pod
-from pymor.grids.rect import RectGrid
 from pymor.tools.table import format_table
 
 

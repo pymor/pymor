@@ -5,12 +5,12 @@
 import math as m
 import numpy as np
 
+from pymor.discretizers.builtin.grids.boundaryinfos import GenericBoundaryInfo, EmptyBoundaryInfo
+from pymor.discretizers.builtin.grids.oned import OnedGrid
+from pymor.discretizers.builtin.grids.rect import RectGrid
+from pymor.discretizers.builtin.grids.tria import TriaGrid
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
 from pymor.domaindescriptions.polygonal import PolygonalDomain
-from pymor.grids.boundaryinfos import GenericBoundaryInfo, EmptyBoundaryInfo
-from pymor.grids.oned import OnedGrid
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
 from pymor.tools.floatcmp import float_cmp
 
 
@@ -170,8 +170,8 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         else:
             return discretize_TorusDomain()
     elif isinstance(domain_description, PolygonalDomain):
-        from pymor.grids.unstructured import UnstructuredTriangleGrid
-        from pymor.domaindiscretizers.gmsh import discretize_gmsh
+        from pymor.discretizers.builtin.grids.unstructured import UnstructuredTriangleGrid
+        from pymor.discretizers.builtin.domaindiscretizers.gmsh import discretize_gmsh
         assert grid_type is None or grid_type is UnstructuredTriangleGrid
         return discretize_gmsh(domain_description, clscale=diameter)
     else:

@@ -8,8 +8,8 @@ import time
 from pymor.core.config import config
 from pymor.core.exceptions import MeshioMissing
 from pymor.core.logger import getLogger
-from pymor.grids.boundaryinfos import GenericBoundaryInfo, EmptyBoundaryInfo
-from pymor.grids.unstructured import UnstructuredTriangleGrid
+from pymor.discretizers.builtin.grids.boundaryinfos import GenericBoundaryInfo, EmptyBoundaryInfo
+from pymor.discretizers.builtin.grids.unstructured import UnstructuredTriangleGrid
 
 
 def load_gmsh(filename):
@@ -31,7 +31,7 @@ def load_gmsh(filename):
         raise MeshioMissing('meshio is required for reading Gmsh files.')
     import meshio
 
-    logger = getLogger('pymor.grids.gmsh.load_gmsh')
+    logger = getLogger('pymor.discretizers.builtin.grids.gmsh.load_gmsh')
 
     logger.info('Parsing Gmsh file ...')
     tic = time.time()

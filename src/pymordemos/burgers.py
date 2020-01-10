@@ -36,9 +36,7 @@ import time
 from docopt import docopt
 
 from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.fv import discretize_instationary_fv
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
+from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid, TriaGrid
 
 
 def burgers_demo(args):

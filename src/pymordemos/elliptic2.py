@@ -20,8 +20,7 @@ Options:
 from docopt import docopt
 
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.discretizers.cg import discretize_stationary_cg
-from pymor.discretizers.fv import discretize_stationary_fv
+from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ExpressionFunction, LincombFunction, ConstantFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional

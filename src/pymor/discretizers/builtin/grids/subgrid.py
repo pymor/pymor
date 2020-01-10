@@ -6,8 +6,8 @@ import weakref
 
 import numpy as np
 
-from pymor.grids.boundaryinfos import GenericBoundaryInfo
-from pymor.grids.interfaces import AffineGridInterface
+from pymor.discretizers.builtin.grids.boundaryinfos import GenericBoundaryInfo
+from pymor.discretizers.builtin.grids.interfaces import AffineGridInterface
 
 
 class SubGrid(AffineGridInterface):
@@ -111,12 +111,12 @@ class SubGrid(AffineGridInterface):
 
 
 def make_sub_grid_boundary_info(sub_grid, parent_grid, parent_grid_boundary_info, new_boundary_type=None):
-    """Derives a |BoundaryInfo| for a :class:`~pymor.grids.subgrid.SubGrid`.
+    """Derives a |BoundaryInfo| for a :class:`~pymor.discretizers.builtin.grids.subgrid.SubGrid`.
 
     Parameters
     ----------
     sub_grid
-        The :class:`~pymor.grids.subgrid.SubGrid` for which a |BoundaryInfo| is created.
+        The :class:`~pymor.discretizers.builtin.grids.subgrid.SubGrid` for which a |BoundaryInfo| is created.
     parent_grid
         The parent |Grid|.
     parent_grid_boundary_info

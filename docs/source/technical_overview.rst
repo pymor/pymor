@@ -216,11 +216,12 @@ its boundary.
 To obtain a |Model| from an |analytical problem| we use a
 :mod:`discretizer <pymor.discretizers>`. A discretizer will first mesh the
 computational domain by feeding the |DomainDescription| into a
-:mod:`domaindiscretizer <pymor.domaindiscretizers>` which will return the |Grid|
-along with a |BoundaryInfo| associating boundary entities with boundary types.
-Next, the |Grid|, |BoundaryInfo| and the various data functions of the
-|analytical problem| are used to instatiate :mod:`finite element
-<pymor.operators.cg>` or :mod:`finite volume <pymor.operators.fv>` operators.
+:mod:`domaindiscretizer <pymor.discretizers.builtin.domaindiscretizers>`
+which will return the |Grid| along with a |BoundaryInfo| associating boundary
+entities with boundary types. Next, the |Grid|, |BoundaryInfo| and the various
+data functions of the |analytical problem| are used to instatiate
+:mod:`finite element <pymor.discretizers.builtin.cg>` or
+:mod:`finite volume <pymor.discretizers.builtin.fv>` operators.
 Finally these operators are used to instatiate one of the provided
 |Model| classes.
 

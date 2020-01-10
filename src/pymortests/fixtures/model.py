@@ -7,8 +7,7 @@ from itertools import product
 import pytest
 from pkg_resources import resource_filename
 
-from pymor.discretizers.cg import discretize_stationary_cg
-from pymor.discretizers.fv import discretize_instationary_fv
+from pymor.discretizers.builtin import discretize_stationary_cg, discretize_instationary_fv
 from pymor.discretizers.disk import discretize_stationary_from_disk, discretize_instationary_from_disk
 from pymortests.fixtures.analyticalproblem import (picklable_thermalblock_problems, non_picklable_thermalblock_problems,
                                                    burgers_problems)

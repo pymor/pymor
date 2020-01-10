@@ -5,8 +5,8 @@
 import numpy as np
 
 from pymor.core.config import config
-from pymor.grids import referenceelements
-from pymor.grids.constructions import flatten_grid
+from pymor.discretizers.builtin.grids import referenceelements
+from pymor.discretizers.builtin.grids.constructions import flatten_grid
 
 if config.HAVE_PYEVTK:
     from pyevtk.hl import _addDataToFile, _appendDataToFile

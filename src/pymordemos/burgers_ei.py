@@ -63,9 +63,7 @@ from docopt import docopt
 from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.ei import interpolate_operators
 from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.fv import discretize_instationary_fv
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
+from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid, TriaGrid
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import InstationaryRBReductor
 

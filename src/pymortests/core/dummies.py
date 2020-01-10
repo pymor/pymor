@@ -102,7 +102,7 @@ class BoringTestClass(BasicInterface):
         UberMeta as their metaclass can be checked w/o manually defining a new contract type.
 
         :type cls: pymortests.core.dummies.BoringTestInterface
-        :type other: pymor.grids.boundaryinfos.AllDirichletBoundaryInfo
+        :type other: pymor.discretizers.builtin.grids.boundaryinfos.AllDirichletBoundaryInfo
         """
         pass
 
@@ -110,7 +110,7 @@ class BoringTestClass(BasicInterface):
         """I'm used in testing whether contracts can distinguish
         between equally named classes in different modules
 
-        :type dirichletA: pymor.grids.interfaces.BoundaryInfoInterface
+        :type dirichletA: pymor.discretizers.builtin.grids.interfaces.BoundaryInfoInterface
         :type dirichletB: pymortests.core.dummies.AllDirichletBoundaryInfo
         """
         return dirichletA != dirichletB

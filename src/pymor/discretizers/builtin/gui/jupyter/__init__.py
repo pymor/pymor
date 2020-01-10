@@ -13,14 +13,14 @@ inside the given notebook.
 import IPython
 
 from pymor.core.defaults import defaults
-from pymor.gui.jupyter.patch import visualize_patch
+from pymor.discretizers.builtin.gui.jupyter.patch import visualize_patch
 from pymor.core.config import config
 
 
 @defaults('backend')
 def get_visualizer(backend='py3js'):
     if backend == 'py3js' and config.HAVE_PYTHREEJS:
-        from pymor.gui.jupyter.threejs import visualize_py3js
+        from pymor.discretizers.builtin.gui.jupyter.threejs import visualize_py3js
         return visualize_py3js
     else:
         return visualize_patch
@@ -80,12 +80,12 @@ def progress_bar(sequence, every=None, size=None, name='Parameters'):
 
 
 def load_ipython_extension(ipython):
-    from pymor.gui.jupyter.logging import redirect_logging
+    from pymor.discretizers.builtin.gui.jupyter.logging import redirect_logging
     ipython.events.register('pre_run_cell', redirect_logging.start)
     ipython.events.register('post_run_cell', redirect_logging.stop)
 
 
 def unload_ipython_extension(ipython):
-    from pymor.gui.jupyter.logging import redirect_logging
+    from pymor.discretizers.builtin.gui.jupyter.logging import redirect_logging
     ipython.events.unregister('pre_run_cell', redirect_logging.start)
     ipython.events.unregister('post_run_cell', redirect_logging.stop)

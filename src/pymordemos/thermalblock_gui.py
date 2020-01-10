@@ -33,7 +33,7 @@ import numpy as np
 import OpenGL
 
 from pymor.core.config import is_windows_platform
-from pymor.gui.matplotlib import MatplotlibPatchWidget
+from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchWidget
 
 OpenGL.ERROR_ON_COPY = True
 
@@ -44,8 +44,8 @@ except ImportError as e:
     raise QtMissing()
 from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.discretizers.cg import discretize_stationary_cg
-from pymor.gui.gl import ColorBarWidget, GLPatchWidget
+from pymor.discretizers.builtin import discretize_stationary_cg
+from pymor.discretizers.builtin.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.coercive import CoerciveRBReductor
 
 
@@ -193,5 +193,5 @@ if __name__ == '__main__':
         win.show()
         sys.exit(app.exec_())
 
-    from pymor.gui import qt
+    from pymor.discretizers.builtin.gui import qt
     qt._launch_qt_app(lambda : RBGui(args), block=False)

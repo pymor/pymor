@@ -5,9 +5,9 @@
 import numpy as np
 
 from pymor.tools.floatcmp import float_cmp
-from pymor.tools.relations import inverse_relation
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
+from pymor.discretizers.builtin.grids.rect import RectGrid
+from pymor.discretizers.builtin.grids.tria import TriaGrid
+from pymor.discretizers.builtin.relations import inverse_relation
 
 
 def flatten_grid(grid):

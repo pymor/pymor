@@ -10,8 +10,8 @@ scalar data assigned to one- and two-dimensional grids using
 import numpy as np
 
 from pymor.core.config import config
-from pymor.grids.constructions import flatten_grid
-from pymor.grids.referenceelements import triangle, square
+from pymor.discretizers.builtin.grids.constructions import flatten_grid
+from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 
 
 class MatplotlibPatchAxes:
@@ -70,7 +70,7 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
 
     from matplotlib.figure import Figure
 
-    from pymor.grids.oned import OnedGrid
+    from pymor.discretizers.builtin.grids.oned import OnedGrid
 
     # noinspection PyShadowingNames
     class Matplotlib1DWidget(FigureCanvas):

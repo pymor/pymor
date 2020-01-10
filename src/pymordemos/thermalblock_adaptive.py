@@ -56,7 +56,7 @@ from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dump
-from pymor.discretizers.cg import discretize_stationary_cg
+from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.parallel.default import new_parallel_pool

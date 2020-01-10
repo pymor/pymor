@@ -13,8 +13,8 @@ import pythreejs as p3js
 from matplotlib.cm import get_cmap
 
 from pymor.core import config
-from pymor.grids.referenceelements import triangle, square
-from pymor.grids.constructions import flatten_grid
+from pymor.discretizers.builtin.grids.referenceelements import triangle, square
+from pymor.discretizers.builtin.grids.constructions import flatten_grid
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 # we should try to limit ourselves to webgl 1.0 here since 2.0 (draft) is not as widely supported

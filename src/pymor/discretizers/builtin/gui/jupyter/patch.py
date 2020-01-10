@@ -4,7 +4,7 @@
 import numpy as np
 
 from pymor.core.config import config
-from pymor.gui.matplotlib import MatplotlibPatchAxes
+from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
