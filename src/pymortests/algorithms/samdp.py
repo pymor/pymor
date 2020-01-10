@@ -1,13 +1,13 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.algorithms.samdp import samdp
-
-import scipy.sparse as sps
-import scipy.linalg as spla
 import numpy as np
+import scipy.linalg as spla
+import scipy.sparse as sps
+
+from pymor.algorithms.samdp import samdp
+from pymor.operators.numpy import NumpyMatrixOperator
 
 import pytest
 
@@ -58,10 +58,10 @@ def test_samdp(n, m, k, wanted, with_E, which):
     C = np.random.randn(k, n)
 
     Aop = NumpyMatrixOperator(A)
-    Bop = NumpyMatrixOperator(B)
-    Cop = NumpyMatrixOperator(C)
+    Bva = Aop.source.from_numpy(B.T)
+    Cva = Aop.source.from_numpy(C)
 
-    dom_poles, dom_res, dom_rev, dom_lev = samdp(Aop, Eop, Bop, Cop, wanted, which=which)
+    dom_poles, dom_res, dom_rev, dom_lev = samdp(Aop, Eop, Bva, Cva, wanted, which=which)
 
     dom_absres = np.array([])
 

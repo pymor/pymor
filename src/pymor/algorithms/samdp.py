@@ -1,14 +1,14 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.operators.constructions import IdentityOperator
-from pymor.core.defaults import defaults
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
+from pymor.operators.constructions import IdentityOperator
 
 
 @defaults('which', 'tol', 'imagtol', 'conjtol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
@@ -17,12 +17,12 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
           rqitol=1e-4, maxrestart=100, krestart=10, rqi_maxiter=10):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
-    This function uses the subspace accelerated dominant pole (samdp) algorithm as described in
+    This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
     [RM06]_ in Algorithm 2 in order to compute dominant pole triplets and residues of the transfer
     function
 
     .. math::
-        H(s) = C^T (s E - A)^{-1} B + D
+        H(s) = C (s E - A)^{-1} B
 
     of an LTI system. It is possible to take advantage of prior knowledge about the poles
     by specifying shift parameters, which are injected after a new pole has been found.
@@ -34,9 +34,9 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
     E
         The |Operator| E or `None`.
     B
-        The |Operator| B.
+        The operator B as a |VectorArray| from `A.source`.
     C
-        The |Operator| C.
+        The operator C as a |VectorArray| from `A.source`.
     nwanted
         The number of dominant poles that should be computed.
     init_shifts
@@ -44,10 +44,10 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
     which
         A string specifying the strategy by which the dominant poles and residues are selected.
         Possible values are:
-            'LR':   Select poles with largest ||residual|| / ||Re(pole)||
-            'LS':   Select poles with largest ||residual|| / ||pole||
-            'LM':   Select poles with largest ||residual||
 
+            - `'LR'`: select poles with largest ||residual|| / |Re(pole)|
+            - `'LS'`: select poles with largest ||residual|| / |pole|
+            - `'LM'`: select poles with largest ||residual||
     tol
         Tolerance for the residual of the poles.
     imagtol
@@ -80,9 +80,6 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
     if E is None:
         E = IdentityOperator(A.source)
-
-    B = B.as_range_array()
-    C = C.as_source_array()
 
     B_defl = B.copy()
     C_defl = C.copy()
@@ -121,7 +118,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
         sEmAB = sEmA.apply_inverse(B_defl)
         Hs = C_defl.dot(sEmAB)
 
-        y_all, _, u_all = spla.svd(Hs)  # use scipy.sparse.linalg.svds(Hs, k=1) instead?
+        y_all, _, u_all = spla.svd(Hs)
 
         u = u_all.conj()[0]
         y = y_all[:, 0]
@@ -131,8 +128,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
         X.append(x)
         V.append(v)
-        V = gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 1, copy=False)
-        X = gram_schmidt(X, atol=0, rtol=0, offset=len(X) - 1, copy=False)
+        gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 1, copy=False)
+        gram_schmidt(X, atol=0, rtol=0, offset=len(X) - 1, copy=False)
 
         AX.append(A.apply(X[k-1]))
 
@@ -199,8 +196,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                     V = A.source.empty()
 
                 if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
-                    V = gram_schmidt(V, atol=0, rtol=0, copy=False)
-                    X = gram_schmidt(X, atol=0, rtol=0, copy=False)
+                    gram_schmidt(V, atol=0, rtol=0, copy=False)
+                    gram_schmidt(X, atol=0, rtol=0, copy=False)
 
                 B_defl = B_defl - E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
                 C_defl = C_defl - E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
@@ -234,8 +231,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                             Q[-1].scal(1 / nqqt)
                             Qs[-1].scal(1 / nqqt)
 
-                            V = gram_schmidt(V, atol=0, rtol=0, copy=False)
-                            X = gram_schmidt(X, atol=0, rtol=0, copy=False)
+                            gram_schmidt(V, atol=0, rtol=0, copy=False)
+                            gram_schmidt(X, atol=0, rtol=0, copy=False)
 
                             B_defl = B_defl - E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
                             C_defl = C_defl - E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
@@ -277,8 +274,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 X = X.lincomb(UR[:, minidx])
                 V = V.lincomb(URt[:, minidx])
 
-                V = gram_schmidt(V, atol=0, rtol=0, copy=False)
-                X = gram_schmidt(X, atol=0, rtol=0, copy=False)
+                gram_schmidt(V, atol=0, rtol=0, copy=False)
+                gram_schmidt(X, atol=0, rtol=0, copy=False)
 
                 G = V.dot(E.apply(X))
                 AX = A.apply(X)
