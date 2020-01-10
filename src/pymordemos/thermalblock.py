@@ -76,7 +76,10 @@ def main(args):
         fom, fom_summary = discretize_pymor(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
 
     if args['--cache-region'] != 'none':
-        fom.enable_caching(args['--cache-region'])
+        # building a cache_id is only needed for persistent CacheRegions
+        cache_id = (f"pymordemos.thermalblock {args['--fenics']} {args['XBLOCKS']} {args['YBLOCKS']}"
+                    f"{args['--grid']} {args['--order']}")
+        fom.enable_caching(args['--cache-region'], cache_id)
 
     if args['--plot-solutions']:
         print('Showing some solutions')

@@ -171,7 +171,7 @@ class ColoredFormatter(logging.Formatter):
 
 
 
-@defaults('filename', sid_ignore='filename')
+@defaults('filename')
 def default_handler(filename=''):
     streamhandler = logging.StreamHandler()
     streamformatter = ColoredFormatter()
@@ -185,7 +185,7 @@ def default_handler(filename=''):
     return handlers
 
 
-@defaults('filename', sid_ignore='filename')
+@defaults('filename')
 def getLogger(module, level=None, filename=''):
     """Get the logger of the respective module for pyMOR's logging facility.
 
@@ -251,7 +251,7 @@ class DummyLogger:
 dummy_logger = DummyLogger()
 
 
-@defaults('levels', sid_ignore=('levels',))
+@defaults('levels')
 def set_log_levels(levels=None):
     """Set log levels for pyMOR's logging facility.
 
@@ -267,8 +267,7 @@ def set_log_levels(levels=None):
         getLogger(k).setLevel(v)
 
 
-@defaults('max_hierarchy_level', 'indent_blocks', 'block_timings',
-          sid_ignore=('max_hierarchy_level', 'indent_blocks', 'block_timings'))
+@defaults('max_hierarchy_level', 'indent_blocks', 'block_timings')
 def set_log_format(max_hierarchy_level=1, indent_blocks=True, block_timings=False):
     """Set log levels for pyMOR's logging facility.
 

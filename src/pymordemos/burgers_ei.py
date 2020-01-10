@@ -115,7 +115,11 @@ def main(args):
     )
 
     if args['--cache-region'] != 'none':
-        fom.enable_caching(args['--cache-region'])
+        # building a cache_id is only needed for persistent CacheRegions
+        cache_id = (f"pymordemos.burgers_ei {args['--vx']} {args['--vy']} {args['--initial-data']}"
+                    f"{args['--not-periodic']} {args['--grid']} {args['--grid-type']} {args['--num-flux']}"
+                    f"{args['--lxf-lambda']} {args['--nt']}")
+        fom.enable_caching(args['--cache-region'], cache_id)
 
     print(fom.operator.grid)
 

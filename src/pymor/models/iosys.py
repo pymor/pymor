@@ -29,10 +29,12 @@ def sparse_min_size(value=1000):
 class InputOutputModel(ModelBase):
     """Base class for input-output systems."""
 
+    cache_region = 'memory'
+
     def __init__(self, input_space, output_space, cont_time=True,
-                 estimator=None, visualizer=None, cache_region='memory', name=None):
+                 estimator=None, visualizer=None, name=None):
         assert cont_time in (True, False)
-        super().__init__(estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
+        super().__init__(estimator=estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
     @property
@@ -128,9 +130,9 @@ class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
 
     def __init__(self, input_space, solution_space, output_space, cont_time=True,
-                 estimator=None, visualizer=None, cache_region='memory', name=None):
+                 estimator=None, visualizer=None, name=None):
         super().__init__(input_space, output_space, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer, cache_region=cache_region, name=name)
+                         estimator=estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
     @property
@@ -182,8 +184,6 @@ class LTIModel(InputStateOutputModel):
         A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
         method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
         the model which forwards its arguments to the visualizer's `visualize` method.
-    cache_region
-        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -208,8 +208,7 @@ class LTIModel(InputStateOutputModel):
     """
 
     def __init__(self, A, B, C, D=None, E=None, cont_time=True, parameter_space=None,
-                 solver_options=None, estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+                 solver_options=None, estimator=None, visualizer=None, name=None):
 
         assert A.linear
         assert A.source == A.range
@@ -231,8 +230,7 @@ class LTIModel(InputStateOutputModel):
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+                         estimator=estimator, visualizer=visualizer, name=name)
         self.build_parameter_type(A, B, C, D, E)
         self.__auto_init(locals())
 
@@ -252,7 +250,7 @@ class LTIModel(InputStateOutputModel):
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
                       state_id='STATE', solver_options=None, estimator=None,
-                      visualizer=None, cache_region='memory', name=None):
+                      visualizer=None, name=None):
         """Create |LTIModel| from matrices.
 
         Parameters
@@ -281,9 +279,6 @@ class LTIModel(InputStateOutputModel):
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
             to the model which forwards its arguments to the visualizer's `visualize` method.
-        cache_region
-            `None` or name of the cache region to use. See
-            :mod:`pymor.core.cache`.
         name
             Name of the system.
 
@@ -308,12 +303,12 @@ class LTIModel(InputStateOutputModel):
 
         return cls(A, B, C, D, E, cont_time=cont_time,
                    solver_options=solver_options, estimator=estimator, visualizer=visualizer,
-                   cache_region=cache_region, name=name)
+                   name=name)
 
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True,
                    state_id='STATE', solver_options=None, estimator=None, visualizer=None,
-                   cache_region='memory', name=None):
+                   name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -342,8 +337,6 @@ class LTIModel(InputStateOutputModel):
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
             to the model which forwards its arguments to the visualizer's `visualize` method.
-        cache_region
-            `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
         name
             Name of the system.
 
@@ -362,13 +355,12 @@ class LTIModel(InputStateOutputModel):
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
                                  state_id=state_id, solver_options=solver_options,
-                                 estimator=estimator, visualizer=visualizer,
-                                 cache_region=cache_region, name=name)
+                                 estimator=estimator, visualizer=visualizer, name=name)
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True,
                       state_id='STATE', solver_options=None, estimator=None,
-                      visualizer=None, cache_region='memory', name=None):
+                      visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
         Parameters
@@ -390,8 +382,6 @@ class LTIModel(InputStateOutputModel):
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
             to the model which forwards its arguments to the visualizer's `visualize` method.
-        cache_region
-            `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
         name
             Name of the system.
 
@@ -413,13 +403,12 @@ class LTIModel(InputStateOutputModel):
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
                                  state_id=state_id, solver_options=solver_options,
-                                 estimator=estimator, visualizer=visualizer,
-                                 cache_region=cache_region, name=name)
+                                 estimator=estimator, visualizer=visualizer, name=name)
 
     @classmethod
     def from_abcde_files(cls, files_basename, cont_time=True,
                          state_id='STATE', solver_options=None, estimator=None,
-                         visualizer=None, cache_region='memory', name=None):
+                         visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .[ABCDE] files.
 
         Parameters
@@ -440,8 +429,6 @@ class LTIModel(InputStateOutputModel):
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
             to the model which forwards its arguments to the visualizer's `visualize` method.
-        cache_region
-            `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
         name
             Name of the system.
 
@@ -461,8 +448,7 @@ class LTIModel(InputStateOutputModel):
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
                                  state_id=state_id, solver_options=solver_options,
-                                 estimator=estimator, visualizer=visualizer,
-                                 cache_region=cache_region, name=name)
+                                 estimator=estimator, visualizer=visualizer, name=name)
 
     def __add__(self, other):
         """Add an |LTIModel|."""
@@ -870,8 +856,6 @@ class TransferFunction(InputOutputModel):
         `True` if the system is continuous-time, otherwise `False`.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
-    cache_region
-        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -887,9 +871,8 @@ class TransferFunction(InputOutputModel):
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, input_space, output_space, tf, dtf, cont_time=True, parameter_space=None,
-                 cache_region='memory', name=None):
-        super().__init__(input_space, output_space, cont_time=cont_time, cache_region=cache_region, name=name)
+    def __init__(self, input_space, output_space, tf, dtf, cont_time=True, parameter_space=None, name=None):
+        super().__init__(input_space, output_space, cont_time=cont_time, name=name)
         self.parameter_type = parameter_space.parameter_type if parameter_space else None
         self.__auto_init(locals())
 
@@ -1087,8 +1070,6 @@ class SecondOrderModel(InputStateOutputModel):
         A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
         method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
         the model which forwards its arguments to the visualizer's `visualize` method.
-    cache_region
-        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -1117,8 +1098,7 @@ class SecondOrderModel(InputStateOutputModel):
     """
 
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True, parameter_space=None,
-                 solver_options=None, estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+                 solver_options=None, estimator=None, visualizer=None, name=None):
 
         assert M.linear and M.source == M.range
         assert E.linear and E.source == E.range == M.source
@@ -1135,8 +1115,7 @@ class SecondOrderModel(InputStateOutputModel):
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+                         estimator=estimator, visualizer=visualizer, name=name)
         self.build_parameter_type(M, E, K, B, Cp, Cv, D)
         self.__auto_init(locals())
 
@@ -1157,7 +1136,7 @@ class SecondOrderModel(InputStateOutputModel):
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
                       state_id='STATE', solver_options=None, estimator=None,
-                      visualizer=None, cache_region='memory', name=None):
+                      visualizer=None, name=None):
         """Create a second order system from matrices.
 
         Parameters
@@ -1188,8 +1167,6 @@ class SecondOrderModel(InputStateOutputModel):
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
             to the model which forwards its arguments to the visualizer's `visualize` method.
-        cache_region
-            `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
         name
             Name of the system.
 
@@ -1217,8 +1194,7 @@ class SecondOrderModel(InputStateOutputModel):
             D = NumpyMatrixOperator(D)
 
         return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
-                   solver_options=solver_options, estimator=estimator, visualizer=visualizer,
-                   cache_region=cache_region, name=name)
+                   solver_options=solver_options, estimator=estimator, visualizer=visualizer, name=name)
 
     @cached
     def to_lti(self):
@@ -1279,7 +1255,7 @@ class SecondOrderModel(InputStateOutputModel):
                         cont_time=self.cont_time,
                         parameter_space=self.parameter_space,
                         solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
-                        cache_region=self.cache_region, name=self.name + '_first_order')
+                        name=self.name + '_first_order')
 
     def __add__(self, other):
         """Add a |SecondOrderModel| or an |LTIModel|."""
@@ -1754,8 +1730,6 @@ class LinearDelayModel(InputStateOutputModel):
         A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
         method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
         the model which forwards its arguments to the visualizer's `visualize` method.
-    cache_region
-        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -1786,7 +1760,7 @@ class LinearDelayModel(InputStateOutputModel):
     """
 
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True, parameter_space=None,
-                 estimator=None, visualizer=None, cache_region='memory', name=None):
+                 estimator=None, visualizer=None, name=None):
 
         assert A.linear and A.source == A.range
         assert isinstance(Ad, tuple) and len(Ad) > 0
@@ -1802,8 +1776,7 @@ class LinearDelayModel(InputStateOutputModel):
         assert E.linear and E.source == E.range == A.source
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+                         estimator=estimator, visualizer=visualizer, name=name)
 
         self.build_parameter_type(A, *Ad, B, C, D, E)
         self.__auto_init(locals())
@@ -2138,8 +2111,6 @@ class LinearStochasticModel(InputStateOutputModel):
         A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
         method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
         the model which forwards its arguments to the visualizer's `visualize` method.
-    cache_region
-        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -2168,8 +2139,7 @@ class LinearStochasticModel(InputStateOutputModel):
     """
 
     def __init__(self, A, As, B, C, D=None, E=None, cont_time=True,
-                 estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+                 estimator=None, visualizer=None, name=None):
 
         assert A.linear and A.source == A.range
         assert isinstance(As, tuple) and len(As) > 0
@@ -2186,8 +2156,7 @@ class LinearStochasticModel(InputStateOutputModel):
         assert cont_time in (True, False)
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+                         estimator=estimator, visualizer=visualizer, name=name)
 
         self.__auto_init(locals())
         self.q = len(As)
@@ -2263,8 +2232,6 @@ class BilinearModel(InputStateOutputModel):
         A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
         method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
         the model which forwards its arguments to the visualizer's `visualize` method.
-    cache_region
-        `None` or name of the cache region to use. See :mod:`pymor.core.cache`.
     name
         Name of the system.
 
@@ -2291,8 +2258,7 @@ class BilinearModel(InputStateOutputModel):
     """
 
     def __init__(self, A, N, B, C, D, E=None, cont_time=True,
-                 estimator=None, visualizer=None,
-                 cache_region='memory', name=None):
+                 estimator=None, visualizer=None, name=None):
 
         assert A.linear and A.source == A.range
         assert B.linear and B.range == A.source
@@ -2309,8 +2275,7 @@ class BilinearModel(InputStateOutputModel):
         assert cont_time in (True, False)
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         estimator=estimator, visualizer=visualizer,
-                         cache_region=cache_region, name=name)
+                         estimator=estimator, visualizer=visualizer, name=name)
 
         self.__auto_init(locals())
         self.linear = False

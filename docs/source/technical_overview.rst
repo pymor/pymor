@@ -165,10 +165,8 @@ main benefits:
 1. If multiple objects/algorithms hold references to the same
    |Operator| or |Model|, none of the objects has to worry that the
    referenced object changes without their knowledge.
-2. It becomes affordable to generate persistent keys for |caching| of computation
-   results by generating |state ids| which uniquely identify the object's state.
-   Since the state cannot change, these ids have to be computed only once for the
-   lifetime of the object.
+2. The return value of a method of an immutable object only depends on its
+   arguments, allowing reliable |caching| of these return values.
 
 A class can be made immutable in pyMOR by deriving from |ImmutableInterface|,
 which ensures that write access to the object's attributes is prohibited after
