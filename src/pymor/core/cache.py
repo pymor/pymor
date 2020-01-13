@@ -16,12 +16,11 @@ instance.
 Making this assumption, the keys for cache lookup are created from
 the following data:
 
-    1. the instance's |state id| in case of a :attr:`~CacheRegion.persistent`
-       :class:`CacheRegion`, else the instance's
+    1. the instance's :attr:`~CacheableInterface.cache_id` in case of a
+       :attr:`~CacheRegion.persistent` :class:`CacheRegion`, else the instance's
        :attr:`~pymor.core.interfaces.BasicInterface.uid`,
     2. the method's `__name__`,
-    3. the |state id| of the arguments,
-    4. the |state id| of pyMOR's global |defaults|.
+    3. the method's arguments.
 
 Note that instances of |ImmutableInterface| are allowed to have mutable
 private attributes. It is the implementors responsibility not to break things.
@@ -66,18 +65,26 @@ import atexit
 from collections import OrderedDict
 import functools
 import getpass
+import hashlib
 import inspect
+from numbers import Number
 import os
 import tempfile
 from types import MethodType
-import diskcache
 
-from pymor.core.defaults import defaults, defaults_sid
-from pymor.core.interfaces import ImmutableInterface, generate_sid
+import diskcache
+import numpy as np
+
+from pymor.core.defaults import defaults, defaults_changes
+from pymor.core.exceptions import CacheKeyGenerationError
+from pymor.core.interfaces import ImmutableInterface
 from pymor.core.logger import getLogger
+from pymor.core.pickle import dumps
+from pymor.parameters.base import Parameter, ParameterType
+
 
 @atexit.register
-def cleanup_non_persisten_regions():
+def cleanup_non_persistent_regions():
     for region in cache_regions.values():
         if not region.persistent:
             region.clear()
@@ -191,8 +198,7 @@ class DiskRegion(CacheRegion):
         self._cache.clear()
 
 
-@defaults('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys',
-          sid_ignore=('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys'))
+@defaults('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys')
 def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
                     disk_max_size=1024 ** 3,
                     persistent_path=os.path.join(tempfile.gettempdir(), 'pymor.persistent.cache.' + getpass.getuser()),
@@ -217,7 +223,6 @@ cache_regions = {}
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
-    from pymor.core.logger import getLogger
     getLogger('pymor.core.cache').warn('caching globally disabled by environment')
 
 
@@ -248,36 +253,47 @@ class CacheableInterface(ImmutableInterface):
         Name of the :class:`CacheRegion` to use. Must correspond to a key in
         the :attr:`cache_regions` dict. If `None` or `'none'`, caching
         is disabled.
+    cache_id
+        Identifier for the object instance on which a cached method is called.
     """
 
-    sid_ignore = ImmutableInterface.sid_ignore | {'cache_region'}
-
     cache_region = None
+    cache_id = None
 
     def disable_caching(self):
         """Disable caching for this instance."""
         self.__dict__['cache_region'] = None
+        self.__dict__['cache_id'] = None
 
-    def enable_caching(self, region):
+    def enable_caching(self, region, cache_id=None):
         """Enable caching for this instance.
 
-        When setting the object's cache region to a :attr:`~CacheRegion.persistent`
-        :class:`CacheRegion`, the object's |state id| will be computed.
+        .. warning::
+            Note that using :meth:`~pymor.core.interfaces.ImmutableInterface.with_`
+            will reset :attr:`cache_region` and :attr:`cache_id` to their class
+            defaults.
 
         Parameters
         ----------
         region
-            Name of the `CacheRegion` to use. Must correspond to a key in
+            Name of the |CacheRegion| to use. Must correspond to a key in
             the :attr:`cache_regions` dict. If `None` or `'none'`, caching
             is disabled.
+        cache_id
+            Identifier for the object instance on which a cached method is called.
+            Must be specified when `region` is :attr:`~CacheRegion.persistent`.
+            When `region` is not :attr:`~CacheRegion.persistent` and no `cache_id`
+            is given, the object's :attr:`~pymor.core.interfaces.BasicInterface.uid`
+            is used instead.
         """
+        self.__dict__['cache_id'] = cache_id
         if region in (None, 'none'):
             self.__dict__['cache_region'] = None
         else:
             self.__dict__['cache_region'] = region
             r = cache_regions.get(region, None)
-            if r and r.persistent:
-                self.generate_sid()
+            if r and r.persistent and cache_id is None:
+                raise ValueError('For persistent CacheRegions a cache_id has to be specified.')
 
     def cached_method_call(self, method, *args, **kwargs):
         """Call a given `method` and cache the return value.
@@ -319,14 +335,9 @@ class CacheableInterface(ImmutableInterface):
             except KeyError:
                 raise KeyError(f'No cache region "{self.cache_region}" found')
 
-            # compute id for self
-            if region.persistent:
-                self_id = getattr(self, 'sid')
-                if not self_id:     # this can happen when cache_region is already set by the class to
-                                    # a persistent region
-                    self_id = self.generate_sid()
-            else:
-                self_id = self.uid
+            # id for self
+            assert self.cache_id or not region.persistent
+            self_id = self.cache_id or self.uid
 
             # ensure that passing a value as positional or keyword argument does not matter
             kwargs.update(zip(argnames, args))
@@ -335,14 +346,18 @@ class CacheableInterface(ImmutableInterface):
             if defaults:
                 kwargs = dict(defaults, **kwargs)
 
-            key = generate_sid((method.__name__, self_id, kwargs, defaults_sid()))
+            key = build_cache_key((method.__name__, self_id, kwargs))
             found, value = region.get(key)
+
             if found:
+                value, cached_defaults_changes = value
+                if cached_defaults_changes != defaults_changes():
+                    getLogger('pymor.core.cache').warn('pyMOR defaults have been changed. Cached result may be wrong.')
                 return value
             else:
                 self.logger.debug(f'creating new cache entry for {self.__class__.__name__}.{method.__name__}')
                 value = method(self, **kwargs) if pass_self else method(**kwargs)
-                region.set(key, value)
+                region.set(key, (value, defaults_changes()))
                 return value
 
 
@@ -362,3 +377,34 @@ def cached(function):
         return self._cached_method_call(function, True, argnames, defaults, args, kwargs)
 
     return wrapper
+
+
+NoneType = type(None)
+
+
+def build_cache_key(obj):
+
+    def transform_obj(obj):
+        t = type(obj)
+        if t in (NoneType, bool, int, float, str, bytes):
+            return obj
+        elif t is np.ndarray:
+            if obj.dtype == object:
+                raise CacheKeyGenerationError('Cannot generate cache key for provided arguments')
+            return obj
+        elif t in (list, tuple):
+            return tuple(transform_obj(o) for o in obj)
+        elif t in (set, frozenset):
+            return tuple(transform_obj(o) for o in sorted(obj))
+        elif t in (dict, Parameter, ParameterType):
+            return tuple((transform_obj(k), transform_obj(v)) for k, v in sorted(obj.items()))
+        elif isinstance(obj, Number):
+            # handle numpy number objects
+            return obj
+        else:
+            raise CacheKeyGenerationError('Cannot generate cache key for provided arguments')
+
+    obj = transform_obj(obj)
+    key = hashlib.sha256(dumps(obj, protocol=-1)).hexdigest()
+
+    return key

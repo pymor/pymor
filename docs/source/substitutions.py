@@ -56,9 +56,6 @@ common = '''
 .. |default| replace:: :mod:`default <pymor.core.defaults>`
 .. |defaults| replace:: :mod:`~pymor.core.defaults`
 
-.. |state id| replace:: :ref:`state id <state id>`
-.. |state ids| replace:: :ref:`state ids <state id>`
-
 .. |CacheRegion| replace:: :class:`~pymor.core.cache.CacheRegion`
 
 .. |StationaryProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`

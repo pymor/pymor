@@ -39,7 +39,6 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.interfaces import generate_sid
 from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.pprint import format_array
 
@@ -95,20 +94,11 @@ class ParameterType(OrderedDict):
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
 
-    @property
-    def sid(self):
-        sid = getattr(self, '__sid', None)
-        if sid:
-            return sid
-        else:
-            self.__sid = sid = generate_sid(dict(self))
-            return sid
-
     def __reduce__(self):
         return (ParameterType, (dict(self),))
 
     def __hash__(self):
-        return hash(self.sid)
+        return hash(tuple(self.items()))
 
 
 class Parameter(dict):
@@ -124,8 +114,6 @@ class Parameter(dict):
           but also the |NumPy arrays| are copied.
         - The :meth:`allclose` method allows to compare |Parameters| for
           equality in a mathematically meaningful way.
-        - Each |Parameter| has a :attr:`~Parameter.sid` property providing a
-          unique |state id|.
         - We override :meth:`__str__` to ensure alphanumerical ordering of the keys
           and pretty printing of the values.
         - The :attr:`parameter_type` property can be used to obtain the |ParameterType|
@@ -142,8 +130,6 @@ class Parameter(dict):
     ----------
     parameter_type
         The |ParameterType| of the |Parameter|.
-    sid
-        The |state id| of the |Parameter|.
     """
 
     def __init__(self, v):
@@ -234,10 +220,6 @@ class Parameter(dict):
         else:
             return True
 
-    def clear(self):
-        dict.clear(self)
-        self.__sid = None
-
     def copy(self):
         c = Parameter({k: v.copy() for k, v in self.items()})
         return c
@@ -246,11 +228,6 @@ class Parameter(dict):
         if not isinstance(value, np.ndarray):
             value = np.array(value)
         dict.__setitem__(self, key, value)
-        self.__sid = None
-
-    def __delitem__(self, key):
-        dict.__delitem__(self, key)
-        self.__sid = None
 
     def __eq__(self, mu):
         if not isinstance(mu, Parameter):
@@ -277,15 +254,6 @@ class Parameter(dict):
     @property
     def parameter_type(self):
         return ParameterType({k: v.shape for k, v in self.items()})
-
-    @property
-    def sid(self):
-        sid = getattr(self, '__sid', None)
-        if sid:
-            return sid
-        else:
-            self.__sid = sid = generate_sid(dict(self))
-            return sid
 
     def __str__(self):
         np.set_string_function(format_array, repr=False)

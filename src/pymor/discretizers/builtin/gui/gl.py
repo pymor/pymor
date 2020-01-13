@@ -79,7 +79,7 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
     }
     """
 
-    @defaults('name', sid_ignore=('name',))
+    @defaults('name')
     def colormap_texture(name='viridis'):
         resolution = min(gl.GL_MAX_TEXTURE_SIZE, 1024)
         colormap_id = gl.glGenTextures(1)

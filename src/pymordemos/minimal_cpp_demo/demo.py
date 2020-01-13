@@ -45,7 +45,7 @@ def discretize(n, nt, blocks):
 
     fom = InstationaryModel(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
                             time_stepper=time_stepper, num_values=20, parameter_space=parameter_space,
-                            visualizer=visualizer, name='C++-Model', cache_region=None)
+                            visualizer=visualizer, name='C++-Model')
     return fom
 
 

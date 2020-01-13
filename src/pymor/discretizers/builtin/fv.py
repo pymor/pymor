@@ -218,8 +218,6 @@ class NonlinearAdvectionOperator(OperatorBase):
         The name of the operator.
     """
 
-    sid_ignore = OperatorBase.sid_ignore | {'_grid_data'}
-
     linear = False
 
     def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None,

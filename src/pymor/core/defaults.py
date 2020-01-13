@@ -39,27 +39,11 @@ As an alternative, the environment variable `PYMOR_DEFAULTS` can be
 used to specify the path of a configuration file. If empty or set to
 `NONE`, no configuration file will be loaded whatsoever.
 
-.. _defaults_warning:
 .. warning::
-   The state of pyMOR's global defaults enters the calculation of each
-   |state id|. Thus, if you first instantiate an immutable object and
-   then change the defaults, the resulting object will have a different
-   |state id| than if you first change the defaults. (This is necessary
-   as the object can save internal state upon initialization, which
-   depends on the state of the global defaults.) As a consequence, the
-   key generated for :mod:`caching <pymor.core.cache>` will depend on the
-   time the defaults have been changed. While no wrong results will be
-   produced, changing defaults at different times will cause unnecessary
-   cache misses and will pollute the cache with duplicate entries.
-
-   An exemption from this rule are defaults which are listed in the
-   `sid_ignore` argument of the :func:`defaults` decorator. Such
-   defaults will not enter the |state id| calculation. This allows the
-   user to change defaults related to input/output, e.g.
-   :mod:`logging <pymor.core.logger>`, without breaking caching.
-   Before marking defaults as ignored in your own code, however, make
-   sure to double check that these defaults will not affect the result
-   of any mathematical algorithm.
+    Note that changing defaults may affect the result of a (cached)
+    function call. pyMOR will emit a warning, when a result is retrieved
+    from the cache that has been computed using an earlier set of
+    |defaults| (see :func:`defaults_changes`).
 """
 
 from collections import defaultdict, OrderedDict
@@ -68,6 +52,7 @@ import importlib
 import inspect
 import pkgutil
 import textwrap
+import threading
 
 from pymor.tools.table import format_table
 
@@ -91,8 +76,10 @@ class DefaultContainer:
     def __init__(self):
         self._data = defaultdict(dict)
         self.registered_functions = set()
+        self.changes = 0
+        self.changes_lock = threading.Lock()
 
-    def _add_defaults_for_function(self, func, args, sid_ignore):
+    def _add_defaults_for_function(self, func, args):
 
         if func.__doc__ is not None:
             new_docstring = inspect.cleandoc(func.__doc__)
@@ -122,7 +109,6 @@ Defaults
         for k, v in defaultsdict.items():
             self._data[path + '.' + k]['func'] = func
             self._data[path + '.' + k]['code'] = v
-            self._data[path + '.' + k]['sid_ignore'] = k in sid_ignore
 
         defaultsdict = {}
         for k in self._data:
@@ -141,8 +127,8 @@ Defaults
         func.__signature__ = sig.replace(parameters=params.values())
 
     def update(self, defaults, type='user'):
-        if hasattr(self, '_sid'):
-            del self._sid
+        with self.changes_lock:
+            self.changes += 1
         assert type in ('user', 'file')
 
         functions_to_update = set()
@@ -175,11 +161,11 @@ Defaults
     def get(self, key):
         values = self._data[key]
         if 'user' in values:
-            return values['user'], 'user', values['sid_ignore']
+            return values['user'], 'user'
         elif 'file' in values:
-            return values['file'], 'file', values['sid_ignore']
+            return values['file'], 'file'
         elif 'code' in values:
-            return values['code'], 'code', values['sid_ignore']
+            return values['code'], 'code'
         else:
             raise ValueError('No default value matching the specified criteria')
 
@@ -195,21 +181,11 @@ Defaults
         for package in packages:
             _import_all(package)
 
-    @property
-    def sid(self):
-        sid = getattr(self, '_sid', None)
-        if not sid:
-            from pymor.core.interfaces import generate_sid
-            user_dict = {k: v['user'] if 'user' in v else v['file']
-                         for k, v in self._data.items() if 'user' in v or 'file' in v and not v['sid_ignore']}
-            self._sid = sid = generate_sid(user_dict)
-        return sid
-
 
 _default_container = DefaultContainer()
 
 
-def defaults(*args, sid_ignore=()):
+def defaults(*args):
     """Function decorator for marking function arguments as user-configurable defaults.
 
     If a function decorated with :func:`defaults` is called, the values of the marked
@@ -232,11 +208,6 @@ def defaults(*args, sid_ignore=()):
         List of strings containing the names of the arguments of the decorated
         function to mark as pyMOR defaults. Each of these arguments has to be
         a keyword argument (with a default value).
-    sid_ignore
-        List of strings naming the defaults in `args` which should not enter
-        |state id| calculation (because they do not affect the outcome of any
-        computation). Such defaults will typically be IO related. Use with
-        extreme caution!
     """
     assert all(isinstance(arg, str) for arg in args)
 
@@ -246,7 +217,7 @@ def defaults(*args, sid_ignore=()):
             return func
 
         global _default_container
-        _default_container._add_defaults_for_function(func, args=args, sid_ignore=sid_ignore)
+        _default_container._add_defaults_for_function(func, args=args)
 
         @functools.wraps(func, updated=())  # ensure that __signature__ is not copied
         def wrapper(*wrapper_args, **wrapper_kwargs):
@@ -303,29 +274,22 @@ def print_defaults(import_all=True, shorten_paths=2):
     if import_all:
         _default_container.import_all()
 
-    keys = ([], [])
-    values = ([], [])
-    comments = ([], [])
+    keys, values, comments = [], [], []
 
     for k in sorted(_default_container.keys()):
-        v, c, i = _default_container.get(k)
+        v, c = _default_container.get(k)
         k_parts = k.split('.')
         if len(k_parts) >= shorten_paths + 2:
-            keys[int(i)].append('.'.join(k_parts[shorten_paths:]))
+            keys.append('.'.join(k_parts[shorten_paths:]))
         else:
-            keys[int(i)].append('.'.join(k_parts))
-        values[int(i)].append(repr(v))
-        comments[int(i)].append(c)
+            keys.append('.'.join(k_parts))
+        values.append(repr(v))
+        comments.append(c)
     key_string = 'path (shortened)' if shorten_paths else 'path'
 
-    for i, (ks, vls, cs) in enumerate(zip(keys, values, comments)):
-        description = 'defaults not affecting state id calculation' if i else 'defaults affecting state id calcuation'
-        rows = [[key_string, 'value', 'source']] + list(zip(ks, vls, cs))
-        print(format_table(rows, title=description))
-        if not i:
-            print()
-            print()
-        print()
+    rows = [[key_string, 'value', 'source']] + list(zip(keys, values, comments))
+    print(format_table(rows, title='pyMOR defaults'))
+    print()
 
 
 def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
@@ -350,15 +314,13 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
     for package in packages:
         _import_all(package)
 
-    keys = ([], [])
-    values = ([], [])
-    as_comment = ([], [])
+    keys, values, as_comment = [], [], []
 
     for k in sorted(_default_container.keys()):
-        v, c, i = _default_container.get(k)
-        keys[int(i)].append("'" + k + "'")
-        values[int(i)].append(repr(v))
-        as_comment[int(i)].append(c == 'code')
+        v, c = _default_container.get(k)
+        keys.append("'" + k + "'")
+        values.append(repr(v))
+        as_comment.append(c == 'code')
     key_width = max(max([0] + list(map(len, ks))) for ks in keys)
 
     with open(filename, 'wt') as f:
@@ -369,37 +331,15 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
 d = {}
 '''[1:], file=f)
 
-        for i, (ks, vls, cs) in enumerate(zip(keys, values, as_comment)):
+        lks = keys[0].split('.')[:-1] if keys else ''
+        for c, k, v in zip(as_comment, keys, values):
+            ks = k.split('.')[:-1]
+            if lks != ks:
+                print('', file=f)
+            lks = ks
 
-            if i:
-                print('''
-########################################################################
-#                                                                      #
-# SETTING THE FOLLOWING DEFAULTS WILL NOT AFFECT STATE ID CALCULATION. #
-#                                                                      #
-########################################################################
-'''[1:], file=f)
-            else:
-                print('''
-########################################################################
-#                                                                      #
-# SETTING THE FOLLOWING DEFAULTS WILL AFFECT STATE ID CALCULATION.     #
-#                                                                      #
-########################################################################
-'''[1:], file=f)
-
-            lks = ks[0].split('.')[:-1] if ks else ''
-            for c, k, v in zip(cs, ks, vls):
-                ks = k.split('.')[:-1]
-                if lks != ks:
-                    print('', file=f)
-                lks = ks
-
-                comment = '# ' if c else ''
-                print(f'{comment}d[{k:{key_width}}] = {v}', file=f)
-
-            print(file=f)
-            print(file=f)
+            comment = '# ' if c else ''
+            print(f'{comment}d[{k:{key_width}}] = {v}', file=f)
 
     print('Written defaults to file ' + filename)
 
@@ -411,10 +351,6 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
     The file is loaded via Python's :func:`exec` function, so be very careful
     with configuration files you have not created your own. You have been
     warned!
-
-    Note that defaults should generally only be changed/loaded before
-    |state ids| have been calculated. See this :ref:`warning <defaults_warning>`
-    for details.
 
     Parameters
     ----------
@@ -437,9 +373,6 @@ def set_defaults(defaults):
     function signature or set earlier via :func:`load_defaults_from_file` or
     previous :func:`set_defaults` calls.
 
-    Note that defaults should generally only be changed/loaded before state ids
-    have been calculated. See this :ref:`warning <defaults_warning>` for details.
-
     Parameters
     ----------
     defaults
@@ -452,10 +385,21 @@ def set_defaults(defaults):
         raise KeyError(f'Error setting defaults. Key {e} does not correspond to a default')
 
 
-def defaults_sid():
-    """Return a |state id| for pyMOR's global |defaults|.
+def defaults_changes():
+    """Returns the number of changes made to to pyMOR's global |defaults|.
 
-    This method is used for the calculation of |state ids| of |immutable|
-    objects and for :mod:`~pymor.core.cache` key generation.
+    This methods returns the number of changes made to the state of
+    pyMOR's global |defaults| via :func:`set_defaults` or
+    :func:`load_defaults_from_file` since the start of program execution.
+
+    Since changing |defaults| may affect the result of a (cached) function
+    call, this value is used to warn when a result is retrieved from the cache
+    that has been computed using an earlier set of |defaults|.
+
+    .. warning::
+        Note that when using :mod:`parallelization <pymor.parallel>`,
+        workers might set different defaults at the same time, resulting
+        in equal change counts but different states of |defaults| at each
+        worker.
     """
-    return _default_container.sid
+    return _default_container.changes

@@ -135,7 +135,9 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
         m = mpi.get_object(local_models)
         if m.visualizer:
             wrapped_attributes['visualizer'] = MPIVisualizer(local_models)
-        return m.with_(cache_region=None, **wrapped_attributes)
+        m = m.with_(**wrapped_attributes)
+        m.disable_caching()
+        return m
     else:
 
         class MPIWrappedModel(MPIModel, base_type):
