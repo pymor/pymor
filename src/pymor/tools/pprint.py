@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.defaults import defaults
@@ -7,7 +7,7 @@ from pymor.core.defaults import defaults
 import numpy as np
 
 
-@defaults('compact_print', sid_ignore=('compact_print',))
+@defaults('compact_print')
 def format_array(array, compact_print=False):
     '''Creates a formatted string representation of a |NumPy array|.
 

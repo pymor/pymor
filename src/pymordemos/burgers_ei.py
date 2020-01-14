@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Burgers with EI demo.
@@ -63,9 +63,7 @@ from docopt import docopt
 from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.ei import interpolate_operators
 from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.fv import discretize_instationary_fv
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
+from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid, TriaGrid
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import InstationaryRBReductor
 
@@ -115,7 +113,11 @@ def main(args):
     )
 
     if args['--cache-region'] != 'none':
-        fom.enable_caching(args['--cache-region'])
+        # building a cache_id is only needed for persistent CacheRegions
+        cache_id = (f"pymordemos.burgers_ei {args['--vx']} {args['--vy']} {args['--initial-data']}"
+                    f"{args['--not-periodic']} {args['--grid']} {args['--grid-type']} {args['--num-flux']}"
+                    f"{args['--lxf-lambda']} {args['--nt']}")
+        fom.enable_caching(args['--cache-region'], cache_id)
 
     print(fom.operator.grid)
 

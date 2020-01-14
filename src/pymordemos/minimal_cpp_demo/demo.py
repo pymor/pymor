@@ -1,14 +1,14 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 
 from pymor.algorithms.pod import pod
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
+from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
 from pymor.models.basic import InstationaryModel
-from pymor.grids.oned import OnedGrid
-from pymor.gui.visualizers import OnedVisualizer
+from pymor.discretizers.builtin import OnedGrid
 from pymor.operators.constructions import VectorOperator, LincombOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
@@ -45,7 +45,7 @@ def discretize(n, nt, blocks):
 
     fom = InstationaryModel(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
                             time_stepper=time_stepper, num_values=20, parameter_space=parameter_space,
-                            visualizer=visualizer, name='C++-Model', cache_region=None)
+                            visualizer=visualizer, name='C++-Model')
     return fom
 
 

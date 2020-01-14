@@ -6,9 +6,9 @@
 
 # C extensions
 *.so
-src/pymor/tools/inplace.c
-src/pymor/tools/relations.c
-src/pymor/grids/_unstructured.c
+src/pymor/discretizers/builtin/inplace.c
+src/pymor/discretizers/builtin/relations.c
+src/pymor/discretizers/builtin/grids/_unstructured.c
 src/pymordemos/minimal_cpp_demo/bindings_generated.cpp
 src/pymordemos/reduced_model.out
 src/pymordemos/results.out

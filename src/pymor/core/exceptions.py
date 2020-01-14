@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import warnings
@@ -37,8 +37,8 @@ class NewtonError(Exception):
     """Is raised if the Newton algorithm fails to converge."""
 
 
-class SIDGenerationError(Exception):
-    """Is raised when generate_sid fails."""
+class CacheKeyGenerationError(Exception):
+    """Is raised when cache key generation fails due to unspported arguments."""
 
 
 class GmshMissing(Exception):

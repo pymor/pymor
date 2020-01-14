@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pickle import dumps, loads
@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from pymor.core.exceptions import QtMissing
-from pymor.gui.qt import stop_gui_processes
+from pymor.discretizers.builtin.gui.qt import stop_gui_processes
 from pymortests.fixtures.grid import grid, grids_with_visualize
 from pymortests.pickling import assert_picklable_without_dumps_function
 

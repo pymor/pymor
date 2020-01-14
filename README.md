@@ -22,7 +22,7 @@ provided for getting started quickly.
 License
 -------
 
-Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:
@@ -70,6 +70,8 @@ command:
 
     pip install --upgrade pip  # make sure that pip is reasonably new
     pip install pymor[full]
+
+(Please note that pip must be at least version 9.0.0)
 
 This will install the latest release of pyMOR on your system with most optional
 dependencies.

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """This module contains some iterative linear solvers which only use the |Operator| interface"""
@@ -16,8 +16,7 @@ from pymor.core.logger import getLogger
           'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
           'least_squares_lsmr_maxiter', 'least_squares_lsmr_show',
           'least_squares_lsqr_atol', 'least_squares_lsqr_btol', 'least_squares_lsqr_conlim',
-          'least_squares_lsqr_iter_lim', 'least_squares_lsqr_show',
-          sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show'))
+          'least_squares_lsqr_iter_lim', 'least_squares_lsqr_show')
 def solver_options(lgmres_tol=1e-5,
                    lgmres_maxiter=1000,
                    lgmres_inner_m=39,

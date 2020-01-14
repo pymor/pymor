@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Simple demonstration of solving the Poisson equation in 2D on a circular sector
@@ -24,7 +24,7 @@ from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.discretizers.cg import discretize_stationary_cg
+from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.domaindescriptions.polygonal import CircularSectorDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction
 

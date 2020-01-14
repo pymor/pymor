@@ -165,10 +165,8 @@ main benefits:
 1. If multiple objects/algorithms hold references to the same
    |Operator| or |Model|, none of the objects has to worry that the
    referenced object changes without their knowledge.
-2. It becomes affordable to generate persistent keys for |caching| of computation
-   results by generating |state ids| which uniquely identify the object's state.
-   Since the state cannot change, these ids have to be computed only once for the
-   lifetime of the object.
+2. The return value of a method of an immutable object only depends on its
+   arguments, allowing reliable |caching| of these return values.
 
 A class can be made immutable in pyMOR by deriving from |ImmutableInterface|,
 which ensures that write access to the object's attributes is prohibited after
@@ -216,11 +214,12 @@ its boundary.
 To obtain a |Model| from an |analytical problem| we use a
 :mod:`discretizer <pymor.discretizers>`. A discretizer will first mesh the
 computational domain by feeding the |DomainDescription| into a
-:mod:`domaindiscretizer <pymor.domaindiscretizers>` which will return the |Grid|
-along with a |BoundaryInfo| associating boundary entities with boundary types.
-Next, the |Grid|, |BoundaryInfo| and the various data functions of the
-|analytical problem| are used to instatiate :mod:`finite element
-<pymor.operators.cg>` or :mod:`finite volume <pymor.operators.fv>` operators.
+:mod:`domaindiscretizer <pymor.discretizers.builtin.domaindiscretizers>`
+which will return the |Grid| along with a |BoundaryInfo| associating boundary
+entities with boundary types. Next, the |Grid|, |BoundaryInfo| and the various
+data functions of the |analytical problem| are used to instatiate
+:mod:`finite element <pymor.discretizers.builtin.cg>` or
+:mod:`finite volume <pymor.discretizers.builtin.fv>` operators.
 Finally these operators are used to instatiate one of the provided
 |Model| classes.
 

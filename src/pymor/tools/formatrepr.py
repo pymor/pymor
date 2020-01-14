@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
@@ -110,7 +110,7 @@ def _recurse(obj, max_width, verbosity):
         return repr(obj)
 
 
-@defaults('max_width', 'verbosity', sid_ignore=('max_width', 'all_arg_names'))
+@defaults('max_width', 'verbosity')
 def format_repr(obj, max_width=120, verbosity=1):
     return _recurse(obj, max_width, verbosity)
 

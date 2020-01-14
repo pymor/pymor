@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -9,7 +9,7 @@ from types import FunctionType, MethodType
 from pymor.core.config import config
 from pymor.core.interfaces import BasicInterface
 from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
-from pymor.grids.subgrid import SubGrid
+from pymor.discretizers.builtin.grids.subgrid import SubGrid
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 
 is_equal_ignored_attributes = \

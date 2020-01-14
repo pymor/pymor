@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import importlib
@@ -10,8 +10,7 @@ from pymor.core.interfaces import (ImmutableInterface, abstractstaticmethod, abs
 from pymor.core import exceptions
 from pymortests.base import TestInterface, runmodule, subclassForImplemetorsOf
 from pymortests.core.dummies import *   # NOQA
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
+from pymor.discretizers.builtin import RectGrid, TriaGrid
 from pymor.tools import timing
 import pymor.core
 

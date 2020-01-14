@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """This module imports some commonly used methods and classes.
@@ -39,18 +39,15 @@ from pymor.models.iosys import LTIModel, SecondOrderModel, TransferFunction
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
 from pymor.domaindescriptions.polygonal import DiscDomain, CircularSectorDomain, PolygonalDomain
 
-from pymor.domaindiscretizers.default import discretize_domain_default
-
-from pymor.discretizers.cg import discretize_stationary_cg, discretize_instationary_cg
-from pymor.discretizers.fv import discretize_stationary_fv, discretize_instationary_fv
+from pymor.discretizers.builtin import (discretize_stationary_cg, discretize_instationary_cg,
+                                        discretize_stationary_fv, discretize_instationary_fv,
+                                        OnedGrid, TriaGrid, RectGrid, load_gmsh)
+from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
+from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo, GenericBoundaryInfo, AllDirichletBoundaryInfo
 
 from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction, LincombFunction
 from pymor.functions.bitmap import BitmapFunction
 
-from pymor.grids.boundaryinfos import EmptyBoundaryInfo, GenericBoundaryInfo, AllDirichletBoundaryInfo
-from pymor.grids.oned import OnedGrid
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
 
 from pymor.operators.constructions import (LincombOperator, Concatenation, ComponentProjection, IdentityOperator,
                                            ConstantOperator, ZeroOperator, VectorArrayOperator, VectorOperator,

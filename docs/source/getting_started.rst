@@ -109,15 +109,15 @@ we want so solve. In this case, a
 
 We want to discretize this problem using the finite element method.
 We could do this by hand, creating a |Grid|, instatiating
-:class:`~pymor.operators.cg.DiffusionOperatorP1` finite element diffusion
+:class:`~pymor.discretizers.builtin.cg.DiffusionOperatorP1` finite element diffusion
 operators for each subblock of the domain, forming a |LincombOperator|
 to represent the affine decomposition, instantiating a
-:class:`~pymor.operators.cg.L2ProductFunctionalP1` as right hand side, and
+:class:`~pymor.discretizers.builtin.cg.L2ProductFunctionalP1` as right hand side, and
 putting it all together into a |StationaryModel|. However, since
 :meth:`~pymor.analyticalproblems.thermalblock.thermal_block_problem` returns
 a :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`, we can use
 a predifined *discretizer* to do the work for us. In this case, we use
-:func:`~pymor.discretizers.cg.discretize_stationary_cg`:
+:func:`~pymor.discretizers.builtin.cg.discretize_stationary_cg`:
 
 .. nbplot::
    fom, fom_data = discretize_stationary_cg(p, diameter=1./50.)

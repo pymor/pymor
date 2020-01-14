@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from collections import namedtuple
@@ -135,7 +135,9 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
         m = mpi.get_object(local_models)
         if m.visualizer:
             wrapped_attributes['visualizer'] = MPIVisualizer(local_models)
-        return m.with_(cache_region=None, **wrapped_attributes)
+        m = m.with_(**wrapped_attributes)
+        m.disable_caching()
+        return m
     else:
 
         class MPIWrappedModel(MPIModel, base_type):

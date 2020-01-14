@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from math import sin, pi, exp
@@ -11,10 +11,10 @@ from pymor.tools.io import SafeTemporaryFileName
 from pymortests.base import TestInterface, runmodule
 from pymortests.fixtures.grid import rect_or_tria_grid
 from pymortests.base import polynomials
+from pymor.discretizers.builtin.grids.vtkio import write_vtk
+from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.tools.deprecated import Deprecated
-from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
-from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools import timing
 

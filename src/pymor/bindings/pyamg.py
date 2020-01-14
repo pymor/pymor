@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
@@ -21,8 +21,7 @@ if config.HAVE_PYAMG:
               'sa_symmetry', 'sa_strength', 'sa_aggregate', 'sa_smooth',
               'sa_presmoother', 'sa_postsmoother', 'sa_improve_candidates', 'sa_max_levels',
               'sa_max_coarse', 'sa_diagonal_dominance', 'sa_coarse_solver', 'sa_cycle',
-              'sa_accel', 'sa_tol', 'sa_maxiter',
-              sid_ignore=('verb',))
+              'sa_accel', 'sa_tol', 'sa_maxiter')
     def solver_options(tol=1e-5,
                        maxiter=400,
                        verb=False,

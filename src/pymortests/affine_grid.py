@@ -1,12 +1,12 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
 import numpy as np
 import pytest
 
-from pymor.grids.interfaces import ReferenceElementInterface
+from pymor.discretizers.builtin.grids.interfaces import ReferenceElementInterface
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import grid, grid_with_orthogonal_centers
 

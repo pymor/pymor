@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Thermalblock demo.
@@ -76,7 +76,10 @@ def main(args):
         fom, fom_summary = discretize_pymor(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
 
     if args['--cache-region'] != 'none':
-        fom.enable_caching(args['--cache-region'])
+        # building a cache_id is only needed for persistent CacheRegions
+        cache_id = (f"pymordemos.thermalblock {args['--fenics']} {args['XBLOCKS']} {args['YBLOCKS']}"
+                    f"{args['--grid']} {args['--order']}")
+        fom.enable_caching(args['--cache-region'], cache_id)
 
     if args['--plot-solutions']:
         print('Showing some solutions')
@@ -215,7 +218,7 @@ def parse_arguments(args):
 
 def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
     from pymor.analyticalproblems.thermalblock import thermal_block_problem
-    from pymor.discretizers.cg import discretize_stationary_cg
+    from pymor.discretizers.builtin import discretize_stationary_cg
     from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
 
     print('Discretize ...')

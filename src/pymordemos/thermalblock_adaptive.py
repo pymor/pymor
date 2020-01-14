@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Modified thermalblock demo using adaptive greedy basis generation algorithm.
@@ -56,7 +56,7 @@ from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dump
-from pymor.discretizers.cg import discretize_stationary_cg
+from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.parallel.default import new_parallel_pool
@@ -98,7 +98,9 @@ def thermalblock_demo(args):
         fom = convert_to_numpy_list_vector_array(fom)
 
     if args['--cache-region'] != 'none':
-        fom.enable_caching(args['--cache-region'])
+        # building a cache_id is only needed for persistent CacheRegions
+        cache_id = f"pymordemos.thermalblock_adaptive {args['--grid']}"
+        fom.enable_caching(args['--cache-region'], cache_id)
 
     if args['--plot-solutions']:
         print('Showing some solutions')
