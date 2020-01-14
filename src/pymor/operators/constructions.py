@@ -168,18 +168,6 @@ class LincombOperator(OperatorBase):
                 derivative_coefficients.append(0.)
         return self.with_(coefficients=derivative_coefficients, name=self.name + '_d_mu')
 
-    def d_mui_muj(self, component_i, component_j, index_i=(), index_j=()):
-        for op in self.operators:
-            if op.parametric:
-                raise NotImplementedError
-        second_derivative_coefficients = []
-        for coef in self.coefficients:
-            if isinstance(coef, Parametric):
-                second_derivative_coefficients.append(coef.d_mui_muj(component_i, component_j, index_i, index_j))
-            else:
-                second_derivative_coefficients.append(0.)
-        return self.with_(coefficients=second_derivative_coefficients, name=self.name + '_d_mui_muj')
-
     def apply_inverse(self, V, mu=None, least_squares=False):
         if len(self.operators) == 1:
             if self.coefficients[0] == 0.:

@@ -49,12 +49,6 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
                 return ConstantParameterFunctional(1, name=self.name + '_d_mu')
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
-    def d_mui_muj(self, component_i, component_j, index_i=(), index_j=()):
-        check_i, _ = self._check_and_parse_input(component_i, index_i)
-        check_j, _ = self._check_and_parse_input(component_j, index_j)
-        return ConstantParameterFunctional(0, name=self.name + '_d_mui_muj')
-
-
 class GenericParameterFunctional(ParameterFunctionalInterface):
     """A wrapper making an arbitrary Python function a |ParameterFunctional|
 
@@ -100,31 +94,21 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
                                   partial derivatives in self.parameter_type')
             else:
                 if component in self.derivative_mappings:
-                    return GenericParameterFunctional(self.derivative_mappings[component][index],
-                                                      self.parameter_type, name=self.name + '_d_mu')
-                else:
-                    raise ValueError('derivative mappings does not contain item {}'.format(component))
-        return ConstantParameterFunctional(0, name=self.name + '_d_mu')
-
-    def d_mui_muj(self, component_i, component_j, index_i=(), index_j=()):
-        check_i, index_i = self._check_and_parse_input(component_i, index_i)
-        check_j, index_j = self._check_and_parse_input(component_j, index_j)
-        if check_i and check_j:
-            if self.second_derivative_mappings is None:
-                raise ValueError('You must provide a dict of expressions for all \
-                                  second order partial derivatives in self.parameter_type')
-            else:
-                if component_i in self.second_derivative_mappings:
-                    column_i = self.second_derivative_mappings[component_i][index_i]
-                    if component_j in column_i:
-                        return GenericParameterFunctional(column_i[component_j][index_j],
-                                                    self.parameter_type, name=self.name + '_d_mui_muj')
+                    if self.second_derivative_mappings is None:
+                        return GenericParameterFunctional(self.derivative_mappings[component][index],
+                                                        self.parameter_type, name=self.name + '_d_mu')
                     else:
-                        raise ValueError('hessian mappings does not contain item {} for \
-                                         item {}'.format(component_j,component_i))
+                        if component in self.second_derivative_mappings:
+                            return GenericParameterFunctional(self.derivative_mappings[component][index],
+                                                    self.parameter_type, name=self.name + '_d_mu',
+                                                    derivative_mappings=self.second_derivative_mappings[component][index])
+                        else:
+                            return GenericParameterFunctional(self.derivative_mappings[component][index],
+                                                    self.parameter_type, name=self.name + '_d_mu',
+                                                    derivative_mappings={})
                 else:
-                    raise ValueError('hessian mappings does not contain item {}'.format(component_i))
-        return ConstantParameterFunctional(0, name=self.name + '_d_mui_muj')
+                    raise ValueError('derivative expressions does not contain item {}'.format(component))
+        return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
 
 class ExpressionParameterFunctional(GenericParameterFunctional):
@@ -231,9 +215,6 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
     def d_mu(self, component, index=()):
         raise NotImplementedError
 
-    def d_mui_muj(self, component_i, component_j, index_i=(), index_j=()):
-        raise NotImplementedError
-
 class ConjugateParameterFunctional(ParameterFunctionalInterface):
     """Conjugate of a given |ParameterFunctional|
 
@@ -261,9 +242,6 @@ class ConjugateParameterFunctional(ParameterFunctionalInterface):
     def d_mu(self, component, index=()):
         raise NotImplementedError
 
-    def d_mui_muj(self, component_i, component_j, index_i=(), index_j=()):
-        raise NotImplementedError
-
 class ConstantParameterFunctional(ParameterFunctionalInterface):
     """|ParameterFunctional| returning a constant value for each parameter.
 
@@ -284,6 +262,3 @@ class ConstantParameterFunctional(ParameterFunctionalInterface):
 
     def d_mu(self, component, index=()):
         return self.with_(constant_value=0, name=self.name + '_d_mu')
-
-    def d_mui_muj(self, component_i, component_j, index_i=(), index_j=()):
-        return self.with_(constant_value=0, name=self.name + '_d_mui_muj')

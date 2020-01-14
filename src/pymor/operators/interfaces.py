@@ -257,27 +257,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    @abstractmethod
-    def d_mui_muj(self, component_i, component_j, index_i=(), index_j=()):
-        """Return the operator's second derivative with respect to indices of parameter components i and j.
-
-        Parameters
-        ----------
-        component_i
-            Parameter component i
-        component_j
-            Parameter component j
-        index_i
-            index in the parameter component i
-        index_j
-            index in the parameter component j
-
-        Returns
-        -------
-        New |Operator| representing the second order partial derivative.
-        """
-        pass
-
     def as_range_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its range space.
 

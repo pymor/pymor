@@ -161,13 +161,6 @@ class OperatorBase(OperatorInterface):
             from pymor.operators.constructions import ZeroOperator
             return ZeroOperator(self.range, self.source, name=self.name + '_d_mu')
 
-    def d_mui_muj(self, component_i, component_j, index_i=(), index_j=()):
-        if self.parametric:
-            raise NotImplementedError
-        else:
-            from pymor.operators.constructions import ZeroOperator
-            return ZeroOperator(self.range, self.source, name=self.name + '_d_mui_muj')
-
 class ListVectorArrayOperatorBase(OperatorBase):
 
     def _prepare_apply(self, U, mu, kind, least_squares=False):
