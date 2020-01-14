@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.grids.interfaces import BoundaryInfoInterface
+from pymor.discretizers.builtin.grids.interfaces import BoundaryInfoInterface
 
 
 class EmptyBoundaryInfo(BoundaryInfoInterface):

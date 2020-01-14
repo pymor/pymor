@@ -5,8 +5,8 @@
 import numpy as np
 
 from pymor.core.cache import cached
-from pymor.tools.inverse import inv_transposed_two_by_two
-from pymor.tools.relations import inverse_relation
+from pymor.discretizers.builtin.inverse import inv_transposed_two_by_two
+from pymor.discretizers.builtin.relations import inverse_relation
 
 
 class ConformalTopologicalGridDefaultImplementations:

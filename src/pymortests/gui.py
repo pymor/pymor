@@ -2,16 +2,15 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.grids.oned import OnedGrid
+from pymor.discretizers.builtin.grids.oned import OnedGrid
 from time import sleep
-from pymor.gui.qt import visualize_patch, stop_gui_processes
+from pymor.discretizers.builtin.gui.qt import visualize_patch, stop_gui_processes
 
 import pytest
 import numpy as np
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.discretizers.cg import discretize_stationary_cg
-from pymor.domaindiscretizers.default import discretize_domain_default
-from pymor.grids.rect import RectGrid
+from pymor.discretizers.builtin import discretize_stationary_cg, RectGrid
+from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.core.exceptions import QtMissing
 
 from pymortests.base import runmodule

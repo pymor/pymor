@@ -4,8 +4,8 @@
 
 import numpy as np
 
-from pymor.grids.interfaces import ReferenceElementInterface
-from pymor.tools.quadratures import GaussQuadratures
+from pymor.discretizers.builtin.grids.interfaces import ReferenceElementInterface
+from pymor.discretizers.builtin.quadratures import GaussQuadratures
 
 
 class Point(ReferenceElementInterface):

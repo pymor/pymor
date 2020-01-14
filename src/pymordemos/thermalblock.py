@@ -218,7 +218,7 @@ def parse_arguments(args):
 
 def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
     from pymor.analyticalproblems.thermalblock import thermal_block_problem
-    from pymor.discretizers.cg import discretize_stationary_cg
+    from pymor.discretizers.builtin import discretize_stationary_cg
     from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
 
     print('Discretize ...')

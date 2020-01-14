@@ -3,12 +3,12 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
-from pymor.core.interfaces import BasicInterface
-from pymor.grids.oned import OnedGrid
-from pymor.grids.referenceelements import triangle, square
-from pymor.tools.vtkio import write_vtk
-from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.core.config import is_jupyter
+from pymor.core.interfaces import BasicInterface
+from pymor.discretizers.builtin.grids.oned import OnedGrid
+from pymor.discretizers.builtin.grids.referenceelements import triangle, square
+from pymor.discretizers.builtin.grids.vtkio import write_vtk
+from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
 class PatchVisualizer(BasicInterface):
@@ -65,7 +65,7 @@ class PatchVisualizer(BasicInterface):
             default provided during instantiation.
         filename
             If specified, write the data to a VTK-file using
-            :func:`pymor.tools.vtkio.write_vtk` instead of displaying it.
+            :func:`~pymor.discretizers.builtin.grids.vtkio.write_vtk` instead of displaying it.
         columns
             The number of columns in the visualizer GUI in case multiple plots are displayed
             at the same time.
@@ -82,13 +82,13 @@ class PatchVisualizer(BasicInterface):
                     write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
         else:
             if self.backend == 'jupyter':
-                from pymor.gui.jupyter import get_visualizer
+                from pymor.discretizers.builtin.gui.jupyter import get_visualizer
                 return get_visualizer()(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                 legend=legend, separate_colorbars=separate_colorbars,
                                 rescale_colorbars=rescale_colorbars, columns=columns)
             else:
                 block = self.block if block is None else block
-                from pymor.gui.qt import visualize_patch
+                from pymor.discretizers.builtin.gui.qt import visualize_patch
                 return visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                 legend=legend, separate_colorbars=separate_colorbars,
                                 rescale_colorbars=rescale_colorbars, backend=self.backend, block=block,
@@ -138,5 +138,5 @@ class OnedVisualizer(BasicInterface):
             default provided during instantiation.
         """
         block = self.block if block is None else block
-        from pymor.gui.qt import visualize_matplotlib_1d
+        from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
         visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend, block=block)

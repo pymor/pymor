@@ -7,9 +7,9 @@ import numpy as np
 from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
 from pymor.domaindescriptions.interfaces import KNOWN_BOUNDARY_TYPES
-from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
-                                     ReferenceElementDefaultImplementations,
-                                     AffineGridDefaultImplementations,)
+from pymor.discretizers.builtin.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
+                                                          ReferenceElementDefaultImplementations,
+                                                          AffineGridDefaultImplementations,)
 
 
 class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, CacheableInterface):
@@ -19,7 +19,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
     :meth:`~ConformalTopologicalGridInterface.subentities`. In addition,
     only :meth:`~ConformalTopologicalGridInterface.size` has to be
     implemented, cached default implementations for all other methods are
-    provided by :class:`~pymor.grids.defaultimpl.ConformalTopologicalGridDefaultImplementations`.
+    provided by :class:`~pymor.discretizers.builtin.grids.defaultimpl.ConformalTopologicalGridDefaultImplementations`.
 
     Attributes
     ----------
@@ -197,7 +197,7 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
     :meth:`~AffineGridInterface.embeddings`.  In addition,
     only :meth:`~ConformalTopologicalGridInterface.size` and :meth:`~AffineGridInterface.reference_element`
     have to be implemented. Cached default implementations for all other methods are
-    provided by :class:`~pymor.grids.defaultimpl.AffineGridDefaultImplementations`.
+    provided by :class:`~pymor.discretizers.builtin.grids.defaultimpl.AffineGridDefaultImplementations`.
 
     """
 

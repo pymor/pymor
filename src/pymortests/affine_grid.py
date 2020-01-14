@@ -6,7 +6,7 @@
 import numpy as np
 import pytest
 
-from pymor.grids.interfaces import ReferenceElementInterface
+from pymor.discretizers.builtin.grids.interfaces import ReferenceElementInterface
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import grid, grid_with_orthogonal_centers
 

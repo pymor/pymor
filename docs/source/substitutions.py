@@ -7,13 +7,13 @@
 # define substitutions for all important interface classes
 interfaces = '''
 
-.. |AffineGrids| replace:: :class:`AffineGrids <pymor.grids.interfaces.AffineGridInterface>`
-.. |AffineGrid| replace:: :class:`AffineGrid <pymor.grids.interfaces.AffineGridInterface>`
+.. |AffineGrids| replace:: :class:`AffineGrids <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
+.. |AffineGrid| replace:: :class:`AffineGrid <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
 .. |BasicInterface| replace:: :class:`~pymor.core.interfaces.BasicInterface`
-.. |BoundaryInfo| replace:: :class:`BoundaryInfo <pymor.grids.interfaces.BoundaryInfoInterface>`
-.. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.grids.interfaces.BoundaryInfoInterface>`
-.. |ConformalTopologicalGrids| replace:: :class:`ConformalTopologicalGrids <pymor.grids.interfaces.ConformalTopologicalGridInterface>`
-.. |ConformalTopologicalGrid| replace:: :class:`ConformalTopologicalGrid <pymor.grids.interfaces.ConformalTopologicalGridInterface>`
+.. |BoundaryInfo| replace:: :class:`BoundaryInfo <pymor.discretizers.builtin.grids.interfaces.BoundaryInfoInterface>`
+.. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.discretizers.builtin.grids.interfaces.BoundaryInfoInterface>`
+.. |ConformalTopologicalGrids| replace:: :class:`ConformalTopologicalGrids <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGridInterface>`
+.. |ConformalTopologicalGrid| replace:: :class:`ConformalTopologicalGrid <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGridInterface>`
 .. |Models| replace:: :class:`Models <pymor.models.interfaces.ModelInterface>`
 .. |Model| replace:: :class:`Model <pymor.models.interfaces.ModelInterface>`
 .. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.domaindescriptions.interfaces.DomainDescriptionInterface>`
@@ -22,8 +22,8 @@ interfaces = '''
 .. |Functional| replace:: :class:`Functional <pymor.operators.interfaces.OperatorInterface>`
 .. |Functions| replace:: :class:`Functions <pymor.functions.interfaces.FunctionInterface>`
 .. |Function| replace:: :class:`Function <pymor.functions.interfaces.FunctionInterface>`
-.. |Grid| replace:: :class:`Grid <pymor.grids.interfaces.AffineGridInterface>`
-.. |Grids| replace:: :class:`Grids <pymor.grids.interfaces.AffineGridInterface>`
+.. |Grid| replace:: :class:`Grid <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
+.. |Grids| replace:: :class:`Grids <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
 .. |ImmutableInterface| replace:: :class:`~pymor.core.interfaces.ImmutableInterface`
 .. |immutable| replace:: :class:`immutable <pymor.core.interfaces.ImmutableInterface>`
 .. |Immutable| replace:: :class:`Immutable <pymor.core.interfaces.ImmutableInterface>`
@@ -35,8 +35,8 @@ interfaces = '''
 .. |ParameterFunctional| replace:: :class:`ParameterFunctional <pymor.parameters.interfaces.ParameterFunctionalInterface>`
 .. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.interfaces.ParameterSpaceInterface>`
 .. |ParameterSpaces| replace:: :class:`ParameterSpaces <pymor.parameters.interfaces.ParameterSpaceInterface>`
-.. |ReferenceElements| replace:: :class:`ReferenceElements <pymor.grids.interfaces.ReferenceElementInterface>`
-.. |ReferenceElement| replace:: :class:`ReferenceElement <pymor.grids.interfaces.ReferenceElementInterface>`
+.. |ReferenceElements| replace:: :class:`ReferenceElements <pymor.discretizers.builtin.grids.interfaces.ReferenceElementInterface>`
+.. |ReferenceElement| replace:: :class:`ReferenceElement <pymor.discretizers.builtin.grids.interfaces.ReferenceElementInterface>`
 .. |RemoteObject| replace:: :class:`RemoteObject <pymor.parallel.interfaces.RemoteObjectInterface>`
 .. |RemoteObjects| replace:: :class:`RemoteObjects <pymor.parallel.interfaces.RemoteObjectInterface>`
 .. |VectorArrays| replace:: :class:`VectorArrays <pymor.vectorarrays.interfaces.VectorArrayInterface>`
@@ -67,12 +67,12 @@ common = '''
 .. |TorusDomain| replace:: :class:`~pymor.domaindescriptions.basic.TorusDomain`
 .. |LineDomain| replace:: :class:`~pymor.domaindescriptions.basic.LineDomain`
 .. |CircleDomain| replace:: :class:`~pymor.domaindescriptions.basic.CircleDomain`
-.. |discretize_domain_default| replace:: :func:`~pymor.domaindiscretizers.default.discretize_domain_default`
+.. |discretize_domain_default| replace:: :func:`~pymor.discretizers.builtin.domaindiscretizers.default.discretize_domain_default`
 
-.. |OnedGrid| replace:: :class:`~pymor.grids.oned.OnedGrid`
-.. |RectGrid| replace:: :class:`~pymor.grids.rect.RectGrid`
-.. |TriaGrid| replace:: :class:`~pymor.grids.tria.TriaGrid`
-.. |GmshGrid| replace:: :class:`~pymor.grids.gmsh.GmshGrid`
+.. |OnedGrid| replace:: :class:`~pymor.discretizers.builtin.grids.oned.OnedGrid`
+.. |RectGrid| replace:: :class:`~pymor.discretizers.builtin.grids.rect.RectGrid`
+.. |TriaGrid| replace:: :class:`~pymor.discretizers.builtin.grids.tria.TriaGrid`
+.. |GmshGrid| replace:: :class:`~pymor.discretizers.builtin.grids.gmsh.GmshGrid`
 
 .. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
 .. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`

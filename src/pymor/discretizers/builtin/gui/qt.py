@@ -18,9 +18,9 @@ from pymor.core.config import is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.core.exceptions import QtMissing
-from pymor.gui.gl import GLPatchWidget, ColorBarWidget
-from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
-from pymor.tools.vtkio import write_vtk
+from pymor.discretizers.builtin.grids.vtkio import write_vtk
+from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
+from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -253,11 +253,11 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
     if backend == 'gl':
         if not config.HAVE_GL:
-            logger = getLogger('pymor.gui.qt.visualize_patch')
+            logger = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
             logger.warning('import of PyOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
         elif not config.HAVE_QTOPENGL:
-            logger = getLogger('pymor.gui.qt.visualize_patch')
+            logger = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
             logger.warning('import of Qt.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
         if backend == 'matplotlib' and not config.HAVE_MATPLOTLIB:
@@ -285,7 +285,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 widget = MatplotlibPatchWidget
                 cbar_widget = None
                 if not separate_colorbars and len(U) > 1:
-                    l = getLogger('pymor.gui.qt.visualize_patch')
+                    l = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
                     l.warn('separate_colorbars=False not supported for matplotlib backend')
                 separate_colorbars = True
 

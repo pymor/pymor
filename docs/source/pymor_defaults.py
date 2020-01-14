@@ -1,3 +1,3 @@
 d = {}
-d['pymor.gui.jupyter.get_visualizer.backend'                                             ] = 'matplotlib'
+d['pymor.discretizers.builtin.gui.jupyter.get_visualizer.backend'                                             ] = 'matplotlib'
 

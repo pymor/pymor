@@ -5,8 +5,8 @@
 """ This module provides a widget for displaying patch plots of
 scalar data assigned to 2D-grids using OpenGL. This widget is not
 intended to be used directly. Instead, use
-:meth:`~pymor.gui.qt.visualize_patch` or
-:class:`~pymor.gui.qt.PatchVisualizer`.
+:meth:`~pymor.discretizers.builtin.gui.qt.visualize_patch` or
+:class:`~pymor.discretizers.builtin.gui.qt.PatchVisualizer`.
 """
 
 import math as m
@@ -23,9 +23,9 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
     from Qt.QtOpenGL import QGLWidget
     from ctypes import c_void_p
 
-    from pymor.grids.constructions import flatten_grid
     from pymor.core.defaults import defaults
-    from pymor.grids.referenceelements import triangle, square
+    from pymor.discretizers.builtin.grids.constructions import flatten_grid
+    from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 
     def compile_shader(source, vertex=True):
         """Compile a vertex shader from source."""
@@ -96,7 +96,7 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             # this is our default which might not exist for older matplotlib so a warning would be annoying
             if name != 'viridis':
                 msg = f'Unknown colormap {name}, using default colormap'
-                getLogger('pymor.gui.gl.colormap_texture').warn(msg)
+                getLogger('pymor.discretizers.builtin.gui.gl.colormap_texture').warn(msg)
             cmap = get_cmap()
         colormap[:] = cmap(np.linspace(0., 1., resolution))
         gl.glTexImage1D(gl.GL_TEXTURE_1D, 0, gl.GL_RGBA, resolution, 0, gl.GL_RGBA, gl.GL_FLOAT, colormap)

@@ -8,9 +8,9 @@ import os
 import subprocess
 import time
 
+from pymor.discretizers.builtin.grids.gmsh import load_gmsh
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.domaindescriptions.polygonal import PolygonalDomain
-from pymor.grids.gmsh import load_gmsh
 from pymor.core.exceptions import GmshMissing
 from pymor.core.logger import getLogger
 
@@ -46,12 +46,12 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     Returns
     -------
     grid
-        The generated :class:`~pymor.grids.gmsh.GmshGrid`.
+        The generated :class:`~pymor.discretizers.builtin.grids.gmsh.GmshGrid`.
     boundary_info
-        The generated :class:`~pymor.grids.gmsh.GmshBoundaryInfo`.
+        The generated :class:`~pymor.discretizers.builtin.grids.gmsh.GmshBoundaryInfo`.
     """
     assert domain_description is None or geo_file is None
-    logger = getLogger('pymor.domaindiscretizers.gmsh.discretize_gmsh')
+    logger = getLogger('pymor.discretizers.builtin.domaindiscretizers.gmsh.discretize_gmsh')
 
     # run Gmsh; initial meshing
     logger.info('Checking for Gmsh ...')

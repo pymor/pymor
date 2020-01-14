@@ -12,7 +12,7 @@ import shutil
 
 from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing
-from pymor.gui.qt import stop_gui_processes
+from pymor.discretizers.builtin.gui.qt import stop_gui_processes
 from pymor.core.config import is_windows_platform
 from pymor.tools.mpi import parallel
 

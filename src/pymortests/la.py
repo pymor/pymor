@@ -4,11 +4,11 @@
 
 import numpy as np
 
+from pymor.discretizers.builtin.grids.boundaryinfos import AllDirichletBoundaryInfo
+from pymor.discretizers.builtin.grids.tria import TriaGrid
+from pymor.discretizers.builtin.cg import L2ProductP1
 from pymor.operators.constructions import induced_norm
-from pymor.operators.cg import L2ProductP1
 from pymortests.base import runmodule
-from pymor.grids.tria import TriaGrid
-from pymor.grids.boundaryinfos import AllDirichletBoundaryInfo
 
 
 def test_induced():

@@ -8,11 +8,11 @@ import random
 import numpy as np
 import pytest
 
-from pymor.grids.oned import OnedGrid
-from pymor.grids.rect import RectGrid
-from pymor.grids.subgrid import SubGrid
-from pymor.grids.tria import TriaGrid
-from pymor.grids.unstructured import UnstructuredTriangleGrid
+from pymor.discretizers.builtin.grids.oned import OnedGrid
+from pymor.discretizers.builtin.grids.rect import RectGrid
+from pymor.discretizers.builtin.grids.subgrid import SubGrid
+from pymor.discretizers.builtin.grids.tria import TriaGrid
+from pymor.discretizers.builtin.grids.unstructured import UnstructuredTriangleGrid
 
 
 rect_grid_generators = [lambda arg=arg, kwargs=kwargs: RectGrid(arg, **kwargs) for arg, kwargs in
