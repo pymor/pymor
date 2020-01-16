@@ -4,8 +4,8 @@
 
 from itertools import product
 
+from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction, LincombFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace

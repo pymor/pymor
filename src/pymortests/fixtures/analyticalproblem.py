@@ -4,8 +4,8 @@
 
 import pytest
 
-from pymor.domaindescriptions.basic import RectDomain
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
+from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem

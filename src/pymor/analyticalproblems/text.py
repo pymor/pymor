@@ -2,9 +2,9 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.core.defaults import defaults
-from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ConstantFunction, LincombFunction
 from pymor.functions.bitmap import BitmapFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional
