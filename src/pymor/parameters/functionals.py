@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
+from itertools import chain
 
 import numpy as np
 
@@ -325,3 +326,90 @@ class ConstantParameterFunctional(ParameterFunctional):
 
     def d_mu(self, component, index=()):
         return self.with_(constant_value=0, name=self.name + '_d_mu')
+
+
+class MinThetaParameterFunctional(ParameterFunctionalInterface):
+    """|ParameterFunctional| implementing the min-theta approach from [Haa17]_ (Proposition 2.35).
+
+
+    Parameters
+    ----------
+    thetas
+        List or tuple of |ParameterFunctional|s
+
+    mu_bar
+        see [Haa17]_ (Proposition 2.35)
+
+    alpha_mu_bar
+        see [Haa17]_ (Proposition 2.35)
+
+    name
+        Name of the functional.
+    """
+
+    def __init__(self, thetas, mu_bar, alpha_mu_bar=1., name=None):
+        assert isinstance(thetas, (list, tuple))
+        assert all([isinstance(theta, (Number, ParameterFunctionalInterface)) for theta in thetas])
+        thetas = [ConstantParameterFunctional(theta) if not isinstance(theta, ParameterFunctionalInterface) else theta
+                  for theta in thetas]
+        assert all([isinstance(f, ParameterFunctionalInterface) for f in thetas])
+        self.build_parameter_type(*chain(thetas))
+        mu_bar = self.parse_parameter(mu_bar)
+        thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
+        assert np.all(thetas_mu_bar > 0)
+        assert isinstance(alpha_mu_bar, Number)
+        assert alpha_mu_bar > 0
+        self.__auto_init(locals())
+        self.thetas_mu_bar = thetas_mu_bar # why is this required after __auto_init?
+
+    def evaluate(self, mu=None):
+        mu = self.parse_parameter(mu)
+        thetas_mu = np.array([theta(mu) for theta in self.thetas])
+        assert np.all(thetas_mu > 0)
+        return self.alpha_mu_bar * np.min(thetas_mu / self.thetas_mu_bar)
+
+    def d_mu(self, component, index=()):
+        raise NotImplementedError
+
+
+class MaxThetaParameterFunctional(ParameterFunctionalInterface):
+    """|ParameterFunctional| implementing the max-theta approach from [Haa17]_ (Exercise 5.12).
+
+
+    Parameters
+    ----------
+    thetas
+        List or tuple of |ParameterFunctional|s
+
+    mu_bar
+        see [Haa17]_ (Proposition 2.35)
+
+    gamma_mu_bar
+        see [Haa17]_ (Proposition 2.35)
+
+    name
+        Name of the functional.
+    """
+
+    def __init__(self, thetas, mu_bar, gamma_mu_bar=1., name=None):
+        assert isinstance(thetas, (list, tuple))
+        thetas = [ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctionalInterface) else f
+                  for f in thetas]
+        assert all([isinstance(f, ParameterFunctionalInterface) for f in thetas])
+        self.build_parameter_type(*chain(thetas))
+        mu_bar = self.parse_parameter(mu_bar)
+        thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
+        assert np.all(thetas_mu_bar > 0)
+        assert isinstance(gamma_mu_bar, Number)
+        assert gamma_mu_bar > 0
+        self.__auto_init(locals())
+        self.thetas_mu_bar = thetas_mu_bar # why is this required after __auto_init?
+
+    def evaluate(self, mu=None):
+        mu = self.parse_parameter(mu)
+        thetas_mu = np.array([theta(mu) for theta in self.thetas])
+        assert np.all(thetas_mu > 0)
+        return self.gamma_mu_bar * np.max(thetas_mu / self.thetas_mu_bar)
+
+    def d_mu(self, component, index=()):
+        raise NotImplementedError
