@@ -7,9 +7,51 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.functions.interfaces import FunctionInterface
+from pymor.core.interfaces import ImmutableInterface, abstractmethod
+from pymor.parameters.base import Parametric
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.interfaces import ParameterFunctionalInterface
+
+
+class FunctionInterface(ImmutableInterface, Parametric):
+    """Interface for |Parameter| dependent analytical functions.
+
+    Every |Function| is a map of the form ::
+
+       f(μ): Ω ⊆ R^d -> R^(shape_range)
+
+    The returned values are |NumPy arrays| of arbitrary (but fixed)
+    shape. Note that NumPy distinguishes between one-dimensional
+    arrays of length 1 (with shape `(1,)`) and zero-dimensional
+    scalar arrays (with shape `()`). In pyMOR, we usually
+    expect scalar-valued functions to have `shape_range == ()`.
+
+    While the function might raise an error if it is evaluated
+    for an argument not in the domain Ω, the exact behavior is left
+    undefined.
+
+    Functions are vectorized in the sense, that if `x.ndim == k`, then ::
+
+       f(x, μ)[i0, i1, ..., i(k-2)] == f(x[i0, i1, ..., i(k-2)], μ).
+
+    In particular, `f(x, μ).shape == x.shape[:-1] + shape_range`.
+
+    Attributes
+    ----------
+    dim_domain
+        The dimension d > 0.
+    shape_range
+        The shape of the function values.
+    """
+
+    @abstractmethod
+    def evaluate(self, x, mu=None):
+        """Evaluate the function for given argument `x` and |Parameter| `mu`."""
+        pass
+
+    def __call__(self, x, mu=None):
+        """Shorthand for :meth:`~FunctionInterface.evaluate`."""
+        return self.evaluate(x, mu)
 
 
 class FunctionBase(FunctionInterface):
@@ -256,3 +298,44 @@ class ProductFunction(FunctionBase):
     def evaluate(self, x, mu=None):
         mu = self.parse_parameter(mu)
         return np.prod([f(x, mu) for f in self.functions], axis=0)
+
+
+class BitmapFunction(FunctionBase):
+    """Define a 2D |Function| via a grayscale image.
+
+    Parameters
+    ----------
+    filename
+        Path of the image representing the function.
+    bounding_box
+        Lower left and upper right coordinates of the domain of the function.
+    range
+        A pixel of value p is mapped to `(p / 255.) * range[1] + range[0]`.
+    """
+
+    dim_domain = 2
+    shape_range = ()
+
+    def __init__(self, filename, bounding_box=None, range=None):
+        bounding_box = bounding_box or [[0., 0.], [1., 1.]]
+        range = range or [0., 1.]
+        try:
+            from PIL import Image
+        except ImportError:
+            raise ImportError("PIL is needed for loading images. Try 'pip install pillow'")
+        img = Image.open(filename)
+        if not img.mode == "L":
+            self.logger.warning("Image " + filename + " not in grayscale mode. Converting to grayscale.")
+            img = img.convert('L')
+        self.__auto_init(locals())
+        self.bitmap = np.array(img).T[:, ::-1]
+        self.lower_left = np.array(bounding_box[0])
+        self.size = np.array(bounding_box[1] - self.lower_left)
+
+    def evaluate(self, x, mu=None):
+        indices = np.maximum(np.floor((x - self.lower_left) * np.array(self.bitmap.shape) / self.size).astype(int), 0)
+        F = (self.bitmap[np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
+                         np.minimum(indices[..., 1], self.bitmap.shape[1] - 1)]
+             * ((self.range[1] - self.range[0]) / 255.)
+             + self.range[0])
+        return F

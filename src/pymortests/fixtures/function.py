@@ -6,7 +6,7 @@ import numpy as np
 
 import pytest
 
-from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction
+from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction, ExpressionFunction
 
 
 constant_functions = \

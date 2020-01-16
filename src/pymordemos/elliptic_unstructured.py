@@ -25,8 +25,8 @@ import numpy as np
 
 from pymor.analyticalproblems.domaindescriptions import CircularSectorDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
 from pymor.discretizers.builtin import discretize_stationary_cg
-from pymor.functions.basic import ConstantFunction, ExpressionFunction
 
 
 def elliptic_gmsh_demo(args):

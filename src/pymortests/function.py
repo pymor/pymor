@@ -5,8 +5,8 @@
 import numpy as np
 import pytest
 
+from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction
 from pymor.core.pickle import dumps, loads
-from pymor.functions.basic import ConstantFunction, GenericFunction
 from pymortests.fixtures.function import function, picklable_function, function_argument
 from pymortests.fixtures.parameter import parameters_of_type
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function

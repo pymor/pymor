@@ -10,10 +10,10 @@ import pytest
 import numpy as np
 from pymor.analyticalproblems.domaindescriptions import RectDomain, LineDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.analyticalproblems.functions import GenericFunction
 from pymor.core.exceptions import QtMissing
 from pymor.discretizers.builtin import discretize_stationary_cg, RectGrid
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
-from pymor.functions.basic import GenericFunction
 
 from pymortests.base import runmodule
 
