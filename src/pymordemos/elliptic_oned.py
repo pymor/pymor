@@ -19,9 +19,9 @@ Options:
 
 from docopt import docopt
 
+from pymor.analyticalproblems.domaindescriptions import LineDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
-from pymor.domaindescriptions.basic import LineDomain
 from pymor.functions.basic import ExpressionFunction, ConstantFunction, LincombFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace

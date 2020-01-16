@@ -4,9 +4,9 @@
 
 import numpy as np
 
+from pymor.analyticalproblems.domaindescriptions import KNOWN_BOUNDARY_TYPES
 from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
-from pymor.domaindescriptions.interfaces import KNOWN_BOUNDARY_TYPES
 from pymor.discretizers.builtin.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
                                                           ReferenceElementDefaultImplementations,
                                                           AffineGridDefaultImplementations,)

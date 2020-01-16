@@ -23,9 +23,9 @@ Options:
 from docopt import docopt
 import numpy as np
 
+from pymor.analyticalproblems.domaindescriptions import CircularSectorDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.builtin import discretize_stationary_cg
-from pymor.domaindescriptions.polygonal import CircularSectorDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction
 
 

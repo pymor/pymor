@@ -22,6 +22,8 @@ from pymor.algorithms.preassemble import preassemble
 from pymor.algorithms.projection import project, project_to_subbasis
 
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
+from pymor.analyticalproblems.domaindescriptions import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
+from pymor.analyticalproblems.domaindescriptions import DiscDomain, CircularSectorDomain, PolygonalDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.instationary import InstationaryProblem
@@ -35,9 +37,6 @@ from pymor.core.pickle import dump, dumps, load, loads
 
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.models.iosys import LTIModel, SecondOrderModel, TransferFunction
-
-from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
-from pymor.domaindescriptions.polygonal import DiscDomain, CircularSectorDomain, PolygonalDomain
 
 from pymor.discretizers.builtin import (discretize_stationary_cg, discretize_instationary_cg,
                                         discretize_stationary_fv, discretize_instationary_fv,

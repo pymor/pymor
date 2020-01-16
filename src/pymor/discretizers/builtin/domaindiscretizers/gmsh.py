@@ -8,9 +8,8 @@ import os
 import subprocess
 import time
 
+from pymor.analyticalproblems.domaindescriptions import RectDomain, PolygonalDomain
 from pymor.discretizers.builtin.grids.gmsh import load_gmsh
-from pymor.domaindescriptions.basic import RectDomain
-from pymor.domaindescriptions.polygonal import PolygonalDomain
 from pymor.core.exceptions import GmshMissing
 from pymor.core.logger import getLogger
 

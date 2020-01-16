@@ -26,9 +26,9 @@ Options:
 from docopt import docopt
 import numpy as np
 
+from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv, RectGrid, TriaGrid
-from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ExpressionFunction, ConstantFunction
 
 

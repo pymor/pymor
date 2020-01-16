@@ -5,12 +5,12 @@
 import math as m
 import numpy as np
 
+from pymor.analyticalproblems.domaindescriptions import (RectDomain, CylindricalDomain, TorusDomain, LineDomain,
+                                                         CircleDomain, PolygonalDomain)
 from pymor.discretizers.builtin.grids.boundaryinfos import GenericBoundaryInfo, EmptyBoundaryInfo
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.rect import RectGrid
 from pymor.discretizers.builtin.grids.tria import TriaGrid
-from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
-from pymor.domaindescriptions.polygonal import PolygonalDomain
 from pymor.tools.floatcmp import float_cmp
 
 

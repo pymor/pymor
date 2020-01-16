@@ -16,8 +16,8 @@ interfaces = '''
 .. |ConformalTopologicalGrid| replace:: :class:`ConformalTopologicalGrid <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGridInterface>`
 .. |Models| replace:: :class:`Models <pymor.models.interfaces.ModelInterface>`
 .. |Model| replace:: :class:`Model <pymor.models.interfaces.ModelInterface>`
-.. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.domaindescriptions.interfaces.DomainDescriptionInterface>`
-.. |DomainDescription| replace:: :class:`DomainDescription <pymor.domaindescriptions.interfaces.DomainDescriptionInterface>`
+.. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.analyticalproblems.domaindescriptions.DomainDescriptionInterface>`
+.. |DomainDescription| replace:: :class:`DomainDescription <pymor.analyticalproblems.domaindescriptions.DomainDescriptionInterface>`
 .. |Functionals| replace:: :class:`Functionals <pymor.operators.interfaces.OperatorInterface>`
 .. |Functional| replace:: :class:`Functional <pymor.operators.interfaces.OperatorInterface>`
 .. |Functions| replace:: :class:`Functions <pymor.functions.interfaces.FunctionInterface>`
@@ -61,12 +61,12 @@ common = '''
 .. |StationaryProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`
 .. |InstationaryProblem| replace:: :class:`~pymor.analyticalproblems.instationary.InstationaryProblem`
 
-.. |RectDomain| replace:: :class:`~pymor.domaindescriptions.basic.RectDomain`
-.. |PolygonalDomain| replace:: :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`
-.. |CylindricalDomain| replace:: :class:`~pymor.domaindescriptions.basic.CylindricalDomain`
-.. |TorusDomain| replace:: :class:`~pymor.domaindescriptions.basic.TorusDomain`
-.. |LineDomain| replace:: :class:`~pymor.domaindescriptions.basic.LineDomain`
-.. |CircleDomain| replace:: :class:`~pymor.domaindescriptions.basic.CircleDomain`
+.. |RectDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.RectDomain`
+.. |PolygonalDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.PolygonalDomain`
+.. |CylindricalDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.CylindricalDomain`
+.. |TorusDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.TorusDomain`
+.. |LineDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.LineDomain`
+.. |CircleDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.CircleDomain`
 .. |discretize_domain_default| replace:: :func:`~pymor.discretizers.builtin.domaindiscretizers.default.discretize_domain_default`
 
 .. |OnedGrid| replace:: :class:`~pymor.discretizers.builtin.grids.oned.OnedGrid`
