@@ -8,7 +8,6 @@ import pytest
 from pkg_resources import resource_filename
 
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_instationary_fv
-from pymor.discretizers.disk import discretize_stationary_from_disk, discretize_instationary_from_disk
 from pymortests.fixtures.analyticalproblem import (picklable_thermalblock_problems, non_picklable_thermalblock_problems,
                                                    burgers_problems)
 
@@ -17,11 +16,7 @@ picklable_model_generators = \
         [lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]
          for p, d in product(picklable_thermalblock_problems, [1./50., 1./100.])] + \
         [lambda p=p, d=d: discretize_instationary_fv(p, diameter=d, nt=100)[0]
-         for p, d in product(burgers_problems, [1./10., 1./15.])] + \
-        [lambda p=p: discretize_stationary_from_disk(parameter_file=p)
-         for p in (resource_filename('pymortests', 'testdata/parameter_stationary.ini'),)] + \
-        [lambda p=p: discretize_instationary_from_disk(parameter_file=p)
-         for p in (resource_filename('pymortests', 'testdata/parameter_instationary.ini'),)]
+         for p, d in product(burgers_problems, [1./10., 1./15.])]
 
 
 non_picklable_model_generators = \
