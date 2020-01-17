@@ -11,7 +11,7 @@ if config.HAVE_FENICS:
     import numpy as np
 
     from pymor.core.defaults import defaults
-    from pymor.core.interfaces import BasicInterface
+    from pymor.core.interfaces import BasicObject
     from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase, OperatorBase
     from pymor.operators.constructions import ZeroOperator
     from pymor.operators.numpy import NumpyMatrixOperator
@@ -415,7 +415,7 @@ if config.HAVE_FENICS:
         options = (solver, preconditioner) if preconditioner else (solver,)
         df.solve(matrix, r, v, *options)
 
-    class FenicsVisualizer(BasicInterface):
+    class FenicsVisualizer(BasicObject):
         """Visualize a FEniCS grid function.
 
         Parameters

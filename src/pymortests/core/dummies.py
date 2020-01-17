@@ -2,12 +2,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import (BasicInterface, abstractmethod)
+from pymor.core.interfaces import (BasicObject, abstractmethod)
 from pymor.core.cache import CacheableInterface, cached
 from pymor.core import interfaces
 
 
-class BoundaryInterface(interfaces.BasicInterface):
+class BoundaryInterface(interfaces.BasicObject):
     pass
 
 
@@ -15,11 +15,11 @@ class AllDirichletBoundaryInfo(BoundaryInterface):
     pass
 
 
-class UnknownInterface(BasicInterface):
+class UnknownInterface(BasicObject):
     pass
 
 
-class StupidInterface(BasicInterface):
+class StupidInterface(BasicObject):
     """I am a stupid Interface"""
 
     @abstractmethod
@@ -38,7 +38,7 @@ class StupidInterface(BasicInterface):
         pass
 
 
-class BrilliantInterface(BasicInterface):
+class BrilliantInterface(BasicObject):
     """I am a brilliant Interface"""
 
     @abstractmethod
@@ -90,11 +90,11 @@ class FailImplementer(StupidInterface):
     pass
 
 
-class BoringTestInterface(BasicInterface):
+class BoringTestInterface(BasicObject):
     pass
 
 
-class BoringTestClass(BasicInterface):
+class BoringTestClass(BasicObject):
 
     def validate_interface(self, cls, other):
         """If you want to contract check on a type defined in the same module you CANNOT use the absolute path

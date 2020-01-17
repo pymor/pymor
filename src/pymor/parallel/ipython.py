@@ -8,7 +8,7 @@ import time
 
 
 from pymor.core.config import config
-from pymor.core.interfaces import BasicInterface
+from pymor.core.interfaces import BasicObject
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools.counter import Counter
 
@@ -20,7 +20,7 @@ if config.HAVE_IPYTHON:
         from IPython.parallel import Client, TimeoutError
 
 
-class new_ipcluster_pool(BasicInterface):
+class new_ipcluster_pool(BasicObject):
     """Create a new IPython parallel cluster and connect to it.
 
     This context manager can be used to create an :class:`IPythonPool`

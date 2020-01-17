@@ -8,11 +8,11 @@ import numpy as np
 from queue import LifoQueue
 
 from pymor.algorithms.pod import pod
-from pymor.core.interfaces import BasicInterface, abstractmethod
+from pymor.core.interfaces import BasicObject, abstractmethod
 from pymor.core.logger import getLogger
 
 
-class Tree(BasicInterface):
+class Tree(BasicObject):
     """A rooted tree."""
 
     root = 0

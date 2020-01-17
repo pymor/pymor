@@ -2,10 +2,10 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import BasicInterface
+from pymor.core.interfaces import BasicObject
 
 
-class RemoteObjectManager(BasicInterface):
+class RemoteObjectManager(BasicObject):
     """A simple context manager to keep track of |RemoteObjects|.
 
     When leaving this context, all |RemoteObjects| that have been

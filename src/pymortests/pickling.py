@@ -7,7 +7,7 @@ from scipy.sparse import issparse
 from types import FunctionType, MethodType
 
 from pymor.core.config import config
-from pymor.core.interfaces import BasicInterface
+from pymor.core.interfaces import BasicObject
 from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
 from pymor.discretizers.builtin.grids.subgrid import SubGrid
 from pymor.operators.numpy import NumpyMatrixBasedOperator
@@ -15,7 +15,7 @@ from pymor.operators.numpy import NumpyMatrixBasedOperator
 is_equal_ignored_attributes = \
     ((SubGrid, {'_uid', '_CacheableInterface__cache_region', '_SubGrid__parent_grid'}),
      (NumpyMatrixBasedOperator, {'_uid', '_CacheableInterface__cache_region', '_assembled_operator'}),
-     (BasicInterface, {'_name', '_uid', '_CacheableInterface__cache_region'}))
+     (BasicObject, {'_name', '_uid', '_CacheableInterface__cache_region'}))
 
 is_equal_dispatch_table = {}
 
@@ -84,7 +84,7 @@ def assert_is_equal(first, second):
             _assert_is_equal(first.__self__, second.__self__)
         elif isinstance(first, cell_type):
             _assert_is_equal(first.cell_contents, second.cell_contents)
-        elif not isinstance(first, BasicInterface):
+        elif not isinstance(first, BasicObject):
             assert first == second
         else:
             assert ((set(first.__dict__.keys()) - ignored_attributes)

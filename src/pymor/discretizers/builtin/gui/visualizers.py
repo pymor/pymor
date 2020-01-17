@@ -4,14 +4,14 @@
 
 
 from pymor.core.config import is_jupyter
-from pymor.core.interfaces import BasicInterface
+from pymor.core.interfaces import BasicObject
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-class PatchVisualizer(BasicInterface):
+class PatchVisualizer(BasicObject):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -95,7 +95,7 @@ class PatchVisualizer(BasicInterface):
                                 columns=columns)
 
 
-class OnedVisualizer(BasicInterface):
+class OnedVisualizer(BasicObject):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either

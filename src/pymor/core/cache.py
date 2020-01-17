@@ -18,7 +18,7 @@ the following data:
 
     1. the instance's :attr:`~CacheableInterface.cache_id` in case of a
        :attr:`~CacheRegion.persistent` :class:`CacheRegion`, else the instance's
-       :attr:`~pymor.core.interfaces.BasicInterface.uid`,
+       :attr:`~pymor.core.interfaces.BasicObject.uid`,
     2. the method's `__name__`,
     3. the method's arguments.
 
@@ -283,7 +283,7 @@ class CacheableInterface(ImmutableObject):
             Identifier for the object instance on which a cached method is called.
             Must be specified when `region` is :attr:`~CacheRegion.persistent`.
             When `region` is not :attr:`~CacheRegion.persistent` and no `cache_id`
-            is given, the object's :attr:`~pymor.core.interfaces.BasicInterface.uid`
+            is given, the object's :attr:`~pymor.core.interfaces.BasicObject.uid`
             is used instead.
         """
         self.__dict__['cache_id'] = cache_id

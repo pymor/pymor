@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import BasicInterface
+from pymor.core.interfaces import BasicObject
 
 import numpy as np
 
@@ -13,7 +13,7 @@ except ImportError:
     HAVE_SYMPY = False
 
 
-class ExpressionFunction(BasicInterface):
+class ExpressionFunction(BasicObject):
 
     def __init__(self, expressions, variables='x y z'):
         if not HAVE_SYMPY:

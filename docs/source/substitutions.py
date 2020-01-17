@@ -9,7 +9,7 @@ interfaces = '''
 
 .. |AffineGrids| replace:: :class:`AffineGrids <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
 .. |AffineGrid| replace:: :class:`AffineGrid <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
-.. |BasicInterface| replace:: :class:`~pymor.core.interfaces.BasicInterface`
+.. |BasicObject| replace:: :class:`~pymor.core.interfaces.BasicObject`
 .. |BoundaryInfo| replace:: :class:`BoundaryInfo <pymor.discretizers.builtin.grids.interfaces.BoundaryInfoInterface>`
 .. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.discretizers.builtin.grids.interfaces.BoundaryInfoInterface>`
 .. |ConformalTopologicalGrids| replace:: :class:`ConformalTopologicalGrids <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGridInterface>`

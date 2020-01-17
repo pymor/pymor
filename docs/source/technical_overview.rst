@@ -190,9 +190,9 @@ set of allowed arguments can be found in the
 :attr:`~pymor.core.interfaces.ImmutableObject.with_arguments` attribute.
 
 All immutable classes in pyMOR and most other classes derive from
-|BasicInterface| which, through its meta class, provides several convenience
-features for pyMOR. Most notably, every subclass of |BasicInterface| obtains its
-own :attr:`~pymor.core.interfaces.BasicInterface.logger` instance with a class
+|BasicObject| which, through its meta class, provides several convenience
+features for pyMOR. Most notably, every subclass of |BasicObject| obtains its
+own :attr:`~pymor.core.interfaces.BasicObject.logger` instance with a class
 specific prefix.
 
 .. |caching|        replace:: :mod:`caching <pymor.core.cache>`

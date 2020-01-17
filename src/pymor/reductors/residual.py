@@ -6,13 +6,13 @@ import numpy as np
 
 from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.algorithms.projection import project, project_to_subbasis
-from pymor.core.interfaces import BasicInterface
+from pymor.core.interfaces import BasicObject
 from pymor.core.exceptions import ImageCollectionError
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import induced_norm
 
 
-class ResidualReductor(BasicInterface):
+class ResidualReductor(BasicObject):
     """Generic reduced basis residual reductor.
 
     Given an operator and a right-hand side, the residual is given by::
@@ -169,7 +169,7 @@ class NonProjectedResidualOperator(ResidualOperator):
         return self.with_(operator=project_to_subbasis(self.operator, None, dim_source))
 
 
-class ImplicitEulerResidualReductor(BasicInterface):
+class ImplicitEulerResidualReductor(BasicObject):
     """Reduced basis residual reductor with mass operator for implicit Euler timestepping.
 
     Given an operator, mass and a functional, the concatenation of residual operator

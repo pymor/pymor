@@ -24,13 +24,13 @@ class Test_Interface(TestInterface):
         assert ['AverageImplementer'] == BrilliantInterface.implementor_names()
 
     def testAbstractMethods(self):
-        class ClassImplementer(BasicInterface):
+        class ClassImplementer(BasicObject):
 
             @abstractclassmethod
             def abstract_class_method(cls):
                 pass
 
-        class StaticImplementer(BasicInterface):
+        class StaticImplementer(BasicObject):
 
             @abstractstaticmethod
             def abstract_static_method():

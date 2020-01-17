@@ -7,12 +7,12 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.defaults import defaults
-from pymor.core.interfaces import BasicInterface, ImmutableObject, abstractmethod
+from pymor.core.interfaces import BasicObject, ImmutableObject, abstractmethod
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.random import get_random_state
 
 
-class VectorArrayInterface(BasicInterface):
+class VectorArrayInterface(BasicObject):
     """Interface for vector arrays.
 
     A vector array should be thought of as a list of (possibly high-dimensional) vectors.

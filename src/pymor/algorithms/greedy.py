@@ -7,7 +7,7 @@ import time
 import numpy as np
 
 from pymor.core.exceptions import ExtensionError
-from pymor.core.interfaces import BasicInterface, abstractmethod
+from pymor.core.interfaces import BasicObject, abstractmethod
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interfaces import RemoteObjectInterface
@@ -114,7 +114,7 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
             'time': tictoc}
 
 
-class WeakGreedySurrogate(BasicInterface):
+class WeakGreedySurrogate(BasicObject):
     """Surrogate for the approximation error in :func:`weak_greedy`."""
 
     @abstractmethod

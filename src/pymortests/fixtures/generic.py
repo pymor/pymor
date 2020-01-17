@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import BasicInterface
+from pymor.core.interfaces import BasicObject
 from pymortests.base import (TestInterface, _load_all)
 
 import pytest
@@ -21,7 +21,7 @@ def subclasses_of(interface_type, **kwargs):
     return pytest.fixture(params=implementors(interface_type), **kwargs)
 
 
-@subclasses_of(BasicInterface)
+@subclasses_of(BasicObject)
 def basicinterface_subclass(request):
     return request.param
 

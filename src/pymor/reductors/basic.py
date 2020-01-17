@@ -12,14 +12,14 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import ExtensionError, AccuracyError
-from pymor.core.interfaces import BasicInterface, abstractmethod
+from pymor.core.interfaces import BasicObject, abstractmethod
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.constructions import Concatenation, InverseOperator
 
 
-class ProjectionBasedReductor(BasicInterface):
+class ProjectionBasedReductor(BasicObject):
     """Generic projection based reductor.
 
     Parameters
