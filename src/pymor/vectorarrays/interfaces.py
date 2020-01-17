@@ -7,7 +7,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.defaults import defaults
-from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
+from pymor.core.interfaces import BasicInterface, ImmutableObject, abstractmethod
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.random import get_random_state
 
@@ -618,7 +618,7 @@ class VectorArrayInterface(BasicInterface):
                 return [ind[ind_ind]]
 
 
-class VectorSpaceInterface(ImmutableInterface):
+class VectorSpaceInterface(ImmutableObject):
     """Class describing a vector space.
 
     Vector spaces act as factories for |VectorArrays| of vectors

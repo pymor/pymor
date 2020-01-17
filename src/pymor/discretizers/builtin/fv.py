@@ -14,7 +14,7 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import FunctionInterface, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.defaults import defaults
-from pymor.core.interfaces import ImmutableInterface, abstractmethod
+from pymor.core.interfaces import ImmutableObject, abstractmethod
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCentersInterface
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
@@ -34,7 +34,7 @@ def FVVectorSpace(grid, id='STATE'):
     return NumpyVectorSpace(grid.size(0), id)
 
 
-class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
+class NumericalConvectiveFluxInterface(ImmutableObject, Parametric):
     """Interface for numerical convective fluxes for finite volume schemes.
 
     Numerical fluxes defined by this interfaces are functions of

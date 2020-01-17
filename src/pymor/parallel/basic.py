@@ -6,7 +6,7 @@
 
 import weakref
 
-from pymor.core.interfaces import ImmutableInterface
+from pymor.core.interfaces import ImmutableObject
 from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
 
 
@@ -44,7 +44,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         self._pushed_immutable_objects = {}
 
     def push(self, obj):
-        if isinstance(obj, ImmutableInterface):
+        if isinstance(obj, ImmutableObject):
             uid = obj.uid
             if uid not in self._pushed_immutable_objects:
                 remote_id = self._push_object(obj)
@@ -59,7 +59,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
 
     def _map_kwargs(self, kwargs):
         pushed_immutable_objects = self._pushed_immutable_objects
-        return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableInterface) else
+        return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableObject) else
                     v.remote_id if isinstance(v, RemoteObject) else
                     v)
                 for k, v in kwargs.items()}

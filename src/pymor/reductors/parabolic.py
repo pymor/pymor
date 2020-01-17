@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.core.interfaces import ImmutableInterface
+from pymor.core.interfaces import ImmutableObject
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.reductors.residual import ResidualReductor, ImplicitEulerResidualReductor
 from pymor.operators.constructions import IdentityOperator
@@ -91,7 +91,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
         return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
-class ParabolicRBEstimator(ImmutableInterface):
+class ParabolicRBEstimator(ImmutableObject):
     """Instantiated by :class:`ParabolicRBReductor`.
 
     Not to be used directly.

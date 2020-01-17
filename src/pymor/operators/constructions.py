@@ -13,7 +13,7 @@ import scipy.linalg as spla
 
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
-from pymor.core.interfaces import ImmutableInterface
+from pymor.core.interfaces import ImmutableObject
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.base import Parametric
@@ -1246,7 +1246,7 @@ def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     return InducedNorm(product, raise_negative, tol, name)
 
 
-class InducedNorm(ImmutableInterface, Parametric):
+class InducedNorm(ImmutableObject, Parametric):
     """Instantiated by :func:`induced_norm`. Do not use directly."""
 
     def __init__(self, product, raise_negative, tol, name):

@@ -7,13 +7,13 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.interfaces import ImmutableInterface, abstractmethod
+from pymor.core.interfaces import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
-class FunctionInterface(ImmutableInterface, Parametric):
+class FunctionInterface(ImmutableObject, Parametric):
     """Interface for |Parameter| dependent analytical functions.
 
     Every |Function| is a map of the form ::

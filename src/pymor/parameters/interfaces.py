@@ -4,11 +4,11 @@
 
 from numbers import Number
 
-from pymor.core.interfaces import ImmutableInterface, abstractmethod
+from pymor.core.interfaces import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
 
 
-class ParameterSpaceInterface(ImmutableInterface):
+class ParameterSpaceInterface(ImmutableObject):
     """Interface for |Parameter| spaces.
 
     Attributes
@@ -25,7 +25,7 @@ class ParameterSpaceInterface(ImmutableInterface):
         pass
 
 
-class ParameterFunctionalInterface(ImmutableInterface, Parametric):
+class ParameterFunctionalInterface(ImmutableObject, Parametric):
     """Interface for |Parameter| functionals.
 
     A parameter functional is simply a function mapping a |Parameter| to

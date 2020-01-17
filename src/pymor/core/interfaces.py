@@ -30,14 +30,14 @@ are the following:
        set to the name of the object's class.
 
 
-:class:`ImmutableInterface` derives from :class:`BasicInterface` and adds the following
+:class:`ImmutableObject` derives from :class:`BasicInterface` and adds the following
 functionality:
 
     1. Using more metaclass magic, each instance which derives from
-       :class:`ImmutableInterface` is locked after its `__init__` method has returned.
+       :class:`ImmutableObject` is locked after its `__init__` method has returned.
        Each attempt to change one of its attributes raises an exception. Private
        attributes (of the form `_name`) are exempted from this rule.
-    2. :meth:`ImmutableInterface.with_` can be used to create a copy of an instance with
+    2. :meth:`ImmutableObject.with_` can be used to create a copy of an instance with
        some changed attributes. E.g. ::
 
            obj.with_(a=x, b=y)
@@ -286,7 +286,7 @@ class classinstancemethod:
 
 
 class ImmutableMeta(UberMeta):
-    """Metaclass for :class:`ImmutableInterface`."""
+    """Metaclass for :class:`ImmutableObject`."""
 
     def __new__(cls, classname, bases, classdict):
 
@@ -316,16 +316,16 @@ class ImmutableMeta(UberMeta):
     __call__ = _call
 
 
-class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
+class ImmutableObject(BasicInterface, metaclass=ImmutableMeta):
     """Base class for immutable objects in pyMOR.
 
-    Instances of `ImmutableInterface` are immutable in the sense that
+    Instances of `ImmutableObject` are immutable in the sense that
     after execution of `__init__`, any modification of a non-private
     attribute will raise an exception.
 
-    .. _ImmutableInterfaceWarning:
+    .. _ImmutableObjectWarning:
     .. warning::
-           For instances of `ImmutableInterface`,
+           For instances of `ImmutableObject`,
            the result of member function calls should be completely
            determined by the function's arguments together with the
            object's `__init__` arguments and the current state of pyMOR's

@@ -9,7 +9,7 @@ Any class that wishes to provide cached method calls should derive from
 be marked using the :class:`cached` decorator.
 
 To ensure consistency, :class:`CacheableInterface` derives from
-|ImmutableInterface|: The return value of a cached method call should
+|ImmutableObject|: The return value of a cached method call should
 only depend on its arguments as well as the immutable state of the class
 instance.
 
@@ -22,9 +22,9 @@ the following data:
     2. the method's `__name__`,
     3. the method's arguments.
 
-Note that instances of |ImmutableInterface| are allowed to have mutable
+Note that instances of |ImmutableObject| are allowed to have mutable
 private attributes. It is the implementors responsibility not to break things.
-(See this :ref:`warning <ImmutableInterfaceWarning>`.)
+(See this :ref:`warning <ImmutableObjectWarning>`.)
 
 Backends for storage of cached return values derive from :class:`CacheRegion`.
 Currently two backends are provided for memory-based and disk-based caching
@@ -77,7 +77,7 @@ import numpy as np
 
 from pymor.core.defaults import defaults, defaults_changes
 from pymor.core.exceptions import CacheKeyGenerationError
-from pymor.core.interfaces import ImmutableInterface
+from pymor.core.interfaces import ImmutableObject
 from pymor.core.logger import getLogger
 from pymor.core.pickle import dumps
 from pymor.parameters.base import Parameter, ParameterType
@@ -244,7 +244,7 @@ def clear_caches():
         r.clear()
 
 
-class CacheableInterface(ImmutableInterface):
+class CacheableInterface(ImmutableObject):
     """Base class for anything that wants to use our built-in caching.
 
     Attributes
@@ -269,7 +269,7 @@ class CacheableInterface(ImmutableInterface):
         """Enable caching for this instance.
 
         .. warning::
-            Note that using :meth:`~pymor.core.interfaces.ImmutableInterface.with_`
+            Note that using :meth:`~pymor.core.interfaces.ImmutableObject.with_`
             will reset :attr:`cache_region` and :attr:`cache_id` to their class
             defaults.
 

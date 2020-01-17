@@ -6,7 +6,7 @@ import importlib
 import pytest
 import numpy as np
 
-from pymor.core.interfaces import (ImmutableInterface, abstractstaticmethod, abstractclassmethod)
+from pymor.core.interfaces import (ImmutableObject, abstractstaticmethod, abstractclassmethod)
 from pymor.core import exceptions
 from pymortests.base import TestInterface, runmodule, subclassForImplemetorsOf
 from pymortests.core.dummies import *   # NOQA
@@ -78,7 +78,7 @@ class WithcopyInterface(TestInterface):
 
 
 def test_withcopy_implementors():
-    for TestType in subclassForImplemetorsOf(ImmutableInterface, WithcopyInterface):
+    for TestType in subclassForImplemetorsOf(ImmutableObject, WithcopyInterface):
         TestType().test_with_()
 
 

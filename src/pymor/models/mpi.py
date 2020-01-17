@@ -4,7 +4,7 @@
 
 from collections import namedtuple
 
-from pymor.core.interfaces import ImmutableInterface
+from pymor.core.interfaces import ImmutableObject
 from pymor.models.interfaces import ModelInterface
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.mpi import mpi_wrap_operator
@@ -44,7 +44,7 @@ class MPIModel:
         mpi.call(mpi.remove_object, self.obj_id)
 
 
-class MPIVisualizer(ImmutableInterface):
+class MPIVisualizer(ImmutableObject):
 
     def __init__(self, m_obj_id):
         self.m_obj_id = m_obj_id
@@ -89,7 +89,7 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
     This is usually what you want when the actual solve is performed by
     an implementation in the external solver.
 
-    When `use_with` is `True`, :meth:`~pymor.core.interfaces.ImmutableInterface.with_`
+    When `use_with` is `True`, :meth:`~pymor.core.interfaces.ImmutableObject.with_`
     is called on the local |Model| on rank 0, to obtain a new
     |Model| with the wrapped MPI |Operators|. This is mainly useful
     when the local models are generic |Models| as in

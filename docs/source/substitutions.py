@@ -24,9 +24,9 @@ interfaces = '''
 .. |Function| replace:: :class:`Function <pymor.analyticalproblems.functions.FunctionInterface>`
 .. |Grid| replace:: :class:`Grid <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
 .. |Grids| replace:: :class:`Grids <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
-.. |ImmutableInterface| replace:: :class:`~pymor.core.interfaces.ImmutableInterface`
-.. |immutable| replace:: :class:`immutable <pymor.core.interfaces.ImmutableInterface>`
-.. |Immutable| replace:: :class:`Immutable <pymor.core.interfaces.ImmutableInterface>`
+.. |ImmutableObject| replace:: :class:`~pymor.core.interfaces.ImmutableObject`
+.. |immutable| replace:: :class:`immutable <pymor.core.interfaces.ImmutableObject>`
+.. |Immutable| replace:: :class:`Immutable <pymor.core.interfaces.ImmutableObject>`
 .. |LincombOperators| replace:: :class:`LincombOperators <pymor.operators.constructions.LincombOperator>`
 .. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.constructions.LincombOperator>`
 .. |Operators| replace:: :class:`Operators <pymor.operators.interfaces.OperatorInterface>`

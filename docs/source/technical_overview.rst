@@ -168,7 +168,7 @@ main benefits:
 2. The return value of a method of an immutable object only depends on its
    arguments, allowing reliable |caching| of these return values.
 
-A class can be made immutable in pyMOR by deriving from |ImmutableInterface|,
+A class can be made immutable in pyMOR by deriving from |ImmutableObject|,
 which ensures that write access to the object's attributes is prohibited after
 `__init__` has been executed. However, note that changes to private attributes
 (attributes whose name starts with `_`) are still allowed. It lies in the
@@ -181,13 +181,13 @@ subsequent |solve| call, but not its result.
 Of course, in many situations one may wish to change properties of an immutable
 object, e.g. the number of timesteps for a given model. This can be
 easily achieved using the
-:meth:`~pymor.core.interfaces.ImmutableInterface.with_` method every immutable
+:meth:`~pymor.core.interfaces.ImmutableObject.with_` method every immutable
 object has: a call of the form ``o.with_(a=x, b=y)`` will return a copy of `o`
 in which the attribute `a` now has the value `x` and the attribute `b` the
 value `y`. It can be generally assumed that calls to
-:meth:`~pymor.core.interfaces.ImmutableInterface.with_` are inexpensive. The
+:meth:`~pymor.core.interfaces.ImmutableObject.with_` are inexpensive. The
 set of allowed arguments can be found in the
-:attr:`~pymor.core.interfaces.ImmutableInterface.with_arguments` attribute.
+:attr:`~pymor.core.interfaces.ImmutableObject.with_arguments` attribute.
 
 All immutable classes in pyMOR and most other classes derive from
 |BasicInterface| which, through its meta class, provides several convenience

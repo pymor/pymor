@@ -6,13 +6,13 @@ import collections
 
 import numpy as np
 
-from pymor.core.interfaces import ImmutableInterface
+from pymor.core.interfaces import ImmutableObject
 
 
 KNOWN_BOUNDARY_TYPES = {'dirichlet', 'neumann', 'robin'}
 
 
-class DomainDescriptionInterface(ImmutableInterface):
+class DomainDescriptionInterface(ImmutableObject):
     """Describes a geometric domain along with its boundary.
 
     Attributes
