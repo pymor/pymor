@@ -107,7 +107,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
                                                     self.parameter_type, name=self.name + '_d_mu',
                                                     derivative_mappings={})
                 else:
-                    raise ValueError('derivative expressions does not contain item {}'.format(component))
+                    raise ValueError('derivative expressions do not contain item {}'.format(component))
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
 
