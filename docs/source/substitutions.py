@@ -20,8 +20,8 @@ interfaces = '''
 .. |DomainDescription| replace:: :class:`DomainDescription <pymor.analyticalproblems.domaindescriptions.DomainDescriptionInterface>`
 .. |Functionals| replace:: :class:`Functionals <pymor.operators.interfaces.OperatorInterface>`
 .. |Functional| replace:: :class:`Functional <pymor.operators.interfaces.OperatorInterface>`
-.. |Functions| replace:: :class:`Functions <pymor.functions.interfaces.FunctionInterface>`
-.. |Function| replace:: :class:`Function <pymor.functions.interfaces.FunctionInterface>`
+.. |Functions| replace:: :class:`Functions <pymor.analyticalproblems.functions.FunctionInterface>`
+.. |Function| replace:: :class:`Function <pymor.analyticalproblems.functions.FunctionInterface>`
 .. |Grid| replace:: :class:`Grid <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
 .. |Grids| replace:: :class:`Grids <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
 .. |ImmutableInterface| replace:: :class:`~pymor.core.interfaces.ImmutableInterface`

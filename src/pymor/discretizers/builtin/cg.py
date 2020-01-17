@@ -12,13 +12,12 @@ from scipy.sparse import coo_matrix, csc_matrix
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
 from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.analyticalproblems.functions import FunctionInterface, ConstantFunction, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
-from pymor.functions.basic import ConstantFunction, LincombFunction
-from pymor.functions.interfaces import FunctionInterface
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.operators.constructions import LincombOperator
 from pymor.operators.numpy import NumpyMatrixBasedOperator

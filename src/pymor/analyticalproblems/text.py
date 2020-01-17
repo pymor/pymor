@@ -4,9 +4,8 @@
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction, BitmapFunction
 from pymor.core.defaults import defaults
-from pymor.functions.basic import ConstantFunction, LincombFunction
-from pymor.functions.bitmap import BitmapFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 

@@ -11,6 +11,7 @@ from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
 from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.analyticalproblems.functions import FunctionInterface, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
@@ -21,8 +22,6 @@ from pymor.discretizers.builtin.grids.subgrid import SubGrid, make_sub_grid_boun
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
 from pymor.discretizers.builtin.inplace import iadd_masked, isub_masked
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
-from pymor.functions.basic import LincombFunction
-from pymor.functions.interfaces import FunctionInterface
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import ComponentProjection, LincombOperator, ZeroOperator
