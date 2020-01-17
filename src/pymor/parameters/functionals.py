@@ -49,7 +49,6 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
                 return ConstantParameterFunctional(1, name=self.name + '_d_mu')
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
-
 class GenericParameterFunctional(ParameterFunctionalInterface):
     """A wrapper making an arbitrary Python function a |ParameterFunctional|
 
@@ -69,9 +68,12 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
     derivative_mappings
         A dict containing all partial derivatives of each component and index in the
         |ParameterType| with the signature `derivative_mappings[component][index](mu)`
+    second_derivative_mappings
+        A dict containing all second order partial derivatives of each component and index in the
+        |ParameterType| with the signature `second_derivative_mappings[component_i][index_i][component_j][index_j](mu)`
     """
 
-    def __init__(self, mapping, parameter_type, name=None, derivative_mappings=None):
+    def __init__(self, mapping, parameter_type, name=None, derivative_mappings=None, second_derivative_mappings=None):
         self.__auto_init(locals())
         self.build_parameter_type(parameter_type)
 
@@ -92,10 +94,20 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
                                   partial derivatives in self.parameter_type')
             else:
                 if component in self.derivative_mappings:
-                    return GenericParameterFunctional(self.derivative_mappings[component][index],
-                                                      self.parameter_type, name=self.name + '_d_mu')
+                    if self.second_derivative_mappings is None:
+                        return GenericParameterFunctional(self.derivative_mappings[component][index],
+                                                        self.parameter_type, name=self.name + '_d_mu')
+                    else:
+                        if component in self.second_derivative_mappings:
+                            return GenericParameterFunctional(self.derivative_mappings[component][index],
+                                                    self.parameter_type, name=self.name + '_d_mu',
+                                                    derivative_mappings=self.second_derivative_mappings[component][index])
+                        else:
+                            return GenericParameterFunctional(self.derivative_mappings[component][index],
+                                                    self.parameter_type, name=self.name + '_d_mu',
+                                                    derivative_mappings={})
                 else:
-                    raise ValueError('derivative mappings does not contain item {}'.format(component))
+                    raise ValueError('derivative expressions do not contain item {}'.format(component))
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
 
@@ -118,10 +130,12 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         The |ParameterType| of the |Parameters| the functional expects.
     name
         The name of the functional.
-
     derivative_expressions
         A dict containing a Python expression for the partial derivatives of each
         parameter component.
+    second_derivative_expressions
+        A dict containing a list of dicts of Python expressions for all second order partial derivatives of each
+        parameter component i and j.
     """
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
@@ -133,7 +147,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
     functions['np'] = np
 
-    def __init__(self, expression, parameter_type, name=None, derivative_expressions=None):
+    def __init__(self, expression, parameter_type, name=None, derivative_expressions=None, second_derivative_expressions=None):
         self.expression = expression
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions
@@ -153,12 +167,28 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
                 derivative_mappings[key] = exp_array
         else:
             derivative_mappings = None
-        super().__init__(exp_mapping, parameter_type, name, derivative_mappings)
+        if second_derivative_expressions is not None:
+            second_derivative_mappings = second_derivative_expressions.copy()
+            for (key_i,key_dicts) in second_derivative_mappings.items():
+                key_dicts_array = np.array(key_dicts, dtype=object)
+                for key_dict in np.nditer(key_dicts_array, op_flags=['readwrite'], flags= ['refs_ok']):
+                    for (key_j, exp) in key_dict[()].items():
+                        exp_array = np.array(exp, dtype=object)
+                        for exp in np.nditer(exp_array, op_flags=['readwrite'], flags= ['refs_ok']):
+                            exp_code = compile(str(exp), '<expression>', 'eval')
+                            mapping = get_lambda(exp_code)
+                            exp[...] = mapping
+                        key_dict[()][key_j] = exp_array
+                second_derivative_mappings[key_i] = key_dicts_array
+        else:
+            second_derivative_mappings = None
+        super().__init__(exp_mapping, parameter_type, name, derivative_mappings, second_derivative_mappings)
         self.__auto_init(locals())
 
     def __reduce__(self):
         return (ExpressionParameterFunctional,
-                (self.expression, self.parameter_type, getattr(self, '_name', None), self.derivative_expressions))
+                (self.expression, self.parameter_type, getattr(self, '_name', None),
+                 self.derivative_expressions, self.second_derivative_expressions))
 
 
 class ProductParameterFunctional(ParameterFunctionalInterface):
@@ -212,10 +242,8 @@ class ConjugateParameterFunctional(ParameterFunctionalInterface):
     def d_mu(self, component, index=()):
         raise NotImplementedError
 
-
 class ConstantParameterFunctional(ParameterFunctionalInterface):
     """|ParameterFunctional| returning a constant value for each parameter.
-
 
     Parameters
     ----------
