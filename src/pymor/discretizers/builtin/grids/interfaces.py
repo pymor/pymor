@@ -6,13 +6,13 @@ import numpy as np
 
 from pymor.analyticalproblems.domaindescriptions import KNOWN_BOUNDARY_TYPES
 from pymor.core.interfaces import abstractmethod
-from pymor.core.cache import CacheableInterface, cached
+from pymor.core.cache import CacheableObject, cached
 from pymor.discretizers.builtin.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
                                                           ReferenceElementDefaultImplementations,
                                                           AffineGridDefaultImplementations,)
 
 
-class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, CacheableInterface):
+class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, CacheableObject):
     """A topological grid without hanging nodes.
 
     The grid is completely determined via the subentity relation given by
@@ -96,7 +96,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         return self._boundaries(codim)
 
 
-class ReferenceElementInterface(ReferenceElementDefaultImplementations, CacheableInterface):
+class ReferenceElementInterface(ReferenceElementDefaultImplementations, CacheableObject):
     """Defines a reference element.
 
     All reference elements have the property that all subentities of a given codimension are of the
@@ -303,7 +303,7 @@ class AffineGridWithOrthogonalCentersInterface(AffineGridInterface):
         pass
 
 
-class BoundaryInfoInterface(CacheableInterface):
+class BoundaryInfoInterface(CacheableObject):
     """Provides boundary types for the boundaries of a given |ConformalTopologicalGrid|.
 
     For every boundary type and codimension a mask is provided, marking grid entities

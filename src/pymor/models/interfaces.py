@@ -2,12 +2,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.cache import CacheableInterface
+from pymor.core.cache import CacheableObject
 from pymor.core.interfaces import abstractmethod
 from pymor.parameters.base import Parametric
 
 
-class ModelInterface(CacheableInterface, Parametric):
+class ModelInterface(CacheableObject, Parametric):
     """Interface for model objects.
 
     A model object defines a discrete problem

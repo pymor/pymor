@@ -174,7 +174,7 @@ which ensures that write access to the object's attributes is prohibited after
 (attributes whose name starts with `_`) are still allowed. It lies in the
 implementors responsibility to ensure that changes to these attributes do not
 affect the outcome of calls to relevant interface methods. As an example, a call
-to :meth:`~pymor.core.cache.CacheableInterface.enable_caching` will set the
+to :meth:`~pymor.core.cache.CacheableObject.enable_caching` will set the
 objects private `__cache_region` attribute, which might affect the speed of a
 subsequent |solve| call, but not its result.
 

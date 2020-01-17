@@ -13,9 +13,9 @@ from pymor.discretizers.builtin.grids.subgrid import SubGrid
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 
 is_equal_ignored_attributes = \
-    ((SubGrid, {'_uid', '_CacheableInterface__cache_region', '_SubGrid__parent_grid'}),
-     (NumpyMatrixBasedOperator, {'_uid', '_CacheableInterface__cache_region', '_assembled_operator'}),
-     (BasicObject, {'_name', '_uid', '_CacheableInterface__cache_region'}))
+    ((SubGrid, {'_uid', '_CacheableObject__cache_region', '_SubGrid__parent_grid'}),
+     (NumpyMatrixBasedOperator, {'_uid', '_CacheableObject__cache_region', '_assembled_operator'}),
+     (BasicObject, {'_name', '_uid', '_CacheableObject__cache_region'}))
 
 is_equal_dispatch_table = {}
 

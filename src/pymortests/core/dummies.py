@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.interfaces import (BasicObject, abstractmethod)
-from pymor.core.cache import CacheableInterface, cached
+from pymor.core.cache import CacheableObject, cached
 from pymor.core import interfaces
 
 
@@ -68,7 +68,7 @@ class AverageImplementer(StupidInterface, BrilliantInterface):
     some_attribute = 2
 
 
-class CacheImplementer(CacheableInterface):
+class CacheImplementer(CacheableObject):
 
     some_attribute = 2
 

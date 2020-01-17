@@ -14,7 +14,7 @@ from pymortests.base import TestInterface, runmodule
 SLEEP_DELTA = timedelta(milliseconds=200)
 
 
-class IamMemoryCached(cache.CacheableInterface):
+class IamMemoryCached(cache.CacheableObject):
 
     def __init__(self):
         self.cache_region = 'memory'
@@ -25,7 +25,7 @@ class IamMemoryCached(cache.CacheableInterface):
         return arg
 
 
-class IamDiskCached(cache.CacheableInterface):
+class IamDiskCached(cache.CacheableObject):
 
     def __init__(self):
         self.cache_region = 'disk'
@@ -36,7 +36,7 @@ class IamDiskCached(cache.CacheableInterface):
         return arg
 
 
-class IamLimitedCached(cache.CacheableInterface):
+class IamLimitedCached(cache.CacheableObject):
 
     def __init__(self, cache_region='disk'):
         self.cache_region = cache_region
@@ -46,7 +46,7 @@ class IamLimitedCached(cache.CacheableInterface):
         return int(arg)
 
 
-class IWillBeCopied(cache.CacheableInterface):
+class IWillBeCopied(cache.CacheableObject):
 
     def __init__(self):
         super().__init__()

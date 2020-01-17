@@ -5,10 +5,10 @@
 """This module provides the caching facilities of pyMOR.
 
 Any class that wishes to provide cached method calls should derive from
-:class:`CacheableInterface`. Methods which are to be cached can then
+:class:`CacheableObject`. Methods which are to be cached can then
 be marked using the :class:`cached` decorator.
 
-To ensure consistency, :class:`CacheableInterface` derives from
+To ensure consistency, :class:`CacheableObject` derives from
 |ImmutableObject|: The return value of a cached method call should
 only depend on its arguments as well as the immutable state of the class
 instance.
@@ -16,7 +16,7 @@ instance.
 Making this assumption, the keys for cache lookup are created from
 the following data:
 
-    1. the instance's :attr:`~CacheableInterface.cache_id` in case of a
+    1. the instance's :attr:`~CacheableObject.cache_id` in case of a
        :attr:`~CacheRegion.persistent` :class:`CacheRegion`, else the instance's
        :attr:`~pymor.core.interfaces.BasicObject.uid`,
     2. the method's `__name__`,
@@ -31,9 +31,9 @@ Currently two backends are provided for memory-based and disk-based caching
 (:class:`MemoryRegion` and :class:`DiskRegion`). The available regions
 are stored in the module level `cache_regions` dict. The user can add
 additional regions (e.g. multiple disk cache regions) as required.
-:attr:`CacheableInterface.cache_region` specifies a key of the `cache_regions` dict
+:attr:`CacheableObject.cache_region` specifies a key of the `cache_regions` dict
 to select a cache region which should be used by the instance.
-(Setting :attr:`~CacheableInterface.cache_region` to `None` or `'none'` disables caching.)
+(Setting :attr:`~CacheableObject.cache_region` to `None` or `'none'` disables caching.)
 
 By default, a 'memory', a 'disk' and a 'persistent' cache region are configured. The
 paths and maximum sizes of the disk regions, as well as the maximum number of keys of
@@ -48,8 +48,8 @@ There two ways to disable and enable caching in pyMOR:
 
     1. Calling :func:`disable_caching` (:func:`enable_caching`), to disable
        (enable) caching globally.
-    2. Calling :meth:`CacheableInterface.disable_caching`
-       (:meth:`CacheableInterface.enable_caching`) to disable (enable) caching
+    2. Calling :meth:`CacheableObject.disable_caching`
+       (:meth:`CacheableObject.enable_caching`) to disable (enable) caching
        for a given instance.
 
 Caching of a method is only active if caching has been enabled both globally
@@ -244,7 +244,7 @@ def clear_caches():
         r.clear()
 
 
-class CacheableInterface(ImmutableObject):
+class CacheableObject(ImmutableObject):
     """Base class for anything that wants to use our built-in caching.
 
     Attributes
@@ -362,7 +362,7 @@ class CacheableInterface(ImmutableObject):
 
 
 def cached(function):
-    """Decorator to make a method of `CacheableInterface` actually cached."""
+    """Decorator to make a method of `CacheableObject` actually cached."""
 
     params = inspect.signature(function).parameters
     if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
