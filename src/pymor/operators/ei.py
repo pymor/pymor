@@ -10,9 +10,9 @@ from scipy.linalg import solve, solve_triangular
 
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interfaces import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interfaces import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -32,7 +32,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
     Since the original operator only has to be evaluated at the given interpolation
     DOFs, |EmpiricalInterpolatedOperator| calls
-    :meth:`~pymor.operators.interfaces.OperatorInterface.restricted`
+    :meth:`~pymor.operators.interfaces.Operator.restricted`
     to obtain a restricted version of the operator which is used
     to quickly obtain the required evaluations. If the `restricted` method, is not
     implemented, the full operator will be evaluated (which will lead to
@@ -61,8 +61,8 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
     def __init__(self, operator, interpolation_dofs, collateral_basis, triangular,
                  solver_options=None, name=None):
-        assert isinstance(operator, OperatorInterface)
-        assert isinstance(collateral_basis, VectorArrayInterface)
+        assert isinstance(operator, Operator)
+        assert isinstance(collateral_basis, VectorArray)
         assert collateral_basis in operator.range
         assert len(interpolation_dofs) == len(collateral_basis)
 

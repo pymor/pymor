@@ -7,7 +7,7 @@ import numpy as np
 from pymor.algorithms.lyapunov import mat_eqn_sparse_min_size
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interfaces import Operator
 
 _DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
                                             'lrradi')
@@ -224,11 +224,11 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
 
 def _solve_ricc_check_args(A, E, B, C, R, S, trans):
-    assert isinstance(A, OperatorInterface) and A.linear
+    assert isinstance(A, Operator) and A.linear
     assert not A.parametric
     assert A.source == A.range
     if E is not None:
-        assert isinstance(E, OperatorInterface) and E.linear
+        assert isinstance(E, Operator) and E.linear
         assert not E.parametric
         assert E.source == E.range == A.source
     assert B in A.source

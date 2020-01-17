@@ -12,12 +12,12 @@ from pymor.discretizers.builtin.grids.defaultimpl import (ConformalTopologicalGr
                                                           AffineGridDefaultImplementations,)
 
 
-class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, CacheableObject):
+class ConformalTopologicalGrid(ConformalTopologicalGridDefaultImplementations, CacheableObject):
     """A topological grid without hanging nodes.
 
     The grid is completely determined via the subentity relation given by
-    :meth:`~ConformalTopologicalGridInterface.subentities`. In addition,
-    only :meth:`~ConformalTopologicalGridInterface.size` has to be
+    :meth:`~ConformalTopologicalGrid.subentities`. In addition,
+    only :meth:`~ConformalTopologicalGrid.size` has to be
     implemented, cached default implementations for all other methods are
     provided by :class:`~pymor.discretizers.builtin.grids.defaultimpl.ConformalTopologicalGridDefaultImplementations`.
 
@@ -96,7 +96,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         return self._boundaries(codim)
 
 
-class ReferenceElementInterface(ReferenceElementDefaultImplementations, CacheableObject):
+class ReferenceElement(ReferenceElementDefaultImplementations, CacheableObject):
     """Defines a reference element.
 
     All reference elements have the property that all subentities of a given codimension are of the
@@ -189,13 +189,13 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
         return frozenset(o.keys())
 
 
-class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopologicalGridInterface):
+class AffineGrid(AffineGridDefaultImplementations, ConformalTopologicalGrid):
     """Topological grid with geometry where each codim-0 entity is affinely mapped to the same |ReferenceElement|.
 
     The grid is completely determined via the subentity relation given by
-    :meth:`~AffineGridInterface.subentities` and the embeddings given by
-    :meth:`~AffineGridInterface.embeddings`.  In addition,
-    only :meth:`~ConformalTopologicalGridInterface.size` and :meth:`~AffineGridInterface.reference_element`
+    :meth:`~AffineGrid.subentities` and the embeddings given by
+    :meth:`~AffineGrid.embeddings`.  In addition,
+    only :meth:`~ConformalTopologicalGrid.size` and :meth:`~AffineGrid.reference_element`
     have to be implemented. Cached default implementations for all other methods are
     provided by :class:`~pymor.discretizers.builtin.grids.defaultimpl.AffineGridDefaultImplementations`.
 
@@ -288,7 +288,7 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._bounding_box()
 
 
-class AffineGridWithOrthogonalCentersInterface(AffineGridInterface):
+class AffineGridWithOrthogonalCenters(AffineGrid):
     """|AffineGrid| with an additional `orthogonal_centers` method."""
 
     @abstractmethod
@@ -303,7 +303,7 @@ class AffineGridWithOrthogonalCentersInterface(AffineGridInterface):
         pass
 
 
-class BoundaryInfoInterface(CacheableObject):
+class BoundaryInfo(CacheableObject):
     """Provides boundary types for the boundaries of a given |ConformalTopologicalGrid|.
 
     For every boundary type and codimension a mask is provided, marking grid entities

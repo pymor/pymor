@@ -7,7 +7,7 @@ import scipy.linalg as spla
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interfaces import Operator
 
 _DEFAULT_LYAP_LRCF_SPARSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
                                             'lradi')
@@ -132,11 +132,11 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
 
 
 def _solve_lyap_lrcf_check_args(A, E, B, trans):
-    assert isinstance(A, OperatorInterface) and A.linear
+    assert isinstance(A, Operator) and A.linear
     assert not A.parametric
     assert A.source == A.range
     if E is not None:
-        assert isinstance(E, OperatorInterface) and E.linear
+        assert isinstance(E, Operator) and E.linear
         assert not E.parametric
         assert E.source == E.range
         assert E.source == A.source

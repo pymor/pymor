@@ -8,7 +8,7 @@ from pymor.core.interfaces import BasicObject
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interfaces import VectorArray
 
 
 class PatchVisualizer(BasicObject):
@@ -70,9 +70,9 @@ class PatchVisualizer(BasicObject):
             The number of columns in the visualizer GUI in case multiple plots are displayed
             at the same time.
         """
-        assert isinstance(U, VectorArrayInterface) \
+        assert isinstance(U, VectorArray) \
             or (isinstance(U, tuple)
-                and all(isinstance(u, VectorArrayInterface) for u in U)
+                and all(isinstance(u, VectorArray) for u in U)
                 and all(len(u) == len(U[0]) for u in U))
         if filename:
             if not isinstance(U, tuple):

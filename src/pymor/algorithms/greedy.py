@@ -10,7 +10,7 @@ from pymor.core.exceptions import ExtensionError
 from pymor.core.interfaces import BasicObject, abstractmethod
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
-from pymor.parallel.interfaces import RemoteObjectInterface
+from pymor.parallel.interfaces import RemoteObject
 from pymor.tools.deprecated import Deprecated
 
 
@@ -226,7 +226,7 @@ class RBSurrogate(WeakGreedySurrogate):
             with self.logger.block('Reducing ...'):
                 self.rom = self.reductor.reduce()
 
-        if not isinstance(mus, RemoteObjectInterface):
+        if not isinstance(mus, RemoteObject):
             mus = self.pool.scatter_list(mus)
 
         result = self.pool.apply(_rb_surrogate_evaluate,

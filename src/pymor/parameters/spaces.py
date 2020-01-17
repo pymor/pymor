@@ -7,11 +7,11 @@ from itertools import product
 import numpy as np
 
 from pymor.parameters.base import Parameter, ParameterType
-from pymor.parameters.interfaces import ParameterSpaceInterface
+from pymor.parameters.interfaces import ParameterSpace
 from pymor.tools.random import get_random_state
 
 
-class CubicParameterSpace(ParameterSpaceInterface):
+class CubicParameterSpace(ParameterSpace):
     """Simple |ParameterSpace| where each summand is an n-cube.
 
     Parameters

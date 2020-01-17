@@ -16,10 +16,10 @@ by :mod:`pymor.tools.mpi`.
 import numpy as np
 
 from pymor.tools import mpi
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface
+from pymor.vectorarrays.interfaces import VectorArray, VectorSpace
 
 
-class MPIVectorArray(VectorArrayInterface):
+class MPIVectorArray(VectorArray):
     """MPI distributed |VectorArray|.
 
     Given a local |VectorArray| on each MPI rank, this wrapper class
@@ -102,7 +102,7 @@ class MPIVectorArray(VectorArrayInterface):
         mpi.call(mpi.remove_object, self.obj_id)
 
 
-class MPIVectorSpace(VectorSpaceInterface):
+class MPIVectorSpace(VectorSpace):
     """|VectorSpace| of :class:`MPIVectorArrays <MPIVectorArray>`.
 
     Parameters

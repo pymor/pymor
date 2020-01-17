@@ -12,7 +12,7 @@ from pymor.core.interfaces import ImmutableObject
 KNOWN_BOUNDARY_TYPES = {'dirichlet', 'neumann', 'robin'}
 
 
-class DomainDescriptionInterface(ImmutableObject):
+class DomainDescription(ImmutableObject):
     """Describes a geometric domain along with its boundary.
 
     Attributes
@@ -39,7 +39,7 @@ class DomainDescriptionInterface(ImmutableObject):
         return 'robin' in self.boundary_types
 
 
-class RectDomain(DomainDescriptionInterface):
+class RectDomain(DomainDescription):
     """Describes a rectangular domain.
 
     Boundary types can be associated edgewise.
@@ -105,7 +105,7 @@ class RectDomain(DomainDescriptionInterface):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
 
-class CylindricalDomain(DomainDescriptionInterface):
+class CylindricalDomain(DomainDescription):
     """Describes a cylindrical domain.
 
     Boundary types can be associated edgewise.
@@ -164,7 +164,7 @@ class CylindricalDomain(DomainDescriptionInterface):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
 
-class TorusDomain(DomainDescriptionInterface):
+class TorusDomain(DomainDescription):
     """Describes a domain with the topology of a torus.
 
     Parameters
@@ -212,7 +212,7 @@ class TorusDomain(DomainDescriptionInterface):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
 
-class LineDomain(DomainDescriptionInterface):
+class LineDomain(DomainDescription):
     """Describes an interval domain.
 
     Boundary types can be associated edgewise.
@@ -249,7 +249,7 @@ class LineDomain(DomainDescriptionInterface):
         return self.domain[1] - self.domain[0]
 
 
-class CircleDomain(DomainDescriptionInterface):
+class CircleDomain(DomainDescription):
     """Describes a domain with the topology of a circle, i.e. a line with
     identified end points.
 
@@ -274,7 +274,7 @@ class CircleDomain(DomainDescriptionInterface):
         return self.domain[1] - self.domain[0]
 
 
-class PolygonalDomain(DomainDescriptionInterface):
+class PolygonalDomain(DomainDescription):
     """Describes a domain with a polygonal boundary and polygonal holes inside the domain.
 
     Parameters

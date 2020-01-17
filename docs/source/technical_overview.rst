@@ -57,22 +57,22 @@ operating on objects of the following types:
     the same |VectorSpace|. If a |VectorArray| is contained in a given
     |VectorSpace| can be tested with the `in` operator.
     
-    .. |apply|            replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply`
-    .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interfaces.VectorArrayInterface.append>`
-    .. |axpy|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.axpy`
-    .. |dofs|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dofs`
-    .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interfaces.VectorArrayInterface.copy>`
-    .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interfaces.VectorArrayInterface.dim>`
-    .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.empty`
-    .. |id|               replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id`
-    .. |indexed|          replace:: :meth:`indexed <pymor.vectorarrays.interfaces.VectorArrayInterface.__getitem__>`
-    .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interfaces.VectorArrayInterface.inner>`
-    .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.lincomb`
-    .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.make_array`
-    .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArrayInterface.__delitem__>`
-    .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interfaces.VectorArrayInterface.scal>`
+    .. |apply|            replace:: :meth:`~pymor.operators.interfaces.Operator.apply`
+    .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interfaces.VectorArray.append>`
+    .. |axpy|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArray.axpy`
+    .. |dofs|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArray.dofs`
+    .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interfaces.VectorArray.copy>`
+    .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interfaces.VectorArray.dim>`
+    .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpace.empty`
+    .. |id|               replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpace.id`
+    .. |indexed|          replace:: :meth:`indexed <pymor.vectorarrays.interfaces.VectorArray.__getitem__>`
+    .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interfaces.VectorArray.inner>`
+    .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArray.lincomb`
+    .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpace.make_array`
+    .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArray.__delitem__>`
+    .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interfaces.VectorArray.scal>`
     .. |subtype|          replace:: :attr:`~pymor.vectorarrays.interfaces.VectorSpace.subtype`
-    .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.zeros`
+    .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpace.zeros`
 
 |Operators|
     The main property of operators in pyMOR is that they can be |applied| to
@@ -103,15 +103,15 @@ operating on objects of the following types:
     new operators from existing ones are contained in
     :mod:`pymor.operators.constructions`.
 
-    .. |applied|           replace:: :meth:`applied <pymor.operators.interfaces.OperatorInterface.apply>`
-    .. |apply2|            replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply2`
-    .. |apply_inverse|     replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse`
-    .. |assembled|         replace:: :meth:`assembled <pymor.operators.interfaces.OperatorInterface.assemble>`
-    .. |_assemble_lincomb| replace:: :meth:`~pymor.operators.interfaces.OperatorInterface._assemble_lincomb`
-    .. |as_vector|         replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.as_vector`
-    .. |linear|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.linear`
-    .. |range|             replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.range`
-    .. |source|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.source`
+    .. |applied|           replace:: :meth:`applied <pymor.operators.interfaces.Operator.apply>`
+    .. |apply2|            replace:: :meth:`~pymor.operators.interfaces.Operator.apply2`
+    .. |apply_inverse|     replace:: :meth:`~pymor.operators.interfaces.Operator.apply_inverse`
+    .. |assembled|         replace:: :meth:`assembled <pymor.operators.interfaces.Operator.assemble>`
+    .. |_assemble_lincomb| replace:: :meth:`~pymor.operators.interfaces.Operator._assemble_lincomb`
+    .. |as_vector|         replace:: :meth:`~pymor.operators.interfaces.Operator.as_vector`
+    .. |linear|            replace:: :attr:`~pymor.operators.interfaces.Operator.linear`
+    .. |range|             replace:: :attr:`~pymor.operators.interfaces.Operator.range`
+    .. |source|            replace:: :attr:`~pymor.operators.interfaces.Operator.source`
 
 |Models|
     Models in pyMOR encode the mathematical structure of a given
@@ -142,15 +142,15 @@ operating on objects of the following types:
     |solution_space|.
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
-    .. |estimate|         replace:: :meth:`~pymor.models.interfaces.ModelInterface.estimate`
-    .. |functionals|      replace:: :attr:`~pymor.models.interfaces.ModelInterface.functionals`
-    .. |operators|        replace:: :attr:`~pymor.models.interfaces.ModelInterface.operators`
-    .. |products|         replace:: :attr:`~pymor.models.interfaces.ModelInterface.products`
-    .. |solution_space|   replace:: :attr:`~pymor.models.interfaces.ModelInterface.solution_space`
-    .. |solve|            replace:: :meth:`~pymor.models.interfaces.ModelInterface.solve`
-    .. |solving|          replace:: :meth:`solving <pymor.models.interfaces.ModelInterface.solve>`
-    .. |vector_operators| replace:: :attr:`~pymor.models.interfaces.ModelInterface.vector_operators`
-    .. |visualize|        replace:: :meth:`~pymor.models.interfaces.ModelInterface.visualize`
+    .. |estimate|         replace:: :meth:`~pymor.models.interfaces.Model.estimate`
+    .. |functionals|      replace:: :attr:`~pymor.models.interfaces.Model.functionals`
+    .. |operators|        replace:: :attr:`~pymor.models.interfaces.Model.operators`
+    .. |products|         replace:: :attr:`~pymor.models.interfaces.Model.products`
+    .. |solution_space|   replace:: :attr:`~pymor.models.interfaces.Model.solution_space`
+    .. |solve|            replace:: :meth:`~pymor.models.interfaces.Model.solve`
+    .. |solving|          replace:: :meth:`solving <pymor.models.interfaces.Model.solve>`
+    .. |vector_operators| replace:: :attr:`~pymor.models.interfaces.Model.vector_operators`
+    .. |visualize|        replace:: :meth:`~pymor.models.interfaces.Model.visualize`
 
 
 Base Classes

@@ -9,13 +9,13 @@ import numpy as np
 from pymor.algorithms import genericsolvers
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.core.interfaces import abstractmethod
-from pymor.operators.interfaces import OperatorInterface
-from pymor.parameters.interfaces import ParameterFunctionalInterface
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.operators.interfaces import Operator
+from pymor.parameters.interfaces import ParameterFunctional
+from pymor.vectorarrays.interfaces import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class OperatorBase(OperatorInterface):
+class OperatorBase(Operator):
     """Base class for |Operators| providing some default implementations.
 
     When implementing a new operator, it is usually advisable to derive
@@ -24,15 +24,15 @@ class OperatorBase(OperatorInterface):
 
     def apply2(self, V, U, mu=None):
         mu = self.parse_parameter(mu)
-        assert isinstance(V, VectorArrayInterface)
-        assert isinstance(U, VectorArrayInterface)
+        assert isinstance(V, VectorArray)
+        assert isinstance(U, VectorArray)
         AU = self.apply(U, mu=mu)
         return V.dot(AU)
 
     def pairwise_apply2(self, V, U, mu=None):
         mu = self.parse_parameter(mu)
-        assert isinstance(V, VectorArrayInterface)
-        assert isinstance(U, VectorArrayInterface)
+        assert isinstance(V, VectorArray)
+        assert isinstance(U, VectorArray)
         assert len(U) == len(V)
         AU = self.apply(U, mu=mu)
         return V.pairwise_dot(AU)
@@ -55,7 +55,7 @@ class OperatorBase(OperatorInterface):
             return self
 
     def __sub__(self, other):
-        if not isinstance(other, OperatorInterface):
+        if not isinstance(other, Operator):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
         if isinstance(other, LincombOperator):
@@ -66,7 +66,7 @@ class OperatorBase(OperatorInterface):
     def __add__(self, other):
         if other == 0:
             return self
-        if not isinstance(other, OperatorInterface):
+        if not isinstance(other, Operator):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
         if isinstance(other, LincombOperator):
@@ -77,13 +77,13 @@ class OperatorBase(OperatorInterface):
     __radd__ = __add__
 
     def __mul__(self, other):
-        if not isinstance(other, (Number, ParameterFunctionalInterface)):
+        if not isinstance(other, (Number, ParameterFunctional)):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
         return LincombOperator([self], [other])
 
     def __matmul__(self, other):
-        if not isinstance(other, OperatorInterface):
+        if not isinstance(other, Operator):
             return NotImplemented
         from pymor.operators.constructions import Concatenation
         if isinstance(other, Concatenation):
@@ -299,11 +299,11 @@ class ProjectedOperator(OperatorBase):
     linear = False
 
     def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None):
-        assert isinstance(operator, OperatorInterface)
+        assert isinstance(operator, Operator)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
         assert (product is None
-                or (isinstance(product, OperatorInterface)
+                or (isinstance(product, Operator)
                     and range_basis is not None
                     and operator.range == product.source
                     and product.range == product.source))

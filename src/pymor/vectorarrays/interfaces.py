@@ -12,7 +12,7 @@ from pymor.tools.deprecated import Deprecated
 from pymor.tools.random import get_random_state
 
 
-class VectorArrayInterface(BasicObject):
+class VectorArray(BasicObject):
     """Interface for vector arrays.
 
     A vector array should be thought of as a list of (possibly high-dimensional) vectors.
@@ -22,21 +22,21 @@ class VectorArrayInterface(BasicObject):
 
     It is assumed that the number of vectors is small enough such that scalar data
     associated to each vector can be handled on the Python side. As such, methods like
-    :meth:`~VectorArrayInterface.l2_norm` or :meth:`~VectorArrayInterface.gramian` will
+    :meth:`~VectorArray.l2_norm` or :meth:`~VectorArray.gramian` will
     always return |NumPy arrays|.
 
-    An implementation of the `VectorArrayInterface` via |NumPy arrays| is given by
+    An implementation of the `VectorArray` via |NumPy arrays| is given by
     |NumpyVectorArray|.  In general, it is the implementors decision how memory is
     allocated internally (e.g.  continuous block of memory vs. list of pointers to the
     individual vectors.) Thus, no general assumptions can be made on the costs of operations
     like appending to or removing vectors from the array. As a hint for 'continuous block
-    of memory' implementations, :meth:`~VectorSpaceInterface.zeros` provides a `reserve`
+    of memory' implementations, :meth:`~VectorSpace.zeros` provides a `reserve`
     keyword argument which allows to specify to what size the array is assumed to grow.
 
     As with |Numpy array|, |VectorArrays| can be indexed with numbers, slices and
     lists or one-dimensional |NumPy arrays|. Indexing will always return a new
     |VectorArray| which acts as a view into the original data. Thus, if the indexed
-    array is modified via :meth:`~VectorArrayInterface.scal` or :meth:`~VectorArrayInterface.axpy`,
+    array is modified via :meth:`~VectorArray.scal` or :meth:`~VectorArray.axpy`,
     the vectors in the original array will be changed. Indices may be negative, in
     which case the vector is selected by counting from the end of the array. Moreover
     indices can be repeated, in which case the corresponding vector is selected several
@@ -46,8 +46,8 @@ class VectorArrayInterface(BasicObject):
         It is disallowed to append vectors to a |VectorArray| view or to remove
         vectors from it. Removing vectors from an array with existing views
         will lead to undefined behavior of these views. As such, it is generally
-        advisable to make a :meth:`~VectorArrayInterface.copy` of a view for long
-        term storage. Since :meth:`~VectorArrayInterface.copy` has copy-on-write
+        advisable to make a :meth:`~VectorArray.copy` of a view for long
+        term storage. Since :meth:`~VectorArray.copy` has copy-on-write
         semantics, this will usually cause little overhead.
 
     Attributes
@@ -618,7 +618,7 @@ class VectorArrayInterface(BasicObject):
                 return [ind[ind_ind]]
 
 
-class VectorSpaceInterface(ImmutableObject):
+class VectorSpace(ImmutableObject):
     """Class describing a vector space.
 
     Vector spaces act as factories for |VectorArrays| of vectors
@@ -628,15 +628,15 @@ class VectorSpaceInterface(ImmutableObject):
     PDE solver).
 
     New |VectorArrays| of null vectors are created via
-    :meth:`~VectorSpaceInterface.zeros`.  The
-    :meth:`~VectorSpaceInterface.make_array` method builds a new
+    :meth:`~VectorSpace.zeros`.  The
+    :meth:`~VectorSpace.make_array` method builds a new
     |VectorArray| from given raw data of the underlying linear algebra
     backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
     Some vector spaces can create new |VectorArrays| from a given
-    |Numpy array| via the :meth:`~VectorSpaceInterface.from_numpy`
+    |Numpy array| via the :meth:`~VectorSpace.from_numpy`
     method.
 
-    Each vector space has a string :attr:`~VectorSpaceInterface.id`
+    Each vector space has a string :attr:`~VectorSpace.id`
     to distinguish mathematically different spaces appearing
     in the formulation of a given problem.
 

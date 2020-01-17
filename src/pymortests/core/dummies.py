@@ -110,7 +110,7 @@ class BoringTestClass(BasicObject):
         """I'm used in testing whether contracts can distinguish
         between equally named classes in different modules
 
-        :type dirichletA: pymor.discretizers.builtin.grids.interfaces.BoundaryInfoInterface
+        :type dirichletA: pymor.discretizers.builtin.grids.interfaces.BoundaryInfo
         :type dirichletB: pymortests.core.dummies.AllDirichletBoundaryInfo
         """
         return dirichletA != dirichletB

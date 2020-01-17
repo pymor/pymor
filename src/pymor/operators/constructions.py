@@ -15,11 +15,11 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import ImmutableObject
 from pymor.operators.basic import OperatorBase
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interfaces import Operator
 from pymor.parameters.base import Parametric
 from pymor.parameters.functionals import ConjugateParameterFunctional
-from pymor.parameters.interfaces import ParameterFunctionalInterface
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface
+from pymor.parameters.interfaces import ParameterFunctional
+from pymor.vectorarrays.interfaces import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -45,8 +45,8 @@ class LincombOperator(OperatorBase):
     def __init__(self, operators, coefficients, solver_options=None, name=None):
         assert len(operators) > 0
         assert len(operators) == len(coefficients)
-        assert all(isinstance(op, OperatorInterface) for op in operators)
-        assert all(isinstance(c, (ParameterFunctionalInterface, Number)) for c in coefficients)
+        assert all(isinstance(op, Operator) for op in operators)
+        assert all(isinstance(c, (ParameterFunctional, Number)) for c in coefficients)
         assert all(op.source == operators[0].source for op in operators[1:])
         assert all(op.range == operators[0].range for op in operators[1:])
         operators = tuple(operators)
@@ -57,14 +57,14 @@ class LincombOperator(OperatorBase):
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
         self.build_parameter_type(*chain(operators,
-                                         (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
+                                         (f for f in coefficients if isinstance(f, ParameterFunctional))))
 
     @property
     def H(self):
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
                    'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
         return self.with_(operators=[op.H for op in self.operators], solver_options=options,
-                          coefficients=[ConjugateParameterFunctional(c) if isinstance(c, ParameterFunctionalInterface)
+                          coefficients=[ConjugateParameterFunctional(c) if isinstance(c, ParameterFunctional)
                                         else np.conj(c)
                                         for c in self.coefficients],
                           name=self.name + '_adjoint')
@@ -212,7 +212,7 @@ class LincombOperator(OperatorBase):
         return self._as_array(True, mu)
 
     def _add_sub(self, other, sign):
-        if not isinstance(other, OperatorInterface):
+        if not isinstance(other, Operator):
             return NotImplemented
 
         if self.name != 'LincombOperator':
@@ -231,7 +231,7 @@ class LincombOperator(OperatorBase):
         return LincombOperator(operators, coefficients, solver_options=self.solver_options)
 
     def _radd_sub(self, other, sign):
-        if not isinstance(other, OperatorInterface):
+        if not isinstance(other, Operator):
             return NotImplemented
 
         # note that 'other' can never be a LincombOperator
@@ -256,7 +256,7 @@ class LincombOperator(OperatorBase):
         return self._radd_sub(other, -1.)
 
     def __mul__(self, other):
-        assert isinstance(other, (Number, ParameterFunctionalInterface))
+        assert isinstance(other, (Number, ParameterFunctional))
         if self.name != 'LincombOperator':
             return LincombOperator((self,), (other,))
         else:
@@ -279,7 +279,7 @@ class Concatenation(OperatorBase):
     """
 
     def __init__(self, operators, solver_options=None, name=None):
-        assert all(isinstance(op, OperatorInterface) for op in operators)
+        assert all(isinstance(op, Operator) for op in operators)
         assert all(operators[i].source == operators[i+1].range for i in range(len(operators)-1))
         operators = tuple(operators)
 
@@ -325,7 +325,7 @@ class Concatenation(OperatorBase):
         return Concatenation(restricted_ops), dofs
 
     def __matmul__(self, other):
-        if not isinstance(other, OperatorInterface):
+        if not isinstance(other, Operator):
             return NotImplemented
 
         if self.name != 'Concatenation':
@@ -341,7 +341,7 @@ class Concatenation(OperatorBase):
         return Concatenation(operators, solver_options=self.solver_options)
 
     def __rmatmul__(self, other):
-        if not isinstance(other, OperatorInterface):
+        if not isinstance(other, Operator):
             return NotImplemented
 
         # note that 'other' can never be a Concatenation
@@ -379,8 +379,8 @@ class LowRankOperator(OperatorBase):
     linear = True
 
     def __init__(self, left, core, right, inverted=False, solver_options=None, name=None):
-        assert isinstance(left, VectorArrayInterface)
-        assert isinstance(right, VectorArrayInterface)
+        assert isinstance(left, VectorArray)
+        assert isinstance(right, VectorArray)
         assert len(left) == len(right)
         assert (isinstance(core, np.ndarray)
                 and core.ndim == 2
@@ -510,7 +510,7 @@ class ComponentProjection(OperatorBase):
     ----------
     components
         List or 1D |NumPy array| of the indices of the vector
-        :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.components` that are
+        :meth:`~pymor.vectorarrays.interfaces.VectorArray.components` that are
         to be extracted by the operator.
     source
         Source |VectorSpace| of the operator.
@@ -603,7 +603,7 @@ class ConstantOperator(OperatorBase):
     linear = False
 
     def __init__(self, value, source, name=None):
-        assert isinstance(value, VectorArrayInterface)
+        assert isinstance(value, VectorArray)
         assert len(value) == 1
         value = value.copy()
 
@@ -646,8 +646,8 @@ class ZeroOperator(OperatorBase):
     linear = True
 
     def __init__(self, range, source, name=None):
-        assert isinstance(range, VectorSpaceInterface)
-        assert isinstance(source, VectorSpaceInterface)
+        assert isinstance(range, VectorSpace)
+        assert isinstance(source, VectorSpace)
         self.__auto_init(locals())
 
     @property
@@ -784,7 +784,7 @@ class VectorOperator(VectorArrayOperator):
     source = NumpyVectorSpace(1)
 
     def __init__(self, vector, name=None):
-        assert isinstance(vector, VectorArrayInterface)
+        assert isinstance(vector, VectorArray)
         assert len(vector) == 1
         super().__init__(vector, adjoint=False, name=name)
         self.vector = self.array  # do not init with vector arg, as vector gets copied in VectorArrayOperator.__init__
@@ -823,9 +823,9 @@ class VectorFunctional(VectorArrayOperator):
     range = NumpyVectorSpace(1)
 
     def __init__(self, vector, product=None, name=None):
-        assert isinstance(vector, VectorArrayInterface)
+        assert isinstance(vector, VectorArray)
         assert len(vector) == 1
-        assert product is None or isinstance(product, OperatorInterface) and vector in product.source
+        assert product is None or isinstance(product, Operator) and vector in product.source
         if product is None:
             super().__init__(vector, adjoint=True, name=name)
         else:
@@ -848,7 +848,7 @@ class ProxyOperator(OperatorBase):
     """
 
     def __init__(self, operator, name=None):
-        assert isinstance(operator, OperatorInterface)
+        assert isinstance(operator, Operator)
         self.__auto_init(locals())
         self.source = operator.source
         self.range = operator.range
@@ -888,7 +888,7 @@ class FixedParameterOperator(ProxyOperator):
         The |Operator| to wrap.
     mu
         The fixed |Parameter| that will be fed to the
-        :meth:`~pymor.operators.interfaces.OperatorInterface.apply` method
+        :meth:`~pymor.operators.interfaces.Operator.apply` method
         (and related methods) of `operator`.
     """
 
@@ -948,7 +948,7 @@ class InverseOperator(OperatorBase):
     """
 
     def __init__(self, operator, name=None):
-        assert isinstance(operator, OperatorInterface)
+        assert isinstance(operator, Operator)
         name or operator.name + '_inverse'
 
         self.__auto_init(locals())
@@ -992,7 +992,7 @@ class InverseAdjointOperator(OperatorBase):
     linear = True
 
     def __init__(self, operator, name=None):
-        assert isinstance(operator, OperatorInterface)
+        assert isinstance(operator, Operator)
         assert operator.linear
         name = name or operator.name + '_inverse_adjoint'
 
@@ -1036,7 +1036,7 @@ class AdjointOperator(OperatorBase):
 
     Thus, if `( , )_s` and `( , )_r` are the Euclidean inner products,
     `op^*v` is simply given by application of the
-    :attr:adjoint <pymor.operators.interface.OperatorInterface.H>`
+    :attr:adjoint <pymor.operators.interface.Operator.H>`
     |Operator|.
 
     Parameters
@@ -1052,11 +1052,11 @@ class AdjointOperator(OperatorBase):
     name
         If not `None`, name of the operator.
     with_apply_inverse
-        If `True`, provide own :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse`
-        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_adjoint`
+        If `True`, provide own :meth:`~pymor.operators.interfaces.Operator.apply_inverse`
+        and :meth:`~pymor.operators.interfaces.Operator.apply_inverse_adjoint`
         implementations by calling these methods on the given `operator`.
         (Is set to `False` in the default implementation of
-        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_adjoint`.)
+        and :meth:`~pymor.operators.interfaces.Operator.apply_inverse_adjoint`.)
     solver_options
         When `with_apply_inverse` is `False`, the |solver_options| to use for
         the `apply_inverse` default implementation.
@@ -1066,7 +1066,7 @@ class AdjointOperator(OperatorBase):
 
     def __init__(self, operator, source_product=None, range_product=None, name=None,
                  with_apply_inverse=True, solver_options=None):
-        assert isinstance(operator, OperatorInterface)
+        assert isinstance(operator, Operator)
         assert operator.linear
         assert not with_apply_inverse or solver_options is None
         name or operator.name + '_adjoint'
@@ -1159,7 +1159,7 @@ class SelectionOperator(OperatorBase):
         # check that boundaries are ascending:
         for i in range(len(boundaries)-1):
             assert boundaries[i] <= boundaries[i+1]
-        assert all(isinstance(op, OperatorInterface) for op in operators)
+        assert all(isinstance(op, Operator) for op in operators)
         assert all(op.source == operators[0].source for op in operators[1:])
         assert all(op.range == operators[0].range for op in operators[1:])
         operators = tuple(operators)

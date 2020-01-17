@@ -7,7 +7,7 @@ from pymor.parameters.base import Parametric
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class OperatorInterface(ImmutableObject, Parametric):
+class Operator(ImmutableObject, Parametric):
     """Interface for |Parameter| dependent discrete operators.
 
     An operator in pyMOR is simply a mapping which for any given
@@ -24,11 +24,11 @@ class OperatorInterface(ImmutableObject, Parametric):
         If not `None`, a dict which can contain the following keys:
 
         :'inverse':           solver options used for
-                              :meth:`~OperatorInterface.apply_inverse`
+                              :meth:`~Operator.apply_inverse`
         :'inverse_adjoint':   solver options used for
-                              :meth:`~OperatorInterface.apply_inverse_adjoint`
+                              :meth:`~Operator.apply_inverse_adjoint`
         :'jacobian':          solver options for the operators returned
-                              by :meth:`~OperatorInterface.jacobian`
+                              by :meth:`~Operator.jacobian`
                               (has no effect for linear operators)
 
         If `solver_options` is `None` or a dict entry is missing
@@ -109,7 +109,7 @@ class OperatorInterface(ImmutableObject, Parametric):
     def pairwise_apply2(self, V, U, mu=None):
         """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
-        Same as :meth:`OperatorInterface.apply2`, except that vectors from `V`
+        Same as :meth:`Operator.apply2`, except that vectors from `V`
         and `U` are applied in pairs.
 
         Parameters
@@ -133,8 +133,8 @@ class OperatorInterface(ImmutableObject, Parametric):
         """Apply the adjoint operator.
 
         For any given linear |Operator| `op`, |Parameter| `mu` and
-        |VectorArrays| `U`, `V` in the :attr:`~OperatorInterface.source`
-        resp. :attr:`~OperatorInterface.range` we have::
+        |VectorArrays| `U`, `V` in the :attr:`~Operator.source`
+        resp. :attr:`~Operator.range` we have::
 
             op.apply_adjoint(V, mu).dot(U) == V.dot(op.apply(U, mu))
 
@@ -261,8 +261,8 @@ class OperatorInterface(ImmutableObject, Parametric):
         """Return a |VectorArray| representation of the operator in its range space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~OperatorInterface.source`, this method returns for every |Parameter|
-        `mu` a |VectorArray| `V` in the operator's :attr:`~OperatorInterface.range`,
+        :attr:`~Operator.source`, this method returns for every |Parameter|
+        `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.range`,
         such that ::
 
             V.lincomb(U.to_numpy()) == self.apply(U, mu)
@@ -286,8 +286,8 @@ class OperatorInterface(ImmutableObject, Parametric):
         """Return a |VectorArray| representation of the operator in its source space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~OperatorInterface.range`, this method returns for every |Parameter|
-        `mu` a |VectorArray| `V` in the operator's :attr:`~OperatorInterface.source`,
+        :attr:`~Operator.range`, this method returns for every |Parameter|
+        `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.source`,
         such that ::
 
             self.range.make_array(V.dot(U).T) == self.apply(U, mu)
@@ -310,9 +310,9 @@ class OperatorInterface(ImmutableObject, Parametric):
     def as_vector(self, mu=None):
         """Return a vector representation of a linear functional or vector operator.
 
-        Depending on the operator's :attr:`~OperatorInterface.source` and
-        :attr:`~OperatorInterface.range`, this method is equivalent to calling
-        :meth:`~OperatorInterface.as_range_array` or :meth:`~OperatorInterface.as_source_array`
+        Depending on the operator's :attr:`~Operator.source` and
+        :attr:`~Operator.range`, this method is equivalent to calling
+        :meth:`~Operator.as_range_array` or :meth:`~Operator.as_source_array`
         respectively. The resulting |VectorArray| is required to have length 1.
 
         Parameters
@@ -412,14 +412,14 @@ class OperatorInterface(ImmutableObject, Parametric):
         ----------
         dofs
             One-dimensional |NumPy array| of degrees of freedom in the operator
-            :attr:`~OperatorInterface.range` to which to restrict.
+            :attr:`~Operator.range` to which to restrict.
 
         Returns
         -------
         restricted_op
             The restricted operator as defined above. The operator will have
-            |NumpyVectorSpace| `(len(source_dofs))` as :attr:`~OperatorInterface.source`
-            and |NumpyVectorSpace| `(len(dofs))` as :attr:`~OperatorInterface.range`.
+            |NumpyVectorSpace| `(len(source_dofs))` as :attr:`~Operator.source`
+            and |NumpyVectorSpace| `(len(dofs))` as :attr:`~Operator.range`.
         source_dofs
             One-dimensional |NumPy array| of source degrees of freedom as
             defined above.

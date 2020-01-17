@@ -10,10 +10,10 @@ import numpy as np
 from pymor.core.interfaces import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
 from pymor.parameters.functionals import ExpressionParameterFunctional
-from pymor.parameters.interfaces import ParameterFunctionalInterface
+from pymor.parameters.interfaces import ParameterFunctional
 
 
-class FunctionInterface(ImmutableObject, Parametric):
+class Function(ImmutableObject, Parametric):
     """Interface for |Parameter| dependent analytical functions.
 
     Every |Function| is a map of the form ::
@@ -50,17 +50,17 @@ class FunctionInterface(ImmutableObject, Parametric):
         pass
 
     def __call__(self, x, mu=None):
-        """Shorthand for :meth:`~FunctionInterface.evaluate`."""
+        """Shorthand for :meth:`~Function.evaluate`."""
         return self.evaluate(x, mu)
 
 
-class FunctionBase(FunctionInterface):
+class FunctionBase(Function):
     """Base class for |Functions| providing some common functionality."""
 
     def __add__(self, other):
         if isinstance(other, Number) and other == 0:
             return self
-        elif not isinstance(other, FunctionInterface):
+        elif not isinstance(other, Function):
             other = np.array(other)
             assert other.shape == self.shape_range
             if np.all(other == 0.):
@@ -71,15 +71,15 @@ class FunctionBase(FunctionInterface):
     __radd__ = __add__
 
     def __sub__(self, other):
-        if isinstance(other, FunctionInterface):
+        if isinstance(other, Function):
             return LincombFunction([self, other], [1., -1.])
         else:
             return self + (- np.array(other))
 
     def __mul__(self, other):
-        if isinstance(other, (Number, ParameterFunctionalInterface)):
+        if isinstance(other, (Number, ParameterFunctional)):
             return LincombFunction([self], [other])
-        if isinstance(other, FunctionInterface):
+        if isinstance(other, Function):
             return ProductFunction([self, other])
         return NotImplemented
 
@@ -249,13 +249,13 @@ class LincombFunction(FunctionBase):
     def __init__(self, functions, coefficients, name=None):
         assert len(functions) > 0
         assert len(functions) == len(coefficients)
-        assert all(isinstance(f, FunctionInterface) for f in functions)
-        assert all(isinstance(c, (ParameterFunctionalInterface, Number)) for c in coefficients)
+        assert all(isinstance(f, Function) for f in functions)
+        assert all(isinstance(c, (ParameterFunctional, Number)) for c in coefficients)
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
         self.__auto_init(locals())
         self.build_parameter_type(*chain(functions,
-                                         (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
+                                         (f for f in coefficients if isinstance(f, ParameterFunctional))))
         self.dim_domain = functions[0].dim_domain
         self.shape_range = functions[0].shape_range
 
@@ -287,7 +287,7 @@ class ProductFunction(FunctionBase):
 
     def __init__(self, functions, name=None):
         assert len(functions) > 0
-        assert all(isinstance(f, FunctionInterface) for f in functions)
+        assert all(isinstance(f, Function) for f in functions)
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
         self.__auto_init(locals())

@@ -7,10 +7,10 @@ import weakref
 import numpy as np
 
 from pymor.discretizers.builtin.grids.boundaryinfos import GenericBoundaryInfo
-from pymor.discretizers.builtin.grids.interfaces import AffineGridInterface
+from pymor.discretizers.builtin.grids.interfaces import AffineGrid
 
 
-class SubGrid(AffineGridInterface):
+class SubGrid(AffineGrid):
     """A subgrid of a |Grid|.
 
     Given a |Grid| and a list of codim-0 entities we construct the minimal
@@ -38,7 +38,7 @@ class SubGrid(AffineGridInterface):
         assert parent_grid is not None, \
             'parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n' \
             'on a SubGrid for which the parent grid has been destroyed?'
-        assert isinstance(parent_grid, AffineGridInterface)
+        assert isinstance(parent_grid, AffineGrid)
         self.dim = parent_grid.dim
         self.reference_element = parent_grid.reference_element
 

@@ -7,13 +7,13 @@ from pymor.core.interfaces import abstractmethod
 from pymor.parameters.base import Parametric
 
 
-class ModelInterface(CacheableObject, Parametric):
+class Model(CacheableObject, Parametric):
     """Interface for model objects.
 
     A model object defines a discrete problem
     via its `class` and the |Operators| it contains.
     Furthermore, models can be
-    :meth:`solved <ModelInterface.solve>` for a given
+    :meth:`solved <Model.solve>` for a given
     |Parameter| resulting in a solution |VectorArray|.
 
     Attributes
@@ -101,7 +101,7 @@ class ModelInterface(CacheableObject, Parametric):
         Parameters
         ----------
         U
-            The |VectorArray| from :attr:`~ModelInterface.solution_space`
+            The |VectorArray| from :attr:`~Model.solution_space`
             that shall be visualized.
         """
         raise NotImplementedError

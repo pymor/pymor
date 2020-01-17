@@ -8,7 +8,7 @@ from pymor.core.interfaces import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
 
 
-class ParameterSpaceInterface(ImmutableObject):
+class ParameterSpace(ImmutableObject):
     """Interface for |Parameter| spaces.
 
     Attributes
@@ -25,7 +25,7 @@ class ParameterSpaceInterface(ImmutableObject):
         pass
 
 
-class ParameterFunctionalInterface(ImmutableObject, Parametric):
+class ParameterFunctional(ImmutableObject, Parametric):
     """Interface for |Parameter| functionals.
 
     A parameter functional is simply a function mapping a |Parameter| to
@@ -59,7 +59,7 @@ class ParameterFunctionalInterface(ImmutableObject, Parametric):
 
     def __mul__(self, other):
         from pymor.parameters.functionals import ProductParameterFunctional
-        if not isinstance(other, (Number, ParameterFunctionalInterface)):
+        if not isinstance(other, (Number, ParameterFunctional)):
             return NotImplemented
         return ProductParameterFunctional([self, other])
 

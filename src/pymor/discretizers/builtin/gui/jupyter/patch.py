@@ -5,7 +5,7 @@ import numpy as np
 
 from pymor.core.config import config
 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interfaces import VectorArray
 
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
@@ -42,11 +42,11 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         at the same time.
     """
 
-    assert isinstance(U, VectorArrayInterface) \
+    assert isinstance(U, VectorArray) \
         or (isinstance(U, tuple)
-            and all(isinstance(u, VectorArrayInterface) for u in U)
+            and all(isinstance(u, VectorArray) for u in U)
             and all(len(u) == len(U[0]) for u in U))
-    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArrayInterface) else \
+    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
         tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
 
     if not config.HAVE_MATPLOTLIB:

@@ -212,7 +212,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         Initial solution. If `None` the initial solution is obtained
         from parameter file.
     time_stepper
-        The desired :class:`time stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
+        The desired :class:`time stepper <pymor.algorithms.timestepping.TimeStepper>`
         to use. If `None`, implicit Euler time stepping is used.
 
     Returns

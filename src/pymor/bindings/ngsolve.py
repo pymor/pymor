@@ -11,7 +11,7 @@ if config.HAVE_NGSOLVE:
 
     from pymor.core.interfaces import ImmutableObject
     from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase
-    from pymor.vectorarrays.interfaces import VectorArrayInterface
+    from pymor.vectorarrays.interfaces import VectorArray
     from pymor.vectorarrays.numpy import NumpyVectorSpace
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 
@@ -165,7 +165,7 @@ if config.HAVE_NGSOLVE:
 
         def visualize(self, U, m, legend=None, separate_colorbars=True, block=True):
             """Visualize the provided data."""
-            if isinstance(U, VectorArrayInterface):
+            if isinstance(U, VectorArray):
                 U = (U,)
             assert all(u in self.space for u in U)
             if any(len(u) != 1 for u in U):

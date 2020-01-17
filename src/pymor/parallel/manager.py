@@ -10,7 +10,7 @@ class RemoteObjectManager(BasicObject):
 
     When leaving this context, all |RemoteObjects| that have been
     :meth:`managed <manage>` by this object will be
-    :meth:`removed <pymor.parallel.interfaces.RemoteObjectInterface.remove>`.
+    :meth:`removed <pymor.parallel.interfaces.RemoteObject.remove>`.
     """
 
     def __init__(self):
@@ -26,7 +26,7 @@ class RemoteObjectManager(BasicObject):
         self.remove_objects()
 
     def remove_objects(self):
-        """Call :meth:`~pymor.parallel.interfaces.RemoteObjectInterface.remove` for all managed objects."""
+        """Call :meth:`~pymor.parallel.interfaces.RemoteObject.remove` for all managed objects."""
         for obj in self.remote_objects:
             obj.remove()
         del self.remote_objects[:]

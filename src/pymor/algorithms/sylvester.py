@@ -5,7 +5,7 @@
 import scipy.linalg as spla
 
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interfaces import Operator
 from pymor.operators.constructions import IdentityOperator
 
 
@@ -65,13 +65,13 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         If `V` and `W` cannot be returned.
     """
     # check types
-    assert isinstance(A, OperatorInterface) and A.linear and A.source == A.range
-    assert isinstance(Ar, OperatorInterface) and Ar.linear and Ar.source == Ar.range
+    assert isinstance(A, Operator) and A.linear and A.source == A.range
+    assert isinstance(Ar, Operator) and Ar.linear and Ar.source == Ar.range
 
-    assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+    assert E is None or isinstance(E, Operator) and E.linear and E.source == E.range == A.source
     if E is None:
         E = IdentityOperator(A.source)
-    assert Er is None or isinstance(Er, OperatorInterface) and Er.linear and Er.source == Er.range == Ar.source
+    assert Er is None or isinstance(Er, Operator) and Er.linear and Er.source == Er.range == Ar.source
 
     compute_V = B is not None and Br is not None
     compute_W = C is not None and Cr is not None
@@ -80,13 +80,13 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         raise ValueError('Not enough parameters are given to solve a Sylvester equation.')
 
     if compute_V:
-        assert isinstance(B, OperatorInterface) and B.linear and B.range == A.source
-        assert isinstance(Br, OperatorInterface) and Br.linear and Br.range == Ar.source
+        assert isinstance(B, Operator) and B.linear and B.range == A.source
+        assert isinstance(Br, Operator) and Br.linear and Br.range == Ar.source
         assert B.source == Br.source
 
     if compute_W:
-        assert isinstance(C, OperatorInterface) and C.linear and C.source == A.source
-        assert isinstance(Cr, OperatorInterface) and Cr.linear and Cr.source == Ar.source
+        assert isinstance(C, Operator) and C.linear and C.source == A.source
+        assert isinstance(Cr, Operator) and Cr.linear and Cr.source == Ar.source
         assert C.range == Cr.range
 
     # convert reduced operators

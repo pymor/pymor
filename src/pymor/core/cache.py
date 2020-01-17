@@ -150,8 +150,8 @@ class MemoryRegion(CacheRegion):
         if value is self.NO_VALUE:
             return False, None
         else:
-            from pymor.vectorarrays.interfaces import VectorArrayInterface
-            if isinstance(value, VectorArrayInterface):
+            from pymor.vectorarrays.interfaces import VectorArray
+            if isinstance(value, VectorArray):
                 value = value.copy()
             return True, value
 

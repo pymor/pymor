@@ -10,8 +10,8 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.operators.interfaces import OperatorInterface
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.operators.interfaces import Operator
+from pymor.vectorarrays.interfaces import VectorArray
 
 
 @defaults('rtol', 'atol', 'l2_err', 'method', 'orth_tol')
@@ -71,8 +71,8 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
         warnings.warn("pod signature has changed. Provide 'modes' as keyword argument.",
                       DeprecationWarning, stacklevel=3)
 
-    assert isinstance(A, VectorArrayInterface)
-    assert product is None or isinstance(product, OperatorInterface)
+    assert isinstance(A, VectorArray)
+    assert product is None or isinstance(product, Operator)
     assert modes is None or modes <= len(A)
     assert method in ('method_of_snapshots', 'qr_svd')
 

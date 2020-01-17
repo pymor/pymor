@@ -6,7 +6,7 @@ from collections import Iterable, Mapping, OrderedDict
 
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.core.interfaces import BasicObject, UberMeta, abstractmethod, classinstancemethod
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interfaces import Operator
 from pymor.tools.table import format_table
 
 
@@ -330,10 +330,10 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         for k in obj._init_arguments:
             try:
                 v = getattr(obj, k)
-                if (isinstance(v, OperatorInterface)
-                    or isinstance(v, Mapping) and all(isinstance(vv, OperatorInterface)
+                if (isinstance(v, Operator)
+                    or isinstance(v, Mapping) and all(isinstance(vv, Operator)
                                                       or vv is None for vv in v.values())
-                    or isinstance(v, Iterable) and type(v) is not str and all(isinstance(vv, OperatorInterface)
+                    or isinstance(v, Iterable) and type(v) is not str and all(isinstance(vv, Operator)
                                                                               or vv is None for vv in v)):
                     children.add(k)
             except AttributeError:

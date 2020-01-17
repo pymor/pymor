@@ -2,12 +2,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""This module contains a base class for implementing WorkerPoolInterface."""
+"""This module contains a base class for implementing WorkerPool."""
 
 import weakref
 
 from pymor.core.interfaces import ImmutableObject
-from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
+from pymor.parallel.interfaces import WorkerPool, RemoteObject
 
 
 class WorkerPoolDefaultImplementations:
@@ -38,7 +38,7 @@ class WorkerPoolDefaultImplementations:
         return remote_l
 
 
-class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
+class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPool):
 
     def __init__(self):
         self._pushed_immutable_objects = {}
@@ -95,7 +95,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         return chunks
 
 
-class RemoteObject(RemoteObjectInterface):
+class RemoteObject(RemoteObject):
 
     def __init__(self, pool, remote_id, uid=None):
         self.pool = weakref.ref(pool)

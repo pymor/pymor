@@ -2,15 +2,15 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.algorithms.timestepping import TimeStepperInterface
-from pymor.models.interfaces import ModelInterface
+from pymor.algorithms.timestepping import TimeStepper
+from pymor.models.interfaces import Model
 from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.tools.formatrepr import indent_value
 from pymor.tools.frozendict import FrozenDict
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interfaces import VectorArray
 
 
-class ModelBase(ModelInterface):
+class ModelBase(Model):
     """Base class for |Models| providing some common functionality."""
 
     def __init__(self, products=None, estimator=None, visualizer=None,
@@ -32,7 +32,7 @@ class ModelBase(ModelInterface):
         ----------
         U
             The |VectorArray| from
-            :attr:`~pymor.models.interfaces.ModelInterface.solution_space`
+            :attr:`~pymor.models.interfaces.Model.solution_space`
             that shall be visualized.
         kwargs
             See docstring of `self.visualizer.visualize`.
@@ -99,7 +99,7 @@ class StationaryModel(ModelBase):
     def __init__(self, operator, rhs, output_functional=None, products=None,
                  parameter_space=None, estimator=None, visualizer=None, name=None):
 
-        if isinstance(rhs, VectorArrayInterface):
+        if isinstance(rhs, VectorArray):
             assert rhs in operator.range
             rhs = VectorOperator(rhs, name='rhs')
 
@@ -170,8 +170,8 @@ class InstationaryModel(ModelBase):
     mass
         The mass |Operator| `M`. If `None`, the identity is assumed.
     time_stepper
-        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
-        to be used by :meth:`~pymor.models.interfaces.ModelInterface.solve`.
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+        to be used by :meth:`~pymor.models.interfaces.Model.solve`.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
@@ -205,14 +205,14 @@ class InstationaryModel(ModelBase):
                  output_functional=None, products=None, parameter_space=None, estimator=None, visualizer=None,
                  name=None):
 
-        if isinstance(rhs, VectorArrayInterface):
+        if isinstance(rhs, VectorArray):
             assert rhs in operator.range
             rhs = VectorOperator(rhs, name='rhs')
-        if isinstance(initial_data, VectorArrayInterface):
+        if isinstance(initial_data, VectorArray):
             assert initial_data in operator.source
             initial_data = VectorOperator(initial_data, name='initial_data')
 
-        assert isinstance(time_stepper, TimeStepperInterface)
+        assert isinstance(time_stepper, TimeStepper)
         assert initial_data.source.is_scalar
         assert operator.source == initial_data.range
         assert rhs is None \

@@ -7,44 +7,44 @@
 # define substitutions for all important interface classes
 interfaces = '''
 
-.. |AffineGrids| replace:: :class:`AffineGrids <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
-.. |AffineGrid| replace:: :class:`AffineGrid <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
+.. |AffineGrids| replace:: :class:`AffineGrids <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
+.. |AffineGrid| replace:: :class:`AffineGrid <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
 .. |BasicObject| replace:: :class:`~pymor.core.interfaces.BasicObject`
-.. |BoundaryInfo| replace:: :class:`BoundaryInfo <pymor.discretizers.builtin.grids.interfaces.BoundaryInfoInterface>`
-.. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.discretizers.builtin.grids.interfaces.BoundaryInfoInterface>`
-.. |ConformalTopologicalGrids| replace:: :class:`ConformalTopologicalGrids <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGridInterface>`
-.. |ConformalTopologicalGrid| replace:: :class:`ConformalTopologicalGrid <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGridInterface>`
-.. |Models| replace:: :class:`Models <pymor.models.interfaces.ModelInterface>`
-.. |Model| replace:: :class:`Model <pymor.models.interfaces.ModelInterface>`
-.. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.analyticalproblems.domaindescriptions.DomainDescriptionInterface>`
-.. |DomainDescription| replace:: :class:`DomainDescription <pymor.analyticalproblems.domaindescriptions.DomainDescriptionInterface>`
-.. |Functionals| replace:: :class:`Functionals <pymor.operators.interfaces.OperatorInterface>`
-.. |Functional| replace:: :class:`Functional <pymor.operators.interfaces.OperatorInterface>`
-.. |Functions| replace:: :class:`Functions <pymor.analyticalproblems.functions.FunctionInterface>`
-.. |Function| replace:: :class:`Function <pymor.analyticalproblems.functions.FunctionInterface>`
-.. |Grid| replace:: :class:`Grid <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
-.. |Grids| replace:: :class:`Grids <pymor.discretizers.builtin.grids.interfaces.AffineGridInterface>`
+.. |BoundaryInfo| replace:: :class:`BoundaryInfo <pymor.discretizers.builtin.grids.interfaces.BoundaryInfo>`
+.. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.discretizers.builtin.grids.interfaces.BoundaryInfo>`
+.. |ConformalTopologicalGrids| replace:: :class:`ConformalTopologicalGrids <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGrid>`
+.. |ConformalTopologicalGrid| replace:: :class:`ConformalTopologicalGrid <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGrid>`
+.. |Models| replace:: :class:`Models <pymor.models.interfaces.Model>`
+.. |Model| replace:: :class:`Model <pymor.models.interfaces.Model>`
+.. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.analyticalproblems.domaindescriptions.DomainDescription>`
+.. |DomainDescription| replace:: :class:`DomainDescription <pymor.analyticalproblems.domaindescriptions.DomainDescription>`
+.. |Functionals| replace:: :class:`Functionals <pymor.operators.interfaces.Operator>`
+.. |Functional| replace:: :class:`Functional <pymor.operators.interfaces.Operator>`
+.. |Functions| replace:: :class:`Functions <pymor.analyticalproblems.functions.Function>`
+.. |Function| replace:: :class:`Function <pymor.analyticalproblems.functions.Function>`
+.. |Grid| replace:: :class:`Grid <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
+.. |Grids| replace:: :class:`Grids <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
 .. |ImmutableObject| replace:: :class:`~pymor.core.interfaces.ImmutableObject`
 .. |immutable| replace:: :class:`immutable <pymor.core.interfaces.ImmutableObject>`
 .. |Immutable| replace:: :class:`Immutable <pymor.core.interfaces.ImmutableObject>`
 .. |LincombOperators| replace:: :class:`LincombOperators <pymor.operators.constructions.LincombOperator>`
 .. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.constructions.LincombOperator>`
-.. |Operators| replace:: :class:`Operators <pymor.operators.interfaces.OperatorInterface>`
-.. |Operator| replace:: :class:`Operator <pymor.operators.interfaces.OperatorInterface>`
-.. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.interfaces.ParameterFunctionalInterface>`
-.. |ParameterFunctional| replace:: :class:`ParameterFunctional <pymor.parameters.interfaces.ParameterFunctionalInterface>`
-.. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.interfaces.ParameterSpaceInterface>`
-.. |ParameterSpaces| replace:: :class:`ParameterSpaces <pymor.parameters.interfaces.ParameterSpaceInterface>`
-.. |ReferenceElements| replace:: :class:`ReferenceElements <pymor.discretizers.builtin.grids.interfaces.ReferenceElementInterface>`
-.. |ReferenceElement| replace:: :class:`ReferenceElement <pymor.discretizers.builtin.grids.interfaces.ReferenceElementInterface>`
-.. |RemoteObject| replace:: :class:`RemoteObject <pymor.parallel.interfaces.RemoteObjectInterface>`
-.. |RemoteObjects| replace:: :class:`RemoteObjects <pymor.parallel.interfaces.RemoteObjectInterface>`
-.. |VectorArrays| replace:: :class:`VectorArrays <pymor.vectorarrays.interfaces.VectorArrayInterface>`
-.. |VectorArray| replace:: :class:`VectorArray <pymor.vectorarrays.interfaces.VectorArrayInterface>`
-.. |VectorSpace| replace:: :class:`VectorSpace <pymor.vectorarrays.interfaces.VectorSpaceInterface>`
-.. |VectorSpaces| replace:: :class:`VectorSpaces <pymor.vectorarrays.interfaces.VectorSpaceInterface>`
-.. |WorkerPool| replace:: :class:`WorkerPool <pymor.parallel.interfaces.WorkerPoolInterface>`
-.. |WorkerPools| replace:: :class:`WorkerPools <pymor.parallel.interfaces.WorkerPoolInterface>`
+.. |Operators| replace:: :class:`Operators <pymor.operators.interfaces.Operator>`
+.. |Operator| replace:: :class:`Operator <pymor.operators.interfaces.Operator>`
+.. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.interfaces.ParameterFunctional>`
+.. |ParameterFunctional| replace:: :class:`ParameterFunctional <pymor.parameters.interfaces.ParameterFunctional>`
+.. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.interfaces.ParameterSpace>`
+.. |ParameterSpaces| replace:: :class:`ParameterSpaces <pymor.parameters.interfaces.ParameterSpace>`
+.. |ReferenceElements| replace:: :class:`ReferenceElements <pymor.discretizers.builtin.grids.interfaces.ReferenceElement>`
+.. |ReferenceElement| replace:: :class:`ReferenceElement <pymor.discretizers.builtin.grids.interfaces.ReferenceElement>`
+.. |RemoteObject| replace:: :class:`RemoteObject <pymor.parallel.interfaces.RemoteObject>`
+.. |RemoteObjects| replace:: :class:`RemoteObjects <pymor.parallel.interfaces.RemoteObject>`
+.. |VectorArrays| replace:: :class:`VectorArrays <pymor.vectorarrays.interfaces.VectorArray>`
+.. |VectorArray| replace:: :class:`VectorArray <pymor.vectorarrays.interfaces.VectorArray>`
+.. |VectorSpace| replace:: :class:`VectorSpace <pymor.vectorarrays.interfaces.VectorSpace>`
+.. |VectorSpaces| replace:: :class:`VectorSpaces <pymor.vectorarrays.interfaces.VectorSpace>`
+.. |WorkerPool| replace:: :class:`WorkerPool <pymor.parallel.interfaces.WorkerPool>`
+.. |WorkerPools| replace:: :class:`WorkerPools <pymor.parallel.interfaces.WorkerPool>`
 
 '''
 
@@ -127,7 +127,7 @@ common = '''
 
 .. |OrderedDict| replace:: :class:`~collections.OrderedDict`
 
-.. |solver_options| replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
+.. |solver_options| replace:: :attr:`~pymor.operators.interfaces.Operator.solver_options`
 
 .. |RuleTable| replace:: :class:`~pymor.algorithms.rules.RuleTable`
 .. |RuleTables| replace:: :class:`RuleTables <pymor.algorithms.rules.RuleTable>`

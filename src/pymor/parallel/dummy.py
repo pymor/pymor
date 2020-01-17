@@ -5,10 +5,10 @@
 from copy import deepcopy
 
 from pymor.core.interfaces import ImmutableObject
-from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
+from pymor.parallel.interfaces import WorkerPool, RemoteObject
 
 
-class DummyPool(WorkerPoolInterface):
+class DummyPool(WorkerPool):
 
     def __len__(self):
         return 1
@@ -51,7 +51,7 @@ class DummyPool(WorkerPoolInterface):
 dummy_pool = DummyPool()
 
 
-class DummyRemoteObject(RemoteObjectInterface):
+class DummyRemoteObject(RemoteObject):
 
     def __init__(self, obj):
         self.obj = obj

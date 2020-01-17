@@ -11,12 +11,12 @@ from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import FunctionInterface, LincombFunction
+from pymor.analyticalproblems.functions import Function, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import ImmutableObject, abstractmethod
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
-from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCentersInterface
+from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
 from pymor.discretizers.builtin.grids.subgrid import SubGrid, make_sub_grid_boundary_info
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
@@ -34,7 +34,7 @@ def FVVectorSpace(grid, id='STATE'):
     return NumpyVectorSpace(grid.size(0), id)
 
 
-class NumericalConvectiveFluxInterface(ImmutableObject, Parametric):
+class NumericalConvectiveFlux(ImmutableObject, Parametric):
     """Interface for numerical convective fluxes for finite volume schemes.
 
     Numerical fluxes defined by this interfaces are functions of
@@ -70,7 +70,7 @@ class NumericalConvectiveFluxInterface(ImmutableObject, Parametric):
         pass
 
 
-class LaxFriedrichsFlux(NumericalConvectiveFluxInterface):
+class LaxFriedrichsFlux(NumericalConvectiveFlux):
     """Lax-Friedrichs numerical flux.
 
     If `f` is the analytical flux, the Lax-Friedrichs flux `F` is given
@@ -99,7 +99,7 @@ class LaxFriedrichsFlux(NumericalConvectiveFluxInterface):
                 + (U[..., 0] - U[..., 1]) * (0.5 / self.lxf_lambda)) * volumes
 
 
-class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
+class SimplifiedEngquistOsherFlux(NumericalConvectiveFlux):
     """Engquist-Osher numerical flux. Simplified Implementation for special case.
 
     For the definition of the Engquist-Osher flux see :class:`EngquistOsherFlux`.
@@ -133,7 +133,7 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
         return F_edge
 
 
-class EngquistOsherFlux(NumericalConvectiveFluxInterface):
+class EngquistOsherFlux(NumericalConvectiveFlux):
     """Engquist-Osher numerical flux.
 
     If `f` is the analytical flux, and `f'` its derivative, the Engquist-Osher flux is
@@ -207,7 +207,7 @@ class NonlinearAdvectionOperator(OperatorBase):
     boundary_info
         |BoundaryInfo| determining the Dirichlet and Neumann boundaries.
     numerical_flux
-        The :class:`NumericalConvectiveFlux <NumericalConvectiveFluxInterface>` to use.
+        The :class:`NumericalConvectiveFlux <NumericalConvectiveFlux>` to use.
     dirichlet_data
         |Function| providing the Dirichlet boundary values. If `None`, constant-zero
         boundary is assumed.
@@ -221,10 +221,10 @@ class NonlinearAdvectionOperator(OperatorBase):
 
     def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None,
                  space_id='STATE', name=None):
-        assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
+        assert dirichlet_data is None or isinstance(dirichlet_data, Function)
 
         self.__auto_init(locals())
-        if (isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet
+        if (isinstance(dirichlet_data, Function) and boundary_info.has_dirichlet
                 and not dirichlet_data.parametric):
             self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
             self._dirichlet_values = self._dirichlet_values.ravel()
@@ -730,9 +730,9 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver_options=None,
                  name=None):
         super().__init__()
-        assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
+        assert isinstance(grid, AffineGridWithOrthogonalCenters)
         assert (diffusion_function is None
-                or (isinstance(diffusion_function, FunctionInterface)
+                or (isinstance(diffusion_function, Function)
                     and diffusion_function.dim_domain == grid.dim
                     and diffusion_function.shape_range == ()))
         self.__auto_init(locals())
@@ -1036,7 +1036,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
     time_stepper
-        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
         to be used by :class:`~pymor.models.basic.InstationaryModel.solve`.
     nt
         If `time_stepper` is not specified, the number of time steps for implicit

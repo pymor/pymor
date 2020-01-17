@@ -9,10 +9,10 @@ from scipy.sparse import issparse
 
 from pymor.core.interfaces import classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values
+from pymor.vectorarrays.interfaces import VectorArray, VectorSpace, _create_random_values
 
 
-class NumpyVectorArray(VectorArrayInterface):
+class NumpyVectorArray(VectorArray):
     """|VectorArray| implementation via |NumPy arrays|.
 
     This is the default |VectorArray| type used by all |Operators|
@@ -21,8 +21,8 @@ class NumpyVectorArray(VectorArrayInterface):
 
     This class is just a thin wrapper around the underlying
     |NumPy array|. Thus, while operations like
-    :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.axpy` or
-    :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
+    :meth:`~pymor.vectorarrays.interfaces.VectorArray.axpy` or
+    :meth:`~pymor.vectorarrays.interfaces.VectorArray.dot`
     will be quite efficient, removing or appending vectors will
     be costly.
 
@@ -334,7 +334,7 @@ class NumpyVectorArray(VectorArrayInterface):
         return NumpyVectorArray(-self._array[:self._len], self.space)
 
 
-class NumpyVectorSpace(VectorSpaceInterface):
+class NumpyVectorSpace(VectorSpace):
     """|VectorSpace| of |NumpyVectorArrays|.
 
     Parameters
@@ -342,7 +342,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
     dim
         The dimension of the vectors contained in the space.
     id
-        See :attr:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id`.
+        See :attr:`~pymor.vectorarrays.interfaces.VectorSpace.id`.
     """
 
     def __init__(self, dim, id=None):

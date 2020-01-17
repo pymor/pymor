@@ -5,19 +5,19 @@
 from pymor.core.interfaces import BasicObject, abstractmethod
 
 
-class WorkerPoolInterface(BasicObject):
+class WorkerPool(BasicObject):
     """Interface for parallel worker pools.
 
     |WorkerPools| allow to easily parallelize algorithms which involve
     no or little communication between the workers at runtime. The interface
     methods give the user simple means to distribute data to
-    workers (:meth:`~WorkerPoolInterface.push`, :meth:`~WorkerPoolInterface.scatter_array`,
-    :meth:`~WorkerPoolInterface.scatter_list`) and execute functions on
-    the distributed data in parallel (:meth:`~WorkerPoolInterface.apply`),
+    workers (:meth:`~WorkerPool.push`, :meth:`~WorkerPool.scatter_array`,
+    :meth:`~WorkerPool.scatter_list`) and execute functions on
+    the distributed data in parallel (:meth:`~WorkerPool.apply`),
     collecting the return values from each function call. A
     single worker can be instructed to execute a function using the
-    :meth:`WorkerPoolInterface.apply_only` method. Finally, a parallelized
-    :meth:`~WorkerPoolInterface.map` function is available, which
+    :meth:`WorkerPool.apply_only` method. Finally, a parallelized
+    :meth:`~WorkerPool.map` function is available, which
     automatically scatters the data among the workers.
 
     All operations are performed synchronously.
@@ -33,8 +33,8 @@ class WorkerPoolInterface(BasicObject):
         """Push a copy of `obj` to  all workers of the pool.
 
         A |RemoteObject| is returned as a handle to the pushed object.
-        This object can be used as a keyword argument to :meth:`~WorkerPoolInterface.apply`,
-        :meth:`~WorkerPoolInterface.apply_only`, :meth:`~WorkerPoolInterface.map`
+        This object can be used as a keyword argument to :meth:`~WorkerPool.apply`,
+        :meth:`~WorkerPool.apply_only`, :meth:`~WorkerPool.map`
         and will then be transparently mapped to the respective copy
         of the pushed object on the worker.
 
@@ -186,16 +186,16 @@ class WorkerPoolInterface(BasicObject):
         pass
 
 
-class RemoteObjectInterface:
+class RemoteObject:
     """Handle to remote data on the workers of a |WorkerPool|.
 
-    See documentation of :class:`WorkerPoolInterface` for usage
-    of these handles in conjunction with :meth:`~WorkerPoolInterface.apply`,
-    :meth:`~WorkerPoolInterface.scatter_array`,
-    :meth:`~WorkerPoolInterface.scatter_list`.
+    See documentation of :class:`WorkerPool` for usage
+    of these handles in conjunction with :meth:`~WorkerPool.apply`,
+    :meth:`~WorkerPool.scatter_array`,
+    :meth:`~WorkerPool.scatter_list`.
 
     Remote objects can be used as a context manager: when leaving the
-    context, the remote object's :meth:`~RemoteObjectInterface.remove`
+    context, the remote object's :meth:`~RemoteObject.remove`
     method is called to ensure proper cleanup of remote resources.
 
     Attributes
@@ -219,7 +219,7 @@ class RemoteObjectInterface:
         object on the worker holds a reference to that object.
         Moreover, |immutable| objects will only be destroyed if
         :meth:`remove` has been called on *all* |RemoteObjects|
-        which refer to the object (see :meth:`~WorkerPoolInterface.push`).
+        which refer to the object (see :meth:`~WorkerPool.push`).
         """
         if self.removed:
             return

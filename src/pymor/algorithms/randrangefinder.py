@@ -8,7 +8,7 @@ from scipy.special import erfinv
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interfaces import Operator
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
@@ -54,9 +54,9 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
         |VectorArray| which contains the basis, whose span approximates the range of A.
     """
 
-    assert source_product is None or isinstance(source_product, OperatorInterface)
-    assert range_product is None or isinstance(range_product, OperatorInterface)
-    assert isinstance(A, OperatorInterface)
+    assert source_product is None or isinstance(source_product, Operator)
+    assert range_product is None or isinstance(range_product, Operator)
+    assert isinstance(A, Operator)
 
     B = A.range.empty()
 
@@ -124,9 +124,9 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
         |VectorArray| which contains the basis, whose span approximates the range of A.
     """
 
-    assert source_product is None or isinstance(source_product, OperatorInterface)
-    assert range_product is None or isinstance(range_product, OperatorInterface)
-    assert isinstance(A, OperatorInterface)
+    assert source_product is None or isinstance(source_product, Operator)
+    assert range_product is None or isinstance(range_product, Operator)
+    assert isinstance(A, Operator)
 
     R = A.source.random(l, distribution='normal')
     if iscomplex:

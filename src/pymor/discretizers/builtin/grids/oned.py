@@ -5,11 +5,11 @@
 
 import numpy as np
 
-from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCentersInterface
+from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import line
 
 
-class OnedGrid(AffineGridWithOrthogonalCentersInterface):
+class OnedGrid(AffineGridWithOrthogonalCenters):
     """One-dimensional |Grid| on an interval.
 
     Parameters
@@ -87,11 +87,11 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
             See :func:`~pymor.discretizers.builtin.gui.qt.visualize_patch`
         """
         from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
-        from pymor.vectorarrays.interfaces import VectorArrayInterface
+        from pymor.vectorarrays.interfaces import VectorArray
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
-        if isinstance(U, (np.ndarray, VectorArrayInterface)):
+        if isinstance(U, (np.ndarray, VectorArray)):
             U = (U,)
-        assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
+        assert all(isinstance(u, (np.ndarray, VectorArray)) for u in U)
         U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
                   u if isinstance(u, NumpyVectorArray) else
                   NumpyVectorSpace.make_array(u.to_numpy())

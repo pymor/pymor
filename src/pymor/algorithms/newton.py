@@ -26,7 +26,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     ----------
     operator
         The |Operator| `A`. `A` must implement the
-        :meth:`~pymor.operators.interfaces.OperatorInterface.jacobian` interface method.
+        :meth:`~pymor.operators.interfaces.Operator.jacobian` interface method.
     rhs
         |VectorArray| of length 1 containing the vector `V`.
     initial_guess

@@ -33,7 +33,7 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
     is allowed as assemble_lincomb implements `apply_inverse` for this special case.
 
     To form the linear combination of backend |Operators| (containing actual matrix data),
-    :meth:`~pymor.operators.interfaces.OperatorInterface._assemble_lincomb` will be called
+    :meth:`~pymor.operators.interfaces.Operator._assemble_lincomb` will be called
     on the first |Operator| in the linear combination.
 
     Parameters

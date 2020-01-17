@@ -20,9 +20,9 @@ from pymor.core.logger import getLogger
 from pymor.algorithms.pod import pod as pod_alg
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
-from pymor.parallel.interfaces import RemoteObjectInterface
+from pymor.parallel.interfaces import RemoteObject
 from pymor.parallel.manager import RemoteObjectManager
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interfaces import VectorArray
 
 
 def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None,
@@ -73,14 +73,14 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     """
 
     if pool:  # dispatch to parallel implemenation
-        assert isinstance(U, (VectorArrayInterface, RemoteObjectInterface))
+        assert isinstance(U, (VectorArray, RemoteObject))
         with RemoteObjectManager() as rom:
-            if isinstance(U, VectorArrayInterface):
+            if isinstance(U, VectorArray):
                 U = rom.manage(pool.scatter_array(U))
             return _parallel_ei_greedy(U, error_norm=error_norm, atol=atol, rtol=rtol,
                                        max_interpolation_dofs=max_interpolation_dofs, copy=copy, pool=pool)
 
-    assert isinstance(U, VectorArrayInterface)
+    assert isinstance(U, VectorArray)
 
     logger = getLogger('pymor.algorithms.ei.ei_greedy')
     logger.info('Generating Interpolation Data ...')
@@ -193,7 +193,7 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
             :svals: POD singular values.
     """
 
-    assert isinstance(U, VectorArrayInterface)
+    assert isinstance(U, VectorArray)
 
     logger = getLogger('pymor.algorithms.ei.deim')
     logger.info('Generating Interpolation Data ...')
@@ -350,7 +350,7 @@ def _interpolate_operators_build_evaluations(mu, fom=None, operators=None, evalu
 
 def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None, copy=True):
 
-    assert isinstance(U, RemoteObjectInterface)
+    assert isinstance(U, RemoteObject)
 
     logger = getLogger('pymor.algorithms.ei.ei_greedy')
     logger.info('Generating Interpolation Data ...')

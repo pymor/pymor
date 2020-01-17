@@ -3,11 +3,11 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
-from pymor.models.interfaces import ModelInterface
+from pymor.models.interfaces import Model
 from pymor.operators.basic import ProjectedOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation,
                                            AffineOperator, AdjointOperator, SelectionOperator)
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interfaces import Operator
 
 
 def preassemble(obj):
@@ -25,7 +25,7 @@ class PreAssembleRules(RuleTable):
     def __init__(self):
         super().__init__(use_caching=True)
 
-    @match_class(ModelInterface, AffineOperator, Concatenation, SelectionOperator)
+    @match_class(Model, AffineOperator, Concatenation, SelectionOperator)
     def action_recurse(self, op):
         return self.replace_children(op)
 
@@ -51,6 +51,6 @@ class PreAssembleRules(RuleTable):
     def action_assemble(self, op):
         return op.assemble()
 
-    @match_class(OperatorInterface)
+    @match_class(Operator)
     def action_identity(self, op):
         return op
