@@ -10,7 +10,7 @@ from scipy.linalg import solve, solve_triangular
 
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.interfaces import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -32,7 +32,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
     Since the original operator only has to be evaluated at the given interpolation
     DOFs, |EmpiricalInterpolatedOperator| calls
-    :meth:`~pymor.operators.interfaces.Operator.restricted`
+    :meth:`~pymor.operators.interface.Operator.restricted`
     to obtain a restricted version of the operator which is used
     to quickly obtain the required evaluations. If the `restricted` method, is not
     implemented, the full operator will be evaluated (which will lead to

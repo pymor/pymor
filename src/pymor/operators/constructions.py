@@ -15,7 +15,7 @@ from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.basic import OperatorBase
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 from pymor.parameters.base import Parametric
 from pymor.parameters.functionals import ConjugateParameterFunctional
 from pymor.parameters.interfaces import ParameterFunctional
@@ -888,7 +888,7 @@ class FixedParameterOperator(ProxyOperator):
         The |Operator| to wrap.
     mu
         The fixed |Parameter| that will be fed to the
-        :meth:`~pymor.operators.interfaces.Operator.apply` method
+        :meth:`~pymor.operators.interface.Operator.apply` method
         (and related methods) of `operator`.
     """
 
@@ -1052,11 +1052,11 @@ class AdjointOperator(OperatorBase):
     name
         If not `None`, name of the operator.
     with_apply_inverse
-        If `True`, provide own :meth:`~pymor.operators.interfaces.Operator.apply_inverse`
-        and :meth:`~pymor.operators.interfaces.Operator.apply_inverse_adjoint`
+        If `True`, provide own :meth:`~pymor.operators.interface.Operator.apply_inverse`
+        and :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`
         implementations by calling these methods on the given `operator`.
         (Is set to `False` in the default implementation of
-        and :meth:`~pymor.operators.interfaces.Operator.apply_inverse_adjoint`.)
+        and :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint`.)
     solver_options
         When `with_apply_inverse` is `False`, the |solver_options| to use for
         the `apply_inverse` default implementation.

@@ -7,7 +7,7 @@ import scipy.linalg as spla
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 
 _DEFAULT_LYAP_LRCF_SPARSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
                                             'lradi')

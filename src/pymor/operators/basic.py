@@ -9,7 +9,7 @@ import numpy as np
 from pymor.algorithms import genericsolvers
 from pymor.core.base import abstractmethod
 from pymor.core.exceptions import InversionError, LinAlgError
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 from pymor.parameters.interfaces import ParameterFunctional
 from pymor.vectorarrays.interfaces import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace

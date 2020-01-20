@@ -7,7 +7,7 @@ import numpy as np
 from pymor.algorithms.lyapunov import mat_eqn_sparse_min_size
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 
 _DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
                                             'lrradi')

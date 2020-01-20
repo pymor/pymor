@@ -219,7 +219,7 @@ For the reduced basis we have:
    print(RB.dim)
 
 Let us check if the reduced basis really is orthonormal with respect to
-the H1-product. For this we use the :meth:`~pymor.operators.interfaces.Operator.apply2`
+the H1-product. For this we use the :meth:`~pymor.operators.interface.Operator.apply2`
 method:
 
 .. nbplot::

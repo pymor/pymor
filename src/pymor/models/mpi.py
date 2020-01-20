@@ -6,7 +6,7 @@ from collections import namedtuple
 
 from pymor.core.base import ImmutableObject
 from pymor.models.interface import Model
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 from pymor.operators.mpi import mpi_wrap_operator
 from pymor.tools import mpi
 from pymor.vectorarrays.mpi import MPIVectorSpace

@@ -12,7 +12,7 @@ from pymor.operators.constructions import (LincombOperator, Concatenation, Const
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
                                            IdentityOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 

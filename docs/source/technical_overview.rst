@@ -57,7 +57,7 @@ operating on objects of the following types:
     the same |VectorSpace|. If a |VectorArray| is contained in a given
     |VectorSpace| can be tested with the `in` operator.
     
-    .. |apply|            replace:: :meth:`~pymor.operators.interfaces.Operator.apply`
+    .. |apply|            replace:: :meth:`~pymor.operators.interface.Operator.apply`
     .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interfaces.VectorArray.append>`
     .. |axpy|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArray.axpy`
     .. |dofs|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArray.dofs`
@@ -103,15 +103,15 @@ operating on objects of the following types:
     new operators from existing ones are contained in
     :mod:`pymor.operators.constructions`.
 
-    .. |applied|           replace:: :meth:`applied <pymor.operators.interfaces.Operator.apply>`
-    .. |apply2|            replace:: :meth:`~pymor.operators.interfaces.Operator.apply2`
-    .. |apply_inverse|     replace:: :meth:`~pymor.operators.interfaces.Operator.apply_inverse`
-    .. |assembled|         replace:: :meth:`assembled <pymor.operators.interfaces.Operator.assemble>`
-    .. |_assemble_lincomb| replace:: :meth:`~pymor.operators.interfaces.Operator._assemble_lincomb`
-    .. |as_vector|         replace:: :meth:`~pymor.operators.interfaces.Operator.as_vector`
-    .. |linear|            replace:: :attr:`~pymor.operators.interfaces.Operator.linear`
-    .. |range|             replace:: :attr:`~pymor.operators.interfaces.Operator.range`
-    .. |source|            replace:: :attr:`~pymor.operators.interfaces.Operator.source`
+    .. |applied|           replace:: :meth:`applied <pymor.operators.interface.Operator.apply>`
+    .. |apply2|            replace:: :meth:`~pymor.operators.interface.Operator.apply2`
+    .. |apply_inverse|     replace:: :meth:`~pymor.operators.interface.Operator.apply_inverse`
+    .. |assembled|         replace:: :meth:`assembled <pymor.operators.interface.Operator.assemble>`
+    .. |_assemble_lincomb| replace:: :meth:`~pymor.operators.interface.Operator._assemble_lincomb`
+    .. |as_vector|         replace:: :meth:`~pymor.operators.interface.Operator.as_vector`
+    .. |linear|            replace:: :attr:`~pymor.operators.interface.Operator.linear`
+    .. |range|             replace:: :attr:`~pymor.operators.interface.Operator.range`
+    .. |source|            replace:: :attr:`~pymor.operators.interface.Operator.source`
 
 |Models|
     Models in pyMOR encode the mathematical structure of a given

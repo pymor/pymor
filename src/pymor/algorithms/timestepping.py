@@ -19,7 +19,7 @@ and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 """
 
 from pymor.core.base import ImmutableObject, abstractmethod
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 from pymor.vectorarrays.interfaces import VectorArray
 
 

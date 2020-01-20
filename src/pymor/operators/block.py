@@ -6,7 +6,7 @@ import numpy as np
 
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
@@ -125,7 +125,7 @@ class BlockOperatorBase(OperatorBase):
 class BlockOperator(BlockOperatorBase):
     """A matrix of arbitrary |Operators|.
 
-    This operator can be :meth:`applied <pymor.operators.interfaces.Operator.apply>`
+    This operator can be :meth:`applied <pymor.operators.interface.Operator.apply>`
     to a compatible :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>`.
 
     Parameters

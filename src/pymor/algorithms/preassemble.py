@@ -7,7 +7,7 @@ from pymor.models.interface import Model
 from pymor.operators.basic import ProjectedOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation,
                                            AffineOperator, AdjointOperator, SelectionOperator)
-from pymor.operators.interfaces import Operator
+from pymor.operators.interface import Operator
 
 
 def preassemble(obj):

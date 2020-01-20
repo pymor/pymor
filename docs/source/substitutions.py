@@ -18,8 +18,8 @@ interfaces = '''
 .. |Model| replace:: :class:`Model <pymor.models.interface.Model>`
 .. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.analyticalproblems.domaindescriptions.DomainDescription>`
 .. |DomainDescription| replace:: :class:`DomainDescription <pymor.analyticalproblems.domaindescriptions.DomainDescription>`
-.. |Functionals| replace:: :class:`Functionals <pymor.operators.interfaces.Operator>`
-.. |Functional| replace:: :class:`Functional <pymor.operators.interfaces.Operator>`
+.. |Functionals| replace:: :class:`Functionals <pymor.operators.interface.Operator>`
+.. |Functional| replace:: :class:`Functional <pymor.operators.interface.Operator>`
 .. |Functions| replace:: :class:`Functions <pymor.analyticalproblems.functions.Function>`
 .. |Function| replace:: :class:`Function <pymor.analyticalproblems.functions.Function>`
 .. |Grid| replace:: :class:`Grid <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
@@ -29,8 +29,8 @@ interfaces = '''
 .. |Immutable| replace:: :class:`Immutable <pymor.core.base.ImmutableObject>`
 .. |LincombOperators| replace:: :class:`LincombOperators <pymor.operators.constructions.LincombOperator>`
 .. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.constructions.LincombOperator>`
-.. |Operators| replace:: :class:`Operators <pymor.operators.interfaces.Operator>`
-.. |Operator| replace:: :class:`Operator <pymor.operators.interfaces.Operator>`
+.. |Operators| replace:: :class:`Operators <pymor.operators.interface.Operator>`
+.. |Operator| replace:: :class:`Operator <pymor.operators.interface.Operator>`
 .. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.interfaces.ParameterFunctional>`
 .. |ParameterFunctional| replace:: :class:`ParameterFunctional <pymor.parameters.interfaces.ParameterFunctional>`
 .. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.interfaces.ParameterSpace>`
@@ -127,7 +127,7 @@ common = '''
 
 .. |OrderedDict| replace:: :class:`~collections.OrderedDict`
 
-.. |solver_options| replace:: :attr:`~pymor.operators.interfaces.Operator.solver_options`
+.. |solver_options| replace:: :attr:`~pymor.operators.interface.Operator.solver_options`
 
 .. |RuleTable| replace:: :class:`~pymor.algorithms.rules.RuleTable`
 .. |RuleTables| replace:: :class:`RuleTables <pymor.algorithms.rules.RuleTable>`
