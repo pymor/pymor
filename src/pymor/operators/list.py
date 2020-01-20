@@ -2,17 +2,8 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
-
-import numpy as np
-
-from pymor.algorithms import genericsolvers
 from pymor.core.base import abstractmethod
-from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.interface import Operator
-from pymor.parameters.functionals import ParameterFunctional
-from pymor.vectorarrays.interface import VectorArray
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class ListVectorArrayOperatorBase(Operator):

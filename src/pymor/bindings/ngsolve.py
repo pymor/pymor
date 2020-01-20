@@ -10,7 +10,7 @@ if config.HAVE_NGSOLVE:
     import numpy as np
 
     from pymor.core.base import ImmutableObject
-    from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase
+    from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
     from pymor.vectorarrays.interface import VectorArray
     from pymor.vectorarrays.numpy import NumpyVectorSpace
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace

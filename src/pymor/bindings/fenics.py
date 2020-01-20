@@ -12,9 +12,9 @@ if config.HAVE_FENICS:
 
     from pymor.core.base import BasicObject
     from pymor.core.defaults import defaults
-    from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase
-    from pymor.operators.interface import Operator
     from pymor.operators.constructions import ZeroOperator
+    from pymor.operators.interface import Operator
+    from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
     from pymor.operators.numpy import NumpyMatrixOperator
     from pymor.vectorarrays.interface import _create_random_values
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
