@@ -97,10 +97,10 @@ operating on objects of the following types:
     represented by a matrix lead to a new operator holding the linear
     combination of the matrices.
 
-    Default implementations for many methods of the operator interface can be
-    found in |OperatorBase|. Base classes for |NumPy|-based operators can be
-    found in :mod:`pymor.operators.numpy`. Several methods for constructing
-    new operators from existing ones are contained in
+    For many interface methods default implementations are provided which
+    may be overridden with operator-specific code. Base classes for |NumPy|-based
+    operators can be found in :mod:`pymor.operators.numpy`. Several methods for
+    constructing new operators from existing ones are contained in
     :mod:`pymor.operators.constructions`.
 
     .. |applied|           replace:: :meth:`applied <pymor.operators.interface.Operator.apply>`

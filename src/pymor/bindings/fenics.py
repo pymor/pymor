@@ -12,7 +12,8 @@ if config.HAVE_FENICS:
 
     from pymor.core.base import BasicObject
     from pymor.core.defaults import defaults
-    from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase, OperatorBase
+    from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase
+    from pymor.operators.interface import Operator
     from pymor.operators.constructions import ZeroOperator
     from pymor.operators.numpy import NumpyMatrixOperator
     from pymor.vectorarrays.interface import _create_random_values
@@ -207,7 +208,7 @@ if config.HAVE_FENICS:
 
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V, solver_options=solver_options, name=name)
 
-    class FenicsOperator(OperatorBase):
+    class FenicsOperator(Operator):
         """Wraps a FEniCS form as an |Operator|."""
 
         linear = False
@@ -374,7 +375,7 @@ if config.HAVE_FENICS:
             assert len(set(restricted_dofs)) == len(set(dofs))
             return restricted_dofs
 
-    class RestrictedFenicsOperator(OperatorBase):
+    class RestrictedFenicsOperator(Operator):
 
         linear = False
 

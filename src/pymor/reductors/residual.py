@@ -8,8 +8,8 @@ from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.base import BasicObject
 from pymor.core.exceptions import ImageCollectionError
-from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import induced_norm
+from pymor.operators.interface import Operator
 
 
 class ResidualReductor(BasicObject):
@@ -109,7 +109,7 @@ class ResidualReductor(BasicObject):
             return self.residual_range[:u.dim].lincomb(u.to_numpy())
 
 
-class ResidualOperator(OperatorBase):
+class ResidualOperator(Operator):
     """Instantiated by :class:`ResidualReductor`."""
 
     def __init__(self, operator, rhs, name=None):
@@ -260,7 +260,7 @@ class ImplicitEulerResidualReductor(BasicObject):
             return self.residual_range[:u.dim].lincomb(u.to_numpy())
 
 
-class ImplicitEulerResidualOperator(OperatorBase):
+class ImplicitEulerResidualOperator(Operator):
     """Instantiated by :class:`ImplicitEulerResidualReductor`."""
 
     def __init__(self, operator, mass, rhs, dt, name=None):

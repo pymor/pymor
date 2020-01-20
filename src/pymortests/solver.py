@@ -8,12 +8,12 @@ import pytest
 
 import pymor.algorithms.genericsolvers
 from pymor.core.config import config
-from pymor.operators.basic import OperatorBase
+from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class GenericOperator(OperatorBase):
+class GenericOperator(Operator):
 
     source = range = NumpyVectorSpace(10)
     op = NumpyMatrixOperator(np.eye(10) * np.arange(1, 11))

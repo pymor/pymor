@@ -23,8 +23,8 @@ from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisu
 from pymor.discretizers.builtin.inplace import iadd_masked, isub_masked
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import ComponentProjection, LincombOperator, ZeroOperator
+from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import Parametric
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -193,7 +193,7 @@ def jacobian_options(delta=1e-7):
     return {'delta': delta}
 
 
-class NonlinearAdvectionOperator(OperatorBase):
+class NonlinearAdvectionOperator(Operator):
     """Nonlinear finite volume advection |Operator|.
 
     The operator is of the form ::
@@ -581,7 +581,7 @@ class ReactionOperator(NumpyMatrixBasedOperator):
         return A
 
 
-class NonlinearReactionOperator(OperatorBase):
+class NonlinearReactionOperator(Operator):
 
     linear = False
 

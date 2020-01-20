@@ -4,13 +4,12 @@
 
 import numpy as np
 
-from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
-class BlockOperatorBase(OperatorBase):
+class BlockOperatorBase(Operator):
 
     def _operators(self):
         """Iterator over operators."""

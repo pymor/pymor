@@ -14,7 +14,7 @@ from pickle import dumps, dump, load
 from pkg_resources import resource_filename, resource_stream
 
 from pymor.core import logger
-from pymor.operators.basic import OperatorBase
+from pymor.operators.interface import Operator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -80,7 +80,7 @@ def polynomials(max_order):
         yield (n, f, deri, integral)
 
 
-class MonomOperator(OperatorBase):
+class MonomOperator(Operator):
     source = range = NumpyVectorSpace(1)
 
     def __init__(self, order, monom=None):

@@ -24,11 +24,11 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
-from pymor.operators.basic import OperatorBase
+from pymor.operators.interface import Operator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class NumpyGenericOperator(OperatorBase):
+class NumpyGenericOperator(Operator):
     """Wraps an arbitrary Python function between |NumPy arrays| as an |Operator|.
 
     Parameters
@@ -89,7 +89,7 @@ class NumpyGenericOperator(OperatorBase):
             return self.source.make_array(self.adjoint_mapping(V))
 
 
-class NumpyMatrixBasedOperator(OperatorBase):
+class NumpyMatrixBasedOperator(Operator):
     """Base class for operators which assemble into a |NumpyMatrixOperator|.
 
     Attributes

@@ -14,7 +14,6 @@ import scipy.linalg as spla
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
-from pymor.operators.basic import OperatorBase
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Parametric
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
@@ -22,7 +21,7 @@ from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class LincombOperator(OperatorBase):
+class LincombOperator(Operator):
     """Linear combination of arbitrary |Operators|.
 
     This |Operator| represents a (possibly |Parameter| dependent)
@@ -262,7 +261,7 @@ class LincombOperator(OperatorBase):
             return self.with_(coefficients=tuple(c * other for c in self.coefficients))
 
 
-class Concatenation(OperatorBase):
+class Concatenation(Operator):
     """|Operator| representing the concatenation of two |Operators|.
 
     Parameters
@@ -352,7 +351,7 @@ class Concatenation(OperatorBase):
         return Concatenation(operators, solver_options=other.solver_options)
 
 
-class LowRankOperator(OperatorBase):
+class LowRankOperator(Operator):
     """Non-parametric low-rank operator.
 
     Represents an operator of the form :math:`L C R^H` or
@@ -502,7 +501,7 @@ class LowRankUpdatedOperator(LincombOperator):
         return V
 
 
-class ComponentProjection(OperatorBase):
+class ComponentProjection(Operator):
     """|Operator| representing the projection of a |VectorArray| onto some of its components.
 
     Parameters
@@ -536,7 +535,7 @@ class ComponentProjection(OperatorBase):
         return IdentityOperator(NumpyVectorSpace(len(source_dofs))), source_dofs
 
 
-class IdentityOperator(OperatorBase):
+class IdentityOperator(Operator):
     """The identity |Operator|.
 
     In other words::
@@ -585,7 +584,7 @@ class IdentityOperator(OperatorBase):
         return IdentityOperator(NumpyVectorSpace(len(dofs))), dofs
 
 
-class ConstantOperator(OperatorBase):
+class ConstantOperator(Operator):
     """A constant |Operator| always returning the same vector.
 
     Parameters
@@ -629,7 +628,7 @@ class ConstantOperator(OperatorBase):
         return self.source.zeros(len(V))
 
 
-class ZeroOperator(OperatorBase):
+class ZeroOperator(Operator):
     """The |Operator| which maps every vector to zero.
 
     Parameters
@@ -678,7 +677,7 @@ class ZeroOperator(OperatorBase):
         return ZeroOperator(NumpyVectorSpace(len(dofs)), NumpyVectorSpace(0)), np.array([], dtype=np.int32)
 
 
-class VectorArrayOperator(OperatorBase):
+class VectorArrayOperator(Operator):
     """Wraps a |VectorArray| as an |Operator|.
 
     If `adjoint` is `False`, the operator maps from `NumpyVectorSpace(len(array))`
@@ -833,7 +832,7 @@ class VectorFunctional(VectorArrayOperator):
         self.product = product
 
 
-class ProxyOperator(OperatorBase):
+class ProxyOperator(Operator):
     """Forwards all interface calls to given |Operator|.
 
     Mainly useful as base class for other |Operator| implementations.
@@ -935,7 +934,7 @@ class AffineOperator(ProxyOperator):
         return self.linear_part.jacobian(U, mu)
 
 
-class InverseOperator(OperatorBase):
+class InverseOperator(Operator):
     """Represents the inverse of a given |Operator|.
 
     Parameters
@@ -977,7 +976,7 @@ class InverseOperator(OperatorBase):
         return self.operator.apply_adjoint(U, mu=mu)
 
 
-class InverseAdjointOperator(OperatorBase):
+class InverseAdjointOperator(Operator):
     """Represents the inverse adjoint of a given |Operator|.
 
     Parameters
@@ -1021,7 +1020,7 @@ class InverseAdjointOperator(OperatorBase):
         return self.operator.apply(U, mu=mu)
 
 
-class AdjointOperator(OperatorBase):
+class AdjointOperator(Operator):
     """Represents the adjoint of a given linear |Operator|.
 
     For a linear |Operator| `op` the adjoint `op^*` of `op` is given by::
@@ -1128,7 +1127,7 @@ class AdjointOperator(OperatorBase):
         return V
 
 
-class SelectionOperator(OperatorBase):
+class SelectionOperator(Operator):
     """An |Operator| selected from a list of |Operators|.
 
     `operators[i]` is used if `parameter_functional(mu)` is less or

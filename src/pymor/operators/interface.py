@@ -2,8 +2,16 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from numbers import Number
+
+import numpy as np
+
+from pymor.algorithms import genericsolvers
 from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.parameters.base import Parametric
+from pymor.parameters.functionals import ParameterFunctional
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -77,7 +85,6 @@ class Operator(ImmutableObject, Parametric):
         """
         pass
 
-    @abstractmethod
     def apply2(self, V, U, mu=None):
         """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
@@ -103,9 +110,12 @@ class Operator(ImmutableObject, Parametric):
         A |NumPy array| with shape `(len(V), len(U))` containing the 2-form
         evaluations.
         """
-        pass
+        mu = self.parse_parameter(mu)
+        assert isinstance(V, VectorArray)
+        assert isinstance(U, VectorArray)
+        AU = self.apply(U, mu=mu)
+        return V.dot(AU)
 
-    @abstractmethod
     def pairwise_apply2(self, V, U, mu=None):
         """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
@@ -126,9 +136,13 @@ class Operator(ImmutableObject, Parametric):
         A |NumPy array| with shape `(len(V),) == (len(U),)` containing
         the 2-form evaluations.
         """
-        pass
+        mu = self.parse_parameter(mu)
+        assert isinstance(V, VectorArray)
+        assert isinstance(U, VectorArray)
+        assert len(U) == len(V)
+        AU = self.apply(U, mu=mu)
+        return V.pairwise_dot(AU)
 
-    @abstractmethod
     def apply_adjoint(self, V, mu=None):
         """Apply the adjoint operator.
 
@@ -152,9 +166,11 @@ class Operator(ImmutableObject, Parametric):
         -------
         |VectorArray| of the adjoint operator evaluations.
         """
-        pass
+        if self.linear:
+            raise NotImplementedError
+        else:
+            raise LinAlgError('Operator not linear.')
 
-    @abstractmethod
     def apply_inverse(self, V, mu=None, least_squares=False):
         """Apply the inverse operator.
 
@@ -186,9 +202,38 @@ class Operator(ImmutableObject, Parametric):
         InversionError
             The operator could not be inverted.
         """
-        pass
+        from pymor.operators.constructions import FixedParameterOperator
+        assembled_op = self.assemble(mu)
+        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+            return assembled_op.apply_inverse(V, least_squares=least_squares)
+        elif self.linear:
+            options = self.solver_options.get('inverse') if self.solver_options else None
+            return genericsolvers.apply_inverse(assembled_op, V, options=options, least_squares=least_squares)
+        else:
+            from pymor.algorithms.newton import newton
+            from pymor.core.exceptions import NewtonError
 
-    @abstractmethod
+            options = self.solver_options.get('inverse') if self.solver_options else None
+            if options:
+                if isinstance(options, str):
+                    assert options == 'newton'
+                    options = {}
+                else:
+                    assert options['type'] == 'newton'
+                    options = options.copy()
+                    options.pop('type')
+            else:
+                options = {}
+            options['least_squares'] = least_squares
+
+            R = V.empty(reserve=len(V))
+            for i in range(len(V)):
+                try:
+                    R.append(newton(self, V[i], mu=mu, **options)[0])
+                except NewtonError as e:
+                    raise InversionError(e)
+            return R
+
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         """Apply the inverse adjoint operator.
 
@@ -220,9 +265,19 @@ class Operator(ImmutableObject, Parametric):
         InversionError
             The operator could not be inverted.
         """
-        pass
+        from pymor.operators.constructions import FixedParameterOperator
+        if not self.linear:
+            raise LinAlgError('Operator not linear.')
+        assembled_op = self.assemble(mu)
+        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+            return assembled_op.apply_inverse_adjoint(U, least_squares=least_squares)
+        else:
+            # use generic solver for the adjoint operator
+            from pymor.operators.constructions import AdjointOperator
+            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
+            adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
+            return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
-    @abstractmethod
     def jacobian(self, U, mu=None):
         """Return the operator's Jacobian as a new |Operator|.
 
@@ -238,9 +293,14 @@ class Operator(ImmutableObject, Parametric):
         -------
         Linear |Operator| representing the Jacobian.
         """
-        pass
+        if self.linear:
+            if self.parametric:
+                return self.assemble(mu)
+            else:
+                return self
+        else:
+            raise NotImplementedError
 
-    @abstractmethod
     def d_mu(self, component, index=()):
         """Return the operator's derivative with respect to an index of a parameter component.
 
@@ -255,7 +315,11 @@ class Operator(ImmutableObject, Parametric):
         -------
         New |Operator| representing the partial derivative.
         """
-        pass
+        if self.parametric:
+            raise NotImplementedError
+        else:
+            from pymor.operators.constructions import ZeroOperator
+            return ZeroOperator(self.range, self.source, name=self.name + '_d_mu')
 
     def as_range_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its range space.
@@ -280,7 +344,7 @@ class Operator(ImmutableObject, Parametric):
             The |VectorArray| defined above.
         """
         assert isinstance(self.source, NumpyVectorSpace) and self.linear
-        raise NotImplementedError
+        return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
 
     def as_source_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its source space.
@@ -305,7 +369,7 @@ class Operator(ImmutableObject, Parametric):
             The |VectorArray| defined above.
         """
         assert isinstance(self.range, NumpyVectorSpace) and self.linear
-        raise NotImplementedError
+        return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
     def as_vector(self, mu=None):
         """Return a vector representation of a linear functional or vector operator.
@@ -334,7 +398,6 @@ class Operator(ImmutableObject, Parametric):
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
 
-    @abstractmethod
     def assemble(self, mu=None):
         """Assemble the operator for a given parameter.
 
@@ -354,7 +417,12 @@ class Operator(ImmutableObject, Parametric):
         -------
         Parameter-independent, assembled |Operator|.
         """
-        pass
+        if self.parametric:
+            from pymor.operators.constructions import FixedParameterOperator
+
+            return FixedParameterOperator(self, mu=mu, name=self.name + '_assembled')
+        else:
+            return self
 
     def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
         """Try to assemble a linear combination of the given operators.
@@ -426,26 +494,52 @@ class Operator(ImmutableObject, Parametric):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def __add__(self, other):
         """Sum of two operators."""
-        pass
+        if other == 0:
+            return self
+        if not isinstance(other, Operator):
+            return NotImplemented
+        from pymor.operators.constructions import LincombOperator
+        if isinstance(other, LincombOperator):
+            return NotImplemented
+        else:
+            return LincombOperator([self, other], [1., 1.])
+
+    __radd__ = __add__
 
     def __sub__(self, other):
-        return self + (- other)
+        if not isinstance(other, Operator):
+            return NotImplemented
+        from pymor.operators.constructions import LincombOperator
+        if isinstance(other, LincombOperator):
+            return NotImplemented
+        else:
+            return LincombOperator([self, other], [1., -1.])
 
-    @abstractmethod
     def __mul__(self, other):
         """Product of operator by a scalar."""
-        pass
+        if not isinstance(other, (Number, ParameterFunctional)):
+            return NotImplemented
+        from pymor.operators.constructions import LincombOperator
+        return LincombOperator([self], [other])
 
     def __rmul__(self, other):
         return self * other
 
-    @abstractmethod
     def __matmul__(self, other):
         """Concatenation of two operators."""
-        pass
+        if not isinstance(other, Operator):
+            return NotImplemented
+        from pymor.operators.constructions import Concatenation
+        if isinstance(other, Concatenation):
+            return NotImplemented
+        else:
+            return Concatenation((self, other))
 
     def __neg__(self):
         return self * (-1.)
+
+    def __str__(self):
+        return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
+               f'(parameter type: {self.parameter_type}, class: {self.__class__.__name__})'

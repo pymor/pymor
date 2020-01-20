@@ -8,7 +8,6 @@ import numpy as np
 from scipy.linalg import solve, solve_triangular
 
 
-from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -16,7 +15,7 @@ from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class EmpiricalInterpolatedOperator(OperatorBase):
+class EmpiricalInterpolatedOperator(Operator):
     """Interpolate an |Operator| using Empirical Operator Interpolation.
 
     Let `L` be an |Operator|, `0 <= c_1, ..., c_M < L.range.dim` indices
@@ -157,7 +156,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         return d
 
 
-class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
+class ProjectedEmpiciralInterpolatedOperator(Operator):
     """A projected |EmpiricalInterpolatedOperator|."""
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
