@@ -445,7 +445,7 @@ if config.HAVE_FENICS:
                 however, is allowed to contain multipled vectors that will be interpreted
                 as a time series.
             m
-                Filled in by :meth:`pymor.models.ModelBase.visualize` (ignored).
+                Filled in by :meth:`pymor.models.interface.Model.visualize` (ignored).
             title
                 Title of the plot.
             legend

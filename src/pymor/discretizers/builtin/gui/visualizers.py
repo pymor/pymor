@@ -50,7 +50,7 @@ class PatchVisualizer(BasicObject):
             provided, in which case a subplot is created for each entry of the tuple. The
             lengths of all arrays have to agree.
         m
-            Filled in by :meth:`pymor.models.ModelBase.visualize` (ignored).
+            Filled in by :meth:`pymor.models.interface.Model.visualize` (ignored).
         title
             Title of the plot.
         legend
@@ -127,7 +127,7 @@ class OnedVisualizer(BasicObject):
             provided, in which case several plots are made into the same axes. The
             lengths of all arrays have to agree.
         m
-            Filled in by :meth:`pymor.models.ModelBase.visualize` (ignored).
+            Filled in by :meth:`pymor.models.interface.Model.visualize` (ignored).
         title
             Title of the plot.
         legend
