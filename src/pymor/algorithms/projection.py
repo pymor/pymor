@@ -6,13 +6,11 @@ import numpy as np
 
 from pymor.algorithms.rules import RuleTable, match_class, match_generic, match_always
 from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
-from pymor.operators.basic import ProjectedOperator
 from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
-from pymor.operators.constructions import (LincombOperator, Concatenation, ConstantOperator,
+from pymor.operators.constructions import (LincombOperator, Concatenation, ConstantOperator, ProjectedOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
                                            IdentityOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
-from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -41,7 +39,7 @@ def project(op, range_basis, source_basis, product=None):
     How the projection is realized will depend on the given |Operator|.
     While a projected |NumpyMatrixOperator| will
     again be a |NumpyMatrixOperator|, only a generic
-    :class:`~pymor.operators.basic.ProjectedOperator` can be returned
+    :class:`~pymor.operators.constructions.ProjectedOperator` can be returned
     in general. The exact algorithm is specified in :class:`ProjectRules`.
 
     Parameters
