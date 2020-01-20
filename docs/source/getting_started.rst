@@ -151,7 +151,7 @@ have a look:
    print(fom.parameter_type)
 
 This tells us, that the |Parameter| which
-:meth:`~pymor.models.interfaces.Model.solve` expects
+:meth:`~pymor.models.interface.Model.solve` expects
 should be a dictionary with one key ``'diffusion'`` whose value is a
 |NumPy array| of shape ``(2, 3)``, corresponding to the block structure of
 the problem. However, by using the

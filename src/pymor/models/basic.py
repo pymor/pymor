@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.timestepping import TimeStepper
-from pymor.models.interfaces import Model
+from pymor.models.interface import Model
 from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.tools.formatrepr import indent_value
 from pymor.tools.frozendict import FrozenDict
@@ -32,7 +32,7 @@ class ModelBase(Model):
         ----------
         U
             The |VectorArray| from
-            :attr:`~pymor.models.interfaces.Model.solution_space`
+            :attr:`~pymor.models.interface.Model.solution_space`
             that shall be visualized.
         kwargs
             See docstring of `self.visualizer.visualize`.
@@ -171,7 +171,7 @@ class InstationaryModel(ModelBase):
         The mass |Operator| `M`. If `None`, the identity is assumed.
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
-        to be used by :meth:`~pymor.models.interfaces.Model.solve`.
+        to be used by :meth:`~pymor.models.interface.Model.solve`.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.

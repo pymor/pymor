@@ -142,15 +142,15 @@ operating on objects of the following types:
     |solution_space|.
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
-    .. |estimate|         replace:: :meth:`~pymor.models.interfaces.Model.estimate`
-    .. |functionals|      replace:: :attr:`~pymor.models.interfaces.Model.functionals`
-    .. |operators|        replace:: :attr:`~pymor.models.interfaces.Model.operators`
-    .. |products|         replace:: :attr:`~pymor.models.interfaces.Model.products`
-    .. |solution_space|   replace:: :attr:`~pymor.models.interfaces.Model.solution_space`
-    .. |solve|            replace:: :meth:`~pymor.models.interfaces.Model.solve`
-    .. |solving|          replace:: :meth:`solving <pymor.models.interfaces.Model.solve>`
-    .. |vector_operators| replace:: :attr:`~pymor.models.interfaces.Model.vector_operators`
-    .. |visualize|        replace:: :meth:`~pymor.models.interfaces.Model.visualize`
+    .. |estimate|         replace:: :meth:`~pymor.models.interface.Model.estimate`
+    .. |functionals|      replace:: :attr:`~pymor.models.interface.Model.functionals`
+    .. |operators|        replace:: :attr:`~pymor.models.interface.Model.operators`
+    .. |products|         replace:: :attr:`~pymor.models.interface.Model.products`
+    .. |solution_space|   replace:: :attr:`~pymor.models.interface.Model.solution_space`
+    .. |solve|            replace:: :meth:`~pymor.models.interface.Model.solve`
+    .. |solving|          replace:: :meth:`solving <pymor.models.interface.Model.solve>`
+    .. |vector_operators| replace:: :attr:`~pymor.models.interface.Model.vector_operators`
+    .. |visualize|        replace:: :meth:`~pymor.models.interface.Model.visualize`
 
 
 Base Classes

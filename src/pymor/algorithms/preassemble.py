@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
-from pymor.models.interfaces import Model
+from pymor.models.interface import Model
 from pymor.operators.basic import ProjectedOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation,
                                            AffineOperator, AdjointOperator, SelectionOperator)
