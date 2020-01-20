@@ -11,7 +11,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('rtol', 'atol', 'l2_err')

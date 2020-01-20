@@ -5,7 +5,7 @@ import numpy as np
 
 from pymor.core.config import config
 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,

@@ -21,7 +21,7 @@ from pymor.core.exceptions import QtMissing
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
 from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if config.HAVE_QT:

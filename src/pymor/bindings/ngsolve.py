@@ -11,7 +11,7 @@ if config.HAVE_NGSOLVE:
 
     from pymor.core.base import ImmutableObject
     from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase
-    from pymor.vectorarrays.interfaces import VectorArray
+    from pymor.vectorarrays.interface import VectorArray
     from pymor.vectorarrays.numpy import NumpyVectorSpace
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 

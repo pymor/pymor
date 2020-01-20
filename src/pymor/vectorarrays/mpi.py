@@ -16,7 +16,7 @@ by :mod:`pymor.tools.mpi`.
 import numpy as np
 
 from pymor.tools import mpi
-from pymor.vectorarrays.interfaces import VectorArray, VectorSpace
+from pymor.vectorarrays.interface import VectorArray, VectorSpace
 
 
 class MPIVectorArray(VectorArray):

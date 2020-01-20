@@ -9,7 +9,7 @@ from pymor.core.logger import getLogger
 from pymor.operators.constructions import Concatenation, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.interface import Operator
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 

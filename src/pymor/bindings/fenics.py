@@ -15,7 +15,7 @@ if config.HAVE_FENICS:
     from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase, OperatorBase
     from pymor.operators.constructions import ZeroOperator
     from pymor.operators.numpy import NumpyMatrixOperator
-    from pymor.vectorarrays.interfaces import _create_random_values
+    from pymor.vectorarrays.interface import _create_random_values
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 

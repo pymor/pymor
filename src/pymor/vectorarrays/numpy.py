@@ -9,7 +9,7 @@ from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interfaces import VectorArray, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import VectorArray, VectorSpace, _create_random_values
 
 
 class NumpyVectorArray(VectorArray):
@@ -21,8 +21,8 @@ class NumpyVectorArray(VectorArray):
 
     This class is just a thin wrapper around the underlying
     |NumPy array|. Thus, while operations like
-    :meth:`~pymor.vectorarrays.interfaces.VectorArray.axpy` or
-    :meth:`~pymor.vectorarrays.interfaces.VectorArray.dot`
+    :meth:`~pymor.vectorarrays.interface.VectorArray.axpy` or
+    :meth:`~pymor.vectorarrays.interface.VectorArray.dot`
     will be quite efficient, removing or appending vectors will
     be costly.
 
@@ -342,7 +342,7 @@ class NumpyVectorSpace(VectorSpace):
     dim
         The dimension of the vectors contained in the space.
     id
-        See :attr:`~pymor.vectorarrays.interfaces.VectorSpace.id`.
+        See :attr:`~pymor.vectorarrays.interface.VectorSpace.id`.
     """
 
     def __init__(self, dim, id=None):

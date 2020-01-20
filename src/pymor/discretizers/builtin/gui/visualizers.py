@@ -8,7 +8,7 @@ from pymor.core.config import is_jupyter
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 
 
 class PatchVisualizer(BasicObject):

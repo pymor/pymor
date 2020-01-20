@@ -465,7 +465,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     Therefore, we assume all |Operators| and |VectorArrays| can be
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interfaces.VectorArray.to_numpy`.
+    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
 
     Parameters
     ----------
@@ -539,7 +539,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     Therefore, we assume all |Operators| and |VectorArrays| can be
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interfaces.VectorArray.to_numpy`.
+    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
 
     Parameters
     ----------

@@ -87,7 +87,7 @@ class OnedGrid(AffineGridWithOrthogonalCenters):
             See :func:`~pymor.discretizers.builtin.gui.qt.visualize_patch`
         """
         from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
-        from pymor.vectorarrays.interfaces import VectorArray
+        from pymor.vectorarrays.interface import VectorArray
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArray)):
             U = (U,)

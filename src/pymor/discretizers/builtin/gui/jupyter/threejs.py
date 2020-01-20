@@ -15,7 +15,7 @@ from matplotlib.cm import get_cmap
 from pymor.core import config
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 
 # we should try to limit ourselves to webgl 1.0 here since 2.0 (draft) is not as widely supported
 # https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#Browser_compatibility

@@ -11,7 +11,7 @@ from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('rtol', 'atol', 'l2_err', 'method', 'orth_tol')

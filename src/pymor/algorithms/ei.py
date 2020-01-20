@@ -22,7 +22,7 @@ from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject
 from pymor.parallel.manager import RemoteObjectManager
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 
 
 def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None,

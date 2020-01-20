@@ -19,7 +19,7 @@ from pymor.operators.interface import Operator
 from pymor.parameters.base import Parametric
 from pymor.parameters.functionals import ConjugateParameterFunctional
 from pymor.parameters.interfaces import ParameterFunctional
-from pymor.vectorarrays.interfaces import VectorArray, VectorSpace
+from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -510,7 +510,7 @@ class ComponentProjection(OperatorBase):
     ----------
     components
         List or 1D |NumPy array| of the indices of the vector
-        :meth:`~pymor.vectorarrays.interfaces.VectorArray.components` that are
+        :meth:`~pymor.vectorarrays.interface.VectorArray.components` that are
         to be extracted by the operator.
     source
         Source |VectorSpace| of the operator.

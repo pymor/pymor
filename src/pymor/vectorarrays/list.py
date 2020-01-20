@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interfaces import VectorArray, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import VectorArray, VectorSpace, _create_random_values
 
 
 class Vector(BasicObject):

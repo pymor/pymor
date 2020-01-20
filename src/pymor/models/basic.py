@@ -7,7 +7,7 @@ from pymor.models.interface import Model
 from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.tools.formatrepr import indent_value
 from pymor.tools.frozendict import FrozenDict
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 
 
 class ModelBase(Model):

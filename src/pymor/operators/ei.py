@@ -12,7 +12,7 @@ from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.interfaces import VectorArray
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 

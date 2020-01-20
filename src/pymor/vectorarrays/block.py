@@ -7,7 +7,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.base import classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArray, VectorSpace
+from pymor.vectorarrays.interface import VectorArray, VectorSpace
 
 
 class BlockVectorArray(VectorArray):
