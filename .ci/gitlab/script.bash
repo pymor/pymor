@@ -50,7 +50,7 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     xvfb-run -a py.test ${COVERAGE_OPTS} -r sxX --pyargs pymortests -c .ci/installed_pytest.ini |& grep -v 'pymess/lrnm.py:82: PendingDeprecationWarning'
     pymor-demo -h
 elif [ "${PYMOR_PYTEST_MARKER}" == "OLDEST" ] ; then
-    ${SUDO} pip install pypi-oldest-requirements>=2019.2
+    ${SUDO} pip install pypi-oldest-requirements>=2020.2
     # replaces any loose pin with a hard pin on the oldest version
     pypi_minimal_requirements_pinned requirements.txt requirements.txt
     pypi_minimal_requirements_pinned requirements-travis.txt requirements-travis.txt
