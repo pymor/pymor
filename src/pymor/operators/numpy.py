@@ -19,10 +19,10 @@ from scipy.linalg import solve
 import scipy.sparse
 from scipy.sparse import issparse
 
+from pymor.core.base import abstractmethod
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
-from pymor.core.interfaces import abstractmethod
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
 from pymor.vectorarrays.numpy import NumpyVectorSpace

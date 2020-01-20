@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import ImmutableObject, abstractmethod
+from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 

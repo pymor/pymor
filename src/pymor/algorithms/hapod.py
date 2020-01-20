@@ -8,7 +8,7 @@ import numpy as np
 from queue import LifoQueue
 
 from pymor.algorithms.pod import pod
-from pymor.core.interfaces import BasicObject, abstractmethod
+from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.logger import getLogger
 
 

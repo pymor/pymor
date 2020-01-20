@@ -18,7 +18,7 @@ and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 :func:`implicit_euler` to provide this interface.
 """
 
-from pymor.core.interfaces import ImmutableObject, abstractmethod
+from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.operators.interfaces import Operator
 from pymor.vectorarrays.interfaces import VectorArray
 

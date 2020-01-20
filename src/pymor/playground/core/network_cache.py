@@ -9,8 +9,8 @@ import base64
 import xmlrpc.client
 from xmlrpc.server import SimpleXMLRPCServer
 
+from pymor.core.base import BasicObject
 from pymor.core.cache import CacheRegion
-from pymor.core.interfaces import BasicObject
 from pymor.core.pickle import dump, load
 
 

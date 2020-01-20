@@ -6,8 +6,8 @@ import importlib
 import pytest
 import numpy as np
 
-from pymor.core.interfaces import (ImmutableObject, abstractstaticmethod, abstractclassmethod)
 from pymor.core import exceptions
+from pymor.core.base import (ImmutableObject, abstractstaticmethod, abstractclassmethod)
 from pymortests.base import TestInterface, runmodule, subclassForImplemetorsOf
 from pymortests.core.dummies import *   # NOQA
 from pymor.discretizers.builtin import RectGrid, TriaGrid

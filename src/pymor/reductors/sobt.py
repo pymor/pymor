@@ -7,7 +7,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.projection import project
-from pymor.core.interfaces import BasicObject
+from pymor.core.base import BasicObject
 from pymor.models.iosys import SecondOrderModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import SOLTIPGReductor

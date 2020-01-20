@@ -7,7 +7,7 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.interfaces import ImmutableObject, abstractmethod
+from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.interfaces import ParameterFunctional

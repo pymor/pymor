@@ -4,7 +4,7 @@
 
 from numbers import Number
 
-from pymor.core.interfaces import ImmutableObject, abstractmethod
+from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
 
 

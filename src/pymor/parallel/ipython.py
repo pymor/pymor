@@ -7,8 +7,8 @@ import os
 import time
 
 
+from pymor.core.base import BasicObject
 from pymor.core.config import config
-from pymor.core.interfaces import BasicObject
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools.counter import Counter
 

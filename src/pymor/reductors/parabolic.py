@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.core.interfaces import ImmutableObject
+from pymor.core.base import ImmutableObject
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.reductors.residual import ResidualReductor, ImplicitEulerResidualReductor
 from pymor.operators.constructions import IdentityOperator

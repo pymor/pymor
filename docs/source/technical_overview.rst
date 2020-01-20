@@ -181,18 +181,18 @@ subsequent |solve| call, but not its result.
 Of course, in many situations one may wish to change properties of an immutable
 object, e.g. the number of timesteps for a given model. This can be
 easily achieved using the
-:meth:`~pymor.core.interfaces.ImmutableObject.with_` method every immutable
+:meth:`~pymor.core.base.ImmutableObject.with_` method every immutable
 object has: a call of the form ``o.with_(a=x, b=y)`` will return a copy of `o`
 in which the attribute `a` now has the value `x` and the attribute `b` the
 value `y`. It can be generally assumed that calls to
-:meth:`~pymor.core.interfaces.ImmutableObject.with_` are inexpensive. The
+:meth:`~pymor.core.base.ImmutableObject.with_` are inexpensive. The
 set of allowed arguments can be found in the
-:attr:`~pymor.core.interfaces.ImmutableObject.with_arguments` attribute.
+:attr:`~pymor.core.base.ImmutableObject.with_arguments` attribute.
 
 All immutable classes in pyMOR and most other classes derive from
 |BasicObject| which, through its meta class, provides several convenience
 features for pyMOR. Most notably, every subclass of |BasicObject| obtains its
-own :attr:`~pymor.core.interfaces.BasicObject.logger` instance with a class
+own :attr:`~pymor.core.base.BasicObject.logger` instance with a class
 specific prefix.
 
 .. |caching|        replace:: :mod:`caching <pymor.core.cache>`

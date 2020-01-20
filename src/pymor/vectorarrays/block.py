@@ -6,7 +6,7 @@ from functools import reduce
 from numbers import Number
 import numpy as np
 
-from pymor.core.interfaces import classinstancemethod
+from pymor.core.base import classinstancemethod
 from pymor.vectorarrays.interfaces import VectorArray, VectorSpace
 
 

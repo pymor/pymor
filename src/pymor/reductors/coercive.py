@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.core.interfaces import ImmutableObject
+from pymor.core.base import ImmutableObject
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import StationaryRBReductor

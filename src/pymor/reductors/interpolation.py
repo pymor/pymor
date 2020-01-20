@@ -6,7 +6,7 @@ import numpy as np
 
 from pymor.algorithms.krylov import rational_arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
-from pymor.core.interfaces import BasicObject
+from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,

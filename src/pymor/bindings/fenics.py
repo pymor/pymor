@@ -10,8 +10,8 @@ if config.HAVE_FENICS:
     import ufl
     import numpy as np
 
+    from pymor.core.base import BasicObject
     from pymor.core.defaults import defaults
-    from pymor.core.interfaces import BasicObject
     from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase, OperatorBase
     from pymor.operators.constructions import ZeroOperator
     from pymor.operators.numpy import NumpyMatrixOperator

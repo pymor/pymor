@@ -4,8 +4,8 @@
 
 from collections import Iterable, Mapping, OrderedDict
 
+from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
-from pymor.core.interfaces import BasicObject, UberMeta, abstractmethod, classinstancemethod
 from pymor.operators.interfaces import Operator
 from pymor.tools.table import format_table
 

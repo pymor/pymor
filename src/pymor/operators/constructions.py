@@ -11,9 +11,9 @@ from numbers import Number
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
-from pymor.core.interfaces import ImmutableObject
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import Operator
 from pymor.parameters.base import Parametric

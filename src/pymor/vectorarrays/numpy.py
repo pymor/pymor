@@ -7,7 +7,7 @@ from numbers import Number
 import numpy as np
 from scipy.sparse import issparse
 
-from pymor.core.interfaces import classinstancemethod
+from pymor.core.base import classinstancemethod
 from pymor.tools.random import get_random_state
 from pymor.vectorarrays.interfaces import VectorArray, VectorSpace, _create_random_values
 

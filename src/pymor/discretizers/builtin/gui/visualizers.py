@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
+from pymor.core.base import BasicObject
 from pymor.core.config import is_jupyter
-from pymor.core.interfaces import BasicObject
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.discretizers.builtin.grids.vtkio import write_vtk

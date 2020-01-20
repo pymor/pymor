@@ -6,7 +6,7 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.interfaces import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
+from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
 from pymor.tools.random import get_random_state
 from pymor.vectorarrays.interfaces import VectorArray, VectorSpace, _create_random_values
 

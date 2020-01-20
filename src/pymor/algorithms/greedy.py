@@ -6,8 +6,8 @@ import time
 
 import numpy as np
 
+from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.exceptions import ExtensionError
-from pymor.core.interfaces import BasicObject, abstractmethod
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interfaces import RemoteObject

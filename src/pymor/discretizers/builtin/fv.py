@@ -13,8 +13,8 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEule
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import Function, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
+from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
-from pymor.core.interfaces import ImmutableObject, abstractmethod
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square

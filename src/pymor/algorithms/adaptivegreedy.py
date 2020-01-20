@@ -8,8 +8,8 @@ import numpy as np
 import time
 
 from pymor.algorithms.greedy import RBSurrogate
+from pymor.core.base import BasicObject
 from pymor.core.exceptions import ExtensionError
-from pymor.core.interfaces import BasicObject
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
 from pymor.parameters.base import Parameter

@@ -10,9 +10,9 @@ from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
+from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import ExtensionError, AccuracyError
-from pymor.core.interfaces import BasicObject, abstractmethod
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.numpy import NumpyMatrixOperator

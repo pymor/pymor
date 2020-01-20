@@ -6,8 +6,8 @@ from numbers import Number
 
 import numpy as np
 
+from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
-from pymor.core.interfaces import BasicObject, ImmutableObject, abstractmethod
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.random import get_random_state
 

@@ -9,7 +9,7 @@ interfaces = '''
 
 .. |AffineGrids| replace:: :class:`AffineGrids <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
 .. |AffineGrid| replace:: :class:`AffineGrid <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
-.. |BasicObject| replace:: :class:`~pymor.core.interfaces.BasicObject`
+.. |BasicObject| replace:: :class:`~pymor.core.base.BasicObject`
 .. |BoundaryInfo| replace:: :class:`BoundaryInfo <pymor.discretizers.builtin.grids.interfaces.BoundaryInfo>`
 .. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.discretizers.builtin.grids.interfaces.BoundaryInfo>`
 .. |ConformalTopologicalGrids| replace:: :class:`ConformalTopologicalGrids <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGrid>`
@@ -24,9 +24,9 @@ interfaces = '''
 .. |Function| replace:: :class:`Function <pymor.analyticalproblems.functions.Function>`
 .. |Grid| replace:: :class:`Grid <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
 .. |Grids| replace:: :class:`Grids <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
-.. |ImmutableObject| replace:: :class:`~pymor.core.interfaces.ImmutableObject`
-.. |immutable| replace:: :class:`immutable <pymor.core.interfaces.ImmutableObject>`
-.. |Immutable| replace:: :class:`Immutable <pymor.core.interfaces.ImmutableObject>`
+.. |ImmutableObject| replace:: :class:`~pymor.core.base.ImmutableObject`
+.. |immutable| replace:: :class:`immutable <pymor.core.base.ImmutableObject>`
+.. |Immutable| replace:: :class:`Immutable <pymor.core.base.ImmutableObject>`
 .. |LincombOperators| replace:: :class:`LincombOperators <pymor.operators.constructions.LincombOperator>`
 .. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.constructions.LincombOperator>`
 .. |Operators| replace:: :class:`Operators <pymor.operators.interfaces.Operator>`

@@ -18,7 +18,7 @@ the following data:
 
     1. the instance's :attr:`~CacheableObject.cache_id` in case of a
        :attr:`~CacheRegion.persistent` :class:`CacheRegion`, else the instance's
-       :attr:`~pymor.core.interfaces.BasicObject.uid`,
+       :attr:`~pymor.core.base.BasicObject.uid`,
     2. the method's `__name__`,
     3. the method's arguments.
 
@@ -75,9 +75,9 @@ from types import MethodType
 import diskcache
 import numpy as np
 
+from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults, defaults_changes
 from pymor.core.exceptions import CacheKeyGenerationError
-from pymor.core.interfaces import ImmutableObject
 from pymor.core.logger import getLogger
 from pymor.core.pickle import dumps
 from pymor.parameters.base import Parameter, ParameterType
@@ -269,7 +269,7 @@ class CacheableObject(ImmutableObject):
         """Enable caching for this instance.
 
         .. warning::
-            Note that using :meth:`~pymor.core.interfaces.ImmutableObject.with_`
+            Note that using :meth:`~pymor.core.base.ImmutableObject.with_`
             will reset :attr:`cache_region` and :attr:`cache_id` to their class
             defaults.
 
@@ -283,7 +283,7 @@ class CacheableObject(ImmutableObject):
             Identifier for the object instance on which a cached method is called.
             Must be specified when `region` is :attr:`~CacheRegion.persistent`.
             When `region` is not :attr:`~CacheRegion.persistent` and no `cache_id`
-            is given, the object's :attr:`~pymor.core.interfaces.BasicObject.uid`
+            is given, the object's :attr:`~pymor.core.base.BasicObject.uid`
             is used instead.
         """
         self.__dict__['cache_id'] = cache_id

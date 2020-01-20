@@ -9,7 +9,7 @@ if config.HAVE_NGSOLVE:
     import ngsolve as ngs
     import numpy as np
 
-    from pymor.core.interfaces import ImmutableObject
+    from pymor.core.base import ImmutableObject
     from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase
     from pymor.vectorarrays.interfaces import VectorArray
     from pymor.vectorarrays.numpy import NumpyVectorSpace
