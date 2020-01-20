@@ -9,8 +9,7 @@ import numpy as np
 
 from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
-from pymor.parameters.functionals import ExpressionParameterFunctional
-from pymor.parameters.interfaces import ParameterFunctional
+from pymor.parameters.functionals import ParameterFunctional, ExpressionParameterFunctional
 
 
 class Function(ImmutableObject, Parametric):

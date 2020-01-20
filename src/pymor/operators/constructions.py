@@ -17,8 +17,7 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Parametric
-from pymor.parameters.functionals import ConjugateParameterFunctional
-from pymor.parameters.interfaces import ParameterFunctional
+from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
