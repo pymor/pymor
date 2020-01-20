@@ -6,9 +6,26 @@ from itertools import product
 
 import numpy as np
 
+from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parameter, ParameterType
-from pymor.parameters.interfaces import ParameterSpace
 from pymor.tools.random import get_random_state
+
+
+class ParameterSpace(ImmutableObject):
+    """Interface for |Parameter| spaces.
+
+    Attributes
+    ----------
+    parameter_type
+        |ParameterType| of the space.
+    """
+
+    parameter_type = None
+
+    @abstractmethod
+    def contains(self, mu):
+        """`True` if `mu` is contained in the space."""
+        pass
 
 
 class CubicParameterSpace(ParameterSpace):

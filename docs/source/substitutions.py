@@ -33,8 +33,8 @@ interfaces = '''
 .. |Operator| replace:: :class:`Operator <pymor.operators.interface.Operator>`
 .. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.interfaces.ParameterFunctional>`
 .. |ParameterFunctional| replace:: :class:`ParameterFunctional <pymor.parameters.interfaces.ParameterFunctional>`
-.. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.interfaces.ParameterSpace>`
-.. |ParameterSpaces| replace:: :class:`ParameterSpaces <pymor.parameters.interfaces.ParameterSpace>`
+.. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.spaces.ParameterSpace>`
+.. |ParameterSpaces| replace:: :class:`ParameterSpaces <pymor.parameters.spaces.ParameterSpace>`
 .. |ReferenceElements| replace:: :class:`ReferenceElements <pymor.discretizers.builtin.grids.interfaces.ReferenceElement>`
 .. |ReferenceElement| replace:: :class:`ReferenceElement <pymor.discretizers.builtin.grids.interfaces.ReferenceElement>`
 .. |RemoteObject| replace:: :class:`RemoteObject <pymor.parallel.interface.RemoteObject>`

@@ -8,23 +8,6 @@ from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
 
 
-class ParameterSpace(ImmutableObject):
-    """Interface for |Parameter| spaces.
-
-    Attributes
-    ----------
-    parameter_type
-        |ParameterType| of the space.
-    """
-
-    parameter_type = None
-
-    @abstractmethod
-    def contains(self, mu):
-        """`True` if `mu` is contained in the space."""
-        pass
-
-
 class ParameterFunctional(ImmutableObject, Parametric):
     """Interface for |Parameter| functionals.
 
