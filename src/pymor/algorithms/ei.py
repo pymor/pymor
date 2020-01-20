@@ -20,7 +20,7 @@ from pymor.core.logger import getLogger
 from pymor.algorithms.pod import pod as pod_alg
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
-from pymor.parallel.interfaces import RemoteObject
+from pymor.parallel.interface import RemoteObject
 from pymor.parallel.manager import RemoteObjectManager
 from pymor.vectorarrays.interfaces import VectorArray
 

@@ -37,14 +37,14 @@ interfaces = '''
 .. |ParameterSpaces| replace:: :class:`ParameterSpaces <pymor.parameters.interfaces.ParameterSpace>`
 .. |ReferenceElements| replace:: :class:`ReferenceElements <pymor.discretizers.builtin.grids.interfaces.ReferenceElement>`
 .. |ReferenceElement| replace:: :class:`ReferenceElement <pymor.discretizers.builtin.grids.interfaces.ReferenceElement>`
-.. |RemoteObject| replace:: :class:`RemoteObject <pymor.parallel.interfaces.RemoteObject>`
-.. |RemoteObjects| replace:: :class:`RemoteObjects <pymor.parallel.interfaces.RemoteObject>`
+.. |RemoteObject| replace:: :class:`RemoteObject <pymor.parallel.interface.RemoteObject>`
+.. |RemoteObjects| replace:: :class:`RemoteObjects <pymor.parallel.interface.RemoteObject>`
 .. |VectorArrays| replace:: :class:`VectorArrays <pymor.vectorarrays.interfaces.VectorArray>`
 .. |VectorArray| replace:: :class:`VectorArray <pymor.vectorarrays.interfaces.VectorArray>`
 .. |VectorSpace| replace:: :class:`VectorSpace <pymor.vectorarrays.interfaces.VectorSpace>`
 .. |VectorSpaces| replace:: :class:`VectorSpaces <pymor.vectorarrays.interfaces.VectorSpace>`
-.. |WorkerPool| replace:: :class:`WorkerPool <pymor.parallel.interfaces.WorkerPool>`
-.. |WorkerPools| replace:: :class:`WorkerPools <pymor.parallel.interfaces.WorkerPool>`
+.. |WorkerPool| replace:: :class:`WorkerPool <pymor.parallel.interface.WorkerPool>`
+.. |WorkerPools| replace:: :class:`WorkerPools <pymor.parallel.interface.WorkerPool>`
 
 '''
 

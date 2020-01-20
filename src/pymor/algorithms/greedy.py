@@ -10,7 +10,7 @@ from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
-from pymor.parallel.interfaces import RemoteObject
+from pymor.parallel.interface import RemoteObject
 from pymor.tools.deprecated import Deprecated
 
 
