@@ -19,6 +19,12 @@ if __name__ == '__main__':
             pass
 
         try:
+            # for MPI runs we need to import qtgui before pyplot
+            # otherwise, if both pyside and pyqt5 are installed we'll get an error later
+            from Qt import QtGui
+        except ImportError:
+            pass
+        try:
             from matplotlib import pyplot
             pyplot.show = nop
         except ImportError:
