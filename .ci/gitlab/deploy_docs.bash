@@ -34,3 +34,4 @@ docker build -t ${IMAGE} -f .ci/docker/docs/Dockerfile ${PUBLIC_DIR}
 docker push ${IMAGE}
 # for automatic deploy gitlab uses ${PROJECT_DIR}/public
 mv ${PUBLIC_DIR} ${PYMOR_ROOT}/
+ls ${PYMOR_ROOT}/public/
