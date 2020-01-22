@@ -8,15 +8,14 @@ import numpy as np
 from scipy.linalg import solve, solve_triangular
 
 
-from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class EmpiricalInterpolatedOperator(OperatorBase):
+class EmpiricalInterpolatedOperator(Operator):
     """Interpolate an |Operator| using Empirical Operator Interpolation.
 
     Let `L` be an |Operator|, `0 <= c_1, ..., c_M < L.range.dim` indices
@@ -32,7 +31,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
     Since the original operator only has to be evaluated at the given interpolation
     DOFs, |EmpiricalInterpolatedOperator| calls
-    :meth:`~pymor.operators.interfaces.OperatorInterface.restricted`
+    :meth:`~pymor.operators.interface.Operator.restricted`
     to obtain a restricted version of the operator which is used
     to quickly obtain the required evaluations. If the `restricted` method, is not
     implemented, the full operator will be evaluated (which will lead to
@@ -61,8 +60,8 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
     def __init__(self, operator, interpolation_dofs, collateral_basis, triangular,
                  solver_options=None, name=None):
-        assert isinstance(operator, OperatorInterface)
-        assert isinstance(collateral_basis, VectorArrayInterface)
+        assert isinstance(operator, Operator)
+        assert isinstance(collateral_basis, VectorArray)
         assert collateral_basis in operator.range
         assert len(interpolation_dofs) == len(collateral_basis)
 
@@ -157,7 +156,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         return d
 
 
-class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
+class ProjectedEmpiciralInterpolatedOperator(Operator):
     """A projected |EmpiricalInterpolatedOperator|."""
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,

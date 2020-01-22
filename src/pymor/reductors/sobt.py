@@ -7,14 +7,14 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.projection import project
-from pymor.core.interfaces import BasicInterface
+from pymor.core.base import BasicObject
 from pymor.models.iosys import SecondOrderModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import SOLTIPGReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class GenericSOBTpvReductor(BasicInterface):
+class GenericSOBTpvReductor(BasicObject):
     """Generic Second-Order Balanced Truncation position/velocity reductor.
 
     See [RS08]_.
@@ -202,7 +202,7 @@ class SOBTvpReductor(GenericSOBTpvReductor):
         return vcf.lincomb(Vvp[:r]), vof.lincomb(Uv[:r]), svp
 
 
-class SOBTfvReductor(BasicInterface):
+class SOBTfvReductor(BasicObject):
     """Free-velocity Second-Order Balanced Truncation reductor.
 
     See [MS96]_.
@@ -284,7 +284,7 @@ class SOBTfvReductor(BasicInterface):
         return self._pg_reductor.reconstruct(u)
 
 
-class SOBTReductor(BasicInterface):
+class SOBTReductor(BasicObject):
     """Second-Order Balanced Truncation reductor.
 
     See [CLVV06]_.

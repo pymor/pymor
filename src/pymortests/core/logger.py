@@ -5,22 +5,17 @@
 import logging
 
 import pymor.core as core
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import (runmodule,)
 
-from pymortests.fixtures.generic import basicinterface_subclass
 
-
-def exercise_logger(logger):
+def test_logger():
+    logger = NumpyMatrixOperator._logger
     for lvl in [getattr(logging, lvl) for lvl in ['WARN', 'ERROR', 'DEBUG', 'INFO']]:
         logger.setLevel(lvl)
         assert logger.isEnabledFor(lvl)
     for verb in ['warning', 'error', 'debug', 'info']:
         getattr(logger, verb)(f'{verb} -- logger {str(logger)}')
-
-
-def test_logclass(basicinterface_subclass):
-    logger = basicinterface_subclass._logger
-    exercise_logger(logger)
 
 
 def test_empty_log_message():

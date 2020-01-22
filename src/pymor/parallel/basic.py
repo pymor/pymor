@@ -2,12 +2,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""This module contains a base class for implementing WorkerPoolInterface."""
+"""This module contains a base class for implementing WorkerPool."""
 
 import weakref
 
-from pymor.core.interfaces import ImmutableInterface
-from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
+from pymor.core.base import ImmutableObject
+from pymor.parallel.interface import WorkerPool, RemoteObject
 
 
 class WorkerPoolDefaultImplementations:
@@ -38,13 +38,13 @@ class WorkerPoolDefaultImplementations:
         return remote_l
 
 
-class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
+class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPool):
 
     def __init__(self):
         self._pushed_immutable_objects = {}
 
     def push(self, obj):
-        if isinstance(obj, ImmutableInterface):
+        if isinstance(obj, ImmutableObject):
             uid = obj.uid
             if uid not in self._pushed_immutable_objects:
                 remote_id = self._push_object(obj)
@@ -59,7 +59,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
 
     def _map_kwargs(self, kwargs):
         pushed_immutable_objects = self._pushed_immutable_objects
-        return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableInterface) else
+        return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableObject) else
                     v.remote_id if isinstance(v, RemoteObject) else
                     v)
                 for k, v in kwargs.items()}
@@ -95,7 +95,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         return chunks
 
 
-class RemoteObject(RemoteObjectInterface):
+class RemoteObject(RemoteObject):
 
     def __init__(self, pool, remote_id, uid=None):
         self.pool = weakref.ref(pool)

@@ -12,7 +12,7 @@ from scipy.sparse import coo_matrix, csc_matrix
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import FunctionInterface, ConstantFunction, LincombFunction
+from pymor.analyticalproblems.functions import Function, ConstantFunction, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo
@@ -468,7 +468,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
                  solver_options=None, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
         assert diffusion_function is None \
-            or (isinstance(diffusion_function, FunctionInterface)
+            or (isinstance(diffusion_function, Function)
                 and diffusion_function.dim_domain == grid.dim
                 and diffusion_function.shape_range == ()
                 or diffusion_function.shape_range == (grid.dim,) * 2)
@@ -582,7 +582,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
                  solver_options=None, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         assert diffusion_function is None \
-            or (isinstance(diffusion_function, FunctionInterface)
+            or (isinstance(diffusion_function, Function)
                 and diffusion_function.dim_domain == grid.dim
                 and diffusion_function.shape_range == ()
                 or diffusion_function.shape_range == (grid.dim,) * 2)
@@ -695,7 +695,7 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
                  solver_options=None, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
         assert advection_function is None \
-            or (isinstance(advection_function, FunctionInterface)
+            or (isinstance(advection_function, Function)
                 and advection_function.dim_domain == grid.dim
                 and advection_function.shape_range == (grid.dim,))
         self.__auto_init(locals())
@@ -806,7 +806,7 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
                  solver_options=None, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         assert advection_function is None \
-            or (isinstance(advection_function, FunctionInterface)
+            or (isinstance(advection_function, Function)
                 and advection_function.dim_domain == grid.dim
                 and advection_function.shape_range == (grid.dim,))
         self.__auto_init(locals())
@@ -912,7 +912,7 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, robin_data=None, solver_options=None, name=None):
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
-        assert robin_data is None or all([isinstance(f, FunctionInterface)
+        assert robin_data is None or all([isinstance(f, Function)
                                           and f.dim_domain == grid.dim
                                           and (f.shape_range == ()
                                                or f.shape_range == (grid.dim,))
@@ -1238,7 +1238,7 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
     time_stepper
-        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
         to be used by :class:`~pymor.models.basic.InstationaryModel.solve`.
     nt
         If `time_stepper` is not specified, the number of time steps for implicit

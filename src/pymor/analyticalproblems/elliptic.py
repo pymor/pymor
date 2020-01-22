@@ -4,11 +4,11 @@
 
 import numpy as np
 
-from pymor.core.interfaces import ImmutableInterface
+from pymor.core.base import ImmutableObject
 from pymor.tools.frozendict import FrozenDict
 
 
-class StationaryProblem(ImmutableInterface):
+class StationaryProblem(ImmutableObject):
     """Linear elliptic problem description.
 
     The problem consists in solving ::

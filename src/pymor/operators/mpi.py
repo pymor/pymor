@@ -2,14 +2,14 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import LincombOperator, VectorArrayOperator
+from pymor.operators.interface import Operator
 from pymor.tools import mpi
 from pymor.vectorarrays.mpi import MPIVectorSpace, _register_local_space
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class MPIOperator(OperatorBase):
+class MPIOperator(Operator):
     """MPI distributed |Operator|.
 
     Given a single-rank implementation of an |Operator|, this
@@ -41,7 +41,7 @@ class MPIOperator(OperatorBase):
         Set to `True` if the operator implementation has its own
         MPI aware implementation of `apply2` and `pairwise_apply2`.
         Otherwise, the default implementations using `apply` and
-        :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
+        :meth:`~pymor.vectorarrays.interface.VectorArray.dot`
         will be used.
     pickle_local_spaces
         If `pickle_local_spaces` is `False`, a unique identifier

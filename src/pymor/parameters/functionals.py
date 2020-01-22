@@ -6,10 +6,70 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.parameters.interfaces import ParameterFunctionalInterface
+from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.parameters.base import Parametric
 
 
-class ProjectionParameterFunctional(ParameterFunctionalInterface):
+class ParameterFunctional(ImmutableObject, Parametric):
+    """Interface for |Parameter| functionals.
+
+    A parameter functional is simply a function mapping a |Parameter| to
+    a number.
+    """
+
+    @abstractmethod
+    def evaluate(self, mu=None):
+        """Evaluate the functional for the given |Parameter| `mu`."""
+        pass
+
+    @abstractmethod
+    def d_mu(self, component, index=()):
+        """Return the functionals's derivative with respect to an index of a parameter component.
+
+        Parameters
+        ----------
+        component
+            Parameter component
+        index
+            index in the parameter component
+
+        Returns
+        -------
+        New |Parameter| functional representing the partial derivative.
+        """
+        pass
+
+    def __call__(self, mu=None):
+        return self.evaluate(mu)
+
+    def __mul__(self, other):
+        from pymor.parameters.functionals import ProductParameterFunctional
+        if not isinstance(other, (Number, ParameterFunctional)):
+            return NotImplemented
+        return ProductParameterFunctional([self, other])
+
+    __rmul__ = __mul__
+
+    def __neg__(self):
+        return self * (-1.)
+
+    def _check_and_parse_input(self, component, index):
+        # check whether component is in parameter_type
+        if component not in self.parameter_type:
+            return False, None
+        # check whether index has the correct shape
+        if isinstance(index, Number):
+            index = (index,)
+        index = tuple(index)
+        for idx in index:
+            assert isinstance(idx, Number)
+        shape = self.parameter_type[component]
+        for i,idx in enumerate(index):
+            assert idx < shape[i], 'wrong input `index` given'
+        return True, index
+
+
+class ProjectionParameterFunctional(ParameterFunctional):
     """|ParameterFunctional| returning a component of the given parameter.
 
     For given parameter `mu`, this functional evaluates to ::
@@ -49,7 +109,8 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
                 return ConstantParameterFunctional(1, name=self.name + '_d_mu')
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
-class GenericParameterFunctional(ParameterFunctionalInterface):
+
+class GenericParameterFunctional(ParameterFunctional):
     """A wrapper making an arbitrary Python function a |ParameterFunctional|
 
     Note that a GenericParameterFunctional can only be :mod:`pickled <pymor.core.pickle>`
@@ -191,7 +252,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
                  self.derivative_expressions, self.second_derivative_expressions))
 
 
-class ProductParameterFunctional(ParameterFunctionalInterface):
+class ProductParameterFunctional(ParameterFunctional):
     """Forms the product of a list of |ParameterFunctionals| or numbers.
 
     Parameters
@@ -204,9 +265,9 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
 
     def __init__(self, factors, name=None):
         assert len(factors) > 0
-        assert all(isinstance(f, (ParameterFunctionalInterface, Number)) for f in factors)
+        assert all(isinstance(f, (ParameterFunctional, Number)) for f in factors)
         self.__auto_init(locals())
-        self.build_parameter_type(*(f for f in factors if isinstance(f, ParameterFunctionalInterface)))
+        self.build_parameter_type(*(f for f in factors if isinstance(f, ParameterFunctional)))
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -215,7 +276,8 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
     def d_mu(self, component, index=()):
         raise NotImplementedError
 
-class ConjugateParameterFunctional(ParameterFunctionalInterface):
+
+class ConjugateParameterFunctional(ParameterFunctional):
     """Conjugate of a given |ParameterFunctional|
 
     Evaluates a given |ParameterFunctional| and returns the complex
@@ -242,7 +304,8 @@ class ConjugateParameterFunctional(ParameterFunctionalInterface):
     def d_mu(self, component, index=()):
         raise NotImplementedError
 
-class ConstantParameterFunctional(ParameterFunctionalInterface):
+
+class ConstantParameterFunctional(ParameterFunctional):
     """|ParameterFunctional| returning a constant value for each parameter.
 
     Parameters

@@ -4,17 +4,17 @@
 
 from copy import deepcopy
 
-from pymor.core.interfaces import ImmutableInterface
-from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
+from pymor.core.base import ImmutableObject
+from pymor.parallel.interface import WorkerPool, RemoteObject
 
 
-class DummyPool(WorkerPoolInterface):
+class DummyPool(WorkerPool):
 
     def __len__(self):
         return 1
 
     def push(self, obj):
-        if isinstance(obj, ImmutableInterface):
+        if isinstance(obj, ImmutableObject):
             return DummyRemoteObject(obj)
         else:
             return DummyRemoteObject(deepcopy(obj))  # ensure we make a deep copy of the data
@@ -51,7 +51,7 @@ class DummyPool(WorkerPoolInterface):
 dummy_pool = DummyPool()
 
 
-class DummyRemoteObject(RemoteObjectInterface):
+class DummyRemoteObject(RemoteObject):
 
     def __init__(self, obj):
         self.obj = obj

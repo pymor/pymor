@@ -4,10 +4,10 @@
 
 import numpy as np
 
-from pymor.discretizers.builtin.grids.interfaces import BoundaryInfoInterface
+from pymor.discretizers.builtin.grids.interfaces import BoundaryInfo
 
 
-class EmptyBoundaryInfo(BoundaryInfoInterface):
+class EmptyBoundaryInfo(BoundaryInfo):
     """|BoundaryInfo| with no boundary types attached to any boundary."""
 
     def __init__(self, grid):
@@ -18,7 +18,7 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
         assert False, f'Has no boundary_type "{boundary_type}"'
 
 
-class GenericBoundaryInfo(BoundaryInfoInterface):
+class GenericBoundaryInfo(BoundaryInfo):
     """Generic |BoundaryInfo| storing entity masks per boundary type."""
 
     def __init__(self, grid, masks, assert_unique_type=(1,), assert_some_type=()):
@@ -51,7 +51,7 @@ class GenericBoundaryInfo(BoundaryInfoInterface):
         return self.masks[boundary_type][codim - 1]
 
 
-class AllDirichletBoundaryInfo(BoundaryInfoInterface):
+class AllDirichletBoundaryInfo(BoundaryInfo):
     """|BoundaryInfo| where the boundary type 'dirichlet' is attached to each boundary entity."""
 
     def __init__(self, grid):

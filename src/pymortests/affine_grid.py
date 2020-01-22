@@ -6,7 +6,7 @@
 import numpy as np
 import pytest
 
-from pymor.discretizers.builtin.grids.interfaces import ReferenceElementInterface
+from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import grid, grid_with_orthogonal_centers
 
@@ -33,7 +33,7 @@ def test_reference_element_wrong_arguments(grid):
 def test_reference_element_type(grid):
     g = grid
     for d in range(g.dim + 1):
-        assert isinstance(g.reference_element(d), ReferenceElementInterface)
+        assert isinstance(g.reference_element(d), ReferenceElement)
 
 
 def test_reference_element_transitivity(grid):

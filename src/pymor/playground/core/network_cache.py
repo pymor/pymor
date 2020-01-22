@@ -9,8 +9,8 @@ import base64
 import xmlrpc.client
 from xmlrpc.server import SimpleXMLRPCServer
 
+from pymor.core.base import BasicObject
 from pymor.core.cache import CacheRegion
-from pymor.core.interfaces import BasicInterface
 from pymor.core.pickle import dump, load
 
 
@@ -53,7 +53,7 @@ class NetworkFilesystemRegion(CacheRegion):
         raise NotImplementedError
 
 
-class NetworkFilesystemRegionServer(BasicInterface):
+class NetworkFilesystemRegionServer(BasicObject):
 
     def __init__(self, addr, path, secret=None):
         self.server = server = SimpleXMLRPCServer(addr)

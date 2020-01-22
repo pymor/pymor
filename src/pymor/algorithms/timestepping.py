@@ -11,19 +11,19 @@ can also be used to turn an arbitrary stationary |Model| provided
 by an external library into an instationary |Model|.
 
 Currently, implementations of :func:`explicit_euler` and :func:`implicit_euler`
-time-stepping are provided. The :class:`TimeStepperInterface` defines a
+time-stepping are provided. The :class:`TimeStepper` defines a
 common interface that has to be fulfilled by the time-steppers used
 by |InstationaryModel|. The classes :class:`ExplicitEulerTimeStepper`
 and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 :func:`implicit_euler` to provide this interface.
 """
 
-from pymor.core.interfaces import ImmutableInterface, abstractmethod
-from pymor.operators.interfaces import OperatorInterface
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.operators.interface import Operator
+from pymor.vectorarrays.interface import VectorArray
 
 
-class TimeStepperInterface(ImmutableInterface):
+class TimeStepper(ImmutableObject):
     """Interface for time-stepping algorithms.
 
     Algorithms implementing this interface solve time-dependent problems
@@ -70,7 +70,7 @@ class TimeStepperInterface(ImmutableInterface):
         pass
 
 
-class ImplicitEulerTimeStepper(TimeStepperInterface):
+class ImplicitEulerTimeStepper(TimeStepper):
     """Implict Euler time-stepper.
 
     Solves equations of the form ::
@@ -96,7 +96,7 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
                               solver_options=self.solver_options)
 
 
-class ExplicitEulerTimeStepper(TimeStepperInterface):
+class ExplicitEulerTimeStepper(TimeStepper):
     """Explicit Euler time-stepper.
 
     Solves equations of the form ::
@@ -119,9 +119,9 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
 
 
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
-    assert isinstance(A, OperatorInterface)
-    assert isinstance(F, (type(None), OperatorInterface, VectorArrayInterface))
-    assert isinstance(M, (type(None), OperatorInterface))
+    assert isinstance(A, Operator)
+    assert isinstance(F, (type(None), Operator, VectorArray))
+    assert isinstance(M, (type(None), Operator))
     assert A.source == A.range
     num_values = num_values or nt + 1
     dt = (t1 - t0) / nt
@@ -129,7 +129,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
 
     if F is None:
         F_time_dep = False
-    elif isinstance(F, OperatorInterface):
+    elif isinstance(F, Operator):
         assert F.source.dim == 1
         assert F.range == A.range
         F_time_dep = F.parametric and '_t' in F.parameter_type
@@ -179,18 +179,18 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
 
 
 def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
-    assert isinstance(A, OperatorInterface)
-    assert F is None or isinstance(F, (OperatorInterface, VectorArrayInterface))
+    assert isinstance(A, Operator)
+    assert F is None or isinstance(F, (Operator, VectorArray))
     assert A.source == A.range
     num_values = num_values or nt + 1
 
-    if isinstance(F, OperatorInterface):
+    if isinstance(F, Operator):
         assert F.source.dim == 1
         assert F.range == A.range
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
             F_ass = F.as_vector(mu)
-    elif isinstance(F, VectorArrayInterface):
+    elif isinstance(F, VectorArray):
         assert len(F) == 1
         assert F in A.range
         F_time_dep = False

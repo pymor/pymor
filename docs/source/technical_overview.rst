@@ -57,22 +57,22 @@ operating on objects of the following types:
     the same |VectorSpace|. If a |VectorArray| is contained in a given
     |VectorSpace| can be tested with the `in` operator.
     
-    .. |apply|            replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply`
-    .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interfaces.VectorArrayInterface.append>`
-    .. |axpy|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.axpy`
-    .. |dofs|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dofs`
-    .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interfaces.VectorArrayInterface.copy>`
-    .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interfaces.VectorArrayInterface.dim>`
-    .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.empty`
-    .. |id|               replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id`
-    .. |indexed|          replace:: :meth:`indexed <pymor.vectorarrays.interfaces.VectorArrayInterface.__getitem__>`
-    .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interfaces.VectorArrayInterface.inner>`
-    .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.lincomb`
-    .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.make_array`
-    .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArrayInterface.__delitem__>`
-    .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interfaces.VectorArrayInterface.scal>`
+    .. |apply|            replace:: :meth:`~pymor.operators.interface.Operator.apply`
+    .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interfaces.VectorArray.append>`
+    .. |axpy|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArray.axpy`
+    .. |dofs|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArray.dofs`
+    .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interfaces.VectorArray.copy>`
+    .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interfaces.VectorArray.dim>`
+    .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpace.empty`
+    .. |id|               replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpace.id`
+    .. |indexed|          replace:: :meth:`indexed <pymor.vectorarrays.interfaces.VectorArray.__getitem__>`
+    .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interfaces.VectorArray.inner>`
+    .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArray.lincomb`
+    .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpace.make_array`
+    .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArray.__delitem__>`
+    .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interfaces.VectorArray.scal>`
     .. |subtype|          replace:: :attr:`~pymor.vectorarrays.interfaces.VectorSpace.subtype`
-    .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.zeros`
+    .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpace.zeros`
 
 |Operators|
     The main property of operators in pyMOR is that they can be |applied| to
@@ -97,21 +97,21 @@ operating on objects of the following types:
     represented by a matrix lead to a new operator holding the linear
     combination of the matrices.
 
-    Default implementations for many methods of the operator interface can be
-    found in |OperatorBase|. Base classes for |NumPy|-based operators can be
-    found in :mod:`pymor.operators.numpy`. Several methods for constructing
-    new operators from existing ones are contained in
+    For many interface methods default implementations are provided which
+    may be overridden with operator-specific code. Base classes for |NumPy|-based
+    operators can be found in :mod:`pymor.operators.numpy`. Several methods for
+    constructing new operators from existing ones are contained in
     :mod:`pymor.operators.constructions`.
 
-    .. |applied|           replace:: :meth:`applied <pymor.operators.interfaces.OperatorInterface.apply>`
-    .. |apply2|            replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply2`
-    .. |apply_inverse|     replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse`
-    .. |assembled|         replace:: :meth:`assembled <pymor.operators.interfaces.OperatorInterface.assemble>`
-    .. |_assemble_lincomb| replace:: :meth:`~pymor.operators.interfaces.OperatorInterface._assemble_lincomb`
-    .. |as_vector|         replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.as_vector`
-    .. |linear|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.linear`
-    .. |range|             replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.range`
-    .. |source|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.source`
+    .. |applied|           replace:: :meth:`applied <pymor.operators.interface.Operator.apply>`
+    .. |apply2|            replace:: :meth:`~pymor.operators.interface.Operator.apply2`
+    .. |apply_inverse|     replace:: :meth:`~pymor.operators.interface.Operator.apply_inverse`
+    .. |assembled|         replace:: :meth:`assembled <pymor.operators.interface.Operator.assemble>`
+    .. |_assemble_lincomb| replace:: :meth:`~pymor.operators.interface.Operator._assemble_lincomb`
+    .. |as_vector|         replace:: :meth:`~pymor.operators.interface.Operator.as_vector`
+    .. |linear|            replace:: :attr:`~pymor.operators.interface.Operator.linear`
+    .. |range|             replace:: :attr:`~pymor.operators.interface.Operator.range`
+    .. |source|            replace:: :attr:`~pymor.operators.interface.Operator.source`
 
 |Models|
     Models in pyMOR encode the mathematical structure of a given
@@ -142,15 +142,15 @@ operating on objects of the following types:
     |solution_space|.
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
-    .. |estimate|         replace:: :meth:`~pymor.models.interfaces.ModelInterface.estimate`
-    .. |functionals|      replace:: :attr:`~pymor.models.interfaces.ModelInterface.functionals`
-    .. |operators|        replace:: :attr:`~pymor.models.interfaces.ModelInterface.operators`
-    .. |products|         replace:: :attr:`~pymor.models.interfaces.ModelInterface.products`
-    .. |solution_space|   replace:: :attr:`~pymor.models.interfaces.ModelInterface.solution_space`
-    .. |solve|            replace:: :meth:`~pymor.models.interfaces.ModelInterface.solve`
-    .. |solving|          replace:: :meth:`solving <pymor.models.interfaces.ModelInterface.solve>`
-    .. |vector_operators| replace:: :attr:`~pymor.models.interfaces.ModelInterface.vector_operators`
-    .. |visualize|        replace:: :meth:`~pymor.models.interfaces.ModelInterface.visualize`
+    .. |estimate|         replace:: :meth:`~pymor.models.interface.Model.estimate`
+    .. |functionals|      replace:: :attr:`~pymor.models.interface.Model.functionals`
+    .. |operators|        replace:: :attr:`~pymor.models.interface.Model.operators`
+    .. |products|         replace:: :attr:`~pymor.models.interface.Model.products`
+    .. |solution_space|   replace:: :attr:`~pymor.models.interface.Model.solution_space`
+    .. |solve|            replace:: :meth:`~pymor.models.interface.Model.solve`
+    .. |solving|          replace:: :meth:`solving <pymor.models.interface.Model.solve>`
+    .. |vector_operators| replace:: :attr:`~pymor.models.interface.Model.vector_operators`
+    .. |visualize|        replace:: :meth:`~pymor.models.interface.Model.visualize`
 
 
 Base Classes
@@ -168,31 +168,31 @@ main benefits:
 2. The return value of a method of an immutable object only depends on its
    arguments, allowing reliable |caching| of these return values.
 
-A class can be made immutable in pyMOR by deriving from |ImmutableInterface|,
+A class can be made immutable in pyMOR by deriving from |ImmutableObject|,
 which ensures that write access to the object's attributes is prohibited after
 `__init__` has been executed. However, note that changes to private attributes
 (attributes whose name starts with `_`) are still allowed. It lies in the
 implementors responsibility to ensure that changes to these attributes do not
 affect the outcome of calls to relevant interface methods. As an example, a call
-to :meth:`~pymor.core.cache.CacheableInterface.enable_caching` will set the
+to :meth:`~pymor.core.cache.CacheableObject.enable_caching` will set the
 objects private `__cache_region` attribute, which might affect the speed of a
 subsequent |solve| call, but not its result.
 
 Of course, in many situations one may wish to change properties of an immutable
 object, e.g. the number of timesteps for a given model. This can be
 easily achieved using the
-:meth:`~pymor.core.interfaces.ImmutableInterface.with_` method every immutable
+:meth:`~pymor.core.base.ImmutableObject.with_` method every immutable
 object has: a call of the form ``o.with_(a=x, b=y)`` will return a copy of `o`
 in which the attribute `a` now has the value `x` and the attribute `b` the
 value `y`. It can be generally assumed that calls to
-:meth:`~pymor.core.interfaces.ImmutableInterface.with_` are inexpensive. The
+:meth:`~pymor.core.base.ImmutableObject.with_` are inexpensive. The
 set of allowed arguments can be found in the
-:attr:`~pymor.core.interfaces.ImmutableInterface.with_arguments` attribute.
+:attr:`~pymor.core.base.ImmutableObject.with_arguments` attribute.
 
 All immutable classes in pyMOR and most other classes derive from
-|BasicInterface| which, through its meta class, provides several convenience
-features for pyMOR. Most notably, every subclass of |BasicInterface| obtains its
-own :attr:`~pymor.core.interfaces.BasicInterface.logger` instance with a class
+|BasicObject| which, through its meta class, provides several convenience
+features for pyMOR. Most notably, every subclass of |BasicObject| obtains its
+own :attr:`~pymor.core.base.BasicObject.logger` instance with a class
 specific prefix.
 
 .. |caching|        replace:: :mod:`caching <pymor.core.cache>`

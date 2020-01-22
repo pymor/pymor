@@ -21,7 +21,7 @@ from pymor.core.exceptions import QtMissing
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
 from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if config.HAVE_QT:
@@ -270,10 +270,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars, rescale_colorbars, backend):
 
-            assert isinstance(U, VectorArrayInterface) \
-                or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) for u in U)
+            assert isinstance(U, VectorArray) \
+                or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
                     and all(len(u) == len(U[0]) for u in U))
-            U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArrayInterface) else \
+            U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
                 tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
             if isinstance(legend, str):
                 legend = (legend,)
@@ -420,11 +420,11 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, codim, title, legend, separate_plots):
-            assert isinstance(U, VectorArrayInterface) \
+            assert isinstance(U, VectorArray) \
                 or (isinstance(U, tuple)
-                    and all(isinstance(u, VectorArrayInterface) for u in U)
+                    and all(isinstance(u, VectorArray) for u in U)
                     and all(len(u) == len(U[0]) for u in U))
-            U = (U.to_numpy(),) if isinstance(U, VectorArrayInterface) else tuple(u.to_numpy() for u in U)
+            U = (U.to_numpy(),) if isinstance(U, VectorArray) else tuple(u.to_numpy() for u in U)
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)

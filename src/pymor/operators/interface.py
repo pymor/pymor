@@ -2,12 +2,20 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import ImmutableInterface, abstractmethod
+from numbers import Number
+
+import numpy as np
+
+from pymor.algorithms import genericsolvers
+from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.parameters.base import Parametric
+from pymor.parameters.functionals import ParameterFunctional
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class OperatorInterface(ImmutableInterface, Parametric):
+class Operator(ImmutableObject, Parametric):
     """Interface for |Parameter| dependent discrete operators.
 
     An operator in pyMOR is simply a mapping which for any given
@@ -24,11 +32,11 @@ class OperatorInterface(ImmutableInterface, Parametric):
         If not `None`, a dict which can contain the following keys:
 
         :'inverse':           solver options used for
-                              :meth:`~OperatorInterface.apply_inverse`
+                              :meth:`~Operator.apply_inverse`
         :'inverse_adjoint':   solver options used for
-                              :meth:`~OperatorInterface.apply_inverse_adjoint`
+                              :meth:`~Operator.apply_inverse_adjoint`
         :'jacobian':          solver options for the operators returned
-                              by :meth:`~OperatorInterface.jacobian`
+                              by :meth:`~Operator.jacobian`
                               (has no effect for linear operators)
 
         If `solver_options` is `None` or a dict entry is missing
@@ -77,7 +85,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    @abstractmethod
     def apply2(self, V, U, mu=None):
         """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
@@ -103,13 +110,16 @@ class OperatorInterface(ImmutableInterface, Parametric):
         A |NumPy array| with shape `(len(V), len(U))` containing the 2-form
         evaluations.
         """
-        pass
+        mu = self.parse_parameter(mu)
+        assert isinstance(V, VectorArray)
+        assert isinstance(U, VectorArray)
+        AU = self.apply(U, mu=mu)
+        return V.dot(AU)
 
-    @abstractmethod
     def pairwise_apply2(self, V, U, mu=None):
         """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
-        Same as :meth:`OperatorInterface.apply2`, except that vectors from `V`
+        Same as :meth:`Operator.apply2`, except that vectors from `V`
         and `U` are applied in pairs.
 
         Parameters
@@ -126,15 +136,19 @@ class OperatorInterface(ImmutableInterface, Parametric):
         A |NumPy array| with shape `(len(V),) == (len(U),)` containing
         the 2-form evaluations.
         """
-        pass
+        mu = self.parse_parameter(mu)
+        assert isinstance(V, VectorArray)
+        assert isinstance(U, VectorArray)
+        assert len(U) == len(V)
+        AU = self.apply(U, mu=mu)
+        return V.pairwise_dot(AU)
 
-    @abstractmethod
     def apply_adjoint(self, V, mu=None):
         """Apply the adjoint operator.
 
         For any given linear |Operator| `op`, |Parameter| `mu` and
-        |VectorArrays| `U`, `V` in the :attr:`~OperatorInterface.source`
-        resp. :attr:`~OperatorInterface.range` we have::
+        |VectorArrays| `U`, `V` in the :attr:`~Operator.source`
+        resp. :attr:`~Operator.range` we have::
 
             op.apply_adjoint(V, mu).dot(U) == V.dot(op.apply(U, mu))
 
@@ -152,9 +166,11 @@ class OperatorInterface(ImmutableInterface, Parametric):
         -------
         |VectorArray| of the adjoint operator evaluations.
         """
-        pass
+        if self.linear:
+            raise NotImplementedError
+        else:
+            raise LinAlgError('Operator not linear.')
 
-    @abstractmethod
     def apply_inverse(self, V, mu=None, least_squares=False):
         """Apply the inverse operator.
 
@@ -186,9 +202,38 @@ class OperatorInterface(ImmutableInterface, Parametric):
         InversionError
             The operator could not be inverted.
         """
-        pass
+        from pymor.operators.constructions import FixedParameterOperator
+        assembled_op = self.assemble(mu)
+        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+            return assembled_op.apply_inverse(V, least_squares=least_squares)
+        elif self.linear:
+            options = self.solver_options.get('inverse') if self.solver_options else None
+            return genericsolvers.apply_inverse(assembled_op, V, options=options, least_squares=least_squares)
+        else:
+            from pymor.algorithms.newton import newton
+            from pymor.core.exceptions import NewtonError
 
-    @abstractmethod
+            options = self.solver_options.get('inverse') if self.solver_options else None
+            if options:
+                if isinstance(options, str):
+                    assert options == 'newton'
+                    options = {}
+                else:
+                    assert options['type'] == 'newton'
+                    options = options.copy()
+                    options.pop('type')
+            else:
+                options = {}
+            options['least_squares'] = least_squares
+
+            R = V.empty(reserve=len(V))
+            for i in range(len(V)):
+                try:
+                    R.append(newton(self, V[i], mu=mu, **options)[0])
+                except NewtonError as e:
+                    raise InversionError(e)
+            return R
+
     def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
         """Apply the inverse adjoint operator.
 
@@ -220,9 +265,19 @@ class OperatorInterface(ImmutableInterface, Parametric):
         InversionError
             The operator could not be inverted.
         """
-        pass
+        from pymor.operators.constructions import FixedParameterOperator
+        if not self.linear:
+            raise LinAlgError('Operator not linear.')
+        assembled_op = self.assemble(mu)
+        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+            return assembled_op.apply_inverse_adjoint(U, least_squares=least_squares)
+        else:
+            # use generic solver for the adjoint operator
+            from pymor.operators.constructions import AdjointOperator
+            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
+            adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
+            return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
-    @abstractmethod
     def jacobian(self, U, mu=None):
         """Return the operator's Jacobian as a new |Operator|.
 
@@ -238,9 +293,14 @@ class OperatorInterface(ImmutableInterface, Parametric):
         -------
         Linear |Operator| representing the Jacobian.
         """
-        pass
+        if self.linear:
+            if self.parametric:
+                return self.assemble(mu)
+            else:
+                return self
+        else:
+            raise NotImplementedError
 
-    @abstractmethod
     def d_mu(self, component, index=()):
         """Return the operator's derivative with respect to an index of a parameter component.
 
@@ -255,14 +315,18 @@ class OperatorInterface(ImmutableInterface, Parametric):
         -------
         New |Operator| representing the partial derivative.
         """
-        pass
+        if self.parametric:
+            raise NotImplementedError
+        else:
+            from pymor.operators.constructions import ZeroOperator
+            return ZeroOperator(self.range, self.source, name=self.name + '_d_mu')
 
     def as_range_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its range space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~OperatorInterface.source`, this method returns for every |Parameter|
-        `mu` a |VectorArray| `V` in the operator's :attr:`~OperatorInterface.range`,
+        :attr:`~Operator.source`, this method returns for every |Parameter|
+        `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.range`,
         such that ::
 
             V.lincomb(U.to_numpy()) == self.apply(U, mu)
@@ -280,14 +344,14 @@ class OperatorInterface(ImmutableInterface, Parametric):
             The |VectorArray| defined above.
         """
         assert isinstance(self.source, NumpyVectorSpace) and self.linear
-        raise NotImplementedError
+        return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
 
     def as_source_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its source space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~OperatorInterface.range`, this method returns for every |Parameter|
-        `mu` a |VectorArray| `V` in the operator's :attr:`~OperatorInterface.source`,
+        :attr:`~Operator.range`, this method returns for every |Parameter|
+        `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.source`,
         such that ::
 
             self.range.make_array(V.dot(U).T) == self.apply(U, mu)
@@ -305,14 +369,14 @@ class OperatorInterface(ImmutableInterface, Parametric):
             The |VectorArray| defined above.
         """
         assert isinstance(self.range, NumpyVectorSpace) and self.linear
-        raise NotImplementedError
+        return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
     def as_vector(self, mu=None):
         """Return a vector representation of a linear functional or vector operator.
 
-        Depending on the operator's :attr:`~OperatorInterface.source` and
-        :attr:`~OperatorInterface.range`, this method is equivalent to calling
-        :meth:`~OperatorInterface.as_range_array` or :meth:`~OperatorInterface.as_source_array`
+        Depending on the operator's :attr:`~Operator.source` and
+        :attr:`~Operator.range`, this method is equivalent to calling
+        :meth:`~Operator.as_range_array` or :meth:`~Operator.as_source_array`
         respectively. The resulting |VectorArray| is required to have length 1.
 
         Parameters
@@ -334,7 +398,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
 
-    @abstractmethod
     def assemble(self, mu=None):
         """Assemble the operator for a given parameter.
 
@@ -354,7 +417,12 @@ class OperatorInterface(ImmutableInterface, Parametric):
         -------
         Parameter-independent, assembled |Operator|.
         """
-        pass
+        if self.parametric:
+            from pymor.operators.constructions import FixedParameterOperator
+
+            return FixedParameterOperator(self, mu=mu, name=self.name + '_assembled')
+        else:
+            return self
 
     def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
         """Try to assemble a linear combination of the given operators.
@@ -412,40 +480,66 @@ class OperatorInterface(ImmutableInterface, Parametric):
         ----------
         dofs
             One-dimensional |NumPy array| of degrees of freedom in the operator
-            :attr:`~OperatorInterface.range` to which to restrict.
+            :attr:`~Operator.range` to which to restrict.
 
         Returns
         -------
         restricted_op
             The restricted operator as defined above. The operator will have
-            |NumpyVectorSpace| `(len(source_dofs))` as :attr:`~OperatorInterface.source`
-            and |NumpyVectorSpace| `(len(dofs))` as :attr:`~OperatorInterface.range`.
+            |NumpyVectorSpace| `(len(source_dofs))` as :attr:`~Operator.source`
+            and |NumpyVectorSpace| `(len(dofs))` as :attr:`~Operator.range`.
         source_dofs
             One-dimensional |NumPy array| of source degrees of freedom as
             defined above.
         """
         raise NotImplementedError
 
-    @abstractmethod
     def __add__(self, other):
         """Sum of two operators."""
-        pass
+        if other == 0:
+            return self
+        if not isinstance(other, Operator):
+            return NotImplemented
+        from pymor.operators.constructions import LincombOperator
+        if isinstance(other, LincombOperator):
+            return NotImplemented
+        else:
+            return LincombOperator([self, other], [1., 1.])
+
+    __radd__ = __add__
 
     def __sub__(self, other):
-        return self + (- other)
+        if not isinstance(other, Operator):
+            return NotImplemented
+        from pymor.operators.constructions import LincombOperator
+        if isinstance(other, LincombOperator):
+            return NotImplemented
+        else:
+            return LincombOperator([self, other], [1., -1.])
 
-    @abstractmethod
     def __mul__(self, other):
         """Product of operator by a scalar."""
-        pass
+        if not isinstance(other, (Number, ParameterFunctional)):
+            return NotImplemented
+        from pymor.operators.constructions import LincombOperator
+        return LincombOperator([self], [other])
 
     def __rmul__(self, other):
         return self * other
 
-    @abstractmethod
     def __matmul__(self, other):
         """Concatenation of two operators."""
-        pass
+        if not isinstance(other, Operator):
+            return NotImplemented
+        from pymor.operators.constructions import Concatenation
+        if isinstance(other, Concatenation):
+            return NotImplemented
+        else:
+            return Concatenation((self, other))
 
     def __neg__(self):
         return self * (-1.)
+
+    def __str__(self):
+        return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
+               f'(parameter type: {self.parameter_type}, class: {self.__class__.__name__})'

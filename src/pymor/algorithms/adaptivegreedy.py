@@ -8,8 +8,8 @@ import numpy as np
 import time
 
 from pymor.algorithms.greedy import RBSurrogate
+from pymor.core.base import BasicObject
 from pymor.core.exceptions import ExtensionError
-from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
 from pymor.parameters.base import Parameter
@@ -307,7 +307,7 @@ def adaptive_greedy(*args, **kwargs):
     return rb_adaptive_greedy(*args, **kwargs)
 
 
-class AdaptiveSampleSet(BasicInterface):
+class AdaptiveSampleSet(BasicObject):
     """An adaptive parameter sample set.
 
     Used by :func:`adaptive_weak_greedy`.

@@ -3,15 +3,15 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
+from pymor.core.base import BasicObject
 from pymor.core.config import is_jupyter
-from pymor.core.interfaces import BasicInterface
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interface import VectorArray
 
 
-class PatchVisualizer(BasicInterface):
+class PatchVisualizer(BasicObject):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -50,7 +50,7 @@ class PatchVisualizer(BasicInterface):
             provided, in which case a subplot is created for each entry of the tuple. The
             lengths of all arrays have to agree.
         m
-            Filled in by :meth:`pymor.models.ModelBase.visualize` (ignored).
+            Filled in by :meth:`pymor.models.interface.Model.visualize` (ignored).
         title
             Title of the plot.
         legend
@@ -70,9 +70,9 @@ class PatchVisualizer(BasicInterface):
             The number of columns in the visualizer GUI in case multiple plots are displayed
             at the same time.
         """
-        assert isinstance(U, VectorArrayInterface) \
+        assert isinstance(U, VectorArray) \
             or (isinstance(U, tuple)
-                and all(isinstance(u, VectorArrayInterface) for u in U)
+                and all(isinstance(u, VectorArray) for u in U)
                 and all(len(u) == len(U[0]) for u in U))
         if filename:
             if not isinstance(U, tuple):
@@ -95,7 +95,7 @@ class PatchVisualizer(BasicInterface):
                                 columns=columns)
 
 
-class OnedVisualizer(BasicInterface):
+class OnedVisualizer(BasicObject):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
@@ -127,7 +127,7 @@ class OnedVisualizer(BasicInterface):
             provided, in which case several plots are made into the same axes. The
             lengths of all arrays have to agree.
         m
-            Filled in by :meth:`pymor.models.ModelBase.visualize` (ignored).
+            Filled in by :meth:`pymor.models.interface.Model.visualize` (ignored).
         title
             Title of the plot.
         legend

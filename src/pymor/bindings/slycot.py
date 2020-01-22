@@ -171,7 +171,7 @@ if config.HAVE_SLYCOT:
         Therefore, we assume all |Operators| and |VectorArrays| can be
         converted to |NumPy arrays| using
         :func:`~pymor.algorithms.to_matrix.to_matrix` and
-        :func:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`.
+        :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
 
         Parameters
         ----------
@@ -291,7 +291,7 @@ if config.HAVE_SLYCOT:
         Therefore, we assume all |Operators| and |VectorArrays| can be
         converted to |NumPy arrays| using
         :func:`~pymor.algorithms.to_matrix.to_matrix` and
-        :func:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`.
+        :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
 
         Parameters
         ----------

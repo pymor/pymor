@@ -4,12 +4,12 @@
 
 import numpy as np
 
-from pymor.discretizers.builtin.grids.interfaces import AffineGridInterface
+from pymor.discretizers.builtin.grids.interfaces import AffineGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle
 from pymor.discretizers.builtin.grids._unstructured import compute_edges
 
 
-class UnstructuredTriangleGrid(AffineGridInterface):
+class UnstructuredTriangleGrid(AffineGrid):
     """A generic unstructured, triangular grid.
 
     Use :meth:`~UnstructuredTriangleGrid.from_vertices` to instantiate
@@ -96,11 +96,11 @@ class UnstructuredTriangleGrid(AffineGridInterface):
             See :func:`~pymor.discretizers.builtin.gui.qt.visualize_patch`
         """
         from pymor.discretizers.builtin.gui.qt import visualize_patch
-        from pymor.vectorarrays.interfaces import VectorArrayInterface
+        from pymor.vectorarrays.interface import VectorArray
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
-        if isinstance(U, (np.ndarray, VectorArrayInterface)):
+        if isinstance(U, (np.ndarray, VectorArray)):
             U = (U,)
-        assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
+        assert all(isinstance(u, (np.ndarray, VectorArray)) for u in U)
         U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
                   u if isinstance(u, NumpyVectorArray) else
                   NumpyVectorSpace.make_array(u.to_numpy())

@@ -5,39 +5,39 @@
 """This module provides base classes from which most classes in pyMOR inherit.
 
 The purpose of these classes is to provide some common functionality for
-all objects in pyMOR. The most notable features provided by :class:`BasicInterface`
+all objects in pyMOR. The most notable features provided by :class:`BasicObject`
 are the following:
 
-    1. :class:`BasicInterface` sets class :class:`UberMeta` as metaclass
+    1. :class:`BasicObject` sets class :class:`UberMeta` as metaclass
        which itself inherits from :class:`abc.ABCMeta`. Thus it is possible
        to define interface classes with abstract methods using the
        :func:`abstractmethod` decorator. There are also decorators for
        abstract class methods, static methods, and properties.
-    2. Using metaclass magic, each *class* deriving from :class:`BasicInterface`
+    2. Using metaclass magic, each *class* deriving from :class:`BasicObject`
        comes with its own :mod:`~pymor.core.logger` instance accessible through its `logger`
        attribute. The logger prefix is automatically set to the class name.
     3. Logging can be disabled and re-enabled for each *instance* using the
-       :meth:`BasicInterface.disable_logging` and :meth:`BasicInterface.enable_logging`
+       :meth:`BasicObject.disable_logging` and :meth:`BasicObject.enable_logging`
        methods.
-    4. :meth:`BasicInterface.uid` provides a unique id for each instance. While
+    4. :meth:`BasicObject.uid` provides a unique id for each instance. While
        `id(obj)` is only guaranteed to be unique among all living Python objects,
-       :meth:`BasicInterface.uid` will be (almost) unique among all pyMOR objects
+       :meth:`BasicObject.uid` will be (almost) unique among all pyMOR objects
        that have ever existed, including previous runs of the application. This
        is achieved by building the id from a uuid4 which is newly created for
        each pyMOR run and a counter which is increased for any object that requests
        an uid.
-    5. If not set by the user to another value, :attr:`BasicInterface.name` is
+    5. If not set by the user to another value, :attr:`BasicObject.name` is
        set to the name of the object's class.
 
 
-:class:`ImmutableInterface` derives from :class:`BasicInterface` and adds the following
+:class:`ImmutableObject` derives from :class:`BasicObject` and adds the following
 functionality:
 
     1. Using more metaclass magic, each instance which derives from
-       :class:`ImmutableInterface` is locked after its `__init__` method has returned.
+       :class:`ImmutableObject` is locked after its `__init__` method has returned.
        Each attempt to change one of its attributes raises an exception. Private
        attributes (of the form `_name`) are exempted from this rule.
-    2. :meth:`ImmutableInterface.with_` can be used to create a copy of an instance with
+    2. :meth:`ImmutableObject.with_` can be used to create a copy of an instance with
        some changed attributes. E.g. ::
 
            obj.with_(a=x, b=y)
@@ -87,21 +87,12 @@ class UID:
 class UberMeta(abc.ABCMeta):
 
     def __init__(cls, name, bases, namespace):
-        """Metaclass of :class:`BasicInterface`.
+        """Metaclass of :class:`BasicObject`.
 
-        I tell base classes when I derive a new class from them. I create a logger
-        for each class I create. I add an `init_args` attribute to the class.
+        I create a logger for each class I create.
+        I add an `init_arguments` attribute to the class.
         """
 
-        # all bases except object get the derived class' name appended
-        for base in [b for b in bases if b != object]:
-            derived = cls
-            # mangle the name to the base scope
-            attribute = '_%s__implementors' % base.__name__
-            if hasattr(base, attribute):
-                getattr(base, attribute).append(derived)
-            else:
-                setattr(base, attribute, [derived])
         cls._logger = logger.getLogger(f'{cls.__module__.replace("__main__", "pymor")}.{name}')
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
@@ -113,7 +104,7 @@ class UberMeta(abc.ABCMeta):
         """
         for attr in ('_init_arguments', '_init_defaults'):
             if attr in classdict:
-                raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicInterface')
+                raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicObject')
 
         for attr, item in classdict.items():
             if isinstance(item, FunctionType):
@@ -167,7 +158,7 @@ class UberMeta(abc.ABCMeta):
         return c
 
 
-class BasicInterface(metaclass=UberMeta):
+class BasicObject(metaclass=UberMeta):
     """Base class for most classes in pyMOR.
 
     Attributes
@@ -211,31 +202,6 @@ class BasicInterface(metaclass=UberMeta):
     def enable_logging(self, doit=True):
         """Enable logging output for this instance."""
         self.disable_logging(not doit)
-
-    @classmethod
-    def implementors(cls, descend=False):
-        """I return a, potentially empty, list of my subclass-objects.
-        If `descend` is `True`, I traverse my entire subclass hierarchy and return a flattened list.
-        """
-        if not hasattr(cls, '_%s__implementors' % cls.__name__):
-            return []
-        level = getattr(cls, '_%s__implementors' % cls.__name__)
-        if not descend:
-            return level
-        subtrees = itertools.chain.from_iterable([sub.implementors() for sub in level if sub.implementors() != []])
-        level.extend(subtrees)
-        return level
-
-    @classmethod
-    def implementor_names(cls, descend=False):
-        """For convenience I return a list of my implementor names instead of class objects"""
-        return [c.__name__ for c in cls.implementors(descend)]
-
-    @classmethod
-    def has_interface_name(cls):
-        """`True` if the class name ends with `Interface`. Used for introspection."""
-        name = cls.__name__
-        return name.endswith('Interface')
 
     _uid = None
 
@@ -286,7 +252,7 @@ class classinstancemethod:
 
 
 class ImmutableMeta(UberMeta):
-    """Metaclass for :class:`ImmutableInterface`."""
+    """Metaclass for :class:`ImmutableObject`."""
 
     def __new__(cls, classname, bases, classdict):
 
@@ -316,16 +282,16 @@ class ImmutableMeta(UberMeta):
     __call__ = _call
 
 
-class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
+class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
     """Base class for immutable objects in pyMOR.
 
-    Instances of `ImmutableInterface` are immutable in the sense that
+    Instances of `ImmutableObject` are immutable in the sense that
     after execution of `__init__`, any modification of a non-private
     attribute will raise an exception.
 
-    .. _ImmutableInterfaceWarning:
+    .. _ImmutableObjectWarning:
     .. warning::
-           For instances of `ImmutableInterface`,
+           For instances of `ImmutableObject`,
            the result of member function calls should be completely
            determined by the function's arguments together with the
            object's `__init__` arguments and the current state of pyMOR's

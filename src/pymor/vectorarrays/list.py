@@ -6,12 +6,12 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, classinstancemethod
+from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _create_random_values
+from pymor.vectorarrays.interface import VectorArray, VectorSpace, _create_random_values
 
 
-class VectorInterface(BasicInterface):
+class Vector(BasicObject):
     """Interface for vectors used in conjunction with |ListVectorArray|.
 
     This interface must be satisfied by the individual entries of the
@@ -105,7 +105,7 @@ class VectorInterface(BasicInterface):
         return self.copy()
 
 
-class CopyOnWriteVector(VectorInterface):
+class CopyOnWriteVector(Vector):
 
     @abstractclassmethod
     def from_instance(cls, instance):
@@ -159,7 +159,7 @@ class CopyOnWriteVector(VectorInterface):
             self._refcount = [1]
 
 
-class ComplexifiedVector(VectorInterface):
+class ComplexifiedVector(Vector):
 
     def __init__(self, real_part, imag_part):
         self.real_part, self.imag_part = real_part, imag_part
@@ -355,13 +355,13 @@ class NumpyVector(CopyOnWriteVector):
         return self.__class__(self._array.conj())
 
 
-class ListVectorArray(VectorArrayInterface):
+class ListVectorArray(VectorArray):
     """|VectorArray| implemented as a Python list of vectors.
 
     This |VectorArray| implementation is the first choice when
     creating pyMOR wrappers for external solvers which are based
     on single vector objects. In order to do so, a wrapping
-    subclass of :class:`VectorInterface` has to be provided
+    subclass of :class:`Vector` has to be provided
     on which the implementation of |ListVectorArray| will operate.
     The associated |VectorSpace| is a subclass of
     :class:`ListVectorSpace`.
@@ -539,7 +539,7 @@ class ListVectorArray(VectorArrayInterface):
 
     @property
     def imag(self):
-        # note that VectorInterface.imag is allowed to return None in case
+        # note that Vector.imag is allowed to return None in case
         # of a real vector, so we have to check for that.
         # returning None is allowed as ComplexifiedVector does not know
         # how to create a new zero vector.
@@ -552,7 +552,7 @@ class ListVectorArray(VectorArrayInterface):
         return f'ListVectorArray of {len(self._list)} of space {self.space}'
 
 
-class ListVectorSpace(VectorSpaceInterface):
+class ListVectorSpace(VectorSpace):
     """|VectorSpace| of |ListVectorArrays|."""
 
     dim = None
@@ -613,7 +613,7 @@ class ListVectorSpace(VectorSpaceInterface):
 
     @make_array.instancemethod
     def make_array(self, obj):
-        return ListVectorArray([v if isinstance(v, VectorInterface) else self.make_vector(v) for v in obj], self)
+        return ListVectorArray([v if isinstance(v, Vector) else self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
     def from_numpy(cls, data, id=None, ensure_copy=False):

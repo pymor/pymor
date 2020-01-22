@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.core.interfaces import ImmutableInterface
+from pymor.core.base import ImmutableObject
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import StationaryRBReductor
@@ -56,7 +56,7 @@ class CoerciveRBReductor(StationaryRBReductor):
         return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
-class CoerciveRBEstimator(ImmutableInterface):
+class CoerciveRBEstimator(ImmutableObject):
     """Instantiated by :class:`CoerciveRBReductor`.
 
     Not to be used directly.
@@ -203,7 +203,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
-class SimpleCoerciveRBEstimator(ImmutableInterface):
+class SimpleCoerciveRBEstimator(ImmutableObject):
     """Instantiated by :class:`SimpleCoerciveRBReductor`.
 
     Not to be used directly.

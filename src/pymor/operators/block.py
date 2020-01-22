@@ -4,13 +4,12 @@
 
 import numpy as np
 
-from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interface import Operator
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
-class BlockOperatorBase(OperatorBase):
+class BlockOperatorBase(Operator):
 
     def _operators(self):
         """Iterator over operators."""
@@ -28,7 +27,7 @@ class BlockOperatorBase(OperatorBase):
         else:
             if blocks.ndim == 1:
                 blocks.shape = (len(blocks), 1)
-        assert all(isinstance(op, OperatorInterface) or op is None for op in self._operators())
+        assert all(isinstance(op, Operator) or op is None for op in self._operators())
 
         # check if every row/column contains at least one operator
         assert all(any(blocks[i, j] is not None for j in range(blocks.shape[1]))
@@ -125,7 +124,7 @@ class BlockOperatorBase(OperatorBase):
 class BlockOperator(BlockOperatorBase):
     """A matrix of arbitrary |Operators|.
 
-    This operator can be :meth:`applied <pymor.operators.interfaces.OperatorInterface.apply>`
+    This operator can be :meth:`applied <pymor.operators.interface.Operator.apply>`
     to a compatible :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>`.
 
     Parameters

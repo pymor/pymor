@@ -107,9 +107,9 @@ if config.HAVE_PYMESS:
 
         This function uses `pymess.glyap` and `pymess.lradi`.
         For both methods,
-        :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`
+        :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`
         and
-        :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`
+        :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
         need to be implemented for `A.source`.
         Additionally, since `glyap` is a dense solver, it expects
         :func:`~pymor.algorithms.to_matrix.to_matrix` to work for A and
@@ -326,9 +326,9 @@ if config.HAVE_PYMESS:
 
         This function uses `pymess.dense_nm_gmpcare` and `pymess.lrnm`.
         For both methods,
-        :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`
+        :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`
         and
-        :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`
+        :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
         need to be implemented for `A.source`.
         Additionally, since `dense_nm_gmpcare` is a dense solver, it
         expects :func:`~pymor.algorithms.to_matrix.to_matrix` to work

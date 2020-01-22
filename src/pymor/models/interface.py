@@ -2,18 +2,20 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.cache import CacheableInterface
-from pymor.core.interfaces import abstractmethod
+from pymor.core.base import abstractmethod
+from pymor.core.cache import CacheableObject
+from pymor.operators.constructions import induced_norm
 from pymor.parameters.base import Parametric
+from pymor.tools.frozendict import FrozenDict
 
 
-class ModelInterface(CacheableInterface, Parametric):
+class Model(CacheableObject, Parametric):
     """Interface for model objects.
 
     A model object defines a discrete problem
     via its `class` and the |Operators| it contains.
     Furthermore, models can be
-    :meth:`solved <ModelInterface.solve>` for a given
+    :meth:`solved <Model.solve>` for a given
     |Parameter| resulting in a solution |VectorArray|.
 
     Attributes
@@ -32,7 +34,17 @@ class ModelInterface(CacheableInterface, Parametric):
     solution_space = None
     output_space = None
     linear = False
-    products = dict()
+    products = FrozenDict()
+
+    def __init__(self, products=None, estimator=None, visualizer=None,
+                 name=None, **kwargs):
+        products = FrozenDict(products or {})
+        if products:
+            for k, v in products.items():
+                setattr(self, f'{k}_product', v)
+                setattr(self, f'{k}_norm', induced_norm(v))
+
+        self.__auto_init(locals())
 
     @abstractmethod
     def _solve(self, mu=None, return_output=False, **kwargs):
@@ -93,7 +105,10 @@ class ModelInterface(CacheableInterface, Parametric):
         -------
         The estimated error.
         """
-        raise NotImplementedError
+        if getattr(self, 'estimator') is not None:
+            return self.estimator.estimate(U, mu=mu, m=self)
+        else:
+            raise NotImplementedError('Model has no estimator.')
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
@@ -101,7 +116,13 @@ class ModelInterface(CacheableInterface, Parametric):
         Parameters
         ----------
         U
-            The |VectorArray| from :attr:`~ModelInterface.solution_space`
+            The |VectorArray| from
+            :attr:`~pymor.models.interface.Model.solution_space`
             that shall be visualized.
+        kwargs
+            See docstring of `self.visualizer.visualize`.
         """
-        raise NotImplementedError
+        if getattr(self, 'visualizer') is not None:
+            return self.visualizer.visualize(U, self, **kwargs)
+        else:
+            raise NotImplementedError('Model has no visualizer.')

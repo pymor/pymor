@@ -11,7 +11,7 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.models.basic import ModelBase
+from pymor.models.interface import Model
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
@@ -26,7 +26,7 @@ def sparse_min_size(value=1000):
     return value
 
 
-class InputOutputModel(ModelBase):
+class InputOutputModel(Model):
     """Base class for input-output systems."""
 
     cache_region = 'memory'

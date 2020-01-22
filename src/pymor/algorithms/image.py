@@ -8,8 +8,8 @@ from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import Concatenation, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
-from pymor.operators.interfaces import OperatorInterface
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.operators.interface import Operator
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -69,14 +69,14 @@ def estimate_image(operators=(), vectors=(),
     assert operators or vectors
     domain_space = operators[0].source if operators else None
     image_space = operators[0].range if operators \
-        else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
+        else vectors[0].space if isinstance(vectors[0], VectorArray) \
         else vectors[0].range
     assert all(op.source == domain_space and op.range == image_space for op in operators)
     assert all(
-        isinstance(v, VectorArrayInterface) and (
+        isinstance(v, VectorArray) and (
             v in image_space
         )
-        or isinstance(v, OperatorInterface) and (
+        or isinstance(v, Operator) and (
             v.range == image_space and isinstance(v.source, NumpyVectorSpace) and v.linear
         )
         for v in vectors
@@ -167,14 +167,14 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
     assert operators or vectors
     domain_space = operators[0].source if operators else None
     image_space = operators[0].range if operators \
-        else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
+        else vectors[0].space if isinstance(vectors[0], VectorArray) \
         else vectors[0].range
     assert all(op.source == domain_space and op.range == image_space for op in operators)
     assert all(
-        isinstance(v, VectorArrayInterface) and (
+        isinstance(v, VectorArray) and (
             v in image_space
         )
-        or isinstance(v, OperatorInterface) and (
+        or isinstance(v, Operator) and (
             v.range == image_space and isinstance(v.source, NumpyVectorSpace) and v.linear
         )
         for v in vectors
@@ -255,7 +255,7 @@ class CollectVectorRangeRules(RuleTable):
         super().__init__(use_caching=True)
         self.image = image
 
-    @match_class(VectorArrayInterface)
+    @match_class(VectorArray)
     def action_VectorArray(self, obj):
         self.image.append(obj)
 

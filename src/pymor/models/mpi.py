@@ -4,9 +4,9 @@
 
 from collections import namedtuple
 
-from pymor.core.interfaces import ImmutableInterface
-from pymor.models.interfaces import ModelInterface
-from pymor.operators.interfaces import OperatorInterface
+from pymor.core.base import ImmutableObject
+from pymor.models.interface import Model
+from pymor.operators.interface import Operator
 from pymor.operators.mpi import mpi_wrap_operator
 from pymor.tools import mpi
 from pymor.vectorarrays.mpi import MPIVectorSpace
@@ -20,7 +20,7 @@ class MPIModel:
     to allow an MPI distributed usage of the |Model|.
     The underlying implementation needs to be MPI aware.
     In particular, the model's
-    :meth:`~pymor.models.interfaces.ModelInterface.solve`
+    :meth:`~pymor.models.interface.Model.solve`
     method has to perform an MPI parallel solve of the model.
 
     Note that this class is not intended to be instantiated directly.
@@ -44,7 +44,7 @@ class MPIModel:
         mpi.call(mpi.remove_object, self.obj_id)
 
 
-class MPIVisualizer(ImmutableInterface):
+class MPIVisualizer(ImmutableObject):
 
     def __init__(self, m_obj_id):
         self.m_obj_id = m_obj_id
@@ -82,19 +82,19 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
 
     When `use_with` is `False`, an :class:`MPIModel` is instantiated
     with the wrapped operators. A call to
-    :meth:`~pymor.models.interfaces.ModelInterface.solve`
+    :meth:`~pymor.models.interface.Model.solve`
     will then use an MPI parallel call to the
-    :meth:`~pymor.models.interfaces.ModelInterface.solve`
+    :meth:`~pymor.models.interface.Model.solve`
     methods of the wrapped local |Models| to obtain the solution.
     This is usually what you want when the actual solve is performed by
     an implementation in the external solver.
 
-    When `use_with` is `True`, :meth:`~pymor.core.interfaces.ImmutableInterface.with_`
+    When `use_with` is `True`, :meth:`~pymor.core.base.ImmutableObject.with_`
     is called on the local |Model| on rank 0, to obtain a new
     |Model| with the wrapped MPI |Operators|. This is mainly useful
     when the local models are generic |Models| as in
     :mod:`pymor.models.basic` and
-    :meth:`~pymor.models.interfaces.ModelInterface.solve`
+    :meth:`~pymor.models.interface.Model.solve`
     is implemented directly in pyMOR via operations on the contained
     |Operators|.
 
@@ -116,7 +116,7 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
         See :class:`~pymor.operators.mpi.MPIOperator`.
     """
 
-    assert use_with or isinstance(base_type, ModelInterface)
+    assert use_with or isinstance(base_type, Model)
 
     if not isinstance(local_models, mpi.ObjectId):
         local_models = mpi.call(mpi.function_call_manage, local_models)
@@ -156,7 +156,7 @@ def _mpi_wrap_model_manage_operators(obj_id, mpi_spaces, use_with, base_type):
     attributes = {k: getattr(m, k) for k in attributes_to_consider}
 
     def process_attribute(v):
-        if isinstance(v, OperatorInterface):
+        if isinstance(v, Operator):
             mpi_range = type(v.range) in mpi_spaces or v.range.id in mpi_spaces
             mpi_source = type(v.source) in mpi_spaces or v.source.id in mpi_spaces
             if mpi_range or mpi_source:

@@ -9,9 +9,9 @@ if config.HAVE_NGSOLVE:
     import ngsolve as ngs
     import numpy as np
 
-    from pymor.core.interfaces import ImmutableInterface
-    from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase
-    from pymor.vectorarrays.interfaces import VectorArrayInterface
+    from pymor.core.base import ImmutableObject
+    from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
+    from pymor.vectorarrays.interface import VectorArray
     from pymor.vectorarrays.numpy import NumpyVectorSpace
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 
@@ -156,7 +156,7 @@ if config.HAVE_NGSOLVE:
             vec = self.matrix.AsVector().FV().NumPy()
             return NumpyVectorSpace.make_array(vec.copy() if copy else vec)
 
-    class NGSolveVisualizer(ImmutableInterface):
+    class NGSolveVisualizer(ImmutableObject):
         """Visualize an NGSolve grid function."""
 
         def __init__(self, mesh, fespace):
@@ -165,7 +165,7 @@ if config.HAVE_NGSOLVE:
 
         def visualize(self, U, m, legend=None, separate_colorbars=True, block=True):
             """Visualize the provided data."""
-            if isinstance(U, VectorArrayInterface):
+            if isinstance(U, VectorArray):
                 U = (U,)
             assert all(u in self.space for u in U)
             if any(len(u) != 1 for u in U):

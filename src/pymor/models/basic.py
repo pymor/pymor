@@ -2,54 +2,14 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.algorithms.timestepping import TimeStepperInterface
-from pymor.models.interfaces import ModelInterface
-from pymor.operators.constructions import VectorOperator, induced_norm
+from pymor.algorithms.timestepping import TimeStepper
+from pymor.models.interface import Model
+from pymor.operators.constructions import VectorOperator
 from pymor.tools.formatrepr import indent_value
-from pymor.tools.frozendict import FrozenDict
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interface import VectorArray
 
 
-class ModelBase(ModelInterface):
-    """Base class for |Models| providing some common functionality."""
-
-    def __init__(self, products=None, estimator=None, visualizer=None,
-                 name=None, **kwargs):
-
-        products = FrozenDict(products or {})
-
-        if products:
-            for k, v in products.items():
-                setattr(self, f'{k}_product', v)
-                setattr(self, f'{k}_norm', induced_norm(v))
-
-        self.__auto_init(locals())
-
-    def visualize(self, U, **kwargs):
-        """Visualize a solution |VectorArray| U.
-
-        Parameters
-        ----------
-        U
-            The |VectorArray| from
-            :attr:`~pymor.models.interfaces.ModelInterface.solution_space`
-            that shall be visualized.
-        kwargs
-            See docstring of `self.visualizer.visualize`.
-        """
-        if self.visualizer is not None:
-            return self.visualizer.visualize(U, self, **kwargs)
-        else:
-            raise NotImplementedError('Model has no visualizer.')
-
-    def estimate(self, U, mu=None):
-        if self.estimator is not None:
-            return self.estimator.estimate(U, mu=mu, m=self)
-        else:
-            raise NotImplementedError('Model has no estimator.')
-
-
-class StationaryModel(ModelBase):
+class StationaryModel(Model):
     """Generic class for models of stationary problems.
 
     This class describes discrete problems given by the equation::
@@ -99,7 +59,7 @@ class StationaryModel(ModelBase):
     def __init__(self, operator, rhs, output_functional=None, products=None,
                  parameter_space=None, estimator=None, visualizer=None, name=None):
 
-        if isinstance(rhs, VectorArrayInterface):
+        if isinstance(rhs, VectorArray):
             assert rhs in operator.range
             rhs = VectorOperator(rhs, name='rhs')
 
@@ -141,7 +101,7 @@ class StationaryModel(ModelBase):
             return U
 
 
-class InstationaryModel(ModelBase):
+class InstationaryModel(Model):
     """Generic class for models of instationary problems.
 
     This class describes instationary problems given by the equations::
@@ -170,8 +130,8 @@ class InstationaryModel(ModelBase):
     mass
         The mass |Operator| `M`. If `None`, the identity is assumed.
     time_stepper
-        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
-        to be used by :meth:`~pymor.models.interfaces.ModelInterface.solve`.
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+        to be used by :meth:`~pymor.models.interface.Model.solve`.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
@@ -205,14 +165,14 @@ class InstationaryModel(ModelBase):
                  output_functional=None, products=None, parameter_space=None, estimator=None, visualizer=None,
                  name=None):
 
-        if isinstance(rhs, VectorArrayInterface):
+        if isinstance(rhs, VectorArray):
             assert rhs in operator.range
             rhs = VectorOperator(rhs, name='rhs')
-        if isinstance(initial_data, VectorArrayInterface):
+        if isinstance(initial_data, VectorArray):
             assert initial_data in operator.source
             initial_data = VectorOperator(initial_data, name='initial_data')
 
-        assert isinstance(time_stepper, TimeStepperInterface)
+        assert isinstance(time_stepper, TimeStepper)
         assert initial_data.source.is_scalar
         assert operator.source == initial_data.range
         assert rhs is None \

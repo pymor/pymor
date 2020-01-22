@@ -4,11 +4,11 @@
 
 import numpy as np
 
-from pymor.discretizers.builtin.grids.interfaces import ReferenceElementInterface
+from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 
 
-class Point(ReferenceElementInterface):
+class Point(ReferenceElement):
 
     dim = 0
     volume = 1
@@ -54,7 +54,7 @@ class Point(ReferenceElementInterface):
 point = Point()
 
 
-class Line(ReferenceElementInterface):
+class Line(ReferenceElement):
 
     dim = 1
     volume = 1
@@ -113,7 +113,7 @@ class Line(ReferenceElementInterface):
 line = Line()
 
 
-class Square(ReferenceElementInterface):
+class Square(ReferenceElement):
 
     dim = 2
     volume = 1
@@ -215,7 +215,7 @@ class Square(ReferenceElementInterface):
 square = Square()
 
 
-class Triangle(ReferenceElementInterface):
+class Triangle(ReferenceElement):
 
     dim = 2
     volume = 0.5

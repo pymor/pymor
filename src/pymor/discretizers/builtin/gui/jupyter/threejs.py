@@ -15,7 +15,7 @@ from matplotlib.cm import get_cmap
 from pymor.core import config
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interface import VectorArray
 
 # we should try to limit ourselves to webgl 1.0 here since 2.0 (draft) is not as widely supported
 # https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#Browser_compatibility
@@ -311,10 +311,10 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     color_map
         a Matplotlib Colormap object
     """
-    assert isinstance(U, VectorArrayInterface) \
-           or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) for u in U)
+    assert isinstance(U, VectorArray) \
+           or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
                and all(len(u) == len(U[0]) for u in U))
-    if isinstance(U, VectorArrayInterface):
+    if isinstance(U, VectorArray):
         size = len(U)
         U = (U.to_numpy().astype(np.float32, copy=False),)
     else:

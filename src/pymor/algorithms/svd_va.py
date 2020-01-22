@@ -10,8 +10,8 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.operators.interfaces import OperatorInterface
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.operators.interface import Operator
+from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('rtol', 'atol', 'l2_err')
@@ -61,8 +61,8 @@ def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=
     Vh
         |NumPy array| of right singular vectors.
     """
-    assert isinstance(A, VectorArrayInterface)
-    assert product is None or isinstance(product, OperatorInterface)
+    assert isinstance(A, VectorArray)
+    assert product is None or isinstance(product, Operator)
     assert modes is None or modes <= len(A)
 
     if A.dim == 0 or len(A) == 0:
@@ -149,8 +149,8 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     Vh
         |NumPy array| of right singular vectors.
     """
-    assert isinstance(A, VectorArrayInterface)
-    assert product is None or isinstance(product, OperatorInterface)
+    assert isinstance(A, VectorArray)
+    assert product is None or isinstance(product, Operator)
     assert modes is None or modes <= len(A)
 
     if A.dim == 0 or len(A) == 0:

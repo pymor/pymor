@@ -10,12 +10,13 @@ if config.HAVE_FENICS:
     import ufl
     import numpy as np
 
+    from pymor.core.base import BasicObject
     from pymor.core.defaults import defaults
-    from pymor.core.interfaces import BasicInterface
-    from pymor.operators.basic import LinearComplexifiedListVectorArrayOperatorBase, OperatorBase
     from pymor.operators.constructions import ZeroOperator
+    from pymor.operators.interface import Operator
+    from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
     from pymor.operators.numpy import NumpyMatrixOperator
-    from pymor.vectorarrays.interfaces import _create_random_values
+    from pymor.vectorarrays.interface import _create_random_values
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -207,7 +208,7 @@ if config.HAVE_FENICS:
 
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V, solver_options=solver_options, name=name)
 
-    class FenicsOperator(OperatorBase):
+    class FenicsOperator(Operator):
         """Wraps a FEniCS form as an |Operator|."""
 
         linear = False
@@ -374,7 +375,7 @@ if config.HAVE_FENICS:
             assert len(set(restricted_dofs)) == len(set(dofs))
             return restricted_dofs
 
-    class RestrictedFenicsOperator(OperatorBase):
+    class RestrictedFenicsOperator(Operator):
 
         linear = False
 
@@ -415,7 +416,7 @@ if config.HAVE_FENICS:
         options = (solver, preconditioner) if preconditioner else (solver,)
         df.solve(matrix, r, v, *options)
 
-    class FenicsVisualizer(BasicInterface):
+    class FenicsVisualizer(BasicObject):
         """Visualize a FEniCS grid function.
 
         Parameters
@@ -444,7 +445,7 @@ if config.HAVE_FENICS:
                 however, is allowed to contain multipled vectors that will be interpreted
                 as a time series.
             m
-                Filled in by :meth:`pymor.models.ModelBase.visualize` (ignored).
+                Filled in by :meth:`pymor.models.interface.Model.visualize` (ignored).
             title
                 Title of the plot.
             legend
