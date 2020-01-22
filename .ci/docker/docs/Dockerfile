@@ -1,3 +1,4 @@
-FROM scratch
+FROM alpine:latest
 
-COPY public/* /public/
+COPY * /public/
+RUN ls -l /public/
