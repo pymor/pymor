@@ -3,10 +3,33 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+from numpy.polynomial.polynomial import Polynomial
 import pytest
 
 from pymor.core.config import config
+from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+
+class MonomOperator(Operator):
+    source = range = NumpyVectorSpace(1)
+
+    def __init__(self, order, monom=None):
+        self.monom = monom if monom else Polynomial(np.identity(order + 1)[order])
+        assert isinstance(self.monom, Polynomial)
+        self.order = order
+        self.derivative = self.monom.deriv()
+        self.linear = order == 1
+
+    def apply(self, U, mu=None):
+        return self.source.make_array(self.monom(U.to_numpy()))
+
+    def jacobian(self, U, mu=None):
+        return MonomOperator(self.order - 1, self.derivative)
+
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        return self.range.make_array(1. / V.to_numpy())
 
 
 def random_integers(count, seed):

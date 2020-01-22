@@ -5,10 +5,12 @@
 import numpy as np
 import pytest
 
-from pymortests.base import runmodule, MonomOperator
 from pymor.algorithms.newton import newton, NewtonError
 from pymor.tools.floatcmp import float_cmp
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+from pymortests.base import runmodule
+from pymortests.fixtures.operator import MonomOperator
 
 
 def _newton(order, **kwargs):

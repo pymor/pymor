@@ -3,101 +3,17 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import hashlib
-import pprint
-import pkgutil
 import os
 import sys
 import numpy as np
-from numpy.polynomial.polynomial import Polynomial
-from math import factorial
-from pickle import dumps, dump, load
+from pickle import dump, load
 from pkg_resources import resource_filename, resource_stream
-
-from pymor.core import logger
-from pymor.operators.interface import Operator
-from pymor.vectorarrays.numpy import NumpyVectorSpace
-
-
-class TestInterface:
-    logger = logger.getLogger(__name__)
-
-
-TestInterface = TestInterface
-
-
-def _load_all():
-    import pymor
-
-    ignore_playground = True
-    fails = []
-    for _, module_name, _ in pkgutil.walk_packages(pymor.__path__, pymor.__name__ + '.',
-                                                   lambda n: fails.append((n, ''))):
-        if ignore_playground and 'playground' in module_name:
-            continue
-        try:
-            __import__(module_name, level=0)
-        except (TypeError, ImportError) as t:
-            fails.append((module_name, t))
-    if len(fails) > 0:
-        logger.getLogger(__name__).fatal(f'Failed imports: {pprint.pformat(fails)}')
-        raise ImportError(__name__)
-
-
-def subclassForImplemetorsOf(InterfaceType, TestCase):
-    """dynamically creates subclasses of the decorated base test class
-    for all implementors of a given Interface
-    """
-    try:
-        _load_all()
-    except ImportError:
-        pass
-
-    test_types = set(sorted([T for T in InterfaceType.implementors(True) if not (T.has_interface_name()
-                                                                                 or issubclass(T, TestInterface))],
-                            key=lambda g: g.__name__))
-    for Type in test_types:
-        cname = f'DynamicTest_{Type.__name__}_{TestCase.__name__.replace("Interface", "")}'
-        yield type(cname, (TestCase,), {'Type': Type})
 
 
 def runmodule(filename):
     import pytest
 
     sys.exit(pytest.main(sys.argv[1:] + [filename]))
-
-
-def polynomials(max_order):
-    for n in range(max_order + 1):
-        def f(x):
-            return np.power(x, n)
-
-        def deri(k):
-            if k > n:
-                return lambda _: 0
-            return lambda x: (factorial(n) / factorial(n - k)) * np.power(x, n - k)
-
-        integral = (1 / (n + 1))
-        yield (n, f, deri, integral)
-
-
-class MonomOperator(Operator):
-    source = range = NumpyVectorSpace(1)
-
-    def __init__(self, order, monom=None):
-        self.monom = monom if monom else Polynomial(np.identity(order + 1)[order])
-        assert isinstance(self.monom, Polynomial)
-        self.order = order
-        self.derivative = self.monom.deriv()
-        self.linear = order == 1
-
-    def apply(self, U, mu=None):
-        return self.source.make_array(self.monom(U.to_numpy()))
-
-    def jacobian(self, U, mu=None):
-        return MonomOperator(self.order - 1, self.derivative)
-
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        return self.range.make_array(1. / V.to_numpy())
 
 
 def check_results(test_name, params, results, *args):

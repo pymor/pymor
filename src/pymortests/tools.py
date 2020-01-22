@@ -2,15 +2,15 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from math import sin, pi, exp
+from math import sin, pi, exp, factorial
 import numpy as np
 import pytest
 import itertools
 
+from pymor.core.logger import getLogger
 from pymor.tools.io import SafeTemporaryFileName
-from pymortests.base import TestInterface, runmodule
+from pymortests.base import runmodule
 from pymortests.fixtures.grid import rect_or_tria_grid
-from pymortests.base import polynomials
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.tools.deprecated import Deprecated
@@ -19,70 +19,86 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools import timing
 
 
+logger = getLogger('pymortests.tools')
+
+
 FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
              ('e^x', lambda x: exp(x), exp(1) - exp(0)))
 
 
-class TestGaussQuadrature(TestInterface):
+def polynomials(max_order):
+    for n in range(max_order + 1):
+        def f(x):
+            return np.power(x, n)
 
-    def test_polynomials(self):
-        for n, function, _, integral in polynomials(GaussQuadratures.orders[-1]):
-            name = f'x^{n}'
-            for order in GaussQuadratures.orders:
-                if n > order / 2:
-                    continue
-                Q = GaussQuadratures.iter_quadrature(order)
-                ret = sum([function(p) * w for (p, w) in Q])
-                assert float_cmp(ret, integral), \
-                    f'{name} integral wrong: {integral} vs {ret} (quadrature order {order})'
+        def deri(k):
+            if k > n:
+                return lambda _: 0
+            return lambda x: (factorial(n) / factorial(n - k)) * np.power(x, n - k)
 
-    def test_other_functions(self):
-        order = GaussQuadratures.orders[-1]
-        for name, function, integral in FUNCTIONS:
+        integral = (1 / (n + 1))
+        yield (n, f, deri, integral)
+
+
+def test_quadrature_polynomials():
+    for n, function, _, integral in polynomials(GaussQuadratures.orders[-1]):
+        name = f'x^{n}'
+        for order in GaussQuadratures.orders:
+            if n > order / 2:
+                continue
             Q = GaussQuadratures.iter_quadrature(order)
             ret = sum([function(p) * w for (p, w) in Q])
             assert float_cmp(ret, integral), \
                 f'{name} integral wrong: {integral} vs {ret} (quadrature order {order})'
 
-    def test_weights(self):
-        for order in GaussQuadratures.orders:
-            _, W = GaussQuadratures.quadrature(order)
-            assert float_cmp(sum(W), 1)
 
-    def test_points(self):
-        for order in GaussQuadratures.orders:
-            P, _ = GaussQuadratures.quadrature(order)
-            assert float_cmp_all(P, np.sort(P))
-            assert 0.0 < P[0]
-            assert P[-1] < 1.0
+def test_quadrature_other_functions():
+    order = GaussQuadratures.orders[-1]
+    for name, function, integral in FUNCTIONS:
+        Q = GaussQuadratures.iter_quadrature(order)
+        ret = sum([function(p) * w for (p, w) in Q])
+        assert float_cmp(ret, integral), \
+            f'{name} integral wrong: {integral} vs {ret} (quadrature order {order})'
 
 
-class TestCmp(TestInterface):
+def test_quadrature_weights():
+    for order in GaussQuadratures.orders:
+        _, W = GaussQuadratures.quadrature(order)
+        assert float_cmp(sum(W), 1)
 
-    def test_props(self):
-        tol_range = [0.0, 1e-8, 1]
-        nan = float('nan')
-        inf = float('inf')
-        for (rtol, atol) in itertools.product(tol_range, tol_range):
-            msg = f'rtol: {rtol} | atol {atol}'
-            assert float_cmp(0., 0., rtol, atol), msg
-            assert float_cmp(-0., -0., rtol, atol), msg
-            assert float_cmp(-1., -1., rtol, atol), msg
-            assert float_cmp(0., -0., rtol, atol), msg
-            assert not float_cmp(2., -2., rtol, atol), msg
 
-            assert not float_cmp(nan, nan, rtol, atol), msg
-            assert nan != nan
-            assert not (nan == nan)
-            assert not float_cmp(-nan, nan, rtol, atol), msg
+def test_quadrature_points():
+    for order in GaussQuadratures.orders:
+        P, _ = GaussQuadratures.quadrature(order)
+        assert float_cmp_all(P, np.sort(P))
+        assert 0.0 < P[0]
+        assert P[-1] < 1.0
 
-            assert not float_cmp(inf, inf, rtol, atol), msg
-            assert not (inf != inf)
-            assert inf == inf
-            if rtol > 0:
-                assert float_cmp(-inf, inf, rtol, atol), msg
-            else:
-                assert not float_cmp(-inf, inf, rtol, atol), msg
+
+def test_float_cmp():
+    tol_range = [0.0, 1e-8, 1]
+    nan = float('nan')
+    inf = float('inf')
+    for (rtol, atol) in itertools.product(tol_range, tol_range):
+        msg = f'rtol: {rtol} | atol {atol}'
+        assert float_cmp(0., 0., rtol, atol), msg
+        assert float_cmp(-0., -0., rtol, atol), msg
+        assert float_cmp(-1., -1., rtol, atol), msg
+        assert float_cmp(0., -0., rtol, atol), msg
+        assert not float_cmp(2., -2., rtol, atol), msg
+
+        assert not float_cmp(nan, nan, rtol, atol), msg
+        assert nan != nan
+        assert not (nan == nan)
+        assert not float_cmp(-nan, nan, rtol, atol), msg
+
+        assert not float_cmp(inf, inf, rtol, atol), msg
+        assert not (inf != inf)
+        assert inf == inf
+        if rtol > 0:
+            assert float_cmp(-inf, inf, rtol, atol), msg
+        else:
+            assert not float_cmp(-inf, inf, rtol, atol), msg
 
 
 def test_vtkio(rect_or_tria_grid):
@@ -99,27 +115,28 @@ def test_vtkio(rect_or_tria_grid):
                     write_vtk(grid, data, out_name, codim=codim)
 
 
-class TestTiming(TestInterface):
+def testTimingContext():
+    with timing.Timer('busywait', logger):
+        timing.busywait(100)
+    with timing.Timer('defaultlog'):
+        timing.busywait(100)
 
-    def testTimingContext(self):
-        with timing.Timer('busywait', self.logger):
-            timing.busywait(100)
-        with timing.Timer('defaultlog'):
-            timing.busywait(100)
 
-    @timing.Timer('busywait_decorator', TestInterface.logger)
-    def wait(self):
+def testTimingDecorator():
+
+    @timing.Timer('busywait_decorator', logger)
+    def wait():
         timing.busywait(1000)
 
-    def testTimingDecorator(self):
-        self.wait()
+    wait()
 
-    def testTiming(self):
-        timer = timing.Timer('busywait', self.logger)
-        timer.start()
-        timing.busywait(1000)
-        timer.stop()
-        self.logger.info('plain timing took %s seconds', timer.dt)
+
+def testTiming():
+    timer = timing.Timer('busywait', logger)
+    timer.start()
+    timing.busywait(1000)
+    timer.stop()
+    logger.info('plain timing took %s seconds', timer.dt)
 
 
 def testDeprecated():

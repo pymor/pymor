@@ -89,19 +89,10 @@ class UberMeta(abc.ABCMeta):
     def __init__(cls, name, bases, namespace):
         """Metaclass of :class:`BasicObject`.
 
-        I tell base classes when I derive a new class from them. I create a logger
-        for each class I create. I add an `init_args` attribute to the class.
+        I create a logger for each class I create.
+        I add an `init_arguments` attribute to the class.
         """
 
-        # all bases except object get the derived class' name appended
-        for base in [b for b in bases if b != object]:
-            derived = cls
-            # mangle the name to the base scope
-            attribute = '_%s__implementors' % base.__name__
-            if hasattr(base, attribute):
-                getattr(base, attribute).append(derived)
-            else:
-                setattr(base, attribute, [derived])
         cls._logger = logger.getLogger(f'{cls.__module__.replace("__main__", "pymor")}.{name}')
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
@@ -211,31 +202,6 @@ class BasicObject(metaclass=UberMeta):
     def enable_logging(self, doit=True):
         """Enable logging output for this instance."""
         self.disable_logging(not doit)
-
-    @classmethod
-    def implementors(cls, descend=False):
-        """I return a, potentially empty, list of my subclass-objects.
-        If `descend` is `True`, I traverse my entire subclass hierarchy and return a flattened list.
-        """
-        if not hasattr(cls, '_%s__implementors' % cls.__name__):
-            return []
-        level = getattr(cls, '_%s__implementors' % cls.__name__)
-        if not descend:
-            return level
-        subtrees = itertools.chain.from_iterable([sub.implementors() for sub in level if sub.implementors() != []])
-        level.extend(subtrees)
-        return level
-
-    @classmethod
-    def implementor_names(cls, descend=False):
-        """For convenience I return a list of my implementor names instead of class objects"""
-        return [c.__name__ for c in cls.implementors(descend)]
-
-    @classmethod
-    def has_interface_name(cls):
-        """`True` if the class name ends with `Interface`. Used for introspection."""
-        name = cls.__name__
-        return name.endswith('Interface')
 
     _uid = None
 
