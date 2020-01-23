@@ -38,4 +38,13 @@ services:
     restart: "no"
     command: "/src/.ci/gitlab/script.bash"
 
+  docs:
+    image: pymor/testing:3.7
+    environment:
+      - PYMOR_FORCE_JUPYTER=1
+      - PYMOR_WITH_SPHINX=1
+      - CI_PROJECT_DIR=/src
+    volumes:
+        - ./..:/src
+    restart: "no"
     command: "/src/.ci/gitlab/test_docs.bash"

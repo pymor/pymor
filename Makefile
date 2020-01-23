@@ -27,8 +27,8 @@ test:
 
 image:
 	$(DOCKER_COMPOSE) build
-dockerdocs: image
-	$(DOCKER_COMPOSE) run pytest ./.ci/gitlab/test_docs.bash
+dockerdocs:
+	$(DOCKER_COMPOSE) run docs ./.ci/gitlab/test_docs.bash
 dockerrun: image
 	$(DOCKER_COMPOSE) run jupyter bash
 dockertest: image
