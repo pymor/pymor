@@ -7,13 +7,12 @@ else
 fi
 
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
-SUDO="sudo -E -H"
+
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
 # any failure here should fail the whole test
 set -eux
-
 export USER=pymor
 make dockerdocs
 
@@ -23,12 +22,13 @@ container=$(docker create --entrypoint / ${IMAGE})
 
 PUBLIC_DIR=/tmp/public
 mkdir -p ${PUBLIC_DIR}/${CI_COMMIT_REF_SLUG}/
-docker cp ${container}:/public/ ${PUBLIC_DIR}/
+docker cp ${container}:/public/ ${PUBLIC_DIR}/ || echo "No previous docs builds in storage"
 du -sch ${PUBLIC_DIR}/*
 rm -rf ${PUBLIC_DIR}/${CI_COMMIT_REF_SLUG}/
 
 rsync -a docs/_build/html/ ${PUBLIC_DIR}/${CI_COMMIT_REF_SLUG}/
 cp -r docs/public_root/* ${PUBLIC_DIR}
+${PYMOR_ROOT}/.ci/gitlab/docs_makeindex.py ${PUBLIC_DIR}
 du -sch ${PUBLIC_DIR}/*
 docker build -t ${IMAGE} -f .ci/docker/docs/Dockerfile ${PUBLIC_DIR}
 docker push ${IMAGE}
