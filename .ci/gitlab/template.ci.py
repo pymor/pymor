@@ -65,7 +65,8 @@ pages:
     variables:
         IMAGE: ${CI_REGISTRY_IMAGE}/docs:latest
     script:
-        - apk --update add make
+        - apk --update add make python3
+        - pip3 install jinja2 pathlib
         - .ci/gitlab/deploy_docs.bash
 
     # only:
