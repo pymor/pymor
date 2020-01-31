@@ -121,5 +121,4 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
         interact(set_time, t=IntSlider(min=0, max=len(U[0])-1, step=1, value=0))
 
-    return plot
-
+    return None
