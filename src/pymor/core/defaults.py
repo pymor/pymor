@@ -211,26 +211,31 @@ def defaults(*args):
     """
     assert all(isinstance(arg, str) for arg in args)
 
-    def the_decorator(func):
+    def the_decorator(decorated_function):
 
         if not args:
-            return func
+            return decorated_function
 
         global _default_container
-        _default_container._add_defaults_for_function(func, args=args)
+        _default_container._add_defaults_for_function(decorated_function, args=args)
 
-        @functools.wraps(func, updated=())  # ensure that __signature__ is not copied
-        def wrapper(*wrapper_args, **wrapper_kwargs):
-            for k, v in zip(func.argnames, wrapper_args):
+        def set_default_values(*wrapper_args, **wrapper_kwargs):
+            for k, v in zip(decorated_function.argnames, wrapper_args):
                 if k in wrapper_kwargs:
-                    raise TypeError(f"{func.__name__} got multiple values for argument '{k}'")
+                    raise TypeError(f"{decorated_function.__name__} got multiple values for argument '{k}'")
                 wrapper_kwargs[k] = v
-            wrapper_kwargs = {k: v if v is not None else func.defaultsdict.get(k, None)
+            wrapper_kwargs = {k: v if v is not None else decorated_function.defaultsdict.get(k, None)
                               for k, v in wrapper_kwargs.items()}
-            wrapper_kwargs = dict(func.defaultsdict, **wrapper_kwargs)
-            return func(**wrapper_kwargs)
+            wrapper_kwargs = dict(decorated_function.defaultsdict, **wrapper_kwargs)
+            return wrapper_kwargs
 
-        return wrapper
+        # ensure that __signature__ is not copied
+        @functools.wraps(decorated_function, updated=())
+        def defaults_wrapper(*wrapper_args, **wrapper_kwargs):
+            kwargs = set_default_values(*wrapper_args, **wrapper_kwargs)
+            return decorated_function(**kwargs)
+
+        return defaults_wrapper
 
     return the_decorator
 
