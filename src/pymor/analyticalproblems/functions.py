@@ -52,10 +52,6 @@ class Function(ImmutableObject, Parametric):
         """Shorthand for :meth:`~Function.evaluate`."""
         return self.evaluate(x, mu)
 
-
-class FunctionBase(Function):
-    """Base class for |Functions| providing some common functionality."""
-
     def __add__(self, other):
         if isinstance(other, Number) and other == 0:
             return self
@@ -88,7 +84,7 @@ class FunctionBase(Function):
         return LincombFunction([self], [-1.])
 
 
-class ConstantFunction(FunctionBase):
+class ConstantFunction(Function):
     """A constant |Function| ::
 
         f: R^d -> R^shape(c), f(x) = c
@@ -122,7 +118,7 @@ class ConstantFunction(FunctionBase):
             return np.tile(self.value, x.shape[:-1] + (1,) * len(self.shape_range))
 
 
-class GenericFunction(FunctionBase):
+class GenericFunction(Function):
     """Wrapper making an arbitrary Python function between |NumPy arrays| a proper |Function|.
 
     Note that a :class:`GenericFunction` can only be :mod:`pickled <pymor.core.pickle>`
@@ -223,7 +219,7 @@ class ExpressionFunction(GenericFunction):
                  getattr(self, '_name', None)))
 
 
-class LincombFunction(FunctionBase):
+class LincombFunction(Function):
     """A |Function| representing a linear combination of |Functions|.
 
     The linear coefficients can be provided either as scalars or as
@@ -269,7 +265,7 @@ class LincombFunction(FunctionBase):
         return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))
 
 
-class ProductFunction(FunctionBase):
+class ProductFunction(Function):
     """A |Function| representing a product of |Functions|.
 
     Parameters
@@ -299,7 +295,7 @@ class ProductFunction(FunctionBase):
         return np.prod([f(x, mu) for f in self.functions], axis=0)
 
 
-class BitmapFunction(FunctionBase):
+class BitmapFunction(Function):
     """Define a 2D |Function| via a grayscale image.
 
     Parameters
