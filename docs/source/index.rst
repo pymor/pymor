@@ -16,6 +16,7 @@ provided for getting started quickly.
 .. toctree::
     getting_started
     technical_overview
+    tutorial01
     environment
     release_notes
     bibliography
