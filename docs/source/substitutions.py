@@ -31,8 +31,8 @@ interfaces = '''
 .. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.constructions.LincombOperator>`
 .. |Operators| replace:: :class:`Operators <pymor.operators.interface.Operator>`
 .. |Operator| replace:: :class:`Operator <pymor.operators.interface.Operator>`
-.. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.interfaces.ParameterFunctional>`
-.. |ParameterFunctional| replace:: :class:`ParameterFunctional <pymor.parameters.interfaces.ParameterFunctional>`
+.. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.functionals.ParameterFunctional>`
+.. |ParameterFunctional| replace:: :class:`ParameterFunctional <pymor.parameters.functionals.ParameterFunctional>`
 .. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.spaces.ParameterSpace>`
 .. |ParameterSpaces| replace:: :class:`ParameterSpaces <pymor.parameters.spaces.ParameterSpace>`
 .. |ReferenceElements| replace:: :class:`ReferenceElements <pymor.discretizers.builtin.grids.interfaces.ReferenceElement>`
@@ -68,6 +68,18 @@ common = '''
 .. |LineDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.LineDomain`
 .. |CircleDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.CircleDomain`
 .. |discretize_domain_default| replace:: :func:`~pymor.discretizers.builtin.domaindiscretizers.default.discretize_domain_default`
+
+.. |BitmapFunction| replace:: :class:`~pymor.analyticalproblems.functions.BitmapFunction`
+.. |BitmapFunctions| replace:: :class:`BitmapFunctions <pymor.analyticalproblems.functions.BitmapFunction>`
+.. |ConstantFunction| replace:: :class:`~pymor.analyticalproblems.functions.ConstantFunction`
+.. |ConstantFunctions| replace:: :class:`ConstantFunctions <pymor.analyticalproblems.functions.ConstantFunction>`
+.. |ExpressionFunction| replace:: :class:`~pymor.analyticalproblems.functions.ExpressionFunction`
+.. |ExpressionFunctions| replace:: :class:`ExpressionFunctions <pymor.analyticalproblems.functions.ExpressionFunction>`
+.. |LincombFunction| replace:: :class:`~pymor.analyticalproblems.functions.LincombFunction`
+.. |LincombFunctions| replace:: :class:`LincombFunctions <pymor.analyticalproblems.functions.LincombFunction>`
+
+.. |ExpressionParameterFunctional| replace:: :class:`~pymor.parameters.functionals.ExpressionParameterFunctional`
+.. |ExpressionParameterFunctionals| replace:: :class:`ExpressionParameterFunctionals <pymor.parameters.functionals.ExpressionParameterFunctional>`
 
 .. |OnedGrid| replace:: :class:`~pymor.discretizers.builtin.grids.oned.OnedGrid`
 .. |RectGrid| replace:: :class:`~pymor.discretizers.builtin.grids.rect.RectGrid`
