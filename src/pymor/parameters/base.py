@@ -89,7 +89,7 @@ class ParameterType(OrderedDict):
         raise NotImplementedError
 
     def __str__(self):
-        return str(dict(self))
+        return '{' + ', '.join(f'{k}: {v}' for k, v in self.items()) + '}'
 
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
