@@ -287,5 +287,10 @@ rst_epilog = substitutions.substitutions
 modindex_common_prefix = ['pymor.']
 
 nbplot_render_output = True
-markdown_http_base = 'https://docs.pymor.org/en/2019.2.x'
 nbplot_cwd = os.path.dirname(os.path.abspath(__file__))
+try:
+    base_branch = os.environ['CI_COMMIT_REF_SLUG']
+    markdown_http_base = f'https://docs.pymor.org/en/{base_branch}'
+except KeyError:
+    markdown_http_base = f"file:///{os.path.join( nbplot_cwd, '..', '_build', 'html')}"
+
