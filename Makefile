@@ -1,5 +1,6 @@
 DOCKER_COMPOSE=docker-compose -f .binder/docker-compose.yml -p pymor
 PYMOR_PYTEST_MARKER?=None
+NB_DIR=notebooks
 PANDOC_MAJOR=$(shell pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)
 ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
@@ -25,16 +26,12 @@ flake8:
 test:
 	python setup.py test
 
-image:
-	$(DOCKER_COMPOSE) build
-dockerdocs:
-	$(DOCKER_COMPOSE) run docs ./.ci/gitlab/test_docs.bash
-dockerrun: image
-	$(DOCKER_COMPOSE) run jupyter bash
-dockertest: image
-	PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) $(DOCKER_COMPOSE) up pytest
-jupyter_server: image
-	$(DOCKER_COMPOSE) up jupyter
+jupyter:
+	jupyter notebook --notebook-dir=$(NB_DIR) --NotebookApp.disable_check_xsrf=True
+
+tutorials: NB_DIR="docs/_build/html"
+tutorials: docs jupyter
+
 fasttest:
 	PYMOR_PYTEST_MARKER="not slow" python setup.py test
 
@@ -53,3 +50,22 @@ full-test:
 
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
+
+# Docker targets
+docker_image:
+	$(DOCKER_COMPOSE) build
+
+docker_docs:
+	NB_DIR=notebooks $(DOCKER_COMPOSE) run docs ./.ci/gitlab/test_docs.bash
+
+docker_run: docker_image
+	$(DOCKER_COMPOSE) run --service-ports jupyter bash
+
+docker_tutorials: NB_DIR=docs/_build/html
+docker_tutorials: docker_docs docker_jupyter
+
+docker_test: docker_image
+	PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) $(DOCKER_COMPOSE) up pytest
+
+docker_jupyter: docker_image
+	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
