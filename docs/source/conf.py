@@ -292,5 +292,6 @@ try:
     base_branch = os.environ['CI_COMMIT_REF_SLUG']
     markdown_http_base = f'https://docs.pymor.org/en/{base_branch}'
 except KeyError:
-    markdown_http_base = f"file:///{os.path.join( nbplot_cwd, '..', '_build', 'html')}"
+    # this will work as long as all (tutorial) notebooks are side-by-side with the index document
+    markdown_http_base = '.'
 
