@@ -24,9 +24,12 @@ services:
     volumes:
         - ./..:/pymor
     restart: "no"
+    environment:
+      - NB_DIR
     entrypoint: /usr/local/bin/dev-entrypoint.bash
+    # xsrf check disabled for docs viewing with chrome. Somewhat related issue: https://github.com/jupyterlab/jupyterlab/issues/6106
     command: >
-        bash -c "cd notebooks && jupyter notebook --ip 0.0.0.0 --no-browser"
+        bash -c "jupyter notebook --ip 0.0.0.0 --no-browser --notebook-dir=$${NB_DIR} --NotebookApp.disable_check_xsrf=True"
 
   pytest:
     image: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
