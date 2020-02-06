@@ -29,6 +29,11 @@ RUN useradd -d /home/pymor --shell /bin/bash -u ${NB_UID} -o -c "" -m ${NB_USER}
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
     &&  apt update && apt install nodejs
 
+# do local package install before requirements to avoid conflict
+COPY .binder/local_packages /pymor/local_packages/
+RUN for i in $(find /pymor/local_packages -maxdepth 1 -mindepth 1 -type d | grep -v keepdir) ; do pip install -e $i ; done
+
+
 # at this point setup.py exists only in image_binder
 # for the dev image it's only available via the mount at runtime
 ADD requirements*.txt /tmp/
@@ -43,7 +48,8 @@ RUN /bin/bash -c "pip install jupyterlab && \
     jupyter nbextension enable codefolding/main && \
     jupyter nbextension enable notify/notify && \
     jupyter nbextension enable scroll_down/main && \
-    ([[ -e /pymor/setup.py ]] && pip install /pymor[docs,ci,full] || echo 'no install needed')"
+    ([[ -e /pymor/setup.py ]] && pip install /pymor[docs,ci,full] || echo 'no install needed') && \
+    rm -rf /pymor/local_packages "
 ADD .binder/dev-entrypoint.bash /usr/local/bin/
 ADD .binder/ipython_kernel_config.py /etc/ipython/
 USER ${NB_USER}

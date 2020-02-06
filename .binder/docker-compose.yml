@@ -7,6 +7,10 @@ version: '3'
 # then start with ```docker-compose up --build```
 # and connect to the server at http://localhost:9180/?token=${PYMOR_JUPYTER_TOKEN}
 
+# 3rd party libraries that need editing can be put in .binder/local_packages/
+# These are "installed" at build time of the image and will be available
+# via mount at container runtime
+
 services:
   jupyter:
     build:
@@ -23,11 +27,13 @@ services:
         - 9180:8888
     volumes:
         - ./..:/pymor
+        - ./local_packages:/pymor/local_packages
     restart: "no"
     environment:
       - NB_DIR
     entrypoint: /usr/local/bin/dev-entrypoint.bash
     # xsrf check disabled for docs viewing with chrome. Somewhat related issue: https://github.com/jupyterlab/jupyterlab/issues/6106
+    # and see also https://bugs.chromium.org/p/chromium/issues/detail?id=455987
     command: >
         bash -c "jupyter notebook --ip 0.0.0.0 --no-browser --notebook-dir=$${NB_DIR} --NotebookApp.disable_check_xsrf=True"
 
