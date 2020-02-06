@@ -39,11 +39,13 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'pygmsh': 'python frontend for gmsh',
                     'sympy': 'symbolic mathematics',
                     'pythreejs': 'threejs bindings for python notebook  visualization',
+                    #'notebook==5.7.5':'', 'tornado==5.1.1':'',
                     _PYTEST: 'testing framework required to execute unit tests',
                     'PySide2': 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
                     'pillow': 'image library used for bitmap data functions'}
-doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.4', 'matplotlib', 'PySide2', 'ipyparallel', 'ipywidgets'] + install_requires
+doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.4', 'matplotlib', 'PySide2', 'ipyparallel',
+                'ipywidgets', 'sphinx-qt-documentation'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'testipynb']

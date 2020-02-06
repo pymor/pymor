@@ -89,6 +89,7 @@ extensions = ['sphinx.ext.autodoc',
               'pymordocstring',
               'nb2plots',
               'sphinx.ext.mathjax',
+              'sphinx_qt_documentation',
               ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -279,6 +280,7 @@ coverage_ignore_c_items = {}
 
 intersphinx_mapping = {'python': ('http://docs.python.org/3', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy', None),
+                       'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference', None)}
 
 import substitutions
@@ -295,3 +297,5 @@ except KeyError:
     # this will work as long as all (tutorial) notebooks are side-by-side with the index document
     markdown_http_base = '.'
 
+# make intersphinx link to pyside2 docs
+qt_documentation = 'PySide2'
