@@ -22,7 +22,7 @@ pillow
 pyamg
 pyevtk>=1.1
 pygmsh
-pymor-nb2plots>=0.4
+pymor-nb2plots>=0.7
 pyopengl
 pytest-runner>=2.9
 pytest>=4.4
