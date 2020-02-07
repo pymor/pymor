@@ -10,10 +10,13 @@ Usage:
 
 Arguments:
   BACKEND    Discretization toolkit to use (pymor, fenics).
+
   ALG        The model reduction algorithm to use
              (greedy, adaptive_greedy, pod).
+
   SNAPSHOTS  greedy/pod:      number of training set parameters
              adaptive_greedy: size of validation set.
+
   RBSIZE     Size of the reduced basis.
   TEST       Number of test parameters for reduction error estimation.
 """
