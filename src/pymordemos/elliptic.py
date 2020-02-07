@@ -12,6 +12,7 @@ Arguments:
     PROBLEM-NUMBER    {0,1}, selects the problem to solve
     DIRICHLET-NUMBER  {0,1,2}, selects the Dirichlet data function
     NEUMANN-NUMBER    {0,1}, selects the Neumann data function
+
     NEUMANN-COUNT     0: no neumann boundary
                       1: right edge is neumann boundary
                       2: right+top edges are neumann boundary
