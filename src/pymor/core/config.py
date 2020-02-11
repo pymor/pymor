@@ -4,6 +4,7 @@
 
 from importlib import import_module
 import sys
+import platform
 
 
 def _can_import(module):
@@ -25,6 +26,10 @@ def _get_fenics_version():
 
 def is_windows_platform():
     return sys.platform == 'win32' or sys.platform == 'cygwin'
+
+
+def is_macos_platform():
+    return 'Darwin' in platform.system()
 
 
 def _get_matplotib_version():
