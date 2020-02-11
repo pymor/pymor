@@ -19,7 +19,7 @@ import pprint
 
 import dependencies
 
-tests_require = dependencies.tests_require
+tests_require = dependencies.ci_requires
 install_requires = dependencies.install_requires
 setup_requires = dependencies.setup_requires()
 install_suggests = dependencies.install_suggests
