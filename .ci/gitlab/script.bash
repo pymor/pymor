@@ -47,6 +47,7 @@ if [ "${PYMOR_PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     pushd ${SDIST_DIR}
     ${SUDO} pip install $(ls ${SDIST_DIR})
     popd
+    set -o pipefail
     xvfb-run -a py.test ${COVERAGE_OPTS} -r sxX --pyargs pymortests -c .ci/installed_pytest.ini |& grep -v 'pymess/lrnm.py:82: PendingDeprecationWarning'
     pymor-demo -h
 elif [ "${PYMOR_PYTEST_MARKER}" == "OLDEST" ] ; then
