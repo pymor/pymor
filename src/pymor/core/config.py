@@ -62,7 +62,10 @@ def is_jupyter():
     """This Method is not foolprof and might fail with any given jupyter release
     :return: True if we believe to be running in a Jupyter Notebook or Lab
     """
-    from IPython import get_ipython
+    try:
+        from IPython import get_ipython
+    except (ImportError, ModuleNotFoundError):
+        return False
     from os import environ
     force = environ.get('PYMOR_FORCE_JUPYTER', None)
     if force is not None:
