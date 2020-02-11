@@ -6,6 +6,7 @@ nbconvert
 pytest-cov
 pytest-memprof
 pytest-xdist
+pytest>=4.4
 readme_renderer[md]
 rstcheck
 testipynb
