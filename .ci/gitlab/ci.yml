@@ -40,19 +40,19 @@ stages:
 
 numpy 3 6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/testing_py3.6:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
 
 oldest 3.6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/testing_py3.6:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "OLDEST"
 
 minimal_cpp_demo:
     extends: .pytest
-    image: pymor/testing:3.7
+    image: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     script: ./.ci/gitlab/cpp_demo.bash
 
 pages:
@@ -74,42 +74,42 @@ pages:
             - public
 Vanilla 3 6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/testing_py3.6:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
 PIP_ONLY 3 6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/testing_py3.6:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
 NOTEBOOKS 3 6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/testing_py3.6:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
 MPI 3 6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/testing_py3.6:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
 Vanilla 3 7:
     extends: .pytest
-    image: pymor/testing:3.7
+    image: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
 PIP_ONLY 3 7:
     extends: .pytest
-    image: pymor/testing:3.7
+    image: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
 NOTEBOOKS 3 7:
     extends: .pytest
-    image: pymor/testing:3.7
+    image: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
 MPI 3 7:
     extends: .pytest
-    image: pymor/testing:3.7
+    image: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
 

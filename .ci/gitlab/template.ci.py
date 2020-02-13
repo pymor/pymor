@@ -42,19 +42,19 @@ stages:
 
 numpy 3 6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/testing_py3.6:{{ci_image_tag}}
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
 
 oldest 3.6:
     extends: .pytest
-    image: pymor/testing:3.6
+    image: pymor/testing_py3.6:{{ci_image_tag}}
     variables:
         PYMOR_PYTEST_MARKER: "OLDEST"
 
 minimal_cpp_demo:
     extends: .pytest
-    image: pymor/testing:3.7
+    image: pymor/testing_py3.7:{{ci_image_tag}}
     script: ./.ci/gitlab/cpp_demo.bash
 
 pages:
@@ -78,7 +78,7 @@ pages:
 {%- for py, m in matrix %}
 {{m}} {{py[0]}} {{py[2]}}:
     extends: .pytest
-    image: pymor/testing:{{py}}
+    image: pymor/testing_py{{py}}:{{ci_image_tag}}
     variables:
         PYMOR_PYTEST_MARKER: "{{m}}"
 {%- endfor %}
@@ -262,6 +262,7 @@ marker = ["Vanilla", "PIP_ONLY", "NOTEBOOKS", "MPI"]
 binder_urls = ['https://gke.mybinder.org/build/gh/pymor/pymor',
                'https://ovh.mybinder.org/build/gh/pymor/pymor']
 testos = ['centos_8', 'debian_buster', 'debian_testing']
+ci_image_tag = '05486aa0fe225e7aac9cc32eb5bcbeb73339a500'
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = list(product(pythons, marker))
     yml.write(tpl.render(**locals()))

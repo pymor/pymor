@@ -13,7 +13,7 @@ services:
         context: ../
         dockerfile: .binder/Dockerfile
         args:
-            PYVER: 3.7
+            BASE: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
             NB_USER: "${USER}"
             NB_UID: 1000
@@ -29,7 +29,7 @@ services:
         bash -c "cd notebooks && jupyter notebook --ip 0.0.0.0 --no-browser"
 
   pytest:
-    image: pymor/testing:3.7
+    image: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
     environment:
       - PYMOR_PYTEST_MARKER=${PYMOR_PYTEST_MARKER}
       - CI_PROJECT_DIR=/src
