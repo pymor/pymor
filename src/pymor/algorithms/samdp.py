@@ -141,7 +141,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             G = np.append(G, V[0:k-1].dot(EX[k-1]), axis=1)
         G = np.append(G, V[k-1].dot(EX), axis=0)
 
-        SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, E, which)
+        SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, which)
 
         found = True
         do_rqi = True
@@ -241,7 +241,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 if k > 0:
                     G = V.dot(E.apply(X))
                     H = V.dot(AX)
-                    SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, E, which)
+                    SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, which)
                     found = True
                 else:
                     G = np.empty((0, 1))
@@ -258,17 +258,11 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                         st = shifts[shift_nr]
                         shift_nr = shift_nr + 1
             elif k >= krestart:
-                logger.info(f'Perform restart...')
+                logger.info('Perform restart...')
                 EX = E.apply(X)
                 RR = AX.lincomb(UR.T) - EX.lincomb(UR.T).lincomb(SH.T)
-                minNorm = RR[0].norm()
-                minidx = 0
-                for i in range(1, len(RR)):
-                    norm = RR[i].norm()
-                    if norm < minNorm:
-                        minidx = i
-                        minNorm = norm
 
+                minidx = RR.norm().argmin()
                 k = 1
 
                 X = X.lincomb(UR[:, minidx])
@@ -306,7 +300,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             rightev = rightev[idx]
             leftev = leftev[idx]
             if nr_converged < nwanted:
-                logger.warning(f'The specified number of poles could not be computed.')
+                logger.warning('The specified number of poles could not be computed.')
             break
 
     return poles, residues, rightev, leftev
@@ -348,10 +342,10 @@ def twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
         Residual of the computed triplet.
     """
 
-    iter = 0
+    i = 0
     nrq = 1
-    while nrq > tol and iter < maxiter:
-        iter = iter + 1
+    while nrq > tol and i < maxiter:
+        i = i + 1
         Ex = E.apply(x)
         Ey = E.apply_adjoint(y)
         tEmA = theta * E - A
@@ -397,7 +391,7 @@ def twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
         return x, y, theta, init_res
 
 
-def select_max_eig(H, G, X, V, B, C, E, which):
+def select_max_eig(H, G, X, V, B, C, which):
     """Compute poles sorted from largest to smallest residual.
 
     Parameters
@@ -414,8 +408,6 @@ def select_max_eig(H, G, X, V, B, C, E, which):
         The |VectorArray| B from the corresponding LTI system modified by deflation.
     C
         The |VectorArray| C from the corresponding LTI system modified by deflation.
-    E
-        The |Operator| E from the corresponding LTI system.
     which
         A string that indicates which poles to select. See :func:`samdp`.
 
@@ -440,12 +432,9 @@ def select_max_eig(H, G, X, V, B, C, E, which):
     X = X.lincomb(Vs.T)
     V = V.lincomb(Vt.T)
 
-    residue = np.array([])
-
-    for i in range(len(H)):
-        V[i].scal(1 / V[i].norm())
-        X[i].scal(1 / X[i].norm())
-        residue = np.append(residue, spla.norm(C.dot(X[i]) @ V[i].dot(B), 2))
+    V.scal(1 / V.norm())
+    X.scal(1 / X.norm())
+    residue = spla.norm(C.dot(X), 2, 0) * spla.norm(V.dot(B), 2, 1)
 
     if which == 'LR':
         idx = np.argsort(-residue / np.abs(np.real(DP)))
