@@ -4,6 +4,7 @@
 
 from importlib import import_module
 import sys
+import platform
 
 
 def _can_import(module):
@@ -25,6 +26,10 @@ def _get_fenics_version():
 
 def is_windows_platform():
     return sys.platform == 'win32' or sys.platform == 'cygwin'
+
+
+def is_macos_platform():
+    return 'Darwin' in platform.system()
 
 
 def _get_matplotib_version():
@@ -62,7 +67,10 @@ def is_jupyter():
     """This Method is not foolprof and might fail with any given jupyter release
     :return: True if we believe to be running in a Jupyter Notebook or Lab
     """
-    from IPython import get_ipython
+    try:
+        from IPython import get_ipython
+    except (ImportError, ModuleNotFoundError):
+        return False
     from os import environ
     force = environ.get('PYMOR_FORCE_JUPYTER', None)
     if force is not None:

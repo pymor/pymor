@@ -13,7 +13,7 @@ import shutil
 from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing
 from pymor.discretizers.builtin.gui.qt import stop_gui_processes
-from pymor.core.config import is_windows_platform
+from pymor.core.config import is_windows_platform, is_macos_platform
 from pymor.tools.mpi import parallel
 
 
@@ -236,7 +236,9 @@ def test_analyze_pickle4():
     finally:
         shutil.rmtree(d)
 
+
 @pytest.mark.skipif(is_windows_platform(), reason='hangs indefinitely')
+@pytest.mark.skipif(is_macos_platform(), reason='spurious JSON Decode errors in Ipython launch')
 def test_thermalblock_ipython(demo_args):
     if demo_args[0] != 'pymordemos.thermalblock':
         return
