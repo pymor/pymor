@@ -2,13 +2,13 @@
 # the container, local dev needs it in path from mounted src
 # we trick docker into fulfilling both roles via a conditional ONBUILD
 # if you want to use the local dev setup, see docker/docker-compose.yml
-ARG PYVER=3.7
+ARG BASE=pymor/testing_py3.7:latest
 ARG BUILD_ENV=binder
 
-FROM pymor/testing:$PYVER as image_binder
+FROM $BASE as image_binder
 ONBUILD ADD . /pymor
 
-FROM pymor/testing:$PYVER as image_dev
+FROM $BASE as image_dev
 ONBUILD RUN echo "dev image uses mounted pymor" && mkdir /pymor
 ONBUILD ENV PYTHONPATH=/pymor/src:${PYTHONPATH}
 
