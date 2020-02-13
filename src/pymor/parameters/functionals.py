@@ -3,12 +3,12 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
-from itertools import chain
 
 import numpy as np
 
 from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.parameters.base import Parametric
+from pymor.tools.floatcmp import float_cmp
 
 
 class ParameterFunctional(ImmutableObject, Parametric):
@@ -332,22 +332,22 @@ class MinThetaParameterFunctional(ParameterFunctional):
     """|ParameterFunctional| implementing the min-theta approach from [Haa17]_ (Proposition 2.35).
 
     Let V denote a Hilbert space and let a: V x V -> K denote a parametric coercive bilinear form with affine
-    decomposition
+    decomposition ::
 
       a(u, v, mu) = sum_{q = 1}^Q theta_q(mu) a_q(u, v),
 
-    for Q positive coefficient |ParameterFunctional|s theta_1, ..., theta_Q and positive semi-definit component
+    for Q positive coefficient |ParameterFunctional|s theta_1, ..., theta_Q and positive semi-definite component
     bilinear forms a_1, ..., a_Q: V x V -> K. Let mu_bar be a parameter with respect to which the coercivity constant
-    of a(., ., mu_bar) is known, i.e. we known alpha_mu_bar > 0, s.t.
+    of a(., ., mu_bar) is known, i.e. we known alpha_mu_bar > 0, s.t. ::
 
       alpha_mu_bar |u|_V^2 <= a(u, u, mu=mu_bar).
 
     The min-theta approach from [Haa17]_ (Proposition 2.35) allows to obtain a computable bound for the coercivity
-    constant of a(., ., mu) for arbitrary parameters mu, since
+    constant of a(., ., mu) for arbitrary parameters mu, since ::
 
       a(u, u, mu=mu) >= min_{q = 1}^Q theta_q(mu)/theta_q(mu_bar) a(u, u, mu=mu_bar).
 
-    Given a list of the thetas, the parameter mu_bar and the constant alpha_mu_bar, this functional thus evaluates
+    Given a list of the thetas, the |Parameter| mu_bar and the constant alpha_mu_bar, this functional thus evaluates
     to ::
 
       alpha_mu_bar * min_{q = 1}^Q theta_q(mu)/theta_q(mu_bar)
@@ -369,8 +369,8 @@ class MinThetaParameterFunctional(ParameterFunctional):
         assert isinstance(thetas, (list, tuple))
         assert len(thetas) > 0
         assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
-        thetas = [ConstantParameterFunctional(theta) if not isinstance(theta, ParameterFunctional) else theta
-                  for theta in thetas]
+        thetas = (ConstantParameterFunctional(theta) if not isinstance(theta, ParameterFunctional) else theta
+                  for theta in thetas)
         self.build_parameter_type(*[t for t in thetas if t.parametric])
         mu_bar = self.parse_parameter(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
@@ -378,7 +378,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
         assert isinstance(alpha_mu_bar, Number)
         assert alpha_mu_bar > 0
         self.__auto_init(locals())
-        self.thetas_mu_bar = thetas_mu_bar # why is this required after __auto_init?
+        self.thetas_mu_bar = thetas_mu_bar
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -394,29 +394,28 @@ class MaxThetaParameterFunctional(ParameterFunctional):
     """|ParameterFunctional| implementing the max-theta approach from [Haa17]_ (Exercise 5.12).
 
     Let V denote a Hilbert space and let a: V x V -> K denote a continuous bilinear form or l: V -> K a continuous
-    linear functional, either with affine
-    decomposition
+    linear functional, either with affine decomposition ::
 
       a(u, v, mu) = sum_{q = 1}^Q theta_q(mu) a_q(u, v)  or  l(v, mu) = sum_{q = 1}^Q theta_q(mu) l_q(v)
 
     for Q coefficient |ParameterFunctional|s theta_1, ..., theta_Q and continuous bilinear forms
     a_1, ..., a_Q: V x V -> K or continuous linear functionals l_q: V -> K. Let mu_bar be a parameter with respect to
-    which the continuity constant of a(., ., mu_bar) or l(., mu_bar)is known, i.e. we known gamma_mu_bar > 0, s.t.
+    which the continuity constant of a(., ., mu_bar) or l(., mu_bar) is known, i.e. we known gamma_mu_bar > 0, s.t. ::
 
       a(u, v, mu_bar) <= gamma_mu_bar |u|_V |v|_V  or  l(v, mu_bar) <= gamma_mu_bar |v|_V.
 
     The max-theta approach from [Haa17]_ (Exercise 5.12) allows to obtain a computable bound for the continuity
-    constant of a(., ., mu) or l(., mu) for arbitrary parameters mu, since
+    constant of a(., ., mu) or l(., mu) for arbitrary parameters mu, since ::
 
       a(u, v, mu=mu) <= |max_{q = 1}^Q theta_q(mu)/theta_q(mu_bar)|  |a(u, v, mu=mu_bar)|
 
-    or
+    or ::
 
       l(v, mu=mu) <= |max_{q = 1}^Q theta_q(mu)/theta_q(mu_bar)| |l(v, mu=mu_bar)|,
 
     if all theta_q(mu_bar) != 0.
 
-    Given a list of the thetas, the parameter mu_bar and the constant gamma_mu_bar, this functional thus evaluates
+    Given a list of the thetas, the |Parameter| mu_bar and the constant gamma_mu_bar, this functional thus evaluates
     to ::
 
       gamma_mu_bar * max{q = 1}^Q theta_q(mu)/theta_q(mu_bar)
@@ -438,16 +437,16 @@ class MaxThetaParameterFunctional(ParameterFunctional):
         assert isinstance(thetas, (list, tuple))
         assert len(thetas) > 0
         assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
-        thetas = [ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
-                  for f in thetas]
+        thetas = (ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
+                  for f in thetas)
         self.build_parameter_type(*[t for t in thetas if t.parametric])
         mu_bar = self.parse_parameter(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
-        assert np.all(np.logical_or(thetas_mu_bar < 0, thetas_mu_bar > 0))
+        assert not np.any(float_cmp(thetas_mu_bar, 0))
         assert isinstance(gamma_mu_bar, Number)
         assert gamma_mu_bar > 0
         self.__auto_init(locals())
-        self.thetas_mu_bar = thetas_mu_bar # why is this required after __auto_init?
+        self.thetas_mu_bar = thetas_mu_bar
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
