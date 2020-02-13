@@ -50,15 +50,5 @@ def test_max_theta_parameter_functional():
     assert expected_value == actual_value
 
 
-
-
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
     runmodule(filename=__file__)
