@@ -487,7 +487,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
         if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
@@ -1060,6 +1060,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     # diffusion part
     if isinstance(p.diffusion, LincombFunction):
+        scalar_diffusion = len(p.diffusion.shape_range) == 0 \
+                           or (len(p.diffusion.shape_range) == 1 and p.diffusion.shape_range[0] == 1)
         Li += [DiffusionOperator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
                                  name=f'diffusion_{i}')
                for i, df in enumerate(p.diffusion.functions)]
@@ -1068,6 +1070,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                                       dirichlet_clear_columns=True)]
         coefficients += list(p.diffusion.coefficients)
     elif p.diffusion is not None:
+        scalar_diffusion = np.array(p.diffusion).ndim == 0 \
+                or (np.array(p.diffusion).ndim == 1 and np.array(p.diffusion).shape[0] == 1)
         Li += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion,
                                  dirichlet_clear_diag=True, name='diffusion')]
         if energy_product:
@@ -1121,7 +1125,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
     if energy_product:
-        eL = LincombOperator(operators=eLi, coefficients=coefficients, name='ellipticEnergyProduct')
+        eL = LincombOperator(operators=eLi, coefficients=[1.]*len(eLi), name='ellipticEnergyProduct')
 
     # right-hand side
     rhs = p.rhs or ConstantFunction(0., dim_domain=p.domain.dim)
@@ -1188,7 +1192,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 'h1_0_semi': h1_0_semi_product,
                 'l2_0': l2_0_product}
 
-    # assemble additionals output functionals
+    # assemble additional output functionals
     if p.outputs:
         if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
             raise NotImplementedError
@@ -1216,7 +1220,10 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             from pymor.operators.constructions import FixedParameterOperator
             eL = FixedParameterOperator(eL, mu=energy_product)
         products = {**m.products}
-        products['energy'] = 0.5*eL + 0.5*eL.H
+        if scalar_diffusion:
+            products['energy'] = eL
+        else:
+            products['energy'] = 0.5*eL + 0.5*eL.H
         m = m.with_(products=products)
 
     if preassemble:
