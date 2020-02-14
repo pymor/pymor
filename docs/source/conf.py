@@ -278,11 +278,10 @@ coverage_ignore_c_items = {}
 
 # autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 
-# PyQt5 is only necessary for some internals of the sphinx-qt-doc extension
+# PyQt5 inventory is only used internally, actual link targets PySide2
 intersphinx_mapping = {'python': ('http://docs.python.org/3', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy', None),
                        'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
-                       'PySide2': ("https://doc.qt.io/qtforpython/PySide2/", None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference', None)}
 
 import substitutions
