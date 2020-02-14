@@ -320,7 +320,7 @@ We can then make the following definition of the Neumann data:
 
 Similar to the range of the function, pyMOR cannot infer from the given
 string expression the type of parameters used in the expression, so the
-|ParameterType| has to be provided as the |parameter_type| argument.
+|ParameterType| has to be provided as the `parameter_type` argument.
 The individual parameter components are then available as variables in
 the expression.
 
