@@ -22,7 +22,7 @@ Arguments:
 
 Options:
   --grid=NI              Use grid with 2*NI*NI elements [default: 60].
-  --product=PROD         Product (euclidean, h1) w.r.t. which to orthonormalize \
+  --product=PROD         Product (euclidean, h1) w.r.t. which to orthonormalize
                          and calculate Riesz representatives [default: h1].
   --testing              load the gui and exit right away (for functional testing)
   -h, --help             Show this message.
