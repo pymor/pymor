@@ -14,7 +14,6 @@ cd "${PYMOR_ROOT}"
 # any failure here should fail the whole test
 set -eux
 export USER=pymor
-make docker_docs
 
 docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 docker pull ${IMAGE}
@@ -26,6 +25,7 @@ docker cp ${container}:/public/ ${PUBLIC_DIR}/ || echo "No previous docs builds 
 du -sch ${PUBLIC_DIR}/*
 rm -rf ${PUBLIC_DIR}/${CI_COMMIT_REF_SLUG}/
 
+# we get the already built html documentation as an artefact from an earlier build stage
 rsync -a docs/_build/html/ ${PUBLIC_DIR}/${CI_COMMIT_REF_SLUG}/
 cp -r docs/public_root/* ${PUBLIC_DIR}
 ${PYMOR_ROOT}/.ci/gitlab/docs_makeindex.py ${PUBLIC_DIR}

@@ -70,18 +70,30 @@ minimal_cpp_demo:
     image: pymor/testing_py3.7:{{ci_image_tag}}
     script: ./.ci/gitlab/cpp_demo.bash
 
+pages build:
+    extends: .docker-in-docker
+    stage: build
+    script:
+        - apk --update add make python3
+        - pip3 install jinja2 pathlib
+        - make docker_docs
+    artifacts:
+        paths:
+            - docs/_build/html
+            - docs/error.log
+
 pages:
-# this needs to use a semaphore to avoid races on the docker images
-# should become available with gitlab 12.6 (Dez. 17)
     extends: .docker-in-docker
     stage: deploy
+    resource_group: pages_deploy
+    dependencies:
+        - pages build
     variables:
         IMAGE: ${CI_REGISTRY_IMAGE}/docs:latest
     script:
         - apk --update add make python3
         - pip3 install jinja2 pathlib
         - .ci/gitlab/deploy_docs.bash
-
     # only:
     #   - master
     #   - tags
