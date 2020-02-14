@@ -164,7 +164,7 @@ Improved string representations of pyMOR objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Custom  `__str__` special methods have been implemented for all |Model| classes shipped with
 pyMOR `[#652] <https://github.com/pymor/pymor/pull/652>`_. Moreover, we have added a generic
-`__repr__` implementation to |BasicInterface| which recursively prints all class attributes
+`__repr__` implementation to `BasicInterface` which recursively prints all class attributes
 corresponding to an `__init__` argument (with a non-default value)
 `[#706] <https://github.com/pymor/pymor/pull/706>`_.
 
@@ -173,12 +173,12 @@ Easier working with immutable objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A new check in :class:`~pymor.core.interfaces.ImmutableMeta` enforces all `__init__` arguments
 of an |immutable| object to be available as object attributes, thus ensuring that
-:meth:`~pymor.core.interfaces.ImmutableInterface.with_` works reliably with all |immutable| objects
+`~pymor.core.interfaces.ImmutableInterface.with_` works reliably with all |immutable| objects
 in pyMOR `[#694] <https://github.com/pymor/pymor/pull/694>`_. To facilitate the initialization
 of these attributes in `__init__` the
 `__auto_init <https://github.com/pymor/pymor/pull/732/files#diff-9ff4f0e773ee7352ff323cb88a3adeabR149-R164>`_
-method has been added to |BasicInterface| `[#732] <https://github.com/pymor/pymor/pull/732>`_.
-Finally, :meth:`~pymor.core.interfaces.ImmutableInterface.with_` now has a `new_type` parameter
+method has been added to `BasicInterface` `[#732] <https://github.com/pymor/pymor/pull/732>`_.
+Finally, `~pymor.core.interfaces.ImmutableInterface.with_` now has a `new_type` parameter
 which allows to change the class of the object returned by it
 `[#705] <https://github.com/pymor/pymor/pull/705>`_.
 
@@ -753,38 +753,38 @@ Improvements to pyMOR's discretizaion tookit
 
 Caching improvements
 ~~~~~~~~~~~~~~~~~~~~
-- |state id| generation is now based on deterministic pickling.
-  In previous version of pyMOR, the |state id| of |immutable| objects
+- `state id` generation is now based on deterministic pickling.
+  In previous version of pyMOR, the `state id` of |immutable| objects
   was computed from the state ids of the parameters passed to the
   object's `__init__` method. This approach was complicated and error-prone.
-  Instead, we now compute the |state id| as a hash of a deterministic serialization
+  Instead, we now compute the `state id` as a hash of a deterministic serialization
   of the object's state. While this approach is more robust, it is also
   slightly more expensive. However, due to the object's immutability,
-  the |state id| only has to be computed once, and state ids are now only
+  the `state id` only has to be computed once, and state ids are now only
   required for storing results in persistent cache regions (see below).
   Computing such results will usually be much more expensive than the
-  |state id| calculation `[#106] <https://github.com/pymor/pymor/issues/106>`_.
+  `state id` calculation `[#106] <https://github.com/pymor/pymor/issues/106>`_.
 
 - :class:`CacheRegions <pymor.core.cache.CacheRegion>` now have a
   :attr:`~pymor.core.cache.CacheRegion.persistent` attribute indicating
   whether the cache data will be kept between program runs. For persistent
-  cache regions the |state id| of the object for which the cached method is
+  cache regions the `state id` of the object for which the cached method is
   called has to be computed to obtain a unique persistent id for the given object.
   For non-persistent regions the object's
-  :attr:`~pymor.core.interfaces.BasicInterface.uid` can be used instead.
+  `~pymor.core.interfaces.BasicInterface.uid` can be used instead.
   :attr:`pymor.core.cache_regions` now by default contains `'memory'`,
   `'disk'` and `'persistent'` cache regions
   `[#182] <https://github.com/pymor/pymor/pull/182>`_, `[#121] <https://github.com/pymor/pymor/issues/121>`_ .
 
-- |defaults| can now be marked to not affect |state id| computation.
+- |defaults| can now be marked to not affect `state id` computation.
   In previous version of pyMOR, changing any |default| value caused
-  a change of the |state id| pyMOR's defaults dictionary, leading to cache
+  a change of the `state id` pyMOR's defaults dictionary, leading to cache
   misses. While this in general is desirable, as, for instance, changed linear
   solver default error tolerances might lead to different solutions for
   the same `Discretization` object, it is clear for many I/O related defaults,
   that these will not affect the outcome of any computation. For these defaults,
   the :meth:`~pymor.core.defaults.defaults` decorator now accepts a `sid_ignore`
-  parameter, to exclude these defaults from |state id| computation, preventing
+  parameter, to exclude these defaults from `state id` computation, preventing
   changes of these defaults causing cache misses `[#81] <https://github.com/pymor/pymor/issues/81>`_.
 
 - As an alternative to using the :meth:`@cached <pymor.core.cache.cached>`
@@ -884,7 +884,7 @@ Backward incompatible changes
     :meth:`pymor.reductors.coercive.reduce_coercive_simple`. The old names
     are deprecated and will be removed in pyMOR 0.5.
 
-- Non-parametric objects have now :attr:`~pymor.parameters.base.Parametric.parameter_type` `{}` instead of `None` `[#84] <https://github.com/pymor/pymor/issues/84>`_.
+- Non-parametric objects have now `~pymor.parameters.base.Parametric.parameter_type` `{}` instead of `None` `[#84] <https://github.com/pymor/pymor/issues/84>`_.
 
 - Sampling methods of |ParameterSpaces| now return iterables instead of iterators `[#108] <https://github.com/pymor/pymor/issues/108>`_.
 
@@ -906,14 +906,14 @@ Backward incompatible changes
 
 - The `copy` parameter of :meth:`pymor.algorithms.gram_schmidt.gram_schmidt` now defaults to `True` `[#123] <https://github.com/pymor/pymor/issues/123>`_.
 
-- `with_` has been moved from |BasicInterface| to |ImmutableInterface| `[#154] <https://github.com/pymor/pymor/issues/154>`_.
+- `with_` has been moved from `BasicInterface` to `ImmutableInterface` `[#154] <https://github.com/pymor/pymor/issues/154>`_.
 
 - `BasicInterface.add_attributes` has been removed `[#158] <https://github.com/pymor/pymor/issues/158>`_.
 
 - Auto-generated names no longer contain the :attr:`~pymor.core.interfaces.BasicInterface.uid` `[#198] <https://github.com/pymor/pymor/issues/198>`_.
-    The auto-generated :attr:`~pymor.core.interfaces.BasicInterface.name`
+    The auto-generated `~pymor.core.interfaces.BasicInterface.name`
     of pyMOR objects no longer contains their
-    :attr:`~pymor.core.interfaces.BasicInterface.uid`. Instead, the name
+    `~pymor.core.interfaces.BasicInterface.uid`. Instead, the name
     is now simply set to the class name.
 
 - Python fallbacks to Cython functions have been removed `[#145] <https://github.com/pymor/pymor/issues/145>`_.
