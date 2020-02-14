@@ -29,9 +29,9 @@ def test_min_theta_parameter_functional_fails_for_wrong_input():
               ConstantParameterFunctional(1),
               -1)
     mu_bar = -3
-    gamma_mu_bar = 10
+    alpha_mu_bar = 10
     with pytest.raises(AssertionError):
-        theta = MinThetaParameterFunctional(thetas, mu_bar, gamma_mu_bar)
+        theta = MinThetaParameterFunctional(thetas, mu_bar, alpha_mu_bar)
 
 
 def test_max_theta_parameter_functional():
