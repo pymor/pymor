@@ -371,7 +371,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
         assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
         thetas = tuple(ConstantParameterFunctional(theta) if not isinstance(theta, ParameterFunctional) else theta
                        for theta in thetas)
-        self.build_parameter_type(*[t for t in thetas if t.parametric])
+        self.build_parameter_type(*thetas)
         mu_bar = self.parse_parameter(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
         assert np.all(thetas_mu_bar > 0)
@@ -439,7 +439,7 @@ class MaxThetaParameterFunctional(ParameterFunctional):
         assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
         thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                        for f in thetas)
-        self.build_parameter_type(*[t for t in thetas if t.parametric])
+        self.build_parameter_type(*thetas)
         mu_bar = self.parse_parameter(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
         assert not np.any(float_cmp(thetas_mu_bar, 0))
