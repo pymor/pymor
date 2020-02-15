@@ -101,7 +101,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
     poles = np.empty((1, 0))
 
     if init_shifts is None:
-        st = 0.
+        st = np.random.uniform() * 1.j
         shift_nr = 0
         nr_shifts = 0
     else:
@@ -124,7 +124,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
         y = y_all[:, 0]
 
         x = sEmAB.lincomb(u)
-        v = sEmA.apply_inverse_adjoint((C_defl.lincomb(y.T)))
+        v = sEmA.apply_inverse_adjoint(C_defl.lincomb(y.T))
 
         X.append(x)
         V.append(v)
@@ -293,7 +293,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             elif which == 'LM':
                 idx = np.argsort(-absres)
             else:
-                raise ValueError('Unknown samdp selection strategy.')
+                raise ValueError('Unknown SAMDP selection strategy.')
 
             residues = residues[:, :, idx]
             poles = poles[idx]
@@ -397,13 +397,13 @@ def select_max_eig(H, G, X, V, B, C, which):
     Parameters
     ----------
     H
-        The |Numpy array| H from the samdp algorithm.
+        The |Numpy array| H from the SAMDP algorithm.
     G
-        The |Numpy array| G from the samdp algorithm.
+        The |Numpy array| G from the SAMDP algorithm.
     X
-        A |VectorArray| describing the orthogonal search space used in the samdp algorithm.
+        A |VectorArray| describing the orthogonal search space used in the SAMDP algorithm.
     V
-        A |VectorArray| describing the orthogonal search space used in the samdp algorithm.
+        A |VectorArray| describing the orthogonal search space used in the SAMDP algorithm.
     B
         The |VectorArray| B from the corresponding LTI system modified by deflation.
     C
@@ -434,7 +434,7 @@ def select_max_eig(H, G, X, V, B, C, which):
 
     V.scal(1 / V.norm())
     X.scal(1 / X.norm())
-    residue = spla.norm(C.dot(X), 2, 0) * spla.norm(V.dot(B), 2, 1)
+    residue = spla.norm(C.dot(X), axis=0) * spla.norm(V.dot(B), axis=1)
 
     if which == 'LR':
         idx = np.argsort(-residue / np.abs(np.real(DP)))
@@ -443,6 +443,6 @@ def select_max_eig(H, G, X, V, B, C, which):
     elif which == 'LM':
         idx = np.argsort(-residue)
     else:
-        raise ValueError('Unknown samdp selection strategy.')
+        raise ValueError('Unknown SAMDP selection strategy.')
 
     return np.diag(DP[idx]), Vs[:, idx], Vt[:, idx]
