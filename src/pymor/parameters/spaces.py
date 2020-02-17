@@ -7,7 +7,7 @@ from itertools import product
 import numpy as np
 
 from pymor.core.base import ImmutableObject, abstractmethod
-from pymor.parameters.base import Parameter, ParameterType
+from pymor.parameters.base import ParameterType
 from pymor.tools.random import get_random_state
 
 
@@ -59,7 +59,7 @@ class CubicParameterSpace(ParameterSpace):
         self.__auto_init(locals())
 
     def parse_parameter(self, mu):
-        return Parameter.from_parameter_type(mu, self.parameter_type)
+        return self.parameter_type.parse_parameter(mu)
 
     def contains(self, mu):
         mu = self.parse_parameter(mu)
@@ -77,8 +77,8 @@ class CubicParameterSpace(ParameterSpace):
         linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameter_type)
         iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
                       for ls, sps in zip(linspaces, self.parameter_type.values()))
-        return [Parameter(((k, np.array(v).reshape(shp))
-                           for k, v, shp in zip(self.parameter_type, i, self.parameter_type.values())))
+        return [dict(((k, np.array(v).reshape(shp))
+                      for k, v, shp in zip(self.parameter_type, i, self.parameter_type.values())))
                 for i in product(*iters)]
 
     def sample_randomly(self, count=None, random_state=None, seed=None):
@@ -105,8 +105,8 @@ class CubicParameterSpace(ParameterSpace):
         assert not random_state or seed is None
         ranges = self.ranges
         random_state = get_random_state(random_state, seed)
-        get_param = lambda: Parameter(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
-                                       for k, shp in self.parameter_type.items()))
+        get_param = lambda: dict(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
+                                 for k, shp in self.parameter_type.items()))
         if count is None:
             def param_generator():
                 while True:

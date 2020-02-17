@@ -100,7 +100,7 @@ class ProjectionParameterFunctional(ParameterFunctional):
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
-        return mu[self.component_name].item(self.index)
+        return np.asarray(mu[self.component_name]).item(self.index)
 
     def d_mu(self, component, index=()):
         check, index = self._check_and_parse_input(component, index)

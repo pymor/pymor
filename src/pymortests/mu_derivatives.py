@@ -113,7 +113,7 @@ def test_ExpressionParameterFunctional_for_2d_array():
     derivative_to_22_mu_index = epf2d.d_mu('mu', (1,1))
     derivative_to_nu_index = epf2d.d_mu('nu')
 
-    mu = {'mu': (1,2,3,4), 'nu': 0}
+    mu = {'mu': np.array([[1,2],[3,4]]), 'nu': 0}
 
     der_mu_11 = derivative_to_11_mu_index.evaluate(mu)
     der_mu_12 = derivative_to_12_mu_index.evaluate(mu)

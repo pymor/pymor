@@ -80,7 +80,7 @@ from pymor.core.defaults import defaults, defaults_changes
 from pymor.core.exceptions import CacheKeyGenerationError
 from pymor.core.logger import getLogger
 from pymor.core.pickle import dumps
-from pymor.parameters.base import Parameter, ParameterType
+from pymor.parameters.base import ParameterType
 
 
 @atexit.register
@@ -391,12 +391,12 @@ def build_cache_key(obj):
         elif t is np.ndarray:
             if obj.dtype == object:
                 raise CacheKeyGenerationError('Cannot generate cache key for provided arguments')
-            return obj
+            return obj.tolist()
         elif t in (list, tuple):
             return tuple(transform_obj(o) for o in obj)
         elif t in (set, frozenset):
             return tuple(transform_obj(o) for o in sorted(obj))
-        elif t in (dict, Parameter, ParameterType):
+        elif t in (dict, ParameterType):
             return tuple((transform_obj(k), transform_obj(v)) for k, v in sorted(obj.items()))
         elif isinstance(obj, Number):
             # handle numpy number objects

@@ -79,6 +79,57 @@ class ParameterType(OrderedDict):
         super().__init__(sorted(t.items()))
         self.clear = self.__setitem__ = self.__delitem__ = self.pop = self.popitem = self.update = self._is_immutable
 
+    def parse_parameter(self, mu):
+        """Interpret a user supplied parameter `mu` as a |Parameter|.
+
+        If `mu` is not already a |Parameter|, :meth:`Parameter.from_parameter_type`
+        is used, to make `mu` a parameter of the correct |ParameterType|. If `mu`
+        is already a |Parameter|, it is checked if its |ParameterType| matches our own.
+        (It is actually allowed that the |ParameterType| of `mu` is a superset of
+        our own |ParameterType| in the obvious sense.)
+
+        Parameters
+        ----------
+        mu
+            The input to parse as a |Parameter|.
+        """
+        if mu is None:
+            assert not self, \
+                f'Given parameter is None but expected parameter of type {self}'
+            return {}
+
+        if not self:
+            assert mu is None or mu == {}
+            return {}
+
+        if not isinstance(mu, dict):
+            if isinstance(mu, (tuple, list)):
+                if len(self) == 1 and len(mu) != 1:
+                    mu = (mu,)
+            else:
+                mu = (mu,)
+            if len(mu) != len(self):
+                raise ValueError('Parameter length does not match.')
+            mu = dict(zip(sorted(self), mu))
+        elif set(mu.keys()) != set(self.keys()):
+            raise ValueError(f'Provided parameter with keys {list(mu.keys())} does not match '
+                             f'parameter type {self}.')
+
+        def parse_value(k, v):
+            if not isinstance(v, np.ndarray):
+                v = np.array(v)
+                try:
+                    v = v.reshape(self[k])
+                except ValueError:
+                    raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
+                                     f'expected {self[k]}')
+            if v.shape != self[k]:
+                raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
+                                 f'expected {self[k]}')
+            return v
+
+        return {k: parse_value(k, v) for k, v in mu.items()}
+
     def _is_immutable(*args, **kwargs):
         raise ValueError('ParameterTypes cannot be modified')
 
@@ -94,184 +145,24 @@ class ParameterType(OrderedDict):
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
 
+    def __le__(self, mu):
+
+        def check_component(c, shape):
+            if len(shape) == 0:
+                return isinstance(c, Number) or isinstance(c, np.ndarray) and c.shape == ()
+            elif len(shape) == 1:
+                return isinstance(c, (list, tuple, np.ndarray)) and len(c) == shape[0]
+            else:
+                return isinstance(c, np.ndarray) and c.shape == shape
+
+        return not self or \
+            isinstance(mu, dict) and all(check_component(mu.get(k), v) for k, v in self.items())
+
     def __reduce__(self):
         return (ParameterType, (dict(self),))
 
     def __hash__(self):
         return hash(tuple(self.items()))
-
-
-class Parameter(dict):
-    """Class representing a parameter.
-
-    A |Parameter| is simply a `dict` where each key is a string and each value
-    is a |NumPy array|. We call an item of the dictionary a *parameter component*.
-
-    A |Parameter| differs from an ordinary `dict` in the following ways:
-
-        - It is ensured that each value is a |NumPy array|.
-        - We overwrite :meth:`copy` to ensure that not only the `dict`
-          but also the |NumPy arrays| are copied.
-        - The :meth:`allclose` method allows to compare |Parameters| for
-          equality in a mathematically meaningful way.
-        - We override :meth:`__str__` to ensure alphanumerical ordering of the keys
-          and pretty printing of the values.
-        - The :attr:`parameter_type` property can be used to obtain the |ParameterType|
-          of the parameter.
-        - Use :meth:`from_parameter_type` to construct a |Parameter| from a |ParameterType|
-          and user supplied input.
-
-    Parameters
-    ----------
-    v
-        Anything that :class:`dict` accepts for the construction of a dictionary.
-
-    Attributes
-    ----------
-    parameter_type
-        The |ParameterType| of the |Parameter|.
-    """
-
-    def __init__(self, v):
-        if v is None:
-            v = {}
-        i = iter(v.items()) if hasattr(v, 'items') else v
-        dict.__init__(self, {k: np.array(v) if not isinstance(v, np.ndarray) else v for k, v in i})
-
-    @classmethod
-    def from_parameter_type(cls, mu, parameter_type=None):
-        """Takes a user input `mu` and interprets it as a |Parameter| according to the given
-        |ParameterType|.
-
-        Depending on the |ParameterType|, `mu` can be given as a |Parameter|, dict, tuple,
-        list, array or scalar.
-
-        Parameters
-        ----------
-        mu
-            The user input which shall be interpreted as a |Parameter|.
-        parameter_type
-            The |ParameterType| w.r.t. which `mu` is to be interpreted.
-
-        Returns
-        -------
-        The resulting |Parameter|.
-
-        Raises
-        ------
-        ValueError
-            Is raised if `mu` cannot be interpreted as a |Parameter| of |ParameterType|
-            `parameter_type`.
-        """
-        if not parameter_type:
-            assert mu is None or mu == {}
-            return None
-
-        if isinstance(mu, Parameter):
-            assert mu.parameter_type == parameter_type
-            return mu
-
-        if not isinstance(mu, dict):
-            if isinstance(mu, (tuple, list)):
-                if len(parameter_type) == 1 and len(mu) != 1:
-                    mu = (mu,)
-            else:
-                mu = (mu,)
-            if len(mu) != len(parameter_type):
-                raise ValueError('Parameter length does not match.')
-            mu = dict(zip(sorted(parameter_type), mu))
-        elif set(mu.keys()) != set(parameter_type.keys()):
-            raise ValueError(f'Provided parameter with keys {list(mu.keys())} does not match '
-                             f'parameter type {parameter_type}.')
-
-        def parse_value(k, v):
-            if not isinstance(v, np.ndarray):
-                v = np.array(v)
-                try:
-                    v = v.reshape(parameter_type[k])
-                except ValueError:
-                    raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
-                                     f'expected {parameter_type[k]}')
-            if v.shape != parameter_type[k]:
-                raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
-                                 f'expected {parameter_type[k]}')
-            return v
-
-        return cls({k: parse_value(k, v) for k, v in mu.items()})
-
-    def allclose(self, mu):
-        """Compare two |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
-
-        Parameters
-        ----------
-        mu
-            The |Parameter| with which to compare.
-
-        Returns
-        -------
-        `True` if both |Parameters| have the same |ParameterType| and all parameter
-        components are almost equal, else `False`.
-        """
-        assert isinstance(mu, Parameter)
-        if list(self.keys()) != list(mu.keys()):
-            return False
-        elif not all(float_cmp_all(v, mu[k]) for k, v in self.items()):
-            return False
-        else:
-            return True
-
-    def copy(self):
-        c = Parameter({k: v.copy() for k, v in self.items()})
-        return c
-
-    def __setitem__(self, key, value):
-        if not isinstance(value, np.ndarray):
-            value = np.array(value)
-        dict.__setitem__(self, key, value)
-
-    def __eq__(self, mu):
-        if not isinstance(mu, Parameter):
-            mu = Parameter(mu)
-        if list(self.keys()) != list(mu.keys()):
-            return False
-        elif not all(np.array_equal(v, mu[k]) for k, v in self.items()):
-            return False
-        else:
-            return True
-
-    def fromkeys(self, S, v=None):
-        raise NotImplementedError
-
-    def pop(self, k, d=None):
-        raise NotImplementedError
-
-    def popitem(self):
-        raise NotImplementedError
-
-    def update(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @property
-    def parameter_type(self):
-        return ParameterType({k: v.shape for k, v in self.items()})
-
-    def __str__(self):
-        np.set_string_function(format_array, repr=False)
-        s = '{'
-        for k in sorted(self.keys()):
-            v = self[k]
-            if v.ndim > 1:
-                v = v.ravel()
-            if s == '{':
-                s += f'{k}: {v}'
-            else:
-                s += f', {k}: {v}'
-        s += '}'
-        np.set_string_function(None, repr=False)
-        return s
-
-    def __getstate__(self):
-        return dict(self)
 
 
 class Parametric:
@@ -324,29 +215,11 @@ class Parametric:
         mu
             The input to parse as a |Parameter|.
         """
-        if mu is None:
-            assert not self.parameter_type, \
-                f'Given parameter is None but expected parameter of type {self.parameter_type}'
-            return Parameter({})
-        if mu.__class__ is not Parameter:
-            mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert not self.parameter_type or all(getattr(mu.get(k, None), 'shape', None) == v
-                                              for k, v in self.parameter_type.items()), \
-            f'Given parameter of type {mu.parameter_type} does not match expected parameter type {self.parameter_type}'
+        parameter_type = self.parameter_type or ParameterType({})
+        if not isinstance(mu, dict):
+            return parameter_type.parse_parameter(mu)
+        assert mu >= parameter_type
         return mu
-
-    def strip_parameter(self, mu):
-        """Remove all components of the |Parameter| `mu` which are not part of the object's |ParameterType|.
-
-        Otherwise :meth:`strip_parameter` behaves like :meth:`parse_parameter`.
-
-        This method is mainly useful for caching where the key should only contain the
-        relevant parameter components.
-        """
-        if mu.__class__ is not Parameter:
-            mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.items())
-        return Parameter({k: mu[k] for k in self.parameter_type})
 
     def build_parameter_type(self, *args, provides=None, **kwargs):
         """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
