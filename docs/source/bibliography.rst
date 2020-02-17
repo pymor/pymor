@@ -108,6 +108,10 @@ Bibliography
            IEEE Transactions on Circuits and Systems, 35(2), 184-189,
            1988.
 
+.. [RL95] R. B. Lehoucq, Analysis and implementation of an implicitly
+          restarted Arnoldi iteration,
+          PhD thesis, Rice University, 1995
+
 .. [RS08] T. Reis and T. Stykel,
           Balanced truncation model reduction of second-order
           systems,
