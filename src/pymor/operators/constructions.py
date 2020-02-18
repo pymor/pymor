@@ -841,6 +841,24 @@ class VectorArrayOperator(Operator):
         else:
             return self.range.make_array(self.array.dot(U).T)
 
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        if not least_squares and len(V) != V.dim:
+            raise InversionError
+
+        from pymor.algorithms.gram_schmidt import gram_schmidt
+        from numpy.linalg import lstsq
+
+        Q, R = gram_schmidt(self.array, return_R=True, reiterate=False)
+        if self.adjoint:
+            v = lstsq(R.T.conj(), V.to_numpy().T)[0]
+            U = Q.lincomb(v.T)
+        else:
+            v = Q.dot(V)
+            u = lstsq(R, v)[0]
+            U = self.source.make_array(u.T)
+
+        return U
+
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if not self.adjoint:
