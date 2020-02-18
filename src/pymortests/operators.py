@@ -37,7 +37,7 @@ def test_selection_op():
     )
     x = np.linspace(-1., 1., num=3)
     vx = p1.source.make_array(x[:, np.newaxis])
-    assert np.allclose(p1.apply(vx,mu=0).to_numpy(), s1.apply(vx,mu=0).to_numpy())
+    assert np.allclose(p1.apply(vx).to_numpy(), s1.apply(vx, mu={'nrrhs': 0}).to_numpy())
 
     s2 = SelectionOperator(
         operators=[p1,p1,p1,p1],

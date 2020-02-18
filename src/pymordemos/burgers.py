@@ -73,7 +73,7 @@ def burgers_demo(args):
 
     print(f'The parameter type is {m.parameter_type}')
 
-    mu = args['EXP']
+    mu = m.parse_parameter(args['EXP'])
     print(f'Solving for exponent = {mu} ... ')
     sys.stdout.flush()
     tic = time.time()

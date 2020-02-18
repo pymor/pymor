@@ -51,8 +51,9 @@ class GenericBHIReductor(BasicObject):
     _PGReductor = ProjectionBasedReductor
 
     def __init__(self, fom, mu=None):
+        assert mu >= fom.parameter_type
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -341,8 +342,9 @@ class TFBHIReductor(BasicObject):
         |Parameter|.
     """
     def __init__(self, fom, mu=None):
+        assert mu >= fom.parameter_type
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
 
     def reduce(self, sigma, b, c):
         """Realization-independent tangential Hermite interpolation.

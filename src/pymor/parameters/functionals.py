@@ -99,7 +99,7 @@ class ProjectionParameterFunctional(ParameterFunctional):
         self.build_parameter_type({component_name: component_shape})
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         return np.asarray(mu[self.component_name]).item(self.index)
 
     def d_mu(self, component, index=()):
@@ -139,7 +139,7 @@ class GenericParameterFunctional(ParameterFunctional):
         self.build_parameter_type(parameter_type)
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         value = self.mapping(mu)
         # ensure that we return a number not an array
         if isinstance(value, np.ndarray):
@@ -270,7 +270,7 @@ class ProductParameterFunctional(ParameterFunctional):
         self.build_parameter_type(*(f for f in factors if isinstance(f, ParameterFunctional)))
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
     def d_mu(self, component, index=()):
@@ -298,7 +298,7 @@ class ConjugateParameterFunctional(ParameterFunctional):
         self.build_parameter_type(functional)
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         return np.conj(self.functional.evaluate(mu))
 
     def d_mu(self, component, index=()):

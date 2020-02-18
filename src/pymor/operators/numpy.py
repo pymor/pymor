@@ -66,13 +66,14 @@ class NumpyGenericOperator(Operator):
     def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
                  source_id=None, range_id=None, solver_options=None, name=None):
         self.__auto_init(locals())
+        self.build_parameter_type(None)
         self.source = NumpyVectorSpace(dim_source, source_id)
         self.range = NumpyVectorSpace(dim_range, range_id)
 
     def apply(self, U, mu=None):
+        assert mu >= self.parameter_type
         assert U in self.source
         if self.parametric:
-            mu = self.parse_parameter(mu)
             return self.range.make_array(self.mapping(U.to_numpy(), mu=mu))
         else:
             return self.range.make_array(self.mapping(U.to_numpy()))
@@ -81,9 +82,9 @@ class NumpyGenericOperator(Operator):
         if self.adjoint_mapping is None:
             raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
         assert V in self.range
+        assert mu >= self.parameter_type
         V = V.to_numpy()
         if self.parametric:
-            mu = self.parse_parameter(mu)
             return self.source.make_array(self.adjoint_mapping(V, mu=mu))
         else:
             return self.source.make_array(self.adjoint_mapping(V))
@@ -114,7 +115,7 @@ class NumpyMatrixBasedOperator(Operator):
         pass
 
     def assemble(self, mu=None):
-        return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
+        return NumpyMatrixOperator(self._assemble(mu),
                                    source_id=self.source.id,
                                    range_id=self.range.id,
                                    solver_options=self.solver_options,

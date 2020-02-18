@@ -186,7 +186,7 @@ class Parametric:
         is not empty.
     """
 
-    parameter_type = None
+    parameter_type = ParameterType({})
 
     @property
     def parameter_space(self):

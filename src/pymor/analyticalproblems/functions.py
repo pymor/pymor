@@ -151,19 +151,18 @@ class GenericFunction(Function):
         assert isinstance(shape_range, (Number, tuple))
         if not isinstance(shape_range, tuple):
             shape_range = (shape_range,)
-        if parameter_type is not None:
-            self.build_parameter_type(parameter_type)
+        self.build_parameter_type(parameter_type)
         self.__auto_init(locals())
 
     def __str__(self):
         return f'{self.name}: x -> {self.mapping}'
 
     def evaluate(self, x, mu=None):
+        assert mu >= self.parameter_type
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
 
         if self.parametric:
-            mu = self.parse_parameter(mu)
             v = self.mapping(x, mu)
         else:
             v = self.mapping(x)
@@ -256,11 +255,11 @@ class LincombFunction(Function):
 
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients for a given |Parameter| `mu`."""
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
     def evaluate(self, x, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         coeffs = self.evaluate_coefficients(mu)
         return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))
 
@@ -291,7 +290,7 @@ class ProductFunction(Function):
         self.shape_range = functions[0].shape_range
 
     def evaluate(self, x, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         return np.prod([f(x, mu) for f in self.functions], axis=0)
 
 

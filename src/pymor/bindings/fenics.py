@@ -222,7 +222,7 @@ if config.HAVE_FENICS:
             self.build_parameter_type(parameter_type)
 
         def _set_mu(self, mu=None):
-            mu = self.parse_parameter(mu)
+            assert mu >= self.parameter_type
             if self.parameter_setter:
                 self.parameter_setter(mu)
 

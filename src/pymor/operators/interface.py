@@ -110,7 +110,7 @@ class Operator(ImmutableObject, Parametric):
         A |NumPy array| with shape `(len(V), len(U))` containing the 2-form
         evaluations.
         """
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         assert isinstance(V, VectorArray)
         assert isinstance(U, VectorArray)
         AU = self.apply(U, mu=mu)
@@ -136,7 +136,7 @@ class Operator(ImmutableObject, Parametric):
         A |NumPy array| with shape `(len(V),) == (len(U),)` containing
         the 2-form evaluations.
         """
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         assert isinstance(V, VectorArray)
         assert isinstance(U, VectorArray)
         assert len(U) == len(V)

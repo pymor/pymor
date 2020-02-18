@@ -62,7 +62,7 @@ class CubicParameterSpace(ParameterSpace):
         return self.parameter_type.parse_parameter(mu)
 
     def contains(self, mu):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
                    for k in self.parameter_type)
 

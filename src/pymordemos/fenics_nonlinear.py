@@ -113,7 +113,7 @@ def fenics_nonlinear_demo(args):
     import numpy as np
 
     # ensure that FFC is not called during runtime measurements
-    rom.solve(1)
+    rom.solve({'c': 1})
 
     errs = []
     speedups = []

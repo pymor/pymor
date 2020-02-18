@@ -70,7 +70,7 @@ class Model(CacheableObject, Parametric):
         The solution |VectorArray|. When `return_output` is `True`,
         the output |VectorArray| is returned as second value.
         """
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         return self.cached_method_call(self._solve, mu=mu, return_output=return_output, **kwargs)
 
     def output(self, mu=None, **kwargs):

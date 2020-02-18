@@ -79,7 +79,7 @@ class LincombOperator(Operator):
         -------
         List of linear coefficients.
         """
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         return [c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients]
 
     def apply(self, U, mu=None):
@@ -295,13 +295,13 @@ class Concatenation(Operator):
                           name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         for op in self.operators[::-1]:
             U = op.apply(U, mu=mu)
         return U
 
     def apply_adjoint(self, V, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         for op in self.operators:
             V = op.apply_adjoint(V, mu=mu)
         return V
@@ -409,7 +409,7 @@ class ProjectedOperator(Operator):
             return ProjectedOperator(self.operator.H, self.source_basis, self.range_basis, solver_options=options)
 
     def apply(self, U, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         if self.source_basis is None:
             if self.range_basis is None:
                 return self.operator.apply(U, mu=mu)
@@ -432,7 +432,7 @@ class ProjectedOperator(Operator):
         if self.linear:
             return self.assemble(mu)
         assert len(U) == 1
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         if self.source_basis is None:
             J = self.operator.jacobian(U, mu=mu)
         else:
@@ -1008,7 +1008,7 @@ class FixedParameterOperator(ProxyOperator):
 
     def __init__(self, operator, mu=None, name=None):
         super().__init__(operator, name)
-        assert operator.parse_parameter(mu) or True
+        assert mu >= operator.parameter_type
         self.mu = mu.copy()
         self.build_parameter_type()
 
@@ -1298,27 +1298,27 @@ class SelectionOperator(Operator):
         return len(self.boundaries)
 
     def assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         op = self.operators[self._get_operator_number(mu)]
         return op.assemble(mu)
 
     def apply(self, U, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].apply(U, mu=mu)
 
     def apply_adjoint(self, V, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         op = self.operators[self._get_operator_number(mu)]
         return op.apply_adjoint(V, mu=mu)
 
     def as_range_array(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_range_array(mu=mu)
 
     def as_source_array(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_source_array(mu=mu)
 

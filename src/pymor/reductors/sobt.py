@@ -27,9 +27,10 @@ class GenericSOBTpvReductor(BasicObject):
         |Parameter|.
     """
     def __init__(self, fom, mu=None):
+        assert mu >= fom.parameter_type
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -215,9 +216,10 @@ class SOBTfvReductor(BasicObject):
         |Parameter|.
     """
     def __init__(self, fom, mu=None):
+        assert mu >= fom.parameter_type
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -297,9 +299,10 @@ class SOBTReductor(BasicObject):
         |Parameter|.
     """
     def __init__(self, fom, mu=None):
+        assert mu >= fom.parameter_type
         assert isinstance(fom, SecondOrderModel)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V1 = None
         self.W1 = None
         self.V2 = None

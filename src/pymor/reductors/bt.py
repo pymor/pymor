@@ -25,8 +25,9 @@ class GenericBTReductor(BasicObject):
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
+        assert mu >= fom.parameter_type
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
