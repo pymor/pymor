@@ -233,7 +233,7 @@ def extend_arnoldi(A, E, V, H, f, p):
     k = len(V)
 
     res = f.l2_norm()[0]
-    H = np.pad(H, ((0, p), (0, p)))
+    H = np.pad(H, ((0, p), (0, p)), 'constant')
     H[k, k - 1] = res
     v = f * (1 / res)
     # since i cannot append to the VectorArrayView V I copy it before appending...

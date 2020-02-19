@@ -10,7 +10,7 @@ from pymor.operators.numpy import NumpyMatrixOperator
 
 n_list = [100, 200]
 k_list = [1, 7]
-which_list = ['LM', 'LR', 'SI']
+which_list = ['LM', 'LR', 'LI']
 
 
 @pytest.mark.parametrize('n', n_list)
@@ -23,6 +23,6 @@ def test_eigs(n, k, which):
     j = np.random.randint(n, size=n**2 // 2)
     A[i, j] = 0
     Aop = NumpyMatrixOperator(A)
-    ew, ev = eigs(Aop, k=k, which=which, tol=0)
+    ew, ev = eigs(Aop, k=k, which=which)
 
     assert np.sum((Aop.apply(ev) - ev * ew).l2_norm()) < 1e-4
