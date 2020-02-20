@@ -4,6 +4,7 @@
 # if you want to use the local dev setup, see docker/docker-compose.yml
 ARG BASE=pymor/testing_py3.7:latest
 ARG BUILD_ENV=binder
+ARG PYPI_MIRROR_TAG=latest
 
 FROM $BASE as image_binder
 ONBUILD ADD . /pymor
@@ -11,6 +12,8 @@ ONBUILD ADD . /pymor
 FROM $BASE as image_dev
 ONBUILD RUN echo "dev image uses mounted pymor" && mkdir /pymor
 ONBUILD ENV PYTHONPATH=/pymor/src:${PYTHONPATH}
+
+FROM pymor/pypi-mirror_stable_py3.7:${PYPI_MIRROR_TAG} as dependencies
 
 # select "base" image according to build arg
 FROM image_${BUILD_ENV}
@@ -33,12 +36,12 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 COPY .binder/local_packages /pymor/local_packages/
 RUN for i in $(find /pymor/local_packages -maxdepth 1 -mindepth 1 -type d | grep -v keepdir) ; do pip install -e $i ; done
 
-
+COPY --from=dependencies /pymor/downloads/* /tmp/dependencies/
+RUN pip install /tmp/dependencies/*
 # at this point setup.py exists only in image_binder
 # for the dev image it's only available via the mount at runtime
 ADD requirements*.txt /tmp/
 RUN /bin/bash -c "pip install jupyterlab && \
-    pip install -r /tmp/requirements-optional.txt && \
     jupyter nbextension install --py --symlink --sys-prefix pythreejs && \
     jupyter nbextension enable --py --sys-prefix pythreejs && \
     jupyter labextension install jupyter-threejs && \

@@ -5,6 +5,8 @@ PANDOC_MAJOR=$(shell pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.'
 ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
+PYPI_MIRROR_TAG:=$(shell cat .ci/PYPI_MIRROR_TAG)
+CI_IMAGE_TAG:=$(shell cat .ci/CI_IMAGE_TAG)
 
 .PHONY: docker README.html pylint test docs
 
@@ -53,9 +55,9 @@ docs:
 
 # Docker targets
 docker_image:
-	$(DOCKER_COMPOSE) build
+	PYPI_MIRROR_TAG=$(PYPI_MIRROR_TAG) CI_IMAGE_TAG=$(CI_IMAGE_TAG) $(DOCKER_COMPOSE) build
 
-docker_docs:
+docker_docs: docker_image
 	NB_DIR=notebooks $(DOCKER_COMPOSE) run docs ./.ci/gitlab/test_docs.bash
 
 docker_run: docker_image
