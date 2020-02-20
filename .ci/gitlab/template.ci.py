@@ -28,6 +28,9 @@ stages:
     environment:
         name: unsafe
     stage: test
+    before_script:
+    # switches default index to pypi-mirror service
+      - mkdir ~/.config/pip/ && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
     after_script:
       - .ci/gitlab/after_script.bash
     artifacts:
@@ -42,18 +45,27 @@ stages:
 
 numpy 3 6:
     extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:{{pypi_mirror_tag}}
+          alias: pypi_mirror
     image: pymor/testing_py3.6:{{ci_image_tag}}
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
 
 oldest 3.6:
     extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:{{pypi_mirror_tag}}
+          alias: pypi_mirror
     image: pymor/testing_py3.6:{{ci_image_tag}}
     variables:
         PYMOR_PYTEST_MARKER: "OLDEST"
 
 minimal_cpp_demo:
     extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:{{pypi_mirror_tag}}
+          alias: pypi_mirror
     image: pymor/testing_py3.7:{{ci_image_tag}}
     script: ./.ci/gitlab/cpp_demo.bash
 
@@ -79,6 +91,9 @@ pages:
 {%- for py, m in matrix %}
 {{m}} {{py[0]}} {{py[2]}}:
     extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:{{pypi_mirror_tag}}
+          alias: pypi_mirror
     image: pymor/testing_py{{py}}:{{ci_image_tag}}
     variables:
         PYMOR_PYTEST_MARKER: "{{m}}"
@@ -263,7 +278,8 @@ marker = ["Vanilla", "PIP_ONLY", "NOTEBOOKS", "MPI"]
 binder_urls = ['https://gke.mybinder.org/build/gh/pymor/pymor',
                'https://ovh.mybinder.org/build/gh/pymor/pymor']
 testos = ['centos_8', 'debian_buster', 'debian_testing']
-ci_image_tag = '05486aa0fe225e7aac9cc32eb5bcbeb73339a500'
+ci_image_tag = open(os.path.join(os.path.dirname(__file__), '..', 'CI_IMAGE_TAG'), 'rt').read()
+pypi_mirror_tag = open(os.path.join(os.path.dirname(__file__), '..', 'PYPI_MIRROR_TAG'), 'rt').read()
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = list(product(pythons, marker))
     yml.write(tpl.render(**locals()))
