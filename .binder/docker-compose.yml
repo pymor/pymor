@@ -1,5 +1,7 @@
 version: '3'
 
+# you should not use this file directly, but rather via the targets in ../Makefile
+
 # this service runs a jupyter notebook server with all of pymor's
 # requirements installed and the src directory added to PYTHONPATH
 
@@ -17,8 +19,9 @@ services:
         context: ../
         dockerfile: .binder/Dockerfile
         args:
-            BASE: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
+            BASE: pymor/testing_py3.7:${CI_IMAGE_TAG}
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
+            PYPI_MIRROR_TAG: ${PYPI_MIRROR_TAG}
             NB_USER: "${USER}"
             NB_UID: 1000
             BUILD_ENV: dev
@@ -38,7 +41,13 @@ services:
         bash -c "jupyter notebook --ip 0.0.0.0 --no-browser --notebook-dir=$${NB_DIR} --NotebookApp.disable_check_xsrf=True"
 
   pytest:
-    image: pymor/testing_py3.7:05486aa0fe225e7aac9cc32eb5bcbeb73339a500
+    build:
+        context: ../
+        dockerfile: .binder/local-dev.Dockerfile
+        args:
+            BASE: pymor/testing_py3.7:${CI_IMAGE_TAG}
+            PYPI_MIRROR_TAG: ${PYPI_MIRROR_TAG}
+    image: pymor_local_dev
     environment:
       - PYMOR_PYTEST_MARKER=${PYMOR_PYTEST_MARKER}
       - CI_PROJECT_DIR=/src
@@ -48,7 +57,9 @@ services:
     command: "/src/.ci/gitlab/script.bash"
 
   docs:
-    image: pymor/testing:3.7
+    image: pymor_local_dev
+    depends_on:
+      - pytest
     environment:
       - PYMOR_FORCE_JUPYTER=1
       - PYMOR_WITH_SPHINX=1
