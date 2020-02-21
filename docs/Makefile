@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = -W --keep-going
 SPHINXBUILD   = PYMOR_FORCE_JUPYTER=1 sphinx-build -j auto -v source
 PAPER         =
 BUILDDIR      = _build
