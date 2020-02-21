@@ -180,6 +180,9 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
                 basis_sizes = rom.solution_space.dim + 1
             basis_sizes = min(rom.solution_space.dim + 1, basis_sizes)
             basis_sizes = np.linspace(0, rom.solution_space.dim, basis_sizes).astype(int)
+    elif isinstance(basis_sizes, (list, tuple)):
+        assert all([isinstance(sz, Number) for sz in basis_sizes])
+        basis_sizes = np.array(basis_sizes)
     if error_norm_names is None:
         error_norm_names = tuple(norm.name for norm in error_norms)
 
@@ -281,9 +284,11 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
     max_estimates = result['max_estimates']
     min_effectivities = result['min_effectivities']
     max_effectivities = result['max_effectivities']
-    max_conditions = result['max_conditions']
-    custom_values = result['custom_values']
-    custom_names = result['custom_names']
+    if condition:
+        max_conditions = result['max_conditions']
+    if custom:
+        custom_values = result['custom_values']
+        custom_names = result['custom_names']
 
     max_basis_size = max_basis_size if max_basis_size else len(basis_sizes)
 
