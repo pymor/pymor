@@ -41,7 +41,7 @@ stages:
         reports:
             junit: test_results.xml
 
-numpy 3 6:
+numpy-git 3 6:
     extends: .pytest
     services:
         - name: pymor/pypi-mirror_stable_py3.6:b91332bb45ed1950647b572cc01b550f9009d977
@@ -201,11 +201,11 @@ submit Vanilla 3 7:
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
 
-submit numpy 3 6:
+submit numpy-git 3 6:
     extends: .submit
     image: pymor/python:3.6
     dependencies:
-        - numpy 3 6
+        - numpy-git 3 6
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
 
