@@ -15,11 +15,6 @@ COVERAGE_OPTS="--cov=src/pymor --cov-report=xml  --memprof-top-n 50 --memprof-cs
 set -eux
 ${SUDO} pip install -U pip
 
-# make sure CI setup is current
-./.ci/gitlab/template.ci.py && git diff --exit-code .ci/gitlab/ci.yml
-# check if requirements files are up-to-date
-./dependencies.py && git diff --exit-code requirements* pyproject.toml
-
 # most of these should be baked into the docker image already
 ${SUDO} pip install -r requirements.txt
 ${SUDO} pip install -r requirements-ci.txt
