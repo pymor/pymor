@@ -163,7 +163,7 @@ verify setup.py:
         DOCKER_HOST: tcp://docker:2375/
         DOCKER_DRIVER: overlay2
     before_script:
-        - apk --update add openssh-client rsync git file bash python3 curl
+        - apk --update add openssh-client rsync git file bash python3 curl make
         # hotfix for https://github.com/jupyter/repo2docker/issues/755
         - pip3 install ruamel.yaml==0.15.100
         - pip3 install jinja2 jupyter-repo2docker docker-compose
@@ -182,20 +182,27 @@ pip {{loop.index}}/{{loop.length}}:
 {% endfor %}
 
 # this should ensure binderhubs can still build a runnable image from our repo
-repo2docker:
+.binder:
     extends: .docker-in-docker
     stage: install_checks
     variables:
         IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
         CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
         USER: juno
+
+repo2docker:
+    extends: .binder
     script:
         - repo2docker --user-id 2000 --user-name ${USER} --no-run --debug --image-name ${IMAGE} .
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
         - docker run ${IMAGE} ${CMD}
         - docker push ${IMAGE}
+
+local_jupyter:
+    extends: .binder
+    script:
+        - make docker_image
         - cd .binder
-        - docker-compose build
         - docker-compose run jupyter ${CMD}
 
 {% for url in binder_urls %}
