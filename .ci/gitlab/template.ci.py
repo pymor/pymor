@@ -202,9 +202,7 @@ local_jupyter:
     extends: .binder
     script:
         - make docker_image
-        - cd .binder
-        - docker-compose run jupyter ${CMD}
-
+        - make DOCKER_CMD="${CMD}" docker_exec 
 {% for url in binder_urls %}
 trigger_binder {{loop.index}}/{{loop.length}}:
     extends: .test_base

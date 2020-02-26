@@ -63,6 +63,9 @@ docker_docs: docker_image
 docker_run: docker_image
 	$(DOCKER_COMPOSE) run --service-ports jupyter bash
 
+docker_exec: docker_image
+	$(DOCKER_COMPOSE) run --service-ports jupyter bash -l -c "${DOCKER_CMD}"
+
 docker_tutorials: NB_DIR=docs/_build/html
 docker_tutorials: docker_docs docker_jupyter
 
