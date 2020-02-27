@@ -19,7 +19,7 @@ services:
         context: ../
         dockerfile: .binder/Dockerfile
         args:
-            BASE: pymor/testing_py3.7:${CI_IMAGE_TAG}
+            BASE: pymor/jupyter_py3.7:${CI_IMAGE_TAG}
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
             PYPI_MIRROR_TAG: ${PYPI_MIRROR_TAG}
             NB_USER: "${USER}"
@@ -41,13 +41,7 @@ services:
         bash -c "jupyter notebook --ip 0.0.0.0 --no-browser --notebook-dir=$${NB_DIR} --NotebookApp.disable_check_xsrf=True"
 
   pytest:
-    build:
-        context: ../
-        dockerfile: .binder/local-dev.Dockerfile
-        args:
-            BASE: pymor/testing_py3.7:${CI_IMAGE_TAG}
-            PYPI_MIRROR_TAG: ${PYPI_MIRROR_TAG}
-    image: pymor_local_dev
+    image: pymor/jupyter_py3.7:${CI_IMAGE_TAG}
     environment:
       - PYMOR_PYTEST_MARKER=${PYMOR_PYTEST_MARKER}
       - CI_PROJECT_DIR=/src
