@@ -336,7 +336,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
 
       a(u, v, mu) = sum_{q = 1}^Q theta_q(mu) a_q(u, v),
 
-    for Q positive coefficient |ParameterFunctional|s theta_1, ..., theta_Q and positive semi-definite component
+    for Q positive coefficient |ParameterFunctional| theta_1, ..., theta_Q and positive semi-definite component
     bilinear forms a_1, ..., a_Q: V x V -> K. Let mu_bar be a parameter with respect to which the coercivity constant
     of a(., ., mu_bar) is known, i.e. we known alpha_mu_bar > 0, s.t. ::
 
@@ -356,7 +356,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
     Parameters
     ----------
     thetas
-        List or tuple of |ParameterFunctional|s
+        List or tuple of |ParameterFunctional|
     mu_bar
         Parameter associated with alpha_mu_bar.
     alpha_mu_bar
@@ -398,7 +398,7 @@ class MaxThetaParameterFunctional(ParameterFunctional):
 
       a(u, v, mu) = sum_{q = 1}^Q theta_q(mu) a_q(u, v)  or  l(v, mu) = sum_{q = 1}^Q theta_q(mu) l_q(v)
 
-    for Q coefficient |ParameterFunctional|s theta_1, ..., theta_Q and continuous bilinear forms
+    for Q coefficient |ParameterFunctional| theta_1, ..., theta_Q and continuous bilinear forms
     a_1, ..., a_Q: V x V -> K or continuous linear functionals l_q: V -> K. Let mu_bar be a parameter with respect to
     which the continuity constant of a(., ., mu_bar) or l(., mu_bar) is known, i.e. we known gamma_mu_bar > 0, s.t. ::
 
@@ -424,7 +424,7 @@ class MaxThetaParameterFunctional(ParameterFunctional):
     Parameters
     ----------
     thetas
-        List or tuple of |ParameterFunctional|s
+        List or tuple of |ParameterFunctional|
     mu_bar
         Parameter associated with gamma_mu_bar.
     gamma_mu_bar
