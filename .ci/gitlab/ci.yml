@@ -48,7 +48,7 @@ numpy-git 3 6:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
@@ -59,7 +59,7 @@ oldest 3.6:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "OLDEST"
@@ -70,7 +70,7 @@ minimal_cpp_demo:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     script: ./.ci/gitlab/cpp_demo.bash
 
@@ -110,7 +110,7 @@ Vanilla 3 6:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
@@ -120,7 +120,7 @@ PIP_ONLY 3 6:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
@@ -130,7 +130,7 @@ NOTEBOOKS 3 6:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
@@ -140,7 +140,7 @@ MPI 3 6:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
@@ -150,7 +150,7 @@ Vanilla 3 7:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
@@ -160,7 +160,7 @@ PIP_ONLY 3 7:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
@@ -170,7 +170,7 @@ NOTEBOOKS 3 7:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
@@ -180,7 +180,7 @@ MPI 3 7:
         - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:b91332bb45ed1950647b572cc01b550f9009d977
+    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
 
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
