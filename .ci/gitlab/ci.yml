@@ -45,10 +45,10 @@ stages:
 numpy-git 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "numpy"
@@ -56,10 +56,10 @@ numpy-git 3 6:
 oldest 3.6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "OLDEST"
@@ -67,10 +67,10 @@ oldest 3.6:
 minimal_cpp_demo:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     script: ./.ci/gitlab/cpp_demo.bash
 
@@ -107,80 +107,120 @@ pages:
 Vanilla 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
 PIP_ONLY 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
 NOTEBOOKS 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
 MPI 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
 Vanilla 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
 PIP_ONLY 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "PIP_ONLY"
 NOTEBOOKS 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "NOTEBOOKS"
 MPI 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    variables:
+        PYMOR_PYTEST_MARKER: "MPI"
+Vanilla 3 8:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    variables:
+        PYMOR_PYTEST_MARKER: "Vanilla"
+PIP_ONLY 3 8:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    variables:
+        PYMOR_PYTEST_MARKER: "PIP_ONLY"
+NOTEBOOKS 3 8:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    variables:
+        PYMOR_PYTEST_MARKER: "NOTEBOOKS"
+MPI 3 8:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     variables:
         PYMOR_PYTEST_MARKER: "MPI"
@@ -211,6 +251,13 @@ submit Vanilla 3 7:
     image: pymor/python:3.7
     dependencies:
         - Vanilla 3 7
+    variables:
+        PYMOR_PYTEST_MARKER: "Vanilla"
+submit Vanilla 3 8:
+    extends: .submit
+    image: pymor/python:3.8
+    dependencies:
+        - Vanilla 3 8
     variables:
         PYMOR_PYTEST_MARKER: "Vanilla"
 
@@ -379,6 +426,25 @@ wheel 2014 py3 7:
     script: bash .ci/gitlab/wheels.bash 2014
 
 
+wheel 1 py3 8:
+    extends: .wheel
+    variables:
+        PYVER: "3.8"
+    script: bash .ci/gitlab/wheels.bash 1
+
+wheel 2010 py3 8:
+    extends: .wheel
+    variables:
+        PYVER: "3.8"
+    script: bash .ci/gitlab/wheels.bash 2010
+
+wheel 2014 py3 8:
+    extends: .wheel
+    variables:
+        PYVER: "3.8"
+    script: bash .ci/gitlab/wheels.bash 2014
+
+
 
 .check_wheel:
     extends: .test_base
@@ -392,6 +458,9 @@ wheel 2014 py3 7:
       - "wheel 1 py3 7"
       - "wheel 2010 py3 7"
       - "wheel 2014 py3 7"
+      - "wheel 1 py3 8"
+      - "wheel 2010 py3 8"
+      - "wheel 2014 py3 8"
     before_script:
       - pip3 install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg

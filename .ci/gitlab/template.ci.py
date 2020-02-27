@@ -295,7 +295,7 @@ import jinja2
 import sys
 from itertools import product
 tpl = jinja2.Template(tpl)
-pythons = ['3.6', '3.7']
+pythons = ['3.6', '3.7', '3.8']
 # these should be all instances in the federation
 marker = ["Vanilla", "PIP_ONLY", "NOTEBOOKS", "MPI"]
 binder_urls = ['https://gke.mybinder.org/build/gh/pymor/pymor',
