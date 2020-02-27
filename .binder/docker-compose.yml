@@ -21,7 +21,6 @@ services:
         args:
             BASE: pymor/jupyter_py3.7:${CI_IMAGE_TAG}
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
-            PYPI_MIRROR_TAG: ${PYPI_MIRROR_TAG}
             NB_USER: "${USER}"
             NB_UID: 1000
             BUILD_ENV: dev

@@ -9,6 +9,8 @@ cd "${PYMOR_ROOT}"
 
 set -eux
 
+# make sure binder setup is current
+make docker_file && git diff --exit-code .binder/Dockerfile
 # make sure CI setup is current
 ./.ci/gitlab/template.ci.py && git diff --exit-code .ci/gitlab/ci.yml
 # check if requirements files are up-to-date

@@ -54,7 +54,10 @@ docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
 
 # Docker targets
-docker_image:
+docker_file:
+	sed "s;CI_IMAGE_TAG;$(CI_IMAGE_TAG);g" .binder/Dockerfile.in > .binder/Dockerfile
+
+docker_image: docker_file
 	PYPI_MIRROR_TAG=$(PYPI_MIRROR_TAG) CI_IMAGE_TAG=$(CI_IMAGE_TAG) $(DOCKER_COMPOSE) build
 
 docker_docs: docker_image
