@@ -76,7 +76,7 @@ pages build:
     script:
         - apk --update add make python3
         - pip3 install jinja2 pathlib
-        - make docker_docs
+        - make USER=pymor docker_docs
     artifacts:
         paths:
             - docs/_build/html
@@ -214,7 +214,7 @@ local_jupyter:
     extends: .binder
     script:
         - make docker_image
-        - make DOCKER_CMD="${CMD}" docker_exec 
+        - make DOCKER_CMD="${CMD}" docker_exec
 {% for url in binder_urls %}
 trigger_binder {{loop.index}}/{{loop.length}}:
     extends: .test_base
