@@ -158,6 +158,11 @@ if config.HAVE_FENICS:
             impl[:] = values
             return FenicsVector(impl)
 
+        def real_vector_from_numpy(self, data, ensure_copy=False):
+            impl = df.Function(self.V).vector()
+            impl[:] = data
+            return FenicsVector(impl)
+
         def real_make_vector(self, obj):
             return FenicsVector(obj)
 
