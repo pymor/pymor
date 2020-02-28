@@ -105,7 +105,7 @@ pages:
 {{m}} {{py[0]}} {{py[2]}}:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:{{pypi_mirror_tag}}
+        - name: pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
           alias: pypi_mirror
     image: pymor/testing_py{{py}}:{{ci_image_tag}}
     variables:
