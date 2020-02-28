@@ -34,9 +34,7 @@ if config.HAVE_FENICS:
             self.impl = self.impl.copy()
 
         def to_numpy(self, ensure_copy=False):
-            if ensure_copy:
-                return self.impl.copy().get_local()
-            return self.impl.get_local()
+            return self.impl.get_local()  # always returns a copy
 
         def _scal(self, alpha):
             self.impl *= alpha
