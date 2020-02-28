@@ -147,7 +147,7 @@ MPI 3 6:
 Vanilla 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.7:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
     image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
@@ -157,7 +157,7 @@ Vanilla 3 7:
 PIP_ONLY 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.7:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
     image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
@@ -167,7 +167,7 @@ PIP_ONLY 3 7:
 NOTEBOOKS 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.7:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
     image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
@@ -177,7 +177,7 @@ NOTEBOOKS 3 7:
 MPI 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:debcff651a903b10fe5d73e6a7941790cbcfc5b8
+        - name: pymor/pypi-mirror_stable_py3.7:debcff651a903b10fe5d73e6a7941790cbcfc5b8
 
           alias: pypi_mirror
     image: pymor/testing_py3.7:377847deafeab233e9da24a5094f4ae2684d9a5a
