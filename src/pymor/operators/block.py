@@ -3,9 +3,12 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+from numbers import Integral, Number
+from scipy.sparse import bmat
 
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.operators.interface import Operator
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
@@ -225,6 +228,130 @@ class BlockDiagonalOperator(BlockOperator):
             return self
         else:
             return self.__class__(blocks)
+
+
+class SparseBlockOperator(Operator):
+    """A row-major sparse matrix of arbitrary |Operators|.
+
+    This operator can be :meth:`applied <pymor.operators.interface.Operator.apply>`
+    to a compatible :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>`.
+
+    Parameters
+    ----------
+    blocks
+        List or tuple of dicts as sparse representations of rows, i.e. `blocks[i] = {j: op_ij, ...}`.
+    """
+
+    def _operators(self):
+        """Iterator over operators."""
+        for row in self.blocks:
+            for _, op in row.items():
+                yield op
+
+    def __init__(self, blocks):
+        assert isinstance(blocks, (list, tuple)), 'blocks has to be a list of dicts (each a sparse row)!'
+        self.num_source_blocks = rows = len(blocks)
+        assert all(isinstance(row, dict) for row in blocks), 'blocks has to be a list of dicts (each a sparse row)!'
+        assert all(all(isinstance(col_ind, Number) for col_ind in row.keys()) for row in blocks)
+        # check if every row/column contains at least one operator
+        col_indcs = set()
+        for row in blocks:
+            col_indcs = col_indcs.union(set(row.keys()))
+        self.num_range_blocks = cols = len(col_indcs)
+        assert all(isinstance(col_ind, Integral) for col_ind in col_indcs)
+        assert all(col_ind >= 0 for col_ind in col_indcs), f'Column indices have to be positive (are {col_indcs})!'
+        assert all(col_ind < cols for col_ind in col_indcs)
+        assert all(all(isinstance(op, Operator) for _, op in row.items()) for row in blocks)
+        # find source/range spaces for every column/row
+        source_spaces = [None for _ in range(cols)]
+        range_spaces = [None for _ in range(rows)]
+        for row_ind, row in enumerate(blocks):
+            for col_ind, op in row.items():
+                if not source_spaces[col_ind]:
+                    source_spaces[col_ind] = op.source
+                assert op.source == source_spaces[col_ind], 'All operators in a column need to have the same source!'
+                if not range_spaces[row_ind]:
+                    range_spaces[row_ind] = op.range
+                assert op.range == range_spaces[row_ind], 'All operators in a row need to have the same range!'
+        self.blocks = blocks
+        self.source = BlockVectorSpace(source_spaces)
+        self.range = BlockVectorSpace(range_spaces)
+        self.linear = all(op.linear for op in self._operators())
+        self.build_parameter_type(*self._operators())
+
+    @property
+    def H(self):
+        rows = self.num_source_blocks
+        cols = self.num_range_blocks
+        adj_blocks = [{} for _ in range(cols)]
+        for row_ind, row in enumerate(self.blocks):
+            for col_ind, op in row.items():
+                adj_blocks[col_ind][row_ind] = op.H
+        return SparseBlockOperator(adj_blocks)
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+
+        V_blocks = [None for i in range(self.num_range_blocks)]
+        for i, row in enumerate(self.blocks):
+            for j, op in row.items():
+                Vi = op.apply(U.block(j), mu=mu)
+                if V_blocks[i] is None:
+                    V_blocks[i] = Vi
+                else:
+                    V_blocks[i] += Vi
+
+        return self.range.make_array(V_blocks)
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+
+        V_blocks = [None for j in range(self.num_source_blocks)]
+        for i, row in enumerate(self.blocks):
+            for j, op in row.items():
+                Uj = op.apply_adjoint(V.block(i), mu=mu)
+                if V_blocks[j] is None:
+                    V_blocks[j] = Uj
+                else:
+                    V_blocks[j] += Uj
+
+        return self.source.make_array(V_blocks)
+
+    def assemble(self, mu=None):
+        blocks = [{} for _ in range(self.num_range_blocks)]
+        differs = 0
+        for i, row in enumerate(self.blocks):
+            for j, op in row.items():
+                blocks[i][j] = op.assemble(mu=mu)
+                if blocks[i][j] != op:
+                    differs += 1
+        if differs > 0:
+            return self.__class__(blocks)
+        else:
+            return self
+
+    def as_range_array(self, mu=None):
+        blocks = [None for _ in range(self.num_range_blocks)]
+        for i, row in enumerate(self.blocks):
+            blocks[i] = self.range.subspaces[i].empty()
+            for j in range(self.num_source_blocks):
+                if j in row:
+                    op = row[j]
+                else:
+                    op = ZeroOperator(self.range.subspaces[i], self.source.subspaces[j])
+                blocks[i].append(op.as_range_array(mu))
+        return self.range.make_array(blocks)
+
+    def as_source_array(self, mu=None):
+        blocks = [subspace.empty() for subspace in self.source.subspaces]
+        for i, row in enumerate(self.blocks):
+            for j in range(self.num_source_blocks):
+                if j in row:
+                    op = row[j]
+                else:
+                    op = ZeroOperator(self.range.subspaces[i], self.source.subspaces[j])
+                blocks[j].append(op.as_source_array(mu))
+        return self.source.make_array(blocks)
 
 
 class SecondOrderModelOperator(BlockOperator):

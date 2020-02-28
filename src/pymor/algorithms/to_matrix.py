@@ -8,7 +8,7 @@ import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 
 from pymor.algorithms.rules import RuleTable, match_class
-from pymor.operators.block import BlockOperatorBase
+from pymor.operators.block import BlockOperatorBase, SparseBlockOperator
 from pymor.operators.constructions import (AdjointOperator, ComponentProjection, Concatenation, IdentityOperator,
                                            LincombOperator, LowRankOperator, LowRankUpdatedOperator,
                                            VectorArrayOperator, ZeroOperator)
@@ -78,6 +78,15 @@ class ToMatrixRules(RuleTable):
             return np.asarray(np.bmat(mat_blocks))
         else:
             return sps.bmat(mat_blocks, format=format)
+
+    @match_class(SparseBlockOperator)
+    def action_SparseBlockOperator(self, op):
+        format = self.format
+        blocks = np.full((op.num_range_blocks, op.num_source_blocks), None)
+        for i, row in enumerate(op.blocks):
+            for j, op in row.items():
+                blocks[i, j] = self.apply(op)
+        return to_matrix(NumpyMatrixOperator(sps.bmat(blocks)), format=self.format)
 
     @match_class(AdjointOperator)
     def action_AdjointOperator(self, op):
