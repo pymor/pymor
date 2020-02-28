@@ -235,7 +235,7 @@ submit oldest 3.6:
 verify setup.py:
     extends: .test_base
     image: python:3.5-alpine
-    stage: install_checks
+    stage: sanity
     script:
         - python setup.py egg_info
 
