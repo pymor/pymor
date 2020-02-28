@@ -155,12 +155,12 @@ if config.HAVE_FENICS:
         def real_random_vector(self, distribution, random_state, **kwargs):
             impl = df.Function(self.V).vector()
             values = _create_random_values(impl.local_size(), distribution, random_state, **kwargs)
-            impl[:] = values
+            impl[:] = np.ascontiguousarray(values)
             return FenicsVector(impl)
 
         def real_vector_from_numpy(self, data, ensure_copy=False):
             impl = df.Function(self.V).vector()
-            impl[:] = data
+            impl[:] = np.ascontiguousarray(data)
             return FenicsVector(impl)
 
         def real_make_vector(self, obj):
@@ -393,7 +393,7 @@ if config.HAVE_FENICS:
             assert U in self.source
             UU = self.op.source.zeros(len(U))
             for uu, u in zip(UU._list, U.data):
-                uu.real_part.impl[:] = u
+                uu.real_part.impl[:] = np.ascontiguousarray(u)
             VV = self.op.apply(UU, mu=mu)
             V = self.range.zeros(len(VV))
             for v, vv in zip(V.data, VV._list):
@@ -403,7 +403,7 @@ if config.HAVE_FENICS:
         def jacobian(self, U, mu=None):
             assert U in self.source and len(U) == 1
             UU = self.op.source.zeros()
-            UU._list[0].real_part.impl[:] = U.data[0]
+            UU._list[0].real_part.impl[:] = np.ascontiguousarray(U.data[0])
             JJ = self.op.jacobian(UU, mu=mu)
             return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
 
