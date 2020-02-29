@@ -50,9 +50,7 @@ services:
     command: "/src/.ci/gitlab/script.bash"
 
   docs:
-    image: pymor_local_dev
-    depends_on:
-      - pytest
+    image: pymor/jupyter_py3.7:${CI_IMAGE_TAG}
     environment:
       - PYMOR_FORCE_JUPYTER=1
       - PYMOR_WITH_SPHINX=1

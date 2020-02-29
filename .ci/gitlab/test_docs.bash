@@ -26,6 +26,7 @@ ${SUDO} pip install -U jupyterlab
 python setup.py build_ext -i
 
 # pymor checks if this file's owner uid matches with the interpreter executor's
-${SUDO} chown pymor docs/source/pymor_defaults.py
+ME=$(id -u)
+${SUDO} chown ${ME} docs/source/pymor_defaults.py
 
 make docs
