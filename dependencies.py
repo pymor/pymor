@@ -22,7 +22,8 @@ def setup_requires(toml=False):
     # numpy versions with filters according to minimal version with a wheel
     numpys = ['numpy>={};python_version == "3.6"'.format(NUMPY),
       'numpy>=1.15.4;python_version == "3.7"',
-      'numpy>={};python_version != "3.6" and python_version != "3.7"'.format(NUMPY),]
+      'numpy>=1.17.5;python_version == "3.8"',
+      'numpy>={};python_version != "3.6" and python_version != "3.7" and python_version != "3.8"'.format(NUMPY),]
     other = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.27', 'packaging',]
     if toml:
         numpys = [f.replace('numpy>=', 'numpy==') for f in numpys]
