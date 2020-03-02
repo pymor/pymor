@@ -11,7 +11,7 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
-                                           LincombOperator)
+                                           LincombOperator, VectorArrayOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
@@ -417,3 +417,36 @@ def test_InverseAdjointOperator(operator_with_arrays):
                                    rtol=rtol, atol=atol))
     except (InversionError, LinAlgError, NotImplementedError):
         pass
+
+
+def test_vectorarray_op_apply_inverse():
+    np.random.seed(1234)
+    O = np.random.random((5, 5))
+    op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
+    V = op.range.random()
+    U = op.apply_inverse(V)
+    v = V.to_numpy()
+    u = np.linalg.solve(O.T, v.ravel())
+    assert np.all(almost_equal(U, U.space.from_numpy(u)))
+
+
+def test_vectorarray_op_apply_inverse_lstsq():
+    np.random.seed(1234)
+    O = np.random.random((3, 5))
+    op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
+    V = op.range.random()
+    U = op.apply_inverse(V, least_squares=True)
+    v = V.to_numpy()
+    u = np.linalg.lstsq(O.T, v.ravel())[0]
+    assert np.all(almost_equal(U, U.space.from_numpy(u)))
+
+
+def test_adjoint_vectorarray_op_apply_inverse_lstsq():
+    np.random.seed(1234)
+    O = np.random.random((3, 5))
+    op = VectorArrayOperator(NumpyVectorSpace.make_array(O), adjoint=True)
+    V = op.range.random()
+    U = op.apply_inverse(V, least_squares=True)
+    v = V.to_numpy()
+    u = np.linalg.lstsq(O, v.ravel())[0]
+    assert np.all(almost_equal(U, U.space.from_numpy(u)))
