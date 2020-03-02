@@ -842,7 +842,7 @@ class VectorArrayOperator(Operator):
             return self.range.make_array(self.array.dot(U).T)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
-        if not least_squares and len(V) != V.dim:
+        if not least_squares and len(self.array) != self.array.dim:
             raise InversionError
 
         from pymor.algorithms.gram_schmidt import gram_schmidt
