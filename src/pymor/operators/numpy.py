@@ -154,7 +154,7 @@ class NumpyMatrixBasedOperator(Operator):
         assert output_format in {'matlab', 'matrixmarket'}
         matrix = self.assemble(mu).matrix
         matrix_name = matrix_name or self.name
-        if output_format is 'matlab':
+        if output_format == 'matlab':
             savemat(filename, {matrix_name: matrix})
         else:
             mmwrite(filename, matrix, comment=matrix_name)
