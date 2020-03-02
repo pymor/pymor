@@ -19,7 +19,7 @@ services:
         context: ../
         dockerfile: .binder/Dockerfile
         args:
-            BASE: pymor/jupyter_py3.7:${CI_IMAGE_TAG}
+            BASE: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
             NB_USER: "${USER}"
             NB_UID: 1000
@@ -40,22 +40,22 @@ services:
         bash -c "jupyter notebook --ip 0.0.0.0 --no-browser --notebook-dir=$${NB_DIR} --NotebookApp.disable_check_xsrf=True"
 
   pytest:
-    image: pymor/jupyter_py3.7:${CI_IMAGE_TAG}
+    image: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
     environment:
       - PYMOR_PYTEST_MARKER=${PYMOR_PYTEST_MARKER}
       - CI_PROJECT_DIR=/src
     volumes:
-        - ./..:/src
+        - ./..:/pymor
     restart: "no"
-    command: "/src/.ci/gitlab/script.bash"
+    command: "/pymor/.ci/gitlab/script.bash"
 
   docs:
-    image: pymor/jupyter_py3.7:${CI_IMAGE_TAG}
+    image: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
     environment:
       - PYMOR_FORCE_JUPYTER=1
       - PYMOR_WITH_SPHINX=1
       - CI_PROJECT_DIR=/src
     volumes:
-        - ./..:/src
+        - ./..:/pymor
     restart: "no"
-    command: "/src/.ci/gitlab/test_docs.bash"
+    command: "/pymor/.ci/gitlab/test_docs.bash"

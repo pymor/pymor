@@ -1,4 +1,4 @@
-DOCKER_COMPOSE=PYPI_MIRROR_TAG=$(PYPI_MIRROR_TAG) CI_IMAGE_TAG=$(CI_IMAGE_TAG) docker-compose -f .binder/docker-compose.yml -p pymor
+DOCKER_COMPOSE=DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYPI_MIRROR_TAG=$(PYPI_MIRROR_TAG) CI_IMAGE_TAG=$(CI_IMAGE_TAG) docker-compose -f .binder/docker-compose.yml -p pymor
 PYMOR_PYTEST_MARKER?=None
 NB_DIR=notebooks
 PANDOC_MAJOR=$(shell pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)
@@ -7,6 +7,8 @@ ifeq ($(PANDOC_MAJOR),1)
 endif
 PYPI_MIRROR_TAG:=$(shell cat .ci/PYPI_MIRROR_TAG)
 CI_IMAGE_TAG:=$(shell cat .ci/CI_IMAGE_TAG)
+DOCKER_BASE_PYTHON=3.7
+SED_OPTIONS=-e "s;CI_IMAGE_TAG;$(CI_IMAGE_TAG);g" -e "s;DOCKER_BASE_PYTHON;$(DOCKER_BASE_PYTHON);g"
 
 .PHONY: docker README.html pylint test docs
 
@@ -55,7 +57,7 @@ docs:
 
 # Docker targets
 docker_file:
-	sed "s;CI_IMAGE_TAG;$(CI_IMAGE_TAG);g" .binder/Dockerfile.in > .binder/Dockerfile
+	sed $(SED_OPTIONS) .binder/Dockerfile.in > .binder/Dockerfile
 
 docker_image: docker_file
 	$(DOCKER_COMPOSE) build
