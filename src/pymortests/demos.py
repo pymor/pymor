@@ -239,6 +239,7 @@ def test_analyze_pickle4():
 
 @pytest.mark.skipif(is_windows_platform(), reason='hangs indefinitely')
 @pytest.mark.skipif(is_macos_platform(), reason='spurious JSON Decode errors in Ipython launch')
+@pytest.mark.xfail(sys.version_info[0:2]==(3,8), reason='ipyparallel currently broken on python 3.8')
 def test_thermalblock_ipython(demo_args):
     if demo_args[0] != 'pymordemos.thermalblock':
         return
