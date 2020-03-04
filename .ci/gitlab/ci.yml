@@ -8,6 +8,8 @@ stages:
   - install_checks
   - deploy
 
+#************ definition of base jobs *********************************************************************************#
+
 .test_base:
     retry:
         max: 2
@@ -21,7 +23,6 @@ stages:
 
 .pytest:
     extends: .test_base
-    script: .ci/gitlab/script.bash
     tags:
       - long execution time
     environment:
@@ -42,189 +43,6 @@ stages:
         reports:
             junit: test_results.xml
 
-numpy-git 3 6:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "numpy"
-
-oldest 3.6:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "OLDEST"
-
-minimal_cpp_demo:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    script: ./.ci/gitlab/cpp_demo.bash
-
-pages build:
-    extends: .docker-in-docker
-    stage: build
-    script:
-        - apk --update add make python3
-        - pip3 install jinja2 pathlib
-        - make USER=pymor docker_docs
-    artifacts:
-        paths:
-            - docs/_build/html
-            - docs/error.log
-
-pages:
-    extends: .docker-in-docker
-    stage: deploy
-    resource_group: pages_deploy
-    dependencies:
-        - pages build
-    variables:
-        IMAGE: ${CI_REGISTRY_IMAGE}/docs:latest
-    script:
-        - apk --update add make python3
-        - pip3 install jinja2 pathlib
-        - .ci/gitlab/deploy_docs.bash
-    # only:
-    #   - master
-    #   - tags
-    artifacts:
-        paths:
-            - public
-Vanilla 3 6:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "Vanilla"
-PIP_ONLY 3 6:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "PIP_ONLY"
-NOTEBOOKS 3 6:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "NOTEBOOKS"
-MPI 3 6:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "MPI"
-Vanilla 3 7:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "Vanilla"
-PIP_ONLY 3 7:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "PIP_ONLY"
-NOTEBOOKS 3 7:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "NOTEBOOKS"
-MPI 3 7:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "MPI"
-Vanilla 3 8:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "Vanilla"
-PIP_ONLY 3 8:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "PIP_ONLY"
-NOTEBOOKS 3 8:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "NOTEBOOKS"
-MPI 3 8:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    variables:
-        PYMOR_PYTEST_MARKER: "MPI"
-
 
 .submit:
     extends: .test_base
@@ -239,52 +57,6 @@ MPI 3 8:
         - /^staging/.*$/i
     stage: deploy
     script: .ci/gitlab/submit.bash
-submit Vanilla 3 6:
-    extends: .submit
-    image: pymor/python:3.6
-    dependencies:
-        - Vanilla 3 6
-    variables:
-        PYMOR_PYTEST_MARKER: "Vanilla"
-submit Vanilla 3 7:
-    extends: .submit
-    image: pymor/python:3.7
-    dependencies:
-        - Vanilla 3 7
-    variables:
-        PYMOR_PYTEST_MARKER: "Vanilla"
-submit Vanilla 3 8:
-    extends: .submit
-    image: pymor/python:3.8
-    dependencies:
-        - Vanilla 3 8
-    variables:
-        PYMOR_PYTEST_MARKER: "Vanilla"
-
-submit numpy-git 3 6:
-    extends: .submit
-    image: pymor/python:3.6
-    dependencies:
-        - numpy-git 3 6
-    variables:
-        PYMOR_PYTEST_MARKER: "numpy"
-
-submit oldest 3.6:
-    extends: .submit
-    image: pymor/python:3.6
-    dependencies:
-        - oldest 3.6
-    variables:
-        PYMOR_PYTEST_MARKER: "OLDEST"
-
-# this step makes sure that on older python our install fails with
-# a nice message ala "python too old" instead of "SyntaxError"
-verify setup.py:
-    extends: .test_base
-    image: python:3.5-alpine
-    stage: sanity
-    script:
-        - python setup.py egg_info
 
 .docker-in-docker:
     tags:
@@ -311,6 +83,234 @@ verify setup.py:
         name: unsafe
 
 
+# this should ensure binderhubs can still build a runnable image from our repo
+.binder:
+    extends: .docker-in-docker
+    stage: install_checks
+    variables:
+        IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
+        CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
+        USER: juno
+
+.wheel:
+    extends: .docker-in-docker
+    stage: build
+    only: ['branches', 'tags', 'triggers']
+    variables:
+        TEST_OS: "centos_8 debian_buster debian_testing"
+    artifacts:
+        paths:
+        # cannot use exported var from env here
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux*whl
+        expire_in: 1 week
+
+
+.check_wheel:
+    extends: .test_base
+    stage: install_checks
+    services:
+      - pymor/devpi:1
+    dependencies:
+      - "wheel 1 py3 6"
+      - "wheel 2010 py3 6"
+      - "wheel 2014 py3 6"
+      - "wheel 1 py3 7"
+      - "wheel 2010 py3 7"
+      - "wheel 2014 py3 7"
+      - "wheel 1 py3 8"
+      - "wheel 2010 py3 8"
+      - "wheel 2014 py3 8"
+    before_script:
+      - pip3 install devpi-client
+      - devpi use http://pymor__devpi:3141/root/public --set-cfg
+      - devpi login root --password none
+      - devpi upload --from-dir --formats=* ./shared
+    only: ['branches', 'tags', 'triggers']
+    # the docker service adressing fails on other runners
+    tags: [mike]
+
+#******** end definition of base jobs *********************************************************************************#
+
+#******* sanity stage
+
+# this step makes sure that on older python our install fails with
+# a nice message ala "python too old" instead of "SyntaxError"
+verify setup.py:
+    extends: .test_base
+    image: python:3.5-alpine
+    stage: sanity
+    script:
+        - python setup.py egg_info
+
+ci setup:
+    extends: .docker-in-docker
+    stage: sanity
+    script: ./.ci/gitlab/ci_sanity_check.bash
+
+#****** test stage
+
+minimal_cpp_demo:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/cpp_demo.bash
+mpi 3 6:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_mpi.bash
+mpi 3 7:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_mpi.bash
+mpi 3 8:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_mpi.bash
+notebooks_dir 3 6:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_notebooks_dir.bash
+notebooks_dir 3 7:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_notebooks_dir.bash
+notebooks_dir 3 8:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_notebooks_dir.bash
+pip_installed 3 6:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_pip_installed.bash
+pip_installed 3 7:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_pip_installed.bash
+pip_installed 3 8:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_pip_installed.bash
+vanilla 3 6:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_vanilla.bash
+vanilla 3 7:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_vanilla.bash
+vanilla 3 8:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_vanilla.bash
+numpy_git 3 6:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_numpy_git.bash
+oldest 3 8:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_oldest.bash
+submit vanilla 3 6:
+    extends: .submit
+    image: pymor/python:3.6
+    dependencies:
+        - vanilla 3 6
+submit vanilla 3 7:
+    extends: .submit
+    image: pymor/python:3.7
+    dependencies:
+        - vanilla 3 7
+submit vanilla 3 8:
+    extends: .submit
+    image: pymor/python:3.8
+    dependencies:
+        - vanilla 3 8
+submit numpy_git 3 6:
+    extends: .submit
+    image: pymor/python:3.6
+    dependencies:
+        - numpy_git 3 6
+submit oldest 3 8:
+    extends: .submit
+    image: pymor/python:3.8
+    dependencies:
+        - oldest 3 8
+
+
 pip 1/3:
     extends: .docker-in-docker
     stage: install_checks
@@ -327,15 +327,6 @@ pip 3/3:
     script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
 
 
-# this should ensure binderhubs can still build a runnable image from our repo
-.binder:
-    extends: .docker-in-docker
-    stage: install_checks
-    variables:
-        IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
-        CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
-        USER: juno
-
 repo2docker:
     extends: .binder
     script:
@@ -350,7 +341,8 @@ local_jupyter:
         - make docker_image
         - make DOCKER_CMD="${CMD}" docker_exec
 
-trigger_binder 1/2:
+
+trigger_binder 1/23:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
@@ -361,9 +353,9 @@ trigger_binder 1/2:
         - apk --update add bash python3
         - pip3 install requests
     script:
-        - python3 .ci/gitlab/trigger_binder.py "https://gke.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+        - python3 .ci/gitlab/trigger_binder.py "https://g.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
-trigger_binder 2/2:
+trigger_binder 2/23:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
@@ -374,20 +366,281 @@ trigger_binder 2/2:
         - apk --update add bash python3
         - pip3 install requests
     script:
-        - python3 .ci/gitlab/trigger_binder.py "https://ovh.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+        - python3 .ci/gitlab/trigger_binder.py "https://k.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
+trigger_binder 3/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://e.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
-.wheel:
-    extends: .docker-in-docker
-    stage: build
-    only: ['branches', 'tags', 'triggers']
-    variables:
-        TEST_OS: "centos_8 debian_buster debian_testing"
-    artifacts:
-        paths:
-        # cannot use exported var from env here
-        - ${CI_PROJECT_DIR}/shared/pymor*manylinux*whl
-        expire_in: 1 week
+trigger_binder 4/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://,.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 5/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https:// .mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 6/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://t.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 7/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://u.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 8/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://r.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 9/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://i.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 10/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://n.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 11/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://g.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 12/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://,.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 13/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https:// .mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 14/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://o.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 15/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://v.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 16/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://h.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 17/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://,.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 18/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https:// .mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 19/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://g.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 20/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://e.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 21/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://s.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 22/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://i.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
+trigger_binder 23/23:
+    extends: .test_base
+    stage: deploy
+    image: alpine:3.10
+    only:
+        - master
+        - tags
+    before_script:
+        - apk --update add bash python3
+        - pip3 install requests
+    script:
+        - python3 .ci/gitlab/trigger_binder.py "https://s.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+
 wheel 1 py3 6:
     extends: .wheel
     variables:
@@ -446,30 +699,6 @@ wheel 2014 py3 8:
 
 
 
-.check_wheel:
-    extends: .test_base
-    stage: install_checks
-    services:
-      - pymor/devpi:1
-    dependencies:
-      - "wheel 1 py3 6"
-      - "wheel 2010 py3 6"
-      - "wheel 2014 py3 6"
-      - "wheel 1 py3 7"
-      - "wheel 2010 py3 7"
-      - "wheel 2014 py3 7"
-      - "wheel 1 py3 8"
-      - "wheel 2010 py3 8"
-      - "wheel 2014 py3 8"
-    before_script:
-      - pip3 install devpi-client
-      - devpi use http://pymor__devpi:3141/root/public --set-cfg
-      - devpi login root --password none
-      - devpi upload --from-dir --formats=* ./shared
-    only: ['branches', 'tags', 'triggers']
-    # the docker service adressing fails on other runners
-    tags: [mike]
-
 
 check_wheel 1:
     extends: .check_wheel
@@ -487,10 +716,36 @@ check_wheel 3:
     script: devpi install pymor[full]
 
 
-sanity:
+pages build:
     extends: .docker-in-docker
-    stage: sanity
-    script: ./.ci/gitlab/ci_sanity_check.bash
+    stage: build
+    script:
+        - apk --update add make python3
+        - pip3 install jinja2 pathlib
+        - make USER=pymor docker_docs
+    artifacts:
+        paths:
+            - docs/_build/html
+            - docs/error.log
+
+pages:
+    extends: .docker-in-docker
+    stage: deploy
+    resource_group: pages_deploy
+    dependencies:
+        - pages build
+    variables:
+        IMAGE: ${CI_REGISTRY_IMAGE}/docs:latest
+    script:
+        - apk --update add make python3
+        - pip3 install jinja2 pathlib
+        - .ci/gitlab/deploy_docs.bash
+    # only:
+    #   - master
+    #   - tags
+    artifacts:
+        paths:
+            - public
 
 # THIS FILE IS AUTOGENERATED -- DO NOT EDIT #
 #   Edit and Re-run .ci/gitlab/template.ci.py instead       #

@@ -20,3 +20,7 @@ for py in 3.6 3.7 3.8 ; do
   docker_tag_exists pymor/testing_py${py} $(cat .ci/CI_IMAGE_TAG)
   docker_tag_exists pymor/pypi-mirror_stable_py${py} $(cat .ci/PYPI_MIRROR_TAG)
 done
+
+for script in ${PYMOR_ROOT}/.ci/gitlab/test* ; do
+  [[ -x "${script}" ]] || exit 1
+done
