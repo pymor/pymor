@@ -23,5 +23,5 @@ pushd ${SDIST_DIR}
 ${SUDO} pip install $(ls ${SDIST_DIR})
 popd
 set -o pipefail
-xvfb-run -a py.test ${COVERAGE_OPTS} -r sxX --pyargs pymortests -c .ci/installed_pytest.ini |& grep -v 'pymess/lrnm.py:82: PendingDeprecationWarning'
+xvfb-run -a py.test ${COMMON_PYTEST_OPTS} --pyargs pymortests -c .ci/installed_pytest.ini |& grep -v 'pymess/lrnm.py:82: PendingDeprecationWarning'
 pymor-demo -h

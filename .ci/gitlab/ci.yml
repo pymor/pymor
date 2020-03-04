@@ -287,26 +287,36 @@ oldest 3 8:
 submit vanilla 3 6:
     extends: .submit
     image: pymor/python:3.6
+    variables:
+        COVERAGE_FLAG: vanilla
     dependencies:
         - vanilla 3 6
 submit vanilla 3 7:
     extends: .submit
     image: pymor/python:3.7
+    variables:
+        COVERAGE_FLAG: vanilla
     dependencies:
         - vanilla 3 7
 submit vanilla 3 8:
     extends: .submit
     image: pymor/python:3.8
+    variables:
+        COVERAGE_FLAG: vanilla
     dependencies:
         - vanilla 3 8
 submit numpy_git 3 6:
     extends: .submit
     image: pymor/python:3.6
+    variables:
+        COVERAGE_FLAG: numpy_git
     dependencies:
         - numpy_git 3 6
 submit oldest 3 8:
     extends: .submit
     image: pymor/python:3.8
+    variables:
+        COVERAGE_FLAG: oldest
     dependencies:
         - oldest 3 8
 
