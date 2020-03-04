@@ -7,4 +7,4 @@ ${SUDO} pip uninstall -y numpy
 ${SUDO} pip install git+https://github.com/numpy/numpy@master
 # there seems to be no way of really overwriting -p no:warnings from setup.cfg
 sed -i -e 's/\-p\ no\:warnings//g' setup.cfg
-xvfb-run -a py.test ${COVERAGE_OPTS} -W once::DeprecationWarning -W once::PendingDeprecationWarning -r sxX --junitxml=test_results_${PYMOR_VERSION}.xml
+xvfb-run -a py.test ${COMMON_PYTEST_OPTS} -W once::DeprecationWarning -W once::PendingDeprecationWarning

@@ -170,6 +170,8 @@ minimal_cpp_demo:
 submit {{script}} {{py[0]}} {{py[2]}}:
     extends: .submit
     image: pymor/python:{{py}}
+    variables:
+        COVERAGE_FLAG: {{script}}
     dependencies:
         - {{script}} {{py[0]}} {{py[2]}}
 {%- endfor %}

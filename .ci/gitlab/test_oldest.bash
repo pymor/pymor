@@ -18,4 +18,4 @@ python setup.py build_ext -i
 
 pip freeze
 # this runs in pytest in a fake, auto numbered, X Server
-xvfb-run -a py.test ${COVERAGE_OPTS} --cov-report=xml -r sxX --junitxml=test_results.xml
+xvfb-run -a py.test ${COMMON_PYTEST_OPTS}
