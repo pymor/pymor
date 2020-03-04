@@ -266,22 +266,22 @@ vanilla 3 8:
     image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     script: ./.ci/gitlab/test_vanilla.bash
-numpy_git 3 6:
-    extends: .pytest
-    services:
-        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-          alias: pypi_mirror
-    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
-
-    script: ./.ci/gitlab/test_numpy_git.bash
-oldest 3 8:
+numpy_git 3 8:
     extends: .pytest
     services:
         - name: pymor/pypi-mirror_stable_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
           alias: pypi_mirror
     image: pymor/testing_py3.8:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+    script: ./.ci/gitlab/test_numpy_git.bash
+oldest 3 6:
+    extends: .pytest
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+
+          alias: pypi_mirror
+    image: pymor/testing_py3.6:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
 
     script: ./.ci/gitlab/test_oldest.bash
 submit vanilla 3 6:
@@ -305,20 +305,20 @@ submit vanilla 3 8:
         COVERAGE_FLAG: vanilla
     dependencies:
         - vanilla 3 8
-submit numpy_git 3 6:
-    extends: .submit
-    image: pymor/python:3.6
-    variables:
-        COVERAGE_FLAG: numpy_git
-    dependencies:
-        - numpy_git 3 6
-submit oldest 3 8:
+submit numpy_git 3 8:
     extends: .submit
     image: pymor/python:3.8
     variables:
+        COVERAGE_FLAG: numpy_git
+    dependencies:
+        - numpy_git 3 8
+submit oldest 3 6:
+    extends: .submit
+    image: pymor/python:3.6
+    variables:
         COVERAGE_FLAG: oldest
     dependencies:
-        - oldest 3 8
+        - oldest 3 6
 
 
 pip 1/3:
