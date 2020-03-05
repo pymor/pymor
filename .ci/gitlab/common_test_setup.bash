@@ -17,7 +17,7 @@ ${SUDO} pip install -U pip
 # most of these should be baked into the docker image already
 ${SUDO} pip install -r requirements.txt
 ${SUDO} pip install -r requirements-ci.txt
-${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
+${SUDO} pip install -r requirements-optional.txt
 
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0
