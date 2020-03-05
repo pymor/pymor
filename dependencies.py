@@ -46,9 +46,9 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.7', 'matplotlib', 'PySide2', 'ipyparallel',
                 'ipywidgets', 'sphinx-qt-documentation'] + install_requires
-ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert',
-               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
-               'testipynb', "pypi-oldest-requirements>=2020.2"]
+ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
+               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout', 
+               'testipynb', "pypi-oldest-requirements>=2020.2", 'pytest-deadfixtures']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
                 'pytest-instafail': 'pytest_instafail',
