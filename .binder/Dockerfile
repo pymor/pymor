@@ -5,7 +5,7 @@
 # the container, local dev needs it in path from mounted src
 # we trick docker into fulfilling both roles via a conditional ONBUILD
 # if you want to use the local dev setup, see docker/docker-compose.yml
-ARG BASE=pymor/jupyter_py3.7:a76b487ef4d2b6fda1f9089bf0de4b1dc64d0f53
+ARG BASE=pymor/jupyter_py3.7:ebcf689f5c41a49033c07a550d26a104131167b9
 ARG BUILD_ENV=binder
 
 FROM $BASE as image_binder

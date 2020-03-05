@@ -5,7 +5,10 @@ codecov
 nbconvert
 pypi-oldest-requirements>=2020.2
 pytest-cov
+pytest-deadfixtures
 pytest-memprof
+pytest-parallel
+pytest-timeout
 pytest-xdist
 pytest>=4.4
 readme_renderer[md]
