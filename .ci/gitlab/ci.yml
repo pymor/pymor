@@ -352,7 +352,7 @@ local_jupyter:
         - make DOCKER_CMD="${CMD}" docker_exec
 
 
-trigger_binder 1/23:
+trigger_binder 1/4:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
@@ -363,9 +363,9 @@ trigger_binder 1/23:
         - apk --update add bash python3
         - pip3 install requests
     script:
-        - python3 .ci/gitlab/trigger_binder.py "https://g.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+        - python3 .ci/gitlab/trigger_binder.py "https://gke.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
-trigger_binder 2/23:
+trigger_binder 2/4:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
@@ -376,9 +376,9 @@ trigger_binder 2/23:
         - apk --update add bash python3
         - pip3 install requests
     script:
-        - python3 .ci/gitlab/trigger_binder.py "https://k.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+        - python3 .ci/gitlab/trigger_binder.py "https://turing.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
-trigger_binder 3/23:
+trigger_binder 3/4:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
@@ -389,9 +389,9 @@ trigger_binder 3/23:
         - apk --update add bash python3
         - pip3 install requests
     script:
-        - python3 .ci/gitlab/trigger_binder.py "https://e.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+        - python3 .ci/gitlab/trigger_binder.py "https://ovh.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
-trigger_binder 4/23:
+trigger_binder 4/4:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
@@ -402,254 +402,7 @@ trigger_binder 4/23:
         - apk --update add bash python3
         - pip3 install requests
     script:
-        - python3 .ci/gitlab/trigger_binder.py "https://,.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 5/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https:// .mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 6/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://t.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 7/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://u.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 8/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://r.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 9/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://i.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 10/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://n.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 11/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://g.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 12/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://,.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 13/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https:// .mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 14/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://o.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 15/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://v.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 16/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://h.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 17/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://,.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 18/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https:// .mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 19/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://g.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 20/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://e.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 21/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://s.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 22/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://i.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 23/23:
-    extends: .test_base
-    stage: deploy
-    image: alpine:3.10
-    only:
-        - master
-        - tags
-    before_script:
-        - apk --update add bash python3
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://s.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+        - python3 .ci/gitlab/trigger_binder.py "https://gesis.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
 wheel 1 py3 6:
     extends: .wheel
