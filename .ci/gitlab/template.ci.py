@@ -277,7 +277,7 @@ newest = [pythons[-1]]
 test_scripts = [("mpi", pythons, 1), ("notebooks_dir", pythons, 1),  ("pip_installed", pythons, 1),
     ("vanilla", pythons, 1), ("numpy_git", newest, 1), ("oldest", oldest, 1),]
 # these should be all instances in the federation
-binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke, turing, ovh, gesis')]
+binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'turing', 'ovh', 'gesis')]
 testos = ['centos_8', 'debian_buster', 'debian_testing']
 ci_image_tag = open(os.path.join(os.path.dirname(__file__), '..', 'CI_IMAGE_TAG'), 'rt').read()
 pypi_mirror_tag = open(os.path.join(os.path.dirname(__file__), '..', 'PYPI_MIRROR_TAG'), 'rt').read()
