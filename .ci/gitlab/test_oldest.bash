@@ -10,7 +10,7 @@ pypi_minimal_requirements_pinned requirements-travis.txt requirements-travis.txt
 pypi_minimal_requirements_pinned requirements-optional.txt requirements-optional.txt
 ${SUDO} pip install -r requirements.txt
 ${SUDO} pip install -r requirements-travis.txt
-${SUDO} pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
+${SUDO} pip install -r requirements-optional.txt
 # we've changed numpy versions, recompile cyx
 find src/pymor/ -name _*.c | xargs rm -f
 find src/pymor/ -name _*.so | xargs rm -f
