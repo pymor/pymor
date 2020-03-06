@@ -7,19 +7,20 @@ else
 fi
 
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
-SUDO="sudo -E -H"
+export PATH=~/.local/bin:${PATH}
+
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 # any failure here should fail the whole test
 set -eux
-${SUDO} pip install -U pip
+
 # switches default index to pypi-mirror service
 ([[ -d ~/.config/pip/ ]] || mkdir ~/.config/pip/) && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
 
 # most of these should be baked into the docker image already
-${SUDO} pip install -r requirements.txt
-${SUDO} pip install -r requirements-ci.txt
-${SUDO} pip install -r requirements-optional.txt
+pip install -r requirements.txt
+pip install -r requirements-ci.txt
+pip install -r requirements-optional.txt
 
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0
