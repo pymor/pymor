@@ -294,8 +294,9 @@ class ProductParameterFunctional(ParameterFunctional):
         if sum_of_parametric == 0:
             return ConstantParameterFunctional(0, name=self.name + '_d_mu')
         elif sum_of_parametric == 1:
-            return self.factors[at].d_mu(component, index) * self.with_(factors = [f for f in self.factors if not
-                                                                                   isinstance(f, ParameterFunctional)])
+            factors = [self.factors[at].d_mu(component, index)]
+            factors.extend([f for f in self.factors if not isinstance(f ,ParameterFunctional)])
+            return self.with_(factors = factors)
         else:
             raise NotImplementedError
 
