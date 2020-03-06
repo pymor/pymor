@@ -30,9 +30,6 @@ stages:
     environment:
         name: unsafe
     stage: test
-    before_script:
-    # switches default index to pypi-mirror service
-      - mkdir ~/.config/pip/ && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
     after_script:
       - .ci/gitlab/after_script.bash
     artifacts:

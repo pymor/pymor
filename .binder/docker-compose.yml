@@ -15,6 +15,8 @@ version: '3'
 
 services:
   jupyter:
+    depends_on:
+      - pypi_mirror
     build:
         context: ../
         dockerfile: .binder/Dockerfile
@@ -41,16 +43,23 @@ services:
 
   pytest:
     image: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
+    depends_on:
+      - pypi_mirror
     environment:
-      - PYMOR_PYTEST_MARKER=${PYMOR_PYTEST_MARKER}
       - CI_PROJECT_DIR=/src
     volumes:
         - ./..:/pymor
     restart: "no"
-    command: "/pymor/.ci/gitlab/script.bash"
+    command: "/pymor/.ci/gitlab/test_vanilla.bash"
+
+  pypi_mirror:
+    image: pymor/pypi-mirror_stable_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
+    restart: "no"
 
   docs:
     image: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
+    depends_on:
+      - pypi_mirror
     environment:
       - PYMOR_FORCE_JUPYTER=1
       - PYMOR_WITH_SPHINX=1
