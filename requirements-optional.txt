@@ -3,7 +3,7 @@
 -r requirements-ci.txt
 PySide2
 Qt.py>=1.2.4
-cython>=0.27
+cython>=0.28
 diskcache
 docopt-ng
 https://pymor.github.io/wheels/pymess-1.0.0-cp36-cp36m-manylinux1_x86_64.whl ; python_version == "3.6" and "linux" in sys_platform
