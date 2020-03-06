@@ -5,6 +5,7 @@
 from importlib import import_module
 import sys
 import platform
+import warnings
 
 
 def _can_import(module):
@@ -19,7 +20,6 @@ def _can_import(module):
 def _get_fenics_version():
     import dolfin as df
     if df.__version__ != '2019.1.0':
-        import warnings
         warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 (installed: {df.__version__}).')
     return df.__version__
 
@@ -59,8 +59,12 @@ def _get_slycot_version():
 
 
 def _get_qt_version():
-    import Qt
-    return Qt.__binding__ + ' ' + Qt.__binding_version__
+    try:
+        import Qt
+        return Qt.__binding__ + ' ' + Qt.__binding_version__
+    except AttributeError as ae:
+        warnings.warn(f'importing Qt.py abstraction failed:\n{ae}')
+        return False
 
 
 def is_jupyter():
