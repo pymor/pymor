@@ -15,3 +15,4 @@ readme_renderer[md]
 rstcheck
 testipynb
 twine
+virtualenv
