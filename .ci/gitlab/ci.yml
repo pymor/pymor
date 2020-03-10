@@ -63,15 +63,12 @@ stages:
         max: 2
         when:
             - always
-    image: docker:stable
+    
+    image: pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
     variables:
         DOCKER_HOST: tcp://docker:2375/
         DOCKER_DRIVER: overlay2
     before_script:
-        - apk --update add openssh-client rsync git file bash python3 curl make
-        # hotfix for https://github.com/jupyter/repo2docker/issues/755
-        - pip3 install ruamel.yaml==0.15.100
-        - pip3 install jinja2 jupyter-repo2docker docker-compose
         - 'export SHARED_PATH="${CI_PROJECT_DIR}/shared"'
         - mkdir -p ${SHARED_PATH}
     services:
