@@ -144,7 +144,7 @@ ci setup:
 minimal_cpp_demo:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:{{pypi_mirror_tag}}
+        - name: pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
           alias: pypi_mirror
     image: pymor/testing_py3.7:{{ci_image_tag}}
     script: ./.ci/gitlab/cpp_demo.bash
