@@ -15,7 +15,8 @@ cd "${PYMOR_ROOT}"
 set -eux
 
 # switches default index to pypi-mirror service
-([[ -d ~/.config/pip/ ]] || mkdir ~/.config/pip/) && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
+[[ -d ~/.config/pip/ ]] || mkdir -p ~/.config/pip/
+cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
 
 # most of these should be baked into the docker image already
 pip install -r requirements.txt
