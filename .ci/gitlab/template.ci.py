@@ -140,7 +140,7 @@ verify setup.py:
 ci setup:
     extends: .docker-in-docker
     stage: sanity
-    script: ./.ci/gitlab/ci_sanity_check.bash
+    script: ./.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}"
 
 #****** test stage
 
