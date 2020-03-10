@@ -146,7 +146,7 @@ ci setup:
 minimal_cpp_demo:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:70453834e2b32e51321bfa0771e60745227746b2
+        - name: pymor/pypi-mirror_stable_py3.7:70453834e2b32e51321bfa0771e60745227746b2
 
           alias: pypi_mirror
     image: pymor/testing_py3.7:70453834e2b32e51321bfa0771e60745227746b2
