@@ -15,5 +15,5 @@
  1. [ ] update researchgate https://www.researchgate.net/project/pyMOR-Model-Order-Reduction-with-Python
  1. [ ] Submit release to NA-digest: http://icl.utk.edu/na-digest/websubmit.html
  1. [ ] Send release announcement to pymor-dev
- 
+ 1. [ ] add a new section in https://github.com/pymor/docker-all/blob/master/docs/releases/Dockerfile 
 
