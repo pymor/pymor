@@ -154,7 +154,11 @@ minimal_cpp_demo:
 {{script}} {{py[0]}} {{py[2]}}:
     extends: .pytest
     services:
+    {%- if script == "oldest" %}
+        - name: pymor/pypi-mirror_oldest_py{{py}}:{{pypi_mirror_tag}}
+    {%- else %}
         - name: pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
+    {%- endif %}
           alias: pypi_mirror
     image: pymor/testing_py{{py}}:{{ci_image_tag}}
     script: ./.ci/gitlab/test_{{script}}.bash
