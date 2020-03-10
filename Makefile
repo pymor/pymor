@@ -55,6 +55,9 @@ full-test:
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
 
+template: docker_file
+	./.ci/gitlab/template.ci.py
+
 # Docker targets
 docker_file:
 	sed $(SED_OPTIONS) .binder/Dockerfile.in > .binder/Dockerfile
