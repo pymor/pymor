@@ -56,6 +56,7 @@ docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
 
 template: docker_file
+	./dependencies.py
 	./.ci/gitlab/template.ci.py
 
 # Docker targets
