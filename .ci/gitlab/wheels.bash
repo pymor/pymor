@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -eu
 
 MANYLINUX=manylinux${1}
 shift
@@ -19,7 +19,7 @@ cd "${PYMOR_ROOT}"
 set -x
 mkdir -p ${BUILDER_WHEELHOUSE}
 
-BUILDER_IMAGE=pymor/wheelbuilder:${MANYLINUX}_py${PYVER}
+BUILDER_IMAGE=pymor/wheelbuilder_${MANYLINUX}_py${PYVER}:${PYPI_MIRROR_TAG}
 docker pull ${BUILDER_IMAGE} 1> /dev/null
 docker run --rm  -t -e LOCAL_USER_ID=$(id -u)  \
     -v ${BUILDER_WHEELHOUSE}:/io/wheelhouse \
