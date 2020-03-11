@@ -22,6 +22,8 @@ stages:
     only: ['branches', 'tags', 'triggers', 'merge-requests']
     except:
         - /^staging/.*$/i
+    variables:
+        PYPI_MIRROR_TAG: {{pypi_mirror_tag}}
 
 .pytest:
     extends: .test_base
