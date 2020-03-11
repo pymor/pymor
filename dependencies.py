@@ -16,8 +16,7 @@ def _pymess(rev, major, minor, marker=True):
         return '{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'.format(url=url, major=major, minor=minor)
     return url
 
-# for pyproject.toml we require equality to build compatible wheels in pep 517 mode
-def setup_requires(toml=False):
+def setup_requires():
     NUMPY = '1.16.0'
     # numpy versions with filters according to minimal version with a wheel
     numpys = ['numpy>={};python_version == "3.6"'.format(NUMPY),
@@ -25,8 +24,6 @@ def setup_requires(toml=False):
       'numpy>=1.17.5;python_version == "3.8"',
       'numpy>={};python_version != "3.6" and python_version != "3.7" and python_version != "3.8"'.format(NUMPY),]
     other = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.28', 'packaging',]
-    if toml:
-        numpys = [f.replace('numpy>=', 'numpy==') for f in numpys]
     return numpys + other
 
 install_requires = ['scipy>=1.1;python_version < "3.8"','scipy>=1.3.3;python_version >= "3.8"', 'Qt.py>=1.2.4', 'packaging','diskcache', 'docopt-ng'] + setup_requires()
@@ -46,8 +43,8 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.7', 'matplotlib', 'PySide2', 'ipyparallel',
                 'ipywidgets', 'sphinx-qt-documentation'] + install_requires
-ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel', 'virtualenv', 
-               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout', 
+ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel', 'virtualenv',
+               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
                'testipynb', "pypi-oldest-requirements>=2020.2", 'pytest-deadfixtures']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
@@ -131,4 +128,4 @@ if __name__ == '__main__':
             req.write(module+'\n')
     with open(os.path.join(os.path.dirname(__file__), 'pyproject.toml'), 'wt') as toml:
         toml.write(note)
-        toml.write(toml_tpl.format(str(setup_requires(toml=True))))
+        toml.write(toml_tpl.format(str(setup_requires())))
