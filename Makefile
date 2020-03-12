@@ -1,4 +1,6 @@
-DOCKER_COMPOSE=DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYPI_MIRROR_TAG=$(PYPI_MIRROR_TAG) CI_IMAGE_TAG=$(CI_IMAGE_TAG) docker-compose -f .binder/docker-compose.yml -p pymor
+DOCKER_COMPOSE=DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYPI_MIRROR_TAG=$(PYPI_MIRROR_TAG) \
+	CI_IMAGE_TAG=$(CI_IMAGE_TAG) CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
+	docker-compose -f .binder/docker-compose.yml -p pymor
 PYMOR_PYTEST_MARKER?=None
 NB_DIR=notebooks
 PANDOC_MAJOR=$(shell pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)
