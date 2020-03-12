@@ -42,15 +42,17 @@ services:
         bash -c "jupyter notebook --ip 0.0.0.0 --no-browser --notebook-dir=$${NB_DIR} --NotebookApp.disable_check_xsrf=True"
 
   pytest:
-    image: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
+    image: pymor/testing_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
     depends_on:
       - pypi_mirror
     environment:
-      - CI_PROJECT_DIR=/src
+      - CI_PROJECT_DIR=/pymor
+      - CI_PROJECT_URL=https://zivgitlab.uni-muenster.de/pymor/pymor
+      - CI_COMMIT_SHA
     volumes:
         - ./..:/pymor
     restart: "no"
-    command: "/pymor/.ci/gitlab/test_vanilla.bash"
+    command: "/pymor/.ci/gitlab/test_${PYMOR_TEST_SCRIPT}.bash"
 
   pypi_mirror:
     image: pymor/pypi-mirror_stable_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
@@ -63,7 +65,7 @@ services:
     environment:
       - PYMOR_FORCE_JUPYTER=1
       - PYMOR_WITH_SPHINX=1
-      - CI_PROJECT_DIR=/src
+      - CI_PROJECT_DIR=/pymor
     volumes:
         - ./..:/pymor
     restart: "no"

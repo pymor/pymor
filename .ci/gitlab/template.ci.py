@@ -110,7 +110,7 @@ stages:
       - pymor/devpi:1
     dependencies:
     {%- for PY in pythons %}
-    {%- for ML in [1, 2010, 2014] %}
+    {%- for ML in manylinuxs %}
       - "wheel {{ML}} py{{PY[0]}} {{PY[2]}}"
     {%- endfor %}
     {%- endfor %}
@@ -213,7 +213,7 @@ trigger_binder {{loop.index}}/{{loop.length}}:
 {% endfor %}
 
 {%- for PY in pythons %}
-{%- for ML in [1, 2010, 2014] %}
+{%- for ML in manylinuxs %}
 wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
     extends: .wheel
     variables:
@@ -281,6 +281,7 @@ binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('g
 testos = ['centos_8', 'debian_buster', 'debian_testing']
 ci_image_tag = open(os.path.join(os.path.dirname(__file__), '..', 'CI_IMAGE_TAG'), 'rt').read()
 pypi_mirror_tag = open(os.path.join(os.path.dirname(__file__), '..', 'PYPI_MIRROR_TAG'), 'rt').read()
+manylinuxs = [2010, 2014]
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = [(sc, py, pa) for sc, pythons, pa in test_scripts for py in pythons]
     yml.write(tpl.render(**locals()))
