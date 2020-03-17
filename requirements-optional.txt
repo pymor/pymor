@@ -11,9 +11,11 @@ https://pymor.github.io/wheels/pymess-1.0.0-cp37-cp37m-manylinux1_x86_64.whl ; p
 ipyparallel
 ipython>=5.0
 ipywidgets
+jupyter_contrib_nbextensions
 matplotlib
 meshio==3.3.1
 mpi4py
+nbresuse
 numpy>=1.15.4;python_version == "3.7"
 numpy>=1.16.0;python_version != "3.6" and python_version != "3.7" and python_version != "3.8"
 numpy>=1.16.0;python_version == "3.6"

@@ -21,7 +21,7 @@ stages:
     except:
         - /^staging/.*$/i
     variables:
-        PYPI_MIRROR_TAG: 2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        PYPI_MIRROR_TAG: 7551efb799cbd76e93e00e8c34540d530e440f8e
 
 
 .pytest:
@@ -146,136 +146,136 @@ ci setup:
 minimal_cpp_demo:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/cpp_demo.bash
 mpi 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_mpi.bash
 mpi 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_mpi.bash
 mpi 3 8:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_mpi.bash
 notebooks_dir 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 8:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_notebooks_dir.bash
 pip_installed 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 8:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_pip_installed.bash
 vanilla 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_vanilla.bash
 vanilla 3 7:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.7:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.7:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_vanilla.bash
 vanilla 3 8:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_vanilla.bash
 numpy_git 3 8:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_stable_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.8:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.8:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_numpy_git.bash
 oldest 3 6:
     extends: .pytest
     services:
-        - name: pymor/pypi-mirror_oldest_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+        - name: pymor/pypi-mirror_oldest_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
           alias: pypi_mirror
-    image: pymor/testing_py3.6:2dfc02c68e4f886d68a6920388d7a06c00c9b8b3
+    image: pymor/testing_py3.6:7551efb799cbd76e93e00e8c34540d530e440f8e
 
     script: ./.ci/gitlab/test_oldest.bash
 submit vanilla 3 6:

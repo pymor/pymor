@@ -40,6 +40,8 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     _PYTEST: 'testing framework required to execute unit tests',
                     'PySide2': 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
+                    'nbresuse': 'resource usage indicator for notebooks', 
+                    'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.7', 'matplotlib', 'PySide2', 'ipyparallel',
                 'ipywidgets', 'sphinx-qt-documentation'] + install_requires
