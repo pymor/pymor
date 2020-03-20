@@ -63,18 +63,15 @@ def test_samdp(n, m, k, wanted, with_E, which):
 
     dom_poles, dom_res, dom_rev, dom_lev = samdp(Aop, Eop, Bva, Cva, wanted, which=which)
 
-    dom_absres = np.array([])
+    dom_absres = spla.norm(dom_res, ord=2, axis=(1, 2))
 
-    for i in range(len(dom_poles)):
-        dom_absres = np.append(dom_absres, spla.norm(dom_res[:, :, i], 2))
+    poles, lev, rev = spla.eig(A.toarray(), E.toarray(), left=True)
 
-    poles, lev, rev = spla.eig(A.todense(), E.todense(), left=True)
-
-    absres = np.array([])
+    absres = np.empty(len(poles))
 
     for i in range(len(poles)):
         lev[:, i] = lev[:, i] * (1 / lev[:, i].dot(E @ rev[:, i]))
-        absres = np.append(absres, spla.norm(np.outer(C.dot(rev[:, i]), (lev[:, i].dot(B))), 2))
+        absres[i] = spla.norm(np.outer(C @ rev[:, i], lev[:, i] @ B), ord=2)
 
     if which == 'LR':
         val = absres / np.abs(np.real(poles))
@@ -88,3 +85,6 @@ def test_samdp(n, m, k, wanted, with_E, which):
 
     # check if computed poles are more dominant than others on average
     assert np.average(val) < np.average(dom_val)
+
+
+test_samdp(100, 2, 3, 10, True, 'LM')

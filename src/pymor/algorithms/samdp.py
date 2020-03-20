@@ -67,9 +67,9 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
     Returns
     -------
     poles
-        A |NumPy array| containing the computed dominant poles.
+        A 1D |NumPy array| containing the computed dominant poles.
     residues
-        A |NumPy array| containing the computed residues.
+        A 3D |NumPy array| of shape `(len(poles), len(C), len(B))` containing the computed residues.
     rightev
         A |VectorArray| containing the right eigenvectors of the computed poles.
     leftev
@@ -98,7 +98,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
     H = np.empty((0, 1))
     G = np.empty((0, 1))
-    poles = np.empty((1, 0))
+    poles = np.empty(0)
 
     if init_shifts is None:
         st = np.random.uniform() * 1.j
@@ -112,7 +112,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
     shifts = init_shifts
 
     while nrestart < maxrestart:
-        k = k + 1
+        k += 1
 
         sEmA = st * E - A
         sEmAB = sEmA.apply_inverse(B_defl)
@@ -134,12 +134,12 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
         AX.append(A.apply(X[k-1]))
 
         if k > 1:
-            H = np.append(H, V[0:k-1].dot(AX[k-1]), axis=1)
-        H = np.append(H, V[k-1].dot(AX), axis=0)
+            H = np.hstack((H, V[0:k-1].dot(AX[k-1])))
+        H = np.vstack((H, V[k-1].dot(AX)))
         EX = E.apply(X)
         if k > 1:
-            G = np.append(G, V[0:k-1].dot(EX[k-1]), axis=1)
-        G = np.append(G, V[k-1].dot(EX), axis=0)
+            G = np.hstack((G, V[0:k-1].dot(EX[k-1])))
+        G = np.vstack((G, V[k-1].dot(EX)))
 
         SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, which)
 
@@ -186,7 +186,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 Q[-1].scal(1 / nqqt)
                 Qs[-1].scal(1 / nqqt)
 
-                nr_converged = nr_converged + 1
+                nr_converged += 1
 
                 if k > 1:
                     X = X.lincomb(UR[:, 1:k].T)
@@ -199,10 +199,10 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                     gram_schmidt(V, atol=0, rtol=0, copy=False)
                     gram_schmidt(X, atol=0, rtol=0, copy=False)
 
-                B_defl = B_defl - E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
-                C_defl = C_defl - E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
+                B_defl -= E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
+                C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
 
-                k = k - 1
+                k -= 1
 
                 cce = theta.conj()
                 if np.abs(np.imag(cce)) / np.abs(cce) >= imagtol:
@@ -234,8 +234,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                             gram_schmidt(V, atol=0, rtol=0, copy=False)
                             gram_schmidt(X, atol=0, rtol=0, copy=False)
 
-                            B_defl = B_defl - E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
-                            C_defl = C_defl - E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
+                            B_defl -= E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
+                            C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
 
                 AX = A.apply(X)
                 if k > 0:
@@ -256,7 +256,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
                     if shift_nr < nr_shifts:
                         st = shifts[shift_nr]
-                        shift_nr = shift_nr + 1
+                        shift_nr += 1
             elif k >= krestart:
                 logger.info('Perform restart...')
                 EX = E.apply(X)
@@ -274,17 +274,17 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 G = V.dot(E.apply(X))
                 AX = A.apply(X)
                 H = V.dot(AX)
-                nrestart = nrestart + 1
+                nrestart += 1
 
         if nr_converged == nwanted or nrestart == maxrestart:
             rightev = Q
             leftev = Qt
-            absres = np.array([])
-            residues = np.empty((len(C), len(B), 0))
+            absres = np.empty(len(poles))
+            residues = np.empty((len(poles), len(C), len(B)))
             for i in range(len(poles)):
                 leftev[i].scal(1 / (leftev[i].dot(E.apply(rightev[i].conj())))[0][0])
-                residues = np.dstack((residues, C.dot(rightev[i]) @ (leftev[i].dot(B))))
-                absres = np.append(absres, spla.norm(residues[:, :, i], 2))
+                residues[i] = C.dot(rightev[i]) @ leftev[i].dot(B)
+                absres[i] = spla.norm(residues[i], ord=2)
 
             if which == 'LR':
                 idx = np.argsort(-absres / np.abs(np.real(poles)))
@@ -295,7 +295,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             else:
                 raise ValueError('Unknown SAMDP selection strategy.')
 
-            residues = residues[:, :, idx]
+            residues = residues[idx]
             poles = poles[idx]
             rightev = rightev[idx]
             leftev = leftev[idx]
@@ -345,7 +345,7 @@ def twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
     i = 0
     nrq = 1
     while nrq > tol and i < maxiter:
-        i = i + 1
+        i += 1
         Ex = E.apply(x)
         Ey = E.apply_adjoint(y)
         tEmA = theta * E - A
