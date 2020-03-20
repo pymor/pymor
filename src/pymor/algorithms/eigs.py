@@ -50,7 +50,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
     maxiter
         The maximum number of iterations.
     tol
-        The relative error tolerance for the ritz estimates.
+        The relative error tolerance for the Ritz estimates.
 
     Returns
     -------
@@ -63,7 +63,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
     n = A.source.dim
 
     if l is None:
-        l = np.min((n - 1, np.max((2 * k + 1, 20))))
+        l = min(n - 1, max(2 * k + 1, 20))
 
     if E is None:
         E = IdentityOperator(A.source)
@@ -82,7 +82,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
     i = 0
 
     while True:
-        i = i + 1
+        i += 1
 
         V, H, f = extend_arnoldi(A, E, V, H, f, l - k)
 
@@ -96,13 +96,13 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
         elif which == 'SM':
             idx = np.argsort(np.abs(ew))
         elif which == 'LR':
-            idx = np.argsort(-np.real(ew))
+            idx = np.argsort(-ew.real)
         elif which == 'SR':
-            idx = np.argsort(np.real(ew))
+            idx = np.argsort(ew.real)
         elif which == 'LI':
-            idx = np.argsort(-np.abs(np.imag(ew)))
+            idx = np.argsort(-np.abs(ew.imag))
         elif which == 'SI':
-            idx = np.argsort(np.abs(np.imag(ew)))
+            idx = np.argsort(np.abs(ew.imag))
 
         k = k0
         ews = ew[idx]
@@ -112,13 +112,13 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
 
         # increase k by one in order to keep complex conjugate pairs together
         if ews[k - 1].imag != 0 and ews[k - 1].imag + ews[k].imag < 1e-12:
-            k = k + 1
+            k += 1
 
         if np.all(rres[:k] <= tol) or i >= maxiter:
             break
 
         # increase k in order to prevent stagnation
-        k = np.min((l - 1, k + np.min((np.count_nonzero(rres[:k] <= tol), (l - k) // 2))))
+        k = min(l - 1, k + min(np.count_nonzero(rres[:k] <= tol), (l - k) // 2))
 
         # sort shifts for QR iteration based on their residual
         shifts = ews[k:l]
@@ -127,12 +127,12 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
         srres = srres[idx]
         shifts = shifts[idx]
 
-        # don't use converged unwanted ritzvalues as shifts
-        shifts = np.delete(shifts, np.where(srres == 0))
-        k = k + np.count_nonzero(srres == 0)
+        # don't use converged unwanted Ritz values as shifts
+        shifts = shifts[srres != 0]
+        k += np.count_nonzero(srres == 0)
         if shifts[0].imag != 0 and shifts[0].imag + ews[1].imag >= 1e-12:
             shifts = shifts[1:]
-            k = k + 1
+            k += 1
 
         H, Qs = QR_iteration(H, shifts)
 
@@ -176,7 +176,7 @@ def arnoldi(A, E, l, b):
     H
         A |NumPy array| which is an upper Hessenberg matrix.
     f
-        A |VectorArray| which represents the residual vector of the Arnoldi factorzation.
+        A |VectorArray| which represents the residual vector of the Arnoldi factorization.
     """
 
     v = b * (1 / b.l2_norm()[0])
@@ -218,7 +218,7 @@ def extend_arnoldi(A, E, V, H, f, p):
     f
         The |VectorArray| f from the length :math:`l` Arnoldi factorization.
     p
-        The number of addditional Arnoldi steps which are to be performed.
+        The number of additional Arnoldi steps which are to be performed.
 
     Returns
     -------
@@ -227,17 +227,15 @@ def extend_arnoldi(A, E, V, H, f, p):
     H
         A |NumPy array| which is an upper Hessenberg matrix.
     f
-        A |VectorArray| which represents the residual vector of the Arnoldi factorzation.
+        A |VectorArray| which represents the residual vector of the Arnoldi factorization.
     """
 
     k = len(V)
 
     res = f.l2_norm()[0]
-    H = np.pad(H, ((0, p), (0, p)), 'constant')
+    H = np.pad(H, ((0, p), (0, p)))
     H[k, k - 1] = res
     v = f * (1 / res)
-    # since i cannot append to the VectorArrayView V I copy it before appending...
-    # is there a better way to do this?
     V = V.copy()
     V.append(v)
 
@@ -258,7 +256,7 @@ def QR_iteration(H, shifts):
 
     Performs a QR step for each shift provided in `shifts`. `H` is assumed to be an
     unreduced upper Hessenberg matrix. If a complex shift occurs a double step is
-    peformed in order to avoid complex arithmetic.
+    performed in order to avoid complex arithmetic.
 
     Parameters
     ----------
@@ -281,11 +279,11 @@ def QR_iteration(H, shifts):
     while i < len(shifts) - 1:
         s = shifts[i]
         if shifts[i].imag != 0:
-            Q, R = np.linalg.qr(H @ H - 2 * np.real(s) * H + np.abs(s)**2 * np.eye(len(H)))
-            i = i + 2
+            Q, _ = np.linalg.qr(H @ H - 2 * s.real * H + np.abs(s)**2 * np.eye(len(H)))
+            i += 2
         else:
-            Q, R = np.linalg.qr(H - s * np.eye(len(H)))
-            i = i + 1
+            Q, _ = np.linalg.qr(H - s * np.eye(len(H)))
+            i += 1
         Qs = Qs @ Q
         H = Q.T @ H @ Q
 

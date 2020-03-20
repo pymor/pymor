@@ -4,6 +4,7 @@
 
 import numpy as np
 import pytest
+import scipy.sparse as sps
 
 from pymor.algorithms.eigs import eigs
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -18,10 +19,7 @@ which_list = ['LM', 'LR', 'LI']
 @pytest.mark.parametrize('which', which_list)
 def test_eigs(n, k, which):
     np.random.seed(0)
-    A = np.random.random((n, n))
-    i = np.random.randint(n, size=n**2 // 2)
-    j = np.random.randint(n, size=n**2 // 2)
-    A[i, j] = 0
+    A = sps.random(n, n, density=0.1)
     Aop = NumpyMatrixOperator(A)
     ew, ev = eigs(Aop, k=k, which=which)
 
