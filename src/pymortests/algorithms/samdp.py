@@ -85,6 +85,3 @@ def test_samdp(n, m, k, wanted, with_E, which):
 
     # check if computed poles are more dominant than others on average
     assert np.average(val) < np.average(dom_val)
-
-
-test_samdp(100, 2, 3, 10, True, 'LM')

@@ -9,6 +9,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
+from pymor.operators.interface import Operator
 
 
 @defaults('which', 'tol', 'imagtol', 'conjtol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
@@ -45,9 +46,9 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
         A string specifying the strategy by which the dominant poles and residues are selected.
         Possible values are:
 
-            - `'LR'`: select poles with largest ||residual|| / |Re(pole)|
-            - `'LS'`: select poles with largest ||residual|| / |pole|
-            - `'LM'`: select poles with largest ||residual||
+        - `'LR'`: select poles with largest norm(residual) / abs(Re(pole))
+        - `'LS'`: select poles with largest norm(residual) / abs(pole)
+        - `'LM'`: select poles with largest norm(residual)
     tol
         Tolerance for the residual of the poles.
     imagtol
@@ -80,6 +81,17 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
     if E is None:
         E = IdentityOperator(A.source)
+
+    assert isinstance(A, Operator) and A.linear
+    assert not A.parametric
+    assert A.source == A.range
+    if E is not None:
+        assert isinstance(E, Operator) and E.linear
+        assert not E.parametric
+        assert E.source == E.range
+        assert E.source == A.source
+    assert B in A.source
+    assert C in A.source
 
     B_defl = B.copy()
     C_defl = C.copy()
@@ -280,11 +292,12 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             rightev = Q
             leftev = Qt
             absres = np.empty(len(poles))
-            residues = np.empty((len(poles), len(C), len(B)))
+            residues = []
             for i in range(len(poles)):
-                leftev[i].scal(1 / (leftev[i].dot(E.apply(rightev[i].conj())))[0][0])
-                residues[i] = C.dot(rightev[i]) @ leftev[i].dot(B)
-                absres[i] = spla.norm(residues[i], ord=2)
+                leftev[i].scal(1 / leftev[i].dot(E.apply(rightev[i]))[0][0])
+                residues.append(C.dot(rightev[i]) @ leftev[i].dot(B))
+                absres[i] = spla.norm(residues[-1], ord=2)
+            residues = np.array(residues)
 
             if which == 'LR':
                 idx = np.argsort(-absres / np.abs(np.real(poles)))
