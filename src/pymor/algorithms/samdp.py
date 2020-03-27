@@ -13,9 +13,9 @@ from pymor.operators.interface import Operator
 
 
 @defaults('which', 'tol', 'imagtol', 'conjtol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
-          'rqi_maxiter')
-def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=1e-8, conjtol=1e-8,
-          rqitol=1e-4, maxrestart=100, krestart=10, rqi_maxiter=10):
+          'rqi_maxiter', 'seed')
+def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=1e-7, conjtol=1e-8,
+          rqitol=1e-4, maxrestart=100, krestart=10, rqi_maxiter=10, seed=0):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
@@ -64,6 +64,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
         Maximum dimension of search space before performing a restart.
     rqi_maxiter
         Maximum number of iterations for the two-sided Rayleigh quotient iteration.
+    seed
+        Random seed which is used for computing the initial shift and random restarts.
 
     Returns
     -------
@@ -99,6 +101,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
     k = 0
     nrestart = 0
     nr_converged = 0
+    np.random.seed(seed)
 
     X = A.source.empty()
     Q = A.source.empty()
@@ -153,7 +156,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             G = np.hstack((G, V[0:k-1].dot(EX[k-1])))
         G = np.vstack((G, V[k-1].dot(EX)))
 
-        SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, which)
+        SH, UR, URt = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
 
         found = True
         do_rqi = True
@@ -171,8 +174,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             logger.info(f'Step: {k}, Theta: {theta:.5e}, Residual: {nres:.5e}')
 
             if nres < rqitol and do_rqi:
-                schurvec, lschurvec, theta, nres = twosided_rqi(A, E, schurvec, lschurvec, theta,
-                                                                nres, tol, imagtol, rqi_maxiter)
+                schurvec, lschurvec, theta, nres = _twosided_rqi(A, E, schurvec, lschurvec, theta,
+                                                                 nres, tol, imagtol, rqi_maxiter)
                 do_rqi = False
                 if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
                     rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
@@ -253,7 +256,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 if k > 0:
                     G = V.dot(E.apply(X))
                     H = V.dot(AX)
-                    SH, UR, URt = select_max_eig(H, G, X, V, B_defl, C_defl, which)
+                    SH, UR, URt = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
                     found = True
                 else:
                     G = np.empty((0, 1))
@@ -319,7 +322,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
     return poles, residues, rightev, leftev
 
 
-def twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
+def _twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
     """Refine an initial guess for an eigentriplet of the matrix pair (A, E).
 
     Parameters
@@ -404,7 +407,7 @@ def twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
         return x, y, theta, init_res
 
 
-def select_max_eig(H, G, X, V, B, C, which):
+def _select_max_eig(H, G, X, V, B, C, which):
     """Compute poles sorted from largest to smallest residual.
 
     Parameters

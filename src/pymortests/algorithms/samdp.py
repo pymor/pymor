@@ -15,7 +15,7 @@ n_list = [50, 100]
 m_list = [1, 2]
 k_list = [2, 3]
 wanted_list = [15, 20]
-which_list = ['LR', 'LS', 'LM']
+which_list = ['LR', 'LS']
 
 
 def conv_diff_1d_fd(n, a, b):
