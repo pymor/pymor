@@ -185,7 +185,11 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=
                         lschurvec = lschurvec.real
                         theta = np.real(theta)
                         nres = nrr
-            found = nres < tol and nr_converged < nwanted
+                if nres >= tol:
+                    logger.warning('Two-sided RQI did not reach desired tolerance.')
+                found = nr_converged < nwanted
+            else:
+                found = False
 
             if found:
                 poles = np.append(poles, theta)

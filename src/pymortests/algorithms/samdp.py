@@ -15,7 +15,7 @@ n_list = [50, 100]
 m_list = [1, 2]
 k_list = [2, 3]
 wanted_list = [15, 20]
-which_list = ['LR', 'LS']
+which_list = ['LR', 'LS', 'LM']
 
 
 def conv_diff_1d_fd(n, a, b):
@@ -84,4 +84,4 @@ def test_samdp(n, m, k, wanted, with_E, which):
         dom_val = dom_absres
 
     # check if computed poles are more dominant than others on average
-    assert np.average(val) < np.average(dom_val)
+    assert np.median(val) < np.median(dom_val)
