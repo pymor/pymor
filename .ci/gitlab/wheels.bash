@@ -1,15 +1,14 @@
 #!/bin/bash
 
-set -eu
-
-MANYLINUX=manylinux${1}
-shift
+set -e
 
 if [[ "x${CI_COMMIT_TAG}" == "x" ]] ; then
     sed -i -e 's;style\ \=\ pep440;style\ \=\ ci_wheel_builder;g' setup.cfg
 fi
 
 set -u
+MANYLINUX=manylinux${1}
+shift
 
 # since we're in a d-in-d setup this needs to a be a path shared from the real host
 BUILDER_WHEELHOUSE=${SHARED_PATH}
