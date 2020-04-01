@@ -40,7 +40,7 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     _PYTEST: 'testing framework required to execute unit tests',
                     'PySide2': 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
-                    'nbresuse': 'resource usage indicator for notebooks', 
+                    'nbresuse': 'resource usage indicator for notebooks',
                     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.7', 'matplotlib', 'PySide2', 'ipyparallel',
@@ -96,8 +96,10 @@ def extras():
                 except pkg_resources.RequirementParseError:
                     continue
 
+    # blacklisted packages need a (minimal) compiler setup
+    # - nbresuse, pytest-memprof depend on psutil which has no wheels
     return {
-        'full': list(_candidates(blacklist=[])),
+        'full': list(_candidates(blacklist=['nbresuse', 'pytest-memprof'])),
         'ci':  ci_requires,
         'docs': doc_requires,
     }
