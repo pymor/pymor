@@ -58,6 +58,18 @@ services:
     image: pymor/pypi-mirror_${PYPI_MIRROR}_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
     restart: "no"
 
+  wheel_check:
+    image: pymor/deploy_checks:devpi_${PYMOR_TEST_OS}
+    volumes:
+        - ./..:/pymor
+    depends_on:
+      - pymor__devpi
+    command: /bin/bash
+
+  pymor__devpi:
+    image: pymor/devpi:1
+    restart: "no"
+
   docs:
     image: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
     depends_on:
