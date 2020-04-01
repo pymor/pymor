@@ -84,18 +84,22 @@ for an installation with minimal dependencies.
 There are some optional packages not included with `pymor[full]`
 because they need additional setup on your system:
 
-    # for support of MPI distributed models and parallelization of
-    # greedy algorithms (requires MPI development headers and a C compiler)
-    pip install mpi4py
+- for support of MPI distributed models and parallelization of greedy algorithms
+  (requires MPI development headers and a C compiler):
 
-    # dense matrix equation solver for system-theoretic MOR methods,
-    # required for H-infinity norm calculation (requires OpenBLAS headers and a Fortran compiler)
-    pip install slycot
+      pip install mpi4py
 
-    # sparse matrix equation solver for system-theoretic MOR methods
-    # (other backends available)
-    open https://www.mpi-magdeburg.mpg.de/projects/mess
-    # download and install pymess wheel for your architecture
+- dense matrix equation solver for system-theoretic MOR methods, required for
+  H-infinity norm calculation (requires OpenBLAS headers and a Fortran
+  compiler):
+
+      pip install slycot
+
+- dense and sparse matrix equation solver for system-theoretic MOR methods
+  (other backends available):
+    - from [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)
+      (recommended)
+    - using a [wheel](https://www.mpi-magdeburg.mpg.de/projects/mess)
 
 If you are not operating in a virtual environment, you can pass the optional `--user`
 argument to pip. pyMOR will then only be installed for your
