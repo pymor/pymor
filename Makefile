@@ -3,6 +3,8 @@ DOCKER_BASE_PYTHON?=3.7
 PYMOR_TEST_SCRIPT?=vanilla
 # stable or oldest
 PYPI_MIRROR?=stable
+# debian_buster centos_8 debian_testing
+PYMOR_TEST_OS?=debian_buster
 DOCKER_COMPOSE=DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYPI_MIRROR_TAG=$(PYPI_MIRROR_TAG) \
 	       PYMOR_TEST_SCRIPT=$(PYMOR_TEST_SCRIPT) PYPI_MIRROR=$(PYPI_MIRROR) \
 	CI_IMAGE_TAG=$(CI_IMAGE_TAG) CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
@@ -89,3 +91,5 @@ docker_test: docker_image
 
 docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
+docker_wheel_check: docker_image
+	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports wheel_check bash
