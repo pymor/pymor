@@ -55,7 +55,7 @@ services:
     command: "/pymor/.ci/gitlab/test_${PYMOR_TEST_SCRIPT}.bash"
 
   pypi_mirror:
-    image: pymor/pypi-mirror_stable_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
+    image: pymor/pypi-mirror_${PYPI_MIRROR}_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
     restart: "no"
 
   docs:

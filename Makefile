@@ -1,8 +1,10 @@
 DOCKER_BASE_PYTHON?=3.7
 # one of mpi, notebooks_dir, oldest, vanilla, mpi, numpy_git, pip_installed
 PYMOR_TEST_SCRIPT?=vanilla
+# stable or oldest
+PYPI_MIRROR?=stable
 DOCKER_COMPOSE=DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYPI_MIRROR_TAG=$(PYPI_MIRROR_TAG) \
-	       PYMOR_TEST_SCRIPT=$(PYMOR_TEST_SCRIPT) \
+	       PYMOR_TEST_SCRIPT=$(PYMOR_TEST_SCRIPT) PYPI_MIRROR=$(PYPI_MIRROR) \
 	CI_IMAGE_TAG=$(CI_IMAGE_TAG) CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
 	docker-compose -f .binder/docker-compose.yml -p pymor
 NB_DIR=notebooks
