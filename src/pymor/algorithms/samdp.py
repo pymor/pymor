@@ -12,10 +12,10 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 
 
-@defaults('which', 'tol', 'imagtol', 'conjtol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
+@defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
           'rqi_maxiter', 'seed')
-def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=1e-7, conjtol=1e-8,
-          rqitol=1e-4, maxrestart=100, krestart=10, rqi_maxiter=10, seed=0):
+def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=1e-6, conjtol=1e-8,
+          dorqitol=1e-4, rqitol=1e-5, maxrestart=100, krestart=10, rqi_maxiter=10, seed=0):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
@@ -50,14 +50,17 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=
         - `'LS'`: select poles with largest norm(residual) / abs(pole)
         - `'LM'`: select poles with largest norm(residual)
     tol
-        Tolerance for the residual of the poles.
+        Relative tolerance for the residual of the poles.
     imagtol
         Relative tolerance for imaginary parts of pairs of complex conjugate eigenvalues.
     conjtol
         Tolerance for the residual of the complex conjugate of a pole.
-    rqitol
-        If the residual is smaller than rqitol the two-sided Rayleigh quotient iteration
+    dorqitol
+        If the residual is smaller than dorqitol the two-sided Rayleigh quotient iteration
         is executed.
+    rqitol
+        Tolerance for the relative change of a pole in the two-sided Rayleigh quotient
+        iteration.
     maxrestart
         The maximum number of restarts.
     krestart
@@ -116,7 +119,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=
     poles = np.empty(0)
 
     if init_shifts is None:
-        st = np.random.uniform() * 1.j
+        st = np.random.uniform() * 10.j
         shift_nr = 0
         nr_shifts = 0
     else:
@@ -143,8 +146,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=
 
         X.append(x)
         V.append(v)
-        gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 1, copy=False)
-        gram_schmidt(X, atol=0, rtol=0, offset=len(X) - 1, copy=False)
+        gram_schmidt(V, atol=0, rtol=0, copy=False)
+        gram_schmidt(X, atol=0, rtol=0, copy=False)
 
         AX.append(A.apply(X[k-1]))
 
@@ -169,17 +172,17 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=
 
             st = theta
 
-            nres = (A.apply(schurvec) - (E.apply(schurvec) * theta)).norm()[0]
+            nres = (A.apply(schurvec) - (E.apply(schurvec) * theta)).norm()[0] / np.abs(theta)
 
-            logger.info(f'Step: {k}, Theta: {theta:.5e}, Residual: {nres:.5e}')
+            logger.info(f'Step: {k}, Theta: {theta:.5e}, Relative residual: {nres:.5e}')
 
-            if nres < rqitol and do_rqi:
-                schurvec, lschurvec, theta, nres = _twosided_rqi(A, E, schurvec, lschurvec, theta,
-                                                                 nres, tol, imagtol, rqi_maxiter)
+            if nres < dorqitol and do_rqi:
+                schurvec, lschurvec, theta, nres = _twosided_rqi(A, E, schurvec, lschurvec, theta, nres,
+                                                                 tol, imagtol, rqitol, rqi_maxiter)
                 do_rqi = False
                 if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
                     rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
-                    nrr = rres.norm()
+                    nrr = rres.norm() / np.abs(np.real(theta))
                     if nrr < nres:
                         schurvec = schurvec.real
                         lschurvec = lschurvec.real
@@ -187,9 +190,16 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=
                         nres = nrr
                 if nres >= tol:
                     logger.warning('Two-sided RQI did not reach desired tolerance.')
-                found = nr_converged < nwanted
-            else:
-                found = False
+
+            elif np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
+                rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
+                nrr = rres.norm() / np.abs(np.real(theta))
+                if nrr < nres:
+                    schurvec = schurvec.real
+                    lschurvec = lschurvec.real
+                    theta = np.real(theta)
+                    nres = nrr
+            found = nr_converged < nwanted and nres < tol
 
             if found:
                 poles = np.append(poles, theta)
@@ -271,7 +281,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=
                     if found:
                         st = SH[0, 0]
                     else:
-                        st = np.random.uniform() * 1.j
+                        st = np.random.uniform() * 10.j
 
                     if shift_nr < nr_shifts:
                         st = shifts[shift_nr]
@@ -326,7 +336,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-11, imagtol=
     return poles, residues, rightev, leftev
 
 
-def _twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
+def _twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, rqitol, maxiter):
     """Refine an initial guess for an eigentriplet of the matrix pair (A, E).
 
     Parameters
@@ -344,9 +354,11 @@ def _twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
     init_res
         Residual of initial guess.
     tol
-        Convergence tolerance for the Rayleigh qotient iteration.
+        Convergence tolerance for the pole estimate.
     imagtol
         Relative tolerance for imaginary parts of pairs of complex conjugate eigenvalues.
+    rqitol
+        Convergence tolerance for the relative change of the pole.
     maxiter
         Maximum number of iteration.
 
@@ -364,7 +376,7 @@ def _twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
 
     i = 0
     nrq = 1
-    while nrq > tol and i < maxiter:
+    while i < maxiter:
         i += 1
         Ex = E.apply(x)
         Ey = E.apply_adjoint(y)
@@ -400,9 +412,10 @@ def _twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, maxiter):
 
         x = x_rqi
         y = v_rqi
+        nrq = rqi_res.norm() / np.abs(x_rq)
+        if np.abs(theta - x_rq) / np.abs(x_rq) < rqitol and nrq < tol:
+            break
         theta = x_rq
-        nrq = rqi_res.norm()
-
         if not np.isfinite(nrq):
             nrq = 1
     if nrq < init_res:
