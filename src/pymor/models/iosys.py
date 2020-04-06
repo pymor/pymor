@@ -1196,6 +1196,64 @@ class SecondOrderModel(InputStateOutputModel):
         return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
                    solver_options=solver_options, estimator=estimator, visualizer=visualizer, name=name)
 
+    @classmethod
+    def from_files(cls, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, cont_time=True,
+                   state_id='STATE', solver_options=None, estimator=None, visualizer=None,
+                   name=None):
+        """Create |LTIModel| from matrices stored in separate files.
+
+        Parameters
+        ----------
+        M_file
+            The name of the file (with extension) containing A.
+        E_file
+            The name of the file (with extension) containing E.
+        K_file
+            The name of the file (with extension) containing K.
+        B_file
+            The name of the file (with extension) containing B.
+        Cp_file
+            The name of the file (with extension) containing Cp.
+        Cv_file
+            `None` or the name of the file (with extension) containing Cv.
+        D_file
+            `None` or the name of the file (with extension) containing D.
+        cont_time
+            `True` if the system is continuous-time, otherwise `False`.
+        state_id
+            Id of the state space.
+        solver_options
+            The solver options to use to solve the Lyapunov equations.
+        estimator
+            An error estimator for the problem. This can be any object with an
+            `estimate(U, mu, model)` method. If `estimator` is not `None`, an `estimate(U, mu)`
+            method is added to the model which will call `estimator.estimate(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+            method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the visualizer's `visualize` method.
+        name
+            Name of the system.
+
+        Returns
+        -------
+        som
+            The |SecondOrderModel| with operators M, E, K, B, Cp, Cv, and D.
+        """
+        from pymor.tools.io import load_matrix
+
+        M = load_matrix(M_file)
+        E = load_matrix(E_file)
+        K = load_matrix(K_file)
+        B = load_matrix(B_file)
+        Cp = load_matrix(Cp_file)
+        Cv = load_matrix(Cv_file) if Cv_file is not None else None
+        D = load_matrix(D_file) if D_file is not None else None
+
+        return cls.from_matrices(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
+                                 state_id=state_id, solver_options=solver_options,
+                                 estimator=estimator, visualizer=visualizer, name=name)
+
     @cached
     def to_lti(self):
         r"""Return a first order representation.
