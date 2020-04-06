@@ -119,6 +119,14 @@ Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
 
 
+Installation via conda
+----------------------
+
+pyMOR can be installed using `conda` by running
+
+    conda install -c conda-forge pymor
+
+
 Documentation
 -------------
 
