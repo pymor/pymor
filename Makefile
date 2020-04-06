@@ -1,22 +1,25 @@
-DOCKER_BASE_PYTHON?=3.7
+
+# customization points via environment variables
+# 3.{6,7,8} supported currently
+# DOCKER_BASE_PYTHON=3.7
 # one of mpi, notebooks_dir, oldest, vanilla, mpi, numpy_git, pip_installed
-PYMOR_TEST_SCRIPT?=vanilla
+# PYMOR_TEST_SCRIPT=vanilla
 # stable or oldest
-PYPI_MIRROR?=stable
+# PYPI_MIRROR=stable
 # debian_buster centos_8 debian_testing
-PYMOR_TEST_OS?=debian_buster
-DOCKER_COMPOSE=DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYPI_MIRROR_TAG=$(PYPI_MIRROR_TAG) \
-	       PYMOR_TEST_SCRIPT=$(PYMOR_TEST_SCRIPT) PYPI_MIRROR=$(PYPI_MIRROR) \
-	CI_IMAGE_TAG=$(CI_IMAGE_TAG) CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
+# PYMOR_TEST_OS=debian_buster
+# end: customization points via environment variables
+
+DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
 	docker-compose -f .binder/docker-compose.yml -p pymor
 NB_DIR=notebooks
 PANDOC_MAJOR=$(shell pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)
 ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
-PYPI_MIRROR_TAG:=$(shell cat .ci/PYPI_MIRROR_TAG)
-CI_IMAGE_TAG:=$(shell cat .ci/CI_IMAGE_TAG)
-SED_OPTIONS=-e "s;CI_IMAGE_TAG;$(CI_IMAGE_TAG);g" -e "s;DOCKER_BASE_PYTHON;$(DOCKER_BASE_PYTHON);g"
+# load env file, but do not overwrite pre-existing values
+ENV_FILE?=.env
+ENV_KEYS:=$(shell env | sort | grep -v -P "^_.*" | grep -v \] 	| sed 's/=.*//'g | tr '\n' '|')DUMMY
 
 .PHONY: docker README.html pylint test docs
 
@@ -67,9 +70,11 @@ template: docker_file
 	./dependencies.py
 	./.ci/gitlab/template.ci.py
 
-# Docker targets
+# docker targets
 docker_file:
-	sed $(SED_OPTIONS) .binder/Dockerfile.in > .binder/Dockerfile
+	 @export $$( cat $(ENV_FILE) | grep -v -E "$(ENV_KEYS)" ) && \
+		sed -e "s;CI_IMAGE_TAG;$${CI_IMAGE_TAG};g" -e "s;DOCKER_BASE_PYTHON;$${DOCKER_BASE_PYTHON};g" \
+		 .binder/Dockerfile.in > .binder/Dockerfile
 
 docker_image: docker_file
 	$(DOCKER_COMPOSE) build

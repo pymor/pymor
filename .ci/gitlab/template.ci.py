@@ -270,6 +270,8 @@ import os
 import jinja2
 import sys
 from itertools import product
+from pathlib import Path  # python3 only
+from dotenv import dotenv_values
 tpl = jinja2.Template(tpl)
 pythons = ['3.6', '3.7', '3.8']
 oldest = [pythons[0]]
@@ -279,8 +281,11 @@ test_scripts = [("mpi", pythons, 1), ("notebooks_dir", pythons, 1),  ("pip_insta
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'turing', 'ovh', 'gesis')]
 testos = ['centos_8', 'debian_buster', 'debian_testing']
-ci_image_tag = open(os.path.join(os.path.dirname(__file__), '..', 'CI_IMAGE_TAG'), 'rt').read()
-pypi_mirror_tag = open(os.path.join(os.path.dirname(__file__), '..', 'PYPI_MIRROR_TAG'), 'rt').read()
+
+env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
+env = dotenv_values(env_path)
+ci_image_tag = env['CI_IMAGE_TAG']
+pypi_mirror_tag = env['PYPI_MIRROR_TAG']
 manylinuxs = [2010, 2014]
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = [(sc, py, pa) for sc, pythons, pa in test_scripts for py in pythons]
