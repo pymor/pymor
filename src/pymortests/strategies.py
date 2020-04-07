@@ -92,11 +92,12 @@ if config.HAVE_FENICS:
     def fenics_vector_array(draw):
         length = draw(lengths)
         V = draw(fenics_spaces())
-        U = FenicsVectorSpace(V).zeros(length)
+        space = FenicsVectorSpace(V)
+        U = space.zeros(length)
         dim = U.dim
         # dtype is float here since the petsc vector is not setup for complex
         for v, a in zip(U._list, draw(np_arrays(length, dim))):
-            v.impl[:] = a
+            v = space.vector_from_numpy(a)
         return U
 else:
     fenics_vector_array = hyst.nothing

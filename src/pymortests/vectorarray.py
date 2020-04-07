@@ -518,7 +518,7 @@ def test_axpy_self(vector_array_inds):
         assert np.all(almost_equal(c[ind1_complement], v[ind1_complement]))
         assert np.all(c[ind1].sup_norm() <= v[ind1].sup_norm() + abs(a) * v[ind2].sup_norm() * (1. + 1e-10))
         try:
-                x = v.to_numpy(True).astype(complex)  # ensure that inplace addition works
+            x = v.to_numpy(True).astype(complex)  # ensure that inplace addition works
             if isinstance(ind1, Number):
                 x[[ind1]] += indexed(v.to_numpy(), ind2) * a
             else:
@@ -601,14 +601,14 @@ def test_dot_self(vector_array_inds):
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
     r2 = v[ind2].dot(v[ind1])
-        assert np.allclose(r, r2.T.conj())
+    assert np.allclose(r, r2.T.conj())
     assert np.all(r <= v[ind1].l2_norm()[:, np.newaxis] * v[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
     try:
             assert np.allclose(r, indexed(v.to_numpy(), ind1).conj().dot(indexed(v.to_numpy(), ind2).T))
     except NotImplementedError:
         pass
     r = v[ind1].dot(v[ind1])
-        assert np.allclose(r, r.T.conj())
+    assert np.allclose(r, r.T.conj())
 
 
 @given(pyst.vector_array_with_ind())
@@ -663,10 +663,10 @@ def test_lincomb_wrong_coefficients(v_ind):
 def test_l1_norm(v_ind):
     v, ind = v_ind
     c = v.copy()
-        try:
-            norm = c[ind].l1_norm()
-        except NotImplementedError:
-            pytest.xfail('l1_norm not implemented')
+    try:
+        norm = c[ind].l1_norm()
+    except NotImplementedError:
+        pytest.xfail('l1_norm not implemented')
     assert isinstance(norm, np.ndarray)
     assert norm.shape == (v.len_ind(ind),)
     assert np.all(norm >= 0)
@@ -804,7 +804,7 @@ def test_amax(v_ind):
     v, ind = v_ind
     assume(v.dim != 0)
     max_inds, max_vals = v[ind].amax()
-        assert np.allclose(max_vals, v[ind].sup_norm())
+    assert np.allclose(max_vals, v[ind].sup_norm())
     for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals):
             assert np.allclose(max_val, np.abs(v[[i]].dofs([max_ind])))
 
