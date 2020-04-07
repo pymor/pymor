@@ -23,6 +23,7 @@ stages:
     variables:
         PYPI_MIRROR_TAG: d740c7196b6901aab305e4445b27ac18a18661ff
         CI_IMAGE_TAG: d740c7196b6901aab305e4445b27ac18a18661ff
+        PYMOR_HYPOTHESIS_PROFILE: ci
 
 .pytest:
     extends: .test_base

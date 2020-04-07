@@ -35,6 +35,7 @@ services:
     restart: "no"
     environment:
       - NB_DIR
+      - PYMOR_HYPOTHESIS_PROFILE
     entrypoint: /usr/local/bin/dev-entrypoint.bash
     # xsrf check disabled for docs viewing with chrome. Somewhat related issue: https://github.com/jupyterlab/jupyterlab/issues/6106
     # and see also https://bugs.chromium.org/p/chromium/issues/detail?id=455987
@@ -49,6 +50,7 @@ services:
       - CI_PROJECT_DIR=/pymor
       - CI_PROJECT_URL=https://zivgitlab.uni-muenster.de/pymor/pymor
       - CI_COMMIT_SHA
+      - PYMOR_HYPOTHESIS_PROFILE
     volumes:
         - ./..:/pymor
     restart: "no"

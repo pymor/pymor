@@ -25,6 +25,7 @@ stages:
     variables:
         PYPI_MIRROR_TAG: {{pypi_mirror_tag}}
         CI_IMAGE_TAG: {{ci_image_tag}}
+        PYMOR_HYPOTHESIS_PROFILE: ci
 
 .pytest:
     extends: .test_base
