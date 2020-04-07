@@ -15,7 +15,7 @@ from pymor.operators.interface import Operator
 @defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
           'rqi_maxiter', 'seed')
 def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=1e-6, conjtol=1e-8,
-          dorqitol=1e-4, rqitol=1e-5, maxrestart=100, krestart=10, rqi_maxiter=10, seed=0):
+          dorqitol=1e-4, rqitol=1e-6, maxrestart=100, krestart=20, rqi_maxiter=10, seed=0):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
@@ -159,9 +159,14 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             G = np.hstack((G, V[0:k-1].dot(EX[k-1])))
         G = np.vstack((G, V[k-1].dot(EX)))
 
-        SH, UR, URt = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
+        SH, UR, URt, res = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
 
-        found = True
+        if np.all(res < np.finfo(float).eps):
+            st = np.random.uniform() * 10.j
+            found = False
+        else:
+            found = True
+
         do_rqi = True
         while found:
             theta = SH[0, 0]
@@ -172,18 +177,19 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
             st = theta
 
-            nres = (A.apply(schurvec) - (E.apply(schurvec) * theta)).norm()[0] / np.abs(theta)
+            absres = (A.apply(schurvec) - (E.apply(schurvec) * theta)).norm()[0]
+            nres = absres / np.abs(theta)
 
             logger.info(f'Step: {k}, Theta: {theta:.5e}, Relative residual: {nres:.5e}')
 
-            if nres < dorqitol and do_rqi:
+            if nres < dorqitol and absres < 1. and do_rqi:
                 schurvec, lschurvec, theta, nres = _twosided_rqi(A, E, schurvec, lschurvec, theta, nres,
-                                                                 tol, imagtol, rqitol, rqi_maxiter)
+                                                                 imagtol, rqitol, rqi_maxiter)
                 do_rqi = False
                 if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
                     rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
                     nrr = rres.norm() / np.abs(np.real(theta))
-                    if nrr < nres:
+                    if nrr - nres < np.finfo(float).eps:
                         schurvec = schurvec.real
                         lschurvec = lschurvec.real
                         theta = np.real(theta)
@@ -194,7 +200,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             elif np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
                 rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
                 nrr = rres.norm() / np.abs(np.real(theta))
-                if nrr < nres:
+                if nrr - nres < np.finfo(float).eps:
                     schurvec = schurvec.real
                     lschurvec = lschurvec.real
                     theta = np.real(theta)
@@ -244,7 +250,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
                         r = A.apply(ccv) - E.apply(ccv) * cce
 
-                        if r.norm() < conjtol:
+                        if r.norm() / np.abs(cce) < conjtol:
                             logger.info(f'Conjugate Pole: {cce:.5e}')
                             poles = np.append(poles, cce)
 
@@ -270,8 +276,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 if k > 0:
                     G = V.dot(E.apply(X))
                     H = V.dot(AX)
-                    SH, UR, URt = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
-                    found = True
+                    SH, UR, URt, residues = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
+                    found = np.any(res >= np.finfo(float).eps)
                 else:
                     G = np.empty((0, 1))
                     H = np.empty((0, 1))
@@ -305,6 +311,25 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 H = V.dot(AX)
                 nrestart += 1
 
+        if k >= krestart:
+            logger.info('Perform restart...')
+            EX = E.apply(X)
+            RR = AX.lincomb(UR.T) - EX.lincomb(UR.T).lincomb(SH.T)
+
+            minidx = RR.norm().argmin()
+            k = 1
+
+            X = X.lincomb(UR[:, minidx])
+            V = V.lincomb(URt[:, minidx])
+
+            gram_schmidt(V, atol=0, rtol=0, copy=False)
+            gram_schmidt(X, atol=0, rtol=0, copy=False)
+
+            G = V.dot(E.apply(X))
+            AX = A.apply(X)
+            H = V.dot(AX)
+            nrestart += 1
+
         if nr_converged == nwanted or nrestart == maxrestart:
             rightev = Q
             leftev = Qt
@@ -336,7 +361,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
     return poles, residues, rightev, leftev
 
 
-def _twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, rqitol, maxiter):
+def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter):
     """Refine an initial guess for an eigentriplet of the matrix pair (A, E).
 
     Parameters
@@ -353,8 +378,6 @@ def _twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, rqitol, maxiter):
         Initial guess for eigenvalue of matrix pair (A, E).
     init_res
         Residual of initial guess.
-    tol
-        Convergence tolerance for the pole estimate.
     imagtol
         Relative tolerance for imaginary parts of pairs of complex conjugate eigenvalues.
     rqitol
@@ -413,7 +436,7 @@ def _twosided_rqi(A, E, x, y, theta, init_res, tol, imagtol, rqitol, maxiter):
         x = x_rqi
         y = v_rqi
         nrq = rqi_res.norm() / np.abs(x_rq)
-        if np.abs(theta - x_rq) / np.abs(x_rq) < rqitol and nrq < tol:
+        if np.abs(theta - x_rq) / np.abs(x_rq) < rqitol:
             break
         theta = x_rq
         if not np.isfinite(nrq):
@@ -452,15 +475,15 @@ def _select_max_eig(H, G, X, V, B, C, which):
         A |NumPy array| containing the right eigenvectors of the computed poles.
     leftevs
         A |NumPy array| containing the left eigenvectors of the computed poles.
+    residue
+        A 1D |NumPy array| containing the norms of the residues.
     """
 
-    D, Vs = spla.eig(H, G)
+    D, Vt, Vs = spla.eig(H, G, left=True)
     idx = np.argsort(D)
     DP = D[idx]
     Vs = Vs[:, idx]
-
-    Dt, Vt = spla.eig(H.conj().T, G.conj().T)
-    Vt = Vt[:, np.argsort(Dt)]
+    Vt = Vt[:, idx]
 
     X = X.lincomb(Vs.T)
     V = V.lincomb(Vt.T)
@@ -478,4 +501,4 @@ def _select_max_eig(H, G, X, V, B, C, which):
     else:
         raise ValueError('Unknown SAMDP selection strategy.')
 
-    return np.diag(DP[idx]), Vs[:, idx], Vt[:, idx]
+    return np.diag(DP[idx]), Vs[:, idx], Vt[:, idx], residue
