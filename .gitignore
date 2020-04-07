@@ -71,3 +71,4 @@ test_timings.csv
 
 Pipfile 
 Pipfile.lock
+.hypothesis
