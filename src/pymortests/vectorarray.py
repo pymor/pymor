@@ -619,7 +619,7 @@ def test_dot(compatible_vector_array_pair):
 
 
 # TODO enable complex
-@given(pyst.vector_arrays_with_ind_pairs_both_lengths(dtype=np.float64))
+@given(pyst.vector_arrays_with_ind_pairs_both_lengths())
 def test_dot_self(vector_array_inds):
     v, (ind1, ind2) = vector_array_inds
     r = v[ind1].dot(v[ind2])
@@ -640,7 +640,7 @@ def test_dot_self(vector_array_inds):
 def test_lincomb_1d(v_ind):
     v, ind = v_ind
     np.random.seed(len(v) + 42 + v.dim)
-    coeffs = np.random.random(v.len_ind(ind)).astype(v.space.dtype)
+    coeffs = np.random.random(v.len_ind(ind))
     lc = v[ind].lincomb(coeffs)
     assert lc.space == v.space
     assert len(lc) == 1

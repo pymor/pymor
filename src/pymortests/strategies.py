@@ -119,7 +119,7 @@ def block_vector_array(draw, count=1, dtype=None, length=None, compatible=True):
     dtype = dtype or draw(hy_dtypes)
     for dims, l in zip(dim_tuples, draw(lngs)):
         data = draw(np_arrays(l, sum(dims), dtype=dtype))
-        V = BlockVectorSpace([NumpyVectorSpace(dim, dtype=data.dtype) for dim in dims]).from_numpy(
+        V = BlockVectorSpace([NumpyVectorSpace(dim) for dim in dims]).from_numpy(
             NumpyVectorSpace.from_numpy(data).to_numpy()
         )
         ret.append(V)
@@ -145,7 +145,7 @@ if config.HAVE_FENICS:
         for i in range(count):
             # dtype is float here since the petsc vector is not setup for complex
             for v, a in zip(Us[i]._list, draw(np_arrays(lngs[i], dims[i], dtype=dtype))):
-            v = v.space.vector_from_numpy(a)
+                v = FenicsVectorSpace(V).vector_from_numpy(a)
         return Us
 else:
     fenics_vector_array = nothing
@@ -285,7 +285,9 @@ def vector_array_with_ind(draw, ind_length=None, count=1, dtype=None, length=Non
 def vector_arrays_with_ind_pairs_same_length(draw, count=1, dtype=None, length=None):
     assert count == 1
     v = draw(vector_arrays(dtype=dtype, length=length), count)
-    ind = hyst.sampled_from(list(valid_inds_of_same_length(v[0],v[0])))
+    ind = list(valid_inds_of_same_length(v[0],v[0]))
+    assert len(ind)
+    ind = hyst.sampled_from(ind)
     return (*v, draw(ind))
 
 
@@ -293,8 +295,11 @@ def vector_arrays_with_ind_pairs_same_length(draw, count=1, dtype=None, length=N
 def vector_arrays_with_ind_pairs_diff_length(draw, count=1, dtype=None, length=None):
     assert count == 1
     v = draw(vector_arrays(dtype=dtype, length=length), count)
-    ind = hyst.sampled_from(list(valid_inds_of_different_length(v[0],v[0])))
-    return (*v, draw(ind))
+    ind = list(valid_inds_of_different_length(v[0],v[0]))
+    if len(ind):
+        ind = hyst.sampled_from(ind)
+        return (*v, draw(ind))
+    return (*v, draw(nothing()))
 
 
 def vector_arrays_with_ind_pairs_both_lengths(count=1, dtype=None, length=None):
