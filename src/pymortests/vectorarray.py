@@ -564,8 +564,7 @@ def test_axpy_self(vector_array_inds):
         assert np.all(almost_equal(c, cc))
 
 
-# TODO enable complex
-@given(pyst.vector_arrays(count=2, dtype=np.float64))
+@given(pyst.vector_arrays(count=2))
 def test_pairwise_dot(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
@@ -581,8 +580,7 @@ def test_pairwise_dot(compatible_vector_array_pair):
             pass
 
 
-# TODO enable complex
-@given(pyst.vector_arrays_with_ind_pairs_same_length(dtype=np.float64))
+@given(pyst.vector_arrays_with_ind_pairs_same_length())
 def test_pairwise_dot_self(vector_array_inds):
     v, (ind1, ind2) = vector_array_inds
     r = v[ind1].pairwise_dot(v[ind2])
@@ -600,9 +598,9 @@ def test_pairwise_dot_self(vector_array_inds):
     assert np.allclose(r, v[ind].l2_norm() ** 2)
 
 
-# TODO replace indices loop, enable complex
+# TODO replace indices loop
 @settings(deadline=None)
-@given(pyst.vector_arrays(count=2, dtype=np.float64))
+@given(pyst.vector_arrays(count=2))
 def test_dot(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     for ind1, ind2 in chain(pyst.valid_inds_of_different_length(v1, v2), pyst.valid_inds_of_same_length(v1, v2)):
@@ -618,7 +616,6 @@ def test_dot(compatible_vector_array_pair):
             pass
 
 
-# TODO enable complex
 @given(pyst.vector_arrays_with_ind_pairs_both_lengths())
 def test_dot_self(vector_array_inds):
     v, (ind1, ind2) = vector_array_inds
@@ -684,8 +681,7 @@ def test_lincomb_wrong_coefficients(v_ind):
             v[ind].lincomb(coeffs)
 
 
-# TODO enable complex
-@given(pyst.vector_array_with_ind(dtype=np.float64))
+@given(pyst.vector_array_with_ind())
 def test_l1_norm(v_ind):
     v, ind = v_ind
     c = v.copy()
@@ -710,8 +706,7 @@ def test_l1_norm(v_ind):
     assert np.allclose(c[ind].l1_norm(), 0)
 
 
-# TODO enable complex
-@given(pyst.vector_array_with_ind(dtype=np.float64))
+@given(pyst.vector_array_with_ind())
 def test_l2_norm(v_ind):
     v, ind = v_ind
     c = v.copy()
@@ -733,8 +728,7 @@ def test_l2_norm(v_ind):
     assert np.allclose(c[ind].l2_norm(), 0)
 
 
-# TODO enable complex
-@given(pyst.vector_array_with_ind(dtype=np.float64))
+@given(pyst.vector_array_with_ind())
 def test_l2_norm2(v_ind):
     v, ind = v_ind
     c = v.copy()
@@ -756,8 +750,7 @@ def test_l2_norm2(v_ind):
     assert np.allclose(c[ind].l2_norm2(), 0)
 
 
-# TODO enable complex
-@given(pyst.vector_array_with_ind(dtype=np.float64))
+@given(pyst.vector_array_with_ind())
 def test_sup_norm(v_ind):
     v, ind = v_ind
     c = v.copy()
@@ -830,8 +823,7 @@ def test_components_wrong_dof_indices(v_ind):
         v[ind].dofs(np.array([v.dim]))
 
 
-# TODO enable complex
-@given(pyst.vector_array_with_ind(dtype=np.float64))
+@given(pyst.vector_array_with_ind())
 def test_amax(v_ind):
     v, ind = v_ind
     assume(v.dim > 0)
