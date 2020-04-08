@@ -147,9 +147,8 @@ def test_full(vector_arrays):
                 pass
 
 
-# TODO relax float restrictions
-@given(pyst.vector_arrays(count=1, dtype=np.float64), hyst.integers(min_value=0, max_value=30),
-       hyst.floats(min_value=-1e-3, max_value=7), hyst.floats(min_value=0, max_value=7))
+@given(pyst.vector_arrays(count=1), hyst.integers(min_value=0, max_value=30),
+       hyst.floats(allow_infinity=False, allow_nan=False), hyst.floats(allow_infinity=False, allow_nan=False))
 def test_random_uniform(vector_arrays, count, low, high):
     vector_array = vector_arrays[0]
     with pytest.raises(Exception):
@@ -181,9 +180,8 @@ def test_random_uniform(vector_arrays, count, low, high):
     assert np.allclose((v - vv).sup_norm(), 0.)
 
 
-# TODO relax float restrictions
-@given(pyst.vector_arrays(count=1, dtype=np.float64), hyst.integers(min_value=0, max_value=30),
-       hyst.floats(min_value=-1e-3, max_value=7), hyst.floats(min_value=-1, max_value=7))
+@given(pyst.vector_arrays(count=1), hyst.integers(min_value=0, max_value=30),
+       hyst.floats(allow_infinity=False, allow_nan=False), hyst.floats(allow_infinity=False, allow_nan=False))
 # TODO the first call to this test is magnitudes slower than the next
 @settings(deadline=None)
 def test_random_normal(vector_arrays, count, loc, scale):
