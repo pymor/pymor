@@ -47,7 +47,7 @@ doc_requires = ['sphinx>=1.7', 'pymor-nb2plots>=0.7', 'matplotlib', 'PySide2', '
                 'ipywidgets', 'sphinx-qt-documentation'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel', 'virtualenv',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
-               'testipynb', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]']
+               'testipynb', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]', 'pytest-pycharm']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
                 'pytest-instafail': 'pytest_instafail',
