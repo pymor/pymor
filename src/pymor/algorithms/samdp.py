@@ -15,7 +15,7 @@ from pymor.operators.interface import Operator
 @defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
           'rqi_maxiter', 'seed')
 def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=1e-6, conjtol=1e-8,
-          dorqitol=1e-4, rqitol=1e-6, maxrestart=100, krestart=20, rqi_maxiter=10, seed=0):
+          dorqitol=1e-4, rqitol=1e-10, maxrestart=100, krestart=20, rqi_maxiter=10, seed=0):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
@@ -50,7 +50,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
         - `'LS'`: select poles with largest norm(residual) / abs(pole)
         - `'LM'`: select poles with largest norm(residual)
     tol
-        Relative tolerance for the residual of the poles.
+        Tolerance for the residual of the poles.
     imagtol
         Relative tolerance for imaginary parts of pairs of complex conjugate eigenvalues.
     conjtol
@@ -177,12 +177,11 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
             st = theta
 
-            absres = (A.apply(schurvec) - (E.apply(schurvec) * theta)).norm()[0]
-            nres = absres / np.abs(theta)
+            nres = (A.apply(schurvec) - (E.apply(schurvec) * theta)).norm()[0]
 
-            logger.info(f'Step: {k}, Theta: {theta:.5e}, Relative residual: {nres:.5e}')
+            logger.info(f'Step: {k}, Theta: {theta:.5e}, Residual: {nres:.5e}')
 
-            if nres < dorqitol and absres < 1. and do_rqi:
+            if nres < dorqitol and do_rqi:
                 schurvec, lschurvec, theta, nres = _twosided_rqi(A, E, schurvec, lschurvec, theta, nres,
                                                                  imagtol, rqitol, rqi_maxiter)
                 do_rqi = False
@@ -242,35 +241,32 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 cce = theta.conj()
                 if np.abs(np.imag(cce)) / np.abs(cce) >= imagtol:
 
-                    pairdifs = np.abs(poles - cce)
+                    ccv = schurvec.conj()
+                    ccv.scal(1 / ccv.norm())
 
-                    if np.min(pairdifs) > tol:
-                        ccv = schurvec.conj()
-                        ccv.scal(1 / ccv.norm())
+                    r = A.apply(ccv) - E.apply(ccv) * cce
 
-                        r = A.apply(ccv) - E.apply(ccv) * cce
+                    if r.norm() / np.abs(cce) < conjtol:
+                        logger.info(f'Conjugate Pole: {cce:.5e}')
+                        poles = np.append(poles, cce)
 
-                        if r.norm() / np.abs(cce) < conjtol:
-                            logger.info(f'Conjugate Pole: {cce:.5e}')
-                            poles = np.append(poles, cce)
+                        Q.append(ccv)
+                        ccvt = lschurvec.conj()
+                        Qt.append(ccvt)
 
-                            Q.append(ccv)
-                            ccvt = lschurvec.conj()
-                            Qt.append(ccvt)
+                        Esch = E.apply(ccv)
+                        Qs.append(Esch)
+                        Qts.append(E.apply_adjoint(ccvt))
 
-                            Esch = E.apply(ccv)
-                            Qs.append(Esch)
-                            Qts.append(E.apply_adjoint(ccvt))
+                        nqqt = ccvt.dot(E.apply(ccv))[0][0]
+                        Q[-1].scal(1 / nqqt)
+                        Qs[-1].scal(1 / nqqt)
 
-                            nqqt = ccvt.dot(E.apply(ccv))[0][0]
-                            Q[-1].scal(1 / nqqt)
-                            Qs[-1].scal(1 / nqqt)
+                        gram_schmidt(V, atol=0, rtol=0, copy=False)
+                        gram_schmidt(X, atol=0, rtol=0, copy=False)
 
-                            gram_schmidt(V, atol=0, rtol=0, copy=False)
-                            gram_schmidt(X, atol=0, rtol=0, copy=False)
-
-                            B_defl -= E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
-                            C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
+                        B_defl -= E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
+                        C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
 
                 AX = A.apply(X)
                 if k > 0:
