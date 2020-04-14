@@ -7,7 +7,7 @@ from numbers import Number
 
 import pytest
 import numpy as np
-from hypothesis import given, assume, reproduce_failure, settings, HealthCheck
+from hypothesis import given, assume, settings, HealthCheck
 from hypothesis import strategies as hyst
 
 from pymor.algorithms.basic import almost_equal
@@ -16,6 +16,7 @@ from pymor.tools import floatcmp
 from pymor.tools.floatcmp import float_cmp
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
+from pymortests.strategies import invalid_inds, invalid_ind_pairs
 
 
 def ind_complement(v, ind):
@@ -38,31 +39,6 @@ def indexed(v, ind):
         return np.empty((0, v.shape[1]), dtype=v.dtype)
     else:
         return v[ind]
-
-
-def invalid_inds(v, length=None):
-    yield None
-    if length is None:
-        yield len(v)
-        yield [len(v)]
-        yield -len(v)-1
-        yield [-len(v)-1]
-        yield [0, len(v)]
-        length = 42
-    if length > 0:
-        yield [-len(v)-1] + [0, ] * (length - 1)
-        yield list(range(length - 1)) + [len(v)]
-
-
-def invalid_ind_pairs(v1, v2):
-    for inds in pyst.valid_inds_of_different_length(v1, v2):
-        yield inds
-    for ind1 in pyst.valid_inds(v1):
-        for ind2 in invalid_inds(v2, length=v1.len_ind(ind1)):
-            yield ind1, ind2
-    for ind2 in pyst.valid_inds(v2):
-        for ind1 in invalid_inds(v1, length=v2.len_ind(ind2)):
-            yield ind1, ind2
 
 
 def ind_to_list(v, ind):
