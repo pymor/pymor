@@ -311,3 +311,28 @@ def vector_arrays_with_ind_pairs_both_lengths(count=1, dtype=None, length=None):
 def equal_tuples(draw, strategy, count):
     val = draw(strategy)
     return draw(hyst.tuples(*[hyst.just(val) for _ in range(count)]))
+
+
+def invalid_inds(v, length=None):
+    yield None
+    if length is None:
+        yield len(v)
+        yield [len(v)]
+        yield -len(v)-1
+        yield [-len(v)-1]
+        yield [0, len(v)]
+        length = 42
+    if length > 0:
+        yield [-len(v)-1] + [0, ] * (length - 1)
+        yield list(range(length - 1)) + [len(v)]
+
+
+def invalid_ind_pairs(v1, v2):
+    for inds in pyst.valid_inds_of_different_length(v1, v2):
+        yield inds
+    for ind1 in pyst.valid_inds(v1):
+        for ind2 in invalid_inds(v2, length=v1.len_ind(ind1)):
+            yield ind1, ind2
+    for ind2 in pyst.valid_inds(v2):
+        for ind1 in invalid_inds(v1, length=v2.len_ind(ind2)):
+            yield ind1, ind2
