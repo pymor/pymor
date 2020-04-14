@@ -3,8 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import math as m
-import random
-
+from hypothesis import strategies as hyst
 import numpy as np
 import pytest
 
@@ -15,99 +14,57 @@ from pymor.discretizers.builtin.grids.tria import TriaGrid
 from pymor.discretizers.builtin.grids.unstructured import UnstructuredTriangleGrid
 
 
-rect_grid_generators = [lambda arg=arg, kwargs=kwargs: RectGrid(arg, **kwargs) for arg, kwargs in
-                        [((2, 4), {}),
-                         ((1, 1), {}),
-                         ((42, 42), {}),
-                         ((2, 4), dict(identify_left_right=True)),
-                         ((2, 4), dict(identify_bottom_top=True)),
-                         ((2, 4), dict(identify_left_right=True, identify_bottom_top=True)),
-                         ((2, 1), dict(identify_left_right=True)),
-                         ((1, 2), dict(identify_bottom_top=True)),
-                         ((2, 2), dict(identify_left_right=True, identify_bottom_top=True)),
-                         ((42, 30), dict(identify_left_right=True)),
-                         ((42, 30), dict(identify_bottom_top=True)),
-                         ((42, 30), dict(identify_left_right=True, identify_bottom_top=True))]]
+# TODO let domain be drawn too
+def hy_rect_tria_kwargs(draw):
+    identify_left_right = draw(hyst.booleans())
+    identify_bottom_top = draw(hyst.booleans())
+    interval_i = hyst.integers(min_value=1, max_value=42)
+    num_intervals = draw(hyst.tuples(interval_i.filter(lambda x: (not identify_left_right) or x > 1),
+                                     interval_i.filter(lambda y: (not identify_bottom_top) or y > 1)))
+    # domain_value = hyst.floats(allow_infinity=False, allow_nan=False)
+    # domain_point = hyst.tuples(domain_value, domain_value)
+    # domain = draw(hyst.tuples(domain_point, domain_point).filter(lambda d: d[0][0] < d[1][0] and d[0][1] < d[1][1]))
+    domain = ((0,0), (1,1))
+    return {"num_intervals": num_intervals, "domain": domain, "identify_left_right": identify_left_right,
+            "identify_bottom_top": identify_bottom_top}
 
 
-tria_grid_generators = [lambda arg=arg, kwargs=kwargs: TriaGrid(arg, **kwargs) for arg, kwargs in
-                        [((2, 4), {}),
-                         ((1, 1), {}),
-                         ((42, 42), {}),
-                         ((2, 4), dict(identify_left_right=True)),
-                         ((2, 4), dict(identify_bottom_top=True)),
-                         ((2, 4), dict(identify_left_right=True, identify_bottom_top=True)),
-                         ((2, 1), dict(identify_left_right=True)),
-                         ((1, 2), dict(identify_bottom_top=True)),
-                         ((2, 2), dict(identify_left_right=True, identify_bottom_top=True)),
-                         ((42, 30), dict(identify_left_right=True)),
-                         ((42, 30), dict(identify_bottom_top=True)),
-                         ((42, 30), dict(identify_left_right=True, identify_bottom_top=True))]]
+@hyst.composite
+def hy_rect_grid(draw):
+    return RectGrid(**hy_rect_tria_kwargs(draw))
 
 
-oned_grid_generators = [lambda kwargs=kwargs: OnedGrid(**kwargs) for kwargs in
-                        [dict(domain=np.array((-2, 2)), num_intervals=10),
-                         dict(domain=np.array((-4, -2)), num_intervals=100),
-                         dict(domain=np.array((-4, -2)), num_intervals=100, identify_left_right=True),
-                         dict(domain=np.array((2, 3)), num_intervals=10),
-                         dict(domain=np.array((2, 3)), num_intervals=10, identify_left_right=True),
-                         dict(domain=np.array((1, 2)), num_intervals=10000)]]
-
-unstructured_grid_generators = \
-    [lambda: UnstructuredTriangleGrid.from_vertices(np.array([[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]),
-                                                    np.array([[0, 1, 2], [0, 3, 4], [0, 4, 1]]))]
+@hyst.composite
+def hy_tria_grid(draw):
+    return RectGrid(**hy_rect_tria_kwargs(draw))
 
 
-def subgrid_factory(grid_generator, neq, seed):
-    np.random.seed(seed)
-    g = grid_generator()
+@hyst.composite
+def hy_oned_grid(draw):
+    identify_left_right = draw(hyst.booleans())
+    interval_i = hyst.integers(min_value=1, max_value=10000)
+    num_intervals = draw(interval_i.filter(lambda x: (not identify_left_right) or x > 1))
+    domain_point = hyst.floats(allow_infinity=False, allow_nan=False)
+    domain = draw(hyst.tuples(domain_point, domain_point).filter(lambda d: d[0] < d[1]))
+    return OnedGrid(num_intervals=num_intervals, domain=domain, identify_left_right=identify_left_right)
+
+
+# TODO re-use other grid strategies
+@hyst.composite
+def hy_subgrid(draw):
+    grid = draw(hyst.sampled_from([RectGrid((1, 1)), TriaGrid((1, 1)), RectGrid((8, 8)), TriaGrid((24, 24))]))
+    neq = draw(hyst.sampled_from([0, 2, 4]))
     if neq == 0:
-        return SubGrid(g, np.arange(g.size(0), dtype=np.int32))
+        return SubGrid(grid, np.arange(grid.size(0), dtype=np.int32))
     else:
-        return SubGrid(g, np.array(random.sample(range(g.size(0)), max(int(m.floor(g.size(0) / neq)), 1))))
+        random = draw(hyst.randoms())
+        sample = random.sample(range(grid.size(0)), max(int(m.floor(grid.size(0) / neq)), 1))
+        return SubGrid(grid, np.array(sample))
 
 
-subgrid_generators = [lambda args=args: subgrid_factory(*args) for args in
-                      [(lambda: RectGrid((1, 1)), 0, 123),
-                       (lambda: RectGrid((1, 1)), 2, 123),
-                       (lambda: RectGrid((1, 1)), 4, 123),
-                       (lambda: TriaGrid((1, 1)), 0, 123),
-                       (lambda: TriaGrid((1, 1)), 2, 123),
-                       (lambda: TriaGrid((1, 1)), 4, 123),
-                       (lambda: RectGrid((8, 8)), 0, 123),
-                       (lambda: RectGrid((8, 8)), 2, 123),
-                       (lambda: RectGrid((8, 8)), 4, 123),
-                       (lambda: TriaGrid((24, 24)), 0, 123),
-                       (lambda: TriaGrid((24, 24)), 2, 123),
-                       (lambda: TriaGrid((24, 24)), 4, 123)]]
-
-
-@pytest.fixture(params=(
-    rect_grid_generators
-    + tria_grid_generators
-    + oned_grid_generators
-    + subgrid_generators
-    + unstructured_grid_generators
-))
-def grid(request):
-    return request.param()
-
-
-@pytest.fixture(params=(rect_grid_generators + tria_grid_generators))
-def rect_or_tria_grid(request):
-    return request.param()
-
-
-@pytest.fixture(params=(rect_grid_generators + oned_grid_generators))
-def grid_with_orthogonal_centers(request):
-    return request.param()
-
-
-@pytest.fixture(params=(
-    rect_grid_generators
-    + tria_grid_generators
-    + oned_grid_generators
-    + unstructured_grid_generators
-))
-def grids_with_visualize(request):
-    return request.param()
+hy_grid = hy_rect_grid() | hy_tria_grid() | hy_oned_grid() | hy_subgrid()
+hy_rect_or_tria_grid = hy_rect_grid() | hy_tria_grid()
+hy_unstructured_grid = hyst.just(UnstructuredTriangleGrid.from_vertices(
+    np.array([[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]), np.array([[0, 1, 2], [0, 3, 4], [0, 4, 1]])))
+hy_grid_with_orthogonal_centers = hy_rect_grid() | hy_oned_grid()
+hy_grids_with_visualize = hy_rect_grid() | hy_tria_grid() | hy_oned_grid() | hy_unstructured_grid
