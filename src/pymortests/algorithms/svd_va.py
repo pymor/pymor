@@ -4,16 +4,18 @@
 
 import numpy as np
 import pytest
+from hypothesis import given
+from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.fixtures.vectorarray import vector_array, vector_array_without_reserve
+from pymortests.strategies import vector_arrays
 
 methods = [method_of_snapshots, qr_svd]
 
 
-@pytest.mark.parametrize('method', methods)
+@given(vector_arrays(count=1), sampled_from(methods))
 def test_method_of_snapshots(vector_array, method):
     A = vector_array
     print(type(A))
