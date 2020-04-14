@@ -17,7 +17,7 @@ methods = [method_of_snapshots, qr_svd]
 
 @given(vector_arrays(count=1), sampled_from(methods))
 def test_method_of_snapshots(vector_array, method):
-    A = vector_array
+    A = vector_array[0]
     print(type(A))
     print(A.dim, len(A))
 

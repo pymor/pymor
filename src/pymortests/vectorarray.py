@@ -195,6 +195,10 @@ def test_random_normal(vector_arrays, count, loc, scale):
     except NotImplementedError:
         pass
     vv = vector_array.random(c, 'normal', loc=loc, scale=scale, seed=seed)
+    data = vv.to_numpy()
+    # due to scaling data might actually now include nan or inf
+    assume(not np.isnan(data).any())
+    assume(not np.isinf(data).any())
     assert np.allclose((v - vv).sup_norm(), 0.)
 
 
@@ -561,7 +565,7 @@ def test_pairwise_dot_self(vector_array_inds):
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind1),)
     r2 = v[ind2].pairwise_dot(v[ind1])
-    assert np.allclose(r, r2)
+    assert np.allclose(r, r2.T.conj())
     assert np.all(r <= v[ind1].l2_norm() * v[ind2].l2_norm() * (1. + 1e-10))
     try:
             assert np.allclose(r, np.sum(indexed(v.to_numpy(), ind1).conj() * indexed(v.to_numpy(), ind2), axis=1))
@@ -1048,6 +1052,7 @@ def test_scal_wrong_coefficients(v_ind):
             v[ind].scal(alpha)
 
 
+@settings(deadline=None)
 @given(pyst.vector_arrays(count=2))
 def test_axpy_wrong_ind(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
