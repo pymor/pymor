@@ -7,10 +7,11 @@ from itertools import product
 
 import numpy as np
 import pytest
+from hypothesis import given, settings
 
 from pymor.core.exceptions import QtMissing
 from pymor.discretizers.builtin.gui.qt import stop_gui_processes
-from pymortests.fixtures.grid import grid, grids_with_visualize
+from pymortests.fixtures.grid import hy_grids_with_visualize, hy_grid
 from pymortests.pickling import assert_picklable_without_dumps_function
 
 
@@ -26,12 +27,14 @@ def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
 np.testing.assert_allclose = monkey_allclose
 
 
+@given(hy_grid)
 def test_dim(grid):
     g = grid
     assert isinstance(g.dim, int)
     assert g.dim >= 0
 
 
+@given(hy_grid)
 def test_size(grid):
     g = grid
     for d in range(g.dim + 1):
@@ -42,6 +45,7 @@ def test_size(grid):
         g.size(g.dim + 1)
 
 
+@given(hy_grid)
 def test_subentities_wrong_arguments(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -55,6 +59,7 @@ def test_subentities_wrong_arguments(grid):
         g.subentities(-1, 0)
 
 
+@given(hy_grid)
 def test_subentities_shape(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -63,6 +68,7 @@ def test_subentities_shape(grid):
             assert g.subentities(e, s).shape[0] == g.size(e)
 
 
+@given(hy_grid)
 def test_subentities_dtype(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -70,6 +76,7 @@ def test_subentities_dtype(grid):
             assert g.subentities(e, s).dtype == np.dtype('int32')
 
 
+@given(hy_grid)
 def test_subentities_entry_value_range(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -78,6 +85,8 @@ def test_subentities_entry_value_range(grid):
             np.testing.assert_array_less(-2, g.subentities(e, s))
 
 
+@settings(deadline=None)
+@given(hy_grid)
 def test_subentities_entry_values_unique(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -87,6 +96,7 @@ def test_subentities_entry_values_unique(grid):
                 assert S.size == np.unique(S).size
 
 
+@given(hy_grid)
 def test_subentities_codim_d_codim_d(grid):
     g = grid
     for d in range(g.dim + 1):
@@ -94,6 +104,7 @@ def test_subentities_codim_d_codim_d(grid):
         np.testing.assert_array_equal(g.subentities(d, d).ravel(), np.arange(g.size(d)))
 
 
+@given(hy_grid)
 def test_subentities_transitivity(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -108,6 +119,7 @@ def test_subentities_transitivity(grid):
                             assert set(SESE[SE[i, j]]) <= set(SSE[i]).union((-1,))
 
 
+@given(hy_grid)
 def test_superentities_wrong_arguments(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -123,6 +135,7 @@ def test_superentities_wrong_arguments(grid):
         g.superentities(-1, -2)
 
 
+@given(hy_grid)
 def test_superentities_shape(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -133,6 +146,7 @@ def test_superentities_shape(grid):
     assert g.superentities(1, 0).shape[1] <= 2
 
 
+@given(hy_grid)
 def test_superentities_dtype(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -140,6 +154,7 @@ def test_superentities_dtype(grid):
             assert g.superentities(e, s).dtype == np.dtype('int32')
 
 
+@given(hy_grid)
 def test_superentities_entry_value_range(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -148,6 +163,7 @@ def test_superentities_entry_value_range(grid):
             np.testing.assert_array_less(-2, g.superentities(e, s))
 
 
+@given(hy_grid)
 def test_superentities_entry_values_unique(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -157,6 +173,7 @@ def test_superentities_entry_values_unique(grid):
                 assert S.size == np.unique(S).size
 
 
+@given(hy_grid)
 def test_superentities_entries_sorted(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -170,6 +187,7 @@ def test_superentities_entries_sorted(grid):
                     np.testing.assert_array_equal(S[i + 1:], -1)
 
 
+@given(hy_grid)
 def test_superentities_codim_d_codim_d(grid):
     g = grid
     for d in range(g.dim + 1):
@@ -177,6 +195,7 @@ def test_superentities_codim_d_codim_d(grid):
         np.testing.assert_array_equal(g.superentities(d, d).ravel(), np.arange(g.size(d)))
 
 
+@given(hy_grid)
 def test_superentities_each_entry_superentity(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -189,6 +208,7 @@ def test_superentities_each_entry_superentity(grid):
                         assert i in SUBE[se]
 
 
+@given(hy_grid)
 def test_superentities_each_superentity_has_entry(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -201,6 +221,7 @@ def test_superentities_each_superentity_has_entry(grid):
                         assert i in SE[se]
 
 
+@given(hy_grid)
 def test_superentity_indices_wrong_arguments(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -216,6 +237,7 @@ def test_superentity_indices_wrong_arguments(grid):
         g.superentity_indices(-1, -2)
 
 
+@given(hy_grid)
 def test_superentity_indices_shape(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -223,6 +245,7 @@ def test_superentity_indices_shape(grid):
             assert g.superentity_indices(e, s).shape == g.superentities(e, s).shape
 
 
+@given(hy_grid)
 def test_superentity_indices_dtype(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -230,6 +253,7 @@ def test_superentity_indices_dtype(grid):
             assert g.superentity_indices(e, s).dtype == np.dtype('int32')
 
 
+@given(hy_grid)
 def test_superentity_indices_valid_entries(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -242,6 +266,7 @@ def test_superentity_indices_valid_entries(grid):
                     assert SUBE[superentity, SEI[index]] == index[0]
 
 
+@given(hy_grid)
 def test_neighbours_wrong_arguments(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -264,6 +289,9 @@ def test_neighbours_wrong_arguments(grid):
         g.neighbours(-1, 0, g.dim)
 
 
+# TODO product -> strategy
+@settings(deadline=None)
+@given(hy_grid)
 def test_neighbours_shape(grid):
     g = grid
     for e, n in product(range(g.dim + 1), range(g.dim + 1)):
@@ -272,6 +300,9 @@ def test_neighbours_shape(grid):
             assert g.neighbours(e, n, s).shape[0] == g.size(e)
 
 
+# TODO product -> strategy
+@settings(deadline=None)
+@given(hy_grid)
 def test_neighbours_dtype(grid):
     g = grid
     for e, n in product(range(g.dim + 1), range(g.dim + 1)):
@@ -279,6 +310,9 @@ def test_neighbours_dtype(grid):
             assert g.neighbours(e, n, s).dtype == np.dtype('int32')
 
 
+# TODO product -> strategy
+@settings(deadline=None)
+@given(hy_grid)
 def test_neighbours_entry_value_range(grid):
     g = grid
     for e, n in product(range(g.dim + 1), range(g.dim + 1)):
@@ -287,6 +321,9 @@ def test_neighbours_entry_value_range(grid):
             np.testing.assert_array_less(-2, g.neighbours(e, n, s))
 
 
+# TODO product -> strategy
+@settings(deadline=None)
+@given(hy_grid)
 def test_neighbours_entry_values_unique(grid):
     g = grid
     for e, n in product(range(g.dim + 1), range(g.dim + 1)):
@@ -296,6 +333,9 @@ def test_neighbours_entry_values_unique(grid):
                 assert S.size == np.unique(S).size
 
 
+# TODO product -> strategy
+@settings(deadline=None)
+@given(hy_grid)
 def test_neighbours_each_entry_neighbour(grid):
     g = grid
     for e, n in product(range(g.dim + 1), range(g.dim + 1)):
@@ -312,6 +352,9 @@ def test_neighbours_each_entry_neighbour(grid):
                         assert len(inter) > 0
 
 
+# TODO product -> strategy
+@settings(deadline=None)
+@given(hy_grid)
 def test_neighbours_each_neighbour_has_entry(grid):
     g = grid
     for e, n in product(range(g.dim + 1), range(g.dim + 1)):
@@ -333,6 +376,8 @@ def test_neighbours_each_neighbour_has_entry(grid):
                                 f'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
 
 
+@settings(deadline=None)
+@given(hy_grid)
 def test_neighbours_not_neighbour_of_itself(grid):
     g = grid
     for e in range(g.dim + 1):
@@ -343,6 +388,7 @@ def test_neighbours_not_neighbour_of_itself(grid):
                     f'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'
 
 
+@given(hy_grid)
 def test_boundary_mask_wrong_arguments(grid):
     g = grid
     with pytest.raises(AssertionError):
@@ -351,18 +397,21 @@ def test_boundary_mask_wrong_arguments(grid):
         g.boundary_mask(g.dim + 1)
 
 
+@given(hy_grid)
 def test_boundary_mask_shape(grid):
     g = grid
     for d in range(g.dim + 1):
         assert g.boundary_mask(d).shape == (g.size(d),)
 
 
+@given(hy_grid)
 def test_boundary_mask_dtype(grid):
     g = grid
     for d in range(g.dim + 1):
         g.boundary_mask(d).dtype == np.dtype('bool')
 
 
+@given(hy_grid)
 def test_boundary_mask_entries_codim1(grid):
     g = grid
     BM = g.boundary_mask(1)
@@ -372,6 +421,7 @@ def test_boundary_mask_entries_codim1(grid):
         assert (E[E > -1].size <= 1) == b
 
 
+@given(hy_grid)
 def test_boundary_mask_entries_codim0(grid):
     g = grid
     BM0 = g.boundary_mask(0)
@@ -382,6 +432,7 @@ def test_boundary_mask_entries_codim0(grid):
         assert np.any(BM1[S[S > -1]]) == b
 
 
+@given(hy_grid)
 def test_boundary_mask_entries_codim_d(grid):
     g = grid
     for d in range(2, g.dim + 1):
@@ -393,6 +444,7 @@ def test_boundary_mask_entries_codim_d(grid):
             assert np.any(BM1[S[S > -1]]) == b
 
 
+@given(hy_grid)
 def test_boundaries_wrong_arguments(grid):
     g = grid
     with pytest.raises(AssertionError):
@@ -401,18 +453,21 @@ def test_boundaries_wrong_arguments(grid):
         g.boundaries(g.dim + 1)
 
 
+@given(hy_grid)
 def test_boundaries_shape(grid):
     g = grid
     for d in range(g.dim + 1):
         assert len(g.boundaries(d).shape) == 1
 
 
+@given(hy_grid)
 def test_boundaries_dtype(grid):
     g = grid
     for d in range(g.dim + 1):
         assert g.boundaries(d).dtype == np.dtype('int32')
 
 
+@given(hy_grid)
 def test_boundaries_entry_value_range(grid):
     g = grid
     for d in range(g.dim + 1):
@@ -420,16 +475,20 @@ def test_boundaries_entry_value_range(grid):
         np.testing.assert_array_less(-1, g.boundaries(d))
 
 
+@given(hy_grid)
 def test_boundaries_entries(grid):
     g = grid
     for d in range(g.dim + 1):
         np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
 
 
+@given(hy_grid)
 def test_pickle(grid):
     assert_picklable_without_dumps_function(grid)
 
 
+@settings(deadline=None)
+@given(hy_grids_with_visualize)
 def test_visualize(grids_with_visualize):
     import sys
     sys._called_from_test = True

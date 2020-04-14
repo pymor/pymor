@@ -7,10 +7,12 @@ import numpy as np
 import pytest
 import itertools
 
+from hypothesis import given
+
 from pymor.core.logger import getLogger
 from pymor.tools.io import SafeTemporaryFileName
 from pymortests.base import runmodule
-from pymortests.fixtures.grid import rect_or_tria_grid
+from pymortests.fixtures.grid import hy_rect_or_tria_grid
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.tools.deprecated import Deprecated
@@ -101,8 +103,8 @@ def test_float_cmp():
             assert not float_cmp(-inf, inf, rtol, atol), msg
 
 
-def test_vtkio(rect_or_tria_grid):
-    grid = rect_or_tria_grid
+@given(hy_rect_or_tria_grid)
+def test_vtkio(grid):
     steps = 4
     for dim in range(1, 2):
         for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.zeros((steps, grid.size(c))))
