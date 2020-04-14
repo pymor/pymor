@@ -7,6 +7,7 @@ from hypothesis import given, settings, assume, reproduce_failure
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymortests.base import runmodule
 from pymortests.fixtures.operator import operator_with_arrays_and_products
 import pymortests.strategies as pyst
 
@@ -132,3 +133,7 @@ def test_gram_schmidt_biorth_with_product(operator_with_arrays_and_products):
     assert np.all(almost_equal(A2, B2))
     assert np.all(almost_equal(A1, U1))
     assert np.all(almost_equal(A2, U2))
+
+
+if __name__ == "__main__":
+    runmodule(filename=__file__)

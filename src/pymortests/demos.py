@@ -290,5 +290,6 @@ def test_parabolic_mor_results():
                   (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
                   'estimates', 'max_estimates', 'effectivities', 'min_effectivities', 'max_effectivities', 'errors')
 
+
 if __name__ == "__main__":
     runmodule(filename=__file__)
