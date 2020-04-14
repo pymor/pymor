@@ -17,6 +17,7 @@ include *.md
 include *.py
 include versioneer.py
 include pyproject.toml
+include .env
 
 include MANIFEST.in
 include README.rst
