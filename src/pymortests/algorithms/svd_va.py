@@ -9,6 +9,7 @@ from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
+from pymortests.base import runmodule
 from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import vector_arrays
 
@@ -47,3 +48,7 @@ def test_method_of_snapshots_with_product(operator_with_arrays_and_products, met
     U.scal(s)
     UsVh = U.lincomb(Vh.T)
     assert np.all(almost_equal(A, UsVh, rtol=4e-8))
+
+
+if __name__ == "__main__":
+    runmodule(filename=__file__)
