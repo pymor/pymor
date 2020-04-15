@@ -188,11 +188,12 @@ def picklable_vector_arrays(count=1, dtype=None, length=None, compatible=True):
            block_vector_array(count, dtype, length, compatible)
 
 
+# strategies shrink to the left while falsifying, make the "simplest" the leftmost
 def vector_arrays(count=1, dtype=None, length=None, compatible=True):
-    return fenics_vector_array(count, dtype, length, compatible) | \
+    return picklable_vector_arrays(count, dtype, length, compatible) | \
+           fenics_vector_array(count, dtype, length, compatible) | \
            dealii_vector_array(count, dtype, length, compatible) | \
-           ngsolve_vector_array(count, dtype, length, compatible) | \
-           picklable_vector_arrays(count, dtype, length, compatible)
+           ngsolve_vector_array(count, dtype, length, compatible)
 
 
 # TODO this needs to be a strategy
