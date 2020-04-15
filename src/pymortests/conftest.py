@@ -8,6 +8,8 @@ import os
 from csv import DictWriter
 from hypothesis import settings, Verbosity, HealthCheck
 
+settings.register_profile("ci_large", max_examples=5000,
+                          suppress_health_check=(HealthCheck.too_slow, HealthCheck.data_too_large,))
 settings.register_profile("ci", max_examples=100,verbosity=Verbosity.verbose,
                           suppress_health_check=(HealthCheck.too_slow, HealthCheck.data_too_large,))
 settings.register_profile("dev", max_examples=10,
