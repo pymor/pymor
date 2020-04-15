@@ -17,7 +17,6 @@ stages:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
-    only: ['branches', 'tags', 'triggers', 'merge-requests']
     except:
         - /^staging/.*$/i
     variables:
@@ -85,6 +84,8 @@ stages:
 .binder:
     extends: .docker-in-docker
     stage: install_checks
+    except:
+        - schedules
     variables:
         IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
         CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
@@ -93,6 +94,8 @@ stages:
 .wheel:
     extends: .docker-in-docker
     stage: build
+    except:
+        - schedules
     only: ['branches', 'tags', 'triggers']
     variables:
         TEST_OS: "centos_8 debian_buster debian_testing"
@@ -106,6 +109,8 @@ stages:
 .check_wheel:
     extends: .test_base
     stage: install_checks
+    except:
+        - schedules
     services:
       - pymor/devpi:1
     dependencies:
@@ -151,6 +156,8 @@ ci setup:
 
 minimal_cpp_demo:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -158,6 +165,8 @@ minimal_cpp_demo:
     script: ./.ci/gitlab/cpp_demo.bash
 mpi 3 6:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -165,6 +174,8 @@ mpi 3 6:
     script: ./.ci/gitlab/test_mpi.bash
 mpi 3 7:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -172,6 +183,8 @@ mpi 3 7:
     script: ./.ci/gitlab/test_mpi.bash
 mpi 3 8:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -179,6 +192,8 @@ mpi 3 8:
     script: ./.ci/gitlab/test_mpi.bash
 notebooks_dir 3 6:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -186,6 +201,8 @@ notebooks_dir 3 6:
     script: ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 7:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -193,6 +210,8 @@ notebooks_dir 3 7:
     script: ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 8:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -200,6 +219,8 @@ notebooks_dir 3 8:
     script: ./.ci/gitlab/test_notebooks_dir.bash
 pip_installed 3 6:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -207,6 +228,8 @@ pip_installed 3 6:
     script: ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 7:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -214,6 +237,8 @@ pip_installed 3 7:
     script: ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 8:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -221,6 +246,8 @@ pip_installed 3 8:
     script: ./.ci/gitlab/test_pip_installed.bash
 vanilla 3 6:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -228,6 +255,8 @@ vanilla 3 6:
     script: ./.ci/gitlab/test_vanilla.bash
 vanilla 3 7:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -235,6 +264,8 @@ vanilla 3 7:
     script: ./.ci/gitlab/test_vanilla.bash
 vanilla 3 8:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -242,6 +273,8 @@ vanilla 3 8:
     script: ./.ci/gitlab/test_vanilla.bash
 numpy_git 3 8:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
@@ -249,13 +282,47 @@ numpy_git 3 8:
     script: ./.ci/gitlab/test_numpy_git.bash
 oldest 3 6:
     extends: .pytest
+    except:
+        - schedules
     services:
         - name: pymor/pypi-mirror_oldest_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
     script: ./.ci/gitlab/test_oldest.bash
+ci_weekly 3 6:
+    extends: .pytest
+    only:
+        - schedules
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
+          alias: pypi_mirror
+    image: pymor/testing_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
+    
+    script: ./.ci/gitlab/test_vanilla.bash
+ci_weekly 3 7:
+    extends: .pytest
+    only:
+        - schedules
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
+          alias: pypi_mirror
+    image: pymor/testing_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
+    
+    script: ./.ci/gitlab/test_vanilla.bash
+ci_weekly 3 8:
+    extends: .pytest
+    only:
+        - schedules
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
+          alias: pypi_mirror
+    image: pymor/testing_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
+    
+    script: ./.ci/gitlab/test_vanilla.bash
 submit vanilla 3 6:
     extends: .submit
+    except:
+        - schedules
     image: pymor/python:3.6
     variables:
         COVERAGE_FLAG: vanilla
@@ -263,6 +330,8 @@ submit vanilla 3 6:
         - vanilla 3 6
 submit vanilla 3 7:
     extends: .submit
+    except:
+        - schedules
     image: pymor/python:3.7
     variables:
         COVERAGE_FLAG: vanilla
@@ -270,6 +339,8 @@ submit vanilla 3 7:
         - vanilla 3 7
 submit vanilla 3 8:
     extends: .submit
+    except:
+        - schedules
     image: pymor/python:3.8
     variables:
         COVERAGE_FLAG: vanilla
@@ -277,6 +348,8 @@ submit vanilla 3 8:
         - vanilla 3 8
 submit numpy_git 3 8:
     extends: .submit
+    except:
+        - schedules
     image: pymor/python:3.8
     variables:
         COVERAGE_FLAG: numpy_git
@@ -284,25 +357,61 @@ submit numpy_git 3 8:
         - numpy_git 3 8
 submit oldest 3 6:
     extends: .submit
+    except:
+        - schedules
     image: pymor/python:3.6
     variables:
         COVERAGE_FLAG: oldest
     dependencies:
         - oldest 3 6
+submit ci_weekly 3 6:
+    extends: .submit
+    only:
+        - schedules
+    image: pymor/python:3.6
+    variables:
+        COVERAGE_FLAG: ci_weekly
+    dependencies:
+        - ci_weekly 3 6
+submit ci_weekly 3 7:
+    extends: .submit
+    only:
+        - schedules
+    image: pymor/python:3.7
+    variables:
+        COVERAGE_FLAG: ci_weekly
+    dependencies:
+        - ci_weekly 3 7
+submit ci_weekly 3 8:
+    extends: .submit
+    only:
+        - schedules
+    image: pymor/python:3.8
+    variables:
+        COVERAGE_FLAG: ci_weekly
+    dependencies:
+        - ci_weekly 3 8
+
 
 
 pip 1/3:
     extends: .docker-in-docker
+    except:
+        - schedules
     stage: install_checks
     script: docker build -f .ci/docker/install_checks/centos_8/Dockerfile .
 
 pip 2/3:
     extends: .docker-in-docker
+    except:
+        - schedules
     stage: install_checks
     script: docker build -f .ci/docker/install_checks/debian_buster/Dockerfile .
 
 pip 3/3:
     extends: .docker-in-docker
+    except:
+        - schedules
     stage: install_checks
     script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
 
@@ -444,6 +553,8 @@ check_wheel 3:
 
 docs build:
     extends: .docker-in-docker
+    except:
+        - schedules
     stage: build
     script:
         - apk --update add make python3
@@ -458,7 +569,7 @@ docs:
     extends: .test_base
     image: alpine:3.11
     stage: deploy
-    resource_group: docs_deploy
+    resource_group: docs_deploy    
     dependencies:
         - docs build
     before_script:
@@ -468,6 +579,7 @@ docs:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
     only: ['branches', 'tags']
     except:
+        - schedules
         - /^staging/.*$/i
         - /^github/PR_.*$/i
     environment:
