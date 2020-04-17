@@ -98,8 +98,10 @@ def extras():
 
     # blacklisted packages need a (minimal) compiler setup
     # - nbresuse, pytest-memprof depend on psutil which has no wheels
+    # - slycot directly needs a compiler setup with BLAS
+    # - pymess is better installed from source (see README.md)
     return {
-        'full': list(_candidates(blacklist=['nbresuse', 'pytest-memprof'])),
+        'full': list(_candidates(blacklist=['slycot', 'pymess', 'nbresuse', 'pytest-memprof'])),
         'ci':  ci_requires,
         'docs': doc_requires,
     }
