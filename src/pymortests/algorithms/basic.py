@@ -70,7 +70,7 @@ def test_almost_equal_product(operator_with_arrays_and_products):
 
 @given(pyst.vector_arrays_with_ind_pairs_same_length(count=1))
 def test_almost_equal_self(v_ind):
-    v, ind = v_ind
+    v, (ind,_) = v_ind
     for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)):
         for n in ['sup', 'l1', 'l2']:
             try:
