@@ -10,11 +10,11 @@
 
 ## pyMOR 2020.1
 
-* Tim Keil, tim.keil@uni-muenster.de
-    * second order derivatives for parameters
-
 * Linus Balicki, linus.balicki@ovgu.de
     * subspace accelerated dominant pole algorithm in algorithms.samdp
+
+* Tim Keil, tim.keil@uni-muenster.de
+    * second order derivatives for parameters
 
 ## pyMOR 2019.2
 
