@@ -283,9 +283,47 @@ def vector_array_with_ind(draw, ind_length=None, count=1, dtype=None, length=Non
 
 
 @hyst.composite
+def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
+    """
+
+    Parameters
+    ----------
+    draw hypothesis control function object
+    count how many bases do you want
+    dtype dtype for the generated bases, defaults to `np.float_`
+    max_dim size limit for the generated
+
+    Returns a list of |VectorArray| linear-independent objects of same dim and length
+    -------
+
+    """
+    dtype = dtype or np.float_
+    # simplest way currently of getting a |VectorSpace| to construct our new arrays from
+    space = draw(vector_arrays(count=1, dtype=dtype, length=hyst.just((1,)), compatible=True)
+                 .filter(lambda x: x[0].space.dim > 0 and x[0].space.dim < max_dim))[0].space
+    length = space.dim
+    from scipy.stats import random_correlation
+    # this lets hypothesis control np's random state too
+    random = draw(hyst.randoms())
+
+    def _eigs():
+        """sum must equal to `length` for the scipy construct method"""
+        min_eig, max_eig = 0.001, 1.
+        eigs = np.asarray((max_eig-min_eig)*np.random.random(length-1) + min_eig, dtype=float)
+        return np.append(eigs, [length - np.sum(eigs)])
+
+    if length > 1:
+        mat = [random_correlation.rvs(_eigs(), tol=1e-12) for _ in range(count)]
+        return [space.from_numpy(m) for m in mat]
+    else:
+        scalar = 4*np.random.random((1,1))+0.1
+        return [space.from_numpy(scalar) for _ in range(count)]
+
+
+@hyst.composite
 def vector_arrays_with_ind_pairs_same_length(draw, count=1, dtype=None, length=None):
     assert count == 1
-    v = draw(vector_arrays(dtype=dtype, length=length), count)
+    v = draw(vector_arrays(dtype=dtype, length=length, count=1))
     ind = list(valid_inds_of_same_length(v[0],v[0]))
     assert len(ind)
     ind = hyst.sampled_from(ind)
