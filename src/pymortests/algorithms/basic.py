@@ -192,10 +192,10 @@ def test_almost_equal_wrong_ind(compatible_vector_array_pair):
                 almost_equal(c1[ind1], c2[ind2], norm=n)
 
 
-def test_project_array():
-    np.random.seed(123)
-    U = NumpyVectorSpace.from_numpy(np.random.random((2, 10)))
-    basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))
+@given(pyst.base_vector_arrays(count=2))
+def test_project_array(bases):
+    U = bases[0][:-2]
+    basis = bases[1]
     U_p = project_array(U, basis, orthonormal=False)
     onb = gram_schmidt(basis)
     U_p2 = project_array(U, onb, orthonormal=True)
