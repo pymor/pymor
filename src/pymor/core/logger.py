@@ -13,6 +13,7 @@ Logging can be configured via the :func:`set_log_format` and
 import logging
 import os
 import time
+from contextlib import contextmanager
 from types import MethodType
 
 from pymor.core.defaults import defaults
@@ -328,3 +329,27 @@ def _info2(self, msg, *args, **kwargs):
 
 def _info3(self, msg, *args, **kwargs):
     self.log(INFO3, msg, *args, **kwargs)
+
+
+@contextmanager
+def scoped_logger(module, level, filename=''):
+    """ Get a logger on entry, reset level to before state on exit.
+
+    Parameters
+    ----------
+    module string describing which logger to get
+    level if this is None,
+    filename If not empty, path of an existing file where everything logged will be
+        written to.
+
+    Returns logger object
+    -------
+
+    """
+    logger = getLogger(module, None, filename)
+    lvl = logger.getEffectiveLevel()
+    logger.setLevel(level)
+    try:
+        yield logger
+    finally:
+        logger.setLevel(lvl)
