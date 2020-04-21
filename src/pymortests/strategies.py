@@ -35,7 +35,8 @@ if config.HAVE_NGSOLVE:
             NGSOLVE_spaces[dim] = NGSolveVectorSpace(ngs.L2(ngs.Mesh(mesh), order=0))
         return NGSOLVE_spaces[dim]
 
-hy_lengths = hyst.integers(min_value=0, max_value=102)
+MAX_LENGTH = 102
+hy_lengths = hyst.integers(min_value=0, max_value=MAX_LENGTH)
 hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False, min_value=-1, max_value=1)
 hy_complex_array_elements = hyst.complex_numbers(allow_nan=False, allow_infinity=False, max_magnitude=2)
 # TODO non-fixed sampling pool
@@ -248,6 +249,30 @@ def valid_inds_of_same_length(v1, v2):
         yield np.random.randint(-len(v1), len(v1), size=len(v2)), slice(None)
 
 
+@hyst.composite
+def st_valid_inds_of_same_length(draw, v1, v2):
+    len1, len2 = len(v1), len(v2)
+    ret = hyst.just([([],), ([],)])
+    # TODO we should include integer arrays here
+    val1 = hynp.basic_indices(shape=(len1,), allow_ellipsis=False) #| hynp.integer_array_indices(shape=(len1,))
+    if len1 == len2:
+        ret = ret | hyst.tuples(hyst.shared(val1, key="st_valid_inds_of_same_length"), hyst.shared(val1, key="st_valid_inds_of_same_length"))
+    if len1 > 0 and len2 > 0:
+        val2 = hynp.basic_indices(shape=(len2,), allow_ellipsis=False) #| hynp.integer_array_indices(shape=(len2,))
+        ret = ret | hyst.tuples(val1, val2)#.filter()
+    # values are always tuples
+    return [d[0] for d in draw(ret)]
+
+
+@hyst.composite
+def vector_arrays_with_valid_inds_of_same_length(draw, count=2):
+    val = draw(hyst.integers(min_value=1, max_value=MAX_LENGTH))
+    length = hyst.tuples(*[hyst.just(val) for _ in range(count)])
+    vectors = draw(vector_arrays(count=count, length=length, compatible=True))
+    ind = draw(st_valid_inds_of_same_length(*vectors))
+    return vectors, ind
+
+
 # TODO this needs to be a strategy
 def valid_inds_of_different_length(v1, v2):
     if len(v1) != len(v2):
@@ -323,8 +348,8 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
 @hyst.composite
 def vector_arrays_with_ind_pairs_same_length(draw, count=1, dtype=None, length=None):
     assert count == 1
-    v = draw(vector_arrays(dtype=dtype, length=length, count=1))
-    ind = list(valid_inds_of_same_length(v[0],v[0]))
+    v = draw(vector_arrays(dtype=dtype, length=length, count=count))
+    ind = list(valid_inds_of_same_length(v[0], v[0]))
     assert len(ind)
     ind = hyst.sampled_from(ind)
     return (*v, draw(ind))

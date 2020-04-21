@@ -7,7 +7,7 @@ from numbers import Number
 
 import pytest
 import numpy as np
-from hypothesis import given, assume, settings, HealthCheck
+from hypothesis import given, assume, settings, HealthCheck, reproduce_failure
 from hypothesis import strategies as hyst
 
 from pymor.algorithms.basic import almost_equal
@@ -576,22 +576,23 @@ def test_pairwise_dot_self(vector_array_inds):
     assert np.allclose(r, v[ind].l2_norm() ** 2)
 
 
-# TODO replace indices loop
-@settings(deadline=None)
-@given(pyst.vector_arrays(count=2))
-def test_dot(compatible_vector_array_pair):
-    v1, v2 = compatible_vector_array_pair
-    for ind1, ind2 in chain(pyst.valid_inds_of_different_length(v1, v2), pyst.valid_inds_of_same_length(v1, v2)):
-        r = v1[ind1].dot(v2[ind2])
-        assert isinstance(r, np.ndarray)
-        assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
-        r2 = v2[ind2].dot(v1[ind1])
-        assert np.allclose(r, r2.T.conj())
-        assert np.all(r <= v1[ind1].l2_norm()[:, np.newaxis] * v2[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
-        try:
-            assert np.allclose(r, indexed(v1.to_numpy(), ind1).conj().dot(indexed(v2.to_numpy(), ind2).T))
-        except NotImplementedError:
-            pass
+@settings(deadline=None, print_blob=True)
+@given(pyst.vector_arrays_with_valid_inds_of_same_length(count=2))
+def test_dot(vectors_indices):
+    vectors, indices = vectors_indices
+    v1, v2 = vectors
+    ind1, ind2 = indices
+    # for ind1, ind2 in chain(pyst.valid_inds_of_different_length(v1, v2), pyst.valid_inds_of_same_length(v1, v2)):
+    r = v1[ind1].dot(v2[ind2])
+    assert isinstance(r, np.ndarray)
+    assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
+    r2 = v2[ind2].dot(v1[ind1])
+    assert np.allclose(r, r2.T.conj())
+    assert np.all(r <= v1[ind1].l2_norm()[:, np.newaxis] * v2[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
+    try:
+        assert np.allclose(r, indexed(v1.to_numpy(), ind1).conj().dot(indexed(v2.to_numpy(), ind2).T))
+    except NotImplementedError:
+        pass
 
 
 @given(pyst.vector_arrays_with_ind_pairs_both_lengths())
@@ -751,10 +752,8 @@ def test_sup_norm(v_ind):
     assert np.allclose(c[ind].sup_norm(), 0)
 
 
-@given(pyst.vector_array_with_ind())
-# TODO split and replace count loop
-@settings(deadline=None)
-def test_dofs(v_ind):
+@given(pyst.vector_array_with_ind(), hyst.integers(min_value=1, max_value=10))
+def test_dofs(v_ind, count):
     v, ind = v_ind
     c = v.copy()
     dofs = c[ind].dofs(np.array([], dtype=np.int))
@@ -767,25 +766,25 @@ def test_dofs(v_ind):
     assert dofs.shape == (v.len_ind(ind), 0)
 
     assume(v.dim > 0)
-    for count in (1, 5, 10):
-        c_ind = np.random.randint(0, v.dim, count)
-        c = v.copy()
-        dofs = c[ind].dofs(c_ind)
-        assert dofs.shape == (v.len_ind(ind), count)
-        c = v.copy()
-        dofs2 = c[ind].dofs(list(c_ind))
-        assert np.all(dofs == dofs2)
-        c = v.copy()
-        c.scal(3.)
-        dofs2 = c[ind].dofs(c_ind)
-        assert np.allclose(dofs * 3, dofs2)
-        c = v.copy()
-        dofs2 = c[ind].dofs(np.hstack((c_ind, c_ind)))
-        assert np.all(dofs2 == np.hstack((dofs, dofs)))
-        try:
-            assert np.all(dofs == indexed(v.to_numpy(), ind)[:, c_ind])
-        except NotImplementedError:
-            pass
+
+    c_ind = np.random.randint(0, v.dim, count)
+    c = v.copy()
+    dofs = c[ind].dofs(c_ind)
+    assert dofs.shape == (v.len_ind(ind), count)
+    c = v.copy()
+    dofs2 = c[ind].dofs(list(c_ind))
+    assert np.all(dofs == dofs2)
+    c = v.copy()
+    c.scal(3.)
+    dofs2 = c[ind].dofs(c_ind)
+    assert np.allclose(dofs * 3, dofs2)
+    c = v.copy()
+    dofs2 = c[ind].dofs(np.hstack((c_ind, c_ind)))
+    assert np.all(dofs2 == np.hstack((dofs, dofs)))
+    try:
+        assert np.all(dofs == indexed(v.to_numpy(), ind)[:, c_ind])
+    except NotImplementedError:
+        pass
 
 
 @given(pyst.vector_array_with_ind())
