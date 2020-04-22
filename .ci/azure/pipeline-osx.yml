@@ -39,6 +39,7 @@ jobs:
       conda install -y cython pytest-cov pytest
       # install anything which might a new dependency with pip
       pip install -r requirements.txt
+      pip install -r requirements-ci.txt
       pip install pytest-azurepipelines
       conda list
     displayName: Configure conda and conda-build
