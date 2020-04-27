@@ -577,12 +577,16 @@ def test_pairwise_dot_self(vector_array_inds):
 
 
 @settings(deadline=None, print_blob=True)
-@given(pyst.vector_arrays_with_valid_inds_of_same_length(count=2))
+@given(pyst.vector_arrays_with_valid_inds_of_same_length(count=2)
+       | pyst.vector_arrays_with_valid_inds_of_different_length(count=2))
 def test_dot(vectors_indices):
     vectors, indices = vectors_indices
     v1, v2 = vectors
     ind1, ind2 = indices
-    # for ind1, ind2 in chain(pyst.valid_inds_of_different_length(v1, v2), pyst.valid_inds_of_same_length(v1, v2)):
+
+    # TODO
+    assume_old_slicing(indices)
+
     r = v1[ind1].dot(v2[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
@@ -595,6 +599,17 @@ def test_dot(vectors_indices):
         pass
 
 
+def assume_old_slicing(indices):
+    # TODO old data input did not have None as X in slices, only slice(None)
+    for ind in indices:
+        if ind is slice(None):
+            continue
+        if isinstance(ind, slice):
+            for p in ('step', 'start', 'stop'):
+                assume(getattr(ind, p) is not None)
+
+
+@settings(deadline=None)
 @given(pyst.vector_arrays_with_ind_pairs_both_lengths())
 def test_dot_self(vector_array_inds):
     v, (ind1, ind2) = vector_array_inds
