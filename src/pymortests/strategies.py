@@ -300,6 +300,30 @@ def valid_inds_of_different_length(v1, v2):
 
 
 @hyst.composite
+def st_valid_inds_of_different_length(draw, v1, v2):
+    len1, len2 = len(v1), len(v2)
+    ret = nothing()
+    # TODO we should include integer arrays here
+    val = hynp.basic_indices(shape=(len1,), allow_ellipsis=False)  # | hynp.integer_array_indices(shape=(len1,))
+    if len1 != len2:
+        ret = ret | hyst.just((slice(None), slice(None))) \
+              | hyst.tuples(hyst.shared(val, key="indfl"), hyst.shared(val, key="indfl"))
+    if len1 > 0 and len2 > 0:
+        ret = ret | hyst.tuples(val, val).filter(lambda x: len(x[0])!=len(x[1]))
+    # values are always tuples
+    return [d[0] for d in draw(ret)]
+
+
+@hyst.composite
+def vector_arrays_with_valid_inds_of_different_length(draw, count=2):
+    val = draw(hyst.integers(min_value=1, max_value=MAX_LENGTH))
+    length = hyst.tuples(*[hyst.just(val) for _ in range(count)])
+    vectors = draw(vector_arrays(count=count, length=length, compatible=True))
+    ind = draw(st_valid_inds_of_different_length(*vectors))
+    return vectors, ind
+
+
+@hyst.composite
 def vector_array_with_ind(draw, ind_length=None, count=1, dtype=None, length=None):
     assert count == 1
     v = draw(vector_arrays(dtype=dtype, length=length), count)
@@ -400,3 +424,25 @@ def invalid_ind_pairs(v1, v2):
     for ind2 in valid_inds(v2):
         for ind1 in invalid_inds(v1, length=v2.len_ind(ind2)):
             yield ind1, ind2
+
+
+def st_invalid_ind_pairs(v1, v2):
+    # for inds in valid_inds_of_different_length(v1, v2):
+    #     yield inds
+    # for ind1 in valid_inds(v1):
+    #     for ind2 in invalid_inds(v2, length=v1.len_ind(ind1)):
+    #         yield ind1, ind2
+    # for ind2 in valid_inds(v2):
+    #     for ind1 in invalid_inds(v1, length=v2.len_ind(ind2)):
+    #         yield ind1, ind2
+    return hyst.sampled_from(list(valid_inds_of_different_length(v1, v2))) | \
+        hyst.sampled_from([(i1, i2) for i1 in valid_inds(v1) for i2 in invalid_inds(v2, length=v1.len_ind(i1)) ])
+
+
+@hyst.composite
+def vector_arrays_with_invalid_inds(draw, count=2):
+    val = draw(hyst.integers(min_value=1, max_value=MAX_LENGTH))
+    length = hyst.tuples(*[hyst.just(val) for _ in range(count)])
+    vectors = draw(vector_arrays(count=count, length=length, compatible=True))
+    ind = draw(st_invalid_ind_pairs(*vectors))
+    return vectors, ind

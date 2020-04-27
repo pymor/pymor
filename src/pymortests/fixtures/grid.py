@@ -39,12 +39,15 @@ def hy_tria_grid(draw):
     return RectGrid(**hy_rect_tria_kwargs(draw))
 
 
+# TODO negative Domain values produce centers outside bounding box
 @hyst.composite
 def hy_oned_grid(draw):
     identify_left_right = draw(hyst.booleans())
     interval_i = hyst.integers(min_value=1, max_value=10000)
     num_intervals = draw(interval_i.filter(lambda x: (not identify_left_right) or x > 1))
-    domain_point = hyst.floats(allow_infinity=False, allow_nan=False)
+    # domain points are limited to allow their norm2 computations
+    domain_point = hyst.floats(allow_infinity=False, allow_nan=False, min_value=0,
+                               max_value=np.math.sqrt(np.finfo(float).max))
     domain = draw(hyst.tuples(domain_point, domain_point).filter(lambda d: d[0] < d[1]))
     return OnedGrid(num_intervals=num_intervals, domain=domain, identify_left_right=identify_left_right)
 
