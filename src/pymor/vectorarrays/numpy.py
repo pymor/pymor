@@ -26,7 +26,9 @@ class NumpyVectorArray(VectorArray):
     will be quite efficient, removing or appending vectors will
     be costly.
 
-    The associated |VectorSpace| is |NumpyVectorSpace|.
+    .. warning::
+        This class is not intended to be instantiated directly. Use
+        the associated :class:`VectorSpace <NumpyVectorSpace>` instead.
     """
 
     def __init__(self, array, space):
