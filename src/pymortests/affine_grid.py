@@ -5,7 +5,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, settings
+from hypothesis import given, settings, reproduce_failure
 
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymortests.base import runmodule
@@ -190,6 +190,7 @@ def test_volumes_inverse_values(grid):
 
 
 @given(hy_grid)
+@settings(deadline=None)
 def test_unit_outer_normals_shape(grid):
     g = grid
     SE = g.subentities(0, 1)
