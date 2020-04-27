@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, assume
+from hypothesis import given, assume, reproduce_failure
 from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal
@@ -23,7 +23,8 @@ def test_pod(vector_array, method):
     print(A.dim, len(A))
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
-    assume(len(A) > 1 or not contains_zero_vector(A))
+    assume(len(A) > 1 or A.dim > 1)
+    assume(not contains_zero_vector(A))
 
     B = A.copy()
     U, s = pod(A, method=method)
