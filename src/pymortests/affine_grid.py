@@ -1,13 +1,14 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
+import operator
 
 import numpy as np
 import pytest
 from hypothesis import given, settings, reproduce_failure
 
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
+from pymor.tools.floatcmp import float_cmp, compare_with_tolerance
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers
 
@@ -333,8 +334,10 @@ def test_bounding_box(grid):
     bbox = g.bounding_box()
     assert bbox.shape == (2, g.dim)
     assert np.all(bbox[0] <= bbox[1])
-    assert np.all(g.centers(g.dim) >= bbox[0])
-    assert np.all(g.centers(g.dim) <= bbox[1])
+    # compare with tolerance is necessary with very large domain boundaries values
+    # where the relative error in the centers computation introduces enough error to fail the test otherwise
+    assert np.all(compare_with_tolerance(bbox[0], g.centers(g.dim), operator.le, rtol=1e-15, atol=0))
+    assert np.all(compare_with_tolerance(g.centers(g.dim), bbox[1], operator.le, rtol=1e-15, atol=0))
 
 
 @settings(deadline=None)
