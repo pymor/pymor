@@ -126,6 +126,8 @@ def test_full(vector_arrays):
 @given(pyst.vector_arrays(count=1), hyst.integers(min_value=0, max_value=30),
        hyst.floats(allow_infinity=False, allow_nan=False), hyst.floats(allow_infinity=False, allow_nan=False))
 def test_random_uniform(vector_arrays, count, low, high):
+    # avoid Overflow in np.random.RandomState.uniform
+    assume(np.isfinite(high-low))
     vector_array = vector_arrays[0]
     with pytest.raises(Exception):
         vector_array.random(-1)
