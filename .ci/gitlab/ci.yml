@@ -107,10 +107,13 @@ stages:
     services:
       - pymor/devpi:1
     dependencies:
+      - "wheel 1 py3 6"
       - "wheel 2010 py3 6"
       - "wheel 2014 py3 6"
+      - "wheel 1 py3 7"
       - "wheel 2010 py3 7"
       - "wheel 2014 py3 7"
+      - "wheel 1 py3 8"
       - "wheel 2010 py3 8"
       - "wheel 2014 py3 8"
     before_script:
@@ -367,6 +370,12 @@ trigger_binder 4/4:
     script:
         - python3 .ci/gitlab/trigger_binder.py "https://gesis.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
+wheel 1 py3 6:
+    extends: .wheel
+    variables:
+        PYVER: "3.6"
+    script: bash .ci/gitlab/wheels.bash 1
+
 wheel 2010 py3 6:
     extends: .wheel
     variables:
@@ -380,6 +389,12 @@ wheel 2014 py3 6:
     script: bash .ci/gitlab/wheels.bash 2014
 
 
+wheel 1 py3 7:
+    extends: .wheel
+    variables:
+        PYVER: "3.7"
+    script: bash .ci/gitlab/wheels.bash 1
+
 wheel 2010 py3 7:
     extends: .wheel
     variables:
@@ -392,6 +407,12 @@ wheel 2014 py3 7:
         PYVER: "3.7"
     script: bash .ci/gitlab/wheels.bash 2014
 
+
+wheel 1 py3 8:
+    extends: .wheel
+    variables:
+        PYVER: "3.8"
+    script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 8:
     extends: .wheel
