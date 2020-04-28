@@ -1,7 +1,7 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
+import operator
 from math import sin, pi, exp, factorial
 import numpy as np
 import pytest
@@ -16,7 +16,7 @@ from pymortests.fixtures.grid import hy_rect_or_tria_grid
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.tools.deprecated import Deprecated
-from pymor.tools.floatcmp import float_cmp, float_cmp_all
+from pymor.tools.floatcmp import float_cmp, float_cmp_all, compare_with_tolerance
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools import timing
 
@@ -101,6 +101,29 @@ def test_float_cmp():
             assert float_cmp(-inf, inf, rtol, atol), msg
         else:
             assert not float_cmp(-inf, inf, rtol, atol), msg
+
+
+def test_compare_with_tolerance():
+    tol_range = [0.0, 1e-8, 1]
+    nan = float('nan')
+    inf = float('inf')
+    for (rtol, atol) in itertools.product(tol_range, tol_range):
+        msg = f'rtol: {rtol} | atol {atol}'
+        op = operator.le
+        assert compare_with_tolerance(0., 1, op, rtol, atol), msg
+        assert compare_with_tolerance(-1., -0., op, rtol, atol), msg
+        assert compare_with_tolerance(-1., 1., op, rtol, atol), msg
+        assert compare_with_tolerance(0., atol, op, rtol, atol), msg
+        assert (rtol==0.0 and not compare_with_tolerance(0., inf, op, rtol, atol), msg) or \
+               compare_with_tolerance(0., inf, op, rtol, atol), msg
+        op = operator.ge
+        assert compare_with_tolerance(1., 0., op, rtol, atol), msg
+        assert compare_with_tolerance(-0., -1., op, rtol, atol), msg
+        assert compare_with_tolerance(1., -1., op, rtol, atol), msg
+        assert compare_with_tolerance(atol, 0, op, rtol, atol), msg
+        assert not compare_with_tolerance(-inf, 0., op, rtol, atol), msg
+    with pytest.warns(Warning, match='Use float_cmp'):
+        compare_with_tolerance(0.0, 0.0, operator.eq)
 
 
 @given(hy_rect_or_tria_grid)
