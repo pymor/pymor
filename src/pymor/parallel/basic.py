@@ -52,10 +52,10 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPool):
             else:
                 remote_id, ref_count = self._pushed_immutable_objects[uid]
                 self._pushed_immutable_objects[uid] = (remote_id, ref_count + 1)
-            return RemoteObject(self, remote_id, uid=uid)
+            return GenericRemoteObject(self, remote_id, uid=uid)
         else:
             remote_id = self._push_object(obj)
-            return RemoteObject(self, remote_id)
+            return GenericRemoteObject(self, remote_id)
 
     def _map_kwargs(self, kwargs):
         pushed_immutable_objects = self._pushed_immutable_objects
@@ -95,7 +95,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPool):
         return chunks
 
 
-class RemoteObject(RemoteObject):
+class GenericRemoteObject(RemoteObject):
 
     def __init__(self, pool, remote_id, uid=None):
         self.pool = weakref.ref(pool)
