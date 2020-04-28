@@ -16,6 +16,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.parameters.base import Parameter, ParameterType
 from pymor.tools.formatrepr import indent_value
 from pymor.vectorarrays.block import BlockVectorSpace
 
@@ -75,8 +76,9 @@ class InputOutputModel(Model):
         """
         if not self.cont_time:
             raise NotImplementedError
-
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
 
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
@@ -527,7 +529,9 @@ class LTIModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of system poles.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A.assemble(mu=mu)
         E = self.E.assemble(mu=mu)
 
@@ -567,7 +571,9 @@ class LTIModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A
         B = self.B
         C = self.C
@@ -613,7 +619,9 @@ class LTIModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A
         B = self.B
         C = self.C
@@ -671,7 +679,9 @@ class LTIModel(InputStateOutputModel):
 
         assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
 
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A.assemble(mu)
         B = self.B
         C = self.C
@@ -717,7 +727,9 @@ class LTIModel(InputStateOutputModel):
         Vh
             |NumPy array| of right singular vectors.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         cf = self.gramian('c_lrcf', mu=mu)
         of = self.gramian('o_lrcf', mu=mu)
         U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver='gesvd')
@@ -760,7 +772,9 @@ class LTIModel(InputStateOutputModel):
         """
         if not self.cont_time:
             raise NotImplementedError
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         if self.input_dim <= self.output_dim:
             cf = self.gramian('c_lrcf', mu=mu)
             return np.sqrt(self.C.apply(cf, mu=mu).l2_norm2().sum())
@@ -795,8 +809,10 @@ class LTIModel(InputStateOutputModel):
             raise NotImplementedError
         if not return_fpeak:
             return self.hinf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
 
-        mu = self.parse_parameter(mu)
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
         if self.order >= sparse_min_size():
@@ -873,7 +889,7 @@ class TransferFunction(InputOutputModel):
 
     def __init__(self, input_space, output_space, tf, dtf, cont_time=True, parameter_space=None, name=None):
         super().__init__(input_space, output_space, cont_time=cont_time, name=name)
-        self.parameter_type = parameter_space.parameter_type if parameter_space else None
+        self.parameter_type = parameter_space.parameter_type if parameter_space else ParameterType({})
         self.__auto_init(locals())
 
     def __str__(self):
@@ -889,17 +905,21 @@ class TransferFunction(InputOutputModel):
         )
 
     def eval_tf(self, s, mu=None):
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         if not self.parametric:
             return self.tf(s)
         else:
-            mu = self.parse_parameter(mu)
             return self.tf(s, mu=mu)
 
     def eval_dtf(self, s, mu=None):
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         if not self.parametric:
             return self.dtf(s)
         else:
-            mu = self.parse_parameter(mu)
             return self.dtf(s, mu=mu)
 
     def __add__(self, other):
@@ -1452,7 +1472,9 @@ class SecondOrderModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         M = self.M
         E = self.E
         K = self.K
@@ -1505,7 +1527,9 @@ class SecondOrderModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         M = self.M
         E = self.E
         K = self.K
@@ -2037,7 +2061,9 @@ class LinearDelayModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A
         Ad = self.Ad
         B = self.B
@@ -2088,7 +2114,9 @@ class LinearDelayModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A
         Ad = self.Ad
         B = self.B

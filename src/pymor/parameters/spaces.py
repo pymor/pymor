@@ -58,11 +58,11 @@ class CubicParameterSpace(ParameterSpace):
         parameter_type = ParameterType(parameter_type)
         self.__auto_init(locals())
 
-    def parse_parameter(self, mu):
-        return Parameter.from_parameter_type(mu, self.parameter_type)
-
     def contains(self, mu):
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Parameter):
+            mu = self.parameter_type.parse(mu)
+        if not mu >= self.parameter_type:
+            return False
         return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
                    for k in self.parameter_type)
 

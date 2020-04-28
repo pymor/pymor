@@ -7,7 +7,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.base import ImmutableObject, abstractmethod
-from pymor.parameters.base import Parametric
+from pymor.parameters.base import Parameter, Parametric
 from pymor.tools.floatcmp import float_cmp
 
 
@@ -372,7 +372,9 @@ class MinThetaParameterFunctional(ParameterFunctional):
         thetas = tuple(ConstantParameterFunctional(theta) if not isinstance(theta, ParameterFunctional) else theta
                        for theta in thetas)
         self.build_parameter_type(*thetas)
-        mu_bar = self.parse_parameter(mu_bar)
+        if not isinstance(mu_bar, Parameter):
+            mu_bar = self.parameter_type.parse(mu_bar)
+        assert mu_bar >= self.parameter_type, self.parameter_type.why_incompatible(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
         assert np.all(thetas_mu_bar > 0)
         assert isinstance(alpha_mu_bar, Number)
@@ -440,7 +442,9 @@ class MaxThetaParameterFunctional(ParameterFunctional):
         thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                        for f in thetas)
         self.build_parameter_type(*thetas)
-        mu_bar = self.parse_parameter(mu_bar)
+        if not isinstance(mu_bar, Parameter):
+            mu_bar = self.parameter_type.parse(mu_bar)
+        assert mu_bar >= self.parameter_type, self.parameter_type.why_incompatible(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
         assert not np.any(float_cmp(thetas_mu_bar, 0))
         assert isinstance(gamma_mu_bar, Number)

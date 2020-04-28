@@ -9,6 +9,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
+from pymor.parameters.base import Parameter
 from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
                                    DelayLTIPGReductor)
 
@@ -51,8 +52,11 @@ class GenericBHIReductor(BasicObject):
     _PGReductor = ProjectionBasedReductor
 
     def __init__(self, fom, mu=None):
+        if not isinstance(mu, Parameter):
+            mu = fom.parameter_type.parse(mu)
+        assert mu >= fom.parameter_type, fom.parameter_type.why_incompatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -341,8 +345,11 @@ class TFBHIReductor(BasicObject):
         |Parameter|.
     """
     def __init__(self, fom, mu=None):
+        if not isinstance(mu, Parameter):
+            mu = fom.parameter_type.parse(mu)
+        assert mu >= fom.parameter_type, fom.parameter_type.why_incompatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
 
     def reduce(self, sigma, b, c):
         """Realization-independent tangential Hermite interpolation.

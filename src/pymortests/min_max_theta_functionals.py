@@ -18,8 +18,8 @@ def test_min_theta_parameter_functional():
     theta = MinThetaParameterFunctional(thetas, mu_bar, alpha_mu_bar)
     thetas = [ConstantParameterFunctional(t) if not isinstance(t, ParameterFunctional) else t
               for t in thetas]
-    mu = theta.parse_parameter(1)
-    mu_bar = theta.parse_parameter(mu_bar)
+    mu = theta.parameter_type.parse(1)
+    mu_bar = theta.parameter_type.parse(mu_bar)
     expected_value = alpha_mu_bar * np.min(np.array([t(mu) for t in thetas])/np.array([t(mu_bar) for t in thetas]))
     actual_value = theta.evaluate(mu)
     assert expected_value == actual_value
@@ -44,8 +44,8 @@ def test_max_theta_parameter_functional():
     theta = MaxThetaParameterFunctional(thetas, mu_bar, gamma_mu_bar)
     thetas = [ConstantParameterFunctional(t) if not isinstance(t, ParameterFunctional) else t
               for t in thetas]
-    mu = theta.parse_parameter(1)
-    mu_bar = theta.parse_parameter(mu_bar)
+    mu = theta.parameter_type.parse(1)
+    mu_bar = theta.parameter_type.parse(mu_bar)
     expected_value = gamma_mu_bar * np.abs(np.max(np.array([t(mu) for t in thetas])/np.array([t(mu_bar) for t in
         thetas])))
     actual_value = theta.evaluate(mu)

@@ -16,6 +16,7 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import InputOutputModel, LTIModel
 from pymor.operators.constructions import IdentityOperator
+from pymor.parameters.base import Parameter
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
 
@@ -40,8 +41,11 @@ class GenericIRKAReductor(BasicObject):
         self.errors = []
 
     def __init__(self, fom, mu=None):
+        if not isinstance(mu, Parameter):
+            mu = fom.parameter_type.parse(mu)
+        assert mu >= fom.parameter_type, fom.parameter_type.why_incompatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
