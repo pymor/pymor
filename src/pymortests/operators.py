@@ -37,7 +37,8 @@ def test_selection_op():
     )
     x = np.linspace(-1., 1., num=3)
     vx = p1.source.make_array(x[:, np.newaxis])
-    assert np.allclose(p1.apply(vx,mu=0).to_numpy(), s1.apply(vx,mu=0).to_numpy())
+    assert np.allclose(p1.apply(vx).to_numpy(),
+                       s1.apply(vx,mu=s1.parse_parameter(0)).to_numpy())
 
     s2 = SelectionOperator(
         operators=[p1,p1,p1,p1],
@@ -46,13 +47,13 @@ def test_selection_op():
         name="Bar"
     )
 
-    assert s2._get_operator_number({"nrrhs": -4}) == 0
-    assert s2._get_operator_number({"nrrhs": -3}) == 0
-    assert s2._get_operator_number({"nrrhs": -2}) == 1
-    assert s2._get_operator_number({"nrrhs": 3}) == 1
-    assert s2._get_operator_number({"nrrhs": 4}) == 2
-    assert s2._get_operator_number({"nrrhs": 7}) == 2
-    assert s2._get_operator_number({"nrrhs": 9}) == 3
+    assert s2._get_operator_number(s2.parse_parameter({"nrrhs": -4})) == 0
+    assert s2._get_operator_number(s2.parse_parameter({"nrrhs": -3})) == 0
+    assert s2._get_operator_number(s2.parse_parameter({"nrrhs": -2})) == 1
+    assert s2._get_operator_number(s2.parse_parameter({"nrrhs": 3})) == 1
+    assert s2._get_operator_number(s2.parse_parameter({"nrrhs": 4})) == 2
+    assert s2._get_operator_number(s2.parse_parameter({"nrrhs": 7})) == 2
+    assert s2._get_operator_number(s2.parse_parameter({"nrrhs": 9})) == 3
 
 
 def test_lincomb_op():

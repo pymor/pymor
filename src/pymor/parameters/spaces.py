@@ -20,7 +20,7 @@ class ParameterSpace(ImmutableObject):
         |ParameterType| of the space.
     """
 
-    parameter_type = None
+    parameter_type = ParameterType({})
 
     @abstractmethod
     def contains(self, mu):

@@ -86,8 +86,6 @@ class StationaryModel(Model):
         )
 
     def _solve(self, mu=None, return_output=False):
-        mu = self.parse_parameter(mu)
-
         # explicitly checking if logging is disabled saves the str(mu) call
         if not self.logging_disabled:
             self.logger.info(f'Solving {self.name} for {mu} ...')
@@ -203,7 +201,7 @@ class InstationaryModel(Model):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
     def _solve(self, mu=None, return_output=False):
-        mu = self.parse_parameter(mu).copy()
+        mu = mu.copy()
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:

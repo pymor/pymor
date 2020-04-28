@@ -100,7 +100,7 @@ class ProjectionParameterFunctional(ParameterFunctional):
         self.build_parameter_type({component_name: component_shape})
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         return mu[self.component_name].item(self.index)
 
     def d_mu(self, component, index=()):
@@ -140,7 +140,7 @@ class GenericParameterFunctional(ParameterFunctional):
         self.build_parameter_type(parameter_type)
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         value = self.mapping(mu)
         # ensure that we return a number not an array
         if isinstance(value, np.ndarray):
@@ -271,7 +271,7 @@ class ProductParameterFunctional(ParameterFunctional):
         self.build_parameter_type(*(f for f in factors if isinstance(f, ParameterFunctional)))
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
     def d_mu(self, component, index=()):
@@ -299,7 +299,7 @@ class ConjugateParameterFunctional(ParameterFunctional):
         self.build_parameter_type(functional)
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         return np.conj(self.functional.evaluate(mu))
 
     def d_mu(self, component, index=()):
@@ -381,7 +381,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
         self.thetas_mu_bar = thetas_mu_bar
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         thetas_mu = np.array([theta(mu) for theta in self.thetas])
         assert np.all(thetas_mu > 0)
         return self.alpha_mu_bar * np.min(thetas_mu / self.thetas_mu_bar)
@@ -449,7 +449,7 @@ class MaxThetaParameterFunctional(ParameterFunctional):
         self.thetas_mu_bar = thetas_mu_bar
 
     def evaluate(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         thetas_mu = np.array([theta(mu) for theta in self.thetas])
         assert np.all(np.logical_or(thetas_mu < 0, thetas_mu > 0))
         return self.gamma_mu_bar * np.abs(np.max(thetas_mu / self.thetas_mu_bar))

@@ -106,9 +106,9 @@ def thermalblock_factory(xblocks, yblocks, diameter, seed):
     V = m.operator.range.empty()
     np.random.seed(seed)
     for exp in np.random.random(5):
-        U.append(iop.as_vector(exp))
+        U.append(iop.as_vector(f.parse_parameter(exp)))
     for exp in np.random.random(6):
-        V.append(iop.as_vector(exp))
+        V.append(iop.as_vector(f.parse_parameter(exp)))
     return m.operator, m.parameter_space.sample_randomly(1, seed=seed)[0], U, V, m.h1_product, m.l2_product
 
 

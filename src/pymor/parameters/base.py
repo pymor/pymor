@@ -94,6 +94,27 @@ class ParameterType(OrderedDict):
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
 
+    def __le__(self, mu):
+        if mu is not None and not isinstance(mu, Parameter):
+            raise TypeError('mu is not a Parameter. (Use parse_parameter?)')
+        return not self or \
+            mu is not None and all(getattr(mu.get(k), 'shape') == v for k, v in self.items())
+
+    def why_incompatible(self, mu):
+        if mu is not None and not isinstance(mu, Parameter):
+            return 'mu is not a Parameter. (Use parse_parameter?)'
+        assert self
+        if mu is None:
+            mu = {}
+        failing_components = {}
+        for k, v in self.items():
+            if k not in mu:
+                failing_components[k] = f'missing != {v}'
+            elif mu[k].shape != v:
+                failing_components[k] = f'{mu[k].shape} != {v}'
+        assert failing_components
+        return f'Incompatible components: {failing_components}'
+
     def __reduce__(self):
         return (ParameterType, (dict(self),))
 
@@ -295,7 +316,7 @@ class Parametric:
         is not empty.
     """
 
-    parameter_type = None
+    parameter_type = ParameterType({})
 
     @property
     def parameter_space(self):

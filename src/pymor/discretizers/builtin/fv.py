@@ -264,7 +264,7 @@ class NonlinearAdvectionOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
 
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
@@ -319,7 +319,7 @@ class NonlinearAdvectionOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert U in self.source and len(U) == 1
-        mu = self.parse_parameter(mu)
+        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
 
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
