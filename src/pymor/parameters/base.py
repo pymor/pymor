@@ -356,19 +356,6 @@ class Parametric:
             f'Given parameter of type {mu.parameter_type} does not match expected parameter type {self.parameter_type}'
         return mu
 
-    def strip_parameter(self, mu):
-        """Remove all components of the |Parameter| `mu` which are not part of the object's |ParameterType|.
-
-        Otherwise :meth:`strip_parameter` behaves like :meth:`parse_parameter`.
-
-        This method is mainly useful for caching where the key should only contain the
-        relevant parameter components.
-        """
-        if mu.__class__ is not Parameter:
-            mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.items())
-        return Parameter({k: mu[k] for k in self.parameter_type})
-
     def build_parameter_type(self, *args, provides=None, **kwargs):
         """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
 
