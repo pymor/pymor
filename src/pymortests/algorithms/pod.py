@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, assume, reproduce_failure
+from hypothesis import given, assume, reproduce_failure, settings
 from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal
@@ -16,6 +16,7 @@ from pymortests.strategies import vector_arrays
 methods = ['method_of_snapshots', 'qr_svd']
 
 
+@settings(deadline=None)
 @given(vector_arrays(count=1), sampled_from(methods))
 def test_pod(vector_array, method):
     A = vector_array[0]
