@@ -17,7 +17,7 @@ import pymortests.strategies as pyst
 
 
 @given(pyst.vector_arrays(count=1))
-@settings(deadline=None)
+@settings(deadline=20000)
 def test_gram_schmidt(vector_array):
     U = vector_array[0]
     # TODO assumption here masks a potential issue with the algorithm
@@ -28,7 +28,8 @@ def test_gram_schmidt(vector_array):
     onb = gram_schmidt(U, copy=True)
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.dot(onb), np.eye(len(onb)))
-    assert np.all(almost_equal(U, onb.lincomb(onb.dot(U).T), rtol=1e-13))
+    # TODO maybe raise tolerances again
+    assert np.all(almost_equal(U, onb.lincomb(onb.dot(U).T), atol=1e-13, rtol=1e-13))
 
     onb2 = gram_schmidt(U, copy=False)
     assert np.all(almost_equal(onb, onb2))
