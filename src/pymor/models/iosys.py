@@ -16,7 +16,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.base import Mu, ParameterType
+from pymor.parameters.base import Mu, Parameters
 from pymor.tools.formatrepr import indent_value
 from pymor.vectorarrays.block import BlockVectorSpace
 
@@ -889,7 +889,7 @@ class TransferFunction(InputOutputModel):
 
     def __init__(self, input_space, output_space, tf, dtf, cont_time=True, parameter_space=None, name=None):
         super().__init__(input_space, output_space, cont_time=cont_time, name=name)
-        self.parameter_type = parameter_space.parameter_type if parameter_space else ParameterType({})
+        self.parameter_type = parameter_space.parameter_type if parameter_space else Parameters({})
         self.__auto_init(locals())
 
     def __str__(self):

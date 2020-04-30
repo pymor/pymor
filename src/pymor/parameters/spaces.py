@@ -7,7 +7,7 @@ from itertools import product
 import numpy as np
 
 from pymor.core.base import ImmutableObject, abstractmethod
-from pymor.parameters.base import Mu, ParameterType
+from pymor.parameters.base import Mu, Parameters
 from pymor.tools.random import get_random_state
 
 
@@ -20,7 +20,7 @@ class ParameterSpace(ImmutableObject):
         |ParameterType| of the space.
     """
 
-    parameter_type = ParameterType({})
+    parameter_type = Parameters({})
 
     @abstractmethod
     def contains(self, mu):
@@ -55,7 +55,7 @@ class CubicParameterSpace(ParameterSpace):
         assert minimum is None or minimum < maximum
         if ranges is None:
             ranges = {k: (minimum, maximum) for k in parameter_type}
-        parameter_type = ParameterType(parameter_type)
+        parameter_type = Parameters(parameter_type)
         self.__auto_init(locals())
 
     def contains(self, mu):

@@ -43,7 +43,7 @@ from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.pprint import format_array
 
 
-class ParameterType(OrderedDict):
+class Parameters(OrderedDict):
     """Class representing a parameter type.
 
     A parameter type is simply a dictionary with strings as keys and tuples of
@@ -65,10 +65,10 @@ class ParameterType(OrderedDict):
     def __init__(self, t):
         if t is None:
             t = {}
-        elif isinstance(t, ParameterType):
+        elif isinstance(t, Parameters):
             pass
         elif hasattr(t, 'parameter_type'):
-            assert isinstance(t.parameter_type, ParameterType)
+            assert isinstance(t.parameter_type, Parameters)
             t = t.parameter_type
         else:
             t = dict(t)
@@ -83,7 +83,7 @@ class ParameterType(OrderedDict):
         raise ValueError('ParameterTypes cannot be modified')
 
     def copy(self):
-        return ParameterType(self)
+        return Parameters(self)
 
     def fromkeys(self, S, v=None):
         raise NotImplementedError
@@ -174,7 +174,7 @@ class ParameterType(OrderedDict):
         return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
     def __reduce__(self):
-        return (ParameterType, (dict(self),))
+        return (Parameters, (dict(self),))
 
     def __hash__(self):
         return hash(tuple(self.items()))
@@ -271,7 +271,7 @@ class Mu(dict):
 
     @property
     def parameter_type(self):
-        return ParameterType({k: v.shape for k, v in self.items()})
+        return Parameters({k: v.shape for k, v in self.items()})
 
     def __str__(self):
         np.set_string_function(format_array, repr=False)
@@ -313,7 +313,7 @@ class Parametric:
         is not empty.
     """
 
-    parameter_type = ParameterType({})
+    parameter_type = Parameters({})
 
     @property
     def parameter_space(self):
@@ -391,4 +391,4 @@ class Parametric:
             assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
             my_parameter_type.pop(component, None)
 
-        self.parameter_type = ParameterType(my_parameter_type)
+        self.parameter_type = Parameters(my_parameter_type)
