@@ -16,11 +16,11 @@ class ParameterSpace(ImmutableObject):
 
     Attributes
     ----------
-    parameter_type
+    parameters
         |ParameterType| of the space.
     """
 
-    parameter_type = Parameters({})
+    parameters = Parameters({})
 
     @abstractmethod
     def contains(self, mu):
@@ -33,7 +33,7 @@ class CubicParameterSpace(ParameterSpace):
 
     Parameters
     ----------
-    parameter_type
+    parameters
         The |ParameterType| of the space.
     minimum
         The minimum for each matrix entry of each |Parameter| component.
@@ -42,43 +42,43 @@ class CubicParameterSpace(ParameterSpace):
         The maximum for each matrix entry of each |Parameter| component.
         Must be `None` if `ranges` is specified.
     ranges
-        dict whose keys agree with `parameter_type` and whose values
+        dict whose keys agree with `parameters` and whose values
         are tuples (min, max) specifying the minimum and maximum of each
         matrix entry of corresponding |Parameter| component.
         Must be `None` if `minimum` and `maximum` are specified.
     """
 
-    def __init__(self, parameter_type, minimum=None, maximum=None, ranges=None):
+    def __init__(self, parameters, minimum=None, maximum=None, ranges=None):
         assert ranges is None or (minimum is None and maximum is None), 'Must specify minimum, maximum or ranges'
         assert ranges is not None or (minimum is not None and maximum is not None),\
             'Must specify minimum, maximum or ranges'
         assert minimum is None or minimum < maximum
         if ranges is None:
-            ranges = {k: (minimum, maximum) for k in parameter_type}
-        parameter_type = Parameters(parameter_type)
+            ranges = {k: (minimum, maximum) for k in parameters}
+        parameters = Parameters(parameters)
         self.__auto_init(locals())
 
     def contains(self, mu):
         if not isinstance(mu, Mu):
-            mu = self.parameter_type.parse(mu)
-        if not mu >= self.parameter_type:
+            mu = self.parameters.parse(mu)
+        if not mu >= self.parameters:
             return False
         return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
-                   for k in self.parameter_type)
+                   for k in self.parameters)
 
     def sample_uniformly(self, counts):
         """Uniformly sample |Parameters| from the space."""
         if isinstance(counts, dict):
             pass
         elif isinstance(counts, (tuple, list, np.ndarray)):
-            counts = {k: c for k, c in zip(self.parameter_type, counts)}
+            counts = {k: c for k, c in zip(self.parameters, counts)}
         else:
-            counts = {k: counts for k in self.parameter_type}
-        linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameter_type)
+            counts = {k: counts for k in self.parameters}
+        linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameters)
         iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
-                      for ls, sps in zip(linspaces, self.parameter_type.values()))
+                      for ls, sps in zip(linspaces, self.parameters.values()))
         return [Mu(((k, np.array(v).reshape(shp))
-                           for k, v, shp in zip(self.parameter_type, i, self.parameter_type.values())))
+                           for k, v, shp in zip(self.parameters, i, self.parameters.values())))
                 for i in product(*iters)]
 
     def sample_randomly(self, count=None, random_state=None, seed=None):
@@ -106,7 +106,7 @@ class CubicParameterSpace(ParameterSpace):
         ranges = self.ranges
         random_state = get_random_state(random_state, seed)
         get_param = lambda: Mu(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
-                                       for k, shp in self.parameter_type.items()))
+                                       for k, shp in self.parameters.items()))
         if count is None:
             def param_generator():
                 while True:
@@ -116,7 +116,7 @@ class CubicParameterSpace(ParameterSpace):
             return [get_param() for _ in range(count)]
 
     def __str__(self):
-        rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.items()]
+        rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameters.items()]
         column_widths = [max(map(len, c)) for c in zip(*rows)]
         return ('CubicParameterSpace\n'
                 + '\n'.join(('key: {:' + str(column_widths[0] + 2)

@@ -101,7 +101,7 @@ def main(args):
 
     # define estimator for coercivity constant
     from pymor.parameters.functionals import ExpressionParameterFunctional
-    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameter_type)
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
 
     # inner product for computation of Riesz representatives
     product = fom.h1_0_semi_product if args['--product'] == 'h1' else None
@@ -336,7 +336,7 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
 
     # build model
     visualizer = FenicsVisualizer(FenicsVectorSpace(V))
-    parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
+    parameter_space = CubicParameterSpace(op.parameters, 0.1, 1.)
     fom = StationaryModel(op, rhs, products={'h1_0_semi': h1_product,
                                              'l2': l2_product},
                           parameter_space=parameter_space,

@@ -129,8 +129,8 @@ class GenericFunction(Function):
     Parameters
     ----------
     mapping
-        The function to wrap. If `parameter_type` is `None`, the function is of
-        the form `mapping(x)`. If `parameter_type` is not `None`, the function has
+        The function to wrap. If `parameters` is `None`, the function is of
+        the form `mapping(x)`. If `parameters` is not `None`, the function has
         to have the signature `mapping(x, mu)`. Moreover, the function is expected
         to be vectorized, i.e.::
 
@@ -140,25 +140,25 @@ class GenericFunction(Function):
         The dimension of the domain.
     shape_range
         The shape of the values returned by the mapping.
-    parameter_type
+    parameters
         The |ParameterType| the mapping accepts.
     name
         The name of the function.
     """
 
-    def __init__(self, mapping, dim_domain=1, shape_range=(), parameter_type=None, name=None):
+    def __init__(self, mapping, dim_domain=1, shape_range=(), parameters=None, name=None):
         assert dim_domain > 0
         assert isinstance(shape_range, (Number, tuple))
         if not isinstance(shape_range, tuple):
             shape_range = (shape_range,)
-        self.build_parameter_type(parameter_type)
+        self.build_parameter_type(parameters)
         self.__auto_init(locals())
 
     def __str__(self):
         return f'{self.name}: x -> {self.mapping}'
 
     def evaluate(self, x, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
 
@@ -194,7 +194,7 @@ class ExpressionFunction(GenericFunction):
         The dimension of the domain.
     shape_range
         The shape of the values returned by the expression.
-    parameter_type
+    parameters
         The |ParameterType| the expression accepts.
     values
         Dictionary of additional constants that can be used in `expression`
@@ -205,16 +205,16 @@ class ExpressionFunction(GenericFunction):
 
     functions = ExpressionParameterFunctional.functions
 
-    def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, values=None, name=None):
+    def __init__(self, expression, dim_domain=1, shape_range=(), parameters=None, values=None, name=None):
         values = values or {}
         code = compile(expression, '<expression>', 'eval')
         super().__init__(lambda x, mu={}: eval(code, dict(self.functions, **values), dict(mu, x=x, mu=mu)),
-                         dim_domain, shape_range, parameter_type, name)
+                         dim_domain, shape_range, parameters, name)
         self.__auto_init(locals())
 
     def __reduce__(self):
         return (ExpressionFunction,
-                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.values,
+                (self.expression, self.dim_domain, self.shape_range, self.parameters, self.values,
                  getattr(self, '_name', None)))
 
 
@@ -255,11 +255,11 @@ class LincombFunction(Function):
 
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients for a given |Parameter| `mu`."""
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
     def evaluate(self, x, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         coeffs = self.evaluate_coefficients(mu)
         return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))
 
@@ -290,7 +290,7 @@ class ProductFunction(Function):
         self.shape_range = functions[0].shape_range
 
     def evaluate(self, x, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.prod([f(x, mu) for f in self.functions], axis=0)
 
 

@@ -71,7 +71,7 @@ def burgers_demo(args):
     )
     print(m.operator.grid)
 
-    print(f'The parameter type is {m.parameter_type}')
+    print(f'The parameters are {m.parameters}')
 
     mu = args['EXP']
     print(f'Solving for exponent = {mu} ... ')

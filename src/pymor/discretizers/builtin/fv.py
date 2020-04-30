@@ -264,7 +264,7 @@ class NonlinearAdvectionOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
 
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
@@ -319,7 +319,7 @@ class NonlinearAdvectionOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert U in self.source and len(U) == 1
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
 
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
@@ -1079,7 +1079,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
             I = m.solution_space.make_array(I)
             return I.lincomb(U).to_numpy()
         I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True, range_id=m.solution_space.id,
-                                 parameter_type=p.initial_data.parameter_type)
+                                 parameters=p.initial_data.parameters)
     else:
         I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
         I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)

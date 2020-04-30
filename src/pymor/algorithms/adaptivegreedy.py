@@ -316,10 +316,10 @@ class AdaptiveSampleSet(BasicObject):
     def __init__(self, parameter_space):
         assert isinstance(parameter_space, CubicParameterSpace)
         self.parameter_space = parameter_space
-        self.parameter_type = parameter_space.parameter_type
+        self.parameters = parameter_space.parameters
         self.ranges = np.concatenate([np.tile(np.array(parameter_space.ranges[k])[np.newaxis, :],
                                               [np.prod(shape), 1])
-                                      for k, shape in parameter_space.parameter_type.items()], axis=0)
+                                      for k, shape in parameter_space.parameters.items()], axis=0)
         self.dimensions = self.ranges[:, 1] - self.ranges[:, 0]
         self.total_volume = np.prod(self.dimensions)
         self.dim = len(self.dimensions)
@@ -340,7 +340,7 @@ class AdaptiveSampleSet(BasicObject):
     def map_vertex_to_mu(self, vertex):
         values = self.ranges[:, 0] + self.dimensions * list(map(float, vertex))
         mu = Mu({})
-        for k, shape in self.parameter_type.items():
+        for k, shape in self.parameters.items():
             count = np.prod(shape, dtype=int)
             head, values = values[:count], values[count:]
             mu[k] = np.array(head).reshape(shape)

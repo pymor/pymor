@@ -95,7 +95,7 @@ class EmpiricalInterpolatedOperator(Operator):
             return self._operator
 
     def apply(self, U, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         if len(self.interpolation_dofs) == 0:
             return self.range.zeros(len(U))
 
@@ -115,7 +115,7 @@ class EmpiricalInterpolatedOperator(Operator):
         return self.collateral_basis.lincomb(interpolation_coefficients)
 
     def jacobian(self, U, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
 
         if len(self.interpolation_dofs) == 0:
@@ -171,7 +171,7 @@ class ProjectedEmpiciralInterpolatedOperator(Operator):
         self.build_parameter_type(restricted_operator)
 
     def apply(self, U, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         U_dofs = self.source_basis_dofs.lincomb(U.to_numpy())
         AU = self.restricted_operator.apply(U_dofs, mu=mu)
         try:
@@ -186,7 +186,7 @@ class ProjectedEmpiciralInterpolatedOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
 
         if self.interpolation_matrix.shape[0] == 0:

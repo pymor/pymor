@@ -34,20 +34,20 @@ class NumpyGenericOperator(Operator):
     Parameters
     ----------
     mapping
-        The function to wrap. If `parameter_type` is `None`, the function is of
+        The function to wrap. If `parameters` is `None`, the function is of
         the form `mapping(U)` and is expected to be vectorized. In particular::
 
             mapping(U).shape == U.shape[:-1] + (dim_range,).
 
-        If `parameter_type` is not `None`, the function has to have the signature
+        If `parameters` is not `None`, the function has to have the signature
         `mapping(U, mu)`.
     adjoint_mapping
-        The adjoint function to wrap. If `parameter_type` is `None`, the function is of
+        The adjoint function to wrap. If `parameters` is `None`, the function is of
         the form `adjoint_mapping(U)` and is expected to be vectorized. In particular::
 
             adjoint_mapping(U).shape == U.shape[:-1] + (dim_source,).
 
-        If `parameter_type` is not `None`, the function has to have the signature
+        If `parameters` is not `None`, the function has to have the signature
         `adjoint_mapping(U, mu)`.
     dim_source
         Dimension of the operator's source.
@@ -55,7 +55,7 @@ class NumpyGenericOperator(Operator):
         Dimension of the operator's range.
     linear
         Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
-    parameter_type
+    parameters
         The |ParameterType| of the |Parameters| the mapping accepts.
     solver_options
         The |solver_options| for the operator.
@@ -63,16 +63,16 @@ class NumpyGenericOperator(Operator):
         Name of the operator.
     """
 
-    def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
+    def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameters=None,
                  source_id=None, range_id=None, solver_options=None, name=None):
         self.__auto_init(locals())
         self.source = NumpyVectorSpace(dim_source, source_id)
         self.range = NumpyVectorSpace(dim_range, range_id)
-        self.build_parameter_type(parameter_type)
+        self.build_parameter_type(parameters)
 
     def apply(self, U, mu=None):
         assert U in self.source
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         if self.parametric:
             return self.range.make_array(self.mapping(U.to_numpy(), mu=mu))
         else:
@@ -82,7 +82,7 @@ class NumpyGenericOperator(Operator):
         if self.adjoint_mapping is None:
             raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
         assert V in self.range
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         V = V.to_numpy()
         if self.parametric:
             return self.source.make_array(self.adjoint_mapping(V, mu=mu))
@@ -115,7 +115,7 @@ class NumpyMatrixBasedOperator(Operator):
         pass
 
     def assemble(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return NumpyMatrixOperator(self._assemble(mu),
                                    source_id=self.source.id,
                                    range_id=self.range.id,

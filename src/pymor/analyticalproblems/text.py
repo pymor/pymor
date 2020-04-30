@@ -62,5 +62,5 @@ def text_problem(text='pyMOR', font_name=None):
         domain=RectDomain(dfs[1].bounding_box, bottom='neumann'),
         neumann_data=ConstantFunction(-1., 2),
         diffusion=diffusion,
-        parameter_space=CubicParameterSpace(diffusion.parameter_type, 0.1, 1.)
+        parameter_space=CubicParameterSpace(diffusion.parameters, 0.1, 1.)
     )

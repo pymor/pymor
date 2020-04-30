@@ -121,7 +121,7 @@ def main(args):
 
     print(fom.operator.grid)
 
-    print(f'The parameter type is {fom.parameter_type}')
+    print(f'The parameters are {fom.parameters}')
 
     if args['--plot-solutions']:
         print('Showing some solutions')

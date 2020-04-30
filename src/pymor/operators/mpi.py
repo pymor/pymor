@@ -85,7 +85,7 @@ class MPIOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         U = U.obj_id if self.mpi_source else U
         if self.mpi_range:
             return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply', U, mu=mu))
@@ -93,11 +93,11 @@ class MPIOperator(Operator):
             return mpi.call(mpi.method_call, self.obj_id, 'apply', U, mu=mu)
 
     def as_range_array(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_range_array', mu=mu))
 
     def as_source_array(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_source_array', mu=mu))
 
     def apply2(self, V, U, mu=None):
@@ -105,7 +105,7 @@ class MPIOperator(Operator):
             return super().apply2(V, U, mu=mu)
         assert V in self.range
         assert U in self.source
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         U = U.obj_id if self.mpi_source else U
         V = V.obj_id if self.mpi_range else V
         return mpi.call(mpi.method_call, self.obj_id, 'apply2', V, U, mu=mu)
@@ -115,14 +115,14 @@ class MPIOperator(Operator):
             return super().pairwise_apply2(V, U, mu=mu)
         assert V in self.range
         assert U in self.source
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         U = U.obj_id if self.mpi_source else U
         V = V.obj_id if self.mpi_range else V
         return mpi.call(mpi.method_call, self.obj_id, 'pairwise_apply2', V, U, mu=mu)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         V = V.obj_id if self.mpi_range else V
         if self.mpi_source:
             return self.source.make_array(
@@ -135,7 +135,7 @@ class MPIOperator(Operator):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
         assert V in self.range
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
                                                V.obj_id, mu=mu, least_squares=least_squares))
 
@@ -143,17 +143,17 @@ class MPIOperator(Operator):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
         assert U in self.source
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse_adjoint',
                                                U.obj_id, mu=mu, least_squares=least_squares))
 
     def jacobian(self, U, mu=None):
         assert U in self.source
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'jacobian', U.obj_id, mu=mu))
 
     def assemble(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
 
     def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):

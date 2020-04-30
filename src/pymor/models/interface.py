@@ -71,8 +71,8 @@ class Model(CacheableObject, Parametric):
         the output |VectorArray| is returned as second value.
         """
         if not isinstance(mu, Mu):
-            mu = self.parameter_type.parse(mu)
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+            mu = self.parameters.parse(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return self.cached_method_call(self._solve, mu=mu, return_output=return_output, **kwargs)
 
     def output(self, mu=None, **kwargs):

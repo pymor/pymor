@@ -217,15 +217,15 @@ if config.HAVE_FENICS:
         linear = False
 
         def __init__(self, form, source_space, range_space, source_function, dirichlet_bcs=(),
-                     parameter_setter=None, parameter_type=None, solver_options=None, name=None):
+                     parameter_setter=None, parameters=None, solver_options=None, name=None):
             assert len(form.arguments()) == 1
             self.__auto_init(locals())
             self.source = source_space
             self.range = range_space
-            self.build_parameter_type(parameter_type)
+            self.build_parameter_type(parameters)
 
         def _set_mu(self, mu=None):
-            assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+            assert mu >= self.parameters, self.parameters.why_incompatible(mu)
             if self.parameter_setter:
                 self.parameter_setter(mu)
 
@@ -313,7 +313,7 @@ if config.HAVE_FENICS:
 
                 op_r = FenicsOperator(form_r, FenicsVectorSpace(V_r_source), FenicsVectorSpace(V_r_range),
                                       source_function_r, dirichlet_bcs=bc_r, parameter_setter=self.parameter_setter,
-                                      parameter_type=self.parameter_type)
+                                      parameters=self.parameters)
 
                 return (RestrictedFenicsOperator(op_r, restricted_range_dofs),
                         source_dofs[np.argsort(restricted_source_dofs)])

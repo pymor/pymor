@@ -117,7 +117,7 @@ def thermalblock_demo(args):
 
     product = fom.h1_0_semi_product if args['--product'] == 'h1' else None
     coercivity_estimator = ExpressionParameterFunctional('min([diffusion[0], diffusion[1]**2])',
-                                                         fom.parameter_type)
+                                                         fom.parameters)
     reductors = {'residual_basis': CoerciveRBReductor(fom, product=product,
                                                       coercivity_estimator=coercivity_estimator),
                  'traditional': SimpleCoerciveRBReductor(fom, product=product,

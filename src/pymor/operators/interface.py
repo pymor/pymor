@@ -110,7 +110,7 @@ class Operator(ImmutableObject, Parametric):
         A |NumPy array| with shape `(len(V), len(U))` containing the 2-form
         evaluations.
         """
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         assert isinstance(V, VectorArray)
         assert isinstance(U, VectorArray)
         AU = self.apply(U, mu=mu)
@@ -136,7 +136,7 @@ class Operator(ImmutableObject, Parametric):
         A |NumPy array| with shape `(len(V),) == (len(U),)` containing
         the 2-form evaluations.
         """
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         assert isinstance(V, VectorArray)
         assert isinstance(U, VectorArray)
         assert len(U) == len(V)
@@ -542,4 +542,4 @@ class Operator(ImmutableObject, Parametric):
 
     def __str__(self):
         return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
-               f'(parameter type: {self.parameter_type}, class: {self.__class__.__name__})'
+               f'(parameters: {self.parameters}, class: {self.__class__.__name__})'

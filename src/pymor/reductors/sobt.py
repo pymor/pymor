@@ -30,8 +30,8 @@ class GenericSOBTpvReductor(BasicObject):
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         if not isinstance(mu, Mu):
-            mu = fom.parameter_type.parse(mu)
-        assert mu >= fom.parameter_type, fom.parameter_type.why_incompatible(mu)
+            mu = fom.parameters.parse(mu)
+        assert mu >= fom.parameters, fom.parameters.why_incompatible(mu)
         self.fom = fom
         self.mu = mu
         self.V = None
@@ -221,8 +221,8 @@ class SOBTfvReductor(BasicObject):
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         if not isinstance(mu, Mu):
-            mu = fom.parameter_type.parse(mu)
-        assert mu >= fom.parameter_type, fom.parameter_type.why_incompatible(mu)
+            mu = fom.parameters.parse(mu)
+        assert mu >= fom.parameters, fom.parameters.why_incompatible(mu)
         self.fom = fom
         self.mu = mu
         self.V = None
@@ -306,8 +306,8 @@ class SOBTReductor(BasicObject):
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         if not isinstance(mu, Mu):
-            mu = fom.parameter_type.parse(mu)
-        assert mu >= fom.parameter_type, fom.parameter_type.why_incompatible(mu)
+            mu = fom.parameters.parse(mu)
+        assert mu >= fom.parameters, fom.parameters.why_incompatible(mu)
         self.fom = fom
         self.mu = mu
         self.V1 = None

@@ -239,7 +239,7 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
 
     # select reduction algorithm with error estimator
     #################################################
-    coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameter_type)
+    coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameters)
     reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
     # generate reduced model

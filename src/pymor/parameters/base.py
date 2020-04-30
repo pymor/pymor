@@ -8,11 +8,11 @@ A |Parameter| in pyMOR is basically a `dict` of |NumPy Arrays|. Each item of the
 dict is called a parameter component. The |ParameterType| of a |Parameter| is the dict
 of the shapes of the parameter components, i.e. ::
 
-    mu.parameter_type['component'] == mu['component'].shape
+    mu.parameters['component'] == mu['component'].shape
 
 Classes which represent mathematical objects depending on parameters, e.g. |Functions|,
 |Operators|, |Models| derive from the |Parametric| mixin. Each |Parametric|
-object has a :attr:`~Parametric.parameter_type` attribute holding the |ParameterType|
+object has a :attr:`~Parametric.parameters` attribute holding the |ParameterType|
 of the |Parameters| the object's `evaluate`, `apply`, `solve`, etc. methods expect.
 Note that the |ParameterType| of the given |Parameter| is allowed to be a
 superset of the object's |ParameterType|.
@@ -57,7 +57,7 @@ class Parameters(OrderedDict):
     Parameters
     ----------
     t
-        If `t` is an object with a `parameter_type` attribute, a copy of this
+        If `t` is an object with a `parameters` attribute, a copy of this
         |ParameterType| is created. Otherwise, `t` can be anything from which
         a `dict` can be constructed.
     """
@@ -67,9 +67,9 @@ class Parameters(OrderedDict):
             t = {}
         elif isinstance(t, Parameters):
             pass
-        elif hasattr(t, 'parameter_type'):
-            assert isinstance(t.parameter_type, Parameters)
-            t = t.parameter_type
+        elif hasattr(t, 'parameters'):
+            assert isinstance(t.parameters, Parameters)
+            t = t.parameters
         else:
             t = dict(t)
             for k, v in t.items():
@@ -96,13 +96,13 @@ class Parameters(OrderedDict):
 
     def __le__(self, mu):
         if mu is not None and not isinstance(mu, Mu):
-            raise TypeError('mu is not a Parameter. (Use parameter_type.parse?)')
+            raise TypeError('mu is not a Parameter. (Use parameters.parse?)')
         return not self or \
             mu is not None and all(getattr(mu.get(k), 'shape') == v for k, v in self.items())
 
     def why_incompatible(self, mu):
         if mu is not None and not isinstance(mu, Mu):
-            return 'mu is not a Parameter. (Use parameter_type.parse?)'
+            return 'mu is not a Parameter. (Use parameters.parse?)'
         assert self
         if mu is None:
             mu = {}
@@ -135,14 +135,14 @@ class Parameters(OrderedDict):
         ------
         ValueError
             Is raised if `mu` cannot be interpreted as a |Parameter| of |ParameterType|
-            `parameter_type`.
+            `parameters`.
         """
         if not self:
             assert mu is None or mu == {}
             return Mu({})
 
         if isinstance(mu, Mu):
-            assert mu.parameter_type == self
+            assert mu.parameters == self
             return mu
 
         if not isinstance(mu, dict):
@@ -195,7 +195,7 @@ class Mu(dict):
           equality in a mathematically meaningful way.
         - We override :meth:`__str__` to ensure alphanumerical ordering of the keys
           and pretty printing of the values.
-        - The :attr:`parameter_type` property can be used to obtain the |ParameterType|
+        - The :attr:`parameters` property can be used to obtain the |ParameterType|
           of the parameter.
         - Use :meth:`from_parameter_type` to construct a |Parameter| from a |ParameterType|
           and user supplied input.
@@ -207,7 +207,7 @@ class Mu(dict):
 
     Attributes
     ----------
-    parameter_type
+    parameters
         The |ParameterType| of the |Parameter|.
     """
 
@@ -270,7 +270,7 @@ class Mu(dict):
         raise NotImplementedError
 
     @property
-    def parameter_type(self):
+    def parameters(self):
         return Parameters({k: v.shape for k, v in self.items()})
 
     def __str__(self):
@@ -295,7 +295,7 @@ class Mu(dict):
 class Parametric:
     """Mixin class for objects representing mathematical entities depending on a |Parameter|.
 
-    Each such object has a |ParameterType| stored in the :attr:`parameter_type` attribute,
+    Each such object has a |ParameterType| stored in the :attr:`parameters` attribute,
     which should be set by the implementor during :meth:`__init__` using the
     :meth:`build_parameter_type` method. Methods expecting the |Parameter| (typically
     `evaluate`, `apply`, `solve`, etc. ..) should accept an optional argument `mu` defaulting
@@ -304,16 +304,16 @@ class Parametric:
 
     Attributes
     ----------
-    parameter_type
+    parameters
         The |ParameterType| of the |Parameters| the object expects.
     parameter_space
         |ParameterSpace| the parameters are expected to lie in or `None`.
     parametric:
-        `True` if the object really depends on a parameter, i.e. :attr:`parameter_type`
+        `True` if the object really depends on a parameter, i.e. :attr:`parameters`
         is not empty.
     """
 
-    parameter_type = Parameters({})
+    parameters = Parameters({})
 
     @property
     def parameter_space(self):
@@ -321,12 +321,12 @@ class Parametric:
 
     @parameter_space.setter
     def parameter_space(self, ps):
-        assert ps is None or self.parameter_type == ps.parameter_type
+        assert ps is None or self.parameters == ps.parameters
         self._parameter_space = ps
 
     @property
     def parametric(self):
-        return bool(self.parameter_type)
+        return bool(self.parameters)
 
     def build_parameter_type(self, *args, provides=None, **kwargs):
         """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
@@ -351,7 +351,7 @@ class Parametric:
         ----------
         args
             Each positional argument must either be a dict of parameter components and shapes or
-            a |Parametric| object whose :attr:`~Parametric.parameter_type` is added.
+            a |Parametric| object whose :attr:`~Parametric.parameters` is added.
         kwargs
             Each keyword argument is interpreted as parameter component with corresponding shape.
         provides
@@ -360,7 +360,7 @@ class Parametric:
             |ParameterType|.
         """
         provides = provides or {}
-        my_parameter_type = {}
+        my_parameters = {}
 
         def check_shapes(shape1, shape2):
             if type(shape1) is not tuple:
@@ -371,24 +371,24 @@ class Parametric:
                 shape2 = () if shape2 == 0 else (shape2,)
             assert shape1 == shape2, \
                 (f'Dimension mismatch for parameter component {component} '
-                 f'(got {my_parameter_type[component]} and {shape})')
+                 f'(got {my_parameters[component]} and {shape})')
             return True
 
         for arg in args:
-            if hasattr(arg, 'parameter_type'):
-                arg = arg.parameter_type
+            if hasattr(arg, 'parameters'):
+                arg = arg.parameters
             if arg is None:
                 continue
             for component, shape in arg.items():
-                assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
-                my_parameter_type[component] = shape
+                assert component not in my_parameters or check_shapes(my_parameters[component], shape)
+                my_parameters[component] = shape
 
         for component, shape in kwargs.items():
-            assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
-            my_parameter_type[component] = shape
+            assert component not in my_parameters or check_shapes(my_parameters[component], shape)
+            my_parameters[component] = shape
 
         for component, shape in provides.items():
-            assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
-            my_parameter_type.pop(component, None)
+            assert component not in my_parameters or check_shapes(my_parameters[component], shape)
+            my_parameters.pop(component, None)
 
-        self.parameter_type = Parameters(my_parameter_type)
+        self.parameters = Parameters(my_parameters)

@@ -59,7 +59,7 @@ def discretize(DIM, N, ORDER):
     space = FenicsVectorSpace(V)
     op = FenicsOperator(F, space, space, u, (bc,),
                         parameter_setter=lambda mu: c.assign(float(mu['c'])),
-                        parameter_type={'c': ()},
+                        parameters={'c': ()},
                         solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
     rhs = VectorOperator(op.range.zeros())
 

@@ -41,7 +41,7 @@ def discretize(n, nt, blocks):
     visualizer = OnedVisualizer(grid)
 
     time_stepper = ExplicitEulerTimeStepper(nt)
-    parameter_space = CubicParameterSpace(operator.parameter_type, 0.1, 1)
+    parameter_space = CubicParameterSpace(operator.parameters, 0.1, 1)
 
     fom = InstationaryModel(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
                             time_stepper=time_stepper, num_values=20, parameter_space=parameter_space,

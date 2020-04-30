@@ -55,8 +55,8 @@ class ParameterFunctional(ImmutableObject, Parametric):
         return self * (-1.)
 
     def _check_and_parse_input(self, component, index):
-        # check whether component is in parameter_type
-        if component not in self.parameter_type:
+        # check whether component is in parameters
+        if component not in self.parameters:
             return False, None
         # check whether index has the correct shape
         if isinstance(index, Number):
@@ -64,7 +64,7 @@ class ParameterFunctional(ImmutableObject, Parametric):
         index = tuple(index)
         for idx in index:
             assert isinstance(idx, Number)
-        shape = self.parameter_type[component]
+        shape = self.parameters[component]
         for i,idx in enumerate(index):
             assert idx < shape[i], 'wrong input `index` given'
         return True, index
@@ -100,7 +100,7 @@ class ProjectionParameterFunctional(ParameterFunctional):
         self.build_parameter_type({component_name: component_shape})
 
     def evaluate(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return mu[self.component_name].item(self.index)
 
     def d_mu(self, component, index=()):
@@ -123,7 +123,7 @@ class GenericParameterFunctional(ParameterFunctional):
     ----------
     mapping
         The function to wrap. The function has signature `mapping(mu)`.
-    parameter_type
+    parameters
         The |ParameterType| of the |Parameters| the functional expects.
     name
         The name of the functional.
@@ -135,12 +135,12 @@ class GenericParameterFunctional(ParameterFunctional):
         |ParameterType| with the signature `second_derivative_mappings[component_i][index_i][component_j][index_j](mu)`
     """
 
-    def __init__(self, mapping, parameter_type, name=None, derivative_mappings=None, second_derivative_mappings=None):
+    def __init__(self, mapping, parameters, name=None, derivative_mappings=None, second_derivative_mappings=None):
         self.__auto_init(locals())
-        self.build_parameter_type(parameter_type)
+        self.build_parameter_type(parameters)
 
     def evaluate(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         value = self.mapping(mu)
         # ensure that we return a number not an array
         if isinstance(value, np.ndarray):
@@ -153,20 +153,20 @@ class GenericParameterFunctional(ParameterFunctional):
         if check:
             if self.derivative_mappings is None:
                 raise ValueError('You must provide a dict of expressions for all \
-                                  partial derivatives in self.parameter_type')
+                                  partial derivatives in self.parameters')
             else:
                 if component in self.derivative_mappings:
                     if self.second_derivative_mappings is None:
                         return GenericParameterFunctional(self.derivative_mappings[component][index],
-                                                        self.parameter_type, name=self.name + '_d_mu')
+                                                        self.parameters, name=self.name + '_d_mu')
                     else:
                         if component in self.second_derivative_mappings:
                             return GenericParameterFunctional(self.derivative_mappings[component][index],
-                                                    self.parameter_type, name=self.name + '_d_mu',
+                                                    self.parameters, name=self.name + '_d_mu',
                                                     derivative_mappings=self.second_derivative_mappings[component][index])
                         else:
                             return GenericParameterFunctional(self.derivative_mappings[component][index],
-                                                    self.parameter_type, name=self.name + '_d_mu',
+                                                    self.parameters, name=self.name + '_d_mu',
                                                     derivative_mappings={})
                 else:
                     raise ValueError('derivative expressions do not contain item {}'.format(component))
@@ -187,8 +187,8 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     Parameters
     ----------
     expression
-        A Python expression in the parameter components of the given `parameter_type`.
-    parameter_type
+        A Python expression in the parameter components of the given `parameters`.
+    parameters
         The |ParameterType| of the |Parameters| the functional expects.
     name
         The name of the functional.
@@ -209,7 +209,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
     functions['np'] = np
 
-    def __init__(self, expression, parameter_type, name=None, derivative_expressions=None, second_derivative_expressions=None):
+    def __init__(self, expression, parameters, name=None, derivative_expressions=None, second_derivative_expressions=None):
         self.expression = expression
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions
@@ -244,12 +244,12 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
                 second_derivative_mappings[key_i] = key_dicts_array
         else:
             second_derivative_mappings = None
-        super().__init__(exp_mapping, parameter_type, name, derivative_mappings, second_derivative_mappings)
+        super().__init__(exp_mapping, parameters, name, derivative_mappings, second_derivative_mappings)
         self.__auto_init(locals())
 
     def __reduce__(self):
         return (ExpressionParameterFunctional,
-                (self.expression, self.parameter_type, getattr(self, '_name', None),
+                (self.expression, self.parameters, getattr(self, '_name', None),
                  self.derivative_expressions, self.second_derivative_expressions))
 
 
@@ -271,7 +271,7 @@ class ProductParameterFunctional(ParameterFunctional):
         self.build_parameter_type(*(f for f in factors if isinstance(f, ParameterFunctional)))
 
     def evaluate(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
     def d_mu(self, component, index=()):
@@ -299,7 +299,7 @@ class ConjugateParameterFunctional(ParameterFunctional):
         self.build_parameter_type(functional)
 
     def evaluate(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.conj(self.functional.evaluate(mu))
 
     def d_mu(self, component, index=()):
@@ -373,8 +373,8 @@ class MinThetaParameterFunctional(ParameterFunctional):
                        for theta in thetas)
         self.build_parameter_type(*thetas)
         if not isinstance(mu_bar, Mu):
-            mu_bar = self.parameter_type.parse(mu_bar)
-        assert mu_bar >= self.parameter_type, self.parameter_type.why_incompatible(mu_bar)
+            mu_bar = self.parameters.parse(mu_bar)
+        assert mu_bar >= self.parameters, self.parameters.why_incompatible(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
         assert np.all(thetas_mu_bar > 0)
         assert isinstance(alpha_mu_bar, Number)
@@ -383,7 +383,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
         self.thetas_mu_bar = thetas_mu_bar
 
     def evaluate(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         thetas_mu = np.array([theta(mu) for theta in self.thetas])
         assert np.all(thetas_mu > 0)
         return self.alpha_mu_bar * np.min(thetas_mu / self.thetas_mu_bar)
@@ -443,8 +443,8 @@ class MaxThetaParameterFunctional(ParameterFunctional):
                        for f in thetas)
         self.build_parameter_type(*thetas)
         if not isinstance(mu_bar, Mu):
-            mu_bar = self.parameter_type.parse(mu_bar)
-        assert mu_bar >= self.parameter_type, self.parameter_type.why_incompatible(mu_bar)
+            mu_bar = self.parameters.parse(mu_bar)
+        assert mu_bar >= self.parameters, self.parameters.why_incompatible(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
         assert not np.any(float_cmp(thetas_mu_bar, 0))
         assert isinstance(gamma_mu_bar, Number)
@@ -453,7 +453,7 @@ class MaxThetaParameterFunctional(ParameterFunctional):
         self.thetas_mu_bar = thetas_mu_bar
 
     def evaluate(self, mu=None):
-        assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
+        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         thetas_mu = np.array([theta(mu) for theta in self.thetas])
         assert np.all(np.logical_or(thetas_mu < 0, thetas_mu > 0))
         return self.gamma_mu_bar * np.abs(np.max(thetas_mu / self.thetas_mu_bar))
