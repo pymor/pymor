@@ -95,13 +95,13 @@ class ParameterType(OrderedDict):
         return 'ParameterType(' + str(self) + ')'
 
     def __le__(self, mu):
-        if mu is not None and not isinstance(mu, Parameter):
+        if mu is not None and not isinstance(mu, Mu):
             raise TypeError('mu is not a Parameter. (Use parameter_type.parse?)')
         return not self or \
             mu is not None and all(getattr(mu.get(k), 'shape') == v for k, v in self.items())
 
     def why_incompatible(self, mu):
-        if mu is not None and not isinstance(mu, Parameter):
+        if mu is not None and not isinstance(mu, Mu):
             return 'mu is not a Parameter. (Use parameter_type.parse?)'
         assert self
         if mu is None:
@@ -139,9 +139,9 @@ class ParameterType(OrderedDict):
         """
         if not self:
             assert mu is None or mu == {}
-            return Parameter({})
+            return Mu({})
 
-        if isinstance(mu, Parameter):
+        if isinstance(mu, Mu):
             assert mu.parameter_type == self
             return mu
 
@@ -171,7 +171,7 @@ class ParameterType(OrderedDict):
                                  f'expected {self[k]}')
             return v
 
-        return Parameter({k: parse_value(k, v) for k, v in mu.items()})
+        return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
     def __reduce__(self):
         return (ParameterType, (dict(self),))
@@ -180,7 +180,7 @@ class ParameterType(OrderedDict):
         return hash(tuple(self.items()))
 
 
-class Parameter(dict):
+class Mu(dict):
     """Class representing a parameter.
 
     A |Parameter| is simply a `dict` where each key is a string and each value
@@ -230,7 +230,7 @@ class Parameter(dict):
         `True` if both |Parameters| have the same |ParameterType| and all parameter
         components are almost equal, else `False`.
         """
-        assert isinstance(mu, Parameter)
+        assert isinstance(mu, Mu)
         if list(self.keys()) != list(mu.keys()):
             return False
         elif not all(float_cmp_all(v, mu[k]) for k, v in self.items()):
@@ -239,7 +239,7 @@ class Parameter(dict):
             return True
 
     def copy(self):
-        c = Parameter({k: v.copy() for k, v in self.items()})
+        c = Mu({k: v.copy() for k, v in self.items()})
         return c
 
     def __setitem__(self, key, value):
@@ -248,8 +248,8 @@ class Parameter(dict):
         dict.__setitem__(self, key, value)
 
     def __eq__(self, mu):
-        if not isinstance(mu, Parameter):
-            mu = Parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = Mu(mu)
         if list(self.keys()) != list(mu.keys()):
             return False
         elif not all(np.array_equal(v, mu[k]) for k, v in self.items()):

@@ -16,7 +16,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.base import Parameter, ParameterType
+from pymor.parameters.base import Mu, ParameterType
 from pymor.tools.formatrepr import indent_value
 from pymor.vectorarrays.block import BlockVectorSpace
 
@@ -76,7 +76,7 @@ class InputOutputModel(Model):
         """
         if not self.cont_time:
             raise NotImplementedError
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
@@ -529,7 +529,7 @@ class LTIModel(InputStateOutputModel):
         -------
         One-dimensional |NumPy array| of system poles.
         """
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A.assemble(mu=mu)
@@ -571,7 +571,7 @@ class LTIModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A
@@ -619,7 +619,7 @@ class LTIModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A
@@ -679,7 +679,7 @@ class LTIModel(InputStateOutputModel):
 
         assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
 
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A.assemble(mu)
@@ -727,7 +727,7 @@ class LTIModel(InputStateOutputModel):
         Vh
             |NumPy array| of right singular vectors.
         """
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         cf = self.gramian('c_lrcf', mu=mu)
@@ -772,7 +772,7 @@ class LTIModel(InputStateOutputModel):
         """
         if not self.cont_time:
             raise NotImplementedError
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         if self.input_dim <= self.output_dim:
@@ -809,7 +809,7 @@ class LTIModel(InputStateOutputModel):
             raise NotImplementedError
         if not return_fpeak:
             return self.hinf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
 
@@ -905,7 +905,7 @@ class TransferFunction(InputOutputModel):
         )
 
     def eval_tf(self, s, mu=None):
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         if not self.parametric:
@@ -914,7 +914,7 @@ class TransferFunction(InputOutputModel):
             return self.tf(s, mu=mu)
 
     def eval_dtf(self, s, mu=None):
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         if not self.parametric:
@@ -1472,7 +1472,7 @@ class SecondOrderModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         M = self.M
@@ -1527,7 +1527,7 @@ class SecondOrderModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         M = self.M
@@ -2061,7 +2061,7 @@ class LinearDelayModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A
@@ -2114,7 +2114,7 @@ class LinearDelayModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         A = self.A

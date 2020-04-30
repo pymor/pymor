@@ -10,7 +10,7 @@ from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
-from pymor.parameters.base import Parameter
+from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 
 
@@ -26,7 +26,7 @@ class GenericBTReductor(BasicObject):
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = fom.parameter_type.parse(mu)
         assert mu >= fom.parameter_type, fom.parameter_type.why_incompatible(mu)
         self.fom = fom

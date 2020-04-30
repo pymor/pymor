@@ -9,7 +9,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
-from pymor.parameters.base import Parameter
+from pymor.parameters.base import Mu
 from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
                                    DelayLTIPGReductor)
 
@@ -52,7 +52,7 @@ class GenericBHIReductor(BasicObject):
     _PGReductor = ProjectionBasedReductor
 
     def __init__(self, fom, mu=None):
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = fom.parameter_type.parse(mu)
         assert mu >= fom.parameter_type, fom.parameter_type.why_incompatible(mu)
         self.fom = fom
@@ -345,7 +345,7 @@ class TFBHIReductor(BasicObject):
         |Parameter|.
     """
     def __init__(self, fom, mu=None):
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = fom.parameter_type.parse(mu)
         assert mu >= fom.parameter_type, fom.parameter_type.why_incompatible(mu)
         self.fom = fom

@@ -9,12 +9,12 @@ import numpy as np
 
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
 from pymor.operators.constructions import LincombOperator, ZeroOperator
-from pymor.basic import NumpyVectorSpace, Parameter
+from pymor.basic import NumpyVectorSpace, Mu
 
 
 def test_ProjectionParameterFunctional():
     pf = ProjectionParameterFunctional('mu', (2,), (0,))
-    mu = Parameter({'mu': (10,2)})
+    mu = Mu({'mu': (10,2)})
 
     derivative_to_first_index = pf.d_mu('mu', 0)
     derivative_to_second_index = pf.d_mu('mu', 1)
@@ -53,7 +53,7 @@ def test_ExpressionParameterFunctional():
                                         'functional_with_derivative_and_second_derivative',
                                         dict_of_d_mus, dict_of_second_derivative)
 
-    mu = Parameter({'mu': (10,2), 'nu': 0})
+    mu = Mu({'mu': (10,2), 'nu': 0})
 
     derivative_to_first_mu_index = epf.d_mu('mu', 0)
     derivative_to_second_mu_index = epf.d_mu('mu', 1)
@@ -113,7 +113,7 @@ def test_ExpressionParameterFunctional_for_2d_array():
     derivative_to_22_mu_index = epf2d.d_mu('mu', (1,1))
     derivative_to_nu_index = epf2d.d_mu('nu')
 
-    mu = Parameter({'mu': [[1,2],[3,4]], 'nu': 0})
+    mu = Mu({'mu': [[1,2],[3,4]], 'nu': 0})
 
     der_mu_11 = derivative_to_11_mu_index.evaluate(mu)
     der_mu_12 = derivative_to_12_mu_index.evaluate(mu)
@@ -141,7 +141,7 @@ def test_d_mu_of_LincombOperator():
                                         'functional_with_derivative',
                                         dict_of_d_mus, dict_of_second_derivative)
 
-    mu = Parameter({'mu': (10,2), 'nu': 0})
+    mu = Mu({'mu': (10,2), 'nu': 0})
 
     space = NumpyVectorSpace(1)
     zero_op = ZeroOperator(space, space)

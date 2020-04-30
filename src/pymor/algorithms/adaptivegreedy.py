@@ -12,7 +12,7 @@ from pymor.core.base import BasicObject
 from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
-from pymor.parameters.base import Parameter
+from pymor.parameters.base import Mu
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.tools.deprecated import Deprecated
 
@@ -339,7 +339,7 @@ class AdaptiveSampleSet(BasicObject):
 
     def map_vertex_to_mu(self, vertex):
         values = self.ranges[:, 0] + self.dimensions * list(map(float, vertex))
-        mu = Parameter({})
+        mu = Mu({})
         for k, shape in self.parameter_type.items():
             count = np.prod(shape, dtype=int)
             head, values = values[:count], values[count:]

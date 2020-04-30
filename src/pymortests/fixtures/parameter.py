@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.parameters.base import Parameter
+from pymor.parameters.base import Mu
 
 
 def parameters_of_type(parameter_type, seed):
@@ -13,4 +13,4 @@ def parameters_of_type(parameter_type, seed):
         if parameter_type is None:
             yield None
         else:
-            yield Parameter({k: np.random.random(v) for k, v in parameter_type.items()})
+            yield Mu({k: np.random.random(v) for k, v in parameter_type.items()})

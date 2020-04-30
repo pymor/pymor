@@ -5,7 +5,7 @@
 from pymor.core.base import abstractmethod
 from pymor.core.cache import CacheableObject
 from pymor.operators.constructions import induced_norm
-from pymor.parameters.base import Parametric, Parameter
+from pymor.parameters.base import Parametric, Mu
 from pymor.tools.frozendict import FrozenDict
 
 
@@ -70,7 +70,7 @@ class Model(CacheableObject, Parametric):
         The solution |VectorArray|. When `return_output` is `True`,
         the output |VectorArray| is returned as second value.
         """
-        if not isinstance(mu, Parameter):
+        if not isinstance(mu, Mu):
             mu = self.parameter_type.parse(mu)
         assert mu >= self.parameter_type, self.parameter_type.why_incompatible(mu)
         return self.cached_method_call(self._solve, mu=mu, return_output=return_output, **kwargs)
