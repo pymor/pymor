@@ -1,10 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 
 function docker_tag_exists() {
     curl --silent -f -lSL https://hub.docker.com/v2/repositories/$1/tags/$2 > /dev/null
 }
 
-PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
+PYMOR_ROOT="$(cd "$(dirname "$0")" && cd ../../ && pwd -P )"
+
 cd "${PYMOR_ROOT}"
 
 set -eux

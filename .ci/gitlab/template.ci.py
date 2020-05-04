@@ -24,6 +24,7 @@ stages:
         - /^staging/.*$/i
     variables:
         PYPI_MIRROR_TAG: {{pypi_mirror_tag}}
+        CI_IMAGE_TAG: {{ci_image_tag}}
 
 .pytest:
     extends: .test_base
@@ -125,6 +126,10 @@ stages:
     # the docker service adressing fails on other runners
     tags: [mike]
 
+.sanity_checks:
+    extends: .test_base
+    image: pymor/ci_sanity:{{ci_image_tag}}
+    stage: sanity
 #******** end definition of base jobs *********************************************************************************#
 
 #******* sanity stage
@@ -132,16 +137,14 @@ stages:
 # this step makes sure that on older python our install fails with
 # a nice message ala "python too old" instead of "SyntaxError"
 verify setup.py:
-    extends: .test_base
-    image: python:3.5-alpine
-    stage: sanity
+    extends: .sanity_checks
     script:
-        - python setup.py egg_info
+        - python3 setup.py egg_info
 
 ci setup:
-    extends: .docker-in-docker
-    stage: sanity
-    script: ./.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}"
+    extends: .sanity_checks
+    script:
+        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}"
 
 #****** test stage
 
