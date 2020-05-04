@@ -94,6 +94,8 @@ stages:
     extends: .docker-in-docker
     stage: build
     only: ['branches', 'tags', 'triggers']
+    tags:
+      - amm-only
     variables:
         TEST_OS: "{{ ' '.join(testos) }}"
     artifacts:

@@ -92,6 +92,8 @@ stages:
     extends: .docker-in-docker
     stage: build
     only: ['branches', 'tags', 'triggers']
+    tags:
+      - amm-only
     variables:
         TEST_OS: "centos_8 debian_buster debian_testing"
     artifacts:
