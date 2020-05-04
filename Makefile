@@ -15,7 +15,7 @@ THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
 	docker-compose -f .binder/docker-compose.yml -p pymor
 NB_DIR=notebooks
-PANDOC_MAJOR=$(shell pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)
+PANDOC_MAJOR=$(shell ( which pandoc && pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)) || echo "pandoc missing")
 ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
