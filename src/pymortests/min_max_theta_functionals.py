@@ -10,7 +10,7 @@ from pymortests.base import runmodule
 
 
 def test_min_theta_parameter_functional():
-    thetas = (ExpressionParameterFunctional('2*mu', {'mu': ()}),
+    thetas = (ExpressionParameterFunctional('2*mu[0]', {'mu': 1}),
               ConstantParameterFunctional(1),
               1)
     mu_bar = 3
@@ -26,7 +26,7 @@ def test_min_theta_parameter_functional():
 
 
 def test_min_theta_parameter_functional_fails_for_wrong_input():
-    thetas = (ExpressionParameterFunctional('2*mu', {'mu': ()}),
+    thetas = (ExpressionParameterFunctional('2*mu[0]', {'mu': 1}),
               ConstantParameterFunctional(1),
               -1)
     mu_bar = -3
@@ -36,7 +36,7 @@ def test_min_theta_parameter_functional_fails_for_wrong_input():
 
 
 def test_max_theta_parameter_functional():
-    thetas = (ExpressionParameterFunctional('2*mu', {'mu': ()}),
+    thetas = (ExpressionParameterFunctional('2*mu[0]', {'mu': 1}),
               ConstantParameterFunctional(1),
               -1)
     mu_bar = -3

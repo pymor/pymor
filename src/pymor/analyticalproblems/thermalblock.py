@@ -43,8 +43,8 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
 
     def parameter_functional_factory(ix, iy):
         return ProjectionParameterFunctional(component_name='diffusion',
-                                             component_shape=(num_blocks[1], num_blocks[0]),
-                                             index=(num_blocks[1] - iy - 1, ix),
+                                             component_shape=num_blocks[1]*num_blocks[0],
+                                             index=(num_blocks[1] - iy - 1) + ix*num_blocks[1],
                                              name=f'diffusion_{ix}_{iy}')
 
     def diffusion_function_factory(ix, iy):
@@ -72,7 +72,7 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
                                    for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))],
                                   name='diffusion'),
 
-        parameter_space=CubicParameterSpace({'diffusion': (num_blocks[1], num_blocks[0])}, *parameter_range),
+        parameter_space=CubicParameterSpace({'diffusion': num_blocks[1]*num_blocks[0]}, *parameter_range),
 
         name=f'ThermalBlock({num_blocks})'
 

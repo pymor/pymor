@@ -301,7 +301,7 @@ class Operator(ImmutableObject, Parametric):
         else:
             raise NotImplementedError
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         """Return the operator's derivative with respect to an index of a parameter component.
 
         Parameters

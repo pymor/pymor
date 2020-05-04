@@ -154,7 +154,7 @@ class LincombOperator(Operator):
         else:
             return jac
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         for op in self.operators:
             if op.parametric:
                 raise NotImplementedError

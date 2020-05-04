@@ -73,14 +73,13 @@ class Parameters(OrderedDict):
         else:
             t = dict(t)
             for k, v in t.items():
-                if not isinstance(v, tuple):
-                    assert isinstance(v, Number)
-                    t[k] = () if v == 0 else (v,)
+                if not isinstance(v, int) or v < 0:
+                    raise ValueError
         super().__init__(sorted(t.items()))
         self.clear = self.__setitem__ = self.__delitem__ = self.pop = self.popitem = self.update = self._is_immutable
 
     def _is_immutable(*args, **kwargs):
-        raise ValueError('ParameterTypes cannot be modified')
+        raise ValueError('Parameters instances cannot be modified')
 
     def copy(self):
         return Parameters(self)
@@ -92,13 +91,13 @@ class Parameters(OrderedDict):
         return '{' + ', '.join(f'{k}: {v}' for k, v in self.items()) + '}'
 
     def __repr__(self):
-        return 'ParameterType(' + str(self) + ')'
+        return 'Parameters(' + str(self) + ')'
 
     def __le__(self, mu):
         if mu is not None and not isinstance(mu, Mu):
             raise TypeError('mu is not a Parameter. (Use parameters.parse?)')
         return not self or \
-            mu is not None and all(getattr(mu.get(k), 'shape') == v for k, v in self.items())
+            mu is not None and all(getattr(mu.get(k), 'size') == v for k, v in self.items())
 
     def why_incompatible(self, mu):
         if mu is not None and not isinstance(mu, Mu):
@@ -111,7 +110,7 @@ class Parameters(OrderedDict):
             if k not in mu:
                 failing_components[k] = f'missing != {v}'
             elif mu[k].shape != v:
-                failing_components[k] = f'{mu[k].shape} != {v}'
+                failing_components[k] = f'{mu[k].size} != {v}'
         assert failing_components
         return f'Incompatible components: {failing_components}'
 
@@ -137,41 +136,51 @@ class Parameters(OrderedDict):
             Is raised if `mu` cannot be interpreted as a |Parameter| of |ParameterType|
             `parameters`.
         """
+
+        def fail(msg):
+            if isinstance(mu, dict):
+                mu_str = '{' + ', '.join([f'{k}: {v}' for k, v in mu.items()]) + '}'
+            else:
+                mu_str = str(mu)
+            raise ValueError(f'{mu_str} is incompatible with Parameters {self} ({msg})')
+
         if not self:
-            assert mu is None or mu == {}
+            mu is None or mu == {} or fail('must be None or empty dict')
             return Mu({})
 
-        if isinstance(mu, Mu):
-            assert mu.parameters == self
+        elif isinstance(mu, Mu):
+            mu == self or fail(self.why_incompatible(mu))
+            set(mu) == set(self) or fail(f'additional parameters {set(mu) - set(self)}')
             return mu
 
-        if not isinstance(mu, dict):
-            if isinstance(mu, (tuple, list)):
-                if len(self) == 1 and len(mu) != 1:
-                    mu = (mu,)
-            else:
-                mu = (mu,)
-            if len(mu) != len(self):
-                raise ValueError('Parameter length does not match.')
-            mu = dict(zip(sorted(self), mu))
-        elif set(mu.keys()) != set(self.keys()):
-            raise ValueError(f'Provided parameter with keys {list(mu.keys())} does not match '
-                             f'parameter type {self}.')
+        elif isinstance(mu, Number):
+            1 == sum(v for v in self.values()) or fail('need more than one number')
+            return Mu({next(iter(self)): np.array([mu])})
 
-        def parse_value(k, v):
-            if not isinstance(v, np.ndarray):
-                v = np.array(v)
-                try:
-                    v = v.reshape(self[k])
-                except ValueError:
-                    raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
-                                     f'expected {self[k]}')
-            if v.shape != self[k]:
-                raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
-                                 f'expected {self[k]}')
-            return v
+        elif isinstance(mu, (tuple, list, np.ndarray)):
+            if isinstance(mu, np.ndarray):
+                mu = mu.ravel()
+            all(isinstance(v, Number) for v in mu) or fail('not every element a number')
+            len(mu) == sum(v for v in self.values()) or fail('wrong size')
+            parsed_mu = {}
+            for k, v in self.items():
+                p, mu = mu[:v], mu[v:]
+                parsed_mu[k] = p
+            return Mu(parsed_mu)
 
-        return Mu({k: parse_value(k, v) for k, v in mu.items()})
+        elif isinstance(mu, dict):
+            set(mu.keys()) == set(self.keys()) or fail('components not matching')
+
+            def parse_value(k, v):
+                isinstance(v, (Number, tuple, list, np.ndarray)) or fail(f"invalid type '{type(v)}' of parameter {k}")
+                if isinstance(v, Number):
+                    v = np.array([v])
+                elif isinstance(v, np.ndarray):
+                    v = v.ravel()
+                len(v) == self[k] or fail('wrong size of parameter {k}')
+                return v
+
+            return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
     def __reduce__(self):
         return (Parameters, (dict(self),))
@@ -214,8 +223,13 @@ class Mu(dict):
     def __init__(self, v):
         if v is None:
             v = {}
-        i = iter(v.items()) if hasattr(v, 'items') else v
-        dict.__init__(self, {k: np.array(v) if not isinstance(v, np.ndarray) else v for k, v in i})
+        super().__init__(v)
+        for k, v in self.items():
+            if not isinstance(v, np.ndarray):
+                v = np.array(v)
+            if v.ndim != 1:
+                v = v.ravel()
+            self[k] = v
 
     def allclose(self, mu):
         """Compare two |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
@@ -362,14 +376,9 @@ class Parametric:
         provides = provides or {}
         my_parameters = {}
 
-        def check_shapes(shape1, shape2):
-            if type(shape1) is not tuple:
-                assert isinstance(shape1, Number)
-                shape1 = () if shape1 == 0 else (shape1,)
-            if type(shape2) is not tuple:
-                assert isinstance(shape2, Number)
-                shape2 = () if shape2 == 0 else (shape2,)
-            assert shape1 == shape2, \
+        def check_shapes(component, shape1, shape2):
+            assert isinstance(shape2, int) and shape2 >= 0, f'Component {component} not an int or negative'
+            assert shape1 is None or shape1 == shape2, \
                 (f'Dimension mismatch for parameter component {component} '
                  f'(got {my_parameters[component]} and {shape})')
             return True
@@ -380,15 +389,15 @@ class Parametric:
             if arg is None:
                 continue
             for component, shape in arg.items():
-                assert component not in my_parameters or check_shapes(my_parameters[component], shape)
+                assert check_shapes(component, my_parameters.get(component), shape)
                 my_parameters[component] = shape
 
         for component, shape in kwargs.items():
-            assert component not in my_parameters or check_shapes(my_parameters[component], shape)
+            assert component not in my_parameters or check_shapes(component, my_parameters[component], shape)
             my_parameters[component] = shape
 
         for component, shape in provides.items():
-            assert component not in my_parameters or check_shapes(my_parameters[component], shape)
+            assert component not in my_parameters or check_shapes(component, my_parameters[component], shape)
             my_parameters.pop(component, None)
 
         self.parameters = Parameters(my_parameters)

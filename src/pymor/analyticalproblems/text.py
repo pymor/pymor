@@ -55,7 +55,7 @@ def text_problem(text='pyMOR', font_name=None):
 
     # form the linear combination
     dfs = [background] + dfs
-    coefficients = [1] + [ProjectionParameterFunctional('diffusion', (len(text),), (i,)) for i in range(len(text))]
+    coefficients = [1] + [ProjectionParameterFunctional('diffusion', len(text), i) for i in range(len(text))]
     diffusion = LincombFunction(dfs, coefficients)
 
     return StationaryProblem(

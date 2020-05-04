@@ -24,7 +24,7 @@ class ParameterFunctional(ImmutableObject, Parametric):
         pass
 
     @abstractmethod
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         """Return the functionals's derivative with respect to an index of a parameter component.
 
         Parameters
@@ -59,14 +59,8 @@ class ParameterFunctional(ImmutableObject, Parametric):
         if component not in self.parameters:
             return False, None
         # check whether index has the correct shape
-        if isinstance(index, Number):
-            index = (index,)
-        index = tuple(index)
-        for idx in index:
-            assert isinstance(idx, Number)
-        shape = self.parameters[component]
-        for i,idx in enumerate(index):
-            assert idx < shape[i], 'wrong input `index` given'
+        assert isinstance(index, Number)
+        assert 0 <= index < self.parameters[component], 'wrong input `index` given'
         return True, index
 
 
@@ -90,11 +84,10 @@ class ProjectionParameterFunctional(ParameterFunctional):
         Name of the functional.
     """
 
-    def __init__(self, component_name, component_shape, index=(), name=None):
-        if isinstance(component_shape, Number):
-            component_shape = () if component_shape == 0 else (component_shape,)
-        assert len(index) == len(component_shape)
-        assert not component_shape or index < component_shape
+    def __init__(self, component_name, component_shape, index=0, name=None):
+        assert isinstance(component_shape, Number)
+        assert isinstance(index, Number)
+        assert index < component_shape
 
         self.__auto_init(locals())
         self.build_parameter_type({component_name: component_shape})
@@ -103,7 +96,7 @@ class ProjectionParameterFunctional(ParameterFunctional):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return mu[self.component_name].item(self.index)
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         check, index = self._check_and_parse_input(component, index)
         if check:
             if component == self.component_name and index == self.index:
@@ -148,7 +141,7 @@ class GenericParameterFunctional(ParameterFunctional):
         else:
             return value
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         check, index = self._check_and_parse_input(component, index)
         if check:
             if self.derivative_mappings is None:
@@ -274,7 +267,7 @@ class ProductParameterFunctional(ParameterFunctional):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         raise NotImplementedError
 
 
@@ -302,7 +295,7 @@ class ConjugateParameterFunctional(ParameterFunctional):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.conj(self.functional.evaluate(mu))
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         raise NotImplementedError
 
 
@@ -324,7 +317,7 @@ class ConstantParameterFunctional(ParameterFunctional):
     def evaluate(self, mu=None):
         return self.constant_value
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         return self.with_(constant_value=0, name=self.name + '_d_mu')
 
 
@@ -388,7 +381,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
         assert np.all(thetas_mu > 0)
         return self.alpha_mu_bar * np.min(thetas_mu / self.thetas_mu_bar)
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         raise NotImplementedError
 
 
@@ -458,5 +451,5 @@ class MaxThetaParameterFunctional(ParameterFunctional):
         assert np.all(np.logical_or(thetas_mu < 0, thetas_mu > 0))
         return self.gamma_mu_bar * np.abs(np.max(thetas_mu / self.thetas_mu_bar))
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, component, index=0):
         raise NotImplementedError

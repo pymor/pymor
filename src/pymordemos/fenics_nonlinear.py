@@ -58,14 +58,14 @@ def discretize(DIM, N, ORDER):
 
     space = FenicsVectorSpace(V)
     op = FenicsOperator(F, space, space, u, (bc,),
-                        parameter_setter=lambda mu: c.assign(float(mu['c'])),
-                        parameters={'c': ()},
+                        parameter_setter=lambda mu: c.assign(mu['c'].item()),
+                        parameters={'c': 1},
                         solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
     rhs = VectorOperator(op.range.zeros())
 
     fom = StationaryModel(op, rhs,
                           visualizer=FenicsVisualizer(space),
-                          parameter_space=CubicParameterSpace({'c': ()}, 0., 1000.))
+                          parameter_space=CubicParameterSpace({'c': 1}, 0., 1000.))
 
     return fom
 

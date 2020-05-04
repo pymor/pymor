@@ -111,7 +111,7 @@ class ParabolicRBEstimator(ImmutableObject):
             t = 0
             for n in range(1, m.time_stepper.nt + 1):
                 t += dt
-                mu['_t'] = t
+                mu['_t'] = np.array([t])
                 est[n] = self.residual.apply(U[n], U[n-1], mu=mu).l2_norm2()
         else:
             est[1:] = self.residual.apply(U[1:], U[:-1], mu=mu).l2_norm2()

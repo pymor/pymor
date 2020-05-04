@@ -47,7 +47,7 @@ def parabolic_demo(args):
                                         dim_domain=2)],
                     [1.,
                      100. - 1.,
-                     ExpressionParameterFunctional('top - 1.', {'top': 0})]
+                     ExpressionParameterFunctional('top - 1.', {'top': 1})]
                 ),
 
                 rhs=ConstantFunction(value=0., dim_domain=2),
@@ -63,7 +63,7 @@ def parabolic_demo(args):
             initial_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 10.',
                                             dim_domain=2),
 
-            parameter_space=CubicParameterSpace({'top': 0}, minimum=1, maximum=100.)
+            parameter_space=CubicParameterSpace({'top': 1}, minimum=1, maximum=100.)
         )
     else:
         args['SPEED'] = float(args['SPEED'])
@@ -75,7 +75,7 @@ def parabolic_demo(args):
                 diffusion=ConstantFunction(0.01, dim_domain=2),
 
                 advection=LincombFunction([ConstantFunction(np.array([-1., 0]), dim_domain=2)],
-                                          [ProjectionParameterFunctional('speed', ())]),
+                                          [ProjectionParameterFunctional('speed', 1)]),
 
                 reaction=ConstantFunction(0.5, dim_domain=2),
 

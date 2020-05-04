@@ -58,10 +58,10 @@ def discretize_pymor():
                                     dim_domain=2)],
                 [1.,
                  100. - 1.,
-                 ExpressionParameterFunctional('top - 1.', {'top': 0})]
+                 ExpressionParameterFunctional('top[0] - 1.', {'top': 1})]
             ),
 
-            rhs=ConstantFunction(value=100., dim_domain=2) * ExpressionParameterFunctional('sin(10*pi*_t)', {'_t': ()}),
+            rhs=ConstantFunction(value=100., dim_domain=2) * ExpressionParameterFunctional('sin(10*pi*_t[0])', {'_t': 1}),
 
             dirichlet_data=ConstantFunction(value=0., dim_domain=2),
 
@@ -74,7 +74,7 @@ def discretize_pymor():
         initial_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 10.',
                                         dim_domain=2),
 
-        parameter_space=CubicParameterSpace({'top': 0}, minimum=1, maximum=100.)
+        parameter_space=CubicParameterSpace({'top': 1}, minimum=1, maximum=100.)
     )
 
     # discretize using continuous finite elements
@@ -161,7 +161,7 @@ def _discretize_fenics():
                                  [1.,
                                   1.,
                                   100. - 1.,
-                                  ExpressionParameterFunctional('top - 1.', {'top': 0})]),
+                                  ExpressionParameterFunctional('top[0] - 1.', {'top': 1})]),
 
         rhs=VectorOperator(FenicsVectorSpace(V).make_array([f])),
 
@@ -174,7 +174,7 @@ def _discretize_fenics():
 
         time_stepper=ImplicitEulerTimeStepper(nt=NT),
 
-        parameter_space=CubicParameterSpace({'top': 0}, minimum=1, maximum=100.),
+        parameter_space=CubicParameterSpace({'top': 1}, minimum=1, maximum=100.),
 
         visualizer=FenicsVisualizer(FenicsVectorSpace(V))
     )

@@ -99,8 +99,8 @@ def thermalblock_factory(xblocks, yblocks, diameter, seed):
     from pymor.discretizers.builtin.cg import InterpolationOperator
     p = thermal_block_problem((xblocks, yblocks))
     m, m_data = discretize_stationary_cg(p, diameter)
-    f = GenericFunction(lambda X, mu: X[..., 0]**mu['exp'] + X[..., 1],
-                        dim_domain=2, parameters={'exp': ()})
+    f = GenericFunction(lambda X, mu: X[..., 0]**mu['exp'][0] + X[..., 1],
+                        dim_domain=2, parameters={'exp': 1})
     iop = InterpolationOperator(m_data['grid'], f)
     U = m.operator.source.empty()
     V = m.operator.range.empty()
@@ -349,7 +349,7 @@ def misc_operator_with_arrays_and_products_factory(n):
         op0, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3, n)
         op1 = NumpyMatrixOperator(np.random.random((30, 30)))
         op2 = NumpyMatrixOperator(np.random.random((30, 30)))
-        op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x', ()), [0.3, 0.6])
+        op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x', 1), [0.3, 0.6])
         return op, op.parameters.parse((n-5)/2), V, U, rp, sp
     elif n == 8:
         from pymor.operators.block import BlockDiagonalOperator
@@ -371,11 +371,11 @@ def misc_operator_with_arrays_and_products_factory(n):
         op1, _, U1, V1, sp1, rp1  = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
         op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
         op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
-        op0 = (op0a * ProjectionParameterFunctional('p', (3,), (0,))
-               + op0b * ProjectionParameterFunctional('p', (3,), (1,))
-               + op0c * ProjectionParameterFunctional('p', (3,), (1,)))
-        op2 = (op2a * ProjectionParameterFunctional('p', (3,), (0,))
-               + op2b * ProjectionParameterFunctional('q', (), ()))
+        op0 = (op0a * ProjectionParameterFunctional('p', 3, 0)
+               + op0b * ProjectionParameterFunctional('p', 3, 1)
+               + op0c * ProjectionParameterFunctional('p', 3, 1))
+        op2 = (op2a * ProjectionParameterFunctional('p', 3, 0)
+               + op2b * ProjectionParameterFunctional('q', 1))
         op = BlockOperator([[op0, op2],
                             [None, op1]])
         mu = op.parameters.parse({'p': [1, 2, 3], 'q': 4})
@@ -391,8 +391,8 @@ def misc_operator_with_arrays_and_products_factory(n):
         op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
         op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
         op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
-        op2 = (op2a * ProjectionParameterFunctional('p', (3,), (0,))
-               + op2b * ProjectionParameterFunctional('q', (), ()))
+        op2 = (op2a * ProjectionParameterFunctional('p', 3, 0)
+               + op2b * ProjectionParameterFunctional('q', 1))
         op = BlockColumnOperator([op2, op1])
         mu = op.parameters.parse({'p': [1, 2, 3], 'q': 4})
         sp = sp1
@@ -407,8 +407,8 @@ def misc_operator_with_arrays_and_products_factory(n):
         op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
         op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
         op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
-        op2 = (op2a * ProjectionParameterFunctional('p', (3,), (0,))
-               + op2b * ProjectionParameterFunctional('q', (), ()))
+        op2 = (op2a * ProjectionParameterFunctional('p', 3, 0)
+               + op2b * ProjectionParameterFunctional('q', 1))
         op = BlockRowOperator([op0, op2])
         mu = op.parameters.parse({'p': [1, 2, 3], 'q': 4})
         sp = BlockDiagonalOperator([sp0, sp1])
@@ -487,8 +487,8 @@ if config.HAVE_FENICS:
 
         space = FenicsVectorSpace(V)
         op = FenicsOperator(F, space, space, w, (bc,),
-                            parameter_setter=lambda mu: c.assign(float(mu['c'])),
-                            parameters={'c': ()},
+                            parameter_setter=lambda mu: c.assign(mu['c'].item()),
+                            parameters={'c': 1},
                             solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
 
         prod = FenicsMatrixOperator(df.assemble(u*v*df.dx), V, V)

@@ -113,8 +113,8 @@ def _discretize_fenics():
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
     parameter_functionals = [ProjectionParameterFunctional(component_name='diffusion',
-                                                           component_shape=(YBLOCKS, XBLOCKS),
-                                                           index=(YBLOCKS - y - 1, x))
+                                                           component_shape=YBLOCKS*XBLOCKS,
+                                                           index=YBLOCKS - y - 1 + x*YBLOCKS)
                              for x in range(XBLOCKS) for y in range(YBLOCKS)]
 
     # wrap operators
@@ -193,7 +193,7 @@ def discretize_ngsolve():
 
     space = NGSolveVectorSpace(V)
     op = LincombOperator([NGSolveMatrixOperator(m, space, space) for m in mats],
-                         [ProjectionParameterFunctional('diffusion', (len(coeffs),), (i,)) for i in range(len(coeffs))])
+                         [ProjectionParameterFunctional('diffusion', len(coeffs), i) for i in range(len(coeffs))])
 
     h1_0_op = op.assemble([1] * len(coeffs)).with_(name='h1_0_semi')
 

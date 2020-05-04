@@ -26,8 +26,8 @@ from pymortests.vectorarray import valid_inds, valid_inds_of_same_length
 def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
-        lambda x: round(float(x["nrrhs"])), 
-        Parameters({"nrrhs": ()})
+        lambda x: round(x["nrrhs"].item()),
+        Parameters({"nrrhs": 1})
     )
     s1 = SelectionOperator(
         operators=[p1],
@@ -82,7 +82,7 @@ def test_lincomb_op():
 
 def test_lincomb_adjoint():
     op = LincombOperator([NumpyMatrixOperator(np.eye(10)), NumpyMatrixOperator(np.eye(10))],
-                         [1+3j, ExpressionParameterFunctional('c + 3', {'c': ()})])
+                         [1+3j, ExpressionParameterFunctional('c[0] + 3', {'c': 1})])
     mu = op.parameters.parse(1j)
     U = op.range.random()
     V = op.apply_adjoint(U, mu=mu)

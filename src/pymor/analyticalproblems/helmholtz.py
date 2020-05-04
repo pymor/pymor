@@ -46,9 +46,9 @@ def helmholtz_problem(domain=RectDomain(), rhs=None, parameter_range=(0., 100.),
         diffusion=ConstantFunction(1., dim_domain=domain.dim),
 
         reaction=LincombFunction([ConstantFunction(1., dim_domain=domain.dim)],
-                                 [ExpressionParameterFunctional('-k**2', {'k': ()})]),
+                                 [ExpressionParameterFunctional('-k[0]**2', {'k': 1})]),
 
-        parameter_space=CubicParameterSpace({'k': ()}, *parameter_range),
+        parameter_space=CubicParameterSpace({'k': 1}, *parameter_range),
 
         name='helmholtz_problem'
 

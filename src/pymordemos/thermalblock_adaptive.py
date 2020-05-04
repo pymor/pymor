@@ -81,13 +81,13 @@ def thermalblock_demo(args):
     args['--theta'] = float(args['--theta'])
 
     problem = thermal_block_problem(num_blocks=(2, 2))
-    functionals = [ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
-                   ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': (2,)}),
-                   ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
-                   ExpressionParameterFunctional('diffusion[1]', {'diffusion': (2,)})]
+    functionals = [ExpressionParameterFunctional('diffusion[0]', {'diffusion': 2}),
+                   ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': 2}),
+                   ExpressionParameterFunctional('diffusion[0]', {'diffusion': 2}),
+                   ExpressionParameterFunctional('diffusion[1]', {'diffusion': 2})]
     problem = problem.with_(
         diffusion=problem.diffusion.with_(coefficients=functionals),
-        parameter_space=CubicParameterSpace({'diffusion': (2,)}, 0.1, 1.)
+        parameter_space=CubicParameterSpace({'diffusion': 2}, 0.1, 1.)
     )
 
     print('Discretize ...')
