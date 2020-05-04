@@ -257,7 +257,7 @@ Parameters
 
 pyMOR classes implement dependence on a parameter by deriving from the
 |Parametric| mix-in class. This class gives each instance a
-:attr:`~pymor.parameters.base.Parametric.parameter_type` attribute describing the
+:attr:`~pymor.parameters.base.ParametricObject.parameters` attribute describing the
 form of |Parameters| the relevant methods of the object (`apply`, `solve`,
 `evaluate`, etc.) expect. A |Parameter| in pyMOR is basically a Python
 :class:`dict` with strings as keys and |NumPy arrays| as values. Each such value
@@ -268,7 +268,7 @@ expected shapes.
 
 The |ParameterType| of a |Parametric| object is determined by the class
 implementor during `__init__` via a call to
-:meth:`~pymor.parameters.base.Parametric.build_parameter_type`, which can be
+:meth:`~pymor.parameters.base.ParametricObject.build_parameter_type`, which can be
 used to infer the |ParameterType| from the |ParameterTypes| of objects the
 given object depends upon. I.e. an |Operator| implementing the L2-product with
 some |Function| will inherit the |ParameterType| of the |Function|.

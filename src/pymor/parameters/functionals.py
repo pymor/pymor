@@ -6,12 +6,12 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.base import ImmutableObject, abstractmethod
-from pymor.parameters.base import Mu, Parametric
+from pymor.core.base import abstractmethod
+from pymor.parameters.base import Mu, ParametricObject
 from pymor.tools.floatcmp import float_cmp
 
 
-class ParameterFunctional(ImmutableObject, Parametric):
+class ParameterFunctional(ParametricObject):
     """Interface for |Parameter| functionals.
 
     A parameter functional is simply a function mapping a |Parameter| to

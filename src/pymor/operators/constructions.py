@@ -11,11 +11,10 @@ from numbers import Number
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
-from pymor.parameters.base import Parametric
+from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -160,7 +159,7 @@ class LincombOperator(Operator):
                 raise NotImplementedError
         derivative_coefficients = []
         for coef in self.coefficients:
-            if isinstance(coef, Parametric):
+            if isinstance(coef, ParametricObject):
                 derivative_coefficients.append(coef.d_mu(component, index))
             else:
                 derivative_coefficients.append(0.)
@@ -1378,7 +1377,7 @@ def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     return InducedNorm(product, raise_negative, tol, name)
 
 
-class InducedNorm(ImmutableObject, Parametric):
+class InducedNorm(ParametricObject):
     """Instantiated by :func:`induced_norm`. Do not use directly."""
 
     def __init__(self, product, raise_negative, tol, name):

@@ -7,12 +7,12 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.base import ImmutableObject, abstractmethod
-from pymor.parameters.base import Parametric
+from pymor.core.base import abstractmethod
+from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ExpressionParameterFunctional
 
 
-class Function(ImmutableObject, Parametric):
+class Function(ParametricObject):
     """Interface for |Parameter| dependent analytical functions.
 
     Every |Function| is a map of the form ::

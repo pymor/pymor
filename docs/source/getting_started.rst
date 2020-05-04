@@ -142,9 +142,9 @@ Let's solve the thermal block problem and visualize the solution:
 Each class in pyMOR that describes a |Parameter| dependent mathematical
 object, like the |StationaryModel| in our case, derives from
 |Parametric| and determines the |Parameters| it expects during :meth:`__init__`
-by calling :meth:`~pymor.parameters.base.Parametric.build_parameter_type`.
+by calling :meth:`~pymor.parameters.base.ParametricObject.build_parameter_type`.
 The resulting |ParameterType| is stored in the object's
-:attr:`~pymor.parameters.base.Parametric.parameter_type` attribute. Let us
+:attr:`~pymor.parameters.base.ParametricObject.parameter_type` attribute. Let us
 have a look:
 
 .. nbplot::
@@ -155,7 +155,7 @@ This tells us, that the |Parameter| which
 should be a dictionary with one key ``'diffusion'`` whose value is a
 |NumPy array| of shape ``(2, 3)``, corresponding to the block structure of
 the problem. However, by using the
-:meth:`~pymor.parameters.base.Parametric.parse_parameter` method, pyMOR is
+:meth:`~pymor.parameters.base.ParametricObject.parse_parameter` method, pyMOR is
 smart enough to correctly parse the input ``[1.0, 0.1, 0.3, 0.1, 0.2, 1.0]``.
 
 Next we want to use the :func:`~pymor.algorithms.greedy.greedy` algorithm

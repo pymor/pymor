@@ -119,8 +119,8 @@ common = '''
 .. |ParameterTypes| replace:: :class:`ParameterTypes <pymor.parameters.base.ParameterType>`
 .. |Parameter| replace:: :class:`~pymor.parameters.base.Parameter`
 .. |Parameters| replace:: :class:`Parameters <pymor.parameters.base.Parameter>`
-.. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
-.. |parametric| replace:: :attr:`~pymor.parameters.base.Parametric.parametric`
+.. |Parametric| replace:: :class:`~pymor.parameters.base.ParametricObject`
+.. |parametric| replace:: :attr:`~pymor.parameters.base.ParametricObject.parametric`
 
 .. |NumPy| replace:: :mod:`NumPy <numpy>`
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`

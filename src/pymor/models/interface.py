@@ -5,11 +5,11 @@
 from pymor.core.base import abstractmethod
 from pymor.core.cache import CacheableObject
 from pymor.operators.constructions import induced_norm
-from pymor.parameters.base import Parametric, Mu
+from pymor.parameters.base import ParametricObject, Mu
 from pymor.tools.frozendict import FrozenDict
 
 
-class Model(CacheableObject, Parametric):
+class Model(CacheableObject, ParametricObject):
     """Interface for model objects.
 
     A model object defines a discrete problem

@@ -7,15 +7,15 @@ from numbers import Number
 import numpy as np
 
 from pymor.algorithms import genericsolvers
-from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.core.base import abstractmethod
 from pymor.core.exceptions import InversionError, LinAlgError
-from pymor.parameters.base import Parametric
+from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class Operator(ImmutableObject, Parametric):
+class Operator(ParametricObject):
     """Interface for |Parameter| dependent discrete operators.
 
     An operator in pyMOR is simply a mapping which for any given

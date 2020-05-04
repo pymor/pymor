@@ -39,6 +39,7 @@ from numbers import Number
 
 import numpy as np
 
+from pymor.core.base import ImmutableObject
 from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.pprint import format_array
 
@@ -306,7 +307,7 @@ class Mu(dict):
         return dict(self)
 
 
-class Parametric:
+class ParametricObject(ImmutableObject):
     """Mixin class for objects representing mathematical entities depending on a |Parameter|.
 
     Each such object has a |ParameterType| stored in the :attr:`parameters` attribute,

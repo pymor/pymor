@@ -13,7 +13,7 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEule
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import Function, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
-from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCenters
@@ -26,7 +26,7 @@ from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.operators.constructions import ComponentProjection, LincombOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
-from pymor.parameters.base import Parametric
+from pymor.parameters.base import ParametricObject
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -34,7 +34,7 @@ def FVVectorSpace(grid, id='STATE'):
     return NumpyVectorSpace(grid.size(0), id)
 
 
-class NumericalConvectiveFlux(ImmutableObject, Parametric):
+class NumericalConvectiveFlux(ParametricObject):
     """Interface for numerical convective fluxes for finite volume schemes.
 
     Numerical fluxes defined by this interfaces are functions of
