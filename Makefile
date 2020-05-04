@@ -1,5 +1,5 @@
 
-# customization points via environment variables
+# customization points via makefile key-value arguments
 # 3.{6,7,8} supported currently
 # DOCKER_BASE_PYTHON=3.7
 # one of mpi, notebooks_dir, oldest, vanilla, mpi, numpy_git, pip_installed
@@ -8,8 +8,10 @@
 # PYPI_MIRROR=stable
 # debian_buster centos_8 debian_testing
 # PYMOR_TEST_OS=debian_buster
-# end: customization points via environment variables
+# end: customization points via makefile key-value arguments
 
+MKFILE_PATH :=
+THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
 	docker-compose -f .binder/docker-compose.yml -p pymor
 NB_DIR=notebooks
@@ -17,9 +19,10 @@ PANDOC_MAJOR=$(shell pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.'
 ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
-# load env file, but do not overwrite pre-existing values
+# this loads $(ENV_FILE) as both makefile variables and into shell env
 ENV_FILE?=.env
-ENV_KEYS:=$(shell env | sort | grep -v -P "^_.*" | grep -v \] 	| sed 's/=.*//'g | tr '\n' '|')DUMMY
+include $(ENV_FILE)
+export $(shell sed 's/=.*//' $(ENV_FILE))
 
 .PHONY: docker README.html pylint test docs
 
@@ -72,8 +75,7 @@ template: docker_file
 
 # docker targets
 docker_file:
-	 @export $$( cat $(ENV_FILE) | grep -v -E "$(ENV_KEYS)" ) && \
-		sed -e "s;CI_IMAGE_TAG;$${CI_IMAGE_TAG};g" -e "s;DOCKER_BASE_PYTHON;$${DOCKER_BASE_PYTHON};g" \
+	 sed -e "s;CI_IMAGE_TAG;$(CI_IMAGE_TAG);g" -e "s;DOCKER_BASE_PYTHON;$(DOCKER_BASE_PYTHON);g" \
 		 .binder/Dockerfile.in > .binder/Dockerfile
 
 docker_image: docker_file
