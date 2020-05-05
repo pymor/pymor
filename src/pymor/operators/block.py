@@ -55,7 +55,6 @@ class BlockOperatorBase(Operator):
         self.num_source_blocks = len(source_spaces)
         self.num_range_blocks = len(range_spaces)
         self.linear = all(op.linear for op in self._operators())
-        self.build_parameter_type(*self._operators())
 
     @property
     def H(self):

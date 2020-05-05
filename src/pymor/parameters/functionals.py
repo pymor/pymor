@@ -7,7 +7,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.base import abstractmethod
-from pymor.parameters.base import Mu, ParametricObject
+from pymor.parameters.base import Mu, ParametricObject, Parameters
 from pymor.tools.floatcmp import float_cmp
 
 
@@ -90,7 +90,7 @@ class ProjectionParameterFunctional(ParameterFunctional):
         assert index < component_shape
 
         self.__auto_init(locals())
-        self.build_parameter_type({component_name: component_shape})
+        self.own_parameters = {component_name: component_shape}
 
     def evaluate(self, mu=None):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
@@ -130,7 +130,7 @@ class GenericParameterFunctional(ParameterFunctional):
 
     def __init__(self, mapping, parameters, name=None, derivative_mappings=None, second_derivative_mappings=None):
         self.__auto_init(locals())
-        self.build_parameter_type(parameters)
+        self.own_parameters = parameters
 
     def evaluate(self, mu=None):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
@@ -261,7 +261,6 @@ class ProductParameterFunctional(ParameterFunctional):
         assert len(factors) > 0
         assert all(isinstance(f, (ParameterFunctional, Number)) for f in factors)
         self.__auto_init(locals())
-        self.build_parameter_type(*(f for f in factors if isinstance(f, ParameterFunctional)))
 
     def evaluate(self, mu=None):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
@@ -289,7 +288,6 @@ class ConjugateParameterFunctional(ParameterFunctional):
     def __init__(self, functional, name=None):
         self.functional = functional
         self.name = name or f'{functional.name}_conj'
-        self.build_parameter_type(functional)
 
     def evaluate(self, mu=None):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
@@ -364,10 +362,9 @@ class MinThetaParameterFunctional(ParameterFunctional):
         assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
         thetas = tuple(ConstantParameterFunctional(theta) if not isinstance(theta, ParameterFunctional) else theta
                        for theta in thetas)
-        self.build_parameter_type(*thetas)
         if not isinstance(mu_bar, Mu):
-            mu_bar = self.parameters.parse(mu_bar)
-        assert mu_bar >= self.parameters, self.parameters.why_incompatible(mu_bar)
+            mu_bar = Parameters.of(thetas).parse(mu_bar)
+        assert mu_bar >= Parameters.of(thetas), Parameters.of(thetas).why_incompatible(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
         assert np.all(thetas_mu_bar > 0)
         assert isinstance(alpha_mu_bar, Number)
@@ -434,10 +431,9 @@ class MaxThetaParameterFunctional(ParameterFunctional):
         assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
         thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                        for f in thetas)
-        self.build_parameter_type(*thetas)
         if not isinstance(mu_bar, Mu):
-            mu_bar = self.parameters.parse(mu_bar)
-        assert mu_bar >= self.parameters, self.parameters.why_incompatible(mu_bar)
+            mu_bar = Parameters.of(thetas).parse(mu_bar)
+        assert mu_bar >= Parameters.of(thetas), Parameters.of(thetas).why_incompatible(mu_bar)
         thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
         assert not np.any(float_cmp(thetas_mu_bar, 0))
         assert isinstance(gamma_mu_bar, Number)

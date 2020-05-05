@@ -66,7 +66,6 @@ class MPIOperator(Operator):
         self.op = op = mpi.get_object(obj_id)
         self.linear = op.linear
         self.name = op.name
-        self.build_parameter_type(op)
         if mpi_source:
             local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, True, pickle_local_spaces)
             if all(ls == local_spaces[0] for ls in local_spaces):

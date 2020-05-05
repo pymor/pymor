@@ -68,7 +68,7 @@ class NumpyGenericOperator(Operator):
         self.__auto_init(locals())
         self.source = NumpyVectorSpace(dim_source, source_id)
         self.range = NumpyVectorSpace(dim_range, range_id)
-        self.build_parameter_type(parameters)
+        self.own_parameters = parameters
 
     def apply(self, U, mu=None):
         assert U in self.source

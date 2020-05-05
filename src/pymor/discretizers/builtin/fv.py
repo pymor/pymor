@@ -88,7 +88,6 @@ class LaxFriedrichsFlux(NumericalConvectiveFlux):
 
     def __init__(self, flux, lxf_lambda=1.0):
         self.__auto_init(locals())
-        self.build_parameter_type(flux)
 
     def evaluate_stage1(self, U, mu=None):
         return U, self.flux(U[..., np.newaxis], mu)
@@ -116,7 +115,6 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFlux):
 
     def __init__(self, flux, flux_derivative):
         self.__auto_init(locals())
-        self.build_parameter_type(flux, flux_derivative)
 
     def evaluate_stage1(self, U, mu=None):
         return self.flux(U[..., np.newaxis], mu), self.flux_derivative(U[..., np.newaxis], mu)
@@ -164,7 +162,6 @@ class EngquistOsherFlux(NumericalConvectiveFlux):
 
     def __init__(self, flux, flux_derivative, gausspoints=5, intervals=1):
         self.__auto_init(locals())
-        self.build_parameter_type(flux, flux_derivative)
         points, weights = GaussQuadratures.quadrature(npoints=self.gausspoints)
         points = points / intervals
         points = ((np.arange(self.intervals, dtype=np.float)[:, np.newaxis] * (1 / intervals))
@@ -230,7 +227,6 @@ class NonlinearAdvectionOperator(Operator):
             self._dirichlet_values = self._dirichlet_values.ravel()
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.source = self.range = FVVectorSpace(grid, space_id)
-        self.build_parameter_type(numerical_flux, dirichlet_data)
 
     def with_numerical_flux(self, **kwargs):
         return self.with_(numerical_flux=self.numerical_flux.with_(**kwargs))
@@ -477,7 +473,6 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver_options=None, name=None):
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
-        self.build_parameter_type(velocity_field)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -571,7 +566,6 @@ class ReactionOperator(NumpyMatrixBasedOperator):
         assert reaction_coefficient.dim_domain == grid.dim and reaction_coefficient.shape_range == ()
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
-        self.build_parameter_type(reaction_coefficient)
 
     def _assemble(self, mu=None):
 
@@ -588,7 +582,6 @@ class NonlinearReactionOperator(Operator):
     def __init__(self, grid, reaction_function, reaction_function_derivative=None, space_id='STATE', name=None):
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid, space_id)
-        self.build_parameter_type(reaction_function, reaction_function_derivative)
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
@@ -650,7 +643,6 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         assert function is None or function.shape_range == ()
         self.__auto_init(locals())
         self.range = FVVectorSpace(grid)
-        self.build_parameter_type(function, dirichlet_data, diffusion_function, neumann_data)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -737,8 +729,6 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
                     and diffusion_function.shape_range == ()))
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
-        if diffusion_function is not None:
-            self.build_parameter_type(diffusion_function)
 
     def _assemble(self, mu=None):
         grid = self.grid

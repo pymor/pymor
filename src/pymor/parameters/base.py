@@ -41,6 +41,7 @@ import numpy as np
 
 from pymor.core.base import ImmutableObject
 from pymor.tools.floatcmp import float_cmp_all
+from pymor.tools.frozendict import FrozenDict
 from pymor.tools.pprint import format_array
 
 
@@ -95,10 +96,13 @@ class Parameters(OrderedDict):
         return 'Parameters(' + str(self) + ')'
 
     def __le__(self, mu):
-        if mu is not None and not isinstance(mu, Mu):
-            raise TypeError('mu is not a Parameter. (Use parameters.parse?)')
-        return not self or \
-            mu is not None and all(getattr(mu.get(k), 'size') == v for k, v in self.items())
+        if isinstance(mu, Parameters):
+            return all(mu.get(k) == v for k, v in self.items())
+        else:
+            if mu is not None and not isinstance(mu, Mu):
+                raise TypeError('mu is not a Parameter. (Use parameters.parse?)')
+            return not self or \
+                mu is not None and all(getattr(mu.get(k), 'size') == v for k, v in self.items())
 
     def why_incompatible(self, mu):
         if mu is not None and not isinstance(mu, Mu):
@@ -114,6 +118,74 @@ class Parameters(OrderedDict):
                 failing_components[k] = f'{mu[k].size} != {v}'
         assert failing_components
         return f'Incompatible components: {failing_components}'
+
+    @classmethod
+    def of(cls, *args):
+        """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
+
+        The |ParameterType| of a |Parametric| object is determined by the parameter components
+        the object itself requires for evaluation, and by the parameter components
+        required by the objects the object depends upon for evaluation.
+
+        All parameter components (directly specified or inherited by the |ParameterType|
+        of a given |Parametric| object) with the same name are treated as identical and
+        are thus required to have the same shapes. The object's |ParameterType| is then
+        made up by the shapes of all parameter components appearing.
+
+        Additionally components of the resulting |ParameterType| can be removed by
+        specifying them via the `provides` parameter. The idea is that the object itself
+        may provide parameter components to the inherited objects which thus should
+        not become part of the object's own parameter type. (A typical application
+        would be |InstationaryModel|, which provides a time parameter
+        component to its (time-dependent) operators during time-stepping.)
+
+        Parameters
+        ----------
+        args
+            Each positional argument must either be a dict of parameter components and shapes or
+            a |Parametric| object whose :attr:`~Parametric.parameters` is added.
+        """
+        parameters = {}
+
+        def check_shapes(component, shape1, shape2):
+            assert isinstance(shape2, int) and shape2 >= 0, f'Component {component} not an int or negative'
+            assert shape1 is None or shape1 == shape2, \
+                f'Dimension mismatch for parameter {component} (got {shape1} and {shape2})'
+            return True
+
+        def traverse(obj):
+            if obj is None:
+                return
+            elif hasattr(obj, 'parameters'):
+                obj_params = obj.parameters
+                if isinstance(obj_params, Parameters):
+                    assert all(check_shapes(component, parameters.get(component), shape)
+                               for component, shape in obj_params.items())
+                    parameters.update(obj_params)
+            elif isinstance(obj, (list, tuple)):
+                for o in obj:
+                    traverse(o)
+            elif isinstance(obj, (dict, FrozenDict)):
+                for o in obj.values():
+                    traverse(o)
+            elif isinstance(obj, np.ndarray) and obj.dtype == object:
+                for o in obj.flat:
+                    traverse(o)
+
+        for arg in args:
+            traverse(arg)
+
+        return cls(parameters)
+
+    def __or__(self, other):
+        assert all(k not in self or self[k] == v
+                   for k, v in other.items())
+        return Parameters(dict(self, **other))
+
+    def __sub__(self, other):
+        assert all(k not in self or self[k] == v
+                   for k, v in other.items())
+        return Parameters({k: v for k, v in self.items() if k not in other})
 
     def parse(self, mu):
         """Takes a user input `mu` and interprets it as a |Parameter| according to the given
@@ -286,7 +358,7 @@ class Mu(dict):
 
     @property
     def parameters(self):
-        return Parameters({k: v.shape for k, v in self.items()})
+        return Parameters({k: v.size for k, v in self.items()})
 
     def __str__(self):
         np.set_string_function(format_array, repr=False)
@@ -328,7 +400,45 @@ class ParametricObject(ImmutableObject):
         is not empty.
     """
 
-    parameters = Parameters({})
+    internal_parameters = Parameters({})
+
+    @property
+    def parameters(self):
+        if self._parameters is not None:
+            return self._parameters
+        assert self._locked, 'parameters attribute can only be accessed after class initialization'
+        params = Parameters.of(*(getattr(self, arg) for arg in self._init_arguments))
+        if self.own_parameters:
+            params = params | self.own_parameters
+        if self.internal_parameters:
+            params = params - self.internal_parameters
+        if self._parameter_space is not None:
+            assert params == self._parameter_space.parameters
+        self._parameters = params
+        return params
+
+    @parameters.setter
+    def parameters(self, parameters):
+        self._parameters = Parameters(parameters)
+        assert self.__check_parameter_consistency()
+
+    @property
+    def own_parameters(self):
+        return self._own_parameters or Parameters({})
+
+    @own_parameters.setter
+    def own_parameters(self, own_parameters):
+        self._own_parameters = Parameters(own_parameters)
+        assert self.__check_parameter_consistency()
+
+    @property
+    def internal_parameters(self):
+        return self._internal_parameters or Parameters({})
+
+    @internal_parameters.setter
+    def internal_parameters(self, internal_parameters):
+        self._internal_parameters = Parameters(internal_parameters)
+        assert self.__check_parameter_consistency()
 
     @property
     def parameter_space(self):
@@ -336,69 +446,27 @@ class ParametricObject(ImmutableObject):
 
     @parameter_space.setter
     def parameter_space(self, ps):
-        assert ps is None or self.parameters == ps.parameters
         self._parameter_space = ps
+        assert self.__check_parameter_consistency()
 
     @property
     def parametric(self):
         return bool(self.parameters)
 
-    def build_parameter_type(self, *args, provides=None, **kwargs):
-        """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
+    def __check_parameter_consistency(self):
+        if self._internal_parameters is not None:
+            if self._parameters is not None:
+                assert self._parameters.keys().isdisjoint(self._internal_parameters)
+            if self._own_parameters is not None:
+                assert self._own_parameters.keys().isdisjoint(self._internal_parameters)
+        if self._own_parameters is not None:
+            if self._parameters is not None:
+                assert self._parameters >= self._own_parameters
+        if self._parameters is not None and self._parameter_space is not None:
+            assert self._parameters == self._parameter_space.parameters
+        return True
 
-        The |ParameterType| of a |Parametric| object is determined by the parameter components
-        the object itself requires for evaluation, and by the parameter components
-        required by the objects the object depends upon for evaluation.
-
-        All parameter components (directly specified or inherited by the |ParameterType|
-        of a given |Parametric| object) with the same name are treated as identical and
-        are thus required to have the same shapes. The object's |ParameterType| is then
-        made up by the shapes of all parameter components appearing.
-
-        Additionally components of the resulting |ParameterType| can be removed by
-        specifying them via the `provides` parameter. The idea is that the object itself
-        may provide parameter components to the inherited objects which thus should
-        not become part of the object's own parameter type. (A typical application
-        would be |InstationaryModel|, which provides a time parameter
-        component to its (time-dependent) operators during time-stepping.)
-
-        Parameters
-        ----------
-        args
-            Each positional argument must either be a dict of parameter components and shapes or
-            a |Parametric| object whose :attr:`~Parametric.parameters` is added.
-        kwargs
-            Each keyword argument is interpreted as parameter component with corresponding shape.
-        provides
-            `Dict` of parameter component names and shapes which are provided by the object
-            itself. The parameter components listed here will not become part of the object's
-            |ParameterType|.
-        """
-        provides = provides or {}
-        my_parameters = {}
-
-        def check_shapes(component, shape1, shape2):
-            assert isinstance(shape2, int) and shape2 >= 0, f'Component {component} not an int or negative'
-            assert shape1 is None or shape1 == shape2, \
-                (f'Dimension mismatch for parameter component {component} '
-                 f'(got {my_parameters[component]} and {shape})')
-            return True
-
-        for arg in args:
-            if hasattr(arg, 'parameters'):
-                arg = arg.parameters
-            if arg is None:
-                continue
-            for component, shape in arg.items():
-                assert check_shapes(component, my_parameters.get(component), shape)
-                my_parameters[component] = shape
-
-        for component, shape in kwargs.items():
-            assert component not in my_parameters or check_shapes(component, my_parameters[component], shape)
-            my_parameters[component] = shape
-
-        for component, shape in provides.items():
-            assert component not in my_parameters or check_shapes(component, my_parameters[component], shape)
-            my_parameters.pop(component, None)
-
-        self.parameters = Parameters(my_parameters)
+    _parameters = None
+    _own_parameters = None
+    _internal_parameters = None
+    _parameter_space = None

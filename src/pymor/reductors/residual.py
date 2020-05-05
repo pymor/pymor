@@ -118,7 +118,6 @@ class ResidualOperator(Operator):
         self.range = operator.range
         self.linear = operator.linear
         self.rhs_vector = rhs.as_range_array() if rhs and not rhs.parametric else None
-        self.build_parameter_type(operator, rhs)
 
     def apply(self, U, mu=None):
         V = self.operator.apply(U, mu=mu)
@@ -269,7 +268,6 @@ class ImplicitEulerResidualOperator(Operator):
         self.range = operator.range
         self.linear = operator.linear
         self.rhs_vector = rhs.as_range_array() if rhs and not rhs.parametric else None
-        self.build_parameter_type(operator, mass, rhs)
 
     def apply(self, U, U_old, mu=None):
         V = self.operator.apply(U, mu=mu)

@@ -65,7 +65,6 @@ class EmpiricalInterpolatedOperator(Operator):
         assert collateral_basis in operator.range
         assert len(interpolation_dofs) == len(collateral_basis)
 
-        self.build_parameter_type(operator)
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
@@ -168,7 +167,6 @@ class ProjectedEmpiciralInterpolatedOperator(Operator):
         self.source = NumpyVectorSpace(len(source_basis_dofs))
         self.range = projected_collateral_basis.space
         self.linear = restricted_operator.linear
-        self.build_parameter_type(restricted_operator)
 
     def apply(self, U, mu=None):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)

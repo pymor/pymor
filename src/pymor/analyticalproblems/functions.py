@@ -151,7 +151,7 @@ class GenericFunction(Function):
         assert isinstance(shape_range, (Number, tuple))
         if not isinstance(shape_range, tuple):
             shape_range = (shape_range,)
-        self.build_parameter_type(parameters)
+        self.own_parameters = parameters
         self.__auto_init(locals())
 
     def __str__(self):
@@ -248,8 +248,6 @@ class LincombFunction(Function):
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
         self.__auto_init(locals())
-        self.build_parameter_type(*chain(functions,
-                                         (f for f in coefficients if isinstance(f, ParameterFunctional))))
         self.dim_domain = functions[0].dim_domain
         self.shape_range = functions[0].shape_range
 
@@ -285,7 +283,6 @@ class ProductFunction(Function):
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
         self.__auto_init(locals())
-        self.build_parameter_type(*functions)
         self.dim_domain = functions[0].dim_domain
         self.shape_range = functions[0].shape_range
 

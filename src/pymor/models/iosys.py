@@ -233,7 +233,6 @@ class LTIModel(InputStateOutputModel):
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, name=name)
-        self.build_parameter_type(A, B, C, D, E)
         self.__auto_init(locals())
 
     def __str__(self):
@@ -889,7 +888,8 @@ class TransferFunction(InputOutputModel):
 
     def __init__(self, input_space, output_space, tf, dtf, cont_time=True, parameter_space=None, name=None):
         super().__init__(input_space, output_space, cont_time=cont_time, name=name)
-        self.parameters = parameter_space.parameters if parameter_space else Parameters({})
+        if parameter_space:
+            self.own_parameters = parameter_space.parameters
         self.__auto_init(locals())
 
     def __str__(self):
@@ -1136,7 +1136,6 @@ class SecondOrderModel(InputStateOutputModel):
 
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, name=name)
-        self.build_parameter_type(M, E, K, B, Cp, Cv, D)
         self.__auto_init(locals())
 
     def __str__(self):
@@ -1860,7 +1859,6 @@ class LinearDelayModel(InputStateOutputModel):
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, name=name)
 
-        self.build_parameter_type(A, *Ad, B, C, D, E)
         self.__auto_init(locals())
         self.q = len(Ad)
         self.solution_space = A.source

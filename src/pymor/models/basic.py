@@ -7,6 +7,7 @@ import numpy as np
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
 from pymor.operators.constructions import VectorOperator
+from pymor.parameters.base import Parameters
 from pymor.tools.formatrepr import indent_value
 from pymor.vectorarrays.interface import VectorArray
 
@@ -70,7 +71,6 @@ class StationaryModel(Model):
 
         super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
-        self.build_parameter_type(operator, rhs, output_functional)
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
@@ -183,7 +183,7 @@ class InstationaryModel(Model):
 
         super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
-        self.build_parameter_type(initial_data, operator, rhs, mass, output_functional, provides={'_t': 1})
+        self.internal_parameters = {'_t': 1}
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)

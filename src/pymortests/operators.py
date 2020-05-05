@@ -13,7 +13,6 @@ from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
                                            LincombOperator, VectorArrayOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.base import Parameters
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -27,7 +26,7 @@ def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
         lambda x: round(x["nrrhs"].item()),
-        Parameters({"nrrhs": 1})
+        {"nrrhs": 1}
     )
     s1 = SelectionOperator(
         operators=[p1],

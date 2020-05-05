@@ -222,7 +222,7 @@ if config.HAVE_FENICS:
             self.__auto_init(locals())
             self.source = source_space
             self.range = range_space
-            self.build_parameter_type(parameters)
+            self.own_parameters = parameters
 
         def _set_mu(self, mu=None):
             assert mu >= self.parameters, self.parameters.why_incompatible(mu)
@@ -387,7 +387,6 @@ if config.HAVE_FENICS:
             self.range = NumpyVectorSpace(len(restricted_range_dofs))
             self.op = op
             self.restricted_range_dofs = restricted_range_dofs
-            self.build_parameter_type(op)
 
         def apply(self, U, mu=None):
             assert U in self.source

@@ -53,8 +53,6 @@ class LincombOperator(Operator):
         self.source = operators[0].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
-        self.build_parameter_type(*chain(operators,
-                                         (f for f in coefficients if isinstance(f, ParameterFunctional))))
 
     @property
     def H(self):
@@ -281,7 +279,6 @@ class Concatenation(Operator):
         operators = tuple(operators)
 
         self.__auto_init(locals())
-        self.build_parameter_type(*operators)
         self.source = operators[-1].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
@@ -393,7 +390,6 @@ class ProjectedOperator(Operator):
         if range_basis is not None:
             range_basis = range_basis.copy()
         self.__auto_init(locals())
-        self.build_parameter_type(operator)
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
         self.linear = operator.linear
@@ -984,7 +980,6 @@ class ProxyOperator(Operator):
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
-        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -1027,7 +1022,8 @@ class FixedParameterOperator(ProxyOperator):
         super().__init__(operator, name)
         assert mu >= operator.parameters, operator.parameters.why_incompatible(mu)
         self.mu = mu.copy()
-        self.build_parameter_type()
+        if mu:
+            self.internal_parameters = mu.parameters
 
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=self.mu)
@@ -1086,7 +1082,6 @@ class InverseOperator(Operator):
         self.source = operator.range
         self.range = operator.source
         self.linear = operator.linear
-        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -1130,7 +1125,6 @@ class InverseAdjointOperator(Operator):
         self.__auto_init(locals())
         self.source = operator.source
         self.range = operator.range
-        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -1205,7 +1199,6 @@ class AdjointOperator(Operator):
         self.__auto_init(locals())
         self.source = operator.range
         self.range = operator.source
-        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -1300,7 +1293,6 @@ class SelectionOperator(Operator):
         self.source = operators[0].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
-        self.build_parameter_type(parameter_functional, *operators)
 
     @property
     def H(self):
@@ -1383,7 +1375,6 @@ class InducedNorm(ParametricObject):
     def __init__(self, product, raise_negative, tol, name):
         name = name or product.name
         self.__auto_init(locals())
-        self.build_parameter_type(product)
 
     def __call__(self, U, mu=None):
         norm_squared = self.product.pairwise_apply2(U, U, mu=mu).real
