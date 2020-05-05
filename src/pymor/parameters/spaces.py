@@ -2,13 +2,10 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from itertools import product
-
 import numpy as np
 
 from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.parameters.base import Mu, Parameters
-from pymor.tools.random import get_random_state
 
 
 class ParameterSpace(ImmutableObject):
@@ -68,18 +65,7 @@ class CubicParameterSpace(ParameterSpace):
 
     def sample_uniformly(self, counts):
         """Uniformly sample |Parameters| from the space."""
-        if isinstance(counts, dict):
-            pass
-        elif isinstance(counts, (tuple, list, np.ndarray)):
-            counts = {k: c for k, c in zip(self.parameters, counts)}
-        else:
-            counts = {k: counts for k in self.parameters}
-        linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameters)
-        iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
-                      for ls, sps in zip(linspaces, self.parameters.values()))
-        return [Mu(((k, np.array(v).reshape(shp))
-                           for k, v, shp in zip(self.parameters, i, self.parameters.values())))
-                for i in product(*iters)]
+        return self.parameters.sample_uniformly(counts, self.ranges)
 
     def sample_randomly(self, count=None, random_state=None, seed=None):
         """Randomly sample |Parameters| from the space.
@@ -102,18 +88,7 @@ class CubicParameterSpace(ParameterSpace):
         |Parameters|.
         Otherwise a list of `count` random |Parameters|.
         """
-        assert not random_state or seed is None
-        ranges = self.ranges
-        random_state = get_random_state(random_state, seed)
-        get_param = lambda: Mu(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
-                                       for k, shp in self.parameters.items()))
-        if count is None:
-            def param_generator():
-                while True:
-                    yield get_param()
-            return param_generator()
-        else:
-            return [get_param() for _ in range(count)]
+        return self.parameters.sample_randomly(count, self.ranges, random_state, seed)
 
     def __str__(self):
         rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameters.items()]

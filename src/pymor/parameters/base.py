@@ -35,6 +35,7 @@ of numbers of the right length). Moreover, when given a |Parameter|,
 """
 
 from collections import OrderedDict
+from itertools import product
 from numbers import Number
 
 import numpy as np
@@ -43,6 +44,7 @@ from pymor.core.base import ImmutableObject
 from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.frozendict import FrozenDict
 from pymor.tools.pprint import format_array
+from pymor.tools.random import get_random_state
 
 
 class Parameters(OrderedDict):
@@ -260,6 +262,70 @@ class Parameters(OrderedDict):
 
     def __hash__(self):
         return hash(tuple(self.items()))
+
+    def _get_sample_ranges(self, ranges):
+        if ranges is None:
+            raise NotImplementedError
+        if isinstance(ranges, (tuple, list)):
+            assert len(ranges) == 2
+            ranges = {k: ranges for k in self}
+        assert isinstance(ranges, dict)
+        assert all(k in ranges
+                   and len(ranges[k]) == 2
+                   and all(isinstance(v, Number) for v in ranges[k])
+                   and ranges[k][0] <= ranges[k][1]
+                   for k in self)
+        return ranges
+
+    def sample_uniformly(self, counts, ranges=None):
+        """Uniformly sample |Parameters| from the space."""
+        if isinstance(counts, dict):
+            pass
+        elif isinstance(counts, (tuple, list, np.ndarray)):
+            counts = {k: c for k, c in zip(self, counts)}
+        else:
+            counts = {k: counts for k in self}
+        ranges = self._get_sample_ranges(ranges)
+
+        linspaces = tuple(np.linspace(ranges[k][0], ranges[k][1], num=counts[k]) for k in self)
+        iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
+                      for ls, sps in zip(linspaces, self.values()))
+        return [Mu((k, np.array(v)) for k, v in zip(self, i))
+                for i in product(*iters)]
+
+    def sample_randomly(self, count=None, ranges=None, random_state=None, seed=None):
+        """Randomly sample |Parameters| from the space.
+
+        Parameters
+        ----------
+        count
+            `None` or number of random parameters (see below).
+        random_state
+            :class:`~numpy.random.RandomState` to use for sampling.
+            If `None`, a new random state is generated using `seed`
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
+        seed
+            If not `None`, a new radom state with this seed is used.
+
+        Returns
+        -------
+        If `count` is `None`, an inexhaustible iterator returning random
+        |Parameters|.
+        Otherwise a list of `count` random |Parameters|.
+        """
+        assert not random_state or seed is None
+        ranges = self._get_sample_ranges(ranges)
+        random_state = get_random_state(random_state, seed)
+        get_param = lambda: Mu(((k, random_state.uniform(ranges[k][0], ranges[k][1], size))
+                               for k, size in self.items()))
+        if count is None:
+            def param_generator():
+                while True:
+                    yield get_param()
+            return param_generator()
+        else:
+            return [get_param() for _ in range(count)]
 
 
 class Mu(dict):
