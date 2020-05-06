@@ -25,7 +25,7 @@ def test_pod(vector_array, method):
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
     assume(len(A) > 1 or A.dim > 1)
-    assume(not contains_zero_vector(A))
+    assume(not contains_zero_vector(A, rtol=1e-13, atol=1e-13))
 
     B = A.copy()
     U, s = pod(A, method=method)
