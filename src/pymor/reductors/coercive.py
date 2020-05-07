@@ -122,8 +122,6 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
                          check_tol=check_tol)
         self.coercivity_estimator = coercivity_estimator
-        self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
-                                                  product=product)
         self.extends = None
 
     def assemble_estimator(self):
