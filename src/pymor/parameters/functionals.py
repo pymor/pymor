@@ -65,41 +65,43 @@ class ParameterFunctional(ParametricObject):
 
 
 class ProjectionParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| returning a component of the given parameter.
+    """|ParameterFunctional| returning a component value of the given parameter.
 
-    For given parameter `mu`, this functional evaluates to ::
+    For given parameter map `mu`, this functional evaluates to ::
 
-        mu[component_name][index]
+        mu[parameter][index]
 
 
     Parameters
     ----------
-    component_name
-        The name of the parameter component to return.
-    component_shape
-        The shape of the parameter component.
+    parameter
+        The name of the parameter to return.
+    size
+        The size of the parameter.
     index
         See above.
     name
         Name of the functional.
     """
 
-    def __init__(self, component_name, component_shape, index=0, name=None):
-        assert isinstance(component_shape, Number)
+    def __init__(self, parameter, size=1, index=None, name=None):
+        assert isinstance(size, Number)
+        if index is None and size == 1:
+            index = 0
         assert isinstance(index, Number)
-        assert index < component_shape
+        assert 0 <= index < size
 
         self.__auto_init(locals())
-        self.own_parameters = {component_name: component_shape}
+        self.own_parameters = {parameter: size}
 
     def evaluate(self, mu=None):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
-        return mu[self.component_name].item(self.index)
+        return mu[self.parameter].item(self.index)
 
     def d_mu(self, component, index=0):
         check, index = self._check_and_parse_input(component, index)
         if check:
-            if component == self.component_name and index == self.index:
+            if component == self.parameter and index == self.index:
                 return ConstantParameterFunctional(1, name=self.name + '_d_mu')
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 

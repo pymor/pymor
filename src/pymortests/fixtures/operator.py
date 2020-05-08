@@ -349,7 +349,7 @@ def misc_operator_with_arrays_and_products_factory(n):
         op0, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3, n)
         op1 = NumpyMatrixOperator(np.random.random((30, 30)))
         op2 = NumpyMatrixOperator(np.random.random((30, 30)))
-        op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x', 1), [0.3, 0.6])
+        op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x'), [0.3, 0.6])
         return op, op.parameters.parse((n-5)/2), V, U, rp, sp
     elif n == 8:
         from pymor.operators.block import BlockDiagonalOperator

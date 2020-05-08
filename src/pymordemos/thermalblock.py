@@ -326,8 +326,8 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
     def parameter_functional_factory(x, y):
-        return ProjectionParameterFunctional(component_name='diffusion',
-                                             component_shape=yblocks*xblocks,
+        return ProjectionParameterFunctional('diffusion',
+                                             size=yblocks*xblocks,
                                              index=yblocks - y - 1 + x *yblocks,
                                              name=f'diffusion_{x}_{y}')
     parameter_functionals = tuple(parameter_functional_factory(x, y)

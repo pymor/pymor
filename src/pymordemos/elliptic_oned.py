@@ -38,7 +38,7 @@ def elliptic_oned_demo(args):
     d0 = ExpressionFunction('1 - x', 1, ())
     d1 = ExpressionFunction('x', 1, ())
 
-    f0 = ProjectionParameterFunctional('diffusionl', 1)
+    f0 = ProjectionParameterFunctional('diffusionl')
     f1 = 1.
 
     problem = StationaryProblem(

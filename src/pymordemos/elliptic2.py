@@ -34,22 +34,22 @@ def elliptic2_demo(args):
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
               LincombFunction(
               [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1.,2)],
-              [ProjectionParameterFunctional('mu', 1), 0.1])]
+              [ProjectionParameterFunctional('mu'), 0.1])]
 
     dirichlets = [ExpressionFunction('zeros(x.shape[:-1])', 2, ()),
                   LincombFunction(
                   [ExpressionFunction('2 * x[..., 0]', 2, ()), ConstantFunction(1.,2)],
-                  [ProjectionParameterFunctional('mu', 1), 0.5])]
+                  [ProjectionParameterFunctional('mu'), 0.5])]
 
     neumanns = [None,
                   LincombFunction(
                   [ExpressionFunction('1 - x[..., 1]', 2, ()), ConstantFunction(1.,2)],
-                  [ProjectionParameterFunctional('mu', 1), 0.5**2])]
+                  [ProjectionParameterFunctional('mu'), 0.5**2])]
 
     robins = [None,
                 (LincombFunction(
                 [ExpressionFunction('x[..., 1]', 2, ()), ConstantFunction(1.,2)],
-                [ProjectionParameterFunctional('mu', 1), 1]),
+                [ProjectionParameterFunctional('mu'), 1]),
                  ConstantFunction(1.,2))]
 
     domains = [RectDomain(),
@@ -66,7 +66,7 @@ def elliptic2_demo(args):
         rhs=rhs,
         diffusion=LincombFunction(
             [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],
-            [ProjectionParameterFunctional('mu', 1), 1]
+            [ProjectionParameterFunctional('mu'), 1]
         ),
         dirichlet_data=dirichlet,
         neumann_data=neumann,

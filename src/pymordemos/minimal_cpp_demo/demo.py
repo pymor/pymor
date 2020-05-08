@@ -21,7 +21,7 @@ from pymordemos.minimal_cpp_demo.wrapper import WrappedDiffusionOperator
 def discretize(n, nt, blocks):
     h = 1. / blocks
     ops = [WrappedDiffusionOperator.create(n, h * i, h * (i + 1)) for i in range(blocks)]
-    pfs = [ProjectionParameterFunctional('diffusion_coefficients', (blocks,), (i,)) for i in range(blocks)]
+    pfs = [ProjectionParameterFunctional('diffusion_coefficients', blocks, i) for i in range(blocks)]
     operator = LincombOperator(ops, pfs)
 
     initial_data = operator.source.zeros()

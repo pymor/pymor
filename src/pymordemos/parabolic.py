@@ -73,7 +73,7 @@ def parabolic_demo(args):
                 diffusion=ConstantFunction(0.01, dim_domain=2),
 
                 advection=LincombFunction([ConstantFunction(np.array([-1., 0]), dim_domain=2)],
-                                          [ProjectionParameterFunctional('speed', 1)]),
+                                          [ProjectionParameterFunctional('speed')]),
 
                 reaction=ConstantFunction(0.5, dim_domain=2),
 

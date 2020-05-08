@@ -112,8 +112,8 @@ def _discretize_fenics():
     from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
-    parameter_functionals = [ProjectionParameterFunctional(component_name='diffusion',
-                                                           component_shape=YBLOCKS*XBLOCKS,
+    parameter_functionals = [ProjectionParameterFunctional('diffusion',
+                                                           size=YBLOCKS*XBLOCKS,
                                                            index=YBLOCKS - y - 1 + x*YBLOCKS)
                              for x in range(XBLOCKS) for y in range(YBLOCKS)]
 
