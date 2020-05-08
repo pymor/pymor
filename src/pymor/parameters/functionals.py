@@ -23,7 +23,6 @@ class ParameterFunctional(ParametricObject):
         """Evaluate the functional for the given |Parameter| `mu`."""
         pass
 
-    @abstractmethod
     def d_mu(self, parameter, index=0):
         """Return the functionals's derivative with respect to a given parameter.
 
@@ -38,7 +37,10 @@ class ParameterFunctional(ParametricObject):
         -------
         New |Parameter| functional representing the partial derivative.
         """
-        pass
+        if parameter not in self.parameters:
+            return ConstantParameterFunctional(0, name=self.name + '_d_mu')
+        else:
+            raise NotImplementedError
 
     def __call__(self, mu=None):
         return self.evaluate(mu)
@@ -53,15 +55,6 @@ class ParameterFunctional(ParametricObject):
 
     def __neg__(self):
         return self * (-1.)
-
-    def _check_and_parse_input(self, component, index):
-        # check whether component is in parameters
-        if component not in self.parameters:
-            return False, None
-        # check whether index has the correct shape
-        assert isinstance(index, Number)
-        assert 0 <= index < self.parameters[component], 'wrong input `index` given'
-        return True, index
 
 
 class ProjectionParameterFunctional(ParameterFunctional):
@@ -99,9 +92,9 @@ class ProjectionParameterFunctional(ParameterFunctional):
         return mu[self.parameter].item(self.index)
 
     def d_mu(self, parameter, index=0):
-        check, index = self._check_and_parse_input(parameter, index)
-        if check:
-            if parameter == self.parameter and index == self.index:
+        if parameter == self.parameter:
+            assert 0 <= index < self.size
+            if index == self.index:
                 return ConstantParameterFunctional(1, name=self.name + '_d_mu')
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
@@ -144,8 +137,8 @@ class GenericParameterFunctional(ParameterFunctional):
             return value
 
     def d_mu(self, parameter, index=0):
-        check, index = self._check_and_parse_input(parameter, index)
-        if check:
+        if parameter in self.parameters:
+            assert 0 <= index < self.parameters[parameter]
             if self.derivative_mappings is None:
                 raise ValueError('You must provide a dict of expressions for all \
                                   partial derivatives in self.parameters')
@@ -274,9 +267,6 @@ class ProductParameterFunctional(ParameterFunctional):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
-    def d_mu(self, parameter, index=0):
-        raise NotImplementedError
-
 
 class ConjugateParameterFunctional(ParameterFunctional):
     """Conjugate of a given |ParameterFunctional|
@@ -300,9 +290,6 @@ class ConjugateParameterFunctional(ParameterFunctional):
     def evaluate(self, mu=None):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.conj(self.functional.evaluate(mu))
-
-    def d_mu(self, parameter, index=0):
-        raise NotImplementedError
 
 
 class ConstantParameterFunctional(ParameterFunctional):
@@ -386,9 +373,6 @@ class MinThetaParameterFunctional(ParameterFunctional):
         assert np.all(thetas_mu > 0)
         return self.alpha_mu_bar * np.min(thetas_mu / self.thetas_mu_bar)
 
-    def d_mu(self, parameter, index=0):
-        raise NotImplementedError
-
 
 class MaxThetaParameterFunctional(ParameterFunctional):
     """|ParameterFunctional| implementing the max-theta approach from [Haa17]_ (Exercise 5.12).
@@ -454,6 +438,3 @@ class MaxThetaParameterFunctional(ParameterFunctional):
         thetas_mu = np.array([theta(mu) for theta in self.thetas])
         assert np.all(np.logical_or(thetas_mu < 0, thetas_mu > 0))
         return self.gamma_mu_bar * np.abs(np.max(thetas_mu / self.thetas_mu_bar))
-
-    def d_mu(self, parameter, index=0):
-        raise NotImplementedError

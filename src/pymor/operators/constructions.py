@@ -153,7 +153,7 @@ class LincombOperator(Operator):
 
     def d_mu(self, parameter, index=0):
         for op in self.operators:
-            if op.parametric:
+            if parameter in op.parameters:
                 raise NotImplementedError
         derivative_coefficients = []
         for coef in self.coefficients:
