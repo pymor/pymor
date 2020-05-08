@@ -881,8 +881,9 @@ class TransferFunction(InputOutputModel):
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, input_space, output_space, tf, dtf, cont_time=True, name=None):
+    def __init__(self, input_space, output_space, tf, dtf, parameters=None, cont_time=True, name=None):
         super().__init__(input_space, output_space, cont_time=cont_time, name=name)
+        self.own_parameters = parameters
         self.__auto_init(locals())
 
     def __str__(self):
