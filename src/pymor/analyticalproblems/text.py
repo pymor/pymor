@@ -7,7 +7,6 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction, BitmapFunction
 from pymor.core.defaults import defaults
 from pymor.parameters.functionals import ProjectionParameterFunctional
-from pymor.parameters.spaces import CubicParameterSpace
 
 
 @defaults('font_name')
@@ -62,5 +61,5 @@ def text_problem(text='pyMOR', font_name=None):
         domain=RectDomain(dfs[1].bounding_box, bottom='neumann'),
         neumann_data=ConstantFunction(-1., 2),
         diffusion=diffusion,
-        parameter_space=CubicParameterSpace(diffusion.parameters, 0.1, 1.)
+        parameter_ranges=(0.1, 1.)
     )

@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.parameters.spaces import CubicParameterSpace
+from pymor.parameters.base import Parameters
 from pymortests.base import runmodule
 
 import pytest
@@ -13,7 +13,7 @@ num_samples = 100
 
 @pytest.fixture(scope='module')
 def space():
-    return CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
+    return Parameters({'diffusionl': 1}).space(0.1, 1)
 
 
 def test_uniform(space):

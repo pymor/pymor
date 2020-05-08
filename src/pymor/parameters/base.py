@@ -23,10 +23,7 @@ method by calling :meth:`~Parametric.build_parameter_type` which computes the
 method. This way, e.g., an |Operator| can inherit the |ParameterTypes| of the
 data functions it depends upon.
 
-A |Parametric| object can have a |ParameterSpace| assigned to it by setting the
-:attr:`~Parametric.parameter_space` attribute (the |ParameterType| of the space
-has to agree with the |ParameterType| of the object). The
-:meth:`~Parametric.parse_parameter` method parses a user input according to
+The :meth:`~Parametric.parse_parameter` method parses a user input according to
 the object's |ParameterType| to make it a |Parameter| (e.g. if the |ParameterType|
 consists of a single one-dimensional component, the user can simply supply a list
 of numbers of the right length). Moreover, when given a |Parameter|,
@@ -257,75 +254,14 @@ class Parameters(OrderedDict):
 
             return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
+    def space(self, *ranges):
+        return ParameterSpace(self, *ranges)
+
     def __reduce__(self):
         return (Parameters, (dict(self),))
 
     def __hash__(self):
         return hash(tuple(self.items()))
-
-    def _get_sample_ranges(self, ranges):
-        if ranges is None:
-            raise NotImplementedError
-        if isinstance(ranges, (tuple, list)):
-            assert len(ranges) == 2
-            ranges = {k: ranges for k in self}
-        assert isinstance(ranges, dict)
-        assert all(k in ranges
-                   and len(ranges[k]) == 2
-                   and all(isinstance(v, Number) for v in ranges[k])
-                   and ranges[k][0] <= ranges[k][1]
-                   for k in self)
-        return ranges
-
-    def sample_uniformly(self, counts, ranges=None):
-        """Uniformly sample |Parameters| from the space."""
-        if isinstance(counts, dict):
-            pass
-        elif isinstance(counts, (tuple, list, np.ndarray)):
-            counts = {k: c for k, c in zip(self, counts)}
-        else:
-            counts = {k: counts for k in self}
-        ranges = self._get_sample_ranges(ranges)
-
-        linspaces = tuple(np.linspace(ranges[k][0], ranges[k][1], num=counts[k]) for k in self)
-        iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
-                      for ls, sps in zip(linspaces, self.values()))
-        return [Mu((k, np.array(v)) for k, v in zip(self, i))
-                for i in product(*iters)]
-
-    def sample_randomly(self, count=None, ranges=None, random_state=None, seed=None):
-        """Randomly sample |Parameters| from the space.
-
-        Parameters
-        ----------
-        count
-            `None` or number of random parameters (see below).
-        random_state
-            :class:`~numpy.random.RandomState` to use for sampling.
-            If `None`, a new random state is generated using `seed`
-            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
-            random state is used.
-        seed
-            If not `None`, a new radom state with this seed is used.
-
-        Returns
-        -------
-        If `count` is `None`, an inexhaustible iterator returning random
-        |Parameters|.
-        Otherwise a list of `count` random |Parameters|.
-        """
-        assert not random_state or seed is None
-        ranges = self._get_sample_ranges(ranges)
-        random_state = get_random_state(random_state, seed)
-        get_param = lambda: Mu(((k, random_state.uniform(ranges[k][0], ranges[k][1], size))
-                               for k, size in self.items()))
-        if count is None:
-            def param_generator():
-                while True:
-                    yield get_param()
-            return param_generator()
-        else:
-            return [get_param() for _ in range(count)]
 
 
 class Mu(dict):
@@ -459,8 +395,6 @@ class ParametricObject(ImmutableObject):
     ----------
     parameters
         The |ParameterType| of the |Parameters| the object expects.
-    parameter_space
-        |ParameterSpace| the parameters are expected to lie in or `None`.
     parametric:
         `True` if the object really depends on a parameter, i.e. :attr:`parameters`
         is not empty.
@@ -478,8 +412,6 @@ class ParametricObject(ImmutableObject):
             params = params | self.own_parameters
         if self.internal_parameters:
             params = params - self.internal_parameters
-        if self._parameter_space is not None:
-            assert params == self._parameter_space.parameters
         self._parameters = params
         return params
 
@@ -507,15 +439,6 @@ class ParametricObject(ImmutableObject):
         assert self.__check_parameter_consistency()
 
     @property
-    def parameter_space(self):
-        return self._parameter_space
-
-    @parameter_space.setter
-    def parameter_space(self, ps):
-        self._parameter_space = ps
-        assert self.__check_parameter_consistency()
-
-    @property
     def parametric(self):
         return bool(self.parameters)
 
@@ -528,11 +451,84 @@ class ParametricObject(ImmutableObject):
         if self._own_parameters is not None:
             if self._parameters is not None:
                 assert self._parameters >= self._own_parameters
-        if self._parameters is not None and self._parameter_space is not None:
-            assert self._parameters == self._parameter_space.parameters
         return True
 
     _parameters = None
     _own_parameters = None
     _internal_parameters = None
-    _parameter_space = None
+
+
+class ParameterSpace(ParametricObject):
+
+    def __init__(self, parameters, *ranges):
+        assert isinstance(parameters, Parameters)
+        assert 1 <= len(ranges) <= 2
+        if len(ranges) == 1:
+            ranges = ranges[0]
+        if isinstance(ranges, (tuple, list)):
+            assert len(ranges) == 2
+            ranges = {k: ranges for k in parameters}
+        assert isinstance(ranges, dict)
+        assert all(k in ranges
+                   and len(ranges[k]) == 2
+                   and all(isinstance(v, Number) for v in ranges[k])
+                   and ranges[k][0] <= ranges[k][1]
+                   for k in parameters)
+        self.parameters = parameters
+        self.ranges = FrozenDict((k, tuple(v)) for k, v in ranges.items())
+
+    def sample_uniformly(self, counts):
+        """Uniformly sample |Parameters| from the space."""
+        if isinstance(counts, dict):
+            pass
+        elif isinstance(counts, (tuple, list, np.ndarray)):
+            counts = {k: c for k, c in zip(self.parameters, counts)}
+        else:
+            counts = {k: counts for k in self.parameters}
+
+        linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameters)
+        iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
+                      for ls, sps in zip(linspaces, self.parameters.values()))
+        return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                for i in product(*iters)]
+
+    def sample_randomly(self, count=None, random_state=None, seed=None):
+        """Randomly sample |Parameters| from the space.
+
+        Parameters
+        ----------
+        count
+            `None` or number of random parameters (see below).
+        random_state
+            :class:`~numpy.random.RandomState` to use for sampling.
+            If `None`, a new random state is generated using `seed`
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
+        seed
+            If not `None`, a new radom state with this seed is used.
+
+        Returns
+        -------
+        If `count` is `None`, an inexhaustible iterator returning random
+        |Parameters|.
+        Otherwise a list of `count` random |Parameters|.
+        """
+        assert not random_state or seed is None
+        random_state = get_random_state(random_state, seed)
+        get_param = lambda: Mu(((k, random_state.uniform(self.ranges[k][0], self.ranges[k][1], size))
+                               for k, size in self.parameters.items()))
+        if count is None:
+            def param_generator():
+                while True:
+                    yield get_param()
+            return param_generator()
+        else:
+            return [get_param() for _ in range(count)]
+
+    def contains(self, mu):
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        if not mu >= self.parameters:
+            return False
+        return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
+                   for k in self.parameters)

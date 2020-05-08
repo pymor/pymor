@@ -24,7 +24,7 @@ def test_pickle_by_solving(model):
     m2 = loads(dumps(m))
     m.disable_caching()
     m2.disable_caching()
-    for mu in m.parameter_space.sample_randomly(3, seed=234):
+    for mu in m.parameters.space(1, 2).sample_randomly(3, seed=234):
         assert np.all(almost_equal(m.solve(mu), m2.solve(mu)))
 
 

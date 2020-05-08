@@ -92,8 +92,7 @@ class GenericSOBTpvReductor(BasicObject):
         # find the reduced model
         if self.fom.parametric:
             fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']},
-                                    parameter_space=None)
+                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']})
         else:
             fom_mu = self.fom
         self._pg_reductor = SOLTIPGReductor(fom_mu, self.W, self.V, projection == 'biorth')
@@ -278,8 +277,7 @@ class SOBTfvReductor(BasicObject):
         # find the reduced model
         if self.fom.parametric:
             fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']},
-                                    parameter_space=None)
+                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']})
         else:
             fom_mu = self.fom
         self._pg_reductor = SOLTIPGReductor(fom_mu, self.W, self.V, projection == 'biorth')

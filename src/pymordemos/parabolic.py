@@ -61,9 +61,7 @@ def parabolic_demo(args):
             T=1.,
 
             initial_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 10.',
-                                            dim_domain=2),
-
-            parameter_space=CubicParameterSpace({'top': 1}, minimum=1, maximum=100.)
+                                            dim_domain=2)
         )
     else:
         args['SPEED'] = float(args['SPEED'])

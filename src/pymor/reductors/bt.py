@@ -107,8 +107,7 @@ class GenericBTReductor(BasicObject):
         # find reduced-order model
         if self.fom.parametric:
             fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                       for op in ['A', 'B', 'C', 'D', 'E']},
-                                    parameter_space=None)
+                                       for op in ['A', 'B', 'C', 'D', 'E']})
         else:
             fom_mu = self.fom
         self._pg_reductor = LTIPGReductor(fom_mu, self.W, self.V, projection in ('sr', 'biorth'))

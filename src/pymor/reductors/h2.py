@@ -398,8 +398,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
         fom = (
             self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']},
-                parameter_space=None,
+                   for op in ['A', 'B', 'C', 'D', 'E']}
             )
             if self.fom.parametric
             else self.fom
@@ -527,8 +526,7 @@ class TSIAReductor(GenericIRKAReductor):
         fom = (
             self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']},
-                parameter_space=None,
+                   for op in ['A', 'B', 'C', 'D', 'E']}
             )
             if self.fom.parametric
             else self.fom

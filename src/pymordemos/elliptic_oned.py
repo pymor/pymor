@@ -23,8 +23,7 @@ from pymor.analyticalproblems.domaindescriptions import LineDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ExpressionFunction, ConstantFunction, LincombFunction
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
-from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
-from pymor.parameters.spaces import CubicParameterSpace
+from pymor.parameters.functionals import ProjectionParameterFunctional
 
 
 def elliptic_oned_demo(args):
@@ -39,7 +38,6 @@ def elliptic_oned_demo(args):
     d0 = ExpressionFunction('1 - x', 1, ())
     d1 = ExpressionFunction('x', 1, ())
 
-    parameter_space = CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
     f0 = ProjectionParameterFunctional('diffusionl', 1)
     f1 = 1.
 
@@ -50,6 +48,8 @@ def elliptic_oned_demo(args):
         dirichlet_data=ConstantFunction(value=0, dim_domain=1),
         name='1DProblem'
     )
+
+    parameter_space = problem.parameters.space(0.1, 1)
 
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg

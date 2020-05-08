@@ -41,20 +41,20 @@ def discretize(n, nt, blocks):
     visualizer = OnedVisualizer(grid)
 
     time_stepper = ExplicitEulerTimeStepper(nt)
-    parameter_space = CubicParameterSpace(operator.parameters, 0.1, 1)
 
     fom = InstationaryModel(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
-                            time_stepper=time_stepper, num_values=20, parameter_space=parameter_space,
+                            time_stepper=time_stepper, num_values=20,
                             visualizer=visualizer, name='C++-Model')
     return fom
 
 
 # discretize
 fom = discretize(50, 10000, 4)
+parameter_space = fom.parameters.space(0.1, 1)
 
 # generate solution snapshots
 snapshots = fom.solution_space.empty()
-for mu in fom.parameter_space.sample_uniformly(2):
+for mu in parameter_space.sample_uniformly(2):
     snapshots.append(fom.solve(mu))
 
 # apply POD
@@ -67,7 +67,7 @@ rom = reductor.reduce()
 # stochastic error estimation
 mu_max = None
 err_max = -1.
-for mu in fom.parameter_space.sample_randomly(10):
+for mu in parameter_space.sample_randomly(10):
     U_RB = (reductor.reconstruct(rom.solve(mu)))
     U = fom.solve(mu)
     err = np.max((U_RB-U).l2_norm())

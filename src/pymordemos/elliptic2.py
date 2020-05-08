@@ -23,8 +23,7 @@ from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ExpressionFunction, LincombFunction, ConstantFunction
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
-from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
-from pymor.parameters.spaces import CubicParameterSpace
+from pymor.parameters.functionals import ProjectionParameterFunctional
 
 
 def elliptic2_demo(args):
@@ -72,7 +71,7 @@ def elliptic2_demo(args):
         dirichlet_data=dirichlet,
         neumann_data=neumann,
         robin_data=robin,
-        parameter_space=CubicParameterSpace({'mu': 1}, 0.1, 1),
+        parameter_ranges=(0.1, 1),
         name='2DProblem'
     )
 
@@ -84,7 +83,7 @@ def elliptic2_demo(args):
 
     print('Solve ...')
     U = m.solution_space.empty()
-    for mu in m.parameter_space.sample_uniformly(10):
+    for mu in problem.parameter_space.sample_uniformly(10):
         U.append(m.solve(mu))
     m.visualize(U, title='Solution for mu in [0.1, 1]')
 

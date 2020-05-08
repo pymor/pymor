@@ -8,7 +8,6 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.domaindescriptions import LineDomain, RectDomain, TorusDomain, CircleDomain
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
-from pymor.parameters.spaces import CubicParameterSpace
 
 
 def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=(1., 2.)):
@@ -63,7 +62,7 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
 
         initial_data=initial_data,
 
-        parameter_space=CubicParameterSpace({'exponent': 1}, *parameter_range),
+        parameter_ranges={'exponent': parameter_range},
 
         name=f"burgers_problem({v}, {circle}, '{initial_data_type}')"
     )
@@ -123,7 +122,7 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
 
         T=0.3,
 
-        parameter_space=CubicParameterSpace({'exponent': 1}, *parameter_range),
+        parameter_ranges=parameter_range,
 
         name=f"burgers_problem_2d({vx}, {vy}, {torus}, '{initial_data_type}')"
     )

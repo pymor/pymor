@@ -12,8 +12,7 @@ from pymor.core.base import BasicObject
 from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
-from pymor.parameters.base import Mu
-from pymor.parameters.spaces import CubicParameterSpace
+from pymor.parameters.base import Mu, ParameterSpace
 from pymor.tools.deprecated import Deprecated
 
 
@@ -227,7 +226,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
             'time': tictoc}
 
 
-def rb_adaptive_greedy(fom, reductor, parameter_space=None,
+def rb_adaptive_greedy(fom, reductor, parameter_space,
                        use_estimator=True, error_norm=None,
                        target_error=None, max_extensions=None,
                        validation_mus=0, rho=1.1, gamma=0.2, theta=0.,
@@ -247,8 +246,7 @@ def rb_adaptive_greedy(fom, reductor, parameter_space=None,
     reductor
         See :func:`~pymor.algorithms.greedy.rb_greedy`.
     parameter_space
-        The |ParameterSpace| for which to compute the reduced model. If `None`,
-        the parameter space of `fom` is used.
+        The |ParameterSpace| for which to compute the reduced model.
     use_estimator
         See :func:`~pymor.algorithms.greedy.rb_greedy`.
     error_norm
@@ -290,8 +288,6 @@ def rb_adaptive_greedy(fom, reductor, parameter_space=None,
         :time:                   Duration of the algorithm.
     """
 
-    parameter_space = parameter_space or fom.parameter_space
-
     surrogate = RBSurrogate(fom, reductor, use_estimator, error_norm, extension_params, pool or dummy_pool)
 
     result = adaptive_weak_greedy(surrogate, parameter_space, target_error=target_error, max_extensions=max_extensions,
@@ -314,7 +310,7 @@ class AdaptiveSampleSet(BasicObject):
     """
 
     def __init__(self, parameter_space):
-        assert isinstance(parameter_space, CubicParameterSpace)
+        assert isinstance(parameter_space, ParameterSpace)
         self.parameter_space = parameter_space
         self.parameters = parameter_space.parameters
         self.ranges = np.concatenate([np.tile(np.array(parameter_space.ranges[k])[np.newaxis, :],

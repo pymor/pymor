@@ -8,7 +8,6 @@ from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional
-from pymor.parameters.spaces import CubicParameterSpace
 
 
 def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
@@ -72,7 +71,7 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
                                    for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))],
                                   name='diffusion'),
 
-        parameter_space=CubicParameterSpace({'diffusion': num_blocks[1]*num_blocks[0]}, *parameter_range),
+        parameter_ranges=parameter_range,
 
         name=f'ThermalBlock({num_blocks})'
 

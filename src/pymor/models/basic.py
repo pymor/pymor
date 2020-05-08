@@ -42,8 +42,6 @@ class StationaryModel(Model):
         problem is posed on. For each product with key `'x'` a corresponding
         attribute `x_product`, as well as a norm method `x_norm` is added to
         the model.
-    parameter_space
-        The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, m)` method. If `estimator` is
@@ -60,7 +58,7 @@ class StationaryModel(Model):
     """
 
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 parameter_space=None, estimator=None, visualizer=None, name=None):
+                 estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -82,7 +80,6 @@ class StationaryModel(Model):
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    {"linear" if self.linear else "non-linear"}\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}\n'
             f'    output_space:    {self.output_space}\n'
         )
@@ -144,8 +141,6 @@ class InstationaryModel(Model):
         problem is posed on. For each product with key `'x'` a corresponding
         attribute `x_product`, as well as a norm method `x_norm` is added to
         the model.
-    parameter_space
-        The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, m)` method. If `estimator` is
@@ -162,8 +157,7 @@ class InstationaryModel(Model):
     """
 
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
-                 output_functional=None, products=None, parameter_space=None, estimator=None, visualizer=None,
-                 name=None):
+                 output_functional=None, products=None, estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -194,7 +188,6 @@ class InstationaryModel(Model):
             f'    class: {self.__class__.__name__}\n'
             f'    {"linear" if self.linear else "non-linear"}\n'
             f'    T: {self.T}\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}\n'
             f'    output_space:    {self.output_space}\n'
         )
@@ -243,4 +236,4 @@ class InstationaryModel(Model):
             raise ValueError('Operators not linear.')
 
         from pymor.models.iosys import LTIModel
-        return LTIModel(A, B, C, E=E, parameter_space=self.parameter_space, visualizer=self.visualizer)
+        return LTIModel(A, B, C, E=E, visualizer=self.visualizer)

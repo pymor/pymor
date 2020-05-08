@@ -49,7 +49,7 @@ def discretize_pymor():
     # discretize using continuous finite elements
     fom, _ = discretize_stationary_cg(problem, diameter=1. / GRID_INTERVALS)
 
-    return fom
+    return fom, problem.parameter_space
 
 
 def discretize_fenics():
@@ -125,12 +125,10 @@ def _discretize_fenics():
 
     # build model
     visualizer = FenicsVisualizer(FenicsVectorSpace(V))
-    parameter_space = CubicParameterSpace(op.parameters, 0.1, 1.)
     fom = StationaryModel(op, rhs, products={'h1_0_semi': h1_product},
-                          parameter_space=parameter_space,
                           visualizer=visualizer)
 
-    return fom
+    return fom, fom.parameters.space((0.1, 1))
 
 
 def discretize_ngsolve():
@@ -201,9 +199,10 @@ def discretize_ngsolve():
     F._list[0].real_part.impl.vec.data = f.vec
     F = VectorOperator(F)
 
-    return StationaryModel(op, F, visualizer=NGSolveVisualizer(mesh, V),
-                           products={'h1_0_semi': h1_0_op},
-                           parameter_space=CubicParameterSpace(op.parameters, 0.1, 1.))
+    fom = StationaryModel(op, F, visualizer=NGSolveVisualizer(mesh, V),
+                          products={'h1_0_semi': h1_0_op})
+
+    return fom, fom.parameters.space((0.1, 1))
 
 
 def discretize_pymor_text():
@@ -214,7 +213,7 @@ def discretize_pymor_text():
     # discretize using continuous finite elements
     fom, _ = discretize_stationary_cg(problem, diameter=1.)
 
-    return fom
+    return fom, problem.parameter_space
 
 
 ####################################################################################################
@@ -222,9 +221,9 @@ def discretize_pymor_text():
 ####################################################################################################
 
 
-def reduce_naive(fom, reductor, basis_size):
+def reduce_naive(fom, reductor, parameter_space, basis_size):
 
-    training_set = fom.parameter_space.sample_randomly(basis_size)
+    training_set = parameter_space.sample_randomly(basis_size)
 
     for mu in training_set:
         reductor.extend_basis(fom.solve(mu), method='trivial')
@@ -234,9 +233,9 @@ def reduce_naive(fom, reductor, basis_size):
     return rom
 
 
-def reduce_greedy(fom, reductor, snapshots, basis_size):
+def reduce_greedy(fom, reductor, parameter_space, snapshots, basis_size):
 
-    training_set = fom.parameter_space.sample_uniformly(snapshots)
+    training_set = parameter_space.sample_uniformly(snapshots)
     pool = new_parallel_pool()
 
     greedy_data = rb_greedy(fom, reductor, training_set,
@@ -247,11 +246,12 @@ def reduce_greedy(fom, reductor, snapshots, basis_size):
     return greedy_data['rom']
 
 
-def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
+def reduce_adaptive_greedy(fom, reductor, parameter_space, validation_mus, basis_size):
 
     pool = new_parallel_pool()
 
-    greedy_data = rb_adaptive_greedy(fom, reductor, validation_mus=-validation_mus,
+    greedy_data = rb_adaptive_greedy(fom, reductor, parameter_space,
+                                     validation_mus=-validation_mus,
                                      extension_params={'method': 'gram_schmidt'},
                                      max_extensions=basis_size,
                                      pool=pool)
@@ -259,9 +259,9 @@ def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
     return greedy_data['rom']
 
 
-def reduce_pod(fom, reductor, snapshots, basis_size):
+def reduce_pod(fom, reductor, parameter_space, snapshots, basis_size):
 
-    training_set = fom.parameter_space.sample_uniformly(snapshots)
+    training_set = parameter_space.sample_uniformly(snapshots)
 
     snapshots = fom.operator.source.empty()
     for mu in training_set:
@@ -292,13 +292,13 @@ def main():
     # discretize
     ############
     if MODEL == 'pymor':
-        fom = discretize_pymor()
+        fom, parameter_space = discretize_pymor()
     elif MODEL == 'fenics':
-        fom = discretize_fenics()
+        fom, parameter_space = discretize_fenics()
     elif MODEL == 'ngsolve':
-        fom = discretize_ngsolve()
+        fom, parameter_space = discretize_ngsolve()
     elif MODEL == 'pymor-text':
-        fom = discretize_pymor_text()
+        fom, parameter_space = discretize_pymor_text()
     else:
         raise NotImplementedError
 
@@ -311,13 +311,13 @@ def main():
     # generate reduced model
     ########################
     if ALG == 'naive':
-        rom = reduce_naive(fom, reductor, RBSIZE)
+        rom = reduce_naive(fom, reductor, parameter_space, RBSIZE)
     elif ALG == 'greedy':
-        rom = reduce_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_greedy(fom, reductor, parameter_space, RBSIZE)
     elif ALG == 'adaptive_greedy':
-        rom = reduce_adaptive_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_adaptive_greedy(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':
-        rom = reduce_pod(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_pod(fom, reductor, parameter_space, RBSIZE)
     else:
         raise NotImplementedError
 
@@ -325,7 +325,8 @@ def main():
     ##############################
     results = reduction_error_analysis(rom, fom=fom, reductor=reductor, estimator=True,
                                        error_norms=[fom.h1_0_semi_norm], condition=True,
-                                       test_mus=TEST, random_seed=999, plot=True)
+                                       test_mus=parameter_space.sample_randomly(TEST),
+                                       plot=True)
 
     # show results
     ##############
@@ -336,7 +337,7 @@ def main():
     # write results to disk
     #######################
     from pymor.core.pickle import dump
-    dump(rom, open('reduced_model.out', 'wb'))
+    dump((rom, parameter_space), open('reduced_model.out', 'wb'))
     results.pop('figure')  # matplotlib figures cannot be serialized
     dump(results, open('results.out', 'wb'))
 

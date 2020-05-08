@@ -54,7 +54,6 @@ def discretize(DIM, N, ORDER):
     from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer
     from pymor.models.basic import StationaryModel
     from pymor.operators.constructions import VectorOperator
-    from pymor.parameters.spaces import CubicParameterSpace
 
     space = FenicsVectorSpace(V)
     op = FenicsOperator(F, space, space, u, (bc,),
@@ -64,8 +63,7 @@ def discretize(DIM, N, ORDER):
     rhs = VectorOperator(op.range.zeros())
 
     fom = StationaryModel(op, rhs,
-                          visualizer=FenicsVisualizer(space),
-                          parameter_space=CubicParameterSpace({'c': 1}, 0., 1000.))
+                          visualizer=FenicsVisualizer(space))
 
     return fom
 
@@ -84,6 +82,8 @@ def fenics_nonlinear_demo(args):
     else:
         fom = discretize(DIM, N, ORDER)
 
+    parameter_space = fom.parameters.space((0, 1000.))
+
     # ### ROM generation (POD/DEIM)
     from pymor.algorithms.ei import ei_greedy
     from pymor.algorithms.newton import newton
@@ -93,7 +93,7 @@ def fenics_nonlinear_demo(args):
 
     U = fom.solution_space.empty()
     residuals = fom.solution_space.empty()
-    for mu in fom.parameter_space.sample_uniformly(10):
+    for mu in parameter_space.sample_uniformly(10):
         UU, data = newton(fom.operator, fom.rhs.as_vector(), mu=mu, rtol=1e-6, return_residuals=True)
         U.append(UU)
         residuals.append(data['residuals'])
@@ -117,7 +117,7 @@ def fenics_nonlinear_demo(args):
 
     errs = []
     speedups = []
-    for mu in fom.parameter_space.sample_randomly(10):
+    for mu in parameter_space.sample_randomly(10):
         tic = time.time()
         U = fom.solve(mu)
         t_fom = time.time() - tic

@@ -186,8 +186,7 @@ class LTIBHIReductor(GenericBHIReductor):
         if self.fom.parametric:
             return self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']},
-                parameter_space=None,
+                   for op in ['A', 'B', 'C', 'D', 'E']}
             )
         return self.fom
 
@@ -277,8 +276,7 @@ class SOBHIReductor(GenericBHIReductor):
         if self.fom.parametric:
             return self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv', 'D']},
-                parameter_space=None,
+                   for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv', 'D']}
             )
         return self.fom
 
@@ -326,8 +324,7 @@ class DelayBHIReductor(GenericBHIReductor):
             return self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
                    for op in ['A', 'B', 'C', 'D', 'E']},
-                Ad=tuple(op.assemble(mu=self.mu) for op in self.fom.Ad),
-                parameter_space=None,
+                Ad=tuple(op.assemble(mu=self.mu) for op in self.fom.Ad)
             )
         return self.fom
 

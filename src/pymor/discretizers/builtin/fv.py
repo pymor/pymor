@@ -968,10 +968,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     l2_product = L2Product(grid, name='l2')
     products = {'l2': l2_product}
 
-    parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
-
     m = StationaryModel(L, F, products=products, visualizer=visualizer,
-                        parameter_space=parameter_space, name=f'{p.name}_FV')
+                        name=f'{p.name}_FV')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
@@ -1085,7 +1083,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     m = InstationaryModel(operator=m.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
                           products=m.products, time_stepper=time_stepper,
-                          parameter_space=p.parameter_space, visualizer=m.visualizer,
+                          visualizer=m.visualizer,
                           num_values=num_values, name=f'{p.name}_FV')
 
     if preassemble:

@@ -58,9 +58,9 @@ def analyze_pickle_histogram(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
     print('Loading reduced model ...')
-    rom = load(open(args['REDUCED_DATA'], 'rb'))
+    rom, parameter_space = load(open(args['REDUCED_DATA'], 'rb'))
 
-    mus = rom.parameter_space.sample_randomly(args['SAMPLES'])
+    mus = parameter_space.sample_randomly(args['SAMPLES'])
     us = []
     for mu in mus:
         print(f'Solving reduced for {mu} ... ', end='')
@@ -176,7 +176,7 @@ def analyze_pickle_convergence(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
     print('Loading reduced model ...')
-    rom = load(open(args['REDUCED_DATA'], 'rb'))
+    rom, parameter_space = load(open(args['REDUCED_DATA'], 'rb'))
 
     if not args['--detailed']:
         raise ValueError('High-dimensional data file must be specified.')
@@ -190,7 +190,7 @@ def analyze_pickle_convergence(args):
     else:
         dims = np.arange(dim + 1)
 
-    mus = rom.parameter_space.sample_randomly(args['SAMPLES'])
+    mus = parameter_space.sample_randomly(args['SAMPLES'])
 
     ESTS = []
     ERRS = []
