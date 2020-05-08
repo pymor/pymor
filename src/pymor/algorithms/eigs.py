@@ -7,21 +7,22 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.operators.constructions import IdentityOperator
+from pymor.operators.interface import Operator
 
 
-def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
+def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, seed=0):
     """Approximate a few eigenvalues of an |Operator|.
 
-    Computes `k` eigenvalues `w[i]` with corresponding eigenvectors `v[i]` which solve
+    Computes `k` eigenvalues `w` with corresponding eigenvectors `v` which solve
     the eigenvalue problem
 
     .. math::
-        A v[i] = w[i] v[i]
+        A v_i = w_i v_i
 
     or the generalized eigenvalue problem
 
     .. math::
-        A v[i] = w[i] E v[i]
+        A v_i = w_i E v_i
 
     if `E` is not `None`.
 
@@ -37,12 +38,13 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
         The number of eigenvalues and eigenvectors which are to be computed.
     which
         A string specifying which `k` eigenvalues and eigenvectors to compute:
-            - `'LM'`: select eigenvalues with largest |v[i]|
-            - `'SM'`: select eigenvalues with smallest |v[i]|
-            - `'LR'`: select eigenvalues with largest Re(v[i])
-            - `'SR'`: select eigenvalues with smallest Re(v[i])
-            - `'LI'`: select eigenvalues with largest Im(v[i])
-            - `'SI'`: select eigenvalues with smallest Im(v[i])
+
+        - `'LM'`: select eigenvalues with largest absolute value
+        - `'SM'`: select eigenvalues with smallest absolute value
+        - `'LR'`: select eigenvalues with largest real part
+        - `'SR'`: select eigenvalues with smallest real part
+        - `'LI'`: select eigenvalues with largest imaginary part
+        - `'SI'`: select eigenvalues with smallest imaginary part
     b
         Initial vector for Arnoldi iteration. Default is a random vector.
     l
@@ -51,11 +53,14 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
         The maximum number of iterations.
     tol
         The relative error tolerance for the Ritz estimates.
+    seed
+        Random seed which is used for computing the initial vector for the Arnoldi
+        iteration.
 
     Returns
     -------
     w
-        A |NumPy array| which contains the computed eigenvalues.
+        A 1D |NumPy array| which contains the computed eigenvalues.
     v
         A |VectorArray| which contains the computed eigenvectors.
     """
@@ -65,26 +70,34 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
     if l is None:
         l = min(n - 1, max(2 * k + 1, 20))
 
+    assert isinstance(A, Operator) and A.linear
+    assert not A.parametric
+    assert A.source == A.range
+
     if E is None:
         E = IdentityOperator(A.source)
+    else:
+        assert isinstance(E, Operator) and E.linear
+        assert not E.parametric
+        assert E.source == E.range
+        assert E.source == A.source
 
-    assert A.source == A.range
-    assert E.source == A.source
-    assert E.range == A.source
+    if b is None:
+        b = A.source.random(seed=seed)
+    else:
+        assert b in A.source
+
     assert k < n
     assert l > k
 
-    if b is None:
-        b = A.source.random()
-
-    V, H, f = arnoldi(A, E, k, b)
+    V, H, f = _arnoldi(A, E, k, b)
     k0 = k
     i = 0
 
     while True:
         i += 1
 
-        V, H, f = extend_arnoldi(A, E, V, H, f, l - k)
+        V, H, f = _extend_arnoldi(A, E, V, H, f, l - k)
 
         ew, ev = spla.eig(H)
 
@@ -134,7 +147,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
             shifts = shifts[1:]
             k += 1
 
-        H, Qs = QR_iteration(H, shifts)
+        H, Qs = _qr_iteration(H, shifts)
 
         V = V.lincomb(Qs.T)
         f = V[k] * H[k, k - 1] + f * Qs[l - 1, k - 1]
@@ -144,7 +157,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13):
     return ews[:k0], V.lincomb(evs[:, :k0].T)
 
 
-def arnoldi(A, E, l, b):
+def _arnoldi(A, E, l, b):
     """Compute an Arnoldi factorization.
 
     Computes matrices :math:`V_l` and :math:`H_l` and a vector :math:`f_l` such that
@@ -172,7 +185,7 @@ def arnoldi(A, E, l, b):
     Returns
     -------
     V
-        A |VectorArray| whose columns span an orthogonal basis for R^l.
+        A |VectorArray| whose columns span an orthogonal basis for :math:`\mathbb{R}^{l}`.
     H
         A |NumPy array| which is an upper Hessenberg matrix.
     f
@@ -197,13 +210,13 @@ def arnoldi(A, E, l, b):
     return V[:l], H, v * R[l, l]
 
 
-def extend_arnoldi(A, E, V, H, f, p):
+def _extend_arnoldi(A, E, V, H, f, p):
     """Extend an existing Arnoldi factorization.
 
     Assuming that the inputs `V`, `H` and `f` define an Arnoldi factorization of length
-    :math:`l` (see :func:`arnoldi`), computes matrices :math:`V_{l+p}` and :math:`H_{l+p}`
-    and a vector :math:`f_{l+p}` which extend the factorization to a length `l+p` Arnoldi
-    factorization.
+    :math:`l` (see :func:`_arnoldi`), computes matrices :math:`V_{l+p}` and :math:`H_{l+p}`
+    and a vector :math:`f_{l+p}` which extend the factorization to a length :math:`l+p`
+    Arnoldi factorization.
 
     Parameters
     ----------
@@ -223,7 +236,8 @@ def extend_arnoldi(A, E, V, H, f, p):
     Returns
     -------
     V
-        A |VectorArray| whose columns span an orthogonal basis for R^(l+p).
+        A |VectorArray| whose columns span an orthogonal basis for
+        :math:`\mathbb{R}^{l+p}`.
     H
         A |NumPy array| which is an upper Hessenberg matrix.
     f
@@ -251,7 +265,7 @@ def extend_arnoldi(A, E, V, H, f, p):
     return V[:k + p], H, v * R[k + p, k + p]
 
 
-def QR_iteration(H, shifts):
+def _qr_iteration(H, shifts):
     """Perform the QR iteration.
 
     Performs a QR step for each shift provided in `shifts`. `H` is assumed to be an
