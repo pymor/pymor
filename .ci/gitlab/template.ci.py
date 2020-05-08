@@ -95,8 +95,6 @@ stages:
     extends: .docker-in-docker
     stage: build
     only: ['branches', 'tags', 'triggers']
-    tags:
-      - amm-only
     variables:
         TEST_OS: "{{ ' '.join(testos) }}"
     artifacts:
@@ -223,6 +221,11 @@ wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
     extends: .wheel
     variables:
         PYVER: "{{PY}}"
+    {%- if ML == 1 -%}
+    {# only the ml 1 wheels fail on current runner/docker/os machines#}
+    tags:
+      - amm-old-ci
+    {%- endif %}
     script: bash .ci/gitlab/wheels.bash {{ML}}
 {% endfor %}
 {% endfor %}

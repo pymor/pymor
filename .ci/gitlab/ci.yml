@@ -93,8 +93,6 @@ stages:
     extends: .docker-in-docker
     stage: build
     only: ['branches', 'tags', 'triggers']
-    tags:
-      - amm-only
     variables:
         TEST_OS: "centos_8 debian_buster debian_testing"
     artifacts:
@@ -366,6 +364,8 @@ wheel 1 py3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
+    tags:
+      - amm-old-ci
     script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 6:
@@ -385,6 +385,8 @@ wheel 1 py3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"
+    tags:
+      - amm-old-ci
     script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 7:
@@ -404,6 +406,8 @@ wheel 1 py3 8:
     extends: .wheel
     variables:
         PYVER: "3.8"
+    tags:
+      - amm-old-ci
     script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 8:
