@@ -12,6 +12,7 @@
 
 MKFILE_PATH :=
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
 	docker-compose -f .binder/docker-compose.yml -p pymor
 NB_DIR=notebooks
@@ -74,6 +75,10 @@ template: docker_file
 	./.ci/gitlab/template.ci.py
 
 # docker targets
+docker_template: docker_file
+	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/dependencies.py
+	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/.ci/gitlab/template.ci.py
+
 docker_file:
 	 sed -e "s;CI_IMAGE_TAG;$(CI_IMAGE_TAG);g" -e "s;DOCKER_BASE_PYTHON;$(DOCKER_BASE_PYTHON);g" \
 		 .binder/Dockerfile.in > .binder/Dockerfile
