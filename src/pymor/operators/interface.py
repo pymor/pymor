@@ -301,21 +301,21 @@ class Operator(ParametricObject):
         else:
             raise NotImplementedError
 
-    def d_mu(self, component, index=0):
-        """Return the operator's derivative with respect to an index of a parameter component.
+    def d_mu(self, parameter, index=0):
+        """Return the operator's derivative with respect to a given parameter.
 
         Parameters
         ----------
-        component
-            Parameter component
+        parameter
+            The parameter w.r.t. which to return the derivative.
         index
-            index in the parameter component
+            Index of the parameter's component w.r.t which to return the derivative.
 
         Returns
         -------
         New |Operator| representing the partial derivative.
         """
-        if self.parametric:
+        if parameter in self.parameters:
             raise NotImplementedError
         else:
             from pymor.operators.constructions import ZeroOperator

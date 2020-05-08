@@ -24,15 +24,15 @@ class ParameterFunctional(ParametricObject):
         pass
 
     @abstractmethod
-    def d_mu(self, component, index=0):
-        """Return the functionals's derivative with respect to an index of a parameter component.
+    def d_mu(self, parameter, index=0):
+        """Return the functionals's derivative with respect to a given parameter.
 
         Parameters
         ----------
-        component
-            Parameter component
+        parameter
+            The parameter w.r.t. which to return the derivative.
         index
-            index in the parameter component
+            Index of the parameter's component w.r.t which to return the derivative.
 
         Returns
         -------
@@ -98,10 +98,10 @@ class ProjectionParameterFunctional(ParameterFunctional):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return mu[self.parameter].item(self.index)
 
-    def d_mu(self, component, index=0):
-        check, index = self._check_and_parse_input(component, index)
+    def d_mu(self, parameter, index=0):
+        check, index = self._check_and_parse_input(parameter, index)
         if check:
-            if component == self.parameter and index == self.index:
+            if parameter == self.parameter and index == self.index:
                 return ConstantParameterFunctional(1, name=self.name + '_d_mu')
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
@@ -143,28 +143,34 @@ class GenericParameterFunctional(ParameterFunctional):
         else:
             return value
 
-    def d_mu(self, component, index=0):
-        check, index = self._check_and_parse_input(component, index)
+    def d_mu(self, parameter, index=0):
+        check, index = self._check_and_parse_input(parameter, index)
         if check:
             if self.derivative_mappings is None:
                 raise ValueError('You must provide a dict of expressions for all \
                                   partial derivatives in self.parameters')
             else:
-                if component in self.derivative_mappings:
+                if parameter in self.derivative_mappings:
                     if self.second_derivative_mappings is None:
-                        return GenericParameterFunctional(self.derivative_mappings[component][index],
-                                                        self.parameters, name=self.name + '_d_mu')
+                        return GenericParameterFunctional(
+                            self.derivative_mappings[parameter][index],
+                            self.parameters, name=self.name + '_d_mu'
+                        )
                     else:
-                        if component in self.second_derivative_mappings:
-                            return GenericParameterFunctional(self.derivative_mappings[component][index],
-                                                    self.parameters, name=self.name + '_d_mu',
-                                                    derivative_mappings=self.second_derivative_mappings[component][index])
+                        if parameter in self.second_derivative_mappings:
+                            return GenericParameterFunctional(
+                                self.derivative_mappings[parameter][index],
+                                self.parameters, name=self.name + '_d_mu',
+                                derivative_mappings=self.second_derivative_mappings[parameter][index]
+                            )
                         else:
-                            return GenericParameterFunctional(self.derivative_mappings[component][index],
-                                                    self.parameters, name=self.name + '_d_mu',
-                                                    derivative_mappings={})
+                            return GenericParameterFunctional(
+                                self.derivative_mappings[parameter][index],
+                                self.parameters, name=self.name + '_d_mu',
+                                derivative_mappings={}
+                            )
                 else:
-                    raise ValueError('derivative expressions do not contain item {}'.format(component))
+                    raise ValueError('derivative expressions do not contain item {}'.format(parameter))
         return ConstantParameterFunctional(0, name=self.name + '_d_mu')
 
 
@@ -268,7 +274,7 @@ class ProductParameterFunctional(ParameterFunctional):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
-    def d_mu(self, component, index=0):
+    def d_mu(self, parameter, index=0):
         raise NotImplementedError
 
 
@@ -295,7 +301,7 @@ class ConjugateParameterFunctional(ParameterFunctional):
         assert mu >= self.parameters, self.parameters.why_incompatible(mu)
         return np.conj(self.functional.evaluate(mu))
 
-    def d_mu(self, component, index=0):
+    def d_mu(self, parameter, index=0):
         raise NotImplementedError
 
 
@@ -317,7 +323,7 @@ class ConstantParameterFunctional(ParameterFunctional):
     def evaluate(self, mu=None):
         return self.constant_value
 
-    def d_mu(self, component, index=0):
+    def d_mu(self, parameter, index=0):
         return self.with_(constant_value=0, name=self.name + '_d_mu')
 
 
@@ -380,7 +386,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
         assert np.all(thetas_mu > 0)
         return self.alpha_mu_bar * np.min(thetas_mu / self.thetas_mu_bar)
 
-    def d_mu(self, component, index=0):
+    def d_mu(self, parameter, index=0):
         raise NotImplementedError
 
 
@@ -449,5 +455,5 @@ class MaxThetaParameterFunctional(ParameterFunctional):
         assert np.all(np.logical_or(thetas_mu < 0, thetas_mu > 0))
         return self.gamma_mu_bar * np.abs(np.max(thetas_mu / self.thetas_mu_bar))
 
-    def d_mu(self, component, index=0):
+    def d_mu(self, parameter, index=0):
         raise NotImplementedError

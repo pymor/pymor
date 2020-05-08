@@ -151,14 +151,14 @@ class LincombOperator(Operator):
         else:
             return jac
 
-    def d_mu(self, component, index=0):
+    def d_mu(self, parameter, index=0):
         for op in self.operators:
             if op.parametric:
                 raise NotImplementedError
         derivative_coefficients = []
         for coef in self.coefficients:
             if isinstance(coef, ParametricObject):
-                derivative_coefficients.append(coef.d_mu(component, index))
+                derivative_coefficients.append(coef.d_mu(parameter, index))
             else:
                 derivative_coefficients.append(0.)
         return self.with_(coefficients=derivative_coefficients, name=self.name + '_d_mu')
