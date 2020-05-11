@@ -146,7 +146,7 @@ class GenericFunction(Function):
         The name of the function.
     """
 
-    def __init__(self, mapping, dim_domain=1, shape_range=(), parameters=None, name=None):
+    def __init__(self, mapping, dim_domain=1, shape_range=(), parameters={}, name=None):
         assert dim_domain > 0
         assert isinstance(shape_range, (Number, tuple))
         if not isinstance(shape_range, tuple):
@@ -205,7 +205,7 @@ class ExpressionFunction(GenericFunction):
 
     functions = ExpressionParameterFunctional.functions
 
-    def __init__(self, expression, dim_domain=1, shape_range=(), parameters=None, values=None, name=None):
+    def __init__(self, expression, dim_domain=1, shape_range=(), parameters={}, values=None, name=None):
         values = values or {}
         code = compile(expression, '<expression>', 'eval')
         super().__init__(lambda x, mu={}: eval(code, dict(self.functions, **values), dict(mu, x=x, mu=mu)),

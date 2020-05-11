@@ -19,9 +19,14 @@ class FrozenDict(dict):
     def __new__(cls, *args, **kwargs):
         new = dict.__new__(cls)
         dict.__init__(new, *args, **kwargs)
+        new._post_init()
         return new
 
     def __init__(self, *args, **kwargs):
+        # ensure that dict cannot be modified by calling __init__
+        pass
+
+    def _post_init(self):
         pass
 
     def __repr__(self):

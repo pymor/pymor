@@ -63,7 +63,7 @@ class NumpyGenericOperator(Operator):
         Name of the operator.
     """
 
-    def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameters=None,
+    def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameters={},
                  source_id=None, range_id=None, solver_options=None, name=None):
         self.__auto_init(locals())
         self.source = NumpyVectorSpace(dim_source, source_id)

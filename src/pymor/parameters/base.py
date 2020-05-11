@@ -31,7 +31,6 @@ of numbers of the right length). Moreover, when given a |Parameter|,
 |ParameterType|.
 """
 
-from collections import OrderedDict
 from itertools import product
 from numbers import Number
 
@@ -44,7 +43,7 @@ from pymor.tools.pprint import format_array
 from pymor.tools.random import get_random_state
 
 
-class Parameters(OrderedDict):
+class Parameters(FrozenDict):
     """Class representing a parameter type.
 
     A parameter type is simply a dictionary with strings as keys and tuples of
@@ -63,36 +62,14 @@ class Parameters(OrderedDict):
         a `dict` can be constructed.
     """
 
-    def __init__(self, t):
-        if t is None:
-            t = {}
-        elif isinstance(t, Parameters):
-            pass
-        elif hasattr(t, 'parameters'):
-            assert isinstance(t.parameters, Parameters)
-            t = t.parameters
-        else:
-            t = dict(t)
-            for k, v in t.items():
-                if not isinstance(v, int) or v < 0:
-                    raise ValueError
-        super().__init__(sorted(t.items()))
-        self.clear = self.__setitem__ = self.__delitem__ = self.pop = self.popitem = self.update = self._is_immutable
-
-    def _is_immutable(*args, **kwargs):
-        raise ValueError('Parameters instances cannot be modified')
-
-    def copy(self):
-        return Parameters(self)
-
-    def fromkeys(self, S, v=None):
-        raise NotImplementedError
+    def _post_init(self):
+        assert all(type(v) is int and 0 <= v for v in self.values())
 
     def __str__(self):
-        return '{' + ', '.join(f'{k}: {v}' for k, v in self.items()) + '}'
+        return '{' + ', '.join(f'{k}: {v}' for k, v in sorted(self.items())) + '}'
 
     def __repr__(self):
-        return 'Parameters(' + str(self) + ')'
+        return 'Parameters(' + str(sorted(self)) + ')'
 
     def __le__(self, mu):
         if isinstance(mu, Parameters):
@@ -295,16 +272,10 @@ class Mu(dict):
         The |ParameterType| of the |Parameter|.
     """
 
-    def __init__(self, v):
-        if v is None:
-            v = {}
-        super().__init__(v)
-        for k, v in self.items():
-            if not isinstance(v, np.ndarray):
-                v = np.array(v)
-            if v.ndim != 1:
-                v = v.ravel()
-            self[k] = v
+    def __init__(self, *args, **kwargs):
+        super().__init__((k, np.array(v, copy=False, ndmin=1))
+                         for k, v in dict(*args, **kwargs).items())
+        assert all(v.ndim == 1 for v in self.values())
 
     def allclose(self, mu):
         """Compare two |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
@@ -320,12 +291,7 @@ class Mu(dict):
         components are almost equal, else `False`.
         """
         assert isinstance(mu, Mu)
-        if list(self.keys()) != list(mu.keys()):
-            return False
-        elif not all(float_cmp_all(v, mu[k]) for k, v in self.items()):
-            return False
-        else:
-            return True
+        return self.keys() == mu.keys() and all(float_cmp_all(v, mu[k]) for k, v in self.items())
 
     def copy(self):
         c = Mu({k: v.copy() for k, v in self.items()})
@@ -333,18 +299,14 @@ class Mu(dict):
 
     def __setitem__(self, key, value):
         if not isinstance(value, np.ndarray):
-            value = np.array(value)
-        dict.__setitem__(self, key, value)
+            value = np.array(value, copy=False, ndmin=1)
+            assert value.ndim == 1
+        super().__setitem__(key, value)
 
     def __eq__(self, mu):
         if not isinstance(mu, Mu):
             mu = Mu(mu)
-        if list(self.keys()) != list(mu.keys()):
-            return False
-        elif not all(np.array_equal(v, mu[k]) for k, v in self.items()):
-            return False
-        else:
-            return True
+        return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
 
     def fromkeys(self, S, v=None):
         raise NotImplementedError
@@ -363,22 +325,10 @@ class Mu(dict):
         return Parameters({k: v.size for k, v in self.items()})
 
     def __str__(self):
-        np.set_string_function(format_array, repr=False)
-        s = '{'
-        for k in sorted(self.keys()):
-            v = self[k]
-            if v.ndim > 1:
-                v = v.ravel()
-            if s == '{':
-                s += f'{k}: {v}'
-            else:
-                s += f', {k}: {v}'
-        s += '}'
-        np.set_string_function(None, repr=False)
-        return s
+        return '{' + ', '.join(f'{k}: {format_array(v)}' for k, v in sorted(self.items())) + '}'
 
-    def __getstate__(self):
-        return dict(self)
+    def __repr__(self):
+        return f'Mu({self})'
 
 
 class ParametricObject(ImmutableObject):

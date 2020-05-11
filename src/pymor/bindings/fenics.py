@@ -217,7 +217,7 @@ if config.HAVE_FENICS:
         linear = False
 
         def __init__(self, form, source_space, range_space, source_function, dirichlet_bcs=(),
-                     parameter_setter=None, parameters=None, solver_options=None, name=None):
+                     parameter_setter=None, parameters={}, solver_options=None, name=None):
             assert len(form.arguments()) == 1
             self.__auto_init(locals())
             self.source = source_space
