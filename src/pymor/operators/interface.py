@@ -110,7 +110,7 @@ class Operator(ParametricObject):
         A |NumPy array| with shape `(len(V), len(U))` containing the 2-form
         evaluations.
         """
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         assert isinstance(V, VectorArray)
         assert isinstance(U, VectorArray)
         AU = self.apply(U, mu=mu)
@@ -136,7 +136,7 @@ class Operator(ParametricObject):
         A |NumPy array| with shape `(len(V),) == (len(U),)` containing
         the 2-form evaluations.
         """
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         assert isinstance(V, VectorArray)
         assert isinstance(U, VectorArray)
         assert len(U) == len(V)

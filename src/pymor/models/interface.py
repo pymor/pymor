@@ -72,7 +72,7 @@ class Model(CacheableObject, ParametricObject):
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         return self.cached_method_call(self._solve, mu=mu, return_output=return_output, **kwargs)
 
     def output(self, mu=None, **kwargs):

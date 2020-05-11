@@ -72,7 +72,7 @@ class NumpyGenericOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         if self.parametric:
             return self.range.make_array(self.mapping(U.to_numpy(), mu=mu))
         else:
@@ -82,7 +82,7 @@ class NumpyGenericOperator(Operator):
         if self.adjoint_mapping is None:
             raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
         assert V in self.range
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         V = V.to_numpy()
         if self.parametric:
             return self.source.make_array(self.adjoint_mapping(V, mu=mu))
@@ -115,7 +115,7 @@ class NumpyMatrixBasedOperator(Operator):
         pass
 
     def assemble(self, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         return NumpyMatrixOperator(self._assemble(mu),
                                    source_id=self.source.id,
                                    range_id=self.range.id,

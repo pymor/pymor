@@ -76,7 +76,7 @@ class LincombOperator(Operator):
         -------
         List of linear coefficients.
         """
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         return [c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients]
 
     def apply(self, U, mu=None):
@@ -291,13 +291,13 @@ class Concatenation(Operator):
                           name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         for op in self.operators[::-1]:
             U = op.apply(U, mu=mu)
         return U
 
     def apply_adjoint(self, V, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         for op in self.operators:
             V = op.apply_adjoint(V, mu=mu)
         return V
@@ -404,7 +404,7 @@ class ProjectedOperator(Operator):
             return ProjectedOperator(self.operator.H, self.source_basis, self.range_basis, solver_options=options)
 
     def apply(self, U, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         if self.source_basis is None:
             if self.range_basis is None:
                 return self.operator.apply(U, mu=mu)
@@ -425,7 +425,7 @@ class ProjectedOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         if self.linear:
             return self.assemble(mu)
         if self.source_basis is None:
@@ -1020,7 +1020,7 @@ class FixedParameterOperator(ProxyOperator):
 
     def __init__(self, operator, mu=None, name=None):
         super().__init__(operator, name)
-        assert mu >= operator.parameters, operator.parameters.why_incompatible(mu)
+        assert operator.parameters.assert_compatible(mu)
         self.mu = mu
         if mu:
             self.internal_parameters = mu.parameters
@@ -1307,27 +1307,27 @@ class SelectionOperator(Operator):
         return len(self.boundaries)
 
     def assemble(self, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         op = self.operators[self._get_operator_number(mu)]
         return op.assemble(mu)
 
     def apply(self, U, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].apply(U, mu=mu)
 
     def apply_adjoint(self, V, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         op = self.operators[self._get_operator_number(mu)]
         return op.apply_adjoint(V, mu=mu)
 
     def as_range_array(self, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_range_array(mu=mu)
 
     def as_source_array(self, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_source_array(mu=mu)
 

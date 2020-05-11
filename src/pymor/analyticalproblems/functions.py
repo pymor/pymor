@@ -158,7 +158,7 @@ class GenericFunction(Function):
         return f'{self.name}: x -> {self.mapping}'
 
     def evaluate(self, x, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
 
@@ -253,11 +253,11 @@ class LincombFunction(Function):
 
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients for a given |Parameter| `mu`."""
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
     def evaluate(self, x, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         coeffs = self.evaluate_coefficients(mu)
         return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))
 
@@ -287,7 +287,7 @@ class ProductFunction(Function):
         self.shape_range = functions[0].shape_range
 
     def evaluate(self, x, mu=None):
-        assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+        assert self.parameters.assert_compatible(mu)
         return np.prod([f(x, mu) for f in self.functions], axis=0)
 
 

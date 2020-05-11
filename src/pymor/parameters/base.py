@@ -80,6 +80,10 @@ class Parameters(FrozenDict):
             return not self or \
                 mu is not None and all(getattr(mu.get(k), 'size') == v for k, v in self.items())
 
+    def assert_compatible(self, mu):
+        assert mu >= self, self.why_incompatible(mu)
+        return True
+
     def why_incompatible(self, mu):
         if mu is not None and not isinstance(mu, Mu):
             return 'mu is not a Parameter. (Use parameters.parse?)'

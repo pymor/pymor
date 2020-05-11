@@ -62,7 +62,7 @@ def elliptic2_demo(args):
     robin = robins[args['PROBLEM-NUMBER']]
     
     problem = StationaryProblem(
-        domain=RectDomain(),
+        domain=domain,
         rhs=rhs,
         diffusion=LincombFunction(
             [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],

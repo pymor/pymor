@@ -225,7 +225,7 @@ if config.HAVE_FENICS:
             self.own_parameters = parameters
 
         def _set_mu(self, mu=None):
-            assert mu >= self.parameters, self.parameters.why_incompatible(mu)
+            assert self.parameters.assert_compatible(mu)
             if self.parameter_setter:
                 self.parameter_setter(mu)
 

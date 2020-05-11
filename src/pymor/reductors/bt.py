@@ -28,7 +28,7 @@ class GenericBTReductor(BasicObject):
         assert isinstance(fom, LTIModel)
         if not isinstance(mu, Mu):
             mu = fom.parameters.parse(mu)
-        assert mu >= fom.parameters, fom.parameters.why_incompatible(mu)
+        assert fom.parameters.assert_compatible(mu)
         self.fom = fom
         self.mu = mu
         self.V = None
