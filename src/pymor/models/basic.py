@@ -196,13 +196,11 @@ class InstationaryModel(Model):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
     def _solve(self, mu=None, return_output=False):
-        mu = mu.copy()
-
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
             self.logger.info(f'Solving {self.name} for {mu} ...')
 
-        mu['_t'] = np.array([0.])
+        mu = mu.with_(_t=0.)
         U0 = self.initial_data.as_range_array(mu)
         U = self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                     initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)

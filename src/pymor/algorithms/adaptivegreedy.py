@@ -335,12 +335,12 @@ class AdaptiveSampleSet(BasicObject):
 
     def map_vertex_to_mu(self, vertex):
         values = self.ranges[:, 0] + self.dimensions * list(map(float, vertex))
-        mu = Mu({})
+        mu = {}
         for k, shape in self.parameters.items():
             count = np.prod(shape, dtype=int)
             head, values = values[:count], values[count:]
             mu[k] = np.array(head).reshape(shape)
-        return mu
+        return Mu(mu)
 
     def visualize(self, vertex_data=None, vertex_inds=None, center_data=None, center_inds=None, volume_data=None,
                   vertex_size=80, vmin=None, vmax=None, new_figure=True):

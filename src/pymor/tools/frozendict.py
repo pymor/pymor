@@ -11,7 +11,7 @@ class FrozenDict(dict):
 
     @property
     def _blocked_attribute(self):
-        raise AttributeError('A frozendict cannot be modified.')
+        raise AttributeError(f'A {type(self).__name__} cannot be modified.')
 
     __delitem__ = __setitem__ = clear = _blocked_attribute
     pop = popitem = setdefault = update = _blocked_attribute
@@ -33,4 +33,4 @@ class FrozenDict(dict):
         return f'FrozenDict({dict.__repr__(self)})'
 
     def __reduce__(self):
-        return (FrozenDict, (dict(self),))
+        return (type(self), (dict(self),))

@@ -1021,7 +1021,7 @@ class FixedParameterOperator(ProxyOperator):
     def __init__(self, operator, mu=None, name=None):
         super().__init__(operator, name)
         assert mu >= operator.parameters, operator.parameters.why_incompatible(mu)
-        self.mu = mu.copy()
+        self.mu = mu
         if mu:
             self.internal_parameters = mu.parameters
 

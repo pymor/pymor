@@ -234,14 +234,11 @@ class Parameters(FrozenDict):
     def space(self, *ranges):
         return ParameterSpace(self, *ranges)
 
-    def __reduce__(self):
-        return (Parameters, (dict(self),))
-
     def __hash__(self):
         return hash(tuple(self.items()))
 
 
-class Mu(dict):
+class Mu(FrozenDict):
     """Class representing a parameter.
 
     A |Parameter| is simply a `dict` where each key is a string and each value
@@ -272,10 +269,17 @@ class Mu(dict):
         The |ParameterType| of the |Parameter|.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__((k, np.array(v, copy=False, ndmin=1))
-                         for k, v in dict(*args, **kwargs).items())
-        assert all(v.ndim == 1 for v in self.values())
+    def __new__(cls, *args, **kwargs):
+        mu = super().__new__(cls,
+                             ((k, np.array(v, copy=False, ndmin=1))
+                              for k, v in dict(*args, **kwargs).items()))
+        assert all(v.ndim == 1 for v in mu.values())
+        # only make elements immutable when running without optimization
+        assert not any(v.setflags(write=False) for v in mu.values())
+        return mu
+
+    def with_(self, **kwargs):
+        return Mu(self, **kwargs)
 
     def allclose(self, mu):
         """Compare two |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
@@ -294,31 +298,15 @@ class Mu(dict):
         return self.keys() == mu.keys() and all(float_cmp_all(v, mu[k]) for k, v in self.items())
 
     def copy(self):
-        c = Mu({k: v.copy() for k, v in self.items()})
-        return c
-
-    def __setitem__(self, key, value):
-        if not isinstance(value, np.ndarray):
-            value = np.array(value, copy=False, ndmin=1)
-            assert value.ndim == 1
-        super().__setitem__(key, value)
+        return self
 
     def __eq__(self, mu):
         if not isinstance(mu, Mu):
-            mu = Mu(mu)
+            try:
+                mu = Mu(mu)
+            except:
+                return False
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
-
-    def fromkeys(self, S, v=None):
-        raise NotImplementedError
-
-    def pop(self, k, d=None):
-        raise NotImplementedError
-
-    def popitem(self):
-        raise NotImplementedError
-
-    def update(self, *args, **kwargs):
-        raise NotImplementedError
 
     @property
     def parameters(self):

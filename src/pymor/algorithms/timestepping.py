@@ -165,7 +165,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
 
     for n in range(nt):
         t += dt
-        mu['_t'][0] = t
+        mu = mu.with_(_t=t)
         rhs = M.apply(U)
         if F_time_dep:
             dt_F = F.as_vector(mu) * dt
@@ -214,14 +214,14 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     if F is None:
         for n in range(nt):
             t += dt
-            mu['_t'][0] = t
+            mu = mu.with_(_t=t)
             U.axpy(-dt, A.apply(U, mu=mu))
             while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
     else:
         for n in range(nt):
             t += dt
-            mu['_t'] = t
+            mu = mu.with_(_t=t)
             if F_time_dep:
                 F_ass = F.as_vector(mu)
             U.axpy(dt, F_ass - A.apply(U, mu=mu))
