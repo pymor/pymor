@@ -141,22 +141,24 @@ Let's solve the thermal block problem and visualize the solution:
 
 Each class in pyMOR that describes a |Parameter| dependent mathematical
 object, like the |StationaryModel| in our case, derives from
-|Parametric| and determines the |Parameters| it expects during :meth:`__init__`
-by calling :meth:`~pymor.parameters.base.ParametricObject.build_parameter_type`.
-The resulting |ParameterType| is stored in the object's
-:attr:`~pymor.parameters.base.ParametricObject.parameter_type` attribute. Let us
-have a look:
+|ParametricObject|. |ParametricObjects| automatically determine the
+|Parameters| they depend on from |ParametricObjects| that have been passed
+as :meth:`__init__` arguments and from the
+:meth:`~pymor.parameters.base.ParametricObject.own_parameters` and
+:meth:`~pymor.parameters.base.ParametricObject.internal_parameters`
+attributes that have been set in :meth:`__init__`.
+Let's have a look:
 
 .. nbplot::
-   print(fom.parameter_type)
+   print(fom.parameters)
 
-This tells us, that the |Parameter| which
+This tells us, that the |Parameters| which
 :meth:`~pymor.models.interface.Model.solve` expects
-should be a dictionary with one key ``'diffusion'`` whose value is a
-|NumPy array| of shape ``(2, 3)``, corresponding to the block structure of
-the problem. However, by using the
-:meth:`~pymor.parameters.base.ParametricObject.parse_parameter` method, pyMOR is
-smart enough to correctly parse the input ``[1.0, 0.1, 0.3, 0.1, 0.2, 1.0]``.
+should be a dictionary with one key ``'diffusion'`` whose value is a one-dimensional
+|NumPy array| of size ``6``, corresponding to the block structure of
+the problem. However, the interface methods of |Models| allow simply passing
+the list ``[1.0, 0.1, 0.3, 0.1, 0.2, 1.0]`` by internally calling
+:meth:`~pymor.parameters.Parameters.parse`.
 
 Next we want to use the :func:`~pymor.algorithms.greedy.greedy` algorithm
 to reduce the problem. For this we need to choose a reductor which will keep
@@ -178,16 +180,15 @@ the coercivity of the problem for a given parameter.
    reductor = CoerciveRBReductor(
        fom,
        product=fom.h1_0_semi_product,
-       coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', fom.parameter_type)
+       coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', fom.parameters)
    )
 
-Moreover, we need to select a |Parameter| training set. The model
-``fom`` already comes with a |ParameterSpace| which it has inherited from the
-analytical problem. We can sample our parameters from this space, which is a
-:class:`~pymor.parameters.spaces.CubicParameterSpace`. E.g.:
+Moreover, we need to select a |Parameter| training set. The problem
+``p`` already comes with a |ParameterSpace|, from which we can sample our parameters.
+E.g.:
 
 .. nbplot::
-   training_set = fom.parameter_space.sample_uniformly(4)
+   training_set = p.parameter_space.sample_uniformly(4)
    print(training_set[0])
 
 Now we start the basis generation:
