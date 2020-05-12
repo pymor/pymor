@@ -30,6 +30,10 @@ class MPIModel:
     def __init__(self, obj_id, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.obj_id = obj_id
+        m = mpi.get_object(obj_id)
+        self.parameters = m.parameters
+        self.own_parameters = m.own_parameters
+        self.internal_parameters = m.internal_parameters
         self.visualizer = MPIVisualizer(obj_id)
 
     def _solve(self, mu=None):

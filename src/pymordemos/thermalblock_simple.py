@@ -57,9 +57,10 @@ def discretize_fenics():
 
     if mpi.parallel:
         from pymor.models.mpi import mpi_wrap_model
-        return mpi_wrap_model(_discretize_fenics, use_with=True, pickle_local_spaces=False)
+        fom =  mpi_wrap_model(_discretize_fenics, use_with=True, pickle_local_spaces=False)
     else:
-        return _discretize_fenics()
+        fom = _discretize_fenics()
+    return fom, fom.parameters.space((0.1, 1))
 
 
 def _discretize_fenics():
@@ -128,7 +129,7 @@ def _discretize_fenics():
     fom = StationaryModel(op, rhs, products={'h1_0_semi': h1_product},
                           visualizer=visualizer)
 
-    return fom, fom.parameters.space((0.1, 1))
+    return fom
 
 
 def discretize_ngsolve():
@@ -313,7 +314,7 @@ def main():
     if ALG == 'naive':
         rom = reduce_naive(fom, reductor, parameter_space, RBSIZE)
     elif ALG == 'greedy':
-        rom = reduce_greedy(fom, reductor, parameter_space, RBSIZE)
+        rom = reduce_greedy(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
     elif ALG == 'adaptive_greedy':
         rom = reduce_adaptive_greedy(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':

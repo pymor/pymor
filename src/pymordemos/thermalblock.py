@@ -322,13 +322,12 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     from pymor.models.basic import StationaryModel
     from pymor.operators.constructions import LincombOperator, VectorOperator
     from pymor.parameters.functionals import ProjectionParameterFunctional
-    from pymor.parameters.spaces import CubicParameterSpace
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
     def parameter_functional_factory(x, y):
         return ProjectionParameterFunctional('diffusion',
                                              size=yblocks*xblocks,
-                                             index=yblocks - y - 1 + x *yblocks,
+                                             index=yblocks - y - 1 + x * yblocks,
                                              name=f'diffusion_{x}_{y}')
     parameter_functionals = tuple(parameter_functional_factory(x, y)
                                   for x in range(xblocks) for y in range(yblocks))
