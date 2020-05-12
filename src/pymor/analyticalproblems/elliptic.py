@@ -130,4 +130,7 @@ class StationaryProblem(ParametricObject):
 
     @property
     def parameter_space(self):
-        return ParameterSpace(self.parameters, self.parameter_ranges)
+        if self.parameter_ranges is None:
+            return None
+        else:
+            return ParameterSpace(self.parameters, self.parameter_ranges)
