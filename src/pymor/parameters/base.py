@@ -69,7 +69,7 @@ class Parameters(FrozenDict):
         return '{' + ', '.join(f'{k}: {v}' for k, v in sorted(self.items())) + '}'
 
     def __repr__(self):
-        return 'Parameters(' + str(sorted(self)) + ')'
+        return 'Parameters(' + str(self) + ')'
 
     def __le__(self, mu):
         if isinstance(mu, Parameters):
