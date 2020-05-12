@@ -56,7 +56,7 @@ from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 from pymor.parallel.default import new_parallel_pool
 from pymor.parallel.manager import RemoteObjectManager
 
-from pymor.parameters.base import Mu, ParameterSpace
+from pymor.parameters.base import Parameters, Mu, ParametricObject, ParameterSpace
 from pymor.parameters.functionals import (ProjectionParameterFunctional, GenericParameterFunctional,
                                           ExpressionParameterFunctional)
 
