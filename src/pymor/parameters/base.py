@@ -379,6 +379,10 @@ class ParametricObject(ImmutableObject):
         assert self.__check_parameter_consistency()
 
     @property
+    def parameters_inherited(self):
+        return self.parameters - self.parameters_own
+
+    @property
     def parametric(self):
         return bool(self.parameters)
 
