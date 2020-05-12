@@ -177,7 +177,7 @@ class InstationaryModel(Model):
 
         super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
-        self.parameters_internal = {'_t': 1}
+        self.parameters_internal = {'t': 1}
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
@@ -200,7 +200,7 @@ class InstationaryModel(Model):
         if not self.logging_disabled:
             self.logger.info(f'Solving {self.name} for {mu} ...')
 
-        mu = mu.with_(_t=0.)
+        mu = mu.with_(t=0.)
         U0 = self.initial_data.as_range_array(mu)
         U = self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                     initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)

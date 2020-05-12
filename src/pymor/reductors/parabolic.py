@@ -55,7 +55,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
                  check_orthonormality=None, check_tol=None):
         if not isinstance(fom.time_stepper, ImplicitEulerTimeStepper):
             raise NotImplementedError
-        if fom.mass is not None and fom.mass.parametric and '_t' in fom.mass.parameters:
+        if fom.mass is not None and fom.mass.parametric and 't' in fom.mass.parameters:
             raise NotImplementedError
         super().__init__(fom, RB, product=product,
                          check_orthonormality=check_orthonormality, check_tol=check_tol)
@@ -107,11 +107,11 @@ class ParabolicRBEstimator(ImmutableObject):
 
         est = np.empty(len(U))
         est[0] = (1./C) * self.initial_residual.apply(U[0], mu=mu).l2_norm2()[0]
-        if '_t' in self.residual.parameters:
+        if 't' in self.residual.parameters:
             t = 0
             for n in range(1, m.time_stepper.nt + 1):
                 t += dt
-                mu = mu.with_(_t=t)
+                mu = mu.with_(t=t)
                 est[n] = self.residual.apply(U[n], U[n-1], mu=mu).l2_norm2()
         else:
             est[1:] = self.residual.apply(U[1:], U[:-1], mu=mu).l2_norm2()
