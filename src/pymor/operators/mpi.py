@@ -66,8 +66,8 @@ class MPIOperator(Operator):
         self.op = op = mpi.get_object(obj_id)
         self.linear = op.linear
         self.parameters = op.parameters
-        self.own_parameters = op.own_parameters
-        self.internal_parameters = op.internal_parameters
+        self.parameters_own = op.parameters_own
+        self.parameters_internal = op.parameters_internal
         self.name = op.name
         if mpi_source:
             local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, True, pickle_local_spaces)

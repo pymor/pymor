@@ -177,7 +177,7 @@ class InstationaryModel(Model):
 
         super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
-        self.internal_parameters = {'_t': 1}
+        self.parameters_internal = {'_t': 1}
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)

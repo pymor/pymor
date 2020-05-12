@@ -32,8 +32,8 @@ class MPIModel:
         self.obj_id = obj_id
         m = mpi.get_object(obj_id)
         self.parameters = m.parameters
-        self.own_parameters = m.own_parameters
-        self.internal_parameters = m.internal_parameters
+        self.parameters_own = m.parameters_own
+        self.parameters_internal = m.parameters_internal
         self.visualizer = MPIVisualizer(obj_id)
 
     def _solve(self, mu=None):

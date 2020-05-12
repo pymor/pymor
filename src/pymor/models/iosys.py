@@ -883,7 +883,7 @@ class TransferFunction(InputOutputModel):
 
     def __init__(self, input_space, output_space, tf, dtf, parameters={}, cont_time=True, name=None):
         super().__init__(input_space, output_space, cont_time=cont_time, name=name)
-        self.own_parameters = parameters
+        self.parameters_own = parameters
         self.__auto_init(locals())
 
     def __str__(self):

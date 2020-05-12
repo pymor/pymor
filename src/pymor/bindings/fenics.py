@@ -222,7 +222,7 @@ if config.HAVE_FENICS:
             self.__auto_init(locals())
             self.source = source_space
             self.range = range_space
-            self.own_parameters = parameters
+            self.parameters_own = parameters
 
         def _set_mu(self, mu=None):
             assert self.parameters.assert_compatible(mu)

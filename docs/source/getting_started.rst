@@ -144,8 +144,8 @@ object, like the |StationaryModel| in our case, derives from
 |ParametricObject|. |ParametricObjects| automatically determine the
 |Parameters| they depend on from |ParametricObjects| that have been passed
 as :meth:`__init__` arguments and from the
-:meth:`~pymor.parameters.base.ParametricObject.own_parameters` and
-:meth:`~pymor.parameters.base.ParametricObject.internal_parameters`
+:meth:`~pymor.parameters.base.ParametricObject.parameters_own` and
+:meth:`~pymor.parameters.base.ParametricObject.parameters_internal`
 attributes that have been set in :meth:`__init__`.
 Let's have a look:
 

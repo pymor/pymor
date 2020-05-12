@@ -342,18 +342,16 @@ class ParametricObject(ImmutableObject):
         is not empty.
     """
 
-    internal_parameters = Parameters({})
-
     @property
     def parameters(self):
         if self._parameters is not None:
             return self._parameters
         assert self._locked, 'parameters attribute can only be accessed after class initialization'
         params = Parameters.of(*(getattr(self, arg) for arg in self._init_arguments))
-        if self.own_parameters:
-            params = params | self.own_parameters
-        if self.internal_parameters:
-            params = params - self.internal_parameters
+        if self.parameters_own:
+            params = params | self.parameters_own
+        if self.parameters_internal:
+            params = params - self.parameters_internal
         self._parameters = params
         return params
 
@@ -363,21 +361,21 @@ class ParametricObject(ImmutableObject):
         assert self.__check_parameter_consistency()
 
     @property
-    def own_parameters(self):
-        return self._own_parameters or Parameters({})
+    def parameters_own(self):
+        return self._parameters_own or Parameters({})
 
-    @own_parameters.setter
-    def own_parameters(self, own_parameters):
-        self._own_parameters = Parameters(own_parameters)
+    @parameters_own.setter
+    def parameters_own(self, parameters_own):
+        self._parameters_own = Parameters(parameters_own)
         assert self.__check_parameter_consistency()
 
     @property
-    def internal_parameters(self):
-        return self._internal_parameters or Parameters({})
+    def parameters_internal(self):
+        return self._parameters_internal or Parameters({})
 
-    @internal_parameters.setter
-    def internal_parameters(self, internal_parameters):
-        self._internal_parameters = Parameters(internal_parameters)
+    @parameters_internal.setter
+    def parameters_internal(self, parameters_internal):
+        self._parameters_internal = Parameters(parameters_internal)
         assert self.__check_parameter_consistency()
 
     @property
@@ -385,19 +383,19 @@ class ParametricObject(ImmutableObject):
         return bool(self.parameters)
 
     def __check_parameter_consistency(self):
-        if self._internal_parameters is not None:
+        if self._parameters_internal is not None:
             if self._parameters is not None:
-                assert self._parameters.keys().isdisjoint(self._internal_parameters)
-            if self._own_parameters is not None:
-                assert self._own_parameters.keys().isdisjoint(self._internal_parameters)
-        if self._own_parameters is not None:
+                assert self._parameters.keys().isdisjoint(self._parameters_internal)
+            if self._parameters_own is not None:
+                assert self._parameters_own.keys().isdisjoint(self._parameters_internal)
+        if self._parameters_own is not None:
             if self._parameters is not None:
-                assert self._parameters >= self._own_parameters
+                assert self._parameters >= self._parameters_own
         return True
 
     _parameters = None
-    _own_parameters = None
-    _internal_parameters = None
+    _parameters_own = None
+    _parameters_internal = None
 
 
 class ParameterSpace(ParametricObject):

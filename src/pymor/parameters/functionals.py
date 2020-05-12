@@ -85,7 +85,7 @@ class ProjectionParameterFunctional(ParameterFunctional):
         assert 0 <= index < size
 
         self.__auto_init(locals())
-        self.own_parameters = {parameter: size}
+        self.parameters_own = {parameter: size}
 
     def evaluate(self, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -125,7 +125,7 @@ class GenericParameterFunctional(ParameterFunctional):
 
     def __init__(self, mapping, parameters, name=None, derivative_mappings=None, second_derivative_mappings=None):
         self.__auto_init(locals())
-        self.own_parameters = parameters
+        self.parameters_own = parameters
 
     def evaluate(self, mu=None):
         assert self.parameters.assert_compatible(mu)

@@ -151,7 +151,7 @@ class GenericFunction(Function):
         assert isinstance(shape_range, (Number, tuple))
         if not isinstance(shape_range, tuple):
             shape_range = (shape_range,)
-        self.own_parameters = parameters
+        self.parameters_own = parameters
         self.__auto_init(locals())
 
     def __str__(self):
