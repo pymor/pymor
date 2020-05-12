@@ -318,7 +318,7 @@ def main():
     elif ALG == 'adaptive_greedy':
         rom = reduce_adaptive_greedy(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':
-        rom = reduce_pod(fom, reductor, parameter_space, RBSIZE)
+        rom = reduce_pod(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
     else:
         raise NotImplementedError
 
