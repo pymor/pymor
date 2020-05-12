@@ -194,7 +194,7 @@ def discretize_ngsolve():
     op = LincombOperator([NGSolveMatrixOperator(m, space, space) for m in mats],
                          [ProjectionParameterFunctional('diffusion', len(coeffs), i) for i in range(len(coeffs))])
 
-    h1_0_op = op.assemble([1] * len(coeffs)).with_(name='h1_0_semi')
+    h1_0_op = op.assemble(Mu(diffusion=[1] * len(coeffs))).with_(name='h1_0_semi')
 
     F = space.zeros()
     F._list[0].real_part.impl.vec.data = f.vec
