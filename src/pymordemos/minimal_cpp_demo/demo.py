@@ -11,7 +11,6 @@ from pymor.models.basic import InstationaryModel
 from pymor.discretizers.builtin import OnedGrid
 from pymor.operators.constructions import VectorOperator, LincombOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
-from pymor.parameters.spaces import CubicParameterSpace
 from pymor.reductors.basic import InstationaryRBReductor
 
 # import wrapped classes
