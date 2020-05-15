@@ -17,7 +17,7 @@ from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
-from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 
 class LincombOperator(Operator):
@@ -81,44 +81,84 @@ class LincombOperator(Operator):
 
     def apply(self, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply(U, mu=mu)
-        R.scal(coeffs[0])
-        for op, c in zip(self.operators[1:], coeffs[1:]):
-            R.axpy(c, op.apply(U, mu=mu))
+        if np.linalg.norm(coeffs) == 0:
+            R = NumpyVectorArray(np.ndarray((1,self.operators[0].range.dim),buffer= np.zeros(self.operators[0].range.dim)),self.operators[0].range) 
+        else:
+            if coeffs[0]!= 0.0:
+                R = self.operators[0].apply(U, mu=mu)
+                R.scal(coeffs[0])
+            else:
+                R = NumpyVectorArray(np.ndarray((1,self.operators[0].range.dim),buffer= np.zeros(self.operators[0].range.dim)),self.operators[0].range) 
+            for op, c in zip(self.operators[1:], coeffs[1:]):
+                if c!= 0.0:
+                    R.axpy(c, op.apply(U, mu=mu))
         return R
 
     def apply2(self, V, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        matrices = [op.apply2(V, U, mu=mu) for op in self.operators]
-        coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
-        matrices_dtype = reduce(np.promote_types, (m.dtype for m in matrices))
-        common_dtype = np.promote_types(coeffs_dtype, matrices_dtype)
-        R = coeffs[0] * matrices[0]
-        if R.dtype != common_dtype:
-            R = R.astype(common_dtype)
-        for m, c in zip(matrices[1:], coeffs[1:]):
-            R += c * m
+        if np.linalg.norm(coeffs) == 0:
+            R = np.ndarray((1,1),buffer= np.array([0.0]))  
+        else:
+            if coeffs[0]!= 0.0:
+                coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
+                m = self.operators[0].apply2(V, U, mu=mu)
+                R = coeffs[0]*m
+                common_dtype = np.promote_types(coeffs_dtype,m.dtype)
+            else:
+                R = np.ndarray((1,1),buffer= np.array([0.0]))
+                common_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
+            if R.dtype != common_dtype:
+                    R = R.astype(common_dtype)
+            i = 0
+            for c in coeffs[1:]:
+                i = i + 1
+                if c!=0.0:
+                    m = self.operators[i].apply2(V,U,mu=mu)
+                    common_dtype = np.promote_types(common_dtype,m.dtype)
+                    R += c*m
+                    if R.dtype != common_dtype:
+                        R = R.astype(common_dtype)
         return R
 
     def pairwise_apply2(self, V, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        vectors = [op.pairwise_apply2(V, U, mu=mu) for op in self.operators]
-        coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
-        vectors_dtype = reduce(np.promote_types, (v.dtype for v in vectors))
-        common_dtype = np.promote_types(coeffs_dtype, vectors_dtype)
-        R = coeffs[0] * vectors[0]
-        if R.dtype != common_dtype:
-            R = R.astype(common_dtype)
-        for v, c in zip(vectors[1:], coeffs[1:]):
-            R += c * v
+        if np.linalg.norm(coeffs) == 0:
+            R = np.ndarray((1,1),buffer= np.array([0.0]))  
+        else:
+            if coeffs[0]!= 0.0:
+                coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
+                v = self.operators[0].pairwise_apply2(V, U, mu=mu)
+                R = coeffs[0]*v
+                common_dtype = np.promote_types(coeffs_dtype,v.dtype)
+            else:
+                R = np.ndarray((1,1),buffer= np.array([0.0]))  
+                common_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
+            if R.dtype!= common_dtype:
+                R = R.astype(common_dtype)
+            i = 0
+            for c in coeffs[1:]:
+                i = i+1
+                if c!= 0.0:
+                    v = self.operators[i].pairwise_apply2(V, U, mu= mu)
+                    common_dtype = np.promote_types(common_dtype,v.dtype)
+                    R += c * v
+                    if R.dtype!= common_dtype:
+                        R = R.astype(common_dtype)
         return R
 
     def apply_adjoint(self, V, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply_adjoint(V, mu=mu)
-        R.scal(np.conj(coeffs[0]))
-        for op, c in zip(self.operators[1:], coeffs[1:]):
-            R.axpy(np.conj(c), op.apply_adjoint(V, mu=mu))
+        if np.linalg.norm(coeffs) == 0:
+            R = NumpyVectorArray(np.ndarray((1,self.operators[0].source.dim),buffer= np.zeros(self.operators[0].source.dim)),self.operators[0].source) 
+        else:
+            if coeffs[0]!= 0.0:
+                R = self.operators[0].apply_adjoint(V, mu=mu)
+                R.scal(np.conj(coeffs[0]))
+            else:
+                R= NumpyVectorArray(np.ndarray((1,self.operators[0].source.dim),buffer= np.zeros(self.operators[0].source.dim)),self.operators[0].source) 
+            for op, c in zip(self.operators[1:], coeffs[1:]):
+                if c!= 0.0:
+                    R.axpy(np.conj(c), op.apply_adjoint(V, mu=mu))
         return R
 
     def assemble(self, mu=None):
