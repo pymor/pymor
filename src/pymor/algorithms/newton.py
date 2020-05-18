@@ -4,6 +4,8 @@
 
 import numpy as np
 
+from pymor.algorithms.line_search import armijo
+
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError, NewtonError
 from pymor.core.logger import getLogger
@@ -11,7 +13,7 @@ from pymor.core.logger import getLogger
 
 @defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
-           miniter=0, maxiter=100, rtol=0., atol=0., relax=1.,
+           miniter=0, maxiter=100, rtol=0., atol=0., relax=1., line_search_method='armijo',
            stagnation_window=3, stagnation_threshold=np.inf,
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
@@ -50,6 +52,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         Finish when the residual norm is below this threshold.
     relax
         Relaxation factor for Newton updates.
+    line_search_method
+        Method to use for line search; if provided, parameter `relax` is not used.
     stagnation_window
         Finish when the residual norm has not been reduced by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
@@ -124,6 +128,15 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
             correction = jacobian.apply_inverse(residual, least_squares=least_squares)
         except InversionError:
             raise NewtonError('Could not invert jacobian')
+        if line_search_method is not None:
+            if line_search_method == 'armijo':
+                def res(x):
+                    residual_vec = rhs - operator.apply(x, mu=mu)
+                    return residual_vec.l2_norm()[0] if error_norm is None else error_norm(residual_vec)[0]
+                grad = 2.0 * jacobian.apply(residual) if error_norm is None else None
+                relax = armijo(res, U, correction, grad=grad)
+            else:
+                raise NewtonError('Unknown line search method')
         U.axpy(relax, correction)
         residual = rhs - operator.apply(U, mu=mu)
 
