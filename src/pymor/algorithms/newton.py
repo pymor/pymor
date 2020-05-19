@@ -136,7 +136,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
                 grad = 2.0 * jacobian.apply(residual) if error_norm is None else None
                 relax = armijo(res, U, correction, grad=grad)
             else:
-                raise NewtonError('Unknown line search method')
+                raise ValueError('Unknown line search method')
         U.axpy(relax, correction)
         residual = rhs - operator.apply(U, mu=mu)
 

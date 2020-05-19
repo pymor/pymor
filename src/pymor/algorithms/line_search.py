@@ -6,7 +6,7 @@ from pymor.core.defaults import defaults
 
 
 @defaults('alpha_init', 'tau', 'beta', 'maxiter')
-def armijo(r, starting_point, correction, grad=None,
+def armijo(f, starting_point, direction, grad=None,
            alpha_init=1.0, tau=0.5, beta=0.0001, maxiter=100):
     """Armijo line search algorithm.
 
@@ -15,21 +15,21 @@ def armijo(r, starting_point, correction, grad=None,
 
     Parameters
     ----------
-    r
+    f
         Real-valued function that can be evaluated for its value.
     starting_point
         A |VectorArray| of length 1 containing the starting point of the line search.
-    correction
-        Descent direction of `r` in the point `starting_point` along which the line
+    direction
+        Descent direction of `f` in the point `starting_point` along which the line
         search is performed.
     grad
-        Gradient of `r` in the point `starting_point`.
+        Gradient of `f` in the point `starting_point`.
     alpha_init
         Initial step size that is gradually reduced.
     tau
         The fraction by which the step size is reduced in each iteration.
     beta
-        Control parameter to adjust the required decrease of the function value of `r`.
+        Control parameter to adjust the required decrease of the function value of `f`.
     maxiter
         Fail if the iteration count reaches this value without finding a point fulfilling
         the Armijo-Goldstein condition.
@@ -47,20 +47,20 @@ def armijo(r, starting_point, correction, grad=None,
     alpha = alpha_init
 
     # Compute initial function value
-    initial_residual = r(starting_point)
+    initial_value = f(starting_point)
 
     iteration = 0
     slope = 0.0
 
     # Compute slope if gradient is provided
     if grad:
-        slope = min(grad.dot(correction), 0.0)
+        slope = min(grad.dot(direction), 0.0)
 
     while True:
         # Compute new function value
-        current_residual = r(starting_point + alpha * correction)
+        current_value = f(starting_point + alpha * direction)
         # Check the Armijo-Goldstein condition
-        if current_residual < initial_residual + alpha * beta * slope:
+        if current_value < initial_value + alpha * beta * slope:
             break
         # Check if maxiter is reached
         if iteration >= maxiter:
