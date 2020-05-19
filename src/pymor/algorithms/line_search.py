@@ -10,8 +10,8 @@ def armijo(f, starting_point, direction, grad=None,
            alpha_init=1.0, tau=0.5, beta=0.0001, maxiter=100):
     """Armijo line search algorithm.
 
-    This method computes a step size such that the Armijo-Goldstein condition is
-    fulfilled.
+    This method computes a step size such that the Armijo condition (see [NW06]_, p. 33)
+    is fulfilled.
 
     Parameters
     ----------
@@ -32,12 +32,12 @@ def armijo(f, starting_point, direction, grad=None,
         Control parameter to adjust the required decrease of the function value of `f`.
     maxiter
         Fail if the iteration count reaches this value without finding a point fulfilling
-        the Armijo-Goldstein condition.
+        the Armijo condition.
 
     Returns
     -------
     alpha
-        Step size computed according to the Armijo-Goldstein condition.
+        Step size computed according to the Armijo condition.
     """
     assert alpha_init > 0
     assert 0 < tau < 1
@@ -59,7 +59,7 @@ def armijo(f, starting_point, direction, grad=None,
     while True:
         # Compute new function value
         current_value = f(starting_point + alpha * direction)
-        # Check the Armijo-Goldstein condition
+        # Check the Armijo condition
         if current_value < initial_value + alpha * beta * slope:
             break
         # Check if maxiter is reached

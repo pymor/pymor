@@ -102,6 +102,12 @@ Bibliography
            IEEE Transactions on Automatic Control, 36(6), 668-682,
            1991.
 
+.. [NW06] J. Nocedal and S. J. Wright,
+          Numerical optimization,
+          Springer Series in Operations Research and Financial
+          Engineering,
+          Second Edition, Springer New-York, 2006
+
 .. [OJ88]  P. C. Opdenacker, E. A. Jonckheere, A Contraction Mapping
            Preserving Balanced Reduction Scheme and Its Infinity Norm
            Error Bounds,
