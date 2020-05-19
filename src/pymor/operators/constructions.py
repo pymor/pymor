@@ -82,13 +82,13 @@ class LincombOperator(Operator):
     def apply(self, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
         if np.linalg.norm(coeffs) == 0:
-            R = NumpyVectorArray(np.ndarray((1,self.operators[0].range.dim),buffer= np.zeros(self.operators[0].range.dim)),self.operators[0].range) 
+            R = self.range.zeros()
         else:
             if coeffs[0]!= 0.0:
                 R = self.operators[0].apply(U, mu=mu)
                 R.scal(coeffs[0])
             else:
-                R = NumpyVectorArray(np.ndarray((1,self.operators[0].range.dim),buffer= np.zeros(self.operators[0].range.dim)),self.operators[0].range) 
+                R = self.range.zeros()
             for op, c in zip(self.operators[1:], coeffs[1:]):
                 if c!= 0.0:
                     R.axpy(c, op.apply(U, mu=mu))
@@ -149,13 +149,13 @@ class LincombOperator(Operator):
     def apply_adjoint(self, V, mu=None):
         coeffs = self.evaluate_coefficients(mu)
         if np.linalg.norm(coeffs) == 0:
-            R = NumpyVectorArray(np.ndarray((1,self.operators[0].source.dim),buffer= np.zeros(self.operators[0].source.dim)),self.operators[0].source) 
+            R = self.source.zeros()
         else:
             if coeffs[0]!= 0.0:
                 R = self.operators[0].apply_adjoint(V, mu=mu)
                 R.scal(np.conj(coeffs[0]))
             else:
-                R= NumpyVectorArray(np.ndarray((1,self.operators[0].source.dim),buffer= np.zeros(self.operators[0].source.dim)),self.operators[0].source) 
+                R = self.source.zeros()
             for op, c in zip(self.operators[1:], coeffs[1:]):
                 if c!= 0.0:
                     R.axpy(np.conj(c), op.apply_adjoint(V, mu=mu))
