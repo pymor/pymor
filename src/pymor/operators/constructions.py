@@ -17,7 +17,7 @@ from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class LincombOperator(Operator):
