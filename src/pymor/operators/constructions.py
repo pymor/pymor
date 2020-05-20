@@ -80,26 +80,29 @@ class LincombOperator(Operator):
         return [c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients]
 
     def apply(self, U, mu=None):
-        coeffs = self.evaluate_coefficients(mu)
-        if np.linalg.norm(coeffs) == 0:
+        coeffs = np.array(self.evaluate_coefficients(mu))
+        if not coeffs.any():
             R = self.range.zeros()
         else:
-            if coeffs[0]!= 0.0:
+            where_nonzero = list(coeffs.nonzero()[0])
+            if 0 in where_nonzero:
+                where_nonzero.pop(0)
                 R = self.operators[0].apply(U, mu=mu)
                 R.scal(coeffs[0])
             else:
                 R = self.range.zeros()
-            for op, c in zip(self.operators[1:], coeffs[1:]):
-                if c!= 0.0:
-                    R.axpy(c, op.apply(U, mu=mu))
+            for idx in where_nonzero:
+                R.axpy(coeffs[idx], self.operators[idx].apply(U, mu=mu))
         return R
 
     def apply2(self, V, U, mu=None):
-        coeffs = self.evaluate_coefficients(mu)
-        if np.linalg.norm(coeffs) == 0:
+        coeffs = np.array(self.evaluate_coefficients(mu))
+        if not coeffs.any():
             R = np.ndarray((1,1),buffer= np.array([0.0]))  
         else:
-            if coeffs[0]!= 0.0:
+            where_nonzero = list(coeffs.nonzero()[0])
+            if 0 in where_nonzero:
+                where_nonzero.pop(0)
                 coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
                 m = self.operators[0].apply2(V, U, mu=mu)
                 R = coeffs[0]*m
@@ -108,24 +111,23 @@ class LincombOperator(Operator):
                 R = np.ndarray((1,1),buffer= np.array([0.0]))
                 common_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
             if R.dtype != common_dtype:
+                R = R.astype(common_dtype)
+            for idx in where_nonzero:
+                m = self.operators[idx].apply2(V,U,mu=mu)
+                common_dtype = np.promote_types(common_dtype,m.dtype)
+                R += coeffs[idx]*m
+                if R.dtype != common_dtype:
                     R = R.astype(common_dtype)
-            i = 0
-            for c in coeffs[1:]:
-                i = i + 1
-                if c!=0.0:
-                    m = self.operators[i].apply2(V,U,mu=mu)
-                    common_dtype = np.promote_types(common_dtype,m.dtype)
-                    R += c*m
-                    if R.dtype != common_dtype:
-                        R = R.astype(common_dtype)
         return R
 
     def pairwise_apply2(self, V, U, mu=None):
-        coeffs = self.evaluate_coefficients(mu)
-        if np.linalg.norm(coeffs) == 0:
+        coeffs = np.array(self.evaluate_coefficients(mu))
+        if not coeffs.any():
             R = np.ndarray((1,1),buffer= np.array([0.0]))  
         else:
-            if coeffs[0]!= 0.0:
+            where_nonzero = list(coeffs.nonzero()[0])
+            if 0 in where_nonzero:
+                where_nonzero.pop(0)
                 coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
                 v = self.operators[0].pairwise_apply2(V, U, mu=mu)
                 R = coeffs[0]*v
@@ -135,30 +137,28 @@ class LincombOperator(Operator):
                 common_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
             if R.dtype!= common_dtype:
                 R = R.astype(common_dtype)
-            i = 0
-            for c in coeffs[1:]:
-                i = i+1
-                if c!= 0.0:
-                    v = self.operators[i].pairwise_apply2(V, U, mu= mu)
-                    common_dtype = np.promote_types(common_dtype,v.dtype)
-                    R += c * v
-                    if R.dtype!= common_dtype:
-                        R = R.astype(common_dtype)
+            for idx in where_nonzero:
+                v = self.operators[idx].pairwise_apply2(V, U, mu= mu)
+                common_dtype = np.promote_types(common_dtype,v.dtype)
+                R += coeffs[idx] * v
+                if R.dtype!= common_dtype:
+                    R = R.astype(common_dtype)
         return R
 
     def apply_adjoint(self, V, mu=None):
-        coeffs = self.evaluate_coefficients(mu)
-        if np.linalg.norm(coeffs) == 0:
+        coeffs = np.array(self.evaluate_coefficients(mu))
+        if not coeffs.any():
             R = self.source.zeros()
         else:
-            if coeffs[0]!= 0.0:
+            where_nonzero = list(coeffs.nonzero()[0])
+            if 0 in where_nonzero:
+                where_nonzero.pop(0)
                 R = self.operators[0].apply_adjoint(V, mu=mu)
                 R.scal(np.conj(coeffs[0]))
             else:
                 R = self.source.zeros()
-            for op, c in zip(self.operators[1:], coeffs[1:]):
-                if c!= 0.0:
-                    R.axpy(np.conj(c), op.apply_adjoint(V, mu=mu))
+            for idx in where_nonzero:
+                R.axpy(np.conj(coeffs[idx]), self.operators[idx].apply_adjoint(V, mu=mu))
         return R
 
     def assemble(self, mu=None):
