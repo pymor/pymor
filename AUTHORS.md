@@ -15,6 +15,10 @@
 
 * Tim Keil, tim.keil@uni-muenster.de
     * second order derivatives for parameters
+    * speed up of lincomb operators
+
+* Luca Mechelli, luca.mechelli@uni-konstanz.de
+    * speed up of lincomb operators
 
 ## pyMOR 2019.2
 
