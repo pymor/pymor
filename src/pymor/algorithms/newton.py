@@ -129,6 +129,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         except InversionError:
             raise NewtonError('Could not invert jacobian')
         if line_search_method is not None:
+            logger.info(f'Using {line_search_method} as line search method')
             if line_search_method == 'armijo':
                 def res(x):
                     residual_vec = rhs - operator.apply(x, mu=mu)

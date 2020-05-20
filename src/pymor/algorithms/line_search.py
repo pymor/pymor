@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.defaults import defaults
+from pymor.core.logger import getLogger
 
 
 @defaults('alpha_init', 'tau', 'beta', 'maxiter')
@@ -64,7 +65,11 @@ def armijo(f, starting_point, direction, grad=None,
             break
         # Check if maxiter is reached
         if iteration >= maxiter:
+            # Use default value as step size
             alpha = alpha_init
+            # Log warning
+            logger = getLogger('pymor.algorithms.line_search')
+            logger.warning('Reached maximum number of line search steps')
             break
         iteration += 1
         # Adjust step size
