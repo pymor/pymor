@@ -12,7 +12,7 @@ from pymor.core.logger import getLogger
 
 
 @defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
-def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
+def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least_squares=False,
            miniter=0, maxiter=100, rtol=0., atol=0., relax=1., line_search_params=None,
            stagnation_window=3, stagnation_threshold=np.inf,
            return_stages=False, return_residuals=False):
@@ -37,8 +37,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     mu
         The |parameter values| for which to solve the equation.
     error_norm
-        The norm with which the norm of the residual is computed. If `None`, the
-        Euclidean norm is used.
+        The product with which the norm of the residual is computed. If `None`, the
+        Euclidean product is used.
     least_squares
         If `True`, use a least squares linear solver (e.g. for residual minimization).
     miniter
@@ -99,7 +99,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     U = initial_guess.copy()
     residual = rhs - operator.apply(U, mu=mu)
 
-    err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
+    err = residual.dot(residual)[0][0] if error_product is None else error_product.apply2(residual, residual)[0][0]
+    print(err)
     logger.info(f'      Initial Residual: {err:5e}')
 
     iteration = 0
@@ -133,15 +134,15 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
             logger.info(f'Using Armijo as line search method')
             def res(x):
                 residual_vec = rhs - operator.apply(x, mu=mu)
-                return residual_vec.l2_norm()[0] if error_norm is None else error_norm(residual_vec)[0]
-            grad = 2.0 * jacobian.apply(residual) if error_norm is None else None
+                return residual_vec.dot(residual_vec)[0][0] if error_product is None else error_product.apply2(residual_vec, residual_vec)[0][0]
+            grad = - (jacobian.apply(residual) + jacobian.apply_adjoint(residual)) if error_product is None else - (jacobian.apply_adjoint(error_product.apply(residual)) + jacobian.apply(error_product.apply_adjoint(residual)))
             step_size = armijo(res, U, correction, grad=grad, **(line_search_params or {}))
         else:
             step_size = relax
         U.axpy(step_size, correction)
         residual = rhs - operator.apply(U, mu=mu)
 
-        err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
+        err = residual.dot(residual)[0][0] if error_product is None else error_product.apply2(residual, residual)[0][0]
         logger.info(f'Iteration {iteration:2}: Residual: {err:5e},  '
                     f'Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}')
         error_sequence.append(err)
