@@ -90,7 +90,7 @@ class LincombOperator(Operator):
                 R.scal(coeffs[0])
             else:
                 R = self.range.zeros()
-            for idx in where_nonzero[1:]:
+            for idx in where_nonzero[max(0,1-where_nonzero[0]):]:
                 R.axpy(coeffs[idx], self.operators[idx].apply(U, mu=mu))
         return R
 
@@ -110,7 +110,7 @@ class LincombOperator(Operator):
                 common_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
             if R.dtype != common_dtype:
                 R = R.astype(common_dtype)
-            for idx in where_nonzero[1:]:
+            for idx in where_nonzero[max(0,1-where_nonzero[0]):]:
                 m = self.operators[idx].apply2(V,U,mu=mu)
                 common_dtype = np.promote_types(common_dtype,m.dtype)
                 R += coeffs[idx]*m
@@ -134,7 +134,7 @@ class LincombOperator(Operator):
                 common_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
             if R.dtype!= common_dtype:
                 R = R.astype(common_dtype)
-            for idx in where_nonzero[1:]:
+            for idx in where_nonzero[max(0,1-where_nonzero[0]):]:
                 v = self.operators[idx].pairwise_apply2(V, U, mu= mu)
                 common_dtype = np.promote_types(common_dtype,v.dtype)
                 R += coeffs[idx] * v
@@ -153,7 +153,7 @@ class LincombOperator(Operator):
                 R.scal(np.conj(coeffs[0]))
             else:
                 R = self.source.zeros()
-            for idx in where_nonzero[1:]:
+            for idx in where_nonzero[max(0,1-where_nonzero[0]):]:
                 R.axpy(np.conj(coeffs[idx]), self.operators[idx].apply_adjoint(V, mu=mu))
         return R
 
