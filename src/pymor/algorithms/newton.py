@@ -13,7 +13,7 @@ from pymor.core.logger import getLogger
 
 @defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
-           miniter=0, maxiter=100, rtol=0., atol=0., relax=1., line_search_method='armijo',
+           miniter=0, maxiter=100, rtol=0., atol=0., relax=1., line_search_params=None,
            stagnation_window=3, stagnation_threshold=np.inf,
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
@@ -51,9 +51,10 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     atol
         Finish when the residual norm is below this threshold.
     relax
-        Relaxation factor for Newton updates.
-    line_search_method
-        Method to use for line search; if provided, parameter `relax` is not used.
+        If real valued, relaxation factor for Newton updates; otherwise the name of a line
+        search method (for instance 'armijo').
+    line_search_params
+        Dictionary of additional parameters passed to the line search method.
     stagnation_window
         Finish when the residual norm has not been reduced by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
@@ -128,17 +129,16 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
             correction = jacobian.apply_inverse(residual, least_squares=least_squares)
         except InversionError:
             raise NewtonError('Could not invert jacobian')
-        if line_search_method is not None:
-            logger.info(f'Using {line_search_method} as line search method')
-            if line_search_method == 'armijo':
-                def res(x):
-                    residual_vec = rhs - operator.apply(x, mu=mu)
-                    return residual_vec.l2_norm()[0] if error_norm is None else error_norm(residual_vec)[0]
-                grad = 2.0 * jacobian.apply(residual) if error_norm is None else None
-                relax = armijo(res, U, correction, grad=grad)
-            else:
-                raise ValueError('Unknown line search method')
-        U.axpy(relax, correction)
+        if relax == 'armijo':
+            logger.info(f'Using Armijo as line search method')
+            def res(x):
+                residual_vec = rhs - operator.apply(x, mu=mu)
+                return residual_vec.l2_norm()[0] if error_norm is None else error_norm(residual_vec)[0]
+            grad = 2.0 * jacobian.apply(residual) if error_norm is None else None
+            step_size = armijo(res, U, correction, grad=grad, **(line_search_params or {}))
+        else:
+            step_size = relax
+        U.axpy(step_size, correction)
         residual = rhs - operator.apply(U, mu=mu)
 
         err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
