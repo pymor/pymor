@@ -137,12 +137,10 @@ class Parameters(FrozenDict):
         def traverse(obj):
             if obj is None:
                 return
-            elif hasattr(obj, 'parameters'):
-                obj_params = obj.parameters
-                if isinstance(obj_params, Parameters):
-                    assert all(check_shapes(component, parameters.get(component), shape)
-                               for component, shape in obj_params.items())
-                    parameters.update(obj_params)
+            elif isinstance(obj, ParametricObject):
+                assert all(check_shapes(component, parameters.get(component), shape)
+                           for component, shape in obj.parameters.items())
+                parameters.update(obj.parameters)
             elif isinstance(obj, (list, tuple)):
                 for o in obj:
                     traverse(o)
