@@ -52,18 +52,18 @@ class Parameters(FrozenDict):
         """
         parameters = {}
 
-        def check_shapes(component, shape1, shape2):
-            assert isinstance(shape2, int) and shape2 >= 0, f'Component {component} not an int or negative'
-            assert shape1 is None or shape1 == shape2, \
-                f'Dimension mismatch for parameter {component} (got {shape1} and {shape2})'
+        def check_dims(param, dim1, dim2):
+            assert isinstance(dim2, int) and dim2 >= 0, f'Dimension of parameter {param} not an int or negative'
+            assert dim1 is None or dim1 == dim2, \
+                f'Dimension mismatch for parameter {param} (got {dim1} and {dim2})'
             return True
 
         def traverse(obj):
             if obj is None:
                 return
             elif isinstance(obj, ParametricObject):
-                assert all(check_shapes(component, parameters.get(component), shape)
-                           for component, shape in obj.parameters.items())
+                assert all(check_dims(param, parameters.get(param), dim)
+                           for param, dim in obj.parameters.items())
                 parameters.update(obj.parameters)
             elif isinstance(obj, (list, tuple)):
                 for o in obj:
@@ -141,15 +141,15 @@ class Parameters(FrozenDict):
             return Mu(parsed_mu)
 
         elif isinstance(mu, dict):
-            set(mu.keys()) == set(self.keys()) or fail('components not matching')
+            set(mu.keys()) == set(self.keys()) or fail('parameters not matching')
 
             def parse_value(k, v):
-                isinstance(v, (Number, tuple, list, np.ndarray)) or fail(f"invalid type '{type(v)}' of parameter {k}")
+                isinstance(v, (Number, tuple, list, np.ndarray)) or fail(f"invalid value type '{type(v)}' for parameter {k}")
                 if isinstance(v, Number):
                     v = np.array([v])
                 elif isinstance(v, np.ndarray):
                     v = v.ravel()
-                len(v) == self[k] or fail('wrong size of parameter {k}')
+                len(v) == self[k] or fail('wrong dimension of parameter value {k}')
                 return v
 
             return Mu({k: parse_value(k, v) for k, v in mu.items()})
@@ -184,24 +184,24 @@ class Parameters(FrozenDict):
             return all(mu.get(k) == v for k, v in self.items())
         else:
             if mu is not None and not isinstance(mu, Mu):
-                raise TypeError('mu is not a Parameter. (Use parameters.parse?)')
+                raise TypeError('mu is not a Mu instance. (Use parameters.parse?)')
             return not self or \
                 mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
 
     def why_incompatible(self, mu):
         if mu is not None and not isinstance(mu, Mu):
-            return 'mu is not a Parameter. (Use parameters.parse?)'
+            return 'mu is not a Mu instance. (Use parameters.parse?)'
         assert self
         if mu is None:
             mu = {}
-        failing_components = {}
+        failing_params = {}
         for k, v in self.items():
             if k not in mu:
-                failing_components[k] = f'missing != {v}'
+                failing_params[k] = f'missing != {v}'
             elif mu[k].shape != v:
-                failing_components[k] = f'{mu[k].size} != {v}'
-        assert failing_components
-        return f'Incompatible components: {failing_components}'
+                failing_params[k] = f'{mu[k].size} != {v}'
+        assert failing_params
+        return f'Incompatible parameters: {failing_params}'
 
     def __or__(self, other):
         assert all(k not in self or self[k] == v
