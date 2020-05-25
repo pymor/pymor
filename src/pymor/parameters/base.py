@@ -179,7 +179,7 @@ class Parameters(FrozenDict):
         return True
 
     def __le__(self, mu):
-        """Check if |parameters values| are compatible with the given |Parameters|."""
+        """Check if |parameter values| are compatible with the given |Parameters|."""
         if isinstance(mu, Parameters):
             return all(mu.get(k) == v for k, v in self.items())
         else:
