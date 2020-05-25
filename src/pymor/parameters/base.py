@@ -424,8 +424,6 @@ class ParameterSpace(ParametricObject):
         """Uniformly sample |Parameters| from the space."""
         if isinstance(counts, dict):
             pass
-        elif isinstance(counts, (tuple, list, np.ndarray)):
-            counts = {k: c for k, c in zip(self.parameters, counts)}
         else:
             counts = {k: counts for k in self.parameters}
 
