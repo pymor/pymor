@@ -238,7 +238,7 @@ class Parameters(FrozenDict):
         return ParameterSpace(self, *ranges)
 
     def __hash__(self):
-        return hash(tuple(self.items()))
+        return hash(tuple(sorted(self.items())))
 
 
 class Mu(FrozenDict):
