@@ -36,49 +36,6 @@ class Parameters(FrozenDict):
         assert all(type(k) is str and type(v) is int and 0 <= v
                    for k, v in self.items())
 
-    def __str__(self):
-        return '{' + ', '.join(f'{k}: {v}' for k, v in sorted(self.items())) + '}'
-
-    def __repr__(self):
-        return 'Parameters(' + str(self) + ')'
-
-    def __le__(self, mu):
-        if isinstance(mu, Parameters):
-            return all(mu.get(k) == v for k, v in self.items())
-        else:
-            if mu is not None and not isinstance(mu, Mu):
-                raise TypeError('mu is not a Parameter. (Use parameters.parse?)')
-            return not self or \
-                mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
-
-    def assert_compatible(self, mu):
-        """Assert that |parameter values| is compatible with the given |Parameters|.
-
-        Each of the parameter must be contained in  `mu` and the dimensions have to match,
-        i.e. ::
-
-            mu[parameter].size == self[parameter]
-
-        Otherwise, an `AssertionError` will be raised.
-        """
-        assert mu >= self, self.why_incompatible(mu)
-        return True
-
-    def why_incompatible(self, mu):
-        if mu is not None and not isinstance(mu, Mu):
-            return 'mu is not a Parameter. (Use parameters.parse?)'
-        assert self
-        if mu is None:
-            mu = {}
-        failing_components = {}
-        for k, v in self.items():
-            if k not in mu:
-                failing_components[k] = f'missing != {v}'
-            elif mu[k].shape != v:
-                failing_components[k] = f'{mu[k].size} != {v}'
-        assert failing_components
-        return f'Incompatible components: {failing_components}'
-
     @classmethod
     def of(cls, *args):
         """Computes the total set of |Parameters| a collection of objects depends on.
@@ -122,16 +79,6 @@ class Parameters(FrozenDict):
             traverse(arg)
 
         return cls(parameters)
-
-    def __or__(self, other):
-        assert all(k not in self or self[k] == v
-                   for k, v in other.items())
-        return Parameters(dict(self, **other))
-
-    def __sub__(self, other):
-        assert all(k not in self or self[k] == v
-                   for k, v in other.items())
-        return Parameters({k: v for k, v in self.items() if k not in other})
 
     def parse(self, mu):
         """Takes a user input `mu` and interprets it as set of |parameter values|
@@ -218,6 +165,60 @@ class Parameters(FrozenDict):
         """
         return ParameterSpace(self, *ranges)
 
+    def assert_compatible(self, mu):
+        """Assert that |parameter values| are compatible with the given |Parameters|.
+
+        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        i.e. ::
+
+            mu[parameter].size == self[parameter]
+
+        Otherwise, an `AssertionError` will be raised.
+        """
+        assert mu >= self, self.why_incompatible(mu)
+        return True
+
+    def __le__(self, mu):
+        """Check if |parameters values| are compatible with the given |Parameters|."""
+        if isinstance(mu, Parameters):
+            return all(mu.get(k) == v for k, v in self.items())
+        else:
+            if mu is not None and not isinstance(mu, Mu):
+                raise TypeError('mu is not a Parameter. (Use parameters.parse?)')
+            return not self or \
+                mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
+
+    def why_incompatible(self, mu):
+        if mu is not None and not isinstance(mu, Mu):
+            return 'mu is not a Parameter. (Use parameters.parse?)'
+        assert self
+        if mu is None:
+            mu = {}
+        failing_components = {}
+        for k, v in self.items():
+            if k not in mu:
+                failing_components[k] = f'missing != {v}'
+            elif mu[k].shape != v:
+                failing_components[k] = f'{mu[k].size} != {v}'
+        assert failing_components
+        return f'Incompatible components: {failing_components}'
+
+    def __or__(self, other):
+        assert all(k not in self or self[k] == v
+                   for k, v in other.items())
+        return Parameters(dict(self, **other))
+
+    def __sub__(self, other):
+        assert all(k not in self or self[k] == v
+                   for k, v in other.items())
+        return Parameters({k: v for k, v in self.items() if k not in other})
+
+    def __str__(self):
+        return '{' + ', '.join(f'{k}: {v}' for k, v in sorted(self.items())) + '}'
+
+    def __repr__(self):
+        return 'Parameters(' + str(self) + ')'
+
     def __hash__(self):
         return hash(tuple(sorted(self.items())))
 
@@ -249,6 +250,10 @@ class Mu(FrozenDict):
     def with_(self, **kwargs):
         return Mu(self, **kwargs)
 
+    @property
+    def parameters(self):
+        return Parameters({k: v.size for k, v in self.items()})
+
     def allclose(self, mu):
         """Compare two dicts of |parameter values| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
 
@@ -275,10 +280,6 @@ class Mu(FrozenDict):
             except Exception:
                 return False
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
-
-    @property
-    def parameters(self):
-        return Parameters({k: v.size for k, v in self.items()})
 
     def __str__(self):
         return '{' + ', '.join(f'{k}: {format_array(v)}' for k, v in sorted(self.items())) + '}'
