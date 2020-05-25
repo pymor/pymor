@@ -63,7 +63,8 @@ class Parameters(FrozenDict):
     """
 
     def _post_init(self):
-        assert all(type(v) is int and 0 <= v for v in self.values())
+        assert all(type(k) is str and type(v) is int and 0 <= v
+                   for k, v in self.items())
 
     def __str__(self):
         return '{' + ', '.join(f'{k}: {v}' for k, v in sorted(self.items())) + '}'
