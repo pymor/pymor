@@ -276,7 +276,7 @@ class Mu(FrozenDict):
         mu = super().__new__(cls,
                              ((k, np.array(v, copy=False, ndmin=1))
                               for k, v in dict(*args, **kwargs).items()))
-        assert all(v.ndim == 1 for v in mu.values())
+        assert all(type(k) is str and v.ndim == 1 for k, v in mu.items())
         # only make elements immutable when running without optimization
         assert not any(v.setflags(write=False) for v in mu.values())
         return mu
