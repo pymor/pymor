@@ -22,7 +22,7 @@ class GenericBTReductor(BasicObject):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
@@ -129,7 +129,7 @@ class BTReductor(GenericBTReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
@@ -149,7 +149,7 @@ class LQGBTReductor(GenericBTReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     solver_options
         The solver options to use to solve the Riccati equations.
     """
@@ -187,7 +187,7 @@ class BRBTReductor(GenericBTReductor):
     gamma
         Upper bound for the :math:`\mathcal{H}_\infty`-norm.
     mu
-        |Parameter|.
+        |Parameter values|.
     solver_options
         The solver options to use to solve the positive Riccati equations.
     """

@@ -57,8 +57,9 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
         this is the index of the norm in `error_norms` w.r.t. which
         to compute the effectivity of the estimator.
     custom
-        List of custom functions which are evaluated for each test |Parameter|
-        and basis size. The functions must have the signature ::
+        List of custom functions which are evaluated for each test
+        |parameter values| and basis size. The functions must have
+        the signature ::
 
             def custom_value(rom, fom, reductor, mu, dim):
                 pass

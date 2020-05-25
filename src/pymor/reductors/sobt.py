@@ -25,7 +25,7 @@ class GenericSOBTpvReductor(BasicObject):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
@@ -114,7 +114,7 @@ class SOBTpReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
@@ -141,7 +141,7 @@ class SOBTvReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
@@ -165,7 +165,7 @@ class SOBTpvReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
@@ -189,7 +189,7 @@ class SOBTvpReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         pof = self.fom.gramian('po_lrcf', mu=self.mu)
@@ -215,7 +215,7 @@ class SOBTfvReductor(BasicObject):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
@@ -299,7 +299,7 @@ class SOBTReductor(BasicObject):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)

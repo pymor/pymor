@@ -28,7 +28,7 @@ def to_matrix(op, format=None, mu=None):
         If `None`, a choice between dense and sparse format is
         automatically made.
     mu
-        The |Parameter| for which to convert `op`.
+        The |parameter values| for which to convert `op`.
 
     Returns
     -------

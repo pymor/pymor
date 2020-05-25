@@ -19,7 +19,7 @@ class Operator(ParametricObject):
     """Interface for |Parameter| dependent discrete operators.
 
     An operator in pyMOR is simply a mapping which for any given
-    |Parameter| maps vectors from its `source` |VectorSpace|
+    |parameter values| maps vectors from its `source` |VectorSpace|
     to vectors in its `range` |VectorSpace|.
 
     Note that there is no special distinction between functionals
@@ -77,7 +77,7 @@ class Operator(ParametricObject):
         U
             |VectorArray| of vectors to which the operator is applied.
         mu
-            The |Parameter| for which to evaluate the operator.
+            The |parameter values| for which to evaluate the operator.
 
         Returns
         -------
@@ -103,7 +103,7 @@ class Operator(ParametricObject):
         U
             |VectorArray| of the right right arguments U.
         mu
-            The |Parameter| for which to evaluate the operator.
+            The |parameter values| for which to evaluate the operator.
 
         Returns
         -------
@@ -129,7 +129,7 @@ class Operator(ParametricObject):
         U
             |VectorArray| of the right right arguments U.
         mu
-            The |Parameter| for which to evaluate the operator.
+            The |parameter values| for which to evaluate the operator.
 
         Returns
         -------
@@ -146,7 +146,7 @@ class Operator(ParametricObject):
     def apply_adjoint(self, V, mu=None):
         """Apply the adjoint operator.
 
-        For any given linear |Operator| `op`, |Parameter| `mu` and
+        For any given linear |Operator| `op`, |parameter values| `mu` and
         |VectorArrays| `U`, `V` in the :attr:`~Operator.source`
         resp. :attr:`~Operator.range` we have::
 
@@ -160,7 +160,7 @@ class Operator(ParametricObject):
         V
             |VectorArray| of vectors to which the adjoint operator is applied.
         mu
-            The |Parameter| for which to apply the adjoint operator.
+            The |parameter values| for which to apply the adjoint operator.
 
         Returns
         -------
@@ -179,7 +179,7 @@ class Operator(ParametricObject):
         V
             |VectorArray| of vectors to which the inverse operator is applied.
         mu
-            The |Parameter| for which to evaluate the inverse operator.
+            The |parameter values| for which to evaluate the inverse operator.
         least_squares
             If `True`, solve the least squares problem::
 
@@ -242,7 +242,7 @@ class Operator(ParametricObject):
         U
             |VectorArray| of vectors to which the inverse adjoint operator is applied.
         mu
-            The |Parameter| for which to evaluate the inverse adjoint operator.
+            The |parameter values| for which to evaluate the inverse adjoint operator.
         least_squares
             If `True`, solve the least squares problem::
 
@@ -287,7 +287,7 @@ class Operator(ParametricObject):
             Length 1 |VectorArray| containing the vector for which to compute
             the Jacobian.
         mu
-            The |Parameter| for which to compute the Jacobian.
+            The |parameter values| for which to compute the Jacobian.
 
         Returns
         -------
@@ -325,7 +325,7 @@ class Operator(ParametricObject):
         """Return a |VectorArray| representation of the operator in its range space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~Operator.source`, this method returns for every |Parameter|
+        :attr:`~Operator.source`, this method returns for given |parameter values|
         `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.range`,
         such that ::
 
@@ -336,7 +336,8 @@ class Operator(ParametricObject):
         Parameters
         ----------
         mu
-            The |Parameter| for which to return the |VectorArray| representation.
+            The |parameter values| for which to return the |VectorArray|
+            representation.
 
         Returns
         -------
@@ -350,7 +351,7 @@ class Operator(ParametricObject):
         """Return a |VectorArray| representation of the operator in its source space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~Operator.range`, this method returns for every |Parameter|
+        :attr:`~Operator.range`, this method returns for given |parameter values|
         `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.source`,
         such that ::
 
@@ -361,7 +362,8 @@ class Operator(ParametricObject):
         Parameters
         ----------
         mu
-            The |Parameter| for which to return the |VectorArray| representation.
+            The |parameter values| for which to return the |VectorArray|
+            representation.
 
         Returns
         -------
@@ -382,7 +384,7 @@ class Operator(ParametricObject):
         Parameters
         ----------
         mu
-            The |Parameter| for which to return the vector representation.
+            The |parameter values| for which to return the vector representation.
 
         Returns
         -------
@@ -399,7 +401,7 @@ class Operator(ParametricObject):
             raise TypeError('This operator does not represent a vector or linear functional.')
 
     def assemble(self, mu=None):
-        """Assemble the operator for a given parameter.
+        """Assemble the operator for given |parameter values|.
 
         The result of the method strongly depends on the given operator.
         For instance, a matrix-based operator will assemble its matrix, a |LincombOperator|
@@ -411,7 +413,7 @@ class Operator(ParametricObject):
         Parameters
         ----------
         mu
-            The |Parameter| for which to assemble the operator.
+            The |parameter values| for which to assemble the operator.
 
         Returns
         -------

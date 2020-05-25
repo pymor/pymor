@@ -46,7 +46,7 @@ class GenericBHIReductor(BasicObject):
     fom
         The full-order |Model| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     _PGReductor = ProjectionBasedReductor
@@ -158,7 +158,7 @@ class LTIBHIReductor(GenericBHIReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     _PGReductor = LTIPGReductor
@@ -246,7 +246,7 @@ class SOBHIReductor(GenericBHIReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     _PGReductor = SOLTIPGReductor
@@ -289,7 +289,7 @@ class DelayBHIReductor(GenericBHIReductor):
     fom
         The full-order |LinearDelayModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     _PGReductor = DelayLTIPGReductor
@@ -339,7 +339,7 @@ class TFBHIReductor(BasicObject):
     fom
         The |Model| with `eval_tf` and `eval_dtf` methods.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         if not isinstance(mu, Mu):

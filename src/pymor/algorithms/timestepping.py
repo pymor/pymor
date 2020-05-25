@@ -57,8 +57,8 @@ class TimeStepper(ImmutableObject):
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
-            |Parameter| for which `operator` and `rhs` are evaluated. The current time is added
-            to `mu` with key `_t`.
+            |Parameter values| for which `operator` and `rhs` are evaluated. The current
+            time is added to `mu` with key `t`.
         num_values
             The number of returned vectors of the solution trajectory. If `None`, each
             intermediate vector that is calculated is returned.

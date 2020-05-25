@@ -14,13 +14,13 @@ from pymor.tools.floatcmp import float_cmp
 class ParameterFunctional(ParametricObject):
     """Interface for |Parameter| functionals.
 
-    A parameter functional is simply a function mapping a |Parameter| to
+    A parameter functional is simply a function mapping |Parameters| to
     a number.
     """
 
     @abstractmethod
     def evaluate(self, mu=None):
-        """Evaluate the functional for the given |Parameter| `mu`."""
+        """Evaluate the functional for given |parameter values| `mu`."""
         pass
 
     def d_mu(self, parameter, index=0):
@@ -29,13 +29,13 @@ class ParameterFunctional(ParametricObject):
         Parameters
         ----------
         parameter
-            The parameter w.r.t. which to return the derivative.
+            The |Parameter| w.r.t. which to return the derivative.
         index
-            Index of the parameter's component w.r.t which to return the derivative.
+            Index of the |Parameter|'s component w.r.t which to return the derivative.
 
         Returns
         -------
-        New |Parameter| functional representing the partial derivative.
+        New |ParameterFunctional| representing the partial derivative.
         """
         if parameter not in self.parameters:
             return ConstantParameterFunctional(0, name=self.name + '_d_mu')
@@ -112,15 +112,15 @@ class GenericParameterFunctional(ParameterFunctional):
     mapping
         The function to wrap. The function has signature `mapping(mu)`.
     parameters
-        The |ParameterType| of the |Parameters| the functional expects.
+        The |Parameters| the functional depends on.
     name
         The name of the functional.
     derivative_mappings
-        A dict containing all partial derivatives of each component and index in the
-        |ParameterType| with the signature `derivative_mappings[component][index](mu)`
+        A dict containing all partial derivatives of each |Parameter| and index
+        with the signature `derivative_mappings[parameter][index](mu)`
     second_derivative_mappings
-        A dict containing all second order partial derivatives of each component and index in the
-        |ParameterType| with the signature `second_derivative_mappings[component_i][index_i][component_j][index_j](mu)`
+        A dict containing all second order partial derivatives of each |Parameter| and index
+        with the signature `second_derivative_mappings[parameter_i][index_i][parameter_j][index_j](mu)`
     """
 
     def __init__(self, mapping, parameters, name=None, derivative_mappings=None, second_derivative_mappings=None):
@@ -183,7 +183,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     expression
         A Python expression in the parameter components of the given `parameters`.
     parameters
-        The |ParameterType| of the |Parameters| the functional expects.
+        The |Parameters| the functional depends on.
     name
         The name of the functional.
     derivative_expressions
@@ -333,7 +333,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
 
       a(u, u, mu=mu) >= min_{q = 1}^Q theta_q(mu)/theta_q(mu_bar) a(u, u, mu=mu_bar).
 
-    Given a list of the thetas, the |Parameter| mu_bar and the constant alpha_mu_bar, this functional thus evaluates
+    Given a list of the thetas, the |parameter values| mu_bar and the constant alpha_mu_bar, this functional thus evaluates
     to ::
 
       alpha_mu_bar * min_{q = 1}^Q theta_q(mu)/theta_q(mu_bar)
@@ -399,7 +399,7 @@ class MaxThetaParameterFunctional(ParameterFunctional):
 
     if all theta_q(mu_bar) != 0.
 
-    Given a list of the thetas, the |Parameter| mu_bar and the constant gamma_mu_bar, this functional thus evaluates
+    Given a list of the thetas, the |parameter values| mu_bar and the constant gamma_mu_bar, this functional thus evaluates
     to ::
 
       gamma_mu_bar * max{q = 1}^Q theta_q(mu)/theta_q(mu_bar)

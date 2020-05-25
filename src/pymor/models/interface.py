@@ -15,8 +15,8 @@ class Model(CacheableObject, ParametricObject):
     A model object defines a discrete problem
     via its `class` and the |Operators| it contains.
     Furthermore, models can be
-    :meth:`solved <Model.solve>` for a given
-    |Parameter| resulting in a solution |VectorArray|.
+    :meth:`solved <Model.solve>` for given
+    |parameter values| resulting in a solution |VectorArray|.
 
     Attributes
     ----------
@@ -52,7 +52,7 @@ class Model(CacheableObject, ParametricObject):
         pass
 
     def solve(self, mu=None, return_output=False, **kwargs):
-        """Solve the discrete problem for the |Parameter| `mu`.
+        """Solve the discrete problem for the |parameter values| `mu`.
 
         The result will be :mod:`cached <pymor.core.cache>`
         in case caching has been activated for the given model.
@@ -60,9 +60,9 @@ class Model(CacheableObject, ParametricObject):
         Parameters
         ----------
         mu
-            |Parameter| for which to solve.
+            |Parameter values| for which to solve.
         return_output
-            If `True`, the model output for the given |Parameter| `mu` is
+            If `True`, the model output for the given |parameter values| `mu` is
             returned as a |VectorArray| from :attr:`output_space`.
 
         Returns
@@ -76,12 +76,12 @@ class Model(CacheableObject, ParametricObject):
         return self.cached_method_call(self._solve, mu=mu, return_output=return_output, **kwargs)
 
     def output(self, mu=None, **kwargs):
-        """Return the model output for given |Parameter| `mu`.
+        """Return the model output for given |parameter values| `mu`.
 
         Parameters
         ----------
         mu
-            |Parameter| for which to compute the output.
+            |Parameter values| for which to compute the output.
 
         Returns
         -------
@@ -101,7 +101,7 @@ class Model(CacheableObject, ParametricObject):
         U
             The solution obtained by :meth:`~solve`.
         mu
-            |Parameter| for which `U` has been obtained.
+            |Parameter values| for which `U` has been obtained.
 
         Returns
         -------

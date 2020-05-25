@@ -301,12 +301,13 @@ Now, let us consider the Neumann data function:
 
    g_N((x_0, x_1), \mu_{neum}) := -\cos(\pi \cdot x_0)^2 \cdot\mu_{neum}
 
-with a single parameter :math:`\mu_{neum} \in \mathbb{R}`.
+with a single |Parameter| :math:`\mu_{neum} \in \mathbb{R}`.
 
-In pyMOR, a parameters are specified as a dictionary of NumPy arrays. Each
-parameter in the dictionary must have a correct size specified by the
-|parameters| of the |ParametricObject|. In this example we have a single scalar
-valued parameter component which we call `'neum'`. Thus, the |Parametres| will be ::
+In pyMOR, |parameter values| are specified as a dictionary of one-dimensional
+|NumPy arrays|. Each value in the dictionary must have a correct size specified by the
+|Parameters| of the |ParametricObject|. In this example we have a single scalar
+valued parameter which we call `'neum'`. Thus, the |Parameters| of the function
+will be ::
 
    {'neum': 1}
 
@@ -317,8 +318,8 @@ We can then make the following definition of the Neumann data:
    neumann_data = ExpressionFunction('-cos(pi*x[...,0])**2*neum[0]', 2, (), parameters= {'neum': 1})
 
 Similar to the range of the function, pyMOR cannot infer from the given
-string expression the type of parameters used in the expression, so the
-|Parameters| has to be provided as the `parameters` argument.
+string expression the parameters used in the expression, so these
+|Parameters| have to be provided as the `parameters` argument.
 The individual parameters are then available as variables in
 the expression.
 
@@ -341,16 +342,15 @@ We can then proceed as usual and automatically obtain a parametric
    m, data = discretize_stationary_cg(problem, diameter=1/100)
    m.parameters
 
-When solving the model, we now need to specify an appropriate
-|Parameter|:
+When solving the model, we now need to specify appropriate
+|parameter values|:
 
 .. nbplot::
 
    m.visualize(m.solve({'neum': [1.]}))
 
-For the :meth:`~pymor.models.interface.Model.solve` method, the parameter
-can also be specified as a sequence of numbers (in case of multiple parameters,
-the parameters are sorted alphabetically):
+For the :meth:`~pymor.models.interface.Model.solve` method, the
+parameter value can also be specified as a single number:
 
 .. nbplot::
 
@@ -387,14 +387,15 @@ We proceed as usual:
    m.parameters
 
 As we can see, pyMOR automatically derives that in this case the model
-depends on two parameters, and we have to provide two values
+depends on two |Parameters|, and we have to provide two values
 when solving the model:
 
 .. nbplot::
 
    m.visualize(m.solve({'diffu': 0.001, 'neum': 1}))
 
-We can also simply specify a list of parameter values, in which case
+For :meth:`~pymor.models.interface.Model.solve` we can also
+simply pass a list of parameter values, in which case
 pyMOR assumes an alphabetical ordering of the parameters:
 
 .. nbplot::
@@ -444,7 +445,7 @@ the following image files:
    f_R = BitmapFunction('R.png', range=[1, 0])
    f_B = BitmapFunction('B.png', range=[1, 0])
 
-Next we need to define the parameter functionals
+Next we need to define the |ParameterFunctionals|
 
 .. math::
 
@@ -458,7 +459,7 @@ Similar to an |ExpressionFunction|, we can use
    theta_R = ExpressionParameterFunctional('R[0] - 1', {'R': 1})
    theta_B = ExpressionParameterFunctional('B[0] - 1', {'B': 1})
 
-Note that the second argument is again the |Parameters| whose
+Note that the second argument is again the |Parameters|
 that are used in the expression. Finally, we form the linear
 combination using a |LincombFunction| which is given a list of
 |Functions| as the first and a corresponding list of
@@ -473,7 +474,7 @@ combination using a |LincombFunction| which is given a list of
    diffusion.parameters
 
 Again, pyMOR automatically derives that the evaluation of `diffusion`
-depends on the two parameters `'B'` and `'R'`. Now, we can
+depends on the two |Parameters| `'B'` and `'R'`. Now, we can
 proceed as usual:
 
 .. nbplot::
@@ -498,5 +499,4 @@ The |LincombFunction| has become a |LincombOperator|, with the same
 linear coefficients but the |BitmapFunctions| replaced by
 corresponding stiffness matrices. Note that an additional summand
 appears which ensures correct enforcement of Dirichlet boundary values
-for all possible parameter combinations.
-
+for all possible parameter value combinations.

@@ -66,7 +66,7 @@ class InputOutputModel(Model):
         w
             A sequence of angular frequencies at which to compute the transfer function.
         mu
-            |Parameter| for which to evaluate the transfer function.
+            |Parameter values| for which to evaluate the transfer function.
 
         Returns
         -------
@@ -89,7 +89,7 @@ class InputOutputModel(Model):
         w
             A sequence of angular frequencies at which to compute the transfer function.
         mu
-            |Parameter| for which to evaluate the transfer function.
+            |Parameter values| for which to evaluate the transfer function.
         ax
             Axis to which to plot.
             If not given, `matplotlib.pyplot.gca` is used.
@@ -519,7 +519,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter| for which to compute the systems poles.
+            |Parameter values| for which to compute the systems poles.
 
         Returns
         -------
@@ -559,7 +559,7 @@ class LTIModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -607,7 +607,7 @@ class LTIModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -662,7 +662,7 @@ class LTIModel(InputStateOutputModel):
                 For `'c_dense'` and `'o_dense'` types, the method assumes there are no two system
                 poles which add to zero.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -712,7 +712,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -740,7 +740,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -759,7 +759,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -788,7 +788,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
         return_fpeak
             Whether to return the frequency at which the maximum is achieved.
         ab13dd_equilibrate
@@ -837,7 +837,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1425,7 +1425,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1452,7 +1452,7 @@ class SecondOrderModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1507,7 +1507,7 @@ class SecondOrderModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1573,7 +1573,7 @@ class SecondOrderModel(InputStateOutputModel):
                 For `'*_dense'` types, the method assumes there are no two system poles which add to
                 zero.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1603,7 +1603,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1623,7 +1623,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1643,7 +1643,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1663,7 +1663,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1684,7 +1684,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1703,7 +1703,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
         return_fpeak
             Should the frequency at which the maximum is achieved should be returned.
         ab13dd_equilibrate
@@ -1730,7 +1730,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -2037,7 +2037,7 @@ class LinearDelayModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -2090,7 +2090,7 @@ class LinearDelayModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------

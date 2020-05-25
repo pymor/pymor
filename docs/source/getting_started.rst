@@ -64,9 +64,9 @@ size ``SNAPSHOTS^(XBLOCKS x YBLOCKS)``. After the basis of size 32 (the
 last parameter) has been computed, the quality of the obtained reduced model
 (on the 32-dimensional reduced basis space) is evaluated by comparing the
 solutions of the reduced and detailed models for new, randomly chosen
-parameters. Finally, plots of the detailed and reduced solutions, as well
-as the difference between the two, are displayed for the random parameter
-which maximises reduction error.
+parameter values. Finally, plots of the detailed and reduced solutions, as well
+as the difference between the two, are displayed for the random
+parameter values which maximises reduction error.
 
 
 The thermalblock demo explained
@@ -139,7 +139,7 @@ Let's solve the thermal block problem and visualize the solution:
    U = fom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
    fom.visualize(U, title='Solution')
 
-Each class in pyMOR that describes a |Parameter| dependent mathematical
+Each class in pyMOR that describes a |Parameter|-dependent mathematical
 object, like the |StationaryModel| in our case, derives from
 |ParametricObject|. |ParametricObjects| automatically determine the
 |Parameters| they depend on from |ParametricObjects| that have been passed
@@ -156,9 +156,9 @@ This tells us, that the |Parameters| which
 :meth:`~pymor.models.interface.Model.solve` expects
 should be a dictionary with one key ``'diffusion'`` whose value is a one-dimensional
 |NumPy array| of size ``6``, corresponding to the block structure of
-the problem. However, the interface methods of |Models| allow simply passing
-the list ``[1.0, 0.1, 0.3, 0.1, 0.2, 1.0]`` by internally calling
-:meth:`~pymor.parameters.Parameters.parse`.
+the problem. However, as an exception to this rule, the interface methods of
+|Models| allow simply passing the list ``[1.0, 0.1, 0.3, 0.1, 0.2, 1.0]`` by
+internally calling :meth:`~pymor.parameters.Parameters.parse`.
 
 Next we want to use the :func:`~pymor.algorithms.greedy.greedy` algorithm
 to reduce the problem. For this we need to choose a reductor which will keep
@@ -174,7 +174,7 @@ the :attr:`h1_0_semi_product` attribute of the model as inner product to
 the reductor, which will also use it for computing the Riesz representatives
 required for error estimation. Moreover, we have to provide
 the reductor with a |ParameterFunctional| which computes a lower bound for
-the coercivity of the problem for a given parameter.
+the coercivity of the problem for given |parameter values|.
 
 .. nbplot::
    reductor = CoerciveRBReductor(
@@ -183,9 +183,9 @@ the coercivity of the problem for a given parameter.
        coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', fom.parameters)
    )
 
-Moreover, we need to select a |Parameter| training set. The problem
-``p`` already comes with a |ParameterSpace|, from which we can sample our parameters.
-E.g.:
+Moreover, we need to select a training set of |parameter values|. The problem
+``p`` already comes with a |ParameterSpace|, from which we can easily sample
+these values.  E.g.:
 
 .. nbplot::
    training_set = p.parameter_space.sample_uniformly(4)
@@ -228,9 +228,9 @@ method:
    gram_matrix = RB.gramian(fom.h1_0_semi_product)
    print(np.max(np.abs(gram_matrix - np.eye(32))))
 
-Looks good! We can now solve the reduced model for the same parameter as above.
-The result is a vector of coefficients w.r.t. the reduced basis, which is
-currently stored in ``rb``. To form the linear combination, we can use the
+Looks good! We can now solve the reduced model for the same |parameter values|
+as above.  The result is a vector of coefficients w.r.t. the reduced basis, which is
+currently stored in ``RB``. To form the linear combination, we can use the
 `reconstruct` method of the reductor:
 
 .. nbplot::
@@ -257,8 +257,8 @@ Learning more
 -------------
 
 As a next step, you should read our :ref:`technical_overview` which discusses the
-most important concepts and design decisions behind pyMOR. After that
-you should be ready to delve into the reference documentation.
+most important concepts and design decisions behind pyMOR. You can also follow our
+growing set of tutorials which focus on specific aspects of pyMOR.
 
 Should you have any problems regarding pyMOR, questions or
 `feature requests <https://github.com/pymor/pymor/issues>`_, do not hesitate

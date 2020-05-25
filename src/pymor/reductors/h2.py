@@ -29,7 +29,7 @@ class GenericIRKAReductor(BasicObject):
     fom
         The full-order |Model| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     def _clear_lists(self):
@@ -186,7 +186,7 @@ class IRKAReductor(GenericIRKAReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
@@ -300,7 +300,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
         - `'V'`: Galerkin projection using the input Krylov subspace,
         - `'W'`: Galerkin projection using the output Krylov subspace.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, version, mu=None):
         assert isinstance(fom, LTIModel)
@@ -428,7 +428,7 @@ class TSIAReductor(GenericIRKAReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
@@ -554,7 +554,7 @@ class TFIRKAReductor(GenericIRKAReductor):
     fom
         The full-order |Model| with `eval_tf` and `eval_dtf` methods.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, InputOutputModel)

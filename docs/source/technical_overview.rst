@@ -86,7 +86,7 @@ operating on objects of the following types:
     |apply2| method. A functional in pyMOR is simply an operator with
     `NumpyVectorSpace(1)` as |range|. Dually, a vector-like operator is an operator
     with `NumpyVectorSpace(1)` as |source|. Such vector-like operators are used
-    in pyMOR to represent |Parameter| dependent vectors such as the initial data
+    in pyMOR to represent |Parameter|-dependent vectors such as the initial data
     of an |InstationaryModel|. For linear functionals and vector-like
     operators, the |as_vector| method can be called to obtain a vector
     representation of the operator as a |VectorArray| of length 1.
@@ -124,8 +124,8 @@ operating on objects of the following types:
     Apart from describing the discrete problem, models also implement
     algorithms for |solving| the given problem, returning |VectorArrays|
     from the |solution_space|. The solution can be |cached|, s.t.
-    subsequent solving of the problem for the same parameter reduces to
-    looking up the solution in pyMOR's cache.
+    subsequent solving of the problem for the same |parameter values| reduces
+    to looking up the solution in pyMOR's cache.
 
     While special model classes may be implemented which make use of
     the specific types of operators they contain (e.g. using some external
@@ -199,7 +199,7 @@ specific prefix.
 
 
 Creating Models
-------------------------
+---------------
 
 pyMOR ships a small (and still quite incomplete) framework for creating finite
 element or finite volume discretizations based on the `NumPy/Scipy
@@ -237,45 +237,40 @@ communication with the solver is managed. For instance, communication could take
 place via a network protocol or job files.  In particular it should be stressed
 that in general no communication of high-dimensional data between the solver
 and pyMOR is necessary: |VectorArrays| can merely hold handles to data in the
-solver's memory or some on-disk database. Where possible, we favour, however, a
+solver's memory or some on-disk database. Where possible, we favor, however, a
 deep integration of the solver with pyMOR by linking the solver code as a Python
 extension module. This allows Python to directly access the solver's data
 structures which can be used to quickly add features to the high-dimensional
 code without any recompilation. A minimal example for such an integration using
-`pybindgen <https://code.google.com/p/pybindgen>`_ can be found in the
+`pybind11 <https://github.com/pybind/pybind11>`_ can be found in the
 ``src/pymordemos/minimal_cpp_demo`` directory of the pyMOR repository.
 Bindings for `FEnicS <https://fenicsproject.org>`_ and
 `NGSolve <https://ngsolve.org>`_ packages are available in the 
 :mod:`bindings.fenics <pymor.bindings.fenics>` and
 :mod:`bindings.ngsolve <pymor.bindings.ngsolve>` modules.
 The `pymor-deal.II <https://github.com/pymor/pymor-deal.II>`_ repository contains
-experimental bindings for `deal.II <https://dealii.org>`_.
+bindings for `deal.II <https://dealii.org>`_.
 
 
 Parameters
 ----------
 
 pyMOR classes implement dependence on a parameter by deriving from the
-|Parametric| mix-in class. This class gives each instance a
+|ParametricObject| base class. This class gives each instance a
 :attr:`~pymor.parameters.base.ParametricObject.parameters` attribute describing the
-form of |Parameters| the relevant methods of the object (`apply`, `solve`,
-`evaluate`, etc.) expect. A |Parameter| in pyMOR is basically a Python
-:class:`dict` with strings as keys and |NumPy arrays| as values. Each such value
-is called a |Parameter| component. The |ParameterType| of a |Parameter| is
-simply obtained by replacing the arrays in the |Parameter| with their shape.
-I.e. a |ParameterType| specifies the names of the parameter components and their
-expected shapes.
+|Parameters| the object and its relevant methods (`apply`, `solve`, `evaluate`, etc.)
+depend on. Each |Parameter| in pyMOR has a name and a fixed dimension, i.e. the
+number of scalar components of the |Parameter|. Scalar parameters are simply
+represented by one-dimensional |Parameters|. To assign concrete values to |Parameters|
+the specialized dict-like class :class:`~pymor.parameters.base.Mu` is used.
+In particular, it ensures, that all of its values are one-dimensional |NumPy arrays|.
 
-The |ParameterType| of a |Parametric| object is determined by the class
-implementor during `__init__` via a call to
-:meth:`~pymor.parameters.base.ParametricObject.build_parameter_type`, which can be
-used to infer the |ParameterType| from the |ParameterTypes| of objects the
-given object depends upon. I.e. an |Operator| implementing the L2-product with
-some |Function| will inherit the |ParameterType| of the |Function|.
-
-Reading the :mod:`reference documentation <pymor.parameters.base>` on pyMOR's
-parameter handling facilities is strongly advised for implementors of
-|Parametric| classes.
+The |Parameters| of a |ParametricObject| are usually automatically derived
+as the union of all |Parameters| of the objects that are passed to it's `__init__` method.
+For instance, an |Operator| that implements the L2-product with some user-provided
+|Function| will automatically inherit all |Parameters| of that |Function|.
+Additional |Parameters| can be easily added by setting the
+:attr:`~pymor.parameters.ParametricObject.parameters_own` attribute.
 
 
 Defaults
@@ -375,7 +370,7 @@ offline/online-decompose affinely |Parameter|-dependent linear problems.
 Non-linear problems or such with no affine |Parameter| dependence require
 additional techniques such as :mod:`empirical interpolation <pymor.algorithms.ei>`.
 
-If you want to further dive into the inner workings of pyMOR, we highly
+If you want to further dive into the inner workings of pyMOR, we 
 recommend to study the source code of :class:`~pymor.reductors.basic.GenericRBReductor`
-and to step through calls of this method with a Python debugger, such as 
+and to step through calls of it's `reduce` method with a Python debugger, such as 
 `ipdb <https://pypi.python.org/pypi/ipdb>`_.

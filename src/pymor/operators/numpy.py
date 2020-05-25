@@ -56,7 +56,7 @@ class NumpyGenericOperator(Operator):
     linear
         Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
     parameters
-        The |ParameterType| of the |Parameters| the mapping accepts.
+        The |Parameters| the depends on.
     solver_options
         The |solver_options| for the operator.
     name
@@ -151,7 +151,7 @@ class NumpyMatrixBasedOperator(Operator):
         output_format
             Output file format. Either `matlab` or `matrixmarket`.
         mu
-            The |Parameter| to assemble the to be exported matrix for.
+            The |parameter values| to assemble the to be exported matrix for.
         """
         assert output_format in {'matlab', 'matrixmarket'}
         matrix = self.assemble(mu).matrix
@@ -243,7 +243,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         V
             |VectorArray| of vectors to which the inverse operator is applied.
         mu
-            The |Parameter| for which to evaluate the inverse operator.
+            The |parameter values| for which to evaluate the inverse operator.
         least_squares
             If `True`, solve the least squares problem::
 

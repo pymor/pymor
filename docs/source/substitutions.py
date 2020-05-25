@@ -31,10 +31,6 @@ interfaces = '''
 .. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.constructions.LincombOperator>`
 .. |Operators| replace:: :class:`Operators <pymor.operators.interface.Operator>`
 .. |Operator| replace:: :class:`Operator <pymor.operators.interface.Operator>`
-.. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.functionals.ParameterFunctional>`
-.. |ParameterFunctional| replace:: :class:`ParameterFunctional <pymor.parameters.functionals.ParameterFunctional>`
-.. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.spaces.ParameterSpace>`
-.. |ParameterSpaces| replace:: :class:`ParameterSpaces <pymor.parameters.spaces.ParameterSpace>`
 .. |ReferenceElements| replace:: :class:`ReferenceElements <pymor.discretizers.builtin.grids.interfaces.ReferenceElement>`
 .. |ReferenceElement| replace:: :class:`ReferenceElement <pymor.discretizers.builtin.grids.interfaces.ReferenceElement>`
 .. |RemoteObject| replace:: :class:`RemoteObject <pymor.parallel.interface.RemoteObject>`
@@ -115,12 +111,19 @@ common = '''
 .. |LinearDelayModel| replace:: :class:`~pymor.models.iosys.LinearDelayModel`
 .. |LinearDelayModels| replace:: :class:`LinearDelayModels <pymor.models.iosys.LinearDelayModel>`
 
-.. |ParameterType| replace:: :class:`~pymor.parameters.base.ParameterType`
-.. |ParameterTypes| replace:: :class:`ParameterTypes <pymor.parameters.base.ParameterType>`
-.. |Parameter| replace:: :class:`~pymor.parameters.base.Parameter`
-.. |Parameters| replace:: :class:`Parameters <pymor.parameters.base.Parameter>`
-.. |Parametric| replace:: :class:`~pymor.parameters.base.ParametricObject`
+.. |Parameter| replace:: :class:`Parameter <pymor.parameters.base.Parameters>`
+.. |Parameters| replace:: :class:`~pymor.parameters.base.Parameters`
+.. |Parameter values| replace:: :class:`Parameter values <pymor.parameters.base.Mu>`
+.. |parameter values| replace:: :class:`parameter values <pymor.parameters.base.Mu>`
+.. |Parameter value| replace:: :class:`Parameter value <pymor.parameters.base.Mu>`
+.. |parameter value| replace:: :class:`parameter value <pymor.parameters.base.Mu>`
+.. |ParametricObject| replace:: :class:`~pymor.parameters.base.ParametricObject`
+.. |ParametricObjects| replace:: :class:`ParametricObjects <pymor.parameters.base.ParametricObject>`
 .. |parametric| replace:: :attr:`~pymor.parameters.base.ParametricObject.parametric`
+.. |ParameterFunctional| replace:: :class:`~pymor.parameters.functionals.ParameterFunctional`
+.. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.functionals.ParameterFunctional>`
+.. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.base.ParameterSpace>`
+.. |ParameterSpaces| replace:: :class:`ParameterSpaces <pymor.parameters.base.ParameterSpace>`
 
 .. |NumPy| replace:: :mod:`NumPy <numpy>`
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`

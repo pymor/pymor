@@ -119,7 +119,7 @@ class InstationaryModel(Model):
         (for the |Parameter|-dependent case) a vector-like |Operator|
         (i.e. a linear |Operator| with `source.dim == 1`) which
         applied to `NumpyVectorArray(np.array([1]))` will yield the
-        initial data for a given |Parameter|.
+        initial data for given |parameter values|.
     operator
         The |Operator| L.
     rhs

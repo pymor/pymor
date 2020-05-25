@@ -166,8 +166,9 @@ def rb_greedy(fom, reductor, training_set, use_estimator=True, error_norm=None,
         The training set of |Parameters| on which to perform the greedy search.
     use_estimator
         If `False`, exactly compute the model reduction error by also computing
-        the solution of `fom` for each training set |Parameter|. This is mainly
-        useful when no estimator for the model reduction error is available.
+        the solution of `fom` for all |parameter values| of the training set.
+        This is mainly useful when no estimator for the model reduction error
+        is available.
     error_norm
         If `use_estimator` is `False`, use this function to calculate the
         norm of the error. If `None`, the Euclidean norm is used.

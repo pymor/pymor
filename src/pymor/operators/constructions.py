@@ -65,12 +65,12 @@ class LincombOperator(Operator):
                           name=self.name + '_adjoint')
 
     def evaluate_coefficients(self, mu):
-        """Compute the linear coefficients for a given |Parameter|.
+        """Compute the linear coefficients for given |parameter values|.
 
         Parameters
         ----------
         mu
-            |Parameter| for which to compute the linear coefficients.
+            |Parameter values| for which to compute the linear coefficients.
 
         Returns
         -------
@@ -1006,14 +1006,14 @@ class ProxyOperator(Operator):
 
 
 class FixedParameterOperator(ProxyOperator):
-    """Makes an |Operator| |Parameter|-independent by setting a fixed |Parameter|.
+    """Makes an |Operator| |Parameter|-independent by setting fixed |parameter values|.
 
     Parameters
     ----------
     operator
         The |Operator| to wrap.
     mu
-        The fixed |Parameter| that will be fed to the
+        The fixed |parameter values| that will be fed to the
         :meth:`~pymor.operators.interface.Operator.apply` method
         (and related methods) of `operator`.
     """
@@ -1268,7 +1268,7 @@ class SelectionOperator(Operator):
     ----------
     operators
         List of |Operators| from which one |Operator| is
-        selected based on the given |Parameter|.
+        selected based on the given |parameter values|.
     parameter_functional
         The |ParameterFunctional| used for the selection of one |Operator|.
     boundaries
@@ -1363,8 +1363,8 @@ def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     -------
     norm
         A function `norm(U, mu=None)` taking a |VectorArray| `U`
-        as input together with the |Parameter| `mu` which is
-        passed to the product.
+        as input together with the |parameter values| `mu` which
+        are passed to the product.
     """
     return InducedNorm(product, raise_negative, tol, name)
 

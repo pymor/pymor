@@ -45,7 +45,7 @@ class Function(ParametricObject):
 
     @abstractmethod
     def evaluate(self, x, mu=None):
-        """Evaluate the function for given argument `x` and |Parameter| `mu`."""
+        """Evaluate the function for given argument `x` and |parameter values| `mu`."""
         pass
 
     def __call__(self, x, mu=None):
@@ -141,7 +141,7 @@ class GenericFunction(Function):
     shape_range
         The shape of the values returned by the mapping.
     parameters
-        The |ParameterType| the mapping accepts.
+        The |Parameters| the mapping accepts.
     name
         The name of the function.
     """
@@ -195,7 +195,7 @@ class ExpressionFunction(GenericFunction):
     shape_range
         The shape of the values returned by the expression.
     parameters
-        The |ParameterType| the expression accepts.
+        The |Parameters| the expression accepts.
     values
         Dictionary of additional constants that can be used in `expression`
         with their corresponding value.
@@ -252,7 +252,7 @@ class LincombFunction(Function):
         self.shape_range = functions[0].shape_range
 
     def evaluate_coefficients(self, mu):
-        """Compute the linear coefficients for a given |Parameter| `mu`."""
+        """Compute the linear coefficients for given |parameter values| `mu`."""
         assert self.parameters.assert_compatible(mu)
         return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
