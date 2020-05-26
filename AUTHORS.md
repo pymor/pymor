@@ -16,6 +16,9 @@
 * Tim Keil, tim.keil@uni-muenster.de
     * second order derivatives for parameters
 
+* Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
+    * Armijo line search algorithm
+
 ## pyMOR 2019.2
 
 * Linus Balicki, linus.balicki@ovgu.de
