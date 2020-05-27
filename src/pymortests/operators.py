@@ -79,6 +79,36 @@ def test_lincomb_op():
         assert almost_equal(pa, p.apply(vx)).all()
 
 
+def test_lincomb_op_with_zero_coefficients():
+    p1 = MonomOperator(1)
+    p2 = MonomOperator(2)
+    p10 = p1 + 0 * p2
+    p0 = 0 * p1 + 0 * p1
+    x = np.linspace(-1., 1., num=3)
+    vx = p1.source.make_array((x[:, np.newaxis]))
+
+    pc1 = NumpyMatrixOperator(np.eye(p1.source.dim))
+    pc2 = NumpyMatrixOperator(2*np.eye(p1.source.dim))
+    pc10 = pc1 + 0 * pc2
+    pc0 = 0 * pc1 + 0 * pc2
+
+    assert np.allclose(p0.apply(vx).to_numpy(), [0.])
+    assert len(p0.apply(vx)) == len(vx)
+    assert almost_equal(p10.apply(vx), p1.apply(vx)).all()
+
+    assert np.allclose(p0.apply2(vx,vx), [0.])
+    assert len(p0.apply2(vx,vx)) == len(vx)
+    assert np.allclose(p10.apply2(vx,vx), p1.apply2(vx,vx))
+
+    assert np.allclose(p0.pairwise_apply2(vx,vx), [0.])
+    assert len(p0.pairwise_apply2(vx,vx)) == len(vx)
+    assert np.allclose(p10.pairwise_apply2(vx,vx), p1.pairwise_apply2(vx,vx))
+
+    assert np.allclose(pc0.apply_adjoint(vx).to_numpy(), [0.])
+    assert len(pc0.apply_adjoint(vx)) == len(vx)
+    assert almost_equal(pc10.apply_adjoint(vx), pc1.apply_adjoint(vx)).all()
+
+
 def test_lincomb_adjoint():
     op = LincombOperator([NumpyMatrixOperator(np.eye(10)), NumpyMatrixOperator(np.eye(10))],
                          [1+3j, ExpressionParameterFunctional('c[0] + 3', {'c': 1})])
