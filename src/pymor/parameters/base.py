@@ -175,11 +175,17 @@ class Parameters(FrozenDict):
 
         Otherwise, an `AssertionError` will be raised.
         """
-        assert mu >= self, self.why_incompatible(mu)
+        assert self.is_compatible(mu), self.why_incompatible(mu)
         return True
 
-    def __le__(self, mu):
-        """Check if |parameter values| are compatible with the given |Parameters|."""
+    def is_compatible(self, mu):
+        """Check if |parameter values| are compatible with the given |Parameters|.
+
+        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        i.e. ::
+
+            mu[parameter].size == self[parameter]
+        """
         if isinstance(mu, Parameters):
             return all(mu.get(k) == v for k, v in self.items())
         else:
