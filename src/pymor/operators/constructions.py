@@ -93,10 +93,10 @@ class LincombOperator(Operator):
 
     def apply2(self, V, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        coeffs, matrices = zip(
-            *[(c, self.operators[i].apply2(V, U, mu=mu))
-            for i, c in enumerate(coeffs) if c])
-        if not coeffs:
+        try:
+            coeffs, matrices = zip(*[(c, self.operators[i].apply2(V, U, mu=mu))
+                                        for i, c in enumerate(coeffs) if c])
+        except ValueError:
             return np.zeros((len(V), len(U)))
         coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
         matrices_dtype = reduce(np.promote_types, (m.dtype for m in matrices))
@@ -108,10 +108,10 @@ class LincombOperator(Operator):
 
     def pairwise_apply2(self, V, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        coeffs, matrices = zip(
-            *[(c, self.operators[i].pairwise_apply2(V, U, mu=mu))
-            for i, c in enumerate(coeffs) if c])
-        if not coeffs:
+        try:
+            coeffs, matrices = zip(*[(c, self.operators[i].pairwise_apply2(V, U, mu=mu))
+                                        for i, c in enumerate(coeffs) if c])
+        except ValueError:
             return np.zeros((len(V), len(U)))
         coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
         matrices_dtype = reduce(np.promote_types, (m.dtype for m in matrices))
