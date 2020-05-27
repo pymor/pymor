@@ -6,6 +6,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 
@@ -39,8 +40,8 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
     which
         A string specifying which `k` eigenvalues and eigenvectors to compute:
 
-        - `'LM'`: select eigenvalues with largest absolute value
-        - `'SM'`: select eigenvalues with smallest absolute value
+        - `'LM'`: select eigenvalues with largest magnitude
+        - `'SM'`: select eigenvalues with smallest magnitude
         - `'LR'`: select eigenvalues with largest real part
         - `'SR'`: select eigenvalues with smallest real part
         - `'LI'`: select eigenvalues with largest imaginary part
@@ -65,10 +66,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
         A |VectorArray| which contains the computed eigenvectors.
     """
 
-    n = A.source.dim
-
-    if l is None:
-        l = min(n - 1, max(2 * k + 1, 20))
+    logger = getLogger('pymor.algorithms.eigs.eigs')
 
     assert isinstance(A, Operator) and A.linear
     assert not A.parametric
@@ -86,6 +84,11 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
         b = A.source.random(seed=seed)
     else:
         assert b in A.source
+
+    n = A.source.dim
+
+    if l is None:
+        l = min(n - 1, max(2 * k + 1, 20))
 
     assert k < n
     assert l > k
@@ -126,6 +129,8 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
         # increase k by one in order to keep complex conjugate pairs together
         if ews[k - 1].imag != 0 and ews[k - 1].imag + ews[k].imag < 1e-12:
             k += 1
+
+        logger.info(f'Maximum of relative Ritz estimates at step {i}: {rres[:k].max():.5e}')
 
         if np.all(rres[:k] <= tol) or i >= maxiter:
             break
@@ -185,7 +190,7 @@ def _arnoldi(A, E, l, b):
     Returns
     -------
     V
-        A |VectorArray| whose columns span an orthogonal basis for :math:`\mathbb{R}^{l}`.
+        A |VectorArray| whose vectors represent an orthonormal basis for the Krylov subspace.
     H
         A |NumPy array| which is an upper Hessenberg matrix.
     f
@@ -236,8 +241,7 @@ def _extend_arnoldi(A, E, V, H, f, p):
     Returns
     -------
     V
-        A |VectorArray| whose columns span an orthogonal basis for
-        :math:`\mathbb{R}^{l+p}`.
+        A |VectorArray| whose vectors represent an orthonormal basis for the Krylov subspace.
     H
         A |NumPy array| which is an upper Hessenberg matrix.
     f
