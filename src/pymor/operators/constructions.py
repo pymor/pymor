@@ -85,7 +85,7 @@ class LincombOperator(Operator):
             R = self.operators[0].apply(U, mu=mu)
             R.scal(coeffs[0])
         else:
-            R = self.range.zeros()
+            R = self.range.zeros(len(U))
         for op, c in zip(self.operators[1:], coeffs[1:]):
             if c:
                 R.axpy(c, op.apply(U, mu=mu))
@@ -127,7 +127,7 @@ class LincombOperator(Operator):
             R = self.operators[0].apply_adjoint(V, mu=mu)
             R.scal(np.conj(coeffs[0]))
         else:
-            R = self.source.zeros()
+            R = self.source.zeros(len(V))
         for op, c in zip(self.operators[1:], coeffs[1:]):
             if c:
                 R.axpy(np.conj(c), op.apply_adjoint(V, mu=mu))
