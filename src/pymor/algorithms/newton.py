@@ -99,6 +99,12 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
 
     iteration = 0
     error_sequence = [err]
+
+    if err == 0.0:
+        logger.info(f'Initial Residual is already 0. Stopping.')
+        data['error_sequence'] = np.array(error_sequence)
+        return U, data
+
     while True:
         if iteration >= miniter:
             if err <= atol:
@@ -128,8 +134,11 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         residual = rhs - operator.apply(U, mu=mu)
 
         err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
-        logger.info(f'Iteration {iteration:2}: Residual: {err:5e},  '
-                    f'Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}')
+        if error_sequence[-1] == 0.0:
+            logger.info(f'Iteration {iteration:2}: Residual: {err:5e}')
+        else:
+            logger.info(f'Iteration {iteration:2}: Residual: {err:5e},  '
+                        f'Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}')
         error_sequence.append(err)
         if not np.isfinite(err):
             raise NewtonError('Failed to converge')
