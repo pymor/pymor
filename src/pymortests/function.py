@@ -26,7 +26,7 @@ np.testing.assert_allclose = monkey_allclose
 
 def test_evaluate(function):
     f = function
-    mus = parameters_of_type(f.parameter_type, 4711)
+    mus = parameters_of_type(f.parameters, 4711)
     for count in [0, 1, 5, (0, 1), (2, 2, 2)]:
         arg = function_argument(f, count, 454)
         result = f.evaluate(arg, next(mus))
@@ -67,7 +67,7 @@ def test_pickle_without_dumps_function(picklable_function):
 def test_pickle_by_evaluation(function):
     f = function
     f2 = loads(dumps(f))
-    mus = parameters_of_type(f.parameter_type, 47)
+    mus = parameters_of_type(f.parameters, 47)
     for arg in function_argument(f, 10, 42):
         mu = next(mus)
         assert np.all(f.evaluate(arg, mu) == f2.evaluate(arg, mu))

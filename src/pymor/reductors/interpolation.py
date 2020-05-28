@@ -9,6 +9,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.constructions import LincombOperator
+from pymor.parameters.base import Mu
 from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
                                    DelayLTIPGReductor)
 
@@ -45,14 +46,17 @@ class GenericBHIReductor(BasicObject):
     fom
         The full-order |Model| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     _PGReductor = ProjectionBasedReductor
 
     def __init__(self, fom, mu=None):
+        if not isinstance(mu, Mu):
+            mu = fom.parameters.parse(mu)
+        assert fom.parameters.assert_compatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -154,7 +158,7 @@ class LTIBHIReductor(GenericBHIReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     _PGReductor = LTIPGReductor
@@ -182,8 +186,7 @@ class LTIBHIReductor(GenericBHIReductor):
         if self.fom.parametric:
             return self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']},
-                parameter_space=None,
+                   for op in ['A', 'B', 'C', 'D', 'E']}
             )
         return self.fom
 
@@ -243,7 +246,7 @@ class SOBHIReductor(GenericBHIReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     _PGReductor = SOLTIPGReductor
@@ -273,8 +276,7 @@ class SOBHIReductor(GenericBHIReductor):
         if self.fom.parametric:
             return self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv', 'D']},
-                parameter_space=None,
+                   for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv', 'D']}
             )
         return self.fom
 
@@ -287,7 +289,7 @@ class DelayBHIReductor(GenericBHIReductor):
     fom
         The full-order |LinearDelayModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     _PGReductor = DelayLTIPGReductor
@@ -322,8 +324,7 @@ class DelayBHIReductor(GenericBHIReductor):
             return self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
                    for op in ['A', 'B', 'C', 'D', 'E']},
-                Ad=tuple(op.assemble(mu=self.mu) for op in self.fom.Ad),
-                parameter_space=None,
+                Ad=tuple(op.assemble(mu=self.mu) for op in self.fom.Ad)
             )
         return self.fom
 
@@ -338,11 +339,14 @@ class TFBHIReductor(BasicObject):
     fom
         The |Model| with `eval_tf` and `eval_dtf` methods.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
+        if not isinstance(mu, Mu):
+            mu = fom.parameters.parse(mu)
+        assert fom.parameters.assert_compatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
 
     def reduce(self, sigma, b, c):
         """Realization-independent tangential Hermite interpolation.

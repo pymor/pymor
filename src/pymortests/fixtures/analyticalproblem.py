@@ -48,7 +48,7 @@ non_picklable_elliptic_problems = \
                      diffusion=LincombFunction(
                          [GenericFunction(dim_domain=2, mapping=lambda X, p=p: X[..., 0]**p)
                           for p in range(5)],
-                         [ExpressionParameterFunctional(f'max(mu["exp"], {m})', parameter_type={'exp': ()})
+                         [ExpressionParameterFunctional(f'max(mu["exp"], {m})', parameters={'exp': 1})
                           for m in range(5)]
                      ))]
 

@@ -7,19 +7,19 @@ from numbers import Number
 import numpy as np
 
 from pymor.algorithms import genericsolvers
-from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.core.base import abstractmethod
 from pymor.core.exceptions import InversionError, LinAlgError
-from pymor.parameters.base import Parametric
+from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class Operator(ImmutableObject, Parametric):
+class Operator(ParametricObject):
     """Interface for |Parameter| dependent discrete operators.
 
     An operator in pyMOR is simply a mapping which for any given
-    |Parameter| maps vectors from its `source` |VectorSpace|
+    |parameter values| maps vectors from its `source` |VectorSpace|
     to vectors in its `range` |VectorSpace|.
 
     Note that there is no special distinction between functionals
@@ -77,7 +77,7 @@ class Operator(ImmutableObject, Parametric):
         U
             |VectorArray| of vectors to which the operator is applied.
         mu
-            The |Parameter| for which to evaluate the operator.
+            The |parameter values| for which to evaluate the operator.
 
         Returns
         -------
@@ -103,14 +103,14 @@ class Operator(ImmutableObject, Parametric):
         U
             |VectorArray| of the right right arguments U.
         mu
-            The |Parameter| for which to evaluate the operator.
+            The |parameter values| for which to evaluate the operator.
 
         Returns
         -------
         A |NumPy array| with shape `(len(V), len(U))` containing the 2-form
         evaluations.
         """
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         assert isinstance(V, VectorArray)
         assert isinstance(U, VectorArray)
         AU = self.apply(U, mu=mu)
@@ -129,14 +129,14 @@ class Operator(ImmutableObject, Parametric):
         U
             |VectorArray| of the right right arguments U.
         mu
-            The |Parameter| for which to evaluate the operator.
+            The |parameter values| for which to evaluate the operator.
 
         Returns
         -------
         A |NumPy array| with shape `(len(V),) == (len(U),)` containing
         the 2-form evaluations.
         """
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         assert isinstance(V, VectorArray)
         assert isinstance(U, VectorArray)
         assert len(U) == len(V)
@@ -146,7 +146,7 @@ class Operator(ImmutableObject, Parametric):
     def apply_adjoint(self, V, mu=None):
         """Apply the adjoint operator.
 
-        For any given linear |Operator| `op`, |Parameter| `mu` and
+        For any given linear |Operator| `op`, |parameter values| `mu` and
         |VectorArrays| `U`, `V` in the :attr:`~Operator.source`
         resp. :attr:`~Operator.range` we have::
 
@@ -160,7 +160,7 @@ class Operator(ImmutableObject, Parametric):
         V
             |VectorArray| of vectors to which the adjoint operator is applied.
         mu
-            The |Parameter| for which to apply the adjoint operator.
+            The |parameter values| for which to apply the adjoint operator.
 
         Returns
         -------
@@ -179,7 +179,7 @@ class Operator(ImmutableObject, Parametric):
         V
             |VectorArray| of vectors to which the inverse operator is applied.
         mu
-            The |Parameter| for which to evaluate the inverse operator.
+            The |parameter values| for which to evaluate the inverse operator.
         least_squares
             If `True`, solve the least squares problem::
 
@@ -242,7 +242,7 @@ class Operator(ImmutableObject, Parametric):
         U
             |VectorArray| of vectors to which the inverse adjoint operator is applied.
         mu
-            The |Parameter| for which to evaluate the inverse adjoint operator.
+            The |parameter values| for which to evaluate the inverse adjoint operator.
         least_squares
             If `True`, solve the least squares problem::
 
@@ -287,7 +287,7 @@ class Operator(ImmutableObject, Parametric):
             Length 1 |VectorArray| containing the vector for which to compute
             the Jacobian.
         mu
-            The |Parameter| for which to compute the Jacobian.
+            The |parameter values| for which to compute the Jacobian.
 
         Returns
         -------
@@ -301,21 +301,21 @@ class Operator(ImmutableObject, Parametric):
         else:
             raise NotImplementedError
 
-    def d_mu(self, component, index=()):
-        """Return the operator's derivative with respect to an index of a parameter component.
+    def d_mu(self, parameter, index=0):
+        """Return the operator's derivative with respect to a given parameter.
 
         Parameters
         ----------
-        component
-            Parameter component
+        parameter
+            The parameter w.r.t. which to return the derivative.
         index
-            index in the parameter component
+            Index of the parameter's component w.r.t which to return the derivative.
 
         Returns
         -------
         New |Operator| representing the partial derivative.
         """
-        if self.parametric:
+        if parameter in self.parameters:
             raise NotImplementedError
         else:
             from pymor.operators.constructions import ZeroOperator
@@ -325,7 +325,7 @@ class Operator(ImmutableObject, Parametric):
         """Return a |VectorArray| representation of the operator in its range space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~Operator.source`, this method returns for every |Parameter|
+        :attr:`~Operator.source`, this method returns for given |parameter values|
         `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.range`,
         such that ::
 
@@ -336,7 +336,8 @@ class Operator(ImmutableObject, Parametric):
         Parameters
         ----------
         mu
-            The |Parameter| for which to return the |VectorArray| representation.
+            The |parameter values| for which to return the |VectorArray|
+            representation.
 
         Returns
         -------
@@ -350,7 +351,7 @@ class Operator(ImmutableObject, Parametric):
         """Return a |VectorArray| representation of the operator in its source space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~Operator.range`, this method returns for every |Parameter|
+        :attr:`~Operator.range`, this method returns for given |parameter values|
         `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.source`,
         such that ::
 
@@ -361,7 +362,8 @@ class Operator(ImmutableObject, Parametric):
         Parameters
         ----------
         mu
-            The |Parameter| for which to return the |VectorArray| representation.
+            The |parameter values| for which to return the |VectorArray|
+            representation.
 
         Returns
         -------
@@ -382,7 +384,7 @@ class Operator(ImmutableObject, Parametric):
         Parameters
         ----------
         mu
-            The |Parameter| for which to return the vector representation.
+            The |parameter values| for which to return the vector representation.
 
         Returns
         -------
@@ -399,7 +401,7 @@ class Operator(ImmutableObject, Parametric):
             raise TypeError('This operator does not represent a vector or linear functional.')
 
     def assemble(self, mu=None):
-        """Assemble the operator for a given parameter.
+        """Assemble the operator for given |parameter values|.
 
         The result of the method strongly depends on the given operator.
         For instance, a matrix-based operator will assemble its matrix, a |LincombOperator|
@@ -411,7 +413,7 @@ class Operator(ImmutableObject, Parametric):
         Parameters
         ----------
         mu
-            The |Parameter| for which to assemble the operator.
+            The |parameter values| for which to assemble the operator.
 
         Returns
         -------
@@ -542,4 +544,4 @@ class Operator(ImmutableObject, Parametric):
 
     def __str__(self):
         return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
-               f'(parameter type: {self.parameter_type}, class: {self.__class__.__name__})'
+               f'(parameters: {self.parameters}, class: {self.__class__.__name__})'

@@ -4,411 +4,502 @@
 
 """This module contains the implementation of pyMOR's parameter handling facilities.
 
-A |Parameter| in pyMOR is basically a `dict` of |NumPy Arrays|. Each item of the
-dict is called a parameter component. The |ParameterType| of a |Parameter| is the dict
-of the shapes of the parameter components, i.e. ::
-
-    mu.parameter_type['component'] == mu['component'].shape
-
-Classes which represent mathematical objects depending on parameters, e.g. |Functions|,
-|Operators|, |Models| derive from the |Parametric| mixin. Each |Parametric|
-object has a :attr:`~Parametric.parameter_type` attribute holding the |ParameterType|
-of the |Parameters| the object's `evaluate`, `apply`, `solve`, etc. methods expect.
-Note that the |ParameterType| of the given |Parameter| is allowed to be a
-superset of the object's |ParameterType|.
-
-The |ParameterType| of a |Parametric| object is determined in its :meth:`__init__`
-method by calling :meth:`~Parametric.build_parameter_type` which computes the
-|ParameterType| as the union of the |ParameterTypes| of the objects given to the
-method. This way, e.g., an |Operator| can inherit the |ParameterTypes| of the
-data functions it depends upon.
-
-A |Parametric| object can have a |ParameterSpace| assigned to it by setting the
-:attr:`~Parametric.parameter_space` attribute (the |ParameterType| of the space
-has to agree with the |ParameterType| of the object). The
-:meth:`~Parametric.parse_parameter` method parses a user input according to
-the object's |ParameterType| to make it a |Parameter| (e.g. if the |ParameterType|
-consists of a single one-dimensional component, the user can simply supply a list
-of numbers of the right length). Moreover, when given a |Parameter|,
-:meth:`~Parametric.parse_parameter` ensures the |Parameter| has an appropriate
-|ParameterType|.
+Use the |ParametricObject| base class to define immutable (mathematical) objects that
+depend on some |Parameters|. Each |Parameter| in pyMOR has a name and a fixed dimension
+(number of scalar components of the parameter vector). In particular, scalar parameters
+are treated as parameter vectors of dimension 1. Mappings of |Parameters| to
+|parameter values| are stored in pyMOR using dedicated :class:`Mu` objects.
+To sample |parameter values| within a given range, |ParameterSpace| objects can be used.
 """
 
-from collections import OrderedDict
+from itertools import product
 from numbers import Number
 
 import numpy as np
 
+from pymor.core.base import ImmutableObject
 from pymor.tools.floatcmp import float_cmp_all
+from pymor.tools.frozendict import FrozenDict
 from pymor.tools.pprint import format_array
+from pymor.tools.random import get_random_state
 
 
-class ParameterType(OrderedDict):
-    """Class representing a parameter type.
+class Parameters(FrozenDict):
+    """Immutable dict mapping parameter names to parameter dimensions.
 
-    A parameter type is simply a dictionary with strings as keys and tuples of
-    natural numbers as values. The keys are the names of the parameter components
-    and the tuples their expected shape (compare :class:`Parameter`).
-
-    Apart from checking the correct format of its values, the only difference
-    between a |ParameterType| and an ordinary `dict` is, that |ParameterType|
-    orders its keys alphabetically.
-
-    Parameters
-    ----------
-    t
-        If `t` is an object with a `parameter_type` attribute, a copy of this
-        |ParameterType| is created. Otherwise, `t` can be anything from which
-        a `dict` can be constructed.
+    Each key of a |Parameters| dict is a string specifying the
+    name of a parameter. The corresponding value is a non-negative `int`
+    specifying the dimension (number of scalar components) of the parameter.
     """
 
-    def __init__(self, t):
-        if t is None:
-            t = {}
-        elif isinstance(t, ParameterType):
-            pass
-        elif hasattr(t, 'parameter_type'):
-            assert isinstance(t.parameter_type, ParameterType)
-            t = t.parameter_type
-        else:
-            t = dict(t)
-            for k, v in t.items():
-                if not isinstance(v, tuple):
-                    assert isinstance(v, Number)
-                    t[k] = () if v == 0 else (v,)
-        super().__init__(sorted(t.items()))
-        self.clear = self.__setitem__ = self.__delitem__ = self.pop = self.popitem = self.update = self._is_immutable
-
-    def _is_immutable(*args, **kwargs):
-        raise ValueError('ParameterTypes cannot be modified')
-
-    def copy(self):
-        return ParameterType(self)
-
-    def fromkeys(self, S, v=None):
-        raise NotImplementedError
-
-    def __str__(self):
-        return '{' + ', '.join(f'{k}: {v}' for k, v in self.items()) + '}'
-
-    def __repr__(self):
-        return 'ParameterType(' + str(self) + ')'
-
-    def __reduce__(self):
-        return (ParameterType, (dict(self),))
-
-    def __hash__(self):
-        return hash(tuple(self.items()))
-
-
-class Parameter(dict):
-    """Class representing a parameter.
-
-    A |Parameter| is simply a `dict` where each key is a string and each value
-    is a |NumPy array|. We call an item of the dictionary a *parameter component*.
-
-    A |Parameter| differs from an ordinary `dict` in the following ways:
-
-        - It is ensured that each value is a |NumPy array|.
-        - We overwrite :meth:`copy` to ensure that not only the `dict`
-          but also the |NumPy arrays| are copied.
-        - The :meth:`allclose` method allows to compare |Parameters| for
-          equality in a mathematically meaningful way.
-        - We override :meth:`__str__` to ensure alphanumerical ordering of the keys
-          and pretty printing of the values.
-        - The :attr:`parameter_type` property can be used to obtain the |ParameterType|
-          of the parameter.
-        - Use :meth:`from_parameter_type` to construct a |Parameter| from a |ParameterType|
-          and user supplied input.
-
-    Parameters
-    ----------
-    v
-        Anything that :class:`dict` accepts for the construction of a dictionary.
-
-    Attributes
-    ----------
-    parameter_type
-        The |ParameterType| of the |Parameter|.
-    """
-
-    def __init__(self, v):
-        if v is None:
-            v = {}
-        i = iter(v.items()) if hasattr(v, 'items') else v
-        dict.__init__(self, {k: np.array(v) if not isinstance(v, np.ndarray) else v for k, v in i})
+    def _post_init(self):
+        assert all(type(k) is str and type(v) is int and 0 <= v
+                   for k, v in self.items())
 
     @classmethod
-    def from_parameter_type(cls, mu, parameter_type=None):
-        """Takes a user input `mu` and interprets it as a |Parameter| according to the given
-        |ParameterType|.
+    def of(cls, *args):
+        """Computes the total set of |Parameters| a collection of objects depends on.
 
-        Depending on the |ParameterType|, `mu` can be given as a |Parameter|, dict, tuple,
-        list, array or scalar.
-
-        Parameters
-        ----------
-        mu
-            The user input which shall be interpreted as a |Parameter|.
-        parameter_type
-            The |ParameterType| w.r.t. which `mu` is to be interpreted.
-
-        Returns
-        -------
-        The resulting |Parameter|.
-
-        Raises
-        ------
-        ValueError
-            Is raised if `mu` cannot be interpreted as a |Parameter| of |ParameterType|
-            `parameter_type`.
-        """
-        if not parameter_type:
-            assert mu is None or mu == {}
-            return None
-
-        if isinstance(mu, Parameter):
-            assert mu.parameter_type == parameter_type
-            return mu
-
-        if not isinstance(mu, dict):
-            if isinstance(mu, (tuple, list)):
-                if len(parameter_type) == 1 and len(mu) != 1:
-                    mu = (mu,)
-            else:
-                mu = (mu,)
-            if len(mu) != len(parameter_type):
-                raise ValueError('Parameter length does not match.')
-            mu = dict(zip(sorted(parameter_type), mu))
-        elif set(mu.keys()) != set(parameter_type.keys()):
-            raise ValueError(f'Provided parameter with keys {list(mu.keys())} does not match '
-                             f'parameter type {parameter_type}.')
-
-        def parse_value(k, v):
-            if not isinstance(v, np.ndarray):
-                v = np.array(v)
-                try:
-                    v = v.reshape(parameter_type[k])
-                except ValueError:
-                    raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
-                                     f'expected {parameter_type[k]}')
-            if v.shape != parameter_type[k]:
-                raise ValueError(f'Shape mismatch for parameter component {k}: got {v.shape}, '
-                                 f'expected {parameter_type[k]}')
-            return v
-
-        return cls({k: parse_value(k, v) for k, v in mu.items()})
-
-    def allclose(self, mu):
-        """Compare two |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
-
-        Parameters
-        ----------
-        mu
-            The |Parameter| with which to compare.
-
-        Returns
-        -------
-        `True` if both |Parameters| have the same |ParameterType| and all parameter
-        components are almost equal, else `False`.
-        """
-        assert isinstance(mu, Parameter)
-        if list(self.keys()) != list(mu.keys()):
-            return False
-        elif not all(float_cmp_all(v, mu[k]) for k, v in self.items()):
-            return False
-        else:
-            return True
-
-    def copy(self):
-        c = Parameter({k: v.copy() for k, v in self.items()})
-        return c
-
-    def __setitem__(self, key, value):
-        if not isinstance(value, np.ndarray):
-            value = np.array(value)
-        dict.__setitem__(self, key, value)
-
-    def __eq__(self, mu):
-        if not isinstance(mu, Parameter):
-            mu = Parameter(mu)
-        if list(self.keys()) != list(mu.keys()):
-            return False
-        elif not all(np.array_equal(v, mu[k]) for k, v in self.items()):
-            return False
-        else:
-            return True
-
-    def fromkeys(self, S, v=None):
-        raise NotImplementedError
-
-    def pop(self, k, d=None):
-        raise NotImplementedError
-
-    def popitem(self):
-        raise NotImplementedError
-
-    def update(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @property
-    def parameter_type(self):
-        return ParameterType({k: v.shape for k, v in self.items()})
-
-    def __str__(self):
-        np.set_string_function(format_array, repr=False)
-        s = '{'
-        for k in sorted(self.keys()):
-            v = self[k]
-            if v.ndim > 1:
-                v = v.ravel()
-            if s == '{':
-                s += f'{k}: {v}'
-            else:
-                s += f', {k}: {v}'
-        s += '}'
-        np.set_string_function(None, repr=False)
-        return s
-
-    def __getstate__(self):
-        return dict(self)
-
-
-class Parametric:
-    """Mixin class for objects representing mathematical entities depending on a |Parameter|.
-
-    Each such object has a |ParameterType| stored in the :attr:`parameter_type` attribute,
-    which should be set by the implementor during :meth:`__init__` using the
-    :meth:`build_parameter_type` method. Methods expecting the |Parameter| (typically
-    `evaluate`, `apply`, `solve`, etc. ..) should accept an optional argument `mu` defaulting
-    to `None`. This argument `mu` should then be fed into :meth:`parse_parameter` to obtain a
-    |Parameter| of correct |ParameterType| from the (user supplied) input `mu`.
-
-    Attributes
-    ----------
-    parameter_type
-        The |ParameterType| of the |Parameters| the object expects.
-    parameter_space
-        |ParameterSpace| the parameters are expected to lie in or `None`.
-    parametric:
-        `True` if the object really depends on a parameter, i.e. :attr:`parameter_type`
-        is not empty.
-    """
-
-    parameter_type = None
-
-    @property
-    def parameter_space(self):
-        return self._parameter_space
-
-    @parameter_space.setter
-    def parameter_space(self, ps):
-        assert ps is None or self.parameter_type == ps.parameter_type
-        self._parameter_space = ps
-
-    @property
-    def parametric(self):
-        return bool(self.parameter_type)
-
-    def parse_parameter(self, mu):
-        """Interpret a user supplied parameter `mu` as a |Parameter|.
-
-        If `mu` is not already a |Parameter|, :meth:`Parameter.from_parameter_type`
-        is used, to make `mu` a parameter of the correct |ParameterType|. If `mu`
-        is already a |Parameter|, it is checked if its |ParameterType| matches our own.
-        (It is actually allowed that the |ParameterType| of `mu` is a superset of
-        our own |ParameterType| in the obvious sense.)
-
-        Parameters
-        ----------
-        mu
-            The input to parse as a |Parameter|.
-        """
-        if mu is None:
-            assert not self.parameter_type, \
-                f'Given parameter is None but expected parameter of type {self.parameter_type}'
-            return Parameter({})
-        if mu.__class__ is not Parameter:
-            mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert not self.parameter_type or all(getattr(mu.get(k, None), 'shape', None) == v
-                                              for k, v in self.parameter_type.items()), \
-            f'Given parameter of type {mu.parameter_type} does not match expected parameter type {self.parameter_type}'
-        return mu
-
-    def strip_parameter(self, mu):
-        """Remove all components of the |Parameter| `mu` which are not part of the object's |ParameterType|.
-
-        Otherwise :meth:`strip_parameter` behaves like :meth:`parse_parameter`.
-
-        This method is mainly useful for caching where the key should only contain the
-        relevant parameter components.
-        """
-        if mu.__class__ is not Parameter:
-            mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.items())
-        return Parameter({k: mu[k] for k in self.parameter_type})
-
-    def build_parameter_type(self, *args, provides=None, **kwargs):
-        """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
-
-        The |ParameterType| of a |Parametric| object is determined by the parameter components
-        the object itself requires for evaluation, and by the parameter components
-        required by the objects the object depends upon for evaluation.
-
-        All parameter components (directly specified or inherited by the |ParameterType|
-        of a given |Parametric| object) with the same name are treated as identical and
-        are thus required to have the same shapes. The object's |ParameterType| is then
-        made up by the shapes of all parameter components appearing.
-
-        Additionally components of the resulting |ParameterType| can be removed by
-        specifying them via the `provides` parameter. The idea is that the object itself
-        may provide parameter components to the inherited objects which thus should
-        not become part of the object's own parameter type. (A typical application
-        would be |InstationaryModel|, which provides a time parameter
-        component to its (time-dependent) operators during time-stepping.)
+        If two objects depend on a parameter with the same name, both parameters must have
+        the same dimension.
 
         Parameters
         ----------
         args
-            Each positional argument must either be a dict of parameter components and shapes or
-            a |Parametric| object whose :attr:`~Parametric.parameter_type` is added.
-        kwargs
-            Each keyword argument is interpreted as parameter component with corresponding shape.
-        provides
-            `Dict` of parameter component names and shapes which are provided by the object
-            itself. The parameter components listed here will not become part of the object's
-            |ParameterType|.
+            Each positional argument must either be `None`, a |ParametricObject| or
+            lists, tuples, dicts or |NumPy arrays| of such objects. The latter will be
+            traversed recursively.
         """
-        provides = provides or {}
-        my_parameter_type = {}
+        parameters = {}
 
-        def check_shapes(shape1, shape2):
-            if type(shape1) is not tuple:
-                assert isinstance(shape1, Number)
-                shape1 = () if shape1 == 0 else (shape1,)
-            if type(shape2) is not tuple:
-                assert isinstance(shape2, Number)
-                shape2 = () if shape2 == 0 else (shape2,)
-            assert shape1 == shape2, \
-                (f'Dimension mismatch for parameter component {component} '
-                 f'(got {my_parameter_type[component]} and {shape})')
+        def check_dims(param, dim1, dim2):
+            assert isinstance(dim2, int) and dim2 >= 0, f'Dimension of parameter {param} not an int or negative'
+            assert dim1 is None or dim1 == dim2, \
+                f'Dimension mismatch for parameter {param} (got {dim1} and {dim2})'
             return True
 
+        def traverse(obj):
+            if obj is None:
+                return
+            elif isinstance(obj, ParametricObject):
+                assert all(check_dims(param, parameters.get(param), dim)
+                           for param, dim in obj.parameters.items())
+                parameters.update(obj.parameters)
+            elif isinstance(obj, (list, tuple)):
+                for o in obj:
+                    traverse(o)
+            elif isinstance(obj, (dict, FrozenDict)):
+                for o in obj.values():
+                    traverse(o)
+            elif isinstance(obj, np.ndarray) and obj.dtype == object:
+                for o in obj.flat:
+                    traverse(o)
+
         for arg in args:
-            if hasattr(arg, 'parameter_type'):
-                arg = arg.parameter_type
-            if arg is None:
-                continue
-            for component, shape in arg.items():
-                assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
-                my_parameter_type[component] = shape
+            traverse(arg)
 
-        for component, shape in kwargs.items():
-            assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
-            my_parameter_type[component] = shape
+        return cls(parameters)
 
-        for component, shape in provides.items():
-            assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
-            my_parameter_type.pop(component, None)
+    def parse(self, mu):
+        """Takes a user input `mu` and interprets it as set of |parameter values|
+        according to the given |Parameters|.
 
-        self.parameter_type = ParameterType(my_parameter_type)
+        Depending on the |Parameters|, `mu` can be given as a dict, list,
+        tuple, |NumPy array| or scalar. In the latter cases, multiple parameters
+        will be concatenated by alphabetical ordering. E.g.::
+
+            Parameters(b=2, a=1).parse([1,2,3])
+
+        will assign to parameter `a` the value `[1]` and to parameter `b` the
+        values `[2, 3]`.
+
+        Parameters
+        ----------
+        mu
+            The user input which shall be interpreted as |parameter values|.
+
+        Returns
+        -------
+        The resulting object of |parameter values|.
+
+        Raises
+        ------
+        ValueError
+            Is raised if `mu` cannot be interpreted as |parameter values| for the
+            given |Parameters|.
+        """
+
+        def fail(msg):
+            if isinstance(mu, dict):
+                mu_str = '{' + ', '.join([f'{k}: {v}' for k, v in mu.items()]) + '}'
+            else:
+                mu_str = str(mu)
+            raise ValueError(f'{mu_str} is incompatible with Parameters {self} ({msg})')
+
+        if not self:
+            mu is None or mu == {} or fail('must be None or empty dict')
+            return Mu({})
+
+        elif isinstance(mu, Mu):
+            mu == self or fail(self.why_incompatible(mu))
+            set(mu) == set(self) or fail(f'additional parameters {set(mu) - set(self)}')
+            return mu
+
+        elif isinstance(mu, Number):
+            1 == sum(v for v in self.values()) or fail('need more than one number')
+            return Mu({next(iter(self)): np.array([mu])})
+
+        elif isinstance(mu, (tuple, list, np.ndarray)):
+            if isinstance(mu, np.ndarray):
+                mu = mu.ravel()
+            all(isinstance(v, Number) for v in mu) or fail('not every element a number')
+            len(mu) == sum(v for v in self.values()) or fail('wrong size')
+            parsed_mu = {}
+            for k, v in self.items():
+                p, mu = mu[:v], mu[v:]
+                parsed_mu[k] = p
+            return Mu(parsed_mu)
+
+        elif isinstance(mu, dict):
+            set(mu.keys()) == set(self.keys()) or fail('parameters not matching')
+
+            def parse_value(k, v):
+                isinstance(v, (Number, tuple, list, np.ndarray)) or fail(f"invalid value type '{type(v)}' for parameter {k}")
+                if isinstance(v, Number):
+                    v = np.array([v])
+                elif isinstance(v, np.ndarray):
+                    v = v.ravel()
+                len(v) == self[k] or fail('wrong dimension of parameter value {k}')
+                return v
+
+            return Mu({k: parse_value(k, v) for k, v in mu.items()})
+
+    def space(self, *ranges):
+        """Create a |ParameterSpace| with given ranges.
+
+        This is a shorthand for ::
+
+            ParameterSpace(self, *range)
+
+        See |ParameterSpace| for allowed range arguments.
+        """
+        return ParameterSpace(self, *ranges)
+
+    def assert_compatible(self, mu):
+        """Assert that |parameter values| are compatible with the given |Parameters|.
+
+        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        i.e. ::
+
+            mu[parameter].size == self[parameter]
+
+        Otherwise, an `AssertionError` will be raised.
+        """
+        assert self.is_compatible(mu), self.why_incompatible(mu)
+        return True
+
+    def is_compatible(self, mu):
+        """Check if |parameter values| are compatible with the given |Parameters|.
+
+        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        i.e. ::
+
+            mu[parameter].size == self[parameter]
+        """
+        if mu is not None and not isinstance(mu, Mu):
+            raise TypeError('mu is not a Mu instance. (Use parameters.parse?)')
+        return not self or \
+            mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
+
+    def why_incompatible(self, mu):
+        if mu is not None and not isinstance(mu, Mu):
+            return 'mu is not a Mu instance. (Use parameters.parse?)'
+        assert self
+        if mu is None:
+            mu = {}
+        failing_params = {}
+        for k, v in self.items():
+            if k not in mu:
+                failing_params[k] = f'missing != {v}'
+            elif mu[k].shape != v:
+                failing_params[k] = f'{mu[k].size} != {v}'
+        assert failing_params
+        return f'Incompatible parameters: {failing_params}'
+
+    def __or__(self, other):
+        assert all(k not in self or self[k] == v
+                   for k, v in other.items())
+        return Parameters(dict(self, **other))
+
+    def __sub__(self, other):
+        assert all(k not in self or self[k] == v
+                   for k, v in other.items())
+        return Parameters({k: v for k, v in self.items() if k not in other})
+
+    def __le__(self, mu):
+        """Check if |parameter values| are compatible with the given |Parameters|.
+
+        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        i.e. ::
+
+            mu[parameter].size == self[parameter]
+        """
+        if isinstance(mu, Parameters):
+            return all(mu.get(k) == v for k, v in self.items())
+        else:
+            return NotImplemented
+
+    def __str__(self):
+        return '{' + ', '.join(f'{k}: {v}' for k, v in sorted(self.items())) + '}'
+
+    def __repr__(self):
+        return 'Parameters(' + str(self) + ')'
+
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
+
+class Mu(FrozenDict):
+    """Immutable mapping of |Parameter| names to parameter values.
+
+    Parameters
+    ----------
+    Anything that dict accepts for the construction of a dictionary.
+    Values are automatically converted to immutable one-dimensional |NumPy arrays|,
+    unless the Python interpreter runs with the `-O` flag.
+
+    Attributes
+    ----------
+    parameters
+        The |Parameters| to which the mapping assigns values.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        mu = super().__new__(cls,
+                             ((k, np.array(v, copy=False, ndmin=1))
+                              for k, v in dict(*args, **kwargs).items()))
+        assert all(type(k) is str and v.ndim == 1 for k, v in mu.items())
+        # only make elements immutable when running without optimization
+        assert not any(v.setflags(write=False) for v in mu.values())
+        return mu
+
+    def with_(self, **kwargs):
+        return Mu(self, **kwargs)
+
+    @property
+    def parameters(self):
+        return Parameters({k: v.size for k, v in self.items()})
+
+    def allclose(self, mu):
+        """Compare two dicts of |parameter values| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
+
+        Parameters
+        ----------
+        mu
+            The |parameter values| with which to compare.
+
+        Returns
+        -------
+        `True` if both |parameter value| dicts contain values for the same |Parameters| and all
+        components of the parameter values are almost equal, else `False`.
+        """
+        assert isinstance(mu, Mu)
+        return self.keys() == mu.keys() and all(float_cmp_all(v, mu[k]) for k, v in self.items())
+
+    def copy(self):
+        return self
+
+    def __eq__(self, mu):
+        if not isinstance(mu, Mu):
+            try:
+                mu = Mu(mu)
+            except Exception:
+                return False
+        return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
+
+    def __str__(self):
+        return '{' + ', '.join(f'{k}: {format_array(v)}' for k, v in sorted(self.items())) + '}'
+
+    def __repr__(self):
+        return f'Mu({self})'
+
+
+class ParametricObject(ImmutableObject):
+    """Base class for immutable mathematical entities depending on some |Parameters|.
+
+    Each |ParametricObject| lists the |Parameters| it depends on in the :attr:`parameters`
+    attribute. Usually, these |Parameters| are automatically derived as the union of all
+    |Parameters| of the object's `__init__` arguments.
+
+    Additional |Parameters| introduced by the object itself can be specified by setting the
+    :attr:`parameters_own` attribute in `__init__`. In case the object fixes some |Parameters|
+    it's child objects depend on to concrete values, those |Parameters| can be removed from
+    the :attr:`parameters` attribute by setting :attr:`parameters_internal`.
+
+    Alternatively, :attr:`parameters` can be initialized manually in `__init__`.
+
+    Attributes
+    ----------
+    parameters
+        The |Parameters| the object depends on.
+    parameters_own
+        The |Parameters| the object depends on which are not inherited from a child
+        object the object depends on. Each item of :attr:`parameters_own` is also an
+        item of :attr:`parameters`.
+    parameters_inherited
+        The |Parameters| the object depends on because some child object depends on them.
+        Each item of :attr:`parameters_own` is also an item of :attr:`parameters`.
+    parameters_internal
+        The |Parameters| some of the object's child objects may depend on, but which are
+        fixed to a concrete value by this object. All items of :attr:`parameters_internal`
+        are removed from :attr:`parameters` and :attr:`parameters_inherited`. When
+        initializing :attr:`parameters_own` and :attr:`parameters_internal`, it has to be
+        ensured that both dicts are disjoint.
+    parametric:
+        `True` if the object really depends on a parameter, i.e. :attr:`parameters`
+        is not empty.
+    """
+
+    @property
+    def parameters(self):
+        if self._parameters is not None:
+            return self._parameters
+        assert self._locked, 'parameters attribute can only be accessed after class initialization'
+        params = Parameters.of(*(getattr(self, arg) for arg in self._init_arguments))
+        if self.parameters_own:
+            params = params | self.parameters_own
+        if self.parameters_internal:
+            params = params - self.parameters_internal
+        self._parameters = params
+        return params
+
+    @parameters.setter
+    def parameters(self, parameters):
+        self._parameters = Parameters(parameters)
+        assert self.__check_parameter_consistency()
+
+    @property
+    def parameters_own(self):
+        return self._parameters_own or Parameters({})
+
+    @parameters_own.setter
+    def parameters_own(self, parameters_own):
+        self._parameters_own = Parameters(parameters_own)
+        assert self.__check_parameter_consistency()
+
+    @property
+    def parameters_internal(self):
+        return self._parameters_internal or Parameters({})
+
+    @parameters_internal.setter
+    def parameters_internal(self, parameters_internal):
+        self._parameters_internal = Parameters(parameters_internal)
+        assert self.__check_parameter_consistency()
+
+    @property
+    def parameters_inherited(self):
+        return self.parameters - self.parameters_own
+
+    @property
+    def parametric(self):
+        return bool(self.parameters)
+
+    def __check_parameter_consistency(self):
+        if self._parameters_internal is not None:
+            if self._parameters is not None:
+                assert self._parameters.keys().isdisjoint(self._parameters_internal)
+            if self._parameters_own is not None:
+                assert self._parameters_own.keys().isdisjoint(self._parameters_internal)
+        if self._parameters_own is not None:
+            if self._parameters is not None:
+                assert self._parameters >= self._parameters_own
+        return True
+
+    _parameters = None
+    _parameters_own = None
+    _parameters_internal = None
+
+
+class ParameterSpace(ParametricObject):
+    """A set of |Parameters| with allowed ranges for their values.
+
+    |ParameterSpaces| are mostly used to create sample set of
+    |parameter values| for given |Parameters| within a specified
+    range.
+
+    Parameters
+    ----------
+    parameters
+        The |Parameters| which are part of the space.
+    ranges
+        Allowed ranges for the |parameter values|. Either:
+
+        - two numbers specifying the lower and upper bound
+          for all parameter value components,
+        - a list/tuple of two numbers specifying these bounds,
+        - or a dict of those tuples, specifying upper and lower
+          bounds individually for each parameter of the space.
+    """
+
+    def __init__(self, parameters, *ranges):
+        assert isinstance(parameters, Parameters)
+        assert 1 <= len(ranges) <= 2
+        if len(ranges) == 1:
+            ranges = ranges[0]
+        if isinstance(ranges, (tuple, list)):
+            assert len(ranges) == 2
+            ranges = {k: ranges for k in parameters}
+        assert isinstance(ranges, dict)
+        assert all(k in ranges
+                   and len(ranges[k]) == 2
+                   and all(isinstance(v, Number) for v in ranges[k])
+                   and ranges[k][0] <= ranges[k][1]
+                   for k in parameters)
+        self.parameters = parameters
+        self.ranges = FrozenDict((k, tuple(v)) for k, v in ranges.items())
+
+    def sample_uniformly(self, counts):
+        """Uniformly sample |parameter values| from the space.
+
+        Parameters
+        ----------
+        counts
+            Number of samples to take per parameter and component
+            of the parameter. Either a dict of counts per |Parameter|
+            or a single count that is taken for all |Parameters|
+
+        Returns
+        -------
+        List of |parameter value| dicts.
+        """
+        if isinstance(counts, dict):
+            pass
+        else:
+            counts = {k: counts for k in self.parameters}
+
+        linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameters)
+        iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
+                      for ls, sps in zip(linspaces, self.parameters.values()))
+        return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                for i in product(*iters)]
+
+    def sample_randomly(self, count=None, random_state=None, seed=None):
+        """Randomly sample |parameter values| from the space.
+
+        Parameters
+        ----------
+        count
+            `None` or number of random samples (see below).
+        random_state
+            :class:`~numpy.random.RandomState` to use for sampling.
+            If `None`, a new random state is generated using `seed`
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
+        seed
+            If not `None`, a new random state with this seed is used.
+
+        Returns
+        -------
+        If `count` is `None`, an inexhaustible iterator returning random
+        |parameter value| dicts.
+        Otherwise a list of `count` random |parameter value| dicts.
+        """
+        assert not random_state or seed is None
+        random_state = get_random_state(random_state, seed)
+        get_param = lambda: Mu(((k, random_state.uniform(self.ranges[k][0], self.ranges[k][1], size))
+                               for k, size in self.parameters.items()))
+        if count is None:
+            def param_generator():
+                while True:
+                    yield get_param()
+            return param_generator()
+        else:
+            return [get_param() for _ in range(count)]
+
+    def contains(self, mu):
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        if not self.parameters.is_compatible(mu):
+            return False
+        return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
+                   for k in self.parameters)

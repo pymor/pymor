@@ -65,7 +65,6 @@ class EmpiricalInterpolatedOperator(Operator):
         assert collateral_basis in operator.range
         assert len(interpolation_dofs) == len(collateral_basis)
 
-        self.build_parameter_type(operator)
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
@@ -95,7 +94,7 @@ class EmpiricalInterpolatedOperator(Operator):
             return self._operator
 
     def apply(self, U, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         if len(self.interpolation_dofs) == 0:
             return self.range.zeros(len(U))
 
@@ -115,7 +114,7 @@ class EmpiricalInterpolatedOperator(Operator):
         return self.collateral_basis.lincomb(interpolation_coefficients)
 
     def jacobian(self, U, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
 
         if len(self.interpolation_dofs) == 0:
@@ -168,10 +167,9 @@ class ProjectedEmpiciralInterpolatedOperator(Operator):
         self.source = NumpyVectorSpace(len(source_basis_dofs))
         self.range = projected_collateral_basis.space
         self.linear = restricted_operator.linear
-        self.build_parameter_type(restricted_operator)
 
     def apply(self, U, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         U_dofs = self.source_basis_dofs.lincomb(U.to_numpy())
         AU = self.restricted_operator.apply(U_dofs, mu=mu)
         try:
@@ -186,7 +184,7 @@ class ProjectedEmpiciralInterpolatedOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
 
         if self.interpolation_matrix.shape[0] == 0:

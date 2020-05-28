@@ -9,12 +9,12 @@ import numpy as np
 
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
 from pymor.operators.constructions import LincombOperator, ZeroOperator
-from pymor.basic import NumpyVectorSpace
+from pymor.basic import NumpyVectorSpace, Mu
 
 
 def test_ProjectionParameterFunctional():
-    pf = ProjectionParameterFunctional('mu', (2,), (0,))
-    mu = {'mu': (10,2)}
+    pf = ProjectionParameterFunctional('mu', 2, 0)
+    mu = Mu({'mu': (10,2)})
 
     derivative_to_first_index = pf.d_mu('mu', 0)
     derivative_to_second_index = pf.d_mu('mu', 1)
@@ -42,22 +42,23 @@ def test_ProjectionParameterFunctional():
 
 
 def test_ExpressionParameterFunctional():
-    dict_of_d_mus = {'mu': ['200 * mu[0]', '2 * mu[0]'], 'nu': 'cos(nu)'}
+    dict_of_d_mus = {'mu': ['200 * mu[0]', '2 * mu[0]'], 'nu': ['cos(nu[0])']}
 
-    dict_of_second_derivative = {'mu': [{'mu': ['200', '2'], 'nu': '0'},
-                              {'mu': ['2', '0'], 'nu': '0'}],
-                       'nu': {'mu': ['0', '0'], 'nu': '-sin(nu)'}}
+    dict_of_second_derivative = {
+        'mu': [{'mu': ['200', '2'], 'nu': ['0']}, {'mu': ['2', '0'], 'nu': ['0']}],
+        'nu': [{'mu': ['0', '0'], 'nu': ['-sin(nu[0])']}]
+    }
 
-    epf = ExpressionParameterFunctional('100 * mu[0]**2 + 2 * mu[1] * mu[0] + sin(nu)',
-                                        {'mu': (2,), 'nu': ()},
+    epf = ExpressionParameterFunctional('100 * mu[0]**2 + 2 * mu[1] * mu[0] + sin(nu[0])',
+                                        {'mu': 2, 'nu': 1},
                                         'functional_with_derivative_and_second_derivative',
                                         dict_of_d_mus, dict_of_second_derivative)
 
-    mu = {'mu': (10,2), 'nu': 0}
+    mu = Mu({'mu': [10, 2], 'nu': [0]})
 
     derivative_to_first_mu_index = epf.d_mu('mu', 0)
     derivative_to_second_mu_index = epf.d_mu('mu', 1)
-    derivative_to_nu_index = epf.d_mu('nu', ())
+    derivative_to_nu_index = epf.d_mu('nu', 0)
 
     der_mu_1 = derivative_to_first_mu_index.evaluate(mu)
     der_mu_2 = derivative_to_second_mu_index.evaluate(mu)
@@ -97,51 +98,22 @@ def test_ExpressionParameterFunctional():
     assert hes_nu_mu_2 == 0
     assert hes_nu_nu == -0
 
-def test_ExpressionParameterFunctional_for_2d_array():
-    dict_of_d_mus_2d = {'mu': [['10', '20'],['1', '2']], 'nu': 'cos(nu)'}
-
-    epf2d = ExpressionParameterFunctional('10 * mu[(0,0)] + 20 * mu[(0,1)] \
-                                          + 1 * mu[(1,0)] + 2 *  mu[(1,1)] \
-                                          + sin(nu)',
-                                        {'mu': (2,2), 'nu': ()},
-                                        'functional_with_derivative',
-                                        dict_of_d_mus_2d)
-
-    derivative_to_11_mu_index = epf2d.d_mu('mu', (0,0))
-    derivative_to_12_mu_index = epf2d.d_mu('mu', (0,1))
-    derivative_to_21_mu_index = epf2d.d_mu('mu', (1,0))
-    derivative_to_22_mu_index = epf2d.d_mu('mu', (1,1))
-    derivative_to_nu_index = epf2d.d_mu('nu')
-
-    mu = {'mu': (1,2,3,4), 'nu': 0}
-
-    der_mu_11 = derivative_to_11_mu_index.evaluate(mu)
-    der_mu_12 = derivative_to_12_mu_index.evaluate(mu)
-    der_mu_21 = derivative_to_21_mu_index.evaluate(mu)
-    der_mu_22 = derivative_to_22_mu_index.evaluate(mu)
-    der_nu = derivative_to_nu_index.evaluate(mu)
-
-    assert epf2d.evaluate(mu) == 1*10 + 2*20 + 3*1 + 4*2 + 0
-    assert der_mu_11 == 10
-    assert der_mu_12 == 20
-    assert der_mu_21 == 1
-    assert der_mu_22 == 2
-    assert der_nu == 1
 
 def test_d_mu_of_LincombOperator():
-    dict_of_d_mus = {'mu': ['100', '2 * mu[0]'], 'nu': 'cos(nu)'}
+    dict_of_d_mus = {'mu': ['100', '2 * mu[0]'], 'nu': ['cos(nu[0])']}
 
-    dict_of_second_derivative = {'mu': [{'mu': ['0', '2'], 'nu': '0'},
-                              {'mu': ['2', '0'], 'nu': '0'}],
-                       'nu': {'mu': ['0', '0'], 'nu': '-sin(nu)'}}
+    dict_of_second_derivative = {
+        'mu': [{'mu': ['0', '2'], 'nu': ['0']}, {'mu': ['2', '0'], 'nu': ['0']}],
+        'nu': [{'mu': ['0', '0'], 'nu': ['-sin(nu[0])']}]
+    }
 
-    pf = ProjectionParameterFunctional('mu', (2,), (0,))
-    epf = ExpressionParameterFunctional('100 * mu[0] + 2 * mu[1] * mu[0] + sin(nu)',
-                                        {'mu': (2,), 'nu': ()},
+    pf = ProjectionParameterFunctional('mu', 2, 0)
+    epf = ExpressionParameterFunctional('100 * mu[0] + 2 * mu[1] * mu[0] + sin(nu[0])',
+                                        {'mu': 2, 'nu': 1},
                                         'functional_with_derivative',
                                         dict_of_d_mus, dict_of_second_derivative)
 
-    mu = {'mu': (10,2), 'nu': 0}
+    mu = Mu({'mu': [10, 2], 'nu': [0]})
 
     space = NumpyVectorSpace(1)
     zero_op = ZeroOperator(space, space)
@@ -152,7 +124,7 @@ def test_d_mu_of_LincombOperator():
 
     op_sensitivity_to_first_mu = operator.d_mu('mu', 0)
     op_sensitivity_to_second_mu = operator.d_mu('mu', 1)
-    op_sensitivity_to_nu = operator.d_mu('nu', ())
+    op_sensitivity_to_nu = operator.d_mu('nu', 0)
 
     eval_mu_1 = op_sensitivity_to_first_mu.evaluate_coefficients(mu)
     eval_mu_2 = op_sensitivity_to_second_mu.evaluate_coefficients(mu)

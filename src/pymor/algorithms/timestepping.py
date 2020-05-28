@@ -57,8 +57,8 @@ class TimeStepper(ImmutableObject):
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
-            |Parameter| for which `operator` and `rhs` are evaluated. The current time is added
-            to `mu` with key `_t`.
+            |Parameter values| for which `operator` and `rhs` are evaluated. The current
+            time is added to `mu` with key `t`.
         num_values
             The number of returned vectors of the solution trajectory. If `None`, each
             intermediate vector that is calculated is returned.
@@ -132,7 +132,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     elif isinstance(F, Operator):
         assert F.source.dim == 1
         assert F.range == A.range
-        F_time_dep = F.parametric and '_t' in F.parameter_type
+        F_time_dep = F.parametric and 't' in F.parameters
         if not F_time_dep:
             dt_F = F.as_vector(mu) * dt
     else:
@@ -157,7 +157,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
               M.solver_options if solver_options == 'mass' else \
               solver_options
     M_dt_A = (M + A * dt).with_(solver_options=options)
-    if not M_dt_A.parametric or '_t' not in M_dt_A.parameter_type:
+    if not M_dt_A.parametric or 't' not in M_dt_A.parameters:
         M_dt_A = M_dt_A.assemble(mu)
 
     t = t0
@@ -165,7 +165,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
 
     for n in range(nt):
         t += dt
-        mu['_t'] = t
+        mu = mu.with_(t=t)
         rhs = M.apply(U)
         if F_time_dep:
             dt_F = F.as_vector(mu) * dt
@@ -187,7 +187,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     if isinstance(F, Operator):
         assert F.source.dim == 1
         assert F.range == A.range
-        F_time_dep = F.parametric and '_t' in F.parameter_type
+        F_time_dep = F.parametric and 't' in F.parameters
         if not F_time_dep:
             F_ass = F.as_vector(mu)
     elif isinstance(F, VectorArray):
@@ -199,7 +199,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     assert len(U0) == 1
     assert U0 in A.source
 
-    A_time_dep = A.parametric and '_t' in A.parameter_type
+    A_time_dep = A.parametric and 't' in A.parameters
     if not A_time_dep:
         A = A.assemble(mu)
 
@@ -214,14 +214,14 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     if F is None:
         for n in range(nt):
             t += dt
-            mu['_t'] = t
+            mu = mu.with_(t=t)
             U.axpy(-dt, A.apply(U, mu=mu))
             while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
     else:
         for n in range(nt):
             t += dt
-            mu['_t'] = t
+            mu = mu.with_(t=t)
             if F_time_dep:
                 F_ass = F.as_vector(mu)
             U.axpy(dt, F_ass - A.apply(U, mu=mu))

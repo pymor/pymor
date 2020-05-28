@@ -17,7 +17,7 @@ class SORIRKAReductor(GenericIRKAReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)

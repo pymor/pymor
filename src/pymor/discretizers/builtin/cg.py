@@ -55,7 +55,6 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         assert not dirichlet_clear_dofs or boundary_info
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
-        self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -122,7 +121,6 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
         assert not (boundary_type or dirichlet_clear_dofs) or boundary_info
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
-        self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -171,7 +169,6 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
         assert grid.reference_element(0) in {line, triangle, square}
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
-        self.build_parameter_type(dirichlet_data)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -211,7 +208,6 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         assert not dirichlet_clear_dofs or boundary_info
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
-        self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -282,7 +278,6 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         assert grid.reference_element in (line, triangle)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        self.build_parameter_type(coefficient_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -373,7 +368,6 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         assert grid.reference_element in {square}
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        self.build_parameter_type(coefficient_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -474,8 +468,6 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
                 or diffusion_function.shape_range == (grid.dim,) * 2)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        if diffusion_function is not None:
-            self.build_parameter_type(diffusion_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -588,8 +580,6 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
                 or diffusion_function.shape_range == (grid.dim,) * 2)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        if diffusion_function is not None:
-            self.build_parameter_type(diffusion_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -700,8 +690,6 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
                 and advection_function.shape_range == (grid.dim,))
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        if advection_function is not None:
-            self.build_parameter_type(advection_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -811,8 +799,6 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
                 and advection_function.shape_range == (grid.dim,))
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        if advection_function is not None:
-            self.build_parameter_type(advection_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -919,8 +905,6 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
                                           for f in robin_data])
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
-        if self.robin_data is not None:
-            self.build_parameter_type(self.robin_data[0])
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -980,7 +964,6 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         assert function.shape_range == ()
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
-        self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
         return self.function.evaluate(self.grid.centers(self.grid.dim), mu=mu).reshape((-1, 1))
@@ -1195,10 +1178,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     else:
         output_functional = None
 
-    parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
-
     m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
-                         parameter_space=parameter_space, name=f'{p.name}_CG')
+                         name=f'{p.name}_CG')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
@@ -1289,7 +1270,6 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
                           products=m.products,
                           output_functional=m.output_functional,
                           time_stepper=time_stepper,
-                          parameter_space=p.parameter_space,
                           visualizer=m.visualizer,
                           num_values=num_values, name=f'{p.name}_CG')
 

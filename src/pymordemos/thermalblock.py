@@ -79,6 +79,8 @@ def main(args):
     else:
         fom, fom_summary = discretize_pymor(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
 
+    parameter_space = fom.parameters.space(0.1, 1.)
+
     if args['--cache-region'] != 'none':
         # building a cache_id is only needed for persistent CacheRegions
         cache_id = (f"pymordemos.thermalblock {args['--fenics']} {args['XBLOCKS']} {args['YBLOCKS']}"
@@ -89,7 +91,7 @@ def main(args):
         print('Showing some solutions')
         Us = ()
         legend = ()
-        for mu in fom.parameter_space.sample_randomly(2):
+        for mu in parameter_space.sample_randomly(2):
             print(f"Solving for diffusion = \n{mu['diffusion']} ... ")
             sys.stdout.flush()
             Us = Us + (fom.solve(mu),)
@@ -101,7 +103,7 @@ def main(args):
 
     # define estimator for coercivity constant
     from pymor.parameters.functionals import ExpressionParameterFunctional
-    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameter_type)
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
 
     # inner product for computation of Riesz representatives
     product = fom.h1_0_semi_product if args['--product'] == 'h1' else None
@@ -118,17 +120,20 @@ def main(args):
         assert False  # this should never happen
 
     if args['--alg'] == 'naive':
-        rom, red_summary = reduce_naive(fom=fom, reductor=reductor, basis_size=args['RBSIZE'])
+        rom, red_summary = reduce_naive(fom=fom, reductor=reductor, parameter_space=parameter_space,
+                                        basis_size=args['RBSIZE'])
     elif args['--alg'] == 'greedy':
         parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS model
-        rom, red_summary = reduce_greedy(fom=fom, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+        rom, red_summary = reduce_greedy(fom=fom, reductor=reductor, parameter_space=parameter_space,
+                                         snapshots_per_block=args['SNAPSHOTS'],
                                          extension_alg_name=args['--extension-alg'],
                                          max_extensions=args['RBSIZE'],
                                          use_estimator=not args['--greedy-without-estimator'],
                                          pool=pool if parallel else None)
     elif args['--alg'] == 'adaptive_greedy':
         parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS model
-        rom, red_summary = reduce_adaptive_greedy(fom=fom, reductor=reductor, validation_mus=args['SNAPSHOTS'],
+        rom, red_summary = reduce_adaptive_greedy(fom=fom, reductor=reductor, parameter_space=parameter_space,
+                                                  validation_mus=args['SNAPSHOTS'],
                                                   extension_alg_name=args['--extension-alg'],
                                                   max_extensions=args['RBSIZE'],
                                                   use_estimator=not args['--greedy-without-estimator'],
@@ -137,7 +142,8 @@ def main(args):
                                                   theta=args['--adaptive-greedy-theta'],
                                                   pool=pool if parallel else None)
     elif args['--alg'] == 'pod':
-        rom, red_summary = reduce_pod(fom=fom, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+        rom, red_summary = reduce_pod(fom=fom, reductor=reductor, parameter_space=parameter_space,
+                                      snapshots_per_block=args['SNAPSHOTS'],
                                       basis_size=args['RBSIZE'])
     else:
         assert False  # this should never happen
@@ -145,7 +151,7 @@ def main(args):
     if args['--pickle']:
         print(f"\nWriting reduced model to file {args['--pickle']}_reduced ...")
         with open(args['--pickle'] + '_reduced', 'wb') as f:
-            dump(rom, f)
+            dump((rom, parameter_space), f)
         if not args['--fenics']:  # FEniCS data structures do not support serialization
             print(f"Writing detailed model and reductor to file {args['--pickle']}_detailed ...")
             with open(args['--pickle'] + '_detailed', 'wb') as f:
@@ -159,11 +165,11 @@ def main(args):
                                        estimator=True,
                                        error_norms=(fom.h1_0_semi_norm, fom.l2_norm),
                                        condition=True,
-                                       test_mus=args['--test'],
+                                       test_mus=parameter_space.sample_randomly(args['--test'], seed=999),
                                        basis_sizes=0 if args['--plot-error-sequence'] else 1,
                                        plot=args['--plot-error-sequence'],
-                                       pool=None if args['--fenics'] else pool,  # cannot pickle FEniCS model
-                                       random_seed=999)
+                                       pool=None if args['--fenics'] else pool  # cannot pickle FEniCS model
+                                       )
 
     print('\n*** RESULTS ***\n')
     print(fom_summary)
@@ -316,13 +322,12 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     from pymor.models.basic import StationaryModel
     from pymor.operators.constructions import LincombOperator, VectorOperator
     from pymor.parameters.functionals import ProjectionParameterFunctional
-    from pymor.parameters.spaces import CubicParameterSpace
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
     def parameter_functional_factory(x, y):
-        return ProjectionParameterFunctional(component_name='diffusion',
-                                             component_shape=(yblocks, xblocks),
-                                             index=(yblocks - y - 1, x),
+        return ProjectionParameterFunctional('diffusion',
+                                             size=yblocks*xblocks,
+                                             index=yblocks - y - 1 + x * yblocks,
                                              name=f'diffusion_{x}_{y}')
     parameter_functionals = tuple(parameter_functional_factory(x, y)
                                   for x in range(xblocks) for y in range(yblocks))
@@ -336,20 +341,18 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
 
     # build model
     visualizer = FenicsVisualizer(FenicsVectorSpace(V))
-    parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
     fom = StationaryModel(op, rhs, products={'h1_0_semi': h1_product,
                                              'l2': l2_product},
-                          parameter_space=parameter_space,
                           visualizer=visualizer)
 
     return fom
 
 
-def reduce_naive(fom, reductor, basis_size):
+def reduce_naive(fom, reductor, parameter_space, basis_size):
 
     tic = time.time()
 
-    training_set = fom.parameter_space.sample_randomly(basis_size)
+    training_set = parameter_space.sample_randomly(basis_size)
 
     for mu in training_set:
         reductor.extend_basis(fom.solve(mu), method='trivial')
@@ -366,13 +369,13 @@ def reduce_naive(fom, reductor, basis_size):
     return rom, summary
 
 
-def reduce_greedy(fom, reductor, snapshots_per_block,
+def reduce_greedy(fom, reductor, parameter_space, snapshots_per_block,
                   extension_alg_name, max_extensions, use_estimator, pool):
 
     from pymor.algorithms.greedy import rb_greedy
 
     # run greedy
-    training_set = fom.parameter_space.sample_uniformly(snapshots_per_block)
+    training_set = parameter_space.sample_uniformly(snapshots_per_block)
     greedy_data = rb_greedy(fom, reductor, training_set,
                             use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
                             extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
@@ -394,14 +397,14 @@ def reduce_greedy(fom, reductor, snapshots_per_block,
     return rom, summary
 
 
-def reduce_adaptive_greedy(fom, reductor, validation_mus,
+def reduce_adaptive_greedy(fom, reductor, parameter_space, validation_mus,
                            extension_alg_name, max_extensions, use_estimator,
                            rho, gamma, theta, pool):
 
     from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy
 
     # run greedy
-    greedy_data = rb_adaptive_greedy(fom, reductor, validation_mus=-validation_mus,
+    greedy_data = rb_adaptive_greedy(fom, reductor, parameter_space, validation_mus=-validation_mus,
                                      use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
                                      extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
                                      rho=rho, gamma=gamma, theta=theta, pool=pool)
@@ -423,12 +426,12 @@ def reduce_adaptive_greedy(fom, reductor, validation_mus,
     return rom, summary
 
 
-def reduce_pod(fom, reductor, snapshots_per_block, basis_size):
+def reduce_pod(fom, reductor, parameter_space, snapshots_per_block, basis_size):
     from pymor.algorithms.pod import pod
 
     tic = time.time()
 
-    training_set = fom.parameter_space.sample_uniformly(snapshots_per_block)
+    training_set = parameter_space.sample_uniformly(snapshots_per_block)
 
     print('Solving on training set ...')
     snapshots = fom.operator.source.empty(reserve=len(training_set))

@@ -65,8 +65,10 @@ class MPIOperator(Operator):
         self.__auto_init(locals())
         self.op = op = mpi.get_object(obj_id)
         self.linear = op.linear
+        self.parameters = op.parameters
+        self.parameters_own = op.parameters_own
+        self.parameters_internal = op.parameters_internal
         self.name = op.name
-        self.build_parameter_type(op)
         if mpi_source:
             local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, True, pickle_local_spaces)
             if all(ls == local_spaces[0] for ls in local_spaces):
@@ -85,7 +87,7 @@ class MPIOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         U = U.obj_id if self.mpi_source else U
         if self.mpi_range:
             return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply', U, mu=mu))
@@ -93,11 +95,11 @@ class MPIOperator(Operator):
             return mpi.call(mpi.method_call, self.obj_id, 'apply', U, mu=mu)
 
     def as_range_array(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_range_array', mu=mu))
 
     def as_source_array(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_source_array', mu=mu))
 
     def apply2(self, V, U, mu=None):
@@ -105,7 +107,7 @@ class MPIOperator(Operator):
             return super().apply2(V, U, mu=mu)
         assert V in self.range
         assert U in self.source
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         U = U.obj_id if self.mpi_source else U
         V = V.obj_id if self.mpi_range else V
         return mpi.call(mpi.method_call, self.obj_id, 'apply2', V, U, mu=mu)
@@ -115,14 +117,14 @@ class MPIOperator(Operator):
             return super().pairwise_apply2(V, U, mu=mu)
         assert V in self.range
         assert U in self.source
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         U = U.obj_id if self.mpi_source else U
         V = V.obj_id if self.mpi_range else V
         return mpi.call(mpi.method_call, self.obj_id, 'pairwise_apply2', V, U, mu=mu)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         V = V.obj_id if self.mpi_range else V
         if self.mpi_source:
             return self.source.make_array(
@@ -135,7 +137,7 @@ class MPIOperator(Operator):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
         assert V in self.range
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
                                                V.obj_id, mu=mu, least_squares=least_squares))
 
@@ -143,17 +145,17 @@ class MPIOperator(Operator):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
         assert U in self.source
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse_adjoint',
                                                U.obj_id, mu=mu, least_squares=least_squares))
 
     def jacobian(self, U, mu=None):
         assert U in self.source
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'jacobian', U.obj_id, mu=mu))
 
     def assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
 
     def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):

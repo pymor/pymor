@@ -58,10 +58,10 @@ def discretize_pymor():
                                     dim_domain=2)],
                 [1.,
                  100. - 1.,
-                 ExpressionParameterFunctional('top - 1.', {'top': 0})]
+                 ExpressionParameterFunctional('top[0] - 1.', {'top': 1})]
             ),
 
-            rhs=ConstantFunction(value=100., dim_domain=2) * ExpressionParameterFunctional('sin(10*pi*_t)', {'_t': ()}),
+            rhs=ConstantFunction(value=100., dim_domain=2) * ExpressionParameterFunctional('sin(10*pi*t[0])', {'t': 1}),
 
             dirichlet_data=ConstantFunction(value=0., dim_domain=2),
 
@@ -72,9 +72,7 @@ def discretize_pymor():
         T=1.,
 
         initial_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 10.',
-                                        dim_domain=2),
-
-        parameter_space=CubicParameterSpace({'top': 0}, minimum=1, maximum=100.)
+                                        dim_domain=2)
     )
 
     # discretize using continuous finite elements
@@ -161,7 +159,7 @@ def _discretize_fenics():
                                  [1.,
                                   1.,
                                   100. - 1.,
-                                  ExpressionParameterFunctional('top - 1.', {'top': 0})]),
+                                  ExpressionParameterFunctional('top[0] - 1.', {'top': 1})]),
 
         rhs=VectorOperator(FenicsVectorSpace(V).make_array([f])),
 
@@ -174,8 +172,6 @@ def _discretize_fenics():
 
         time_stepper=ImplicitEulerTimeStepper(nt=NT),
 
-        parameter_space=CubicParameterSpace({'top': 0}, minimum=1, maximum=100.),
-
         visualizer=FenicsVisualizer(FenicsVectorSpace(V))
     )
 
@@ -187,9 +183,9 @@ def _discretize_fenics():
 ####################################################################################################
 
 
-def reduce_greedy(fom, reductor, snapshots, basis_size):
+def reduce_greedy(fom, reductor, parameter_space, snapshots, basis_size):
 
-    training_set = fom.parameter_space.sample_uniformly(snapshots)
+    training_set = parameter_space.sample_uniformly(snapshots)
     pool = new_parallel_pool()
 
     greedy_data = rb_greedy(fom, reductor, training_set, max_extensions=basis_size, pool=pool)
@@ -197,19 +193,20 @@ def reduce_greedy(fom, reductor, snapshots, basis_size):
     return greedy_data['rom']
 
 
-def reduce_adaptive_greedy(fom, reductor, validation_mus, basis_size):
+def reduce_adaptive_greedy(fom, reductor, parameter_space, validation_mus, basis_size):
 
     pool = new_parallel_pool()
 
-    greedy_data = rb_adaptive_greedy(fom, reductor, validation_mus=validation_mus,
+    greedy_data = rb_adaptive_greedy(fom, reductor, parameter_space,
+                                     validation_mus=validation_mus,
                                      max_extensions=basis_size, pool=pool)
 
     return greedy_data['rom']
 
 
-def reduce_pod(fom, reductor, snapshots, basis_size):
+def reduce_pod(fom, reductor, parameter_space, snapshots, basis_size):
 
-    training_set = fom.parameter_space.sample_uniformly(snapshots)
+    training_set = parameter_space.sample_uniformly(snapshots)
 
     snapshots = fom.operator.source.empty()
     for mu in training_set:
@@ -236,20 +233,21 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
         fom = discretize_fenics()
     else:
         raise NotImplementedError
+    parameter_space=fom.parameters.space(1, 100)
 
     # select reduction algorithm with error estimator
     #################################################
-    coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameter_type)
+    coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameters)
     reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
     # generate reduced model
     ########################
     if ALG == 'greedy':
-        rom = reduce_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_greedy(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
     elif ALG == 'adaptive_greedy':
-        rom = reduce_adaptive_greedy(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_adaptive_greedy(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':
-        rom = reduce_pod(fom, reductor, SNAPSHOTS, RBSIZE)
+        rom = reduce_pod(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
     else:
         raise NotImplementedError
 
@@ -259,7 +257,7 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
         rom, fom=fom, reductor=reductor, estimator=True,
         error_norms=[lambda U: DT * np.sqrt(np.sum(fom.h1_0_semi_norm(U)[1:]**2))],
         error_norm_names=['l^2-h^1'],
-        condition=False, test_mus=TEST, random_seed=999, plot=True
+        condition=False, test_mus=parameter_space.sample_randomly(TEST, seed=999), plot=True
     )
 
     # show results

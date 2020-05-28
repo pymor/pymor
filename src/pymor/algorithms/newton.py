@@ -33,7 +33,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         If not `None`, a |VectorArray| of length 1 containing an initial guess for the
         solution `U`.
     mu
-        The |Parameter| for which to solve the equation.
+        The |parameter values| for which to solve the equation.
     error_norm
         The norm with which the norm of the residual is computed. If `None`, the
         Euclidean norm is used.

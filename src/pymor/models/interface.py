@@ -5,18 +5,18 @@
 from pymor.core.base import abstractmethod
 from pymor.core.cache import CacheableObject
 from pymor.operators.constructions import induced_norm
-from pymor.parameters.base import Parametric
+from pymor.parameters.base import ParametricObject, Mu
 from pymor.tools.frozendict import FrozenDict
 
 
-class Model(CacheableObject, Parametric):
+class Model(CacheableObject, ParametricObject):
     """Interface for model objects.
 
     A model object defines a discrete problem
     via its `class` and the |Operators| it contains.
     Furthermore, models can be
-    :meth:`solved <Model.solve>` for a given
-    |Parameter| resulting in a solution |VectorArray|.
+    :meth:`solved <Model.solve>` for given
+    |parameter values| resulting in a solution |VectorArray|.
 
     Attributes
     ----------
@@ -52,7 +52,7 @@ class Model(CacheableObject, Parametric):
         pass
 
     def solve(self, mu=None, return_output=False, **kwargs):
-        """Solve the discrete problem for the |Parameter| `mu`.
+        """Solve the discrete problem for the |parameter values| `mu`.
 
         The result will be :mod:`cached <pymor.core.cache>`
         in case caching has been activated for the given model.
@@ -60,9 +60,9 @@ class Model(CacheableObject, Parametric):
         Parameters
         ----------
         mu
-            |Parameter| for which to solve.
+            |Parameter values| for which to solve.
         return_output
-            If `True`, the model output for the given |Parameter| `mu` is
+            If `True`, the model output for the given |parameter values| `mu` is
             returned as a |VectorArray| from :attr:`output_space`.
 
         Returns
@@ -70,16 +70,18 @@ class Model(CacheableObject, Parametric):
         The solution |VectorArray|. When `return_output` is `True`,
         the output |VectorArray| is returned as second value.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         return self.cached_method_call(self._solve, mu=mu, return_output=return_output, **kwargs)
 
     def output(self, mu=None, **kwargs):
-        """Return the model output for given |Parameter| `mu`.
+        """Return the model output for given |parameter values| `mu`.
 
         Parameters
         ----------
         mu
-            |Parameter| for which to compute the output.
+            |Parameter values| for which to compute the output.
 
         Returns
         -------
@@ -99,7 +101,7 @@ class Model(CacheableObject, Parametric):
         U
             The solution obtained by :meth:`~solve`.
         mu
-            |Parameter| for which `U` has been obtained.
+            |Parameter values| for which `U` has been obtained.
 
         Returns
         -------

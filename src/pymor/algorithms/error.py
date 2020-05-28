@@ -12,8 +12,8 @@ from pymor.models.basic import StationaryModel
 from pymor.parallel.dummy import dummy_pool
 
 
-def reduction_error_analysis(rom, fom, reductor,
-                             test_mus=10, basis_sizes=0, random_seed=None,
+def reduction_error_analysis(rom, fom, reductor, test_mus,
+                             basis_sizes=0,
                              estimator=True, condition=False, error_norms=(), error_norm_names=None,
                              estimator_norm_index=0, custom=(),
                              plot=False, plot_custom_logarithmic=True,
@@ -32,18 +32,13 @@ def reduction_error_analysis(rom, fom, reductor,
     reductor
         The reductor which has created `rom`.
     test_mus
-        Either a list of |Parameters| to compute the errors for, or
-        the number of parameters which are sampled randomly from
-        `parameter_space` (if given) or `rom.parameter_space`.
+        List of |Parameters| to compute the errors for.
     basis_sizes
         Either a list of reduced basis dimensions to consider, or
         the number of dimensions (which are then selected equidistantly,
         always including the maximum reduced space dimension).
         The dimensions are input for the `dim`-Parameter of
         `reductor.reduce()`.
-    random_seed
-        If `test_mus` is a number, use this value as random seed
-        for drawing the |Parameters|.
     estimator
         If `True` evaluate the error estimator of `rom`
         on the test |Parameters|.
@@ -62,8 +57,9 @@ def reduction_error_analysis(rom, fom, reductor,
         this is the index of the norm in `error_norms` w.r.t. which
         to compute the effectivity of the estimator.
     custom
-        List of custom functions which are evaluated for each test |Parameter|
-        and basis size. The functions must have the signature ::
+        List of custom functions which are evaluated for each test
+        |parameter values| and basis size. The functions must have
+        the signature ::
 
             def custom_value(rom, fom, reductor, mu, dim):
                 pass
@@ -174,8 +170,6 @@ def reduction_error_analysis(rom, fom, reductor,
 
     tic = time.time()
 
-    if isinstance(test_mus, Number):
-        test_mus = rom.parameter_space.sample_randomly(test_mus, seed=random_seed)
     if isinstance(basis_sizes, Number):
         if basis_sizes == 1:
             basis_sizes = [rom.solution_space.dim]

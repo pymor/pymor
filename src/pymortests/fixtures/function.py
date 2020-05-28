@@ -37,7 +37,7 @@ def get_function_with_closure(y):
 
 generic_functions = \
     [GenericFunction(lambda x: x, dim_domain=2, shape_range=(2,)),
-     GenericFunction(lambda x, mu: mu['c']*x, dim_domain=1, shape_range=(1,), parameter_type={'c': ()}),
+     GenericFunction(lambda x, mu: mu['c'][0]*x, dim_domain=1, shape_range=(1,), parameters={'c': 1}),
      GenericFunction(A.unimportable_function, dim_domain=7, shape_range=()),
      GenericFunction(get_function_with_closure(42), dim_domain=1, shape_range=(2,))]
 
@@ -47,8 +47,8 @@ picklable_generic_functions = \
 
 expression_functions = \
     [ExpressionFunction('x', dim_domain=2, shape_range=(2,)),
-     ExpressionFunction("c*x", dim_domain=1, shape_range=(1,), parameter_type={'c': ()}),
-     ExpressionFunction("c[2]*sin(x)", dim_domain=1, shape_range=(1,), parameter_type={'c': (3,)})]
+     ExpressionFunction("c[0]*x", dim_domain=1, shape_range=(1,), parameters={'c': 1}),
+     ExpressionFunction("c[2]*sin(x)", dim_domain=1, shape_range=(1,), parameters={'c': 3})]
 
 
 @pytest.fixture(params=constant_functions + generic_functions + picklable_generic_functions + expression_functions)

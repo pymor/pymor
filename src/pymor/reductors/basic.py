@@ -193,7 +193,7 @@ class StationaryRBReductor(ProjectionBasedReductor):
         return projected_operators
 
     def build_rom(self, projected_operators, estimator):
-        return StationaryModel(parameter_space=self.fom.parameter_space, estimator=estimator, **projected_operators)
+        return StationaryModel(estimator=estimator, **projected_operators)
 
 
 class InstationaryRBReductor(ProjectionBasedReductor):
@@ -286,7 +286,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
     def build_rom(self, projected_operators, estimator):
         fom = self.fom
         return InstationaryModel(T=fom.T, time_stepper=fom.time_stepper, num_values=fom.num_values,
-                                 parameter_space=self.fom.parameter_space, estimator=estimator, **projected_operators)
+                                 estimator=estimator, **projected_operators)
 
 
 class LTIPGReductor(ProjectionBasedReductor):

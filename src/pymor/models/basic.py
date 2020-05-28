@@ -2,9 +2,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
 from pymor.operators.constructions import VectorOperator
+from pymor.parameters.base import Parameters
 from pymor.tools.formatrepr import indent_value
 from pymor.vectorarrays.interface import VectorArray
 
@@ -39,8 +42,6 @@ class StationaryModel(Model):
         problem is posed on. For each product with key `'x'` a corresponding
         attribute `x_product`, as well as a norm method `x_norm` is added to
         the model.
-    parameter_space
-        The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, m)` method. If `estimator` is
@@ -57,7 +58,7 @@ class StationaryModel(Model):
     """
 
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 parameter_space=None, estimator=None, visualizer=None, name=None):
+                 estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -68,7 +69,6 @@ class StationaryModel(Model):
 
         super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
-        self.build_parameter_type(operator, rhs, output_functional)
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
@@ -80,14 +80,11 @@ class StationaryModel(Model):
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    {"linear" if self.linear else "non-linear"}\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}\n'
             f'    output_space:    {self.output_space}\n'
         )
 
     def _solve(self, mu=None, return_output=False):
-        mu = self.parse_parameter(mu)
-
         # explicitly checking if logging is disabled saves the str(mu) call
         if not self.logging_disabled:
             self.logger.info(f'Solving {self.name} for {mu} ...')
@@ -122,7 +119,7 @@ class InstationaryModel(Model):
         (for the |Parameter|-dependent case) a vector-like |Operator|
         (i.e. a linear |Operator| with `source.dim == 1`) which
         applied to `NumpyVectorArray(np.array([1]))` will yield the
-        initial data for a given |Parameter|.
+        initial data for given |parameter values|.
     operator
         The |Operator| L.
     rhs
@@ -144,8 +141,6 @@ class InstationaryModel(Model):
         problem is posed on. For each product with key `'x'` a corresponding
         attribute `x_product`, as well as a norm method `x_norm` is added to
         the model.
-    parameter_space
-        The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, m)` method. If `estimator` is
@@ -162,8 +157,7 @@ class InstationaryModel(Model):
     """
 
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
-                 output_functional=None, products=None, parameter_space=None, estimator=None, visualizer=None,
-                 name=None):
+                 output_functional=None, products=None, estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -183,7 +177,7 @@ class InstationaryModel(Model):
 
         super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
-        self.build_parameter_type(initial_data, operator, rhs, mass, output_functional, provides={'_t': 0})
+        self.parameters_internal = {'t': 1}
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
@@ -194,7 +188,6 @@ class InstationaryModel(Model):
             f'    class: {self.__class__.__name__}\n'
             f'    {"linear" if self.linear else "non-linear"}\n'
             f'    T: {self.T}\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}\n'
             f'    output_space:    {self.output_space}\n'
         )
@@ -203,13 +196,11 @@ class InstationaryModel(Model):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
     def _solve(self, mu=None, return_output=False):
-        mu = self.parse_parameter(mu).copy()
-
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
             self.logger.info(f'Solving {self.name} for {mu} ...')
 
-        mu['_t'] = 0
+        mu = mu.with_(t=0.)
         U0 = self.initial_data.as_range_array(mu)
         U = self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                     initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
@@ -243,4 +234,4 @@ class InstationaryModel(Model):
             raise ValueError('Operators not linear.')
 
         from pymor.models.iosys import LTIModel
-        return LTIModel(A, B, C, E=E, parameter_space=self.parameter_space, visualizer=self.visualizer)
+        return LTIModel(A, B, C, E=E, visualizer=self.visualizer)

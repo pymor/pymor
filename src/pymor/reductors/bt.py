@@ -10,6 +10,7 @@ from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator
+from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 
 
@@ -21,12 +22,15 @@ class GenericBTReductor(BasicObject):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
+        if not isinstance(mu, Mu):
+            mu = fom.parameters.parse(mu)
+        assert fom.parameters.assert_compatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -103,8 +107,7 @@ class GenericBTReductor(BasicObject):
         # find reduced-order model
         if self.fom.parametric:
             fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                       for op in ['A', 'B', 'C', 'D', 'E']},
-                                    parameter_space=None)
+                                       for op in ['A', 'B', 'C', 'D', 'E']})
         else:
             fom_mu = self.fom
         self._pg_reductor = LTIPGReductor(fom_mu, self.W, self.V, projection in ('sr', 'biorth'))
@@ -126,7 +129,7 @@ class BTReductor(GenericBTReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
@@ -146,7 +149,7 @@ class LQGBTReductor(GenericBTReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     solver_options
         The solver options to use to solve the Riccati equations.
     """
@@ -184,7 +187,7 @@ class BRBTReductor(GenericBTReductor):
     gamma
         Upper bound for the :math:`\mathcal{H}_\infty`-norm.
     mu
-        |Parameter|.
+        |Parameter values|.
     solver_options
         The solver options to use to solve the positive Riccati equations.
     """

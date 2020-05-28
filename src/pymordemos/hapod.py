@@ -61,7 +61,7 @@ def hapod_demo(args):
     m, data = discretize_instationary_fv(p, grid_type=RectGrid, diameter=np.sqrt(2)/args['--grid'], nt=args['--nt'])
 
     U = m.solution_space.empty()
-    for mu in m.parameter_space.sample_randomly(args['--snap']):
+    for mu in p.parameter_space.sample_randomly(args['--snap']):
         U.append(m.solve(mu))
 
     tic = time()

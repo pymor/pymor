@@ -11,7 +11,7 @@ class FrozenDict(dict):
 
     @property
     def _blocked_attribute(self):
-        raise AttributeError('A frozendict cannot be modified.')
+        raise AttributeError(f'A {type(self).__name__} cannot be modified.')
 
     __delitem__ = __setitem__ = clear = _blocked_attribute
     pop = popitem = setdefault = update = _blocked_attribute
@@ -19,13 +19,18 @@ class FrozenDict(dict):
     def __new__(cls, *args, **kwargs):
         new = dict.__new__(cls)
         dict.__init__(new, *args, **kwargs)
+        new._post_init()
         return new
 
     def __init__(self, *args, **kwargs):
+        # ensure that dict cannot be modified by calling __init__
+        pass
+
+    def _post_init(self):
         pass
 
     def __repr__(self):
         return f'FrozenDict({dict.__repr__(self)})'
 
     def __reduce__(self):
-        return (FrozenDict, (dict(self),))
+        return (type(self), (dict(self),))

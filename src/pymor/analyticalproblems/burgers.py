@@ -8,7 +8,6 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.domaindescriptions import LineDomain, RectDomain, TorusDomain, CircleDomain
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
-from pymor.parameters.spaces import CubicParameterSpace
 
 
 def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=(1., 2.)):
@@ -52,18 +51,18 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
 
             rhs=None,
 
-            nonlinear_advection=ExpressionFunction('abs(x)**exponent * v',
-                                                   1, (1,), {'exponent': ()}, {'v': v}),
+            nonlinear_advection=ExpressionFunction('abs(x)**exponent[0] * v',
+                                                   1, (1,), {'exponent': 1}, {'v': v}),
 
-            nonlinear_advection_derivative=ExpressionFunction('exponent * abs(x)**(exponent-1) * sign(x) * v',
-                                                              1, (1,), {'exponent': ()}, {'v': v}),
+            nonlinear_advection_derivative=ExpressionFunction('exponent * abs(x)**(exponent[0]-1) * sign(x) * v',
+                                                              1, (1,), {'exponent': 1}, {'v': v}),
         ),
 
         T=0.3,
 
         initial_data=initial_data,
 
-        parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),
+        parameter_ranges={'exponent': parameter_range},
 
         name=f"burgers_problem({v}, {circle}, '{initial_data_type}')"
     )
@@ -113,17 +112,17 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
             rhs=None,
 
             nonlinear_advection=ExpressionFunction("abs(x)**exponent * v",
-                                                   1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
+                                                   1, (2,), {'exponent': 1}, {'v': np.array([vx, vy])}),
 
             nonlinear_advection_derivative=ExpressionFunction("exponent * abs(x)**(exponent-1) * sign(x) * v",
-                                                              1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
+                                                              1, (2,), {'exponent': 1}, {'v': np.array([vx, vy])}),
         ),
 
         initial_data=initial_data,
 
         T=0.3,
 
-        parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),
+        parameter_ranges=parameter_range,
 
         name=f"burgers_problem_2d({vx}, {vy}, {torus}, '{initial_data_type}')"
     )

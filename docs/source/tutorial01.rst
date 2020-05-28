@@ -301,27 +301,26 @@ Now, let us consider the Neumann data function:
 
    g_N((x_0, x_1), \mu_{neum}) := -\cos(\pi \cdot x_0)^2 \cdot\mu_{neum}
 
-with a single parameter :math:`\mu_{neum} \in \mathbb{R}`.
+with a single |Parameter| :math:`\mu_{neum} \in \mathbb{R}`.
 
-In pyMOR, a parameter is a dictionary of NumPy arrays. The individual
-items of the dictionary are called ‘parameter components’. Each
-parameter has a corresponding |ParameterType|, which assigns to each
-name of a parameter component the shape of the corresponding NumPy
-Array. In this example we have a single scalar valued parameter
-component which we call `'neum'`. Thus, the |ParameterType| will be ::
+In pyMOR, |parameter values| are specified as a dictionary of one-dimensional
+|NumPy arrays|. Each value in the dictionary must have a correct size specified by the
+|Parameters| of the |ParametricObject|. In this example we have a single scalar
+valued parameter which we call `'neum'`. Thus, the |Parameters| of the function
+will be ::
 
-   {'neum': ()}
+   {'neum': 1}
 
 We can then make the following definition of the Neumann data:
 
 .. nbplot::
 
-   neumann_data = ExpressionFunction('-cos(pi*x[...,0])**2*neum', 2, (), parameter_type= {'neum': ()})
+   neumann_data = ExpressionFunction('-cos(pi*x[...,0])**2*neum[0]', 2, (), parameters= {'neum': 1})
 
 Similar to the range of the function, pyMOR cannot infer from the given
-string expression the type of parameters used in the expression, so the
-|ParameterType| has to be provided as the `parameter_type` argument.
-The individual parameter components are then available as variables in
+string expression the parameters used in the expression, so these
+|Parameters| have to be provided as the `parameters` argument.
+The individual parameters are then available as variables in
 the expression.
 
 We can then proceed as usual and automatically obtain a parametric
@@ -341,26 +340,25 @@ We can then proceed as usual and automatically obtain a parametric
    )
    
    m, data = discretize_stationary_cg(problem, diameter=1/100)
-   m.parameter_type
+   m.parameters
 
-When solving the model, we now need to specify an appropriate
-|Parameter|:
+When solving the model, we now need to specify appropriate
+|parameter values|:
 
 .. nbplot::
 
-   m.visualize(m.solve({'neum': 1.}))
+   m.visualize(m.solve({'neum': [1.]}))
 
-For the :meth:`~pymor.models.interface.Model.solve` method, the parameter
-can also be specified as a sequence of numbers (in case of multiple components,
-the components are sorted alphabetically):
+For the :meth:`~pymor.models.interface.Model.solve` method, the
+parameter value can also be specified as a single number:
 
 .. nbplot::
 
    m.visualize(m.solve(-100))
 
 
-Multiple parameter components
------------------------------
+Multiple parameters
+-------------------
 
 Next we also want to to parametrize the diffusivity in the
 :math:`K \times K` circular disks by a scalar factor
@@ -369,10 +367,10 @@ Next we also want to to parametrize the diffusivity in the
 .. nbplot::
 
    diffusion = ExpressionFunction(
-       '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * (1 - diffu)',
+       '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * (1 - diffu[0])',
        2, (),
        values={'K': 10},
-       parameter_type= {'diffu': ()}
+       parameters= {'diffu': 1}
    )
 
 We proceed as usual:
@@ -386,18 +384,19 @@ We proceed as usual:
    )
    
    m, data = discretize_stationary_cg(problem, diameter=1/100)
-   m.parameter_type
+   m.parameters
 
 As we can see, pyMOR automatically derives that in this case the model
-depends on two parameter components, and we have to provide two values
+depends on two |Parameters|, and we have to provide two values
 when solving the model:
 
 .. nbplot::
 
    m.visualize(m.solve({'diffu': 0.001, 'neum': 1}))
 
-We can also simply specify a list of parameter values, in which case
-pyMOR assumes an alphabetical ordering of the parameter components:
+For :meth:`~pymor.models.interface.Model.solve` we can also
+simply pass a list of parameter values, in which case
+pyMOR assumes an alphabetical ordering of the parameters:
 
 .. nbplot::
 
@@ -446,7 +445,7 @@ the following image files:
    f_R = BitmapFunction('R.png', range=[1, 0])
    f_B = BitmapFunction('B.png', range=[1, 0])
 
-Next we need to define the parameter functionals
+Next we need to define the |ParameterFunctionals|
 
 .. math::
 
@@ -457,11 +456,11 @@ Similar to an |ExpressionFunction|, we can use
 
 .. nbplot::
 
-   theta_R = ExpressionParameterFunctional('R - 1', {'R': ()})
-   theta_B = ExpressionParameterFunctional('B - 1', {'B': ()})
+   theta_R = ExpressionParameterFunctional('R[0] - 1', {'R': 1})
+   theta_B = ExpressionParameterFunctional('B[0] - 1', {'B': 1})
 
-Note that the second argument is again the |ParameterType| whose
-components are used in the expression. Finally, we form the linear
+Note that the second argument is again the |Parameters|
+that are used in the expression. Finally, we form the linear
 combination using a |LincombFunction| which is given a list of
 |Functions| as the first and a corresponding list of
 |ParameterFunctionals| or constants as the second argument:
@@ -472,10 +471,10 @@ combination using a |LincombFunction| which is given a list of
        [ConstantFunction(1., 2), f_R, f_B],
        [1., theta_R, theta_B]
    )
-   diffusion.parameter_type
+   diffusion.parameters
 
 Again, pyMOR automatically derives that the evaluation of `diffusion`
-depends on the two parameter components `'B'` and `'R'`. Now, we can
+depends on the two |Parameters| `'B'` and `'R'`. Now, we can
 proceed as usual:
 
 .. nbplot::
@@ -500,5 +499,4 @@ The |LincombFunction| has become a |LincombOperator|, with the same
 linear coefficients but the |BitmapFunctions| replaced by
 corresponding stiffness matrices. Note that an additional summand
 appears which ensures correct enforcement of Dirichlet boundary values
-for all possible parameter combinations.
-
+for all possible parameter value combinations.

@@ -58,7 +58,6 @@ from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dump
 from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
-from pymor.parameters.spaces import CubicParameterSpace
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 
@@ -81,13 +80,12 @@ def thermalblock_demo(args):
     args['--theta'] = float(args['--theta'])
 
     problem = thermal_block_problem(num_blocks=(2, 2))
-    functionals = [ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
-                   ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': (2,)}),
-                   ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
-                   ExpressionParameterFunctional('diffusion[1]', {'diffusion': (2,)})]
+    functionals = [ExpressionParameterFunctional('diffusion[0]', {'diffusion': 2}),
+                   ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': 2}),
+                   ExpressionParameterFunctional('diffusion[0]', {'diffusion': 2}),
+                   ExpressionParameterFunctional('diffusion[1]', {'diffusion': 2})]
     problem = problem.with_(
         diffusion=problem.diffusion.with_(coefficients=functionals),
-        parameter_space=CubicParameterSpace({'diffusion': (2,)}, 0.1, 1.)
     )
 
     print('Discretize ...')
@@ -106,7 +104,7 @@ def thermalblock_demo(args):
         print('Showing some solutions')
         Us = ()
         legend = ()
-        for mu in fom.parameter_space.sample_randomly(2):
+        for mu in problem.parameter_space.sample_randomly(2):
             print(f"Solving for diffusion = \n{mu['diffusion']} ... ")
             sys.stdout.flush()
             Us = Us + (fom.solve(mu),)
@@ -117,7 +115,7 @@ def thermalblock_demo(args):
 
     product = fom.h1_0_semi_product if args['--product'] == 'h1' else None
     coercivity_estimator = ExpressionParameterFunctional('min([diffusion[0], diffusion[1]**2])',
-                                                         fom.parameter_type)
+                                                         fom.parameters)
     reductors = {'residual_basis': CoerciveRBReductor(fom, product=product,
                                                       coercivity_estimator=coercivity_estimator),
                  'traditional': SimpleCoerciveRBReductor(fom, product=product,
@@ -126,7 +124,7 @@ def thermalblock_demo(args):
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
     greedy_data = rb_adaptive_greedy(
-        fom, reductor,
+        fom, reductor, problem.parameter_space,
         validation_mus=args['--validation-mus'],
         rho=args['--rho'],
         gamma=args['--gamma'],
@@ -155,7 +153,7 @@ def thermalblock_demo(args):
                                        estimator=True,
                                        error_norms=(fom.h1_0_semi_norm,),
                                        condition=True,
-                                       test_mus=args['--test'],
+                                       test_mus=problem.parameter_space.sample_randomly(args['--test']),
                                        basis_sizes=25 if args['--plot-error-sequence'] else 1,
                                        plot=True,
                                        pool=pool)

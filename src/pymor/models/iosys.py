@@ -16,6 +16,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.parameters.base import Mu, Parameters
 from pymor.tools.formatrepr import indent_value
 from pymor.vectorarrays.block import BlockVectorSpace
 
@@ -65,7 +66,7 @@ class InputOutputModel(Model):
         w
             A sequence of angular frequencies at which to compute the transfer function.
         mu
-            |Parameter| for which to evaluate the transfer function.
+            |Parameter values| for which to evaluate the transfer function.
 
         Returns
         -------
@@ -75,8 +76,9 @@ class InputOutputModel(Model):
         """
         if not self.cont_time:
             raise NotImplementedError
-
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
 
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
@@ -87,7 +89,7 @@ class InputOutputModel(Model):
         w
             A sequence of angular frequencies at which to compute the transfer function.
         mu
-            |Parameter| for which to evaluate the transfer function.
+            |Parameter values| for which to evaluate the transfer function.
         ax
             Axis to which to plot.
             If not given, `matplotlib.pyplot.gca` is used.
@@ -172,8 +174,6 @@ class LTIModel(InputStateOutputModel):
         The |Operator| E or `None` (then E is assumed to be identity).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
-    parameter_space
-        The |ParameterSpace| for which the discrete problem is posed.
     solver_options
         The solver options to use to solve the Lyapunov equations.
     estimator
@@ -207,7 +207,7 @@ class LTIModel(InputStateOutputModel):
         The |Operator| E.
     """
 
-    def __init__(self, A, B, C, D=None, E=None, cont_time=True, parameter_space=None,
+    def __init__(self, A, B, C, D=None, E=None, cont_time=True,
                  solver_options=None, estimator=None, visualizer=None, name=None):
 
         assert A.linear
@@ -231,7 +231,6 @@ class LTIModel(InputStateOutputModel):
 
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, name=name)
-        self.build_parameter_type(A, B, C, D, E)
         self.__auto_init(locals())
 
     def __str__(self):
@@ -243,7 +242,6 @@ class LTIModel(InputStateOutputModel):
             f'    number of outputs:   {self.output_dim}\n'
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    linear time-invariant\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}'
         )
 
@@ -521,13 +519,15 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter| for which to compute the systems poles.
+            |Parameter values| for which to compute the systems poles.
 
         Returns
         -------
         One-dimensional |NumPy array| of system poles.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         A = self.A.assemble(mu=mu)
         E = self.E.assemble(mu=mu)
 
@@ -559,7 +559,7 @@ class LTIModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -567,7 +567,9 @@ class LTIModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         A = self.A
         B = self.B
         C = self.C
@@ -605,7 +607,7 @@ class LTIModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -613,7 +615,9 @@ class LTIModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         A = self.A
         B = self.B
         C = self.C
@@ -658,7 +662,7 @@ class LTIModel(InputStateOutputModel):
                 For `'c_dense'` and `'o_dense'` types, the method assumes there are no two system
                 poles which add to zero.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -671,7 +675,9 @@ class LTIModel(InputStateOutputModel):
 
         assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
 
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         A = self.A.assemble(mu)
         B = self.B
         C = self.C
@@ -706,7 +712,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -717,7 +723,9 @@ class LTIModel(InputStateOutputModel):
         Vh
             |NumPy array| of right singular vectors.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         cf = self.gramian('c_lrcf', mu=mu)
         of = self.gramian('o_lrcf', mu=mu)
         U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver='gesvd')
@@ -732,7 +740,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -751,7 +759,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -760,7 +768,9 @@ class LTIModel(InputStateOutputModel):
         """
         if not self.cont_time:
             raise NotImplementedError
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         if self.input_dim <= self.output_dim:
             cf = self.gramian('c_lrcf', mu=mu)
             return np.sqrt(self.C.apply(cf, mu=mu).l2_norm2().sum())
@@ -778,7 +788,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
         return_fpeak
             Whether to return the frequency at which the maximum is achieved.
         ab13dd_equilibrate
@@ -795,8 +805,10 @@ class LTIModel(InputStateOutputModel):
             raise NotImplementedError
         if not return_fpeak:
             return self.hinf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
 
-        mu = self.parse_parameter(mu)
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
         if self.order >= sparse_min_size():
@@ -825,7 +837,7 @@ class LTIModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -854,8 +866,6 @@ class TransferFunction(InputOutputModel):
         The complex derivative of `H` with respect to `s`.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
-    parameter_space
-        The |ParameterSpace| for which the discrete problem is posed.
     name
         Name of the system.
 
@@ -871,9 +881,9 @@ class TransferFunction(InputOutputModel):
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, input_space, output_space, tf, dtf, cont_time=True, parameter_space=None, name=None):
+    def __init__(self, input_space, output_space, tf, dtf, parameters={}, cont_time=True, name=None):
         super().__init__(input_space, output_space, cont_time=cont_time, name=name)
-        self.parameter_type = parameter_space.parameter_type if parameter_space else None
+        self.parameters_own = parameters
         self.__auto_init(locals())
 
     def __str__(self):
@@ -884,22 +894,25 @@ class TransferFunction(InputOutputModel):
             f'    number of outputs: {self.output_dim}\n'
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    linear time-invariant\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}'
         )
 
     def eval_tf(self, s, mu=None):
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         if not self.parametric:
             return self.tf(s)
         else:
-            mu = self.parse_parameter(mu)
             return self.tf(s, mu=mu)
 
     def eval_dtf(self, s, mu=None):
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         if not self.parametric:
             return self.dtf(s)
         else:
-            mu = self.parse_parameter(mu)
             return self.dtf(s, mu=mu)
 
     def __add__(self, other):
@@ -1058,8 +1071,6 @@ class SecondOrderModel(InputStateOutputModel):
         The |Operator| D or `None` (then D is assumed to be zero).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
-    parameter_space
-        The |ParameterSpace| for which the discrete problem is posed.
     solver_options
         The solver options to use to solve the Lyapunov equations.
     estimator
@@ -1097,7 +1108,7 @@ class SecondOrderModel(InputStateOutputModel):
         The |Operator| D.
     """
 
-    def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True, parameter_space=None,
+    def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
                  solver_options=None, estimator=None, visualizer=None, name=None):
 
         assert M.linear and M.source == M.range
@@ -1116,7 +1127,6 @@ class SecondOrderModel(InputStateOutputModel):
 
         super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, name=name)
-        self.build_parameter_type(M, E, K, B, Cp, Cv, D)
         self.__auto_init(locals())
 
     def __str__(self):
@@ -1129,7 +1139,6 @@ class SecondOrderModel(InputStateOutputModel):
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    second-order\n'
             f'    linear time-invariant\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}'
         )
 
@@ -1311,7 +1320,6 @@ class SecondOrderModel(InputStateOutputModel):
                            if isinstance(self.M, IdentityOperator) else
                            BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
                         cont_time=self.cont_time,
-                        parameter_space=self.parameter_space,
                         solver_options=self.solver_options, estimator=self.estimator, visualizer=self.visualizer,
                         name=self.name + '_first_order')
 
@@ -1417,7 +1425,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1444,7 +1452,7 @@ class SecondOrderModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1452,7 +1460,9 @@ class SecondOrderModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         M = self.M
         E = self.E
         K = self.K
@@ -1497,7 +1507,7 @@ class SecondOrderModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1505,7 +1515,9 @@ class SecondOrderModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         M = self.M
         E = self.E
         K = self.K
@@ -1561,7 +1573,7 @@ class SecondOrderModel(InputStateOutputModel):
                 For `'*_dense'` types, the method assumes there are no two system poles which add to
                 zero.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1591,7 +1603,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1611,7 +1623,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1631,7 +1643,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1651,7 +1663,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1672,7 +1684,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1691,7 +1703,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
         return_fpeak
             Should the frequency at which the maximum is achieved should be returned.
         ab13dd_equilibrate
@@ -1718,7 +1730,7 @@ class SecondOrderModel(InputStateOutputModel):
         Parameters
         ----------
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -1778,8 +1790,6 @@ class LinearDelayModel(InputStateOutputModel):
         The |Operator| E or `None` (then E is assumed to be identity).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
-    parameter_space
-        The |ParameterSpace| for which the discrete problem is posed.
     estimator
         An error estimator for the problem. This can be any object with an `estimate(U, mu, model)`
         method. If `estimator` is not `None`, an `estimate(U, mu)` method is added to the model
@@ -1817,7 +1827,7 @@ class LinearDelayModel(InputStateOutputModel):
         The |Operator| E.
     """
 
-    def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True, parameter_space=None,
+    def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True,
                  estimator=None, visualizer=None, name=None):
 
         assert A.linear and A.source == A.range
@@ -1836,7 +1846,6 @@ class LinearDelayModel(InputStateOutputModel):
         super().__init__(B.source, A.source, C.range, cont_time=cont_time,
                          estimator=estimator, visualizer=visualizer, name=name)
 
-        self.build_parameter_type(A, *Ad, B, C, D, E)
         self.__auto_init(locals())
         self.q = len(Ad)
         self.solution_space = A.source
@@ -1851,7 +1860,6 @@ class LinearDelayModel(InputStateOutputModel):
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    time-delay\n'
             f'    linear time-invariant\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}'
         )
 
@@ -2029,7 +2037,7 @@ class LinearDelayModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -2037,7 +2045,9 @@ class LinearDelayModel(InputStateOutputModel):
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
             `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         A = self.A
         Ad = self.Ad
         B = self.B
@@ -2080,7 +2090,7 @@ class LinearDelayModel(InputStateOutputModel):
         s
             Complex number.
         mu
-            |Parameter|.
+            |Parameter values|.
 
         Returns
         -------
@@ -2088,7 +2098,9 @@ class LinearDelayModel(InputStateOutputModel):
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
             shape `(self.output_dim, self.input_dim)`.
         """
-        mu = self.parse_parameter(mu)
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         A = self.A
         Ad = self.Ad
         B = self.B
@@ -2229,7 +2241,6 @@ class LinearStochasticModel(InputStateOutputModel):
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    stochastic\n'
             f'    linear time-invariant\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}'
         )
 
@@ -2347,6 +2358,5 @@ class BilinearModel(InputStateOutputModel):
             f'    number of outputs:   {self.output_dim}\n'
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    bilinear time-invariant\n'
-            f'    parameter_space: {indent_value(str(self.parameter_space), len("    parameter_space: "))}\n'
             f'    solution_space:  {self.solution_space}'
         )

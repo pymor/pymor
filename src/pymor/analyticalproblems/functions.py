@@ -7,12 +7,12 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.base import ImmutableObject, abstractmethod
-from pymor.parameters.base import Parametric
+from pymor.core.base import abstractmethod
+from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ExpressionParameterFunctional
 
 
-class Function(ImmutableObject, Parametric):
+class Function(ParametricObject):
     """Interface for |Parameter| dependent analytical functions.
 
     Every |Function| is a map of the form ::
@@ -45,7 +45,7 @@ class Function(ImmutableObject, Parametric):
 
     @abstractmethod
     def evaluate(self, x, mu=None):
-        """Evaluate the function for given argument `x` and |Parameter| `mu`."""
+        """Evaluate the function for given argument `x` and |parameter values| `mu`."""
         pass
 
     def __call__(self, x, mu=None):
@@ -129,8 +129,8 @@ class GenericFunction(Function):
     Parameters
     ----------
     mapping
-        The function to wrap. If `parameter_type` is `None`, the function is of
-        the form `mapping(x)`. If `parameter_type` is not `None`, the function has
+        The function to wrap. If `parameters` is `None`, the function is of
+        the form `mapping(x)`. If `parameters` is not `None`, the function has
         to have the signature `mapping(x, mu)`. Moreover, the function is expected
         to be vectorized, i.e.::
 
@@ -140,30 +140,29 @@ class GenericFunction(Function):
         The dimension of the domain.
     shape_range
         The shape of the values returned by the mapping.
-    parameter_type
-        The |ParameterType| the mapping accepts.
+    parameters
+        The |Parameters| the mapping accepts.
     name
         The name of the function.
     """
 
-    def __init__(self, mapping, dim_domain=1, shape_range=(), parameter_type=None, name=None):
+    def __init__(self, mapping, dim_domain=1, shape_range=(), parameters={}, name=None):
         assert dim_domain > 0
         assert isinstance(shape_range, (Number, tuple))
         if not isinstance(shape_range, tuple):
             shape_range = (shape_range,)
-        if parameter_type is not None:
-            self.build_parameter_type(parameter_type)
+        self.parameters_own = parameters
         self.__auto_init(locals())
 
     def __str__(self):
         return f'{self.name}: x -> {self.mapping}'
 
     def evaluate(self, x, mu=None):
+        assert self.parameters.assert_compatible(mu)
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
 
         if self.parametric:
-            mu = self.parse_parameter(mu)
             v = self.mapping(x, mu)
         else:
             v = self.mapping(x)
@@ -195,8 +194,8 @@ class ExpressionFunction(GenericFunction):
         The dimension of the domain.
     shape_range
         The shape of the values returned by the expression.
-    parameter_type
-        The |ParameterType| the expression accepts.
+    parameters
+        The |Parameters| the expression accepts.
     values
         Dictionary of additional constants that can be used in `expression`
         with their corresponding value.
@@ -206,16 +205,16 @@ class ExpressionFunction(GenericFunction):
 
     functions = ExpressionParameterFunctional.functions
 
-    def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, values=None, name=None):
+    def __init__(self, expression, dim_domain=1, shape_range=(), parameters={}, values=None, name=None):
         values = values or {}
         code = compile(expression, '<expression>', 'eval')
         super().__init__(lambda x, mu={}: eval(code, dict(self.functions, **values), dict(mu, x=x, mu=mu)),
-                         dim_domain, shape_range, parameter_type, name)
+                         dim_domain, shape_range, parameters, name)
         self.__auto_init(locals())
 
     def __reduce__(self):
         return (ExpressionFunction,
-                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.values,
+                (self.expression, self.dim_domain, self.shape_range, self.parameters, self.values,
                  getattr(self, '_name', None)))
 
 
@@ -249,18 +248,16 @@ class LincombFunction(Function):
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
         self.__auto_init(locals())
-        self.build_parameter_type(*chain(functions,
-                                         (f for f in coefficients if isinstance(f, ParameterFunctional))))
         self.dim_domain = functions[0].dim_domain
         self.shape_range = functions[0].shape_range
 
     def evaluate_coefficients(self, mu):
-        """Compute the linear coefficients for a given |Parameter| `mu`."""
-        mu = self.parse_parameter(mu)
+        """Compute the linear coefficients for given |parameter values| `mu`."""
+        assert self.parameters.assert_compatible(mu)
         return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
     def evaluate(self, x, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         coeffs = self.evaluate_coefficients(mu)
         return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))
 
@@ -286,12 +283,11 @@ class ProductFunction(Function):
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
         self.__auto_init(locals())
-        self.build_parameter_type(*functions)
         self.dim_domain = functions[0].dim_domain
         self.shape_range = functions[0].shape_range
 
     def evaluate(self, x, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         return np.prod([f(x, mu) for f in self.functions], axis=0)
 
 

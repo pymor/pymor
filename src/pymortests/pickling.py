@@ -11,10 +11,12 @@ from pymor.core.config import config
 from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
 from pymor.discretizers.builtin.grids.subgrid import SubGrid
 from pymor.operators.numpy import NumpyMatrixBasedOperator
+from pymor.parameters.base import ParametricObject
 
 is_equal_ignored_attributes = \
     ((SubGrid, {'_uid', '_CacheableObject__cache_region', '_SubGrid__parent_grid'}),
-     (NumpyMatrixBasedOperator, {'_uid', '_CacheableObject__cache_region', '_assembled_operator'}),
+     (NumpyMatrixBasedOperator, {'_uid', '_CacheableObject__cache_region', '_parameters', '_assembled_operator'}),
+     (ParametricObject, {'_name', '_uid', '_CacheableObject__cache_region', '_parameters'}),
      (BasicObject, {'_name', '_uid', '_CacheableObject__cache_region'}))
 
 is_equal_dispatch_table = {}

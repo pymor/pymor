@@ -121,13 +121,13 @@ def main(args):
 
     print(fom.operator.grid)
 
-    print(f'The parameter type is {fom.parameter_type}')
+    print(f'The parameters are {fom.parameters}')
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = ()
         legend = ()
-        for mu in fom.parameter_space.sample_uniformly(4):
+        for mu in problem.parameter_space.sample_uniformly(4):
             print(f"Solving for exponent = {mu['exponent']} ... ")
             sys.stdout.flush()
             Us = Us + (fom.solve(mu),)
@@ -136,7 +136,7 @@ def main(args):
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
     eim, ei_data = interpolate_operators(fom, ['operator'],
-                                         fom.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
+                                         problem.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
                                          error_norm=fom.l2_norm, product=fom.l2_product,
                                          max_interpolation_dofs=args['EISIZE'],
                                          alg=args['--ei-alg'],
@@ -146,7 +146,7 @@ def main(args):
         print('Showing some EI errors')
         ERRs = ()
         legend = ()
-        for mu in fom.parameter_space.sample_randomly(2):
+        for mu in problem.parameter_space.sample_randomly(2):
             print(f"Solving for exponent = \n{mu['exponent']} ... ")
             sys.stdout.flush()
             U = fom.solve(mu)
@@ -169,7 +169,7 @@ def main(args):
 
     reductor = InstationaryRBReductor(eim)
 
-    greedy_data = rb_greedy(fom, reductor, fom.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+    greedy_data = rb_greedy(fom, reductor, problem.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                             use_estimator=False, error_norm=lambda U: np.max(fom.l2_norm(U)),
                             extension_params={'method': 'pod'}, max_extensions=args['RBSIZE'],
                             pool=pool)
@@ -180,7 +180,7 @@ def main(args):
 
     tic = time.time()
 
-    mus = fom.parameter_space.sample_randomly(args['--test'])
+    mus = problem.parameter_space.sample_randomly(args['--test'])
 
     def error_analysis(N, M):
         print(f'N = {N}, M = {M}: ', end='')

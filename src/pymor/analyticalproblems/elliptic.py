@@ -4,11 +4,11 @@
 
 import numpy as np
 
-from pymor.core.base import ImmutableObject
+from pymor.parameters.base import ParametricObject, ParameterSpace
 from pymor.tools.frozendict import FrozenDict
 
 
-class StationaryProblem(ImmutableObject):
+class StationaryProblem(ParametricObject):
     """Linear elliptic problem description.
 
     The problem consists in solving ::
@@ -55,8 +55,8 @@ class StationaryProblem(ImmutableObject):
             :l2:            Evaluate the l2-product with the given data function.
             :l2_boundary:   Evaluate the l2-product with the given data function
                             on the boundary.
-    parameter_space
-        |ParameterSpace| for the problem.
+    parameter_ranges
+        Ranges of interest for the |Parameters| of the problem.
     name
         Name of the problem.
 
@@ -82,7 +82,7 @@ class StationaryProblem(ImmutableObject):
                  advection=None, nonlinear_advection=None, nonlinear_advection_derivative=None,
                  reaction=None, nonlinear_reaction=None, nonlinear_reaction_derivative=None,
                  dirichlet_data=None, neumann_data=None, robin_data=None, outputs=None,
-                 parameter_space=None, name=None):
+                 parameter_ranges=None, name=None):
 
         assert (rhs is None
                 or rhs.dim_domain == domain.dim and rhs.shape_range == ())
@@ -111,7 +111,26 @@ class StationaryProblem(ImmutableObject):
         assert (outputs is None
                 or all(isinstance(v, tuple) and len(v) == 2 and v[0] in ('l2', 'l2_boundary')
                        and v[1].dim_domain == domain.dim and v[1].shape_range == () for v in outputs))
+        assert (parameter_ranges is None
+                or (isinstance(parameter_ranges, (list, tuple))
+                    and len(parameter_ranges) == 2
+                    and parameter_ranges[0] <= parameter_ranges[1])
+                or (isinstance(parameter_ranges, dict)
+                    and all(isinstance(v, (list, tuple)) and len(v) == 2 and v[0] <= v[1]
+                            for v in parameter_ranges.values())))
 
         outputs = tuple(outputs) if outputs is not None else None
+        parameter_ranges = (
+            None if parameter_ranges is None else
+            tuple(parameter_ranges) if isinstance(parameter_ranges, (list, tuple)) else
+            FrozenDict((k, tuple(v)) for k, v in parameter_ranges.items())
+        )
 
         self.__auto_init(locals())
+
+    @property
+    def parameter_space(self):
+        if self.parameter_ranges is None:
+            return None
+        else:
+            return ParameterSpace(self.parameters, self.parameter_ranges)

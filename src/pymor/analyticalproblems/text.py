@@ -7,7 +7,6 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction, BitmapFunction
 from pymor.core.defaults import defaults
 from pymor.parameters.functionals import ProjectionParameterFunctional
-from pymor.parameters.spaces import CubicParameterSpace
 
 
 @defaults('font_name')
@@ -55,12 +54,12 @@ def text_problem(text='pyMOR', font_name=None):
 
     # form the linear combination
     dfs = [background] + dfs
-    coefficients = [1] + [ProjectionParameterFunctional('diffusion', (len(text),), (i,)) for i in range(len(text))]
+    coefficients = [1] + [ProjectionParameterFunctional('diffusion', len(text), i) for i in range(len(text))]
     diffusion = LincombFunction(dfs, coefficients)
 
     return StationaryProblem(
         domain=RectDomain(dfs[1].bounding_box, bottom='neumann'),
         neumann_data=ConstantFunction(-1., 2),
         diffusion=diffusion,
-        parameter_space=CubicParameterSpace(diffusion.parameter_type, 0.1, 1.)
+        parameter_ranges=(0.1, 1.)
     )

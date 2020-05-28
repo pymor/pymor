@@ -12,8 +12,7 @@ from pymor.core.base import BasicObject
 from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
-from pymor.parameters.base import Parameter
-from pymor.parameters.spaces import CubicParameterSpace
+from pymor.parameters.base import Mu, ParameterSpace
 from pymor.tools.deprecated import Deprecated
 
 
@@ -227,7 +226,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
             'time': tictoc}
 
 
-def rb_adaptive_greedy(fom, reductor, parameter_space=None,
+def rb_adaptive_greedy(fom, reductor, parameter_space,
                        use_estimator=True, error_norm=None,
                        target_error=None, max_extensions=None,
                        validation_mus=0, rho=1.1, gamma=0.2, theta=0.,
@@ -247,8 +246,7 @@ def rb_adaptive_greedy(fom, reductor, parameter_space=None,
     reductor
         See :func:`~pymor.algorithms.greedy.rb_greedy`.
     parameter_space
-        The |ParameterSpace| for which to compute the reduced model. If `None`,
-        the parameter space of `fom` is used.
+        The |ParameterSpace| for which to compute the reduced model.
     use_estimator
         See :func:`~pymor.algorithms.greedy.rb_greedy`.
     error_norm
@@ -290,8 +288,6 @@ def rb_adaptive_greedy(fom, reductor, parameter_space=None,
         :time:                   Duration of the algorithm.
     """
 
-    parameter_space = parameter_space or fom.parameter_space
-
     surrogate = RBSurrogate(fom, reductor, use_estimator, error_norm, extension_params, pool or dummy_pool)
 
     result = adaptive_weak_greedy(surrogate, parameter_space, target_error=target_error, max_extensions=max_extensions,
@@ -314,12 +310,12 @@ class AdaptiveSampleSet(BasicObject):
     """
 
     def __init__(self, parameter_space):
-        assert isinstance(parameter_space, CubicParameterSpace)
+        assert isinstance(parameter_space, ParameterSpace)
         self.parameter_space = parameter_space
-        self.parameter_type = parameter_space.parameter_type
+        self.parameters = parameter_space.parameters
         self.ranges = np.concatenate([np.tile(np.array(parameter_space.ranges[k])[np.newaxis, :],
                                               [np.prod(shape), 1])
-                                      for k, shape in parameter_space.parameter_type.items()], axis=0)
+                                      for k, shape in parameter_space.parameters.items()], axis=0)
         self.dimensions = self.ranges[:, 1] - self.ranges[:, 0]
         self.total_volume = np.prod(self.dimensions)
         self.dim = len(self.dimensions)
@@ -339,12 +335,12 @@ class AdaptiveSampleSet(BasicObject):
 
     def map_vertex_to_mu(self, vertex):
         values = self.ranges[:, 0] + self.dimensions * list(map(float, vertex))
-        mu = Parameter({})
-        for k, shape in self.parameter_type.items():
+        mu = {}
+        for k, shape in self.parameters.items():
             count = np.prod(shape, dtype=int)
             head, values = values[:count], values[count:]
             mu[k] = np.array(head).reshape(shape)
-        return mu
+        return Mu(mu)
 
     def visualize(self, vertex_data=None, vertex_inds=None, center_data=None, center_inds=None, volume_data=None,
                   vertex_size=80, vmin=None, vmax=None, new_figure=True):

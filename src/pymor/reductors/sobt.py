@@ -10,6 +10,7 @@ from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
 from pymor.models.iosys import SecondOrderModel
 from pymor.operators.constructions import IdentityOperator
+from pymor.parameters.base import Mu
 from pymor.reductors.basic import SOLTIPGReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -24,12 +25,15 @@ class GenericSOBTpvReductor(BasicObject):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
+        if not isinstance(mu, Mu):
+            mu = fom.parameters.parse(mu)
+        assert fom.parameters.assert_compatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -88,8 +92,7 @@ class GenericSOBTpvReductor(BasicObject):
         # find the reduced model
         if self.fom.parametric:
             fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']},
-                                    parameter_space=None)
+                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']})
         else:
             fom_mu = self.fom
         self._pg_reductor = SOLTIPGReductor(fom_mu, self.W, self.V, projection == 'biorth')
@@ -111,7 +114,7 @@ class SOBTpReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
@@ -138,7 +141,7 @@ class SOBTvReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
@@ -162,7 +165,7 @@ class SOBTpvReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
@@ -186,7 +189,7 @@ class SOBTvpReductor(GenericSOBTpvReductor):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def _gramians(self):
         pof = self.fom.gramian('po_lrcf', mu=self.mu)
@@ -212,12 +215,15 @@ class SOBTfvReductor(BasicObject):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
+        if not isinstance(mu, Mu):
+            mu = fom.parameters.parse(mu)
+        assert fom.parameters.assert_compatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -271,8 +277,7 @@ class SOBTfvReductor(BasicObject):
         # find the reduced model
         if self.fom.parametric:
             fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']},
-                                    parameter_space=None)
+                                       for op in ['M', 'E', 'K', 'B', 'Cp', 'Cv']})
         else:
             fom_mu = self.fom
         self._pg_reductor = SOLTIPGReductor(fom_mu, self.W, self.V, projection == 'biorth')
@@ -294,12 +299,15 @@ class SOBTReductor(BasicObject):
     fom
         The full-order |SecondOrderModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
+        if not isinstance(mu, Mu):
+            mu = fom.parameters.parse(mu)
+        assert fom.parameters.assert_compatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V1 = None
         self.W1 = None
         self.V2 = None

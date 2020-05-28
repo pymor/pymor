@@ -11,11 +11,10 @@ from numbers import Number
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
-from pymor.parameters.base import Parametric
+from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -54,8 +53,6 @@ class LincombOperator(Operator):
         self.source = operators[0].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
-        self.build_parameter_type(*chain(operators,
-                                         (f for f in coefficients if isinstance(f, ParameterFunctional))))
 
     @property
     def H(self):
@@ -68,18 +65,18 @@ class LincombOperator(Operator):
                           name=self.name + '_adjoint')
 
     def evaluate_coefficients(self, mu):
-        """Compute the linear coefficients for a given |Parameter|.
+        """Compute the linear coefficients for given |parameter values|.
 
         Parameters
         ----------
         mu
-            |Parameter| for which to compute the linear coefficients.
+            |Parameter values| for which to compute the linear coefficients.
 
         Returns
         -------
         List of linear coefficients.
         """
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         return [c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients]
 
     def apply(self, U, mu=None):
@@ -154,14 +151,14 @@ class LincombOperator(Operator):
         else:
             return jac
 
-    def d_mu(self, component, index=()):
+    def d_mu(self, parameter, index=0):
         for op in self.operators:
-            if op.parametric:
+            if parameter in op.parameters:
                 raise NotImplementedError
         derivative_coefficients = []
         for coef in self.coefficients:
-            if isinstance(coef, Parametric):
-                derivative_coefficients.append(coef.d_mu(component, index))
+            if isinstance(coef, ParametricObject):
+                derivative_coefficients.append(coef.d_mu(parameter, index))
             else:
                 derivative_coefficients.append(0.)
         return self.with_(coefficients=derivative_coefficients, name=self.name + '_d_mu')
@@ -282,7 +279,6 @@ class Concatenation(Operator):
         operators = tuple(operators)
 
         self.__auto_init(locals())
-        self.build_parameter_type(*operators)
         self.source = operators[-1].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
@@ -295,13 +291,13 @@ class Concatenation(Operator):
                           name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         for op in self.operators[::-1]:
             U = op.apply(U, mu=mu)
         return U
 
     def apply_adjoint(self, V, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         for op in self.operators:
             V = op.apply_adjoint(V, mu=mu)
         return V
@@ -394,7 +390,6 @@ class ProjectedOperator(Operator):
         if range_basis is not None:
             range_basis = range_basis.copy()
         self.__auto_init(locals())
-        self.build_parameter_type(operator)
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
         self.linear = operator.linear
@@ -409,7 +404,7 @@ class ProjectedOperator(Operator):
             return ProjectedOperator(self.operator.H, self.source_basis, self.range_basis, solver_options=options)
 
     def apply(self, U, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         if self.source_basis is None:
             if self.range_basis is None:
                 return self.operator.apply(U, mu=mu)
@@ -429,10 +424,10 @@ class ProjectedOperator(Operator):
                 return self.range.make_array(self.product.apply2(V, self.range_basis))
 
     def jacobian(self, U, mu=None):
+        assert len(U) == 1
+        assert self.parameters.assert_compatible(mu)
         if self.linear:
             return self.assemble(mu)
-        assert len(U) == 1
-        mu = self.parse_parameter(mu)
         if self.source_basis is None:
             J = self.operator.jacobian(U, mu=mu)
         else:
@@ -985,7 +980,6 @@ class ProxyOperator(Operator):
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
-        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -1012,23 +1006,24 @@ class ProxyOperator(Operator):
 
 
 class FixedParameterOperator(ProxyOperator):
-    """Makes an |Operator| |Parameter|-independent by setting a fixed |Parameter|.
+    """Makes an |Operator| |Parameter|-independent by setting fixed |parameter values|.
 
     Parameters
     ----------
     operator
         The |Operator| to wrap.
     mu
-        The fixed |Parameter| that will be fed to the
+        The fixed |parameter values| that will be fed to the
         :meth:`~pymor.operators.interface.Operator.apply` method
         (and related methods) of `operator`.
     """
 
     def __init__(self, operator, mu=None, name=None):
         super().__init__(operator, name)
-        assert operator.parse_parameter(mu) or True
-        self.mu = mu.copy()
-        self.build_parameter_type()
+        assert operator.parameters.assert_compatible(mu)
+        self.mu = mu
+        if mu:
+            self.parameters_internal = mu.parameters
 
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=self.mu)
@@ -1087,7 +1082,6 @@ class InverseOperator(Operator):
         self.source = operator.range
         self.range = operator.source
         self.linear = operator.linear
-        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -1131,7 +1125,6 @@ class InverseAdjointOperator(Operator):
         self.__auto_init(locals())
         self.source = operator.source
         self.range = operator.range
-        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -1206,7 +1199,6 @@ class AdjointOperator(Operator):
         self.__auto_init(locals())
         self.source = operator.range
         self.range = operator.source
-        self.build_parameter_type(operator)
 
     @property
     def H(self):
@@ -1276,7 +1268,7 @@ class SelectionOperator(Operator):
     ----------
     operators
         List of |Operators| from which one |Operator| is
-        selected based on the given |Parameter|.
+        selected based on the given |parameter values|.
     parameter_functional
         The |ParameterFunctional| used for the selection of one |Operator|.
     boundaries
@@ -1301,7 +1293,6 @@ class SelectionOperator(Operator):
         self.source = operators[0].source
         self.range = operators[0].range
         self.linear = all(op.linear for op in operators)
-        self.build_parameter_type(parameter_functional, *operators)
 
     @property
     def H(self):
@@ -1316,27 +1307,27 @@ class SelectionOperator(Operator):
         return len(self.boundaries)
 
     def assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         op = self.operators[self._get_operator_number(mu)]
         return op.assemble(mu)
 
     def apply(self, U, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].apply(U, mu=mu)
 
     def apply_adjoint(self, V, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         op = self.operators[self._get_operator_number(mu)]
         return op.apply_adjoint(V, mu=mu)
 
     def as_range_array(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_range_array(mu=mu)
 
     def as_source_array(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_source_array(mu=mu)
 
@@ -1372,19 +1363,18 @@ def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     -------
     norm
         A function `norm(U, mu=None)` taking a |VectorArray| `U`
-        as input together with the |Parameter| `mu` which is
-        passed to the product.
+        as input together with the |parameter values| `mu` which
+        are passed to the product.
     """
     return InducedNorm(product, raise_negative, tol, name)
 
 
-class InducedNorm(ImmutableObject, Parametric):
+class InducedNorm(ParametricObject):
     """Instantiated by :func:`induced_norm`. Do not use directly."""
 
     def __init__(self, product, raise_negative, tol, name):
         name = name or product.name
         self.__auto_init(locals())
-        self.build_parameter_type(product)
 
     def __call__(self, U, mu=None):
         norm_squared = self.product.pairwise_apply2(U, U, mu=mu).real

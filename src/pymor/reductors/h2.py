@@ -16,6 +16,7 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import InputOutputModel, LTIModel
 from pymor.operators.constructions import IdentityOperator
+from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
 
@@ -28,7 +29,7 @@ class GenericIRKAReductor(BasicObject):
     fom
         The full-order |Model| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
 
     def _clear_lists(self):
@@ -40,8 +41,11 @@ class GenericIRKAReductor(BasicObject):
         self.errors = []
 
     def __init__(self, fom, mu=None):
+        if not isinstance(mu, Mu):
+            mu = fom.parameters.parse(mu)
+        assert fom.parameters.assert_compatible(mu)
         self.fom = fom
-        self.mu = fom.parse_parameter(mu)
+        self.mu = mu
         self.V = None
         self.W = None
         self._pg_reductor = None
@@ -182,7 +186,7 @@ class IRKAReductor(GenericIRKAReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
@@ -296,7 +300,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
         - `'V'`: Galerkin projection using the input Krylov subspace,
         - `'W'`: Galerkin projection using the output Krylov subspace.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, version, mu=None):
         assert isinstance(fom, LTIModel)
@@ -394,8 +398,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
         fom = (
             self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']},
-                parameter_space=None,
+                   for op in ['A', 'B', 'C', 'D', 'E']}
             )
             if self.fom.parametric
             else self.fom
@@ -425,7 +428,7 @@ class TSIAReductor(GenericIRKAReductor):
     fom
         The full-order |LTIModel| to reduce.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
@@ -523,8 +526,7 @@ class TSIAReductor(GenericIRKAReductor):
         fom = (
             self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']},
-                parameter_space=None,
+                   for op in ['A', 'B', 'C', 'D', 'E']}
             )
             if self.fom.parametric
             else self.fom
@@ -552,7 +554,7 @@ class TFIRKAReductor(GenericIRKAReductor):
     fom
         The full-order |Model| with `eval_tf` and `eval_dtf` methods.
     mu
-        |Parameter|.
+        |Parameter values|.
     """
     def __init__(self, fom, mu=None):
         assert isinstance(fom, InputOutputModel)

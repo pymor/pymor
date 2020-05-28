@@ -34,20 +34,20 @@ class NumpyGenericOperator(Operator):
     Parameters
     ----------
     mapping
-        The function to wrap. If `parameter_type` is `None`, the function is of
+        The function to wrap. If `parameters` is `None`, the function is of
         the form `mapping(U)` and is expected to be vectorized. In particular::
 
             mapping(U).shape == U.shape[:-1] + (dim_range,).
 
-        If `parameter_type` is not `None`, the function has to have the signature
+        If `parameters` is not `None`, the function has to have the signature
         `mapping(U, mu)`.
     adjoint_mapping
-        The adjoint function to wrap. If `parameter_type` is `None`, the function is of
+        The adjoint function to wrap. If `parameters` is `None`, the function is of
         the form `adjoint_mapping(U)` and is expected to be vectorized. In particular::
 
             adjoint_mapping(U).shape == U.shape[:-1] + (dim_source,).
 
-        If `parameter_type` is not `None`, the function has to have the signature
+        If `parameters` is not `None`, the function has to have the signature
         `adjoint_mapping(U, mu)`.
     dim_source
         Dimension of the operator's source.
@@ -55,24 +55,25 @@ class NumpyGenericOperator(Operator):
         Dimension of the operator's range.
     linear
         Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
-    parameter_type
-        The |ParameterType| of the |Parameters| the mapping accepts.
+    parameters
+        The |Parameters| the depends on.
     solver_options
         The |solver_options| for the operator.
     name
         Name of the operator.
     """
 
-    def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
+    def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameters={},
                  source_id=None, range_id=None, solver_options=None, name=None):
         self.__auto_init(locals())
         self.source = NumpyVectorSpace(dim_source, source_id)
         self.range = NumpyVectorSpace(dim_range, range_id)
+        self.parameters_own = parameters
 
     def apply(self, U, mu=None):
         assert U in self.source
+        assert self.parameters.assert_compatible(mu)
         if self.parametric:
-            mu = self.parse_parameter(mu)
             return self.range.make_array(self.mapping(U.to_numpy(), mu=mu))
         else:
             return self.range.make_array(self.mapping(U.to_numpy()))
@@ -81,9 +82,9 @@ class NumpyGenericOperator(Operator):
         if self.adjoint_mapping is None:
             raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
         assert V in self.range
+        assert self.parameters.assert_compatible(mu)
         V = V.to_numpy()
         if self.parametric:
-            mu = self.parse_parameter(mu)
             return self.source.make_array(self.adjoint_mapping(V, mu=mu))
         else:
             return self.source.make_array(self.adjoint_mapping(V))
@@ -114,7 +115,8 @@ class NumpyMatrixBasedOperator(Operator):
         pass
 
     def assemble(self, mu=None):
-        return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
+        assert self.parameters.assert_compatible(mu)
+        return NumpyMatrixOperator(self._assemble(mu),
                                    source_id=self.source.id,
                                    range_id=self.range.id,
                                    solver_options=self.solver_options,
@@ -149,7 +151,7 @@ class NumpyMatrixBasedOperator(Operator):
         output_format
             Output file format. Either `matlab` or `matrixmarket`.
         mu
-            The |Parameter| to assemble the to be exported matrix for.
+            The |parameter values| to assemble the to be exported matrix for.
         """
         assert output_format in {'matlab', 'matrixmarket'}
         matrix = self.assemble(mu).matrix
@@ -241,7 +243,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         V
             |VectorArray| of vectors to which the inverse operator is applied.
         mu
-            The |Parameter| for which to evaluate the inverse operator.
+            The |parameter values| for which to evaluate the inverse operator.
         least_squares
             If `True`, solve the least squares problem::
 

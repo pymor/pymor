@@ -13,7 +13,7 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEule
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import Function, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
-from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCenters
@@ -26,7 +26,7 @@ from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.operators.constructions import ComponentProjection, LincombOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
-from pymor.parameters.base import Parametric
+from pymor.parameters.base import ParametricObject
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -34,7 +34,7 @@ def FVVectorSpace(grid, id='STATE'):
     return NumpyVectorSpace(grid.size(0), id)
 
 
-class NumericalConvectiveFlux(ImmutableObject, Parametric):
+class NumericalConvectiveFlux(ParametricObject):
     """Interface for numerical convective fluxes for finite volume schemes.
 
     Numerical fluxes defined by this interfaces are functions of
@@ -88,7 +88,6 @@ class LaxFriedrichsFlux(NumericalConvectiveFlux):
 
     def __init__(self, flux, lxf_lambda=1.0):
         self.__auto_init(locals())
-        self.build_parameter_type(flux)
 
     def evaluate_stage1(self, U, mu=None):
         return U, self.flux(U[..., np.newaxis], mu)
@@ -116,7 +115,6 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFlux):
 
     def __init__(self, flux, flux_derivative):
         self.__auto_init(locals())
-        self.build_parameter_type(flux, flux_derivative)
 
     def evaluate_stage1(self, U, mu=None):
         return self.flux(U[..., np.newaxis], mu), self.flux_derivative(U[..., np.newaxis], mu)
@@ -164,7 +162,6 @@ class EngquistOsherFlux(NumericalConvectiveFlux):
 
     def __init__(self, flux, flux_derivative, gausspoints=5, intervals=1):
         self.__auto_init(locals())
-        self.build_parameter_type(flux, flux_derivative)
         points, weights = GaussQuadratures.quadrature(npoints=self.gausspoints)
         points = points / intervals
         points = ((np.arange(self.intervals, dtype=np.float)[:, np.newaxis] * (1 / intervals))
@@ -230,7 +227,6 @@ class NonlinearAdvectionOperator(Operator):
             self._dirichlet_values = self._dirichlet_values.ravel()
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.source = self.range = FVVectorSpace(grid, space_id)
-        self.build_parameter_type(numerical_flux, dirichlet_data)
 
     def with_numerical_flux(self, **kwargs):
         return self.with_(numerical_flux=self.numerical_flux.with_(**kwargs))
@@ -264,7 +260,7 @@ class NonlinearAdvectionOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
 
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
@@ -319,7 +315,7 @@ class NonlinearAdvectionOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert U in self.source and len(U) == 1
-        mu = self.parse_parameter(mu)
+        assert self.parameters.assert_compatible(mu)
 
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
@@ -477,7 +473,6 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver_options=None, name=None):
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
-        self.build_parameter_type(velocity_field)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -571,7 +566,6 @@ class ReactionOperator(NumpyMatrixBasedOperator):
         assert reaction_coefficient.dim_domain == grid.dim and reaction_coefficient.shape_range == ()
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
-        self.build_parameter_type(reaction_coefficient)
 
     def _assemble(self, mu=None):
 
@@ -588,7 +582,6 @@ class NonlinearReactionOperator(Operator):
     def __init__(self, grid, reaction_function, reaction_function_derivative=None, space_id='STATE', name=None):
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid, space_id)
-        self.build_parameter_type(reaction_function, reaction_function_derivative)
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
@@ -650,7 +643,6 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         assert function is None or function.shape_range == ()
         self.__auto_init(locals())
         self.range = FVVectorSpace(grid)
-        self.build_parameter_type(function, dirichlet_data, diffusion_function, neumann_data)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -737,8 +729,6 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
                     and diffusion_function.shape_range == ()))
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
-        if diffusion_function is not None:
-            self.build_parameter_type(diffusion_function)
 
     def _assemble(self, mu=None):
         grid = self.grid
@@ -978,10 +968,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     l2_product = L2Product(grid, name='l2')
     products = {'l2': l2_product}
 
-    parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
-
     m = StationaryModel(L, F, products=products, visualizer=visualizer,
-                        parameter_space=parameter_space, name=f'{p.name}_FV')
+                        name=f'{p.name}_FV')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
@@ -1079,7 +1067,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
             I = m.solution_space.make_array(I)
             return I.lincomb(U).to_numpy()
         I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True, range_id=m.solution_space.id,
-                                 parameter_type=p.initial_data.parameter_type)
+                                 parameters=p.initial_data.parameters)
     else:
         I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
         I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
@@ -1095,7 +1083,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     m = InstationaryModel(operator=m.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
                           products=m.products, time_stepper=time_stepper,
-                          parameter_space=p.parameter_space, visualizer=m.visualizer,
+                          visualizer=m.visualizer,
                           num_values=num_values, name=f'{p.name}_FV')
 
     if preassemble:
