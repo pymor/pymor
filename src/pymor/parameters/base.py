@@ -186,13 +186,10 @@ class Parameters(FrozenDict):
 
             mu[parameter].size == self[parameter]
         """
-        if isinstance(mu, Parameters):
-            return all(mu.get(k) == v for k, v in self.items())
-        else:
-            if mu is not None and not isinstance(mu, Mu):
-                raise TypeError('mu is not a Mu instance. (Use parameters.parse?)')
-            return not self or \
-                mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
+        if mu is not None and not isinstance(mu, Mu):
+            raise TypeError('mu is not a Mu instance. (Use parameters.parse?)')
+        return not self or \
+            mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
 
     def why_incompatible(self, mu):
         if mu is not None and not isinstance(mu, Mu):
@@ -218,6 +215,19 @@ class Parameters(FrozenDict):
         assert all(k not in self or self[k] == v
                    for k, v in other.items())
         return Parameters({k: v for k, v in self.items() if k not in other})
+
+    def __le__(self, mu):
+        """Check if |parameter values| are compatible with the given |Parameters|.
+
+        Each of the parameter must be contained in  `mu` and the dimensions have to match,
+        i.e. ::
+
+            mu[parameter].size == self[parameter]
+        """
+        if isinstance(mu, Parameters):
+            return all(mu.get(k) == v for k, v in self.items())
+        else:
+            return NotImplemented
 
     def __str__(self):
         return '{' + ', '.join(f'{k}: {v}' for k, v in sorted(self.items())) + '}'
