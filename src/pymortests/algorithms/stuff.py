@@ -19,17 +19,24 @@ def _newton(order, initial_value=1.0, **kwargs):
     guess = NumpyVectorSpace.from_numpy([initial_value])
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
-
 @pytest.mark.parametrize("order", list(range(1, 8)))
 def test_newton(order):
     U, _ = _newton(order, atol=1e-15)
     assert float_cmp(U.to_numpy(), 0.0)
 
-
 def test_newton_fail():
     with pytest.raises(NewtonError):
         _ = _newton(0, maxiter=10, stagnation_threshold=np.inf)
 
+@pytest.mark.parametrize("order", list(range(1, 8)))
+def test_newton_with_line_search(order):
+    U, _ = _newton(order, initial_value=0.5, atol=1e-15, relax='armijo')
+    assert float_cmp(U.to_numpy(), 0.0)
+
+@pytest.mark.parametrize("order", list(range(1, 8)))
+def test_newton_fail_without_line_search(order):
+    with pytest.raises(NewtonError):
+        _ = _newton(order, initial_value=0.5, atol=1e-15)
 
 def test_newton_residual_is_zero(order=5):
     U, _ = _newton(order, initial_value=0.0)
