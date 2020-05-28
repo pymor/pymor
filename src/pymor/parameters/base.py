@@ -499,7 +499,7 @@ class ParameterSpace(ParametricObject):
     def contains(self, mu):
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
-        if not mu >= self.parameters:
+        if not self.parameters.is_compatible(mu):
             return False
         return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
                    for k in self.parameters)
