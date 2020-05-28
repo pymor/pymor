@@ -171,7 +171,16 @@ mpi 3 6:
         - name: pymor/pypi-mirror_stable_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_mpi.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_mpi.bash
 mpi 3 7:
     extends: .pytest
     except:
@@ -180,7 +189,16 @@ mpi 3 7:
         - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_mpi.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_mpi.bash
 mpi 3 8:
     extends: .pytest
     except:
@@ -189,7 +207,16 @@ mpi 3 8:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_mpi.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_mpi.bash
 notebooks_dir 3 6:
     extends: .pytest
     except:
@@ -198,7 +225,16 @@ notebooks_dir 3 6:
         - name: pymor/pypi-mirror_stable_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_notebooks_dir.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 7:
     extends: .pytest
     except:
@@ -207,7 +243,16 @@ notebooks_dir 3 7:
         - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_notebooks_dir.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 8:
     extends: .pytest
     except:
@@ -216,7 +261,16 @@ notebooks_dir 3 8:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_notebooks_dir.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_notebooks_dir.bash
 pip_installed 3 6:
     extends: .pytest
     except:
@@ -225,7 +279,16 @@ pip_installed 3 6:
         - name: pymor/pypi-mirror_stable_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_pip_installed.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 7:
     extends: .pytest
     except:
@@ -234,7 +297,16 @@ pip_installed 3 7:
         - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_pip_installed.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 8:
     extends: .pytest
     except:
@@ -243,7 +315,16 @@ pip_installed 3 8:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_pip_installed.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_pip_installed.bash
 vanilla 3 6:
     extends: .pytest
     except:
@@ -252,7 +333,16 @@ vanilla 3 6:
         - name: pymor/pypi-mirror_stable_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_vanilla.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_vanilla.bash
 vanilla 3 7:
     extends: .pytest
     except:
@@ -261,7 +351,16 @@ vanilla 3 7:
         - name: pymor/pypi-mirror_stable_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.7:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_vanilla.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_vanilla.bash
 vanilla 3 8:
     extends: .pytest
     except:
@@ -270,7 +369,16 @@ vanilla 3 8:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_vanilla.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_vanilla.bash
 numpy_git 3 8:
     extends: .pytest
     except:
@@ -279,7 +387,16 @@ numpy_git 3 8:
         - name: pymor/pypi-mirror_stable_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.8:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_numpy_git.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_numpy_git.bash
 oldest 3 6:
     extends: .pytest
     except:
@@ -288,7 +405,16 @@ oldest 3 6:
         - name: pymor/pypi-mirror_oldest_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
           alias: pypi_mirror
     image: pymor/testing_py3.6:d740c7196b6901aab305e4445b27ac18a18661ff
-    script: ./.ci/gitlab/test_oldest.bash
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_oldest.bash
 ci_weekly 3 6:
     extends: .pytest
     only:
