@@ -39,11 +39,11 @@ def test_pod(vector_array, method):
         err = np.max(np.abs(U.inner(U, product) - np.eye(len(U))))
         U_orth = gram_schmidt(U, product=product, copy=True) if err >= orth_tol else U
         if len(U_orth) < len(U):
+            # TODO tighter check + gramian assert equiv.?
             assert len(U_orth) < len(s)
-        else:
-            assert len(U) == len(s)
-    else:
-        assert len(U) == len(s)
+            return
+
+    assert len(U) == len(s)
     assert np.allclose(U.gramian(), np.eye(len(s)))
 
 
