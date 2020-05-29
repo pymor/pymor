@@ -99,6 +99,60 @@ def test_ExpressionParameterFunctional():
     assert hes_nu_nu == -0
 
 
+def test_ProductParameterFunctional():
+    pf = ProjectionParameterFunctional('mu', 2, 0)
+    mu = Mu({'mu': (10,2)})
+    productf = pf * 2 * 3
+
+    derivative_to_first_index = productf.d_mu('mu', 0)
+    derivative_to_second_index = productf.d_mu('mu', 1)
+
+    second_derivative_first_first = productf.d_mu('mu', 0).d_mu('mu', 0)
+    second_derivative_first_second = productf.d_mu('mu', 0).d_mu('mu', 1)
+    second_derivative_second_first = productf.d_mu('mu', 1).d_mu('mu', 0)
+    second_derivative_second_second = productf.d_mu('mu', 1).d_mu('mu', 1)
+
+    der_mu_1 = derivative_to_first_index.evaluate(mu)
+    der_mu_2 = derivative_to_second_index.evaluate(mu)
+
+    hes_mu_1_mu_1 = second_derivative_first_first.evaluate(mu)
+    hes_mu_1_mu_2 = second_derivative_first_second.evaluate(mu)
+    hes_mu_2_mu_1 = second_derivative_second_first.evaluate(mu)
+    hes_mu_2_mu_2 = second_derivative_second_second.evaluate(mu)
+
+    assert der_mu_1 == 2 * 3
+    assert der_mu_2 == 0
+    assert hes_mu_1_mu_1 == 0
+    assert hes_mu_1_mu_2 == 0
+    assert hes_mu_2_mu_1 == 0
+    assert hes_mu_2_mu_2 == 0
+
+    dict_of_d_mus = {'mu': ['2*mu']}
+
+    dict_of_second_derivative = {'mu': [{'mu': ['2']}]}
+
+    epf = ExpressionParameterFunctional('mu**2',
+                                        {'mu': 1},
+                                        'functional_with_derivative_and_second_derivative',
+                                        dict_of_d_mus, dict_of_second_derivative)
+
+    productf = epf * 2
+    mu = Mu({'mu': 3})
+
+    derivative_to_first_index = productf.d_mu('mu')
+
+    second_derivative_first_first = productf.d_mu('mu').d_mu('mu')
+
+    der_mu = derivative_to_first_index.evaluate(mu)
+
+    hes_mu_mu = second_derivative_first_first.evaluate(mu)
+
+    assert productf.evaluate(mu) == 2 * 3 ** 2
+    assert der_mu == 2 * 2 * 3
+    assert hes_mu_mu == 2 * 2
+
+    pp = productf * productf
+
 def test_d_mu_of_LincombOperator():
     dict_of_d_mus = {'mu': ['100', '2 * mu[0]'], 'nu': ['cos(nu[0])']}
 
