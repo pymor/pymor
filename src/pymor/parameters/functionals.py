@@ -284,6 +284,21 @@ class ProductParameterFunctional(ParameterFunctional):
         assert self.parameters.assert_compatible(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
+    def d_mu(self, component, index=()):
+        sum_of_parametric = 0
+        at = 0
+        for i, f in enumerate(self.factors):
+            if isinstance(f, ParameterFunctional):
+                sum_of_parametric += 1
+                at = i
+        if sum_of_parametric == 0:
+            return ConstantParameterFunctional(0, name=self.name + '_d_mu')
+        elif sum_of_parametric == 1:
+            return self.factors[at].d_mu(component, index) * self.with_(factors = [f for f in self.factors if not
+                                                                                   isinstance(f, ParameterFunctional)])
+        else:
+            raise NotImplementedError
+
 
 class ConjugateParameterFunctional(ParameterFunctional):
     """Conjugate of a given |ParameterFunctional|
