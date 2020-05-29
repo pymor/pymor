@@ -39,7 +39,7 @@ def test_almost_equal(vectors, tolerances, norms):
         dv1 = dv2 = None
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         try:
-            r = almost_equal(v1[ind1], v2[ind2], norm=n)
+            r = almost_equal(v1[ind1], v2[ind2], norm=n, rtol=rtol, atol=atol)
         except NotImplementedError as e:
             if n == 'l1':
                 pytest.xfail('l1_norm not implemented')
