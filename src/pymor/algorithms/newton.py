@@ -11,7 +11,7 @@ from pymor.core.logger import getLogger
 
 @defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
-           miniter=0, maxiter=100, rtol=-1., atol=-1., relax=1.,
+           miniter=0, maxiter=100, rtol=0., atol=0., relax=1.,
            stagnation_window=3, stagnation_threshold=np.inf,
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
@@ -99,12 +99,6 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
 
     iteration = 0
     error_sequence = [err]
-
-    if err == 0.0:
-        logger.info(f'Initial Residual is already 0. Stopping.')
-        data['error_sequence'] = np.array(error_sequence)
-        return U, data
-
     while True:
         if iteration >= miniter:
             if err <= atol:
@@ -134,11 +128,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         residual = rhs - operator.apply(U, mu=mu)
 
         err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
-        if error_sequence[-1] == 0.0:
-            logger.info(f'Iteration {iteration:2}: Residual: {err:5e}')
-        else:
-            logger.info(f'Iteration {iteration:2}: Residual: {err:5e},  '
-                        f'Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}')
+        logger.info(f'Iteration {iteration:2}: Residual: {err:5e},  '
+                    f'Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}')
         error_sequence.append(err)
         if not np.isfinite(err):
             raise NewtonError('Failed to converge')
