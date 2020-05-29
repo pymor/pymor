@@ -284,18 +284,16 @@ class ProductParameterFunctional(ParameterFunctional):
         assert self.parameters.assert_compatible(mu)
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
-    def d_mu(self, component, index=()):
-        sum_of_parametric = 0
-        at = 0
+    def d_mu(self, component, index=0):
+        parametric_at = []
         for i, f in enumerate(self.factors):
-            if isinstance(f, ParameterFunctional):
-                sum_of_parametric += 1
-                at = i
-        if sum_of_parametric == 0:
+            if hasattr(f, 'evaluate'):
+                parametric_at.append(i)
+        if len(parametric_at) == 0:
             return ConstantParameterFunctional(0, name=self.name + '_d_mu')
-        elif sum_of_parametric == 1:
-            factors = [self.factors[at].d_mu(component, index)]
-            factors.extend([f for f in self.factors if not isinstance(f ,ParameterFunctional)])
+        elif len(parametric_at) == 1:
+            factors = [self.factors[parametric_at[0]].d_mu(component, index)]
+            factors.extend([f for f in self.factors if not hasattr(f , 'evaluate')])
             return self.with_(factors = factors)
         else:
             raise NotImplementedError
