@@ -294,7 +294,7 @@ class ProductParameterFunctional(ParameterFunctional):
         elif len(parametric_at) == 1:
             factors = [self.factors[parametric_at[0]].d_mu(component, index)]
             factors.extend([f for f in self.factors if not hasattr(f , 'evaluate')])
-            return self.with_(factors = factors)
+            return self.with_(factors = factors, name=self.name + '_d_mu')
         else:
             raise NotImplementedError
 
