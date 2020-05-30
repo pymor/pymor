@@ -5,7 +5,6 @@
 """Module containing some constructions to obtain new operators from old ones."""
 
 from functools import reduce
-from itertools import chain
 from numbers import Number
 
 import numpy as np
@@ -94,7 +93,7 @@ class LincombOperator(Operator):
     def apply2(self, V, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
         coeffs_and_matrices = [(c, self.operators[i].apply2(V, U, mu=mu))
-                                        for i, c in enumerate(coeffs) if c]
+                               for i, c in enumerate(coeffs) if c]
         if not coeffs_and_matrices:
             return np.zeros((len(V), len(U)))
         else:
@@ -110,7 +109,7 @@ class LincombOperator(Operator):
     def pairwise_apply2(self, V, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
         coeffs_and_matrices = [(c, self.operators[i].pairwise_apply2(V, U, mu=mu))
-                                        for i, c in enumerate(coeffs) if c]
+                               for i, c in enumerate(coeffs) if c]
         if not coeffs_and_matrices:
             return np.zeros((len(V), len(U)))
         else:
