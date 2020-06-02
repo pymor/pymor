@@ -417,6 +417,7 @@ oldest 3 6:
         - ./.ci/gitlab/test_oldest.bash
 ci_weekly 3 6:
     extends: .pytest
+    timeout: 5h
     only:
         - schedules
     services:
@@ -427,6 +428,7 @@ ci_weekly 3 6:
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 7:
     extends: .pytest
+    timeout: 5h
     only:
         - schedules
     services:
@@ -437,6 +439,7 @@ ci_weekly 3 7:
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 8:
     extends: .pytest
+    timeout: 5h
     only:
         - schedules
     services:

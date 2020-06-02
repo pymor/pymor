@@ -191,6 +191,7 @@ minimal_cpp_demo:
 {%- for py in pythons %}
 ci_weekly {{py[0]}} {{py[2]}}:
     extends: .pytest
+    timeout: 5h
     only:
         - schedules
     services:
