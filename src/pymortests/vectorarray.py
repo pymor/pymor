@@ -1024,38 +1024,12 @@ def test_isub_incompatible(incompatible_vector_array_pair):
 
 
 @given(pyst.vector_arrays(count=1))
-def test_copy_wrong_ind(vector_arrays):
+def test_wrong_ind_raises_exception(vector_arrays):
     v = vector_arrays[0]
+    # TODO index input as hypothesis strategy
     for ind in invalid_inds(v):
         with pytest.raises(Exception):
-            v[ind].copy()
-
-
-@given(pyst.vector_arrays(count=1))
-def test_remove_wrong_ind(vector_arrays):
-    v = vector_arrays[0]
-    for ind in invalid_inds(v):
-        c = v.copy()
-        with pytest.raises(Exception):
-            del c[ind]
-
-
-@given(pyst.vector_arrays(count=1))
-def test_scal_wrong_ind(vector_arrays):
-    v = vector_arrays[0]
-    for ind in invalid_inds(v):
-        c = v.copy()
-        with pytest.raises(Exception):
-            c[ind].scal(0.)
-        c = v.copy()
-        with pytest.raises(Exception):
-            c[ind].scal(1.)
-        c = v.copy()
-        with pytest.raises(Exception):
-            c[ind].scal(-1.)
-        c = v.copy()
-        with pytest.raises(Exception):
-            c[ind].scal(1.2)
+            v[ind]
 
 
 @given(pyst.vector_array_with_ind())
@@ -1068,30 +1042,10 @@ def test_scal_wrong_coefficients(v_ind):
             v[ind].scal(alpha)
 
 
-@settings(deadline=None)
-@given(pyst.vector_arrays(count=2))
-def test_axpy_wrong_ind(compatible_vector_array_pair):
-    v1, v2 = compatible_vector_array_pair
-    for ind1, ind2 in invalid_ind_pairs(v1, v2):
-        if v2.len_ind(ind2) == 1:
-            continue
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1[ind1].axpy(0., c2[ind2])
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1[ind1].axpy(1., c2[ind2])
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1[ind1].axpy(-1., c2[ind2])
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1[ind1].axpy(1.456, c2[ind2])
-
-
 @given(pyst.vector_arrays(count=2))
 def test_axpy_wrong_coefficients(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
+    # TODO data input from hypothesis strategy
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
         np.random.seed(len(v1) + 99)
         for alpha in ([np.array([]), np.eye(v1.len_ind(ind1)), np.random.random(v1.len_ind(ind1) + 1)]
@@ -1099,15 +1053,6 @@ def test_axpy_wrong_coefficients(compatible_vector_array_pair):
                       [np.random.random(1)]):
             with pytest.raises(Exception):
                 v1[ind1].axpy(alpha, v2[ind2])
-
-
-@given(pyst.vector_arrays(count=2))
-def test_pairwise_dot_wrong_ind(compatible_vector_array_pair):
-    v1, v2 = compatible_vector_array_pair
-    for ind1, ind2 in invalid_ind_pairs(v1, v2):
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1[ind1].pairwise_dot(c2[ind2])
 
 
 @given(pyst.picklable_vector_arrays())
