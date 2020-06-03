@@ -52,6 +52,7 @@ THERMALBLOCK_ARGS = (
     ('thermalblock', ['--alg=pod', 2, 2, 3, 5]),
     ('thermalblock', ['--alg=adaptive_greedy', 2, 2, 10, 30]),
     ('thermalblock', ['--alg=naive', '--reductor=traditional', 2, 2, 10, 5]),
+    ('thermalblock', ['--list-vector-array', 2, 2, 2, 2]),
 )
 
 THERMALBLOCK_ADAPTIVE_ARGS = (
