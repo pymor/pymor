@@ -194,21 +194,6 @@ def test_almost_equal_incompatible(incompatible_vector_array_pair):
                 almost_equal(c1[ind1], c2[ind2], norm=n)
 
 
-@given(vectors_indices=pyst.vector_arrays_with_invalid_inds(count=2))
-def test_almost_equal_wrong_ind(vectors_indices):
-    def _check(ind, v):
-        return ind is None and len(v) == 1 or isinstance(ind, Number) or hasattr(ind, '__len__') and len(ind) == 1
-
-    v1, v2 = vectors_indices[0]
-    ind1, ind2 = vectors_indices[1]
-    for n in ['sup', 'l1', 'l2']:
-        if _check(ind1, v1) or _check(ind2, v2):
-            continue
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            almost_equal(c1[ind1], c2[ind2], norm=n)
-
-
 @given(pyst.base_vector_arrays(count=2))
 @settings(deadline=None)
 def test_project_array(bases):
