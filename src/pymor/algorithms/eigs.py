@@ -11,8 +11,9 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 
 
-def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, seed=0):
-    """Approximate a few eigenvalues of an |Operator|.
+def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
+         imag_tol=1e-12, complex_pair_tol=1e-12, seed=0):
+    """Approximate a few eigenvalues of a linear |Operator|.
 
     Computes `k` eigenvalues `w` with corresponding eigenvectors `v` which solve
     the eigenvalue problem
@@ -32,9 +33,9 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
     Parameters
     ----------
     A
-        The real |Operator| for which the eigenvalues are to be computed.
+        The real linear |Operator| for which the eigenvalues are to be computed.
     E
-        The |Operator| which defines the generalized eigenvalue problem.
+        The real linear |Operator| which defines the generalized eigenvalue problem.
     k
         The number of eigenvalues and eigenvectors which are to be computed.
     which
@@ -54,6 +55,10 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
         The maximum number of iterations.
     tol
         The relative error tolerance for the Ritz estimates.
+    imag_tol
+        Relative imaginary parts below this tolerance are set to 0.
+    complex_pair_tol
+        Tolerance for detecting pairs of complex conjugate eigenvalues.
     seed
         Random seed which is used for computing the initial vector for the Arnoldi
         iteration.
@@ -86,9 +91,10 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
         assert b in A.source
 
     n = A.source.dim
+    l_min = 20
 
     if l is None:
-        l = min(n - 1, max(2 * k + 1, 20))
+        l = min(n - 1, max(2 * k + 1, l_min))
 
     assert k < n
     assert l > k
@@ -105,7 +111,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
         ew, ev = spla.eig(H)
 
         # truncate small imaginary parts
-        ew.imag[np.abs(ew.imag) / np.abs(ew) < 1e-12] = 0
+        ew.imag[np.abs(ew.imag) / np.abs(ew) < imag_tol] = 0
 
         if which == 'LM':
             idx = np.argsort(-np.abs(ew))
@@ -127,7 +133,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
         rres = f.l2_norm()[0] * np.abs(evs[l - 1]) / np.abs(ews)
 
         # increase k by one in order to keep complex conjugate pairs together
-        if ews[k - 1].imag != 0 and ews[k - 1].imag + ews[k].imag < 1e-12:
+        if ews[k - 1].imag != 0 and ews[k - 1].imag + ews[k].imag < complex_pair_tol:
             k += 1
 
         logger.info(f'Maximum of relative Ritz estimates at step {i}: {rres[:k].max():.5e}')
@@ -148,7 +154,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
         # don't use converged unwanted Ritz values as shifts
         shifts = shifts[srres != 0]
         k += np.count_nonzero(srres == 0)
-        if shifts[0].imag != 0 and shifts[0].imag + ews[1].imag >= 1e-12:
+        if shifts[0].imag != 0 and shifts[0].imag + ews[1].imag >= complex_pair_tol:
             shifts = shifts[1:]
             k += 1
 
@@ -163,39 +169,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13, se
 
 
 def _arnoldi(A, E, l, b):
-    """Compute an Arnoldi factorization.
-
-    Computes matrices :math:`V_l` and :math:`H_l` and a vector :math:`f_l` such that
-
-    .. math::
-        A V_l = V_l H_l + f_l e_l^T.
-
-    Additionally it holds that :math:`V_l^T V_l` is the identity matrix and :math:`H_l`
-    is an upper Hessenberg matrix. If `E` is not `None` it holds
-
-    .. math::
-        E^{-1} A V_l = V_l H_l + f_l e_l^T.
-
-    Parameters
-    ----------
-    A
-        The |Operator| A.
-    E
-        The |Operator| E.
-    l
-        The length of the Arnoldi factorization.
-    b
-        A |VectorArray| which is used as the initial vector for the iteration.
-
-    Returns
-    -------
-    V
-        A |VectorArray| whose vectors represent an orthonormal basis for the Krylov subspace.
-    H
-        A |NumPy array| which is an upper Hessenberg matrix.
-    f
-        A |VectorArray| which represents the residual vector of the Arnoldi factorization.
-    """
+    """Compute an Arnoldi factorization."""
 
     v = b * (1 / b.l2_norm()[0])
 
@@ -216,37 +190,7 @@ def _arnoldi(A, E, l, b):
 
 
 def _extend_arnoldi(A, E, V, H, f, p):
-    """Extend an existing Arnoldi factorization.
-
-    Assuming that the inputs `V`, `H` and `f` define an Arnoldi factorization of length
-    :math:`l` (see :func:`_arnoldi`), computes matrices :math:`V_{l+p}` and :math:`H_{l+p}`
-    and a vector :math:`f_{l+p}` which extend the factorization to a length :math:`l+p`
-    Arnoldi factorization.
-
-    Parameters
-    ----------
-    A
-        The |Operator| A.
-    E
-        The |Operator| E.
-    V
-        The |VectorArray| V from the length :math:`l` Arnoldi factorization.
-    H
-        The |NumPy array| H from the length :math:`l` Arnoldi factorization.
-    f
-        The |VectorArray| f from the length :math:`l` Arnoldi factorization.
-    p
-        The number of additional Arnoldi steps which are to be performed.
-
-    Returns
-    -------
-    V
-        A |VectorArray| whose vectors represent an orthonormal basis for the Krylov subspace.
-    H
-        A |NumPy array| which is an upper Hessenberg matrix.
-    f
-        A |VectorArray| which represents the residual vector of the Arnoldi factorization.
-    """
+    """Extend an existing Arnoldi factorization."""
 
     k = len(V)
 
@@ -270,26 +214,7 @@ def _extend_arnoldi(A, E, V, H, f, p):
 
 
 def _qr_iteration(H, shifts):
-    """Perform the QR iteration.
-
-    Performs a QR step for each shift provided in `shifts`. `H` is assumed to be an
-    unreduced upper Hessenberg matrix. If a complex shift occurs a double step is
-    performed in order to avoid complex arithmetic.
-
-    Parameters
-    ----------
-    H
-        The |NumPy array| H which is an unreduced upper Hessenberg matrix.
-    shifts
-        A |NumPy array| which contains the shifts that are to be applied in the QR steps.
-
-    Returns
-    -------
-    Hs
-        A |NumPy array| in upper Hessenberg form such that it holds :math:`H Q_s = Q_s H_s`.
-    Qs
-        The product of the orthogonal matrices computed in each QR step.
-    """
+    """Perform the QR iteration."""
 
     Qs = np.eye(len(H))
 
