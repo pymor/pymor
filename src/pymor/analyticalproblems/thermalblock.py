@@ -19,15 +19,15 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
 
     on the domain [0,1]^2 with Dirichlet zero boundary values. The domain is
     partitioned into nx x ny blocks and the diffusion function d(x, μ) is
-    constant on each such block (i,j) with value μ_ij. ::
+    constant on each such block i with value μ_i. ::
 
            ----------------------------
            |        |        |        |
-           |  μ_11  |  μ_12  |  μ_13  |
+           |  μ_4   |  μ_5   |  μ_6   |
            |        |        |        |
            |---------------------------
            |        |        |        |
-           |  μ_21  |  μ_22  |  μ_23  |
+           |  μ_1   |  μ_2   |  μ_3   |
            |        |        |        |
            ----------------------------
 
@@ -36,14 +36,14 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
     num_blocks
         The tuple `(nx, ny)`
     parameter_range
-        A tuple `(μ_min, μ_max)`. Each |Parameter| component μ_ij is allowed
+        A tuple `(μ_min, μ_max)`. Each |Parameter| component μ_i is allowed
         to lie in the interval [μ_min, μ_max].
     """
 
     def parameter_functional_factory(ix, iy):
         return ProjectionParameterFunctional('diffusion',
-                                             size=num_blocks[1]*num_blocks[0],
-                                             index=(num_blocks[1] - iy - 1) + ix*num_blocks[1],
+                                             size=num_blocks[0]*num_blocks[1],
+                                             index=ix + iy*num_blocks[0],
                                              name=f'diffusion_{ix}_{iy}')
 
     def diffusion_function_factory(ix, iy):
@@ -66,9 +66,9 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
         rhs=ConstantFunction(dim_domain=2, value=1.),
 
         diffusion=LincombFunction([diffusion_function_factory(ix, iy)
-                                   for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))],
+                                   for iy, ix in product(range(num_blocks[1]), range(num_blocks[0]))],
                                   [parameter_functional_factory(ix, iy)
-                                   for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))],
+                                   for iy, ix in product(range(num_blocks[1]), range(num_blocks[0]))],
                                   name='diffusion'),
 
         parameter_ranges=parameter_range,
