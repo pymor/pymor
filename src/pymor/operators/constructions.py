@@ -5,7 +5,6 @@
 """Module containing some constructions to obtain new operators from old ones."""
 
 from functools import reduce
-from itertools import chain
 from numbers import Number
 
 import numpy as np
@@ -81,44 +80,58 @@ class LincombOperator(Operator):
 
     def apply(self, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply(U, mu=mu)
-        R.scal(coeffs[0])
+        if coeffs[0]:
+            R = self.operators[0].apply(U, mu=mu)
+            R.scal(coeffs[0])
+        else:
+            R = self.range.zeros(len(U))
         for op, c in zip(self.operators[1:], coeffs[1:]):
-            R.axpy(c, op.apply(U, mu=mu))
+            if c:
+                R.axpy(c, op.apply(U, mu=mu))
         return R
 
     def apply2(self, V, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        matrices = [op.apply2(V, U, mu=mu) for op in self.operators]
+        coeffs_and_matrices = [(c, self.operators[i].apply2(V, U, mu=mu))
+                               for i, c in enumerate(coeffs) if c]
+        if not coeffs_and_matrices:
+            return np.zeros((len(V), len(U)))
+        else:
+            coeffs, matrices = zip(*coeffs_and_matrices)
         coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
         matrices_dtype = reduce(np.promote_types, (m.dtype for m in matrices))
         common_dtype = np.promote_types(coeffs_dtype, matrices_dtype)
-        R = coeffs[0] * matrices[0]
-        if R.dtype != common_dtype:
-            R = R.astype(common_dtype)
+        R = (coeffs[0] * matrices[0]).astype(common_dtype, copy=False)
         for m, c in zip(matrices[1:], coeffs[1:]):
             R += c * m
         return R
 
     def pairwise_apply2(self, V, U, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        vectors = [op.pairwise_apply2(V, U, mu=mu) for op in self.operators]
+        coeffs_and_matrices = [(c, self.operators[i].pairwise_apply2(V, U, mu=mu))
+                               for i, c in enumerate(coeffs) if c]
+        if not coeffs_and_matrices:
+            return np.zeros((len(V), len(U)))
+        else:
+            coeffs, matrices = zip(*coeffs_and_matrices)
         coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
-        vectors_dtype = reduce(np.promote_types, (v.dtype for v in vectors))
-        common_dtype = np.promote_types(coeffs_dtype, vectors_dtype)
-        R = coeffs[0] * vectors[0]
-        if R.dtype != common_dtype:
-            R = R.astype(common_dtype)
-        for v, c in zip(vectors[1:], coeffs[1:]):
-            R += c * v
+        matrices_dtype = reduce(np.promote_types, (m.dtype for m in matrices))
+        common_dtype = np.promote_types(coeffs_dtype, matrices_dtype)
+        R = (coeffs[0] * matrices[0]).astype(common_dtype, copy=False)
+        for m, c in zip(matrices[1:], coeffs[1:]):
+            R += c * m
         return R
 
     def apply_adjoint(self, V, mu=None):
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply_adjoint(V, mu=mu)
-        R.scal(np.conj(coeffs[0]))
+        if coeffs[0]:
+            R = self.operators[0].apply_adjoint(V, mu=mu)
+            R.scal(np.conj(coeffs[0]))
+        else:
+            R = self.source.zeros(len(V))
         for op, c in zip(self.operators[1:], coeffs[1:]):
-            R.axpy(np.conj(c), op.apply_adjoint(V, mu=mu))
+            if c:
+                R.axpy(np.conj(c), op.apply_adjoint(V, mu=mu))
         return R
 
     def assemble(self, mu=None):
