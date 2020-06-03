@@ -8,8 +8,8 @@ import pytest
 
 from pymor.core.config import config
 from pymor.operators.interface import Operator
+from pymor.operators.list import NumpyListVectorArrayMatrixOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.playground.operators.numpy import NumpyListVectorArrayMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 

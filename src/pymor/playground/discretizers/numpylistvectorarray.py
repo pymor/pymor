@@ -9,8 +9,8 @@ from pymor.operators.constructions import (AdjointOperator, AffineOperator, Conc
                                            FixedParameterOperator, LincombOperator,
                                            SelectionOperator, VectorArrayOperator,
                                            VectorFunctional, VectorOperator)
+from pymor.operators.list import NumpyListVectorArrayMatrixOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.playground.operators.numpy import NumpyListVectorArrayMatrixOperator
 from pymor.vectorarrays.list import NumpyListVectorSpace
 
 
@@ -18,7 +18,7 @@ def convert_to_numpy_list_vector_array(obj):
     """Use NumpyListVectorArrayMatrixOperator instead of NumpyMatrixOperator.
 
     This simple function recursively converts |NumpyMatrixOperators| to corresponding
-    :class:`NumpyListVectorArrayMatrixOperators <pymor.playground.operators.numpy.NumpyListVectorArrayMatrixOperator>`.
+    :class:`NumpyListVectorArrayMatrixOperators <pymor.operators.list.NumpyListVectorArrayMatrixOperator>`.
 
     Parameters
     ----------
