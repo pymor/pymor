@@ -233,9 +233,13 @@ Tests
 -----
 
 pyMOR uses [pytest](https://pytest.org/) for unit testing. To run the test suite,
-simply execute `make test` in the base directory of the pyMOR repository. This
-will also create a test coverage report which can be found in the `htmlcov`
-directory. Alternatively, you can run `make full-test` which will also enable
+simply execute `make test` in the base directory of the pyMOR repository. This will
+run the pytest suite with the default hypothesis profile "dev". For available profiles
+see `src/pymortests/conftest.py`. A profile is selected by running `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME test`.
+If docker is available, use `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME docker_test` to execute the test suite
+in the same environment as on pyMOR's CI infrastructure. Additional customization points are listed at the top of the
+`Makefile`.
+Run `make full-test` which will also enable
 [pyflakes](https://pypi.python.org/pypi/pyflakes) and
 [pep8](https://www.python.org/dev/peps/pep-0008/) checks.
 

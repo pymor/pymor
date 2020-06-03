@@ -1,16 +1,19 @@
+#!/usr/bin/env make
 
 # customization points via makefile key-value arguments
-# 3.{6,7,8} supported currently
+#
+# interpreter in images: 3.{6,7,8} currently available
 # DOCKER_BASE_PYTHON=3.7
-# one of mpi, notebooks_dir, oldest, vanilla, mpi, numpy_git, pip_installed
+# test script executed with `docker_test`: mpi, notebooks_dir, oldest, vanilla, mpi, numpy_git, pip_installed
 # PYMOR_TEST_SCRIPT=vanilla
-# stable or oldest
+# version pinned mirror to be used: stable or oldest
 # PYPI_MIRROR=stable
-# debian_buster centos_8 debian_testing
+# wheel check OS: debian_buster centos_8 debian_testing
 # PYMOR_TEST_OS=debian_buster
-# end: customization points via makefile key-value arguments
+# hypothesis profiles: dev, debug, ci, ci-pr, ci-large
+# PYMOR_HYPOTHESIS_PROFILE=dev
+#
 
-MKFILE_PATH :=
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
@@ -43,16 +46,13 @@ flake8:
 	flake8 ./src
 
 test:
-	python setup.py test
+	python setup.py pytest
 
 jupyter:
 	jupyter notebook --notebook-dir=$(NB_DIR) --NotebookApp.disable_check_xsrf=True
 
 tutorials: NB_DIR="docs/_build/html"
 tutorials: docs jupyter
-
-fasttest:
-	PYMOR_PYTEST_MARKER="not slow" python setup.py test
 
 full-test:
 	@echo
