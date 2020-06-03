@@ -12,6 +12,7 @@ if config.HAVE_TORCH:
     import torch.nn as nn
     import torch.optim as optim
 
+    from pymor.algorithms.pod import pod
     from pymor.core.base import BasicObject
 
 
@@ -42,4 +43,11 @@ if config.HAVE_TORCH:
         def build_basis(self, mus):
             if not self.logging_disabled:
                 self.logger.info('Building reduced basis')
-            return None
+
+            U = self.fom.solution_space.empty()
+            for mu in mus:
+                U.append(self.fom.solve(mu))
+
+            reduced_basis, _ = pod(U, modes=self.basis_size, rtol=self.basis_rtol, atol=self.basis_atol)
+
+            return reduced_basis
