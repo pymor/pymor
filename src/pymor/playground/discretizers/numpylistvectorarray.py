@@ -2,35 +2,54 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.operators.constructions import LincombOperator
+from pymor.algorithms.preassemble import preassemble
+from pymor.algorithms.rules import RuleTable, match_class
+from pymor.models.interface import Model
+from pymor.operators.constructions import (AdjointOperator, AffineOperator, Concatenation,
+                                           FixedParameterOperator, LincombOperator,
+                                           SelectionOperator, VectorArrayOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
-
 from pymor.playground.operators.numpy import NumpyListVectorArrayMatrixOperator
+from pymor.vectorarrays.list import NumpyListVectorSpace
 
 
-def convert_to_numpy_list_vector_array(m):
+def convert_to_numpy_list_vector_array(obj):
     """Use NumpyListVectorArrayMatrixOperator instead of NumpyMatrixOperator.
 
-    This simple function converts linear, affinely decomposed models
-    to use :class:`~pymor.playground.operators.numpy.NumpyListVectorArrayMatrixOperator`
-    instead of |NumpyMatrixOperator|.
+    This simple function recursively converts |NumpyMatrixOperators| to corresponding
+    :class:`NumpyListVectorArrayMatrixOperators <pymor.playground.operators.numpy.NumpyListVectorArrayMatrixOperator>`.
+
+    Parameters
+    ----------
+    obj
+        Either an |Operator|, e.g. |NumpyMatrixOperator| or a |LincombOperator| of
+        |NumpyMatrixOperators|, or an entire |Model| that is to be converted.
+
+    Returns
+    -------
+    The converted |Operator| or |Model|.
     """
+    obj = preassemble(obj)
+    return ConvertToNumpyListVectorArrayRules().apply(obj)
 
-    def convert_operator(op, functional=False, vector=False):
-        if isinstance(op, LincombOperator):
-            return op.with_(operators=[convert_operator(o) for o in op.operators])
-        elif not op.parametric:
-            op = op.assemble()
-            if isinstance(op, NumpyMatrixOperator):
-                return NumpyListVectorArrayMatrixOperator(op.matrix,
-                                                          source_id=op.source.id, range_id=op.range.id,
-                                                          name=op.name)
-            else:
-                raise NotImplementedError
-        else:
-            raise NotImplementedError
 
-    operators = {k: convert_operator(v) for k, v in m.operators.items()}
-    products = {k: convert_operator(v) for k, v in m.products.items()}
+class ConvertToNumpyListVectorArrayRules(RuleTable):
 
-    return m.with_(operators=operators, products=products)
+    def __init__(self):
+        super().__init__(use_caching=True)
+
+    @match_class(AdjointOperator, AffineOperator, Concatenation,
+                 FixedParameterOperator, LincombOperator, SelectionOperator,
+                 Model)
+    def action_recurse(self, op):
+        return self.replace_children(op)
+
+    @match_class(NumpyMatrixOperator)
+    def action_NumpyMatrixOperator(self, op):
+        return op.with_(new_type=NumpyListVectorArrayMatrixOperator)
+
+    @match_class(VectorArrayOperator)
+    def action_VectorArrayOperator(self, op):
+        space = NumpyListVectorSpace(op.array.dim, op.array.space.id)
+        return op.with_(new_type=VectorArrayOperator,
+                        array=space.from_numpy(op.array.to_numpy()))
