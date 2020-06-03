@@ -7,7 +7,8 @@ from pymor.algorithms.rules import RuleTable, match_class
 from pymor.models.interface import Model
 from pymor.operators.constructions import (AdjointOperator, AffineOperator, Concatenation,
                                            FixedParameterOperator, LincombOperator,
-                                           SelectionOperator, VectorArrayOperator)
+                                           SelectionOperator, VectorArrayOperator,
+                                           VectorFunctional, VectorOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.playground.operators.numpy import NumpyListVectorArrayMatrixOperator
 from pymor.vectorarrays.list import NumpyListVectorSpace
@@ -46,7 +47,18 @@ class ConvertToNumpyListVectorArrayRules(RuleTable):
 
     @match_class(NumpyMatrixOperator)
     def action_NumpyMatrixOperator(self, op):
-        return op.with_(new_type=NumpyListVectorArrayMatrixOperator)
+        vector = op.source.dim == 1
+        functional = op.range.dim == 1
+        if vector and functional:
+            raise NotImplementedError
+        if vector:
+            space = NumpyListVectorSpace(op.range.dim, op.range.id)
+            return VectorOperator(space.from_numpy(op.matrix.reshape((1, -1))), op.name)
+        elif functional:
+            space = NumpyListVectorSpace(op.source.dim, op.source.id)
+            return VectorFunctional(space.from_numpy(op.matrix.ravel()), op.name)
+        else:
+            return op.with_(new_type=NumpyListVectorArrayMatrixOperator)
 
     @match_class(VectorArrayOperator)
     def action_VectorArrayOperator(self, op):
