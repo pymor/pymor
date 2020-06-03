@@ -285,16 +285,32 @@ class ProductParameterFunctional(ParameterFunctional):
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
     def d_mu(self, component, index=0):
-        parametric_at = []
+        summands = [[] for i in range(len(self.factors))]
+        indices = np.arange(len(self.factors))
         for i, f in enumerate(self.factors):
             if hasattr(f, 'evaluate'):
-                parametric_at.append(i)
-        if len(parametric_at) == 0:
+                summands[i].append(f.d_mu(component, index))
+            else:
+                summands[i].append(0)
+            for index in indices: 
+                if index != i:
+                    summands[index].append(f)
+        non_zero_parts = []
+        trigger = 0
+        for i, summand in enumerate(summands):
+            if 0 not in summand:
+                for s in summand:
+                    if isinstance(s, ConstantParameterFunctional):
+                        if s() == 0:
+                            trigger = 1
+                if trigger:
+                    trigger = 0
+                    continue
+                non_zero_parts.append(i)
+        if len(non_zero_parts) == 0:
             return ConstantParameterFunctional(0, name=self.name + '_d_mu')
-        elif len(parametric_at) == 1:
-            factors = [self.factors[parametric_at[0]].d_mu(component, index)]
-            factors.extend([f for f in self.factors if not hasattr(f , 'evaluate')])
-            return self.with_(factors = factors, name=self.name + '_d_mu')
+        elif len(non_zero_parts) == 1:
+            return self.with_(factors = summands[non_zero_parts[0]], name=self.name + '_d_mu')
         else:
             raise NotImplementedError
 
