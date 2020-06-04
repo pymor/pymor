@@ -29,7 +29,7 @@ class MonomOperator(Operator):
         return self.apply(U, mu=None)
 
     def jacobian(self, U, mu=None):
-        return MonomOperator(self.order - 1, self.derivative)
+        return NumpyMatrixOperator(self.derivative(U.to_numpy()).reshape((1,1)))
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         return self.range.make_array(1. / V.to_numpy())
