@@ -92,7 +92,7 @@ def thermalblock_demo(args):
     fom, _ = discretize_stationary_cg(problem, diameter=1. / args['--grid'])
 
     if args['--list-vector-array']:
-        from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
+        from pymor.discretizers.builtin.list import convert_to_numpy_list_vector_array
         fom = convert_to_numpy_list_vector_array(fom)
 
     if args['--cache-region'] != 'none':

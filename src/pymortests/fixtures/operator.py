@@ -8,6 +8,7 @@ import pytest
 
 from pymor.core.config import config
 from pymor.operators.interface import Operator
+from pymor.operators.list import NumpyListVectorArrayMatrixOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -43,6 +44,18 @@ def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_sourc
     op = NumpyMatrixOperator(np.random.random((dim_range, dim_source)), source_id=source_id, range_id=range_id)
     s = op.source.make_array(np.random.random((count_source, dim_source)))
     r = op.range.make_array(np.random.random((count_range, dim_range)))
+    return op, None, s, r
+
+
+def numpy_list_vector_array_matrix_operator_with_arrays_factory(
+    dim_source, dim_range, count_source, count_range, seed, source_id=None, range_id=None
+):
+    op, _, s, r = numpy_matrix_operator_with_arrays_factory(
+        dim_source, dim_range, count_source, count_range, seed, source_id, range_id
+    )
+    op = op.with_(new_type=NumpyListVectorArrayMatrixOperator)
+    s = op.source.from_numpy(s.to_numpy())
+    r = op.range.from_numpy(r.to_numpy())
     return op, None, s, r
 
 
@@ -89,6 +102,16 @@ numpy_matrix_operator_with_arrays_generators = \
 
 numpy_matrix_operator_generators = \
     [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args)[0:2]
+     for args in numpy_matrix_operator_with_arrays_factory_arguments]
+
+
+numpy_list_vector_array_matrix_operator_with_arrays_generators = \
+    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args)
+     for args in numpy_matrix_operator_with_arrays_factory_arguments]
+
+
+numpy_list_vector_array_matrix_operator_generators = \
+    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args)[0:2]
      for args in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
@@ -524,6 +547,7 @@ def operator_with_arrays_and_products(request):
 
 @pytest.fixture(params=(
     numpy_matrix_operator_with_arrays_generators
+    + numpy_list_vector_array_matrix_operator_with_arrays_generators
     + thermalblock_operator_with_arrays_generators
     + thermalblock_assemble_operator_with_arrays_generators
     + thermalblock_concatenation_operator_with_arrays_generators
@@ -544,6 +568,7 @@ def operator_with_arrays(request):
 
 @pytest.fixture(params=(
     numpy_matrix_operator_generators
+    + numpy_list_vector_array_matrix_operator_generators
     + thermalblock_operator_generators
     + thermalblock_assemble_operator_generators
     + thermalblock_concatenation_operator_generators
@@ -563,6 +588,7 @@ def operator(request):
 
 @pytest.fixture(params=(
     numpy_matrix_operator_generators
+    + numpy_list_vector_array_matrix_operator_generators
     + thermalblock_operator_generators
     + thermalblock_assemble_operator_generators
     + thermalblock_concatenation_operator_generators

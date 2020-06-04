@@ -220,10 +220,14 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return self
 
     def as_range_array(self, mu=None):
-        return self.range.make_array(self.matrix.T.copy())
+        if self.sparse:
+            raise NotImplementedError
+        return self.range.from_numpy(self.matrix.T.copy())
 
     def as_source_array(self, mu=None):
-        return self.source.make_array(self.matrix.copy()).conj()
+        if self.sparse:
+            raise NotImplementedError
+        return self.source.from_numpy(self.matrix.copy()).conj()
 
     def apply(self, U, mu=None):
         assert U in self.source
