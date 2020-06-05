@@ -149,18 +149,22 @@ def solver_options(bicgstab_tol=1e-15,
 
 
 @defaults('check_finite', 'default_solver', 'default_least_squares_solver')
-def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
+def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, check_finite=True,
                   default_solver='scipy_spsolve', default_least_squares_solver='scipy_least_squares_lsmr'):
     """Solve linear equation system.
 
-    Applies the inverse of `op` to the vectors in `rhs` using SciPy.
+    Applies the inverse of `op` to the vectors in `V` using SciPy.
 
     Parameters
     ----------
     op
         The linear, non-parametric |Operator| to invert.
-    rhs
+    V
         |VectorArray| of right-hand sides for the equation system.
+    initial_guess
+        |VectorArray| with the same length as `V` containing initial guesses
+        for the solution.  Some implementations of `apply_inverse` may
+        ignore this parameter.  If `None` a solver-dependent default is used.
     options
         The |solver_options| to use (see :func:`solver_options`).
     least_squares
@@ -180,6 +184,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
     """
 
     assert V in op.range
+    assert initial_guess is None or initial_guess in op.source and len(initial_guess) == len(V)
 
     if isinstance(op, NumpyMatrixOperator):
         matrix = op.matrix
@@ -190,12 +195,14 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
     options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
 
     V = V.to_numpy()
+    initial_guess = initial_guess.to_numpy() if initial_guess is not None else None
     promoted_type = np.promote_types(matrix.dtype, V.dtype)
     R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
 
     if options['type'] == 'scipy_bicgstab':
         for i, VV in enumerate(V):
-            R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'])
+            R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
+                                  tol=options['tol'], maxiter=options['maxiter'])
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
@@ -214,7 +221,8 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                         permc_spec=options['spilu_permc_spec'])
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i, VV in enumerate(V):
-            R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'], M=precond)
+            R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
+                                  tol=options['tol'], maxiter=options['maxiter'], M=precond)
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
@@ -270,7 +278,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
             raise InversionError(e)
     elif options['type'] == 'scipy_lgmres':
         for i, VV in enumerate(V):
-            R[i], info = lgmres(matrix, VV,
+            R[i], info = lgmres(matrix, VV, initial_guess[i] if initial_guess is not None else None,
                                 tol=options['tol'],
                                 maxiter=options['maxiter'],
                                 inner_m=options['inner_m'],
@@ -287,7 +295,8 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                                                   btol=options['btol'],
                                                   conlim=options['conlim'],
                                                   maxiter=options['maxiter'],
-                                                  show=options['show'])
+                                                  show=options['show'],
+                                                  x0=initial_guess[i] if initial_guess is not None else None)
             assert 0 <= info <= 7
             if info == 7:
                 raise InversionError(f'lsmr failed to converge after {itn} iterations')
@@ -299,7 +308,8 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                                                         btol=options['btol'],
                                                         conlim=options['conlim'],
                                                         iter_lim=options['iter_lim'],
-                                                        show=options['show'])
+                                                        show=options['show'],
+                                                        x0=initial_guess[i] if initial_guess is not None else None)
             assert 0 <= info <= 7
             if info == 7:
                 raise InversionError(f'lsmr failed to converge after {itn} iterations')

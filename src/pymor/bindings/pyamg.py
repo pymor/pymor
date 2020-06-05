@@ -152,17 +152,22 @@ if config.HAVE_PYAMG:
                                 'maxiter': sa_maxiter}}
 
     @defaults('check_finite', 'default_solver')
-    def apply_inverse(op, V, options=None, least_squares=False, check_finite=True, default_solver='pyamg_solve'):
+    def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False,
+                      check_finite=True, default_solver='pyamg_solve'):
         """Solve linear equation system.
 
-        Applies the inverse of `op` to the vectors in `rhs` using PyAMG.
+        Applies the inverse of `op` to the vectors in `V` using PyAMG.
 
         Parameters
         ----------
         op
             The linear, non-parametric |Operator| to invert.
-        rhs
+        V
             |VectorArray| of right-hand sides for the equation system.
+        initial_guess
+            |VectorArray| with the same length as `V` containing initial guesses
+            for the solution.  Some implementations of `apply_inverse` may
+            ignore this parameter.  If `None` a solver-dependent default is used.
         options
             The |solver_options| to use (see :func:`solver_options`).
         least_squares
@@ -178,6 +183,7 @@ if config.HAVE_PYAMG:
         """
 
         assert V in op.range
+        assert initial_guess is None or initial_guess in op.source and len(initial_guess) == len(V)
 
         if least_squares:
             raise NotImplementedError

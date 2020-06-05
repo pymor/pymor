@@ -97,18 +97,22 @@ def solver_options(lgmres_tol=1e-5,
 
 
 @defaults('check_finite', 'default_solver', 'default_least_squares_solver')
-def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
+def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, check_finite=True,
                   default_solver='generic_lgmres', default_least_squares_solver='generic_least_squares_lsmr'):
     """Solve linear equation system.
 
-    Applies the inverse of `op` to the vectors in `rhs` using a generic iterative solver.
+    Applies the inverse of `op` to the vectors in `V` using a generic iterative solver.
 
     Parameters
     ----------
     op
         The linear, non-parametric |Operator| to invert.
-    rhs
+    V
         |VectorArray| of right-hand sides for the equation system.
+    initial_guess
+        |VectorArray| with the same length as `V` containing initial guesses
+        for the solution.  Some implementations of `apply_inverse` may
+        ignore this parameter.  If `None` a solver-dependent default is used.
     options
         The |solver_options| to use (see :func:`solver_options`).
     least_squares
@@ -126,13 +130,15 @@ def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
     |VectorArray| of the solution vectors.
     """
 
+    assert V in op.range
+    assert initial_guess is None or initial_guess in op.source and len(initial_guess) == len(V)
     options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
 
-    R = op.source.empty(reserve=len(rhs))
+    R = op.source.empty(reserve=len(V))
 
     if options['type'] == 'generic_lgmres':
-        for i in range(len(rhs)):
-            r, info = lgmres(op, rhs[i],
+        for i in range(len(V)):
+            r, info = lgmres(op, V[i], initial_guess[i] if initial_guess is not None else None,
                              tol=options['tol'],
                              maxiter=options['maxiter'],
                              inner_m=options['inner_m'],
@@ -142,8 +148,8 @@ def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
             assert info == 0
             R.append(r)
     elif options['type'] == 'generic_least_squares_lsmr':
-        for i in range(len(rhs)):
-            r, info, itn, _, _, _, _, _ = lsmr(op, rhs[i],
+        for i in range(len(V)):
+            r, info, itn, _, _, _, _, _ = lsmr(op, V[i],
                                                damp=options['damp'],
                                                atol=options['atol'],
                                                btol=options['btol'],
@@ -156,8 +162,8 @@ def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
             getLogger('pymor.algorithms.genericsolvers.lsmr').info(f'Converged after {itn} iterations')
             R.append(r)
     elif options['type'] == 'generic_least_squares_lsqr':
-        for i in range(len(rhs)):
-            r, info, itn, _, _, _, _, _, _ = lsqr(op, rhs[i],
+        for i in range(len(V)):
+            r, info, itn, _, _, _, _, _, _ = lsqr(op, V[i],
                                                   damp=options['damp'],
                                                   atol=options['atol'],
                                                   btol=options['btol'],

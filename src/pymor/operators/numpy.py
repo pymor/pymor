@@ -134,8 +134,8 @@ class NumpyMatrixBasedOperator(Operator):
     def as_source_array(self, mu=None):
         return self.assemble(mu).as_source_array()
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        return self.assemble(mu).apply_inverse(V, least_squares=least_squares)
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save the matrix of the operator to a file.
@@ -238,8 +238,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return self.H.apply(V, mu=mu)
 
     @defaults('check_finite', 'default_sparse_solver_backend')
-    def apply_inverse(self, V, mu=None, least_squares=False, check_finite=True,
-                      default_sparse_solver_backend='scipy'):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False,
+                      check_finite=True, default_sparse_solver_backend='scipy'):
         """Apply the inverse operator.
 
         Parameters
@@ -248,6 +248,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             |VectorArray| of vectors to which the inverse operator is applied.
         mu
             The |parameter values| for which to evaluate the inverse operator.
+        initial_guess
+            |VectorArray| with the same length as `V` containing initial guesses
+            for the solution.  Some implementations of `apply_inverse` may
+            ignore this parameter.  If `None` a solver-dependent default is used.
         least_squares
             If `True`, solve the least squares problem::
 
@@ -275,6 +279,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             The operator could not be inverted.
         """
         assert V in self.range
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
 
         if V.dim == 0:
             if self.source.dim == 0 or least_squares:
@@ -308,7 +313,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             else:
                 raise NotImplementedError
 
-            return apply_inverse_impl(self, V, options=options, least_squares=least_squares, check_finite=check_finite)
+            return apply_inverse_impl(self, V, initial_guess=initial_guess, options=options,
+                                      least_squares=least_squares, check_finite=check_finite)
 
         else:
             if least_squares:
@@ -329,8 +335,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
             return self.source.make_array(R)
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
-        return self.H.apply_inverse(U, mu=mu, least_squares=least_squares)
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        return self.H.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
     def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
         if not all(isinstance(op, NumpyMatrixOperator) for op in operators):

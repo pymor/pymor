@@ -201,15 +201,23 @@ class BlockDiagonalOperator(BlockOperator):
         U_blocks = [self.blocks[i, i].apply_adjoint(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
-        U_blocks = [self.blocks[i, i].apply_inverse(V.block(i), mu=mu, least_squares=least_squares)
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
+        U_blocks = [self.blocks[i, i].apply_inverse(V.block(i), mu=mu,
+                                                    initial_guess=(initial_guess.block(i)
+                                                                   if initial_guess is not None else None),
+                                                    least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
-        V_blocks = [self.blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu, least_squares=least_squares)
+        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
+        V_blocks = [self.blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu,
+                                                            initial_guess=(initial_guess.block(i)
+                                                                           if initial_guess is not None else None),
+                                                            least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
         return self.range.make_array(V_blocks)
 
@@ -285,15 +293,17 @@ class SecondOrderModelOperator(BlockOperator):
                     V.block(0) - self.E.apply_adjoint(V.block(1), mu=mu)]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
         U_blocks = [-self.K.apply_inverse(self.E.apply(V.block(0), mu=mu) + V.block(1), mu=mu,
                                           least_squares=least_squares),
                     V.block(0)]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
+        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
         KitU0 = self.K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
         V_blocks = [-self.E.apply_adjoint(KitU0, mu=mu) + U.block(1),
                     -KitU0]
@@ -381,8 +391,9 @@ class ShiftedSecondOrderModelOperator(BlockOperator):
                     - self.E.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate()]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
         aMmbEV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.E.apply(V.block(0), mu=mu) * self.b
         KV0 = self.K.apply(V.block(0), mu=mu)
         a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
@@ -393,8 +404,9 @@ class ShiftedSecondOrderModelOperator(BlockOperator):
                     + a2MmabEpb2KiV1 * self.a]
         return self.source.make_array(U_blocks)
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
+        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
         a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
         a2MmabEpb2KitU0 = a2MmabEpb2K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
         a2MmabEpb2KitU1 = a2MmabEpb2K.apply_inverse_adjoint(U.block(1), mu=mu, least_squares=least_squares)

@@ -171,7 +171,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
             dt_F = F.as_vector(mu) * dt
         if F:
             rhs += dt_F
-        U = M_dt_A.apply_inverse(rhs, mu=mu)
+        U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
         while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
             R.append(U)
 
