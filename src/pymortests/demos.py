@@ -183,8 +183,14 @@ def _test_demo(demo):
         pytest.xfail(f'meshio not intalled')
     finally:
         stop_gui_processes()
+
         from pymor.parallel.default import _cleanup
         _cleanup()
+        try:
+            from matplotlib import pyplot
+            pyplot.close('all')
+        except ImportError:
+            pass
 
     return result
 
