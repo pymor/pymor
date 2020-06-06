@@ -29,6 +29,7 @@ class MonomOperator(Operator):
         return self.apply(U, mu=None)
 
     def jacobian(self, U, mu=None):
+        assert len(U) == 1
         return NumpyMatrixOperator(self.derivative(U.to_numpy()).reshape((1,1)))
 
     def apply_inverse(self, V, mu=None, least_squares=False):
