@@ -39,6 +39,11 @@ def test_newton_fail_without_line_search():
     with pytest.raises(NewtonError):
         _ = _newton(mop, initial_value=0.0, atol=1e-15)
 
+def test_newton_unknown_line_search():
+    mop = MonomOperator(1)
+    with pytest.raises(ValueError):
+        _ = _newton(mop, relax='armo')
+
 def test_newton_residual_is_zero(order=5):
     mop = MonomOperator(order)
     U, _ = _newton(mop, initial_value=0.0)
