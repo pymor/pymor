@@ -280,6 +280,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
         for i, VV in enumerate(V):
             R[i], info = lgmres(matrix, VV, initial_guess[i] if initial_guess is not None else None,
                                 tol=options['tol'],
+                                atol=options['tol'],
                                 maxiter=options['maxiter'],
                                 inner_m=options['inner_m'],
                                 outer_k=options['outer_k'])
