@@ -16,7 +16,7 @@ from pymortests.fixtures.grid import hy_rect_or_tria_grid
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.tools.deprecated import Deprecated
-from pymor.tools.floatcmp import float_cmp, float_cmp_all, compare_with_tolerance
+from pymor.tools.floatcmp import float_cmp, float_cmp_all, compare_with_tolerance, almost_less
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools import timing
 
@@ -110,6 +110,8 @@ def test_compare_with_tolerance():
     for (rtol, atol) in itertools.product(tol_range, tol_range):
         msg = f'rtol: {rtol} | atol {atol}'
         op = operator.le
+        assert almost_less(0., 1, rtol, atol), msg
+        assert almost_less(-1., -0., rtol, atol), msg
         assert compare_with_tolerance(0., 1, op, rtol, atol), msg
         assert compare_with_tolerance(-1., -0., op, rtol, atol), msg
         assert compare_with_tolerance(-1., 1., op, rtol, atol), msg
@@ -122,6 +124,7 @@ def test_compare_with_tolerance():
         assert compare_with_tolerance(1., -1., op, rtol, atol), msg
         assert compare_with_tolerance(atol, 0, op, rtol, atol), msg
         assert not compare_with_tolerance(-inf, 0., op, rtol, atol), msg
+
     with pytest.warns(Warning, match='Use float_cmp'):
         compare_with_tolerance(0.0, 0.0, operator.eq)
 

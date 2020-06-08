@@ -4,6 +4,8 @@
 
 import operator
 import warnings
+from functools import partial
+
 import numpy as np
 
 from pymor.core.defaults import defaults
@@ -90,3 +92,6 @@ def compare_with_tolerance(x, y, comparison_op, rtol=1e-14, atol=1e-14):
     if comparison_op is operator.eq:
         warnings.warn('Use float_cmp for float equality tests')
     return comparison_op(x-y, atol + y * rtol)
+
+
+almost_less = partial(compare_with_tolerance, comparison_op=operator.le)
