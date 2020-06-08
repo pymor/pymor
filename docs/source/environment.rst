@@ -23,3 +23,8 @@ PYMOR_DEFAULTS
     If empty or ``NONE``, do not load any :mod:`~pymor.core.defaults`
     from file. Otherwise, a ``:``-separated list of the paths to a
     Python scripts containing defaults.
+
+PYMOR_HYPOTHESIS_PROFILE
+    Controls which profile the hypothesis pytest plugin uses to execute our
+    test suites. Defaults to the "dev" profile which runs fewer variations than 
+    the "ci" or "ci_pr" which get used in our Gitlab-CI.
