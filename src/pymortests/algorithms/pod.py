@@ -10,7 +10,7 @@ from hypothesis.strategies import sampled_from
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
-from pymor.tools.floatcmp import contains_zero_vector
+from pymor.algorithms.basic import contains_zero_vector
 from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import vector_arrays
 

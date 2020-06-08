@@ -9,7 +9,7 @@ from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
-from pymor.tools.floatcmp import contains_zero_vector
+from pymor.algorithms.basic import contains_zero_vector
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import vector_arrays
