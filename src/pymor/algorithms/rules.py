@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from collections import Iterable, Mapping, OrderedDict
+from weakref import WeakValueDictionary
 
 from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
@@ -161,6 +162,8 @@ class RuleTableMeta(UberMeta):
                 rules.append(v)
         # note: since Python 3.6, the definition order is preserved in dct, so rules has the right order
         dct['rules'] = rules
+        dct['_breakpoint_for_obj'] = WeakValueDictionary()
+        dct['_breakpoint_for_name'] = set()
 
         return super().__new__(cls, name, parents, dct)
 
@@ -222,6 +225,38 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         assert isinstance(rule_, rule)
         self.rules.append(rule_)
 
+    @classmethod
+    def breakpoint_for_obj(cls, obj):
+        """Add a conditional breakpoint for given object.
+
+        Break execution in :meth:`~RuleTable.apply`, when being applied
+        to a certain object.
+
+        Parameters
+        ----------
+        obj
+            Object for which to add the conditional breakpoint.
+        """
+        # By using a WeakValueDictionary we ensure that the breakpoint is
+        # removed when the object is finalized and does not match a new
+        # object with the same id.
+        cls._breakpoint_for_obj[id(obj)] = obj
+
+    @classmethod
+    def breakpoint_for_name(cls, name):
+        """Add a conditional breakpoint for objects of given name.
+
+        Break execution in :meth:`~RuleTable.apply`, when being applied
+        to an object with a certain name.
+
+        Parameters
+        ----------
+        name
+            :attr:`~pymor.core.base.BasicObject.name` of the object for which
+            to add the conditional breakpoint.
+        """
+        cls._breakpoint_for_name.add(name)
+
     def apply(self, obj):
         """Sequentially apply rules to given object.
 
@@ -252,6 +287,13 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         NoMatchingRuleError
             No |rule| could be applied to the given object.
         """
+        if id(obj) in self._breakpoint_for_obj or getattr(obj, 'name', None) in self._breakpoint_for_name:
+            try:
+                breakpoint()
+            except NameError:
+                import pdb
+                pdb.set_trace()
+
         if self.use_caching and obj in self._cache:
             return self._cache[obj]
 
