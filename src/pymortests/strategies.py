@@ -253,13 +253,13 @@ def valid_inds_of_same_length(v1, v2):
 def st_valid_inds_of_same_length(draw, v1, v2):
     len1, len2 = len(v1), len(v2)
     ret = hyst.just([([],), ([],)])
-    # TODO we should include integer arrays here
-    val1 = hynp.basic_indices(shape=(len1,), allow_ellipsis=False) #| hynp.integer_array_indices(shape=(len1,))
+    # TODO we should include integer arrays here by chaining `| hynp.integer_array_indices(shape=(LEN_X,))`
+    val1 = hynp.basic_indices(shape=(len1,), allow_ellipsis=False)
     if len1 == len2:
         ret = ret | hyst.tuples(hyst.shared(val1, key="st_valid_inds_of_same_length"), hyst.shared(val1, key="st_valid_inds_of_same_length"))
     if len1 > 0 and len2 > 0:
-        val2 = hynp.basic_indices(shape=(len2,), allow_ellipsis=False) #| hynp.integer_array_indices(shape=(len2,))
-        ret = ret | hyst.tuples(val1, val2)#.filter()
+        val2 = hynp.basic_indices(shape=(len2,), allow_ellipsis=False)
+        ret = ret | hyst.tuples(val1, val2)
     # values are always tuples
     return [d[0] for d in draw(ret)]
 
@@ -427,14 +427,6 @@ def invalid_ind_pairs(v1, v2):
 
 
 def st_invalid_ind_pairs(v1, v2):
-    # for inds in valid_inds_of_different_length(v1, v2):
-    #     yield inds
-    # for ind1 in valid_inds(v1):
-    #     for ind2 in invalid_inds(v2, length=v1.len_ind(ind1)):
-    #         yield ind1, ind2
-    # for ind2 in valid_inds(v2):
-    #     for ind1 in invalid_inds(v1, length=v2.len_ind(ind2)):
-    #         yield ind1, ind2
     return hyst.sampled_from(list(valid_inds_of_different_length(v1, v2))) | \
         hyst.sampled_from([(i1, i2) for i1 in valid_inds(v1) for i2 in invalid_inds(v2, length=v1.len_ind(i1)) ])
 
