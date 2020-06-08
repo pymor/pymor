@@ -2,7 +2,8 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from collections import Iterable, Mapping, OrderedDict
+from collections.abc import Iterable, Mapping
+from collections import OrderedDict
 from weakref import WeakValueDictionary
 
 from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
