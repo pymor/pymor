@@ -255,14 +255,22 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         if self.use_caching and obj in self._cache:
             return self._cache[obj]
 
-        for r in self.rules:
-            if r.matches(obj):
-                try:
-                    result = r.action(self, obj)
-                    self._cache[obj] = result
-                    return result
-                except RuleNotMatchingError:
-                    pass
+        failed_rules = []
+
+        def matching_rules():
+            for r in self.rules:
+                if r.matches(obj):
+                    yield r
+                else:
+                    failed_rules.append(r)
+
+        for r in matching_rules():
+            try:
+                result = r.action(self, obj)
+                self._cache[obj] = result
+                return result
+            except RuleNotMatchingError:
+                failed_rules.append(r)
 
         raise NoMatchingRuleError(obj)
 
