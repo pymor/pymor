@@ -33,7 +33,7 @@ def test_rrf():
     assert len(Q) == 8
 
     Q = rrf(op_complex, iscomplex=True)
-    assert np.iscomplexobj(Q.data)
+    assert np.iscomplexobj(Q.to_numpy())
     assert Q in op.range
     assert len(Q) == 8
 
@@ -43,5 +43,5 @@ def test_adaptive_rrf():
     assert B in op.range
 
     B = adaptive_rrf(op_complex, iscomplex=True)
-    assert np.iscomplexobj(B.data)
+    assert np.iscomplexobj(B.to_numpy())
     assert B in op.range
