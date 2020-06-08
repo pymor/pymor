@@ -9,6 +9,7 @@ import scipy
 
 from pymor.core.defaults import defaults
 from pymor.operators.constructions import induced_norm
+from pymor.tools.floatcmp import float_cmp
 
 
 @defaults('rtol', 'atol')
@@ -101,3 +102,22 @@ def project_array(U, basis, product=None, orthonormal=True):
         rhs = basis.inner(U, product)
         coeffs = scipy.linalg.solve(gramian, rhs, sym_pos=True, overwrite_a=True, overwrite_b=True).T
         return basis.lincomb(coeffs)
+
+
+def contains_zero_vector(vector_array, rtol=None, atol=None):
+    """returns `True` iff any vector in the array float_compares to 0s of the same dim
+
+    Parameters
+    ----------
+    vector_array
+        a |VectorArray| implementation
+    rtol
+        relative tolerance for float_cmp
+    atol
+        absolute tolerance for float_cmp
+    """
+    for i in range(len(vector_array)):
+        sup = vector_array[i].sup_norm()
+        if float_cmp(sup, 0.0, rtol, atol):
+            return True
+    return False

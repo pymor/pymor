@@ -68,27 +68,6 @@ def bounded(lower, upper, x, rtol=None, atol=None):
     return (lower < x < upper) or float_cmp(x, lower, rtol, atol) or float_cmp(x, upper, rtol, atol)
 
 
-def contains_zero_vector(vector_array, rtol=None, atol=None):
-    """returns `True` iff any vector in the array float_compares to 0s of the same dim
-
-    Parameters
-    ----------
-    vector_array
-        a |VectorArray| implementation
-    rtol
-        relative tolerance for float_cmp
-    atol
-        absolute tolerance for float_cmp
-    """
-    zero = np.zeros(vector_array.dim)
-
-    for i in range(len(vector_array)):
-        vec = vector_array[i].to_numpy()
-        if float_cmp_all(vec, zero, rtol, atol):
-            return True
-    return False
-
-
 @defaults('rtol', 'atol')
 def compare_with_tolerance(x, y, comparison_op, rtol=1e-14, atol=1e-14):
     """ 'One-sided' Comparison x and y component-wise with given comparison op.

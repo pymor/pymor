@@ -9,7 +9,7 @@ from hypothesis import given, settings, assume, reproduce_failure, example
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.logger import getLogger, scoped_logger
-from pymor.tools.floatcmp import contains_zero_vector
+from pymor.algorithms.basic import contains_zero_vector
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import operator_with_arrays_and_products
