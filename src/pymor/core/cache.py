@@ -157,7 +157,7 @@ class MemoryRegion(CacheRegion):
 
     def set(self, key, value):
         if key in self._cache:
-            getLogger('pymor.core.cache.MemoryRegion').warn('Key already present in cache region, ignoring.')
+            getLogger('pymor.core.cache.MemoryRegion').warning('Key already present in cache region, ignoring.')
             return
         if len(self._cache) == self.max_keys:
             self._cache.popitem(last=False)
@@ -190,7 +190,7 @@ class DiskRegion(CacheRegion):
     def set(self, key, value):
         has_key = key in self._cache
         if has_key:
-            getLogger('pymor.core.cache.DiskRegion').warn('Key already present in cache region, ignoring.')
+            getLogger('pymor.core.cache.DiskRegion').warning('Key already present in cache region, ignoring.')
             return
         self._cache.set(key, value)
 
@@ -223,7 +223,7 @@ cache_regions = {}
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
-    getLogger('pymor.core.cache').warn('caching globally disabled by environment')
+    getLogger('pymor.core.cache').warning('caching globally disabled by environment')
 
 
 def enable_caching():
@@ -352,7 +352,7 @@ class CacheableObject(ImmutableObject):
             if found:
                 value, cached_defaults_changes = value
                 if cached_defaults_changes != defaults_changes():
-                    getLogger('pymor.core.cache').warn('pyMOR defaults have been changed. Cached result may be wrong.')
+                    getLogger('pymor.core.cache').warning('pyMOR defaults have been changed. Cached result may be wrong.')
                 return value
             else:
                 self.logger.debug(f'creating new cache entry for {self.__class__.__name__}.{method.__name__}')
