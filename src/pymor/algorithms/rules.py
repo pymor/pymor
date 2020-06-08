@@ -165,15 +165,7 @@ class RuleTableMeta(UberMeta):
         return super().__new__(cls, name, parents, dct)
 
     def __repr__(cls):
-        rows = [['Pos', 'Match Type', 'Condition', 'Action Name / Action Description', 'Stop']]
-        for i, r in enumerate(cls.rules):
-            for ii in range(r.num_rules):
-                rows.append(['' if ii else str(i),
-                             r.condition_type,
-                             r.condition_description,
-                             '' if ii else r.action_description])
-                r = r.next_rule
-        return format_table(rows)
+        return format_rules(cls.rules)
 
     def __getitem__(cls, idx):
         return cls.rules[idx]
@@ -340,6 +332,9 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
                 pass
         return children
 
+    def __repr__(self):
+        return super().__repr__() + "\n\n" + format_rules(self.rules)
+
 
 def print_children(obj):
     def build_tree(obj):
@@ -361,3 +356,19 @@ def print_children(obj):
     except ImportError:
         from pprint import pprint
         pprint({obj.name: build_tree(obj)})
+
+
+def format_rules(rules):
+    rows = [['Pos', 'Match Type', 'Condition', 'Action Name / Action Description', 'Stop']]
+    for i, r in enumerate(rules):
+        for ii in range(r.num_rules):
+            rows.append(['' if ii else str(i),
+                         r.condition_type,
+                         r.condition_description,
+                         '' if ii else r.action_description])
+            r = r.next_rule
+    return format_table(rows)
+
+
+def print_rules(rules):
+    print(format_rules(rules))
