@@ -185,10 +185,12 @@ if config.HAVE_FENICS:
             self.matrix.transpmult(v.impl, r.impl)
             return r
 
-        def _real_apply_inverse_one_vector(self, v, mu=None, least_squares=False, prepare_data=None):
+        def _real_apply_inverse_one_vector(self, v, mu=None, initial_guess=None,
+                                           least_squares=False, prepare_data=None):
             if least_squares:
                 raise NotImplementedError
-            r = self.source.real_zero_vector()
+            r = (self.source.real_zero_vector() if initial_guess is None else
+                 initial_guess.copy(deep=True))
             options = self.solver_options.get('inverse') if self.solver_options else None
             _apply_inverse(self.matrix, r.impl, v.impl, options)
             return r

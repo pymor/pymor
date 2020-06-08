@@ -134,7 +134,8 @@ if config.HAVE_NGSOLVE:
             mat.Mult(v.impl.vec, u.impl.vec)
             return u
 
-        def _real_apply_inverse_one_vector(self, v, mu=None, least_squares=False, prepare_data=None):
+        def _real_apply_inverse_one_vector(self, v, mu=None, initial_guess=None,
+                                           least_squares=False, prepare_data=None):
             inv = prepare_data
             r = self.source.real_zero_vector()
             r.impl.vec.data = inv * v.impl.vec

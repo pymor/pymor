@@ -133,21 +133,29 @@ class MPIOperator(Operator):
         else:
             return mpi.call(mpi.method_call, self.obj_id, 'apply_adjoint', V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
         assert V in self.range
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
         assert self.parameters.assert_compatible(mu)
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
-                                               V.obj_id, mu=mu, least_squares=least_squares))
+                                               V.obj_id, mu=mu,
+                                               initial_guess=(initial_guess.obj_id if initial_guess is not None
+                                                              else None),
+                                               least_squares=least_squares))
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
         assert U in self.source
+        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
         assert self.parameters.assert_compatible(mu)
         return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse_adjoint',
-                                               U.obj_id, mu=mu, least_squares=least_squares))
+                                               U.obj_id, mu=mu,
+                                               initial_guess=(initial_guess.obj_id if initial_guess is not None
+                                                              else None),
+                                               least_squares=least_squares))
 
     def jacobian(self, U, mu=None):
         assert U in self.source

@@ -176,7 +176,7 @@ class LincombOperator(Operator):
                 derivative_coefficients.append(0.)
         return self.with_(coefficients=derivative_coefficients, name=self.name + '_d_mu')
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if len(self.operators) == 1:
             if self.coefficients[0] == 0.:
                 if least_squares:
@@ -184,13 +184,13 @@ class LincombOperator(Operator):
                 else:
                     raise InversionError
             else:
-                U = self.operators[0].apply_inverse(V, mu=mu, least_squares=least_squares)
+                U = self.operators[0].apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
                 U *= (1. / self.coefficients[0])
                 return U
         else:
-            return super().apply_inverse(V, mu=mu, least_squares=least_squares)
+            return super().apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         if len(self.operators) == 1:
             if self.coefficients[0] == 0.:
                 if least_squares:
@@ -198,11 +198,12 @@ class LincombOperator(Operator):
                 else:
                     raise InversionError
             else:
-                V = self.operators[0].apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
+                V = self.operators[0].apply_inverse_adjoint(U, mu=mu,
+                                                            initial_guess=initial_guess, least_squares=least_squares)
                 V *= (1. / self.coefficients[0])
                 return V
         else:
-            return super().apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
+            return super().apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
     def _as_array(self, source, mu):
         coefficients = np.array(self.evaluate_coefficients(mu))
@@ -588,9 +589,9 @@ class LowRankUpdatedOperator(LincombOperator):
                          solver_options=solver_options, name=name)
         self.__auto_init(locals())
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if least_squares:
-            return super().apply_inverse(V, mu=mu, least_squares=True)
+            return super().apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=True)
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
         if not LR.inverted:
@@ -606,9 +607,9 @@ class LowRankUpdatedOperator(LincombOperator):
         U.scal(1 / alpha)
         return U
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         if least_squares:
-            return super().apply_inverse_adjoint(U, mu=mu, least_squares=True)
+            return super().apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=True)
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
         if not LR.inverted:
@@ -692,12 +693,14 @@ class IdentityOperator(Operator):
         assert V in self.range
         return V.copy()
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
         return V.copy()
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
+        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
         return U.copy()
 
     def assemble(self, mu=None):
@@ -746,7 +749,7 @@ class ConstantOperator(Operator):
         restricted_value = NumpyVectorSpace.make_array(self.value.dofs(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if not least_squares:
             raise InversionError('ConstantOperator is not invertible.')
         return self.source.zeros(len(V))
@@ -784,14 +787,16 @@ class ZeroOperator(Operator):
         assert V in self.range
         return self.source.zeros(len(V))
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
         if not least_squares:
             raise InversionError
         return self.source.zeros(len(V))
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
+        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
         if not least_squares:
             raise InversionError
         return self.range.zeros(len(U))
@@ -849,7 +854,7 @@ class VectorArrayOperator(Operator):
         else:
             return self.range.make_array(self.array.dot(U).T)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if not least_squares and len(self.array) != self.array.dim:
             raise InversionError
 
@@ -874,9 +879,9 @@ class VectorArrayOperator(Operator):
         else:
             return self.array.lincomb(V.to_numpy())
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         adjoint_op = VectorArrayOperator(self.array, adjoint=not self.adjoint)
-        return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
+        return adjoint_op.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
     def as_range_array(self, mu=None):
         if not self.adjoint:
@@ -1004,11 +1009,11 @@ class ProxyOperator(Operator):
     def apply_adjoint(self, V, mu=None):
         return self.operator.apply_adjoint(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        return self.operator.apply_inverse(V, mu=mu, least_squares=least_squares)
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        return self.operator.apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
-        return self.operator.apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        return self.operator.apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=mu)
@@ -1044,11 +1049,12 @@ class FixedParameterOperator(ProxyOperator):
     def apply_adjoint(self, V, mu=None):
         return self.operator.apply_adjoint(V, mu=self.mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
-        return self.operator.apply_inverse(V, mu=self.mu, least_squares=least_squares)
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        return self.operator.apply_inverse(V, mu=self.mu, initial_guess=initial_guess, least_squares=least_squares)
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
-        return self.operator.apply_inverse_adjoint(U, mu=self.mu, least_squares=least_squares)
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        return self.operator.apply_inverse_adjoint(U, mu=self.mu,
+                                                   initial_guess=initial_guess, least_squares=least_squares)
 
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=self.mu)
@@ -1108,12 +1114,14 @@ class InverseOperator(Operator):
         assert V in self.range
         return self.operator.apply_inverse_adjoint(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
         return self.operator.apply(V, mu=mu)
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
+        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
         return self.operator.apply_adjoint(U, mu=mu)
 
 
@@ -1151,11 +1159,11 @@ class InverseAdjointOperator(Operator):
         assert V in self.range
         return self.operator.apply_inverse(V, mu=mu)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
         return self.operator.apply_adjoint(V, mu=mu)
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
         return self.operator.apply(U, mu=mu)
 
@@ -1241,26 +1249,30 @@ class AdjointOperator(Operator):
             U = self.range_product.apply(U)
         return U
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if not self.with_apply_inverse:
-            return super().apply_inverse(V, mu=mu, least_squares=least_squares)
+            return super().apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
         assert V in self.range
         if self.source_product:
             V = self.source_product(V)
-        U = self.operator.apply_inverse_adjoint(V, mu=mu, least_squares=least_squares)
+        U = self.operator.apply_inverse_adjoint(V, mu=mu,
+                                                initial_guess=initial_guess if not self.range_product else None,
+                                                least_squares=least_squares)
         if self.range_product:
             U = self.range_product.apply_inverse(U)
         return U
 
-    def apply_inverse_adjoint(self, U, mu=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         if not self.with_apply_inverse:
-            return super().apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
+            return super().apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
         assert U in self.source
         if self.range_product:
             U = self.range_product.apply_inverse(U)
-        V = self.operator.apply_inverse(U, mu=mu, least_squares=least_squares)
+        V = self.operator.apply_inverse(U, mu=mu,
+                                        initial_guess=initial_guess if not self.source_product else None,
+                                        least_squares=least_squares)
         if self.source_product:
             V = self.source_product.apply(V)
         return V
