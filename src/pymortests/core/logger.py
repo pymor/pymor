@@ -5,6 +5,7 @@
 import logging
 
 import pymor.core as core
+from pymor.core.logger import temporary_log_levels
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import (runmodule,)
 
@@ -20,6 +21,19 @@ def test_logger():
 
 def test_empty_log_message():
     core.logger.getLogger('test').warn('')
+
+
+def test_temporary_log_levels():
+    logger = NumpyMatrixOperator._logger
+    before_name = 'INFO'
+    logger.setLevel(before_name)
+    before = logger.level
+    with temporary_log_levels({logger.name: 'DEBUG'}):
+        assert 'DEBUG' == logging.getLevelName(logger.level)
+        assert logger.level != before
+    assert logger.level == before
+    assert before_name == logging.getLevelName(logger.level)
+
 
 
 if __name__ == "__main__":
