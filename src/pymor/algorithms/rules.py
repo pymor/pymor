@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from collections import Iterable, Mapping, OrderedDict
+from weakref import WeakValueDictionary
 
 from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
@@ -161,19 +162,13 @@ class RuleTableMeta(UberMeta):
                 rules.append(v)
         # note: since Python 3.6, the definition order is preserved in dct, so rules has the right order
         dct['rules'] = rules
+        dct['_breakpoint_for_obj'] = WeakValueDictionary()
+        dct['_breakpoint_for_name'] = set()
 
         return super().__new__(cls, name, parents, dct)
 
     def __repr__(cls):
-        rows = [['Pos', 'Match Type', 'Condition', 'Action Name / Action Description', 'Stop']]
-        for i, r in enumerate(cls.rules):
-            for ii in range(r.num_rules):
-                rows.append(['' if ii else str(i),
-                             r.condition_type,
-                             r.condition_description,
-                             '' if ii else r.action_description])
-                r = r.next_rule
-        return format_table(rows)
+        return format_rules(cls.rules)
 
     def __getitem__(cls, idx):
         return cls.rules[idx]
@@ -230,6 +225,38 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         assert isinstance(rule_, rule)
         self.rules.append(rule_)
 
+    @classmethod
+    def breakpoint_for_obj(cls, obj):
+        """Add a conditional breakpoint for given object.
+
+        Break execution in :meth:`~RuleTable.apply`, when being applied
+        to a certain object.
+
+        Parameters
+        ----------
+        obj
+            Object for which to add the conditional breakpoint.
+        """
+        # By using a WeakValueDictionary we ensure that the breakpoint is
+        # removed when the object is finalized and does not match a new
+        # object with the same id.
+        cls._breakpoint_for_obj[id(obj)] = obj
+
+    @classmethod
+    def breakpoint_for_name(cls, name):
+        """Add a conditional breakpoint for objects of given name.
+
+        Break execution in :meth:`~RuleTable.apply`, when being applied
+        to an object with a certain name.
+
+        Parameters
+        ----------
+        name
+            :attr:`~pymor.core.base.BasicObject.name` of the object for which
+            to add the conditional breakpoint.
+        """
+        cls._breakpoint_for_name.add(name)
+
     def apply(self, obj):
         """Sequentially apply rules to given object.
 
@@ -260,17 +287,32 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         NoMatchingRuleError
             No |rule| could be applied to the given object.
         """
+        if id(obj) in self._breakpoint_for_obj or getattr(obj, 'name', None) in self._breakpoint_for_name:
+            try:
+                breakpoint()
+            except NameError:
+                import pdb
+                pdb.set_trace()
+
         if self.use_caching and obj in self._cache:
             return self._cache[obj]
 
-        for r in self.rules:
-            if r.matches(obj):
-                try:
-                    result = r.action(self, obj)
-                    self._cache[obj] = result
-                    return result
-                except RuleNotMatchingError:
-                    pass
+        failed_rules = []
+
+        def matching_rules():
+            for r in self.rules:
+                if r.matches(obj):
+                    yield r
+                else:
+                    failed_rules.append(r)
+
+        for r in matching_rules():
+            try:
+                result = r.action(self, obj)
+                self._cache[obj] = result
+                return result
+            except RuleNotMatchingError:
+                failed_rules.append(r)
 
         raise NoMatchingRuleError(obj)
 
@@ -340,6 +382,9 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
                 pass
         return children
 
+    def __repr__(self):
+        return super().__repr__() + "\n\n" + format_rules(self.rules)
+
 
 def print_children(obj):
     def build_tree(obj):
@@ -361,3 +406,19 @@ def print_children(obj):
     except ImportError:
         from pprint import pprint
         pprint({obj.name: build_tree(obj)})
+
+
+def format_rules(rules):
+    rows = [['Pos', 'Match Type', 'Condition', 'Action Name / Action Description', 'Stop']]
+    for i, r in enumerate(rules):
+        for ii in range(r.num_rules):
+            rows.append(['' if ii else str(i),
+                         r.condition_type,
+                         r.condition_description,
+                         '' if ii else r.action_description])
+            r = r.next_rule
+    return format_table(rows)
+
+
+def print_rules(rules):
+    print(format_rules(rules))
