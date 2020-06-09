@@ -27,7 +27,11 @@ class BlockVectorArray(VectorArray):
         assert self._blocks_are_valid()
 
     def to_numpy(self, ensure_copy=False):
-        return np.hstack([block.to_numpy() for block in self._blocks])
+        if len(self._blocks):
+            # hstack will error out with empty input list
+            return np.hstack([block.to_numpy() for block in self._blocks])
+        else:
+            return np.empty((0,0))
 
     @property
     def real(self):
@@ -57,7 +61,10 @@ class BlockVectorArray(VectorArray):
         return len(self._blocks)
 
     def __len__(self):
-        return len(self._blocks[0])
+        try:
+            return len(self._blocks[0])
+        except IndexError:
+            return 0
 
     def __getitem__(self, ind):
         return BlockVectorArrayView(self, ind)
@@ -193,6 +200,9 @@ class BlockVectorSpace(VectorSpace):
         return sum(subspace.dim for subspace in self.subspaces)
 
     def zeros(self, count=1, reserve=0):
+        # these asserts make sure we also trigger if the subspace list is empty
+        assert count >= 0
+        assert reserve >= 0
         return BlockVectorArray([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
 
     @classinstancemethod
