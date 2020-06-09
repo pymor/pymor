@@ -96,7 +96,7 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             # this is our default which might not exist for older matplotlib so a warning would be annoying
             if name != 'viridis':
                 msg = f'Unknown colormap {name}, using default colormap'
-                getLogger('pymor.discretizers.builtin.gui.gl.colormap_texture').warn(msg)
+                getLogger('pymor.discretizers.builtin.gui.gl.colormap_texture').warning(msg)
             cmap = get_cmap()
         colormap[:] = cmap(np.linspace(0., 1., resolution))
         gl.glTexImage1D(gl.GL_TEXTURE_1D, 0, gl.GL_RGBA, resolution, 0, gl.GL_RGBA, gl.GL_FLOAT, colormap)
