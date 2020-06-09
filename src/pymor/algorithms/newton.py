@@ -2,7 +2,11 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from numbers import Number
+
 import numpy as np
+
+from pymor.algorithms.line_search import armijo
 
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError, NewtonError
@@ -10,8 +14,8 @@ from pymor.core.logger import getLogger
 
 
 @defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
-def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
-           miniter=0, maxiter=100, rtol=0., atol=0., relax=1.,
+def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least_squares=False,
+           miniter=0, maxiter=100, rtol=0., atol=0., relax=1., line_search_params=None,
            stagnation_window=3, stagnation_threshold=np.inf,
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
@@ -35,8 +39,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     mu
         The |parameter values| for which to solve the equation.
     error_norm
-        The norm with which the norm of the residual is computed. If `None`, the
-        Euclidean norm is used.
+        The product with which the norm of the residual is computed. If `None`, the
+        Euclidean product is used.
     least_squares
         If `True`, use a least squares linear solver (e.g. for residual minimization).
     miniter
@@ -49,7 +53,11 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     atol
         Finish when the residual norm is below this threshold.
     relax
-        Relaxation factor for Newton updates.
+        If real valued, relaxation factor for Newton updates; otherwise 'armijo' to
+        indicate that the :func:~pymor.algorithms.line_search.armijo line search algorithm
+        shall be used.
+    line_search_params
+        Dictionary of additional parameters passed to the line search method.
     stagnation_window
         Finish when the residual norm has not been reduced by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
@@ -94,7 +102,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     U = initial_guess.copy()
     residual = rhs - operator.apply(U, mu=mu)
 
-    err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
+    err = residual.norm(error_product)[0]
     logger.info(f'      Initial Residual: {err:5e}')
 
     iteration = 0
@@ -124,10 +132,24 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
             correction = jacobian.apply_inverse(residual, least_squares=least_squares)
         except InversionError:
             raise NewtonError('Could not invert jacobian')
-        U.axpy(relax, correction)
+        if isinstance(relax, Number):
+            step_size = relax
+        elif relax == 'armijo':
+            logger.info(f'Using Armijo as line search method')
+            def res(x):
+                residual_vec = rhs - operator.apply(x, mu=mu)
+                return residual_vec.norm(error_product)[0]
+            if error_product is None:
+                grad = - (jacobian.apply(residual) + jacobian.apply_adjoint(residual))
+            else:
+                grad = - (jacobian.apply_adjoint(error_product.apply(residual)) + jacobian.apply(error_product.apply_adjoint(residual)))
+            step_size = armijo(res, U, correction, grad=grad, initial_value=err, **(line_search_params or {}))
+        else:
+            raise ValueError('Unknown line search method')
+        U.axpy(step_size, correction)
         residual = rhs - operator.apply(U, mu=mu)
 
-        err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
+        err = residual.norm(error_product)[0]
         logger.info(f'Iteration {iteration:2}: Residual: {err:5e},  '
                     f'Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}')
         error_sequence.append(err)

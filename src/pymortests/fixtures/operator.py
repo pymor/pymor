@@ -26,8 +26,12 @@ class MonomOperator(Operator):
     def apply(self, U, mu=None):
         return self.source.make_array(self.monom(U.to_numpy()))
 
+    def apply_adjoint(self, U, mu=None):
+        return self.apply(U, mu=None)
+
     def jacobian(self, U, mu=None):
-        return MonomOperator(self.order - 1, self.derivative)
+        assert len(U) == 1
+        return NumpyMatrixOperator(self.derivative(U.to_numpy()).reshape((1,1)))
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         return self.range.make_array(1. / V.to_numpy())

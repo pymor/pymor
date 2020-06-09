@@ -22,6 +22,9 @@
 * Luca Mechelli, luca.mechelli@uni-konstanz.de
     * speed up of lincomb operators
 
+* Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
+    * Armijo line search algorithm
+
 ## pyMOR 2019.2
 
 * Linus Balicki, linus.balicki@ovgu.de
