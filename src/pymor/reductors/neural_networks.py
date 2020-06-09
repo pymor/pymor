@@ -15,6 +15,7 @@ if config.HAVE_TORCH:
 
     from pymor.algorithms.pod import pod
     from pymor.core.base import BasicObject
+    from pymor.models.neural_network import NeuralNetworkModel
 
 
     class FullyConnectedNN(nn.Module, BasicObject):
@@ -95,11 +96,13 @@ if config.HAVE_TORCH:
 
             if not self.logging_disabled:
                 self.logger.info('Initialize neural network ...')
-            self.neural_network = FullyConnectedNN(layers, activation_function=self.activation_function)
+            self.neural_network = FullyConnectedNN(layers, activation_function=self.activation_function).double()
 
             self.optimizer = self.optimizer(self.neural_network.parameters(), lr=self.learning_rate)
 
             self._train()
+
+            return self._build_rom()
 
         def _train(self):
             training_data = []
@@ -165,6 +168,16 @@ if config.HAVE_TORCH:
                             self.logger.info(f'Minimum validation loss: {early_stopping_scheduler.best_loss}')
                         return
 
+        def _build_rom(self):
+            with self.logger.block('Building ROM ...'):
+                rom = self.build_rom()
+                rom = rom.with_(name=f'{self.fom.name}_reduced')
+                rom.disable_logging()
+
+            return rom
+
+        def build_rom(self):
+            return NeuralNetworkModel(self.neural_network, self.reduced_basis)
 
         def build_basis(self):
             if not self.logging_disabled:
@@ -178,15 +191,14 @@ if config.HAVE_TORCH:
 
             return reduced_basis
 
-
         def _prepare_batch(self, batch):
             inputs = []
             targets = []
 
             for item in batch:
                 u_proj = self.reduced_basis.inner(item['u_full'])[:,0]
-                input_ = torch.Tensor(np.fromiter(item['mu'].values(), dtype=float))
-                target = torch.Tensor(u_proj)
+                input_ = torch.DoubleTensor(np.fromiter(item['mu'].values(), dtype=float))
+                target = torch.DoubleTensor(u_proj)
                 inputs.append(input_)
                 targets.append(target)
 
