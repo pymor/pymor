@@ -20,6 +20,7 @@ provided for getting started quickly.
     tutorial-rb
     tutorial_bt
     tutorial_mor_with_anns
+    tutorial_external_solver
     environment
     release_notes
     bibliography
