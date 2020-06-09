@@ -67,7 +67,7 @@ def neural_networks_demo(args):
 
     parameter_space = fom.parameters.space((0.1, 1))
 
-    from pymor.reductors.neural_networks import NeuralNetworkReductor
+    from pymor.reductors.neural_network import NeuralNetworkReductor
 
     training_set = parameter_space.sample_uniformly(int(TRAINING_SAMPLES))
     validation_set = parameter_space.sample_randomly(int(VALIDATION_SAMPLES))
