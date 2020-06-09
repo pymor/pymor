@@ -332,33 +332,20 @@ def _info3(self, msg, *args, **kwargs):
 
 
 @contextmanager
-def scoped_logger(module, level, filename=''):
-    """ Get a logger on entry, reset level to before state on exit.
+def temporary_log_levels(level_mapping):
+    """Change levels for given loggers on entry and reset to before state on exit.
 
     Parameters
     ----------
-    module
-        string describing which logger to get
-    level
-        Loglevel set for logger while in managed context (see
-        :meth:`~logging.Logger.setLevel`).
-    filename If not empty, path of an existing file where everything logged will be
-        written to.
-
-    Returns
-    -------
-    logger
-        a contextmanager object usable as logger ::
-
-            lg = getLogger('mymodule', logging.ERROR)
-            with scoped_logger('mymodule', logging.INFO) as sc_log:
-                sc_log.info('this is now printed')
-            lg.info('this isn't printed, level was reset to logging.ERROR')
+    level_mapping
+        a dict of logger name -> level name
     """
-    logger = getLogger(module, None, filename)
-    lvl = logger.getEffectiveLevel()
-    logger.setLevel(level)
+    for name, level in level_mapping.items():
+        logger = getLogger(name)
+        level_mapping[name] = logger.level
+        logger.setLevel(level)
     try:
-        yield logger
+        yield
     finally:
-        logger.setLevel(lvl)
+        for name, level in level_mapping.items():
+            getLogger(name).setLevel(level)
