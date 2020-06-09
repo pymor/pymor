@@ -286,7 +286,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 cbar_widget = None
                 if not separate_colorbars and len(U) > 1:
                     l = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
-                    l.warn('separate_colorbars=False not supported for matplotlib backend')
+                    l.warning('separate_colorbars=False not supported for matplotlib backend')
                 separate_colorbars = True
 
             class PlotWidget(QWidget):

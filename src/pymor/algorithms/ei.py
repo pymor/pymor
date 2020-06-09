@@ -322,7 +322,7 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
                                               copy=False, pool=pool)
         elif alg == 'deim':
             if alg == 'deim' and pool is not dummy_pool:
-                logger.warn('DEIM algorithm not parallel. Collecting operator evaluations.')
+                logger.warning('DEIM algorithm not parallel. Collecting operator evaluations.')
                 evaluations = pool.apply(_identity, x=evaluations)
                 evs = evaluations[0]
                 for e in evaluations[1:]:

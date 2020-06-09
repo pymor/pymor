@@ -83,7 +83,7 @@ def load_gmsh(filename):
 
         bi = GenericBoundaryInfo(grid, masks)
     else:
-        logger.warn('Boundary data not found. Creating empty BoundaryInfo ...')
+        logger.warning('Boundary data not found. Creating empty BoundaryInfo ...')
         bi = EmptyBoundaryInfo(grid)
 
     toc = time.time()
