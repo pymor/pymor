@@ -80,6 +80,11 @@ class Parameters(FrozenDict):
 
         return cls(parameters)
 
+    @property
+    def dim(self):
+        """The sum of the dimensions of all parameters."""
+        return sum(self.values())
+
     def parse(self, mu):
         """Takes a user input `mu` and interprets it as set of |parameter values|
         according to the given |Parameters|.
