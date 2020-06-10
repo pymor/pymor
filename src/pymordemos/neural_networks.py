@@ -79,31 +79,32 @@ def neural_networks_demo(args):
 
     test_set = parameter_space.sample_randomly(10)
 
-    absolute_errors = []
-    relative_errors = []
     speedups = []
 
     import time
 
     print(f'Performing test on set of size {len(test_set)} ...')
 
+    U = fom.solution_space.empty(reserve=len(test_set))
+    U_red = fom.solution_space.empty(reserve=len(test_set))
+
     for mu in test_set:
         tic = time.time()
-        U = fom.solve(mu)
+        U.append(fom.solve(mu))
         time_fom = time.time() - tic
 
         tic = time.time()
-        U_red = rom.solve(mu)
+        U_red.append(rom.solve(mu))
         time_red = time.time() - tic
 
-        if args['--vis']:
-            fom.visualize(U, title=f'Full solution for mu={mu}')
-            fom.visualize(U_red, title=f'Reduced solution for mu={mu}')
-
-        absolute_errors.append((U - U_red).l2_norm())
-        relative_errors.append((U - U_red).l2_norm() / U.l2_norm())
         speedups.append(time_fom / time_red)
 
+    absolute_errors = (U - U_red).l2_norm()
+    relative_errors = (U - U_red).l2_norm() / U.l2_norm()
+
+    if args['--vis']:
+        fom.visualize((U, U_red),
+                      legend=(f'Full solution for mu={mu}', 'Reduced solution for mu={mu}'))
 
     print(f'Average absolute error: {np.average(absolute_errors)}')
     print(f'Average relative error: {np.average(relative_errors)}')
