@@ -94,9 +94,8 @@ if config.HAVE_TORCH:
             layers = eval(self.hidden_layers, {'N': len(self.reduced_basis), 'P': len(self.fom.parameters)})
             layers = [len(self.fom.parameters),] + layers + [len(self.reduced_basis),]
 
-            if not self.logging_disabled:
-                self.logger.info('Initialize neural network ...')
-            self.neural_network = FullyConnectedNN(layers, activation_function=self.activation_function).double()
+            with self.logger.block('Initialize neural network ...'):
+                self.neural_network = FullyConnectedNN(layers, activation_function=self.activation_function).double()
 
             self.optimizer = self.optimizer(self.neural_network.parameters(), lr=self.learning_rate)
 
@@ -105,13 +104,15 @@ if config.HAVE_TORCH:
             return self._build_rom()
 
         def _train(self):
-            training_data = []
-            for mu in self.training_set:
-                training_data.append({'mu': mu, 'u_full': self.fom.solve(mu)})
+            with self.logger.block('Computing training snapshots ...'):
+                training_data = []
+                for mu in self.training_set:
+                    training_data.append({'mu': mu, 'u_full': self.fom.solve(mu)})
 
-            validation_data = []
-            for mu in self.validation_set:
-                validation_data.append({'mu': mu, 'u_full': self.fom.solve(mu)})
+            with self.logger.block('Computing validation snapshots ...'):
+                validation_data = []
+                for mu in self.validation_set:
+                    validation_data.append({'mu': mu, 'u_full': self.fom.solve(mu)})
 
             if type(self.optimizer) == optim.LBFGS:
                 self.batch_size = len(training_data)
@@ -124,49 +125,48 @@ if config.HAVE_TORCH:
             validation_loader = utils.data.DataLoader(validation_data, batch_size=self.batch_size, collate_fn=lambda batch: self._prepare_batch(batch))
             dataloaders = {'train':  training_loader, 'val': validation_loader}
 
-            if not self.logging_disabled:
-                self.logger.info('Training the neural network ...')
+            with self.logger.block('Training the neural network ...'):
 
-            for epoch in range(self.epochs):
-                losses = {}
-                for phase in phases:
-                    if phase == 'train':
-                        self.neural_network.train()
-                    else:
-                        self.neural_network.eval()
+                for epoch in range(self.epochs):
+                    losses = {}
+                    for phase in phases:
+                        if phase == 'train':
+                            self.neural_network.train()
+                        else:
+                            self.neural_network.eval()
 
-                    running_loss = 0.0
+                        running_loss = 0.0
 
-                    for batch in dataloaders[phase]:
-                        inputs = torch.stack(batch['inputs'])
-                        targets = torch.stack(batch['targets'])
+                        for batch in dataloaders[phase]:
+                            inputs = torch.stack(batch['inputs'])
+                            targets = torch.stack(batch['targets'])
 
-                        with torch.set_grad_enabled(phase == 'train'):
-                            def closure():
-                                if torch.is_grad_enabled():
-                                    self.optimizer.zero_grad()
-                                outputs = self.neural_network(inputs)
-                                loss = loss_function(outputs, targets)
-                                if loss.requires_grad:
-                                    loss.backward()
-                                return loss
+                            with torch.set_grad_enabled(phase == 'train'):
+                                def closure():
+                                    if torch.is_grad_enabled():
+                                        self.optimizer.zero_grad()
+                                    outputs = self.neural_network(inputs)
+                                    loss = loss_function(outputs, targets)
+                                    if loss.requires_grad:
+                                        loss.backward()
+                                    return loss
 
-                            if phase == 'train':
-                                self.optimizer.step(closure)
+                                if phase == 'train':
+                                    self.optimizer.step(closure)
 
-                            loss = closure()
+                                loss = closure()
 
-                        running_loss += loss.item() * len(batch['inputs'])
+                            running_loss += loss.item() * len(batch['inputs'])
 
-                    epoch_loss = running_loss / len(dataloaders[phase].dataset)
+                        epoch_loss = running_loss / len(dataloaders[phase].dataset)
 
-                    losses[phase] = epoch_loss
+                        losses[phase] = epoch_loss
 
-                    if phase == 'val' and early_stopping_scheduler(losses['val']):
-                        if not self.logging_disabled:
-                            self.logger.info('Early stopping training process ...')
-                            self.logger.info(f'Minimum validation loss: {early_stopping_scheduler.best_loss}')
-                        return
+                        if phase == 'val' and early_stopping_scheduler(losses['val']):
+                            if not self.logging_disabled:
+                                self.logger.info('Early stopping training process ...')
+                                self.logger.info(f'Minimum validation loss: {early_stopping_scheduler.best_loss}')
+                            return
 
         def _build_rom(self):
             with self.logger.block('Building ROM ...'):
@@ -180,14 +180,14 @@ if config.HAVE_TORCH:
             return NeuralNetworkModel(self.neural_network, self.reduced_basis)
 
         def build_basis(self):
-            if not self.logging_disabled:
-                self.logger.info('Building reduced basis ...')
+            with self.logger.block('Building reduced basis ...'):
 
-            U = self.fom.solution_space.empty()
-            for mu in self.training_set:
-                U.append(self.fom.solve(mu))
+                with self.logger.block('Computing training snapshots ...'):
+                    U = self.fom.solution_space.empty()
+                    for mu in self.training_set:
+                        U.append(self.fom.solve(mu))
 
-            reduced_basis, _ = pod(U, modes=self.basis_size, rtol=self.basis_rtol, atol=self.basis_atol, **(self.pod_params or {}))
+                reduced_basis, _ = pod(U, modes=self.basis_size, rtol=self.basis_rtol, atol=self.basis_atol, **(self.pod_params or {}))
 
             return reduced_basis
 
