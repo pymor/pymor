@@ -91,7 +91,7 @@ if config.HAVE_TORCH:
         def reduce(self):
             self.reduced_basis = self.build_basis()
 
-            layers = eval(self.hidden_layers, {'N': len(self.reduced_basis), 'P': len(self.fom.parameters)})
+            layers = eval(self.hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
             layers = [len(self.fom.parameters),] + layers + [len(self.reduced_basis),]
 
             with self.logger.block('Initialize neural network ...'):
@@ -197,7 +197,7 @@ if config.HAVE_TORCH:
 
             for item in batch:
                 u_proj = self.reduced_basis.inner(item['u_full'])[:,0]
-                input_ = torch.DoubleTensor(np.fromiter(item['mu'].values(), dtype=float))
+                input_ = torch.DoubleTensor(item['mu'].to_numpy())
                 target = torch.DoubleTensor(u_proj)
                 inputs.append(input_)
                 targets.append(target)
