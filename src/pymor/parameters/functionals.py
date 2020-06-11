@@ -314,6 +314,42 @@ class ConstantParameterFunctional(ParameterFunctional):
         return self.with_(constant_value=0, name=self.name + '_d_mu')
 
 
+class LincombParameterFunctional(ParameterFunctional):
+    """A |ParameterFunctional| representing a linear combination of |ParameterFunctionals|.
+
+    The coefficients must be provided as scalars or as.
+
+    Parameters
+    ----------
+    functionals
+        List of |ParameterFunctionals| whose linear combination is formed.
+    coefficients
+        A list of scalar coefficients.
+    name
+        Name of the functionial.
+
+    Attributes
+    ----------
+    functionals
+    coefficients
+    """
+
+    def __init__(self, functionals, coefficients, name=None):
+        assert len(functionals) > 0
+        assert len(functionals) == len(coefficients)
+        assert all(isinstance(f, ParameterFunctional) for f in functionals)
+        assert all(isinstance(c, Number) for c in coefficients)
+        self.__auto_init(locals())
+
+    def evaluate(self, mu=None):
+        assert self.parameters.assert_compatible(mu)
+        return sum(c * f(mu) for c, f in zip(self.coefficients, self.functionals))
+
+    def d_mu(self, parameter, index=0):
+        functionals_d_mu = [f.d_mu(parameter, index) for f in self.functionals]
+        return self.with_(functionals=functionals_d_mu, name=self.name + '_d_mu')
+
+
 class MinThetaParameterFunctional(ParameterFunctional):
     """|ParameterFunctional| implementing the min-theta approach from [Haa17]_ (Proposition 2.35).
 
