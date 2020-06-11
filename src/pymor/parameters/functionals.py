@@ -45,11 +45,27 @@ class ParameterFunctional(ParametricObject):
     def __call__(self, mu=None):
         return self.evaluate(mu)
 
+    def __add__(self, other):
+        if isinstance(other, Number) and other == 0:
+            return self
+        elif not isinstance(other, ParameterFunctional):
+            other = ConstantParameterFunctional(other)
+        return LincombParameterFunctional([self, other], [1., 1.])
+
+    __radd__ = __add__
+
+    def __sub__(self, other):
+        if isinstance(other, ParameterFunctional):
+            return LincombParameterFunctional([self, other], [1., -1.])
+        else:
+            return self + (- other)
+
     def __mul__(self, other):
-        from pymor.parameters.functionals import ProductParameterFunctional
-        if not isinstance(other, (Number, ParameterFunctional)):
-            return NotImplemented
-        return ProductParameterFunctional([self, other])
+        if isinstance(other, Number):
+            return LincombParameterFunctional([self], [other])
+        if isinstance(other, ParameterFunctional):
+            return ProductParameterFunctional([self, other])
+        return NotImplemented
 
     __rmul__ = __mul__
 
