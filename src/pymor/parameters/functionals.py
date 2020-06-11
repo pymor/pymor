@@ -342,7 +342,7 @@ class LincombParameterFunctional(ParameterFunctional):
     coefficients
         A list of scalar coefficients.
     name
-        Name of the functionial.
+        Name of the functional.
 
     Attributes
     ----------
