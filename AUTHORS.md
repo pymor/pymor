@@ -23,11 +23,12 @@
     * pruduct rule for ProductParameterFunctional
     * BaseMaxThetaParameterFunctional
 
-* Luca Mechelli, luca.mechelli@uni-konstanz.de
-    * speed up of LincombOperators
-
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
     * Armijo line search algorithm
+    * artificial neural networks for model order reduction
+
+* Luca Mechelli, luca.mechelli@uni-konstanz.de
+    * speed up of LincombOperators
 
 ## pyMOR 2019.2
 
