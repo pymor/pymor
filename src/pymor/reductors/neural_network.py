@@ -193,6 +193,10 @@ if config.HAVE_TORCH:
 
             return reduced_basis
 
+        def reconstruct(self, u):
+            assert hasattr(self, 'reduced_basis')
+            return self.reduced_basis.lincomb(u)
+
         def _prepare_batch(self, batch):
             inputs = []
             targets = []

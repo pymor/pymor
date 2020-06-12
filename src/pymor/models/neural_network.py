@@ -30,12 +30,11 @@ if config.HAVE_TORCH:
                 self.logger.info(f'Solving {self.name} for {mu} ...')
 
             converted_input = torch.from_numpy(np.fromiter(mu.values(), dtype=float)).double()
-            network_output = self.neural_network(converted_input).data.numpy()
-            U = self.reduced_basis.lincomb(network_output)
+            u = self.neural_network(converted_input).data.numpy()
 
             if return_output:
                 if self.output_functional is None:
                     raise ValueError('Model has no output')
-                return U, self.output_functional.apply(U, mu=mu)
+                return u, self.output_functional.apply(u, mu=mu)
             else:
-                return U
+                return u
