@@ -88,7 +88,9 @@ if config.HAVE_TORCH:
         ):
             self.__auto_init(locals())
 
-        def reduce(self):
+        def reduce(self, seed=0):
+            torch.manual_seed(seed)
+
             self.reduced_basis = self.build_basis()
 
             layers = eval(self.hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
