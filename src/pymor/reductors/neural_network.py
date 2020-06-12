@@ -68,6 +68,18 @@ if config.HAVE_TORCH:
             return False
 
 
+    class CustomDataset(utils.data.Dataset):
+        def __init__(self, training_data):
+            self.training_data = training_data
+
+        def __len__(self):
+            return len(self.training_data)
+
+        def __getitem__(self, idx):
+            t = self.training_data[idx]
+            return t
+
+
     class NeuralNetworkReductor(BasicObject):
 
         def __init__(
@@ -97,34 +109,39 @@ if config.HAVE_TORCH:
             layers = [len(self.fom.parameters),] + layers + [len(self.reduced_basis),]
 
             with self.logger.block('Initialize neural network ...'):
-                self.neural_network = FullyConnectedNN(layers, activation_function=self.activation_function).double()
+                self.neural_network = FullyConnectedNN(layers,
+                                                       activation_function=self.activation_function).double()
 
-            self.optimizer = self.optimizer(self.neural_network.parameters(), lr=self.learning_rate)
+            self.optimizer = self.optimizer(self.neural_network.parameters(),
+                                            lr=self.learning_rate)
 
             self._train()
 
             return self._build_rom()
 
         def _train(self):
-            with self.logger.block('Computing training snapshots ...'):
-                training_data = []
-                for mu in self.training_set:
-                    training_data.append({'mu': mu, 'u_full': self.fom.solve(mu)})
+            if not hasattr(self, 'training_data'):
+                self.logger.error('No data for training available ...')
 
             with self.logger.block('Computing validation snapshots ...'):
                 validation_data = []
                 for mu in self.validation_set:
-                    validation_data.append({'mu': mu, 'u_full': self.fom.solve(mu)})
+                    mu_tensor = torch.DoubleTensor(mu.to_numpy())
+                    u = self.fom.solve(mu)
+                    u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u)[:,0])
+                    validation_data.append((mu_tensor, u_tensor))
 
             if type(self.optimizer) == optim.LBFGS:
-                self.batch_size = len(training_data)
+                self.batch_size = len(self.training_data)
 
             loss_function = nn.MSELoss()
             early_stopping_scheduler = EarlyStoppingScheduler()
 
+            training_dataset = CustomDataset(self.training_data)
+            validation_dataset = CustomDataset(validation_data)
             phases = ['train', 'val']
-            training_loader = utils.data.DataLoader(training_data, batch_size=self.batch_size, collate_fn=lambda batch: self._prepare_batch(batch))
-            validation_loader = utils.data.DataLoader(validation_data, batch_size=self.batch_size, collate_fn=lambda batch: self._prepare_batch(batch))
+            training_loader = utils.data.DataLoader(training_dataset, batch_size=self.batch_size)
+            validation_loader = utils.data.DataLoader(validation_dataset, batch_size=self.batch_size)
             dataloaders = {'train':  training_loader, 'val': validation_loader}
 
             with self.logger.block('Training the neural network ...'):
@@ -140,8 +157,8 @@ if config.HAVE_TORCH:
                         running_loss = 0.0
 
                         for batch in dataloaders[phase]:
-                            inputs = torch.stack(batch['inputs'])
-                            targets = torch.stack(batch['targets'])
+                            inputs = batch[0]
+                            targets = batch[1]
 
                             with torch.set_grad_enabled(phase == 'train'):
                                 def closure():
@@ -158,7 +175,7 @@ if config.HAVE_TORCH:
 
                                 loss = closure()
 
-                            running_loss += loss.item() * len(batch['inputs'])
+                            running_loss += loss.item() * len(batch[0])
 
                         epoch_loss = running_loss / len(dataloaders[phase].dataset)
 
@@ -182,30 +199,28 @@ if config.HAVE_TORCH:
             return NeuralNetworkModel(self.neural_network, self.reduced_basis)
 
         def build_basis(self):
+            snapshots = []
+            self.training_data = []
+
             with self.logger.block('Building reduced basis ...'):
 
                 with self.logger.block('Computing training snapshots ...'):
                     U = self.fom.solution_space.empty()
                     for mu in self.training_set:
-                        U.append(self.fom.solve(mu))
+                        u = self.fom.solve(mu)
+                        U.append(u)
+                        snapshots.append({'mu': mu, 'u_full': u})
 
-                reduced_basis, _ = pod(U, modes=self.basis_size, rtol=self.basis_rtol, atol=self.basis_atol, **(self.pod_params or {}))
+                reduced_basis, _ = pod(U, modes=self.basis_size, rtol=self.basis_rtol,
+                                       atol=self.basis_atol, **(self.pod_params or {}))
+
+                for v in snapshots:
+                    mu_tensor = torch.DoubleTensor(v['mu'].to_numpy())
+                    u_tensor = torch.DoubleTensor(reduced_basis.inner(v['u_full'])[:,0])
+                    self.training_data.append((mu_tensor, u_tensor))
 
             return reduced_basis
 
         def reconstruct(self, u):
             assert hasattr(self, 'reduced_basis')
             return self.reduced_basis.lincomb(u)
-
-        def _prepare_batch(self, batch):
-            inputs = []
-            targets = []
-
-            for item in batch:
-                u_proj = self.reduced_basis.inner(item['u_full'])[:,0]
-                input_ = torch.DoubleTensor(item['mu'].to_numpy())
-                target = torch.DoubleTensor(u_proj)
-                inputs.append(input_)
-                targets.append(target)
-
-            return {'inputs': inputs, 'targets': targets}
