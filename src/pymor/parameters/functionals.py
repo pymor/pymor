@@ -447,8 +447,8 @@ class MinThetaParameterFunctional(ParameterFunctional):
         return self.alpha_mu_bar * np.min(thetas_mu / self.thetas_mu_bar)
 
 
-class MaxThetaParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| implementing the max-theta approach from [Haa17]_ (Exercise 5.12).
+class BaseMaxThetaParameterFunctional(ParameterFunctional):
+    """|ParameterFunctional| implementing a generalization of the max-theta approach from [Haa17]_ (Exercise 5.12).
 
     Let V denote a Hilbert space and let a: V x V -> K denote a continuous bilinear form or l: V -> K a continuous
     linear functional, either with affine decomposition ::
@@ -461,8 +461,86 @@ class MaxThetaParameterFunctional(ParameterFunctional):
 
       a(u, v, mu_bar) <= gamma_mu_bar |u|_V |v|_V  or  l(v, mu_bar) <= gamma_mu_bar |v|_V.
 
-    The max-theta approach from [Haa17]_ (Exercise 5.12) allows to obtain a computable bound for the continuity
-    constant of a(., ., mu) or l(., mu) for arbitrary parameters mu, since ::
+    The max-theta approach (in its generalized form) from [Haa17]_ (Exercise 5.12) allows to obtain a computable bound
+    for the continuity constant of another bilinear form a_prime(., ., mu) or linear form l_prime(., mu) with the same
+    affine decomposition but different theta_prime_q for arbitrary parameters mu, since ::
+
+      a_prime(u, v, mu=mu) <= |max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)|  |a(u, v, mu=mu_bar)|
+
+    or ::
+
+      l_prime(v, mu=mu) <= |max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)| |l(v, mu=mu_bar)|,
+
+    if all theta_q(mu_bar) != 0.
+
+    Given a list of the thetas, the |parameter values| mu_bar and the constant gamma_mu_bar, this functional thus evaluates
+    to ::
+
+      |gamma_mu_bar * max{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)|
+
+    Note that we also get an upper bound if theta_prime_q(mu) == 0 for any q. However, if theta_prime_q(mu) == 0 for
+    at least one q, we need to use the absolute value in the denominator, i.e.
+
+      |gamma_mu_bar * max{q = 1}^Q theta_prime_q(mu)/|theta_q(mu_bar)||
+
+    Parameters
+    ----------
+    thetas
+        List or tuple of |ParameterFunctional| of the base bilinear form a which is used for estimation.
+    thetas_prime
+        List or tuple of |ParameterFunctional| of the bilinear form a_prime for the numerator of the
+        MaxThetaParameterFunctional.
+    mu_bar
+        Parameter associated with gamma_mu_bar.
+    gamma_mu_bar
+        Known continuity constant of the base bilinear form a.
+    name
+        Name of the functional.
+    """
+
+    def __init__(self, thetas_prime, thetas, mu_bar, gamma_mu_bar=1., name=None):
+        assert isinstance(thetas_prime, (list, tuple))
+        assert isinstance(thetas, (list, tuple))
+        assert len(thetas) > 0
+        assert len(thetas) == len(thetas_prime)
+        assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
+        assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas_prime])
+        thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
+                       for f in thetas)
+        thetas_prime = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
+                       for f in thetas_prime)
+        if not isinstance(mu_bar, Mu):
+            mu_bar = Parameters.of(thetas).parse(mu_bar)
+        assert Parameters.of(thetas).assert_compatible(mu_bar)
+        thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
+        assert not np.any(float_cmp(thetas_mu_bar, 0))
+        assert isinstance(gamma_mu_bar, Number)
+        assert gamma_mu_bar > 0
+        self.__auto_init(locals())
+        self.thetas_mu_bar = thetas_mu_bar
+        self.theta_mu_bar_has_negative = True if np.any(thetas_mu_bar < 0) else False
+        if self.theta_mu_bar_has_negative:
+            # If 0 is in theta_prime(mu), we need to use the absolute value to ensure
+            # that the bound is still valid (and not zero)
+            self.abs_thetas_mu_bar = np.array([np.abs(theta(mu_bar)) for theta in thetas])
+
+    def evaluate(self, mu=None):
+        assert self.parameters.assert_compatible(mu)
+        thetas_prime_mu = np.array([theta(mu) for theta in self.thetas_prime])
+        if np.all(np.logical_or(thetas_prime_mu < 0, thetas_prime_mu > 0)) or not self.theta_mu_bar_has_negative:
+            return self.gamma_mu_bar * np.abs(np.max(thetas_prime_mu / self.thetas_mu_bar))
+        else:
+            # special case
+            return self.gamma_mu_bar * np.abs(np.max(thetas_prime_mu / self.abs_thetas_mu_bar))
+
+    def d_mu(self, component, index=()):
+        raise NotImplementedError
+
+class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
+    """|ParameterFunctional| implementing the max-theta approach from [Haa17]_ (Exercise 5.12).
+
+    This is a specialized version of BaseMaxThetaParameterFunctional which allows to obtain a computable bound
+    for the continuity constant of the actual a(., ., mu) or l(., mu) for arbitrary parameters mu, since ::
 
       a(u, v, mu=mu) <= |max_{q = 1}^Q theta_q(mu)/theta_q(mu_bar)|  |a(u, v, mu=mu_bar)|
 
@@ -475,8 +553,7 @@ class MaxThetaParameterFunctional(ParameterFunctional):
     Given a list of the thetas, the |parameter values| mu_bar and the constant gamma_mu_bar, this functional thus evaluates
     to ::
 
-      gamma_mu_bar * max{q = 1}^Q theta_q(mu)/theta_q(mu_bar)
-
+     |gamma_mu_bar * max{q = 1}^Q theta_q(mu)/theta_q(mu_bar)|
 
     Parameters
     ----------
@@ -491,23 +568,4 @@ class MaxThetaParameterFunctional(ParameterFunctional):
     """
 
     def __init__(self, thetas, mu_bar, gamma_mu_bar=1., name=None):
-        assert isinstance(thetas, (list, tuple))
-        assert len(thetas) > 0
-        assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
-        thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
-                       for f in thetas)
-        if not isinstance(mu_bar, Mu):
-            mu_bar = Parameters.of(thetas).parse(mu_bar)
-        assert Parameters.of(thetas).assert_compatible(mu_bar)
-        thetas_mu_bar = np.array([theta(mu_bar) for theta in thetas])
-        assert not np.any(float_cmp(thetas_mu_bar, 0))
-        assert isinstance(gamma_mu_bar, Number)
-        assert gamma_mu_bar > 0
-        self.__auto_init(locals())
-        self.thetas_mu_bar = thetas_mu_bar
-
-    def evaluate(self, mu=None):
-        assert self.parameters.assert_compatible(mu)
-        thetas_mu = np.array([theta(mu) for theta in self.thetas])
-        assert np.all(np.logical_or(thetas_mu < 0, thetas_mu > 0))
-        return self.gamma_mu_bar * np.abs(np.max(thetas_mu / self.thetas_mu_bar))
+        super().__init__(thetas, thetas, mu_bar, gamma_mu_bar, name)
