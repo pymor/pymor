@@ -17,12 +17,13 @@
 
 * Tim Keil, tim.keil@uni-muenster.de
     * second order derivatives for parameters
-    * speed up of lincomb operators
+    * speed up of LincombOperators
     * add LincombParameterFunctional
     * pruduct rule for ProductParameterFunctional
+    * BaseMaxThetaParameterFunctional
 
 * Luca Mechelli, luca.mechelli@uni-konstanz.de
-    * speed up of lincomb operators
+    * speed up of LincombOperators
 
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
     * Armijo line search algorithm
