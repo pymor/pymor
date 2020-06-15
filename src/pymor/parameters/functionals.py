@@ -334,7 +334,7 @@ class ConstantParameterFunctional(ParameterFunctional):
 class LincombParameterFunctional(ParameterFunctional):
     """A |ParameterFunctional| representing a linear combination of |ParameterFunctionals|.
 
-    The coefficients must be provided as scalars or as.
+    The coefficients must be provided as scalars.
 
     Parameters
     ----------
@@ -356,6 +356,8 @@ class LincombParameterFunctional(ParameterFunctional):
         assert len(functionals) == len(coefficients)
         assert all(isinstance(f, ParameterFunctional) for f in functionals)
         assert all(isinstance(c, Number) for c in coefficients)
+        functionals = tuple(functionals)
+        coefficients = tuple(coefficients)
         self.__auto_init(locals())
 
     def evaluate(self, mu=None):
