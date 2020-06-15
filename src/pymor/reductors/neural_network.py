@@ -44,15 +44,17 @@ if config.HAVE_TORCH:
 
     class EarlyStoppingScheduler(BasicObject):
 
-        def __init__(self, patience=100, delta=0., maximum_loss=None):
+        def __init__(self, patience=10, delta=0., maximum_loss=None):
             self.__auto_init(locals())
 
             self.best_loss = None
+            self.best_neural_network = None
             self.counter = 0
 
-        def __call__(self, validation_loss):
+        def __call__(self, validation_loss, neural_network=None):
             if self.best_loss is None:
                 self.best_loss = validation_loss
+                self.best_neural_network = neural_network
             elif self.best_loss - self.delta <= validation_loss:
                 self.counter += 1
                 if self.counter >= self.patience:
@@ -63,6 +65,7 @@ if config.HAVE_TORCH:
                         return True
             else:
                 self.best_loss = validation_loss
+                self.best_neural_network = neural_network
                 self.counter = 0
 
             return False
@@ -96,8 +99,13 @@ if config.HAVE_TORCH:
             optimizer=optim.LBFGS,
             epochs=1000,
             batch_size=20,
-            learning_rate=1.
+            learning_rate=1.,
+            restarts=20
         ):
+            assert restarts > 0
+            assert epochs > 0
+            assert batch_size > 0
+            assert learning_rate > 0.
             self.__auto_init(locals())
 
         def reduce(self, seed=0):
@@ -106,22 +114,7 @@ if config.HAVE_TORCH:
             self.reduced_basis = self.build_basis()
 
             layers = eval(self.hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
-            layers = [len(self.fom.parameters),] + layers + [len(self.reduced_basis),]
-
-            with self.logger.block('Initialize neural network ...'):
-                self.neural_network = FullyConnectedNN(layers,
-                                                       activation_function=self.activation_function).double()
-
-            self.optimizer = self.optimizer(self.neural_network.parameters(),
-                                            lr=self.learning_rate)
-
-            self._train()
-
-            return self._build_rom()
-
-        def _train(self):
-            if not hasattr(self, 'training_data'):
-                self.logger.error('No data for training available ...')
+            self.layers = [len(self.fom.parameters),] + layers + [len(self.reduced_basis),]
 
             with self.logger.block('Computing validation snapshots ...'):
                 validation_data = []
@@ -130,29 +123,54 @@ if config.HAVE_TORCH:
                     u = self.fom.solve(mu)
                     u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u)[:,0])
                     validation_data.append((mu_tensor, u_tensor))
+                self.validation_data = validation_data
 
-            if type(self.optimizer) == optim.LBFGS:
-                self.batch_size = len(self.training_data)
+            with self.logger.block(f'Performing {self.restarts} restarts for training ...'):
+                for run in range(self.restarts):
+                    neural_network, loss = self._train()
+                    if not hasattr(self, 'validation_loss') or loss < self.validation_loss:
+                        self.validation_loss = loss
+                        self.neural_network = neural_network
 
-            loss_function = nn.MSELoss()
-            early_stopping_scheduler = EarlyStoppingScheduler()
+            self.logger.info(f'Finished training with a validation loss of {self.validation_loss} ...')
 
-            training_dataset = CustomDataset(self.training_data)
-            validation_dataset = CustomDataset(validation_data)
-            phases = ['train', 'val']
-            training_loader = utils.data.DataLoader(training_dataset, batch_size=self.batch_size)
-            validation_loader = utils.data.DataLoader(validation_dataset, batch_size=self.batch_size)
-            dataloaders = {'train':  training_loader, 'val': validation_loader}
+            return self._build_rom()
+
+        def _train(self):
+            if not hasattr(self, 'training_data'):
+                self.logger.error('No data for training available ...')
+
+            if not hasattr(self, 'validation_data'):
+                self.logger.error('No data for validation available ...')
+
+            if self.optimizer == optim.LBFGS:
+                self.batch_size = max(len(self.training_data), len(self.validation_data))
 
             with self.logger.block('Training the neural network ...'):
+
+                neural_network = FullyConnectedNN(self.layers,
+                                                  activation_function=self.activation_function).double()
+
+                optimizer = self.optimizer(neural_network.parameters(),
+                                           lr=self.learning_rate)
+
+                loss_function = nn.MSELoss()
+                early_stopping_scheduler = EarlyStoppingScheduler()
+
+                training_dataset = CustomDataset(self.training_data)
+                validation_dataset = CustomDataset(self.validation_data)
+                phases = ['train', 'val']
+                training_loader = utils.data.DataLoader(training_dataset, batch_size=self.batch_size)
+                validation_loader = utils.data.DataLoader(validation_dataset, batch_size=self.batch_size)
+                dataloaders = {'train':  training_loader, 'val': validation_loader}
 
                 for epoch in range(self.epochs):
                     losses = {}
                     for phase in phases:
                         if phase == 'train':
-                            self.neural_network.train()
+                            neural_network.train()
                         else:
-                            self.neural_network.eval()
+                            neural_network.eval()
 
                         running_loss = 0.0
 
@@ -163,15 +181,15 @@ if config.HAVE_TORCH:
                             with torch.set_grad_enabled(phase == 'train'):
                                 def closure():
                                     if torch.is_grad_enabled():
-                                        self.optimizer.zero_grad()
-                                    outputs = self.neural_network(inputs)
+                                        optimizer.zero_grad()
+                                    outputs = neural_network(inputs)
                                     loss = loss_function(outputs, targets)
                                     if loss.requires_grad:
                                         loss.backward()
                                     return loss
 
                                 if phase == 'train':
-                                    self.optimizer.step(closure)
+                                    optimizer.step(closure)
 
                                 loss = closure()
 
@@ -181,11 +199,12 @@ if config.HAVE_TORCH:
 
                         losses[phase] = epoch_loss
 
-                        if phase == 'val' and early_stopping_scheduler(losses['val']):
+                        if phase == 'val' and early_stopping_scheduler(losses['val'], neural_network):
                             if not self.logging_disabled:
-                                self.logger.info('Early stopping training process ...')
+                                self.logger.info(f'Early stopping training process after {epoch + 1} epochs ...')
                                 self.logger.info(f'Minimum validation loss: {early_stopping_scheduler.best_loss}')
-                            return
+                            return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_loss
+            return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_loss
 
         def _build_rom(self):
             with self.logger.block('Building ROM ...'):
