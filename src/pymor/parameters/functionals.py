@@ -64,11 +64,9 @@ class ParameterFunctional(ParametricObject):
             return self + (- other)
 
     def __mul__(self, other):
-        if isinstance(other, Number):
-            return LincombParameterFunctional([self], [other])
-        if isinstance(other, ParameterFunctional):
-            return ProductParameterFunctional([self, other])
-        return NotImplemented
+        if not isinstance(other, (Number, ParameterFunctional)):
+            return NotImplemented
+        return ProductParameterFunctional([self, other])
 
     __rmul__ = __mul__
 
