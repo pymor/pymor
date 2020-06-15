@@ -80,6 +80,11 @@ class Parameters(FrozenDict):
 
         return cls(parameters)
 
+    @property
+    def dim(self):
+        """The sum of the dimensions of all parameters."""
+        return sum(self.values())
+
     def parse(self, mu):
         """Takes a user input `mu` and interprets it as set of |parameter values|
         according to the given |Parameters|.
@@ -285,6 +290,10 @@ class Mu(FrozenDict):
         """
         assert isinstance(mu, Mu)
         return self.keys() == mu.keys() and all(float_cmp_all(v, mu[k]) for k, v in self.items())
+
+    def to_numpy(self):
+        """All parameter values as a NumPy array, ordered alphabetically."""
+        return np.hstack([v for k, v in sorted(self.items())])
 
     def copy(self):
         return self
