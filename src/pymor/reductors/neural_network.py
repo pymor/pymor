@@ -39,6 +39,9 @@ if config.HAVE_TORCH:
             if layers_sizes is None or not len(layers_sizes) > 1 or not all(size >= 1 for size in layers_sizes):
                 raise ValueError
 
+            self.input_dimension = layers_sizes[0]
+            self.output_dimension = layers_sizes[-1]
+
             self.layers = nn.ModuleList()
             self.layers.extend([nn.Linear(int(layers_sizes[i]), int(layers_sizes[i+1])) for i in range(len(layers_sizes) - 1)])
 
@@ -386,4 +389,4 @@ if config.HAVE_TORCH:
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
             assert hasattr(self, 'reduced_basis')
-            return self.reduced_basis.lincomb(u)
+            return self.reduced_basis.lincomb(u.to_numpy())

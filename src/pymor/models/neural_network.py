@@ -11,6 +11,7 @@ if config.HAVE_TORCH:
     import torch
 
     from pymor.models.interface import Model
+    from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
     class NeuralNetworkModel(Model):
@@ -53,6 +54,7 @@ if config.HAVE_TORCH:
             super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
             self.__auto_init(locals())
+            self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
             self.linear = output_functional is None or output_functional.linear
             if output_functional is not None:
                 self.output_space = output_functional.range
@@ -65,6 +67,8 @@ if config.HAVE_TORCH:
             converted_input = torch.from_numpy(np.fromiter(mu.values(), dtype=float)).double()
             # obtain (reduced) coordinates by forward pass of the parameter values through the neural network
             u = self.neural_network(converted_input).data.numpy()
+            # convert plain numpy array to element of the actual solution space
+            u = self.solution_space.make_array(u)
 
             if return_output:
                 if self.output_functional is None:
