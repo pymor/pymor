@@ -46,11 +46,14 @@ class ParameterFunctional(ParametricObject):
         return self.evaluate(mu)
 
     def __add__(self, other):
-        if isinstance(other, Number) and other == 0:
-            return self
-        elif not isinstance(other, ParameterFunctional):
+        if isinstance(other, Number):
+            if other == 0:
+                return self
             other = ConstantParameterFunctional(other)
-        return LincombParameterFunctional([self, other], [1., 1.])
+        if isinstance(other, ParameterFunctional):
+            return LincombParameterFunctional([self, other], [1., 1.])
+        else:
+            return NotImplemented        
 
     __radd__ = __add__
 
