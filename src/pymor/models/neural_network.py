@@ -14,9 +14,41 @@ if config.HAVE_TORCH:
 
 
     class NeuralNetworkModel(Model):
+        """Class for models of stationary problems that use artificial neural networks.
 
-        def __init__(self, neural_network, reduced_basis, output_functional=None,
-                     products=None, estimator=None, visualizer=None, name=None):
+        This class implements a model that deploys a neural network for solving.
+
+        Parameters
+        ----------
+        neural_network
+            The neural network that approximates the mapping from parameter space
+            to solution space.
+        output_functional
+            |Operator| mapping a given solution to the model output. In many applications,
+            this will be a |Functional|, i.e. an |Operator| mapping to scalars.
+            This is not required, however.
+        products
+            A dict of inner product |Operators| defined on the discrete space the
+            problem is posed on. For each product with key `'x'` a corresponding
+            attribute `x_product`, as well as a norm method `x_norm` is added to
+            the model.
+        estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate(U, mu, m)` method. If `estimator` is
+            not `None`, an `estimate(U, mu)` method is added to the
+            model which will call `estimator.estimate(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with
+            a `visualize(U, m, ...)` method. If `visualizer`
+            is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the
+            visualizer's `visualize` method.
+        name
+            Name of the model.
+        """
+
+        def __init__(self, neural_network, output_functional=None, products=None,
+                     estimator=None, visualizer=None, name=None):
 
             super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
@@ -29,7 +61,9 @@ if config.HAVE_TORCH:
             if not self.logging_disabled:
                 self.logger.info(f'Solving {self.name} for {mu} ...')
 
+            # convert the parameter `mu` into a form that is usable in PyTorch
             converted_input = torch.from_numpy(np.fromiter(mu.values(), dtype=float)).double()
+            # obtain (reduced) coordinates by forward pass of the parameter values through the neural network
             u = self.neural_network(converted_input).data.numpy()
 
             if return_output:

@@ -87,6 +87,11 @@ Bibliography
            Hierarchical Approximate Proper Orthogonal Decomposition,
            SIAM J. Sci. Comput. 40, A3267-A3292, 2018.
 
+.. [HU18]  J. Hesthaven, S. Ubbiali,
+           Non-intrusive reduced order modeling of nonlinear problems using neural networks,
+           Journal of Computational Physics, 363,
+           2018
+
 .. [PK16]  P. Kürschner,
            Efficient Low-Rank Solution of Large-Scale Matrix Equations,
            Shaker Verlag Aachen, available from
