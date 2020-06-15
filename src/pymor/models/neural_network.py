@@ -64,7 +64,7 @@ if config.HAVE_TORCH:
                 self.logger.info(f'Solving {self.name} for {mu} ...')
 
             # convert the parameter `mu` into a form that is usable in PyTorch
-            converted_input = torch.from_numpy(np.fromiter(mu.values(), dtype=float)).double()
+            converted_input = torch.from_numpy(mu.to_numpy()).double()
             # obtain (reduced) coordinates by forward pass of the parameter values through the neural network
             u = self.neural_network(converted_input).data.numpy()
             # convert plain numpy array to element of the actual solution space
