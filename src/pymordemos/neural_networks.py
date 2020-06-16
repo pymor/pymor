@@ -20,13 +20,9 @@ from docopt import docopt
 
 import numpy as np
 
-from pymor.analyticalproblems.domaindescriptions import LineDomain
-from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import ExpressionFunction, ConstantFunction, LincombFunction
+from pymor.basic import *
+
 from pymor.core.config import config
-from pymor.core.logger import getLogger
-from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
-from pymor.parameters.functionals import ProjectionParameterFunctional
 
 
 def create_fom(args):
@@ -104,7 +100,7 @@ def neural_networks_demo(args):
 
     if args['--vis']:
         fom.visualize((U, U_red),
-                      legend=(f'Full solution for mu={mu}', 'Reduced solution for mu={mu}'))
+                      legend=('Full solution', 'Reduced solution'))
 
     print(f'Average absolute error: {np.average(absolute_errors)}')
     print(f'Average relative error: {np.average(relative_errors)}')
