@@ -39,8 +39,9 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     mu
         The |parameter values| for which to solve the equation.
     error_norm
-        The product with which the norm of the residual is computed. If `None`, the
-        Euclidean product is used.
+        The inner product with which the error measure norm (norm of the
+        residual/update vector) is computed. If `None`, the Euclidean inner product
+        is used.
     least_squares
         If `True`, use a least squares linear solver (e.g. for residual minimization).
     miniter
@@ -48,10 +49,10 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     maxiter
         Fail if the iteration count reaches this value without converging.
     atol
-        Finish when the residual norm is below this threshold.
+        Finish when the the error measure is below this threshold.
     rtol
-        Finish when the residual norm has been reduced by this factor relative to the
-        norm of the initial residual.
+        Finish when the error measure has been reduced by this factor
+        relative to the norm of the initial residual resp. the norm of the current solution.
     relax
         If real valued, relaxation factor for Newton updates; otherwise 'armijo' to
         indicate that the :func:~pymor.algorithms.line_search.armijo line search algorithm
@@ -59,10 +60,10 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     line_search_params
         Dictionary of additional parameters passed to the line search method.
     error_measure
-        If 'resdiual', convergence depends on the norm of the residual. If
+        If 'residual', convergence depends on the norm of the residual. If
         'update', convergence depends on the norm of the update vector.
     stagnation_window
-        Finish when the residual norm has not been reduced by a factor of
+        Finish when the error measure has not been reduced by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
     stagnation_threshold
         See `stagnation_window`.
@@ -80,7 +81,9 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     data
         Dict containing the following fields:
 
-            :error_sequence:  |NumPy array| containing the residual norms after each iteration.
+            :solution_norms:  |NumPy array| of the solution norms after each iteration.
+            :update_norms:    |NumPy array| of the norms of the update vectors for each iteration.
+            :residual_norms:  |NumPy array| of the residual norms after each iteration.
             :stages:          See `return_stages`.
             :residuals:       See `return_residuals`.
 
