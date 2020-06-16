@@ -16,7 +16,7 @@ from pymor.core.logger import getLogger
 @defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least_squares=False,
            miniter=0, maxiter=100, rtol=0., atol=0., relax=1., line_search_params=None,
-           stagnation_window=3, stagnation_threshold=np.inf,
+           stagnation_window=3, stagnation_threshold=np.inf, error_measure='residual',
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
 
@@ -58,6 +58,9 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
         shall be used.
     line_search_params
         Dictionary of additional parameters passed to the line search method.
+    error_measure
+        If 'resdiual', convergence depends on the norm of the residual. If
+        'update', convergence depends on the norm of the update vector.
     stagnation_window
         Finish when the residual norm has not been reduced by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
@@ -86,6 +89,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     NewtonError
         Raised if the Netwon algorithm failed to converge.
     """
+    assert error_measure in ('residual', 'update')
+
     logger = getLogger('pymor.algorithms.newton')
 
     data = {}
@@ -102,21 +107,27 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     U = initial_guess.copy()
     residual = rhs - operator.apply(U, mu=mu)
 
-    err = residual.norm(error_product)[0]
-    logger.info(f'      Initial Residual: {err:5e}')
+    solution_norm = U.norm(error_product)[0]
+    solution_norms = [solution_norm]
+    correction_norms = [solution_norm]
+    residual_norm = residual.norm(error_product)[0]
+    residual_norms = [residual_norm]
+    err = residual_norm if error_measure == 'residual' else solution_norm
+    err_scale_factor = err
+    logger.info(f'      Initial Residual: {residual_norm:5e}')
 
     iteration = 0
-    error_sequence = [err]
+    error_sequence = residual_norms if error_measure == 'residual' else correction_norms
     while True:
         if iteration >= miniter:
-            if err <= atol:
+            if err < atol:
                 logger.info(f'Absolute limit of {atol} reached. Stopping.')
                 break
-            if err/error_sequence[0] <= rtol:
+            if residual_norm < rtol * err_scale_factor:
                 logger.info(f'Prescribed total reduction of {rtol} reached. Stopping.')
                 break
             if (len(error_sequence) >= stagnation_window + 1
-                    and err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
+                    and err > stagnation_threshold * max(error_sequence[-stagnation_window - 1:])):
                 logger.info(f'Error is stagnating (threshold: {stagnation_threshold:5e}, window: {stagnation_window}). '
                             f'Stopping.')
                 break
@@ -143,19 +154,29 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
                 grad = - (jacobian.apply(residual) + jacobian.apply_adjoint(residual))
             else:
                 grad = - (jacobian.apply_adjoint(error_product.apply(residual)) + jacobian.apply(error_product.apply_adjoint(residual)))
-            step_size = armijo(res, U, correction, grad=grad, initial_value=err, **(line_search_params or {}))
+            step_size = armijo(res, U, correction, grad=grad, initial_value=residual_norm, **(line_search_params or {}))
         else:
             raise ValueError('Unknown line search method')
         U.axpy(step_size, correction)
         residual = rhs - operator.apply(U, mu=mu)
 
-        err = residual.norm(error_product)[0]
-        logger.info(f'Iteration {iteration:2}: Residual: {err:5e},  '
-                    f'Reduction: {err / error_sequence[-1]:5e}, Total Reduction: {err / error_sequence[0]:5e}')
-        error_sequence.append(err)
-        if not np.isfinite(err):
+        solution_norm = U.norm(error_product)[0]
+        solution_norms.append(solution_norm)
+        correction_norm = correction.norm(error_product)[0]
+        correction_norms.append(correction_norm)
+        residual_norm = residual.norm(error_product)[0]
+        residual_norms.append(residual_norm)
+        err = residual_norm if error_measure == 'residual' else correction_norm
+        if error_measure == 'update':
+            err_scale_factor = solution_norm
+        logger.info(f'Iteration {iteration:2}: Residual: {residual_norm:5e},  '
+                    f'Reduction: {residual_norm / residual_norms[-2]:5e}, Total Reduction: {residual_norm / residual_norms[0]:5e}')
+        if not np.isfinite(residual_norm):
             raise NewtonError('Failed to converge')
 
     data['error_sequence'] = np.array(error_sequence)
+    data['solution_norms'] = np.array(solution_norms)
+    data['update_norms']   = np.array(correction_norms)
+    data['residual_norms'] = np.array(residual_norms)
 
     return U, data
