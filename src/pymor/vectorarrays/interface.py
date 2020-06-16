@@ -577,16 +577,23 @@ class VectorArray(BasicObject):
     def len_ind(self, ind):
         """Return the number of given indices."""
         l = len(self)
-        return (len(range(*ind.indices(l))) if type(ind) is slice else
-                1 if not hasattr(ind, '__len__') else
-                len(ind))
+        if type(ind) is slice:
+            return len(range(*ind.indices(l)))
+        try:
+            return len(ind)
+        except TypeError:
+            return 1
+
 
     def len_ind_unique(self, ind):
         """Return the number of specified unique indices."""
         l = len(self)
-        return (len(range(*ind.indices(l))) if type(ind) is slice else
-                1 if isinstance(ind, Number) else
-                len({i if i >= 0 else l+i for i in ind}))
+        if type(ind) is slice:
+            return len(range(*ind.indices(l)))
+        if isinstance(ind, Number):
+            return 1
+        return len({i if i >= 0 else l+i for i in ind})
+
 
     def normalize_ind(self, ind):
         """Normalize given indices such that they are independent of the array length."""
