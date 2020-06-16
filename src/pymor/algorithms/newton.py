@@ -110,18 +110,23 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     U = initial_guess.copy()
     residual = rhs - operator.apply(U, mu=mu)
 
+    # compute norms
     solution_norm = U.norm(error_product)[0]
     solution_norms = [solution_norm]
-    correction_norms = [solution_norm]
+    update_norms = [solution_norm]
     residual_norm = residual.norm(error_product)[0]
     residual_norms = [residual_norm]
+
+    # select error measure for convergence criteria
     err = residual_norm if error_measure == 'residual' else solution_norm
     err_scale_factor = err
+    errs = residual_norms if error_measure == 'residual' else update_norms
+
     logger.info(f'      Initial Residual: {residual_norm:5e}')
 
     iteration = 0
-    error_sequence = residual_norms if error_measure == 'residual' else correction_norms
     while True:
+        # check for convergence / failure of convergence
         if iteration >= miniter:
             if err < atol:
                 logger.info(f'Absolute limit of {atol} reached. Stopping.')
@@ -129,56 +134,73 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
             if err < rtol * err_scale_factor:
                 logger.info(f'Prescribed total reduction of {rtol} reached. Stopping.')
                 break
-            if (len(error_sequence) >= stagnation_window + 1
-                    and err > stagnation_threshold * max(error_sequence[-stagnation_window - 1:])):
+            if (len(errs) >= stagnation_window + 1
+                    and err > stagnation_threshold * max(errs[-stagnation_window - 1:])):
                 logger.info(f'Error is stagnating (threshold: {stagnation_threshold:5e}, window: {stagnation_window}). '
                             f'Stopping.')
                 break
             if iteration >= maxiter:
                 raise NewtonError('Failed to converge')
+
+        iteration += 1
+
+        # store convergence history
         if iteration > 0 and return_stages:
             data['stages'].append(U)
         if return_residuals:
             data['residuals'].append(residual)
-        iteration += 1
+
+        # compute update
         jacobian = operator.jacobian(U, mu=mu)
         try:
-            correction = jacobian.apply_inverse(residual, least_squares=least_squares)
+            update = jacobian.apply_inverse(residual, least_squares=least_squares)
         except InversionError:
             raise NewtonError('Could not invert jacobian')
+
+        # compute step size
         if isinstance(relax, Number):
             step_size = relax
         elif relax == 'armijo':
             logger.info(f'Using Armijo as line search method')
+
             def res(x):
                 residual_vec = rhs - operator.apply(x, mu=mu)
                 return residual_vec.norm(error_product)[0]
+
             if error_product is None:
                 grad = - (jacobian.apply(residual) + jacobian.apply_adjoint(residual))
             else:
-                grad = - (jacobian.apply_adjoint(error_product.apply(residual)) + jacobian.apply(error_product.apply_adjoint(residual)))
-            step_size = armijo(res, U, correction, grad=grad, initial_value=residual_norm, **(line_search_params or {}))
+                grad = - (jacobian.apply_adjoint(error_product.apply(residual))
+                          + jacobian.apply(error_product.apply_adjoint(residual)))
+            step_size = armijo(res, U, update, grad=grad, initial_value=residual_norm, **(line_search_params or {}))
         else:
             raise ValueError('Unknown line search method')
-        U.axpy(step_size, correction)
+
+        # update solution and residual
+        U.axpy(step_size, update)
         residual = rhs - operator.apply(U, mu=mu)
 
+        # compute norms
         solution_norm = U.norm(error_product)[0]
         solution_norms.append(solution_norm)
-        correction_norm = correction.norm(error_product)[0] * step_size
-        correction_norms.append(correction_norm)
+        update_norm = update.norm(error_product)[0] * step_size
+        update_norms.append(update_norm)
         residual_norm = residual.norm(error_product)[0]
         residual_norms.append(residual_norm)
-        err = residual_norm if error_measure == 'residual' else correction_norm
+
+        # select error measure
+        err = residual_norm if error_measure == 'residual' else update_norm
         if error_measure == 'update':
             err_scale_factor = solution_norm
+
         logger.info(f'Iteration {iteration:2}: Residual: {residual_norm:5e},  '
                     f'Reduction: {residual_norm / residual_norms[-2]:5e}, Total Reduction: {residual_norm / residual_norms[0]:5e}')
-        if not np.isfinite(residual_norm):
+
+        if not np.isfinite(residual_norm) or not np.isfinite(solution_norm):
             raise NewtonError('Failed to converge')
 
     data['solution_norms'] = np.array(solution_norms)
-    data['update_norms']   = np.array(correction_norms)
+    data['update_norms']   = np.array(update_norms)
     data['residual_norms'] = np.array(residual_norms)
 
     return U, data
