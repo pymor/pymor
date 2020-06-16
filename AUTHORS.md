@@ -18,6 +18,7 @@
 * Tim Keil, tim.keil@uni-muenster.de
     * second order derivatives for parameters
     * speed up of lincomb operators
+    * add LincombParameterFunctional
 
 * Luca Mechelli, luca.mechelli@uni-konstanz.de
     * speed up of lincomb operators

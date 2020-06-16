@@ -45,8 +45,25 @@ class ParameterFunctional(ParametricObject):
     def __call__(self, mu=None):
         return self.evaluate(mu)
 
+    def __add__(self, other):
+        if isinstance(other, Number):
+            if other == 0:
+                return self
+            other = ConstantParameterFunctional(other)
+        if isinstance(other, ParameterFunctional):
+            return LincombParameterFunctional([self, other], [1., 1.])
+        else:
+            return NotImplemented        
+
+    __radd__ = __add__
+
+    def __sub__(self, other):
+        if isinstance(other, ParameterFunctional):
+            return LincombParameterFunctional([self, other], [1., -1.])
+        else:
+            return self + (- other)
+
     def __mul__(self, other):
-        from pymor.parameters.functionals import ProductParameterFunctional
         if not isinstance(other, (Number, ParameterFunctional)):
             return NotImplemented
         return ProductParameterFunctional([self, other])
@@ -312,6 +329,44 @@ class ConstantParameterFunctional(ParameterFunctional):
 
     def d_mu(self, parameter, index=0):
         return self.with_(constant_value=0, name=self.name + '_d_mu')
+
+
+class LincombParameterFunctional(ParameterFunctional):
+    """A |ParameterFunctional| representing a linear combination of |ParameterFunctionals|.
+
+    The coefficients must be provided as scalars.
+
+    Parameters
+    ----------
+    functionals
+        List of |ParameterFunctionals| whose linear combination is formed.
+    coefficients
+        A list of scalar coefficients.
+    name
+        Name of the functional.
+
+    Attributes
+    ----------
+    functionals
+    coefficients
+    """
+
+    def __init__(self, functionals, coefficients, name=None):
+        assert len(functionals) > 0
+        assert len(functionals) == len(coefficients)
+        assert all(isinstance(f, ParameterFunctional) for f in functionals)
+        assert all(isinstance(c, Number) for c in coefficients)
+        functionals = tuple(functionals)
+        coefficients = tuple(coefficients)
+        self.__auto_init(locals())
+
+    def evaluate(self, mu=None):
+        assert self.parameters.assert_compatible(mu)
+        return sum(c * f(mu) for c, f in zip(self.coefficients, self.functionals))
+
+    def d_mu(self, parameter, index=0):
+        functionals_d_mu = [f.d_mu(parameter, index) for f in self.functionals]
+        return self.with_(functionals=functionals_d_mu, name=self.name + '_d_mu')
 
 
 class MinThetaParameterFunctional(ParameterFunctional):
