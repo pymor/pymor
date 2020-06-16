@@ -15,8 +15,8 @@ from pymor.core.logger import getLogger
 
 @defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least_squares=False,
-           miniter=0, maxiter=100, atol=0., rtol=0., relax=1., line_search_params=None,
-           stagnation_window=3, stagnation_threshold=np.inf, error_measure='residual',
+           miniter=0, maxiter=100, atol=0., rtol=1e-7, relax='armijo', line_search_params=None,
+           stagnation_window=3, stagnation_threshold=np.inf, error_measure='update',
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
 
