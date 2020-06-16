@@ -126,7 +126,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
             if err < atol:
                 logger.info(f'Absolute limit of {atol} reached. Stopping.')
                 break
-            if residual_norm < rtol * err_scale_factor:
+            if err < rtol * err_scale_factor:
                 logger.info(f'Prescribed total reduction of {rtol} reached. Stopping.')
                 break
             if (len(error_sequence) >= stagnation_window + 1
@@ -165,7 +165,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
 
         solution_norm = U.norm(error_product)[0]
         solution_norms.append(solution_norm)
-        correction_norm = correction.norm(error_product)[0]
+        correction_norm = correction.norm(error_product)[0] * step_size
         correction_norms.append(correction_norm)
         residual_norm = residual.norm(error_product)[0]
         residual_norms.append(residual_norm)
