@@ -174,7 +174,6 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
         if not np.isfinite(residual_norm):
             raise NewtonError('Failed to converge')
 
-    data['error_sequence'] = np.array(error_sequence)
     data['solution_norms'] = np.array(solution_norms)
     data['update_norms']   = np.array(correction_norms)
     data['residual_norms'] = np.array(residual_norms)
