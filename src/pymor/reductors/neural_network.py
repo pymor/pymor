@@ -6,8 +6,6 @@ from pymor.core.config import config
 
 
 if config.HAVE_TORCH:
-    import numpy as np
-
     import torch
     import torch.nn as nn
     import torch.optim as optim

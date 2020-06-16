@@ -6,8 +6,6 @@ from pymor.core.config import config
 
 
 if config.HAVE_TORCH:
-    import numpy as np
-
     import torch
 
     from pymor.models.interface import Model
