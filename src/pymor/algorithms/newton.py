@@ -113,7 +113,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     # compute norms
     solution_norm = U.norm(error_product)[0]
     solution_norms = [solution_norm]
-    update_norms = [solution_norm]
+    update_norms = []
     residual_norm = residual.norm(error_product)[0]
     residual_norms = [residual_norm]
 
@@ -122,25 +122,25 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     err_scale_factor = err
     errs = residual_norms if error_measure == 'residual' else update_norms
 
-    logger.info(f'      Initial Residual: {residual_norm:5e}')
+    logger.info(f'     res:{residual_norm:.3e}                                 norm:{solution_norm:.3e}')
 
     iteration = 0
     while True:
         # check for convergence / failure of convergence
         if iteration >= miniter:
             if err < atol:
-                logger.info(f'Absolute limit of {atol} reached. Stopping.')
+                logger.info(f'Absolute tolerance of {atol} for norm of {error_measure} reached. Converged.')
                 break
             if err < rtol * err_scale_factor:
-                logger.info(f'Prescribed total reduction of {rtol} reached. Stopping.')
+                logger.info(f'Relative tolerance of {rtol} for norm of {error_measure} reached. Converged.')
                 break
             if (len(errs) >= stagnation_window + 1
                     and err > stagnation_threshold * max(errs[-stagnation_window - 1:])):
-                logger.info(f'Error is stagnating (threshold: {stagnation_threshold:5e}, window: {stagnation_window}). '
-                            f'Stopping.')
+                logger.info(f'Norm of {error_measure} is stagnating (threshold: {stagnation_threshold:5e}, '
+                            f'window: {stagnation_window}). Converged.')
                 break
             if iteration >= maxiter:
-                raise NewtonError('Failed to converge')
+                raise NewtonError('Failed to converge after {iteration} iterations.')
 
         iteration += 1
 
@@ -161,8 +161,6 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
         if isinstance(relax, Number):
             step_size = relax
         elif relax == 'armijo':
-            logger.info(f'Using Armijo as line search method')
-
             def res(x):
                 residual_vec = rhs - operator.apply(x, mu=mu)
                 return residual_vec.norm(error_product)[0]
@@ -188,16 +186,24 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
         residual_norm = residual.norm(error_product)[0]
         residual_norms.append(residual_norm)
 
-        # select error measure
+        # select error measure for next iteration
         err = residual_norm if error_measure == 'residual' else update_norm
         if error_measure == 'update':
             err_scale_factor = solution_norm
 
-        logger.info(f'Iteration {iteration:2}: Residual: {residual_norm:5e},  '
-                    f'Reduction: {residual_norm / residual_norms[-2]:5e}, Total Reduction: {residual_norm / residual_norms[0]:5e}')
+        logger.info(f'it:{iteration} '
+                    f'res:{residual_norm:.3e} '
+                    f'red:{residual_norm / residual_norms[-2]:.3e} '
+                    f'tot_red:{residual_norm / residual_norms[0]:.3e} '
+                    f'norm:{solution_norm:.3e} '
+                    f'upd:{update_norm:.3e} '
+                    f'rel_upd:{update_norm / solution_norm:.3e}')
 
         if not np.isfinite(residual_norm) or not np.isfinite(solution_norm):
             raise NewtonError('Failed to converge')
+
+    logger.info('')
+
 
     data['solution_norms'] = np.array(solution_norms)
     data['update_norms']   = np.array(update_norms)
