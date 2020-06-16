@@ -15,7 +15,7 @@ from pymor.core.logger import getLogger
 
 @defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least_squares=False,
-           miniter=0, maxiter=100, rtol=0., atol=0., relax=1., line_search_params=None,
+           miniter=0, maxiter=100, atol=0., rtol=0., relax=1., line_search_params=None,
            stagnation_window=3, stagnation_threshold=np.inf, error_measure='residual',
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
@@ -47,11 +47,11 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
         Minimum amount of iterations to perform.
     maxiter
         Fail if the iteration count reaches this value without converging.
+    atol
+        Finish when the residual norm is below this threshold.
     rtol
         Finish when the residual norm has been reduced by this factor relative to the
         norm of the initial residual.
-    atol
-        Finish when the residual norm is below this threshold.
     relax
         If real valued, relaxation factor for Newton updates; otherwise 'armijo' to
         indicate that the :func:~pymor.algorithms.line_search.armijo line search algorithm
