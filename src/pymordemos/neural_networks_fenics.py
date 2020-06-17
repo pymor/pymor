@@ -5,16 +5,17 @@
 """Example script for the usage of neural networks in model order reduction (approach by Hesthaven and Ubbiali)
 
 Usage:
-    neural_networks.py [--fv] [--vis] N TRAINING_SAMPLES VALIDATION_SAMPLES
+    neural_networks.py [--vis] DIM N ORDER TRAINING_SAMPLES VALIDATION_SAMPLES
 
 Arguments:
-    N                    Grid interval count.
+    DIM                  Spatial dimension of the problem.
+    N                    Number of mesh intervals per spatial dimension.
+    ORDER                Finite element order.
     TRAINING_SAMPLES     Number of samples used for training the neural network.
     VALIDATION_SAMPLES   Number of samples used for validation during the training phase.
 
 Options:
     -h, --help   Show this message.
-    --fv         Use finite volume discretization instead of finite elements.
     --vis        Visualize full order solution and reduced solution for a test set.
 """
 
@@ -27,28 +28,48 @@ from pymor.basic import *
 from pymor.core.config import config
 
 
-def create_fom(args):
-    rhs = ExpressionFunction('(x - 0.5)**2 * 1000', 1, ())
+def create_fom(DIM, N, ORDER):
+    import dolfin as df
 
-    d0 = ExpressionFunction('1 - x', 1, ())
-    d1 = ExpressionFunction('x', 1, ())
+    if DIM == 2:
+        mesh = df.UnitSquareMesh(N, N)
+    elif DIM == 3:
+        mesh = df.UnitCubeMesh(N, N, N)
+    else:
+        raise NotImplementedError
 
-    f0 = ProjectionParameterFunctional('diffusionl')
-    f1 = 1.
+    V = df.FunctionSpace(mesh, "CG", ORDER)
 
-    problem = StationaryProblem(
-        domain=LineDomain(),
-        rhs=rhs,
-        diffusion=LincombFunction([d0, d1], [f0, f1]),
-        dirichlet_data=ConstantFunction(value=0, dim_domain=1),
-        name='1DProblem'
-    )
+    g = df.Constant(1.0)
+    c = df.Constant(1.)
 
-    print('Discretize ...')
-    discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    m, _ = discretizer(problem, diameter=1. / int(args['N']))
+    class DirichletBoundary(df.SubDomain):
+        def inside(self, x, on_boundary):
+            return abs(x[0] - 1.0) < df.DOLFIN_EPS and on_boundary
+    db = DirichletBoundary()
+    bc = df.DirichletBC(V, g, db)
 
-    return m
+    u = df.Function(V)
+    v = df.TestFunction(V)
+    f = df.Expression("x[0]*sin(x[1])", degree=2)
+    F = df.inner((1 + c*u**2)*df.grad(u), df.grad(v))*df.dx - f*v*df.dx
+
+    df.solve(F == 0, u, bc,
+             solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
+
+    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer
+
+    space = FenicsVectorSpace(V)
+    op = FenicsOperator(F, space, space, u, (bc,),
+                        parameter_setter=lambda mu: c.assign(mu['c'].item()),
+                        parameters={'c': 1},
+                        solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
+    rhs = VectorOperator(op.range.zeros())
+
+    fom = StationaryModel(op, rhs,
+                          visualizer=FenicsVisualizer(space))
+
+    return fom
 
 
 def neural_networks_demo(args):
@@ -61,9 +82,13 @@ def neural_networks_demo(args):
     TRAINING_SAMPLES = args['TRAINING_SAMPLES']
     VALIDATION_SAMPLES = args['VALIDATION_SAMPLES']
 
-    fom = create_fom(args)
+    DIM = int(args['DIM'])
+    N = int(args['N'])
+    ORDER = int(args['ORDER'])
 
-    parameter_space = fom.parameters.space((0.1, 1))
+    fom = create_fom(DIM, N, ORDER)
+
+    parameter_space = fom.parameters.space((0, 1000.))
 
     from pymor.reductors.neural_network import NeuralNetworkReductor
 
@@ -72,7 +97,12 @@ def neural_networks_demo(args):
 
     basis_size = 10
 
-    reductor = NeuralNetworkReductor(fom, training_set, validation_set, basis_size=basis_size)
+    reductor = NeuralNetworkReductor(fom,
+                                     training_set,
+                                     validation_set,
+                                     basis_size=basis_size,
+                                     hidden_layers='[(N+P)*3, (N+P)*3, (N+P)*3]',
+                                     restarts=100)
     rom = reductor.reduce()
 
     test_set = parameter_space.sample_randomly(10)
