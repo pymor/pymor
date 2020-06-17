@@ -120,12 +120,15 @@ def block_vector_spaces(draw, np_data_list, compatible, count, dims):
 _other_vector_space_types = []
 
 if config.HAVE_FENICS:
-
+    FENICS_spaces = {}
+    
     def fenics_vector_spaces(draw, np_data_list, compatible, count, dims):
         ret = []
         for d, ar in zip(dims, np_data_list):
             assume(d > 1)
-            ret.append((FenicsVectorSpace(df.FunctionSpace(df.UnitIntervalMesh(d-1), 'Lagrange', 1)), ar) )
+            if d not in FENICS_spaces:
+                FENICS_spaces[d] = FenicsVectorSpace(df.FunctionSpace(df.UnitIntervalMesh(d - 1), 'Lagrange', 1))
+            ret.append((FENICS_spaces[d], ar))
         return ret
     _other_vector_space_types.append('fenics')
 
