@@ -99,7 +99,7 @@ def test_ExpressionParameterFunctional():
     assert hes_nu_nu == -0
 
 
-def test_ProductParameterFunctional():
+def test_simple_ProductParameterFunctional():
     pf = ProjectionParameterFunctional('mu', 2, 0)
     mu = Mu({'mu': (10,2)})
     productf = pf * 2 * 3
@@ -151,7 +151,66 @@ def test_ProductParameterFunctional():
     assert der_mu == 2 * 2 * 3
     assert hes_mu_mu == 2 * 2
 
-    pp = productf * productf
+
+def test_ProductParameterFunctional():
+    # Projection ParameterFunctional
+    pf = ProjectionParameterFunctional('mu', 2, 0)
+    # Expression ParameterFunctional
+    dict_of_d_mus = {'nu': ['2*nu']}
+    dict_of_second_derivative = {'nu': [{'nu': ['2']}]}
+    epf = ExpressionParameterFunctional('nu**2', {'nu': 1},
+                                        'expression_functional',
+                                        dict_of_d_mus, dict_of_second_derivative)
+    mu = Mu({'mu': (10,2), 'nu': 3})
+
+    productf = pf * epf * 2. * pf
+
+    derivative_to_first_index = productf.d_mu('mu', 0)
+    derivative_to_second_index = productf.d_mu('mu', 1)
+    derivative_to_third_index = productf.d_mu('nu', 0)
+
+    second_derivative_first_first = productf.d_mu('mu', 0).d_mu('mu', 0)
+    second_derivative_first_second = productf.d_mu('mu', 0).d_mu('mu', 1)
+    second_derivative_first_third = productf.d_mu('mu', 0).d_mu('nu', 0)
+    second_derivative_second_first = productf.d_mu('mu', 1).d_mu('mu', 0)
+    second_derivative_second_second = productf.d_mu('mu', 1).d_mu('mu', 1)
+    second_derivative_second_third = productf.d_mu('mu', 1).d_mu('nu', 0)
+    second_derivative_third_first = productf.d_mu('nu', 0).d_mu('mu', 0)
+    second_derivative_third_second = productf.d_mu('nu', 0).d_mu('mu', 1)
+    second_derivative_third_third = productf.d_mu('nu', 0).d_mu('nu', 0)
+
+    der_mu_1 = derivative_to_first_index.evaluate(mu)
+    der_mu_2 = derivative_to_second_index.evaluate(mu)
+    der_nu_3 = derivative_to_third_index.evaluate(mu)
+
+    hes_mu_1_mu_1 = second_derivative_first_first.evaluate(mu)
+    hes_mu_1_mu_2 = second_derivative_first_second.evaluate(mu)
+    hes_mu_1_nu_3 = second_derivative_first_third.evaluate(mu)
+    hes_mu_2_mu_1 = second_derivative_second_first.evaluate(mu)
+    hes_mu_2_mu_2 = second_derivative_second_second.evaluate(mu)
+    hes_mu_2_nu_3 = second_derivative_second_third.evaluate(mu)
+    hes_nu_3_mu_1 = second_derivative_third_first.evaluate(mu)
+    hes_nu_3_mu_2 = second_derivative_third_second.evaluate(mu)
+    hes_nu_3_nu_3 = second_derivative_third_third.evaluate(mu)
+
+    # note that productf(mu,nu) = 2 * pf(mu)**2 * epf(nu)
+    # and thus:
+    #      d_mu productf(mu,nu) = 2 * 2 * pf(mu) * (d_mu pf)(mu) * epf(nu)
+    #      d_nu productf(mu,nu) = 2 * pf(mu)**2 * (d_nu epf)(nu)
+    # and so forth
+    assert der_mu_1 == 2 * 2 * 10 * 1 * 9
+    assert der_mu_2 == 0
+    assert der_nu_3 == 2 * 10**2 * 6
+    assert hes_mu_1_mu_1 == 2 * 2 * 9
+    assert hes_mu_1_mu_2 == 0
+    assert hes_mu_1_nu_3 == 2 * 2 * 10 * 1 * 6
+    assert hes_mu_2_mu_1 == 0
+    assert hes_mu_2_mu_2 == 0
+    assert hes_mu_2_nu_3 == 0
+    assert hes_nu_3_mu_1 == 2 * 2 * 10 * 1 * 6
+    assert hes_nu_3_mu_2 == 0
+    assert hes_nu_3_nu_3 == 2 * 10**2 * 2
+
 
 def test_d_mu_of_LincombOperator():
     dict_of_d_mus = {'mu': ['100', '2 * mu[0]'], 'nu': ['cos(nu[0])']}
