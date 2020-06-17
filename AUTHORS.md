@@ -19,6 +19,7 @@
     * second order derivatives for parameters
     * speed up of lincomb operators
     * add LincombParameterFunctional
+    * pruduct rule for ProductParameterFunctional
 
 * Luca Mechelli, luca.mechelli@uni-konstanz.de
     * speed up of lincomb operators
