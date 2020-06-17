@@ -292,10 +292,10 @@ class ProductParameterFunctional(ParameterFunctional):
                 summands[i].append(f.d_mu(component, index))
             else:
                 summands[i].append(0)
-            for index in indices: 
-                if index != i:
-                    summands[index].append(f)
-        non_zero_parts = []
+            for idx in indices:
+                if idx != i:
+                    summands[idx].append(f)
+        non_zero_summands = []
         trigger = 0
         for i, summand in enumerate(summands):
             if 0 not in summand:
@@ -306,13 +306,13 @@ class ProductParameterFunctional(ParameterFunctional):
                 if trigger:
                     trigger = 0
                     continue
-                non_zero_parts.append(i)
-        if len(non_zero_parts) == 0:
+                non_zero_summands.append(summand)
+        if not non_zero_summands:
             return ConstantParameterFunctional(0, name=self.name + '_d_mu')
-        elif len(non_zero_parts) == 1:
-            return self.with_(factors = summands[non_zero_parts[0]], name=self.name + '_d_mu')
         else:
-            raise NotImplementedError
+            return LincombParameterFunctional(functionals=[self.with_(factors=summand) for summand in non_zero_summands],
+                    coefficients=[1 for summand in non_zero_summands], name=self.name + '_d_mu')
+
 
 
 class ConjugateParameterFunctional(ParameterFunctional):
