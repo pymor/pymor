@@ -94,4 +94,5 @@ def compare_with_tolerance(x, y, comparison_op, rtol=1e-14, atol=1e-14):
     return comparison_op(x-y, atol + y * rtol)
 
 
-almost_less = partial(compare_with_tolerance, comparison_op=operator.le)
+def almost_less(x, y, rtol=None, atol=None):
+    return compare_with_tolerance(x, y, operator.le, rtol, atol)
