@@ -38,7 +38,7 @@ class ParameterFunctional(ParametricObject):
         New |ParameterFunctional| representing the partial derivative.
         """
         if parameter not in self.parameters:
-            return ConstantParameterFunctional(0, name=self.name + '_d_mu')
+            return ConstantParameterFunctional(0, name=f'{self.name}_d_{parameter}_{index}')
         else:
             raise NotImplementedError
 
@@ -112,8 +112,8 @@ class ProjectionParameterFunctional(ParameterFunctional):
         if parameter == self.parameter:
             assert 0 <= index < self.size
             if index == self.index:
-                return ConstantParameterFunctional(1, name=self.name + '_d_mu')
-        return ConstantParameterFunctional(0, name=self.name + '_d_mu')
+                return ConstantParameterFunctional(1, name=f'{self.name}_d_{parameter}_{index}')
+        return ConstantParameterFunctional(0, name=f'{self.name}_d_{parameter}_{index}')
 
 
 class GenericParameterFunctional(ParameterFunctional):
@@ -164,24 +164,24 @@ class GenericParameterFunctional(ParameterFunctional):
                     if self.second_derivative_mappings is None:
                         return GenericParameterFunctional(
                             self.derivative_mappings[parameter][index],
-                            self.parameters, name=self.name + '_d_mu'
+                            self.parameters, name=f'{self.name}_d_{parameter}_{index}'
                         )
                     else:
                         if parameter in self.second_derivative_mappings:
                             return GenericParameterFunctional(
                                 self.derivative_mappings[parameter][index],
-                                self.parameters, name=self.name + '_d_mu',
+                                self.parameters, name=f'{self.name}_d_{parameter}_{index}',
                                 derivative_mappings=self.second_derivative_mappings[parameter][index]
                             )
                         else:
                             return GenericParameterFunctional(
                                 self.derivative_mappings[parameter][index],
-                                self.parameters, name=self.name + '_d_mu',
+                                self.parameters, name=f'{self.name}_d_{parameter}_{index}',
                                 derivative_mappings={}
                             )
                 else:
                     raise ValueError('derivative expressions do not contain item {}'.format(parameter))
-        return ConstantParameterFunctional(0, name=self.name + '_d_mu')
+        return ConstantParameterFunctional(0, name=f'{self.name}_d_{parameter}_{index}')
 
 
 class ExpressionParameterFunctional(GenericParameterFunctional):
@@ -346,7 +346,7 @@ class ConstantParameterFunctional(ParameterFunctional):
         return self.constant_value
 
     def d_mu(self, parameter, index=0):
-        return self.with_(constant_value=0, name=self.name + '_d_mu')
+        return self.with_(constant_value=0, name=f'{self.name}_d_{parameter}_{index}')
 
 
 class LincombParameterFunctional(ParameterFunctional):
@@ -384,7 +384,7 @@ class LincombParameterFunctional(ParameterFunctional):
 
     def d_mu(self, parameter, index=0):
         functionals_d_mu = [f.d_mu(parameter, index) for f in self.functionals]
-        return self.with_(functionals=functionals_d_mu, name=self.name + '_d_mu')
+        return self.with_(functionals=functionals_d_mu, name=f'{self.name}_d_{parameter}_{index}')
 
 
 class MinThetaParameterFunctional(ParameterFunctional):
