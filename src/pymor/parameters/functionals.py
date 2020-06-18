@@ -285,29 +285,18 @@ class ProductParameterFunctional(ParameterFunctional):
         return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
 
     def d_mu(self, component, index=0):
-        summands = [[] for i in range(len(self.factors))]
-        indices = np.arange(len(self.factors))
+        summands = []
         for i, f in enumerate(self.factors):
             if hasattr(f, 'evaluate'):
-                summands[i].append(f.d_mu(component, index))
-            else:
-                summands[i].append(0)
-            for idx in indices:
-                if idx != i:
-                    summands[idx].append(f)
-        non_zero_summands = []
-        trigger = 0
-        for i, summand in enumerate(summands):
-            if 0 not in summand:
-                for s in summand:
-                    if isinstance(s, ConstantParameterFunctional):
-                        if s() == 0:
-                            trigger = 1
-                if trigger:
-                    trigger = 0
+                f_d_mu = f.d_mu(component, index)
+                if isinstance(f_d_mu, ConstantParameterFunctional) and f_d_mu() == 0:
                     continue
-                non_zero_summands.append(summand)
-        if not non_zero_summands:
+            else:
+                continue
+            summands.append(
+                ProductParameterFunctional([f_d_mu if j == i else g for j, g in enumerate(self.factors)])
+            )
+        if summands:
             return ConstantParameterFunctional(0, name=self.name + '_d_mu')
         else:
             return LincombParameterFunctional(summands, [1] * len(summands), name=self.name + '_d_mu')
