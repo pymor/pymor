@@ -114,6 +114,8 @@ def block_vector_spaces(draw, np_data_list, compatible, count, dims):
         if c == 0 or (not compatible and c > 0):
             block_dims = _block_dims(d)
         constituent_spaces = [NumpyVectorSpace(dim) for dim in block_dims]
+        # TODO this needs to be relaxed again
+        assume(len(constituent_spaces))
         ret.append((BlockVectorSpace(constituent_spaces), ar))
     return ret
 
@@ -142,8 +144,8 @@ if config.HAVE_DEALII:
         return [(DealIIVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('dealii')
 
+
 _picklable_vector_space_types = ['numpy', 'numpy_list', 'block']
-_picklable_vector_space_types = ['numpy', 'numpy_list']
 
 
 @hyst.composite
