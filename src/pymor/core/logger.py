@@ -332,7 +332,7 @@ def _info3(self, msg, *args, **kwargs):
 
 
 @contextmanager
-def temporary_log_levels(level_mapping):
+def log_levels(level_mapping):
     """Change levels for given loggers on entry and reset to before state on exit.
 
     Parameters
