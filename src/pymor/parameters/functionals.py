@@ -51,7 +51,11 @@ class ParameterFunctional(ParametricObject):
                 return self
             other = ConstantParameterFunctional(other)
         if isinstance(other, ParameterFunctional):
-            return LincombParameterFunctional([self, other], [1., 1.])
+            if isinstance(self, LincombParameterFunctional):
+                return self.with_(functionals=self.functionals + (other,),
+                        coefficients=self.coefficients + (1,))
+            else:
+                return LincombParameterFunctional([self, other], [1., 1.])
         else:
             return NotImplemented        
 
@@ -59,14 +63,21 @@ class ParameterFunctional(ParametricObject):
 
     def __sub__(self, other):
         if isinstance(other, ParameterFunctional):
-            return LincombParameterFunctional([self, other], [1., -1.])
+            if isinstance(self, LincombParameterFunctional):
+                return self.with_(functionals=self.functionals + (other,),
+                        coefficients=self.coefficients + (-1,))
+            else:
+                return LincombParameterFunctional([self, other], [1., -1.])
         else:
             return self + (- other)
 
     def __mul__(self, other):
         if not isinstance(other, (Number, ParameterFunctional)):
             return NotImplemented
-        return ProductParameterFunctional([self, other])
+        if isinstance(self, ProductParameterFunctional):
+            return self.with_(factors=self.factors + [other])
+        else:
+            return ProductParameterFunctional([self, other])
 
     __rmul__ = __mul__
 
