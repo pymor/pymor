@@ -279,10 +279,10 @@ coverage_ignore_c_items = {}
 # autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 
 # PyQt5 inventory is only used internally, actual link targets PySide2
-intersphinx_mapping = {'python': ('http://docs.python.org/3', None),
-                       'numpy': ('http://docs.scipy.org/doc/numpy', None),
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
+                       'numpy': ('https://docs.scipy.org/doc/numpy', None),
                        'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
-                       'scipy': ('http://docs.scipy.org/doc/scipy/reference', None)}
+                       'scipy': ('https://docs.scipy.org/doc/scipy/reference', None)}
 
 import substitutions
 rst_epilog = substitutions.substitutions
