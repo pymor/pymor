@@ -12,15 +12,15 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
 from pymor.algorithms.basic import contains_zero_vector
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.strategies import vector_arrays
+from pymortests.strategies import vector_arrays, implementations
 
 methods = ['method_of_snapshots', 'qr_svd']
 
 
 @settings(deadline=None)
-@given(vector_arrays(count=1), sampled_from(methods))
+@implementations(method=sampled_from(methods))
 def test_pod(vector_array, method):
-    A = vector_array[0]
+    A = vector_array
     product = None
     print(type(A))
     print(A.dim, len(A))

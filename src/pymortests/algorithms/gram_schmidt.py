@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, settings, assume, reproduce_failure, example
+from hypothesis import settings, assume, given
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
@@ -16,10 +16,10 @@ from pymortests.fixtures.operator import operator_with_arrays_and_products
 import pymortests.strategies as pyst
 
 
-@given(pyst.vector_arrays(count=1))
+@pyst.implementations()
 @settings(deadline=20000)
 def test_gram_schmidt(vector_array):
-    U = vector_array[0]
+    U = vector_array
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in del instead of a proper error
     assume(len(U) > 1 or not contains_zero_vector(U))
@@ -36,10 +36,10 @@ def test_gram_schmidt(vector_array):
     assert np.all(almost_equal(onb, U))
 
 
-@given(pyst.vector_arrays(count=1))
+@pyst.implementations()
 @settings(deadline=None)
 def test_gram_schmidt_with_R(vector_array):
-    U = vector_array[0]
+    U = vector_array
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in del instead of a proper error
     assume(len(U) > 1 or not contains_zero_vector(U))

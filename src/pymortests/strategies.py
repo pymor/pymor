@@ -380,8 +380,9 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     """
     dtype = dtype or np.float_
     # simplest way currently of getting a |VectorSpace| to construct our new arrays from
-    space = draw(vector_arrays(count=1, dtype=dtype, length=hyst.just((1,)), compatible=True)
-                 .filter(lambda x: x[0].space.dim > 0 and x[0].space.dim < max_dim))[0].space
+    space_types = _picklable_vector_space_types  + _other_vector_space_types
+    space = draw(vector_arrays(count=1, dtype=dtype, length=hyst.just((1,)), compatible=True, space_types=space_types)
+                 .filter(lambda x: x[0].space.dim > 0 and x[0].space.dim < max_dim)).space
     length = space.dim
     from scipy.stats import random_correlation
     # this lets hypothesis control np's random state too
