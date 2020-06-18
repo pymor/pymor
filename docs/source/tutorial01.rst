@@ -1,9 +1,6 @@
 Tutorial 1: Using pyMOR’s discretization toolkit
 ================================================
 
-.. code-links::
-    :timeout: -1
-
 
 pyMOR’s discretization toolkit allows to quickly build parametrized full
 order models based on the NumPy/SciPy software stack. Currently
@@ -42,7 +39,7 @@ function of a circular disk with radius :math:`0.3` and that
 We start by importing commonly used pyMOR classes and methods from the
 :mod:`~pymor.basic` module:
 
-.. nbplot::
+.. jupyter-execute::
 
    from pymor.basic import *
 
@@ -54,7 +51,7 @@ which all derive from the |DomainDescription| interface class.
 
 In our case, we can use a |RectDomain|:
 
-.. nbplot::
+.. jupyter-execute::
 
     domain = RectDomain([[0.,0.], [1.,1.]])
 
@@ -62,7 +59,7 @@ Data functions are defined using classes which derive from
 the |Function| interface. We specify the constant diffusivity :math:`\sigma`
 using a |ConstantFunction|:
 
-.. nbplot::
+.. jupyter-execute::
 
     diffusion = ConstantFunction(1, 2)
 
@@ -87,7 +84,7 @@ means that `x` can be an arbitrary dimensional NumPy array of
 coordinates where the last array index specifies the spacial dimension.
 Therefore, the correct definition of :math:`f` is:
 
-.. nbplot::
+.. jupyter-execute::
 
    rhs = ExpressionFunction('(sqrt( (x[...,0]-0.5)**2 + (x[...,1]-0.5)**2) <= 0.3) * 1.', 2, ())
 
@@ -102,7 +99,7 @@ returning :math:`2\times 2` matrices we would specify `(2,2)`.
 Finally, the computational domain and all data functions are collected
 in a |StationaryProblem|:
 
-.. nbplot::
+.. jupyter-execute::
 
    problem = StationaryProblem(
        domain=domain,
@@ -117,20 +114,20 @@ discrete full order models. For finite elements, we use
 which receives the maximum mesh element diameter via the `diameter`
 argument:
 
-.. nbplot::
+.. jupyter-execute::
 
    m, data = discretize_stationary_cg(problem, diameter=1/4)
 
 The resulting |Model| can be :meth:`solved <pymor.models.interface.Model.solve>`,
 returning a |VectorArray| with the solution data:
 
-.. nbplot::
+.. jupyter-execute::
 
    U = m.solve()
 
 Finally, we visualize the solution:
 
-.. nbplot::
+.. jupyter-execute::
 
    m.visualize(U)
 
@@ -139,7 +136,7 @@ In case a specific grid type shall be used (|RectGrid| or
 discretizer as the `grid_type` argument. By using |RectGrid| we get
 bilinear finite elements:
 
-.. nbplot::
+.. jupyter-execute::
 
    m, data = discretize_stationary_cg(problem, diameter=1/4, grid_type=RectGrid)
    m.visualize(m.solve())
@@ -147,7 +144,7 @@ bilinear finite elements:
 We get a finite volume model using
 :func:`~pymor.discretizers.builtin.fv.discretize_stationary_fv`:
 
-.. nbplot::
+.. jupyter-execute::
 
    m, data = discretize_stationary_fv(problem, diameter=1/4, grid_type=TriaGrid)
    m.visualize(m.solve())
@@ -189,7 +186,7 @@ Before solving this problem, let us first silence pyMOR’s verbose log
 messages for the rest of this tutorial using the :func:`~pymor.core.logger.set_log_levels`
 method:
 
-.. nbplot::
+.. jupyter-execute::
 
    set_log_levels({'pymor': 'WARN'})
 
@@ -197,7 +194,7 @@ To impose the right boundary conditions we need to declare which type of
 boundary condition should be active on which part of
 :math:`\partial\Omega` when defining the computational domain:
 
-.. nbplot::
+.. jupyter-execute::
 
    domain = RectDomain(bottom='neumann')
 
@@ -205,12 +202,12 @@ Then all we need to pass the Neumann data function :math:`g_N` to the
 |StationaryProblem|. Here, we can use again a |ConstantFunction|.
 The diffusivity can be defined similarly as above:
 
-.. nbplot::
+.. jupyter-execute::
 
    neumann_data = ConstantFunction(-1., 2)
-   
+
    diffusion = ExpressionFunction('1. - (sqrt( (x[...,0]-0.5)**2 + (x[...,1]-0.5)**2) <= 0.3) * 0.999' , 2, ())
-   
+
    problem = StationaryProblem(
        domain=domain,
        diffusion=diffusion,
@@ -219,7 +216,7 @@ The diffusivity can be defined similarly as above:
 
 Finally, we discretize and solve:
 
-.. nbplot::
+.. jupyter-execute::
 
    m, data = discretize_stationary_cg(problem, diameter=1/32)
    m.visualize(m.solve())
@@ -233,7 +230,8 @@ For instance, to let :math:`\sigma` be given by a periodic pattern of
 :math:`K\times K` circular disks of radius :math:`0.3/K` we can use the
 following definition:
 
-.. nbplot::
+.. jupyter-execute::
+
    diffusion = ExpressionFunction(
        '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
        2, (),
@@ -247,7 +245,7 @@ expression. In particular, we can easily change `K` programatically
 without having to resort to string manipulations. The solution looks
 like this:
 
-.. nbplot::
+.. jupyter-execute::
 
    problem = StationaryProblem(
        domain=domain,
@@ -255,7 +253,7 @@ like this:
        neumann_data=neumann_data
    )
 
-   
+
    m, data = discretize_stationary_cg(problem, diameter=1/100)
    m.visualize(m.solve())
 
@@ -275,15 +273,17 @@ following graphic stored in `RB.png`:
 
 and a range of `[0.001 1]` we obtain:
 
-.. nbplot::
+.. jupyter-execute::
 
+   import os
+   print(os.getcwd())
    diffusion = BitmapFunction('RB.png', range=[0.001, 1])
    problem = StationaryProblem(
        domain=domain,
        diffusion=diffusion,
        neumann_data=neumann_data
    )
-   
+
    m, data = discretize_stationary_cg(problem, diameter=1/100)
    m.visualize(m.solve())
 
@@ -313,7 +313,7 @@ will be ::
 
 We can then make the following definition of the Neumann data:
 
-.. nbplot::
+.. jupyter-execute::
 
    neumann_data = ExpressionFunction('-cos(pi*x[...,0])**2*neum[0]', 2, (), parameters= {'neum': 1})
 
@@ -326,7 +326,7 @@ the expression.
 We can then proceed as usual and automatically obtain a parametric
 |Model|:
 
-.. nbplot::
+.. jupyter-execute::
 
    diffusion = ExpressionFunction(
        '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
@@ -338,21 +338,21 @@ We can then proceed as usual and automatically obtain a parametric
        diffusion=diffusion,
        neumann_data=neumann_data
    )
-   
+
    m, data = discretize_stationary_cg(problem, diameter=1/100)
    m.parameters
 
 When solving the model, we now need to specify appropriate
 |parameter values|:
 
-.. nbplot::
+.. jupyter-execute::
 
    m.visualize(m.solve({'neum': [1.]}))
 
 For the :meth:`~pymor.models.interface.Model.solve` method, the
 parameter value can also be specified as a single number:
 
-.. nbplot::
+.. jupyter-execute::
 
    m.visualize(m.solve(-100))
 
@@ -364,7 +364,7 @@ Next we also want to to parametrize the diffusivity in the
 :math:`K \times K` circular disks by a scalar factor
 :math:`\mu_{diffu}`. To this end we define:
 
-.. nbplot::
+.. jupyter-execute::
 
    diffusion = ExpressionFunction(
        '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * (1 - diffu[0])',
@@ -375,14 +375,14 @@ Next we also want to to parametrize the diffusivity in the
 
 We proceed as usual:
 
-.. nbplot::
+.. jupyter-execute::
 
    problem = StationaryProblem(
        domain=domain,
        diffusion=diffusion,
        neumann_data=neumann_data
    )
-   
+
    m, data = discretize_stationary_cg(problem, diameter=1/100)
    m.parameters
 
@@ -390,7 +390,7 @@ As we can see, pyMOR automatically derives that in this case the model
 depends on two |Parameters|, and we have to provide two values
 when solving the model:
 
-.. nbplot::
+.. jupyter-execute::
 
    m.visualize(m.solve({'diffu': 0.001, 'neum': 1}))
 
@@ -398,7 +398,7 @@ For :meth:`~pymor.models.interface.Model.solve` we can also
 simply pass a list of parameter values, in which case
 pyMOR assumes an alphabetical ordering of the parameters:
 
-.. nbplot::
+.. jupyter-execute::
 
    m.visualize(m.solve([1, -1]))
 
@@ -440,7 +440,7 @@ the following image files:
 
 .. image:: B.png
 
-.. nbplot::
+.. jupyter-execute::
 
    f_R = BitmapFunction('R.png', range=[1, 0])
    f_B = BitmapFunction('B.png', range=[1, 0])
@@ -454,7 +454,7 @@ Next we need to define the |ParameterFunctionals|
 Similar to an |ExpressionFunction|, we can use
 |ExpressionParameterFunctionals| for that:
 
-.. nbplot::
+.. jupyter-execute::
 
    theta_R = ExpressionParameterFunctional('R[0] - 1', {'R': 1})
    theta_B = ExpressionParameterFunctional('B[0] - 1', {'B': 1})
@@ -465,7 +465,7 @@ combination using a |LincombFunction| which is given a list of
 |Functions| as the first and a corresponding list of
 |ParameterFunctionals| or constants as the second argument:
 
-.. nbplot::
+.. jupyter-execute::
 
    diffusion = LincombFunction(
        [ConstantFunction(1., 2), f_R, f_B],
@@ -477,7 +477,7 @@ Again, pyMOR automatically derives that the evaluation of `diffusion`
 depends on the two |Parameters| `'B'` and `'R'`. Now, we can
 proceed as usual:
 
-.. nbplot::
+.. jupyter-execute::
 
    problem = StationaryProblem(
        domain=domain,
@@ -491,7 +491,7 @@ proceed as usual:
 Looking at the |Model| `m`, we can see that the decomposition of
 :math:`\sigma` has been preserved by the discretizer:
 
-.. nbplot::
+.. jupyter-execute::
 
    m.operator
 
@@ -500,3 +500,5 @@ linear coefficients but the |BitmapFunctions| replaced by
 corresponding stiffness matrices. Note that an additional summand
 appears which ensures correct enforcement of Dirichlet boundary values
 for all possible parameter value combinations.
+
+Download the code: :jupyter-download:script:`tutorial01` :jupyter-download:notebook:`tutorial01`
