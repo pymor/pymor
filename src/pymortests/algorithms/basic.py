@@ -25,11 +25,11 @@ from pymortests.vectorarray import indexed, assume_old_slicing
 import pymortests.strategies as pyst
 
 
-@given(vectors=pyst.vector_arrays(count=2),
+@pyst.implementations(count=2,
        tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)]),
        norms=hyst.sampled_from([('sup', np.inf), ('l1', 1), ('l2', 2)]))
-def test_almost_equal(vectors, tolerances, norms):
-    v1, v2 = vectors
+def test_almost_equal(vector_arrays, tolerances, norms):
+    v1, v2 = vector_arrays
     rtol, atol = tolerances
     n, o = norms
     try:
@@ -77,12 +77,12 @@ def test_almost_equal_product(operator_with_arrays_and_products):
                                 <= atol + rtol * norm(v2[ind2])))
 
 
-@given(vec_ind=pyst.vector_arrays_with_ind_pairs_same_length(count=1),
+@pyst.implementations(count=1, index_strategy=pyst.pairs_same_length,
        tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)]),
        norm=hyst.sampled_from(['sup', 'l1', 'l2']))
 @settings(print_blob=True)
-def test_almost_equal_self(vec_ind, tolerances, norm):
-    v, (ind,_) = vec_ind
+def test_almost_equal_self(vectors_and_indices, tolerances, norm):
+    v, (ind,_) = vectors_and_indices
     rtol, atol = tolerances
     n = norm
     try:
@@ -184,9 +184,9 @@ def test_almost_equal_self_product(operator_with_arrays_and_products):
                 assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, product=product))
 
 
-@given(pyst.vector_arrays(count=2, compatible=False))
-def test_almost_equal_incompatible(incompatible_vector_array_pair):
-    v1, v2 = incompatible_vector_array_pair
+@pyst.implementations(count=2, compatible=False)
+def test_almost_equal_incompatible(vector_arrays):
+    v1, v2 = vector_arrays
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         for n in ['sup', 'l1', 'l2']:
             c1, c2 = v1.copy(), v2.copy()
