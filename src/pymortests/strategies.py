@@ -3,6 +3,7 @@ from hypothesis import assume, settings, HealthCheck
 from hypothesis.extra import numpy as hynp
 import numpy as np
 import pytest
+from scipy.stats._multivariate import random_correlation_gen
 
 from pymor.core.config import config
 from pymor.vectorarrays.list import NumpyListVectorSpace
@@ -384,9 +385,12 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     space = draw(vector_arrays(count=1, dtype=dtype, length=hyst.just((1,)), compatible=True, space_types=space_types)
                  .filter(lambda x: x[0].space.dim > 0 and x[0].space.dim < max_dim)).space
     length = space.dim
-    from scipy.stats import random_correlation
+
     # this lets hypothesis control np's random state too
     random = draw(hyst.randoms())
+    # scipy performs this check although technically numpy accepts a different range
+    assume(0 <= random.seed < 2**32 - 1)
+    random_correlation = random_correlation_gen(random.seed)
 
     def _eigs():
         """sum must equal to `length` for the scipy construct method"""
