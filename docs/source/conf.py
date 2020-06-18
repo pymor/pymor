@@ -87,7 +87,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
               'pymordocstring',
-              'nb2plots',
+              'jupyter_sphinx',
               'sphinx.ext.mathjax',
               'sphinx_qt_documentation',
               ]
@@ -289,14 +289,6 @@ rst_epilog = substitutions.substitutions
 
 modindex_common_prefix = ['pymor.']
 
-nbplot_render_output = True
-nbplot_cwd = os.path.dirname(os.path.abspath(__file__))
-try:
-    base_branch = os.environ['CI_COMMIT_REF_SLUG']
-    markdown_http_base = f'https://docs.pymor.org/en/{base_branch}'
-except KeyError:
-    # this will work as long as all (tutorial) notebooks are side-by-side with the index document
-    markdown_http_base = '.'
 
 # make intersphinx link to pyside2 docs
 qt_documentation = 'PySide2'
