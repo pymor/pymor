@@ -14,7 +14,7 @@ from pymor.core.logger import getLogger
 
 
 @defaults('miniter', 'maxiter', 'rtol', 'atol', 'relax', 'stagnation_window', 'stagnation_threshold')
-def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least_squares=False,
+def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, source_product=None, least_squares=False,
            miniter=0, maxiter=100, atol=0., rtol=1e-7, relax='armijo', line_search_params=None,
            stagnation_window=3, stagnation_threshold=np.inf, error_measure='update',
            return_stages=False, return_residuals=False):
@@ -38,10 +38,14 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
         solution `U`.
     mu
         The |parameter values| for which to solve the equation.
-    error_norm
-        The inner product with which the error measure norm (norm of the
-        residual/update vector) is computed. If `None`, the Euclidean inner product
+    range_product
+        The inner product `Operator` on `operator.range` with which the norm
+        of the resiudal is computed. If `None`, the Euclidean inner product
         is used.
+    source_product
+        The inner product `Operator` on `operator.source` with which the norm
+        of the solution and update vectors is computed. If `None`, the Euclidean inner
+        product is used.
     least_squares
         If `True`, use a least squares linear solver (e.g. for residual minimization).
     miniter
@@ -111,10 +115,10 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     residual = rhs - operator.apply(U, mu=mu)
 
     # compute norms
-    solution_norm = U.norm(error_product)[0]
+    solution_norm = U.norm(source_product)[0]
     solution_norms = [solution_norm]
     update_norms = []
-    residual_norm = residual.norm(error_product)[0]
+    residual_norm = residual.norm(range_product)[0]
     residual_norms = [residual_norm]
 
     # select error measure for convergence criteria
@@ -168,13 +172,13 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
         elif relax == 'armijo':
             def res(x):
                 residual_vec = rhs - operator.apply(x, mu=mu)
-                return residual_vec.norm(error_product)[0]
+                return residual_vec.norm(range_product)[0]
 
-            if error_product is None:
+            if range_product is None:
                 grad = - (jacobian.apply(residual) + jacobian.apply_adjoint(residual))
             else:
-                grad = - (jacobian.apply_adjoint(error_product.apply(residual))
-                          + jacobian.apply(error_product.apply_adjoint(residual)))
+                grad = - (jacobian.apply_adjoint(range_product.apply(residual))
+                          + jacobian.apply(range_product.apply_adjoint(residual)))
             step_size = armijo(res, U, update, grad=grad, initial_value=residual_norm, **(line_search_params or {}))
         else:
             raise ValueError('Unknown line search method')
@@ -184,11 +188,11 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
         residual = rhs - operator.apply(U, mu=mu)
 
         # compute norms
-        solution_norm = U.norm(error_product)[0]
+        solution_norm = U.norm(source_product)[0]
         solution_norms.append(solution_norm)
-        update_norm = update.norm(error_product)[0] * step_size
+        update_norm = update.norm(source_product)[0] * step_size
         update_norms.append(update_norm)
-        residual_norm = residual.norm(error_product)[0]
+        residual_norm = residual.norm(range_product)[0]
         residual_norms.append(residual_norm)
 
         # select error measure for next iteration
