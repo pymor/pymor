@@ -12,6 +12,7 @@ ipyparallel>=6.2.5
 ipython>=5.0
 ipywidgets
 jupyter_contrib_nbextensions
+jupyter_sphinx
 matplotlib
 meshio==3.3.1
 mpi4py
@@ -25,7 +26,6 @@ pillow
 pyamg
 pyevtk>=1.1
 pygmsh==6.0.2
-pymor-nb2plots>=0.7
 pyopengl
 pytest-runner>=2.9
 pytest>=4.4
