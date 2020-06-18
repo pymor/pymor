@@ -128,6 +128,11 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     while True:
         # check for convergence / failure of convergence
         if iteration >= miniter:
+            if residual_norm == 0:
+                # handle the corner case where error_norm == update, U is the exact solution
+                # and the jacobian of operator is not invertible at the exact solution
+                logger.info(f'Norm of residual exactly zero. Converged.')
+                break
             if err < atol:
                 logger.info(f'Absolute tolerance of {atol} for norm of {error_measure} reached. Converged.')
                 break
