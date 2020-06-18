@@ -118,7 +118,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     residual_norms = [residual_norm]
 
     # select error measure for convergence criteria
-    err = residual_norm if error_measure == 'residual' else solution_norm
+    err = residual_norm if error_measure == 'residual' else np.inf
     err_scale_factor = err
     errs = residual_norms if error_measure == 'residual' else update_norms
 
