@@ -49,7 +49,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     maxiter
         Fail if the iteration count reaches this value without converging.
     atol
-        Finish when the the error measure is below this threshold.
+        Finish when the error measure is below this threshold.
     rtol
         Finish when the error measure has been reduced by this factor
         relative to the norm of the initial residual resp. the norm of the current solution.
