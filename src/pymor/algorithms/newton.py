@@ -209,7 +209,6 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
 
     logger.info('')
 
-
     data['solution_norms'] = np.array(solution_norms)
     data['update_norms']   = np.array(update_norms)
     data['residual_norms'] = np.array(residual_norms)
