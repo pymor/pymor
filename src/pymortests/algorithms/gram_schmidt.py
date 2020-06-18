@@ -8,7 +8,7 @@ from hypothesis import settings, assume, given
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
-from pymor.core.logger import getLogger, scoped_logger
+from pymor.core.logger import getLogger, log_levels
 from pymor.algorithms.basic import contains_zero_vector
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 from pymortests.base import runmodule
@@ -97,7 +97,7 @@ def test_gram_schmidt_biorth(vector_arrays):
     V1 = U1.copy()
     V2 = U2.copy()
 
-    with scoped_logger('pymor.algorithms.gram_schmidt.gram_schmidt_biorth', level='FATAL'):
+    with log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt_biorth': 'FATAL'}):
         A1, A2 = gram_schmidt_biorth(U1, U2, copy=True)
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
