@@ -25,14 +25,14 @@ def test_LincombParameterFunctional():
     two_pf = pf + pf
     three_pf = pf + 2*pf
     pf_plus_one = pf + 1
-    sum_ = epf + pf 
-    pf_squared =  (pf + 2*epf) * (pf - 2*epf) + 4 * epf * epf  
+    sum_ = epf + pf + 1 - 3
+    pf_squared =  (pf + 2*epf) * (pf - 2*epf) + 4 * epf * epf * 1
 
     assert zero(mu) == 0
     assert two_pf(mu) == 2 * pf(mu)
     assert three_pf(mu) == 3 * pf(mu)
     assert pf_plus_one(mu) == pf(mu) + 1
-    assert sum_(mu) == epf(mu) + pf(mu)
+    assert sum_(mu) == epf(mu) + pf(mu) + 1 - 3
     assert pf_squared(mu) == pf(mu) * pf(mu)
     assert sum_.d_mu('mu', 0)(mu) == epf.d_mu('mu', 0)(mu) + pf.d_mu('mu', 0)(mu)
     assert sum_.d_mu('mu', 1)(mu) == epf.d_mu('mu', 1)(mu) + pf.d_mu('mu', 1)(mu)
