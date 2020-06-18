@@ -476,12 +476,12 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
     Given a list of the thetas, the |parameter values| mu_bar and the constant gamma_mu_bar, this functional thus evaluates
     to ::
 
-      |gamma_mu_bar * max{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)|
+      |gamma_mu_bar * max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)|
 
     Note that we also get an upper bound if theta_prime_q(mu) == 0 for any q. However, if theta_prime_q(mu) == 0 for
-    at least one q, we need to use the absolute value in the denominator, i.e.
+    at least one q, we need to use the absolute value in the denominator, i.e. ::
 
-      |gamma_mu_bar * max{q = 1}^Q theta_prime_q(mu)/|theta_q(mu_bar)||
+      |gamma_mu_bar * max_{q = 1}^Q theta_prime_q(mu)/|theta_q(mu_bar)| |
 
     Parameters
     ----------
