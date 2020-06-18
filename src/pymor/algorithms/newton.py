@@ -122,7 +122,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
     err_scale_factor = err
     errs = residual_norms if error_measure == 'residual' else update_norms
 
-    logger.info(f'     res:{residual_norm:.3e}                                 norm:{solution_norm:.3e}')
+    logger.info(f'     norm:{solution_norm:.3e}                                 res:{residual_norm:.3e}')
 
     iteration = 0
     while True:
@@ -197,12 +197,12 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_product=None, least
             err_scale_factor = solution_norm
 
         logger.info(f'it:{iteration} '
-                    f'res:{residual_norm:.3e} '
-                    f'red:{residual_norm / residual_norms[-2]:.3e} '
-                    f'tot_red:{residual_norm / residual_norms[0]:.3e} '
                     f'norm:{solution_norm:.3e} '
                     f'upd:{update_norm:.3e} '
-                    f'rel_upd:{update_norm / solution_norm:.3e}')
+                    f'rel_upd:{update_norm / solution_norm:.3e} '
+                    f'res:{residual_norm:.3e} '
+                    f'red:{residual_norm / residual_norms[-2]:.3e} '
+                    f'tot_red:{residual_norm / residual_norms[0]:.3e}')
 
         if not np.isfinite(residual_norm) or not np.isfinite(solution_norm):
             raise NewtonError('Failed to converge')
