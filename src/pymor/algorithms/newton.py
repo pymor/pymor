@@ -58,14 +58,14 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
         Finish when the error measure has been reduced by this factor
         relative to the norm of the initial residual resp. the norm of the current solution.
     relax
-        If real valued, relaxation factor for Newton updates; otherwise 'armijo' to
-        indicate that the :func:~pymor.algorithms.line_search.armijo line search algorithm
+        If real valued, relaxation factor for Newton updates; otherwise `'armijo'` to
+        indicate that the :func:`~pymor.algorithms.line_search.armijo` line search algorithm
         shall be used.
     line_search_params
         Dictionary of additional parameters passed to the line search method.
     error_measure
-        If 'residual', convergence depends on the norm of the residual. If
-        'update', convergence depends on the norm of the update vector.
+        If `'residual'`, convergence depends on the norm of the residual. If
+        `'update'`, convergence depends on the norm of the update vector.
     stagnation_window
         Finish when the error measure has not been reduced by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
@@ -94,7 +94,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
     Raises
     ------
     NewtonError
-        Raised if the Netwon algorithm failed to converge.
+        Raised if the Newton algorithm failed to converge.
     """
     assert error_measure in ('residual', 'update')
 
