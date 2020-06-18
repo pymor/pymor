@@ -310,8 +310,7 @@ class ProductParameterFunctional(ParameterFunctional):
         if not non_zero_summands:
             return ConstantParameterFunctional(0, name=self.name + '_d_mu')
         else:
-            return LincombParameterFunctional(functionals=[self.with_(factors=summand) for summand in non_zero_summands],
-                    coefficients=[1 for summand in non_zero_summands], name=self.name + '_d_mu')
+            return LincombParameterFunctional(summands, [1] * len(summands), name=self.name + '_d_mu')
 
 
 
