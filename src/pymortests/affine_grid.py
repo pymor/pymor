@@ -8,7 +8,7 @@ import pytest
 from hypothesis import given, settings, reproduce_failure
 
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
-from pymor.tools.floatcmp import float_cmp, compare_with_tolerance
+from pymor.tools.floatcmp import almost_less
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers
 
@@ -336,8 +336,8 @@ def test_bounding_box(grid):
     assert np.all(bbox[0] <= bbox[1])
     # compare with tolerance is necessary with very large domain boundaries values
     # where the relative error in the centers computation introduces enough error to fail the test otherwise
-    assert np.all(compare_with_tolerance(bbox[0], g.centers(g.dim), operator.le, rtol=1e-15, atol=0))
-    assert np.all(compare_with_tolerance(g.centers(g.dim), bbox[1], operator.le, rtol=1e-15, atol=0))
+    assert np.all(almost_less(bbox[0], g.centers(g.dim), rtol=1e-15, atol=0))
+    assert np.all(almost_less(g.centers(g.dim), bbox[1], rtol=1e-15, atol=0))
 
 
 @settings(deadline=None)
