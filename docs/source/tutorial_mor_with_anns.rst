@@ -19,6 +19,7 @@ We assume that we are given a parametrized partial differential equation which
 can be discretized and solved using pyMOR. In this example, we consider the
 following diffusion problem on a one dimensional line domain with a
 parametrized diffusion:
+
 .. math::
 
    -\nabla \cdot \big(\sigma(x, \mu) \nabla u(x, \mu) \big) = f(x, \mu),\quad x \in \Omega,
@@ -28,6 +29,7 @@ functions :math:`f(x, \mu) = 1000 \cdot (x-0.5)^2`,
 :math:`\sigma(x, \mu)=(1-x)*\mu+x`, where :math:`\mu \in (0.1, 1)` denotes the
 parameter. Further, we apply homogeneous Dirichlet boundary conditions.
 We discretize the problem as explained in former tutorials:
+
 .. nbplot::
 
     from pymor.basic import *
@@ -48,16 +50,17 @@ We discretize the problem as explained in former tutorials:
 
     problem = StationaryProblem(
         domain=domain,
-        rhs=rhs,
+        rhs=f,
         diffusion=diffusion,
         dirichlet_data=ConstantFunction(value=0, dim_domain=1),
         name='1DProblem'
     )
 
-    fom, _ = discretize_stationary_cg(problem, diameter=1. / N))
+    fom, _ = discretize_stationary_cg(problem, diameter=1. / N)
 
 Since we employ a single |Parameter|, we can create the |ParameterSpace| using
 the following line:
+
 .. nbplot::
 
     parameter_space = fom.parameters.space((0.1, 1))
@@ -73,6 +76,7 @@ created via POD.
 
 To train the neural network, we create a training and a validation set
 consisting of 100 and 20 randomly chosen |Parameters|, respectively:
+
 .. nbplot::
 
     training_set = parameter_space.sample_uniformly(100)
@@ -82,7 +86,8 @@ In this tutorial, we prescribe the size of the reduced basis that shall be
 used. It is also possible to determine a relative or absolute tolerance that
 should not be exceeded on the validation set. We can now construct a reductor
 using a basis size of 10:
-.. nbplots::
+
+.. nbplot::
 
     from pymor.reductors.neural_network import NeuralNetworkReductor
 
@@ -91,6 +96,7 @@ using a basis size of 10:
 To reduce the model, i.e. compute a reduced basis via POD and train the neural
 network, we use the respective function of the
 :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`:
+
 .. nbplot::
 
     rom = reductor.reduce()
@@ -101,6 +107,7 @@ validation set.
 
 We are now ready to test our implementation by solving for a random parameter
 the full problem and the reduced model and visualize the result:
+
 .. nbplot::
 
     mu = parameter_space.sample_randomly(1)[0]

@@ -17,6 +17,7 @@ provided for getting started quickly.
     getting_started
     technical_overview
     tutorial01
+    tutorial_mor_with_anns
     environment
     release_notes
     bibliography
