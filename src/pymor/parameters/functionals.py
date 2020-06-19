@@ -297,9 +297,9 @@ class ProductParameterFunctional(ParameterFunctional):
                 ProductParameterFunctional([f_d_mu if j == i else g for j, g in enumerate(self.factors)])
             )
         if not summands:
-            return ConstantParameterFunctional(0, name=self.name + '_d_mu')
+            return ConstantParameterFunctional(0, name=f'{self.name}_d_{parameter}_{index}')
         else:
-            return LincombParameterFunctional(summands, [1] * len(summands), name=self.name + '_d_mu')
+            return LincombParameterFunctional(summands, [1] * len(summands), name=f'{self.name}_d_{parameter}_{index}')
 
 
 
