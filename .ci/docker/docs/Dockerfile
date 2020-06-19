@@ -1,4 +1,4 @@
 FROM alpine:latest
 
-COPY * /public/
+COPY . /public/
 RUN ls -l /public/
