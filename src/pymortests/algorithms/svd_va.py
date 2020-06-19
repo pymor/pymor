@@ -12,12 +12,12 @@ from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.algorithms.basic import contains_zero_vector
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.strategies import vector_arrays, implementations
+from pymortests.strategies import vector_arrays, given_vector_arrays
 
 methods = [method_of_snapshots, qr_svd]
 
 
-@implementations(method=sampled_from(methods))
+@given_vector_arrays(method=sampled_from(methods))
 @settings(deadline=None)
 def test_method_of_snapshots(vector_array, method):
     A = vector_array
