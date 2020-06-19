@@ -10,7 +10,7 @@ from hypothesis import settings, Verbosity, HealthCheck
 
 _common_settings = {"print_blob": True, "suppress_health_check": (HealthCheck.too_slow, HealthCheck.data_too_large,),
                     "deadline": 1000, "verbosity": Verbosity.verbose}
-settings.register_profile("ci_large", max_examples=1000, **_common_settings)
+settings.register_profile("ci_large", max_examples=400, **_common_settings)
 settings.register_profile("ci_pr", max_examples=100, **_common_settings)
 settings.register_profile("ci", max_examples=25, **_common_settings)
 settings.register_profile("dev", max_examples=10, **_common_settings)
