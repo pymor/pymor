@@ -233,13 +233,16 @@ class Operator(ParametricObject):
                 options = {}
             options['least_squares'] = least_squares
 
-            R = V.empty(reserve=len(V))
-            for i in range(len(V)):
-                try:
-                    R.append(newton(self, V[i], initial_guess=initial_guess[i] if initial_guess is not None else None,
-                                    mu=mu, **options)[0])
-                except NewtonError as e:
-                    raise InversionError(e)
+            with self.logger.block('Solving nonlinear problem using newton algorithm ...'):
+                R = V.empty(reserve=len(V))
+                for i in range(len(V)):
+                    try:
+                        R.append(newton(self, V[i],
+                                        initial_guess=initial_guess[i] if initial_guess is not None else None,
+                                        mu=mu,
+                                        **options)[0])
+                    except NewtonError as e:
+                        raise InversionError(e)
             return R
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):

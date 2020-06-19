@@ -19,9 +19,13 @@ def _newton(mop, initial_value=1.0, **kwargs):
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 @pytest.mark.parametrize("order", list(range(1, 8)))
-def test_newton(order):
+@pytest.mark.parametrize("error_measure", ['update', 'residual'])
+def test_newton(order, error_measure):
     mop = MonomOperator(order)
-    U, _ = _newton(mop, atol=1e-15)
+    U, _ = _newton(mop,
+                   atol=1e-15 if error_measure == 'residual' else 1e-7,
+                   rtol=0.,
+                   error_measure=error_measure)
     assert float_cmp(mop.apply(U).to_numpy(), 0.0)
 
 def test_newton_fail():
@@ -37,7 +41,7 @@ def test_newton_with_line_search():
 def test_newton_fail_without_line_search():
     mop = MonomOperator(3) - 2 * MonomOperator(1) + 2 * MonomOperator(0)
     with pytest.raises(NewtonError):
-        _ = _newton(mop, initial_value=0.0, atol=1e-15)
+        _ = _newton(mop, initial_value=0.0, atol=1e-15, relax=1.)
 
 def test_newton_unknown_line_search():
     mop = MonomOperator(1)
