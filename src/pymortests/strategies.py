@@ -167,7 +167,7 @@ def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatibl
     return ret
 
 
-def implementations(which='all', count=1, dtype=None, length=None, compatible=True, index_strategy=None, **kwargs):
+def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatible=True, index_strategy=None, **kwargs):
     """This decorator hides the combination details of given
 
     the decorated function will be first wrapped in a |hypothesis.given| (with expanded `given_args` and then in

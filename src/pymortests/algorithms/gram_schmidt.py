@@ -16,7 +16,7 @@ from pymortests.fixtures.operator import operator_with_arrays_and_products
 import pymortests.strategies as pyst
 
 
-@pyst.implementations()
+@pyst.given_vector_arrays()
 @settings(deadline=20000)
 def test_gram_schmidt(vector_array):
     U = vector_array
@@ -36,7 +36,7 @@ def test_gram_schmidt(vector_array):
     assert np.all(almost_equal(onb, U))
 
 
-@pyst.implementations()
+@pyst.given_vector_arrays()
 @settings(deadline=None)
 def test_gram_schmidt_with_R(vector_array):
     U = vector_array
