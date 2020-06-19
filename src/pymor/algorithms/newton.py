@@ -18,7 +18,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
            miniter=0, maxiter=100, atol=0., rtol=1e-7, relax='armijo', line_search_params=None,
            stagnation_window=3, stagnation_threshold=np.inf, error_measure='update',
            return_stages=False, return_residuals=False):
-    """Basic Newton algorithm.
+    """Newton algorithm.
 
     This method solves the nonlinear equation ::
 
@@ -63,14 +63,14 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
         shall be used.
     line_search_params
         Dictionary of additional parameters passed to the line search method.
-    error_measure
-        If `'residual'`, convergence depends on the norm of the residual. If
-        `'update'`, convergence depends on the norm of the update vector.
     stagnation_window
         Finish when the error measure has not been reduced by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
     stagnation_threshold
         See `stagnation_window`.
+    error_measure
+        If `'residual'`, convergence depends on the norm of the residual. If
+        `'update'`, convergence depends on the norm of the update vector.
     return_stages
         If `True`, return a |VectorArray| of the intermediate approximations of `U`
         after each iteration.
