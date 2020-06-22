@@ -7,7 +7,7 @@ Tutorial 5: Model order reduction with artificial neural networks
 
 Recent success of artificial neural networks led to the development of several
 methods for model order reduction using neural networks. pyMOR provides the
-functionality for an approach developed by Hesthaven and Ubbiali in 2018.
+functionality for a simple approach developed by Hesthaven and Ubbiali in 2018.
 pyMOR serves as discretization tool and for computing a reduced basis via
 proper orthogonal decomposition. Further, the PyTorch library is used to train
 artificial neural networks.
@@ -30,16 +30,24 @@ A so called "weight" is assigned to each of those connections. The weights in
 the neural network can be adjusted while fitting the neural network to the
 given sample set. For a given input :math:`x\in X`, the weights between the
 input layer and the first hidden layer (the one after the input layer) are
-multiplied with the respective values in :math:`x`, summed up and assigned to
-the corresponding neuron in the first hidden layer. Before passing those values
-to the following layer, a (non-linear) activation function :math:`\rho\colon\mathbb{R}\rightarrow\mathbb{R}`
-is applied. If :math:`\rho` is linear, the function implemented by the neural
-network is also linear, since solely linear operations were performed. Hence,
-one usually chooses a non-linear activation function to introduce non-linearity
-in the neural network and thus increase its approximation capability. In some
-sense, the input :math:`x` is passed through the neural network, linearly
-combined with the other inputs and non-linearly transformed. These steps are
-repeated in several layers.
+multiplied with the respective values in :math:`x` and summed up. Subsequently,
+a so called "bias" (also adjustable during training) is added and the result is
+assigned to the corresponding neuron in the first hidden layer. Before passing
+those values to the following layer, a (non-linear) activation function
+:math:`\rho\colon\mathbb{R}\rightarrow\mathbb{R}` is applied. If :math:`\rho`
+is linear, the function implemented by the neural network is also linear, since
+solely linear operations were performed. Hence, one usually chooses a
+non-linear activation function to introduce non-linearity in the neural network
+and thus increase its approximation capability. In some sense, the input
+:math:`x` is passed through the neural network, linearly combined with the
+other inputs and non-linearly transformed. These steps are repeated in several
+layers.
+
+The following figure shows a simple example of a neural network with two hidden
+layers, an input size of two and an output size of three. Each edge between
+neurons has a corresponding weight that is learnable in the training phase.
+
+.. image:: neural_network.png
 
 To train the neural network, one considers a so called "loss function", that
 measures how the neural network performs on the training set :math:`S`, i.e.
@@ -105,7 +113,7 @@ We discretize the problem as explained in former tutorials:
         name='1DProblem'
     )
 
-    fom, _ = discretize_stationary_cg(problem, diameter=1. / N)
+    fom, _ = discretize_stationary_cg(problem, diameter=1./N)
 
 Since we employ a single |Parameter|, we can create the |ParameterSpace| using
 the following line:
@@ -122,6 +130,13 @@ obtains the approximated reduced coordinates. To derive the corresponding
 high-fidelity solution, one can further use the reduced basis and compute the
 linear combination defined by the reduced coefficients. The reduced basis is
 created via POD.
+
+The method described above is "non-intrusive", which means that no deep insight
+into the problem is required and it is completely sufficient to be able to
+generate full order snapshots for a randomly chosen set of parameters. This is
+one of the main advantages of the proposed approach, since one can simply train
+a neural network, check its performance and resort to a different method if the
+neural network does not provide proper approximation results.
 
 To train the neural network, we create a training and a validation set
 consisting of 100 and 20 randomly chosen |Parameters|, respectively:
@@ -167,3 +182,67 @@ the full problem and the reduced model and visualize the result:
 
     fom.visualize((U, U_red_recon),
                   legend=(f'Full solution for mu={mu}', f'Reduced solution for mu={mu}'))
+
+Finally, we measure the error of our neural network and the performance
+compared to the solution of the full order problem on a training set. To this
+end, we sample randomly some |Parameters| from our |ParameterSpace|:
+
+.. nbplot::
+
+    test_set = parameter_space.sample_randomly(10)
+
+Next, we create empty solution spaces for the full and reduced solutions and an
+empty list for the speedups:
+
+.. nbplot::
+
+    U = fom.solution_space.empty(reserve=len(test_set))
+    U_red = fom.solution_space.empty(reserve=len(test_set))
+
+    speedups = []
+
+Now, we iterate over the test set, compute full and reduced solutions to the
+respective parameters and measure the speedup:
+
+.. nbplot::
+
+    import time
+
+    for mu in test_set:
+        tic = time.time()
+        U.append(fom.solve(mu))
+        time_fom = time.time() - tic
+
+        tic = time.time()
+        U_red.append(reductor.reconstruct(rom.solve(mu)))
+        time_red = time.time() - tic
+
+        speedups.append(time_fom / time_red)
+
+We can now derive the absolute and relative errors on the training set as
+
+.. nbplot::
+
+    absolute_errors = (U - U_red).l2_norm()
+    relative_errors = (U - U_red).l2_norm() / U.l2_norm()
+
+The average absolute error amounts to
+
+.. nbplot::
+
+    import numpy as np
+
+    np.average(absolute_errors)
+
+On the other hand, the average relative error is
+
+.. nbplot::
+
+    np.average(relative_errors)
+
+Using neural networks results in the following median speedup compared to
+solving the full order problem:
+
+.. nbplot::
+
+    np.median(speedups)
