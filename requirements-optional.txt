@@ -37,4 +37,5 @@ slycot==0.3.3
 sphinx-qt-documentation
 sphinx>=1.7
 sympy
+torch
 wheel
