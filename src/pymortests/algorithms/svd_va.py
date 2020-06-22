@@ -10,6 +10,7 @@ from hypothesis.strategies import sampled_from
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.algorithms.basic import contains_zero_vector
+from pymor.core.logger import log_levels
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import vector_arrays, given_vector_arrays
@@ -21,8 +22,6 @@ methods = [method_of_snapshots, qr_svd]
 @settings(deadline=None)
 def test_method_of_snapshots(vector_array, method):
     A = vector_array
-    print(type(A))
-    print(A.dim, len(A))
 
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
@@ -30,7 +29,8 @@ def test_method_of_snapshots(vector_array, method):
     assume(not contains_zero_vector(A, rtol=1e-13, atol=1e-13))
 
     B = A.copy()
-    U, s, Vh = method(A)
+    with log_levels({"pymor.algorithms": "ERROR"}):
+        U, s, Vh = method(A)
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s) == Vh.shape[0]
     assert Vh.shape[1] == len(A)
@@ -43,11 +43,10 @@ def test_method_of_snapshots(vector_array, method):
 @pytest.mark.parametrize('method', methods)
 def test_method_of_snapshots_with_product(operator_with_arrays_and_products, method):
     _, _, A, _, p, _ = operator_with_arrays_and_products
-    print(type(A))
-    print(A.dim, len(A))
 
     B = A.copy()
-    U, s, Vh = method(A, product=p)
+    with log_levels({"pymor.algorithms": "ERROR"}):
+        U, s, Vh = method(A, product=p)
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s) == Vh.shape[0]
     assert Vh.shape[1] == len(A)

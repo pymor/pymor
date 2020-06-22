@@ -11,6 +11,7 @@ from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
 from pymor.algorithms.basic import contains_zero_vector
+from pymor.core.logger import log_levels
 from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import vector_arrays, given_vector_arrays
 
@@ -22,8 +23,6 @@ methods = ['method_of_snapshots', 'qr_svd']
 def test_pod(vector_array, method):
     A = vector_array
     product = None
-    print(type(A))
-    print(A.dim, len(A))
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
     assume(len(A) > 1 or A.dim > 1)
@@ -50,11 +49,10 @@ def test_pod(vector_array, method):
 @pytest.mark.parametrize('method', methods)
 def test_pod_with_product(operator_with_arrays_and_products, method):
     _, _, A, _, p, _ = operator_with_arrays_and_products
-    print(type(A))
-    print(A.dim, len(A))
 
     B = A.copy()
-    U, s = pod(A, product=p, method=method)
+    with log_levels({"pymor.algorithms": "ERROR"}):
+        U, s = pod(A, product=p, method=method)
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s)
     assert np.allclose(U.gramian(p), np.eye(len(s)))
