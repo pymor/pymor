@@ -106,6 +106,84 @@ class RectDomain(DomainDescription):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
 
+class CubeDomain(DomainDescription):
+    """Describes a cubic domain.
+
+    Boundary types can be associated with each face.
+
+    Parameters
+    ----------
+    domain
+        List of two points defining the lower-left and upper-right corner
+        of the domain (per dimension).
+    left
+        The boundary type of the left side.
+    right
+        The boundary type of the right side.
+    top
+        The boundary type of the top side.
+    bottom
+        The boundary type of the bottom side.
+    front
+        The boundary type of the front side.
+    back
+        The boundary type of the back side.
+
+    Attributes
+    ----------
+    domain
+    left
+    right
+    top
+    bottom
+    front
+    back
+    """
+
+    dim = 3
+
+    def __init__(self, domain=([0, 0, 0], [1, 1, 1]), left='dirichlet',
+                 right='dirichlet', top='dirichlet', bottom='dirichlet',
+                 front='dirichlet', back='dirichlet'):
+        assert domain[0][0] <= domain[1][0]
+        assert domain[0][1] <= domain[1][1]
+        assert domain[0][2] <= domain[1][2]
+        for bt in (front, back, left, right, top, bottom):
+            if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
+                self.logger.warning(f'Unknown boundary type: {bt}')
+        domain = np.array(domain)
+        self.__auto_init(locals())
+        self.boundary_types = frozenset({left, right, top, bottom, front, back})
+
+    @property
+    def lower_left(self):
+        return self.domain[0]
+
+    @property
+    def upper_right(self):
+        return self.domain[1]
+
+    @property
+    def width(self):
+        return self.domain[1, 0] - self.domain[0, 0]
+
+    @property
+    def height(self):
+        return self.domain[1, 2] - self.domain[0, 2]
+
+    @property
+    def depth(self):
+        return self.domain[1, 1] - self.domain[0, 1]
+
+    @property
+    def volume(self):
+        return self.width * self.height * self.depth
+
+    @property
+    def diameter(self):
+        return np.sqrt(self.width ** 2 + self.height ** 2 + self.depth ** 2)
+
+
 class CylindricalDomain(DomainDescription):
     """Describes a cylindrical domain.
 
