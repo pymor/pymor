@@ -698,7 +698,7 @@ class VectorSpace(ImmutableObject):
         pass
 
     def ones(self, count=1, reserve=0):
-        """Create a |VectorArray| of vectors of with all DOFs set to one.
+        """Create a |VectorArray| of vectors with all DOFs set to one.
 
         This is a shorthand for `self.full(1., count, reserve)`.
 
@@ -766,7 +766,7 @@ class VectorSpace(ImmutableObject):
             as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
             random state is used.
         seed
-            If not `None`, a new radom state with this seed is used.
+            If not `None`, a new random state with this seed is used.
         reserve
             Hint for the backend to which length the array will grow.
         """
