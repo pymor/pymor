@@ -55,23 +55,3 @@ class ExecutionTimeCSV:
 def pytest_configure(config):
     config.pluginmanager.register(ExecutionTimeCSV(), 'ExecutionTimeCSV')
 
-
-def pytest_report_header(config):
-    split = os.environ.get('PYMOR_TEST_HALF', None)
-    if split is None:
-        return None
-    return "Test suite splitting in effect"
-
-
-def pytest_collection_modifyitems(config, items):
-    split = os.environ.get('PYMOR_TEST_HALF', None)
-    if split is None:
-        return
-    skip = pytest.mark.skip(reason="Suite splitting in effect")
-    testcount = len(items)
-    if split == 'TOP':
-        for item in items[:testcount//2]:
-            item.add_marker(skip)
-    else:
-        for item in items[testcount//2:]:
-            item.add_marker(skip)
