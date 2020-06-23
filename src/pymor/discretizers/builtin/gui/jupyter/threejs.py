@@ -336,6 +336,4 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             vmins = (min(np.min(u) for u in U),) * len(U)
             vmaxs = (max(np.max(u) for u in U),) * len(U)
 
-    plot = ThreeJSPlot(grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size)
-    IPython.display.display(plot)
-    return None
+    return ThreeJSPlot(grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size)
