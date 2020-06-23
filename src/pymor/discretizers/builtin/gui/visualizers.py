@@ -111,12 +111,14 @@ class OnedVisualizer(BasicObject):
         If `True`, block execution until the plot window is closed.
     """
 
-    def __init__(self, grid, codim=1, block=False):
+    def __init__(self, grid, codim=1, block=False, backend=None):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
+        backend = backend or ('jupyter' if is_jupyter() else None)
         self.__auto_init(locals())
 
-    def visualize(self, U, m, title=None, legend=None, block=None):
+    def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
+                  rescale_colorbars=False, block=None, filename=None, columns=2):
         """Visualize the provided data.
 
         Parameters
@@ -137,6 +139,15 @@ class OnedVisualizer(BasicObject):
             If `True`, block execution until the plot window is closed. If `None`, use the
             default provided during instantiation.
         """
-        block = self.block if block is None else block
-        from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
-        visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend, block=block)
+        if filename is not None:
+            raise NotImplementedError
+
+        if self.backend == 'jupyter':
+            from pymor.discretizers.builtin.gui.jupyter import get_visualizer
+            return get_visualizer()(self.grid, U, bounding_box=self.grid.domain, codim=self.codim, title=title,
+                                    legend=legend, separate_colorbars=separate_colorbars,
+                                    rescale_colorbars=rescale_colorbars, columns=columns)
+        else:
+            block = self.block if block is None else block
+            from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
+            return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend, block=block)
