@@ -97,16 +97,19 @@ def test_gram_schmidt_biorth(vector_arrays):
     V1 = U1.copy()
     V2 = U2.copy()
 
-    with log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt_biorth': 'FATAL'}):
-        A1, A2 = gram_schmidt_biorth(U1, U2, copy=True)
+    # this is the default used in gram_schmidt_biorth
+    check_tol = 1e-3
+    with log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt_biorth': 'ERROR'}):
+        A1, A2 = gram_schmidt_biorth(U1, U2, copy=True, check_tol=check_tol)
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
-    assert np.allclose(A2.dot(A1), np.eye(len(A1)))
+    assert np.allclose(A2.dot(A1), np.eye(len(A1)), atol=check_tol)
     c = np.linalg.cond(A1.to_numpy()) * np.linalg.cond(A2.to_numpy())
     assert np.all(almost_equal(U1, A1.lincomb(A2.dot(U1).T), rtol=c * 1e-14))
     assert np.all(almost_equal(U2, A2.lincomb(A1.dot(U2).T), rtol=c * 1e-14))
 
-    B1, B2 = gram_schmidt_biorth(U1, U2, copy=False)
+    with log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt_biorth': 'ERROR'}):
+        B1, B2 = gram_schmidt_biorth(U1, U2, copy=False)
     assert np.all(almost_equal(A1, B1))
     assert np.all(almost_equal(A2, B2))
     assert np.all(almost_equal(A1, U1))
