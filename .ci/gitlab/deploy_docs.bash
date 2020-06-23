@@ -27,7 +27,7 @@ git add ${TARGET_DIR}
 git commit -m "Updated docs for ${CI_COMMIT_REF_SLUG}"
 
 ${PYMOR_ROOT}/.ci/gitlab/docs_makeindex.py ${REPO_DIR}
-git add index.html
+git add list.html 
 git commit -m "Updated index for ${CI_COMMIT_REF_SLUG}" || echo "nothing to add"
 
 
