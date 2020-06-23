@@ -4,7 +4,7 @@
 import numpy as np
 
 from pymor.core.config import config
-from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes
+from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes, Matplotlib1DAxes
 from pymor.vectorarrays.interface import VectorArray
 
 
@@ -88,8 +88,12 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             for i, (vmin, vmax) in enumerate(zip(self.vmins, self.vmaxs)):
                 ax = figure.add_subplot(rows, columns, i+1)
                 axes.append(ax)
-                plots.append(MatplotlibPatchAxes(figure, grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
-                                                 codim=codim, colorbar=separate_colorbars))
+                if grid.dim == 2:
+                    plots.append(MatplotlibPatchAxes(figure, grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
+                                                     codim=codim, colorbar=separate_colorbars))
+                else:
+                    plots.append(Matplotlib1DAxes(figure, grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
+                                                     codim=codim, colorbar=separate_colorbars))
                 if legend:
                     ax.set_title(legend[i])
 

@@ -57,6 +57,52 @@ class MatplotlibPatchAxes:
         p.set_clim(self.vmin, self.vmax)
 
 
+class Matplotlib1DAxes:
+
+    def __init__(self, figure, grid, bounding_box=None, vmin=None, vmax=None, codim=1,
+                 colorbar=True):
+        assert isinstance(grid, OnedGrid)
+        assert codim in (0, 1)
+
+        self.codim = codim
+        self.grid = grid
+
+        centers = grid.centers(1)
+        if grid.identify_left_right:
+            centers = np.concatenate((centers, [[grid.domain[1]]]), axis=0)
+            self.periodic = True
+        else:
+            self.periodic = False
+        if codim == 1:
+            xs = centers
+        else:
+            xs = np.repeat(centers, 2)[1:-1]
+
+        a = figure.gca()
+        self.lines, = a.plot(xs, np.zeros_like(xs))
+
+        # TODO
+        import matplotlib.pyplot as plt
+        self.p = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"), norm=plt.Normalize(vmin=vmin or 0, vmax=vmax or 1))
+
+        if colorbar:
+            figure.colorbar(self.p, ax=a)
+
+
+    def set(self, U, vmin=None, vmax=None):
+        self.vmin = self.vmin if vmin is None else vmin
+        self.vmax = self.vmax if vmax is None else vmax
+        u = np.array(U)
+        if self.codim == 1:
+            if self.periodic:
+                self.lines.set_ydata(np.concatenate((u, [u[0]])))
+            else:
+                self.lines.set_ydata(u)
+        else:
+            self.lines.set_ydata(np.repeat(u, 2))
+        self.p.set_clim(self.vmin, self.vmax)
+
+
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
     from Qt.QtWidgets import QSizePolicy
 
