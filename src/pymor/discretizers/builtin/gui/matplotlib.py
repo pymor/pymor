@@ -78,8 +78,8 @@ class Matplotlib1DAxes:
         else:
             xs = np.repeat(centers, 2)[1:-1]
 
-        a = figure.gca()
-        self.lines, = a.plot(xs, np.zeros_like(xs))
+        self.axes = figure.gca()
+        self.lines, = self.axes.plot(xs, np.zeros_like(xs))
 
         # TODO
         import matplotlib.pyplot as plt
@@ -100,6 +100,9 @@ class Matplotlib1DAxes:
                 self.lines.set_ydata(u)
         else:
             self.lines.set_ydata(np.repeat(u, 2))
+
+        self.axes.relim()
+        self.axes.autoscale_view(True,True,True)
         self.p.set_clim(self.vmin, self.vmax)
 
 
