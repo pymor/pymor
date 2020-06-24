@@ -13,15 +13,16 @@ from pymor.algorithms.basic import contains_zero_vector
 from pymor.core.logger import log_levels
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.strategies import vector_arrays, given_vector_arrays
+from pymortests.strategies import base_vector_arrays
 
 methods = [method_of_snapshots, qr_svd]
 
 
-@given_vector_arrays(method=sampled_from(methods))
+# TODO relax input to general vectorarrays again
+@given(vector_array=base_vector_arrays(), method=sampled_from(methods))
 @settings(deadline=None)
 def test_method_of_snapshots(vector_array, method):
-    A = vector_array
+    A = vector_array[0]
 
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
