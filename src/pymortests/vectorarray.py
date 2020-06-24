@@ -16,7 +16,7 @@ from pymor.tools import floatcmp
 from pymor.tools.floatcmp import float_cmp
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
-from pymortests.strategies import invalid_inds, invalid_ind_pairs
+from pymortests.strategies import invalid_inds
 
 
 def ind_complement(v, ind):

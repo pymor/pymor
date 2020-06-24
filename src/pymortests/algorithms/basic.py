@@ -20,8 +20,8 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.tools.floatcmp import float_cmp
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.strategies import valid_inds, valid_inds_of_same_length, invalid_ind_pairs
-from pymortests.vectorarray import indexed, assume_old_slicing
+from pymortests.strategies import valid_inds, valid_inds_of_same_length
+from pymortests.vectorarray import indexed
 import pymortests.strategies as pyst
 
 
