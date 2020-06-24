@@ -11,18 +11,18 @@ if config.HAVE_DUNEGDT:
     from collections import OrderedDict
     import os
     import subprocess
+    import tempfile
     from tempfile import mkstemp
 
-    from dune.gdt import make_discrete_function
+    from dune.xt.common.vtk.plot import plot as k3d_plot
+    from dune.gdt import DiscreteFunction
 
-    from pymor.core.interfaces import ImmutableInterface
+    from pymor.core.base import ImmutableObject
     from pymor.bindings.dunext import DuneXTVector
-    from pymor.grids.rect import RectGrid
-    from pymor.gui.visualizers import PatchVisualizer
-    from pymor.vectorarrays.list import NumpyVector, NumpyListVectorSpace, ListVectorArray
+    from pymor.vectorarrays.list import ListVectorArray
 
 
-    class DuneGDTVisualizer(ImmutableInterface):
+    class DuneGDTParaviewVisualizer(ImmutableObject):
         """Visualize a dune-gdt discrete function using paraview.
 
         Parameters
@@ -32,13 +32,13 @@ if config.HAVE_DUNEGDT:
         """
 
         def __init__(self, space):
-            self.space = space
+            self.__auto_init(locals())
 
-        def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False,
+        def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
                       rescale_colorbars=False, block=None, filename=None, columns=2):
 
             def visualize_single(vec, vec_name, f_name):
-                discrete_function = make_discrete_function(self.space, vec, vec_name)
+                discrete_function = DiscreteFunction(self.space, vec, vec_name)
                 discrete_function.visualize(f_name[:-4])
 
             suffix = '.vtp' if self.space.dimDomain == 1 else '.vtu'
@@ -142,35 +142,48 @@ if config.HAVE_DUNEGDT:
                 os.remove(f_name)
 
 
-    class DuneGDTpyMORVisualizerWrapper(ImmutableInterface):
-        """Visualize a dune-gdt discrete function using the visualizer of pyMOR's discretizations.
-
-        Currently, only visualization of Q1 CG on a 2d YaspGrid is supported.
+    class DuneGDTK3dVisualizer(ImmutableObject):
+        """Visualize a dune-gdt discrete function within a jupyter notebook using K3d.
 
         Parameters
         ----------
-        grid
-            The pyMOR |Grid| on which to interpret the DoF vectors.
+        space
+            The dune-gdt space for which we want to visualize DOF vectors.
         """
 
-        def __init__(self, grid):
-            assert isinstance(grid, RectGrid)
-            assert grid.dim == 2
-            self.grid = grid
-            self.visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)
+        def __init__(self, space, name='STATE'):
+            # self.dune_vec = CommonDenseVectorDouble(space.num_DoFs)
+            # self.np_view = np.array(self.dune_vec, copy=False)
+            # self.discrete_function = make_discrete_function(space, self.dune_vec, name)
+            self.__auto_init(locals())
 
-        def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False,
-                      rescale_colorbars=False, block=None, filename=None, columns=2):
+        def visualize(self, U, m):
 
-            def wrap(V):
-                return ListVectorArray([NumpyVector(u.data) for u in V._list], space=NumpyListVectorSpace(V.dim))
+            def visualize_single(u, filename):
+                assert isinstance(u, DuneXTVector)
+                df = DiscreteFunction(self.space, u.impl, self.name)
+                df.visualize(filename)
 
-            if isinstance(U, tuple):
-                U = tuple([wrap(u) for u in U])
+            prefix = os.path.join(tempfile.gettempdir(), next(tempfile._get_candidate_names()))
+            suffix = 'vt{}'.format('k' if self.space.dimDomain == 1 else 'u')
+            if isinstance(U, ListVectorArray):
+                if len(U) == 0:
+                    return
+                for i in range(len(U)):
+                    visualize_single(U._list[i], f'{prefix}_{i}')
+                if len(U) == 1:
+                    filename = f'{prefix}_{i}.{suffix}'
+                else:
+                    with open(f'{prefix}.pvd', 'w') as pvd_file:
+                        pvd_file.write('<?xml version=\'1.0\'?>\n')
+                        pvd_file.write('<VTKFile type=\'Collection\' version=\'0.1\'>\n')
+                        pvd_file.write('<Collection>\n')
+                        for i in range(len(U)):
+                            pvd_file.write(f'<DataSet timestep=\'{i}\' part=\'1\' name=\'{self.name}\' file=\'{prefix}_{i}.{suffix}\'/>\n')
+                        pvd_file.write('</Collection>\n')
+                        pvd_file.write('</VTKFile>\n') 
+                    filename = f'{prefix}.pvd'
             else:
-                U = wrap(U)
-
-            self.visualizer.visualize(U, discretization, title=title, legend=legend,
-                                      separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars,
-                                      block=block, filename=filename, columns=columns)
+                raise NotImplementedError
+            _ = k3d_plot(filename, color_attribute_name=self.name)
 
