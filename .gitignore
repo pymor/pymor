@@ -64,7 +64,6 @@ htmlcov/
 coverage.xml
 libpeerconnection.log
 .cache
-test_timings.csv
 
 # pycharm
 .idea/
