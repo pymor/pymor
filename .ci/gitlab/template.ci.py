@@ -35,6 +35,10 @@ stages:
     stage: test
     after_script:
       - .ci/gitlab/after_script.bash
+    cache:
+        key: same_db_on_all_runners
+        paths:
+          - .hypothesis
     artifacts:
         name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
         expire_in: 3 months
@@ -305,7 +309,7 @@ docs:
     extends: .test_base
     image: alpine:3.11
     stage: deploy
-    resource_group: docs_deploy    
+    resource_group: docs_deploy
     dependencies:
         - docs build
     before_script:
