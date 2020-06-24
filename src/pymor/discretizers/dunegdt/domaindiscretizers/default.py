@@ -27,13 +27,13 @@ if config.HAVE_DUNEXT:
             +======================+===========+=========+
             | |LineDomain|         |      None |    X    |
             +----------------------+-----------+---------+
-            |                      |   simplex |    X    |
+            |                      |   simplex |         |
             | |RectDomain|         +-----------+---------+
-            |                      |      cube |         |
+            |                      |      cube |    X    |
             +----------------------+-----------+---------+
-            |                      |   simplex |    X    |
+            |                      |   simplex |         |
             | |CubeDomain|         +-----------+---------+
-            |                      |      cube |         |
+            |                      |      cube |    X    |
             +----------------------+-----------+---------+
 
         Parameters
@@ -82,11 +82,11 @@ if config.HAVE_DUNEXT:
 
         elif isinstance(domain_description, RectDomain):
 
-            if grid_type == 'simplex' or grid_type is None:
+            if grid_type == 'simplex':
                 element_type = Simplex()
                 num_elements = [int(m.ceil(domain_description.width / diameter)),
                                 int(m.ceil(domain_description.height / diameter))]
-            elif grid_type == 'cube':
+            elif grid_type == 'cube' or grid_type is None:
                 element_type = Cube()
                 num_elements = [int(m.ceil(domain_description.width * m.sqrt(2) / diameter)),
                                 int(m.ceil(domain_description.height * m.sqrt(2) / diameter))]
@@ -114,12 +114,12 @@ if config.HAVE_DUNEXT:
 
         elif isinstance(domain_description, CubeDomain):
 
-            if grid_type == 'simplex' or grid_type is None:
+            if grid_type == 'simplex':
                 element_type = Simplex()
                 num_elements = [int(m.ceil(domain_description.width / diameter)),
                                 int(m.ceil(domain_description.height / diameter)),
                                 int(m.ceil(domain_description.depth / diameter))]
-            elif grid_type == 'cube':
+            elif grid_type == 'cube' or grid_type is None:
                 element_type = Cube()
                 num_elements = [int(m.ceil(domain_description.width * m.sqrt(3) / diameter)),
                                 int(m.ceil(domain_description.height * m.sqrt(3) / diameter)),
