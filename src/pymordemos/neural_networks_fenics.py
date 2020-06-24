@@ -5,12 +5,9 @@
 """Example script for the usage of neural networks in model order reduction (approach by Hesthaven and Ubbiali)
 
 Usage:
-    neural_networks.py [--vis] DIM N ORDER TRAINING_SAMPLES VALIDATION_SAMPLES
+    neural_networks.py [--vis] TRAINING_SAMPLES VALIDATION_SAMPLES
 
 Arguments:
-    DIM                  Spatial dimension of the problem.
-    N                    Number of mesh intervals per spatial dimension.
-    ORDER                Finite element order.
     TRAINING_SAMPLES     Number of samples used for training the neural network.
     VALIDATION_SAMPLES   Number of samples used for validation during the training phase.
 
@@ -27,18 +24,32 @@ from pymor.basic import *
 
 from pymor.core.config import config
 
+DIM = 2
+GRID_INTERVALS = 100
+FENICS_ORDER = 1
 
-def create_fom(DIM, N, ORDER):
+
+def discretize_fenics():
+    from pymor.tools import mpi
+
+    if mpi.parallel:
+        from pymor.models.mpi import mpi_wrap_model
+        fom = mpi_wrap_model(_discretize_fenics, use_with=True, pickle_local_spaces=False)
+    else:
+        fom = _discretize_fenics()
+    return fom, fom.parameters.space((0, 1000.))
+
+def _discretize_fenics():
     import dolfin as df
 
     if DIM == 2:
-        mesh = df.UnitSquareMesh(N, N)
+        mesh = df.UnitSquareMesh(GRID_INTERVALS, GRID_INTERVALS)
     elif DIM == 3:
-        mesh = df.UnitCubeMesh(N, N, N)
+        mesh = df.UnitCubeMesh(GRID_INTERVALS, GRID_INTERVALS, GRID_INTERVALS)
     else:
         raise NotImplementedError
 
-    V = df.FunctionSpace(mesh, "CG", ORDER)
+    V = df.FunctionSpace(mesh, "CG", FENICS_ORDER)
 
     g = df.Constant(1.0)
     c = df.Constant(1.)
@@ -82,13 +93,7 @@ def neural_networks_demo(args):
     TRAINING_SAMPLES = args['TRAINING_SAMPLES']
     VALIDATION_SAMPLES = args['VALIDATION_SAMPLES']
 
-    DIM = int(args['DIM'])
-    N = int(args['N'])
-    ORDER = int(args['ORDER'])
-
-    fom = create_fom(DIM, N, ORDER)
-
-    parameter_space = fom.parameters.space((0, 1000.))
+    fom, parameter_space = discretize_fenics()
 
     from pymor.reductors.neural_network import NeuralNetworkReductor
 

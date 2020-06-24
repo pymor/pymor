@@ -46,9 +46,9 @@ def create_fom(args):
 
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    m, _ = discretizer(problem, diameter=1. / int(args['N']))
+    fom, _ = discretizer(problem, diameter=1. / int(args['N']))
 
-    return m
+    return fom
 
 
 def neural_networks_demo(args):
