@@ -1,14 +1,14 @@
-from hypothesis import strategies as hyst, given
-from hypothesis import assume, settings, HealthCheck
+from hypothesis import strategies as hyst
+from hypothesis import assume, given
 from hypothesis.extra import numpy as hynp
 import numpy as np
-import pytest
 from scipy.stats._multivariate import random_correlation_gen
 
 from pymor.core.config import config
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+
 if config.HAVE_FENICS:
     import dolfin as df
     from pymor.bindings.fenics import FenicsVectorSpace
@@ -21,49 +21,23 @@ if config.HAVE_NGSOLVE:
     import netgen.meshing as ngmsh
     from pymor.bindings.ngsolve import NGSolveVectorSpace
 
-    NGSOLVE_spaces = {}
 
-    def create_ngsolve_space(dim):
-        if dim not in NGSOLVE_spaces:
-            mesh = ngmsh.Mesh(dim=1)
-            if dim > 0:
-                pids = []
-                for i in range(dim + 1):
-                    pids.append(mesh.Add(ngmsh.MeshPoint(ngmsh.Pnt(i / dim, 0, 0))))
-                for i in range(dim):
-                    mesh.Add(ngmsh.Element1D([pids[i], pids[i + 1]], index=1))
-            NGSOLVE_spaces[dim] = NGSolveVectorSpace(ngs.L2(ngs.Mesh(mesh), order=0))
-        return NGSOLVE_spaces[dim]
-
+# hypothesis will gladly fill all our RAM with vector arrays if it's not restricted.
 MAX_LENGTH = 102
 hy_lengths = hyst.integers(min_value=0, max_value=MAX_LENGTH)
-hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False, min_value=-1, max_value=1)
-hy_complex_array_elements = hyst.complex_numbers(allow_nan=False, allow_infinity=False, max_magnitude=2)
-# TODO non-fixed sampling pool
-hy_block_space_dims = hyst.sampled_from([(32, 1), (0, 3), (0, 0), (10,), (34, 1), (32, 3, 1), (1, 1, 1)])
-hy_block_space_dims_incompat = hyst.sampled_from(list(zip([(3, 2), (9,), (34, 1, 1), (32, 3, 3), (3, 3, 3)],  # dim1
-[(3, 1), (9, 3), (34, 2, 1), (32, 3), (4, 3, 3)])))
-
-hy_reserves = hyst.integers(min_value=0, max_value=3)
+# this is a legacy restriction, some tests will not work as expected when this is changed/unset
+MAX_ARRAY_ELEMENT_ABSVALUE = 1
+hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False,
+                                      min_value=-MAX_ARRAY_ELEMENT_ABSVALUE, max_value=MAX_ARRAY_ELEMENT_ABSVALUE)
+# the magnitute restriction is also a legacy one
+MAX_COMPLEX_MAGNITUDE = 2
+hy_complex_array_elements = hyst.complex_numbers(allow_nan=False, allow_infinity=False,
+                                                 max_magnitude=MAX_COMPLEX_MAGNITUDE)
 hy_dtypes = hyst.sampled_from([np.float64, np.complex128])
 
 
-def _vector_array_from_empty_reserve(v, reserve):
-    if reserve == 0:
-        return v
-    if reserve == 1:
-        r = 0
-    elif reserve == 2:
-        r = len(v) + 10
-    elif reserve == 3:
-        r = int(len(v) / 2)
-    c = v.empty(reserve=r)
-    c.append(v)
-    return c
-
-
 @hyst.composite
-def hy_dims(draw, count, compatible):
+def _hy_dims(draw, count, compatible):
     dims = hyst.integers(min_value=0, max_value=34)
     if compatible:
         return draw(equal_tuples(dims, count))
@@ -77,7 +51,7 @@ def nothing(*args, **kwargs):
     return hyst.nothing()
 
 
-def np_arrays(length, dim, dtype=None):
+def _np_arrays(length, dim, dtype=None):
     if dtype is None:
         return hynp.arrays(dtype=np.float64, shape=(length, dim), elements=hy_float_array_elements) | \
                hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements)
@@ -88,15 +62,15 @@ def np_arrays(length, dim, dtype=None):
     raise RuntimeError(f'unsupported dtype={dtype}')
 
 
-def numpy_vector_spaces(draw, np_data_list, compatible, count, dims):
+def _numpy_vector_spaces(draw, np_data_list, compatible, count, dims):
     return [(NumpyVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
 
 
-def numpy_list_vector_spaces(draw, np_data_list, compatible, count, dims):
+def _numpy_list_vector_spaces(draw, np_data_list, compatible, count, dims):
     return [(NumpyListVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
 
 
-def block_vector_spaces(draw, np_data_list, compatible, count, dims):
+def _block_vector_spaces(draw, np_data_list, compatible, count, dims):
     ret = []
     rr = draw(hyst.randoms())
 
@@ -123,25 +97,39 @@ def block_vector_spaces(draw, np_data_list, compatible, count, dims):
 _other_vector_space_types = []
 
 if config.HAVE_FENICS:
-    FENICS_spaces = {}
+    _FENICS_spaces = {}
     
-    def fenics_vector_spaces(draw, np_data_list, compatible, count, dims):
+    def _fenics_vector_spaces(draw, np_data_list, compatible, count, dims):
         ret = []
         for d, ar in zip(dims, np_data_list):
             assume(d > 1)
-            if d not in FENICS_spaces:
-                FENICS_spaces[d] = FenicsVectorSpace(df.FunctionSpace(df.UnitIntervalMesh(d - 1), 'Lagrange', 1))
-            ret.append((FENICS_spaces[d], ar))
+            if d not in _FENICS_spaces:
+                _FENICS_spaces[d] = FenicsVectorSpace(df.FunctionSpace(df.UnitIntervalMesh(d - 1), 'Lagrange', 1))
+            ret.append((_FENICS_spaces[d], ar))
         return ret
     _other_vector_space_types.append('fenics')
 
 if config.HAVE_NGSOLVE:
-    def ngsolve_vector_spaces(draw, np_data_list, compatible, count, dims):
-        return [(create_ngsolve_space(d), ar) for d, ar in zip(dims, np_data_list)]
+    _NGSOLVE_spaces = {}
+
+    def _create_ngsolve_space(dim):
+        if dim not in _NGSOLVE_spaces:
+            mesh = ngmsh.Mesh(dim=1)
+            if dim > 0:
+                pids = []
+                for i in range(dim + 1):
+                    pids.append(mesh.Add(ngmsh.MeshPoint(ngmsh.Pnt(i / dim, 0, 0))))
+                for i in range(dim):
+                    mesh.Add(ngmsh.Element1D([pids[i], pids[i + 1]], index=1))
+            _NGSOLVE_spaces[dim] = NGSolveVectorSpace(ngs.L2(ngs.Mesh(mesh), order=0))
+        return _NGSOLVE_spaces[dim]
+
+    def _ngsolve_vector_spaces(draw, np_data_list, compatible, count, dims):
+        return [(_create_ngsolve_space(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('ngsolve')
 
 if config.HAVE_DEALII:
-    def dealii_vector_spaces(draw, np_data_list, compatible, count, dims):
+    def _dealii_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(DealIIVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('dealii')
 
@@ -151,12 +139,12 @@ _picklable_vector_space_types = ['numpy', 'numpy_list', 'block']
 
 @hyst.composite
 def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatible=True):
-    dims = draw(hy_dims(count, compatible))
+    dims = draw(_hy_dims(count, compatible))
     dtype = dtype or draw(hy_dtypes)
     lngs = draw(length or hyst.tuples(*[hy_lengths for _ in range(count)]))
-    np_data_list = [draw(np_arrays(l, dim, dtype=dtype)) for l, dim in zip(lngs, dims)]
+    np_data_list = [draw(_np_arrays(l, dim, dtype=dtype)) for l, dim in zip(lngs, dims)]
     space_type = draw(hyst.sampled_from(space_types))
-    space_data = globals()[f'{space_type}_vector_spaces'](draw, np_data_list, compatible, count, dims)
+    space_data = globals()[f'_{space_type}_vector_spaces'](draw, np_data_list, compatible, count, dims)
     ret = [sp.from_numpy(d) for sp, d in space_data]
     assume(len(ret))
     if len(ret) == 1:
@@ -424,28 +412,3 @@ def invalid_inds(v, length=None):
     if length > 0:
         yield [-len(v)-1] + [0, ] * (length - 1)
         yield list(range(length - 1)) + [len(v)]
-
-
-def invalid_ind_pairs(v1, v2):
-    for inds in valid_inds_of_different_length(v1, v2):
-        yield inds
-    for ind1 in valid_inds(v1):
-        for ind2 in invalid_inds(v2, length=v1.len_ind(ind1)):
-            yield ind1, ind2
-    for ind2 in valid_inds(v2):
-        for ind1 in invalid_inds(v1, length=v2.len_ind(ind2)):
-            yield ind1, ind2
-
-
-def st_invalid_ind_pairs(v1, v2):
-    return hyst.sampled_from(list(valid_inds_of_different_length(v1, v2))) | \
-        hyst.sampled_from([(i1, i2) for i1 in valid_inds(v1) for i2 in invalid_inds(v2, length=v1.len_ind(i1)) ])
-
-
-@hyst.composite
-def vector_arrays_with_invalid_inds(draw, count=2):
-    val = draw(hyst.integers(min_value=1, max_value=MAX_LENGTH))
-    length = hyst.tuples(*[hyst.just(val) for _ in range(count)])
-    vectors = draw(vector_arrays(count=count, length=length, compatible=True))
-    ind = draw(st_invalid_ind_pairs(*vectors))
-    return vectors, ind
