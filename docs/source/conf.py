@@ -152,9 +152,23 @@ pygments_style = 'sphinx'
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-html_style = 'pymor.css'
-html_theme = 'default'
-
+# html_style = 'pymor.css'
+html_theme = 'sphinx_material'
+html_theme_options = {
+    'base_url': 'https://gh-docs.pymor.org/',
+    'repo_url': 'https://github.com/pymor/pymor/',
+    'repo_name': 'pyMOR',
+    'html_minify': True,
+    'css_minify': True,
+    'nav_title': 'pyMOR Documentation',
+    'logo_icon': '&#xe869',
+    'globaltoc_depth': 2,
+    'theme_color': '58c9f5',
+    'color_primary': 'light-blue',
+    'color_accent': 'blue',
+    'version_dropdown': True,
+    'version_json': '/versions.json'
+}
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 html_title = "%s v%s Manual" % (project, version)
@@ -177,10 +191,10 @@ html_last_updated_fmt = '%b %d, %Y'
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-#html_sidebars = {
-    #'index': 'indexsidebar.html'
-#}
-
+# all: "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
+html_sidebars = {
+    "**": ["logo-text.html", "globaltoc.html", "searchbox.html"]
+}
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
 #html_additional_pages = {
