@@ -44,7 +44,7 @@ clean:
 html:
 	cp source/*png .
 	cp source/pymor_defaults.py .
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	PYMOR_NBCONVERT=1 $(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
