@@ -214,6 +214,7 @@ def valid_inds(v, length=None):
         yield list(range(-len(v), len(v)))
         yield list(range(int(len(v)/2)))
         yield list(range(len(v))) * 2
+        # TODO what's with the magic number here?
         length = 32
     if len(v) > 0:
         for ind in [-len(v), 0, len(v) - 1]:

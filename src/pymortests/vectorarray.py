@@ -382,10 +382,10 @@ def test_scla(vectors_and_indices):
             pass
 
 
-@pyst.given_vector_arrays(count=2)
+@pyst.given_vector_arrays(count=2, random=hyst.random_module())
 # TODO replace indices loop
 @settings(deadline=None)
-def test_axpy(vector_arrays):
+def test_axpy(vector_arrays, random):
     v1, v2 = vector_arrays
 
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
@@ -402,7 +402,6 @@ def test_axpy(vector_arrays):
         assert np.all(almost_equal(c1, v1))
         assert np.all(almost_equal(c2, v2))
 
-        np.random.seed(len(v1) + 39)
         for a in (1., 1.4, np.random.random(v1.len_ind(ind1))):
             c1, c2 = v1.copy(), v2.copy()
             c1[ind1].axpy(a, c2[ind2])
@@ -429,10 +428,10 @@ def test_axpy(vector_arrays):
             assert np.all(almost_equal(c1, v1))
 
 
-@pyst.given_vector_arrays(count=2)
+@pyst.given_vector_arrays(count=2, random=hyst.random_module())
 # TODO replace indices loop
 @settings(deadline=None, suppress_health_check=(HealthCheck.filter_too_much,HealthCheck.too_slow))
-def test_axpy_one_x(vector_arrays):
+def test_axpy_one_x(vector_arrays, random):
     v1, v2 = vector_arrays
     for ind1, ind2 in product(pyst.valid_inds(v1), pyst.valid_inds(v2, 1)):
         assert v1.check_ind(ind1)
@@ -455,7 +454,6 @@ def test_axpy_one_x(vector_arrays):
         assert np.all(almost_equal(c1, v1))
         assert np.all(almost_equal(c2, v2))
 
-        np.random.seed(len(v1) + 39)
         for a in (1., 1.4, np.random.random(v1.len_ind(ind1))):
             c1, c2 = v1.copy(), v2.copy()
             c1[ind1].axpy(a, c2[ind2])
@@ -482,10 +480,10 @@ def test_axpy_one_x(vector_arrays):
             assert np.all(almost_equal(c1, v1))
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length)
+@pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length , random=hyst.random_module())
 # TODO replace indices loop
 @settings(deadline=None)
-def test_axpy_self(vectors_and_indices):
+def test_axpy_self(vectors_and_indices, random):
     v, (ind1, ind2) = vectors_and_indices
 
     if v.len_ind(ind1) != v.len_ind_unique(ind1):
@@ -502,7 +500,6 @@ def test_axpy_self(vectors_and_indices):
     assert len(c) == len(v)
     assert np.all(almost_equal(c, v))
 
-    np.random.seed(len(v) + 8)
     for a in (1., 1.4, np.random.random(v.len_ind(ind1))):
         c = v.copy()
         c[ind1].axpy(a, c[ind2])
@@ -622,10 +619,9 @@ def test_dot_self(vectors_and_indices):
     assert np.allclose(r, r.T.conj())
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-def test_lincomb_1d(vectors_and_indices):
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random=hyst.random_module())
+def test_lincomb_1d(vectors_and_indices, random):
     v, ind = vectors_and_indices
-    np.random.seed(len(v) + 42 + v.dim)
     coeffs = np.random.random(v.len_ind(ind))
     lc = v[ind].lincomb(coeffs)
     assert lc.space == v.space
@@ -636,10 +632,9 @@ def test_lincomb_1d(vectors_and_indices):
     assert np.all(almost_equal(lc, lc2))
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-def test_lincomb_2d(vectors_and_indices):
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random=hyst.random_module())
+def test_lincomb_2d(vectors_and_indices, random):
     v, ind = vectors_and_indices
-    np.random.seed(len(v) + 42 + v.dim)
     for count in (0, 1, 5):
         coeffs = np.random.random((count, v.len_ind(ind)))
         lc = v[ind].lincomb(coeffs)
@@ -651,10 +646,9 @@ def test_lincomb_2d(vectors_and_indices):
         assert np.all(almost_equal(lc, lc2))
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-def test_lincomb_wrong_coefficients(vectors_and_indices):
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random=hyst.random_module())
+def test_lincomb_wrong_coefficients(vectors_and_indices, random):
     v, ind = vectors_and_indices
-    np.random.seed(len(v) + 42 + v.dim)
     coeffs = np.random.random(v.len_ind(ind) + 1)
     with pytest.raises(Exception):
         v[ind].lincomb(coeffs)
@@ -1028,12 +1022,11 @@ def test_scal_wrong_coefficients(vectors_and_indices):
             v[ind].scal(alpha)
 
 
-@pyst.given_vector_arrays(count=2)
-def test_axpy_wrong_coefficients(vector_arrays):
+@pyst.given_vector_arrays(count=2, random=hyst.random_module())
+def test_axpy_wrong_coefficients(vector_arrays, random):
     v1, v2 = vector_arrays
     # TODO data input from hypothesis strategy
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
-        np.random.seed(len(v1) + 99)
         for alpha in ([np.array([]), np.eye(v1.len_ind(ind1)), np.random.random(v1.len_ind(ind1) + 1)]
                       if v1.len_ind(ind1) > 0 else
                       [np.random.random(1)]):
