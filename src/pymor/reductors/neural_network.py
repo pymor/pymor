@@ -177,26 +177,6 @@ if config.HAVE_TORCH:
             set.
         pod_params
             Additional parameters for the POD-method.
-        hidden_layers
-            Number of neurons in the hidden layers. Can either be fixed or
-            depend on the reduced basis size `N` and dimension of the
-            parameter space `P`.
-        activation_function
-            Activation function to use between the hidden layers.
-        optimizer
-            Algorithm to use as optimizer during training.
-        epochs
-            Maximum number of epochs for training.
-        batch_size
-            Batch size to use if optimizer allows mini-batching.
-        learning_rate
-            Step size to use in each optimization step.
-        restarts
-            Number of restarts of the training algorithm. Since the training
-            results highly depend on the initial starting point, i.e. the
-            initial weights and biases, it is advisable to train multiple
-            neural networks by starting with different initial values and
-            choose that one performing best on the validation set.
         """
 
         def __init__(
@@ -208,21 +188,56 @@ if config.HAVE_TORCH:
             rtol=None,
             atol=None,
             pod_params=None,
+        ):
+            self.__auto_init(locals())
+
+        def reduce(self,
             hidden_layers='[(N+P)*2, (N+P)*2]',
             activation_function=torch.tanh,
             optimizer=optim.LBFGS,
             epochs=1000,
             batch_size=20,
             learning_rate=1.,
-            restarts=10
-        ):
+            restarts=10,
+            seed=0):
+            """Reduce by training artificial neural networks.
+
+            Parameters
+            ----------
+            hidden_layers
+                Number of neurons in the hidden layers. Can either be fixed or
+                depend on the reduced basis size `N` and dimension of the
+                parameter space `P`.
+            activation_function
+                Activation function to use between the hidden layers.
+            optimizer
+                Algorithm to use as optimizer during training.
+            epochs
+                Maximum number of epochs for training.
+            batch_size
+                Batch size to use if optimizer allows mini-batching.
+            learning_rate
+                Step size to use in each optimization step.
+            restarts
+                Number of restarts of the training algorithm. Since the training
+                results highly depend on the initial starting point, i.e. the
+                initial weights and biases, it is advisable to train multiple
+                neural networks by starting with different initial values and
+                choose that one performing best on the validation set.
+            seed
+                Seed to use for various functions in PyTorch. Using a fixed seed,
+                it is possible to reproduce former results.
+
+            Returns
+            -------
+            rom
+                Reduced-order |NeuralNetworkModel|.
+            """
             assert restarts > 0
             assert epochs > 0
             assert batch_size > 0
             assert learning_rate > 0.
-            self.__auto_init(locals())
 
-        def reduce(self, seed=0):
             # set a seed for the PyTorch initialization of weights and biases and further PyTorch methods
             torch.manual_seed(seed)
 
@@ -230,9 +245,9 @@ if config.HAVE_TORCH:
             self.reduced_basis = self.build_basis()
 
             # determine the numbers of neurons in the hidden layers
-            layers = eval(self.hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
+            layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
             # input and output size of the neural network are prescribed by the dimension of the parameter space and the reduced basis size
-            self.layers = [len(self.fom.parameters),] + layers + [len(self.reduced_basis),]
+            layers = [len(self.fom.parameters),] + layers + [len(self.reduced_basis),]
 
             # compute validation data
             with self.logger.block('Computing validation snapshots ...'):
@@ -246,10 +261,11 @@ if config.HAVE_TORCH:
                 self.validation_data = validation_data
 
             # run the actual training of the neural network
-            with self.logger.block(f'Performing {self.restarts} restarts for training ...'):
+            with self.logger.block(f'Performing {restarts} restarts for training ...'):
 
-                for run in range(self.restarts):
-                    neural_network, loss = self._train()
+                for run in range(restarts):
+                    neural_network, loss = self._train(layers, activation_function, optimizer,
+                                                       epochs, batch_size, learning_rate)
                     if not hasattr(self, 'validation_loss') or loss < self.validation_loss:
                         self.validation_loss = loss
                         self.neural_network = neural_network
@@ -263,7 +279,7 @@ if config.HAVE_TORCH:
 
             return rom
 
-        def _train(self):
+        def _train(self, layers, activation_function, optimizer, epochs, batch_size, learning_rate):
             """Perform a single training iteration and return the resulting neural network."""
             if not hasattr(self, 'training_data'):
                 self.logger.error('No data for training available ...')
@@ -272,18 +288,18 @@ if config.HAVE_TORCH:
                 self.logger.error('No data for validation available ...')
 
             # LBFGS-optimizer does not support mini-batching, so the batch size needs to be adjusted
-            if self.optimizer == optim.LBFGS:
-                self.batch_size = max(len(self.training_data), len(self.validation_data))
+            if optimizer == optim.LBFGS:
+                batch_size = max(len(self.training_data), len(self.validation_data))
 
             with self.logger.block('Training the neural network ...'):
 
                 # initialize the neural network
-                neural_network = FullyConnectedNN(self.layers,
-                                                  activation_function=self.activation_function).double()
+                neural_network = FullyConnectedNN(layers,
+                                                  activation_function=activation_function).double()
 
                 # initialize the optimizer
-                optimizer = self.optimizer(neural_network.parameters(),
-                                           lr=self.learning_rate)
+                optimizer = optimizer(neural_network.parameters(),
+                                      lr=learning_rate)
 
                 loss_function = nn.MSELoss()
                 early_stopping_scheduler = EarlyStoppingScheduler()
@@ -293,13 +309,13 @@ if config.HAVE_TORCH:
                 validation_dataset = CustomDataset(self.validation_data)
                 phases = ['train', 'val']
                 training_loader = utils.data.DataLoader(training_dataset,
-                                                        batch_size=self.batch_size)
+                                                        batch_size=batch_size)
                 validation_loader = utils.data.DataLoader(validation_dataset,
-                                                          batch_size=self.batch_size)
+                                                          batch_size=batch_size)
                 dataloaders = {'train':  training_loader, 'val': validation_loader}
 
                 # perform optimization procedure
-                for epoch in range(self.epochs):
+                for epoch in range(epochs):
                     losses = {}
 
                     # alternate between training and validation phase
