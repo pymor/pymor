@@ -5,10 +5,10 @@
 """Example script for the usage of neural networks in model order reduction (approach by Hesthaven and Ubbiali)
 
 Usage:
-    neural_networks.py [--fv] [--vis] N TRAINING_SAMPLES VALIDATION_SAMPLES
+    neural_networks.py [--fv] [--vis] GRID_INTERVALS TRAINING_SAMPLES VALIDATION_SAMPLES
 
 Arguments:
-    N                    Grid interval count.
+    GRID_INTERVALS       Grid interval count.
     TRAINING_SAMPLES     Number of samples used for training the neural network.
     VALIDATION_SAMPLES   Number of samples used for validation during the training phase.
 
@@ -46,7 +46,7 @@ def create_fom(args):
 
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    fom, _ = discretizer(problem, diameter=1. / int(args['N']))
+    fom, _ = discretizer(problem, diameter=1. / int(args['GRID_INTERVALS']))
 
     return fom
 
@@ -58,17 +58,14 @@ def neural_networks_demo(args):
         logger.error('PyTorch is not installed! Stopping.')
         return
 
-    TRAINING_SAMPLES = args['TRAINING_SAMPLES']
-    VALIDATION_SAMPLES = args['VALIDATION_SAMPLES']
-
     fom = create_fom(args)
 
     parameter_space = fom.parameters.space((0.1, 1))
 
     from pymor.reductors.neural_network import NeuralNetworkReductor
 
-    training_set = parameter_space.sample_uniformly(int(TRAINING_SAMPLES))
-    validation_set = parameter_space.sample_randomly(int(VALIDATION_SAMPLES))
+    training_set = parameter_space.sample_uniformly(int(args['TRAINING_SAMPLES']))
+    validation_set = parameter_space.sample_randomly(int(args['VALIDATION_SAMPLES']))
 
     basis_size = 10
 
