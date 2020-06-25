@@ -235,7 +235,7 @@ def test_getitem_repeated(vectors_and_indices):
     v_ind = v[ind]
     v_ind_copy = v_ind.copy()
     assert not v_ind_copy.is_view
-    for ind_ind in pyst.valid_inds(v_ind):
+    for ind_ind in pyst.valid_inds(v_ind, random_module=False):
         v_ind_ind = v_ind[ind_ind]
         assert np.all(almost_equal(v_ind_ind, v_ind_copy[ind_ind]))
 
@@ -291,7 +291,7 @@ def test_copy_repeated_index(vector_array):
 def test_append(vector_arrays):
     v1, v2 = vector_arrays
     len_v1, len_v2 = len(v1), len(v2)
-    for ind in pyst.valid_inds(v2):
+    for ind in pyst.valid_inds(v2, random_module=False):
         c1, c2 = v1.copy(), v2.copy()
         c1.append(c2[ind])
         len_ind = v2.len_ind(ind)
@@ -388,7 +388,7 @@ def test_scla(vectors_and_indices):
 def test_axpy(vector_arrays, random):
     v1, v2 = vector_arrays
 
-    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
+    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
         if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
             with pytest.raises(Exception):
                 c1, c2 = v1.copy(), v2.copy()
@@ -433,7 +433,7 @@ def test_axpy(vector_arrays, random):
 @settings(deadline=None, suppress_health_check=(HealthCheck.filter_too_much,HealthCheck.too_slow))
 def test_axpy_one_x(vector_arrays, random):
     v1, v2 = vector_arrays
-    for ind1, ind2 in product(pyst.valid_inds(v1), pyst.valid_inds(v2, 1)):
+    for ind1, ind2 in product(pyst.valid_inds(v1, random_module=False), pyst.valid_inds(v2, 1, random_module=False)):
         assert v1.check_ind(ind1)
         assert v2.check_ind(ind2)
         if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
@@ -940,7 +940,7 @@ def test_append_incompatible(vector_arrays):
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_axpy_incompatible(vector_arrays):
     v1, v2 = vector_arrays
-    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
+    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1[ind1].axpy(0., c2[ind2])
@@ -958,7 +958,7 @@ def test_axpy_incompatible(vector_arrays):
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_dot_incompatible(vector_arrays):
     v1, v2 = vector_arrays
-    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
+    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1[ind1].dot(c2[ind2])
@@ -967,7 +967,7 @@ def test_dot_incompatible(vector_arrays):
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_pairwise_dot_incompatible(vector_arrays):
     v1, v2 = vector_arrays
-    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
+    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1[ind1].pairwise_dot(c2[ind2])
