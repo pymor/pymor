@@ -242,7 +242,8 @@ if config.HAVE_TORCH:
             torch.manual_seed(seed)
 
             # build a reduced basis using POD and compute training data
-            self.reduced_basis = self.build_basis()
+            if not hasattr(self, 'reduced_basis'):
+                self.reduced_basis = self.build_basis()
 
             # determine the numbers of neurons in the hidden layers
             layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
@@ -250,15 +251,16 @@ if config.HAVE_TORCH:
             layers = [len(self.fom.parameters),] + layers + [len(self.reduced_basis),]
 
             # compute validation data
-            with self.logger.block('Computing validation snapshots ...'):
+            if not hasattr(self, 'validation_data'):
+                with self.logger.block('Computing validation snapshots ...'):
 
-                validation_data = []
-                for mu in self.validation_set:
-                    mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                    u = self.fom.solve(mu)
-                    u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u)[:,0])
-                    validation_data.append((mu_tensor, u_tensor))
-                self.validation_data = validation_data
+                    validation_data = []
+                    for mu in self.validation_set:
+                        mu_tensor = torch.DoubleTensor(mu.to_numpy())
+                        u = self.fom.solve(mu)
+                        u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u)[:,0])
+                        validation_data.append((mu_tensor, u_tensor))
+                    self.validation_data = validation_data
 
             # run the actual training of the neural network
             with self.logger.block(f'Performing {restarts} restarts for training ...'):
