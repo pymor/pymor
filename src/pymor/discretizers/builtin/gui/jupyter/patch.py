@@ -93,13 +93,14 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                                      codim=codim, colorbar=separate_colorbars))
                 else:
                     plots.append(Matplotlib1DAxes(figure, grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
-                                                     codim=codim, colorbar=separate_colorbars))
+                                                  codim=codim, colorbar=separate_colorbars))
                 if legend:
                     ax.set_title(legend[i])
 
             plt.tight_layout()
             if not separate_colorbars:
-                figure.colorbar(plots[0].p, ax=axes)
+                if hasattr(plots[0], 'p'):
+                    figure.colorbar(plots[0].p, ax=axes)
 
         def set(self, U, ind):
             if rescale_colorbars:
