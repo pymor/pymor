@@ -256,7 +256,12 @@ if config.HAVE_TORCH:
 
             self.logger.info(f'Finished training with a validation loss of {self.validation_loss} ...')
 
-            return self._build_rom()
+            # construct the reduced order model
+            with self.logger.block('Building ROM ...'):
+                rom = NeuralNetworkModel(self.neural_network)
+                rom = rom.with_(name=f'{self.fom.name}_reduced')
+
+            return rom
 
         def _train(self):
             """Perform a single training iteration and return the resulting neural network."""
@@ -344,18 +349,6 @@ if config.HAVE_TORCH:
                             return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_loss
 
             return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_loss
-
-        def _build_rom(self):
-            with self.logger.block('Building ROM ...'):
-                rom = self.build_rom()
-                rom = rom.with_(name=f'{self.fom.name}_reduced')
-                rom.disable_logging()
-
-            return rom
-
-        def build_rom(self):
-            """Construct the reduced order model."""
-            return NeuralNetworkModel(self.neural_network)
 
         def build_basis(self):
             """Compute a reduced basis using proper orthogonal decomposition."""
