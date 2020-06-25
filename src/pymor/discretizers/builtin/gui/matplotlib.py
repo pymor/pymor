@@ -81,13 +81,6 @@ class Matplotlib1DAxes:
         self.axes = figure.gca()
         self.lines, = self.axes.plot(xs, np.zeros_like(xs))
 
-        # TODO
-        import matplotlib.pyplot as plt
-        self.p = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"), norm=plt.Normalize(vmin=vmin or 0, vmax=vmax or 1))
-
-        if colorbar:
-            figure.colorbar(self.p, ax=a)
-
 
     def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
@@ -103,7 +96,6 @@ class Matplotlib1DAxes:
 
         self.axes.relim()
         self.axes.autoscale_view(True,True,True)
-        self.p.set_clim(self.vmin, self.vmax)
 
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
