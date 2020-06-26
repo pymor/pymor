@@ -140,7 +140,7 @@ class Parameters(FrozenDict):
             all(isinstance(v, Number) for v in mu) or fail('not every element a number')
             len(mu) == sum(v for v in self.values()) or fail('wrong size')
             parsed_mu = {}
-            for k, v in self.items():
+            for k, v in sorted(self.items()):
                 p, mu = mu[:v], mu[v:]
                 parsed_mu[k] = p
             return Mu(parsed_mu)
