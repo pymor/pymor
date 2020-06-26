@@ -29,6 +29,11 @@ def test_randomly(space):
     for value in values:
         assert space.contains(value)
 
+def test_parse_parameter():
+    parameters = Parameters(b=2, a=1)
+    mu_as_list = [1,2,3]
+    mu_as_parameter_and_back = list(parameters.parse(mu_as_list).to_numpy())
+    assert mu_as_list == mu_as_parameter_and_back
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
