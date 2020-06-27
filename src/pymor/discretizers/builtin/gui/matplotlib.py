@@ -94,8 +94,7 @@ class Matplotlib1DAxes:
         else:
             self.lines.set_ydata(np.repeat(u, 2))
 
-        self.axes.relim()
-        self.axes.autoscale_view(True,True,True)
+        self.axes.set_ylim(self.vmin, self.vmax)
 
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
