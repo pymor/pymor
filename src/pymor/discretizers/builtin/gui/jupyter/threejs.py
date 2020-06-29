@@ -184,7 +184,7 @@ class Renderer(widgets.VBox):
                                              target=[0,0,0])
         self.freeze_camera(True)
         self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
-                                      controls=[self.controller],
+                                      controls=[self.controller], webgl_version=1,
                                       width=render_size[0], height=render_size[1])
 
 
