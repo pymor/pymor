@@ -93,17 +93,18 @@ if config.HAVE_TORCH:
         def __init__(self, patience=10, delta=0.):
             self.__auto_init(locals())
 
-            self.best_loss = None
+            self.best_losses = None
             self.best_neural_network = None
             self.counter = 0
 
-        def __call__(self, validation_loss, neural_network=None):
+        def __call__(self, losses, neural_network=None):
             """Returns `True` if early stopping of training is suggested.
 
             Parameters
             ----------
-            validation_loss
-                Loss on the validation set in the current epoch.
+            losses
+                Dictionary of losses on the validation and the training set in
+                the current epoch.
             neural_network
                 Neural network that produces the current validation loss.
 
@@ -111,15 +112,15 @@ if config.HAVE_TORCH:
             -------
             `True` if early stopping is suggested, `False` otherwise.
             """
-            if self.best_loss is None:
-                self.best_loss = validation_loss
+            if self.best_losses is None:
+                self.best_losses = losses
                 self.best_neural_network = neural_network
-            elif self.best_loss - self.delta <= validation_loss:
+            elif self.best_losses['val'] - self.delta <= losses['val']:
                 self.counter += 1
                 if self.counter >= self.patience:
                     return True
             else:
-                self.best_loss = validation_loss
+                self.best_losses = losses
                 self.best_neural_network = neural_network
                 self.counter = 0
 
@@ -170,10 +171,11 @@ if config.HAVE_TORCH:
             Desired size of the reduced basis. If `None`, rtol or atol most
             be provided.
         rtol
-            Relative tolerance the model should guarantee on the validation
-            set.
+            Relative tolerance the model should guarantee on the training set.
         atol
-            Absolute tolerance the model should guarantee on the validation
+            Absolute tolerance the model should guarantee on the training set.
+        l2_err
+            L2-approximation error the model should not exceed on the training
             set.
         pod_params
             Additional parameters for the POD-method.
@@ -185,8 +187,9 @@ if config.HAVE_TORCH:
             training_set,
             validation_set,
             basis_size=None,
-            rtol=None,
-            atol=None,
+            rtol=0.,
+            atol=0.,
+            l2_err=0.,
             pod_params=None,
         ):
             self.__auto_init(locals())
@@ -266,13 +269,13 @@ if config.HAVE_TORCH:
             with self.logger.block(f'Performing {restarts} restarts for training ...'):
 
                 for run in range(restarts):
-                    neural_network, loss = self._train(layers, activation_function, optimizer,
+                    neural_network, current_losses = self._train(layers, activation_function, optimizer,
                                                        epochs, batch_size, learning_rate)
-                    if not hasattr(self, 'validation_loss') or loss < self.validation_loss:
-                        self.validation_loss = loss
+                    if not hasattr(self, 'losses') or current_losses['val'] < self.losses['val']:
+                        self.losses = current_losses
                         self.neural_network = neural_network
 
-            self.logger.info(f'Finished training with a validation loss of {self.validation_loss} ...')
+            self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
 
             # construct the reduced order model
             with self.logger.block('Building ROM ...'):
@@ -315,6 +318,8 @@ if config.HAVE_TORCH:
                 validation_loader = utils.data.DataLoader(validation_dataset,
                                                           batch_size=batch_size)
                 dataloaders = {'train':  training_loader, 'val': validation_loader}
+
+                self.logger.info('Starting optimization procedure ...')
 
                 # perform optimization procedure
                 for epoch in range(epochs):
@@ -360,13 +365,13 @@ if config.HAVE_TORCH:
                         losses[phase] = epoch_loss
 
                         # check for early stopping
-                        if phase == 'val' and early_stopping_scheduler(losses['val'], neural_network):
+                        if phase == 'val' and early_stopping_scheduler(losses, neural_network):
                             if not self.logging_disabled:
                                 self.logger.info(f'Early stopping training process after {epoch + 1} epochs ...')
-                                self.logger.info(f'Minimum validation loss: {early_stopping_scheduler.best_loss}')
-                            return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_loss
+                                self.logger.info(f'Minimum validation loss: {early_stopping_scheduler.best_losses["val"]}')
+                            return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
 
-            return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_loss
+            return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
 
         def build_basis(self):
             """Compute a reduced basis using proper orthogonal decomposition."""
@@ -384,8 +389,9 @@ if config.HAVE_TORCH:
                         snapshots.append({'mu': mu, 'u_full': u})
 
                 # compute reduced basis via POD
-                reduced_basis, _ = pod(U, modes=self.basis_size, rtol=self.rtol,
-                                       atol=self.atol, **(self.pod_params or {}))
+                reduced_basis, _ = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
+                                       atol=self.atol / 2., l2_err=self.l2_err / 2,
+                                       **(self.pod_params or {}))
 
                 # determine the coefficients of the full-order solutions in the reduced basis to obtain the training data; convert everything into tensors that are compatible with PyTorch
                 for v in snapshots:
