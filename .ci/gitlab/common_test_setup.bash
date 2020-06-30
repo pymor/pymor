@@ -9,7 +9,7 @@ fi
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
 export PATH=~/.local/bin:${PATH}
 
-PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
+export PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 # any failure here should fail the whole test
 set -eux
@@ -29,4 +29,6 @@ export PYTHONHASHSEED=0
 python setup.py build_ext -i
 
 PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
-COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml --cov=src/pymor --cov-report=xml  --memprof-top-n 50 --memprof-csv-file=memory_usage.txt"
+COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml --cov=src/pymor --cov-report=xml  \
+  --memprof-top-n 50 --memprof-csv-file=memory_usage.txt\
+  --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}"
