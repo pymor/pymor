@@ -88,5 +88,7 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
         if err >= orth_tol:
             logger.info('Reorthogonalizing POD modes ...')
             gram_schmidt(POD, product=product, copy=False)
+            # adjust length of SVALS in case gram_schmidt has removed vectors
+            SVALS = SVALS[:len(POD)]
 
     return POD, SVALS
