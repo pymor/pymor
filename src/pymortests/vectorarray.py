@@ -430,7 +430,7 @@ def test_axpy(vector_arrays, random):
 
 @pyst.given_vector_arrays(count=2, random=hyst.random_module())
 # TODO replace indices loop
-@settings(deadline=None, suppress_health_check=(HealthCheck.filter_too_much,HealthCheck.too_slow))
+@settings(deadline=None)
 def test_axpy_one_x(vector_arrays, random):
     v1, v2 = vector_arrays
     for ind1, ind2 in product(pyst.valid_inds(v1, random_module=False), pyst.valid_inds(v2, 1, random_module=False)):
