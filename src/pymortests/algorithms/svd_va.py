@@ -13,16 +13,15 @@ from pymor.algorithms.basic import contains_zero_vector
 from pymor.core.logger import log_levels
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.strategies import base_vector_arrays
+from pymortests.strategies import given_vector_arrays
 
 methods = [method_of_snapshots, qr_svd]
 
 
-# TODO relax input to general vectorarrays again
-@given(vector_array=base_vector_arrays(), method=sampled_from(methods))
+@given_vector_arrays(method=sampled_from(methods))
 @settings(deadline=None)
 def test_method_of_snapshots(vector_array, method):
-    A = vector_array[0]
+    A = vector_array
 
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
@@ -31,14 +30,15 @@ def test_method_of_snapshots(vector_array, method):
 
     B = A.copy()
     with log_levels({"pymor.algorithms": "ERROR"}):
-        U, s, Vh = method(A)
+        U, s, Vh = method(A, rtol=4e-8)
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s) == Vh.shape[0]
     assert Vh.shape[1] == len(A)
     assert np.allclose(Vh @ Vh.T.conj(), np.eye(len(s)))
-    U.scal(s)
-    UsVh = U.lincomb(Vh.T)
-    assert np.all(almost_equal(A, UsVh, rtol=4e-8))
+    if len(A) > 0:
+        U.scal(s)
+        UsVh = U.lincomb(Vh.T)
+        assert np.all(almost_equal(A, UsVh, atol=s[0]*4e-8*2))
 
 
 @pytest.mark.parametrize('method', methods)
