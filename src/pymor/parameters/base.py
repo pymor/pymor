@@ -496,7 +496,7 @@ class ParameterSpace(ParametricObject):
         assert not random_state or seed is None
         random_state = get_random_state(random_state, seed)
         get_param = lambda: Mu(((k, random_state.uniform(self.ranges[k][0], self.ranges[k][1], size))
-                               for k, size in self.parameters.items()))
+                               for k, size in sorted(self.parameters.items())))
         if count is None:
             def param_generator():
                 while True:
