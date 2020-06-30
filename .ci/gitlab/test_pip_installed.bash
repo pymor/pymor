@@ -24,6 +24,13 @@ pushd ${SDIST_DIR}
 pip install $(ls ${SDIST_DIR})
 popd
 
-xvfb-run -a py.test ${COMMON_PYTEST_OPTS} --pyargs pymortests -c .ci/installed_pytest.ini
+# make sure pytest does not pick up anything from the source tree
+export PYTHONPATH=${PYTHONPATH_PRE}
+tmpdir=$(mktemp -d)
+pushd ${tmpdir}
+# for some reason the installed conftest plugin is not picked up
+cp ${PYMOR_ROOT}/conftest.py .
+xvfb-run -a pytest ${COMMON_PYTEST_OPTS} --pyargs pymortests -c ${PYMOR_ROOT}/.ci/installed_pytest.ini
 # make sure the demo script was instaled and is usable
 pymor-demo -h
+popd
