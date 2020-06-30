@@ -77,6 +77,9 @@ stages:
     variables:
         DOCKER_HOST: tcp://docker:2375/
         DOCKER_DRIVER: overlay2
+        PYPI_MIRROR_TAG: {{pypi_mirror_tag}}
+        CI_IMAGE_TAG: {{ci_image_tag}}
+        PYMOR_HYPOTHESIS_PROFILE: ci
     before_script:
         - 'export SHARED_PATH="${CI_PROJECT_DIR}/shared"'
         - mkdir -p ${SHARED_PATH}
