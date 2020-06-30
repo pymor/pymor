@@ -3,6 +3,7 @@
 -r requirements-ci.txt
 PySide2
 Qt.py>=1.2.4
+bash_kernel
 cython>=0.28
 diskcache
 docopt-ng
