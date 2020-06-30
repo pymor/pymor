@@ -6,6 +6,7 @@ else
     export PULL_REQUEST=${CI_MERGE_REQUEST_ID}
 fi
 
+export PYTHONPATH_PRE=${PYTHONPATH}
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
 export PATH=~/.local/bin:${PATH}
 
