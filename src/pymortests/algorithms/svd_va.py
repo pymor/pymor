@@ -30,7 +30,7 @@ def test_method_of_snapshots(vector_array, method):
 
     B = A.copy()
     with log_levels({"pymor.algorithms": "ERROR"}):
-        U, s, Vh = method(A, rtol=4e-8)
+        U, s, Vh = method(A, rtol=4e-8)  # default tolerance
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s) == Vh.shape[0]
     assert Vh.shape[1] == len(A)
