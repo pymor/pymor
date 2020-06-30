@@ -22,28 +22,17 @@ methods = ['method_of_snapshots', 'qr_svd']
 @given_vector_arrays(method=sampled_from(methods))
 def test_pod(vector_array, method):
     A = vector_array
-    product = None
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
     assume(len(A) > 1 or A.dim > 1)
     assume(not contains_zero_vector(A, rtol=1e-13, atol=1e-13))
 
     B = A.copy()
-    # we run the pod with infinite tol so we can manually check gram_schidt and adjust assertions
-    orth_tol = np.inf
+    orth_tol = 1e-10
     U, s = pod(A, method=method, orth_tol=orth_tol)
     assert np.all(almost_equal(A, B))
-    if U.dim > 0 and len(U) > 0:
-        orth_tol = 1e-10 # the default
-        err = np.max(np.abs(U.inner(U, product) - np.eye(len(U))))
-        U_orth = gram_schmidt(U, product=product, copy=True) if err >= orth_tol else U
-        if len(U_orth) < len(U):
-            # TODO tighter check + gramian assert equiv.?
-            assert len(U_orth) < len(s)
-            return
-
     assert len(U) == len(s)
-    assert np.allclose(U.gramian(), np.eye(len(s)))
+    assert np.allclose(U.gramian(), np.eye(len(s)), atol=orth_tol)
 
 
 @pytest.mark.parametrize('method', methods)
