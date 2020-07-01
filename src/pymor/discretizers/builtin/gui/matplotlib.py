@@ -59,13 +59,14 @@ class MatplotlibPatchAxes:
 
 class Matplotlib1DAxes:
 
-    def __init__(self, figure, grid, bounding_box=None, vmin=None, vmax=None, codim=1,
-                 colorbar=True):
+    def __init__(self, axes, grid, count, vmin=None, vmax=None, codim=1):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
 
         self.codim = codim
         self.grid = grid
+
+        self.count = count
 
         centers = grid.centers(1)
         if grid.identify_left_right:
@@ -77,22 +78,28 @@ class Matplotlib1DAxes:
             xs = centers
         else:
             xs = np.repeat(centers, 2)[1:-1]
-
-        self.axes = figure.gca()
-        self.lines, = self.axes.plot(xs, np.zeros_like(xs))
+        lines = ()
+        for i in range(count):
+            l, = axes.plot(xs, np.zeros_like(xs))
+            lines = lines + (l,)
+        pad = (vmax - vmin) * 0.1
+        axes.set_ylim(vmin - pad, vmax + pad)
+        self.axes = axes
+        self.lines = lines
 
 
     def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
         self.vmax = self.vmax if vmax is None else vmax
-        u = np.array(U)
-        if self.codim == 1:
-            if self.periodic:
-                self.lines.set_ydata(np.concatenate((u, [u[0]])))
+        for i in range(self.count):
+            u = np.array(U[i])
+            if self.codim == 1:
+                if self.periodic:
+                    self.lines[i].set_ydata(np.concatenate((u, [u[0]])))
+                else:
+                    self.lines[i].set_ydata(u)
             else:
-                self.lines.set_ydata(u)
-        else:
-            self.lines.set_ydata(np.repeat(u, 2))
+                self.lines[i].set_ydata(np.repeat(u, 2))
 
         self.axes.set_ylim(self.vmin, self.vmax)
 
