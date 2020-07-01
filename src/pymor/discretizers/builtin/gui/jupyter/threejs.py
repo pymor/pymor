@@ -255,8 +255,8 @@ class ThreeJSPlot(widgets.VBox):
                 cr = ColorBarRenderer(render_size=bar_size, vmin=vmin, vmax=vmax, color_map=color_map)
                 self.r_hbox_items.insert(2 * i + 1, cr)
                 self.colorbars.append(cr)
-        children = [widgets.HBox(self.r_hbox_items, layout=Layout(overflow='auto',
-                                                                  overflow_x='auto'))]
+        layout = Layout(display='flex', flex_flow='row wrap', align_items='stretch', justify_content='space-around')
+        children = [widgets.Box(self.r_hbox_items, layout=layout)]
         if size > 1:
             def _goto_idx(idx):
                 for c in self.renderer:
