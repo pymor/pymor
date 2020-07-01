@@ -35,7 +35,7 @@ def test_method_of_snapshots(vector_array, method):
     assert len(U) == len(s) == Vh.shape[0]
     assert Vh.shape[1] == len(A)
     assert np.allclose(Vh @ Vh.T.conj(), np.eye(len(s)))
-    if len(A) > 0:
+    if len(s) > 0:
         U.scal(s)
         UsVh = U.lincomb(Vh.T)
         assert np.all(almost_equal(A, UsVh, atol=s[0]*4e-8*2))
