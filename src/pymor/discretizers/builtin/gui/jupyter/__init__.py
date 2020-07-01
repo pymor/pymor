@@ -13,7 +13,7 @@ inside the given notebook.
 import IPython
 
 from pymor.core.defaults import defaults
-from pymor.discretizers.builtin.gui.jupyter.patch import visualize_patch
+from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_patch
 from pymor.core.config import config
 
 

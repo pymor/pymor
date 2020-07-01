@@ -117,8 +117,8 @@ class OnedVisualizer(BasicObject):
         backend = backend or ('jupyter' if is_jupyter() else None)
         self.__auto_init(locals())
 
-    def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
-                  rescale_colorbars=False, block=None, filename=None, columns=2):
+    def visualize(self, U, m, title=None, legend=None, separate_plots=False,
+                  block=None, filename=None, columns=2):
         """Visualize the provided data.
 
         Parameters
@@ -143,10 +143,9 @@ class OnedVisualizer(BasicObject):
             raise NotImplementedError
 
         if self.backend == 'jupyter':
-            from pymor.discretizers.builtin.gui.jupyter import get_visualizer
-            return get_visualizer()(self.grid, U, bounding_box=self.grid.domain, codim=self.codim, title=title,
-                                    legend=legend, separate_colorbars=separate_colorbars,
-                                    rescale_colorbars=rescale_colorbars, columns=columns)
+            from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
+            return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
+                                           separate_plots=separate_plots, columns=columns)
         else:
             block = self.block if block is None else block
             from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d

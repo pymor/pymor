@@ -88,12 +88,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             for i, (vmin, vmax) in enumerate(zip(self.vmins, self.vmaxs)):
                 ax = figure.add_subplot(rows, columns, i+1)
                 axes.append(ax)
-                if grid.dim == 2:
-                    plots.append(MatplotlibPatchAxes(figure, grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
-                                                     codim=codim, colorbar=separate_colorbars))
-                else:
-                    plots.append(Matplotlib1DAxes(figure, grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
-                                                  codim=codim, colorbar=separate_colorbars))
+                plots.append(MatplotlibPatchAxes(figure, grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
+                                                 codim=codim, colorbar=separate_colorbars))
                 if legend:
                     ax.set_title(legend[i])
 
@@ -125,5 +121,68 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             plot.set(U, t)
 
         interact(set_time, t=IntSlider(min=0, max=len(U[0])-1, step=1, value=0))
+
+    return None
+
+
+def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, columns=2):
+    assert isinstance(U, VectorArray) \
+        or (isinstance(U, tuple)
+            and all(isinstance(u, VectorArray) for u in U)
+            and all(len(u) == len(U[0]) for u in U))
+    U = (U.to_numpy(),) if isinstance(U, VectorArray) else tuple(u.to_numpy() for u in U)
+
+    if not config.HAVE_MATPLOTLIB:
+        raise ImportError('cannot visualize: import of matplotlib failed')
+    if not config.HAVE_IPYWIDGETS and len(U[0]) > 1:
+        raise ImportError('cannot visualize: import of ipywidgets failed')
+
+    if isinstance(legend, str):
+        legend = (legend,)
+    assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+
+
+    class Plot:
+
+        def __init__(self):
+            if separate_plots:
+                self.vmins = tuple(np.min(u) for u in U[0])
+                self.vmaxs = tuple(np.max(u) for u in U[0])
+            else:
+                self.vmins = (min(np.min(u) for u in U),)
+                self.vmaxs = (max(np.max(u) for u in U),)
+
+            import matplotlib.pyplot as plt
+
+            rows = int(np.ceil(len(U[0]) / columns))
+            self.figure = plt.figure()
+
+            self.plots = []
+            axes = []
+            for i, (vmin, vmax) in enumerate(zip(self.vmins, self.vmaxs)):
+                if separate_plots:
+                    ax = self.figure.add_subplot(rows, columns, i+1)
+                else:
+                    ax = self.figure.gca()
+                axes.append(ax)
+                count = 1
+                if not separate_plots:
+                    count = len(U[0])
+                self.plots.append(Matplotlib1DAxes(ax, grid, count, vmin=vmin, vmax=vmax,
+                                                   codim=codim))
+                if legend:
+                    ax.set_title(legend[i])
+
+            plt.tight_layout()
+
+        def set(self, U):
+            if separate_plots:
+                for u, plot, vmin, vmax in zip(U, self.plots, self.vmins, self.vmaxs):
+                    plot.set(u[np.newaxis, ...], vmin=vmin, vmax=vmax)
+            else:
+                self.plots[0].set(U, vmin=self.vmins[0], vmax=self.vmaxs[0])
+
+    plot = Plot()
+    plot.set(U[0])
 
     return None
