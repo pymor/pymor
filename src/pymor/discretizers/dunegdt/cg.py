@@ -13,6 +13,7 @@ if config.HAVE_DUNEGDT:
             RobinBoundary,
             Walker,
             )
+    from dune.xt.functions import GridFunction as GF
     from dune.xt.la import Istl
     from dune.gdt import (
             ContinuousLagrangeSpace,
@@ -91,7 +92,7 @@ if config.HAVE_DUNEGDT:
         assert grid_type is None or grid is None
 
         p = analytical_problem
-        dim = p.domain.dim
+        d = p.domain.dim
 
         if not (p.nonlinear_advection
                 == p.nonlinear_advection_derivative
@@ -125,10 +126,10 @@ if config.HAVE_DUNEGDT:
                 np_view = np.array(df.dofs.vector, copy=False)
                 np_view[:] = func.evaluate(interpolation_points['scalar'])[:]
                 return df
-            elif func.shape_range == (dim,):
+            elif func.shape_range == (d,):
                 if not 'vector' in interpolation_space:
                     interpolation_space['vector'] = DiscontinuousLagrangeSpace(
-                            grid, order=data_approximation_order, dim_range=Dim(dim))
+                            grid, order=data_approximation_order, dim_range=Dim(d))
                 if not 'vector' in interpolation_points:
                     interpolation_points['vector'] = interpolation_space['vector'].interpolation_points()
                 df = DiscreteFunction(interpolation_space['vector'], la_backend)
@@ -142,7 +143,7 @@ if config.HAVE_DUNEGDT:
             if isinstance(func, LincombFunction):
                 return [interpolate_single(ff) for ff in func.functions], func.coefficients
             elif not isinstance(func, Function):
-                func = ConstantFunction(value_array=func, dim_domain=dim)
+                func = ConstantFunction(value_array=func, dim_domain=d)
             return [interpolate_single(func)], [1]
 
         # preparations for the actual discretization
@@ -157,9 +158,9 @@ if config.HAVE_DUNEGDT:
 
         # diffusion part
         def make_diffusion_operator(func):
-             op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-             op += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(grid, func))
-             return op
+            op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+            op += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(GF(grid, func, (Dim(d), Dim(d)))))
+            return op
 
         if p.diffusion:
             funcs, coeffs = interpolate(p.diffusion)
@@ -170,7 +171,7 @@ if config.HAVE_DUNEGDT:
         if p.advection:
             def make_advection_operator(func):
                  op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                 op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(grid, func))
+                 op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, func)))
                  return op
 
             funcs, coeffs = interpolate(p.advection)
@@ -180,7 +181,7 @@ if config.HAVE_DUNEGDT:
         # reaction part
         def make_weighted_l2_operator(func):
              op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-             op += LocalElementIntegralBilinearForm(LocalElementProductIntegrand(grid, func))
+             op += LocalElementIntegralBilinearForm(LocalElementProductIntegrand(GF(grid, func)))
              return op
 
         if p.reaction:
@@ -197,7 +198,7 @@ if config.HAVE_DUNEGDT:
             # contributions to the left hand side
             def make_weighted_l2_robin_boundary_operator(func):
                 op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += (LocalIntersectionIntegralBilinearForm(LocalIntersectionProductIntegrand(grid, func)), {},
+                op += (LocalIntersectionIntegralBilinearForm(LocalIntersectionProductIntegrand(GF(grid, func))), {},
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, RobinBoundary()))
                 return op
 
@@ -208,7 +209,7 @@ if config.HAVE_DUNEGDT:
             def make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func):
                 op = VectorFunctional(grid, space, la_backend)
                 op += (LocalIntersectionIntegralFunctional(
-                            LocalIntersectionProductIntegrand(grid, r_param_func).with_ansatz(r_bv_func)), {},
+                            LocalIntersectionProductIntegrand(GF(grid, r_param_func)).with_ansatz(r_bv_func)), {},
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, RobinBoundary()))
                 return op
 
@@ -221,7 +222,8 @@ if config.HAVE_DUNEGDT:
         if p.rhs:
             def make_l2_functional(func):
                 op = VectorFunctional(grid, space, la_backend)
-                op += LocalElementIntegralFunctional(LocalElementProductIntegrand(grid).with_ansatz(func))
+                op += LocalElementIntegralFunctional(
+                        LocalElementProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, func)))
                 return op
 
             source_funcs, source_coeffs = interpolate(p.rhs)
@@ -233,7 +235,7 @@ if config.HAVE_DUNEGDT:
             def make_l2_neumann_boundary_functional(func):
                 op = VectorFunctional(grid, space, la_backend)
                 op += (LocalIntersectionIntegralFunctional(
-                            LocalIntersectionProductIntegrand(grid).with_ansatz(-func)), {},
+                            LocalIntersectionProductIntegrand(GF(grid, 1)).with_ansatz(-GF(grid, func))), {},
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
                 return op
 
