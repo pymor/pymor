@@ -240,7 +240,7 @@ class ColorBarRenderer(widgets.VBox):
 
 class ThreeJSPlot(widgets.VBox):
     def __init__(self,grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size):
-        render_size = (400, 400)
+        render_size = (300, 300)
         self.renderer = [Renderer(u, grid, render_size, color_map, title, bounding_box=bounding_box, codim=codim,
                                   vmin=vmin, vmax=vmax)
                          for u, vmin, vmax in zip(U, vmins, vmaxs)]
@@ -249,13 +249,13 @@ class ThreeJSPlot(widgets.VBox):
             self.colorbars = [ColorBarRenderer(render_size=bar_size, vmin=vmins[0], vmax=vmaxs[0], color_map=color_map)]
             self.r_hbox_items = self.renderer + self.colorbars
         else:
-            self.r_hbox_items = self.renderer
+            self.r_hbox_items = []
             self.colorbars = []
-            for i, (vmin, vmax) in enumerate(zip(vmins, vmaxs)):
+            for vmin, vmax, renderer in zip(vmins, vmaxs, self.renderer):
                 cr = ColorBarRenderer(render_size=bar_size, vmin=vmin, vmax=vmax, color_map=color_map)
-                self.r_hbox_items.insert(2 * i + 1, cr)
+                self.r_hbox_items.append(widgets.HBox([renderer, cr]))
                 self.colorbars.append(cr)
-        layout = Layout(display='flex', flex_flow='row wrap', align_items='stretch', justify_content='space-around')
+        layout = Layout(display='flex', flex_flow='row wrap', align_items='stretch', justify_content='flex-start')
         children = [widgets.Box(self.r_hbox_items, layout=layout)]
         if size > 1:
             def _goto_idx(idx):
