@@ -277,6 +277,11 @@ if config.HAVE_TORCH:
 
             self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
 
+            with self.logger.block('Checking tolerances ...'):
+                if self.l2_err and self.losses['train'] > self.l2_err / 2.:
+                    self.logger.error('Could not train a neural network that guarantees prescribed tolerance!')
+                    return
+
             # construct the reduced order model
             with self.logger.block('Building ROM ...'):
                 rom = NeuralNetworkModel(self.neural_network)
@@ -390,7 +395,7 @@ if config.HAVE_TORCH:
 
                 # compute reduced basis via POD
                 reduced_basis, _ = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
-                                       atol=self.atol / 2., l2_err=self.l2_err / 2,
+                                       atol=self.atol / 2., l2_err=self.l2_err / 2.,
                                        **(self.pod_params or {}))
 
                 # determine the coefficients of the full-order solutions in the reduced basis to obtain the training data; convert everything into tensors that are compatible with PyTorch
