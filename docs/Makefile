@@ -40,6 +40,7 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
+	-rm -f source/generated/*.rst
 
 html:
 	cp -a source/*png .
