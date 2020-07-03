@@ -275,8 +275,6 @@ and a range of `[0.001 1]` we obtain:
 
 .. jupyter-execute::
 
-   import os
-   print(os.getcwd())
    diffusion = BitmapFunction('RB.png', range=[0.001, 1])
    problem = StationaryProblem(
        domain=domain,
