@@ -1,5 +1,2 @@
-[report]
-omit = */playground/*
-
 [paths]
 source = src/pymor src/pymordemos
