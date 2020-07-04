@@ -76,10 +76,10 @@ def extras():
     import pkg_resources
     import itertools
 
-    def _candidates(blacklist):
+    def _candidates(blocklist):
         # skip those which aren't needed in our current environment (py ver, platform)
         for pkg in set(itertools.chain(doc_requires, install_suggests.keys())):
-            if pkg in blacklist:
+            if pkg in blocklist:
                 continue
             try:
                 marker = next(pkg_resources.parse_requirements(pkg)).marker
@@ -96,12 +96,12 @@ def extras():
                 except pkg_resources.RequirementParseError:
                     continue
 
-    # blacklisted packages need a (minimal) compiler setup
+    # blocklisted packages need a (minimal) compiler setup
     # - nbresuse, pytest-memprof depend on psutil which has no wheels
     # - slycot directly needs a compiler setup with BLAS
     # - pymess is better installed from source (see README.md)
     return {
-        'full': list(_candidates(blacklist=['slycot', 'pymess', 'nbresuse', 'pytest-memprof'])),
+        'full': list(_candidates(blocklist=['slycot', 'pymess', 'nbresuse', 'pytest-memprof'])),
         'ci':  ci_requires,
         'docs': doc_requires,
     }
