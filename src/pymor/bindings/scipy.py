@@ -4,8 +4,6 @@
 
 
 import numpy as np
-from packaging.version import Version
-import scipy.version
 from scipy.linalg import solve, solve_continuous_lyapunov, solve_continuous_are
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 
@@ -16,7 +14,6 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
-from pymor.core.logger import getLogger
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
@@ -210,15 +207,8 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'scipy_bicgstab_spilu':
-        if Version(scipy.version.version) >= Version('0.19'):
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                        drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
-        else:
-            if options['spilu_drop_rule']:
-                logger = getLogger('pymor.operators.numpy._apply_inverse')
-                logger.error("ignoring drop_rule in ilu factorization due to old SciPy")
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                        permc_spec=options['spilu_permc_spec'])
+        ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
+                    drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i, VV in enumerate(V):
             R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
@@ -237,43 +227,23 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
                 if not np.can_cast(V.dtype, fdtype, casting='safe'):
                     del matrix.factorization
 
-            if Version(scipy.version.version) >= Version('0.14'):
-                if hasattr(matrix, 'factorization'):
-                    # we may use a complex factorization of a real matrix to
-                    # apply it to a real vector. In that case, we downcast
-                    # the result here, removing the imaginary part,
-                    # which should be zero.
-                    R = matrix.factorization.solve(V.T).T.astype(promoted_type, copy=False)
-                elif options['keep_factorization']:
-                    # the matrix is always converted to the promoted type.
-                    # if matrix.dtype == promoted_type, this is a no_op
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
-                                                permc_spec=options['permc_spec'])
-                    matrix.factorizationdtype = promoted_type
-                    R = matrix.factorization.solve(V.T).T
-                else:
-                    # the matrix is always converted to the promoted type.
-                    # if matrix.dtype == promoted_type, this is a no_op
-                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).T
+            if hasattr(matrix, 'factorization'):
+                # we may use a complex factorization of a real matrix to
+                # apply it to a real vector. In that case, we downcast
+                # the result here, removing the imaginary part,
+                # which should be zero.
+                R = matrix.factorization.solve(V.T).T.astype(promoted_type, copy=False)
+            elif options['keep_factorization']:
+                # the matrix is always converted to the promoted type.
+                # if matrix.dtype == promoted_type, this is a no_op
+                matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                                            permc_spec=options['permc_spec'])
+                matrix.factorizationdtype = promoted_type
+                R = matrix.factorization.solve(V.T).T
             else:
-                # see if-part for documentation
-                if hasattr(matrix, 'factorization'):
-                    for i, VV in enumerate(V):
-                        R[i] = matrix.factorization.solve(VV).astype(promoted_type, copy=False)
-                elif options['keep_factorization']:
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
-                                                permc_spec=options['permc_spec'])
-                    matrix.factorizationdtype = promoted_type
-                    for i, VV in enumerate(V):
-                        R[i] = matrix.factorization.solve(VV)
-                elif len(V) > 1:
-                    factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
-                                         permc_spec=options['permc_spec'])
-                    for i, VV in enumerate(V):
-                        R[i] = factorization.solve(VV)
-                else:
-                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T,
-                                permc_spec=options['permc_spec']).reshape((1, -1))
+                # the matrix is always converted to the promoted type.
+                # if matrix.dtype == promoted_type, this is a no_op
+                R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).T
         except RuntimeError as e:
             raise InversionError(e)
     elif options['type'] == 'scipy_lgmres':
