@@ -8,8 +8,8 @@ Tutorial 2: Reducing a heat equation using balanced truncation
 Heat equation
 -------------
 
-We consider the following heat equation over :math:`[0, 1]` with two inputs and
-three outputs:
+We consider the following heat equation over :math:`[0, 1]` with two inputs
+:math:`u_1, u_2` and three outputs :math:`y_1, y_2, y_2`:
 
 .. math::
 
@@ -28,7 +28,7 @@ three outputs:
         & t > 0.
     \end{align}
 
-In the following, we will create a discretized model and reduced it using the
+In the following, we will create a discretized model and reduce it using the
 balanced truncation method to approximate the mapping from inputs
 :math:`u = (u_1, u_2)` to outputs :math:`y = (y_1, y_2, y_3)`.
 
@@ -44,6 +44,9 @@ We need to construct a linear time-invariant (LTI) system
         y(t) & = C x(t) + D u(t).
     \end{align}
 
+In pyMOR, these models are captured by |LTIModels| from the
+:mod:`pymor.models.iosys` module.
+
 There are many ways of building an |LTIModel|.
 Here, we will use its :meth:`~pymor.models.iosys.LTIModel.from_matrices` method,
 which instantiates an |LTIModel| from NumPy or SciPy matrices.
@@ -57,7 +60,8 @@ First, we do the necessary imports.
     import scipy.sparse as sps
     from pymor.basic import LTIModel, BTReductor
 
-Next, we can assemble the matrices:
+Next, we can assemble the matrices based on a centered finite difference
+approximation:
 
 .. nbplot::
 
@@ -92,27 +96,37 @@ We can get the internal representation of the |LTIModel| `fom`
 
     fom
 
-and some basic information from its string representation
+From this, we see that the matrices were wrapped in |NumpyMatrixOperators|,
+while default values were chosen for :math:`D` and :math:`E` matrices
+(respectively, zero and identity). The operators in an |LTIModel| can be
+accessed directly, e.g., `fom.A`.
+
+We can also see some basic information from `fom`'s string representation
 
 .. nbplot::
 
     print(fom)
 
-The magnitude plot is
+To visualize the behavior of the `fom`, we can draw its magnitude plot
 
 .. nbplot::
 
-    w = np.logspace(-2, 7, 50)
-    _ = fom.mag_plot(w)
+    w = np.logspace(-2, 8, 50)
+    fom.mag_plot(w)
+    plt.grid()
 
-The Hankel singular values are
+Plotting the Hankel singular values shows us how well an LTI system can be
+approximated by a reduced-order model
 
 .. nbplot::
 
     hsv = fom.hsv()
     fig, ax = plt.subplots()
     ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
-    _ = ax.set_title('Hankel singular values')
+    ax.set_title('Hankel singular values')
+    ax.grid()
+
+As expected for a heat equation, the Hankel singular values decay rapidly.
 
 
 Running balanced truncation
@@ -124,8 +138,10 @@ First, we need the reductor object
 
     bt = BTReductor(fom)
 
-We can use it to compute the a priori :math:`\mathcal{H}_\infty`-error bounds
-based on the Hankel singular values.
+Calling its :meth:`~pymor.reductors.bt.GenericBTReductor.reduce` method runs the
+balanced truncation algorithm. This reductor additionally has an `error_bounds`
+method which can compute the a priori :math:`\mathcal{H}_\infty` error bounds
+based on the Hankel singular values:
 
 .. nbplot::
 
@@ -133,31 +149,46 @@ based on the Hankel singular values.
     fig, ax = plt.subplots()
     ax.semilogy(range(1, len(error_bounds) + 1), error_bounds, '.-')
     ax.semilogy(range(1, len(hsv)), hsv[1:], '.-')
-    _ = ax.set_title(r'Upper and lower $\mathcal{H}_\infty$-error bounds')
+    ax.set_xlabel('Reduced order')
+    ax.set_title(r'Upper and lower $\mathcal{H}_\infty$ error bounds')
+    ax.grid()
 
-To get a reduced-order model, we call the `reduce` method.
+To get a reduced-order model of order 10, we call the `reduce` method with the
+appropriate argument:
 
 .. nbplot::
 
     rom = bt.reduce(10)
 
-We can compare the magnitude plots
+Instead, or in addition, a tolerance for the :math:`\mathcal{H}_\infty` error
+can be specified, as well as the projection algorithm (by default, the
+balancing-free square root method is used).
+
+We can compare the magnitude plots between the full-order and reduced-order
+models
 
 .. nbplot::
 
     fig, ax = plt.subplots()
-    fom.mag_plot(w, ax=ax)
-    _ = rom.mag_plot(w, ax=ax, linestyle='--')
+    fom.mag_plot(w, ax=ax, label='FOM')
+    rom.mag_plot(w, ax=ax, linestyle='--', label='ROM')
+    ax.legend()
+    ax.grid()
 
 and plot the magnitude plot of the error system
 
 .. nbplot::
 
-    _ = (fom - rom).mag_plot(w)
+    (fom - rom).mag_plot(w)
+    plt.grid()
 
-We can compute the relative errors
+We can compute the relative errors in :math:`\mathcal{H}_\infty` or
+:math:`\mathcal{H}_2` (or Hankel) norm
 
 .. nbplot::
 
-    print(f'Relative H2-error:   {(fom - rom).h2_norm() / fom.h2_norm():.3e}')
-    print(f'Relative Hinf-error: {(fom - rom).hinf_norm() / fom.hinf_norm():.3e}')
+    print(f'Relative Hinf error: {(fom - rom).hinf_norm() / fom.hinf_norm():.3e}')
+    print(f'Relative H2 error:   {(fom - rom).h2_norm() / fom.h2_norm():.3e}')
+
+To compute the :math:`\mathcal{H}_\infty` norms, pyMOR uses the dense solver
+from Slycot.
