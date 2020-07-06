@@ -18,7 +18,7 @@ _DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
 
 
 @defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
-def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
+def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None,
                     default_sparse_solver_backend=_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND,
                     default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
     """Compute an approximate low-rank solution of a Riccati equation.
@@ -31,28 +31,25 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
       .. math::
           A X E^T + E X A^T
-          - (E X C^T + S) R^{-1} (E X C^T + S)^T
+          - E X C^T R^{-1} C X E^T
           + B B^T = 0.
 
     - if trans is `True`
 
       .. math::
           A^T X E + E^T X A
-          - (E^T X B + S) R^{-1} (E^T X B + S)^T
+          - E^T X B R^{-1} B^T X E
           + C^T C = 0.
 
     If E is None, it is taken to be identity, and similarly for R.
-    If S is None, it is taken to be zero.
 
     We assume:
 
     - A and E are real |Operators|,
-    - B, C and S are real |VectorArrays| from `A.source`,
+    - B and C are real |VectorArrays| from `A.source`,
     - R is a real |NumPy array|,
-    - (E, A, B, C) is stabilizable and detectable,
-    - R is symmetric positive definite, and
-    - :math:`B B^T - S R^{-1} S^T` (:math:`C^T C - S R^{-1} S^T`) is
-      positive semi-definite trans is `False` (`True`).
+    - (E, A, B, C) is stabilizable and detectable, and
+    - R is symmetric positive definite.
 
     For large-scale problems, we additionally assume that `len(B)` and
     `len(C)` are small.
@@ -85,8 +82,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         The operator C as a |VectorArray| from `A.source`.
     R
         The operator R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.
@@ -111,7 +106,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         |VectorArray| from `A.source`.
     """
 
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
@@ -130,7 +125,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         from pymor.algorithms.lrradi import solve_ricc_lrcf as solve_ricc_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
-    return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
+    return solve_ricc_impl(A, E, B, C, R, trans=trans, options=options)
 
 
 _DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
@@ -139,7 +134,7 @@ _DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS el
 
 
 @defaults('default_dense_solver_backend')
-def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
+def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None,
                         default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
     """Compute an approximate low-rank solution of a positive Riccati equation.
 
@@ -151,18 +146,17 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
       .. math::
           A X E^T + E X A^T
-          + (E X C^T + S) R^{-1} (E X C^T + S)^T
+          + E X C^T R^{-1} C X E^T
           + B B^T = 0.
 
     - if trans is `True`
 
       .. math::
           A^T X E + E^T X A
-          + (E^T X B + S) R^{-1} (E^T X B + S)^T
+          + E^T X B R^{-1} B^T X E
           + C^T C = 0.
 
     If E is None, it is taken to be identity, and similarly for R.
-    If S is None, it is taken to be zero.
 
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
@@ -183,8 +177,6 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         The operator C as a |VectorArray| from `A.source`.
     R
         The operator R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the positive Riccati equation is
         transposed.
@@ -206,7 +198,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         solution, |VectorArray| from `A.source`.
     """
 
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
@@ -220,10 +212,10 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         from pymor.bindings.pymess import solve_pos_ricc_lrcf as solve_ricc_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
-    return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
+    return solve_ricc_impl(A, E, B, C, R, trans=trans, options=options)
 
 
-def _solve_ricc_check_args(A, E, B, C, R, S, trans):
+def _solve_ricc_check_args(A, E, B, C, R, trans):
     assert isinstance(A, Operator) and A.linear
     assert not A.parametric
     assert A.source == A.range
@@ -240,9 +232,3 @@ def _solve_ricc_check_args(A, E, B, C, R, S, trans):
             assert R.shape[0] == len(C)
         else:
             assert R.shape[0] == len(B)
-    if S is not None:
-        assert S in A.source
-        if not trans:
-            assert len(S) == len(C)
-        else:
-            assert len(S) == len(B)
