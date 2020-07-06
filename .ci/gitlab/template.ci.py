@@ -46,6 +46,7 @@ stages:
             - src/pymortests/testdata/check_results/*/*_changed
             - coverage.xml
             - memory_usage.txt
+            - .hypothesis
         reports:
             junit: test_results*.xml
 
