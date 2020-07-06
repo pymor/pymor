@@ -396,6 +396,8 @@ def build_cache_key(obj):
             return tuple(transform_obj(o) for o in obj)
         elif t in (set, frozenset):
             return tuple(transform_obj(o) for o in sorted(obj))
+        elif t in (Mu, Parameters):
+            return tuple((transform_obj(k), transform_obj(v)) for k, v in obj.items())
         elif t in (dict, Mu, Parameters):
             return tuple((transform_obj(k), transform_obj(v)) for k, v in sorted(obj.items()))
         elif isinstance(obj, Number):
