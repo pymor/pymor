@@ -8,8 +8,8 @@ Tutorial 2: Reducing a heat equation using balanced truncation
 Heat equation
 -------------
 
-We consider the following one-dimensional heat equation over :math:`(0, 1)` with two inputs
-:math:`u_1, u_2` and three outputs :math:`y_1, y_2, y_2`:
+We consider the following one-dimensional heat equation over :math:`(0, 1)` with
+two inputs :math:`u_1, u_2` and three outputs :math:`y_1, y_2, y_2`:
 
 .. math::
 
@@ -48,8 +48,12 @@ In pyMOR, these models are captured by |LTIModels| from the
 :mod:`pymor.models.iosys` module.
 
 There are many ways of building an |LTIModel|.
-Here, we will use its :meth:`~pymor.models.iosys.LTIModel.from_matrices` method,
-which instantiates an |LTIModel| from NumPy or SciPy matrices.
+Here, we show how to build one from custom matrices instead of using a
+discretizer as in :doc:`tutorial01` and the
+:meth:`~pymor.models.basic.InstationaryModel.to_lti` of |InstationaryModel|.
+In particular, we will use the
+:meth:`~pymor.models.iosys.LTIModel.from_matrices` method of |LTIModel|, which
+instantiates an |LTIModel| from NumPy or SciPy matrices.
 
 First, we do the necessary imports.
 
@@ -58,7 +62,8 @@ First, we do the necessary imports.
     import matplotlib.pyplot as plt
     import numpy as np
     import scipy.sparse as sps
-    from pymor.basic import LTIModel, BTReductor
+    from pymor.models.iosys import LTIModel
+    from pymor.reductors.bt import BTReductor
 
 Next, we can assemble the matrices based on a centered finite difference
 approximation:
@@ -107,7 +112,9 @@ We can also see some basic information from `fom`'s string representation
 
     print(fom)
 
-To visualize the behavior of the `fom`, we can draw its magnitude plot
+To visualize the behavior of the `fom`, we can draw its magnitude plot, i.e.,
+a visualization of the mapping :math:`\omega \mapsto H(i \omega)`, where
+:math:`H(s) = C (s E - A)^{-1} B + D` is the transfer function of the system.
 
 .. jupyter-execute::
 
@@ -163,6 +170,7 @@ appropriate argument:
 Instead, or in addition, a tolerance for the :math:`\mathcal{H}_\infty` error
 can be specified, as well as the projection algorithm (by default, the
 balancing-free square root method is used).
+The used Petrov-Galerkin bases are stored in `bt.V` and `bt.W`.
 
 We can compare the magnitude plots between the full-order and reduced-order
 models
@@ -191,4 +199,4 @@ We can compute the relative errors in :math:`\mathcal{H}_\infty` or
     print(f'Relative H2 error:   {(fom - rom).h2_norm() / fom.h2_norm():.3e}')
 
 To compute the :math:`\mathcal{H}_\infty` norms, pyMOR uses the dense solver
-from Slycot.
+from Slycot, and therefore all of the operators are converted to dense matrices.
