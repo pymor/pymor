@@ -162,7 +162,7 @@ html_theme_options = {
     'css_minify': True,
     'nav_title': 'pyMOR Documentation',
     'logo_icon': '&#xe869',
-    'globaltoc_depth': 2,
+    'globaltoc_depth': 5,
     'theme_color': '58c9f5',
     'color_primary': 'light-blue',
     'color_accent': 'blue',
