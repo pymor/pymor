@@ -1,10 +1,10 @@
 # pyMOR main developers
 
-* Linus Balicki, linus.balicki@ovgu.de 
-* René Fritze, rene.fritze@uni-muenster.de
-* Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
-* Stephan Rave, stephan.rave@uni-muenster.de
-* Felix Schindler, felix.schindler@uni-muenster.de
+* Linus Balicki, linus.balicki@ovgu.de (2020-)
+* René Fritze, rene.fritze@uni-muenster.de (2012-)
+* Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de (2016-)
+* Stephan Rave, stephan.rave@uni-muenster.de (2012-)
+* Felix Schindler, felix.schindler@uni-muenster.de (2012-)
 
 
 # Contributors
