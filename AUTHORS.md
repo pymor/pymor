@@ -1,6 +1,6 @@
 # pyMOR main developers
 
-* René Milk, rene.milk@uni-muenster.de
+* René Fritze, rene.fritze@uni-muenster.de
 * Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
 * Stephan Rave, stephan.rave@uni-muenster.de
 * Felix Schindler, felix.schindler@uni-muenster.de
