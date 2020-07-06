@@ -318,7 +318,7 @@ if config.HAVE_PYMESS:
                                             'opts': lrnm_solver_options()}}
 
     @defaults('default_solver')
-    def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None, default_solver=None):
+    def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solver=None):
         """Compute an approximate low-rank solution of a Riccati equation.
 
         See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
@@ -352,8 +352,6 @@ if config.HAVE_PYMESS:
             The operator C as a |VectorArray| from `A.source`.
         R
             The operator R as a 2D |NumPy array| or `None`.
-        S
-            The operator S as a |VectorArray| from `A.source` or `None`.
         trans
             Whether the first |Operator| in the Riccati equation is
             transposed.
@@ -372,18 +370,16 @@ if config.HAVE_PYMESS:
             |VectorArray| from `A.source`.
         """
 
-        _solve_ricc_check_args(A, E, B, C, R, S, trans)
+        _solve_ricc_check_args(A, E, B, C, R, trans)
         if default_solver is None:
             default_solver = 'pymess_lrnm' if A.source.dim >= mat_eqn_sparse_min_size() else 'pymess_dense_nm_gmpcare'
         options = _parse_options(options, ricc_lrcf_solver_options(), default_solver, None, False)
 
         if options['type'] == 'pymess_dense_nm_gmpcare':
-            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=False,
+            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, trans=trans, options=options['opts'], plus=False,
                                              method_name='solve_ricc_lrcf')
             Z = _chol(X)
         elif options['type'] == 'pymess_lrnm':
-            if S is not None:
-                raise NotImplementedError
             if R is not None:
                 import scipy.linalg as spla
                 Rc = spla.cholesky(R)                                 # R = Rc^T * Rc
@@ -417,7 +413,7 @@ if config.HAVE_PYMESS:
         return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
                                             'opts': dense_nm_gmpcare_solver_options()}}
 
-    def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+    def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a positive Riccati equation.
 
         See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
@@ -437,8 +433,6 @@ if config.HAVE_PYMESS:
             The operator C as a |VectorArray| from `A.source`.
         R
             The operator R as a 2D |NumPy array| or `None`.
-        S
-            The operator S as a |VectorArray| from `A.source` or `None`.
         trans
             Whether the first |Operator| in the Riccati equation is
             transposed.
@@ -453,11 +447,11 @@ if config.HAVE_PYMESS:
             |VectorArray| from `A.source`.
         """
 
-        _solve_ricc_check_args(A, E, B, C, R, S, trans)
+        _solve_ricc_check_args(A, E, B, C, R, trans)
         options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'pymess_dense_nm_gmpcare', None, False)
 
         if options['type'] == 'pymess_dense_nm_gmpcare':
-            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=trans, options=options['opts'], plus=True,
+            X = _call_pymess_dense_nm_gmpare(A, E, B, C, R, trans=trans, options=options['opts'], plus=True,
                                              method_name='solve_pos_ricc_lrcf')
             Z = _chol(X)
         else:
@@ -465,38 +459,21 @@ if config.HAVE_PYMESS:
 
         return A.source.from_numpy(Z.T)
 
-    def _call_pymess_dense_nm_gmpare(A, E, B, C, R, S, trans=False, options=None, plus=False, method_name=''):
+    def _call_pymess_dense_nm_gmpare(A, E, B, C, R, trans=False, options=None, plus=False, method_name=''):
         """Return the solution from pymess.dense_nm_gmpare solver."""
         A = to_matrix(A, format='dense')
         E = to_matrix(E, format='dense') if E else None
         B = B.to_numpy().T
         C = C.to_numpy()
-        S = S.to_numpy().T if S else None
 
         Q = B.dot(B.T) if not trans else C.T.dot(C)
         pymess_trans = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
         if not trans:
             RinvC = spla.solve(R, C) if R is not None else C
             G = C.T.dot(RinvC)
-            if S is not None:
-                RinvST = spla.solve(R, S.T) if R is not None else S.T
-                if not plus:
-                    A -= S.dot(RinvC)
-                    Q -= S.dot(RinvST)
-                else:
-                    A += S.dot(RinvC)
-                    Q += S.dot(RinvST)
         else:
             RinvBT = spla.solve(R, B.T) if R is not None else B.T
             G = B.dot(RinvBT)
-            if S is not None:
-                RinvST = spla.solve(R, S.T) if R is not None else S.T
-                if not plus:
-                    A -= RinvBT.T.dot(S.T)
-                    Q -= S.dot(RinvST)
-                else:
-                    A += RinvBT.T.dot(S.T)
-                    Q += S.dot(RinvST)
         X, absres, relres = pymess.dense_nm_gmpare(None,
                                                    A, E, Q, G,
                                                    plus=plus, trans=pymess_trans,
