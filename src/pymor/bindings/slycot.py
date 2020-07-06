@@ -159,14 +159,13 @@ if config.HAVE_SLYCOT:
 
         return {'slycot': {'type': 'slycot'}}
 
-    def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+    def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a Riccati equation.
 
         See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
         general description.
 
-        This function uses `slycot.sb02md` (if E and S are `None`),
-        `slycot.sb02od` (if E is `None` and S is not `None`) and
+        This function uses `slycot.sb02md` (if E is `None`) or
         `slycot.sg03ad` (if E is not `None`), which are dense solvers.
         Therefore, we assume all |Operators| and |VectorArrays| can be
         converted to |NumPy arrays| using
@@ -185,8 +184,6 @@ if config.HAVE_SLYCOT:
             The operator C as a |VectorArray| from `A.source`.
         R
             The operator R as a 2D |NumPy array| or `None`.
-        S
-            The operator S as a |VectorArray| from `A.source` or `None`.
         trans
             Whether the first |Operator| in the Riccati equation is
             transposed.
@@ -201,7 +198,7 @@ if config.HAVE_SLYCOT:
             |VectorArray| from `A.source`.
         """
 
-        _solve_ricc_check_args(A, E, B, C, R, S, trans)
+        _solve_ricc_check_args(A, E, B, C, R, trans)
         options = _parse_options(options, ricc_lrcf_solver_options(), 'slycot', None, False)
         if options['type'] != 'slycot':
             raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
@@ -211,36 +208,24 @@ if config.HAVE_SLYCOT:
         E = to_matrix(E, format='dense') if E else None
         B = B.to_numpy().T
         C = C.to_numpy()
-        S = S.to_numpy().T if S else None
 
         n = A.shape[0]
         dico = 'C'
 
         if E is None:
-            if S is None:
-                if not trans:
-                    A = A.T
-                    G = C.T.dot(C) if R is None else slycot.sb02mt(n, C.shape[0], C.T, R)[-1]
-                else:
-                    G = B.dot(B.T) if R is None else slycot.sb02mt(n, B.shape[1], B, R)[-1]
-                Q = B.dot(B.T) if not trans else C.T.dot(C)
-                X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
-                _ricc_rcond_check('slycot.sb02md', rcond)
+            if not trans:
+                A = A.T
+                G = C.T.dot(C) if R is None else slycot.sb02mt(n, C.shape[0], C.T, R)[-1]
             else:
-                m = C.shape[0] if not trans else B.shape[1]
-                p = B.shape[1] if not trans else C.shape[0]
-                if R is None:
-                    R = np.eye(m)
-                if not trans:
-                    A = A.T
-                    B, C = C.T, B.T
-                X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
-                _ricc_rcond_check('slycot.sb02od', rcond)
+                G = B.dot(B.T) if R is None else slycot.sb02mt(n, B.shape[1], B, R)[-1]
+            Q = B.dot(B.T) if not trans else C.T.dot(C)
+            X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
+            _ricc_rcond_check('slycot.sb02md', rcond)
         else:
             jobb = 'B'
             fact = 'C'
             uplo = 'U'
-            jobl = 'Z' if S is None else 'N'
+            jobl = 'Z'
             scal = 'N'
             sort = 'S'
             acc = 'R'
@@ -248,8 +233,7 @@ if config.HAVE_SLYCOT:
             p = B.shape[1] if not trans else C.shape[0]
             if R is None:
                 R = np.eye(m)
-            if S is None:
-                S = np.empty((n, m))
+            S = np.empty((n, m))
             if not trans:
                 A = A.T
                 E = E.T
@@ -279,14 +263,13 @@ if config.HAVE_SLYCOT:
 
         return {'slycot': {'type': 'slycot'}}
 
-    def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+    def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a positive Riccati equation.
 
         See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
         general description.
 
-        This function uses `slycot.sb02md` (if E and S are `None`),
-        `slycot.sb02od` (if E is `None` and S is not `None`) and
+        This function uses `slycot.sb02md` (if E is `None`) or
         `slycot.sg03ad` (if E is not `None`), which are dense solvers.
         Therefore, we assume all |Operators| and |VectorArrays| can be
         converted to |NumPy arrays| using
@@ -305,8 +288,6 @@ if config.HAVE_SLYCOT:
             The operator C as a |VectorArray| from `A.source`.
         R
             The operator R as a 2D |NumPy array| or `None`.
-        S
-            The operator S as a |VectorArray| from `A.source` or `None`.
         trans
             Whether the first |Operator| in the positive Riccati
             equation is transposed.
@@ -321,11 +302,11 @@ if config.HAVE_SLYCOT:
             solution, |VectorArray| from `A.source`.
         """
 
-        _solve_ricc_check_args(A, E, B, C, R, S, trans)
+        _solve_ricc_check_args(A, E, B, C, R, trans)
         options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'slycot', None, False)
         if options['type'] != 'slycot':
             raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
 
         if R is None:
             R = np.eye(len(C) if not trans else len(B))
-        return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)
+        return solve_ricc_lrcf(A, E, B, C, -R, trans, options)
