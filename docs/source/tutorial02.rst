@@ -8,7 +8,7 @@ Tutorial 2: Reducing a heat equation using balanced truncation
 Heat equation
 -------------
 
-We consider the following heat equation over :math:`[0, 1]` with two inputs
+We consider the following one-dimensional heat equation over :math:`(0, 1)` with two inputs
 :math:`u_1, u_2` and three outputs :math:`y_1, y_2, y_2`:
 
 .. math::
@@ -28,7 +28,7 @@ We consider the following heat equation over :math:`[0, 1]` with two inputs
         & t > 0.
     \end{align}
 
-In the following, we will create a discretized model and reduce it using the
+In the following, we will create a discretized |Model| and reduce it using the
 balanced truncation method to approximate the mapping from inputs
 :math:`u = (u_1, u_2)` to outputs :math:`y = (y_1, y_2, y_3)`.
 
