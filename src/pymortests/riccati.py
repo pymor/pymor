@@ -28,7 +28,7 @@ ricc_lrcf_solver_list_big = [
 ]
 
 
-def relative_residual(A, E, B, C, R, S, Z, trans):
+def relative_residual(A, E, B, C, R, Z, trans):
     if not trans:
         if E is None:
             linear = A @ Z @ Z.T
@@ -48,8 +48,6 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
         quadratic = quadratic @ (Z.T @ B)
         RHS = C.T @ C
     linear += linear.T
-    if S is not None:
-        quadratic += S
     if R is None:
         quadratic = quadratic @ quadratic.T
     else:
@@ -62,11 +60,11 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
-@pytest.mark.parametrize('with_R,with_S', [(False, False), (True, False), (True, True)])
+@pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n,solver', chain(product(n_list_small, ricc_lrcf_solver_list_small),
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
-def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
+def test_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
     _check_availability(solver)
 
     if not with_E:
@@ -81,37 +79,34 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     if not trans:
         R0 = np.random.randn(p, p)
         R = D.dot(D.T) + R0.dot(R0.T) if with_R else None
-        S = B.dot(D.T) if with_S else None
     else:
         R0 = np.random.randn(m, m)
         R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
-        S = C.T.dot(D) if with_S else None
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E) if with_E else None
     Bva = Aop.source.from_numpy(B.T)
     Cva = Aop.source.from_numpy(C)
-    Sva = Aop.source.from_numpy(S.T) if with_S else None
 
     try:
-        Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
+        Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, trans=trans, options=solver)
     except NotImplementedError:
         return
 
     assert len(Zva) <= n
 
     Z = Zva.to_numpy().T
-    assert relative_residual(A, E, B, C, R, S, Z, trans) < 1e-8
+    assert relative_residual(A, E, B, C, R, Z, trans) < 1e-8
 
 
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
-@pytest.mark.parametrize('with_R,with_S', [(False, False), (True, False), (True, True)])
+@pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
-def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
+def test_pos_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
     _check_availability(solver)
 
     if not with_E:
@@ -126,22 +121,19 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     if not trans:
         R0 = np.random.randn(p, p)
         R = D.dot(D.T) + 10 * R0.dot(R0.T) if with_R else None
-        S = B.dot(D.T) if with_S else None
     else:
         R0 = np.random.randn(m, m)
         R = D.T.dot(D) + 10 * R0.dot(R0.T) if with_R else None
-        S = C.T.dot(D) if with_S else None
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E) if with_E else None
     Bva = Aop.source.from_numpy(B.T)
     Cva = Aop.source.from_numpy(C)
-    Sva = Aop.source.from_numpy(S.T) if with_S else None
 
-    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
+    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, trans=trans, options=solver)
     assert len(Zva) <= n
 
     Z = Zva.to_numpy().T
     if not with_R:
         R = np.eye(p if not trans else m)
-    assert relative_residual(A, E, B, C, -R, S, Z, trans) < 1e-8
+    assert relative_residual(A, E, B, C, -R, Z, trans) < 1e-8
