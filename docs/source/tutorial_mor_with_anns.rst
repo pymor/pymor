@@ -1,9 +1,6 @@
 Tutorial 5: Model order reduction with artificial neural networks
 =================================================================
 
-.. code-links::
-    :timeout: -1
-
 
 Recent success of artificial neural networks led to the development of several
 methods for model order reduction using neural networks. pyMOR provides the
@@ -87,7 +84,7 @@ functions :math:`f(x, \mu) = 1000 \cdot (x-0.5)^2`,
 parameter. Further, we apply homogeneous Dirichlet boundary conditions.
 We discretize the problem as explained in former tutorials:
 
-.. nbplot::
+.. jupyter-execute::
 
     from pymor.basic import *
     
@@ -118,7 +115,7 @@ We discretize the problem as explained in former tutorials:
 Since we employ a single |Parameter|, we can create the |ParameterSpace| using
 the following line:
 
-.. nbplot::
+.. jupyter-execute::
 
     parameter_space = fom.parameters.space((0.1, 1))
 
@@ -141,7 +138,7 @@ neural network does not provide proper approximation results.
 To train the neural network, we create a training and a validation set
 consisting of 100 and 20 randomly chosen |Parameters|, respectively:
 
-.. nbplot::
+.. jupyter-execute::
 
     training_set = parameter_space.sample_uniformly(100)
     validation_set = parameter_space.sample_randomly(20)
@@ -149,19 +146,19 @@ consisting of 100 and 20 randomly chosen |Parameters|, respectively:
 In this tutorial, we prescribe the size of the reduced basis that shall be
 used. It is also possible to determine a relative or absolute tolerance that
 should not be exceeded on the validation set. We can now construct a reductor
-using a basis size of 10:
+using a basis size of 4:
 
-.. nbplot::
+.. jupyter-execute::
 
     from pymor.reductors.neural_network import NeuralNetworkReductor
 
-    reductor = NeuralNetworkReductor(fom, training_set, validation_set, basis_size=10)
+    reductor = NeuralNetworkReductor(fom, training_set, validation_set, basis_size=4)
 
 To reduce the model, i.e. compute a reduced basis via POD and train the neural
 network, we use the respective function of the
 :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`:
 
-.. nbplot::
+.. jupyter-execute::
 
     rom = reductor.reduce()
 
@@ -172,7 +169,7 @@ validation set.
 We are now ready to test our implementation by solving for a random parameter
 the full problem and the reduced model and visualize the result:
 
-.. nbplot::
+.. jupyter-execute::
 
     mu = parameter_space.sample_randomly(1)[0]
 
@@ -187,14 +184,14 @@ Finally, we measure the error of our neural network and the performance
 compared to the solution of the full order problem on a training set. To this
 end, we sample randomly some |Parameters| from our |ParameterSpace|:
 
-.. nbplot::
+.. jupyter-execute::
 
     test_set = parameter_space.sample_randomly(10)
 
 Next, we create empty solution spaces for the full and reduced solutions and an
 empty list for the speedups:
 
-.. nbplot::
+.. jupyter-execute::
 
     U = fom.solution_space.empty(reserve=len(test_set))
     U_red = fom.solution_space.empty(reserve=len(test_set))
@@ -204,7 +201,7 @@ empty list for the speedups:
 Now, we iterate over the test set, compute full and reduced solutions to the
 respective parameters and measure the speedup:
 
-.. nbplot::
+.. jupyter-execute::
 
     import time
 
@@ -221,14 +218,14 @@ respective parameters and measure the speedup:
 
 We can now derive the absolute and relative errors on the training set as
 
-.. nbplot::
+.. jupyter-execute::
 
     absolute_errors = (U - U_red).l2_norm()
     relative_errors = (U - U_red).l2_norm() / U.l2_norm()
 
 The average absolute error amounts to
 
-.. nbplot::
+.. jupyter-execute::
 
     import numpy as np
 
@@ -236,13 +233,13 @@ The average absolute error amounts to
 
 On the other hand, the average relative error is
 
-.. nbplot::
+.. jupyter-execute::
 
     np.average(relative_errors)
 
 Using neural networks results in the following median speedup compared to
 solving the full order problem:
 
-.. nbplot::
+.. jupyter-execute::
 
     np.median(speedups)

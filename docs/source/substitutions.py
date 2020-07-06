@@ -110,6 +110,7 @@ common = '''
 .. |SecondOrderModels| replace:: :class:`SecondOrderModels <pymor.models.iosys.SecondOrderModel>`
 .. |LinearDelayModel| replace:: :class:`~pymor.models.iosys.LinearDelayModel`
 .. |LinearDelayModels| replace:: :class:`LinearDelayModels <pymor.models.iosys.LinearDelayModel>`
+.. |NeuralNetworkModel| replace:: :class:`~pymor.models.neural_network.NeuralNetworkModel`
 
 .. |Parameter| replace:: :class:`Parameter <pymor.parameters.base.Parameters>`
 .. |Parameters| replace:: :class:`~pymor.parameters.base.Parameters`
