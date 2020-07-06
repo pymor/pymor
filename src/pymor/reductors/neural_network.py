@@ -167,6 +167,9 @@ if config.HAVE_TORCH:
         validation_set
             Set of |parameter values| to use for validation in the training
             of the neural network.
+        validation_ratio
+            Fraction of the training set to use for validation in the training
+            of the neural network (only used if no validation set is provided).
         basis_size
             Desired size of the reduced basis. If `None`, rtol or atol most
             be provided.
@@ -185,13 +188,15 @@ if config.HAVE_TORCH:
             self,
             fom,
             training_set,
-            validation_set,
+            validation_set=None,
+            validation_ratio=0.1,
             basis_size=None,
             rtol=0.,
             atol=0.,
             l2_err=0.,
             pod_params=None,
         ):
+            assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
         def reduce(self,
@@ -257,13 +262,17 @@ if config.HAVE_TORCH:
             if not hasattr(self, 'validation_data'):
                 with self.logger.block('Computing validation snapshots ...'):
 
-                    validation_data = []
-                    for mu in self.validation_set:
-                        mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                        u = self.fom.solve(mu)
-                        u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u)[:,0])
-                        validation_data.append((mu_tensor, u_tensor))
-                    self.validation_data = validation_data
+                    if self.validation_set:
+                        self.validation_data = []
+                        for mu in self.validation_set:
+                            mu_tensor = torch.DoubleTensor(mu.to_numpy())
+                            u = self.fom.solve(mu)
+                            u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u)[:,0])
+                            self.validation_data.append((mu_tensor, u_tensor))
+                    else:
+                        number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
+                        self.validation_data = self.training_data[0:number_validation_snapshots]
+                        self.training_data = self.training_data[number_validation_snapshots+1:]
 
             # run the actual training of the neural network
             with self.logger.block(f'Performing {restarts} restarts for training ...'):
