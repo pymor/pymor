@@ -1,8 +1,4 @@
-algorithms:
-  - src/pymortests/algorithms/*
-  - src/pymor/algorithms/*
-
-buildsystem:
+infrastructure:
   - .ci/*
   - .github/*
   - .binder/*
@@ -15,25 +11,7 @@ buildsystem:
   - setup.*
   - versioneer.py
 
-bindings:
-  - src/pymor/bindings/*
-
-builtin-models:
-  - src/pymor/discretizers/*
-  - src/pymor/playground/discretizers/*
-  - src/pymortests/model.py
-  - src/pymortests/fixtures/model.py
-  - src/pymor/models/*
-
-docs:
-  - docs/*
-  - notebooks/*
-
-testing:
-  - src/pymortests/*
-
 management:
-  - AUTHORS.md
   - CONTRIBUTING.md
   - LICENSE.txt
 
