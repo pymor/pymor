@@ -1,8 +1,8 @@
 Tutorial 2: Reducing a heat equation using balanced truncation
 ==============================================================
 
-.. code-links::
-    :timeout: -1
+:jupyter-download:notebook:`tutorial02`
+:jupyter-download:script:`tutorial02`
 
 
 Heat equation
@@ -53,7 +53,7 @@ which instantiates an |LTIModel| from NumPy or SciPy matrices.
 
 First, we do the necessary imports.
 
-.. nbplot::
+.. jupyter-execute::
 
     import matplotlib.pyplot as plt
     import numpy as np
@@ -63,7 +63,7 @@ First, we do the necessary imports.
 Next, we can assemble the matrices based on a centered finite difference
 approximation:
 
-.. nbplot::
+.. jupyter-execute::
 
     k = 50
     n = 2 * k + 1
@@ -86,13 +86,13 @@ approximation:
 
 Then, we can create an |LTIModel|:
 
-.. nbplot::
+.. jupyter-execute::
 
     fom = LTIModel.from_matrices(A, B, C)
 
 We can get the internal representation of the |LTIModel| `fom`
 
-.. nbplot::
+.. jupyter-execute::
 
     fom
 
@@ -103,13 +103,13 @@ accessed directly, e.g., `fom.A`.
 
 We can also see some basic information from `fom`'s string representation
 
-.. nbplot::
+.. jupyter-execute::
 
     print(fom)
 
 To visualize the behavior of the `fom`, we can draw its magnitude plot
 
-.. nbplot::
+.. jupyter-execute::
 
     w = np.logspace(-2, 8, 50)
     fom.mag_plot(w)
@@ -118,7 +118,7 @@ To visualize the behavior of the `fom`, we can draw its magnitude plot
 Plotting the Hankel singular values shows us how well an LTI system can be
 approximated by a reduced-order model
 
-.. nbplot::
+.. jupyter-execute::
 
     hsv = fom.hsv()
     fig, ax = plt.subplots()
@@ -134,7 +134,7 @@ Running balanced truncation
 
 First, we need the reductor object
 
-.. nbplot::
+.. jupyter-execute::
 
     bt = BTReductor(fom)
 
@@ -143,7 +143,7 @@ balanced truncation algorithm. This reductor additionally has an `error_bounds`
 method which can compute the a priori :math:`\mathcal{H}_\infty` error bounds
 based on the Hankel singular values:
 
-.. nbplot::
+.. jupyter-execute::
 
     error_bounds = bt.error_bounds()
     fig, ax = plt.subplots()
@@ -156,7 +156,7 @@ based on the Hankel singular values:
 To get a reduced-order model of order 10, we call the `reduce` method with the
 appropriate argument:
 
-.. nbplot::
+.. jupyter-execute::
 
     rom = bt.reduce(10)
 
@@ -167,7 +167,7 @@ balancing-free square root method is used).
 We can compare the magnitude plots between the full-order and reduced-order
 models
 
-.. nbplot::
+.. jupyter-execute::
 
     fig, ax = plt.subplots()
     fom.mag_plot(w, ax=ax, label='FOM')
@@ -177,7 +177,7 @@ models
 
 and plot the magnitude plot of the error system
 
-.. nbplot::
+.. jupyter-execute::
 
     (fom - rom).mag_plot(w)
     plt.grid()
@@ -185,7 +185,7 @@ and plot the magnitude plot of the error system
 We can compute the relative errors in :math:`\mathcal{H}_\infty` or
 :math:`\mathcal{H}_2` (or Hankel) norm
 
-.. nbplot::
+.. jupyter-execute::
 
     print(f'Relative Hinf error: {(fom - rom).hinf_norm() / fom.hinf_norm():.3e}')
     print(f'Relative H2 error:   {(fom - rom).h2_norm() / fom.h2_norm():.3e}')
