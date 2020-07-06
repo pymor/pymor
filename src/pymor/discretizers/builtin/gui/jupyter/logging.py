@@ -36,7 +36,7 @@ class LogViewer(logging.Handler):
         return '<%s %s>' % (self.__class__.__name__, self.out)
 
 
-class LoggingRedirector(object):
+class LoggingRedirector:
 
     def __init__(self):
         self.old_handlers = None
