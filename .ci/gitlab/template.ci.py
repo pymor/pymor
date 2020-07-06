@@ -47,7 +47,7 @@ stages:
             - coverage.xml
             - memory_usage.txt
         reports:
-            junit: test_results.xml
+            junit: test_results*.xml
 
 {# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
 .submit:

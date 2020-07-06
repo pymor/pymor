@@ -45,7 +45,7 @@ stages:
             - coverage.xml
             - memory_usage.txt
         reports:
-            junit: test_results.xml
+            junit: test_results*.xml
 
 
 .submit:
