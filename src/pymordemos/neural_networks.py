@@ -67,7 +67,7 @@ def neural_networks_demo(args):
     training_set = parameter_space.sample_uniformly(int(args['TRAINING_SAMPLES']))
     validation_set = parameter_space.sample_randomly(int(args['VALIDATION_SAMPLES']))
 
-    reductor = NeuralNetworkReductor(fom, training_set, validation_set, l2_err=1e-4)
+    reductor = NeuralNetworkReductor(fom, training_set, validation_set, basis_size=4)
     rom = reductor.reduce()
 
     test_set = parameter_space.sample_randomly(10)

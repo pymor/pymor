@@ -200,7 +200,7 @@ if config.HAVE_TORCH:
             self.__auto_init(locals())
 
         def reduce(self,
-            hidden_layers='[(N+P)*2, (N+P)*2]',
+            hidden_layers='[(N+P)*3, (N+P)*3]',
             activation_function=torch.tanh,
             optimizer=optim.LBFGS,
             epochs=1000,
@@ -251,7 +251,7 @@ if config.HAVE_TORCH:
 
             # build a reduced basis using POD and compute training data
             if not hasattr(self, 'reduced_basis'):
-                self.reduced_basis = self.build_basis()
+                self.reduced_basis, self.mse_basis = self.build_basis()
 
             # determine the numbers of neurons in the hidden layers
             layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
@@ -286,8 +286,9 @@ if config.HAVE_TORCH:
 
             self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
 
+            # check if neural network is sufficient to guarantee certain error bounds
             with self.logger.block('Checking tolerances ...'):
-                if self.l2_err and self.losses['train'] > self.l2_err / 2.:
+                if (self.mse_basis <= self.losses['train']) or (self.l2_err and self.losses['train'] > self.l2_err / 2.):
                     self.logger.error('Could not train a neural network that guarantees prescribed tolerance!')
                     return
 
@@ -403,7 +404,7 @@ if config.HAVE_TORCH:
                         snapshots.append({'mu': mu, 'u_full': u})
 
                 # compute reduced basis via POD
-                reduced_basis, _ = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
+                reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
                                        atol=self.atol / 2., l2_err=self.l2_err / 2.,
                                        **(self.pod_params or {}))
 
@@ -413,7 +414,10 @@ if config.HAVE_TORCH:
                     u_tensor = torch.DoubleTensor(reduced_basis.inner(v['u_full'])[:,0])
                     self.training_data.append((mu_tensor, u_tensor))
 
-            return reduced_basis
+            # compute mean square loss
+            mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
+
+            return reduced_basis, mean_square_loss
 
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
