@@ -1,5 +1,6 @@
 # pyMOR main developers
 
+* Linus Balicki, linus.balicki@ovgu.de 
 * René Fritze, rene.fritze@uni-muenster.de
 * Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
 * Stephan Rave, stephan.rave@uni-muenster.de
