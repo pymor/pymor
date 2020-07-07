@@ -588,7 +588,7 @@ trigger_binder 2/3:
         - apk --update add bash python3
         - pip3 install requests
     script:
-        - python3 .ci/gitlab/trigger_binder.py "https://turing.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
+        - python3 .ci/gitlab/trigger_binder.py "https://ovh.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
 trigger_binder 3/3:
     extends: .test_base
