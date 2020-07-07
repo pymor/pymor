@@ -34,3 +34,17 @@ class FrozenDict(dict):
 
     def __reduce__(self):
         return (type(self), (dict(self),))
+
+
+class SortedFrozenDict(FrozenDict):
+    """A sorted immutable dictionary."""
+
+    def __new__(cls, *args, **kwargs):
+        new = dict.__new__(cls)
+        # the following only works on Python >= 3.7 or CPython >= 3.6
+        dict.__init__(new, sorted(dict(*args, **kwargs).items()))
+        new._post_init()
+        return new
+
+    def __repr__(self):
+        return f'SortedFrozenDict({dict.__repr__(self)})'

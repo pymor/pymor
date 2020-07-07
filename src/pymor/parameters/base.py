@@ -19,12 +19,12 @@ import numpy as np
 
 from pymor.core.base import ImmutableObject
 from pymor.tools.floatcmp import float_cmp_all
-from pymor.tools.frozendict import FrozenDict
+from pymor.tools.frozendict import FrozenDict, SortedFrozenDict
 from pymor.tools.pprint import format_array
 from pymor.tools.random import get_random_state
 
 
-class Parameters(FrozenDict):
+class Parameters(SortedFrozenDict):
     """Immutable dict mapping parameter names to parameter dimensions.
 
     Each key of a |Parameters| dict is a string specifying the
@@ -140,7 +140,7 @@ class Parameters(FrozenDict):
             all(isinstance(v, Number) for v in mu) or fail('not every element a number')
             len(mu) == sum(v for v in self.values()) or fail('wrong size')
             parsed_mu = {}
-            for k, v in sorted(self.items()):
+            for k, v in self.items():
                 p, mu = mu[:v], mu[v:]
                 parsed_mu[k] = p
             return Mu(parsed_mu)
@@ -235,16 +235,16 @@ class Parameters(FrozenDict):
             return NotImplemented
 
     def __str__(self):
-        return '{' + ', '.join(f'{k}: {v}' for k, v in sorted(self.items())) + '}'
+        return '{' + ', '.join(f'{k}: {v}' for k, v in self.items()) + '}'
 
     def __repr__(self):
         return 'Parameters(' + str(self) + ')'
 
     def __hash__(self):
-        return hash(tuple(sorted(self.items())))
+        return hash(tuple(self.items()))
 
 
-class Mu(FrozenDict):
+class Mu(SortedFrozenDict):
     """Immutable mapping of |Parameter| names to parameter values.
 
     Parameters
@@ -293,7 +293,7 @@ class Mu(FrozenDict):
 
     def to_numpy(self):
         """All parameter values as a NumPy array, ordered alphabetically."""
-        return np.hstack([v for k, v in sorted(self.items())])
+        return np.hstack([v for k, v in self.items()])
 
     def copy(self):
         return self
@@ -307,7 +307,7 @@ class Mu(FrozenDict):
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
 
     def __str__(self):
-        return '{' + ', '.join(f'{k}: {format_array(v)}' for k, v in sorted(self.items())) + '}'
+        return '{' + ', '.join(f'{k}: {format_array(v)}' for k, v in self.items()) + '}'
 
     def __repr__(self):
         return f'Mu({self})'
@@ -445,7 +445,7 @@ class ParameterSpace(ParametricObject):
                    and ranges[k][0] <= ranges[k][1]
                    for k in parameters)
         self.parameters = parameters
-        self.ranges = FrozenDict((k, tuple(v)) for k, v in ranges.items())
+        self.ranges = SortedFrozenDict((k, tuple(v)) for k, v in ranges.items())
 
     def sample_uniformly(self, counts):
         """Uniformly sample |parameter values| from the space.
