@@ -167,9 +167,17 @@ network, we use the respective function of the
 
     rom = reductor.reduce()
 
-This function will automatically train several neural networks with different
-initial weights and select the one leading to the best results on the
-validation set.
+The training is aborted when a neural network that guarantees our prescribed
+tolerance is found. If we set `ann_mse` to `None`, this function will
+automatically train several neural networks with different initial weights and
+select the one leading to the best results on the validation set. We can also
+set `ann_mse` to `'like_basis'`. Then, the algorithm tries to train a neural
+network that leads to a mean squared error on the training set that is as small
+as the error of the reduced basis. If the maximal number of restarts is reached
+without finding a network that fulfills the tolerances, no reduced order model
+is returned. In such a case, one could try to change the architecture of the
+neural network or switch to `ann_mse=None` which is guaranteed to produce a
+reduced order model (perhaps with insufficient approximation properties).
 
 We are now ready to test our implementation by solving for a random parameter
 the full problem and the reduced model and visualize the result:
@@ -248,3 +256,8 @@ solving the full order problem:
 .. jupyter-execute::
 
     np.median(speedups)
+
+The :class:`~pymor.reductors.neural_network.NeuralNetworkReductor` can also
+handle models originated from external solvers. Due to its non-intrusive
+manner, the respective reduced models are implemented quite easily without much
+more effort than in this tutorial.
