@@ -6,6 +6,8 @@ from pymor.core.config import config
 
 
 if config.HAVE_TORCH:
+    from numbers import Number
+
     import torch
     import torch.nn as nn
     import torch.optim as optim
@@ -174,12 +176,21 @@ if config.HAVE_TORCH:
             Desired size of the reduced basis. If `None`, rtol or atol most
             be provided.
         rtol
-            Relative tolerance the model should guarantee on the training set.
+            Relative tolerance the basis should guarantee on the training set.
         atol
-            Absolute tolerance the model should guarantee on the training set.
+            Absolute tolerance the basis should guarantee on the training set.
         l2_err
-            L2-approximation error the model should not exceed on the training
+            L2-approximation error the basis should not exceed on the training
             set.
+        ann_mse
+            If `'like_basis'`, the mean squared error of the neural network on
+            the training set should not exceed the error of the basis.
+            If `None`, the neural network with smallest validation error is
+            used to build the ROM.
+            If a tolerance is prescribed, the mean squared error of the neural
+            network on the training set should not exceed this threshold.
+            Training is interrupted if a neural network that undercuts the
+            error tolerance is found.
         pod_params
             Additional parameters for the POD-method.
         """
@@ -194,6 +205,7 @@ if config.HAVE_TORCH:
             rtol=0.,
             atol=0.,
             l2_err=0.,
+            ann_mse='like_basis',
             pod_params=None,
         ):
             assert 0 < validation_ratio < 1 or validation_set
@@ -284,15 +296,37 @@ if config.HAVE_TORCH:
                         self.losses = current_losses
                         self.neural_network = neural_network
 
-            self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
+                        # check if neural network is sufficient to guarantee certain error bounds
+                        with self.logger.block('Checking tolerances for error of neural network ...'):
+
+                            if isinstance(self.ann_mse, Number) and self.losses['train'] <= self.ann_mse:
+                                self.logger.info(f'Aborting training after {run} restarts ...')
+                                return self._build_rom()
+                            elif self.ann_mse == 'like_basis' and self.losses['train'] <= self.mse_basis:
+                                self.logger.info(f'Aborting training after {run} restarts ...')
+                                return self._build_rom()
+
 
             # check if neural network is sufficient to guarantee certain error bounds
-            with self.logger.block('Checking tolerances ...'):
-                if (self.mse_basis <= self.losses['train']) or (self.l2_err and self.losses['train'] > self.l2_err / 2.):
+            with self.logger.block('Checking tolerances for error of neural network ...'):
+
+                if isinstance(self.ann_mse, Number) and self.losses['train'] > self.ann_mse:
                     self.logger.error('Could not train a neural network that guarantees prescribed tolerance!')
                     return
+                elif self.ann_mse == 'like_basis' and self.losses['train'] > self.mse_basis:
+                    self.logger.error('Could not train a neural network with an error as small as the reduced basis error!')
+                    self.logger.info('Maybe you can try a different neural network architecture or change the value of `ann_mse`')
+                    return
+                elif self.ann_mse is None:
+                    self.logger.info('Using neural network with smallest validation error ...')
+                    self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
+                    return self._build_rom()
+                else:
+                    raise ValueError('Unknown value for mean squared error of neural network')
 
-            # construct the reduced order model
+
+        def _build_rom(self):
+            """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
                 rom = NeuralNetworkModel(self.neural_network)
                 rom = rom.with_(name=f'{self.fom.name}_reduced')

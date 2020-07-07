@@ -100,12 +100,11 @@ def neural_networks_demo(args):
     training_set = parameter_space.sample_uniformly(int(TRAINING_SAMPLES))
     validation_set = parameter_space.sample_randomly(int(VALIDATION_SAMPLES))
 
-    basis_size = 10
-
     reductor = NeuralNetworkReductor(fom,
                                      training_set,
                                      validation_set,
-                                     basis_size=basis_size)
+                                     l2_err=1e-4,
+                                     ann_mse=1e-4)
     rom = reductor.reduce(hidden_layers='[(N+P)*3, (N+P)*3, (N+P)*3]',
                           restarts=100)
 

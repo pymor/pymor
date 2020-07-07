@@ -143,16 +143,21 @@ consisting of 100 and 20 randomly chosen |Parameters|, respectively:
     training_set = parameter_space.sample_uniformly(100)
     validation_set = parameter_space.sample_randomly(20)
 
-In this tutorial, we prescribe the size of the reduced basis that shall be
+In this tutorial, we prescribe the l2 error of the reduced basis that shall be
 used. It is also possible to determine a relative or absolute tolerance that
-should not be exceeded on the validation set. We can now construct a reductor
-using a basis size of 4:
+should not be exceeded on the training set. Further, one can preset the size of
+the reduced basis. We can now construct a reductor with prescribed error for
+the basis and mean squared error of the neural network:
 
 .. jupyter-execute::
 
     from pymor.reductors.neural_network import NeuralNetworkReductor
 
-    reductor = NeuralNetworkReductor(fom, training_set, validation_set, basis_size=4)
+    reductor = NeuralNetworkReductor(fom,
+                                     training_set,
+                                     validation_set,
+                                     l2_err=1e-5,
+                                     ann_mse=1e-5)
 
 To reduce the model, i.e. compute a reduced basis via POD and train the neural
 network, we use the respective function of the
@@ -178,7 +183,7 @@ the full problem and the reduced model and visualize the result:
     U_red_recon = reductor.reconstruct(U_red)
 
     fom.visualize((U, U_red_recon),
-                  legend=(f'Full solution for mu={mu}', f'Reduced solution for mu={mu}'))
+                  legend=(f'Full solution for parameter {mu}', f'Reduced solution for parameter {mu}'))
 
 Finally, we measure the error of our neural network and the performance
 compared to the solution of the full order problem on a training set. To this
