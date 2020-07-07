@@ -87,8 +87,6 @@ def pod(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.,
         err = np.max(np.abs(POD.inner(POD, product) - np.eye(len(POD))))
         if err >= orth_tol:
             logger.info('Reorthogonalizing POD modes ...')
-            gram_schmidt(POD, product=product, copy=False)
-            # adjust length of SVALS in case gram_schmidt has removed vectors
-            SVALS = SVALS[:len(POD)]
+            gram_schmidt(POD, product=product, atol=0., rtol=0., copy=False)
 
     return POD, SVALS
