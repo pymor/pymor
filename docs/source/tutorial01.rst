@@ -2,8 +2,8 @@ Tutorial 1: Using pyMOR’s discretization toolkit
 ================================================
 
 
-pyMOR’s discretization toolkit allows to quickly build parametrized full
-order models based on the NumPy/SciPy software stack. Currently
+pyMOR’s discretization toolkit allows to quickly build parameterized
+full-order models based on the NumPy/SciPy software stack. Currently
 supported are stationary or instationary scalar PDEs of up to second
 order with possibly nonlinear advection or reaction terms in one or two
 spatial dimensions. Unstructured meshes can be imported in the Gmsh file
@@ -31,10 +31,10 @@ function of a circular disk with radius :math:`0.3` and that
 
    f(x, \mu) :=
    \begin{cases}
-      1 & |x - (0.5, 0.5)| < 0.3\\
-      0 & \text{otherwise}.
+      1, & |x - (0.5, 0.5)| < 0.3, \\
+      0, & \text{otherwise},
    \end{cases} \quad\text{and}\quad
-   \sigma(x,\mu) :\equiv 1
+   \sigma(x, \mu) :\equiv 1.
 
 We start by importing commonly used pyMOR classes and methods from the
 :mod:`~pymor.basic` module:
@@ -45,8 +45,8 @@ We start by importing commonly used pyMOR classes and methods from the
 
 To specify the problem at hand using pyMOR’s discretization toolkit, we
 first need to specify the computational domain :math:`\Omega`. Multiple
-classes are available to define such domains in
-in the :mod:`~pymor.analyticalproblems.domaindescriptions` module,
+classes are available to define such domains in the
+:mod:`~pymor.analyticalproblems.domaindescriptions` module,
 which all derive from the |DomainDescription| interface class.
 
 In our case, we can use a |RectDomain|:
@@ -109,7 +109,7 @@ in a |StationaryProblem|:
 
 This problem definition can now be handed over to discretization methods
 (see :mod:`pymor.discretizers.builtin`) which assemble corresponding
-discrete full order models. For finite elements, we use
+discrete full-order models. For finite elements, we use
 :func:`~pymor.discretizers.builtin.cg.discretize_stationary_cg`,
 which receives the maximum mesh element diameter via the `diameter`
 argument:
@@ -159,16 +159,16 @@ boundary conditions are specified, pyMOR’s discretization toolkit will
 assume that homogeneous Dirichlet conditions are implied over the entire
 boundary of :math:`\Omega`.
 
-As a the next example, let us now assume that the data functions are
-given by
+As the next example, let us now assume that the data functions are given
+by
 
 .. math::
 
-   f(x,\mu) \equiv 0 \quad\text{and}\quad
+   f(x, \mu) :\equiv 0 \quad\text{and}\quad
    \sigma(x, \mu) :=
    \begin{cases}
-      0.001 & |x - (0.5, 0.5)| < 0.3\\
-      1 & \text{otherwise,}
+      0.001, & |x - (0.5, 0.5)| < 0.3, \\
+      1, & \text{otherwise},
    \end{cases}
 
 and that we have the following mixed boundary conditions
@@ -176,8 +176,8 @@ and that we have the following mixed boundary conditions
 .. math::
 
    \begin{align}
-   - \sigma_(x, \mu) \nabla u(x, \mu) \cdot n &= g_N(x), &&x \in (0,1) \times \{0\} =: \Omega_N \\
-   u(x, \mu) &= 0, &&x \in \partial\Omega \setminus \Omega_N,
+    -\sigma(x, \mu) \nabla u(x, \mu) \cdot n &= g_N(x), && x \in (0,1) \times \{0\} =: \Omega_N \\
+    u(x, \mu) &= 0, && x \in \partial\Omega \setminus \Omega_N,
    \end{align}
 
 with :math:`g_N(x) \equiv -1`.
@@ -190,7 +190,7 @@ method:
 
    set_log_levels({'pymor': 'WARN'})
 
-To impose the right boundary conditions we need to declare which type of
+To impose the correct boundary conditions we need to declare which type of
 boundary condition should be active on which part of
 :math:`\partial\Omega` when defining the computational domain:
 
@@ -198,7 +198,7 @@ boundary condition should be active on which part of
 
    domain = RectDomain(bottom='neumann')
 
-Then all we need to pass the Neumann data function :math:`g_N` to the
+Then all we need is to pass the Neumann data function :math:`g_N` to the
 |StationaryProblem|. Here, we can use again a |ConstantFunction|.
 The diffusivity can be defined similarly as above:
 
@@ -286,7 +286,7 @@ and a range of `[0.001 1]` we obtain:
    m.visualize(m.solve())
 
 The displayed warning results from the fact that the used image file has
-an additinal channel of transparancy values (alpha channel) and can be
+an additional channel of transparency values (alpha channel) and can be
 ignored.
 
 
@@ -358,7 +358,7 @@ parameter value can also be specified as a single number:
 Multiple parameters
 -------------------
 
-Next we also want to to parametrize the diffusivity in the
+Next we also want to parameterize the diffusivity in the
 :math:`K \times K` circular disks by a scalar factor
 :math:`\mu_{diffu}`. To this end we define:
 
@@ -404,7 +404,7 @@ pyMOR assumes an alphabetical ordering of the parameters:
 Parameter-separability
 ----------------------
 
-For the generation of online-efficient reduced order models, it is often
+For the generation of online-efficient reduced-order models, it is often
 crucial that data functions are parameter separable. We call a
 parametric function `f(x, \mu)` parameter separable if it admits a
 decomposition
@@ -424,7 +424,7 @@ objects.
 
 As an example let us go back to the case where the diffusivity is
 represented by indicator functions of point sets forming the letters
-`RB`. We now want to parametrize the diffusivity in the individual
+`RB`. We now want to parameterize the diffusivity in the individual
 letters. This admits a decomposition of the form
 
 .. math::
