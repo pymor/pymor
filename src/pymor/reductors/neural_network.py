@@ -154,9 +154,9 @@ if config.HAVE_TORCH:
         """Reduced Basis reductor relying on artificial neural networks.
 
         This is a reductor that constructs a reduced basis using proper
-        orthogonal decomposition and trains a neural networks that approximates
+        orthogonal decomposition and trains a neural network that approximates
         the mapping from parameter space to coefficients of the full-order
-        solution in the reduced basis by means of a neural network.
+        solution in the reduced basis.
         The approach is described in [HU18]_.
 
         Parameters
@@ -173,7 +173,7 @@ if config.HAVE_TORCH:
             Fraction of the training set to use for validation in the training
             of the neural network (only used if no validation set is provided).
         basis_size
-            Desired size of the reduced basis. If `None`, rtol or atol most
+            Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
             be provided.
         rtol
             Relative tolerance the basis should guarantee on the training set.
@@ -184,7 +184,7 @@ if config.HAVE_TORCH:
             set.
         ann_mse
             If `'like_basis'`, the mean squared error of the neural network on
-            the training set should not exceed the error of the basis.
+            the training set should not exceed the error of projecting onto the basis.
             If `None`, the neural network with smallest validation error is
             used to build the ROM.
             If a tolerance is prescribed, the mean squared error of the neural
@@ -192,7 +192,7 @@ if config.HAVE_TORCH:
             Training is interrupted if a neural network that undercuts the
             error tolerance is found.
         pod_params
-            Additional parameters for the POD-method.
+            Dict of additional parameters for the POD-method.
         """
 
         def __init__(
@@ -226,8 +226,8 @@ if config.HAVE_TORCH:
             ----------
             hidden_layers
                 Number of neurons in the hidden layers. Can either be fixed or
-                depend on the reduced basis size `N` and dimension of the
-                parameter space `P`.
+                a Python expression string depending on the reduced basis size
+                `N` and the total dimension of the |Parameters| `P`.
             activation_function
                 Activation function to use between the hidden layers.
             optimizer
@@ -328,18 +328,15 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkModel(self.neural_network)
-                rom = rom.with_(name=f'{self.fom.name}_reduced')
+                rom = NeuralNetworkModel(self.neural_network, name=f'{self.fom.name}_reduced')
 
             return rom
 
         def _train(self, layers, activation_function, optimizer, epochs, batch_size, learning_rate):
             """Perform a single training iteration and return the resulting neural network."""
-            if not hasattr(self, 'training_data'):
-                self.logger.error('No data for training available ...')
+            assert hasattr(self, 'training_data')
 
-            if not hasattr(self, 'validation_data'):
-                self.logger.error('No data for validation available ...')
+            assert hasattr(self, 'validation_data')
 
             # LBFGS-optimizer does not support mini-batching, so the batch size needs to be adjusted
             if optimizer == optim.LBFGS:
