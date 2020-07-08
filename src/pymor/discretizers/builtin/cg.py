@@ -24,6 +24,31 @@ from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
+LagrangeShapeFunctions = {
+        line: {1: [lambda X: 1 - X[..., 0],
+                   lambda X: X[..., 0]]},
+        square: {1: [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
+                     lambda X: (1 - X[..., 1]) * (X[..., 0]),
+                     lambda X:     (X[..., 0]) * (X[..., 1]),
+                     lambda X:     (X[..., 1]) * (1 - X[..., 0])]},
+        triangle: {1: [lambda X: 1 - X[..., 0] - X[..., 1],
+                       lambda X: X[..., 0],
+                       lambda X: X[..., 1]]},
+            }
+
+LagrangeShapeFunctionsGrads = {
+        line: {1: np.array(([-1.],
+                            [1., ]))},
+        square: {1: lambda X: np.array(([X[..., 1] - 1., X[..., 0] - 1.],
+                                        [1. - X[..., 1], - X[..., 0]],
+                                        [X[..., 1], X[..., 0]],
+                                        [-X[..., 1], 1. - X[..., 0]]))},
+        triangle: {1: np.array(([-1., -1.],
+                                [1., 0.],
+                                [0., 1.]))}
+        }
+
+
 def CGVectorSpace(grid, id='STATE'):
     return NumpyVectorSpace(grid.size(grid.dim), id)
 
@@ -66,14 +91,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         # evaluate the shape functions at the quadrature points on the reference
         # element -> shape = (number of shape functions, number of quadrature points)
         q, w = g.reference_element.quadrature(order=1)
-        if g.dim == 1:
-            SF = np.array((1 - q[..., 0], q[..., 0]))
-        elif g.dim == 2:
-            SF = np.array(((1 - np.sum(q, axis=-1)),
-                           q[..., 0],
-                           q[..., 1]))
-        else:
-            raise NotImplementedError
+        SF = LagrangeShapeFunctions[g.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
@@ -219,13 +238,8 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         # evaluate the shape functions at the quadrature points on the reference
         # element -> shape = (number of shape functions, number of quadrature points)
         q, w = g.reference_element.quadrature(order=1)
-        if g.dim == 2:
-            SF = np.array(((1 - q[..., 0]) * (1 - q[..., 1]),
-                           (1 - q[..., 1]) * (q[..., 0]),
-                           (q[..., 0]) * (q[..., 1]),
-                           (q[..., 1]) * (1 - q[..., 0])))
-        else:
-            raise NotImplementedError
+        SF = LagrangeShapeFunctions[g.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
@@ -283,32 +297,21 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         g = self.grid
         bi = self.boundary_info
 
-        # our shape functions
-        if g.dim == 2:
-            SF = [lambda X: 1 - X[..., 0] - X[..., 1],
-                  lambda X: X[..., 0],
-                  lambda X: X[..., 1]]
-            q, w = triangle.quadrature(order=2)
-        elif g.dim == 1:
-            SF = [lambda X: 1 - X[..., 0],
-                  lambda X: X[..., 0]]
-            q, w = line.quadrature(order=2)
-        else:
-            raise NotImplementedError
-
         # evaluate the shape functions on the quadrature points
-        SFQ = np.array(tuple(f(q) for f in SF))
+        q, w = g.reference_element.quadrature(order=2)
+        SF = LagrangeShapeFunctions[g.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
 
         self.logger.info('Integrate the products of the shape functions on each element')
         # -> shape = (g.size(0), number of shape functions ** 2)
         if self.coefficient_function is not None:
             C = self.coefficient_function(self.grid.centers(0), mu=mu)
-            SF_INTS = np.einsum('iq,jq,q,e,e->eij', SFQ, SFQ, w, g.integration_elements(0), C).ravel()
+            SF_INTS = np.einsum('iq,jq,q,e,e->eij', SF, SF, w, g.integration_elements(0), C).ravel()
             del C
         else:
-            SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
+            SF_INTS = np.einsum('iq,jq,q,e->eij', SF, SF, w, g.integration_elements(0)).ravel()
 
-        del SFQ
+        del SF
 
         self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, g.dim), g.dim + 1, axis=1).ravel()
@@ -373,28 +376,19 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         g = self.grid
         bi = self.boundary_info
 
-        # our shape functions
-        if g.dim == 2:
-            SF = [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
-                  lambda X: (1 - X[..., 1]) * (X[..., 0]),
-                  lambda X: (X[..., 0]) * (X[..., 1]),
-                  lambda X: (1 - X[..., 0]) * (X[..., 1])]
-        else:
-            raise NotImplementedError
-
-        q, w = square.quadrature(order=2)
-
         # evaluate the shape functions on the quadrature points
-        SFQ = np.array(tuple(f(q) for f in SF))
+        q, w = square.quadrature(order=2)
+        SF = LagrangeShapeFunctions[grid.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
 
         self.logger.info('Integrate the products of the shape functions on each element')
         # -> shape = (g.size(0), number of shape functions ** 2)
         if self.coefficient_function is not None:
             C = self.coefficient_function(self.grid.centers(0), mu=mu)
-            SF_INTS = np.einsum('iq,jq,q,e,e->eij', SFQ, SFQ, w, g.integration_elements(0), C).ravel()
+            SF_INTS = np.einsum('iq,jq,q,e,e->eij', SF, SF, w, g.integration_elements(0), C).ravel()
             del C
         else:
-            SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
+            SF_INTS = np.einsum('iq,jq,q,e->eij', SF, SF, w, g.integration_elements(0)).ravel()
 
         del SFQ
 
@@ -474,15 +468,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         bi = self.boundary_info
 
         # gradients of shape functions
-        if g.dim == 2:
-            SF_GRAD = np.array(([-1., -1.],
-                                [1., 0.],
-                                [0., 1.]))
-        elif g.dim == 1:
-            SF_GRAD = np.array(([-1.],
-                                [1., ]))
-        else:
-            raise NotImplementedError
+        SF_GRAD = LagrangeShapeFunctionsGrads[g.reference_element][1]
 
         self.logger.info('Calculate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
@@ -586,14 +572,9 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         bi = self.boundary_info
 
         # gradients of shape functions
-        if g.dim == 2:
-            q, w = g.reference_element.quadrature(order=2)
-            SF_GRAD = np.array(([q[..., 1] - 1., q[..., 0] - 1.],
-                                [1. - q[..., 1], -q[..., 0]],
-                                [q[..., 1], q[..., 0]],
-                                [-q[..., 1], 1. - q[..., 0]]))
-        else:
-            raise NotImplementedError
+        q, w = g.reference_element.quadrature(order=2)
+        SF_GRAD = LagrangeShapeFunctionsGrads[g.reference_element][1]
+        SF_GRAD = SF_GRAD(q)
 
         self.logger.info('Calculate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
@@ -695,21 +676,11 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
         g = self.grid
         bi = self.boundary_info
 
-        # gradients of shape functions
-        if g.dim == 2:
-            SF_GRAD = np.array(([-1., -1.],
-                                [1., 0.],
-                                [0., 1.]))
-            SF = [lambda X: 1 - X[..., 0] - X[..., 1],
-                  lambda X: X[..., 0],
-                  lambda X: X[..., 1]]
-            # SF_GRAD(function, component)
-        else:
-            raise NotImplementedError
-
         q, w = g.reference_element.quadrature(order=1)
+        SF = LagrangeShapeFunctions[g.reference_element][1]
 
         self.logger.info('Calculate gradients of shape functions transformed by reference map ...')
+        SF_GRAD = LagrangeShapeFunctionsGrads[g.reference_element][1]
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
         # SF_GRADS(element, function, component)
 
@@ -804,22 +775,8 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
         g = self.grid
         bi = self.boundary_info
 
-        # gradients of shape functions
-        if g.dim == 2:
-            q, w = g.reference_element.quadrature(order=2)
-            SF_GRAD = np.array(([q[..., 1] - 1., q[..., 0] - 1.],
-                                [1. - q[..., 1], -q[..., 0]],
-                                [q[..., 1], q[..., 0]],
-                                [-q[..., 1], 1. - q[..., 0]]))
-            # SF_GRAD(function, component, quadraturepoint)
-            SF = [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
-                  lambda X: (1 - X[..., 1]) * (X[..., 0]),
-                  lambda X: (X[..., 0]) * (X[..., 1]),
-                  lambda X: (1 - X[..., 0]) * (X[..., 1])]
-        else:
-            raise NotImplementedError
-
         self.logger.info('Calculate gradients of shape functions transformed by reference map ...')
+        SF_GRAD = LagrangeShapeFunctionsGrads[g.reference_element][1]
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
         # SF_GRADS(element,function,component,quadraturepoint)
 
