@@ -99,7 +99,6 @@ _PACKAGES = {
     'CYTHON': lambda: import_module('cython').__version__,
     'DEALII': lambda: import_module('pydealii'),
     'DOCOPT': lambda: import_module('docopt').__version__,
-    'DUNEXT': lambda: _can_import('dune.xt'),
     'DUNEGDT': lambda: _can_import('dune.gdt'),
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,

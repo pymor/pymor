@@ -6,7 +6,7 @@
 from pymor.core.config import config
 
 
-if config.HAVE_DUNEXT:
+if config.HAVE_DUNEGDT:
 
     import math as m
     from numbers import Number
