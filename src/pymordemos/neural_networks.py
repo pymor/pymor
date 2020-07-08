@@ -25,6 +25,7 @@ import numpy as np
 from pymor.basic import *
 
 from pymor.core.config import config
+from pymor.core.exceptions import TorchMissing
 
 
 def create_fom(args):
@@ -55,8 +56,7 @@ def neural_networks_demo(args):
     logger = getLogger('pymordemos.neural_networks')
 
     if not config.HAVE_TORCH:
-        logger.error('PyTorch is not installed! Stopping.')
-        return
+        raise TorchMissing()
 
     fom = create_fom(args)
 
@@ -67,10 +67,7 @@ def neural_networks_demo(args):
     training_set = parameter_space.sample_uniformly(int(args['TRAINING_SAMPLES']))
     validation_set = parameter_space.sample_randomly(int(args['VALIDATION_SAMPLES']))
 
-    reductor = NeuralNetworkReductor(fom,
-                                     training_set,
-                                     validation_set,
-                                     l2_err=1e-5,
+    reductor = NeuralNetworkReductor(fom, training_set, validation_set, l2_err=1e-5,
                                      ann_mse=1e-5)
     rom = reductor.reduce()
 
