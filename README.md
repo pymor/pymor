@@ -186,7 +186,7 @@ we provide bindings for the following solver libraries:
     Wrapper classes for the NGSolve finite element library are shipped with pyMOR
     (`pymor.bindings.ngsolve`).
     For an example see `pymordemos.thermalblock_simple`.
-    It is tested using version v6.2.2001.
+    It is tested using version v6.2.2006.
 
 
 Do not hesitate to contact
