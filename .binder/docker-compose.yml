@@ -1,4 +1,4 @@
-version: '3'
+version: '2'
 
 # you should not use this file directly, but rather via the targets in ../Makefile
 
@@ -51,6 +51,8 @@ services:
       - CI_PROJECT_URL=https://zivgitlab.uni-muenster.de/pymor/pymor
       - CI_COMMIT_SHA
       - PYMOR_HYPOTHESIS_PROFILE
+    # this is a conservative estimate of available RAM on the gitlab ci runners
+    mem_limit: 3500mb
     volumes:
         - ./..:/pymor
     restart: "no"
