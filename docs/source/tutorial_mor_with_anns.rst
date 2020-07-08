@@ -5,9 +5,7 @@ Tutorial 5: Model order reduction with artificial neural networks
 Recent success of artificial neural networks led to the development of several
 methods for model order reduction using neural networks. pyMOR provides the
 functionality for a simple approach developed by Hesthaven and Ubbiali in 2018.
-pyMOR serves as discretization tool and for computing a reduced basis via
-proper orthogonal decomposition. Further, the PyTorch library is used to train
-artificial neural networks.
+For the training and the evaluation of the neural networks, `PyTorch <https://pytorch.org>`_ is used.
 
 In this tutorial we will learn about feedforward neural networks, the basic
 idea of the approach by Hesthaven et al., and how to use it in pyMOR.
@@ -69,10 +67,10 @@ basis methods will be introduced in the following section.
 A non-intrusive reduced order method using artificial neural networks
 ---------------------------------------------------------------------
 
-We now assume that we are given a parametrized partial differential equation
-which can be discretized and solved using pyMOR. In this example, we consider
-the following diffusion problem on a one dimensional line domain with a
-parametrized diffusion:
+We now assume that we are given a parametric pyMOR |Model| for which we want
+to compute a reduced order surrogate |Model| using a neural network. In this example, we consider
+the following one-dimensional diffusion problem with a
+parametrized diffusion coefficient:
 
 .. math::
 
@@ -82,35 +80,30 @@ on the domain :math:`\Omega:= (0, 1) \subset \mathbb{R}` with data
 functions :math:`f(x, \mu) = 1000 \cdot (x-0.5)^2`,
 :math:`\sigma(x, \mu)=(1-x)*\mu+x`, where :math:`\mu \in (0.1, 1)` denotes the
 parameter. Further, we apply homogeneous Dirichlet boundary conditions.
-We discretize the problem as explained in former tutorials:
+We discretize the problem using pyMOR's builtin discretization toolkit as explained in the first tutorial:
 
 .. jupyter-execute::
 
     from pymor.basic import *
     
-    domain = LineDomain()
 
-    N = 100
+    problem = StationaryProblem(    
 
-    f = ExpressionFunction('(x - 0.5)**2 * 1000', 1, ())
-
-    d0 = ExpressionFunction('1 - x', 1, ())
-    d1 = ExpressionFunction('x', 1, ())
-
-    v0 = ProjectionParameterFunctional('mu')
-    v1 = 1.
-
-    diffusion = LincombFunction([d0, d1], [v0, v1])
-
-    problem = StationaryProblem(
-        domain=domain,
-        rhs=f,
-        diffusion=diffusion,
-        dirichlet_data=ConstantFunction(value=0, dim_domain=1),
-        name='1DProblem'
+        domain=LineDomain(),
+        
+        rhs=ExpressionFunction('(x - 0.5)**2 * 1000', 1, ()),
+                
+        diffusion=LincombFunction(
+            [ExpressionFunction('1 - x', 1, ()),
+             ExpressionFunction('x', 1, ())], 
+            [ProjectionParameterFunctional('mu'),
+             1.]
+        ),
+        
+        dirichlet_data=ConstantFunction(value=0, dim_domain=1),        
     )
 
-    fom, _ = discretize_stationary_cg(problem, diameter=1./N)
+    fom, _ = discretize_stationary_cg(problem, diameter=1/100)
 
 Since we employ a single |Parameter|, we can create the |ParameterSpace| using
 the following line:
@@ -129,14 +122,14 @@ linear combination defined by the reduced coefficients. The reduced basis is
 created via POD.
 
 The method described above is "non-intrusive", which means that no deep insight
-into the problem is required and it is completely sufficient to be able to
+into the model or it's implementation is required and it is completely sufficient to be able to
 generate full order snapshots for a randomly chosen set of parameters. This is
 one of the main advantages of the proposed approach, since one can simply train
 a neural network, check its performance and resort to a different method if the
 neural network does not provide proper approximation results.
 
 To train the neural network, we create a training and a validation set
-consisting of 100 and 20 randomly chosen |Parameters|, respectively:
+consisting of 100 and 20 randomly chosen |parameter values|, respectively:
 
 .. jupyter-execute::
 
@@ -179,7 +172,7 @@ is returned. In such a case, one could try to change the architecture of the
 neural network or switch to `ann_mse=None` which is guaranteed to produce a
 reduced order model (perhaps with insufficient approximation properties).
 
-We are now ready to test our implementation by solving for a random parameter
+We are now ready to test our reduced model by solving for a random parameter value
 the full problem and the reduced model and visualize the result:
 
 .. jupyter-execute::
@@ -195,13 +188,13 @@ the full problem and the reduced model and visualize the result:
 
 Finally, we measure the error of our neural network and the performance
 compared to the solution of the full order problem on a training set. To this
-end, we sample randomly some |Parameters| from our |ParameterSpace|:
+end, we sample randomly some |parameter values| from our |ParameterSpace|:
 
 .. jupyter-execute::
 
     test_set = parameter_space.sample_randomly(10)
 
-Next, we create empty solution spaces for the full and reduced solutions and an
+Next, we create empty solution arrays for the full and reduced solutions and an
 empty list for the speedups:
 
 .. jupyter-execute::
@@ -257,7 +250,7 @@ solving the full order problem:
 
     np.median(speedups)
 
-The :class:`~pymor.reductors.neural_network.NeuralNetworkReductor` can also
-handle models originated from external solvers. Due to its non-intrusive
-manner, the respective reduced models are implemented quite easily without much
-more effort than in this tutorial.
+Since :class:`~pymor.reductors.neural_network.NeuralNetworkReductor` only calls
+the :meth:`~pymor.models.interface.Model.solve` method of the |Model|, it can easily
+be applied to |Models| originating from external solvers, without requiring any access to
+|Operators| internal to the solver.
