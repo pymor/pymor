@@ -484,10 +484,10 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         else:
             raise NotImplementedError
 
-        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
+        self.logger.info('Calculate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
         if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
@@ -595,10 +595,10 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         else:
             raise NotImplementedError
 
-        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
+        self.logger.info('Calculate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
         if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
@@ -652,7 +652,7 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
 
         (Lu)(x) = c ∇ ⋅ [ v(x) u(x) ]
 
-    The function `v` is vector-valued.
+    The function `v` has to be vector-valued.
 
     Parameters
     ----------
@@ -709,14 +709,14 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
 
         q, w = g.reference_element.quadrature(order=1)
 
-        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
+        self.logger.info('Calculate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
         # SF_GRADS(element, function, component)
 
         SFQ = np.array(tuple(f(q) for f in SF))
         # SFQ(function, quadraturepoint)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
         D = self.advection_function(self.grid.centers(0), mu=mu)
         SF_INTS = - np.einsum('pc,eqi,c,e,ec->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
         del D
@@ -819,14 +819,14 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
         else:
             raise NotImplementedError
 
-        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
+        self.logger.info('Calculate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
         # SF_GRADS(element,function,component,quadraturepoint)
 
         SFQ = np.array(tuple(f(q) for f in SF))
         # SFQ(function, quadraturepoint)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
 
         D = self.advection_function(self.grid.centers(0), mu=mu)
         SF_INTS = - np.einsum('pc,eqic,c,e,ei->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
@@ -1163,7 +1163,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 'h1_0_semi': h1_0_semi_product,
                 'l2_0': l2_0_product}
 
-    # assemble additionals output functionals
+    # assemble additional output functionals
     if p.outputs:
         if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
             raise NotImplementedError
