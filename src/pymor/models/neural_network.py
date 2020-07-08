@@ -15,7 +15,7 @@ if config.HAVE_TORCH:
     class NeuralNetworkModel(Model):
         """Class for models of stationary problems that use artificial neural networks.
 
-        This class implements a model that deploys a neural network for solving.
+        This class implements a |Model| that uses a neural network for solving.
 
         Parameters
         ----------
