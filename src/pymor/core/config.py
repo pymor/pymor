@@ -99,7 +99,6 @@ def is_nbconvert():
 
 _PACKAGES = {
     'DEALII': lambda: import_module('pydealii'),
-    'DUNEXT': lambda: _can_import('dune.xt'),
     'DUNEGDT': lambda: _can_import('dune.gdt'),
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
