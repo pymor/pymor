@@ -33,8 +33,13 @@ if config.HAVE_DUNEGDT:
 
     from pymor.analyticalproblems.elliptic import StationaryProblem
     from pymor.analyticalproblems.functions import Function, ConstantFunction, LincombFunction
-    from pymor.bindings.dunegdt import DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer
-    from pymor.bindings.dunext import DuneXTMatrixOperator, DuneXTVector, DuneXTVectorSpace
+    from pymor.bindings.dunegdt import (
+            DuneGDTK3dVisualizer,
+            DuneGDTParaviewVisualizer,
+            DuneXTMatrixOperator,
+            DuneXTVector,
+            DuneXTVectorSpace,
+            )
     from pymor.discretizers.dunegdt.domaindiscretizers.default import discretize_domain_default
     from pymor.models.basic import StationaryModel
     from pymor.operators.constructions import LincombOperator, VectorArrayOperator
@@ -253,7 +258,7 @@ if config.HAVE_DUNEGDT:
         outputs = []
         if p.outputs:
             if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
-                raise NotImplementedError(f'I do not know how to discretize a {v} output!')
+                raise NotImplementedError(f'I do not know how to discretize a {v[0]} output!')
             for output_type, output_data in p.outputs:
                 output_data = interpolate_single(output_data)
                 if output_type == 'l2':
@@ -267,7 +272,7 @@ if config.HAVE_DUNEGDT:
                             ApplyOnAllIntersectionsOnce(grid))
                     outputs.append(op)
                 else:
-                    raise NotImplementedError(f'I do not know how to discretize a {v} output!')
+                    raise NotImplementedError(f'I do not know how to discretize a {v[0]} output!')
 
         # assemble all of the above in one grid walk
         walker = Walker(grid)
