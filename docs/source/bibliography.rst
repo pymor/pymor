@@ -89,8 +89,7 @@ Bibliography
 
 .. [HU18]  J. Hesthaven, S. Ubbiali,
            Non-intrusive reduced order modeling of nonlinear problems using neural networks,
-           Journal of Computational Physics, 363,
-           2018
+           Journal of Computational Physics, 363, 55-78, 2018.
 
 .. [PK16]  P. Kürschner,
            Efficient Low-Rank Solution of Large-Scale Matrix Equations,
