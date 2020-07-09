@@ -1209,8 +1209,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     data = {'grid': grid, 'boundary_info': boundary_info}
 
     if energy_product:
-        energy_product = eL.parse_parameter(energy_product)
         if preassemble:
+            # energy_product is the |Parameter| with which we build the energy product (s.a.)
             eL = eL.assemble(energy_product)
         else:
             from pymor.operators.constructions import FixedParameterOperator
