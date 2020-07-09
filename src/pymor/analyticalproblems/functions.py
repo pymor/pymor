@@ -293,6 +293,9 @@ class LincombFunction(Function):
         assert all(isinstance(c, (ParameterFunctional, Number)) for c in coefficients)
         assert all(f.dim_domain == functions[0].dim_domain for f in functions[1:])
         assert all(f.shape_range == functions[0].shape_range for f in functions[1:])
+        functions = tuple(functions)
+        coefficients = tuple(coefficients)
+
         self.__auto_init(locals())
         self.dim_domain = functions[0].dim_domain
         self.shape_range = functions[0].shape_range
