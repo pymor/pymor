@@ -6,11 +6,13 @@
 """Simple demonstration of solving the Poisson equation in 2D using pyMOR's builtin discretizations.
 
 Usage:
-    elliptic2.py [--fv] PROBLEM-NUMBER N
+    elliptic2.py [--fv] PROBLEM-NUMBER N PRODUCT-COUNT
 
 Arguments:
     PROBLEM-NUMBER    {0,1}, selects the problem to solve
     N                 Triangle count per direction
+    PRODUCT-COUNT     0: equip the model with standard products
+                      1: add an energy product for a fixed parameter
 
 Options:
     -h, --help   Show this message.
@@ -18,6 +20,7 @@ Options:
 """
 
 from docopt import docopt
+import numpy as np
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
@@ -30,6 +33,8 @@ def elliptic2_demo(args):
     args['PROBLEM-NUMBER'] = int(args['PROBLEM-NUMBER'])
     assert 0 <= args['PROBLEM-NUMBER'] <= 1, ValueError('Invalid problem number.')
     args['N'] = int(args['N'])
+    args['PRODUCT-COUNT'] = int(args['PRODUCT-COUNT'])
+    assert 0 <= args['PRODUCT-COUNT'] <= 1, ValueError('Invalid product count.')
 
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
               LincombFunction(
@@ -75,9 +80,18 @@ def elliptic2_demo(args):
         name='2DProblem'
     )
 
+    if args['PRODUCT-COUNT'] and not args['--fv']:
+        # use a random parameter to construct an energy product
+        mu_bar = problem.parameter_space.sample_randomly(1)[0]
+    else:
+        mu_bar = None
+
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    m, data = discretizer(problem, diameter=1. / args['N'])
+    if mu_bar is not None:
+        m, data = discretizer(problem, diameter=1. / args['N'], energy_product=mu_bar)
+    else:
+        m, data = discretizer(problem, diameter=1. / args['N'])
     print(data['grid'])
     print()
 
@@ -85,6 +99,9 @@ def elliptic2_demo(args):
     U = m.solution_space.empty()
     for mu in problem.parameter_space.sample_uniformly(10):
         U.append(m.solve(mu))
+    if mu_bar is not None:
+        energy_norm_squared = m.products['energy'].apply2(U[-1], U[-1])
+        print('Energy norm of the last snapshot: ', np.sqrt(energy_norm_squared)[0][0])
     m.visualize(U, title='Solution for mu in [0.1, 1]')
 
 
