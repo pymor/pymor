@@ -111,10 +111,8 @@ class Function(ParametricObject):
     def __mul__(self, other):
         if not isinstance(other, (Number, ParameterFunctional, Function)):
             return NotImplemented
-        if isinstance(other, ParameterFunctional):
+        if isinstance(other, (Number, ParameterFunctional)):
             return LincombFunction([self], [other])
-        elif isinstance(other, Number):
-            other = ConstantFunction(other)
         if not isinstance(self, ProductFunction):
             if isinstance(other, ProductFunction):
                 return other.with_(functions=other.functions + [self])
@@ -129,7 +127,7 @@ class Function(ParametricObject):
     __rmul__ = __mul__
 
     def __neg__(self):
-        return self * (-1.)
+        return LincombFunction([self], [-1.])
 
 
 class ConstantFunction(Function):
