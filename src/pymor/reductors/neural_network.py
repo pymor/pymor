@@ -274,7 +274,6 @@ if config.HAVE_TORCH:
 
         def build_basis(self):
             """Compute a reduced basis using proper orthogonal decomposition."""
-            snapshots = []
             self.training_data = []
 
             with self.logger.block('Building reduced basis ...'):
@@ -283,9 +282,7 @@ if config.HAVE_TORCH:
                 with self.logger.block('Computing training snapshots ...'):
                     U = self.fom.solution_space.empty()
                     for mu in self.training_set:
-                        u = self.fom.solve(mu)
-                        U.append(u)
-                        snapshots.append({'mu': mu, 'u_full': u})
+                        U.append(self.fom.solve(mu))
 
                 # compute reduced basis via POD
                 reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
@@ -293,9 +290,9 @@ if config.HAVE_TORCH:
                                        **(self.pod_params or {}))
 
                 # determine the coefficients of the full-order solutions in the reduced basis to obtain the training data; convert everything into tensors that are compatible with PyTorch
-                for v in snapshots:
-                    mu_tensor = torch.DoubleTensor(v['mu'].to_numpy())
-                    u_tensor = torch.DoubleTensor(reduced_basis.inner(v['u_full'])[:,0])
+                for mu, u in zip(self.training_set, U):
+                    mu_tensor = torch.DoubleTensor(mu.to_numpy())
+                    u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
                     self.training_data.append((mu_tensor, u_tensor))
 
             # compute mean square loss
