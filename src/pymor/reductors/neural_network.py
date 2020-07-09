@@ -51,6 +51,8 @@ if config.HAVE_TORCH:
         l2_err
             L2-approximation error the basis should not exceed on the training
             set.
+        pod_params
+            Dict of additional parameters for the POD-method.
         ann_mse
             If `'like_basis'`, the mean squared error of the neural network on
             the training set should not exceed the error of projecting onto the basis.
@@ -60,13 +62,11 @@ if config.HAVE_TORCH:
             network on the training set should not exceed this threshold.
             Training is interrupted if a neural network that undercuts the
             error tolerance is found.
-        pod_params
-            Dict of additional parameters for the POD-method.
         """
 
         def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
-                     basis_size=None, rtol=0., atol=0., l2_err=0., ann_mse='like_basis',
-                     pod_params=None):
+                     basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
+                     ann_mse='like_basis'):
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
@@ -320,6 +320,8 @@ if config.HAVE_TORCH:
 
         Parameters
         ----------
+        size_training_validation_set
+            Size of both, training and validation set together.
         patience
             Number of epochs of non-decreasing validation loss allowed, before early
             stopping the training process.
