@@ -23,7 +23,10 @@ if config.HAVE_TORCH:
         ----------
         neural_network
             The neural network that approximates the mapping from parameter space
-            to solution space.
+            to solution space. Should be an instance of
+            :class:`~pymor.models.neural_network.FullyConnectedNN` with input size that
+            matches the (total) number of parameters and output size equal to the
+            dimension of the reduced space.
         output_functional
             |Operator| mapping a given solution to the model output. In many applications,
             this will be a |Functional|, i.e. an |Operator| mapping to scalars.
@@ -103,7 +106,8 @@ if config.HAVE_TORCH:
             self.output_dimension = layers_sizes[-1]
 
             self.layers = nn.ModuleList()
-            self.layers.extend([nn.Linear(int(layers_sizes[i]), int(layers_sizes[i+1])) for i in range(len(layers_sizes) - 1)])
+            self.layers.extend([nn.Linear(int(layers_sizes[i]), int(layers_sizes[i+1]))
+                                for i in range(len(layers_sizes) - 1)])
 
             self.activation_function = activation_function
 

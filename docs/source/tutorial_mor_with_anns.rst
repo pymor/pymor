@@ -1,5 +1,5 @@
-Tutorial 5: Model order reduction with artificial neural networks
-=================================================================
+Tutorial: Model order reduction with artificial neural networks
+===============================================================
 
 
 Recent success of artificial neural networks led to the development of several
@@ -13,9 +13,10 @@ idea of the approach by Hesthaven et al., and how to use it in pyMOR.
 Feedforward neural networks
 ----------------------------
 
-In our case, we aim at approximating a mapping :math:`h\colon\mathcal{P}\rightarrow Y`
-between some input space :math:`\mathcal{P}\subset\mathbb{R}^p` and an output space
-:math:`Y\subset\mathbb{R}^m`, given a set :math:`S=\{(\mu_i,h(\mu_i))\in\mathcal{P}\times Y: i=1,\dots,N\}`
+We aim at approximating a mapping :math:`h\colon\mathcal{P}\rightarrow Y`
+between some input space :math:`\mathcal{P}\subset\mathbb{R}^p` (in our case the
+parameter space) and an output space :math:`Y\subset\mathbb{R}^m` (in our case the
+reduced space), given a set :math:`S=\{(\mu_i,h(\mu_i))\in\mathcal{P}\times Y: i=1,\dots,N\}`
 of samples, by means of an artificial neural network. In this context, neural
 networks serve as a special class of functions that are able to "learn" the
 underlying structure of the sample set :math:`S` by adjusting their weights.
@@ -139,11 +140,12 @@ consisting of 100 and 20 randomly chosen |parameter values|, respectively:
     validation_set = parameter_space.sample_randomly(20)
 
 In this tutorial, we construct the reduced basis such that no more modes than
-required to bound the l2-approximation error by a given value are used. That
-is, we prescribe `l2_err` in the reductor. It is also possible to determine a
-relative or absolute tolerance (in the singular values) that should not be
-exceeded on the training set. Further, one can preset the size of the reduced
-basis.
+required to bound the l2-approximation error by a given value are used.
+The l2-approximation error is  the error of the orthogonal projection (in the
+l2-sense) of the training snapshots onto the reduced basis. That is, we
+prescribe `l2_err` in the reductor. It is also possible to determine a relative
+or absolute tolerance (in the singular values) that should not be exceeded on
+the training set. Further, one can preset the size of the reduced basis.
 
 The training is aborted when a neural network that guarantees our prescribed
 tolerance is found. If we set `ann_mse` to `None`, this function will

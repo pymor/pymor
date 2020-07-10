@@ -121,7 +121,8 @@ if config.HAVE_TORCH:
             # determine the numbers of neurons in the hidden layers
             if isinstance(hidden_layers, str):
                 hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
-            # input and output size of the neural network are prescribed by the dimension of the parameter space and the reduced basis size
+            # input and output size of the neural network are prescribed by the dimension of the parameter space
+            # and the reduced basis size
             assert isinstance(hidden_layers, list)
             layers = [len(self.fom.parameters),] + hidden_layers + [len(self.reduced_basis),]
 
@@ -166,9 +167,12 @@ if config.HAVE_TORCH:
             with self.logger.block('Checking tolerances for error of neural network ...'):
 
                 if isinstance(self.ann_mse, Number) and self.losses['full'] > self.ann_mse:
-                    raise NeuralNetworkTrainingFailed('Could not train a neural network that guarantees prescribed tolerance!')
+                    raise NeuralNetworkTrainingFailed('Could not train a neural network that
+                                                       guarantees prescribed tolerance!')
                 elif self.ann_mse == 'like_basis' and self.losses['full'] > self.mse_basis:
-                    raise NeuralNetworkTrainingFailed('Could not train a neural network with an error as small as the reduced basis error! Maybe you can try a different neural network architecture or change the value of `ann_mse`.')
+                    raise NeuralNetworkTrainingFailed('Could not train a neural network with an error as small as the
+                                                       reduced basis error! Maybe you can try a different neural
+                                                       network architecture or change the value of `ann_mse`.')
                 elif self.ann_mse is None:
                     self.logger.info('Using neural network with smallest validation error ...')
                     self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
@@ -267,7 +271,8 @@ if config.HAVE_TORCH:
                         if phase == 'val' and early_stopping_scheduler(losses, neural_network):
                             if not self.logging_disabled:
                                 self.logger.info(f'Early stopping training process after {epoch + 1} epochs ...')
-                                self.logger.info(f'Minimum validation loss: {early_stopping_scheduler.best_losses["val"]}')
+                                self.logger.info(f'Minimum validation loss:
+                                                   {early_stopping_scheduler.best_losses["val"]}')
                             return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
 
             return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
@@ -286,10 +291,11 @@ if config.HAVE_TORCH:
 
                 # compute reduced basis via POD
                 reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
-                                       atol=self.atol / 2., l2_err=self.l2_err / 2.,
-                                       **(self.pod_params or {}))
+                                           atol=self.atol / 2., l2_err=self.l2_err / 2.,
+                                           **(self.pod_params or {}))
 
-                # determine the coefficients of the full-order solutions in the reduced basis to obtain the training data; convert everything into tensors that are compatible with PyTorch
+                # determine the coefficients of the full-order solutions in the reduced basis to obtain the
+                # training data; convert everything into tensors that are compatible with PyTorch
                 for mu, u in zip(self.training_set, U):
                     mu_tensor = torch.DoubleTensor(mu.to_numpy())
                     u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
