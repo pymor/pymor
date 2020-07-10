@@ -34,6 +34,7 @@ if config.HAVE_DUNEGDT:
     from pymor.analyticalproblems.elliptic import StationaryProblem
     from pymor.analyticalproblems.functions import Function, ConstantFunction, LincombFunction
     from pymor.bindings.dunegdt import (
+            DuneGDT1dMatplotlibVisualizer,
             DuneGDTK3dVisualizer,
             DuneGDTParaviewVisualizer,
             DuneXTMatrixOperator,
@@ -129,7 +130,7 @@ if config.HAVE_DUNEGDT:
                     interpolation_points['scalar'] = interpolation_space['scalar'].interpolation_points()
                 df = DiscreteFunction(interpolation_space['scalar'], la_backend)
                 np_view = np.array(df.dofs.vector, copy=False)
-                np_view[:] = func.evaluate(interpolation_points['scalar'])[:]
+                np_view[:] = func.evaluate(interpolation_points['scalar'])[:].ravel()
                 return df
             elif func.shape_range == (d,):
                 if not 'vector' in interpolation_space:
@@ -139,7 +140,7 @@ if config.HAVE_DUNEGDT:
                     interpolation_points['vector'] = interpolation_space['vector'].interpolation_points()
                 df = DiscreteFunction(interpolation_space['vector'], la_backend)
                 np_view = np.array(df.dofs.vector, copy=False)
-                np_view[:] = func.evaluate(interpolation_points['vector'])[:]
+                np_view[:] = func.evaluate(interpolation_points['vector'])[:].ravel()
                 return df
             else:
                 raise NotImplementedError(f'I do not know how to interpolate a function with {func.shape_range}!')
@@ -168,9 +169,9 @@ if config.HAVE_DUNEGDT:
             return op
 
         if p.diffusion:
-            funcs, coeffs = interpolate(p.diffusion)
-            constrained_lhs_ops += [make_diffusion_operator(func) for func in funcs]
-            constrained_lhs_coeffs += list(coeffs)
+            diffusion_funcs, diffusion_coeffs = interpolate(p.diffusion)
+            constrained_lhs_ops += [make_diffusion_operator(func) for func in diffusion_funcs]
+            constrained_lhs_coeffs += list(diffusion_coeffs)
 
         # advection part
         if p.advection:
@@ -179,9 +180,9 @@ if config.HAVE_DUNEGDT:
                  op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, func)))
                  return op
 
-            funcs, coeffs = interpolate(p.advection)
-            constrained_lhs_ops += [make_advection_operator(func) for func in funcs]
-            constrained_lhs_coeffs += list(coeffs)
+            advection_funcs, advection_coeffs = interpolate(p.advection)
+            constrained_lhs_ops += [make_advection_operator(func) for func in advection_funcs]
+            constrained_lhs_coeffs += list(advection_coeffs)
 
         # reaction part
         def make_weighted_l2_operator(func):
@@ -190,9 +191,9 @@ if config.HAVE_DUNEGDT:
              return op
 
         if p.reaction:
-            funcs, coeffs = interpolate(p.reaction)
-            constrained_lhs_ops += [make_weighted_l2_operator(func) for func in funcs]
-            constrained_lhs_coeffs += list(coeffs)
+            reaction_funcs, reaction_coeffs = interpolate(p.reaction)
+            constrained_lhs_ops += [make_weighted_l2_operator(func) for func in reaction_funcs]
+            constrained_lhs_coeffs += list(reaction_coeffs)
 
         # robin boundaries
         if p.robin_data:
@@ -312,8 +313,8 @@ if config.HAVE_DUNEGDT:
             dirichlet_data = interpolate_single(p.dirichlet_data)
 
             op = VectorFunctional(grid, space, la_backend) # just for the vector and unified handling below
-            dirichlet_DoFs = dirichlet_constraints.dirichlet_DoFs
-            op.vector[dirichlet_Dofs] = dirichlet_data.dofs.vector[dirichlet_DoFs]
+            dirichlet_DoFs = list(dirichlet_constraints.dirichlet_DoFs)
+            np.array(op.vector, copy=False)[dirichlet_DoFs] = np.array(dirichlet_data.dofs.vector, copy=False)[dirichlet_DoFs]
 
             rhs_ops += [op]
             rhs_coeffs += [1.]
@@ -344,7 +345,10 @@ if config.HAVE_DUNEGDT:
             output_functional = BlockColumnOperator(outputs)
 
         # visualizer
-        visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
+        if d == 1:
+            visualizer = DuneGDT1dMatplotlibVisualizer(space)
+        else:
+            visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
 
         m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
                              name=f'{p.name}_CG')
