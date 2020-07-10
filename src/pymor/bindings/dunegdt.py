@@ -325,7 +325,7 @@ if config.HAVE_DUNEGDT:
                 df.visualize(filename)
 
             prefix = os.path.join(tempfile.gettempdir(), next(tempfile._get_candidate_names()))
-            suffix = 'vt{}'.format('k' if self.space.dimDomain == 1 else 'u')
+            suffix = 'vt{}'.format('p' if self.space.dimDomain == 1 else 'u')
             if isinstance(U, ListVectorArray):
                 if len(U) == 0:
                     return
