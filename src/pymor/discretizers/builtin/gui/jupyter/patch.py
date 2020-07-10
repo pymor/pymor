@@ -2,6 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import numpy as np
+from ipywidgets import HTML, HBox
 
 from pymor.core.config import config
 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes
@@ -64,6 +65,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
         def __init__(self):
             if separate_colorbars:
+                # todo rescaling not set up
                 if rescale_colorbars:
                     self.vmins = tuple(np.min(u[0]) for u in U)
                     self.vmaxs = tuple(np.max(u[0]) for u in U)
@@ -85,10 +87,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
             self.plots = plots = []
             axes = []
-            for i, (vmin, vmax) in enumerate(zip(self.vmins, self.vmaxs)):
+            for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
                 ax = figure.add_subplot(rows, columns, i+1)
                 axes.append(ax)
-                plots.append(MatplotlibPatchAxes(figure, grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
+                plots.append(MatplotlibPatchAxes(U=u, ax=ax, figure=figure, grid=grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
                                                  codim=codim, colorbar=separate_colorbars))
                 if legend:
                     ax.set_title(legend[i])
@@ -110,15 +112,9 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 plot.set(u[ind], vmin=vmin, vmax=vmax)
 
     plot = Plot()
-    plot.set(U, 0)
 
     if len(U[0]) > 1:
 
-        from ipywidgets import interact, IntSlider
+        return HBox([HTML(p.anim.to_jshtml()) for p in plot.plots])
 
-        def set_time(t):
-            plot.set(U, t)
-
-        interact(set_time, t=IntSlider(min=0, max=len(U[0])-1, step=1, value=0))
-
-    return None
+    return plot
