@@ -28,7 +28,7 @@ DISCRETIZATION_ARGS = (
     ('elliptic', ['--fv', 0, 0, 2, 1]),
     ('elliptic2', [0, 20, 0]),
     ('elliptic2', [0, 20, 1]),
-    ('elliptic2', ['--fv', 0, 20]),
+    ('elliptic2', ['--fv', 0, 20, 0]),
     ('elliptic2', [1, 20, 0]),
     ('elliptic2', [1, 20, 1]),
     ('elliptic_oned', [1, 20]),
