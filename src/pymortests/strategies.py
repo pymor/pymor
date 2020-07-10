@@ -382,7 +382,7 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     length = space.dim
 
     # this lets hypothesis control np's random state too
-    random = draw(hyst.randoms())
+    random = draw(hyst.random_module())
     # scipy performs this check although technically numpy accepts a different range
     assume(0 <= random.seed < 2**32 - 1)
     random_correlation = random_correlation_gen(random.seed)
