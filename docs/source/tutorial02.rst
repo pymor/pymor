@@ -1,5 +1,5 @@
-Tutorial 2: Reducing a heat equation using balanced truncation
-==============================================================
+Tutorial: Reducing a heat equation using balanced truncation
+============================================================
 
 :jupyter-download:notebook:`tutorial02`
 :jupyter-download:script:`tutorial02`
