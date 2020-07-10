@@ -15,6 +15,7 @@ if config.HAVE_DUNEGDT:
     import subprocess
     import tempfile
     from tempfile import mkstemp
+    from matplotlib import pyplot as plt
 
     from dune.xt.common.vtk.plot import plot as k3d_plot
     from dune.gdt import DiscreteFunction
@@ -180,6 +181,35 @@ if config.HAVE_DUNEGDT:
                 # one would have to extract the patterns from the pruned matrices, merge them and create a new matrix
 
             return DuneXTMatrixOperator(matrix, self.source.id, self.range.id, solver_options=solver_options, name=name)
+
+
+    class DuneGDT1dMatplotlibVisualizer(ImmutableObject):
+        """Visualize a dune-gdt discrete function using paraview.
+
+        Parameters
+        ----------
+        space
+            The dune-gdt space for which we want to visualize DOF vectors.
+        """
+        def __init__(self, space):
+            assert space.max_polorder == 1
+            self.interpolation_points = space.interpolation_points()
+            self.__auto_init(locals())
+
+        def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
+                      rescale_colorbars=False, block=None, filename=None, columns=2):
+            assert isinstance(U, ListVectorArray)
+            assert len(U) == 1
+            U = U._list[0]
+            assert isinstance(U, DuneXTVector)
+            X = np.array(self.interpolation_points, copy=False)
+            Y = np.array(U.impl, copy=False)
+            name = legend if legend else 'STATE'
+            plt.plot(X, Y, label=name)
+            if title:
+                plt.title(title)
+            plt.legend()
+            plt.plot()
 
 
     class DuneGDTParaviewVisualizer(ImmutableObject):
