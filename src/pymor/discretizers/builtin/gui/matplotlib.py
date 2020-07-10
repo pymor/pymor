@@ -8,6 +8,7 @@ scalar data assigned to one- and two-dimensional grids using
 """
 
 import numpy as np
+from matplotlib import animation
 
 from pymor.core.config import config
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
@@ -16,7 +17,7 @@ from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 
 class MatplotlibPatchAxes:
 
-    def __init__(self, figure, grid, bounding_box=None, vmin=None, vmax=None, codim=2,
+    def __init__(self, U, ax, figure, grid, bounding_box=None, vmin=None, vmax=None, codim=2,
                  colorbar=True):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
@@ -31,22 +32,27 @@ class MatplotlibPatchAxes:
         self.vmin = vmin
         self.vmax = vmax
         self.codim = codim
-        a = figure.gca()
+        self.U = U
+        a = ax
         if self.codim == 2:
-            self.p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+            self.p = ax.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
                                  np.zeros(len(self.coordinates)),
                                  vmin=self.vmin, vmax=self.vmax, shading='gouraud')
         else:
-            self.p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+            self.p = ax.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
                                  facecolors=np.zeros(len(self.subentities)),
                                  vmin=self.vmin, vmax=self.vmax, shading='flat')
         if colorbar:
             figure.colorbar(self.p, ax=a)
+        delay_between_frames = 200  # ms
+        # TODO blit=True
+        self.anim = animation.FuncAnimation(figure, self.animate,
+                                       frames=U, interval=delay_between_frames,
+                                       blit=False)
 
-    def set(self, U, vmin=None, vmax=None):
+    def animate(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
         self.vmax = self.vmax if vmax is None else vmax
-        U = np.array(U)
         p = self.p
         if self.codim == 2:
             p.set_array(U)
@@ -55,6 +61,7 @@ class MatplotlibPatchAxes:
         else:
             p.set_array(np.tile(U, 2))
         p.set_clim(self.vmin, self.vmax)
+        return (p,)
 
 
 class Matplotlib1DAxes:
@@ -123,7 +130,7 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
     # noinspection PyShadowingNames
     class Matplotlib1DWidget(FigureCanvas):
 
-        def __init__(self, parent, grid, count, vmin=None, vmax=None, legend=None, codim=1,
+        def __init__(self, U, parent, grid, count, vmin=None, vmax=None, legend=None, codim=1,
                      separate_plots=False, dpi=100):
             assert isinstance(grid, OnedGrid)
             assert codim in (0, 1)
