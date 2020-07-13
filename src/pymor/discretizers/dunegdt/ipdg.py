@@ -37,7 +37,7 @@ if config.HAVE_DUNEGDT:
             LocalLaplaceIntegrand,
             LocalLinearAdvectionUpwindDirichletCouplingIntegrand,
             LocalLinearAdvectionUpwindInnerCouplingIntegrand,
-            LocalLinearAdvectionUpwindVolumeIntegrand,
+            LocalLinearAdvectionIntegrand,
             LocalIntersectionRestrictedIntegralFunctional,
             MatrixOperator,
             VectorFunctional,
@@ -316,7 +316,7 @@ if config.HAVE_DUNEGDT:
             # contributions to the left hand side
             def make_advection_operator(pymor_func, dune_func):
                 op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += LocalElementIntegralBilinearForm(LocalLinearAdvectionUpwindVolumeIntegrand(GF(grid, dune_func)))
+                op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, dune_func)))
                     # logging_prefix='volume'))
                 op += (LocalCouplingIntersectionRestrictedIntegralBilinearForm(restrict_to_inflow(pymor_func),
                     LocalLinearAdvectionUpwindInnerCouplingIntegrand(GF(grid, dune_func))), #logging_prefix='inner')),
