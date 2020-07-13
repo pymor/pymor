@@ -29,20 +29,18 @@ from pymor.core.exceptions import TorchMissing
 
 
 def create_fom(args):
-    rhs = ExpressionFunction('(x - 0.5)**2 * 1000', 1, ())
-
-    d0 = ExpressionFunction('1 - x', 1, ())
-    d1 = ExpressionFunction('x', 1, ())
-
-    f0 = ProjectionParameterFunctional('diffusionl')
-    f1 = 1.
-
     problem = StationaryProblem(
-        domain=LineDomain(),
-        rhs=rhs,
-        diffusion=LincombFunction([d0, d1], [f0, f1]),
-        dirichlet_data=ConstantFunction(value=0, dim_domain=1),
-        name='1DProblem'
+        domain=RectDomain(),
+        rhs=LincombFunction(
+            [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
+            [ProjectionParameterFunctional('mu'), 0.1]),
+        diffusion=LincombFunction(
+            [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],
+            [ProjectionParameterFunctional('mu'), 1]),
+        dirichlet_data=LincombFunction(
+            [ExpressionFunction('2 * x[..., 0]', 2, ()), ConstantFunction(1., 2)],
+            [ProjectionParameterFunctional('mu'), 0.5]),
+        name='2DProblem'
     )
 
     print('Discretize ...')
@@ -53,8 +51,6 @@ def create_fom(args):
 
 
 def neural_networks_demo(args):
-    logger = getLogger('pymordemos.neural_networks')
-
     if not config.HAVE_TORCH:
         raise TorchMissing()
 

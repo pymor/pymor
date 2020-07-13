@@ -62,42 +62,49 @@ A non-intrusive reduced order method using artificial neural networks
 
 We now assume that we are given a parametric pyMOR |Model| for which we want
 to compute a reduced order surrogate |Model| using a neural network. In this
-example, we consider the following one-dimensional diffusion problem with a
-parametrized diffusion coefficient:
+example, we consider the following two-dimensional diffusion problem with
+parametrized diffusion, right hand side and Dirichlet boundary condition:
 
 .. math::
 
-   -\nabla \cdot \big(\sigma(x, \mu) \nabla u(x, \mu) \big) = f(x, \mu),\quad x \in \Omega,
+    -\nabla \cdot \big(\sigma(x, \mu) \nabla u(x, \mu) \big) = f(x, \mu),\quad x=(x_1,x_2) \in \Omega,
 
-on the domain :math:`\Omega:= (0, 1) \subset \mathbb{R}` with data
-functions :math:`f(x, \mu) = 1000 \cdot (x-0.5)^2`,
-:math:`\sigma(x, \mu)=(1-x)*\mu+x`, where :math:`\mu \in (0.1, 1)` denotes the
-parameter. Further, we apply homogeneous Dirichlet boundary conditions.
+on the domain :math:`\Omega:= (0, 1)^2 \subset \mathbb{R}^2` with data
+functions :math:`f((x_1, x_2), \mu) = 10 \cdot \mu + 0.1`,
+:math:`\sigma((x_1, x_2), \mu) = (1 - x_1) \cdot \mu + x_1`, where
+:math:`\mu \in (0.1, 1)` denotes the parameter. Further, we apply the
+Dirichlet boundary conditions
+
+.. math::
+
+    u((x_1, x_2), \mu) = 2x_1\mu + 0.5,\quad x=(x_1, x_2) \in \partial\Omega.
+
 We discretize the problem using pyMOR's builtin discretization toolkit as
 explained in :doc:`tutorial01`:
 
 .. jupyter-execute::
 
     from pymor.basic import *
-    
 
-    problem = StationaryProblem(    
+    problem = StationaryProblem(
+          domain=RectDomain(),
 
-        domain=LineDomain(),
-        
-        rhs=ExpressionFunction('(x - 0.5)**2 * 1000', 1, ()),
-                
-        diffusion=LincombFunction(
-            [ExpressionFunction('1 - x', 1, ()),
-             ExpressionFunction('x', 1, ())], 
-            [ProjectionParameterFunctional('diffu'),
-             1.]
-        ),
-        
-        dirichlet_data=ConstantFunction(value=0, dim_domain=1),        
-    )
+          rhs=LincombFunction(
+              [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
+              [ProjectionParameterFunctional('mu'), 0.1]),
 
-    fom, _ = discretize_stationary_cg(problem, diameter=1/100)
+          diffusion=LincombFunction(
+              [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],
+              [ProjectionParameterFunctional('mu'), 1]),
+
+          dirichlet_data=LincombFunction(
+              [ExpressionFunction('2 * x[..., 0]', 2, ()), ConstantFunction(1., 2)],
+              [ProjectionParameterFunctional('mu'), 0.5]),
+
+          name='2DProblem'
+      )
+
+    fom, _ = discretize_stationary_cg(problem, diameter=1/50)
 
 Since we employ a single |Parameter|, and thus use the same range for each
 parameter, we can create the |ParameterSpace| using the following line:

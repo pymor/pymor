@@ -5,7 +5,7 @@
 """Example script for the usage of neural networks in model order reduction (approach by Hesthaven and Ubbiali)
 
 Usage:
-    neural_networks.py [--vis] TRAINING_SAMPLES VALIDATION_SAMPLES
+    neural_networks.py TRAINING_SAMPLES VALIDATION_SAMPLES
 
 Arguments:
     TRAINING_SAMPLES     Number of samples used for training the neural network.
@@ -13,7 +13,6 @@ Arguments:
 
 Options:
     -h, --help   Show this message.
-    --vis        Visualize full order solution and reduced solution for a test set.
 """
 
 from docopt import docopt
@@ -78,8 +77,7 @@ def _discretize_fenics():
                         solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
     rhs = VectorOperator(op.range.zeros())
 
-    fom = StationaryModel(op, rhs,
-                          visualizer=FenicsVisualizer(space))
+    fom = StationaryModel(op, rhs)
 
     return fom
 
@@ -105,7 +103,7 @@ def neural_networks_demo(args):
     rom = reductor.reduce(hidden_layers='[(N+P)*3, (N+P)*3, (N+P)*3]',
                           restarts=100)
 
-    test_set = parameter_space.sample_randomly(10)
+    test_set = parameter_space.sample_randomly(1)#0)
 
     speedups = []
 
@@ -129,10 +127,6 @@ def neural_networks_demo(args):
 
     absolute_errors = (U - U_red).l2_norm()
     relative_errors = (U - U_red).l2_norm() / U.l2_norm()
-
-    if args['--vis']:
-        fom.visualize((U, U_red),
-                      legend=('Full solution', 'Reduced solution'))
 
     print(f'Average absolute error: {np.average(absolute_errors)}')
     print(f'Average relative error: {np.average(relative_errors)}')

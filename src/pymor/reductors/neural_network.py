@@ -167,12 +167,12 @@ if config.HAVE_TORCH:
             with self.logger.block('Checking tolerances for error of neural network ...'):
 
                 if isinstance(self.ann_mse, Number) and self.losses['full'] > self.ann_mse:
-                    raise NeuralNetworkTrainingFailed('Could not train a neural network that
-                                                       guarantees prescribed tolerance!')
+                    raise NeuralNetworkTrainingFailed('Could not train a neural network that '
+                                                      'guarantees prescribed tolerance!')
                 elif self.ann_mse == 'like_basis' and self.losses['full'] > self.mse_basis:
-                    raise NeuralNetworkTrainingFailed('Could not train a neural network with an error as small as the
-                                                       reduced basis error! Maybe you can try a different neural
-                                                       network architecture or change the value of `ann_mse`.')
+                    raise NeuralNetworkTrainingFailed('Could not train a neural network with an error as small as the '
+                                                      'reduced basis error! Maybe you can try a different neural '
+                                                      'network architecture or change the value of `ann_mse`.')
                 elif self.ann_mse is None:
                     self.logger.info('Using neural network with smallest validation error ...')
                     self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
@@ -271,8 +271,8 @@ if config.HAVE_TORCH:
                         if phase == 'val' and early_stopping_scheduler(losses, neural_network):
                             if not self.logging_disabled:
                                 self.logger.info(f'Early stopping training process after {epoch + 1} epochs ...')
-                                self.logger.info(f'Minimum validation loss:
-                                                   {early_stopping_scheduler.best_losses["val"]}')
+                                self.logger.info('Minimum validation loss: '
+                                                 f'{early_stopping_scheduler.best_losses["val"]}')
                             return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
 
             return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
