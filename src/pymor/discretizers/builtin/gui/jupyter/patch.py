@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import numpy as np
 from ipywidgets import HTML, HBox
+from matplotlib import pyplot
 
 from pymor.core.config import config
 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes
@@ -88,6 +89,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             self.plots = plots = []
             axes = []
             for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
+                # we do not use figures.subplots since conditionally returns an axes array or a single object
                 ax = figure.add_subplot(rows, columns, i+1)
                 axes.append(ax)
                 plots.append(MatplotlibPatchAxes(U=u, ax=ax, figure=figure, grid=grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
@@ -95,7 +97,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 if legend:
                     ax.set_title(legend[i])
 
-            plt.tight_layout()
+            # plt.tight_layout()
             if not separate_colorbars:
                 figure.colorbar(plots[0].p, ax=axes)
 
@@ -114,7 +116,19 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     plot = Plot()
 
     if len(U[0]) > 1:
+        class concat_display(object):
+            """Display HTML representation of multiple objects"""
+            template = """<div style="float: left; padding: 10px;">{0}</div>"""
 
-        return HBox([HTML(p.anim.to_jshtml()) for p in plot.plots])
+            def __init__(self, *args):
+                self.args = args
+
+            def _repr_html_(self):
+                return '\n'.join(self.template.format(a._repr_html_()) for a in self.args)
+
+            def __repr__(self):
+                return '\n\n'.join(repr(a) for a in self.args)
+
+        return concat_display(*[p.html for p in plot.plots])
 
     return plot
