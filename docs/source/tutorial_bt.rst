@@ -142,9 +142,9 @@ full-order LTI system and truncating it to obtain a reduced-order model. In
 particular, there exist invertible transformation matrices
 :math:`T, S \in \mathbb{R}^{n \times n}` such that the equivalent full-order
 model with
-:math:`\widetilde{E} = S E T = I`,
-:math:`\widetilde{A} = S A T`,
-:math:`\widetilde{B} = S B`,
+:math:`\widetilde{E} = S^T E T = I`,
+:math:`\widetilde{A} = S^T A T`,
+:math:`\widetilde{B} = S^T B`,
 :math:`\widetilde{C} = C T`
 has Gramians :math:`\widetilde{P}` and :math:`\widetilde{Q}`, i.e., solutions to
 Lyapunov equations
@@ -165,8 +165,9 @@ Lyapunov equations
 such that
 :math:`\widetilde{P} = \widetilde{Q} = \Sigma = \operatorname{diag}(\sigma_i)`,
 where :math:`\sigma_i` are the Hankel singular values.
-Based on this, basis matrices :math:`V, W \in \mathbb{R}^{n \times r}` can be
-constructed to obtain a reduced-order model
+Then, taking as basis matrices :math:`V, W \in \mathbb{R}^{n \times r}` the
+first :math:`r` columns of :math:`T` and :math:`S` (possibly after
+orthonormalization), gives a reduced-order model
 
 .. math::
 
@@ -183,15 +184,15 @@ with
 :math:`\widehat{B} = W^T B`,
 :math:`\widehat{C} = C V`,
 which satisfies the :math:`\mathcal{H}_\infty` (i.e., induced
-:math:`\mathcal{L}_2`-:math:`\mathcal{L}_2`) error bound
+:math:`\mathcal{L}_2`) error bound
 
 .. math::
 
     \sup_{u \neq 0} \frac{\lVert y - \widehat{y} \rVert_{\mathcal{L}_2}}{\lVert u \rVert_{\mathcal{L}_2}}
     \leqslant 2 \sum_{i = r + 1}^n \sigma_i.
 
-Note that any reduced-order model (not only those from balanced truncation)
-satisfies the lower bound
+Note that any reduced-order model (not only from balanced truncation) satisfies
+the lower bound
 
 .. math::
 
