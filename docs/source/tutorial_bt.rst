@@ -2,7 +2,6 @@ Tutorial: Reducing a heat equation using balanced truncation
 ============================================================
 
 
-
 Heat equation
 -------------
 
@@ -29,6 +28,7 @@ two inputs :math:`u_1, u_2` and three outputs :math:`y_1, y_2, y_2`:
 In the following, we will create a discretized |Model| and reduce it using the
 balanced truncation method to approximate the mapping from inputs
 :math:`u = (u_1, u_2)` to outputs :math:`y = (y_1, y_2, y_3)`.
+
 
 Discretized model
 -----------------
@@ -199,7 +199,9 @@ We can compute the relative errors in :math:`\mathcal{H}_\infty` or
 .. note::
 
     To compute the :math:`\mathcal{H}_\infty` norms, pyMOR uses the dense solver
-    from Slycot, and therefore all of the operators have to be converted to dense matrices.
-    For large systems, this may be very expensive.
-    
-Download the code: :jupyter-download:script:`tutorial_bt` :jupyter-download:notebook:`tutorial_bt`
+    from Slycot, and therefore all of the operators have to be converted to
+    dense matrices. For large systems, this may be very expensive.
+
+Download the code:
+:jupyter-download:script:`tutorial_bt`
+:jupyter-download:notebook:`tutorial_bt`
