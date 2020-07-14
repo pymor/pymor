@@ -8,7 +8,8 @@ scalar data assigned to one- and two-dimensional grids using
 """
 
 import numpy as np
-from matplotlib import animation
+from IPython.core.display import display, HTML
+from matplotlib import animation, pyplot
 
 from pymor.core.config import config
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
@@ -33,7 +34,7 @@ class MatplotlibPatchAxes:
         self.vmax = vmax
         self.codim = codim
         self.U = U
-        a = ax
+
         if self.codim == 2:
             self.p = ax.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
                                  np.zeros(len(self.coordinates)),
@@ -43,17 +44,23 @@ class MatplotlibPatchAxes:
                                  facecolors=np.zeros(len(self.subentities)),
                                  vmin=self.vmin, vmax=self.vmax, shading='flat')
         if colorbar:
-            figure.colorbar(self.p, ax=a)
-        delay_between_frames = 200  # ms
+            figure.colorbar(self.p, ax=ax)
+
+        delay_between_frames = 500  # ms
         # TODO blit=True
-        self.anim = animation.FuncAnimation(figure, self.animate,
+        self.anim = animation.FuncAnimation(figure, self.set,
                                        frames=U, interval=delay_between_frames,
                                        blit=False)
+        # generating the HTML instance outside this class causes the plot display to fail
+        self.html = HTML(self.anim.to_jshtml())
+        # otherwise the subplot displays twice
+        pyplot.close(figure)
 
-    def animate(self, U, vmin=None, vmax=None):
+    def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
         self.vmax = self.vmax if vmax is None else vmax
         p = self.p
+
         if self.codim == 2:
             p.set_array(U)
         elif self.reference_element is triangle:
