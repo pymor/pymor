@@ -123,7 +123,7 @@ linear combination defined by the reduced coefficients. The reduced basis is
 created via POD.
 
 The method described above is "non-intrusive", which means that no deep insight
-into the model or it's implementation is required and it is completely
+into the model or its implementation is required and it is completely
 sufficient to be able to generate full order snapshots for a randomly chosen
 set of parameters. This is one of the main advantages of the proposed approach,
 since one can simply train a neural network, check its performance and resort
