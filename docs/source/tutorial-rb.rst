@@ -42,7 +42,7 @@ of the |Model| for the given |parameter values| :math:`\mu`.
 In pyMOR the set :math:`\mathcal{P}` is called the |ParameterSpace|.
 
 How to read this formula? For each candidate reduced space :math:`V_N` we
-look at all possible |parameter values| `\mu` and compute the best-approximation
+look at all possible |parameter values| :math:`\mu` and compute the best-approximation
 error in :math:`V_N` (the second infimum). The supremum over the infimum
 is thus the worst-case best-approximation error over all |parameter values| of
 interest. Now we take the infimum of the worst-case best-approximation errors
@@ -58,7 +58,7 @@ close to :math:`d_N` as possible.
 However, we will only find a good :math:`V_N` of small dimension
 :math:`N` if the values :math:`d_N` decrease quickly for growing
 :math:`N`. It can be shown that this is the case as soon as :math:`u(\mu)`
-analytically depends on :math:`\mu`, which is the true for many problems
+analytically depends on :math:`\mu`, which is true for many problems
 of interest. More precisely, it can be shown that there are constants
 :math:`C, c > 0` such that
 
@@ -97,7 +97,7 @@ Then we build a 3-by-3 thermalblock problem that we discretize using pyMOR's
 Next, we need to define a |ParameterSpace| of |parameter values| for which
 the solutions of `fom` should be approximated by the reduced basis. We do
 this by calling the :meth:`~pymor.parameters.base.Parameters.space` method
-of the |parameters| of `m`:
+of the |parameters| of `fom`:
 
 .. jupyter-execute::
 
@@ -258,9 +258,9 @@ the best-approximation error in `trivial_basis` for some test vector
 
     V = fom.solve(parameter_space.sample_randomly(1)[0])
 
-The matrix G of all inner products between vectors in `trivial_basis`
+The matrix :math:`G` of all inner products between vectors in `trivial_basis`
 is a so called `Gramian matrix <https://en.wikipedia.org/wiki/Gramian_matrix>`_.
-Luckily, every ``VectorArray`` has a ``gramian`` method, which computes precisely
+Luckily, every |VectorArray| has a :meth:`~pymor.vectorarrays.interface.VectorArray.gramian` method, which computes precisely
 this matrix:
 
 .. jupyter-execute::
@@ -310,7 +310,7 @@ differences:
 .. jupyter-execute::
 
     fom.visualize((V, V_proj, V - V_proj),
-                  legend=('V', 'V_proj', 'best-approximation errr'),
+                  legend=('V', 'V_proj', 'best-approximation err'),
                   separate_colorbars=True)
 
 As you can see, we already have a quite good approximation of `V` with
@@ -318,11 +318,11 @@ only 25 basis vectors.
 
 Now, the Euclidean norm will just work fine in many cases.
 However, when `fom` comes from a PDE, it will be usually not the norm
-we are interested in, and you may get poor results for problem with
+we are interested in, and you may get poor results for problems with
 strongly anisotropic meshes. 
 
 For our diffusion problem with homogeneous Dirichlet boundaries,
-the Sobolev semi-norm (of order one) is a natural choice. Luckily,
+the Sobolev semi-norm (of order one) is a natural choice. Among other useful products,
 :meth:`~pymor.discretizers.builtin.cg.discretize_stationary_cg` already
 assembled a corresponding inner product |Operator| for us, which is available
 as
@@ -364,7 +364,7 @@ as well.
 
 Next we will assess the approximation error a bit more thoroughly, by
 evaluating it on a validation set of 100 |parameter values| for varying
-basis sized.
+basis sizes.
 
 First, we compute the validation snapshots:
 
@@ -396,7 +396,7 @@ and then extract appropriate sub-matrices:
 
     trivial_errors = compute_proj_errors(trivial_basis, V, fom.h1_0_semi_product)
 
-Here we have used the fact that we can form multiple linear combinations at once by passing a
+Here we have used the fact that we can form multiple linear combinations at once by passing
 multiple rows of linear coefficients to 
 :meth:`~pymor.vectorarrays.interface.VectorArray.lincomb`. The
 :meth:`~pymor.vectorarrays.interface.VectorArray.norm` method returns a
@@ -424,7 +424,7 @@ won't be optimal.
 Strong greedy algorithm
 -----------------------
 
-The strong greedy algorithm tries to iteratively build reduced spaces
+The strong greedy algorithm iteratively builds reduced spaces
 :math:`V_N` with a small worst-case best approximation error on a
 training set of solution snapshots by adding, in each iteration, the
 currently worst-approximated snapshot vector to the basis of :math:`V_N`.
@@ -478,7 +478,7 @@ or exponential decay of the N-widths :math:`d_N` yields similar rates
 for the worst-case best-approximation errors of the constructed :math:`V_N`.
 
 
-Orthogonalization required
+Orthonormalization required
 --------------------------
 
 There is one technical problem with both algorithms however: the
@@ -502,10 +502,10 @@ onto :math:`V_N` explode:
 This is quite obvious as the snapshot matrix `U` becomes more and
 more linear dependent the larger it grows.
 
-If we would use the bases we just constructed to build a reduced order model
+If we would use the bases we just constructed to build a reduced-order model
 from them, we will quickly get bitten by the limited accuracy of floating-point numbers.
 
-There is a simple remedy however: we orthogonalize our bases. The standard
+There is a simple remedy however: we orthonormalize our bases. The standard
 algorithm in pyMOR to do so, is a modified
 :meth:`~pymor.algorithms.gram_schmidt.gram_schmidt` procedure with
 re-orthogonalization to improve numerical accuracy:
@@ -534,7 +534,7 @@ numbers should be near 1:
 
 Orthonormalizing the bases does not change their linear span, so
 best-approximation errors stay the same. Also, we can
-can compute these errors now more easily by exploiting orthogonality:
+compute these errors now more easily by exploiting orthogonality:
 
 .. jupyter-execute::
 
@@ -614,7 +614,7 @@ with some given inner product. To account for that, instead of the snapshot matr
 
 Also for this finite-rank (hence compact) operator there exists a SVD of the form
 
-.. math:: \Phi(v) = \sum_{i=1}^r u_i \cdot \sigma_i \cdot (v_i, u) \qquad \forall v \in \mathbb{R}^K,
+.. math:: \Phi(v) = \sum_{i=1}^r u_i \cdot \sigma_i \cdot (v_i, v) \qquad \forall v \in \mathbb{R}^K,
 
 with orthonormal vectors :math:`u_i` and :math:`v_i` that generalizes the SVD of a matrix.
 
@@ -687,9 +687,9 @@ in the first place. This is a problem when the number of |parameters|
 increases and/or the solution depends less uniformly on the |parameters|.
 
 Reduced basis methods have a very elegant solution to this problem, which
-allows training sets that are orders of magnitude larger than the trainings
+allows training sets that are orders of magnitude larger than the training
 sets affordable for POD: instead of computing the best-approximation error
-we only compute surrogate
+we only compute a surrogate
 
 .. math:: \inf_{v \in V_N} \|u(\mu) - v\| \approx \mathcal{E}(\mu)
 
@@ -702,13 +702,13 @@ algorithm, although the involved constants might be worse, depending on the
 efficiency of :math:`\mathcal{E}(\mu)`.
 
 Now here comes the trick: to get a surrogate that can be quickly computed, we can
-use our current reduced order model for it. More precisely, we choose :math:`\mathcal{E}(\mu)`
+use our current reduced-order model for it. More precisely, we choose :math:`\mathcal{E}(\mu)`
 to be of the form
 
 .. math:: \mathcal{E}(\mu):= \operatorname{Err-Est}(\operatorname{ROM-Solve}(\mu), \mu).
 
 So to compute the surrogate for fixed |parameter values| :math:`\mu`, we first
-:meth:`~pymor.models.interface.Model.solve` the reduced order model for the current
+:meth:`~pymor.models.interface.Model.solve` the reduced-order model for the current
 reduced basis for these |parameter values| and then compute an estimate for the
 model order reduction error.
 
@@ -720,7 +720,7 @@ of the `fom`. Here we will only give a simple example how to use the
 :meth:`weak greedy <pymor.algorithms.greedy.weak_greedy>` algorithm for our problem at hand.
 
 In order to do so, we need to be able to build a reduced-order
-model with an appropriate error estimator. For the given thermal block problem 
+model with an appropriate error estimator. For the given (linear coercive) thermal block problem 
 we can use :class:`~pymor.reductors.coercive.CoerciveRBReductor`:
 
 .. jupyter-execute::
@@ -755,7 +755,7 @@ the surrogate :math:`\mathcal{E}(\mu)`.
 
 The returned `greedy_data` dictionary contains various information about the run
 of the algorithm, including the final ROM. Here, however, we are interested in the
-generated reduced basis, which is manged by the `reductor`:
+generated reduced basis, which is managed by the `reductor`:
 
 .. jupyter-execute::
 
