@@ -137,7 +137,68 @@ As expected for a heat equation, the Hankel singular values decay rapidly.
 Running balanced truncation
 ---------------------------
 
-First, we need the reductor object
+The balanced truncation method consists of finding a balanced realization of the
+full-order LTI system and truncating it to obtain a reduced-order model. In
+particular, there exist invertible transformation matrices
+:math:`T, S \in \mathbb{R}^{n \times n}` such that the equivalent full-order
+model with
+:math:`\widetilde{E} = S E T = I`,
+:math:`\widetilde{A} = S A T`,
+:math:`\widetilde{B} = S B`,
+:math:`\widetilde{C} = C T`
+has Gramians :math:`\widetilde{P}` and :math:`\widetilde{Q}`, i.e., solutions to
+Lyapunov equations
+
+.. math::
+
+    \begin{align}
+        \widetilde{A} \widetilde{P}
+        + \widetilde{P} \widetilde{A}^T
+        + \widetilde{B} \widetilde{B}^T
+        & = 0, \\
+        \widetilde{A}^T \widetilde{Q}
+        + \widetilde{Q} \widetilde{A}
+        + \widetilde{C}^T \widetilde{C}
+        & = 0, \\
+    \end{align}
+
+such that
+:math:`\widetilde{P} = \widetilde{Q} = \Sigma = \operatorname{diag}(\sigma_i)`,
+where :math:`\sigma_i` are the Hankel singular values.
+Based on this, basis matrices :math:`V, W \in \mathbb{R}^{n \times r}` can be
+constructed to obtain a reduced-order model
+
+.. math::
+
+    \begin{align}
+        \widehat{E} \dot{\widehat{x}}(t)
+        & = \widehat{A} \widehat{x}(t) + \widehat{B} u(t), \\
+        \widehat{y}(t)
+        & = \widehat{C} \widehat{x}(t) + D u(t),
+    \end{align}
+
+with
+:math:`\widehat{E} = W^T E V`,
+:math:`\widehat{A} = W^T A V`,
+:math:`\widehat{B} = W^T B`,
+:math:`\widehat{C} = C V`,
+which satisfies the :math:`\mathcal{H}_\infty` (i.e., induced
+:math:`\mathcal{L}_2`-:math:`\mathcal{L}_2`) error bound
+
+.. math::
+
+    \sup_{u \neq 0} \frac{\lVert y - \widehat{y} \rVert_{\mathcal{L}_2}}{\lVert u \rVert_{\mathcal{L}_2}}
+    \leqslant 2 \sum_{i = r + 1}^n \sigma_i.
+
+Note that any reduced-order model (not only those from balanced truncation)
+satisfies the lower bound
+
+.. math::
+
+    \sup_{u \neq 0} \frac{\lVert y - \widehat{y} \rVert_{\mathcal{L}_2}}{\lVert u \rVert_{\mathcal{L}_2}}
+    \geqslant \sigma_{r + 1}.
+
+To run balanced truncation in pyMOR, we first need the reductor object
 
 .. jupyter-execute::
 
