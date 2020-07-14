@@ -1,8 +1,6 @@
 Tutorial: Reducing a heat equation using balanced truncation
 ============================================================
 
-:jupyter-download:notebook:`tutorial02`
-:jupyter-download:script:`tutorial02`
 
 
 Heat equation
@@ -198,5 +196,10 @@ We can compute the relative errors in :math:`\mathcal{H}_\infty` or
     print(f'Relative Hinf error: {(fom - rom).hinf_norm() / fom.hinf_norm():.3e}')
     print(f'Relative H2 error:   {(fom - rom).h2_norm() / fom.h2_norm():.3e}')
 
-To compute the :math:`\mathcal{H}_\infty` norms, pyMOR uses the dense solver
-from Slycot, and therefore all of the operators are converted to dense matrices.
+.. note::
+
+    To compute the :math:`\mathcal{H}_\infty` norms, pyMOR uses the dense solver
+    from Slycot, and therefore all of the operators have to be converted to dense matrices.
+    For large systems, this may be very expensive.
+    
+Download the code: :jupyter-download:script:`tutorial_bt` :jupyter-download:notebook:`tutorial_bt`
