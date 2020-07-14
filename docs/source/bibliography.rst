@@ -51,6 +51,10 @@ Bibliography
             Linear Algebra and its Applications, 2006, 415(2–3),
             373-384
 
+.. [DPW13] R. DeVore, G. Petrova & P. Wojtaszczyk, 
+           Greedy Algorithms for Reduced Bases in Banach Spaces,
+           Constructive Approximation, 37, 455–466, 2013.
+
 .. [GP05]   M. A. Grepl, A. T. Patera, A Posteriori Error Bounds For Reduced-Basis
             Approximations Of Parametrized Parabolic Partial Differential Equations,
             M2AN 39(1), 157-181, 2005.

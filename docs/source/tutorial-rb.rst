@@ -59,7 +59,7 @@ However, we will only find a good :math:`V_N` of small dimension
 :math:`N` if the values :math:`d_N` decrease quickly for growing
 :math:`N`. It can be shown that this is the case as soon as :math:`u(\mu)`
 analytically depends on :math:`\mu`, which is true for many problems
-of interest. More precisely, it can be shown that there are constants
+of interest. More precisely, it can be shown [BCDDPW11]_, [DPW13]_ that there are constants
 :math:`C, c > 0` such that
 
 .. math:: d_N \leq C \cdot e^{-N^c}.
@@ -75,7 +75,7 @@ First we need to define a |Model| and a |ParameterSpace| for which we want
 to build a reduced basis. We choose here the standard
 :meth:`thermal block <pymor.analyticalproblems.thermalblock.thermal_block_problem>` benchmark
 problem shipped with pyMOR (see :doc:`getting_started`). However, any pyMOR
-|Model| can be used, except for Section :ref:`weakgreedy` where
+|Model| can be used, except for Section ':ref:`weakgreedy`' where
 some more assumptions have to be made on the |Model|.
 
 First we import everything we need:
@@ -95,8 +95,8 @@ Then we build a 3-by-3 thermalblock problem that we discretize using pyMOR's
     fom, _ = discretize_stationary_cg(problem, diameter=1/100)
 
 Next, we need to define a |ParameterSpace| of |parameter values| for which
-the solutions of `fom` should be approximated by the reduced basis. We do
-this by calling the :meth:`~pymor.parameters.base.Parameters.space` method
+the solutions of the full-order model `fom` should be approximated by the reduced basis.
+We do this by calling the :meth:`~pymor.parameters.base.Parameters.space` method
 of the |parameters| of `fom`:
 
 .. jupyter-execute::
@@ -135,7 +135,7 @@ following. First we define a training set of 25 parameters:
     training_set = parameter_space.sample_randomly(25)
     print(training_set)
 
-Then we :meth:`~pymor.models.interface.Model.solve` the `fom`
+Then we :meth:`~pymor.models.interface.Model.solve` the full-order model
 for all |parameter values| in the training set and accumulate all
 solution vectors in a single |VectorArray| using its
 :meth:`~pymor.vectorarrays.interface.VectorArray.append` method. But first
@@ -260,7 +260,7 @@ the best-approximation error in `trivial_basis` for some test vector
 
 The matrix :math:`G` of all inner products between vectors in `trivial_basis`
 is a so called `Gramian matrix <https://en.wikipedia.org/wiki/Gramian_matrix>`_.
-Luckily, every |VectorArray| has a :meth:`~pymor.vectorarrays.interface.VectorArray.gramian` method, which computes precisely
+Consequently, every |VectorArray| has a :meth:`~pymor.vectorarrays.interface.VectorArray.gramian` method, which computes precisely
 this matrix:
 
 .. jupyter-execute::
@@ -317,7 +317,7 @@ As you can see, we already have a quite good approximation of `V` with
 only 25 basis vectors.
 
 Now, the Euclidean norm will just work fine in many cases.
-However, when `fom` comes from a PDE, it will be usually not the norm
+However, when the full-order model comes from a PDE, it will be usually not the norm
 we are interested in, and you may get poor results for problems with
 strongly anisotropic meshes. 
 
@@ -479,7 +479,7 @@ for the worst-case best-approximation errors of the constructed :math:`V_N`.
 
 
 Orthonormalization required
---------------------------
+---------------------------
 
 There is one technical problem with both algorithms however: the
 condition numbers of the Gramians used to compute the projection
@@ -693,8 +693,9 @@ we only compute a surrogate
 
 .. math:: \inf_{v \in V_N} \|u(\mu) - v\| \approx \mathcal{E}(\mu)
 
-for it. Replacing the best-approximation error by this surrogate in the :ref:`stronggreedy`
-algorithm, we arrive at the :meth:`weak greedy <pymor.algorithms.greedy.weak_greedy>`
+for it. Replacing the best-approximation error by this surrogate in the
+:ref:`strong greedy <stronggreedy>` algorithm, we arrive at the
+:meth:`weak greedy <pymor.algorithms.greedy.weak_greedy>`
 algorithm. If the surrogate :math:`\mathcal{E}(\mu)` is an upper and lower bound
 to the best-approximation error up to some fixed factor, it can still be shown that the
 produced reduced spaces are quasi-optimal in the same sense as for the strong greedy
@@ -716,7 +717,7 @@ We won't go into any further details in this tutorial, but for nice problem clas
 (linear coercive problems with an affine dependence of the system matrix on the |Parameters|),
 one can derive a posteriori error estimators for which the equivalence with the best-approximation
 error can be shown and which can be computed efficiently, independently from the size
-of the `fom`. Here we will only give a simple example how to use the 
+of the full-order model. Here we will only give a simple example how to use the 
 :meth:`weak greedy <pymor.algorithms.greedy.weak_greedy>` algorithm for our problem at hand.
 
 In order to do so, we need to be able to build a reduced-order
@@ -738,7 +739,7 @@ the given inner product. In our case, this is just the minimum of the diffusivit
 all subdomains.
 
 Now we can call :meth:`~pymor.algorithms.greedy.rb_greedy`, which constructs for us the
-surrogate :math:`\mathcal{E}(\mu)` from the `fom` and the `reductor` we just
+surrogate :math:`\mathcal{E}(\mu)` from `fom` and the `reductor` we just
 constructed. It then passes this surrogate to the :meth:`~pymor.algorithms.greedy.weak_greedy`
 method. Furthermore, we need to specify the number of basis vectors we want to compute
 (we could also have specified an error tolerance) and the training set.
