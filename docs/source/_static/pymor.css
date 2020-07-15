@@ -1,33 +1,6 @@
-@import "default.css";
-
-.field-list th {
-  white-space: nowrap;
-  background-color: #F2F2F2;
-}
-
-.admonition-methods table {
-    width: 85%;
-    margin-left: 20px;
-    margin-top: 5px;
-}
-
-.admonition-attributes table {
-    width: 85%;
-    margin-left: 20px;
-    margin-top: 5px;
-}
-
-.admonition-parameters dl {
-    margin-left: 20px;
-    margin-top: 5px;
-}
-
-.admonition-returns dl {
-    margin-left: 20px;
-    margin-top: 5px;
-}
-
-.admonition-raises dl {
-    margin-left: 20px;
-    margin-top: 5px;
+.md-typeset .md-typeset__table{
+    display:inline-block;
+    /* background-color: red; */
+    margin-bottom:.5em;
+    padding:0 .8rem
 }
