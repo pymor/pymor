@@ -1,0 +1,7 @@
+{% extends '!layout.html' %}
+
+{%- block extrahead %}
+{# Call the parent block #}
+{{ super() }}
+<link rel="stylesheet" href="{{ pathto('_static/pymor.css', 1) }}"/>
+{%- endblock %}
