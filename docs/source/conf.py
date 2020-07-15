@@ -156,8 +156,6 @@ pygments_style = 'sphinx'
 html_theme = 'sphinx_material'
 html_theme_options = {
     'base_url': 'https://gh-docs.pymor.org/',
-    'repo_url': 'https://github.com/pymor/pymor/',
-    'repo_name': 'pyMOR',
     'html_minify': True,
     'css_minify': True,
     'nav_title': 'pyMOR Documentation',
