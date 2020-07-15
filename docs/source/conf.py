@@ -152,12 +152,14 @@ pygments_style = 'sphinx'
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-# html_style = 'pymor.css'
+
+on_gitlab_ci = os.environ.get('GITLAB_CI', 'nope') != 'nope'
+
 html_theme = 'sphinx_material'
 html_theme_options = {
     'base_url': 'https://gh-docs.pymor.org/',
-    'html_minify': True,
-    'css_minify': True,
+    'html_minify': on_gitlab_ci,
+    'css_minify': on_gitlab_ci,
     'nav_title': 'pyMOR Documentation',
     'logo_icon': '&#xe869',
     'globaltoc_depth': 5,
