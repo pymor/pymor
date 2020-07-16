@@ -11,7 +11,7 @@ from tempfile import mkdtemp
 import shutil
 
 from pymortests.base import runmodule, check_results
-from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing
+from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing, TorchMissing
 from pymor.discretizers.builtin.gui.qt import stop_gui_processes
 from pymor.core.config import is_windows_platform, is_macos_platform
 from pymor.tools.mpi import parallel
@@ -34,6 +34,8 @@ DISCRETIZATION_ARGS = (
     ('burgers', ['--num-flux=lax_friedrichs', '0.1']),
     ('burgers', ['--num-flux=engquist_osher', '0.1']),
     ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
+    ('neural_networks', [50, 100, 20]),
+    ('neural_networks_fenics', [30, 5]),
     ('parabolic', ['heat', 1]),
     ('parabolic', ['heat', '--rect', 1]),
     ('parabolic', ['heat', '--fv', 1]),
@@ -183,6 +185,8 @@ def _test_demo(demo):
         pytest.xfail(f'Gmsh not intalled')
     except MeshioMissing:
         pytest.xfail(f'meshio not intalled')
+    except TorchMissing:
+        pytest.xfail(f'torch not installed')
     finally:
         stop_gui_processes()
 
