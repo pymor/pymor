@@ -46,29 +46,24 @@ class MatplotlibPatchAxes:
         if colorbar:
             figure.colorbar(self.p, ax=ax)
 
-        delay_between_frames = 500  # ms
-        # TODO blit=True
+        delay_between_frames = 200  # ms
         self.anim = animation.FuncAnimation(figure, self.set,
                                        frames=U, interval=delay_between_frames,
-                                       blit=False)
+                                       blit=True)
         # generating the HTML instance outside this class causes the plot display to fail
         self.html = HTML(self.anim.to_jshtml())
-        # otherwise the subplot displays twice
-        pyplot.close(figure)
 
     def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
         self.vmax = self.vmax if vmax is None else vmax
-        p = self.p
-
         if self.codim == 2:
-            p.set_array(U)
+            self.p.set_array(U)
         elif self.reference_element is triangle:
-            p.set_array(U)
+            self.p.set_array(U)
         else:
-            p.set_array(np.tile(U, 2))
-        p.set_clim(self.vmin, self.vmax)
-        return (p,)
+            self.p.set_array(np.tile(U, 2))
+        self.p.set_clim(self.vmin, self.vmax)
+        return (self.p,)
 
 
 class Matplotlib1DAxes:

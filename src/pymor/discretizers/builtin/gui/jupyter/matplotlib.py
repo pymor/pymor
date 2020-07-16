@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import numpy as np
 from ipywidgets import HTML, HBox
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
 
 from pymor.core.config import config
 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes, Matplotlib1DAxes
@@ -81,26 +81,19 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     self.vmins = (min(np.min(u) for u in U),) * len(U)
                     self.vmaxs = (max(np.max(u) for u in U),) * len(U)
 
-            import matplotlib.pyplot as plt
 
             rows = int(np.ceil(len(U) / columns))
             self.figure = figure = plt.figure()
 
             self.plots = plots = []
-            axes = []
             for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
                 # we do not use figures.subplots since conditionally returns an axes array or a single object
                 ax = figure.add_subplot(rows, columns, i+1)
-                axes.append(ax)
+
                 plots.append(MatplotlibPatchAxes(U=u, ax=ax, figure=figure, grid=grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
                                                  codim=codim, colorbar=separate_colorbars or i == len(U)-1))
                 if legend:
                     ax.set_title(legend[i])
-
-            # plt.tight_layout()
-            if not separate_colorbars:
-                if hasattr(plots[0], 'p'):
-                    figure.colorbar(plots[0].p, ax=axes)
 
         def set(self, U, ind):
             if rescale_colorbars:
@@ -130,6 +123,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             def __repr__(self):
                 return '\n\n'.join(repr(a) for a in self.args)
 
+        # otherwise the subplot displays twice
+        plt.close(plot.figure)
         return concat_display(*[p.html for p in plot.plots])
 
     return plot
