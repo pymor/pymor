@@ -93,7 +93,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 ax = figure.add_subplot(rows, columns, i+1)
                 axes.append(ax)
                 plots.append(MatplotlibPatchAxes(U=u, ax=ax, figure=figure, grid=grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
-                                                 codim=codim, colorbar=separate_colorbars))
+                                                 codim=codim, colorbar=separate_colorbars or i == len(U)-1))
                 if legend:
                     ax.set_title(legend[i])
 
