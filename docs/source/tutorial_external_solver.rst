@@ -1,14 +1,14 @@
-Tutorial: Binding external PDE solver to pyMOR
-================================================
+Tutorial: Binding an external PDE solver to pyMOR
+=================================================
 
-One of pyMOR's main features is easy integration of external Solvers. In this tutorial
-we will do this step-by-step for a toy solver of the one dimensional diffusion equation written in C++.
+One of pyMOR's main features is easy integration of external solvers. In this tutorial
+we will do this step-by-step for a toy solver of the one-dimensional diffusion equation written in C++.
 
 
 Defining the PDE solver
 -----------------------
 
-First we need a class to store our data in with some basic linear algebra operations
+First, we need a class to store our data in and with some basic linear algebra operations
 declared on it.
 
 
@@ -17,16 +17,16 @@ declared on it.
     :language: cpp
 
 
-Next we need the operator that discretizes our PDE.
+Next, we need the operator that discretizes our PDE.
 
 .. literalinclude:: minimal_cpp_demo/model.hh
     :lines: 22-32
     :language: cpp
 
 
-Together with some header guards these two snippets make up our :download:`model.hh <minimal_cpp_demo/model.hh>`.
+Together with some header guards, these two snippets make up our :download:`model.hh <minimal_cpp_demo/model.hh>`.
 
-The definitions for the Vector class are pretty straight forward:
+The definitions for the `Vector` class are pretty straightforward:
 
 .. literalinclude:: minimal_cpp_demo/model.cc
     :lines: 7-35
@@ -38,22 +38,22 @@ Just like the diffusion operator that computes a central differences stencil:
     :lines: 39-49
     :language: cpp
 
-This completes all the C++ code needed for the toy solver itself. Next we will make this code usable from Python.
+This completes all the C++ code needed for the toy solver itself. Next, we will make this code usable from Python.
 We utilize the `pybind11 <https://github.com/pybind/pybind11>`_ library to create a Python
-`extension module <https://docs.python.org/3/extending/extending.html>`_ named "model", that allows us to manipulate
-instances of the C++ "Vector" and "DiffusionOperator" classes.
+`extension module <https://docs.python.org/3/extending/extending.html>`_ named `model`, that allows us to manipulate
+instances of the C++ `Vector` and `DiffusionOperator` classes.
 
 Binding the solver to Python
 ----------------------------
 
-All of the extension module related C++ code is defined inside a scope started with
+All of the C++ code related to the extension module is defined inside a scope started with
 
 .. literalinclude:: minimal_cpp_demo/model.cc
     :lines: 56-57
     :language: cpp
 
-This tells pybind11 to make the contained symbols accessible in module instance `m` that will be importable by the
-name 'model'. Now we create a new pybind11 `class\_` object that wraps the `DiffusionOperator`. Note that the module
+This tells pybind11 to make the contained symbols accessible in the module instance `m` that will be importable by the
+name `model`. Now we create a new pybind11 `class\_` object that wraps the `DiffusionOperator`. Note that the module
 instance is passed to the constructor alongside a name for the Python class and a docstring. The second
 line shows how to define an init function for the Python object by using the special `py:init` object to
 forward arguments to the C++ constructor.
@@ -62,13 +62,13 @@ forward arguments to the C++ constructor.
     :lines: 60-61
     :language: cpp
 
-Next we define read only properties on the Python side named after and delegated to the members of the C++ class.
+Next, we define read-only properties on the Python side named after and delegated to the members of the C++ class.
 
 .. literalinclude:: minimal_cpp_demo/model.cc
     :lines: 62-63
     :language: cpp
 
-And the last `DiffusionOperator` related line exposes the function call to apply in the same way:
+And the last `DiffusionOperator`-related line exposes the function call to apply in the same way:
 
 .. literalinclude:: minimal_cpp_demo/model.cc
     :lines: 64
@@ -82,8 +82,8 @@ with a few more advanced techniques added.
     :language: cpp
 
 Again we define a `py:class\_` with appropiate name and docstring, but now we also indicate to pybind11
-that this class will implement the `buffer protocol <https://docs.python.org/3/c-api/buffer.html>`_, Which basically
-exposes direct access to a chunk of memory to Python. We also see how we can dispatch multiple init functions
+that this class will implement the `buffer protocol <https://docs.python.org/3/c-api/buffer.html>`_, which basically
+exposes direct access to the chunk of memory associated with a `Vector` instance to Python. We also see how we can dispatch multiple init functions
 by using `py:init` objects with C++ lambda functions.
 
 .. literalinclude:: minimal_cpp_demo/model.cc
@@ -108,7 +108,7 @@ First we make sure pybind11 can be used:
     :language: cmake
 
 
-Next we define a new library with our "model.cc" as the single source file and let pybind11 set the proper compile
+Next, we define a new library with our `model.cc` as the single source file and let pybind11 set the proper compile
 flags.
 
 .. literalinclude:: minimal_cpp_demo/CMakeLists.txt
@@ -116,7 +116,7 @@ flags.
     :language: cmake
 
 That is all that is needed for :download:`CMakeLists.txt <minimal_cpp_demo/CMakeLists.txt>`.
-In the next step we will switch to a bash terminal and actually compile this module.
+In the next step, we will switch to a bash terminal and actually compile this module.
 
 After creating a build directory for the module, we let cmake initialize the build and call make to execute the
 compilation.
@@ -143,11 +143,10 @@ interpreter looks for things to import. Afterwards we can import the module and 
   sys.path.insert(0, 'source/minimal_cpp_demo/build')
 
   import model
-  dir(model)
   mymodel = model.DiffusionOperator(10, 0, 1)
   myvector = model.Vector(10, 0)
   mymodel.apply(myvector, myvector)
-
+  dir(model)
 
 
 Using the exported Python classes with pyMOR
@@ -157,18 +156,18 @@ Using the exported Python classes with pyMOR
   This only works after merging https://github.com/pymor/pymor/pull/1013
   In :doc:`tutorial-rb`
 
-In another tutorial we have learned how pyMOR's algorithms operate on |VectorArrays| and |Operators|. To be able to use
-our Python `model.Vector` and `model.DiffusionOperator` in pyMOR we have to provide implementations of
-|VectorArray|, |VectorSpace| and |Operator| that
+In another tutorial, we have learned how pyMOR's algorithms operate on |VectorArrays| and |Operators|. To be able to use
+our Python `model.Vector` and `model.DiffusionOperator` in pyMOR, we have to provide implementations of
+|VectorArray|, |VectorSpace| and |Operator| that wrap the classes defined in the extension module.
 
 Instead of writing a full implementaion of a |VectorArray| that manages multiple `model.Vector`
-instances we can instead implement a wrapper `WrappedVector` for a single `model.Vector` instance based on
+instances, we can instead implement a wrapper `WrappedVector` for a single `model.Vector` instance based on
 :class:`~pymor.vectorarrays.list.CopyOnWriteVector` which will be used to create
-|ListVectorArray| via a :class:`~pymor.vectorarrays.list.ListVectorSpace` based `WrappedVectorSpace`.
+|ListVectorArray| via a :class:`~pymor.vectorarrays.list.ListVectorSpace`-based `WrappedVectorSpace`.
 
 The :class:`~pymor.vectorarrays.list.CopyOnWriteVector` base class manages a reference count for
 us and automatically copies data when necessary in methods :meth:`~pymor.vectorarrays.list.CopyOnWriteVector.scal`
-and :meth:`~pymor.vectorarrays.list.CopyOnWriteVector.axpy`. To use this we need to implement
+and :meth:`~pymor.vectorarrays.list.CopyOnWriteVector.axpy`. To use this, we need to implement
 :meth:`~pymor.vectorarrays.list.CopyOnWriteVector._scal`
 and :meth:`~pymor.vectorarrays.list.CopyOnWriteVector._axpy` in addition to all the abstract
 methods from  :class:`~pymor.vectorarrays.list.CopyOnWriteVector`. We can get away
@@ -235,7 +234,7 @@ with using just a stub that raises an :class:`~NotImplementedError` in some meth
 
 
 The implementation of the `WrappedVectorSpace` is very short as most of the necessary methods
-of |VectorSpace| are default implemented in :class:`~pymor.vectorarrays.list.ListVectorSpace`.
+of |VectorSpace| are implemented in :class:`~pymor.vectorarrays.list.ListVectorSpace`.
 
 .. jupyter-execute::
 
@@ -255,7 +254,7 @@ of |VectorSpace| are default implemented in :class:`~pymor.vectorarrays.list.Lis
           return type(other) is WrappedVectorSpace and self.dim == other.dim
 
 
-Wrapping the `model.DiffusionOperator` is straight forward as well. We just need to attach
+Wrapping the `model.DiffusionOperator` is straightforward as well. We just need to attach
 suitable |VectorSpaces| to the class and implement the application of the operator on a |VectorArray|
 as a sequence of applications on single vectors.
 
@@ -287,8 +286,8 @@ as a sequence of applications on single vectors.
 Putting it all together
 -----------------------
 
-As a demonstration we will use our (stationary) toy diffusion solver in a transient example with timestepping
-provided by pyMOR. For details on the discretization setup see :doc:`tutorial01`. First up we implement
+As a demonstration, we will use our (stationary) toy diffusion solver in a transient example with timestepping
+provided by pyMOR. For details on the discretization setup, see :doc:`tutorial01`. First up, we implement
 a `discretize` function that uses the `WrappedDiffusionOperator` and `WrappedVectorSpace` to assemble an
 |InstationaryModel|.
 
@@ -313,7 +312,7 @@ a `discretize` function that uses the `WrappedDiffusionOperator` and `WrappedVec
       initial_data = operator.source.zeros()
 
       # use to_numpy method of WrappedVector to setup rhs
-      # note that we cannot use the data property of ListVectorArray,
+      # note that we cannot use the to_numpy method of ListVectorArray,
       # since ListVectorArray will always return a copy
       rhs_vec = operator.range.zeros()
       rhs_data = rhs_vec._list[0].to_numpy()
@@ -328,13 +327,13 @@ a `discretize` function that uses the `WrappedDiffusionOperator` and `WrappedVec
 
       time_stepper = ExplicitEulerTimeStepper(nt)
 
-      fom = InstationaryModel(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
+      fom = InstationaryModel(T=1, operator=operator, rhs=rhs, initial_data=initial_data,
                               time_stepper=time_stepper, num_values=20,
                               visualizer=visualizer, name='C++-Model')
       return fom
 
-Now we can build a reduced basis for our model. Note that this code is not specific to our wrapped classes. Those
-only directly used in the `discretize` call.
+Now we can build a reduced basis for our model. Note that this code is not specific to our wrapped classes.
+Those wrapped classes are only directly used in the `discretize` call.
 
 .. jupyter-execute::
 
@@ -359,7 +358,7 @@ only directly used in the `discretize` call.
   mu_max = None
   err_max = -1.
   for mu in parameter_space.sample_randomly(10):
-      U_RB = (reductor.reconstruct(rom.solve(mu)))
+      U_RB = reductor.reconstruct(rom.solve(mu))
       U = fom.solve(mu)
       err = np.max((U_RB-U).l2_norm())
       if err > err_max:
@@ -371,7 +370,7 @@ only directly used in the `discretize` call.
   U = fom.solve(mu_max)
   fom.visualize((U_RB, U), title=f'mu = {mu}', legend=('reduced', 'detailed'))
 
-As you can see in this comparison we get a good approximation of the full order model here and
+As you can see in this comparison, we get a good approximation of the full-order model here and
 the error plot confirms it:
 
 .. jupyter-execute::
@@ -380,4 +379,4 @@ the error plot confirms it:
 
 You can download this demonstration plus the wrapper definitions as a
 notebook :jupyter-download:notebook:`tutorial_external_solver` or
-as a plain python script :jupyter-download:script:`tutorial_external_solver`.
+as a plain Python script :jupyter-download:script:`tutorial_external_solver`.
