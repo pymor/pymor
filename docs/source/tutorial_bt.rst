@@ -1,6 +1,7 @@
 Tutorial: Reducing a heat equation using balanced truncation
 ============================================================
 
+.. include:: jupyter_init.txt
 
 Heat equation
 -------------
