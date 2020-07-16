@@ -15,7 +15,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('rtol', 'atol', 'l2_err')
-def method_of_snapshots(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
+def method_of_snapshots(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.):
     """SVD of a |VectorArray| using the method of snapshots.
 
     Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix, the

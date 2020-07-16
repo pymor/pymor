@@ -115,8 +115,8 @@ def analyze_pickle_histogram(args):
         axHisty = plt.axes(rect_histy)
 
         # scatter plot
-        total_min = min(min(ests), min(errs)) * 0.9
-        total_max = max(max(ests), max(errs)) * 1.1
+        total_min = min(np.min(ests), np.min(errs)) * 0.9
+        total_max = max(np.max(ests), np.max(errs)) * 1.1
         axScatter.set_xscale('log')
         axScatter.set_yscale('log')
         axScatter.set_xlim([total_min, total_max])
@@ -137,15 +137,15 @@ def analyze_pickle_histogram(args):
         axHisty.set_yticklabels([])
         axHistx.set_xlim(axScatter.get_xlim())
         axHisty.set_ylim(axScatter.get_ylim())
-        axHistx.set_ylim([0, max(max(x_hist), max(y_hist))])
-        axHisty.set_xlim([0, max(max(x_hist), max(y_hist))])
+        axHistx.set_ylim([0, max(np.max(x_hist), np.max(y_hist))])
+        axHisty.set_xlim([0, max(np.max(x_hist), np.max(y_hist))])
 
         plt.show()
 
     elif hasattr(rom, 'estimate'):
 
-        total_min = min(ests) * 0.9
-        total_max = max(ests) * 1.1
+        total_min = np.min(ests) * 0.9
+        total_max = np.max(ests) * 1.1
 
         hist, bin_edges = np.histogram(ests, bins=_bins(total_min, total_max))
         plt.bar(bin_edges[1:], hist, width=bin_edges[:-1] - bin_edges[1:], color='blue')
@@ -157,8 +157,8 @@ def analyze_pickle_histogram(args):
 
     elif args['--detailed']:
 
-        total_min = min(ests) * 0.9
-        total_max = max(ests) * 1.1
+        total_min = np.min(ests) * 0.9
+        total_max = np.max(ests) * 1.1
 
         hist, bin_edges = np.histogram(errs, bins=_bins(total_min, total_max))
         plt.bar(bin_edges[1:], hist, width=bin_edges[:-1] - bin_edges[1:], color='blue')
