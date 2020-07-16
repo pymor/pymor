@@ -1,6 +1,7 @@
 Tutorial 1: Using pyMOR’s discretization toolkit
 ================================================
 
+.. include:: jupyter_init.txt
 
 pyMOR’s discretization toolkit allows to quickly build parameterized
 full-order models based on the NumPy/SciPy software stack. Currently

@@ -1,6 +1,7 @@
 Tutorial: Model order reduction with artificial neural networks
 ===============================================================
 
+.. include:: jupyter_init.txt
 
 Recent success of artificial neural networks led to the development of several
 methods for model order reduction using neural networks. pyMOR provides the
