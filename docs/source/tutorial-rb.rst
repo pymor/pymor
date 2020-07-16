@@ -1,17 +1,7 @@
 Tutorial: Building a Reduced Basis
 ==================================
 
-.. jupyter-execute::
-    :hide-code:
-    :hide-output:
-
-    %matplotlib inline
-
-    from IPython import get_ipython
-    ip = get_ipython()
-    if ip is not None:
-        ip.run_line_magic('load_ext', 'pymor.discretizers.builtin.gui.jupyter')
-
+.. include:: jupyter_init.txt
 
 In this tutorial we will learn more about |VectorArrays| and how to
 construct a reduced basis using pyMOR.
