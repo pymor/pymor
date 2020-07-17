@@ -179,14 +179,13 @@ def _test_demo(demo):
     result = None
     try:
         result = demo()
-    except QtMissing:
-        pytest.xfail("Qt missing")
-    except GmshMissing:
-        pytest.xfail(f'Gmsh not intalled')
-    except MeshioMissing:
-        pytest.xfail(f'meshio not intalled')
-    except TorchMissing:
-        pytest.xfail(f'torch not installed')
+    except (QtMissing, GmshMissing, MeshioMissing, TorchMissing) as e:
+        if os.environ.get('DOCKER_PYMOR', False):
+            # these are all installed in our CI env so them missing a grave error
+            raise e
+        else:
+            miss = str(type(e)).replace('Missing', '')
+            pytest.xfail(f'{miss} not installed')
     finally:
         stop_gui_processes()
 
