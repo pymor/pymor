@@ -9,10 +9,11 @@ Usage:
     elliptic2.py [--fv] PROBLEM-NUMBER N PRODUCT-COUNT
 
 Arguments:
-    PROBLEM-NUMBER    {0,1}, selects the problem to solve
-    N                 Triangle count per direction
-    PRODUCT-COUNT     0: equip the model with standard products
-                      1: add an energy product for a fixed parameter
+    PROBLEM-NUMBER  {0,1}, selects the problem to solve
+    N               Triangle count per direction
+
+    PRODUCT-COUNT   0: equip the model with standard products
+                    1: add an energy product for a fixed parameter
 
 Options:
     -h, --help   Show this message.
