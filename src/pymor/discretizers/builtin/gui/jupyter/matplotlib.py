@@ -203,7 +203,10 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
             import matplotlib.pyplot as plt
 
-            rows = int(np.ceil(len(U[0]) / columns))
+            if separate_axes:
+                rows = int(np.ceil(len(U[0]) / columns))
+            else:
+                rows = int(np.ceil(len(U) / columns))
 
             self.plots = []
 
