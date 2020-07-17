@@ -69,10 +69,13 @@ stages:
     tags:
       - docker-in-docker
     extends: .test_base
+    timeout: 45 minutes
     retry:
         max: 2
         when:
-            - always
+            - runner_system_failure
+            - stuck_or_timeout_failure
+            - api_failure
     {# this is intentionally NOT moving with CI_IMAGE_TAG #}
     image: pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
     variables:
