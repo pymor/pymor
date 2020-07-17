@@ -125,7 +125,35 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     return None
 
 
-def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, columns=2):
+def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, separate_axes=False, columns=2):
+    """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
+
+    The grid's |ReferenceElement| must be the line. The data can either
+    be attached to the subintervals or vertices of the grid.
+
+    Parameters
+    ----------
+    grid
+        The underlying |Grid|.
+    U
+        |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
+        as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
+        provided, in which case several plots are made into the same axes. The
+        lengths of all arrays have to agree.
+    codim
+        The codimension of the entities the data in `U` is attached to (either 0 or 1).
+    title
+        Title of the plot.
+    legend
+        Description of the data that is plotted. Most useful if `U` is a tuple in which
+        case `legend` has to be a tuple of strings of the same length.
+    separate_plots
+        If `True`, use subplots to visualize multiple |VectorArrays|.
+    separate_axes
+        If `True`, use separate axes for each subplot.
+    column
+        Number of columns the subplots are organized in.
+    """
     assert isinstance(U, VectorArray) \
         or (isinstance(U, tuple)
             and all(isinstance(u, VectorArray) for u in U)
@@ -146,11 +174,15 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
         def __init__(self):
             if separate_plots:
-                self.vmins = tuple(np.min(u) for u in U[0])
-                self.vmaxs = tuple(np.max(u) for u in U[0])
+                if separate_axes:
+                    self.vmins = tuple(np.min(u) for u in U[0])
+                    self.vmaxs = tuple(np.max(u) for u in U[0])
+                else:
+                    self.vmins = (min(np.min(u) for u in U),) * len(U[0])
+                    self.vmaxs = (max(np.max(u) for u in U),) * len(U[0])
             else:
-                self.vmins = (min(np.min(u) for u in U),)
-                self.vmaxs = (max(np.max(u) for u in U),)
+                self.vmins = (min(np.min(u) for u in U[0]),)
+                self.vmaxs = (max(np.max(u) for u in U[0]),)
 
             import matplotlib.pyplot as plt
 
