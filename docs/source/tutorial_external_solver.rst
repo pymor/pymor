@@ -2,7 +2,7 @@ Tutorial: Binding an external PDE solver to pyMOR
 =================================================
 
 One of pyMOR's main features is easy integration of external solvers that implement the full-order model. In this tutorial
-we will do this step-by-step for a custom toy solver of the one-dimensional diffusion equation written in C++.
+we will do this step-by-step for a custom toy solver written in C++.
 If you use the `FEniCS <https://fenicsproject.org>`_ or `NGSovle <https://ngsolve.org>`_ PDE solver libraries,
 you can find ready-to-use pyMOR bindings in the :mod:`~pymor.bindings` package. pyMOR support for
 `deal.II <https://dealii.org>`_ can be found in a `separate repository <https://github.com/pymor/pymor-deal.II>`_.
@@ -11,6 +11,8 @@ you can find ready-to-use pyMOR bindings in the :mod:`~pymor.bindings` package. 
 Defining the PDE solver
 -----------------------
 
+Our solver discretizes the one-dimensional Laplace equation :math:`u''(x)=0` on the interval :math:`[\text{left},\text{right}]`
+using a central differences scheme with :math:`h=\frac{|\text{right}-\text{left}|}{n}`.
 First, we need a class to store our data in and with some basic linear algebra operations
 declared on it.
 
@@ -46,7 +48,7 @@ We utilize the `pybind11 <https://github.com/pybind/pybind11>`_ library to creat
 `extension module <https://docs.python.org/3/extending/extending.html>`_ named `model`, that allows us to manipulate
 instances of the C++ `Vector` and `DiffusionOperator` classes.
 
-Compiling the PDE solver as a shared library and creating Python bindings for it using 
+Compiling the PDE solver as a shared library and creating Python bindings for it using
 `pybind11 <https://github.com/pybind/pybind11>`_, `Cython <https://cython.org>`_ or
 `ctypes <https://docs.python.org/3/library/ctypes.html>`_ is the preferred way of integrating
 external solvers, as it offers maximal flexibility and performance. For instance, in this
@@ -309,10 +311,18 @@ as a sequence of applications on single vectors.
 Putting it all together
 -----------------------
 
-As a demonstration, we will use our toy diffusion solver in a transient example with timestepping
-provided by pyMOR. First up, we implement
-a `discretize` function that uses the `WrappedDiffusionOperator` and `WrappedVectorSpace` to assemble an
-|InstationaryModel|.
+As a demonstration, we will use our toy Laplace solver to compute an approximation for
+the transient diffusion equation
+
+.. math::
+         \frac{\partial u}{\partial t} =
+        {\alpha_\mu} \frac{\partial^2 u}{\partial x^2},
+
+with explicit timestepping provided by pyMOR, with a parameterized, block-wise defined,  diffusion
+coefficient  :math:`\alpha_\mu`.
+
+First up, we implement a `discretize` function that uses the `WrappedDiffusionOperator` and `WrappedVectorSpace`
+to assemble an |InstationaryModel|.
 
 .. jupyter-execute::
 
