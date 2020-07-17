@@ -10,6 +10,20 @@ from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes, Matpl
 from pymor.vectorarrays.interface import VectorArray
 
 
+class concat_display(object):
+    """Display HTML representation of multiple objects"""
+    template = """<div style="float: left; padding: 10px;">{0}</div>"""
+
+    def __init__(self, *args):
+        self.args = args
+
+    def _repr_html_(self):
+        return '\n'.join(self.template.format(a._repr_html_()) for a in self.args)
+
+    def __repr__(self):
+        return '\n\n'.join(repr(a) for a in self.args)
+
+
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
@@ -95,6 +109,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 if legend:
                     ax.set_title(legend[i])
 
+
         def set(self, U, ind):
             if rescale_colorbars:
                 if separate_colorbars:
@@ -110,18 +125,11 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     plot = Plot()
 
     if len(U[0]) > 1:
-        class concat_display(object):
-            """Display HTML representation of multiple objects"""
-            template = """<div style="float: left; padding: 10px;">{0}</div>"""
+        # otherwise the subplot displays twice
+        plt.close(plot.figure)
+        return concat_display(*[p.html for p in plot.plots])
 
-            def __init__(self, *args):
-                self.args = args
-
-            def _repr_html_(self):
-                return '\n'.join(self.template.format(a._repr_html_()) for a in self.args)
-
-            def __repr__(self):
-                return '\n\n'.join(repr(a) for a in self.args)
+    return plot
 
         # otherwise the subplot displays twice
         plt.close(plot.figure)
@@ -129,7 +137,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
     return plot
 
-    return None
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, separate_axes=False, columns=2):
@@ -198,7 +205,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
             self.plots = []
             axes = []
-            for i, (vmin, vmax) in enumerate(zip(self.vmins, self.vmaxs)):
+            for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
                 if separate_plots:
                     ax = self.figure.add_subplot(rows, columns, i+1)
                 else:
@@ -207,7 +214,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                 count = 1
                 if not separate_plots:
                     count = len(U[0])
-                self.plots.append(Matplotlib1DAxes(ax, grid, count, vmin=vmin, vmax=vmax,
+                self.plots.append(Matplotlib1DAxes(u, ax, self.figure, grid, count, vmin=vmin, vmax=vmax,
                                                    codim=codim))
                 if legend:
                     ax.set_title(legend[i])
@@ -222,4 +229,5 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                 self.plots[0].set(U, vmin=self.vmins[0], vmax=self.vmaxs[0])
 
     plot = Plot()
-    plot.set(U[0])
+
+    if len(U[0]) > 1:

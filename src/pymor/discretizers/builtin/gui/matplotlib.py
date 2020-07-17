@@ -68,14 +68,16 @@ class MatplotlibPatchAxes:
 
 class Matplotlib1DAxes:
 
-    def __init__(self, axes, grid, count, vmin=None, vmax=None, codim=1):
+    def __init__(self, U, axes, figure, grid, count, vmin=None, vmax=None, codim=1):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
 
         self.codim = codim
         self.grid = grid
-
+        self.vmin = vmin
+        self.vmax = vmax
         self.count = count
+        self.U = U
 
         centers = grid.centers(1)
         if grid.identify_left_right:
@@ -96,15 +98,21 @@ class Matplotlib1DAxes:
         self.axes = axes
         self.lines = lines
 
+        delay_between_frames = 200  # ms
+        self.anim = animation.FuncAnimation(figure, self.set,
+                                       frames=U, interval=delay_between_frames,
+                                       blit=True)
+        # generating the HTML instance outside this class causes the plot display to fail
+        self.html = HTML(self.anim.to_jshtml())
 
-    def set(self, U, vmin=None, vmax=None):
+
+    def set(self, u, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
         self.vmax = self.vmax if vmax is None else vmax
         for i in range(self.count):
-            u = np.array(U[i])
             if self.codim == 1:
                 if self.periodic:
-                    self.lines[i].set_ydata(np.concatenate((u, [u[0]])))
+                    self.lines[i].set_ydata(np.concatenate((u, [self.U[0]])))
                 else:
                     self.lines[i].set_ydata(u)
             else:
@@ -112,6 +120,8 @@ class Matplotlib1DAxes:
 
         pad = (self.vmax - self.vmin) * 0.1
         self.axes.set_ylim(self.vmin - pad, self.vmax + pad)
+        return self.lines
+
 
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
