@@ -18,7 +18,7 @@ from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 
 class MatplotlibPatchAxes:
 
-    def __init__(self, U, ax, figure, grid, bounding_box=None, vmin=None, vmax=None, codim=2,
+    def __init__(self, U, ax, figure, sync_timer, grid, bounding_box=None, vmin=None, vmax=None, codim=2,
                  colorbar=True):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
@@ -49,7 +49,7 @@ class MatplotlibPatchAxes:
         delay_between_frames = 200  # ms
         self.anim = animation.FuncAnimation(figure, self.set,
                                        frames=U, interval=delay_between_frames,
-                                       blit=True)
+                                       blit=True, event_source=sync_timer)
         # generating the HTML instance outside this class causes the plot display to fail
         self.html = HTML(self.anim.to_jshtml())
 
@@ -68,7 +68,7 @@ class MatplotlibPatchAxes:
 
 class Matplotlib1DAxes:
 
-    def __init__(self, U, axes, figure, grid, count, vmin=None, vmax=None, codim=1):
+    def __init__(self, U, axes, figure, sync_timer, grid, count, vmin=None, vmax=None, codim=1):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
 
@@ -101,7 +101,7 @@ class Matplotlib1DAxes:
         delay_between_frames = 200  # ms
         self.anim = animation.FuncAnimation(figure, self.set,
                                        frames=U, interval=delay_between_frames,
-                                       blit=True)
+                                       blit=True, event_source=sync_timer)
         # generating the HTML instance outside this class causes the plot display to fail
         self.html = HTML(self.anim.to_jshtml())
 

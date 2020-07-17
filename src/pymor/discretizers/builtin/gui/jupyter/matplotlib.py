@@ -75,8 +75,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     if isinstance(legend, str):
         legend = (legend,)
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
-    if len(U) < 2:
-        columns = 1
 
     class Plot:
 
@@ -97,21 +95,22 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     self.vmins = (min(np.min(u) for u in U),) * len(U)
                     self.vmaxs = (max(np.max(u) for u in U),) * len(U)
 
-
-            rows = int(np.ceil(len(U) / columns))
-            self.figure = figure = plt.figure()
-
             self.plots = plots = []
-            axes = plt.subplots(nrows=rows, ncols=columns, squeeze=False)
-            coord = itertools.product(range(rows), range(columns))
-            for i, (vmin, vmax, u, c) in enumerate(zip(self.vmins, self.vmaxs, U, coord)):
-                ax = axes[c]
+            # this _supposed_ to let animations run in sync
+            sync_timer = None
 
-                plots.append(MatplotlibPatchAxes(U=u, ax=ax, figure=figure, grid=grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
+            for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
+                figure = plt.figure(i)
+                ax = plt.axes()
+                sync_timer = sync_timer or figure.canvas.new_timer()
+                plots.append(MatplotlibPatchAxes(U=u, ax=ax, figure=figure, sync_timer=sync_timer, grid=grid,
+                                                 bounding_box=bounding_box, vmin=vmin, vmax=vmax,
                                                  codim=codim, colorbar=separate_colorbars or i == len(U)-1))
                 if legend:
                     ax.set_title(legend[i])
 
+                plt.tight_layout()
+                plt.close(figure)
 
         def set(self, U, ind):
             if rescale_colorbars:
@@ -128,8 +127,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     plot = Plot()
 
     if len(U[0]) > 1:
-        # otherwise the subplot displays twice
-        plt.close(plot.figure)
         return concat_display(*[p.html for p in plot.plots])
 
     return plot
@@ -209,20 +206,23 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                 rows = int(np.ceil(len(U) / columns))
 
             self.plots = []
+            # this _supposed_ to let animations run in sync
+            sync_timer = None
 
-            self.figure, axes = plt.subplots(nrows=rows, ncols=columns, squeeze=False)
-            coord = itertools.product(range(rows), range(columns))
-            for i, (vmin, vmax, u, c) in enumerate(zip(self.vmins, self.vmaxs, U, coord)):
+            for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
                 count = 1
                 if not separate_plots:
                     count = len(U[0])
-                ax = axes[c]
-                self.plots.append(Matplotlib1DAxes(u, ax, self.figure, grid, count, vmin=vmin, vmax=vmax,
+                figure = plt.figure(i)
+                ax = plt.axes()
+                sync_timer = sync_timer or figure.canvas.new_timer()
+                self.plots.append(Matplotlib1DAxes(u, ax, figure, sync_timer, grid, count, vmin=vmin, vmax=vmax,
                                                    codim=codim))
                 if legend:
                     ax.set_title(legend[i])
 
-            plt.tight_layout()
+                plt.tight_layout()
+                plt.close(figure)
 
         def set(self, U):
             if separate_plots:
