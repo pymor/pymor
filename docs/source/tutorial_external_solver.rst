@@ -1,8 +1,11 @@
 Tutorial: Binding an external PDE solver to pyMOR
 =================================================
 
-One of pyMOR's main features is easy integration of external solvers. In this tutorial
-we will do this step-by-step for a toy solver of the one-dimensional diffusion equation written in C++.
+One of pyMOR's main features is easy integration of external solvers that implement the full-order model. In this tutorial
+we will do this step-by-step for a custom toy solver of the one-dimensional diffusion equation written in C++.
+If you use the `FEniCS <https://fenicsproject.org>`_ or `NGSovle <https://ngsolve.org>`_ PDE solver libraries,
+you can find ready-to-use pyMOR bindings in the :mod:`~pymor.bindings` package. pyMOR support for
+`deal.II <https://dealii.org>`_ can be found in a `separate repository <https://github.com/pymor/pymor-deal.II>`_.
 
 
 Defining the PDE solver
@@ -43,6 +46,21 @@ We utilize the `pybind11 <https://github.com/pybind/pybind11>`_ library to creat
 `extension module <https://docs.python.org/3/extending/extending.html>`_ named `model`, that allows us to manipulate
 instances of the C++ `Vector` and `DiffusionOperator` classes.
 
+Compiling the PDE solver as a shared library and creating Python bindings for it using 
+`pybind11 <https://github.com/pybind/pybind11>`_, `Cython <https://cython.org>`_ or
+`ctypes <https://docs.python.org/3/library/ctypes.html>`_ is the preferred way of integrating
+external solvers, as it offers maximal flexibility and performance. For instance, in this
+example we will actually completely implement the |Model| in Python using a
+:mod:`time stepper <pymor.algorithms.timestepping>` from pyMOR to
+:meth:`~pymor.models.interface.Model.solve` the |Model|.
+
+When this is not an option,
+`RPC <https://en.wikipedia.org/wiki/Remote_procedure_call>`_-based approaches are
+possible as well. For small to medium-sized linear problems, another option it to import
+system matrices and snapshot data into pyMOR via file exchange and to use NumPy-based
+:mod:`Operators <pymor.operators.numpy>` and :mod:`VectorArrays <pymor.vectorarrays.numpy>`
+to represent the full-order model.
+
 Binding the solver to Python
 ----------------------------
 
@@ -68,7 +86,7 @@ Next, we define read-only properties on the Python side named after and delegate
     :lines: 62-63
     :language: cpp
 
-And the last `DiffusionOperator`-related line exposes the function call to apply in the same way:
+The last `DiffusionOperator`-related line exposes the function call to apply in the same way:
 
 .. literalinclude:: minimal_cpp_demo/model.cc
     :lines: 64
@@ -85,6 +103,10 @@ Again we define a `py:class\_` with appropiate name and docstring, but now we al
 that this class will implement the `buffer protocol <https://docs.python.org/3/c-api/buffer.html>`_, which basically
 exposes direct access to the chunk of memory associated with a `Vector` instance to Python. We also see how we can dispatch multiple init functions
 by using `py:init` objects with C++ lambda functions.
+Note that direct memory access to the vector data from Python is not required to integrate a solver with pyMOR.
+It is, however, useful for debugging and quickly modifying or extending the solver from within Python. For instance,
+in our toy example we will use the direct memory access to quickly define a visualization of the solutions and to
+construct the right-hand side vector for our problem.
 
 .. literalinclude:: minimal_cpp_demo/model.cc
     :lines: 70-74
@@ -156,14 +178,15 @@ Using the exported Python classes with pyMOR
   This only works after merging https://github.com/pymor/pymor/pull/1013
   In :doc:`tutorial-rb`
 
-In another tutorial, we have learned how pyMOR's algorithms operate on |VectorArrays| and |Operators|. To be able to use
+All of pyMOR's algorithms operate on |VectorArray| and |Operator| objects that all share the same programming interface. To be able to use
 our Python `model.Vector` and `model.DiffusionOperator` in pyMOR, we have to provide implementations of
-|VectorArray|, |VectorSpace| and |Operator| that wrap the classes defined in the extension module.
+|VectorArray|, |VectorSpace| and |Operator| that wrap the classes defined in the extension module
+and translate calls to the interface methods into operations on `model.Vector` and `model.DiffusionOperator`.
 
 Instead of writing a full implementaion of a |VectorArray| that manages multiple `model.Vector`
 instances, we can instead implement a wrapper `WrappedVector` for a single `model.Vector` instance based on
 :class:`~pymor.vectorarrays.list.CopyOnWriteVector` which will be used to create
-|ListVectorArray| via a :class:`~pymor.vectorarrays.list.ListVectorSpace`-based `WrappedVectorSpace`.
+|ListVectorArrays| via a :class:`~pymor.vectorarrays.list.ListVectorSpace`-based `WrappedVectorSpace`.
 
 The :class:`~pymor.vectorarrays.list.CopyOnWriteVector` base class manages a reference count for
 us and automatically copies data when necessary in methods :meth:`~pymor.vectorarrays.list.CopyOnWriteVector.scal`
@@ -286,8 +309,8 @@ as a sequence of applications on single vectors.
 Putting it all together
 -----------------------
 
-As a demonstration, we will use our (stationary) toy diffusion solver in a transient example with timestepping
-provided by pyMOR. For details on the discretization setup, see :doc:`tutorial01`. First up, we implement
+As a demonstration, we will use our toy diffusion solver in a transient example with timestepping
+provided by pyMOR. First up, we implement
 a `discretize` function that uses the `WrappedDiffusionOperator` and `WrappedVectorSpace` to assemble an
 |InstationaryModel|.
 
@@ -311,11 +334,8 @@ a `discretize` function that uses the `WrappedDiffusionOperator` and `WrappedVec
 
       initial_data = operator.source.zeros()
 
-      # use to_numpy method of WrappedVector to setup rhs
-      # note that we cannot use the to_numpy method of ListVectorArray,
-      # since ListVectorArray will always return a copy
       rhs_vec = operator.range.zeros()
-      rhs_data = rhs_vec._list[0].to_numpy()
+      rhs_data = rhs_vec._data[0]
       rhs_data[:] = np.ones(len(rhs_data))
       rhs_data[0] = 0
       rhs_data[len(rhs_data) - 1] = 0
