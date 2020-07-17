@@ -2,9 +2,9 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides a widgets for displaying plots of
+""" This module provides widgets for displaying plots of
 scalar data assigned to one- and two-dimensional grids using
-:mod:`matplotlib`. This widget is not intended to be used directly.
+:mod:`matplotlib`. These widgets are not intended to be used directly.
 """
 
 import numpy as np
@@ -101,7 +101,8 @@ class Matplotlib1DAxes:
             else:
                 self.lines[i].set_ydata(np.repeat(u, 2))
 
-        self.axes.set_ylim(self.vmin, self.vmax)
+        pad = (self.vmax - self.vmin) * 0.1
+        self.axes.set_ylim(self.vmin - pad, self.vmax + pad)
 
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:

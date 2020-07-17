@@ -118,7 +118,7 @@ class OnedVisualizer(BasicObject):
         self.__auto_init(locals())
 
     def visualize(self, U, m, title=None, legend=None, separate_plots=False,
-                  block=None, filename=None, columns=2):
+                  separate_axes=False, block=None, filename=None, columns=2):
         """Visualize the provided data.
 
         Parameters
@@ -145,7 +145,7 @@ class OnedVisualizer(BasicObject):
         if self.backend == 'jupyter':
             from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
-                                           separate_plots=separate_plots, columns=columns)
+                                           separate_plots=separate_plots, separate_axes=separate_axes, columns=columns)
         else:
             block = self.block if block is None else block
             from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
