@@ -18,6 +18,7 @@ provided for getting started quickly.
     technical_overview
     tutorial01
     tutorial-rb
+    tutorial_bt
     tutorial_mor_with_anns
     environment
     release_notes
