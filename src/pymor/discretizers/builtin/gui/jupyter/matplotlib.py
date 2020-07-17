@@ -1,6 +1,8 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+import itertools
+
 import numpy as np
 from ipywidgets import HTML, HBox
 import matplotlib.pyplot as plt
@@ -100,9 +102,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             self.figure = figure = plt.figure()
 
             self.plots = plots = []
-            for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
-                # we do not use figures.subplots since conditionally returns an axes array or a single object
-                ax = figure.add_subplot(rows, columns, i+1)
+            axes = plt.subplots(nrows=rows, ncols=columns, squeeze=False)
+            coord = itertools.product(range(rows), range(columns))
+            for i, (vmin, vmax, u, c) in enumerate(zip(self.vmins, self.vmaxs, U, coord)):
+                ax = axes[c]
 
                 plots.append(MatplotlibPatchAxes(U=u, ax=ax, figure=figure, grid=grid, bounding_box=bounding_box, vmin=vmin, vmax=vmax,
                                                  codim=codim, colorbar=separate_colorbars or i == len(U)-1))
@@ -201,19 +204,16 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             import matplotlib.pyplot as plt
 
             rows = int(np.ceil(len(U[0]) / columns))
-            self.figure = plt.figure()
 
             self.plots = []
-            axes = []
-            for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
-                if separate_plots:
-                    ax = self.figure.add_subplot(rows, columns, i+1)
-                else:
-                    ax = self.figure.gca()
-                axes.append(ax)
+
+            self.figure, axes = plt.subplots(nrows=rows, ncols=columns, squeeze=False)
+            coord = itertools.product(range(rows), range(columns))
+            for i, (vmin, vmax, u, c) in enumerate(zip(self.vmins, self.vmaxs, U, coord)):
                 count = 1
                 if not separate_plots:
                     count = len(U[0])
+                ax = axes[c]
                 self.plots.append(Matplotlib1DAxes(u, ax, self.figure, grid, count, vmin=vmin, vmax=vmax,
                                                    codim=codim))
                 if legend:
