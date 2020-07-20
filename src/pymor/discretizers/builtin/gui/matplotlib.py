@@ -43,6 +43,8 @@ class MatplotlibAxesBase:
                                            blit=True, event_source=sync_timer)
             # generating the HTML instance outside this class causes the plot display to fail
             self.html = HTML(self.anim.to_jshtml())
+        else:
+            self.set(self.U[0])
 
     @abstractmethod
     def _plot_init(self):
@@ -101,11 +103,13 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
 
 class Matplotlib1DAxes(MatplotlibAxesBase):
 
-    def __init__(self, U, ax, figure, grid, count=1, vmin=None, vmax=None, codim=1, sync_timer=None):
+    def __init__(self, U, ax, figure, grid, count=1, vmin=None, vmax=None, codim=1, separate_plots=False,
+                 sync_timer=None):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
 
         self.count = count
+        self.separate_plots = separate_plots
         super().__init__(U=U, ax=ax, figure=figure, grid=grid, vmin=vmin, vmax=vmax, codim=codim,
                          sync_timer=sync_timer)
 
