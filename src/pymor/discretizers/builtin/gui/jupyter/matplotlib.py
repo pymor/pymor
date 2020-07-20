@@ -216,8 +216,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                 figure = plt.figure(i)
                 ax = plt.axes()
                 sync_timer = sync_timer or figure.canvas.new_timer()
-                self.plots.append(Matplotlib1DAxes(u, ax, figure, sync_timer, grid, count, vmin=vmin, vmax=vmax,
-                                                   codim=codim))
+                self.plots.append(Matplotlib1DAxes(U=u, ax=ax, figure=figure, sync_timer=sync_timer, grid=grid,
+                                                 vmin=vmin, vmax=vmax, count=count, codim=codim, ))
                 if legend:
                     ax.set_title(legend[i])
 
