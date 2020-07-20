@@ -19,14 +19,13 @@ from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 
 class MatplotlibAxesBase:
 
-    def __init__(self, ax, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2):
+    def __init__(self, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2):
         self.vmin = vmin
         self.vmax = vmax
         self.codim = codim
-        self.ax = ax
+
         self.grid = grid
-        # TODO plt.axes
-        self.ax = ax
+        self.ax = figure.gca()
         self.figure = figure
         self.codim = codim
         self.grid = grid
@@ -59,7 +58,7 @@ class MatplotlibAxesBase:
 
 class MatplotlibPatchAxes(MatplotlibAxesBase):
 
-    def __init__(self, ax, figure, grid, bounding_box=None, U=None, vmin=None, vmax=None, codim=2,
+    def __init__(self, figure, grid, bounding_box=None, U=None, vmin=None, vmax=None, codim=2,
                  colorbar=True, sync_timer=None):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
@@ -73,7 +72,7 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
         self.reference_element = grid.reference_element
         self.colorbar = colorbar
 
-        super().__init__(U=U, ax=ax, figure=figure, grid=grid,  vmin=vmin, vmax=vmax, codim=codim,
+        super().__init__(U=U, figure=figure, grid=grid,  vmin=vmin, vmax=vmax, codim=codim,
                          sync_timer=sync_timer)
 
     def _plot_init(self):
@@ -103,14 +102,14 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
 
 class Matplotlib1DAxes(MatplotlibAxesBase):
 
-    def __init__(self, U, ax, figure, grid, count=1, vmin=None, vmax=None, codim=1, separate_plots=False,
+    def __init__(self, U, figure, grid, count=1, vmin=None, vmax=None, codim=1, separate_plots=False,
                  sync_timer=None):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
 
         self.count = count
         self.separate_plots = separate_plots
-        super().__init__(U=U, ax=ax, figure=figure, grid=grid, vmin=vmin, vmax=vmax, codim=codim,
+        super().__init__(U=U, figure=figure, grid=grid, vmin=vmin, vmax=vmax, codim=codim,
                          sync_timer=sync_timer)
 
     def _plot_init(self):
@@ -235,7 +234,8 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
-            self.patch_axes = MatplotlibPatchAxes(self.figure, grid, bounding_box, vmin, vmax, codim)
+            self.patch_axes = MatplotlibPatchAxes(figure=self.figure, grid=grid, bounding_box=bounding_box,
+                                                  vmin=vmin, vmax=vmax, codim=codim)
 
         def set(self, U, vmin=None, vmax=None):
             self.patch_axes.set(U, vmin, vmax)
