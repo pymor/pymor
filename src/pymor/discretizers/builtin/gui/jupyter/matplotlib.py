@@ -13,20 +13,6 @@ from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes, Matpl
 from pymor.vectorarrays.interface import VectorArray
 
 
-class concat_display(object):
-    """Display HTML representation of multiple objects"""
-    template = """<div style="float: left; padding: 10px;">{0}</div>"""
-
-    def __init__(self, *args):
-        self.args = args
-
-    def _repr_html_(self):
-        return '\n'.join(self.template.format(a._repr_html_()) for a in self.args)
-
-    def __repr__(self):
-        return '\n\n'.join(repr(a) for a in self.args)
-
-
 class MPLPlotBase:
 
     def __init__(self, U, grid, codim, legend, bounding_box=None, separate_colorbars=False, count=None,
@@ -58,12 +44,12 @@ class MPLPlotBase:
             ax = plt.axes()
             sync_timer = sync_timer or figure.canvas.new_timer()
             if grid.dim == 2:
-                self.plots.append(MatplotlibPatchAxes(U=u, ax=ax, figure=figure, sync_timer=sync_timer, grid=grid,
+                self.plots.append(MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid,
                                                  bounding_box=bounding_box, vmin=vmin, vmax=vmax,
                                                  codim=codim, colorbar=separate_colorbars or i == len(U) - 1))
             else:
                 assert count
-                self.plots.append(Matplotlib1DAxes(U=u, ax=ax, figure=figure, sync_timer=sync_timer, grid=grid,
+                self.plots.append(Matplotlib1DAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid,
                                                    vmin=vmin, vmax=vmax, count=count, codim=codim,
                                                    separate_plots=separate_plots))
             if self.legend:
@@ -75,9 +61,10 @@ class MPLPlotBase:
             for fig_id in self.fig_ids:
                 # avoids figure double display
                 plt.close(fig_id)
-            self._cd = concat_display(*[p.html for p in self.plots])
+            html = [p.html for p in self.plots]
+            template = """<div style="float: left; padding: 10px;">{0}</div>"""
             # IPython display system checks for presence and calls this func
-            self._repr_html_ = self._cd._repr_html_
+            self._repr_html_ = lambda : '\n'.join(template.format(a._repr_html_()) for a in html)
         else:
             self._out = widgets.Output()
             with self._out:
