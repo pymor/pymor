@@ -74,8 +74,8 @@ pyMOR tutorial collection
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Improvements to ParamterFunctionals
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Improvements to ParameterFunctionals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-
 Several improvements have been made to pyMOR's |ParameterFunctionals|:
 
 - `[#934] [parameters/functionals] Add derivative of products <https://github.com/pymor/pymor/pull/934>`_
@@ -85,7 +85,7 @@ Several improvements have been made to pyMOR's |ParameterFunctionals|:
 - `[#952] add BaseMaxThetaParameterFunctional to generalize max-theta approach  <https://github.com/pymor/pymor/pull/952>`_
 
 
-Extended Netwon algorithm
+Extended Newton algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 - `[#956] Add norm of update vector as error measure in Newton algorithm <https://github.com/pymor/pymor/pull/956>`_
 - `[#925] [line-search] implement Armijo line search algorithm <https://github.com/pymor/pymor/pull/925>`_
