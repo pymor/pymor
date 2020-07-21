@@ -272,7 +272,7 @@ Learning more
 
 As a next step, you should read our :ref:`technical_overview` which discusses the
 most important concepts and design decisions behind pyMOR. You can also follow our
-growing set of tutorials which focus on specific aspects of pyMOR.
+growing set of :doc:`tutorials`, which focus on specific aspects of pyMOR.
 
 Should you have any problems regarding pyMOR, questions or
 `feature requests <https://github.com/pymor/pymor/issues>`_, do not hesitate

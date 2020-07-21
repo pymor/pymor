@@ -77,7 +77,7 @@ First we import everything we need:
 
 Then we build a 3-by-3 thermalblock problem that we discretize using pyMOR's
 :mod:`builtin discretizers <pymor.discretizers.builtin>` (see
-:doc:`tutorial01` for an introduction to pyMOR's discretization toolkit).
+:doc:`tutorial_builtin_discretizer` for an introduction to pyMOR's discretization toolkit).
 
 .. jupyter-execute::
 
@@ -777,4 +777,6 @@ a certain degree, whereas the weak-greedy algorithm could select the snapshots f
 |parameter values|.
 
 
-Download the code: :jupyter-download:script:`tutorial-rb` :jupyter-download:notebook:`tutorial-rb`
+Download the code:
+:jupyter-download:script:`tutorial_basis_generation`
+:jupyter-download:notebook:`tutorial_basis_generation`

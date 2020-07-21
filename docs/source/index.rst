@@ -16,12 +16,8 @@ provided for getting started quickly.
 .. toctree::
     getting_started
     technical_overview
-    tutorial01
-    tutorial-rb
-    tutorial_bt
-    tutorial_mor_with_anns
-    tutorial_external_solver
     environment
+    tutorials
     release_notes
     bibliography
 

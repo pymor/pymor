@@ -1,5 +1,5 @@
-Tutorial 1: Using pyMOR’s discretization toolkit
-================================================
+Tutorial: Using pyMOR’s discretization toolkit
+==============================================
 
 .. include:: jupyter_init.txt
 
@@ -499,4 +499,6 @@ corresponding stiffness matrices. Note that an additional summand
 appears which ensures correct enforcement of Dirichlet boundary values
 for all possible parameter value combinations.
 
-Download the code: :jupyter-download:script:`tutorial01` :jupyter-download:notebook:`tutorial01`
+Download the code:
+:jupyter-download:script:`tutorial_builtin_discretizer`
+:jupyter-download:notebook:`tutorial_builtin_discretizer`

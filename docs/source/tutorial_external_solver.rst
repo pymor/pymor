@@ -1,6 +1,8 @@
 Tutorial: Binding an external PDE solver to pyMOR
 =================================================
 
+.. include:: jupyter_init.txt
+
 One of pyMOR's main features is easy integration of external solvers that implement the full-order model. In this tutorial
 we will do this step-by-step for a custom toy solver written in C++.
 If you use the `FEniCS <https://fenicsproject.org>`_ or `NGSovle <https://ngsolve.org>`_ PDE solver libraries,
@@ -175,10 +177,6 @@ interpreter looks for things to import. Afterwards we can import the module and 
 
 Using the exported Python classes with pyMOR
 --------------------------------------------
-
-..
-  This only works after merging https://github.com/pymor/pymor/pull/1013
-  In :doc:`tutorial-rb`
 
 All of pyMOR's algorithms operate on |VectorArray| and |Operator| objects that all share the same programming interface. To be able to use
 our Python `model.Vector` and `model.DiffusionOperator` in pyMOR, we have to provide implementations of
