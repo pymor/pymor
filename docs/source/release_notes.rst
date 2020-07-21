@@ -16,7 +16,7 @@ more easily.
 Over 600 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2019.2.x...2020.1.x>`__.
 
-pyMOR 2019.2 contains contributions by Linus Balicki, Tim Keil, Hendrik Kleikamp
+pyMOR 2020.1 contains contributions by Linus Balicki, Tim Keil, Hendrik Kleikamp
 and Luca Mechelli. We are also happy to welcome Linus as a new main developer!
 See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for more
 details.
