@@ -32,8 +32,15 @@ Model order reduction using artificial neural networks
 
 New system analysis and linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#834] [algorithms.samdp] add samdp algorithm <https://github.com/pymor/pymor/pull/834>`_
-- `[#880] [algorithms.eigs] add implicitly restarted arnoldi method <https://github.com/pymor/pymor/pull/880>`_
+So far, computing poles of an |LTIModel| was only supported by its
+:meth:`~pymor.models.iosys.LTIModel.poles` method which uses a dense eigenvalue
+solver and converts the operators to dense matrices.
+
+The new version adds :meth:`~pymor.algorithms.samdp.samdp`
+(`[#834] <https://github.com/pymor/pymor/pull/834>`_) and
+:meth:`~pymor.algorithms.eigs.eigs`
+(`[#880] <https://github.com/pymor/pymor/pull/880>`_) which can compute a subset
+of the eigenvalues which are dominant in some sense.
 
 
 Improved parameter handling
