@@ -48,7 +48,7 @@ In pyMOR, these models are captured by |LTIModels| from the
 
 There are many ways of building an |LTIModel|.
 Here, we show how to build one from custom matrices instead of using a
-discretizer as in :doc:`tutorial01` and the
+discretizer as in :doc:`tutorial_builtin_discretizer` and the
 :meth:`~pymor.models.basic.InstationaryModel.to_lti` of |InstationaryModel|.
 In particular, we will use the
 :meth:`~pymor.models.iosys.LTIModel.from_matrices` method of |LTIModel|, which

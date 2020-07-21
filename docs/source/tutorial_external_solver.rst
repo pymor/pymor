@@ -161,6 +161,7 @@ To be able to use this extension module we need to insert the build directory in
 interpreter looks for things to import. Afterwards we can import the module and create and use the exported classes.
 
 .. jupyter-kernel::
+.. include:: jupyter_init.txt
 .. jupyter-execute::
 
   import sys
@@ -175,10 +176,6 @@ interpreter looks for things to import. Afterwards we can import the module and 
 
 Using the exported Python classes with pyMOR
 --------------------------------------------
-
-..
-  This only works after merging https://github.com/pymor/pymor/pull/1013
-  In :doc:`tutorial-rb`
 
 All of pyMOR's algorithms operate on |VectorArray| and |Operator| objects that all share the same programming interface. To be able to use
 our Python `model.Vector` and `model.DiffusionOperator` in pyMOR, we have to provide implementations of
