@@ -4,6 +4,184 @@
 Release Notes
 *************
 
+pyMOR 2020.1 (July ??, 2020)
+----------------------------
+We are proud to announce the release of pyMOR 2020.1! Highlights of this release
+are support for non-intrusive model order reduction using artificial neural networks,
+the subspace accelerated dominant pole algorithm (SAMDP) and the implicitly restarted
+Arnoldi method for eigenvalue computation. Parameter handling in pyMOR has been
+simplified, and a new series of hands-on tutorials helps getting started using pyMOR
+more easily.
+
+Over 600 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2019.2.x...2020.1.x>`__.
+
+pyMOR 2019.2 contains contributions by Linus Balicki, Tim Keil, Hendrik Kleikamp
+and Luca Mechelli. We are also happy to welcome Linus as a new main developer!
+See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for more
+details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+Model order reduction using artificial neural networks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1001] Non-intrusive reduced order models using artificial neural networks <https://github.com/pymor/pymor/pull/1001>`_
+
+
+New system analysis and linear algebra algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#834] [algorithms.samdp] add samdp algorithm <https://github.com/pymor/pymor/pull/834>`_
+- `[#880] [algorithms.eigs] add implicitly restarted arnoldi method <https://github.com/pymor/pymor/pull/880>`_
+
+
+Improved parameter handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+While pyMOR always had a powerful and flexible system for handling |parameters|,
+understanding this system was often a challenge for pyMOR newcomers. Therefore,
+we have completely overhauled parameter handling in pyMOR, removing some unneeded
+complexities and making the nomenclature more straightforward. In particular:
+
+- The `Parameter` class has been renamed to :class:`~pymor.parameters.base.Mu`.
+  `ParameterType` has been renamed to |Parameters|. The items of a |Parameters|
+  dict are the individual *parameters* of the corresponding |ParametricObject|.
+  The items of a :class:`~pymor.parameters.base.Mu` dict are the associated
+  *parameter values*.
+- All parameters are now one-dimensional NumPy arrays.
+- Instead of manually calling `build_parameter_type` in `__init__`, the |parameters|
+  of a |ParametricObject| are now automatically inferred from the object's `__init__`
+  arguments. The process can be customized using the new `parameters_own` and
+  `parameters_internal` properties.
+- `CubicParameterSpace` was renamed to |ParameterSpace| and is created using
+  `parametric_object.parameters.space(ranges)`.
+
+Further details can be found in `[#923] <https://github.com/pymor/pymor/pull/923>`_.
+Also see `[#949] <https://github.com/pymor/pymor/pull/949>`_ and
+`[#998] <https://github.com/pymor/pymor/pull/998>`_.
+
+
+pyMOR tutorial collection
+~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#866] Add tutorial on using pyMOR's discretization toolikit <https://github.com/pymor/pymor/pull/866>`_
+- `[#983] Tutorial 1 minor fixes <https://github.com/pymor/pymor/pull/983>`_
+- `[#984] Balanced truncation tutorial <https://github.com/pymor/pymor/pull/984>`_
+- `[#1007] Cpp tutorial <https://github.com/pymor/pymor/pull/1007>`_
+- `[#1013] Add tutorial on how to build a reduced basis <https://github.com/pymor/pymor/pull/1013>`_
+- `[#1021] Restructure tutorials <https://github.com/pymor/pymor/pull/1021>`_
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Improvements to ParamterFunctionals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Several improvements have been made to pyMOR's |ParameterFunctionals|:
+
+- `[#934] [parameters/functionals] Add derivative of products <https://github.com/pymor/pymor/pull/934>`_
+- `[#950] [parameters/functionals] Add LincombParameterFunctional <https://github.com/pymor/pymor/pull/950>`_
+- `[#959] verbose name for d_mu functionals <https://github.com/pymor/pymor/pull/959>`_
+- `[#861] Min-theta approach <https://github.com/pymor/pymor/pull/861>`_
+- `[#952] add BaseMaxThetaParameterFunctional to generalize max-theta approach  <https://github.com/pymor/pymor/pull/952>`_
+
+
+Extended Netwon algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#956] Add norm of update vector as error measure in Newton algorithm <https://github.com/pymor/pymor/pull/956>`_
+- `[#925] [line-search] implement Armijo line search algorithm <https://github.com/pymor/pymor/pull/925>`_
+- `[#932] [newton] fixed bugs with residual being exactly 0 <https://github.com/pymor/pymor/pull/932>`_
+
+
+initial_guess parameter for apply_inverse
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :meth:`~pymor.operators.interface.Operator.apply_inverse` and 
+:meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint` methods of the |Operator| interface
+have gained an additional `initial_guess` parameter that can be passed to iterative linear solvers.
+For nonlinear |Operators| the initial guess is passed to the :meth:`~pymor.algorithms.newton.newton`
+algorithm `[#941] <https://github.com/pymor/pymor/pull/941>`_.
+
+
+manylinux2014 wheels
+~~~~~~~~~~~~~~~~~~~~
+- `[#846] FIx wheel testing + build manylinux 2014 wheels <https://github.com/pymor/pymor/pull/846>`_
+
+
+Debugging improvements
+~~~~~~~~~~~~~~~~~~~~~~
+The :meth:`~pymor.core.defaults.defaults` decorator has been refactored to make stepping through it
+with a debugger faster `[#864] <https://github.com/pymor/pymor/pull/864>`_. Similar improvements
+have been made to :meth:`RuleTable.apply <pymor.algorithms.rules.RuleTable.apply>`. The new
+:meth:`~pymor.algorithms.rules.RuleTable.breakpoint_for_obj` and
+:meth:`~pymor.algorithms.rules.RuleTable.breakpoint_for_name` methods allow setting conditional
+breakpoints in :meth:`RuleTable.apply <pymor.algorithms.rules.RuleTable.apply>` that match
+specific objects to which the table might be applied `[#945] <https://github.com/pymor/pymor/pull/945>`_.
+
+
+WebGL-based visualizations
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Renamed interface classes
+~~~~~~~~~~~~~~~~~~~~~~~~~
+The names of pyMOR's interface classes have been shortened
+`[#859] <https://github.com/pymor/pymor/pull/859>`_.  In particular:
+
+- `VectorArrayInterface`, `OperatorInterface`, `ModelInterface` were renamed to
+  |VectorArray|, |Operator|, |Model|. The corresponding modules were renamed from
+  `pymor.*.interfaces` to `pymor.*.interface`.
+- `BasicInterface`, `ImmutableInterface`, `CacheableInterface` were renamed to
+  |BasicObject|, |ImmutableObject|, |CacheableObject|. `pymor.core.interfaces` has
+  been renamed to :mod:`pymor.core.base`.
+
+The base classes `OperatorBase`, `ModelBase`, `FunctionBase` were merged into
+their respective interface classes `[#859] <https://github.com/pymor/pymor/pull/859>`_,
+`[#867] <https://github.com/pymor/pymor/pull/867>`_.
+
+
+Module cleanup
+~~~~~~~~~~~~~~
+Modules associated with pyMOR's builtin discretization toolkit were moved to the
+:mod:`pymor.discretizers.builtin` package `[#847] <https://github.com/pymor/pymor/pull/847>`_.
+The `domaindescriptions` and `functions` packages were made sub-packages of
+:mod:`pymor.analyticalproblems` `[#855] <https://github.com/pymor/pymor/pull/855>`_,
+`[#858] <https://github.com/pymor/pymor/pull/858>`_. The obsolete code in
+`pymor.discretizers.disk` was removed `[#856] <https://github.com/pymor/pymor/pull/856>`_.
+Further, the `playground` package was removed `[#940] <https://github.com/pymor/pymor/pull/940>`_.
+
+
+State ids removed and caching simplified
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The unnecessarily complicated concept of *state ids*, which was used to build cache keys
+based on the actual state of a |CacheableObject|, has been completely removed from pyMOR.
+Instead, now a `cache_id` has to be manually specified when persistent caching over multiple
+program runs is desired `[#841] <https://github.com/pymor/pymor/pull/841>`_.
+
+
+Further API changes
+~~~~~~~~~~~~~~~~~~~
+- `[#938] Fix order of parameters in thermalblock_problem <https://github.com/pymor/pymor/pull/938>`_
+- `[#980] Set gram_schmidt tolerances in POD to 0 to never truncate pod modes <https://github.com/pymor/pymor/pull/980>`_
+- `[#1012] Change POD default rtol and fix analyze_pickle demo for numpy master <https://github.com/pymor/pymor/pull/1012>`_
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#885] Implement VectorArrayOperator.apply_inverse <https://github.com/pymor/pymor/pull/885>`_
+- `[#888] Implement FenicsVectorSpace.from_numpy <https://github.com/pymor/pymor/pull/888>`_
+- `[#895] Implement VectorArray.__deepcopy__ via VectorArray.copy(deep=True) <https://github.com/pymor/pymor/pull/895>`_
+- `[#905] Add from_files method to SecondOrderModel <https://github.com/pymor/pymor/pull/905>`_
+- `[#919] [reductors.coercive] remove unneccessary initialization in SimpleCoerciveReductor <https://github.com/pymor/pymor/pull/919>`_
+- `[#926] [Operators] Speed up apply methods for LincombOperator <https://github.com/pymor/pymor/pull/926>`_
+- `[#937] Move NumpyListVectorArrayMatrixOperator out of the playground <https://github.com/pymor/pymor/pull/937>`_
+- `[#943] [logger] adds a ctx manager that restores effective level on exit <https://github.com/pymor/pymor/pull/943>`_
+
+
+
+
+
 pyMOR 2019.2 (December 16, 2019)
 --------------------------------
 We are proud to announce the release of pyMOR 2019.2! For this release we have
