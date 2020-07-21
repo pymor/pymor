@@ -2,6 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import itertools
+from pprint import pprint
 
 import numpy as np
 from IPython.core.display import display
@@ -15,14 +16,18 @@ from pymor.vectorarrays.interface import VectorArray
 
 class MPLPlotBase:
 
-    def __init__(self, U, grid, codim, legend, bounding_box=None, separate_colorbars=False, count=None,
-                 separate_plots=False):
+    def __init__(self, U, grid, codim, legend, bounding_box=None, separate_colorbars=False, columns=2,
+                 separate_plots=False, separate_axes=False):
         assert isinstance(U, VectorArray) \
                or (isinstance(U, tuple)
                    and all(isinstance(u, VectorArray) for u in U)
                    and all(len(u) == len(U[0]) for u in U))
-        self.fig_ids = (U.uid,) if isinstance(U, VectorArray) else tuple(u.uid for u in U)
-        U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+        if separate_plots:
+            self.fig_ids = (U.uid,) if isinstance(U, VectorArray) else tuple(u.uid for u in U)
+        else:
+            # using the same id multiple times lets us automagically re-use the same figure
+            self.fig_ids = (U.uid,) if isinstance(U, VectorArray) else [U[0].uid] * len(U)
+        self.U = U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
             tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
 
         if not config.HAVE_MATPLOTLIB:
@@ -37,25 +42,36 @@ class MPLPlotBase:
         # this _supposed_ to let animations run in sync
         sync_timer = None
 
-        do_animation = len(U[0]) > 1
+        do_animation = not separate_axes and len(U[0]) > 1
 
-        for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
-            figure = plt.figure(self.fig_ids[i])
-            ax = plt.axes()
+        if separate_plots:
+            for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
+                figure = plt.figure(self.fig_ids[i])
+                sync_timer = sync_timer or figure.canvas.new_timer()
+                if grid.dim == 2:
+                    plot = MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin, vmax=vmax,
+                                               bounding_box=bounding_box, codim=codim, columns=columns,
+                                               colorbar=separate_colorbars or i == len(U) - 1)
+                else:
+                    plot = Matplotlib1DAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin, vmax=vmax,
+                                            columns=columns, codim=codim, separate_axes=separate_axes)
+                if self.legend:
+                    plot.ax[0].set_title(self.legend[i])
+                self.plots.append(plot)
+                    # plt.tight_layout()
+        else:
+            figure = plt.figure(self.fig_ids[0])
             sync_timer = sync_timer or figure.canvas.new_timer()
             if grid.dim == 2:
-                self.plots.append(MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid,
-                                                 bounding_box=bounding_box, vmin=vmin, vmax=vmax,
-                                                 codim=codim, colorbar=separate_colorbars or i == len(U) - 1))
+                plot = MatplotlibPatchAxes(U=U, figure=figure, sync_timer=sync_timer, grid=grid, vmin=self.vmins,
+                                           vmax=self.vmaxs, bounding_box=bounding_box, codim=codim, columns=columns,
+                                           colorbar=True)
             else:
-                assert count
-                self.plots.append(Matplotlib1DAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid,
-                                                   vmin=vmin, vmax=vmax, count=count, codim=codim,
-                                                   separate_plots=separate_plots))
+                plot = Matplotlib1DAxes(U=U, figure=figure, sync_timer=sync_timer, grid=grid, vmin=self.vmins,
+                                        vmax=self.vmaxs, columns=columns, codim=codim, separate_axes=separate_axes)
             if self.legend:
-                ax.set_title(self.legend[i])
-
-            plt.tight_layout()
+                plot.ax[0].set_title(self.legend[0])
+            self.plots.append(plot)
 
         if do_animation:
             for fig_id in self.fig_ids:
@@ -129,8 +145,9 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     self.vmaxs = (max(np.max(u) for u in np_U),) * len(np_U)
 
         def __init__(self):
-            super(Plot, self).__init__(U, grid, codim, legend, bounding_box=bounding_box,
-                                       separate_colorbars=separate_colorbars)
+            super(Plot, self).__init__(U, grid, codim, legend, bounding_box=bounding_box, columns=columns,
+                                       separate_colorbars=separate_colorbars, separate_plots=True,
+                                       separate_axes=False)
 
         def set(self, ind):
             np_U = self.U
@@ -149,7 +166,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
 
 
-def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, separate_axes=False, columns=2):
+def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, separate_axes=False,
+                            columns=2):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
@@ -161,9 +179,10 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         The underlying |Grid|.
     U
         |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
-        as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
-        provided, in which case several plots are made into the same axes. The
-        lengths of all arrays have to agree.
+        as an animation in a single axes object or a series of axes, depending on the
+        `separate_axes` switch. It is also possible to provide a tuple of |VectorArrays|,
+        in which case several plots are made into one or multiple figures,
+        depending on the `separate_plots` switch. The lengths of all arrays have to agree.
     codim
         The codimension of the entities the data in `U` is attached to (either 0 or 1).
     title
@@ -172,9 +191,9 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         Description of the data that is plotted. Most useful if `U` is a tuple in which
         case `legend` has to be a tuple of strings of the same length.
     separate_plots
-        If `True`, use subplots to visualize multiple |VectorArrays|.
+        If `True`, use multiple figures to visualize multiple |VectorArrays|.
     separate_axes
-        If `True`, use separate axes for each subplot.
+        If `True`, use separate axes for each figure instead of an Animation.
     column
         Number of columns the subplots are organized in.
     """
@@ -184,25 +203,26 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         def _set_limits(self, np_U):
             if separate_plots:
                 if separate_axes:
-                    self.vmins = tuple(np.min(u) for u in np_U[0])
-                    self.vmaxs = tuple(np.max(u) for u in np_U[0])
+                    self.vmins = tuple(np.min(u) for u in np_U)
+                    self.vmaxs = tuple(np.max(u) for u in np_U)
                 else:
-                    self.vmins = (min(np.min(u) for u in np_U),) * len(np_U[0])
-                    self.vmaxs = (max(np.max(u) for u in np_U),) * len(np_U[0])
+                    self.vmins = (min(np.min(u) for u in np_U),) * len(np_U)
+                    self.vmaxs = (max(np.max(u) for u in np_U),) * len(np_U)
             else:
-                self.vmins = (min(np.min(u) for u in np_U[0]),)
-                self.vmaxs = (max(np.max(u) for u in np_U[0]),)
+                self.vmins = min(np.min(u) for u in np_U)
+                self.vmaxs = max(np.max(u) for u in np_U)
 
         def __init__(self):
-            count = 1
-            super(Plot, self).__init__(U, grid, codim, legend, separate_plots=separate_plots, count=count)
+            super(Plot, self).__init__(U, grid, codim, legend, separate_plots=separate_plots, columns=columns,
+                                       separate_axes=separate_axes)
 
         def set(self, ind):
             np_U = self.U[ind]
             if separate_plots:
                 for u, plot, vmin, vmax in zip(np_U, self.plots, self.vmins, self.vmaxs):
-                    plot.set(u[np.newaxis, ...], vmin=vmin, vmax=vmax)
+                    plot.set(u, vmin=vmin, vmax=vmax)
             else:
-                self.plots[0].set(np_U, vmin=self.vmins[0], vmax=self.vmaxs[0])
-
-    return Plot()
+                self.plots[0].set(np_U, vmin=self.vmins, vmax=self.vmaxs)
+    pl = Plot()
+    pl.set(0)
+    return pl
