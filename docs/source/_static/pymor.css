@@ -1,6 +1,10 @@
 .md-typeset .md-typeset__table{
-    display:inline-block;
+    display:block;
     /* background-color: red; */
     margin-bottom:.5em;
     padding:0 .8rem
+}
+
+.md-typeset .admonition{
+    overflow:hidden;
 }
