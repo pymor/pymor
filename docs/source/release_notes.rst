@@ -82,7 +82,7 @@ Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Improvements to ParameterFunctionals
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Several improvements have been made to pyMOR's |ParameterFunctionals|:
 
 - `[#934] [parameters/functionals] Add derivative of products <https://github.com/pymor/pymor/pull/934>`_
