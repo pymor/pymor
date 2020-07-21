@@ -19,31 +19,43 @@ from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 
 class MatplotlibAxesBase:
 
-    def __init__(self, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2):
+    def __init__(self, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2, separate_axes=False, columns=2):
         self.vmin = vmin
         self.vmax = vmax
         self.codim = codim
 
         self.grid = grid
-        self.ax = figure.gca()
+        if separate_axes:
+            if len(U) == 1:
+                columns = 1 # otherwise we get a sep axes object with 0 data
+            rows = int(np.ceil(len(U) / columns))
+            self.ax = figure.subplots(rows, columns, squeeze=False).flatten()
+        else:
+            self.ax = (figure.gca(),)
         self.figure = figure
         self.codim = codim
         self.grid = grid
+        self.separate_axes = separate_axes
+        self.count = len(U) if separate_axes else 1
 
         self._plot_init()
 
         # assignment delayed to ensure _plot_init works w/o data
         self.U = U
         # Rest is only needed with animation
-        if U is not None and len(U) > 1:
+        if not separate_axes and U is not None and len(U) > 1:
+            assert len(self.ax) == 1
             delay_between_frames = 200  # ms
-            self.anim = animation.FuncAnimation(figure, self.set,
+            self.anim = animation.FuncAnimation(figure, self.animate,
                                            frames=U, interval=delay_between_frames,
                                            blit=True, event_source=sync_timer)
+            pad = (self.vmax - self.vmin) * 0.1
+            for ax in self.ax:
+                ax.set_ylim(self.vmin - pad, self.vmax + pad)
             # generating the HTML instance outside this class causes the plot display to fail
             self.html = HTML(self.anim.to_jshtml())
         else:
-            self.set(self.U[0])
+            self.set(self.U)
 
     @abstractmethod
     def _plot_init(self):
@@ -51,14 +63,19 @@ class MatplotlibAxesBase:
         pass
 
     @abstractmethod
-    def set(self, U, vmin=None, vmax=None):
+    def set(self, U):
+        """Load new data into existing plot objects."""
+        pass
+
+    @abstractmethod
+    def animate(self, u):
         """Load new data into existing plot objects."""
         pass
 
 
 class MatplotlibPatchAxes(MatplotlibAxesBase):
 
-    def __init__(self, figure, grid, bounding_box=None, U=None, vmin=None, vmax=None, codim=2,
+    def __init__(self, figure, grid, bounding_box=None, U=None, vmin=None, vmax=None, codim=2, columns=2,
                  colorbar=True, sync_timer=None):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
@@ -72,20 +89,20 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
         self.reference_element = grid.reference_element
         self.colorbar = colorbar
 
-        super().__init__(U=U, figure=figure, grid=grid,  vmin=vmin, vmax=vmax, codim=codim,
+        super().__init__(U=U, figure=figure, grid=grid,  vmin=vmin, vmax=vmax, codim=codim, columns=columns,
                          sync_timer=sync_timer)
 
     def _plot_init(self):
         if self.codim == 2:
-            self.p = self.ax.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+            self.p = self.ax[0].tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
                                  np.zeros(len(self.coordinates)),
                                  vmin=self.vmin, vmax=self.vmax, shading='gouraud')
         else:
-            self.p = self.ax.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+            self.p = self.ax[0].tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
                                  facecolors=np.zeros(len(self.subentities)),
                                  vmin=self.vmin, vmax=self.vmax, shading='flat')
         if self.colorbar:
-            self.figure.colorbar(self.p, ax=self.ax)
+            self.figure.colorbar(self.p, ax=self.ax[0])
 
     def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
@@ -102,15 +119,12 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
 
 class Matplotlib1DAxes(MatplotlibAxesBase):
 
-    def __init__(self, U, figure, grid, count=1, vmin=None, vmax=None, codim=1, separate_plots=False,
-                 sync_timer=None):
+    def __init__(self, U, figure, grid, vmin=None, vmax=None, codim=1, separate_axes=False, sync_timer=None,
+                 columns=2):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
-
-        self.count = count
-        self.separate_plots = separate_plots
-        super().__init__(U=U, figure=figure, grid=grid, vmin=vmin, vmax=vmax, codim=codim,
-                         sync_timer=sync_timer)
+        super().__init__(U=U, figure=figure, grid=grid, vmin=vmin, vmax=vmax, codim=codim, columns=columns,
+                         sync_timer=sync_timer, separate_axes=separate_axes)
 
     def _plot_init(self):
         centers = self.grid.centers(1)
@@ -123,29 +137,35 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
             xs = centers
         else:
             xs = np.repeat(centers, 2)[1:-1]
-        lines = ()
-        for i in range(self.count):
-            l, = self.ax.plot(xs, np.zeros_like(xs))
-            lines = lines + (l,)
+        if self.separate_axes:
+            self.lines = [ax.plot(xs, np.zeros_like(xs))[0] for ax in self.ax]
+        else:
+            self.lines = [self.ax[0].plot(xs, np.zeros_like(xs))[0] for _ in range(self.count)]
         pad = (self.vmax - self.vmin) * 0.1
-        self.ax.set_ylim(self.vmin - pad, self.vmax + pad)
-        self.lines = lines
+        for ax in self.ax:
+            ax.set_ylim(self.vmin - pad, self.vmax + pad)
 
-    def set(self, u, vmin=None, vmax=None):
+    def _set(self, u, i):
+        if self.codim == 1:
+            if self.periodic:
+                self.lines[i].set_ydata(np.concatenate((u, [self.U[0]])))
+            else:
+                self.lines[i].set_ydata(u)
+        else:
+            self.lines[i].set_ydata(np.repeat(u, 2))
+
+    def animate(self, u):
+        for i in range(len(self.ax)):
+            self._set(u, i)
+        return self.lines
+
+    def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
         self.vmax = self.vmax if vmax is None else vmax
-        for i in range(self.count):
-            if self.codim == 1:
-                if self.periodic:
-                    self.lines[i].set_ydata(np.concatenate((u, [self.U[0]])))
-                else:
-                    self.lines[i].set_ydata(u)
-            else:
-                self.lines[i].set_ydata(np.repeat(u, 2))
-
-        pad = (self.vmax - self.vmin) * 0.1
-        self.ax.set_ylim(self.vmin - pad, self.vmax + pad)
-        return self.lines
+        for i, (u, ax) in enumerate(zip(U, self.ax)):
+            self._set(u, i)
+            pad = (self.vmax - self.vmin) * 0.1
+            ax.set_ylim(self.vmin - pad, self.vmax + pad)
 
 
 
