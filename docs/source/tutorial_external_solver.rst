@@ -1,8 +1,6 @@
 Tutorial: Binding an external PDE solver to pyMOR
 =================================================
 
-.. include:: jupyter_init.txt
-
 One of pyMOR's main features is easy integration of external solvers that implement the full-order model. In this tutorial
 we will do this step-by-step for a custom toy solver written in C++.
 If you use the `FEniCS <https://fenicsproject.org>`_ or `NGSovle <https://ngsolve.org>`_ PDE solver libraries,
@@ -163,6 +161,7 @@ To be able to use this extension module we need to insert the build directory in
 interpreter looks for things to import. Afterwards we can import the module and create and use the exported classes.
 
 .. jupyter-kernel::
+.. include:: jupyter_init.txt
 .. jupyter-execute::
 
   import sys
