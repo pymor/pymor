@@ -8,3 +8,7 @@
 .md-typeset .admonition{
     overflow:hidden;
 }
+
+.cell_output {
+    display: inline-block;
+}
