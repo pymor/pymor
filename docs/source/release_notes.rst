@@ -133,9 +133,12 @@ For nonlinear |Operators| the initial guess is passed to the :meth:`~pymor.algor
 algorithm `[#941] <https://github.com/pymor/pymor/pull/941>`_.
 
 
-manylinux2014 wheels
-~~~~~~~~~~~~~~~~~~~~
-- `[#846] FIx wheel testing + build manylinux 2014 wheels <https://github.com/pymor/pymor/pull/846>`_
+manylinux 2010+2014 wheels
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+In addition to `manylinux1 <https://www.python.org/dev/peps/pep-0513/>`_ wheels we are now also shipping wheels
+conforming with the `manylinux2010 <https://www.python.org/dev/peps/pep-0571/>`_ and
+`manylinux2014 <https://www.python.org/dev/peps/pep-0599/>`_ standards. The infrastructure for this was added in
+`[#846] <https://github.com/pymor/pymor/pull/846>`_.
 
 
 Debugging improvements
@@ -151,6 +154,16 @@ specific objects to which the table might be applied `[#945] <https://github.com
 
 WebGL-based visualizations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+This release enables our `pythreejs <https://github.com/jupyter-widgets/pythreejs>`_-based visualization module
+for Jupyter Notebook environments by default. It acts as a drop in replacement for the previous default, which was
+matplotlib based. This new module improves interactive performance for visualizations
+with a large number of degrees of freedom by utilizing the user's graphics card via the browser's WebGL API.
+The old behaviour can be reactivated using
+
+.. jupyter-execute::
+
+    from pymor.basic import *
+    set_defaults({'pymor.discretizers.builtin.gui.jupyter.get_visualizer.backend': 'MPL'})
 
 
 Backward incompatible changes
