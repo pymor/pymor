@@ -36,14 +36,14 @@ class MatplotlibAxesBase:
         self.codim = codim
         self.grid = grid
         self.separate_axes = separate_axes
-        self.count = len(U) if separate_axes else 1
+        self.count = len(U) if separate_axes or isinstance(U, tuple) else 1
 
         self._plot_init()
 
         # assignment delayed to ensure _plot_init works w/o data
         self.U = U
         # Rest is only needed with animation
-        if not separate_axes and U is not None and len(U) > 1:
+        if not separate_axes and self.count == 1:
             assert len(self.ax) == 1
             delay_between_frames = 200  # ms
             self.anim = animation.FuncAnimation(figure, self.animate,
@@ -162,9 +162,15 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
     def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
         self.vmax = self.vmax if vmax is None else vmax
-        for i, (u, ax) in enumerate(zip(U, self.ax)):
-            self._set(u, i)
-            pad = (self.vmax - self.vmin) * 0.1
+
+        if isinstance(U, tuple):
+            for i, u in enumerate(U):
+                self._set(u, i)
+        else:
+            for i, (u, _) in enumerate(zip(U, self.ax)):
+                self._set(u, i)
+        pad = (self.vmax - self.vmin) * 0.1
+        for ax in self.ax:
             ax.set_ylim(self.vmin - pad, self.vmax + pad)
 
 
