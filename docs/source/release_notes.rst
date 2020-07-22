@@ -89,11 +89,11 @@ a software library. In this release a variety of tutorials have been added which
 introduce important pyMOR concepts and basic model order reduction methods. In
 particular users can now learn about:
 
-- :ref:`tutorial01`.
-- :ref:`tutorial-rb`
-- :ref:`tutorial_bt`
-- :ref:`tutorial_mor_with_anns`
-- :ref:`tutorial_external_solver`
+- :doc:`tutorial_builtin_discretizer`.
+- :doc:`tutorial_basis_generation`
+- :doc:`tutorial_bt`
+- :doc:`tutorial_mor_with_anns`
+- :doc:`tutorial_external_solver`
 
 
 Additional new features
