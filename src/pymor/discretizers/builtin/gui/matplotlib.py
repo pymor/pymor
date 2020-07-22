@@ -49,9 +49,6 @@ class MatplotlibAxesBase:
             self.anim = animation.FuncAnimation(figure, self.animate,
                                            frames=U, interval=delay_between_frames,
                                            blit=True, event_source=sync_timer)
-            pad = (self.vmax - self.vmin) * 0.1
-            for ax in self.ax:
-                ax.set_ylim(self.vmin - pad, self.vmax + pad)
             # generating the HTML instance outside this class causes the plot display to fail
             self.html = HTML(self.anim.to_jshtml())
         else:
@@ -88,6 +85,7 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
         self.entity_map = entity_map
         self.reference_element = grid.reference_element
         self.colorbar = colorbar
+        self.animate = self.set
 
         super().__init__(U=U, figure=figure, grid=grid,  vmin=vmin, vmax=vmax, codim=codim, columns=columns,
                          sync_timer=sync_timer)
