@@ -94,14 +94,21 @@ Several improvements have been made to pyMOR's |ParameterFunctionals|:
 
 Extended Newton algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#956] Add norm of update vector as error measure in Newton algorithm <https://github.com/pymor/pymor/pull/956>`_
-- `[#925] [line-search] implement Armijo line search algorithm <https://github.com/pymor/pymor/pull/925>`_
-- `[#932] [newton] fixed bugs with residual being exactly 0 <https://github.com/pymor/pymor/pull/932>`_
+Finding a proper parameter for the step size in the Newton algorithm can be a difficult
+task. In this release an Armijo line search algorithm is added which allows for computing
+adequate step sizes in every step of the iteration. Details about the line search
+implementation in pyMOR can be found in `[#925] <https://github.com/pymor/pymor/pull/925>`_.
+
+Additionally, new options for determining convergence of the Newton method have been added.
+It is now possible to choose between the norm of the residual or the update vector as a
+measure for the error. Information about other noteworthy improvements that are related to
+this change can be found in `[#956] <https://github.com/pymor/pymor/pull/956>`_, as well as
+`[#932] <https://github.com/pymor/pymor/pull/932>`_.
 
 
 initial_guess parameter for apply_inverse
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The :meth:`~pymor.operators.interface.Operator.apply_inverse` and 
+The :meth:`~pymor.operators.interface.Operator.apply_inverse` and
 :meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint` methods of the |Operator| interface
 have gained an additional `initial_guess` parameter that can be passed to iterative linear solvers.
 For nonlinear |Operators| the initial guess is passed to the :meth:`~pymor.algorithms.newton.newton`
