@@ -43,12 +43,13 @@ New system analysis and linear algebra algorithms
 So far, computing poles of an |LTIModel| was only supported by its
 :meth:`~pymor.models.iosys.LTIModel.poles` method which uses a dense eigenvalue
 solver and converts the operators to dense matrices.
-
-The new version adds :meth:`~pymor.algorithms.samdp.samdp`
-(`[#834] <https://github.com/pymor/pymor/pull/834>`_) and
-:meth:`~pymor.algorithms.eigs.eigs`
-(`[#880] <https://github.com/pymor/pymor/pull/880>`_) which can compute a subset
-of the eigenvalues which are dominant in some sense.
+The new version adds the :meth:`~pymor.algorithms.eigs.eigs` method
+(`[#880] <https://github.com/pymor/pymor/pull/880>`_) for computing a few
+smallest/largest eigenvalues (similar to `scipy.sparse.linalg.eigs`, except
+working for generic operators).
+Furthermore, a new addition is the :meth:`~pymor.algorithms.samdp.samdp` method
+(`[#834] <https://github.com/pymor/pymor/pull/834>`_) which takes into account
+the input and output operators of an |LTIModel| to compute its dominant poles.
 
 
 Improved parameter handling
