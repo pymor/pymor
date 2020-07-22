@@ -53,6 +53,7 @@ common = '''
 .. |defaults| replace:: :mod:`~pymor.core.defaults`
 
 .. |CacheRegion| replace:: :class:`~pymor.core.cache.CacheRegion`
+.. |CacheableObject| replace:: :class:`~pymor.core.cache.CacheableObject`
 
 .. |StationaryProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`
 .. |InstationaryProblem| replace:: :class:`~pymor.analyticalproblems.instationary.InstationaryProblem`
