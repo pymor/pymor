@@ -152,19 +152,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                        separate_colorbars=separate_colorbars, separate_plots=True,
                                        separate_axes=False)
 
-        def set(self, ind):
-            np_U = self.U
-            if self.rescale_colorbars:
-                if self.separate_colorbars:
-                    self.vmins = tuple(np.min(u[ind]) for u in np_U)
-                    self.vmaxs = tuple(np.max(u[ind]) for u in np_U)
-                else:
-                    self.vmins = (min(np.min(u[ind]) for u in np_U),) * len(np_U)
-                    self.vmaxs = (max(np.max(u[ind]) for u in np_U),) * len(np_U)
-
-            for u, plot, vmin, vmax in zip(np_U, self.plots, self.vmins, self.vmaxs):
-                plot.set(u[ind], vmin=vmin, vmax=vmax)
-
     return Plot()
 
 
@@ -218,13 +205,5 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         def __init__(self):
             super(Plot, self).__init__(U, grid, codim, legend, separate_plots=separate_plots, columns=columns,
                                        separate_axes=separate_axes)
-
-        def set(self, ind):
-            np_U = self.U[ind]
-            if separate_plots:
-                for u, plot, vmin, vmax in zip(np_U, self.plots, self.vmins, self.vmaxs):
-                    plot.set(u, vmin=vmin, vmax=vmax)
-            else:
-                self.plots[0].set(np_U, vmin=self.vmins, vmax=self.vmaxs)
 
     return Plot()
