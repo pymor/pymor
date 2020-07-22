@@ -78,12 +78,16 @@ Also see `[#949] <https://github.com/pymor/pymor/pull/949>`_ and
 
 pyMOR tutorial collection
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#866] Add tutorial on using pyMOR's discretization toolikit <https://github.com/pymor/pymor/pull/866>`_
-- `[#983] Tutorial 1 minor fixes <https://github.com/pymor/pymor/pull/983>`_
-- `[#984] Balanced truncation tutorial <https://github.com/pymor/pymor/pull/984>`_
-- `[#1007] Cpp tutorial <https://github.com/pymor/pymor/pull/1007>`_
-- `[#1013] Add tutorial on how to build a reduced basis <https://github.com/pymor/pymor/pull/1013>`_
-- `[#1021] Restructure tutorials <https://github.com/pymor/pymor/pull/1021>`_
+Hands-on tutorials provide a good opportunity for new users to get started with
+a software library. In this release a variety of tutorials have been added which
+introduce important pyMOR concepts and basic model order reduction methods. In
+particular users can now learn about:
+
+- pyMOR's discretization toolkit (`[#866] <https://github.com/pymor/pymor/pull/866>`_).
+- How to build a reduced basis with pyMOR (`[#1013] <https://github.com/pymor/pymor/pull/1013>`_).
+- Reducing a heat equation using balanced truncation (`[#984] <https://github.com/pymor/pymor/pull/984>`_).
+- Model order reduction with artificial neural networks (`[#1001] <https://github.com/pymor/pymor/pull/1001>`_).
+- Binding an external PDE solver to pyMOR (`[#1007] <https://github.com/pymor/pymor/pull/1007>`_).
 
 
 Additional new features
