@@ -1,3 +1,5 @@
+.. _tutorial_mor_with_anns:
+
 Tutorial: Model order reduction with artificial neural networks
 ===============================================================
 

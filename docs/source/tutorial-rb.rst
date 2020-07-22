@@ -1,3 +1,5 @@
+.. _tutorial-rb:
+
 Tutorial: Building a Reduced Basis
 ==================================
 
@@ -7,7 +9,7 @@ In this tutorial we will learn more about |VectorArrays| and how to
 construct a reduced basis using pyMOR.
 
 A reduced basis spans a low dimensional subspace of a |Model|'s
-:attr:`~pymor.models.interface.Model.solution_space`, in which the 
+:attr:`~pymor.models.interface.Model.solution_space`, in which the
 :meth:`solutions <pymor.models.interface.Model.solve>` of the |Model|
 can be well approximated for all |parameter values|. In this context,
 time is treated as an additional parameter. So for time-dependent problems,
@@ -20,8 +22,8 @@ Kolmogorov :math:`N`-width :math:`d_N` given as
 .. math::
 
     d_N := \inf_{\substack{V_N \subseteq V\\ \operatorname{dim}(V_N) \leq N}}\,
-           \sup_{\mu \in \mathcal{P}}\, 
-           \inf_{v \in V_N}\, 
+           \sup_{\mu \in \mathcal{P}}\,
+           \inf_{v \in V_N}\,
            \|u(\mu) - v\|.
 
 In this formula :math:`V` denotes the
@@ -309,7 +311,7 @@ only 25 basis vectors.
 Now, the Euclidean norm will just work fine in many cases.
 However, when the full-order model comes from a PDE, it will be usually not the norm
 we are interested in, and you may get poor results for problems with
-strongly anisotropic meshes. 
+strongly anisotropic meshes.
 
 For our diffusion problem with homogeneous Dirichlet boundaries,
 the Sobolev semi-norm (of order one) is a natural choice. Among other useful products,
@@ -321,7 +323,7 @@ as
 
     fom.h1_0_semi_product
 
-.. note:: 
+.. note::
 
     The `0` in `h1_0_semi_product` refers to the fact that rows and columns of
     Dirichlet boundary DOFs have been cleared in the matrix of the Operator to
@@ -342,7 +344,7 @@ projection error, we can simply pass it as the optional `product` argument to
     R = trivial_basis[:10].inner(V, product=fom.h1_0_semi_product)
     lambdas = np.linalg.solve(G, R)
     V_h1_proj = trivial_basis[:10].lincomb(lambdas.T)
-    
+
     fom.visualize((V, V_h1_proj, V - V_h1_proj), separate_colorbars=True)
 
 As you might have guessed, we have additionally opted here to only use the
@@ -387,7 +389,7 @@ and then extract appropriate sub-matrices:
     trivial_errors = compute_proj_errors(trivial_basis, V, fom.h1_0_semi_product)
 
 Here we have used the fact that we can form multiple linear combinations at once by passing
-multiple rows of linear coefficients to 
+multiple rows of linear coefficients to
 :meth:`~pymor.vectorarrays.interface.VectorArray.lincomb`. The
 :meth:`~pymor.vectorarrays.interface.VectorArray.norm` method returns a
 |NumPy array| of the norms of all vectors in the array with respect to
@@ -452,7 +454,7 @@ We compute the approximation errors for the validation set as before:
 .. jupyter-execute::
 
     greedy_errors = compute_proj_errors(greedy_basis, V, fom.h1_0_semi_product)
-    
+
     plt.figure()
     plt.semilogy(trivial_errors, label='trivial')
     plt.semilogy(greedy_errors, label='greedy')
@@ -518,7 +520,7 @@ numbers should be near 1:
 
     G_trivial = trivial_basis.gramian(fom.h1_0_semi_product)
     G_greedy = greedy_basis.gramian(fom.h1_0_semi_product)
-    
+
     print(f'trivial: {np.linalg.cond(G_trivial)}, '
           f'greedy: {np.linalg.cond(G_greedy)}')
 
@@ -535,26 +537,26 @@ compute these errors now more easily by exploiting orthogonality:
             V_proj = basis[:N].lincomb(v)
             errors.append(np.max((V - V_proj).norm(product)))
         return errors
-    
+
     trivial_errors = compute_proj_errors_orth_basis(trivial_basis, V, fom.h1_0_semi_product)
     greedy_errors  = compute_proj_errors_orth_basis(greedy_basis, V, fom.h1_0_semi_product)
-    
+
     plt.figure()
     plt.semilogy(trivial_errors, label='trivial')
     plt.semilogy(greedy_errors, label='greedy')
     plt.ylim(1e-1, 1e1)
     plt.legend()
     plt.show()
-    
+
 
 Proper Orthogonal Decomposition
 -------------------------------
 
 Another popular method to create a reduced basis out of snapshot data is the so-called
 Proper Orthogonal Decomposition (POD) which can be seen as a non-centered version of
-Principal Component Analysis (PCA). First we build a snapshot matrix 
+Principal Component Analysis (PCA). First we build a snapshot matrix
 
-.. math:: 
+.. math::
 
     A :=
     \begin{bmatrix}
@@ -590,7 +592,7 @@ the following error identity holds:
 
 Thus, the linear spaces produced by the POD are actually optimal, albeit in a different
 error measure: instead of looking at the worst-case best-approximation error over all
-|parameter values|, we minimize the :math:`\ell^2`-sum of all best-approximation errors. 
+|parameter values|, we minimize the :math:`\ell^2`-sum of all best-approximation errors.
 So in the mean squared average, the POD spaces are optimal, but there might be |parameter values|
 for which the best-approximation error is quite large.
 
@@ -628,7 +630,7 @@ best-approximation error:
 .. jupyter-execute::
 
     pod_errors = compute_proj_errors_orth_basis(pod_basis, V, fom.h1_0_semi_product)
-    
+
     plt.figure()
     plt.semilogy(trivial_errors, label='trivial')
     plt.semilogy(greedy_errors, label='greedy')
@@ -641,7 +643,7 @@ As it turns out, the POD spaces perform even slightly better than the greedy spa
 Why is that the case? Note that for finite training or validation sets, both considered error measures
 are equivalent. In particular:
 
-.. math:: 
+.. math::
     \sup_{k = 1,\ldots,K} \inf_{v \in V_N} \|u(\mu_k) - v\| \leq
     \left[\sum_{k = 1}^K \inf_{v \in V_N} \|u(\mu_k) - v\|^2\right]^{1/2} \leq
     \sqrt{K} \cdot \sup_{k = 1,\ldots,K} \inf_{v \in V_N} \|u(\mu_k) - v\|.
@@ -668,7 +670,7 @@ approximating the solutions at the subdomain interfaces.
 Weak greedy algorithm
 ---------------------
 
-Both POD and the strong greedy algorithm require the computation of all 
+Both POD and the strong greedy algorithm require the computation of all
 :meth:`solutions <pymor.models.interface.Model.solve>` :math:`u(\mu)`
 for all |parameter values| :math:`\mu` in the `training_set`. So it is
 clear right from the start that we cannot afford very large training sets.
@@ -707,11 +709,11 @@ We won't go into any further details in this tutorial, but for nice problem clas
 (linear coercive problems with an affine dependence of the system matrix on the |Parameters|),
 one can derive a posteriori error estimators for which the equivalence with the best-approximation
 error can be shown and which can be computed efficiently, independently from the size
-of the full-order model. Here we will only give a simple example how to use the 
+of the full-order model. Here we will only give a simple example how to use the
 :meth:`weak greedy <pymor.algorithms.greedy.weak_greedy>` algorithm for our problem at hand.
 
 In order to do so, we need to be able to build a reduced-order
-model with an appropriate error estimator. For the given (linear coercive) thermal block problem 
+model with an appropriate error estimator. For the given (linear coercive) thermal block problem
 we can use :class:`~pymor.reductors.coercive.CoerciveRBReductor`:
 
 .. jupyter-execute::
@@ -757,7 +759,7 @@ Let's see, how the weak-greedy basis performs:
 .. jupyter-execute::
 
     weak_greedy_errors = compute_proj_errors_orth_basis(weak_greedy_basis, V, fom.h1_0_semi_product)
-    
+
     plt.figure()
     plt.semilogy(trivial_errors, label='trivial')
     plt.semilogy(greedy_errors, label='greedy')

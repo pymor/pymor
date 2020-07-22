@@ -1,3 +1,5 @@
+.. _tutorial01:
+
 Tutorial 1: Using pyMOR’s discretization toolkit
 ================================================
 

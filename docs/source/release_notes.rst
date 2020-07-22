@@ -84,11 +84,11 @@ a software library. In this release a variety of tutorials have been added which
 introduce important pyMOR concepts and basic model order reduction methods. In
 particular users can now learn about:
 
-- pyMOR's discretization toolkit (`[#866] <https://github.com/pymor/pymor/pull/866>`_).
-- How to build a reduced basis with pyMOR (`[#1013] <https://github.com/pymor/pymor/pull/1013>`_).
-- Reducing a heat equation using balanced truncation (`[#984] <https://github.com/pymor/pymor/pull/984>`_).
-- Model order reduction with artificial neural networks (`[#1001] <https://github.com/pymor/pymor/pull/1001>`_).
-- Binding an external PDE solver to pyMOR (`[#1007] <https://github.com/pymor/pymor/pull/1007>`_).
+- :ref:`tutorial01`.
+- :ref:`tutorial-rb`
+- :ref:`tutorial_bt`
+- :ref:`tutorial_mor_with_anns`
+- :ref:`tutorial_external_solver`
 
 
 Additional new features

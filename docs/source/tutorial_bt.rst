@@ -1,3 +1,5 @@
+.. _tutorial_bt:
+
 Tutorial: Reducing a heat equation using balanced truncation
 ============================================================
 

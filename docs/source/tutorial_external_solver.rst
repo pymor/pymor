@@ -1,3 +1,5 @@
+.. _tutorial_external_solver:
+
 Tutorial: Binding an external PDE solver to pyMOR
 =================================================
 
