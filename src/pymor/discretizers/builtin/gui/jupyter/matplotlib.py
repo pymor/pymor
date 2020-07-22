@@ -38,7 +38,7 @@ class MPLPlotBase:
         if not config.HAVE_IPYWIDGETS and len(U[0]) > 1:
             raise ImportError('cannot visualize: import of ipywidgets failed')
         self.legend = (legend,) if isinstance(legend, str) else legend
-        assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+        assert self.legend is None or isinstance(self.legend, tuple) and len(self.legend) == len(U)
         self._set_limits(U)
 
         self.plots = []
