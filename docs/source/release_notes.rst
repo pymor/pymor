@@ -40,16 +40,21 @@ the neural networks. No knowledge of PyTorch or neural networks is required to a
 
 New system analysis and linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new :meth:`~pymor.algorithms.eigs.eigs` method
+`[#880] <https://github.com/pymor/pymor/pull/880>`_ computes 
+smallest/largest eigenvalues of an arbitary linear real |Operator|
+using the implicitly restarted Arnoldi method [RL95]_. It can also
+be used to solve generalized eigenvalue problems.
+
 So far, computing poles of an |LTIModel| was only supported by its
-:meth:`~pymor.models.iosys.LTIModel.poles` method which uses a dense eigenvalue
+:meth:`~pymor.models.iosys.LTIModel.poles` method, which uses a dense eigenvalue
 solver and converts the operators to dense matrices.
-The new version adds the :meth:`~pymor.algorithms.eigs.eigs` method
-(`[#880] <https://github.com/pymor/pymor/pull/880>`_) for computing a few
-smallest/largest eigenvalues (similar to `scipy.sparse.linalg.eigs`, except
-working for generic operators).
-Furthermore, a new addition is the :meth:`~pymor.algorithms.samdp.samdp` method
-(`[#834] <https://github.com/pymor/pymor/pull/834>`_) which takes into account
-the input and output operators of an |LTIModel| to compute its dominant poles.
+The new :meth:`~pymor.algorithms.samdp.samdp` method
+`[#834] <https://github.com/pymor/pymor/pull/834>`_ implements the
+subspace accelerated dominant pole (SAMDP) algorithm  [RM06]_,
+which can be used to compute the dominant poles operators of an 
+|LTIModel| with arbitrary (in particular sparse) system |Operators|
+without relying on dense matrix operations.
 
 
 Improved parameter handling
