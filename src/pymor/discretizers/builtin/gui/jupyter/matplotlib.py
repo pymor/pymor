@@ -29,6 +29,9 @@ class MPLPlotBase:
             self.fig_ids = (U.uid,) if isinstance(U, VectorArray) else [U[0].uid] * len(U)
         self.U = U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
             tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+        if grid.dim == 1 and len(U[0]) > 1 and not separate_plots:
+            raise NotImplementedError('Plotting of VectorArrays with length > 1 is only available with '
+                                      '`separate_plots=True`')
 
         if not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
@@ -166,7 +169,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
 
 
-def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, separate_axes=False,
+def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=True, separate_axes=False,
                             columns=2):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
@@ -223,6 +226,5 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                     plot.set(u, vmin=vmin, vmax=vmax)
             else:
                 self.plots[0].set(np_U, vmin=self.vmins, vmax=self.vmaxs)
-    pl = Plot()
-    pl.set(0)
-    return pl
+
+    return Plot()

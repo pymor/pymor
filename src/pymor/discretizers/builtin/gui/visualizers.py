@@ -117,7 +117,7 @@ class OnedVisualizer(BasicObject):
         backend = backend or ('jupyter' if is_jupyter() else None)
         self.__auto_init(locals())
 
-    def visualize(self, U, m, title=None, legend=None, separate_plots=False,
+    def visualize(self, U, m, title=None, legend=None, separate_plots=True,
                   separate_axes=False, block=None, filename=None, columns=2):
         """Visualize the provided data.
 
