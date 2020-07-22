@@ -28,17 +28,14 @@ Release highlights
 Model order reduction using artificial neural networks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 With this release, we introduce a simple approach for non-intrusive model order
-reduction to pyMOR that makes use of artificial neural networks. The method was first
-described in [HU18]_ and is especially interesting in the case of a highly nonlinear
-dependence of the PDE on the |Parameters| where it is expensive to assemble reduced
-systems of equations. In the online phase of the approach, the reduced coefficients
-are computed by passing the |Parameters| instance through the neural network that was
-trained during a preceded offline phase.
+reduction to pyMOR that makes use of artificial neural networks
+`[#1001] <https://github.com/pymor/pymor/pull/1001>`_. The method was first
+described in [HU18]_ and only requires being able to compute solution snapshots of
+the full-order |Model|. Thus, it can be applied to arbitrary (nonlinear) |Models| even when no
+access to the model's |Operators| is possible.
 
-Our implementation of neural networks builds on `PyTorch <https://pytorch.org>`_,
-a Python package for machine learning algorithms.
-
-Further details on our implementation can be found in `[#1001] Non-intrusive reduced order models using artificial neural networks <https://github.com/pymor/pymor/pull/1001>`_.
+Our implementation internally wraps `PyTorch <https://pytorch.org>`_ for the training and evaluation of
+the neural networks. No knowledge of PyTorch or neural networks is required to apply the method.
 
 
 New system analysis and linear algebra algorithms
