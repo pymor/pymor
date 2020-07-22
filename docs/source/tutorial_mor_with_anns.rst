@@ -186,7 +186,7 @@ network, we use the respective function of the
 
 .. jupyter-execute::
 
-    rom = reductor.reduce()
+    rom = reductor.reduce(restarts=100)
 
 We are now ready to test our reduced model by solving for a random parameter value
 the full problem and the reduced model and visualize the result:
