@@ -76,6 +76,8 @@ stages:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
+            - unknown_failure
+            - job_execution_timeout
     {# this is intentionally NOT moving with CI_IMAGE_TAG #}
     image: pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
     variables:
