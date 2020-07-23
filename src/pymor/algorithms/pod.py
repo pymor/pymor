@@ -63,14 +63,6 @@ def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         One-dimensional |NumPy array| of singular values.
     """
 
-    if isinstance(product, Number):
-        # old pod signature
-        assert modes is None
-        modes, product = product, None
-        import warnings
-        warnings.warn("pod signature has changed. Provide 'modes' as keyword argument.",
-                      DeprecationWarning, stacklevel=3)
-
     assert isinstance(A, VectorArray)
     assert product is None or isinstance(product, Operator)
     assert modes is None or modes <= len(A)
