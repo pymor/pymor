@@ -13,7 +13,6 @@ from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
 from pymor.parameters.base import Mu, ParameterSpace
-from pymor.tools.deprecated import Deprecated
 
 
 def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_extensions=None,
@@ -296,11 +295,6 @@ def rb_adaptive_greedy(fom, reductor, parameter_space,
     result['rom'] = surrogate.rom
 
     return result
-
-
-@Deprecated(rb_adaptive_greedy)
-def adaptive_greedy(*args, **kwargs):
-    return rb_adaptive_greedy(*args, **kwargs)
 
 
 class AdaptiveSampleSet(BasicObject):

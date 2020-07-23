@@ -11,7 +11,6 @@ from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject
-from pymor.tools.deprecated import Deprecated
 
 
 def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=None, pool=None):
@@ -280,10 +279,3 @@ def _rb_surrogate_evaluate(rom=None, fom=None, reductor=None, mus=None, error_no
         max_err_ind = np.argmax(errors)
         return errors[max_err_ind], mus[max_err_ind]
 
-
-@Deprecated(rb_greedy)
-def greedy(*args, **kwargs):
-    if 'samples' in kwargs:
-        training_set = kwargs.pop('samples')
-        kwargs['training_set'] = training_set
-    return rb_greedy(*args, **kwargs)
