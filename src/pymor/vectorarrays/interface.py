@@ -8,7 +8,6 @@ import numpy as np
 
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
-from pymor.tools.deprecated import Deprecated
 from pymor.tools.random import get_random_state
 
 
@@ -206,10 +205,6 @@ class VectorArray(BasicObject):
         """
         raise NotImplementedError
 
-    @property
-    @Deprecated(to_numpy)
-    def data(self):
-        return self.to_numpy()
 
     @abstractmethod
     def append(self, other, remove_from_other=False):
@@ -818,10 +813,6 @@ class VectorSpace(ImmutableObject):
         A |VectorArray| with `data` as data.
         """
         raise NotImplementedError
-
-    @Deprecated('from_numpy')
-    def from_data(self, data):
-        return self.from_numpy(data)
 
     def __eq__(self, other):
         return other is self
