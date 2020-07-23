@@ -4,7 +4,7 @@
 Release Notes
 *************
 
-pyMOR 2020.1 (July ??, 2020)
+pyMOR 2020.1 (July 23, 2020)
 ----------------------------
 We are proud to announce the release of pyMOR 2020.1! Highlights of this release
 are support for non-intrusive model order reduction using artificial neural networks,
