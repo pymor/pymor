@@ -117,7 +117,7 @@ might break (this is usually announced on our
 [mailing list](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install git+https://github.com/pymor/pymor@2019.2.x#egg=pymor[full]
+    pip install git+https://github.com/pymor/pymor@2020.1.x#egg=pymor[full]
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
@@ -148,7 +148,7 @@ Useful Links
 
 * [Latest Changelog](https://pymor.readthedocs.io/en/latest/release_notes.html)
 * [Getting Started](https://pymor.readthedocs.io/en/latest/getting_started.html)
-* [Dependencies](https://github.com/pymor/pymor/blob/2019.2.x/requirements.txt)
+* [Dependencies](https://github.com/pymor/pymor/blob/2020.1.x/requirements.txt)
 
 
 External PDE solvers
@@ -224,7 +224,7 @@ Then, clone the pyMOR git repository using
 
 and, optionally, switch to the branch you are interested in, e.g.
 
-    git checkout 2019.2.x
+    git checkout 2020.1.x
 
 Then, make an editable installation of pyMOR with
 
