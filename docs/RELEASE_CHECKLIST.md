@@ -14,7 +14,9 @@
  1. [ ] Update https://github.com/pymor/docs/index.html to point to new release
  1. [ ] Update Homepage
  1. [ ] Make a github release. Zenodo is hooked into that.
- 1. [ ] update morwiki https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/PyMOR
+ 1. [ ] update MOR Wiki:
+        [pyMOR page](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/PyMOR),
+        [software comparison table](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Comparison_of_Software)
  1. [ ] update researchgate https://www.researchgate.net/project/pyMOR-Model-Order-Reduction-with-Python
         (check formatting after submit!)
  1. [ ] Submit release to NA-digest: http://icl.utk.edu/na-digest/websubmit.html
