@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 function docker_tag_exists() {
     curl --silent -f -lSL https://hub.docker.com/v2/repositories/$1/tags/$2 > /dev/null
