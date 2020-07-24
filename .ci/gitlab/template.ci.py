@@ -289,7 +289,7 @@ wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
 {% endfor %}
 {% endfor %}
 
-collect wheels:
+pypi deploy:
     extends: .sanity_checks
     stage: deploy
     dependencies:
@@ -298,15 +298,19 @@ collect wheels:
       - wheel {{ML}} py{{PY[0]}} {{PY[2]}}
     {% endfor %}
     {% endfor %}
+    except:
+        - schedules
+        - /^staging/.*$/i
+        - /^github/PR_.*$/i
     variables:
         ARCHIVE_DIR: pyMOR_wheels-${CI_COMMIT_REF_NAME}
     artifacts:
         paths:
          - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*manylinux*whl
-        expire_in: 1 week
+        expire_in: 6 months
         name: pymor-wheels
     script:
-        - mkdir ${CI_PROJECT_DIR}/${ARCHIVE_DIR} && mv ${CI_PROJECT_DIR}/shared/*whl ${CI_PROJECT_DIR}/${ARCHIVE_DIR}
+        - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash
 
 {% for OS in testos %}
 check_wheel {{loop.index}}:
