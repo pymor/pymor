@@ -111,11 +111,6 @@ stages:
     only: ['branches', 'tags', 'triggers']
     variables:
         TEST_OS: "{{ ' '.join(testos) }}"
-    artifacts:
-        paths:
-        # cannot use exported var from env here
-        - ${CI_PROJECT_DIR}/shared/pymor*manylinux*whl
-        expire_in: 1 week
 
 
 .check_wheel:
@@ -286,9 +281,32 @@ wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
     tags:
       - amm-old-ci
     {%- endif %}
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux{{ML}}_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash {{ML}}
 {% endfor %}
 {% endfor %}
+
+collect wheels:
+    extends: .sanity_checks
+    stage: deploy
+    dependencies:
+    {%- for PY in pythons %}
+    {%- for ML in manylinuxs %}
+      - wheel {{ML}} py{{PY[0]}} {{PY[2]}}
+    {% endfor %}
+    {% endfor %}
+    variables:
+        ARCHIVE_DIR: pyMOR_wheels-${CI_COMMIT_REF_NAME}
+    artifacts:
+        paths:
+         - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*manylinux*whl
+        expire_in: 1 week
+        name: pymor-wheels
+    script:
+        - mkdir ${CI_PROJECT_DIR}/${ARCHIVE_DIR} && mv ${CI_PROJECT_DIR}/shared/*whl ${CI_PROJECT_DIR}/${ARCHIVE_DIR}
 
 {% for OS in testos %}
 check_wheel {{loop.index}}:

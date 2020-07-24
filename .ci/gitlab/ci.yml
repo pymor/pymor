@@ -109,11 +109,6 @@ stages:
     only: ['branches', 'tags', 'triggers']
     variables:
         TEST_OS: "centos_8 debian_buster debian_testing"
-    artifacts:
-        paths:
-        # cannot use exported var from env here
-        - ${CI_PROJECT_DIR}/shared/pymor*manylinux*whl
-        expire_in: 1 week
 
 
 .check_wheel:
@@ -615,18 +610,30 @@ wheel 1 py3 6:
         PYVER: "3.6"
     tags:
       - amm-old-ci
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2010_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
 wheel 2014 py3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2014_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2014
 
 
@@ -636,18 +643,30 @@ wheel 1 py3 7:
         PYVER: "3.7"
     tags:
       - amm-old-ci
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2010_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
 wheel 2014 py3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2014_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2014
 
 
@@ -657,21 +676,68 @@ wheel 1 py3 8:
         PYVER: "3.8"
     tags:
       - amm-old-ci
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 8:
     extends: .wheel
     variables:
         PYVER: "3.8"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2010_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
 wheel 2014 py3 8:
     extends: .wheel
     variables:
         PYVER: "3.8"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2014_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2014
 
 
+
+collect wheels:
+    extends: .sanity_checks
+    stage: deploy
+    dependencies:
+      - wheel 1 py3 6
+    
+      - wheel 2010 py3 6
+    
+      - wheel 2014 py3 6
+    
+    
+      - wheel 1 py3 7
+    
+      - wheel 2010 py3 7
+    
+      - wheel 2014 py3 7
+    
+    
+      - wheel 1 py3 8
+    
+      - wheel 2010 py3 8
+    
+      - wheel 2014 py3 8
+    
+    
+    variables:
+        ARCHIVE_DIR: pyMOR_wheels-${CI_COMMIT_REF_NAME}
+    artifacts:
+        paths:
+         - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*manylinux*whl
+        expire_in: 1 week
+        name: pymor-wheels
+    script:
+        - mkdir ${CI_PROJECT_DIR}/${ARCHIVE_DIR} && mv ${CI_PROJECT_DIR}/shared/*whl ${CI_PROJECT_DIR}/${ARCHIVE_DIR}
 
 
 check_wheel 1:
