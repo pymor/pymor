@@ -76,8 +76,10 @@ template: docker_file
 
 # docker targets
 docker_template: docker_file
-	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/dependencies.py
-	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/.ci/gitlab/template.ci.py
+	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/dependencies.py \
+	  || $(DOCKER_RUN) pymor/ci_sanity:latest /pymor/dependencies.py
+	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/.ci/gitlab/template.ci.py \
+	  || $(DOCKER_RUN) pymor/ci_sanity:latest /pymor/.ci/gitlab/template.ci.py
 
 docker_file:
 	 sed -e "s;CI_IMAGE_TAG;$(CI_IMAGE_TAG);g" -e "s;DOCKER_BASE_PYTHON;$(DOCKER_BASE_PYTHON);g" \
