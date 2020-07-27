@@ -71,7 +71,7 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None,
             alpha = alpha_init
             # Log warning
             logger = getLogger('pymor.algorithms.line_search.armijo')
-            logger.warning(f'Reached maximum number of line search steps; using initial step size of {alpha_init} instead')
+            logger.warning(f'Reached maximum number of line search steps; using initial step size of {alpha_init} instead.')
             break
         iteration += 1
         # Adjust step size
