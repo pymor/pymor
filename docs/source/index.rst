@@ -20,6 +20,7 @@ provided for getting started quickly.
     tutorials
     release_notes
     bibliography
+    developer_docs
 
 API Documentation
 *****************
