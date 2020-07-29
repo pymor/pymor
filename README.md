@@ -134,7 +134,7 @@ pyMOR can be installed using `conda` by running
 Documentation
 -------------
 
-Documentation is available online at [Read the Docs](https://pymor.readthedocs.org/)
+Documentation is available [online](https://docs.pymor.org/)
 or you can build it yourself from inside the root directory of the pyMOR source tree
 by executing:
 
