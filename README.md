@@ -14,7 +14,7 @@ provided for getting started quickly.
 
 [![PyPI](https://img.shields.io/pypi/pyversions/pymor.svg)](https://pypi.python.org/pypi/pymor)
 [![PyPI](https://img.shields.io/pypi/v/pymor.svg)](https://pypi.python.org/pypi/pymor)
-[![Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](https://pymor.readthedocs.org)
+[![Docs](https://img.shields.io/endpoint?url=https%3A%2F%2Fdocs.pymor.org%2Fbadge.json)](https://docs.pymor.org/latest)
 [![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
 [![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/master/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/master)
 [![Azure Pipeline](https://dev.azure.com/pymor/pymor/_apis/build/status/pymor.pymor?branchName=master)](https://dev.azure.com/pymor/pymor/_build/latest?definitionId=1&branchName=master)
@@ -71,6 +71,8 @@ command:
     pip install --upgrade pip  # make sure that pip is reasonably new
     pip install pymor[full]
 
+(Please note that pip must be at least version 9.0.0)
+
 This will install the latest release of pyMOR on your system with most optional
 dependencies.
 For Linux we provide binary wheels, so no further system packages should
@@ -121,10 +123,18 @@ Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
 
 
+Installation via conda
+----------------------
+
+pyMOR can be installed using `conda` by running
+
+    conda install -c conda-forge pymor
+
+
 Documentation
 -------------
 
-Documentation is available online at [Read the Docs](https://pymor.readthedocs.org/)
+Documentation is available [online](https://docs.pymor.org/)
 or you can build it yourself from inside the root directory of the pyMOR source tree
 by executing:
 
@@ -136,8 +146,8 @@ This will generate HTML documentation in `docs/_build/html`.
 Useful Links
 ------------
 
-* [Latest Changelog](https://pymor.readthedocs.io/en/latest/release_notes.html)
-* [Getting Started](https://pymor.readthedocs.io/en/latest/getting_started.html)
+* [Latest Changelog](https://docs.pymor.org/latest/release_notes.html)
+* [Getting Started](https://docs.pymor.org/latest/getting_started.html)
 * [Dependencies](https://github.com/pymor/pymor/blob/2020.1.x/requirements.txt)
 
 
@@ -164,6 +174,7 @@ we provide bindings for the following solver libraries:
     MPI-compatible wrapper classes for dolfin linear algebra data structures are
     shipped with pyMOR (`pymor.bindings.fenics`).
     For an example see `pymordemos.thermalbock`, `pymordemos.thermalblock_simple`.
+    It is tested using version 2019.1.0.
 
 * [deal.II](https://dealii.org)
 
@@ -175,6 +186,7 @@ we provide bindings for the following solver libraries:
     Wrapper classes for the NGSolve finite element library are shipped with pyMOR
     (`pymor.bindings.ngsolve`).
     For an example see `pymordemos.thermalblock_simple`.
+    It is tested using version v6.2.2006.
 
 
 Do not hesitate to contact
@@ -223,9 +235,13 @@ Tests
 -----
 
 pyMOR uses [pytest](https://pytest.org/) for unit testing. To run the test suite,
-simply execute `make test` in the base directory of the pyMOR repository. This
-will also create a test coverage report which can be found in the `htmlcov`
-directory. Alternatively, you can run `make full-test` which will also enable
+simply execute `make test` in the base directory of the pyMOR repository. This will
+run the pytest suite with the default hypothesis profile "dev". For available profiles
+see `src/pymortests/conftest.py`. A profile is selected by running `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME test`.
+If docker is available, use `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME docker_test` to execute the test suite
+in the same environment as on pyMOR's CI infrastructure. Additional customization points are listed at the top of the
+`Makefile`.
+Run `make full-test` which will also enable
 [pyflakes](https://pypi.python.org/pypi/pyflakes) and
 [pep8](https://www.python.org/dev/peps/pep-0008/) checks.
 
