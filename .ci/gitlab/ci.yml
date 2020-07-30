@@ -178,7 +178,7 @@ mpi 3 6:
     image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -196,7 +196,7 @@ mpi 3 7:
     image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -214,7 +214,7 @@ mpi 3 8:
     image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -232,7 +232,7 @@ notebooks_dir 3 6:
     image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -250,7 +250,7 @@ notebooks_dir 3 7:
     image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -268,7 +268,7 @@ notebooks_dir 3 8:
     image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -286,7 +286,7 @@ pip_installed 3 6:
     image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -304,7 +304,7 @@ pip_installed 3 7:
     image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -322,7 +322,7 @@ pip_installed 3 8:
     image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -340,7 +340,7 @@ vanilla 3 6:
     image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -358,7 +358,7 @@ vanilla 3 7:
     image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -376,7 +376,7 @@ vanilla 3 8:
     image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -394,7 +394,7 @@ numpy_git 3 8:
     image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -412,7 +412,7 @@ oldest 3 6:
     image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else

@@ -183,7 +183,7 @@ minimal_cpp_demo:
     image: pymor/testing_py{{py}}:{{ci_image_tag}}
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile \"ci_pr\" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
