@@ -311,6 +311,8 @@ pypi deploy:
         name: pymor-wheels
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash
+    environment:
+        name: safe
 
 {% for OS in testos %}
 check_wheel {{loop.index}}:
@@ -320,14 +322,16 @@ check_wheel {{loop.index}}:
 {% endfor %}
 
 docs build:
-    extends: .docker-in-docker
+    extends: .test_base
     except:
         - schedules
-    stage: build
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
+          alias: pypi_mirror
+    image: pymor/jupyter_py3.7:{{ci_image_tag}}
     script:
-        - apk --update add make python3
-        - pip3 install jinja2 pathlib
-        - make USER=pymor docker_docs
+        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
+    stage: build
     artifacts:
         paths:
             - docs/_build/html
@@ -335,6 +339,8 @@ docs build:
 
 docs:
     extends: .test_base
+    # makes sure this doesn't land on the test runner
+    tags: [mike]
     image: alpine:3.11
     stage: deploy
     resource_group: docs_deploy
@@ -345,11 +351,11 @@ docs:
         - pip3 install jinja2 pathlib
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
-    only: ['branches', 'tags']
-    except:
-        - schedules
-        - /^staging/.*$/i
-        - /^github/PR_.*$/i
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - if: '${CI_COMMIT_REF_NAME} =~ "github"'
+          when: never
     environment:
         name: safe
 
