@@ -17,8 +17,10 @@ stages:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
-    except:
-        - /^staging/.*$/i
+    rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^staging.*/'
+          when: never
+        - when: on_success
     variables:
         PYPI_MIRROR_TAG: 97eb2abc080637d49c3db8f428ddff14748710ef
         CI_IMAGE_TAG: a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
@@ -57,9 +59,10 @@ stages:
             - always
     environment:
         name: safe
-    except:
-        - /^github\/PR_.*$/
-        - /^staging/.*$/i
+    rules:
+        - if: '${CI_COMMIT_REF_NAME} =~ /^github/PR.*/'
+          when: never
+        - when: on_success
     stage: deploy
     script: .ci/gitlab/submit.bash
 
@@ -94,8 +97,10 @@ stages:
 .binder:
     extends: .docker-in-docker
     stage: install_checks
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     variables:
         IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
         CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
@@ -104,9 +109,10 @@ stages:
 .wheel:
     extends: .docker-in-docker
     stage: build
-    except:
-        - schedules
-    only: ['branches', 'tags', 'triggers']
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     variables:
         TEST_OS: "centos_8 debian_buster debian_testing"
 
@@ -114,8 +120,10 @@ stages:
 .check_wheel:
     extends: .test_base
     stage: install_checks
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
       - pymor/devpi:1
     dependencies:
@@ -133,7 +141,6 @@ stages:
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
       - devpi upload --from-dir --formats=* ./shared
-    only: ['branches', 'tags', 'triggers']
     # the docker service adressing fails on other runners
     tags: [mike]
 
@@ -161,8 +168,10 @@ ci setup:
 
 minimal_cpp_demo:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -170,8 +179,10 @@ minimal_cpp_demo:
     script: ./.ci/gitlab/cpp_demo.bash
 mpi 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -188,8 +199,10 @@ mpi 3 6:
         - ./.ci/gitlab/test_mpi.bash
 mpi 3 7:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -206,8 +219,10 @@ mpi 3 7:
         - ./.ci/gitlab/test_mpi.bash
 mpi 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -224,8 +239,10 @@ mpi 3 8:
         - ./.ci/gitlab/test_mpi.bash
 notebooks_dir 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -242,8 +259,10 @@ notebooks_dir 3 6:
         - ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 7:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -260,8 +279,10 @@ notebooks_dir 3 7:
         - ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -278,8 +299,10 @@ notebooks_dir 3 8:
         - ./.ci/gitlab/test_notebooks_dir.bash
 pip_installed 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -296,8 +319,10 @@ pip_installed 3 6:
         - ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 7:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -314,8 +339,10 @@ pip_installed 3 7:
         - ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -332,8 +359,10 @@ pip_installed 3 8:
         - ./.ci/gitlab/test_pip_installed.bash
 vanilla 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -350,8 +379,10 @@ vanilla 3 6:
         - ./.ci/gitlab/test_vanilla.bash
 vanilla 3 7:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -368,8 +399,10 @@ vanilla 3 7:
         - ./.ci/gitlab/test_vanilla.bash
 vanilla 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -386,8 +419,10 @@ vanilla 3 8:
         - ./.ci/gitlab/test_vanilla.bash
 numpy_git 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -404,8 +439,10 @@ numpy_git 3 8:
         - ./.ci/gitlab/test_numpy_git.bash
 oldest 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_oldest_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -423,8 +460,9 @@ oldest 3 6:
 ci_weekly 3 6:
     extends: .pytest
     timeout: 5h
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     services:
         - name: pymor/pypi-mirror_stable_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -434,8 +472,9 @@ ci_weekly 3 6:
 ci_weekly 3 7:
     extends: .pytest
     timeout: 5h
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     services:
         - name: pymor/pypi-mirror_stable_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -445,8 +484,9 @@ ci_weekly 3 7:
 ci_weekly 3 8:
     extends: .pytest
     timeout: 5h
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     services:
         - name: pymor/pypi-mirror_stable_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
@@ -455,8 +495,10 @@ ci_weekly 3 8:
     script: ./.ci/gitlab/test_vanilla.bash
 submit vanilla 3 6:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.6
     variables:
         COVERAGE_FLAG: vanilla
@@ -464,8 +506,10 @@ submit vanilla 3 6:
         - vanilla 3 6
 submit vanilla 3 7:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.7
     variables:
         COVERAGE_FLAG: vanilla
@@ -473,8 +517,10 @@ submit vanilla 3 7:
         - vanilla 3 7
 submit vanilla 3 8:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.8
     variables:
         COVERAGE_FLAG: vanilla
@@ -482,8 +528,10 @@ submit vanilla 3 8:
         - vanilla 3 8
 submit numpy_git 3 8:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.8
     variables:
         COVERAGE_FLAG: numpy_git
@@ -491,8 +539,10 @@ submit numpy_git 3 8:
         - numpy_git 3 8
 submit oldest 3 6:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.6
     variables:
         COVERAGE_FLAG: oldest
@@ -500,8 +550,9 @@ submit oldest 3 6:
         - oldest 3 6
 submit ci_weekly 3 6:
     extends: .submit
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     image: pymor/python:3.6
     variables:
         COVERAGE_FLAG: ci_weekly
@@ -509,8 +560,9 @@ submit ci_weekly 3 6:
         - ci_weekly 3 6
 submit ci_weekly 3 7:
     extends: .submit
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     image: pymor/python:3.7
     variables:
         COVERAGE_FLAG: ci_weekly
@@ -518,8 +570,9 @@ submit ci_weekly 3 7:
         - ci_weekly 3 7
 submit ci_weekly 3 8:
     extends: .submit
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     image: pymor/python:3.8
     variables:
         COVERAGE_FLAG: ci_weekly
@@ -530,22 +583,28 @@ submit ci_weekly 3 8:
 
 pip 1/3:
     extends: .docker-in-docker
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     stage: install_checks
     script: docker build -f .ci/docker/install_checks/centos_8/Dockerfile .
 
 pip 2/3:
     extends: .docker-in-docker
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     stage: install_checks
     script: docker build -f .ci/docker/install_checks/debian_buster/Dockerfile .
 
 pip 3/3:
     extends: .docker-in-docker
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     stage: install_checks
     script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
 
@@ -569,9 +628,11 @@ trigger_binder 1/3:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
-    only:
-        - master
-        - tags
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == "master"'
+          when: on_success
+        - if: '$CI_COMMIT_TAG'
+          when: on_success
     before_script:
         - apk --update add bash python3
         - pip3 install requests
@@ -582,9 +643,11 @@ trigger_binder 2/3:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
-    only:
-        - master
-        - tags
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == "master"'
+          when: on_success
+        - if: '$CI_COMMIT_TAG'
+          when: on_success
     before_script:
         - apk --update add bash python3
         - pip3 install requests
@@ -595,9 +658,11 @@ trigger_binder 3/3:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
-    only:
-        - master
-        - tags
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == "master"'
+          when: on_success
+        - if: '$CI_COMMIT_TAG'
+          when: on_success
     before_script:
         - apk --update add bash python3
         - pip3 install requests
@@ -729,10 +794,12 @@ pypi deploy:
       - wheel 2014 py3 8
     
     
-    except:
-        - schedules
-        - /^staging/.*$/i
-        - /^github/PR_.*$/i
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
+          when: never
+        - when: on_success
     variables:
         ARCHIVE_DIR: pyMOR_wheels-${CI_COMMIT_REF_NAME}
     artifacts:
@@ -764,12 +831,15 @@ check_wheel 3:
 
 docs build:
     extends: .test_base
-    except:
-        - schedules
+    tags: [mike]
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
           alias: pypi_mirror
-    image: pymor/jupyter_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/jupyter_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
@@ -795,7 +865,7 @@ docs:
     rules:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: never
-        - if: '${CI_COMMIT_REF_NAME} =~ "github"'
+        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
           when: never
     environment:
         name: safe
