@@ -1217,7 +1217,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             if scalar_diffusion:
                 products['energy'] = eL
             else:
-                products['energy'] = 0.5*eL + 0.5*eL.H
+                eL_unassembled = 0.5*eL + 0.5*eL.H
+                products['energy'] = eL_unassembled.assemble() if preassemble else eL_unassembled
         else:
             products['energy'] = eL
 
