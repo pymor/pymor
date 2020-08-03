@@ -42,10 +42,12 @@ def test_lincomb_function():
             for one in (ConstantFunction(1.0, dim_domain=steps),
                         GenericFunction(lambda X: np.ones(X.shape[:-1]), dim_domain=steps), 1.0):
                 add = (zero + one) + 1 - 1
+                add_ =  1 - 1 + (zero + one)
                 sub = (zero - one) + np.zeros(())
                 neg = - zero
                 assert np.allclose(sub(x), [-1])
                 assert np.allclose(add(x), [1.0])
+                assert np.allclose(add_(x), [1.0])
                 assert np.allclose(neg(x), [0.0])
                 (repr(add), str(add), repr(one), str(one))  # just to cover the respective special funcs too
                 mul = neg * 1. * 1.
