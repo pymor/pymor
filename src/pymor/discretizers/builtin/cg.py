@@ -1203,11 +1203,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     else:
         output_functional = None
 
-    m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
-                         name=f'{p.name}_CG')
-
-    data = {'grid': grid, 'boundary_info': boundary_info}
-
+    # assemble additional product
     if mu_energy_product:
         if preassemble:
             # mu_energy_product is the |Parameter| with which we build the energy product (s.a.)
@@ -1215,7 +1211,6 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         else:
             from pymor.operators.constructions import FixedParameterOperator
             eL = FixedParameterOperator(eL, mu=mu_energy_product)
-        products = m.products.copy()
         if p.diffusion is not None:
             scalar_diffusion = len(p.diffusion.shape_range) == 0 \
                            or (len(p.diffusion.shape_range) == 1 and p.diffusion.shape_range[0] == 1)
@@ -1226,7 +1221,11 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         else:
             products['energy'] = eL
 
-        m = m.with_(products=products)
+    m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
+                         name=f'{p.name}_CG')
+
+    data = {'grid': grid, 'boundary_info': boundary_info}
+
 
     if preassemble:
         data['unassembled_m'] = m
