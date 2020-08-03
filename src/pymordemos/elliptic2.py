@@ -13,7 +13,8 @@ Arguments:
     N               Triangle count per direction
 
     PRODUCT-COUNT   0: equip the model with standard products
-                    1: add an energy product for a fixed parameter
+                    1: use a fixed parameter instance with random parameter values to also
+                    add an energy product to the model
 
 Options:
     -h, --help   Show this message.
@@ -90,7 +91,7 @@ def elliptic2_demo(args):
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
     if mu_bar is not None:
-        m, data = discretizer(problem, diameter=1. / args['N'], energy_product=mu_bar)
+        m, data = discretizer(problem, diameter=1. / args['N'], mu_energy_product=mu_bar)
     else:
         m, data = discretizer(problem, diameter=1. / args['N'])
     print(data['grid'])
@@ -101,8 +102,12 @@ def elliptic2_demo(args):
     for mu in problem.parameter_space.sample_uniformly(10):
         U.append(m.solve(mu))
     if mu_bar is not None:
+        # use the given energy product
         energy_norm_squared = m.products['energy'].apply2(U[-1], U[-1])
         print('Energy norm of the last snapshot: ', np.sqrt(energy_norm_squared)[0][0])
+    if not args['--fv']:
+        h1_0_norm_squared = m.products['h1_0_semi'].apply2(U[-1], U[-1])
+        print('H^1_0 semi norm of the last snapshot: ', np.sqrt(h1_0_norm_squared)[0][0])
     m.visualize(U, title='Solution for mu in [0.1, 1]')
 
 
