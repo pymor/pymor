@@ -62,13 +62,13 @@ class Function(ParametricObject):
                 return self
             other = ConstantFunction(other, dim_domain=self.dim_domain)
 
-        if not isinstance(self, LincombFunction):
-            if isinstance(other, LincombFunction):
+        if self.name != 'LincombFunction':
+            if isinstance(other, LincombFunction) and other.name == 'LincombFunction':
                 functions = (self,) + other.functions
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
             else:
                 functions, coefficients = (self, other), (1., sign)
-        elif isinstance(other, LincombFunction):
+        elif isinstance(other, LincombFunction) and other.name == 'LincombFunction':
             functions = self.functions + other.functions
             coefficients = self.coefficients + (other.coefficients if sign == 1.
                                                 else tuple(-c for c in other.coefficients))
@@ -88,7 +88,7 @@ class Function(ParametricObject):
             other = ConstantFunction(other, dim_domain=self.dim_domain)
 
         # note that 'other' can never be a LincombFunction
-        if not isinstance(self, LincombFunction):
+        if self.name != 'LincombFunction':
             functions, coefficients = (other, self), (1., sign)
         else:
             functions = (other,) + self.functions
@@ -113,12 +113,12 @@ class Function(ParametricObject):
             return NotImplemented
         if isinstance(other, (Number, ParameterFunctional)):
             return LincombFunction([self], [other])
-        if not isinstance(self, ProductFunction):
-            if isinstance(other, ProductFunction):
+        if self.name != 'ProductFunction':
+            if isinstance(other, ProductFunction) and other.name == 'ProductFunction':
                 return other.with_(functions=other.functions + [self])
             else:
                 return ProductFunction([self, other])
-        elif isinstance(other, ProductFunction):
+        elif isinstance(other, ProductFunction) and other.name == 'ProductFunction':
             functions = self.functions + other.functions
             return ProductFunction(functions)
         else:
