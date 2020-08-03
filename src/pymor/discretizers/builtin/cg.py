@@ -996,7 +996,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     preassemble
         If `True`, preassemble all operators in the resulting |Model|.
     energy_product
-        If not `None`, a |Parameter| `mu` for which to assemble the symmetric part of the |Operator| of the resulting
+        If not `None`, |parameter values| for which to assemble the symmetric part of the |Operator| of the resulting
         |Model| `fom` (ignoring the advection part), such that `fom.operator.assemble(mu) == fom.products['energy']`
         (apart from the fact that the latter includes Dirichlet unit rows and columns, while the former only includes
         Dirichlet rows), if `fom.operator` is already symmetric.
