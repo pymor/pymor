@@ -1110,9 +1110,9 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             for i, rd in enumerate(p.robin_data[0].functions):
                 robin_tuple = (rd, p.robin_data[1])
                 Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=robin_tuple, name=f'robin_{i}')]
-                if mu_energy_product:
-                    eLi += [RobinBoundaryOperator(grid, boundary_info, robin_data=robin_tuple)]
             coefficients += list(p.robin_data[0].coefficients)
+            if mu_energy_product:
+                eLi += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data)]
         else:
             Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name=f'robin')]
             if mu_energy_product:
