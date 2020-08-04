@@ -75,7 +75,7 @@ def analyze_pickle_histogram(args):
         for u, mu in zip(us, mus):
             print(f'Estimating error for {mu} ... ', end='')
             sys.stdout.flush()
-            ests.append(rom.estimate(u, mu=mu))
+            ests.append(rom.estimate_error(u, mu=mu))
             print('done')
 
     if args['--detailed']:
@@ -215,7 +215,7 @@ def analyze_pickle_convergence(args):
             for u, mu in zip(us, mus):
                 # print('e', end='')
                 # sys.stdout.flush()
-                ests.append(rom.estimate(u, mu=mu))
+                ests.append(rom.estimate_error(u, mu=mu))
             ESTS.append(max(ests))
             T_ESTS.append((time.time() - start) * 1000. / len(mus))
 

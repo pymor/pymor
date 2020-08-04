@@ -44,9 +44,9 @@ class StationaryModel(Model):
         the model.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, m)` method. If `estimator` is
-        not `None`, an `estimate(U, mu)` method is added to the
-        model which will call `estimator.estimate(U, mu, self)`.
+        an `estimate_error(U, mu, m)` method. If `estimator` is
+        not `None`, an `estimate_error(U, mu)` method is added to the
+        model which will call `estimator.estimate_error(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, m, ...)` method. If `visualizer`
@@ -143,9 +143,9 @@ class InstationaryModel(Model):
         the model.
     estimator
         An error estimator for the problem. This can be any object with
-        an `estimate(U, mu, m)` method. If `estimator` is
-        not `None`, an `estimate(U, mu)` method is added to the
-        model which will call `estimator.estimate(U, mu, self)`.
+        an `estimate_error(U, mu, m)` method. If `estimator` is
+        not `None`, an `estimate_error(U, mu)` method is added to the
+        model which will call `estimator.estimate_error(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, m, ...)` method. If `visualizer`

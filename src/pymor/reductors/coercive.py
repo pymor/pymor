@@ -65,7 +65,7 @@ class CoerciveRBEstimator(ImmutableObject):
     def __init__(self, residual, residual_range_dims, coercivity_estimator):
         self.__auto_init(locals())
 
-    def estimate(self, U, mu, m):
+    def estimate_error(self, U, mu, m):
         est = self.residual.apply(U, mu=mu).norm()
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
@@ -211,7 +211,7 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
         self.__auto_init(locals())
         self.norm = induced_norm(estimator_matrix)
 
-    def estimate(self, U, mu, m):
+    def estimate_error(self, U, mu, m):
         if len(U) > 1:
             raise NotImplementedError
         if not m.rhs.parametric:

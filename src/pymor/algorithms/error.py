@@ -334,7 +334,7 @@ def _compute_errors(mu, fom, reductor, estimator, error_norms, condition, custom
         rom = reductor.reduce(dims={k: N for k in reductor.bases})
         u = rom.solve(mu)
         if estimator:
-            e = rom.estimate(u, mu)
+            e = rom.estimate_error(u, mu)
             e = e[0] if hasattr(e, '__len__') else e
             estimates[i_N] = e
         if fom and reductor:
