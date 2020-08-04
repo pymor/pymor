@@ -164,7 +164,7 @@ class ReducedSim(SimBase):
 
         greedy_data = rb_greedy(self.m, reductor,
                                 self.problem.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                                use_estimator=True, error_norm=self.m.h1_0_semi_norm,
+                                use_error_estimator=True, error_norm=self.m.h1_0_semi_norm,
                                 max_extensions=args['RBSIZE'])
         self.rom, self.reductor = greedy_data['rom'], reductor
         self.first = False

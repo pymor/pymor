@@ -128,7 +128,7 @@ def main(args):
                                          snapshots_per_block=args['SNAPSHOTS'],
                                          extension_alg_name=args['--extension-alg'],
                                          max_extensions=args['RBSIZE'],
-                                         use_estimator=not args['--greedy-without-estimator'],
+                                         use_error_estimator=not args['--greedy-without-estimator'],
                                          pool=pool if parallel else None)
     elif args['--alg'] == 'adaptive_greedy':
         parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS model
@@ -136,7 +136,7 @@ def main(args):
                                                   validation_mus=args['SNAPSHOTS'],
                                                   extension_alg_name=args['--extension-alg'],
                                                   max_extensions=args['RBSIZE'],
-                                                  use_estimator=not args['--greedy-without-estimator'],
+                                                  use_error_estimator=not args['--greedy-without-estimator'],
                                                   rho=args['--adaptive-greedy-rho'],
                                                   gamma=args['--adaptive-greedy-gamma'],
                                                   theta=args['--adaptive-greedy-theta'],
@@ -370,14 +370,14 @@ def reduce_naive(fom, reductor, parameter_space, basis_size):
 
 
 def reduce_greedy(fom, reductor, parameter_space, snapshots_per_block,
-                  extension_alg_name, max_extensions, use_estimator, pool):
+                  extension_alg_name, max_extensions, use_error_estimator, pool):
 
     from pymor.algorithms.greedy import rb_greedy
 
     # run greedy
     training_set = parameter_space.sample_uniformly(snapshots_per_block)
     greedy_data = rb_greedy(fom, reductor, training_set,
-                            use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
+                            use_error_estimator=use_error_estimator, error_norm=fom.h1_0_semi_norm,
                             extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
                             pool=pool)
     rom = greedy_data['rom']
@@ -387,7 +387,7 @@ def reduce_greedy(fom, reductor, parameter_space, snapshots_per_block,
     training_set_size = len(training_set)
     summary = f'''Greedy basis generation:
    size of training set:   {training_set_size}
-   error estimator used:   {use_estimator}
+   error estimator used:   {use_error_estimator}
    extension method:       {extension_alg_name}
    prescribed basis size:  {max_extensions}
    actual basis size:      {real_rb_size}
@@ -398,14 +398,14 @@ def reduce_greedy(fom, reductor, parameter_space, snapshots_per_block,
 
 
 def reduce_adaptive_greedy(fom, reductor, parameter_space, validation_mus,
-                           extension_alg_name, max_extensions, use_estimator,
+                           extension_alg_name, max_extensions, use_error_estimator,
                            rho, gamma, theta, pool):
 
     from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy
 
     # run greedy
     greedy_data = rb_adaptive_greedy(fom, reductor, parameter_space, validation_mus=-validation_mus,
-                                     use_estimator=use_estimator, error_norm=fom.h1_0_semi_norm,
+                                     use_error_estimator=use_error_estimator, error_norm=fom.h1_0_semi_norm,
                                      extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
                                      rho=rho, gamma=gamma, theta=theta, pool=pool)
     rom = greedy_data['rom']
@@ -416,7 +416,7 @@ def reduce_adaptive_greedy(fom, reductor, parameter_space, validation_mus,
     validation_mus += 1
     summary = f'''Adaptive greedy basis generation:
    initial size of validation set:  {validation_mus}
-   error estimator used:            {use_estimator}
+   error estimator used:            {use_error_estimator}
    extension method:                {extension_alg_name}
    prescribed basis size:           {max_extensions}
    actual basis size:               {real_rb_size}

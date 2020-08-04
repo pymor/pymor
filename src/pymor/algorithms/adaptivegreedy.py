@@ -226,7 +226,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
 
 
 def rb_adaptive_greedy(fom, reductor, parameter_space,
-                       use_estimator=True, error_norm=None,
+                       use_error_estimator=True, error_norm=None,
                        target_error=None, max_extensions=None,
                        validation_mus=0, rho=1.1, gamma=0.2, theta=0.,
                        extension_params=None, visualize=False, visualize_vertex_size=80,
@@ -246,7 +246,7 @@ def rb_adaptive_greedy(fom, reductor, parameter_space,
         See :func:`~pymor.algorithms.greedy.rb_greedy`.
     parameter_space
         The |ParameterSpace| for which to compute the reduced model.
-    use_estimator
+    use_error_estimator
         See :func:`~pymor.algorithms.greedy.rb_greedy`.
     error_norm
         See :func:`~pymor.algorithms.greedy.rb_greedy`.
@@ -287,7 +287,7 @@ def rb_adaptive_greedy(fom, reductor, parameter_space,
         :time:                   Duration of the algorithm.
     """
 
-    surrogate = RBSurrogate(fom, reductor, use_estimator, error_norm, extension_params, pool or dummy_pool)
+    surrogate = RBSurrogate(fom, reductor, use_error_estimator, error_norm, extension_params, pool or dummy_pool)
 
     result = adaptive_weak_greedy(surrogate, parameter_space, target_error=target_error, max_extensions=max_extensions,
                                   validation_mus=validation_mus, rho=rho, gamma=gamma, theta=theta, visualize=visualize,
