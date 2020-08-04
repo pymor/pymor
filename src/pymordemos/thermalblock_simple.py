@@ -324,7 +324,7 @@ def main():
 
     # evaluate the reduction error
     ##############################
-    results = reduction_error_analysis(rom, fom=fom, reductor=reductor, estimator=True,
+    results = reduction_error_analysis(rom, fom=fom, reductor=reductor, error_estimator=True,
                                        error_norms=[fom.h1_0_semi_norm], condition=True,
                                        test_mus=parameter_space.sample_randomly(TEST),
                                        plot=True)

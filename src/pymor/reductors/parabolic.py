@@ -79,17 +79,17 @@ class ParabolicRBReductor(InstationaryRBReductor):
             riesz_representatives=False
         )
 
-    def assemble_estimator(self):
+    def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
         initial_residual = self.initial_residual_reductor.reduce()
 
-        estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
+        error_estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
                                          initial_residual, self.initial_residual_reductor.residual_range_dims,
                                          self.coercivity_estimator)
-        return estimator
+        return error_estimator
 
-    def assemble_estimator_for_subbasis(self, dims):
-        return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
+    def assemble_error_estimator_for_subbasis(self, dims):
+        return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
 class ParabolicRBEstimator(ImmutableObject):

@@ -79,16 +79,16 @@ class ProjectionBasedReductor(BasicObject):
         with self.logger.block('Operator projection ...'):
             projected_operators = self.project_operators()
 
-        # ensure that no logging output is generated for estimator assembly in case there is
-        # no estimator to assemble
-        if self.assemble_estimator.__func__ is not ProjectionBasedReductor.assemble_estimator:
+        # ensure that no logging output is generated for error_estimator assembly in case there is
+        # no error estimator to assemble
+        if self.assemble_error_estimator.__func__ is not ProjectionBasedReductor.assemble_error_estimator:
             with self.logger.block('Assembling error estimator ...'):
-                estimator = self.assemble_estimator()
+                error_estimator = self.assemble_error_estimator()
         else:
-            estimator = None
+            error_estimator = None
 
         with self.logger.block('Building ROM ...'):
-            rom = self.build_rom(projected_operators, estimator)
+            rom = self.build_rom(projected_operators, error_estimator)
             rom = rom.with_(name=f'{self.fom.name}_reduced')
             rom.disable_logging()
 
@@ -96,8 +96,8 @@ class ProjectionBasedReductor(BasicObject):
 
     def _reduce_to_subbasis(self, dims):
         projected_operators = self.project_operators_to_subbasis(dims)
-        estimator = self.assemble_estimator_for_subbasis(dims)
-        rom = self.build_rom(projected_operators, estimator)
+        error_estimator = self.assemble_error_estimator_for_subbasis(dims)
+        rom = self.build_rom(projected_operators, error_estimator)
         rom = rom.with_(name=f'{self.fom.name}_reduced')
         rom.disable_logging()
         return rom
@@ -106,17 +106,17 @@ class ProjectionBasedReductor(BasicObject):
     def project_operators(self):
         pass
 
-    def assemble_estimator(self):
+    def assemble_error_estimator(self):
         return None
 
     @abstractmethod
-    def build_rom(self, projected_operators, estimator):
+    def build_rom(self, projected_operators, error_estimator):
         pass
 
     def project_operators_to_subbasis(self, dims):
         raise NotImplementedError
 
-    def assemble_estimator_for_subbasis(self, dims):
+    def assemble_error_estimator_for_subbasis(self, dims):
         return None
 
     def reconstruct(self, u, basis='RB'):
@@ -193,8 +193,8 @@ class StationaryRBReductor(ProjectionBasedReductor):
         }
         return projected_operators
 
-    def build_rom(self, projected_operators, estimator):
-        return StationaryModel(estimator=estimator, **projected_operators)
+    def build_rom(self, projected_operators, error_estimator):
+        return StationaryModel(error_estimator=error_estimator, **projected_operators)
 
 
 class InstationaryRBReductor(ProjectionBasedReductor):
@@ -285,10 +285,10 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         }
         return projected_operators
 
-    def build_rom(self, projected_operators, estimator):
+    def build_rom(self, projected_operators, error_estimator):
         fom = self.fom
         return InstationaryModel(T=fom.T, time_stepper=fom.time_stepper, num_values=fom.num_values,
-                                 estimator=estimator, **projected_operators)
+                                 error_estimator=error_estimator, **projected_operators)
 
 
 class LTIPGReductor(ProjectionBasedReductor):
@@ -334,8 +334,8 @@ class LTIPGReductor(ProjectionBasedReductor):
                                'E': None if self.E_biorthonormal else project_to_subbasis(rom.E, dim, dim)}
         return projected_operators
 
-    def build_rom(self, projected_operators, estimator):
-        return LTIModel(estimator=estimator, **projected_operators)
+    def build_rom(self, projected_operators, error_estimator):
+        return LTIModel(error_estimator=error_estimator, **projected_operators)
 
     def extend_basis(self, **kwargs):
         raise NotImplementedError
@@ -391,8 +391,8 @@ class SOLTIPGReductor(ProjectionBasedReductor):
                                'D':  rom.D}
         return projected_operators
 
-    def build_rom(self, projected_operators, estimator):
-        return SecondOrderModel(estimator=estimator, **projected_operators)
+    def build_rom(self, projected_operators, error_estimator):
+        return SecondOrderModel(error_estimator=error_estimator, **projected_operators)
 
     def extend_basis(self, **kwargs):
         raise NotImplementedError
@@ -446,8 +446,8 @@ class DelayLTIPGReductor(ProjectionBasedReductor):
                                'E': None if self.E_biorthonormal else project_to_subbasis(rom.E, dim, dim)}
         return projected_operators
 
-    def build_rom(self, projected_operators, estimator):
-        return LinearDelayModel(tau=self.fom.tau, estimator=estimator, **projected_operators)
+    def build_rom(self, projected_operators, error_estimator):
+        return LinearDelayModel(tau=self.fom.tau, error_estimator=error_estimator, **projected_operators)
 
     def extend_basis(self, **kwargs):
         raise NotImplementedError

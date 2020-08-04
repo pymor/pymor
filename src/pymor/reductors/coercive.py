@@ -47,14 +47,14 @@ class CoerciveRBReductor(StationaryRBReductor):
         self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
                                                   product=product, riesz_representatives=True)
 
-    def assemble_estimator(self):
+    def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
-        estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
+        error_estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
                                         self.coercivity_estimator)
-        return estimator
+        return error_estimator
 
-    def assemble_estimator_for_subbasis(self, dims):
-        return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
+    def assemble_error_estimator_for_subbasis(self, dims):
+        return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
 class CoerciveRBEstimator(ImmutableObject):
@@ -129,7 +129,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         self.coercivity_estimator = coercivity_estimator
         self.extends = None
 
-    def assemble_estimator(self):
+    def assemble_error_estimator(self):
         fom, RB, extends = self.fom, self.bases['RB'], self.extends
         if extends:
             old_RB_size = extends[0]
@@ -137,7 +137,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         else:
             old_RB_size = 0
 
-        # compute data for estimator
+        # compute data for error estimator
         space = fom.operator.source
 
         # compute the Riesz representative of (U, .)_L2 with respect to product
@@ -197,12 +197,12 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
 
         estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
-        estimator = SimpleCoerciveRBEstimator(estimator_matrix, self.coercivity_estimator)
+        error_estimator = SimpleCoerciveRBEstimator(estimator_matrix, self.coercivity_estimator)
         self.extends = (len(RB), dict(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os))
 
-        return estimator
+        return error_estimator
 
-    def assemble_estimator_for_subbasis(self, dims):
+    def assemble_error_estimator_for_subbasis(self, dims):
         return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
