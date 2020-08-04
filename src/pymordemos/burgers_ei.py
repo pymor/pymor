@@ -170,7 +170,7 @@ def main(args):
     reductor = InstationaryRBReductor(eim)
 
     greedy_data = rb_greedy(fom, reductor, problem.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                            use_estimator=False, error_norm=lambda U: np.max(fom.l2_norm(U)),
+                            use_error_estimator=False, error_norm=lambda U: np.max(fom.l2_norm(U)),
                             extension_params={'method': 'pod'}, max_extensions=args['RBSIZE'],
                             pool=pool)
 

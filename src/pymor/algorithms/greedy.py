@@ -141,7 +141,7 @@ class WeakGreedySurrogate(BasicObject):
         pass
 
 
-def rb_greedy(fom, reductor, training_set, use_estimator=True, error_norm=None,
+def rb_greedy(fom, reductor, training_set, use_error_estimator=True, error_norm=None,
               atol=None, rtol=None, max_extensions=None, extension_params=None, pool=None):
     """Weak Greedy basis generation using the RB approximation error as surrogate.
 
@@ -163,13 +163,13 @@ def rb_greedy(fom, reductor, training_set, use_estimator=True, error_norm=None,
         For an example see :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
     training_set
         The training set of |Parameters| on which to perform the greedy search.
-    use_estimator
+    use_error_estimator
         If `False`, exactly compute the model reduction error by also computing
         the solution of `fom` for all |parameter values| of the training set.
         This is mainly useful when no estimator for the model reduction error
         is available.
     error_norm
-        If `use_estimator` is `False`, use this function to calculate the
+        If `use_error_estimator` is `False`, use this function to calculate the
         norm of the error. If `None`, the Euclidean norm is used.
     atol
         See :func:`weak_greedy`.
@@ -198,7 +198,7 @@ def rb_greedy(fom, reductor, training_set, use_estimator=True, error_norm=None,
         :time:                   Total runtime of the algorithm.
     """
 
-    surrogate = RBSurrogate(fom, reductor, use_estimator, error_norm, extension_params, pool or dummy_pool)
+    surrogate = RBSurrogate(fom, reductor, use_error_estimator, error_norm, extension_params, pool or dummy_pool)
 
     result = weak_greedy(surrogate, training_set, atol=atol, rtol=rtol, max_extensions=max_extensions, pool=pool)
     result['rom'] = surrogate.rom
@@ -212,9 +212,9 @@ class RBSurrogate(WeakGreedySurrogate):
     Not intended to be used directly.
     """
 
-    def __init__(self, fom, reductor, use_estimator, error_norm, extension_params, pool):
+    def __init__(self, fom, reductor, use_error_estimator, error_norm, extension_params, pool):
         self.__auto_init(locals())
-        if use_estimator:
+        if use_error_estimator:
             self.remote_fom, self.remote_error_norm, self.remote_reductor = None, None, None
         else:
             self.remote_fom, self.remote_error_norm, self.remote_reductor = \
@@ -251,7 +251,7 @@ class RBSurrogate(WeakGreedySurrogate):
             if len(U) > 1 and extension_params is None:
                 extension_params = {'method': 'pod'}
             self.reductor.extend_basis(U, copy_U=False, **(extension_params or {}))
-            if not self.use_estimator:
+            if not self.use_error_estimator:
                 self.remote_reductor = self.pool.push(self.reductor)
         with self.logger.block('Reducing ...'):
             self.rom = self.reductor.reduce()

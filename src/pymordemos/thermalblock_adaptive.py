@@ -129,7 +129,7 @@ def thermalblock_demo(args):
         rho=args['--rho'],
         gamma=args['--gamma'],
         theta=args['--theta'],
-        use_estimator=not args['--without-estimator'],
+        use_error_estimator=not args['--without-estimator'],
         error_norm=fom.h1_0_semi_norm,
         max_extensions=args['RBSIZE'],
         visualize=not args['--no-visualize-refinement']
