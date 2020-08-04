@@ -89,7 +89,7 @@ class Model(CacheableObject, ParametricObject):
         """
         return self.solve(mu=mu, return_output=True, **kwargs)[1]
 
-    def estimate(self, U, mu=None):
+    def estimate_error(self, U, mu=None):
         """Estimate the model error for a given solution.
 
         The model error could be the error w.r.t. the analytical
@@ -108,7 +108,7 @@ class Model(CacheableObject, ParametricObject):
         The estimated error.
         """
         if getattr(self, 'estimator') is not None:
-            return self.estimator.estimate(U, mu=mu, m=self)
+            return self.estimator.estimate_error(U, mu=mu, m=self)
         else:
             raise NotImplementedError('Model has no estimator.')
 

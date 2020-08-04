@@ -101,7 +101,7 @@ class ParabolicRBEstimator(ImmutableObject):
                  coercivity_estimator):
         self.__auto_init(locals())
 
-    def estimate(self, U, mu, m, return_error_sequence=False):
+    def estimate_error(self, U, mu, m, return_error_sequence=False):
         dt = m.T / m.time_stepper.nt
         C = self.coercivity_estimator(mu) if self.coercivity_estimator else 1.
 
