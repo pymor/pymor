@@ -10,6 +10,7 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import StationaryRBReductor
 from pymor.reductors.residual import ResidualReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.tools.deprecated import Deprecated
 
 
 class CoerciveRBReductor(StationaryRBReductor):
@@ -70,6 +71,10 @@ class CoerciveRBEstimator(ImmutableObject):
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
         return est
+
+    @Deprecated('estimate_error')
+    def estimate(self, U, mu, m):
+        return self.estimate_error(U, mu, m)
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims:
@@ -231,6 +236,10 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
             est /= self.coercivity_estimator(mu)
 
         return est
+
+    @Deprecated('estimate_error')
+    def estimate(self, U, mu, m):
+        return self.estimate_error(U, mu, m)
 
     def restricted_to_subbasis(self, dim, m):
         cr = 1 if not m.rhs.parametric else len(m.rhs.operators)
