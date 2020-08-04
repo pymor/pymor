@@ -16,7 +16,7 @@ Arguments:
 
 Options:
   -h, --help                 Show this message.
-  --without-estimator        Do not use error estimator for basis generation.
+  --without-error-estimator  Do not use error estimator for basis generation.
   --extension-alg=ALG        Basis extension algorithm (trivial, gram_schmidt)
                              to be used [default: gram_schmidt].
   --grid=NI                  Use grid with 2*NI*NI elements [default: 100].
@@ -129,7 +129,7 @@ def thermalblock_demo(args):
         rho=args['--rho'],
         gamma=args['--gamma'],
         theta=args['--theta'],
-        use_error_estimator=not args['--without-estimator'],
+        use_error_estimator=not args['--without-error-estimator'],
         error_norm=fom.h1_0_semi_norm,
         max_extensions=args['RBSIZE'],
         visualize=not args['--no-visualize-refinement']
@@ -150,7 +150,7 @@ def thermalblock_demo(args):
     results = reduction_error_analysis(rom,
                                        fom=fom,
                                        reductor=reductor,
-                                       estimator=True,
+                                       error_estimator=True,
                                        error_norms=(fom.h1_0_semi_norm,),
                                        condition=True,
                                        test_mus=problem.parameter_space.sample_randomly(args['--test']),
@@ -168,7 +168,7 @@ Problem:
    h:                                  sqrt(2)/{args[--grid]}
 
 Greedy basis generation:
-   estimator disabled:                 {args[--without-estimator]}
+   error estimator disabled:           {args[--without-error-estimator]}
    extension method:                   {args[--extension-alg]}
    product:                            {args[--product]}
    prescribed basis size:              {args[RBSIZE]}

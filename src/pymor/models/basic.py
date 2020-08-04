@@ -42,11 +42,11 @@ class StationaryModel(Model):
         problem is posed on. For each product with key `'x'` a corresponding
         attribute `x_product`, as well as a norm method `x_norm` is added to
         the model.
-    estimator
+    error_estimator
         An error estimator for the problem. This can be any object with
-        an `estimate_error(U, mu, m)` method. If `estimator` is
+        an `estimate_error(U, mu, m)` method. If `error_estimator` is
         not `None`, an `estimate_error(U, mu)` method is added to the
-        model which will call `estimator.estimate_error(U, mu, self)`.
+        model which will call `error_estimator.estimate_error(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, m, ...)` method. If `visualizer`
@@ -58,7 +58,7 @@ class StationaryModel(Model):
     """
 
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 estimator=None, visualizer=None, name=None):
+                 error_estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -67,7 +67,7 @@ class StationaryModel(Model):
         assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
         assert output_functional is None or output_functional.source == operator.source
 
-        super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
+        super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
         self.__auto_init(locals())
         self.solution_space = operator.source
@@ -141,11 +141,11 @@ class InstationaryModel(Model):
         problem is posed on. For each product with key `'x'` a corresponding
         attribute `x_product`, as well as a norm method `x_norm` is added to
         the model.
-    estimator
+    error_estimator
         An error estimator for the problem. This can be any object with
-        an `estimate_error(U, mu, m)` method. If `estimator` is
+        an `estimate_error(U, mu, m)` method. If `error_estimator` is
         not `None`, an `estimate_error(U, mu)` method is added to the
-        model which will call `estimator.estimate_error(U, mu, self)`.
+        model which will call `error_estimator.estimate_error(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, m, ...)` method. If `visualizer`
@@ -157,7 +157,7 @@ class InstationaryModel(Model):
     """
 
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
-                 output_functional=None, products=None, estimator=None, visualizer=None, name=None):
+                 output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -175,7 +175,7 @@ class InstationaryModel(Model):
             or mass.linear and mass.source == mass.range == operator.source
         assert output_functional is None or output_functional.source == operator.source
 
-        super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
+        super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
         self.parameters_internal = {'t': 1}
         self.__auto_init(locals())

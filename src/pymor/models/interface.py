@@ -37,7 +37,7 @@ class Model(CacheableObject, ParametricObject):
     linear = False
     products = FrozenDict()
 
-    def __init__(self, products=None, estimator=None, visualizer=None,
+    def __init__(self, products=None, error_estimator=None, visualizer=None,
                  name=None, **kwargs):
         products = FrozenDict(products or {})
         if products:
@@ -108,10 +108,10 @@ class Model(CacheableObject, ParametricObject):
         -------
         The estimated error.
         """
-        if getattr(self, 'estimator') is not None:
-            return self.estimator.estimate_error(U, mu=mu, m=self)
+        if getattr(self, 'error_estimator') is not None:
+            return self.error_estimator.estimate_error(U, mu=mu, m=self)
         else:
-            raise NotImplementedError('Model has no estimator.')
+            raise NotImplementedError('Model has no error estimator.')
 
     @Deprecated('estimate_error')
     def estimate(self, U, mu=None):
