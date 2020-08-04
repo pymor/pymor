@@ -278,7 +278,8 @@ def test_thermalblock_results(thermalblock_args):
     check_results('test_thermalblock_results', thermalblock_args[1], results,
                   first_tolerance, 'basis_sizes', 'norms', 'max_norms',
                   (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
-                  'estimates', 'max_estimates', 'effectivities', 'min_effectivities', 'max_effectivities', 'errors')
+                  'error_estimates', 'max_error_estimates', 'effectivities',
+                  'min_effectivities', 'max_effectivities', 'errors')
 
 
 def test_burgers_ei_results():
@@ -297,7 +298,8 @@ def test_parabolic_mor_results():
     check_results('test_parabolic_mor_results', args, results,
                   (1e-13, 1e-7), 'basis_sizes', 'norms', 'max_norms',
                   (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
-                  'estimates', 'max_estimates', 'effectivities', 'min_effectivities', 'max_effectivities', 'errors')
+                  'error_estimates', 'max_error_estimates', 'effectivities',
+                  'min_effectivities', 'max_effectivities', 'errors')
 
 
 if __name__ == "__main__":
