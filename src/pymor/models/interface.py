@@ -7,6 +7,7 @@ from pymor.core.cache import CacheableObject
 from pymor.operators.constructions import induced_norm
 from pymor.parameters.base import ParametricObject, Mu
 from pymor.tools.frozendict import FrozenDict
+from pymor.tools.deprecated import Deprecated
 
 
 class Model(CacheableObject, ParametricObject):
@@ -111,6 +112,10 @@ class Model(CacheableObject, ParametricObject):
             return self.estimator.estimate_error(U, mu=mu, m=self)
         else:
             raise NotImplementedError('Model has no estimator.')
+
+    @Deprecated('estimate_error')
+    def estimate(self, U, mu=None):
+        return self.estimate_error(U, mu)
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
