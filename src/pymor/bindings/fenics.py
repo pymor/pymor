@@ -209,7 +209,8 @@ if config.HAVE_FENICS:
                 matrix = operators[0].matrix * coefficients[0]
             for op, c in zip(operators[1:], coefficients[1:]):
                 matrix.axpy(c, op.matrix, False)
-                # in general, we cannot assume the same nonzero pattern for # all matrices. how to improve this?
+                # in general, we cannot assume the same nonzero pattern for
+                # all matrices. how to improve this?
 
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V, solver_options=solver_options, name=name)
 
