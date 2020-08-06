@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
-from pymor.core.base import BasicObject
+from pymor.core.base import ImmutableObject
 from pymor.core.config import is_jupyter
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
@@ -11,7 +11,7 @@ from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.vectorarrays.interface import VectorArray
 
 
-class PatchVisualizer(BasicObject):
+class PatchVisualizer(ImmutableObject):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -95,7 +95,7 @@ class PatchVisualizer(BasicObject):
                                 columns=columns)
 
 
-class OnedVisualizer(BasicObject):
+class OnedVisualizer(ImmutableObject):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
