@@ -121,6 +121,15 @@ a visualization of the mapping :math:`\omega \mapsto H(i \omega)`, where
     fom.mag_plot(w)
     plt.grid()
 
+Instead, we can also see the Bode plot
+
+.. jupyter-execute::
+
+    fig, axs = plt.subplots(6, 2, figsize=(10, 20))
+    fom.bode_plot(w, ax=axs)
+    for ax in axs.flatten():
+        ax.grid()
+
 Plotting the Hankel singular values shows us how well an LTI system can be
 approximated by a reduced-order model
 
