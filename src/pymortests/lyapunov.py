@@ -139,5 +139,6 @@ def test_dense(n, m, with_E, trans, lyap_solver):
         B = B.T
 
     X = solve_lyap_dense(A, E, B, trans=trans, options=lyap_solver)
+    assert type(X) is np.ndarray
 
     assert relative_residual(A, E, B, X, trans=trans) < 1e-10
