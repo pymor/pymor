@@ -7,7 +7,7 @@ import numpy as np
 from pymor.algorithms.rules import RuleTable, match_class, match_generic, match_always
 from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
 from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
-from pymor.operators.constructions import (LincombOperator, Concatenation, ConstantOperator, ProjectedOperator,
+from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, ProjectedOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
                                            IdentityOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
@@ -136,8 +136,8 @@ class ProjectRules(RuleTable):
                 from pymor.operators.numpy import NumpyMatrixOperator
                 return NumpyMatrixOperator(op.apply2(range_basis, source_basis), name=op.name)
 
-    @match_class(Concatenation)
-    def action_Concatenation(self, op):
+    @match_class(ConcatenationOperator)
+    def action_ConcatenationOperator(self, op):
         if len(op.operators) == 1:
             return self.apply(op.operators[0])
 
@@ -153,7 +153,7 @@ class ProjectRules(RuleTable):
         else:
             projected_first = project(first, None, source_basis)
             projected_last = project(last, range_basis, None)
-            return Concatenation((projected_last,) + op.operators[1:-1] + (projected_first,), name=op.name)
+            return ConcatenationOperator((projected_last,) + op.operators[1:-1] + (projected_first,), name=op.name)
 
     @match_class(AdjointOperator)
     def action_AdjointOperator(self, op):

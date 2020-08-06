@@ -31,7 +31,7 @@ class MonomOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
-        return NumpyMatrixOperator(self.derivative(U.to_numpy()).reshape((1,1)))
+        return NumpyMatrixOperator(self.derivative(U.to_numpy()).reshape((1, 1)))
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         return self.range.make_array(1. / V.to_numpy())
@@ -92,11 +92,11 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
 
 
 numpy_matrix_operator_with_arrays_factory_arguments = \
-    list(zip([0, 0, 2, 10],           # dim_source
-        [0, 1, 4, 10],           # dim_range
-        [3, 3, 3, 3],            # count_source
-        [3, 3, 3, 3],            # count_range
-        random_integers(4, 44)))  # seed
+    list(zip([0, 0, 2, 10],            # dim_source
+             [0, 1, 4, 10],            # dim_range
+             [3, 3, 3, 3],             # count_source
+             [3, 3, 3, 3],             # count_range
+             random_integers(4, 44)))  # seed
 
 
 numpy_matrix_operator_with_arrays_generators = \
@@ -145,7 +145,6 @@ def thermalblock_assemble_factory(xblocks, yblocks, diameter, seed):
 
 
 def thermalblock_concatenation_factory(xblocks, yblocks, diameter, seed):
-    from pymor.operators.constructions import Concatenation
     op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
     op = sp @ op
     return op, mu, U, V, sp, rp

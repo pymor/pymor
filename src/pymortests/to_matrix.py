@@ -136,7 +136,7 @@ def test_to_matrix_ComponentProjection():
     assert_type_and_allclose(A, Aop, 'sparse')
 
 
-def test_to_matrix_Concatenation():
+def test_to_matrix_ConcatenationOperator():
     np.random.seed(0)
     A = np.random.randn(2, 3)
     B = np.random.randn(3, 4)

@@ -429,7 +429,8 @@ class Operator(ParametricObject):
         The result of the method strongly depends on the given operator.
         For instance, a matrix-based operator will assemble its matrix, a |LincombOperator|
         will try to form the linear combination of its operators, whereas an arbitrary
-        operator might simply return a :class:`~pymor.operators.constructions.FixedParameterOperator`.
+        operator might simply return a
+        :class:`~pymor.operators.constructions.FixedParameterOperator`.
         The only assured property of the assembled operator is that it no longer
         depends on a |Parameter|.
 
@@ -556,11 +557,11 @@ class Operator(ParametricObject):
         """Concatenation of two operators."""
         if not isinstance(other, Operator):
             return NotImplemented
-        from pymor.operators.constructions import Concatenation
-        if isinstance(other, Concatenation):
+        from pymor.operators.constructions import ConcatenationOperator
+        if isinstance(other, ConcatenationOperator):
             return NotImplemented
         else:
-            return Concatenation((self, other))
+            return ConcatenationOperator((self, other))
 
     def __neg__(self):
         return self * (-1.)

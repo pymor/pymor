@@ -6,7 +6,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import Concatenation, LincombOperator, SelectionOperator
+from pymor.operators.constructions import ConcatenationOperator, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
@@ -238,8 +238,8 @@ class CollectOperatorRangeRules(RuleTable):
         if hasattr(op, 'collateral_basis') and not self.extends:
             self.image.append(op.collateral_basis)
 
-    @match_class(Concatenation)
-    def action_Concatenation(self, op):
+    @match_class(ConcatenationOperator)
+    def action_ConcatenationOperator(self, op):
         if len(op.operators) == 1:
             self.apply(op.operators[0])
         else:
@@ -267,8 +267,8 @@ class CollectVectorRangeRules(RuleTable):
     def action_recurse(self, op):
         self.apply_children(op)
 
-    @match_class(Concatenation)
-    def action_Concatenation(self, op):
+    @match_class(ConcatenationOperator)
+    def action_ConcatenationOperator(self, op):
         if len(op.operators) == 1:
             self.apply(op.operators[0])
         else:

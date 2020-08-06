@@ -16,7 +16,7 @@ from pymor.core.exceptions import ExtensionError, AccuracyError
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.operators.constructions import Concatenation, InverseOperator
+from pymor.operators.constructions import ConcatenationOperator, InverseOperator
 
 
 class ProjectionBasedReductor(BasicObject):
@@ -188,7 +188,8 @@ class StationaryRBReductor(ProjectionBasedReductor):
             'operator':          project_to_subbasis(rom.operator, dim, dim),
             'rhs':               project_to_subbasis(rom.rhs, dim, None),
             'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
-            'output_functional': project_to_subbasis(rom.output_functional, None, dim) if rom.output_functional else None
+            'output_functional': (project_to_subbasis(rom.output_functional, None, dim)
+                                  if rom.output_functional else None)
         }
         return projected_operators
 
@@ -240,7 +241,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             projection_op = NumpyMatrixOperator(projection_matrix)
             inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
             pid = project(fom.initial_data, range_basis=RB, source_basis=None, product=self.initial_data_product)
-            projected_initial_data = Concatenation([inverse_projection_op, pid])
+            projected_initial_data = ConcatenationOperator([inverse_projection_op, pid])
         else:
             projected_initial_data = project(fom.initial_data, range_basis=RB, source_basis=None,
                                              product=product)
@@ -268,7 +269,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
                 project_to_subbasis(rom.initial_data.operators[0].operator, dim_range=dim, dim_source=dim),
                 name='inverse_projection_op'
             )
-            projected_initial_data = Concatenation([inverse_projection_op, pop])
+            projected_initial_data = ConcatenationOperator([inverse_projection_op, pop])
         else:
             projected_initial_data = project_to_subbasis(rom.initial_data, dim_range=dim, dim_source=None)
 
@@ -279,7 +280,8 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             'rhs':               project_to_subbasis(rom.rhs, dim, None) if rom.rhs is not None else None,
             'initial_data':      projected_initial_data,
             'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
-            'output_functional': project_to_subbasis(rom.output_functional, None, dim) if rom.output_functional else None
+            'output_functional': (project_to_subbasis(rom.output_functional, None, dim)
+                                  if rom.output_functional else None)
         }
         return projected_operators
 
