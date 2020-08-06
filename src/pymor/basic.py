@@ -22,7 +22,8 @@ from pymor.algorithms.preassemble import preassemble
 from pymor.algorithms.projection import project, project_to_subbasis
 
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
-from pymor.analyticalproblems.domaindescriptions import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
+from pymor.analyticalproblems.domaindescriptions import (RectDomain, CylindricalDomain, TorusDomain, LineDomain,
+                                                         CircleDomain)
 from pymor.analyticalproblems.domaindescriptions import DiscDomain, CircularSectorDomain, PolygonalDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import (ConstantFunction, GenericFunction, ExpressionFunction, LincombFunction,
@@ -44,11 +45,12 @@ from pymor.discretizers.builtin import (discretize_stationary_cg, discretize_ins
                                         discretize_stationary_fv, discretize_instationary_fv,
                                         OnedGrid, TriaGrid, RectGrid, load_gmsh)
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
-from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo, GenericBoundaryInfo, AllDirichletBoundaryInfo
+from pymor.discretizers.builtin.grids.boundaryinfos import (EmptyBoundaryInfo, GenericBoundaryInfo,
+                                                            AllDirichletBoundaryInfo)
 
-from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ComponentProjection, IdentityOperator,
-                                           ConstantOperator, ZeroOperator, VectorArrayOperator, VectorOperator,
-                                           VectorFunctional, FixedParameterOperator, AdjointOperator,
+from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ComponentProjectionOperator,
+                                           IdentityOperator, ConstantOperator, ZeroOperator, VectorArrayOperator,
+                                           VectorOperator, VectorFunctional, FixedParameterOperator, AdjointOperator,
                                            SelectionOperator, induced_norm)
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator

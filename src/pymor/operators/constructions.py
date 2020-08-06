@@ -626,7 +626,7 @@ class LowRankUpdatedOperator(LincombOperator):
         return V
 
 
-class ComponentProjection(Operator):
+class ComponentProjectionOperator(Operator):
     """|Operator| representing the projection of a |VectorArray| onto some of its components.
 
     Parameters

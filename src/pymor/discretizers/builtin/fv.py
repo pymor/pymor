@@ -23,7 +23,7 @@ from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisu
 from pymor.discretizers.builtin.inplace import iadd_masked, isub_masked
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.operators.constructions import ComponentProjection, LincombOperator, ZeroOperator
+from pymor.operators.constructions import ComponentProjectionOperator, LincombOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import ParametricObject
@@ -240,7 +240,7 @@ class NonlinearAdvectionOperator(Operator):
         op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id=None,
                         name=f'{self.name}_restricted')
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
-        proj = ComponentProjection(sub_grid_indices, op.range)
+        proj = ComponentProjectionOperator(sub_grid_indices, op.range)
         return proj @ op, sub_grid.parent_indices(0)
 
     def _fetch_grid_data(self):

@@ -8,7 +8,8 @@ import numpy as np
 from scipy.linalg import solve, solve_triangular
 
 
-from pymor.operators.constructions import VectorArrayOperator, ConcatenationOperator, ComponentProjection, ZeroOperator
+from pymor.operators.constructions import (ComponentProjectionOperator, ConcatenationOperator, VectorArrayOperator,
+                                           ZeroOperator)
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.interface import VectorArray
@@ -146,7 +147,7 @@ class EmpiricalInterpolatedOperator(Operator):
                 J = NumpyMatrixOperator(J.to_numpy().T, range_id=self.range.id)
             else:
                 J = VectorArrayOperator(J)
-            return ConcatenationOperator([J, ComponentProjection(self.source_dofs, self.source)],
+            return ConcatenationOperator([J, ComponentProjectionOperator(self.source_dofs, self.source)],
                                          solver_options=options, name=self.name + '_jacobian')
 
     def __getstate__(self):

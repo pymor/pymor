@@ -345,19 +345,19 @@ num_misc_operators = 12
 
 def misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
-        from pymor.operators.constructions import ComponentProjection
+        from pymor.operators.constructions import ComponentProjectionOperator
         _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 10, 4, 3, n)
-        op = ComponentProjection(np.random.randint(0, 100, 10), U.space)
+        op = ComponentProjectionOperator(np.random.randint(0, 100, 10), U.space)
         return op, _, U, V, sp, rp
     elif n == 1:
-        from pymor.operators.constructions import ComponentProjection
+        from pymor.operators.constructions import ComponentProjectionOperator
         _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 0, 4, 3, n)
-        op = ComponentProjection([], U.space)
+        op = ComponentProjectionOperator([], U.space)
         return op, _, U, V, sp, rp
     elif n == 2:
-        from pymor.operators.constructions import ComponentProjection
+        from pymor.operators.constructions import ComponentProjectionOperator
         _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 3, 4, 3, n)
-        op = ComponentProjection([3, 3, 3], U.space)
+        op = ComponentProjectionOperator([3, 3, 3], U.space)
         return op, _, U, V, sp, rp
     elif n == 3:
         from pymor.operators.constructions import AdjointOperator

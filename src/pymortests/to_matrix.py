@@ -8,8 +8,8 @@ import scipy.sparse as sps
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
-from pymor.operators.constructions import (AdjointOperator, ComponentProjection, IdentityOperator, LowRankOperator,
-                                           LowRankUpdatedOperator, VectorArrayOperator, ZeroOperator)
+from pymor.operators.constructions import (AdjointOperator, ComponentProjectionOperator, IdentityOperator,
+                                           LowRankOperator, LowRankUpdatedOperator, VectorArrayOperator, ZeroOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -125,14 +125,14 @@ def test_to_matrix_AdjointOperator():
     assert_type_and_allclose(spla.solve(S, A.T.dot(R)), Aadj, 'sparse')
 
 
-def test_to_matrix_ComponentProjection():
+def test_to_matrix_ComponentProjectionOperator():
     dofs = np.array([0, 1, 2, 4, 8])
     n = 10
     A = np.zeros((len(dofs), n))
     A[range(len(dofs)), dofs] = 1
 
     source = NumpyVectorSpace(n)
-    Aop = ComponentProjection(dofs, source)
+    Aop = ComponentProjectionOperator(dofs, source)
     assert_type_and_allclose(A, Aop, 'sparse')
 
 
