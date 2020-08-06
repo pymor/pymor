@@ -218,6 +218,7 @@ if config.HAVE_PYMESS:
             Y = B.dot(B.T) if not trans else B.T.dot(B)
             op = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
             X = pymess.glyap(A, E, Y, op=op)[0]
+            X = np.asarray(X)
         else:
             raise ValueError(f'Unexpected Lyapunov equation solver ({options["type"]}).')
 
