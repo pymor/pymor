@@ -447,7 +447,7 @@ def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
 
-class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
+class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
     """Linear advection finite Volume |Operator| using Lax-Friedrichs flux.
 
     The operator is of the form ::
@@ -911,11 +911,11 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     # advection part
     if isinstance(p.advection, LincombFunction):
-        L += [LinearAdvectionLaxFriedrichs(grid, boundary_info, af, name=f'advection_{i}')
+        L += [LinearAdvectionLaxFriedrichsOperator(grid, boundary_info, af, name=f'advection_{i}')
               for i, af in enumerate(p.advection.functions)]
         L_coefficients += list(p.advection.coefficients)
     elif p.advection is not None:
-        L += [LinearAdvectionLaxFriedrichs(grid, boundary_info, p.advection, name='advection')]
+        L += [LinearAdvectionLaxFriedrichsOperator(grid, boundary_info, p.advection, name='advection')]
         L_coefficients.append(1.)
 
     # nonlinear advection part
