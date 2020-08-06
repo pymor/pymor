@@ -244,7 +244,8 @@ class NonlinearAdvectionOperator(Operator):
         return proj @ op, sub_grid.parent_indices(0)
 
     def _fetch_grid_data(self):
-        # pre-fetch all grid-associated data to avoid searching the cache for each operator application
+        # pre-fetch all grid-associated data to avoid searching the cache for each operator
+        # application
         g = self.grid
         bi = self.boundary_info
         self._grid_data = dict(SUPE=g.superentities(1, 0),
@@ -433,7 +434,8 @@ def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_l
 
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
                                                            dirichlet_data=None, solver_options=None, name=None):
-    """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
+    """Instantiate a :class:`NonlinearAdvectionOperator` using
+    :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
@@ -649,7 +651,8 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         bi = self.boundary_info
 
         if self.function is not None:
-            # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
+            # evaluate function at all quadrature points
+            # -> shape = (g.size(0), number of quadrature points, 1)
             F = self.function(g.quadrature_points(0, order=self.order), mu=mu)
 
             _, w = g.reference_element.quadrature(order=self.order)
@@ -676,7 +679,8 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
                 BOUNDARY_DISTS = np.sum((centers[dirichlet_mask, :] - g.orthogonal_centers()[SE_I0_D, :])
                                         * boundary_normals,
                                         axis=-1)
-                DIRICHLET_FLUXES = VOLS[dirichlet_mask] * self.dirichlet_data(centers[dirichlet_mask], mu=mu) / BOUNDARY_DISTS
+                DIRICHLET_FLUXES = (VOLS[dirichlet_mask]
+                                    * self.dirichlet_data(centers[dirichlet_mask], mu=mu) / BOUNDARY_DISTS)
                 if self.diffusion_function is not None:
                     DIRICHLET_FLUXES *= self.diffusion_function(centers[dirichlet_mask], mu=mu)
                 if self.diffusion_constant is not None:
