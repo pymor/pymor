@@ -84,15 +84,15 @@ class PatchVisualizer(ImmutableObject):
             if self.backend == 'jupyter':
                 from pymor.discretizers.builtin.gui.jupyter import get_visualizer
                 return get_visualizer()(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                                legend=legend, separate_colorbars=separate_colorbars,
-                                rescale_colorbars=rescale_colorbars, columns=columns)
+                                        legend=legend, separate_colorbars=separate_colorbars,
+                                        rescale_colorbars=rescale_colorbars, columns=columns)
             else:
                 block = self.block if block is None else block
                 from pymor.discretizers.builtin.gui.qt import visualize_patch
                 return visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                                legend=legend, separate_colorbars=separate_colorbars,
-                                rescale_colorbars=rescale_colorbars, backend=self.backend, block=block,
-                                columns=columns)
+                                       legend=legend, separate_colorbars=separate_colorbars,
+                                       rescale_colorbars=rescale_colorbars, backend=self.backend, block=block,
+                                       columns=columns)
 
 
 class OnedVisualizer(ImmutableObject):
