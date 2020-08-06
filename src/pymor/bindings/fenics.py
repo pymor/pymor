@@ -10,7 +10,7 @@ if config.HAVE_FENICS:
     import ufl
     import numpy as np
 
-    from pymor.core.base import BasicObject
+    from pymor.core.base import ImmutableObject
     from pymor.core.defaults import defaults
     from pymor.operators.constructions import ZeroOperator
     from pymor.operators.interface import Operator
@@ -420,7 +420,7 @@ if config.HAVE_FENICS:
         options = (solver, preconditioner) if preconditioner else (solver,)
         df.solve(matrix, r, v, *options)
 
-    class FenicsVisualizer(BasicObject):
+    class FenicsVisualizer(ImmutableObject):
         """Visualize a FEniCS grid function.
 
         Parameters
