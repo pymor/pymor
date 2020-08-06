@@ -86,11 +86,16 @@ def relative_residual(A, E, B, X, trans=False):
 
 
 def _check_availability(lyap_solver):
-    if lyap_solver.startswith('slycot') and not os.environ.get('DOCKER_PYMOR', False) and not config.HAVE_SLYCOT:
+    if (lyap_solver.startswith('slycot')
+            and not os.environ.get('DOCKER_PYMOR', False)
+            and not config.HAVE_SLYCOT):
         pytest.skip('slycot not available')
     # TODO: re-enable pymess checks for 3.8 once wheels are available
     # https://github.com/pymor/pymor/issues/891
-    if lyap_solver.startswith('pymess') and (not os.environ.get('DOCKER_PYMOR', False) or sys.version_info>=(3,8,0)) and not config.HAVE_PYMESS:
+    if (lyap_solver.startswith('pymess')
+            and (not os.environ.get('DOCKER_PYMOR', False)
+                 or sys.version_info >= (3, 8, 0))
+            and not config.HAVE_PYMESS):
         pytest.skip('pymess not available')
 
 
