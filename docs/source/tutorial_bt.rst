@@ -129,7 +129,7 @@ In particular, :math:`\lvert H_{ij}(\imath \omega) \rvert` is in subplot
 
 .. jupyter-execute::
 
-    fig, axs = plt.subplots(6, 2, figsize=(10, 20))
+    fig, axs = plt.subplots(6, 2, figsize=(10, 20), constrained_layout=True)
     fom.bode_plot(w, ax=axs)
     for ax in axs.flatten():
         ax.grid()
