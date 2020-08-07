@@ -112,7 +112,7 @@ We can also see some basic information from `fom`'s string representation
     print(fom)
 
 To visualize the behavior of the `fom`, we can draw its magnitude plot, i.e.,
-a visualization of the mapping :math:`\omega \mapsto H(i \omega)`, where
+a visualization of the mapping :math:`\omega \mapsto H(\imath \omega)`, where
 :math:`H(s) = C (s E - A)^{-1} B + D` is the transfer function of the system.
 
 .. jupyter-execute::
@@ -121,7 +121,11 @@ a visualization of the mapping :math:`\omega \mapsto H(i \omega)`, where
     fom.mag_plot(w)
     plt.grid()
 
-Instead, we can also see the Bode plot
+We can also see the Bode plot, which shows the magnitude and phase of the
+components of the transfer function.
+In particular, :math:`\lvert H_{ij}(\imath \omega) \rvert` is in subplot
+:math:`(2 i - 1, j)` and :math:`\arg(H_{ij}(\imath \omega))` is in subplot
+:math:`(2 i, j)`.
 
 .. jupyter-execute::
 
