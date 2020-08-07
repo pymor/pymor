@@ -45,7 +45,7 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', 'PySide2', 'ipyparallel>=6.2.5',
-                'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel'] + install_requires
+                'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel', 'virtualenv',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout', 
                'testipynb', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19', ]
