@@ -700,6 +700,49 @@ class LTIModel(Model):
                         T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
                         solver_options=self.solver_options)
 
+    def imp_resp(self, mu=None, return_output=False):
+        """Compute Impulse response from all inputs.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values| for which to solve.
+        return_output
+            If `True`, the model output for the given |parameter values| `mu` is
+            returned as a |VectorArray| from :attr:`output_space`.
+
+        Returns
+        -------
+        The list of solution |VectorArrays| for every input. When
+        `return_output` is `True`, the list of output |VectorArrays| is returned
+        as second value.
+        """
+        assert self.T is not None, 'the final time needs to be set'
+        assert self.time_stepper is not None, 'the time stepper needs to be set'
+
+        T = self.T
+        operator = -self.A
+        rhs = self.solution_space.zeros(1)
+        mass = self.E
+        time_stepper = self.time_stepper
+        num_values = self.num_values
+
+        Xs = []
+        for i in range(self.input_dim):
+            e_i = np.zeros(self.input_dim)
+            e_i[i] = 1
+            e_i = self.B.source.from_numpy(e_i)
+            initial_data = self.B.apply(e_i, mu=mu)
+            instationary_model = InstationaryModel(T, initial_data, operator, rhs, mass=mass,
+                                                   time_stepper=time_stepper, num_values=num_values)
+            X = instationary_model.solve(mu=mu)
+            Xs.append(X)
+
+        if return_output:
+            ys = [self.C.apply(X, mu=mu) for X in Xs]
+            return Xs, ys
+        return Xs
+
     @cached
     def _poles(self, mu=None):
         A = self.A.assemble(mu=mu)
