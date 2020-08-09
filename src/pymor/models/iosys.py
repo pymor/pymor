@@ -700,8 +700,8 @@ class LTIModel(Model):
                         T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
                         solver_options=self.solver_options)
 
-    def imp_resp(self, mu=None, return_output=False):
-        """Compute Impulse response from all inputs.
+    def impulse_resp(self, mu=None, return_output=False):
+        """Compute impulse response from all inputs.
 
         Parameters
         ----------
@@ -717,30 +717,29 @@ class LTIModel(Model):
         `return_output` is `True`, the list of output |VectorArrays| is returned
         as second value.
         """
-        assert self.T is not None, 'the final time needs to be set'
-        assert self.time_stepper is not None, 'the time stepper needs to be set'
+        assert self.T is not None
 
-        T = self.T
-        operator = -self.A
-        rhs = self.solution_space.zeros(1)
-        mass = self.E
-        time_stepper = self.time_stepper
-        num_values = self.num_values
+        # solution computation
+        B_va = self.B.as_range_array(mu)
+        Xs = [
+            self.time_stepper.solve(
+                operator=-self.A,
+                rhs=None,
+                initial_data=b,
+                mass=None if isinstance(self.E, IdentityOperator) else self.E,
+                initial_time=0,
+                end_time=self.T,
+                mu=mu,
+                num_values=self.num_values,
+            )
+            for b in B_va
+        ]
 
-        Xs = []
-        for i in range(self.input_dim):
-            e_i = np.zeros(self.input_dim)
-            e_i[i] = 1
-            e_i = self.B.source.from_numpy(e_i)
-            initial_data = self.B.apply(e_i, mu=mu)
-            instationary_model = InstationaryModel(T, initial_data, operator, rhs, mass=mass,
-                                                   time_stepper=time_stepper, num_values=num_values)
-            X = instationary_model.solve(mu=mu)
-            Xs.append(X)
-
+        # output computation
         if return_output:
             ys = [self.C.apply(X, mu=mu) for X in Xs]
             return Xs, ys
+
         return Xs
 
     def step_resp(self, mu=None, return_output=False):
@@ -760,30 +759,29 @@ class LTIModel(Model):
         `return_output` is `True`, the list of output |VectorArrays| is returned
         as second value.
         """
-        assert self.T is not None, 'the final time needs to be set'
-        assert self.time_stepper is not None, 'the time stepper needs to be set'
+        assert self.T is not None
 
-        T = self.T
-        initial_data = self.solution_space.zeros(1)
-        operator = -self.A
-        mass = self.E
-        time_stepper = self.time_stepper
-        num_values = self.num_values
+        # solution computation
+        B_va = self.B.as_range_array(mu)
+        Xs = [
+            self.time_stepper.solve(
+                operator=-self.A,
+                rhs=b,
+                initial_data=None,
+                mass=None if isinstance(self.E, IdentityOperator) else self.E,
+                initial_time=0,
+                end_time=self.T,
+                mu=mu,
+                num_values=self.num_values,
+            )
+            for b in B_va
+        ]
 
-        Xs = []
-        for i in range(self.input_dim):
-            e_i = np.zeros(self.input_dim)
-            e_i[i] = 1
-            e_i = self.B.source.from_numpy(e_i)
-            rhs = self.B.apply(e_i, mu=mu)
-            instationary_model = InstationaryModel(T, initial_data, operator, rhs, mass=mass,
-                                                   time_stepper=time_stepper, num_values=num_values)
-            X = instationary_model.solve(mu=mu)
-            Xs.append(X)
-
+        # output computation
         if return_output:
             ys = [self.C.apply(X, mu=mu) for X in Xs]
             return Xs, ys
+
         return Xs
 
     @cached
