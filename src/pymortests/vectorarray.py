@@ -64,6 +64,15 @@ def test_empty(vector_array):
             pass
 
 
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
+def test_print(vectors_and_indices):
+    v, ind = vectors_and_indices
+    assert len(str(v))
+    assert len(repr(v))
+    assert len(str(v[ind]))
+    assert len(repr(v[ind]))
+
+
 @pyst.given_vector_arrays()
 def test_zeros(vector_array):
     with pytest.raises(Exception):
