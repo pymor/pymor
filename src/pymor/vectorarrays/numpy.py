@@ -506,6 +506,9 @@ class NumpyVectorArrayView(NumpyVectorArray):
     def amax(self):
         return self.base.amax(_ind=self.ind)
 
+    def __str__(self):
+        return self.base.__str__()
+
     def __add__(self, other):
         if isinstance(other, Number):
             assert other == 0
