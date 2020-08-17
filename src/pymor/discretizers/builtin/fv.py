@@ -27,6 +27,7 @@ from pymor.operators.constructions import ComponentProjectionOperator, LincombOp
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import ParametricObject
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -515,6 +516,11 @@ class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
         A = dia_matrix(([1. / g.volumes(0)], [0]), shape=(g.size(0),) * 2) * A
 
         return A
+
+
+@Deprecated(LinearAdvectionLaxFriedrichsOperator)
+def LinearAdvectionLaxFriedrichs(*args, **kwargs):
+    return LinearAdvectionLaxFriedrichsOperator(*args, **kwargs)
 
 
 class L2Product(NumpyMatrixBasedOperator):
