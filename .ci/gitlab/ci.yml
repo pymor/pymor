@@ -17,8 +17,10 @@ stages:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
-    except:
-        - /^staging/.*$/i
+    rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^staging.*/'
+          when: never
+        - when: on_success
     variables:
         PYPI_MIRROR_TAG: 97eb2abc080637d49c3db8f428ddff14748710ef
         CI_IMAGE_TAG: 97eb2abc080637d49c3db8f428ddff14748710ef
@@ -106,7 +108,7 @@ stages:
         - schedules
     only: ['branches', 'tags', 'triggers']
     variables:
-        TEST_OS: "centos_8 debian_buster debian_testing"
+        TEST_OS: "centos_8 debian_buster debian_bullseye"
     artifacts:
         paths:
         # cannot use exported var from env here
@@ -550,7 +552,7 @@ pip 3/3:
     except:
         - schedules
     stage: install_checks
-    script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
+    script: docker build -f .ci/docker/install_checks/debian_bullseye/Dockerfile .
 
 
 repo2docker:
@@ -684,7 +686,7 @@ check_wheel 2:
 
 check_wheel 3:
     extends: .check_wheel
-    image: pymor/deploy_checks:devpi_debian_testing
+    image: pymor/deploy_checks:devpi_debian_bullseye
     script: devpi install pymor[full]
 
 
