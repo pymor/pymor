@@ -114,7 +114,7 @@ stages:
           when: never
         - when: on_success
     variables:
-        TEST_OS: "centos_8 debian_buster debian_testing"
+        TEST_OS: "centos_8 debian_buster debian_bullseye"
 
 
 .check_wheel:
@@ -606,7 +606,7 @@ pip 3/3:
           when: never
         - when: on_success
     stage: install_checks
-    script: docker build -f .ci/docker/install_checks/debian_testing/Dockerfile .
+    script: docker build -f .ci/docker/install_checks/debian_bullseye/Dockerfile .
 
 
 repo2docker:
@@ -825,7 +825,7 @@ check_wheel 2:
 
 check_wheel 3:
     extends: .check_wheel
-    image: pymor/deploy_checks:devpi_debian_testing
+    image: pymor/deploy_checks:devpi_debian_bullseye
     script: devpi install pymor[full]
 
 
