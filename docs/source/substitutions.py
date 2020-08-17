@@ -7,8 +7,6 @@
 # define substitutions for all important interface classes
 interfaces = '''
 
-.. |AffineGrids| replace:: :class:`AffineGrids <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
-.. |AffineGrid| replace:: :class:`AffineGrid <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
 .. |BasicObject| replace:: :class:`~pymor.core.base.BasicObject`
 .. |BoundaryInfo| replace:: :class:`BoundaryInfo <pymor.discretizers.builtin.grids.interfaces.BoundaryInfo>`
 .. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.discretizers.builtin.grids.interfaces.BoundaryInfo>`
@@ -20,8 +18,8 @@ interfaces = '''
 .. |Functional| replace:: :class:`Functional <pymor.operators.interface.Operator>`
 .. |Functions| replace:: :class:`Functions <pymor.analyticalproblems.functions.Function>`
 .. |Function| replace:: :class:`Function <pymor.analyticalproblems.functions.Function>`
-.. |Grid| replace:: :class:`Grid <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
-.. |Grids| replace:: :class:`Grids <pymor.discretizers.builtin.grids.interfaces.AffineGrid>`
+.. |Grids| replace:: :class:`Grids <pymor.discretizers.builtin.grids.interfaces.Grid>`
+.. |Grid| replace:: :class:`Grid <pymor.discretizers.builtin.grids.interfaces.Grid>`
 .. |ImmutableObject| replace:: :class:`~pymor.core.base.ImmutableObject`
 .. |immutable| replace:: :class:`immutable <pymor.core.base.ImmutableObject>`
 .. |Immutable| replace:: :class:`Immutable <pymor.core.base.ImmutableObject>`
