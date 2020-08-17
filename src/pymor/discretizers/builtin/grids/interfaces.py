@@ -11,17 +11,134 @@ from pymor.discretizers.builtin.inverse import inv_transposed_two_by_two
 from pymor.discretizers.builtin.relations import inverse_relation
 
 
-class ConformalTopologicalGrid(CacheableObject):
-    """A topological grid without hanging nodes.
+class ReferenceElement(CacheableObject):
+    """Defines a reference element.
 
-    The grid is completely determined via the subentity relation given by
-    :meth:`~ConformalTopologicalGrid.subentities`. In addition, only
-    :meth:`~ConformalTopologicalGrid.size` has to be implemented.
+    All reference elements have the property that all subentities of a given codimension are of the
+    same type. I.e. a three-dimensional reference element cannot have triangles and rectangles as
+    faces at the same time.
 
     Attributes
     ----------
     dim
-        The dimension of the grid.
+        The dimension of the reference element
+    volume
+        The volume of the reference element
+    """
+
+    dim = None
+    volume = None
+    cache_region = 'memory'
+
+    @abstractmethod
+    def size(self, codim):
+        """Number of subentities of codimension `codim`."""
+
+    @abstractmethod
+    def subentities(self, codim, subentity_codim):
+        """`subentities(c,sc)[i,j]` is, with respect to the indexing inside the
+        reference element, the index of the `j`-th codim-`subentity_codim`
+        subentity of the `i`-th codim-`codim` subentity of the reference element.
+        """
+        pass
+
+    @abstractmethod
+    def subentity_embedding(self, subentity_codim):
+        """Returns a tuple `(A, B)` which defines the embedding of the codim-`subentity_codim`
+        subentities into the reference element.
+
+        For `subentity_codim > 1', the embedding is by default given recursively via
+        `subentity_embedding(subentity_codim - 1)` and
+        `sub_reference_element(subentity_codim - 1).subentity_embedding(1)` choosing always
+        the superentity with smallest index.
+        """
+        return self._subentity_embedding(subentity_codim)
+
+    @cached
+    def _subentity_embedding(self, subentity_codim):
+        if subentity_codim > 1:
+            A = []
+            B = []
+            for i in range(self.size(subentity_codim)):
+                P = np.where(self.subentities(subentity_codim - 1, subentity_codim) == i)
+                parent_index, local_index = P[0][0], P[1][0]
+                A0, B0 = self.subentity_embedding(subentity_codim - 1)
+                A0 = A0[parent_index]
+                B0 = B0[parent_index]
+                A1, B1 = self.sub_reference_element(subentity_codim - 1).subentity_embedding(1)
+                A1 = A1[local_index]
+                B1 = B1[local_index]
+                A.append(np.dot(A0, A1))
+                B.append(np.dot(A0, B1) + B0)
+            return np.array(A), np.array(B)
+        else:
+            raise NotImplementedError
+
+    @abstractmethod
+    def sub_reference_element(self, codim):
+        """Returns the reference element of the codim-`codim` subentities."""
+        return self._sub_reference_element(codim)
+
+    @cached
+    def _sub_reference_element(self, codim):
+        if codim > 1:
+            return self.sub_reference_element(1).sub_reference_element(codim - 1)
+        else:
+            raise NotImplementedError
+
+    def __call__(self, codim):
+        """Returns the reference element of the codim-`codim` subentities."""
+        return self.sub_reference_element(codim)
+
+    @abstractmethod
+    def unit_outer_normals(self):
+        """`retval[e]` is the unit outer-normal vector to the codim-1 subentity
+        with index `e`.
+        """
+        pass
+
+    @abstractmethod
+    def center(self):
+        """Coordinates of the barycenter."""
+        pass
+
+    @abstractmethod
+    def mapped_diameter(self, A):
+        """The diameter of the reference element after transforming it with the
+        matrix `A` (vectorized).
+        """
+        pass
+
+    @abstractmethod
+    def quadrature(self, order=None, npoints=None, quadrature_type='default'):
+        """Returns tuple `(P, W)` where `P` is an array of quadrature points with
+        corresponding weights `W`.
+
+        The quadrature is of order `order` or has `npoints` integration points.
+        """
+        pass
+
+    @abstractmethod
+    def quadrature_info(self):
+        """Returns a tuple of dicts `(O, N)` where `O[quadrature_type]` is a list
+        of orders which are implemented for `quadrature_type` and `N[quadrature_type]`
+        is a list of the corresponding numbers of integration points.
+        """
+        pass
+
+    def quadrature_types(self):
+        o, _ = self.quadrature_info()
+        return frozenset(o.keys())
+
+
+class AffineGrid(CacheableObject):
+    """Topological grid with geometry where each codim-0 entity is affinely mapped to the same
+    |ReferenceElement|.
+
+    The grid is completely determined via the subentity relation given by
+    :meth:`~AffineGrid.subentities` and the embeddings given by :meth:`~AffineGrid.embeddings`. In
+    addition, only :meth:`~AffineGrid.size` and :meth:`~AffineGrid.reference_element` have to be
+    implemented.
     """
 
     cache_region = 'memory'
@@ -36,32 +153,38 @@ class ConformalTopologicalGrid(CacheableObject):
         """`retval[e,s]` is the global index of the `s`-th codim-`subentity_codim` subentity of the
         codim-`codim` entity with global index `e`.
 
-        Only `subentities(codim, codim+1)` has to be implemented; a default implementation is
-        provided which evaluates `subentities(codim, subentity_codim)` by computing the transitive
-        closure of `subentities(codim, codim+1)`.
+        The ordering of `subentities(0, subentity_codim)[e]` has to correspond, w.r.t. the embedding
+        of `e`, to the local ordering inside the reference element.
+
+        For `codim > 0`, we provide a default implementation by calculating the subentities of `e`
+        as follows:
+
+            1. Find the `codim-1` parent entity `e_0` of `e` with minimal global index
+            2. Lookup the local indices of the subentities of `e` inside `e_0` using the reference
+               element.
+            3. Map these local indices to global indices using
+               `subentities(codim - 1, subentity_codim)`.
+
+        This procedures assures that `subentities(codim, subentity_codim)[e]` has the right ordering
+        w.r.t. the embedding determined by `e_0`, which agrees with what is returned by
+        `embeddings(codim)`
         """
         return self._subentities(codim, subentity_codim)
 
     @cached
     def _subentities(self, codim, subentity_codim):
-        assert 0 <= codim < self.dim, 'Invalid codimension'
-        if subentity_codim > codim + 1:
-            SE = self.subentities(codim, subentity_codim - 1)
-            SESE = self.subentities(subentity_codim - 1, subentity_codim)
+        assert 0 <= codim <= self.dim, 'Invalid codimension'
+        assert 0 < codim, 'Not implemented'
+        P = self.superentities(codim, codim - 1)[:, 0]  # we assume here that superentities() is sorted by global index
+        I = self.superentity_indices(codim, codim - 1)[:, 0]
+        SE = self.subentities(codim - 1, subentity_codim)[P]
+        RSE = self.reference_element(codim - 1).subentities(1, subentity_codim - (codim - 1))[I]
 
-            # we assume that there is only one geometry type ...
-            num_subsubentities = np.unique(SESE[SE[0]]).size
+        SSE = np.empty_like(RSE)
+        for i in range(RSE.shape[0]):
+            SSE[i, :] = SE[i, RSE[i]]
 
-            SSE = np.empty((SE.shape[0], num_subsubentities), dtype=np.int32)
-            SSE.fill(-1)
-
-            for ei in range(SE.shape[0]):
-                X = SESE[SE[ei]].ravel()
-                SSE[ei] = X[np.sort(np.unique(X, return_index=True)[1])]
-
-            return SSE
-        else:
-            raise NotImplementedError
+        return SSE
 
     def superentities(self, codim, superentity_codim):
         """`retval[e,s]` is the global index of the `s`-th codim-`superentity_codim` superentity of
@@ -206,180 +329,10 @@ class ConformalTopologicalGrid(CacheableObject):
             else:
                 return np.array([], dtype=np.int32)
 
-
-class ReferenceElement(CacheableObject):
-    """Defines a reference element.
-
-    All reference elements have the property that all subentities of a given codimension are of the
-    same type. I.e. a three-dimensional reference element cannot have triangles and rectangles as
-    faces at the same time.
-
-    Attributes
-    ----------
-    dim
-        The dimension of the reference element
-    volume
-        The volume of the reference element
-    """
-
-    dim = None
-    volume = None
-    cache_region = 'memory'
-
-    @abstractmethod
-    def size(self, codim):
-        """Number of subentities of codimension `codim`."""
-
-    @abstractmethod
-    def subentities(self, codim, subentity_codim):
-        """`subentities(c,sc)[i,j]` is, with respect to the indexing inside the
-        reference element, the index of the `j`-th codim-`subentity_codim`
-        subentity of the `i`-th codim-`codim` subentity of the reference element.
-        """
-        pass
-
-    @abstractmethod
-    def subentity_embedding(self, subentity_codim):
-        """Returns a tuple `(A, B)` which defines the embedding of the codim-`subentity_codim`
-        subentities into the reference element.
-
-        For `subentity_codim > 1', the embedding is by default given recursively via
-        `subentity_embedding(subentity_codim - 1)` and
-        `sub_reference_element(subentity_codim - 1).subentity_embedding(1)` choosing always
-        the superentity with smallest index.
-        """
-        return self._subentity_embedding(subentity_codim)
-
-    @cached
-    def _subentity_embedding(self, subentity_codim):
-        if subentity_codim > 1:
-            A = []
-            B = []
-            for i in range(self.size(subentity_codim)):
-                P = np.where(self.subentities(subentity_codim - 1, subentity_codim) == i)
-                parent_index, local_index = P[0][0], P[1][0]
-                A0, B0 = self.subentity_embedding(subentity_codim - 1)
-                A0 = A0[parent_index]
-                B0 = B0[parent_index]
-                A1, B1 = self.sub_reference_element(subentity_codim - 1).subentity_embedding(1)
-                A1 = A1[local_index]
-                B1 = B1[local_index]
-                A.append(np.dot(A0, A1))
-                B.append(np.dot(A0, B1) + B0)
-            return np.array(A), np.array(B)
-        else:
-            raise NotImplementedError
-
-    @abstractmethod
-    def sub_reference_element(self, codim):
-        """Returns the reference element of the codim-`codim` subentities."""
-        return self._sub_reference_element(codim)
-
-    @cached
-    def _sub_reference_element(self, codim):
-        if codim > 1:
-            return self.sub_reference_element(1).sub_reference_element(codim - 1)
-        else:
-            raise NotImplementedError
-
-    def __call__(self, codim):
-        """Returns the reference element of the codim-`codim` subentities."""
-        return self.sub_reference_element(codim)
-
-    @abstractmethod
-    def unit_outer_normals(self):
-        """`retval[e]` is the unit outer-normal vector to the codim-1 subentity
-        with index `e`.
-        """
-        pass
-
-    @abstractmethod
-    def center(self):
-        """Coordinates of the barycenter."""
-        pass
-
-    @abstractmethod
-    def mapped_diameter(self, A):
-        """The diameter of the reference element after transforming it with the
-        matrix `A` (vectorized).
-        """
-        pass
-
-    @abstractmethod
-    def quadrature(self, order=None, npoints=None, quadrature_type='default'):
-        """Returns tuple `(P, W)` where `P` is an array of quadrature points with
-        corresponding weights `W`.
-
-        The quadrature is of order `order` or has `npoints` integration points.
-        """
-        pass
-
-    @abstractmethod
-    def quadrature_info(self):
-        """Returns a tuple of dicts `(O, N)` where `O[quadrature_type]` is a list
-        of orders which are implemented for `quadrature_type` and `N[quadrature_type]`
-        is a list of the corresponding numbers of integration points.
-        """
-        pass
-
-    def quadrature_types(self):
-        o, _ = self.quadrature_info()
-        return frozenset(o.keys())
-
-
-class AffineGrid(ConformalTopologicalGrid):
-    """Topological grid with geometry where each codim-0 entity is affinely mapped to the same
-    |ReferenceElement|.
-
-    The grid is completely determined via the subentity relation given by
-    :meth:`~AffineGrid.subentities` and the embeddings given by :meth:`~AffineGrid.embeddings`. In
-    addition, only :meth:`~ConformalTopologicalGrid.size` and :meth:`~AffineGrid.reference_element`
-    have to be implemented. Cached default implementations for all other methods are provided by
-    :class:`~pymor.discretizers.builtin.grids.defaultimpl.AffineGridDefaultImplementations`.
-    """
-
     @abstractmethod
     def reference_element(self, codim):
         """The |ReferenceElement| of the codim-`codim` entities."""
         pass
-
-    @abstractmethod
-    def subentities(self, codim, subentity_codim):
-        """`retval[e,s]` is the global index of the `s`-th codim-`subentity_codim` subentity of the
-        codim-`codim` entity with global index `e`.
-
-        The ordering of `subentities(0, subentity_codim)[e]` has to correspond, w.r.t. the embedding
-        of `e`, to the local ordering inside the reference element.
-
-        For `codim > 0`, we provide a default implementation by calculating the subentities of `e`
-        as follows:
-
-            1. Find the `codim-1` parent entity `e_0` of `e` with minimal global index
-            2. Lookup the local indices of the subentities of `e` inside `e_0` using the reference
-               element.
-            3. Map these local indices to global indices using
-               `subentities(codim - 1, subentity_codim)`.
-
-        This procedures assures that `subentities(codim, subentity_codim)[e]` has the right ordering
-        w.r.t. the embedding determined by `e_0`, which agrees with what is returned by
-        `embeddings(codim)`
-        """
-        return self._subentities(codim, subentity_codim)
-
-    @cached
-    def _subentities(self, codim, subentity_codim):
-        assert 0 <= codim <= self.dim, 'Invalid codimension'
-        assert 0 < codim, 'Not implemented'
-        P = self.superentities(codim, codim - 1)[:, 0]  # we assume here that superentities() is sorted by global index
-        I = self.superentity_indices(codim, codim - 1)[:, 0]
-        SE = self.subentities(codim - 1, subentity_codim)[P]
-        RSE = self.reference_element(codim - 1).subentities(1, subentity_codim - (codim - 1))[I]
-
-        SSE = np.empty_like(RSE)
-        for i in range(RSE.shape[0]):
-            SSE[i, :] = SE[i, RSE[i]]
-
-        return SSE
 
     @abstractmethod
     def embeddings(self, codim):
@@ -554,7 +507,7 @@ class AffineGridWithOrthogonalCenters(AffineGrid):
 
 
 class BoundaryInfo(CacheableObject):
-    """Provides boundary types for the boundaries of a given |ConformalTopologicalGrid|.
+    """Provides boundary types for the boundaries of a given |AffineGrid|.
 
     For every boundary type and codimension a mask is provided, marking grid entities of the
     respective type and codimension by their global index.
