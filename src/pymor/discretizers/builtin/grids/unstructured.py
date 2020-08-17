@@ -4,12 +4,12 @@
 
 import numpy as np
 
-from pymor.discretizers.builtin.grids.interfaces import AffineGrid
+from pymor.discretizers.builtin.grids.interfaces import Grid
 from pymor.discretizers.builtin.grids.referenceelements import triangle
 from pymor.discretizers.builtin.grids._unstructured import compute_edges
 
 
-class UnstructuredTriangleGrid(AffineGrid):
+class UnstructuredTriangleGrid(Grid):
     """A generic unstructured, triangular grid.
 
     Use :meth:`~UnstructuredTriangleGrid.from_vertices` to instantiate

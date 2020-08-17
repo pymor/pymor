@@ -4,11 +4,11 @@
 
 import numpy as np
 
-from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCenters
+from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import square
 
 
-class RectGrid(AffineGridWithOrthogonalCenters):
+class RectGrid(GridWithOrthogonalCenters):
     """Basic implementation of a rectangular |Grid| on a rectangular domain.
 
     The global face, edge and vertex indices are given as follows ::

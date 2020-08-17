@@ -16,7 +16,7 @@ from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
-from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCenters
+from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
 from pymor.discretizers.builtin.grids.subgrid import SubGrid, make_sub_grid_boundary_info
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
@@ -722,7 +722,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver_options=None,
                  name=None):
         super().__init__()
-        assert isinstance(grid, AffineGridWithOrthogonalCenters)
+        assert isinstance(grid, GridWithOrthogonalCenters)
         assert (diffusion_function is None
                 or (isinstance(diffusion_function, Function)
                     and diffusion_function.dim_domain == grid.dim

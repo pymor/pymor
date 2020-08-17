@@ -131,14 +131,13 @@ class ReferenceElement(CacheableObject):
         return frozenset(o.keys())
 
 
-class AffineGrid(CacheableObject):
+class Grid(CacheableObject):
     """Topological grid with geometry where each codim-0 entity is affinely mapped to the same
     |ReferenceElement|.
 
-    The grid is completely determined via the subentity relation given by
-    :meth:`~AffineGrid.subentities` and the embeddings given by :meth:`~AffineGrid.embeddings`. In
-    addition, only :meth:`~AffineGrid.size` and :meth:`~AffineGrid.reference_element` have to be
-    implemented.
+    The grid is completely determined via the subentity relation given by :meth:`~Grid.subentities`
+    and the embeddings given by :meth:`~Grid.embeddings`. In addition, only :meth:`~Grid.size` and
+    :meth:`~Grid.reference_element` have to be implemented.
     """
 
     cache_region = 'memory'
@@ -492,8 +491,8 @@ class AffineGrid(CacheableObject):
         return bbox
 
 
-class AffineGridWithOrthogonalCenters(AffineGrid):
-    """|AffineGrid| with an additional `orthogonal_centers` method."""
+class GridWithOrthogonalCenters(Grid):
+    """|Grid| with an additional `orthogonal_centers` method."""
 
     @abstractmethod
     def orthogonal_centers(self):
@@ -507,7 +506,7 @@ class AffineGridWithOrthogonalCenters(AffineGrid):
 
 
 class BoundaryInfo(CacheableObject):
-    """Provides boundary types for the boundaries of a given |AffineGrid|.
+    """Provides boundary types for the boundaries of a given |Grid|.
 
     For every boundary type and codimension a mask is provided, marking grid entities of the
     respective type and codimension by their global index.
