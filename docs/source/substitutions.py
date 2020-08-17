@@ -12,8 +12,6 @@ interfaces = '''
 .. |BasicObject| replace:: :class:`~pymor.core.base.BasicObject`
 .. |BoundaryInfo| replace:: :class:`BoundaryInfo <pymor.discretizers.builtin.grids.interfaces.BoundaryInfo>`
 .. |BoundaryInfos| replace:: :class:`BoundaryInfos <pymor.discretizers.builtin.grids.interfaces.BoundaryInfo>`
-.. |ConformalTopologicalGrids| replace:: :class:`ConformalTopologicalGrids <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGrid>`
-.. |ConformalTopologicalGrid| replace:: :class:`ConformalTopologicalGrid <pymor.discretizers.builtin.grids.interfaces.ConformalTopologicalGrid>`
 .. |Models| replace:: :class:`Models <pymor.models.interface.Model>`
 .. |Model| replace:: :class:`Model <pymor.models.interface.Model>`
 .. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.analyticalproblems.domaindescriptions.DomainDescription>`
