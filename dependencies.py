@@ -61,7 +61,7 @@ import_names = {'ipython': 'IPython',
                 'pyopengl': 'OpenGL'}
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = [_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7),
-                    'slycot==0.3.3', 'mpi4py']
+                    'slycot>=0.4.0', 'mpi4py']
 
 def strip_markers(name):
     for m in ';<>=':
@@ -99,7 +99,7 @@ def extras():
 
     # blocklisted packages need a (minimal) compiler setup
     # - nbresuse, pytest-memprof depend on psutil which has no wheels
-    # - slycot directly needs a compiler setup with BLAS
+    # - slycot directly needs a compiler setup with BLAS, plus scikit-build + cmake
     # - pymess is better installed from source (see README.md)
     return {
         'full': list(_candidates(blocklist=['slycot', 'pymess', 'nbresuse', 'pytest-memprof'])),
