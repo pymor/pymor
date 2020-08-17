@@ -349,7 +349,7 @@ test_scripts = [("mpi", pythons, 1), ("notebooks_dir", pythons, 1),  ("pip_insta
     ("vanilla", pythons, 1), ("numpy_git", newest, 1), ("oldest", oldest, 1),]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
-testos = ['centos_8', 'debian_buster', 'debian_testing']
+testos = ['centos_8', 'debian_buster', 'debian_bullseye']
 
 env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)
