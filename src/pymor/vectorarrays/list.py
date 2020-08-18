@@ -549,7 +549,7 @@ class ListVectorArray(VectorArray):
         return self.__class__([v.conj() for v in self._list], self.space)
 
     def __str__(self):
-        return f'ListVectorArray of {len(self._list)} vectors of space {self.space}'
+        return f'{type(self).__name__} of {len(self._list)} vectors of space {self.space}'
 
 
 class ListVectorSpace(VectorSpace):
@@ -741,9 +741,6 @@ class ListVectorArrayView(ListVectorArray):
         if x is self.base or x.is_view and x.base is self.base:
             x = x.copy()
         super().axpy(alpha, x)
-
-    def __str__(self):
-        return f'ListVectorArrayView of {len(self._list)} vectors of dimension {self.dim}'
 
 
 class ListVectorArrayNumpyView:
