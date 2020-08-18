@@ -103,7 +103,7 @@ def elliptic2_demo(args):
         U.append(m.solve(mu))
     if mu_bar is not None:
         # use the given energy product
-        energy_norm_squared = m.products['energy'].apply2(U[-1], U[-1])
+        energy_norm_squared = U[-1].norm(m.products['energy'])[0]
         print('Energy norm of the last snapshot: ', np.sqrt(energy_norm_squared)[0][0])
     if not args['--fv']:
         h1_0_norm_squared = m.products['h1_0_semi'].apply2(U[-1], U[-1])
