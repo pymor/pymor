@@ -1212,8 +1212,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             from pymor.operators.constructions import FixedParameterOperator
             eL = FixedParameterOperator(eL, mu=mu_energy_product)
         if p.diffusion is not None:
-            scalar_diffusion = len(p.diffusion.shape_range) == 0 \
-                           or (len(p.diffusion.shape_range) == 1 and p.diffusion.shape_range[0] == 1)
+            scalar_diffusion = len(p.diffusion.shape_range) == 0
             if scalar_diffusion:
                 products['energy'] = eL
             else:
