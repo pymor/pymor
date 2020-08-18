@@ -101,7 +101,7 @@ docker_tutorials: NB_DIR=docs/_build/html
 docker_tutorials: docker_docs docker_jupyter
 
 docker_test: docker_image
-	PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) $(DOCKER_COMPOSE) up pytest
+	PYMOR_TEST_SCRIPT=$(PYMOR_TEST_SCRIPT) $(DOCKER_COMPOSE) up pytest
 
 docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
