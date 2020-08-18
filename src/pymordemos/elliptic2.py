@@ -106,7 +106,7 @@ def elliptic2_demo(args):
         energy_norm_squared = U[-1].norm(m.products['energy'])[0]
         print('Energy norm of the last snapshot: ', np.sqrt(energy_norm_squared)[0][0])
     if not args['--fv']:
-        h1_0_norm_squared = m.products['h1_0_semi'].apply2(U[-1], U[-1])
+        h1_0_norm_squared = U[-1].norm(m.products['h1_0_semi'])[0]
         print('H^1_0 semi norm of the last snapshot: ', np.sqrt(h1_0_norm_squared)[0][0])
     m.visualize(U, title='Solution for mu in [0.1, 1]')
 
