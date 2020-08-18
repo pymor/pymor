@@ -23,7 +23,8 @@ def setup_requires():
       'numpy>=1.15.4;python_version == "3.7"',
       'numpy>=1.17.5;python_version == "3.8"',
       'numpy>={};python_version != "3.6" and python_version != "3.7" and python_version != "3.8"'.format(NUMPY),]
-    other = ['setuptools>=40.8.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.28', 'packaging',]
+    # setuptools pin in accordance with numpy: https://github.com/numpy/numpy/pull/17000, see also https://github.com/pypa/setuptools/pull/2260 https://github.com/pypa/setuptools/pull/2259
+    other = ['setuptools>=40.8.0,<49.2.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.28', 'packaging',]
     return numpys + other
 
 install_requires = ['scipy>=1.1;python_version < "3.8"','scipy>=1.3.3;python_version >= "3.8"', 'Qt.py>=1.2.4', 'packaging','diskcache', 'docopt-ng'] + setup_requires()
