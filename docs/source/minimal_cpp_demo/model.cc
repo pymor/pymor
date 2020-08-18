@@ -21,7 +21,7 @@ void Vector::axpy(double a, const Vector& x) {
   }
 }
 
-double Vector::dot(const Vector& other) const {
+double Vector::inner(const Vector& other) const {
   assert(other.dim == dim);
   double result = 0;
   for (int i = 0; i < dim; i++) {
@@ -70,7 +70,7 @@ PYBIND11_MODULE(model, m)
     vec.def_readonly("dim", &Vector::dim);
     vec.def("scal", &Vector::scal);
     vec.def("axpy", &Vector::axpy);
-    vec.def("dot", &Vector::dot);
+    vec.def("inner", &Vector::inner);
     vec.def("data", &Vector::data);
 
     vec.def_buffer([](Vector& vec) -> py::buffer_info {

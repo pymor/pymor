@@ -27,9 +27,9 @@ def test_gram_schmidt(vector_array):
     V = U.copy()
     onb = gram_schmidt(U, copy=True)
     assert np.all(almost_equal(U, V))
-    assert np.allclose(onb.dot(onb), np.eye(len(onb)))
+    assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     # TODO maybe raise tolerances again
-    assert np.all(almost_equal(U, onb.lincomb(onb.dot(U).T), atol=1e-13, rtol=1e-13))
+    assert np.all(almost_equal(U, onb.lincomb(onb.inner(U).T), atol=1e-13, rtol=1e-13))
 
     onb2 = gram_schmidt(U, copy=False)
     assert np.all(almost_equal(onb, onb2))
@@ -47,8 +47,8 @@ def test_gram_schmidt_with_R(vector_array):
     V = U.copy()
     onb, R = gram_schmidt(U, return_R=True, copy=True)
     assert np.all(almost_equal(U, V))
-    assert np.allclose(onb.dot(onb), np.eye(len(onb)))
-    lc = onb.lincomb(onb.dot(U).T)
+    assert np.allclose(onb.inner(onb), np.eye(len(onb)))
+    lc = onb.lincomb(onb.inner(U).T)
     rtol = atol = 1e-13
     assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
     assert np.all(almost_equal(V, onb.lincomb(R.T), rtol=rtol, atol=atol))
@@ -103,10 +103,10 @@ def test_gram_schmidt_biorth(vector_arrays):
         A1, A2 = gram_schmidt_biorth(U1, U2, copy=True, check_tol=check_tol)
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
-    assert np.allclose(A2.dot(A1), np.eye(len(A1)), atol=check_tol)
+    assert np.allclose(A2.inner(A1), np.eye(len(A1)), atol=check_tol)
     c = np.linalg.cond(A1.to_numpy()) * np.linalg.cond(A2.to_numpy())
-    assert np.all(almost_equal(U1, A1.lincomb(A2.dot(U1).T), rtol=c * 1e-14))
-    assert np.all(almost_equal(U2, A2.lincomb(A1.dot(U2).T), rtol=c * 1e-14))
+    assert np.all(almost_equal(U1, A1.lincomb(A2.inner(U1).T), rtol=c * 1e-14))
+    assert np.all(almost_equal(U2, A2.lincomb(A1.inner(U2).T), rtol=c * 1e-14))
 
     with log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt_biorth': 'ERROR'}):
         B1, B2 = gram_schmidt_biorth(U1, U2, copy=False)

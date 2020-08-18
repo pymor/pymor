@@ -233,17 +233,17 @@ with using just a stub that raises an :class:`~NotImplementedError` in some meth
       def _axpy(self, alpha, x):
           self._impl.axpy(alpha, x._impl)
 
-      def dot(self, other):
-          return self._impl.dot(other._impl)
+      def inner(self, other):
+          return self._impl.inner(other._impl)
 
       def l1_norm(self):
           raise NotImplementedError
 
       def l2_norm(self):
-          return math.sqrt(self.dot(self))
+          return math.sqrt(self.inner(self))
 
       def l2_norm2(self):
-          return self.dot(self)
+          return self.inner(self)
 
       def sup_norm(self):
           raise NotImplementedError

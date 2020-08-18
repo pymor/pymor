@@ -145,13 +145,13 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
                 LN = AsE.apply_inverse_adjoint(cat_arrays([RF, K]))
             L = LN[:len(RF)]
             N = LN[-len(K):]
-            ImBN = np.eye(len(K)) - B.dot(N)
-            ImBNKL = spla.solve(ImBN, B.dot(L))
+            ImBN = np.eye(len(K)) - B.inner(N)
+            ImBNKL = spla.solve(ImBN, B.inner(L))
             V = (L + N.lincomb(ImBNKL.T)) * np.sqrt(-2 * shifts[j_shift].real)
 
         if np.imag(shifts[j_shift]) == 0:
             Z.append(V)
-            VB = V.dot(B)
+            VB = V.inner(B)
             Yt = np.eye(len(C)) - (VB @ VB.T) / (2 * shifts[j_shift].real)
             Y = spla.block_diag(Y, Yt)
             if not trans:
@@ -164,8 +164,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         else:
             Z.append(V.real)
             Z.append(V.imag)
-            Vr = V.real.dot(B)
-            Vi = V.imag.dot(B)
+            Vr = V.real.inner(B)
+            Vi = V.imag.inner(B)
             sa = np.abs(shifts[j_shift])
             F1 = np.vstack((
                 -shifts[j_shift].real/sa * Vr - shifts[j_shift].imag/sa * Vi,
@@ -231,9 +231,9 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
     for _ in range(shift_options['init_maxiter']):
         Q = gram_schmidt(C, atol=0, rtol=0)
         Ap = A.apply2(Q, Q)
-        QB = Q.dot(B)
+        QB = Q.inner(B)
         Gp = QB.dot(QB.T)
-        QR = Q.dot(C)
+        QR = Q.inner(C)
         Rp = QR.dot(QR.T)
         Hp = np.block([
             [Ap, Gp],
@@ -310,11 +310,11 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
 
     Q = gram_schmidt(Z[-l:], atol=0, rtol=0)
     Ap = A.apply2(Q, Q)
-    KBp = Q.dot(K) @ Q.dot(B).T
+    KBp = Q.inner(K) @ Q.inner(B).T
     AAp = Ap - KBp
-    QB = Q.dot(B)
+    QB = Q.inner(B)
     Gp = QB.dot(QB.T)
-    QR = Q.dot(R)
+    QR = Q.inner(R)
     Rp = QR.dot(QR.T)
     Hp = np.block([
         [AAp, Gp],

@@ -134,7 +134,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
         sEmA = st * E - A
         sEmAB = sEmA.apply_inverse(B_defl)
-        Hs = C_defl.dot(sEmAB)
+        Hs = C_defl.inner(sEmAB)
 
         y_all, _, u_all = spla.svd(Hs)
 
@@ -152,12 +152,12 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
         AX.append(A.apply(X[k-1]))
 
         if k > 1:
-            H = np.hstack((H, V[0:k-1].dot(AX[k-1])))
-        H = np.vstack((H, V[k-1].dot(AX)))
+            H = np.hstack((H, V[0:k-1].inner(AX[k-1])))
+        H = np.vstack((H, V[k-1].inner(AX)))
         EX = E.apply(X)
         if k > 1:
-            G = np.hstack((G, V[0:k-1].dot(EX[k-1])))
-        G = np.vstack((G, V[k-1].dot(EX)))
+            G = np.hstack((G, V[0:k-1].inner(EX[k-1])))
+        G = np.vstack((G, V[k-1].inner(EX)))
 
         SH, UR, URt, res = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
 
@@ -216,7 +216,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 Qs.append(Esch)
                 Qts.append(E.apply_adjoint(lschurvec))
 
-                nqqt = lschurvec.dot(Esch)[0][0]
+                nqqt = lschurvec.inner(Esch)[0][0]
                 Q[-1].scal(1 / nqqt)
                 Qs[-1].scal(1 / nqqt)
 
@@ -233,8 +233,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                     gram_schmidt(V, atol=0, rtol=0, copy=False)
                     gram_schmidt(X, atol=0, rtol=0, copy=False)
 
-                B_defl -= E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
-                C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
+                B_defl -= E.apply(Q[-1].lincomb(Qt[-1].inner(B_defl).T))
+                C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].inner(C_defl).T))
 
                 k -= 1
 
@@ -258,20 +258,20 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                         Qs.append(Esch)
                         Qts.append(E.apply_adjoint(ccvt))
 
-                        nqqt = ccvt.dot(E.apply(ccv))[0][0]
+                        nqqt = ccvt.inner(E.apply(ccv))[0][0]
                         Q[-1].scal(1 / nqqt)
                         Qs[-1].scal(1 / nqqt)
 
                         gram_schmidt(V, atol=0, rtol=0, copy=False)
                         gram_schmidt(X, atol=0, rtol=0, copy=False)
 
-                        B_defl -= E.apply(Q[-1].lincomb(Qt[-1].dot(B_defl).T))
-                        C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].dot(C_defl).T))
+                        B_defl -= E.apply(Q[-1].lincomb(Qt[-1].inner(B_defl).T))
+                        C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].inner(C_defl).T))
 
                 AX = A.apply(X)
                 if k > 0:
-                    G = V.dot(E.apply(X))
-                    H = V.dot(AX)
+                    G = V.inner(E.apply(X))
+                    H = V.inner(AX)
                     SH, UR, URt, residues = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
                     found = np.any(res >= np.finfo(float).eps)
                 else:
@@ -302,9 +302,9 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 gram_schmidt(V, atol=0, rtol=0, copy=False)
                 gram_schmidt(X, atol=0, rtol=0, copy=False)
 
-                G = V.dot(E.apply(X))
+                G = V.inner(E.apply(X))
                 AX = A.apply(X)
-                H = V.dot(AX)
+                H = V.inner(AX)
                 nrestart += 1
 
         if k >= krestart:
@@ -321,9 +321,9 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             gram_schmidt(V, atol=0, rtol=0, copy=False)
             gram_schmidt(X, atol=0, rtol=0, copy=False)
 
-            G = V.dot(E.apply(X))
+            G = V.inner(E.apply(X))
             AX = A.apply(X)
-            H = V.dot(AX)
+            H = V.inner(AX)
             nrestart += 1
 
         if nr_converged == nwanted or nrestart == maxrestart:
@@ -332,8 +332,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
             absres = np.empty(len(poles))
             residues = []
             for i in range(len(poles)):
-                leftev[i].scal(1 / leftev[i].dot(E.apply(rightev[i]))[0][0])
-                residues.append(C.dot(rightev[i]) @ leftev[i].dot(B))
+                leftev[i].scal(1 / leftev[i].inner(E.apply(rightev[i]))[0][0])
+                residues.append(C.inner(rightev[i]) @ leftev[i].inner(B))
                 absres[i] = spla.norm(residues[-1], ord=2)
             residues = np.array(residues)
 
@@ -409,7 +409,7 @@ def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter):
         Ax_rqi = A.apply(x_rqi)
         Ex_rqi = E.apply(x_rqi)
 
-        x_rq = (v_rqi.dot(Ax_rqi) / v_rqi.dot(Ex_rqi))[0][0]
+        x_rq = (v_rqi.inner(Ax_rqi) / v_rqi.inner(Ex_rqi))[0][0]
         if not np.isfinite(x_rq):
             x_rqi = x
             v_rqi = y
@@ -486,7 +486,7 @@ def _select_max_eig(H, G, X, V, B, C, which):
 
     V.scal(1 / V.norm())
     X.scal(1 / X.norm())
-    residue = spla.norm(C.dot(X), axis=0) * spla.norm(V.dot(B), axis=1)
+    residue = spla.norm(C.inner(X), axis=0) * spla.norm(V.inner(B), axis=1)
 
     if which == 'LR':
         idx = np.argsort(-residue / np.abs(np.real(DP)))

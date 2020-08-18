@@ -22,7 +22,7 @@ class NumpyVectorArray(VectorArray):
     This class is just a thin wrapper around the underlying
     |NumPy array|. Thus, while operations like
     :meth:`~pymor.vectorarrays.interface.VectorArray.axpy` or
-    :meth:`~pymor.vectorarrays.interface.VectorArray.dot`
+    :meth:`~pymor.vectorarrays.interface.VectorArray.inner`
     will be quite efficient, removing or appending vectors will
     be costly.
 
@@ -169,7 +169,10 @@ class NumpyVectorArray(VectorArray):
             alpha = alpha[:, np.newaxis]
         self._array[_ind] += B * alpha
 
-    def dot(self, other, *, _ind=None):
+    def inner(self, other, product=None, *, _ind=None):
+        assert product is None or _ind is None
+        if product is not None:
+            return product.apply2(self, other)
         if _ind is None:
             _ind = slice(0, self._len)
         assert self.dim == other.dim
@@ -180,7 +183,10 @@ class NumpyVectorArray(VectorArray):
         # .conj() is a no-op on non-complex data types
         return A.conj().dot(B.T)
 
-    def pairwise_dot(self, other, *, _ind=None):
+    def pairwise_inner(self, other, product=None, *, _ind=None):
+        assert product is None or _ind is None
+        if product is not None:
+            return product.pairwise_apply2(self, other)
         if _ind is None:
             _ind = slice(0, self._len)
         assert self.dim == other.dim
@@ -479,11 +485,15 @@ class NumpyVectorArrayView(NumpyVectorArray):
         assert self.base.check_ind_unique(self.ind)
         self.base.axpy(alpha, x, _ind=self.ind)
 
-    def dot(self, other):
-        return self.base.dot(other, _ind=self.ind)
+    def inner(self, other, product=None):
+        if product is not None:
+            return product.apply2(self, other)
+        return self.base.inner(other, _ind=self.ind)
 
-    def pairwise_dot(self, other):
-        return self.base.pairwise_dot(other, _ind=self.ind)
+    def pairwise_inner(self, other, product=None):
+        if product is not None:
+            return product.pairwise_apply2(self, other)
+        return self.base.pairwise_inner(other, _ind=self.ind)
 
     def lincomb(self, coefficients):
         return self.base.lincomb(coefficients, _ind=self.ind)

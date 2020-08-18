@@ -41,7 +41,7 @@ class MPIOperator(Operator):
         Set to `True` if the operator implementation has its own
         MPI aware implementation of `apply2` and `pairwise_apply2`.
         Otherwise, the default implementations using `apply` and
-        :meth:`~pymor.vectorarrays.interface.VectorArray.dot`
+        :meth:`~pymor.vectorarrays.interface.VectorArray.inner`
         will be used.
     pickle_local_spaces
         If `pickle_local_spaces` is `False`, a unique identifier

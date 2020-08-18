@@ -86,15 +86,16 @@ class Operator(ParametricObject):
         pass
 
     def apply2(self, V, U, mu=None):
-        """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
+        """Treat the operator as a 2-form and apply it to V and U.
 
-        If the operator is a linear operator given by multiplication with a matrix
-        M, then `apply2` is given as::
+        This method is usually implemented as ``V.inner(self.apply(U))``.
+        In particular, if the operator is a linear operator given by multiplication
+        with a matrix M, then `apply2` is given as::
 
             op.apply2(V, U) = V^T*M*U.
 
         In the case of complex numbers, note that `apply2` is anti-linear in the
-        first variable by definition of `dot`.
+        first variable by definition of `inner`.
 
         Parameters
         ----------
@@ -114,13 +115,20 @@ class Operator(ParametricObject):
         assert isinstance(V, VectorArray)
         assert isinstance(U, VectorArray)
         AU = self.apply(U, mu=mu)
-        return V.dot(AU)
+        return V.inner(AU)
 
     def pairwise_apply2(self, V, U, mu=None):
-        """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
+        """Treat the operator as a 2-form and apply it to V and U in pairs.
 
-        Same as :meth:`Operator.apply2`, except that vectors from `V`
-        and `U` are applied in pairs.
+        This method is usually implemented as ``V.pairwise_inner(self.apply(U))``.
+        In particular, if the operator is a linear operator given by multiplication
+        with a matrix M, then `apply2` is given as::
+
+            op.apply2(V, U)[i] = V[i]^T*M*U[i].
+
+        In the case of complex numbers, note that `pairwirse_apply2` is anti-linear in the
+        first variable by definition of `pairwise_inner`.
+
 
         Parameters
         ----------
@@ -141,7 +149,7 @@ class Operator(ParametricObject):
         assert isinstance(U, VectorArray)
         assert len(U) == len(V)
         AU = self.apply(U, mu=mu)
-        return V.pairwise_dot(AU)
+        return V.pairwise_inner(AU)
 
     def apply_adjoint(self, V, mu=None):
         """Apply the adjoint operator.
@@ -150,7 +158,7 @@ class Operator(ParametricObject):
         |VectorArrays| `U`, `V` in the :attr:`~Operator.source`
         resp. :attr:`~Operator.range` we have::
 
-            op.apply_adjoint(V, mu).dot(U) == V.dot(op.apply(U, mu))
+            op.apply_adjoint(V, mu).dot(U) == V.inner(op.apply(U, mu))
 
         Thus, when `op` is represented by a matrix `M`, `apply_adjoint` is
         given by left-multplication of (the complex conjugate of) `M` with `V`.
@@ -370,7 +378,7 @@ class Operator(ParametricObject):
         `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.source`,
         such that ::
 
-            self.range.make_array(V.dot(U).T) == self.apply(U, mu)
+            self.range.make_array(V.inner(U).T) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 

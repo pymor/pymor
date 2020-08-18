@@ -153,7 +153,7 @@ class NonProjectedResidualOperator(ResidualOperator):
                 # divide by norm, except when norm is zero:
                 inversel2 = 1./R_riesz.l2_norm()
                 inversel2 = np.nan_to_num(inversel2)
-                R_riesz.scal(np.sqrt(R_riesz.pairwise_dot(R)) * inversel2)
+                R_riesz.scal(np.sqrt(R_riesz.pairwise_inner(R)) * inversel2)
                 return R_riesz
             else:
                 # divide by norm, except when norm is zero:
@@ -306,7 +306,7 @@ class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
             # divide by norm, except when norm is zero:
             inversel2 = 1./R_riesz.l2_norm()
             inversel2 = np.nan_to_num(inversel2)
-            R_riesz.scal(np.sqrt(R_riesz.pairwise_dot(R)) * inversel2)
+            R_riesz.scal(np.sqrt(R_riesz.pairwise_inner(R)) * inversel2)
             return R_riesz
         else:
             return R
