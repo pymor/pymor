@@ -33,7 +33,7 @@ pytest>=4.4
 pythreejs
 scipy>=1.1;python_version < "3.8"
 scipy>=1.3.3;python_version >= "3.8"
-setuptools>=40.8.0
+setuptools>=40.8.0,<49.2.0
 slycot>=0.4.0
 sphinx-qt-documentation
 sphinx>=1.7
