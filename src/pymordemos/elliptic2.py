@@ -6,15 +6,16 @@
 """Simple demonstration of solving the Poisson equation in 2D using pyMOR's builtin discretizations.
 
 Usage:
-    elliptic2.py [--fv] PROBLEM-NUMBER N PRODUCT-COUNT
+    elliptic2.py [--fv] PROBLEM-NUMBER N NORM
 
 Arguments:
     PROBLEM-NUMBER  {0,1}, selects the problem to solve
     N               Triangle count per direction
 
-    PRODUCT-COUNT   0: equip the model with standard products
-                    1: use a fixed parameter instance with random parameter values to also
-                    add an energy product to the model
+    NORM            h1: compute the h1-norm of the last snapshot.
+                    l2: compute the l2-norm of the last snapshot
+                    k: compute the energy norm of the last snapshot, where the energy-product is constructed
+                    with a randomly generated parameter instance with random seed integer k.
 
 Options:
     -h, --help   Show this message.
@@ -35,8 +36,8 @@ def elliptic2_demo(args):
     args['PROBLEM-NUMBER'] = int(args['PROBLEM-NUMBER'])
     assert 0 <= args['PROBLEM-NUMBER'] <= 1, ValueError('Invalid problem number.')
     args['N'] = int(args['N'])
-    args['PRODUCT-COUNT'] = int(args['PRODUCT-COUNT'])
-    assert 0 <= args['PRODUCT-COUNT'] <= 1, ValueError('Invalid product count.')
+    norm = args['NORM']
+    norm = int(norm) if not (str(norm)[0]=='h' or str(norm)[0]=='l') else norm
 
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
               LincombFunction(
@@ -82,18 +83,17 @@ def elliptic2_demo(args):
         name='2DProblem'
     )
 
-    if args['PRODUCT-COUNT'] and not args['--fv']:
+    if isinstance(norm, int) and not args['--fv']:
         # use a random parameter to construct an energy product
-        mu_bar = problem.parameter_space.sample_randomly(1)[0]
+        mu_bar = problem.parameter_space.sample_randomly(1, seed=norm)[0]
     else:
         mu_bar = None
 
     print('Discretize ...')
-    discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    if mu_bar is not None:
-        m, data = discretizer(problem, diameter=1. / args['N'], mu_energy_product=mu_bar)
+    if args['--fv']:
+        m, data = discretize_stationary_fv(problem, diameter=1. / args['N'])
     else:
-        m, data = discretizer(problem, diameter=1. / args['N'])
+        m, data = discretize_stationary_cg(problem, diameter=1. / args['N'], mu_energy_product=mu_bar)
     print(data['grid'])
     print()
 
@@ -103,11 +103,15 @@ def elliptic2_demo(args):
         U.append(m.solve(mu))
     if mu_bar is not None:
         # use the given energy product
-        energy_norm_squared = U[-1].norm(m.products['energy'])[0]
-        print('Energy norm of the last snapshot: ', np.sqrt(energy_norm_squared)[0][0])
+        norm_squared = U[-1].norm(m.products['energy'])[0]
+        print('Energy norm of the last snapshot: ', np.sqrt(norm_squared))
     if not args['--fv']:
-        h1_0_norm_squared = U[-1].norm(m.products['h1_0_semi'])[0]
-        print('H^1_0 semi norm of the last snapshot: ', np.sqrt(h1_0_norm_squared)[0][0])
+        if args['NORM'] == 'h1':
+            norm_squared = U[-1].norm(m.products['h1_0_semi'])[0]
+            print('H^1_0 semi norm of the last snapshot: ', np.sqrt(norm_squared))
+        if args['NORM'] == 'l2':
+            norm_squared = U[-1].norm(m.products['l2_0'])[0]
+            print('L^2_0 norm of the last snapshot: ', np.sqrt(norm_squared))
     m.visualize(U, title='Solution for mu in [0.1, 1]')
 
 
