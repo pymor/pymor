@@ -22,8 +22,8 @@ stages:
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: 0d947ad8acfd2e4326fe844173570247b8e4dc4b
-        CI_IMAGE_TAG: a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+        PYPI_MIRROR_TAG: 6482589aa9345c76ae77437661ecb4d67a1963d4
+        CI_IMAGE_TAG: 6482589aa9345c76ae77437661ecb4d67a1963d4
         PYMOR_HYPOTHESIS_PROFILE: ci
 
 .pytest:
@@ -146,7 +146,7 @@ stages:
 
 .sanity_checks:
     extends: .test_base
-    image: pymor/ci_sanity:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/ci_sanity:6482589aa9345c76ae77437661ecb4d67a1963d4
     stage: sanity
 #******** end definition of base jobs *********************************************************************************#
 
@@ -173,9 +173,9 @@ minimal_cpp_demo:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script: ./.ci/gitlab/cpp_demo.bash
 mpi 3 6:
     extends: .pytest
@@ -184,9 +184,9 @@ mpi 3 6:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -204,9 +204,9 @@ mpi 3 7:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -224,9 +224,9 @@ mpi 3 8:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -244,9 +244,9 @@ notebooks_dir 3 6:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -264,9 +264,9 @@ notebooks_dir 3 7:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -284,9 +284,9 @@ notebooks_dir 3 8:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -304,9 +304,9 @@ pip_installed 3 6:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -324,9 +324,9 @@ pip_installed 3 7:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -344,9 +344,9 @@ pip_installed 3 8:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -364,9 +364,9 @@ vanilla 3 6:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -384,9 +384,9 @@ vanilla 3 7:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -404,9 +404,9 @@ vanilla 3 8:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -424,9 +424,9 @@ numpy_git 3 8:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -444,9 +444,9 @@ oldest 3 6:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_oldest_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_oldest_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -464,9 +464,9 @@ ci_weekly 3 6:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: always
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 7:
@@ -476,9 +476,9 @@ ci_weekly 3 7:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: always
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 8:
@@ -488,9 +488,9 @@ ci_weekly 3 8:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: always
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     
     script: ./.ci/gitlab/test_vanilla.bash
 submit vanilla 3 6:
@@ -837,9 +837,9 @@ docs build:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/jupyter_py3.7:a53addc0046c2fdc5fbb0a6f45b1ba7ca5fbe056
+    image: pymor/jupyter_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
