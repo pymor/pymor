@@ -581,7 +581,9 @@ submit ci_weekly 3 8:
 
 pip 1/3:
     tags: [mike]
-    extends: .test_base
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
+          alias: pypi_mirror
     rules:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: never
@@ -592,7 +594,9 @@ pip 1/3:
 
 pip 2/3:
     tags: [mike]
-    extends: .test_base
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
+          alias: pypi_mirror
     rules:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: never
@@ -603,7 +607,9 @@ pip 2/3:
 
 pip 3/3:
     tags: [mike]
-    extends: .test_base
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
+          alias: pypi_mirror
     rules:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: never

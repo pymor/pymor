@@ -245,10 +245,12 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
 {%- endfor %}
 
 
-{% for OS in testos %}
+{% for OS, PY in testos %}
 pip {{loop.index}}/{{loop.length}}:
     tags: [mike]
-    extends: .test_base
+    services:
+        - name: pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
+          alias: pypi_mirror
     rules:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: never
@@ -335,7 +337,7 @@ pypi deploy:
     environment:
         name: safe
 
-{% for OS in testos %}
+{% for OS, PY in testos %}
 check_wheel {{loop.index}}:
     extends: .check_wheel
     image: pymor/deploy_checks:devpi_{{OS}}
@@ -403,7 +405,7 @@ test_scripts = [("mpi", pythons, 1), ("notebooks_dir", pythons, 1),  ("pip_insta
     ("vanilla", pythons, 1), ("numpy_git", newest, 1), ("oldest", oldest, 1),]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
-testos = ['centos_8', 'debian_buster', 'debian_bullseye']
+testos = [('centos_8','3.6'), ('debian_buster','3.7'), ('debian_bullseye','3.8')]
 
 env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)
