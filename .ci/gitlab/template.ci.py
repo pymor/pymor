@@ -115,8 +115,6 @@ stages:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: never
         - when: on_success
-    variables:
-        TEST_OS: "{{ ' '.join(testos) }}"
 
 
 .check_wheel:
@@ -249,13 +247,15 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
 
 {% for OS in testos %}
 pip {{loop.index}}/{{loop.length}}:
-    extends: .docker-in-docker
+    tags: [mike]
+    extends: .test_base
     rules:
         - if: '$CI_PIPELINE_SOURCE == "schedule"'
           when: never
         - when: on_success
     stage: install_checks
-    script: docker build -f .ci/docker/install_checks/{{OS}}/Dockerfile .
+    image: pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
+    script: ./.ci/gitlab/install_checks/{{OS}}/check.bash
 {% endfor %}
 
 repo2docker:
