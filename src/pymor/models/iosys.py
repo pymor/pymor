@@ -119,13 +119,7 @@ class InputOutputModel(Model):
         freq = w / (2 * np.pi) if Hz else w
         mag = np.abs(self.freq_resp(w, mu=mu))
         phase = np.angle(self.freq_resp(w, mu=mu))
-        for i in range(self.output_dim):
-            for j in range(self.input_dim):
-                for k in range(1, len(w)):
-                    while phase[k, i, j] > phase[k - 1, i, j] + np.pi:
-                        phase[k, i, j] -= 2 * np.pi
-                    while phase[k, i, j] <= phase[k - 1, i, j] - np.pi:
-                        phase[k, i, j] += 2 * np.pi
+        phase = np.unwrap(phase, axis=0)
         if deg:
             phase *= 180 / np.pi
 
