@@ -15,7 +15,7 @@ Arguments:
     NORM            h1: compute the h1-norm of the last snapshot.
                     l2: compute the l2-norm of the last snapshot
                     k: compute the energy norm of the last snapshot, where the energy-product is constructed
-                    with a randomly generated parameter instance with random seed integer k.
+                    with a parameter {'mu': k}.
 
 Options:
     -h, --help   Show this message.
@@ -37,7 +37,7 @@ def elliptic2_demo(args):
     assert 0 <= args['PROBLEM-NUMBER'] <= 1, ValueError('Invalid problem number.')
     args['N'] = int(args['N'])
     norm = args['NORM']
-    norm = int(norm) if not norm.lower() in ('h1', 'l2') else norm.lower()
+    norm = float(norm) if not norm.lower() in ('h1', 'l2') else norm.lower()
 
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
               LincombFunction(
@@ -83,9 +83,9 @@ def elliptic2_demo(args):
         name='2DProblem'
     )
 
-    if isinstance(norm, int) and not args['--fv']:
+    if isinstance(norm, float) and not args['--fv']:
         # use a random parameter to construct an energy product
-        mu_bar = problem.parameter_space.sample_randomly(1, seed=norm)[0]
+        mu_bar = problem.parameters.parse(norm)
     else:
         mu_bar = None
 
