@@ -487,7 +487,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
         if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
@@ -971,7 +971,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
 
 def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
                              grid_type=None, grid=None, boundary_info=None,
-                             preassemble=True):
+                             preassemble=True, mu_energy_product=None):
     """Discretizes a |StationaryProblem| using finite elements.
 
     Parameters
@@ -995,6 +995,11 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         Must be provided if `grid` is specified.
     preassemble
         If `True`, preassemble all operators in the resulting |Model|.
+    mu_energy_product
+        If not `None`, |parameter values| for which to assemble the symmetric part of the |Operator| of the resulting
+        |Model| `fom` (ignoring the advection part). Thus, assuming no advection and a symmetric diffusion tensor,  
+        `fom.products['energy']` is equal to `fom.operator.assemble(mu)`, except for the fact that the former has
+        cleared Dirichlet rows and columns, while the latter only has cleared Dirichlet rows).
 
     Returns
     -------
@@ -1049,6 +1054,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         BoundaryL2Functional = BoundaryL2ProductFunctional
 
     Li = [DiffusionOperator(grid, boundary_info, diffusion_constant=0, name='boundary_part')]
+    if mu_energy_product:
+        eLi = [DiffusionOperator(grid, boundary_info, dirichlet_clear_columns=True, diffusion_constant=0)]
     coefficients = [1.]
 
     # diffusion part
@@ -1056,10 +1063,16 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         Li += [DiffusionOperator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
                                  name=f'diffusion_{i}')
                for i, df in enumerate(p.diffusion.functions)]
+        if mu_energy_product:
+            eLi += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion, dirichlet_clear_diag=True,
+                                      dirichlet_clear_columns=True)]
         coefficients += list(p.diffusion.coefficients)
     elif p.diffusion is not None:
         Li += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion,
                                  dirichlet_clear_diag=True, name='diffusion')]
+        if mu_energy_product:
+            eLi += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion,
+                                      dirichlet_clear_diag=True, dirichlet_clear_columns=True)]
         coefficients.append(1.)
 
     # advection part
@@ -1078,10 +1091,16 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         Li += [ReactionOperator(grid, boundary_info, coefficient_function=rf, dirichlet_clear_diag=True,
                                 name=f'reaction_{i}')
                for i, rf in enumerate(p.reaction.functions)]
+        if mu_energy_product:
+            eLi += [ReactionOperator(grid, boundary_info, coefficient_function=p.reaction, dirichlet_clear_diag=True,
+                                     dirichlet_clear_columns=True)]
         coefficients += list(p.reaction.coefficients)
     elif p.reaction is not None:
         Li += [ReactionOperator(grid, boundary_info, coefficient_function=p.reaction,
                                 dirichlet_clear_diag=True, name='reaction')]
+        if mu_energy_product:
+            eLi += [ReactionOperator(grid, boundary_info, coefficient_function=p.reaction, dirichlet_clear_columns=True,
+                                     dirichlet_clear_diag=True)]
         coefficients.append(1.)
 
     # robin boundaries
@@ -1092,11 +1111,17 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 robin_tuple = (rd, p.robin_data[1])
                 Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=robin_tuple, name=f'robin_{i}')]
             coefficients += list(p.robin_data[0].coefficients)
+            if mu_energy_product:
+                eLi += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data)]
         else:
             Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name=f'robin')]
+            if mu_energy_product:
+                eLi += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data)]
             coefficients.append(1.)
 
     L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
+    if mu_energy_product:
+        eL = LincombOperator(operators=eLi, coefficients=[1.]*len(eLi), name='ellipticEnergyProduct')
 
     # right-hand side
     rhs = p.rhs or ConstantFunction(0., dim_domain=p.domain.dim)
@@ -1163,7 +1188,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 'h1_0_semi': h1_0_semi_product,
                 'l2_0': l2_0_product}
 
-    # assemble additionals output functionals
+    # assemble additional output functionals
     if p.outputs:
         if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
             raise NotImplementedError
@@ -1178,10 +1203,29 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     else:
         output_functional = None
 
+    # assemble additional product
+    if mu_energy_product:
+        if preassemble:
+            # mu_energy_product is the |Parameter| with which we build the energy product (s.a.)
+            eL = eL.assemble(mu_energy_product)
+        else:
+            from pymor.operators.constructions import FixedParameterOperator
+            eL = FixedParameterOperator(eL, mu=mu_energy_product)
+        if p.diffusion is not None:
+            scalar_diffusion = len(p.diffusion.shape_range) == 0
+            if scalar_diffusion:
+                products['energy'] = eL
+            else:
+                eL_unassembled = 0.5*eL + 0.5*eL.H
+                products['energy'] = eL_unassembled.assemble() if preassemble else eL_unassembled
+        else:
+            products['energy'] = eL
+
     m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
                          name=f'{p.name}_CG')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
+
 
     if preassemble:
         data['unassembled_m'] = m

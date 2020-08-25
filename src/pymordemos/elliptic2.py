@@ -6,11 +6,16 @@
 """Simple demonstration of solving the Poisson equation in 2D using pyMOR's builtin discretizations.
 
 Usage:
-    elliptic2.py [--fv] PROBLEM-NUMBER N
+    elliptic2.py [--fv] PROBLEM-NUMBER N NORM
 
 Arguments:
-    PROBLEM-NUMBER    {0,1}, selects the problem to solve
-    N                 Triangle count per direction
+    PROBLEM-NUMBER  {0,1}, selects the problem to solve
+    N               Triangle count per direction
+
+    NORM            h1: compute the h1-norm of the last snapshot.
+                    l2: compute the l2-norm of the last snapshot
+                    k: compute the energy norm of the last snapshot, where the energy-product is constructed
+                    with a parameter {'mu': k}.
 
 Options:
     -h, --help   Show this message.
@@ -18,6 +23,7 @@ Options:
 """
 
 from docopt import docopt
+import numpy as np
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
@@ -30,6 +36,8 @@ def elliptic2_demo(args):
     args['PROBLEM-NUMBER'] = int(args['PROBLEM-NUMBER'])
     assert 0 <= args['PROBLEM-NUMBER'] <= 1, ValueError('Invalid problem number.')
     args['N'] = int(args['N'])
+    norm = args['NORM']
+    norm = float(norm) if not norm.lower() in ('h1', 'l2') else norm.lower()
 
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
               LincombFunction(
@@ -75,9 +83,17 @@ def elliptic2_demo(args):
         name='2DProblem'
     )
 
+    if isinstance(norm, float) and not args['--fv']:
+        # use a random parameter to construct an energy product
+        mu_bar = problem.parameters.parse(norm)
+    else:
+        mu_bar = None
+
     print('Discretize ...')
-    discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    m, data = discretizer(problem, diameter=1. / args['N'])
+    if args['--fv']:
+        m, data = discretize_stationary_fv(problem, diameter=1. / args['N'])
+    else:
+        m, data = discretize_stationary_cg(problem, diameter=1. / args['N'], mu_energy_product=mu_bar)
     print(data['grid'])
     print()
 
@@ -85,6 +101,17 @@ def elliptic2_demo(args):
     U = m.solution_space.empty()
     for mu in problem.parameter_space.sample_uniformly(10):
         U.append(m.solve(mu))
+    if mu_bar is not None:
+        # use the given energy product
+        norm_squared = U[-1].norm(m.products['energy'])[0]
+        print('Energy norm of the last snapshot: ', np.sqrt(norm_squared))
+    if not args['--fv']:
+        if args['NORM'] == 'h1':
+            norm_squared = U[-1].norm(m.products['h1_0_semi'])[0]
+            print('H^1_0 semi norm of the last snapshot: ', np.sqrt(norm_squared))
+        if args['NORM'] == 'l2':
+            norm_squared = U[-1].norm(m.products['l2_0'])[0]
+            print('L^2_0 norm of the last snapshot: ', np.sqrt(norm_squared))
     m.visualize(U, title='Solution for mu in [0.1, 1]')
 
 

@@ -9,6 +9,11 @@
 
 # Contributors
 
+## pyMOR 2020.2
+
+* Tim Keil, tim.keil@uni-muenster.de
+    * Energy product in elliptic discretizer
+
 ## pyMOR 2020.1
 
 * Linus Balicki, linus.balicki@ovgu.de
