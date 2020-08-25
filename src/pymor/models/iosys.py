@@ -134,6 +134,9 @@ class InputOutputModel(Model):
         if ax is None:
             import matplotlib.pyplot as plt
             fig = plt.gcf()
+            width, height = plt.rcParams['figure.figsize']
+            fig.set_size_inches(self.input_dim * width, 2 * self.output_dim * height)
+            fig.set_constrained_layout(True)
             ax = fig.subplots(2 * self.output_dim, self.input_dim, sharex=True, squeeze=False)
         else:
             assert isinstance(ax, np.ndarray) and ax.shape == (2 * self.output_dim, self.input_dim)
