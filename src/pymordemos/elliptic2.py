@@ -37,7 +37,7 @@ def elliptic2_demo(args):
     assert 0 <= args['PROBLEM-NUMBER'] <= 1, ValueError('Invalid problem number.')
     args['N'] = int(args['N'])
     norm = args['NORM']
-    norm = int(norm) if not (str(norm)[0]=='h' or str(norm)[0]=='l') else norm
+    norm = int(norm) if not norm.lower() in ('h1', 'l2') else norm.lower()
 
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
               LincombFunction(
