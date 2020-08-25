@@ -16,8 +16,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.base import Mu, Parameters
-from pymor.tools.formatrepr import indent_value
+from pymor.parameters.base import Mu
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
