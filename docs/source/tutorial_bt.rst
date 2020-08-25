@@ -252,19 +252,34 @@ models
     rom.mag_plot(w, ax=ax, linestyle='--', label='ROM')
     _ = ax.legend()
 
-and plot the magnitude plot of the error system
+as well as Bode plots
 
 .. jupyter-execute::
 
-    _ = (fom - rom).mag_plot(w)
+    fig, axs = plt.subplots(6, 2, figsize=(12, 24), sharex=True, constrained_layout=True)
+    fom.bode_plot(w, ax=axs)
+    _ = rom.bode_plot(w, ax=axs, linestyle='--')
+
+Also, we can plot the magnitude plot of the error system
+
+.. jupyter-execute::
+
+    err = fom - rom
+    _ = err.mag_plot(w)
+
+and its Bode plot
+
+.. jupyter-execute::
+
+    _ = err.bode_plot(w)
 
 We can compute the relative errors in :math:`\mathcal{H}_\infty` or
 :math:`\mathcal{H}_2` (or Hankel) norm
 
 .. jupyter-execute::
 
-    print(f'Relative Hinf error: {(fom - rom).hinf_norm() / fom.hinf_norm():.3e}')
-    print(f'Relative H2 error:   {(fom - rom).h2_norm() / fom.h2_norm():.3e}')
+    print(f'Relative Hinf error: {err.hinf_norm() / fom.hinf_norm():.3e}')
+    print(f'Relative H2 error:   {err.h2_norm() / fom.h2_norm():.3e}')
 
 .. note::
 
