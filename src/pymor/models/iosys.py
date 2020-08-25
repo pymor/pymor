@@ -81,6 +81,31 @@ class InputOutputModel(Model):
         assert self.parameters.assert_compatible(mu)
         return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
 
+    def bode(self, w, mu=None):
+        """Compute magnitudes and phases.
+
+        Parameters
+        ----------
+        w
+            A sequence of angular frequencies at which to compute the transfer function.
+        mu
+            |Parameter values| for which to evaluate the transfer function.
+
+        Returns
+        -------
+        mag
+            Transfer function magnitudes at frequencies in `w`, |NumPy array| of shape
+            `(len(w), self.output_dim, self.input_dim)`.
+        phase
+            Transfer function phases (in radians) at frequencies in `w`, |NumPy array| of shape
+            `(len(w), self.output_dim, self.input_dim)`.
+        """
+        w = np.asarray(w)
+        mag = np.abs(self.freq_resp(w, mu=mu))
+        phase = np.angle(self.freq_resp(w, mu=mu))
+        phase = np.unwrap(phase, axis=0)
+        return mag, phase
+
     def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
         """Draw the Bode plot for all input-output pairs.
 
@@ -117,9 +142,7 @@ class InputOutputModel(Model):
 
         w = np.asarray(w)
         freq = w / (2 * np.pi) if Hz else w
-        mag = np.abs(self.freq_resp(w, mu=mu))
-        phase = np.angle(self.freq_resp(w, mu=mu))
-        phase = np.unwrap(phase, axis=0)
+        mag, phase = self.bode(w, mu=mu)
         if deg:
             phase *= 180 / np.pi
 
