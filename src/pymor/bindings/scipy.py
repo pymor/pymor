@@ -435,7 +435,7 @@ def ricc_lrcf_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
-def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a general
@@ -460,8 +460,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         The operator C as a |VectorArray| from `A.source`.
     R
         The operator R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.
@@ -475,7 +473,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         |VectorArray| from `A.source`.
     """
 
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, trans)
     options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
         raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
@@ -485,15 +483,14 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     E = to_matrix(E, format='dense') if E else None
     B = B.to_numpy().T
     C = C.to_numpy()
-    S = S.to_numpy().T if S else None
     if R is None:
         R = np.eye(C.shape[0] if not trans else B.shape[1])
     if not trans:
         if E is not None:
             E = E.T
-        X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, E, S)
+        X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, E)
     else:
-        X = solve_continuous_are(A, B, C.T.dot(C), R, E, S)
+        X = solve_continuous_are(A, B, C.T.dot(C), R, E)
 
     return A_source.from_numpy(_chol(X).T)
 
@@ -509,7 +506,7 @@ def pos_ricc_lrcf_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
-def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a positive Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
@@ -534,8 +531,6 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         The operator C as a |VectorArray| from `A.source`.
     R
         The operator R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the positive Riccati equation is
         transposed.
@@ -550,11 +545,11 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         solution, |VectorArray| from `A.source`.
     """
 
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, trans)
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
         raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
 
     if R is None:
         R = np.eye(len(C) if not trans else len(B))
-    return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)
+    return solve_ricc_lrcf(A, E, B, C, -R, trans, options)
