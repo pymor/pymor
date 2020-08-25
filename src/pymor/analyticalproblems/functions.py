@@ -69,10 +69,12 @@ class Function(ParametricObject):
             else:
                 functions, coefficients = (self, other), (1., sign)
         elif isinstance(other, LincombFunction) and other.name == 'LincombFunction':
+            assert isinstance(self, LincombFunction)
             functions = self.functions + other.functions
             coefficients = self.coefficients + (other.coefficients if sign == 1.
                                                 else tuple(-c for c in other.coefficients))
         else:
+            assert isinstance(self, LincombFunction)
             functions, coefficients = self.functions + (other,), self.coefficients + (sign,)
 
         return LincombFunction(functions, coefficients)
@@ -91,6 +93,7 @@ class Function(ParametricObject):
         if self.name != 'LincombFunction':
             functions, coefficients = (other, self), (1., sign)
         else:
+            assert isinstance(self, LincombFunction)
             functions = (other,) + self.functions
             coefficients = (1.,) + (self.coefficients if sign == 1. else tuple(-c for c in self.coefficients))
 
@@ -119,9 +122,11 @@ class Function(ParametricObject):
             else:
                 return ProductFunction([self, other])
         elif isinstance(other, ProductFunction) and other.name == 'ProductFunction':
+            assert isinstance(self, ProductFunction)
             functions = self.functions + other.functions
             return ProductFunction(functions)
         else:
+            assert isinstance(self, ProductFunction)
             return self.with_(functions=self.functions + [other])
 
     __rmul__ = __mul__
