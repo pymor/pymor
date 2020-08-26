@@ -12,7 +12,7 @@ public:
   const int dim;
   void scal(double val);
   void axpy(double a, const Vector& x);
-  double dot(const Vector& other) const;
+  double inner(const Vector& other) const;
   double* data();
 private:
   std::vector<double> _data;

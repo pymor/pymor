@@ -208,7 +208,7 @@ def test_apply2(operator_with_arrays):
         for V_ind in valid_inds(V):
             M = op.apply2(V[V_ind], U[U_ind], mu=mu)
             assert M.shape == (V.len_ind(V_ind), U.len_ind(U_ind))
-            M2 = V[V_ind].dot(op.apply(U[U_ind], mu=mu))
+            M2 = V[V_ind].inner(op.apply(U[U_ind], mu=mu))
             assert np.allclose(M, M2)
 
 
@@ -217,7 +217,7 @@ def test_pairwise_apply2(operator_with_arrays):
     for U_ind, V_ind in valid_inds_of_same_length(U, V):
         M = op.pairwise_apply2(V[V_ind], U[U_ind], mu=mu)
         assert M.shape == (V.len_ind(V_ind),)
-        M2 = V[V_ind].pairwise_dot(op.apply(U[U_ind], mu=mu))
+        M2 = V[V_ind].pairwise_inner(op.apply(U[U_ind], mu=mu))
         assert np.allclose(M, M2)
 
 
@@ -245,7 +245,7 @@ def test_apply_adjoint_2(operator_with_arrays):
         ATV = op.apply_adjoint(V, mu=mu)
     except NotImplementedError:
         return
-    assert np.allclose(V.dot(op.apply(U, mu=mu)), ATV.dot(U))
+    assert np.allclose(V.inner(op.apply(U, mu=mu)), ATV.inner(U))
 
 
 def test_H(operator_with_arrays):
@@ -256,7 +256,7 @@ def test_H(operator_with_arrays):
         op.H.apply(V, mu=mu)
     except NotImplementedError:
         return
-    assert np.allclose(V.dot(op.apply(U, mu=mu)), op.H.apply(V, mu=mu).dot(U))
+    assert np.allclose(V.inner(op.apply(U, mu=mu)), op.H.apply(V, mu=mu).inner(U))
 
 
 def test_apply_inverse(operator_with_arrays):
@@ -296,7 +296,7 @@ def test_project(operator_with_arrays):
     np.random.seed(4711 + U.dim + len(V))
     coeffs = np.random.random(len(U))
     X = op_UV.apply(op_UV.source.make_array(coeffs), mu=mu)
-    Y = op_UV.range.make_array(V.dot(op.apply(U.lincomb(coeffs), mu=mu)).T)
+    Y = op_UV.range.make_array(V.inner(op.apply(U.lincomb(coeffs), mu=mu)).T)
     assert np.all(almost_equal(X, Y))
 
 

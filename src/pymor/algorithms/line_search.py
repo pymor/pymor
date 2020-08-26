@@ -57,7 +57,7 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None,
 
     # Compute slope if gradient is provided
     if grad:
-        slope = min(grad.dot(direction), 0.0)
+        slope = min(grad.inner(direction), 0.0)
 
     while True:
         # Compute new function value

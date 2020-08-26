@@ -55,7 +55,7 @@ if config.HAVE_NGSOLVE:
         def _axpy(self, alpha, x):
             self.impl.vec.data = self.impl.vec + float(alpha) * x.impl.vec
 
-        def dot(self, other):
+        def inner(self, other):
             return self.impl.vec.InnerProduct(other.impl.vec)
 
         def l2_norm(self):

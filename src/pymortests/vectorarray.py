@@ -545,13 +545,13 @@ def test_axpy_self(vectors_and_indices, random):
 
 
 @pyst.given_vector_arrays(count=2)
-def test_pairwise_dot(vector_arrays):
+def test_pairwise_inner(vector_arrays):
     v1, v2 = vector_arrays
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
-        r = v1[ind1].pairwise_dot(v2[ind2])
+        r = v1[ind1].pairwise_inner(v2[ind2])
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1),)
-        r2 = v2[ind2].pairwise_dot(v1[ind1])
+        r2 = v2[ind2].pairwise_inner(v1[ind1])
         assert np.allclose, (r, r2)
         assert np.all(r <= v1[ind1].l2_norm() * v2[ind2].l2_norm() * (1. + 1e-10))
         try:
@@ -561,12 +561,12 @@ def test_pairwise_dot(vector_arrays):
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length)
-def test_pairwise_dot_self(vectors_and_indices):
+def test_pairwise_inner_self(vectors_and_indices):
     v, (ind1, ind2) = vectors_and_indices
-    r = v[ind1].pairwise_dot(v[ind2])
+    r = v[ind1].pairwise_inner(v[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind1),)
-    r2 = v[ind2].pairwise_dot(v[ind1])
+    r2 = v[ind2].pairwise_inner(v[ind1])
     assert np.allclose(r, r2.T.conj())
     assert np.all(r <= v[ind1].l2_norm() * v[ind2].l2_norm() * (1. + 1e-10))
     try:
@@ -574,13 +574,13 @@ def test_pairwise_dot_self(vectors_and_indices):
     except NotImplementedError:
         pass
     ind = ind1
-    r = v[ind].pairwise_dot(v[ind])
+    r = v[ind].pairwise_inner(v[ind])
     assert np.allclose(r, v[ind].l2_norm() ** 2)
 
 
 @settings(deadline=None, print_blob=True)
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_both_lengths)
-def test_dot(vectors_and_indices):
+def test_inner(vectors_and_indices):
     vectors, indices = vectors_and_indices
     v1, v2 = vectors
     ind1, ind2 = indices
@@ -588,10 +588,10 @@ def test_dot(vectors_and_indices):
     # TODO
     assume_old_slicing(indices)
 
-    r = v1[ind1].dot(v2[ind2])
+    r = v1[ind1].inner(v2[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
-    r2 = v2[ind2].dot(v1[ind1])
+    r2 = v2[ind2].inner(v1[ind1])
     assert np.allclose(r, r2.T.conj())
     assert np.all(r <= v1[ind1].l2_norm()[:, np.newaxis] * v2[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
     try:
@@ -612,19 +612,19 @@ def assume_old_slicing(indices):
 
 @settings(deadline=None)
 @pyst.given_vector_arrays(index_strategy=pyst.pairs_both_lengths)
-def test_dot_self(vectors_and_indices):
+def test_inner_self(vectors_and_indices):
     v, (ind1, ind2) = vectors_and_indices
-    r = v[ind1].dot(v[ind2])
+    r = v[ind1].inner(v[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
-    r2 = v[ind2].dot(v[ind1])
+    r2 = v[ind2].inner(v[ind1])
     assert np.allclose(r, r2.T.conj())
     assert np.all(r <= v[ind1].l2_norm()[:, np.newaxis] * v[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
     try:
             assert np.allclose(r, indexed(v.to_numpy(), ind1).conj().dot(indexed(v.to_numpy(), ind2).T))
     except NotImplementedError:
         pass
-    r = v[ind1].dot(v[ind1])
+    r = v[ind1].inner(v[ind1])
     assert np.allclose(r, r.T.conj())
 
 
@@ -835,7 +835,7 @@ def test_amax(vectors_and_indices):
 @settings(deadline=None)
 def test_gramian(vectors_and_indices):
     v, ind = vectors_and_indices
-    assert np.allclose(v[ind].gramian(), v[ind].dot(v[ind]))
+    assert np.allclose(v[ind].gramian(), v[ind].inner(v[ind]))
 
 
 @pyst.given_vector_arrays(count=2, length=pyst.equal_tuples(pyst.hy_lengths, count=2))
@@ -965,21 +965,21 @@ def test_axpy_incompatible(vector_arrays):
 
 
 @pyst.given_vector_arrays(count=2, compatible=False)
-def test_dot_incompatible(vector_arrays):
+def test_inner_incompatible(vector_arrays):
     v1, v2 = vector_arrays
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
-            c1[ind1].dot(c2[ind2])
+            c1[ind1].inner(c2[ind2])
 
 
 @pyst.given_vector_arrays(count=2, compatible=False)
-def test_pairwise_dot_incompatible(vector_arrays):
+def test_pairwise_inner_incompatible(vector_arrays):
     v1, v2 = vector_arrays
     for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
-            c1[ind1].pairwise_dot(c2[ind2])
+            c1[ind1].pairwise_inner(c2[ind2])
 
 
 @pyst.given_vector_arrays(count=2, compatible=False)

@@ -31,9 +31,8 @@ class Vector(BasicObject):
     def axpy(self, alpha, x):
         pass
 
-    @abstractmethod
-    def dot(self, other):
-        pass
+    def inner(self, other):
+        raise NotImplementedError
 
     @abstractmethod
     def l1_norm(self):
@@ -207,14 +206,14 @@ class ComplexifiedVector(Vector):
             else:
                 self.imag_part.axpy(alpha.real, x.imag_part)
 
-    def dot(self, other):
-        result = self.real_part.dot(other.real_part)
+    def inner(self, other):
+        result = self.real_part.inner(other.real_part)
         if self.imag_part is not None:
-            result += self.imag_part.dot(other.real_part) * (-1j)
+            result += self.imag_part.inner(other.real_part) * (-1j)
         if other.imag_part is not None:
-            result += self.real_part.dot(other.imag_part) * 1j
+            result += self.real_part.inner(other.imag_part) * 1j
         if self.imag_part is not None and other.imag_part is not None:
-            result += self.imag_part.dot(other.imag_part)
+            result += self.imag_part.inner(other.imag_part)
         return result
 
     def l1_norm(self):
@@ -321,7 +320,7 @@ class NumpyVector(CopyOnWriteVector):
             except TypeError:
                 self._array = self._array + x._array * alpha
 
-    def dot(self, other):
+    def inner(self, other):
         assert self.dim == other.dim
         return np.sum(self._array.conj() * other._array)
 
@@ -460,14 +459,20 @@ class ListVectorArray(VectorArray):
                 for xx, y in zip(x._list, self._list):
                     y.axpy(alpha, xx)
 
-    def dot(self, other):
+    def inner(self, other, product=None):
         assert self.space == other.space
-        return np.array([[a.dot(b) for b in other._list] for a in self._list]).reshape((len(self), len(other)))
+        if product is not None:
+            return product.apply2(self, other)
 
-    def pairwise_dot(self, other):
+        return np.array([[a.inner(b) for b in other._list] for a in self._list]).reshape((len(self), len(other)))
+
+    def pairwise_inner(self, other, product=None):
         assert self.space == other.space
         assert len(self._list) == len(other)
-        return np.array([a.dot(b) for a, b in zip(self._list, other._list)])
+        if product is not None:
+            return product.pairwise_apply2(self, other)
+
+        return np.array([a.inner(b) for a, b in zip(self._list, other._list)])
 
     def gramian(self, product=None):
         if product is not None:
@@ -476,7 +481,7 @@ class ListVectorArray(VectorArray):
         R = [[0.] * l for _ in range(l)]
         for i in range(l):
             for j in range(i, l):
-                R[i][j] = self._list[i].dot(self._list[j])
+                R[i][j] = self._list[i].inner(self._list[j])
                 if i == j:
                     R[i][j] = R[i][j].real
                 else:

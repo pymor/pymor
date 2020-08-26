@@ -104,15 +104,15 @@ def test_axpy():
     assert y.to_numpy()[0, 0] == -1j
 
 
-def test_dot():
+def test_inner():
     x = NumpyVectorSpace.from_numpy(np.array([1 + 1j]))
     y = NumpyVectorSpace.from_numpy(np.array([1 - 1j]))
-    z = x.dot(y)
+    z = x.inner(y)
     assert z[0, 0] == -2j
 
 
-def test_pairwise_dot():
+def test_pairwise_inner():
     x = NumpyVectorSpace.from_numpy(np.array([1 + 1j]))
     y = NumpyVectorSpace.from_numpy(np.array([1 - 1j]))
-    z = x.pairwise_dot(y)
+    z = x.pairwise_inner(y)
     assert z == -2j

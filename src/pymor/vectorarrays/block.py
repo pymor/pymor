@@ -97,25 +97,31 @@ class BlockVectorArray(VectorArray):
         else:
             assert len(self) == 0
 
-    def dot(self, other):
+    def inner(self, other, product=None):
         assert other in self.space
-        dots = [block.dot(other_block) for block, other_block in zip(self._blocks, other._blocks)]
-        assert all([dot.shape == dots[0].shape for dot in dots])
-        common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
-        ret = np.zeros(dots[0].shape, dtype=common_dtype)
-        for dot in dots:
-            ret += dot
+        if product is not None:
+            return product.apply2(self, other)
+
+        prods = [block.inner(other_block) for block, other_block in zip(self._blocks, other._blocks)]
+        assert all([prod.shape == prods[0].shape for prod in prods])
+        common_dtype = reduce(np.promote_types, (prod.dtype for prod in prods))
+        ret = np.zeros(prods[0].shape, dtype=common_dtype)
+        for prod in prods:
+            ret += prod
         return ret
 
-    def pairwise_dot(self, other):
+    def pairwise_inner(self, other, product=None):
         assert other in self.space
-        dots = [block.pairwise_dot(other_block)
-                for block, other_block in zip(self._blocks, other._blocks)]
-        assert all([dot.shape == dots[0].shape for dot in dots])
-        common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
-        ret = np.zeros(dots[0].shape, dtype=common_dtype)
-        for dot in dots:
-            ret += dot
+        if product is not None:
+            return product.pairwise_apply2(self, other)
+
+        prods = [block.pairwise_inner(other_block)
+                 for block, other_block in zip(self._blocks, other._blocks)]
+        assert all([prod.shape == prods[0].shape for prod in prods])
+        common_dtype = reduce(np.promote_types, (prod.dtype for prod in prods))
+        ret = np.zeros(prods[0].shape, dtype=common_dtype)
+        for prod in prods:
+            ret += prod
         return ret
 
     def lincomb(self, coefficients):

@@ -45,7 +45,7 @@ if config.HAVE_FENICS:
             else:
                 self.impl.axpy(alpha, x.impl)
 
-        def dot(self, other):
+        def inner(self, other):
             return self.impl.inner(other.impl)
 
         def l1_norm(self):

@@ -9,6 +9,7 @@ import numpy as np
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.tools.random import get_random_state
+from pymor.tools.deprecated import Deprecated
 
 
 class VectorArray(BasicObject):
@@ -292,9 +293,31 @@ class VectorArray(BasicObject):
         """
         pass
 
-    @abstractmethod
-    def dot(self, other):
+    def inner(self, other, product=None):
         """Returns the inner products between |VectorArray| elements.
+
+        If `product` is `None`, the Euclidean inner product between
+        the :meth:`dofs` of `self` and `other` are returned, i.e. ::
+
+            U.inner(V)
+
+        is equivalent to::
+
+            U.dofs(np.arange(U.dim)) @ V.dofs(np.arange(V.dim)).T
+
+        (Note, that :meth:`dofs` is only intended to be called for a
+        small number of DOF indices.)
+
+        If a `product` |Operator| is specified, this |Operator| is
+        used to compute the inner products using
+        :meth:`~pymor.operators.inerface.Operator.apply2`, i.e.
+        `U.inner(V, product)` is equivalent to::
+
+            product.apply2(U, V)
+
+        which in turn is, by default, implemented as::
+
+            U.inner(product.apply(V))
 
         In the case of complex numbers, this is antilinear in the
         first argument, i.e. in 'self'.
@@ -308,35 +331,67 @@ class VectorArray(BasicObject):
         ----------
         other
             A |VectorArray| containing the second factors.
+        product
+            If not `None` an |Operator| representing the inner product
+            bilinear form.
 
         Returns
         -------
         A |NumPy array| `result` such that:
 
             result[i, j] = ( self[i], other[j] ).
-
         """
-        pass
-
-    def inner(self, other, product=None):
-        """Inner products w.r.t. given product |Operator|.
-
-        Equivalent to `self.dot(other)` if `product` is None,
-        else equivalent to `product.apply2(self, other)`.
-        """
-        if product is None:
-            return self.dot(other)
-        else:
+        if product is not None:
             return product.apply2(self, other)
+        else:
+            raise NotImplementedError
 
-    @abstractmethod
-    def pairwise_dot(self, other):
+    @Deprecated(inner)
+    def dot(self, other):
+        return self.inner(other)
+
+    def pairwise_inner(self, other, product=None):
         """Returns the pairwise inner products between |VectorArray| elements.
+
+        If `product` is `None`, the Euclidean inner product between
+        the :meth:`dofs` of `self` and `other` are returned, i.e. ::
+
+            U.pairwise_inner(V)
+
+        is equivalent to::
+
+            np.sum(U.dofs(np.arange(U.dim)) * V.dofs(np.arange(V.dim)), axis=-1)
+
+        (Note, that :meth:`dofs` is only intended to be called for a
+        small number of DOF indices.)
+
+        If a `product` |Operator| is specified, this |Operator| is
+        used to compute the inner products using
+        :meth:`~pymor.operators.inerface.Operator.pairwise_apply2`, i.e.
+        `U.inner(V, product)` is equivalent to::
+
+            product.pairwise_apply2(U, V)
+
+        which in turn is, by default, implemented as::
+
+            U.pairwise_inner(product.apply(V))
+
+        In the case of complex numbers, this is antilinear in the
+        first argument, i.e. in 'self'.
+        Complex conjugation is done in the first argument because
+        most numerical software in the community handles it this way:
+        Numpy, DUNE, FEniCS, Eigen, Matlab and BLAS do complex conjugation
+        in the first argument, only PetSc and deal.ii do complex
+        conjugation in the second argument.
+
 
         Parameters
         ----------
         other
             A |VectorArray| containing the second factors.
+        product
+            If not `None` an |Operator| representing the inner product
+            bilinear form.
 
         Returns
         -------
@@ -345,18 +400,14 @@ class VectorArray(BasicObject):
             result[i] = ( self[i], other[i] ).
 
         """
-        pass
-
-    def pairwise_inner(self, other, product=None):
-        """Pairwise inner products w.r.t. given product |Operator|.
-
-        Equivalent to `self.pairwise_dot(other)` if `product` is None,
-        else equivalent to `product.pairwise_apply2(self, other)`.
-        """
-        if product is None:
-            return self.pairwise_dot(other)
-        else:
+        if product is not None:
             return product.pairwise_apply2(self, other)
+        else:
+            raise NotImplementedError
+
+    @Deprecated(pairwise_inner)
+    def pairwise_dot(self, other):
+        return self.pariwise_inner(other)
 
     @abstractmethod
     def lincomb(self, coefficients):

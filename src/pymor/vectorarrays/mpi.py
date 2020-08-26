@@ -30,7 +30,7 @@ class MPIVectorArray(VectorArray):
     other (non-distributed) |VectorArray|.
 
     Note, however, that the implementation of the local VectorArrays
-    needs to be MPI aware. For instance, `cls.dot` must perform the
+    needs to be MPI aware. For instance, `cls.inner` must perform the
     needed MPI communication to sum up the local inner products and
     return the sums on rank 0.
 
@@ -73,11 +73,15 @@ class MPIVectorArray(VectorArray):
     def axpy(self, alpha, x):
         mpi.call(_MPIVectorArray_axpy, self.obj_id, alpha, x.obj_id)
 
-    def dot(self, other):
-        return mpi.call(mpi.method_call, self.obj_id, 'dot', other.obj_id)
+    def inner(self, other, product=None):
+        if product is not None:
+            return product.apply2(self, other)
+        return mpi.call(mpi.method_call, self.obj_id, 'inner', other.obj_id)
 
-    def pairwise_dot(self, other):
-        return mpi.call(mpi.method_call, self.obj_id, 'pairwise_dot', other.obj_id)
+    def pairwise_inner(self, other, product=None):
+        if product is not None:
+            return product.pairwise_apply2(self, other)
+        return mpi.call(mpi.method_call, self.obj_id, 'pairwise_inner', other.obj_id)
 
     def lincomb(self, coefficients):
         return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'lincomb', coefficients),
@@ -227,10 +231,14 @@ class MPIVectorArrayNoComm(MPIVectorArray):
     The associated |VectorSpace| is :class:`MPIVectorSpaceNoComm`.
     """
 
-    def dot(self, other):
+    def inner(self, other, product=None):
+        if product is not None:
+            return product.apply2(self, other)
         raise NotImplementedError
 
-    def pairwise_dot(self, other):
+    def pairwise_inner(self, other, product=None):
+        if product is not None:
+            return product.pairwise_apply2(self, other)
         raise NotImplementedError
 
     def l1_norm(self):
@@ -274,11 +282,15 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
     The associated |VectorSpace| is :class:`MPIVectorSpaceAutoComm`.
     """
 
-    def dot(self, other):
-        return mpi.call(_MPIVectorArrayAutoComm_dot, self.obj_id, other.obj_id)
+    def inner(self, other, product=None):
+        if product is not None:
+            return product.apply2(self, other)
+        return mpi.call(_MPIVectorArrayAutoComm_inner, self.obj_id, other.obj_id)
 
-    def pairwise_dot(self, other):
-        return mpi.call(_MPIVectorArrayAutoComm_pairwise_dot, self.obj_id, other.obj_id)
+    def pairwise_inner(self, other, product=None):
+        if product is not None:
+            return product.pairwise_apply2(self, other)
+        return mpi.call(_MPIVectorArrayAutoComm_pairwise_inner, self.obj_id, other.obj_id)
 
     def l1_norm(self):
         return mpi.call(_MPIVectorArrayAutoComm_l1_norm, self.obj_id)
@@ -335,10 +347,10 @@ def _MPIVectorSpaceAutoComm_dim(local_spaces):
         return dims
 
 
-def _MPIVectorArrayAutoComm_dot(self, other):
+def _MPIVectorArrayAutoComm_inner(self, other):
     self = mpi.get_object(self)
     other = mpi.get_object(other)
-    local_results = self.dot(other)
+    local_results = self.inner(other)
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
@@ -346,10 +358,10 @@ def _MPIVectorArrayAutoComm_dot(self, other):
         return np.sum(results, axis=0)
 
 
-def _MPIVectorArrayAutoComm_pairwise_dot(self, other):
+def _MPIVectorArrayAutoComm_pairwise_inner(self, other):
     self = mpi.get_object(self)
     other = mpi.get_object(other)
-    local_results = self.pairwise_dot(other)
+    local_results = self.pairwise_inner(other)
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)

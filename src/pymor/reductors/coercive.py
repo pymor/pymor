@@ -180,9 +180,9 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
                     append_vector(-op.apply(RB[i]), R_O, RR_O)
 
         # compute Gram matrix of the residuals
-        R_RR = RR_R.dot(R_R)
-        R_RO = np.hstack([RR_R.dot(R_O) for R_O in R_Os])
-        R_OO = np.vstack([np.hstack([RR_O.dot(R_O) for R_O in R_Os]) for RR_O in RR_Os])
+        R_RR = RR_R.inner(R_R)
+        R_RO = np.hstack([RR_R.inner(R_O) for R_O in R_Os])
+        R_OO = np.vstack([np.hstack([RR_O.inner(R_O) for R_O in R_Os]) for RR_O in RR_Os])
 
         estimator_matrix = np.empty((len(R_RR) + len(R_OO),) * 2)
         estimator_matrix[:len(R_RR), :len(R_RR)] = R_RR

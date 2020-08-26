@@ -472,7 +472,7 @@ class ProjectedOperator(Operator):
             V = self.range_basis.lincomb(V.to_numpy())
         U = self.operator.apply_adjoint(V, mu)
         if self.source_basis is not None:
-            U = self.source.make_array(U.dot(self.source_basis))
+            U = self.source.make_array(U.inner(self.source_basis))
         return U
 
 
@@ -528,7 +528,7 @@ class LowRankOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V = self.right.dot(U)
+        V = self.right.inner(U)
         if self.inverted:
             V = spla.solve(self.core, V)
         else:
@@ -537,7 +537,7 @@ class LowRankOperator(Operator):
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U = self.left.dot(V)
+        U = self.left.inner(V)
         if self.inverted:
             U = spla.solve(self.core.T.conj(), U)
         else:
@@ -600,8 +600,8 @@ class LowRankUpdatedOperator(LincombOperator):
         alpha, beta = self.evaluate_coefficients(mu)
         AinvV = A.apply_inverse(V)
         AinvL = A.apply_inverse(L)
-        mat = alpha * C + beta * R.dot(AinvL)
-        RhAinvV = R.dot(AinvV)
+        mat = alpha * C + beta * R.inner(AinvL)
+        RhAinvV = R.inner(AinvV)
         U = AinvV
         U.axpy(-beta, AinvL.lincomb(spla.solve(mat, RhAinvV).T))
         U.scal(1 / alpha)
@@ -618,8 +618,8 @@ class LowRankUpdatedOperator(LincombOperator):
         alpha, beta = (c.conjugate() for c in self.evaluate_coefficients(mu))
         AinvhU = A.apply_inverse_adjoint(U)
         AinvhR = A.apply_inverse_adjoint(R)
-        mat = alpha * C.T.conj() + beta * L.dot(AinvhR)
-        LhAinvhU = L.dot(AinvhU)
+        mat = alpha * C.T.conj() + beta * L.inner(AinvhR)
+        LhAinvhU = L.inner(AinvhU)
         V = AinvhU
         V.axpy(-beta, AinvhR.lincomb(spla.solve(mat, LhAinvhU).T))
         V.scal(1 / alpha)
@@ -852,7 +852,7 @@ class VectorArrayOperator(Operator):
         if not self.adjoint:
             return self.array.lincomb(U.to_numpy())
         else:
-            return self.range.make_array(self.array.dot(U).T)
+            return self.range.make_array(self.array.inner(U).T)
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if not least_squares and len(self.array) != self.array.dim:
@@ -866,7 +866,7 @@ class VectorArrayOperator(Operator):
             v = lstsq(R.T.conj(), V.to_numpy().T)[0]
             U = Q.lincomb(v.T)
         else:
-            v = Q.dot(V)
+            v = Q.inner(V)
             u = lstsq(R, v)[0]
             U = self.source.make_array(u.T)
 
@@ -875,7 +875,7 @@ class VectorArrayOperator(Operator):
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if not self.adjoint:
-            return self.source.make_array(self.array.dot(V).T)
+            return self.source.make_array(self.array.inner(V).T)
         else:
             return self.array.lincomb(V.to_numpy())
 
