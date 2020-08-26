@@ -13,6 +13,7 @@
 
 * Tim Keil, tim.keil@uni-muenster.de
     * Energy product in elliptic discretizer
+    * rename estimate --> estimate_error and estimator -> error_estimator
 
 ## pyMOR 2020.1
 
