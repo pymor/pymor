@@ -296,6 +296,18 @@ class VectorArray(BasicObject):
     def inner(self, other, product=None):
         """Returns the inner products between |VectorArray| elements.
 
+        If `product` is `None`, the Euclidean inner product between
+        the :meth:`dofs` of `self` and `other` are returned, i.e. ::
+
+            U.inner(V)
+
+        is equivalent to::
+
+            U.dofs(np.arange(U.dim)) @ V.dofs(np.arange(V.dim)).T
+
+        (Note, that :meth:`dofs` is only intended to be called for a
+        small number of DOF indices.)
+
         If a `product` |Operator| is specified, this |Operator| is
         used to compute the inner products using
         :meth:`~pymor.operators.inerface.Operator.apply2`, i.e.
@@ -303,7 +315,7 @@ class VectorArray(BasicObject):
 
             product.apply2(U, V)
 
-        which in turn is usually implemented as::
+        which in turn is, by default, implemented as::
 
             U.inner(product.apply(V))
 
@@ -341,6 +353,18 @@ class VectorArray(BasicObject):
     def pairwise_inner(self, other, product=None):
         """Returns the pairwise inner products between |VectorArray| elements.
 
+        If `product` is `None`, the Euclidean inner product between
+        the :meth:`dofs` of `self` and `other` are returned, i.e. ::
+
+            U.pairwise_inner(V)
+
+        is equivalent to::
+
+            np.sum(U.dofs(np.arange(U.dim)) * V.dofs(np.arange(V.dim)), axis=-1)
+
+        (Note, that :meth:`dofs` is only intended to be called for a
+        small number of DOF indices.)
+
         If a `product` |Operator| is specified, this |Operator| is
         used to compute the inner products using
         :meth:`~pymor.operators.inerface.Operator.pairwise_apply2`, i.e.
@@ -348,9 +372,9 @@ class VectorArray(BasicObject):
 
             product.pairwise_apply2(U, V)
 
-        which in turn is usually implemented as::
+        which in turn is, by default, implemented as::
 
-            U.pariwise_inner(product.apply(V))
+            U.pairwise_inner(product.apply(V))
 
         In the case of complex numbers, this is antilinear in the
         first argument, i.e. in 'self'.
