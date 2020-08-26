@@ -87,9 +87,6 @@ class MPIVectorArray(VectorArray):
         return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'lincomb', coefficients),
                           self.space)
 
-    def l1_norm(self):
-        return mpi.call(mpi.method_call, self.obj_id, 'l1_norm')
-
     def l2_norm(self):
         return mpi.call(mpi.method_call, self.obj_id, 'l2_norm')
 
@@ -241,9 +238,6 @@ class MPIVectorArrayNoComm(MPIVectorArray):
             return product.pairwise_apply2(self, other)
         raise NotImplementedError
 
-    def l1_norm(self):
-        raise NotImplementedError
-
     def l2_norm(self):
         raise NotImplementedError
 
@@ -291,9 +285,6 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
         if product is not None:
             return product.pairwise_apply2(self, other)
         return mpi.call(_MPIVectorArrayAutoComm_pairwise_inner, self.obj_id, other.obj_id)
-
-    def l1_norm(self):
-        return mpi.call(_MPIVectorArrayAutoComm_l1_norm, self.obj_id)
 
     def l2_norm(self):
         return mpi.call(_MPIVectorArrayAutoComm_l2_norm, self.obj_id)
@@ -362,16 +353,6 @@ def _MPIVectorArrayAutoComm_pairwise_inner(self, other):
     self = mpi.get_object(self)
     other = mpi.get_object(other)
     local_results = self.pairwise_inner(other)
-    assert local_results.dtype == np.float64
-    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
-    mpi.comm.Gather(local_results, results, root=0)
-    if mpi.rank0:
-        return np.sum(results, axis=0)
-
-
-def _MPIVectorArrayAutoComm_l1_norm(self):
-    self = mpi.get_object(self)
-    local_results = self.l1_norm()
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)

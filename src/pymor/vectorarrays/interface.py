@@ -470,17 +470,6 @@ class VectorArray(BasicObject):
             return norm_squared.real
 
     @abstractmethod
-    def l1_norm(self):
-        """The l1-norms of the vectors contained in the array.
-
-        Returns
-        -------
-        A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[i]`.
-        """
-        pass
-
-    @abstractmethod
     def l2_norm(self):
         """The l2-norms of the vectors contained in the array.
 

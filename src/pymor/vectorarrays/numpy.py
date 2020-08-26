@@ -209,11 +209,6 @@ class NumpyVectorArray(VectorArray):
 
         return NumpyVectorArray(coefficients.dot(self._array[_ind]), self.space)
 
-    def l1_norm(self, *, _ind=None):
-        if _ind is None:
-            _ind = slice(0, self._len)
-        return np.linalg.norm(self._array[_ind], ord=1, axis=1)
-
     def l2_norm(self, *, _ind=None):
         if _ind is None:
             _ind = slice(0, self._len)
@@ -497,9 +492,6 @@ class NumpyVectorArrayView(NumpyVectorArray):
 
     def lincomb(self, coefficients):
         return self.base.lincomb(coefficients, _ind=self.ind)
-
-    def l1_norm(self):
-        return self.base.l1_norm(_ind=self.ind)
 
     def l2_norm(self):
         return self.base.l2_norm(_ind=self.ind)

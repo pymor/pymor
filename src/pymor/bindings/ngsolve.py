@@ -16,9 +16,6 @@ if config.HAVE_NGSOLVE:
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 
     class NGSolveVectorCommon:
-        def l1_norm(self):
-            return np.linalg.norm(self.to_numpy(), ord=1)
-
         def amax(self):
             A = np.abs(self.to_numpy())
             max_ind = np.argmax(A)

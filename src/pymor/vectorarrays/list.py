@@ -35,10 +35,6 @@ class Vector(BasicObject):
         raise NotImplementedError
 
     @abstractmethod
-    def l1_norm(self):
-        pass
-
-    @abstractmethod
     def l2_norm(self):
         pass
 
@@ -216,11 +212,6 @@ class ComplexifiedVector(Vector):
             result += self.imag_part.inner(other.imag_part)
         return result
 
-    def l1_norm(self):
-        if self.imag_part is not None:
-            raise NotImplementedError
-        return self.real_part.l1_norm()
-
     def l2_norm(self):
         result = self.real_part.l2_norm()
         if self.imag_part is not None:
@@ -323,9 +314,6 @@ class NumpyVector(CopyOnWriteVector):
     def inner(self, other):
         assert self.dim == other.dim
         return np.sum(self._array.conj() * other._array)
-
-    def l1_norm(self):
-        return np.sum(np.abs(self._array))
 
     def l2_norm(self):
         return np.linalg.norm(self._array)
@@ -504,9 +492,6 @@ class ListVectorArray(VectorArray):
             RL.append(R)
 
         return ListVectorArray(RL, self.space)
-
-    def l1_norm(self):
-        return np.array([v.l1_norm() for v in self._list])
 
     def l2_norm(self):
         return np.array([v.l2_norm() for v in self._list])

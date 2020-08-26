@@ -38,13 +38,7 @@ def test_almost_equal(vector_arrays, tolerances, norms):
     except NotImplementedError:
         dv1 = dv2 = None
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
-        try:
-            r = almost_equal(v1[ind1], v2[ind2], norm=n, rtol=rtol, atol=atol)
-        except NotImplementedError as e:
-            if n == 'l1':
-                pytest.xfail('l1_norm not implemented')
-            else:
-                raise e
+        r = almost_equal(v1[ind1], v2[ind2], norm=n, rtol=rtol, atol=atol)
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1),)
         if dv1 is not None:
@@ -85,13 +79,7 @@ def test_almost_equal_self(vectors_and_indices, tolerances, norm):
     v, (ind,_) = vectors_and_indices
     rtol, atol = tolerances
     n = norm
-    try:
-        r = almost_equal(v[ind], v[ind], norm=n)
-    except NotImplementedError as e:
-        if n == 'l1':
-            pytest.xfail('l1_norm not implemented')
-        else:
-            raise e
+    r = almost_equal(v[ind], v[ind], norm=n)
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind),)
     assert np.all(r)
