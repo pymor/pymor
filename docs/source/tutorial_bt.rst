@@ -54,7 +54,7 @@ In particular, we will use the
 :meth:`~pymor.models.iosys.LTIModel.from_matrices` method of |LTIModel|, which
 instantiates an |LTIModel| from NumPy or SciPy matrices.
 
-First, we do the necessary imports.
+First, we do the necessary imports and some matplotlib style choices.
 
 .. jupyter-execute::
 
@@ -63,6 +63,8 @@ First, we do the necessary imports.
     import scipy.sparse as sps
     from pymor.models.iosys import LTIModel
     from pymor.reductors.bt import BTReductor
+
+    plt.rcParams['axes.grid'] = True
 
 Next, we can assemble the matrices based on a centered finite difference
 approximation:
@@ -112,14 +114,23 @@ We can also see some basic information from `fom`'s string representation
     print(fom)
 
 To visualize the behavior of the `fom`, we can draw its magnitude plot, i.e.,
-a visualization of the mapping :math:`\omega \mapsto H(i \omega)`, where
+a visualization of the mapping :math:`\omega \mapsto H(\imath \omega)`, where
 :math:`H(s) = C (s E - A)^{-1} B + D` is the transfer function of the system.
 
 .. jupyter-execute::
 
     w = np.logspace(-2, 8, 50)
-    fom.mag_plot(w)
-    plt.grid()
+    _ = fom.mag_plot(w)
+
+We can also see the Bode plot, which shows the magnitude and phase of the
+components of the transfer function.
+In particular, :math:`\lvert H_{ij}(\imath \omega) \rvert` is in subplot
+:math:`(2 i - 1, j)` and :math:`\arg(H_{ij}(\imath \omega))` is in subplot
+:math:`(2 i, j)`.
+
+.. jupyter-execute::
+
+    _ = fom.bode_plot(w)
 
 Plotting the Hankel singular values shows us how well an LTI system can be
 approximated by a reduced-order model
@@ -129,8 +140,7 @@ approximated by a reduced-order model
     hsv = fom.hsv()
     fig, ax = plt.subplots()
     ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
-    ax.set_title('Hankel singular values')
-    ax.grid()
+    _ = ax.set_title('Hankel singular values')
 
 As expected for a heat equation, the Hankel singular values decay rapidly.
 
@@ -218,8 +228,7 @@ based on the Hankel singular values:
     ax.semilogy(range(1, len(error_bounds) + 1), error_bounds, '.-')
     ax.semilogy(range(1, len(hsv)), hsv[1:], '.-')
     ax.set_xlabel('Reduced order')
-    ax.set_title(r'Upper and lower $\mathcal{H}_\infty$ error bounds')
-    ax.grid()
+    _ = ax.set_title(r'Upper and lower $\mathcal{H}_\infty$ error bounds')
 
 To get a reduced-order model of order 10, we call the `reduce` method with the
 appropriate argument:
@@ -241,23 +250,36 @@ models
     fig, ax = plt.subplots()
     fom.mag_plot(w, ax=ax, label='FOM')
     rom.mag_plot(w, ax=ax, linestyle='--', label='ROM')
-    ax.legend()
-    ax.grid()
+    _ = ax.legend()
 
-and plot the magnitude plot of the error system
+as well as Bode plots
 
 .. jupyter-execute::
 
-    (fom - rom).mag_plot(w)
-    plt.grid()
+    fig, axs = plt.subplots(6, 2, figsize=(12, 24), sharex=True, constrained_layout=True)
+    fom.bode_plot(w, ax=axs)
+    _ = rom.bode_plot(w, ax=axs, linestyle='--')
+
+Also, we can plot the magnitude plot of the error system
+
+.. jupyter-execute::
+
+    err = fom - rom
+    _ = err.mag_plot(w)
+
+and its Bode plot
+
+.. jupyter-execute::
+
+    _ = err.bode_plot(w)
 
 We can compute the relative errors in :math:`\mathcal{H}_\infty` or
 :math:`\mathcal{H}_2` (or Hankel) norm
 
 .. jupyter-execute::
 
-    print(f'Relative Hinf error: {(fom - rom).hinf_norm() / fom.hinf_norm():.3e}')
-    print(f'Relative H2 error:   {(fom - rom).h2_norm() / fom.h2_norm():.3e}')
+    print(f'Relative Hinf error: {err.hinf_norm() / fom.hinf_norm():.3e}')
+    print(f'Relative H2 error:   {err.h2_norm() / fom.h2_norm():.3e}')
 
 .. note::
 
