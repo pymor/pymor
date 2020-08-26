@@ -5,11 +5,11 @@
 import numpy as np
 
 from pymor.core.cache import cached
-from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCenters
+from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import triangle
 
 
-class TriaGrid(AffineGridWithOrthogonalCenters):
+class TriaGrid(GridWithOrthogonalCenters):
     r"""Basic implementation of a triangular grid on a rectangular domain.
 
     The global face, edge and vertex indices are given as follows ::

@@ -5,11 +5,11 @@
 
 import numpy as np
 
-from pymor.discretizers.builtin.grids.interfaces import AffineGridWithOrthogonalCenters
+from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import line
 
 
-class OnedGrid(AffineGridWithOrthogonalCenters):
+class OnedGrid(GridWithOrthogonalCenters):
     """One-dimensional |Grid| on an interval.
 
     Parameters
