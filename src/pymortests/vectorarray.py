@@ -932,6 +932,13 @@ def test_imul_wrong_factor(vector_array):
     with pytest.raises(Exception):
         vector_array *= vector_array
 
+@pyst.given_vector_arrays()
+def test_iter(vector_array):
+    v = vector_array
+    w = v.empty()
+    for vv in v:
+        w.append(v)
+    assert np.all(almost_equal(w, v))
 
 ########################################################################################################################
 
