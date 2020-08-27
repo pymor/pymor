@@ -937,7 +937,7 @@ def test_iter(vector_array):
     v = vector_array
     w = v.empty()
     for vv in v:
-        w.append(v)
+        w.append(vv)
     assert np.all(almost_equal(w, v))
 
 ########################################################################################################################
