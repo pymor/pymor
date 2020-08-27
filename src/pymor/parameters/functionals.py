@@ -232,6 +232,8 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         if derivative_expressions is not None:
             derivative_mappings = derivative_expressions.copy()
             for (key,exp) in derivative_mappings.items():
+                if isinstance(exp, str):
+                    exp = [exp]
                 exp_array = np.array(exp, dtype=object)
                 for exp in np.nditer(exp_array, op_flags=['readwrite'], flags= ['refs_ok']):
                     exp_code = compile(str(exp), '<expression>', 'eval')
@@ -243,9 +245,13 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         if second_derivative_expressions is not None:
             second_derivative_mappings = second_derivative_expressions.copy()
             for (key_i,key_dicts) in second_derivative_mappings.items():
+                if isinstance(key_dicts, dict):
+                    key_dicts = [key_dicts]
                 key_dicts_array = np.array(key_dicts, dtype=object)
                 for key_dict in np.nditer(key_dicts_array, op_flags=['readwrite'], flags= ['refs_ok']):
                     for (key_j, exp) in key_dict[()].items():
+                        if isinstance(exp, str):
+                            exp = [exp]
                         exp_array = np.array(exp, dtype=object)
                         for exp in np.nditer(exp_array, op_flags=['readwrite'], flags= ['refs_ok']):
                             exp_code = compile(str(exp), '<expression>', 'eval')
