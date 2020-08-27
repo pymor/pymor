@@ -15,6 +15,7 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -272,7 +273,7 @@ class LincombOperator(Operator):
             return self.with_(coefficients=tuple(c * other for c in self.coefficients))
 
 
-class Concatenation(Operator):
+class ConcatenationOperator(Operator):
     """|Operator| representing the concatenation of two |Operators|.
 
     Parameters
@@ -322,43 +323,48 @@ class Concatenation(Operator):
         for op in self.operators[:0:-1]:
             Us.append(op.apply(Us[-1], mu=mu))
         options = self.solver_options.get('jacobian') if self.solver_options else None
-        return Concatenation(tuple(op.jacobian(U, mu=mu) for op, U in zip(self.operators, Us[::-1])),
-                             solver_options=options, name=self.name + '_jacobian')
+        return ConcatenationOperator(tuple(op.jacobian(U, mu=mu) for op, U in zip(self.operators, Us[::-1])),
+                                     solver_options=options, name=self.name + '_jacobian')
 
     def restricted(self, dofs):
         restricted_ops = []
         for op in self.operators:
             rop, dofs = op.restricted(dofs)
             restricted_ops.append(rop)
-        return Concatenation(restricted_ops), dofs
+        return ConcatenationOperator(restricted_ops), dofs
 
     def __matmul__(self, other):
         if not isinstance(other, Operator):
             return NotImplemented
 
-        if self.name != 'Concatenation':
-            if isinstance(other, Concatenation) and other.name == 'Concatenation':
+        if self.name != 'ConcatenationOperator':
+            if isinstance(other, ConcatenationOperator) and other.name == 'ConcatenationOperator':
                 operators = (self,) + other.operators
             else:
                 operators = (self, other)
-        elif isinstance(other, Concatenation) and other.name == 'Concatenation':
+        elif isinstance(other, ConcatenationOperator) and other.name == 'ConcatenationOperator':
             operators = self.operators + other.operators
         else:
             operators = self.operators + (other,)
 
-        return Concatenation(operators, solver_options=self.solver_options)
+        return ConcatenationOperator(operators, solver_options=self.solver_options)
 
     def __rmatmul__(self, other):
         if not isinstance(other, Operator):
             return NotImplemented
 
-        # note that 'other' can never be a Concatenation
-        if self.name != 'Concatenation':
+        # note that 'other' can never be a ConcatenationOperator
+        if self.name != 'ConcatenationOperator':
             operators = (other, self)
         else:
             operators = (other,) + self.operators
 
-        return Concatenation(operators, solver_options=other.solver_options)
+        return ConcatenationOperator(operators, solver_options=other.solver_options)
+
+
+@Deprecated(ConcatenationOperator)
+def Concatenation(*args, **kwargs):
+    return ConcatenationOperator(*args, **kwargs)
 
 
 class ProjectedOperator(Operator):
@@ -626,7 +632,7 @@ class LowRankUpdatedOperator(LincombOperator):
         return V
 
 
-class ComponentProjection(Operator):
+class ComponentProjectionOperator(Operator):
     """|Operator| representing the projection of a |VectorArray| onto some of its components.
 
     Parameters
@@ -753,6 +759,11 @@ class ConstantOperator(Operator):
         if not least_squares:
             raise InversionError('ConstantOperator is not invertible.')
         return self.source.zeros(len(V))
+
+
+@Deprecated(ComponentProjectionOperator)
+def ComponentProjection(*args, **kwargs):
+    return ComponentProjectionOperator(*args, **kwargs)
 
 
 class ZeroOperator(Operator):

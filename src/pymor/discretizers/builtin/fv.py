@@ -23,10 +23,11 @@ from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisu
 from pymor.discretizers.builtin.inplace import iadd_masked, isub_masked
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.operators.constructions import ComponentProjection, LincombOperator, ZeroOperator
+from pymor.operators.constructions import ComponentProjectionOperator, LincombOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import ParametricObject
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -240,11 +241,12 @@ class NonlinearAdvectionOperator(Operator):
         op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id=None,
                         name=f'{self.name}_restricted')
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
-        proj = ComponentProjection(sub_grid_indices, op.range)
+        proj = ComponentProjectionOperator(sub_grid_indices, op.range)
         return proj @ op, sub_grid.parent_indices(0)
 
     def _fetch_grid_data(self):
-        # pre-fetch all grid-associated data to avoid searching the cache for each operator application
+        # pre-fetch all grid-associated data to avoid searching the cache for each operator
+        # application
         g = self.grid
         bi = self.boundary_info
         self._grid_data = dict(SUPE=g.superentities(1, 0),
@@ -433,7 +435,8 @@ def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_l
 
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
                                                            dirichlet_data=None, solver_options=None, name=None):
-    """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
+    """Instantiate a :class:`NonlinearAdvectionOperator` using
+    :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
@@ -445,7 +448,7 @@ def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
 
-class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
+class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
     """Linear advection finite Volume |Operator| using Lax-Friedrichs flux.
 
     The operator is of the form ::
@@ -513,6 +516,11 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         A = dia_matrix(([1. / g.volumes(0)], [0]), shape=(g.size(0),) * 2) * A
 
         return A
+
+
+@Deprecated(LinearAdvectionLaxFriedrichsOperator)
+def LinearAdvectionLaxFriedrichs(*args, **kwargs):
+    return LinearAdvectionLaxFriedrichsOperator(*args, **kwargs)
 
 
 class L2Product(NumpyMatrixBasedOperator):
@@ -649,7 +657,8 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         bi = self.boundary_info
 
         if self.function is not None:
-            # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
+            # evaluate function at all quadrature points
+            # -> shape = (g.size(0), number of quadrature points, 1)
             F = self.function(g.quadrature_points(0, order=self.order), mu=mu)
 
             _, w = g.reference_element.quadrature(order=self.order)
@@ -676,7 +685,8 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
                 BOUNDARY_DISTS = np.sum((centers[dirichlet_mask, :] - g.orthogonal_centers()[SE_I0_D, :])
                                         * boundary_normals,
                                         axis=-1)
-                DIRICHLET_FLUXES = VOLS[dirichlet_mask] * self.dirichlet_data(centers[dirichlet_mask], mu=mu) / BOUNDARY_DISTS
+                DIRICHLET_FLUXES = (VOLS[dirichlet_mask]
+                                    * self.dirichlet_data(centers[dirichlet_mask], mu=mu) / BOUNDARY_DISTS)
                 if self.diffusion_function is not None:
                     DIRICHLET_FLUXES *= self.diffusion_function(centers[dirichlet_mask], mu=mu)
                 if self.diffusion_constant is not None:
@@ -907,11 +917,11 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     # advection part
     if isinstance(p.advection, LincombFunction):
-        L += [LinearAdvectionLaxFriedrichs(grid, boundary_info, af, name=f'advection_{i}')
+        L += [LinearAdvectionLaxFriedrichsOperator(grid, boundary_info, af, name=f'advection_{i}')
               for i, af in enumerate(p.advection.functions)]
         L_coefficients += list(p.advection.coefficients)
     elif p.advection is not None:
-        L += [LinearAdvectionLaxFriedrichs(grid, boundary_info, p.advection, name='advection')]
+        L += [LinearAdvectionLaxFriedrichsOperator(grid, boundary_info, p.advection, name='advection')]
         L_coefficients.append(1.)
 
     # nonlinear advection part

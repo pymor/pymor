@@ -4,6 +4,32 @@
 Release Notes
 *************
 
+pyMOR 2020.2 (?, 2020)
+----------------------
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Renaming of some Operators
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+`ComponentProjection`, `Concatenation` and `LinearAdvectionLaxFriedrichs` were
+renamed to `ComponentProjectionOperator`, `ConcatenationOperator` and
+`LinearAdvectionLaxFriedrichsOperator`, respectively.
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 pyMOR 2020.1 (July 23, 2020)
 ----------------------------
 We are proud to announce the release of pyMOR 2020.1! Highlights of this release

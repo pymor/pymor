@@ -5,7 +5,7 @@
 from pymor.algorithms.preassemble import preassemble
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.models.interface import Model
-from pymor.operators.constructions import (AdjointOperator, AffineOperator, Concatenation,
+from pymor.operators.constructions import (AdjointOperator, AffineOperator, ConcatenationOperator,
                                            FixedParameterOperator, LincombOperator,
                                            SelectionOperator, VectorArrayOperator,
                                            VectorFunctional, VectorOperator)
@@ -39,7 +39,7 @@ class ConvertToNumpyListVectorArrayRules(RuleTable):
     def __init__(self):
         super().__init__(use_caching=True)
 
-    @match_class(AdjointOperator, AffineOperator, Concatenation,
+    @match_class(AdjointOperator, AffineOperator, ConcatenationOperator,
                  FixedParameterOperator, LincombOperator, SelectionOperator,
                  Model)
     def action_recurse(self, op):

@@ -9,8 +9,8 @@ import scipy.sparse.linalg as spsla
 
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.operators.block import BlockOperatorBase
-from pymor.operators.constructions import (AdjointOperator, ComponentProjection, Concatenation, IdentityOperator,
-                                           LincombOperator, LowRankOperator, LowRankUpdatedOperator,
+from pymor.operators.constructions import (AdjointOperator, ComponentProjectionOperator, ConcatenationOperator,
+                                           IdentityOperator, LincombOperator, LowRankOperator, LowRankUpdatedOperator,
                                            VectorArrayOperator, ZeroOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 
@@ -99,8 +99,8 @@ class ToMatrixRules(RuleTable):
             res = getattr(sps, format + '_matrix')(res)
         return res
 
-    @match_class(ComponentProjection)
-    def action_ComponentProjection(self, op):
+    @match_class(ComponentProjectionOperator)
+    def action_ComponentProjectionOperator(self, op):
         format = self.format
         if format == 'dense':
             res = np.zeros((op.range.dim, op.source.dim))
@@ -114,8 +114,8 @@ class ToMatrixRules(RuleTable):
             res = res.asformat(format if format else 'csc')
         return res
 
-    @match_class(Concatenation)
-    def action_Concatenation(self, op):
+    @match_class(ConcatenationOperator)
+    def action_ConcatenationOperator(self, op):
         mats = [self.apply(o) for o in op.operators]
         while len(mats) > 1:
             if self.format is None and not sps.issparse(mats[-2]) and sps.issparse(mats[-1]):

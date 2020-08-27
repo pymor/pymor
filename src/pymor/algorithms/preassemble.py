@@ -4,7 +4,7 @@
 
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.models.interface import Model
-from pymor.operators.constructions import (LincombOperator, Concatenation, ProjectedOperator,
+from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ProjectedOperator,
                                            AffineOperator, AdjointOperator, SelectionOperator)
 from pymor.operators.interface import Operator
 
@@ -24,7 +24,7 @@ class PreAssembleRules(RuleTable):
     def __init__(self):
         super().__init__(use_caching=True)
 
-    @match_class(Model, AffineOperator, Concatenation, SelectionOperator)
+    @match_class(Model, AffineOperator, ConcatenationOperator, SelectionOperator)
     def action_recurse(self, op):
         return self.replace_children(op)
 

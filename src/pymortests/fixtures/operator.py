@@ -31,7 +31,7 @@ class MonomOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
-        return NumpyMatrixOperator(self.derivative(U.to_numpy()).reshape((1,1)))
+        return NumpyMatrixOperator(self.derivative(U.to_numpy()).reshape((1, 1)))
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         return self.range.make_array(1. / V.to_numpy())
@@ -92,11 +92,11 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
 
 
 numpy_matrix_operator_with_arrays_factory_arguments = \
-    list(zip([0, 0, 2, 10],           # dim_source
-        [0, 1, 4, 10],           # dim_range
-        [3, 3, 3, 3],            # count_source
-        [3, 3, 3, 3],            # count_range
-        random_integers(4, 44)))  # seed
+    list(zip([0, 0, 2, 10],            # dim_source
+             [0, 1, 4, 10],            # dim_range
+             [3, 3, 3, 3],             # count_source
+             [3, 3, 3, 3],             # count_range
+             random_integers(4, 44)))  # seed
 
 
 numpy_matrix_operator_with_arrays_generators = \
@@ -145,7 +145,6 @@ def thermalblock_assemble_factory(xblocks, yblocks, diameter, seed):
 
 
 def thermalblock_concatenation_factory(xblocks, yblocks, diameter, seed):
-    from pymor.operators.constructions import Concatenation
     op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
     op = sp @ op
     return op, mu, U, V, sp, rp
@@ -346,19 +345,19 @@ num_misc_operators = 12
 
 def misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
-        from pymor.operators.constructions import ComponentProjection
+        from pymor.operators.constructions import ComponentProjectionOperator
         _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 10, 4, 3, n)
-        op = ComponentProjection(np.random.randint(0, 100, 10), U.space)
+        op = ComponentProjectionOperator(np.random.randint(0, 100, 10), U.space)
         return op, _, U, V, sp, rp
     elif n == 1:
-        from pymor.operators.constructions import ComponentProjection
+        from pymor.operators.constructions import ComponentProjectionOperator
         _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 0, 4, 3, n)
-        op = ComponentProjection([], U.space)
+        op = ComponentProjectionOperator([], U.space)
         return op, _, U, V, sp, rp
     elif n == 2:
-        from pymor.operators.constructions import ComponentProjection
+        from pymor.operators.constructions import ComponentProjectionOperator
         _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 3, 4, 3, n)
-        op = ComponentProjection([3, 3, 3], U.space)
+        op = ComponentProjectionOperator([3, 3, 3], U.space)
         return op, _, U, V, sp, rp
     elif n == 3:
         from pymor.operators.constructions import AdjointOperator
