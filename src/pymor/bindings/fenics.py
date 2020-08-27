@@ -48,9 +48,6 @@ if config.HAVE_FENICS:
         def inner(self, other):
             return self.impl.inner(other.impl)
 
-        def l1_norm(self):
-            return self.impl.norm('l1')
-
         def l2_norm(self):
             return self.impl.norm('l2')
 

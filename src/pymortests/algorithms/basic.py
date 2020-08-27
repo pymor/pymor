@@ -27,7 +27,7 @@ import pymortests.strategies as pyst
 
 @pyst.given_vector_arrays(count=2,
                           tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)]),
-                          norms=hyst.sampled_from([('sup', np.inf), ('l1', 1), ('l2', 2)]))
+                          norms=hyst.sampled_from([('sup', np.inf), ('l2', 2)]))
 def test_almost_equal(vector_arrays, tolerances, norms):
     v1, v2 = vector_arrays
     rtol, atol = tolerances
@@ -38,13 +38,7 @@ def test_almost_equal(vector_arrays, tolerances, norms):
     except NotImplementedError:
         dv1 = dv2 = None
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
-        try:
-            r = almost_equal(v1[ind1], v2[ind2], norm=n, rtol=rtol, atol=atol)
-        except NotImplementedError as e:
-            if n == 'l1':
-                pytest.xfail('l1_norm not implemented')
-            else:
-                raise e
+        r = almost_equal(v1[ind1], v2[ind2], norm=n, rtol=rtol, atol=atol)
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1),)
         if dv1 is not None:
@@ -79,19 +73,13 @@ def test_almost_equal_product(operator_with_arrays_and_products):
 
 @pyst.given_vector_arrays(count=1, index_strategy=pyst.pairs_same_length,
                           tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)]),
-                          norm=hyst.sampled_from(['sup', 'l1', 'l2']))
+                          norm=hyst.sampled_from(['sup', 'l2']))
 @settings(print_blob=True)
 def test_almost_equal_self(vectors_and_indices, tolerances, norm):
     v, (ind,_) = vectors_and_indices
     rtol, atol = tolerances
     n = norm
-    try:
-        r = almost_equal(v[ind], v[ind], norm=n)
-    except NotImplementedError as e:
-        if n == 'l1':
-            pytest.xfail('l1_norm not implemented')
-        else:
-            raise e
+    r = almost_equal(v[ind], v[ind], norm=n)
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind),)
     assert np.all(r)
@@ -188,7 +176,7 @@ def test_almost_equal_self_product(operator_with_arrays_and_products):
 def test_almost_equal_incompatible(vector_arrays):
     v1, v2 = vector_arrays
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
-        for n in ['sup', 'l1', 'l2']:
+        for n in ['sup', 'l2']:
             c1, c2 = v1.copy(), v2.copy()
             with pytest.raises(Exception):
                 almost_equal(c1[ind1], c2[ind2], norm=n)

@@ -674,31 +674,6 @@ def test_lincomb_wrong_coefficients(vectors_and_indices, random):
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-def test_l1_norm(vectors_and_indices):
-    v, ind = vectors_and_indices
-    c = v.copy()
-    try:
-        norm = c[ind].l1_norm()
-    except NotImplementedError:
-        pytest.xfail('l1_norm not implemented')
-    assert isinstance(norm, np.ndarray)
-    assert norm.shape == (v.len_ind(ind),)
-    assert np.all(norm >= 0)
-    if v.dim == 0:
-        assert np.all(norm == 0)
-    try:
-        assert np.allclose(norm, np.sum(np.abs(indexed(v.to_numpy(), ind)), axis=1))
-    except NotImplementedError:
-        pass
-    c.scal(4.)
-    assert np.allclose(c[ind].l1_norm(), norm * 4)
-    c.scal(-4.)
-    assert np.allclose(c[ind].l1_norm(), norm * 16)
-    c.scal(0.)
-    assert np.allclose(c[ind].l1_norm(), 0)
-
-
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
 def test_l2_norm(vectors_and_indices):
     v, ind = vectors_and_indices
     c = v.copy()
