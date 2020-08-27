@@ -17,15 +17,13 @@ stages:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
-    except:
-        - /^staging/.*$/i
     rules:
         - if: '$CI_COMMIT_REF_NAME =~ /^staging.*/'
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: 0d947ad8acfd2e4326fe844173570247b8e4dc4b
-        CI_IMAGE_TAG: 97eb2abc080637d49c3db8f428ddff14748710ef
+        PYPI_MIRROR_TAG: 6482589aa9345c76ae77437661ecb4d67a1963d4
+        CI_IMAGE_TAG: 6482589aa9345c76ae77437661ecb4d67a1963d4
         PYMOR_HYPOTHESIS_PROFILE: ci
 
 .pytest:
@@ -61,9 +59,10 @@ stages:
             - always
     environment:
         name: safe
-    except:
-        - /^github\/PR_.*$/
-        - /^staging/.*$/i
+    rules:
+        - if: '${CI_COMMIT_REF_NAME} =~ /^github/PR.*/'
+          when: never
+        - when: on_success
     stage: deploy
     script: .ci/gitlab/submit.bash
 
@@ -78,6 +77,8 @@ stages:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
+            - unknown_failure
+            - job_execution_timeout
     
     image: pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
     variables:
@@ -96,8 +97,10 @@ stages:
 .binder:
     extends: .docker-in-docker
     stage: install_checks
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     variables:
         IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
         CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
@@ -106,23 +109,19 @@ stages:
 .wheel:
     extends: .docker-in-docker
     stage: build
-    except:
-        - schedules
-    only: ['branches', 'tags', 'triggers']
-    variables:
-        TEST_OS: "centos_8 debian_buster debian_bullseye"
-    artifacts:
-        paths:
-        # cannot use exported var from env here
-        - ${CI_PROJECT_DIR}/shared/pymor*manylinux*whl
-        expire_in: 1 week
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
 
 
 .check_wheel:
     extends: .test_base
     stage: install_checks
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
       - pymor/devpi:1
     dependencies:
@@ -140,13 +139,12 @@ stages:
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
       - devpi upload --from-dir --formats=* ./shared
-    only: ['branches', 'tags', 'triggers']
     # the docker service adressing fails on other runners
     tags: [mike]
 
 .sanity_checks:
     extends: .test_base
-    image: pymor/ci_sanity:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/ci_sanity:6482589aa9345c76ae77437661ecb4d67a1963d4
     stage: sanity
 #******** end definition of base jobs *********************************************************************************#
 
@@ -168,24 +166,28 @@ ci setup:
 
 minimal_cpp_demo:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script: ./.ci/gitlab/cpp_demo.bash
 mpi 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -195,15 +197,17 @@ mpi 3 6:
         - ./.ci/gitlab/test_mpi.bash
 mpi 3 7:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -213,15 +217,17 @@ mpi 3 7:
         - ./.ci/gitlab/test_mpi.bash
 mpi 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -231,15 +237,17 @@ mpi 3 8:
         - ./.ci/gitlab/test_mpi.bash
 notebooks_dir 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -249,15 +257,17 @@ notebooks_dir 3 6:
         - ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 7:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -267,15 +277,17 @@ notebooks_dir 3 7:
         - ./.ci/gitlab/test_notebooks_dir.bash
 notebooks_dir 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -285,15 +297,17 @@ notebooks_dir 3 8:
         - ./.ci/gitlab/test_notebooks_dir.bash
 pip_installed 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -303,15 +317,17 @@ pip_installed 3 6:
         - ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 7:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -321,15 +337,17 @@ pip_installed 3 7:
         - ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -339,15 +357,17 @@ pip_installed 3 8:
         - ./.ci/gitlab/test_pip_installed.bash
 vanilla 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -357,15 +377,17 @@ vanilla 3 6:
         - ./.ci/gitlab/test_vanilla.bash
 vanilla 3 7:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -375,15 +397,17 @@ vanilla 3 7:
         - ./.ci/gitlab/test_vanilla.bash
 vanilla 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -393,15 +417,17 @@ vanilla 3 8:
         - ./.ci/gitlab/test_vanilla.bash
 numpy_git 3 8:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -411,15 +437,17 @@ numpy_git 3 8:
         - ./.ci/gitlab/test_numpy_git.bash
 oldest 3 6:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
-        - name: pymor/pypi-mirror_oldest_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_oldest_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -430,40 +458,45 @@ oldest 3 6:
 ci_weekly 3 6:
     extends: .pytest
     timeout: 5h
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.6:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
     
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 7:
     extends: .pytest
     timeout: 5h
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.7:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 8:
     extends: .pytest
     timeout: 5h
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:0d947ad8acfd2e4326fe844173570247b8e4dc4b
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
-    image: pymor/testing_py3.8:97eb2abc080637d49c3db8f428ddff14748710ef
+    image: pymor/testing_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
     
     script: ./.ci/gitlab/test_vanilla.bash
 submit vanilla 3 6:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.6
     variables:
         COVERAGE_FLAG: vanilla
@@ -471,8 +504,10 @@ submit vanilla 3 6:
         - vanilla 3 6
 submit vanilla 3 7:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.7
     variables:
         COVERAGE_FLAG: vanilla
@@ -480,8 +515,10 @@ submit vanilla 3 7:
         - vanilla 3 7
 submit vanilla 3 8:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.8
     variables:
         COVERAGE_FLAG: vanilla
@@ -489,8 +526,10 @@ submit vanilla 3 8:
         - vanilla 3 8
 submit numpy_git 3 8:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.8
     variables:
         COVERAGE_FLAG: numpy_git
@@ -498,8 +537,10 @@ submit numpy_git 3 8:
         - numpy_git 3 8
 submit oldest 3 6:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:3.6
     variables:
         COVERAGE_FLAG: oldest
@@ -507,8 +548,9 @@ submit oldest 3 6:
         - oldest 3 6
 submit ci_weekly 3 6:
     extends: .submit
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     image: pymor/python:3.6
     variables:
         COVERAGE_FLAG: ci_weekly
@@ -516,8 +558,9 @@ submit ci_weekly 3 6:
         - ci_weekly 3 6
 submit ci_weekly 3 7:
     extends: .submit
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     image: pymor/python:3.7
     variables:
         COVERAGE_FLAG: ci_weekly
@@ -525,8 +568,9 @@ submit ci_weekly 3 7:
         - ci_weekly 3 7
 submit ci_weekly 3 8:
     extends: .submit
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     image: pymor/python:3.8
     variables:
         COVERAGE_FLAG: ci_weekly
@@ -536,25 +580,43 @@ submit ci_weekly 3 8:
 
 
 pip 1/3:
-    extends: .docker-in-docker
-    except:
-        - schedules
+    tags: [mike]
+    services:
+        - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
+          alias: pypi_mirror
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     stage: install_checks
-    script: docker build -f .ci/docker/install_checks/centos_8/Dockerfile .
+    image: pymor/deploy_checks_centos_8:6482589aa9345c76ae77437661ecb4d67a1963d4
+    script: ./.ci/gitlab/install_checks/centos_8/check.bash
 
 pip 2/3:
-    extends: .docker-in-docker
-    except:
-        - schedules
+    tags: [mike]
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
+          alias: pypi_mirror
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     stage: install_checks
-    script: docker build -f .ci/docker/install_checks/debian_buster/Dockerfile .
+    image: pymor/deploy_checks_debian_buster:6482589aa9345c76ae77437661ecb4d67a1963d4
+    script: ./.ci/gitlab/install_checks/debian_buster/check.bash
 
 pip 3/3:
-    extends: .docker-in-docker
-    except:
-        - schedules
+    tags: [mike]
+    services:
+        - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
+          alias: pypi_mirror
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     stage: install_checks
-    script: docker build -f .ci/docker/install_checks/debian_bullseye/Dockerfile .
+    image: pymor/deploy_checks_debian_bullseye:6482589aa9345c76ae77437661ecb4d67a1963d4
+    script: ./.ci/gitlab/install_checks/debian_bullseye/check.bash
 
 
 repo2docker:
@@ -576,9 +638,11 @@ trigger_binder 1/3:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
-    only:
-        - master
-        - tags
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == "master"'
+          when: on_success
+        - if: '$CI_COMMIT_TAG'
+          when: on_success
     before_script:
         - apk --update add bash python3
         - pip3 install requests
@@ -589,9 +653,11 @@ trigger_binder 2/3:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
-    only:
-        - master
-        - tags
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == "master"'
+          when: on_success
+        - if: '$CI_COMMIT_TAG'
+          when: on_success
     before_script:
         - apk --update add bash python3
         - pip3 install requests
@@ -602,9 +668,11 @@ trigger_binder 3/3:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
-    only:
-        - master
-        - tags
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == "master"'
+          when: on_success
+        - if: '$CI_COMMIT_TAG'
+          when: on_success
     before_script:
         - apk --update add bash python3
         - pip3 install requests
@@ -617,18 +685,30 @@ wheel 1 py3 6:
         PYVER: "3.6"
     tags:
       - amm-old-ci
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2010_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
 wheel 2014 py3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2014_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2014
 
 
@@ -638,18 +718,30 @@ wheel 1 py3 7:
         PYVER: "3.7"
     tags:
       - amm-old-ci
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2010_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
 wheel 2014 py3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2014_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2014
 
 
@@ -659,21 +751,76 @@ wheel 1 py3 8:
         PYVER: "3.8"
     tags:
       - amm-old-ci
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 8:
     extends: .wheel
     variables:
         PYVER: "3.8"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2010_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
 wheel 2014 py3 8:
     extends: .wheel
     variables:
         PYVER: "3.8"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2014_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2014
 
 
+
+pypi deploy:
+    extends: .sanity_checks
+    stage: deploy
+    dependencies:
+      - wheel 1 py3 6
+    
+      - wheel 2010 py3 6
+    
+      - wheel 2014 py3 6
+    
+    
+      - wheel 1 py3 7
+    
+      - wheel 2010 py3 7
+    
+      - wheel 2014 py3 7
+    
+    
+      - wheel 1 py3 8
+    
+      - wheel 2010 py3 8
+    
+      - wheel 2014 py3 8
+    
+    
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
+          when: never
+        - when: on_success
+    variables:
+        ARCHIVE_DIR: pyMOR_wheels-${CI_COMMIT_REF_NAME}
+    artifacts:
+        paths:
+         - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*manylinux*whl
+        expire_in: 6 months
+        name: pymor-wheels
+    script:
+        - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash
+    environment:
+        name: safe
 
 
 check_wheel 1:
@@ -693,15 +840,19 @@ check_wheel 3:
 
 
 docs build:
-    extends: .docker-in-docker
-    except:
-        - schedules
-        - name: pymor/pypi-mirror_stable_py3.7:0d947ad8acfd2e4326fe844173570247b8e4dc4b
-    stage: build
+    extends: .test_base
+    tags: [mike]
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
+          alias: pypi_mirror
+    image: pymor/jupyter_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
     script:
-        - apk --update add make python3
-        - pip3 install jinja2 pathlib
-        - make USER=pymor docker_docs
+        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
+    stage: build
     artifacts:
         paths:
             - docs/_build/html
@@ -709,6 +860,8 @@ docs build:
 
 docs:
     extends: .test_base
+    # makes sure this doesn't land on the test runner
+    tags: [mike]
     image: alpine:3.11
     stage: deploy
     resource_group: docs_deploy
@@ -719,11 +872,11 @@ docs:
         - pip3 install jinja2 pathlib
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
-    only: ['branches', 'tags']
-    except:
-        - schedules
-        - /^staging/.*$/i
-        - /^github/PR_.*$/i
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
+          when: never
     environment:
         name: safe
 

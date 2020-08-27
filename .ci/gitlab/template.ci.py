@@ -19,8 +19,10 @@ stages:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
-    except:
-        - /^staging/.*$/i
+    rules:
+        - if: '$CI_COMMIT_REF_NAME =~ /^staging.*/'
+          when: never
+        - when: on_success
     variables:
         PYPI_MIRROR_TAG: {{pypi_mirror_tag}}
         CI_IMAGE_TAG: {{ci_image_tag}}
@@ -59,9 +61,10 @@ stages:
             - always
     environment:
         name: safe
-    except:
-        - /^github\/PR_.*$/
-        - /^staging/.*$/i
+    rules:
+        - if: '${CI_COMMIT_REF_NAME} =~ /^github/PR.*/'
+          when: never
+        - when: on_success
     stage: deploy
     script: .ci/gitlab/submit.bash
 
@@ -76,6 +79,8 @@ stages:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
+            - unknown_failure
+            - job_execution_timeout
     {# this is intentionally NOT moving with CI_IMAGE_TAG #}
     image: pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
     variables:
@@ -94,8 +99,10 @@ stages:
 .binder:
     extends: .docker-in-docker
     stage: install_checks
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     variables:
         IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
         CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
@@ -104,23 +111,19 @@ stages:
 .wheel:
     extends: .docker-in-docker
     stage: build
-    except:
-        - schedules
-    only: ['branches', 'tags', 'triggers']
-    variables:
-        TEST_OS: "{{ ' '.join(testos) }}"
-    artifacts:
-        paths:
-        # cannot use exported var from env here
-        - ${CI_PROJECT_DIR}/shared/pymor*manylinux*whl
-        expire_in: 1 week
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
 
 
 .check_wheel:
     extends: .test_base
     stage: install_checks
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
       - pymor/devpi:1
     dependencies:
@@ -134,7 +137,6 @@ stages:
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
       - devpi upload --from-dir --formats=* ./shared
-    only: ['branches', 'tags', 'triggers']
     # the docker service adressing fails on other runners
     tags: [mike]
 
@@ -162,8 +164,10 @@ ci setup:
 
 minimal_cpp_demo:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
         - name: pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
           alias: pypi_mirror
@@ -174,8 +178,10 @@ minimal_cpp_demo:
 {%- for script, py, para in matrix %}
 {{script}} {{py[0]}} {{py[2]}}:
     extends: .pytest
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     services:
     {%- if script == "oldest" %}
         - name: pymor/pypi-mirror_oldest_py{{py}}:{{pypi_mirror_tag}}
@@ -186,7 +192,7 @@ minimal_cpp_demo:
     image: pymor/testing_py{{py}}:{{ci_image_tag}}
     script:
         - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/"* ]]; then
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
             echo selecting hypothesis profile \"ci_pr\" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
@@ -200,8 +206,9 @@ minimal_cpp_demo:
 ci_weekly {{py[0]}} {{py[2]}}:
     extends: .pytest
     timeout: 5h
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     services:
         - name: pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
           alias: pypi_mirror
@@ -213,8 +220,10 @@ ci_weekly {{py[0]}} {{py[2]}}:
 {%- for script, py, para in matrix if script in ['vanilla', 'oldest', 'numpy_git'] %}
 submit {{script}} {{py[0]}} {{py[2]}}:
     extends: .submit
-    except:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     image: pymor/python:{{py}}
     variables:
         COVERAGE_FLAG: {{script}}
@@ -225,8 +234,9 @@ submit {{script}} {{py[0]}} {{py[2]}}:
 {%- for py in pythons %}
 submit ci_weekly {{py[0]}} {{py[2]}}:
     extends: .submit
-    only:
-        - schedules
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
     image: pymor/python:{{py}}
     variables:
         COVERAGE_FLAG: ci_weekly
@@ -235,13 +245,19 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
 {%- endfor %}
 
 
-{% for OS in testos %}
+{% for OS, PY in testos %}
 pip {{loop.index}}/{{loop.length}}:
-    extends: .docker-in-docker
-    except:
-        - schedules
+    tags: [mike]
+    services:
+        - name: pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
+          alias: pypi_mirror
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
     stage: install_checks
-    script: docker build -f .ci/docker/install_checks/{{OS}}/Dockerfile .
+    image: pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
+    script: ./.ci/gitlab/install_checks/{{OS}}/check.bash
 {% endfor %}
 
 repo2docker:
@@ -263,9 +279,11 @@ trigger_binder {{loop.index}}/{{loop.length}}:
     extends: .test_base
     stage: deploy
     image: alpine:3.10
-    only:
-        - master
-        - tags
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == "master"'
+          when: on_success
+        - if: '$CI_COMMIT_TAG'
+          when: on_success
     before_script:
         - apk --update add bash python3
         - pip3 install requests
@@ -284,11 +302,42 @@ wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
     tags:
       - amm-old-ci
     {%- endif %}
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux{{ML}}_*whl
+        expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash {{ML}}
 {% endfor %}
 {% endfor %}
 
-{% for OS in testos %}
+pypi deploy:
+    extends: .sanity_checks
+    stage: deploy
+    dependencies:
+    {%- for PY in pythons %}
+    {%- for ML in manylinuxs %}
+      - wheel {{ML}} py{{PY[0]}} {{PY[2]}}
+    {% endfor %}
+    {% endfor %}
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
+          when: never
+        - when: on_success
+    variables:
+        ARCHIVE_DIR: pyMOR_wheels-${CI_COMMIT_REF_NAME}
+    artifacts:
+        paths:
+         - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*manylinux*whl
+        expire_in: 6 months
+        name: pymor-wheels
+    script:
+        - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash
+    environment:
+        name: safe
+
+{% for OS, PY in testos %}
 check_wheel {{loop.index}}:
     extends: .check_wheel
     image: pymor/deploy_checks:devpi_{{OS}}
@@ -296,14 +345,19 @@ check_wheel {{loop.index}}:
 {% endfor %}
 
 docs build:
-    extends: .docker-in-docker
-    except:
-        - schedules
-    stage: build
+    extends: .test_base
+    tags: [mike]
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - when: on_success
+    services:
+        - name: pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
+          alias: pypi_mirror
+    image: pymor/jupyter_py3.7:{{ci_image_tag}}
     script:
-        - apk --update add make python3
-        - pip3 install jinja2 pathlib
-        - make USER=pymor docker_docs
+        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
+    stage: build
     artifacts:
         paths:
             - docs/_build/html
@@ -311,6 +365,8 @@ docs build:
 
 docs:
     extends: .test_base
+    # makes sure this doesn't land on the test runner
+    tags: [mike]
     image: alpine:3.11
     stage: deploy
     resource_group: docs_deploy
@@ -321,11 +377,11 @@ docs:
         - pip3 install jinja2 pathlib
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
-    only: ['branches', 'tags']
-    except:
-        - schedules
-        - /^staging/.*$/i
-        - /^github/PR_.*$/i
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: never
+        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
+          when: never
     environment:
         name: safe
 
@@ -349,7 +405,7 @@ test_scripts = [("mpi", pythons, 1), ("notebooks_dir", pythons, 1),  ("pip_insta
     ("vanilla", pythons, 1), ("numpy_git", newest, 1), ("oldest", oldest, 1),]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
-testos = ['centos_8', 'debian_buster', 'debian_bullseye']
+testos = [('centos_8','3.6'), ('debian_buster','3.7'), ('debian_bullseye','3.8')]
 
 env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)
