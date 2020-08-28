@@ -379,6 +379,8 @@ class ListVectorArray(VectorArray):
         return len(self._list)
 
     def __getitem__(self, ind):
+        if isinstance(ind, Number) and (ind >= len(self) or ind < -len(self)):
+            raise IndexError('VectorArray index out of range')
         return ListVectorArrayView(self, ind)
 
     def __delitem__(self, ind):
@@ -714,7 +716,10 @@ class ListVectorArrayView(ListVectorArray):
         return self.base.space
 
     def __getitem__(self, ind):
-        return self.base[self.base.sub_index(self.ind, ind)]
+        try:
+            return self.base[self.base.sub_index(self.ind, ind)]
+        except IndexError:
+            raise IndexError('VectorArray index out of range')
 
     def __delitem__(self, ind):
         raise TypeError('Cannot remove from ListVectorArrayView')
