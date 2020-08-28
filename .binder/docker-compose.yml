@@ -23,7 +23,7 @@ services:
         args:
             BASE: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
-            NB_USER: "${USER}"
+            NB_USER: "${NB_USER}"
             NB_UID: 1000
             BUILD_ENV: dev
 
