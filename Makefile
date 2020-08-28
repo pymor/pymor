@@ -17,8 +17,15 @@
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
-	docker-compose -f .binder/docker-compose.yml -p pymor
+	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose -f .binder/docker-compose.yml -p pymor
 NB_DIR=notebooks
+NB_USER:=${USER}
+ifeq ($(PYMOR_SUDO), 1)
+	COMPOSE_SUDO:=sudo -E
+else
+	COMPOSE_SUDO:=
+endif
+
 PANDOC_MAJOR=$(shell ( which pandoc && pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)) || echo "pandoc missing")
 ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github

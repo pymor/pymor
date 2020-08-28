@@ -240,7 +240,7 @@ run the pytest suite with the default hypothesis profile "dev". For available pr
 see `src/pymortests/conftest.py`. A profile is selected by running `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME test`.
 If docker is available, use `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME docker_test` to execute the test suite
 in the same environment as on pyMOR's CI infrastructure. Additional customization points are listed at the top of the
-`Makefile`.
+`Makefile`. If required set `PYMOR_SUDO=1` in your environment to execute docker with elevated rights.
 Run `make full-test` which will also enable
 [pyflakes](https://pypi.python.org/pypi/pyflakes) and
 [pep8](https://www.python.org/dev/peps/pep-0008/) checks.
