@@ -8,7 +8,6 @@ from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.base import BasicObject
 from pymor.core.exceptions import ImageCollectionError
-from pymor.operators.constructions import induced_norm
 from pymor.operators.interface import Operator
 
 
@@ -37,7 +36,7 @@ class ResidualReductor(BasicObject):
     of the residual operator. Given a reduced basis coefficient vector `u`, w.r.t.
     `RB`, the (dual) norm of the residual can then be computed as ::
 
-        projected_residual.apply(u, mu).l2_norm()
+        projected_residual.apply(u, mu).norm()
 
     Moreover, a `reconstruct` method is provided such that ::
 
@@ -101,8 +100,7 @@ class ResidualReductor(BasicObject):
         """Reconstruct high-dimensional residual vector from reduced vector `u`."""
         if self.residual_range is False:
             if self.product:
-                norm = induced_norm(self.product)
-                return u * (u.l2_norm() / norm(u))[0]
+                return u * (u.norm() / u.norm(self.product))[0]
             else:
                 return u
         else:
@@ -151,13 +149,13 @@ class NonProjectedResidualOperator(ResidualOperator):
             if self.riesz_representatives:
                 R_riesz = self.product.apply_inverse(R)
                 # divide by norm, except when norm is zero:
-                inversel2 = 1./R_riesz.l2_norm()
+                inversel2 = 1./R_riesz.norm()
                 inversel2 = np.nan_to_num(inversel2)
                 R_riesz.scal(np.sqrt(R_riesz.pairwise_inner(R)) * inversel2)
                 return R_riesz
             else:
                 # divide by norm, except when norm is zero:
-                inversel2 = 1./R.l2_norm()
+                inversel2 = 1./R.norm()
                 inversel2 = np.nan_to_num(inversel2)
                 R.scal(np.sqrt(self.product.pairwise_apply2(R, R)) * inversel2)
                 return R
@@ -189,7 +187,7 @@ class ImplicitEulerResidualReductor(BasicObject):
     of the `riesz_residual` operator. Given reduced basis coefficient vectors `u` and `u_old`,
     the dual norm of the residual can then be computed as ::
 
-        projected_riesz_residual.apply(u, u_old, mu).l2_norm()
+        projected_riesz_residual.apply(u, u_old, mu).norm()
 
     Moreover, a `reconstruct` method is provided such that ::
 
@@ -251,8 +249,7 @@ class ImplicitEulerResidualReductor(BasicObject):
         """Reconstruct high-dimensional residual vector from reduced vector `u`."""
         if self.residual_range is False:
             if self.product:
-                norm = induced_norm(self.product)
-                return u * (u.l2_norm() / norm(u))[0]
+                return u * (u.norm() / u.norm(self.product))[0]
             else:
                 return u
         else:
@@ -304,7 +301,7 @@ class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
         if self.product:
             R_riesz = self.product.apply_inverse(R)
             # divide by norm, except when norm is zero:
-            inversel2 = 1./R_riesz.l2_norm()
+            inversel2 = 1./R_riesz.norm()
             inversel2 = np.nan_to_num(inversel2)
             R_riesz.scal(np.sqrt(R_riesz.pairwise_inner(R)) * inversel2)
             return R_riesz

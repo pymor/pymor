@@ -110,8 +110,8 @@ class GenericBHIReductor(BasicObject):
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
-        b = b * (1 / b.l2_norm()) if b.dim > 1 else self.fom.input_space.ones(r)
-        c = c * (1 / c.l2_norm()) if c.dim > 1 else self.fom.output_space.ones(r)
+        b = b * (1 / b.norm()) if b.dim > 1 else self.fom.input_space.ones(r)
+        c = c * (1 / c.norm()) if c.dim > 1 else self.fom.output_space.ones(r)
 
         # compute projection matrices
         self.V = self.fom.solution_space.empty(reserve=r)
@@ -374,8 +374,8 @@ class TFBHIReductor(BasicObject):
         assert c in self.fom.output_space and len(c) == r
 
         # rescale tangential directions (to avoid overflow or underflow)
-        b = b * (1 / b.l2_norm()) if b.dim > 1 else self.fom.input_space.ones(r)
-        c = c * (1 / c.l2_norm()) if c.dim > 1 else self.fom.output_space.ones(r)
+        b = b * (1 / b.norm()) if b.dim > 1 else self.fom.input_space.ones(r)
+        c = c * (1 / c.norm()) if c.dim > 1 else self.fom.output_space.ones(r)
 
         b = b.to_numpy()
         c = c.to_numpy()

@@ -87,17 +87,21 @@ def test_almost_equal_self(vectors_and_indices, tolerances, norm):
     # the first assumption here is a direct translation of the old loop abort
     assume(v.len_ind(ind) > 0 and np.max(v[ind].sup_norm() > 0))
     # the second one accounts for old input missing very-near zero data
+    if norm == 'l2':
+        norm = lambda U: U.norm()
+    else:
+        norm = lambda U: U.sup_norm()
     tol_min = np.min(np.abs(tolerances))
-    v_n_min = np.min(getattr(v[ind], n + '_norm')())
+    v_n_min = np.min(norm(v[ind]))
     assume(v_n_min > tol_min)
 
     c = v.copy()
-    c.scal(atol * (1 - 1e-10) / (np.max(getattr(v[ind], n + '_norm')())))
+    c.scal(atol * (1 - 1e-10) / (np.max(norm(v[ind]))))
     assert np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=n))
 
     if atol > 0:
         c = v.copy()
-        c.scal(2. * atol / (np.max(getattr(v[ind], n + '_norm')())))
+        c.scal(2. * atol / (np.max(norm(v[ind]))))
         assert not np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=n))
 
     c = v.copy()
@@ -110,12 +114,12 @@ def test_almost_equal_self(vectors_and_indices, tolerances, norm):
         assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
 
     c = v.copy()
-    c.scal(1. + atol * 0.9 / np.max(getattr(v[ind], n + '_norm')()))
+    c.scal(1. + atol * 0.9 / np.max(norm(v[ind])))
     assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
 
     if atol > 0 or rtol > 0:
         c = v.copy()
-        c.scal(1 + rtol * 1.1 + atol * 1.1 / np.max(getattr(v[ind], n + '_norm')()))
+        c.scal(1 + rtol * 1.1 + atol * 1.1 / np.max(norm(v[ind])))
         assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
 
 

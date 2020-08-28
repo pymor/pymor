@@ -80,7 +80,7 @@ def rational_arnoldi(A, E, b, sigma, trans=False):
     V = A.source.empty(reserve=r)
 
     v = b.as_vector()
-    v.scal(1 / v.l2_norm()[0])
+    v.scal(1 / v.norm()[0])
 
     for i in range(r):
         if sigma[i].imag < 0:

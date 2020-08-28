@@ -95,7 +95,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     ERR = U
 
-    errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
+    errs = ERR.norm() if error_norm is None else error_norm(ERR)
     max_err_ind = np.argmax(errs)
     initial_max_err = max_err = errs[max_err_ind]
 
@@ -136,7 +136,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         # update U and ERR
         new_dof_values = U.dofs([new_dof])
         U.axpy(-new_dof_values[:, 0], new_vec)
-        errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
+        errs = ERR.norm() if error_norm is None else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
 
@@ -429,7 +429,7 @@ def _parallel_ei_greedy_initialize(U=None, error_norm=None, copy=None, data=None
         U = U.copy()
     data['U'] = U
     data['error_norm'] = error_norm
-    errs = U.l2_norm() if error_norm is None else error_norm(U)
+    errs = U.norm() if error_norm is None else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
     return errs[max_err_ind]
 
@@ -445,7 +445,7 @@ def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
     new_dof_values = U.dofs([new_dof])
     U.axpy(-new_dof_values[:, 0], new_vec)
 
-    errs = U.l2_norm() if error_norm is None else error_norm(U)
+    errs = U.norm() if error_norm is None else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
     return errs[max_err_ind]
 

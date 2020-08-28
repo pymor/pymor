@@ -22,7 +22,7 @@ class VectorArray(BasicObject):
 
     It is assumed that the number of vectors is small enough such that scalar data
     associated to each vector can be handled on the Python side. As such, methods like
-    :meth:`~VectorArray.l2_norm` or :meth:`~VectorArray.gramian` will
+    :meth:`~VectorArray.norm` or :meth:`~VectorArray.gramian` will
     always return |NumPy arrays|.
 
     An implementation of the `VectorArray` via |NumPy arrays| is given by
@@ -407,7 +407,7 @@ class VectorArray(BasicObject):
 
     @Deprecated(pairwise_inner)
     def pairwise_dot(self, other):
-        return self.pariwise_inner(other)
+        return self.pairwise_inner(other)
 
     @abstractmethod
     def lincomb(self, coefficients):
@@ -433,36 +433,85 @@ class VectorArray(BasicObject):
         """
         pass
 
-    @defaults('tol', 'raise_complex')
-    def norm(self, product=None, tol=1e-10, raise_complex=True):
-        """Norm w.r.t. given inner product |Operator|.
+    def norm(self, product=None, tol=None, raise_complex=None):
+        """Norm with respect to a given inner product.
 
-        Equivalent to `self.l2_norm()` if `product` is None,
-        else equivalent to `np.sqrt(product.pairwise_apply2(self, self))`.
-        If `raise_complex` is `True`, a :exc:`ValueError` exception
-        is raised if there are complex norm squares of absolute value
-        larger than `tol`.
+        If `product` is `None`, the Euclidean norms of the :meth:`dofs`
+        of the array are returned, i.e. ::
+
+            U.norm()
+
+        is equivalent to::
+
+            np.sqrt(U.pairwise_inner(U))
+
+        If a `product` |Operator| is specified, this |Operator| is
+        used to compute the norms via::
+
+            np.sqrt(product.pairwise_apply2(U, U))
+
+        Parameters
+        ----------
+        product
+            If not `None`, the inner product |Operator| used to compute the
+            norms.
+        tol
+            If `raise_complex` is `True`, a :exc:`ValueError` exception
+            is raised if there are complex norm squares with an imaginary part
+            of absolute value larger than `tol`.
+        raise_complex
+            See `tol`.
+
+        Returns
+        -------
+        A one-dimensional |NumPy array| of the norms of the vectors in the array.
         """
         if product is None:
-            return self.l2_norm()
+            norm = self._norm()
+            assert np.all(np.isrealobj(norm))
+            return norm
         else:
-            norm_squared = product.pairwise_apply2(self, self)
-            if raise_complex and np.any(np.abs(norm_squared.imag) > tol):
-                raise ValueError(f'norm is complex (square = {norm_squared})')
+            norm_squared = self.norm2(product=product, tol=tol, raise_complex=raise_complex)
             return np.sqrt(norm_squared.real)
 
     @defaults('tol', 'raise_complex')
     def norm2(self, product=None, tol=1e-10, raise_complex=True):
-        """Squared norm w.r.t. given inner product |Operator|.
+        """Squared norm with respect to a given inner product.
 
-        Equivalent to `self.l2_norm2()` if `product` is None,
-        else equivalent to `product.pairwise_apply2(self, self)`.
-        If `raise_complex` is `True`, a :exc:`ValueError` exception
-        is raised if there are complex norm squares of absolute value
-        larger than `tol`.
+        If `product` is `None`, the Euclidean norms of the :meth:`dofs`
+        of the array are returned, i.e. ::
+
+            U.norm()
+
+        is equivalent to::
+
+            U.pairwise_inner(U)
+
+        If a `product` |Operator| is specified, this |Operator| is
+        used to compute the norms via::
+
+            product.pairwise_apply2(U, U)
+
+        Parameters
+        ----------
+        product
+            If not `None`, the inner product |Operator| used to compute the
+            norms.
+        tol
+            If `raise_complex` is `True`, a :exc:`ValueError` exception
+            is raised if there are complex norm squares with an imaginary part
+            of absolute value larger than `tol`.
+        raise_complex
+            See `tol`.
+
+        Returns
+        -------
+        A one-dimensional |NumPy array| of the squared norms of the vectors in the array.
         """
         if product is None:
-            return self.l2_norm2()
+            norm_squared = self._norm2()
+            assert np.all(np.isrealobj(norm_squared))
+            return norm_squared
         else:
             norm_squared = product.pairwise_apply2(self, self)
             if raise_complex and np.any(np.abs(norm_squared.imag) > tol):
@@ -470,26 +519,22 @@ class VectorArray(BasicObject):
             return norm_squared.real
 
     @abstractmethod
-    def l2_norm(self):
-        """The l2-norms of the vectors contained in the array.
-
-        Returns
-        -------
-        A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[i]`.
-        """
+    def _norm(self):
+        """Implementation of :meth:`norm` for the case that no `product` is given."""
         pass
 
     @abstractmethod
-    def l2_norm2(self):
-        """The squared l2-norms of the vectors contained in the array.
-
-        Returns
-        -------
-        A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[i]`.
-        """
+    def _norm2(self):
+        """Implementation of :meth:`norm2` for the case that no `product` is given."""
         pass
+
+    @Deprecated(norm)
+    def l2_norm(self):
+        return self.norm()
+
+    @Deprecated(norm2)
+    def l2_norm2(self):
+        return self.norm2()
 
     def sup_norm(self):
         """The l-infinity-norms of the vectors contained in the array.

@@ -37,7 +37,7 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
         `product` and `norm` are mutually exclusive.
     norm
         If specified, must be a callable which is used to compute the norm
-        or, alternatively, one of the strings 'l1', 'l2', 'sup', in which case the
+        or, alternatively, one of the strings 'l2', 'sup', in which case the
         respective |VectorArray| norm methods are used.
         `product` and `norm` are mutually exclusive. If neither is specified,
         `norm='l2'` is assumed.
@@ -48,13 +48,15 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
     """
 
     assert product is None or norm is None
-    assert not isinstance(norm, str) or norm in ('l1', 'l2', 'sup')
+    assert not isinstance(norm, str) or norm in ('l2', 'sup')
     norm = induced_norm(product) if product is not None else norm
     if norm is None:
         norm = 'l2'
     if isinstance(norm, str):
-        norm_str = norm
-        norm = lambda U: getattr(U, norm_str + '_norm')()
+        if norm == 'l2':
+            norm = lambda U: U.norm()
+        else:
+            norm = lambda U: U.sup_norm()
 
     X = V.copy()
     V_norm = norm(X)

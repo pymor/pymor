@@ -125,8 +125,8 @@ def neural_networks_demo(args):
 
         speedups.append(time_fom / time_red)
 
-    absolute_errors = (U - U_red).l2_norm()
-    relative_errors = (U - U_red).l2_norm() / U.l2_norm()
+    absolute_errors = (U - U_red).norm()
+    relative_errors = (U - U_red).norm() / U.norm()
 
     print(f'Average absolute error: {np.average(absolute_errors)}')
     print(f'Average relative error: {np.average(relative_errors)}')

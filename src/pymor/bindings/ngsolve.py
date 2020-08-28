@@ -55,10 +55,10 @@ if config.HAVE_NGSOLVE:
         def inner(self, other):
             return self.impl.vec.InnerProduct(other.impl.vec)
 
-        def l2_norm(self):
+        def norm(self):
             return self.impl.vec.Norm()
 
-        def l2_norm2(self):
+        def norm2(self):
             return self.impl.vec.Norm() ** 2
 
     class ComplexifiedNGSolveVector(NGSolveVectorCommon, ComplexifiedVector):

@@ -89,8 +89,8 @@ def neural_networks_demo(args):
 
         speedups.append(time_fom / time_red)
 
-    absolute_errors = (U - U_red).l2_norm()
-    relative_errors = (U - U_red).l2_norm() / U.l2_norm()
+    absolute_errors = (U - U_red).norm()
+    relative_errors = (U - U_red).norm() / U.norm()
 
     if args['--vis']:
         fom.visualize((U, U_red),

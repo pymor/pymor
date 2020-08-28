@@ -863,10 +863,10 @@ class LTIModel(InputStateOutputModel):
         assert self.parameters.assert_compatible(mu)
         if self.input_dim <= self.output_dim:
             cf = self.gramian('c_lrcf', mu=mu)
-            return np.sqrt(self.C.apply(cf, mu=mu).l2_norm2().sum())
+            return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum())
         else:
             of = self.gramian('o_lrcf', mu=mu)
-            return np.sqrt(self.B.apply_adjoint(of, mu=mu).l2_norm2().sum())
+            return np.sqrt(self.B.apply_adjoint(of, mu=mu).norm2().sum())
 
     @cached
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):

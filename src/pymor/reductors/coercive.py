@@ -66,7 +66,7 @@ class CoerciveRBEstimator(ImmutableObject):
         self.__auto_init(locals())
 
     def estimate(self, U, mu, m):
-        est = self.residual.apply(U, mu=mu).l2_norm()
+        est = self.residual.apply(U, mu=mu).norm()
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
         return est

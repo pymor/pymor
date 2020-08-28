@@ -236,10 +236,10 @@ with using just a stub that raises an :class:`~NotImplementedError` in some meth
       def inner(self, other):
           return self._impl.inner(other._impl)
 
-      def l2_norm(self):
+      def norm(self):
           return math.sqrt(self.inner(self))
 
-      def l2_norm2(self):
+      def norm2(self):
           return self.inner(self)
 
       def sup_norm(self):
@@ -384,7 +384,7 @@ Those wrapped classes are only directly used in the `discretize` call.
   for mu in parameter_space.sample_randomly(10):
       U_RB = reductor.reconstruct(rom.solve(mu))
       U = fom.solve(mu)
-      err = np.max((U_RB-U).l2_norm())
+      err = np.max((U_RB-U).norm())
       if err > err_max:
           err_max = err
           mu_max = mu
