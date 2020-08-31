@@ -8,12 +8,11 @@ import numpy as np
 import scipy
 
 from pymor.core.defaults import defaults
-from pymor.operators.constructions import induced_norm
 from pymor.tools.floatcmp import float_cmp
 
 
 @defaults('rtol', 'atol')
-def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
+def almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):
     """Compare U and V for almost equality.
 
     The vectors of `U` and `V` are compared in pairs for almost equality.
@@ -21,8 +20,8 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
 
        ||u - v|| <= atol + ||v|| * rtol.
 
-    The norm to be used can be specified via the `norm` or `product`
-    parameter.
+    The norm to be used can be specified via the `product` or `sup_norm`
+    parameters.
 
     If the length of `U`  resp. `V`  is 1, the single specified
     vector is compared to all vectors of the other array.
@@ -34,32 +33,19 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
         |VectorArrays| to be compared.
     product
         If specified, use this inner product |Operator| to compute the norm.
-        `product` and `norm` are mutually exclusive.
-    norm
-        If specified, must be a callable which is used to compute the norm
-        or, alternatively, one of the strings 'l2', 'sup', in which case the
-        respective |VectorArray| norm methods are used.
-        `product` and `norm` are mutually exclusive. If neither is specified,
-        `norm='l2'` is assumed.
+        Otherwise, the Euclidean norm is used.
+    sup_norm
+        If specified, use the sup norm to compute the error.
     rtol
         The relative tolerance.
     atol
         The absolute tolerance.
     """
 
-    assert product is None or norm is None
-    assert not isinstance(norm, str) or norm in ('l2', 'sup')
-    norm = induced_norm(product) if product is not None else norm
-    if norm is None:
-        norm = 'l2'
-    if isinstance(norm, str):
-        if norm == 'l2':
-            norm = lambda U: U.norm()
-        else:
-            norm = lambda U: U.sup_norm()
+    assert product is None or not sup_norm 
 
+    V_norm = V.sup_norm() if sup_norm else V.norm(product)
     X = V.copy()
-    V_norm = norm(X)
 
     # broadcast if necessary
     if len(X) == 1:
@@ -67,7 +53,7 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
             X.append(X[np.zeros(len(U) - 1, dtype=np.int)])
 
     X -= U
-    ERR_norm = norm(X)
+    ERR_norm = X.sup_norm() if sup_norm else X.norm(product)
 
     return ERR_norm <= atol + V_norm * rtol
 
