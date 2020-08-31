@@ -407,7 +407,8 @@ if config.HAVE_FENICS:
             return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
 
     @defaults('solver', 'preconditioner')
-    def _solver_options(solver='mumps', preconditioner=None):
+    def _solver_options(solver='mumps' if 'mumps' in df.linear_solver_methods() else 'default',
+                        preconditioner=None):
         return {'solver': solver, 'preconditioner': preconditioner}
 
     def _apply_inverse(matrix, r, v, options=None):
