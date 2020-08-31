@@ -63,13 +63,15 @@ class Function(ParametricObject):
             other = ConstantFunction(other, dim_domain=self.dim_domain)
 
         if self.name != 'LincombFunction':
-            if isinstance(other, LincombFunction) and other.name == 'LincombFunction':
+            if other.name == 'LincombFunction':
+                assert isinstance(other, LincombFunction)
                 functions = (self,) + other.functions
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
             else:
                 functions, coefficients = (self, other), (1., sign)
-        elif isinstance(other, LincombFunction) and other.name == 'LincombFunction':
+        elif other.name == 'LincombFunction':
             assert isinstance(self, LincombFunction)
+            assert isinstance(other, LincombFunction)
             functions = self.functions + other.functions
             coefficients = self.coefficients + (other.coefficients if sign == 1.
                                                 else tuple(-c for c in other.coefficients))

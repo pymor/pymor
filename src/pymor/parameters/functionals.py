@@ -55,13 +55,15 @@ class ParameterFunctional(ParametricObject):
             other = ConstantParameterFunctional(other)
 
         if self.name != 'LincombParameterFunctional':
-            if isinstance(other, LincombParameterFunctional) and other.name == 'LincombParameterFunctional':
+            if other.name == 'LincombParameterFunctional':
+                assert isinstance(other, LincombParameterFunctional)
                 functionals = (self,) + other.functionals
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
             else:
                 functionals, coefficients = (self, other), (1., sign)
-        elif isinstance(other, LincombParameterFunctional) and other.name == 'LincombParameterFunctional':
+        elif other.name == 'LincombParameterFunctional':
             assert isinstance(self, LincombParameterFunctional)
+            assert isinstance(other, LincombParameterFunctional)
             functionals = self.functionals + other.functionals
             coefficients = self.coefficients + (other.coefficients if sign == 1.
                                                 else tuple(-c for c in other.coefficients))

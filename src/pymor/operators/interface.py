@@ -525,13 +525,15 @@ class Operator(ParametricObject):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
         if self.name != 'LincombOperator':
-            if isinstance(other, LincombOperator) and other.name == 'LincombOperator':
+            if other.name == 'LincombOperator':
+                assert isinstance(other, LincombOperator)
                 operators = (self,) + other.operators
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
             else:
                 operators, coefficients = (self, other), (1., sign)
-        elif isinstance(other, LincombOperator) and other.name == 'LincombOperator':
+        elif other.name == 'LincombOperator':
             assert isinstance(self, LincombOperator)
+            assert isinstance(other, LincombOperator)
             operators = self.operators + other.operators
             coefficients = self.coefficients + (other.coefficients if sign == 1.
                                                 else tuple(-c for c in other.coefficients))
