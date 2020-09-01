@@ -26,3 +26,4 @@ include src/pymor/tools/LICENSE-MIT
 
 prune .binder
 prune .ci
+prune logo
