@@ -90,7 +90,7 @@ def analyze_pickle_histogram(args):
             if args['--error-norm']:
                 errs.append(np.max(getattr(fom, args['--error-norm'] + '_norm')(err)))
             else:
-                errs.append(np.max(err.l2_norm()))
+                errs.append(np.max(err.norm()))
             print('done')
 
         print()
@@ -227,7 +227,7 @@ def analyze_pickle_convergence(args):
             if args['--error-norm']:
                 errs.append(np.max(getattr(fom, args['--error-norm'] + '_norm')(err)))
             else:
-                errs.append(np.max(err.l2_norm()))
+                errs.append(np.max(err.norm()))
         ERRS.append(max(errs))
 
         print()

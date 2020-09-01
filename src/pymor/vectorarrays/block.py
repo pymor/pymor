@@ -128,11 +128,11 @@ class BlockVectorArray(VectorArray):
         lincombs = [block.lincomb(coefficients) for block in self._blocks]
         return BlockVectorArray(lincombs, self.space)
 
-    def l2_norm(self):
-        return np.sqrt(np.sum(np.array([block.l2_norm2() for block in self._blocks]), axis=0))
+    def _norm(self):
+        return np.sqrt(self.norm2())
 
-    def l2_norm2(self):
-        return np.sum(np.array([block.l2_norm2() for block in self._blocks]), axis=0)
+    def _norm2(self):
+        return np.sum(np.array([block.norm2() for block in self._blocks]), axis=0)
 
     def sup_norm(self):
         return np.max(np.array([block.sup_norm() for block in self._blocks]), axis=0)

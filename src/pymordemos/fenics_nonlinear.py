@@ -127,7 +127,7 @@ def fenics_nonlinear_demo(args):
         t_rom = time.time() - tic
 
         U_red = reductor.reconstruct(u_red)
-        errs.append(((U - U_red).l2_norm() / U.l2_norm())[0])
+        errs.append(((U - U_red).norm() / U.norm())[0])
         speedups.append(t_fom / t_rom)
     print(f'Maximum relative ROM error: {max(errs)}')
     print(f'Median of ROM speedup: {np.median(speedups)}')

@@ -69,7 +69,7 @@ err_max = -1.
 for mu in parameter_space.sample_randomly(10):
     U_RB = (reductor.reconstruct(rom.solve(mu)))
     U = fom.solve(mu)
-    err = np.max((U_RB-U).l2_norm())
+    err = np.max((U_RB-U).norm())
     if err > err_max:
         err_max = err
         mu_max = mu

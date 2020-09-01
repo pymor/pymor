@@ -179,7 +179,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
         raise ValueError('Unknown solver type')
 
     if check_finite:
-        if not np.isfinite(np.all(R.l2_norm())):
+        if not np.isfinite(np.all(R.norm())):
             raise InversionError('Result contains non-finite values')
 
     return R
@@ -227,7 +227,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
     if outer_v is None:
         outer_v = []
 
-    b_norm = b.l2_norm()[0]
+    b_norm = b.norm()[0]
     if b_norm == 0:
         b_norm = 1
 
@@ -239,16 +239,16 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
             callback(x)
 
         # -- check stopping condition
-        r_norm = r_outer.l2_norm()[0]
+        r_norm = r_outer.norm()[0]
         if r_norm < tol * b_norm or r_norm < tol:
             break
 
         # -- inner LGMRES iteration
         vs0 = -r_outer   # -psolve(r_outer)
-        inner_res_0 = vs0.l2_norm()[0]
+        inner_res_0 = vs0.norm()[0]
 
         if inner_res_0 == 0:
-            rnorm = r_outer.l2_norm()[0]
+            rnorm = r_outer.norm()[0]
             raise RuntimeError("Preconditioner returned a zero vector; "
                                "|v| ~ %.1g, |M v| = 0" % rnorm)
 
@@ -316,7 +316,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
                 alpha = v.inner(v_new)[0, 0]
                 hcur.append(alpha)
                 v_new.axpy(-alpha, v)  # v_new -= alpha*v
-            hcur.append(v_new.l2_norm()[0])
+            hcur.append(v_new.norm()[0])
 
             if hcur[-1] == 0:
                 # Exact solution found; bail out.
@@ -362,7 +362,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
             dx.axpy(yc, w)  # dx += w*yc
 
         # -- Store LGMRES augmentation vectors
-        nx = dx.l2_norm()[0]
+        nx = dx.norm()[0]
         if store_outer_Av:
             q = np.dot(hess, y)
             ax = vs[0]*q[0]
@@ -513,13 +513,13 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
     u = b.copy()
     x = A.source.zeros()
     alfa = 0
-    beta = u.l2_norm()[0]
+    beta = u.norm()[0]
     w = A.source.zeros()
 
     if beta > 0:
         u.scal(1/beta)
         v = A.apply_adjoint(u)
-        alfa = v.l2_norm()[0]
+        alfa = v.norm()[0]
 
     if alfa > 0:
         v.scal(1/alfa)
@@ -562,13 +562,13 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         %                alfa*v  =  A'*u  -  beta*v.
         """
         u = A.apply(v) - u * alfa
-        beta = u.l2_norm()[0]
+        beta = u.norm()[0]
 
         if beta > 0:
             u.scal(1/beta)
             anorm = np.sqrt(anorm**2 + alfa**2 + beta**2 + damp**2)
             v = A.apply_adjoint(u) - v * beta
-            alfa = v.l2_norm()[0]
+            alfa = v.norm()[0]
             if alfa > 0:
                 v.scal(1 / alfa)
 
@@ -597,7 +597,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
         x = x + w * t1
         w = v + w * t2
-        ddnorm = ddnorm + dk.l2_norm2()[0]
+        ddnorm = ddnorm + dk.norm2()[0]
 
         # Use a plane rotation on the right to eliminate the
         # super-diagonal element (theta) of the upper-bidiagonal matrix.
@@ -766,7 +766,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         print(f'btol = {btol:8.2e}             maxiter = {maxiter:8g}\n')
 
     u = b.copy()
-    beta = u.l2_norm()[0]
+    beta = u.norm()[0]
 
     v = A.source.zeros()
     alpha = 0
@@ -774,7 +774,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
     if beta > 0:
         u.scal(1 / beta)
         v = A.apply_adjoint(u)
-        alpha = v.l2_norm()[0]
+        alpha = v.norm()[0]
 
     if alpha > 0:
         v.scal(1 / alpha)
@@ -848,12 +848,12 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         #        alpha*v  =  A'*u  -  beta*v.
 
         u = A.apply(v) - u * alpha
-        beta = u.l2_norm()[0]
+        beta = u.norm()[0]
 
         if beta > 0:
             u.scal(1 / beta)
             v = A.apply_adjoint(u) - v * beta
-            alpha = v.l2_norm()[0]
+            alpha = v.norm()[0]
             if alpha > 0:
                 v.scal(1 / alpha)
 
@@ -928,7 +928,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
         # Compute norms for convergence testing.
         normar = abs(zetabar)
-        normx = x.l2_norm()[0]
+        normx = x.norm()[0]
 
         # Now use these norms to estimate certain other quantities,
         # some of which will be small near a solution.

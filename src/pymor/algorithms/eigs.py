@@ -130,7 +130,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
         ews = ew[idx]
         evs = ev[:, idx]
 
-        rres = f.l2_norm()[0] * np.abs(evs[l - 1]) / np.abs(ews)
+        rres = f.norm()[0] * np.abs(evs[l - 1]) / np.abs(ews)
 
         # increase k by one in order to keep complex conjugate pairs together
         if ews[k - 1].imag != 0 and ews[k - 1].imag + ews[k].imag < complex_pair_tol:
@@ -171,7 +171,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
 def _arnoldi(A, E, l, b):
     """Compute an Arnoldi factorization."""
 
-    v = b * (1 / b.l2_norm()[0])
+    v = b * (1 / b.norm()[0])
 
     H = np.zeros((l, l))
     V = A.source.empty(reserve=l)
@@ -194,7 +194,7 @@ def _extend_arnoldi(A, E, V, H, f, p):
 
     k = len(V)
 
-    res = f.l2_norm()[0]
+    res = f.norm()[0]
     H = np.pad(H, ((0, p), (0, p)))
     H[k, k - 1] = res
     v = f * (1 / res)

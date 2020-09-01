@@ -38,10 +38,10 @@ class WrappedVector(CopyOnWriteVector):
     def inner(self, other):
         return self._impl.inner(other._impl)
 
-    def l2_norm(self):
+    def norm(self):
         return math.sqrt(self.inner(self))
 
-    def l2_norm2(self):
+    def norm2(self):
         return self.inner(self)
 
     def sup_norm(self):

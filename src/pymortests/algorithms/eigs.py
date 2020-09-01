@@ -23,4 +23,4 @@ def test_eigs(n, k, which):
     Aop = NumpyMatrixOperator(A)
     ew, ev = eigs(Aop, k=k, which=which)
 
-    assert np.sum((Aop.apply(ev) - ev * ew).l2_norm()) < 1e-4
+    assert np.sum((Aop.apply(ev) - ev * ew).norm()) < 1e-4

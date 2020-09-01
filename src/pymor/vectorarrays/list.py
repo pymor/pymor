@@ -35,11 +35,11 @@ class Vector(BasicObject):
         raise NotImplementedError
 
     @abstractmethod
-    def l2_norm(self):
+    def norm(self):
         pass
 
     @abstractmethod
-    def l2_norm2(self):
+    def norm2(self):
         pass
 
     def sup_norm(self):
@@ -212,16 +212,16 @@ class ComplexifiedVector(Vector):
             result += self.imag_part.inner(other.imag_part)
         return result
 
-    def l2_norm(self):
-        result = self.real_part.l2_norm()
+    def norm(self):
+        result = self.real_part.norm()
         if self.imag_part is not None:
-            result = np.linalg.norm([result, self.imag_part.l2_norm()])
+            result = np.linalg.norm([result, self.imag_part.norm()])
         return result
 
-    def l2_norm2(self):
-        result = self.real_part.l2_norm2()
+    def norm2(self):
+        result = self.real_part.norm2()
         if self.imag_part is not None:
-            result += self.imag_part.l2_norm2()
+            result += self.imag_part.norm2()
         return result
 
     def sup_norm(self):
@@ -315,10 +315,10 @@ class NumpyVector(CopyOnWriteVector):
         assert self.dim == other.dim
         return np.sum(self._array.conj() * other._array)
 
-    def l2_norm(self):
+    def norm(self):
         return np.linalg.norm(self._array)
 
-    def l2_norm2(self):
+    def norm2(self):
         return np.sum((self._array * self._array.conj()).real)
 
     def dofs(self, dof_indices):
@@ -495,11 +495,11 @@ class ListVectorArray(VectorArray):
 
         return ListVectorArray(RL, self.space)
 
-    def l2_norm(self):
-        return np.array([v.l2_norm() for v in self._list])
+    def _norm(self):
+        return np.array([v.norm() for v in self._list])
 
-    def l2_norm2(self):
-        return np.array([v.l2_norm2() for v in self._list])
+    def _norm2(self):
+        return np.array([v.norm2() for v in self._list])
 
     def sup_norm(self):
         if self.dim == 0:

@@ -242,8 +242,8 @@ We can now derive the absolute and relative errors on the training set as
 
 .. jupyter-execute::
 
-    absolute_errors = (U - U_red).l2_norm()
-    relative_errors = (U - U_red).l2_norm() / U.l2_norm()
+    absolute_errors = (U - U_red).norm()
+    relative_errors = (U - U_red).norm() / U.norm()
 
 The average absolute error amounts to
 

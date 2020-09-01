@@ -27,25 +27,24 @@ import pymortests.strategies as pyst
 
 @pyst.given_vector_arrays(count=2,
                           tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)]),
-                          norms=hyst.sampled_from([('sup', np.inf), ('l2', 2)]))
-def test_almost_equal(vector_arrays, tolerances, norms):
+                          sup_norm=hyst.booleans())
+def test_almost_equal(vector_arrays, tolerances, sup_norm):
     v1, v2 = vector_arrays
     rtol, atol = tolerances
-    n, o = norms
     try:
         dv1 = v1.to_numpy()
         dv2 = v2.to_numpy()
     except NotImplementedError:
         dv1 = dv2 = None
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
-        r = almost_equal(v1[ind1], v2[ind2], norm=n, rtol=rtol, atol=atol)
+        r = almost_equal(v1[ind1], v2[ind2], sup_norm=sup_norm, rtol=rtol, atol=atol)
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1),)
         if dv1 is not None:
             if dv2.shape[1] == 0:
                 continue
-            assert np.all(r == (np.linalg.norm(indexed(dv1, ind1) - indexed(dv2, ind2), ord=o, axis=1)
-                                <= atol + rtol * np.linalg.norm(indexed(dv2, ind2), ord=o, axis=1)))
+            assert np.all(r == (np.linalg.norm(indexed(dv1, ind1) - indexed(dv2, ind2), ord=np.inf if sup_norm else None, axis=1)
+                                <= atol + rtol * np.linalg.norm(indexed(dv2, ind2), ord=np.inf if sup_norm else None, axis=1)))
 
 
 def test_almost_equal_product(operator_with_arrays_and_products):
@@ -56,30 +55,22 @@ def test_almost_equal_product(operator_with_arrays_and_products):
     v2.append(v1[:len(v1) // 2])
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)):
-            norm = induced_norm(product)
-
-            r = almost_equal(v1[ind1], v2[ind2], norm=norm)
-            assert isinstance(r, np.ndarray)
-            assert r.shape == (v1.len_ind(ind1),)
-            assert np.all(r == (norm(v1[ind1] - v2[ind2])
-                                <= atol + rtol * norm(v2[ind2])))
 
             r = almost_equal(v1[ind1], v2[ind2], product=product)
             assert isinstance(r, np.ndarray)
             assert r.shape == (v1.len_ind(ind1),)
-            assert np.all(r == (norm(v1[ind1] - v2[ind2])
-                                <= atol + rtol * norm(v2[ind2])))
+            assert np.all(r == ((v1[ind1] - v2[ind2]).norm(product)
+                                <= atol + rtol * (v2[ind2]).norm(product)))
 
 
 @pyst.given_vector_arrays(count=1, index_strategy=pyst.pairs_same_length,
                           tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)]),
-                          norm=hyst.sampled_from(['sup', 'l2']))
+                          sup_norm=hyst.booleans())
 @settings(print_blob=True)
-def test_almost_equal_self(vectors_and_indices, tolerances, norm):
+def test_almost_equal_self(vectors_and_indices, tolerances, sup_norm):
     v, (ind,_) = vectors_and_indices
     rtol, atol = tolerances
-    n = norm
-    r = almost_equal(v[ind], v[ind], norm=n)
+    r = almost_equal(v[ind], v[ind], sup_norm=sup_norm)
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind),)
     assert np.all(r)
@@ -87,50 +78,46 @@ def test_almost_equal_self(vectors_and_indices, tolerances, norm):
     # the first assumption here is a direct translation of the old loop abort
     assume(v.len_ind(ind) > 0 and np.max(v[ind].sup_norm() > 0))
     # the second one accounts for old input missing very-near zero data
+    if sup_norm:
+        norm = lambda U: U.sup_norm()
+    else:
+        norm = lambda U: U.norm()
     tol_min = np.min(np.abs(tolerances))
-    v_n_min = np.min(getattr(v[ind], n + '_norm')())
+    v_n_min = np.min(norm(v[ind]))
     assume(v_n_min > tol_min)
 
     c = v.copy()
-    c.scal(atol * (1 - 1e-10) / (np.max(getattr(v[ind], n + '_norm')())))
-    assert np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=n))
+    c.scal(atol * (1 - 1e-10) / (np.max(norm(v[ind]))))
+    assert np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, sup_norm=sup_norm))
 
     if atol > 0:
         c = v.copy()
-        c.scal(2. * atol / (np.max(getattr(v[ind], n + '_norm')())))
-        assert not np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=n))
+        c.scal(2. * atol / (np.max(norm(v[ind]))))
+        assert not np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, sup_norm=sup_norm))
 
     c = v.copy()
     c.scal(1. + rtol * 0.9)
-    assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
+    assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, sup_norm=sup_norm))
 
     if rtol > 0:
         c = v.copy()
         c.scal(2. + rtol * 1.1)
-        assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
+        assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, sup_norm=sup_norm))
 
     c = v.copy()
-    c.scal(1. + atol * 0.9 / np.max(getattr(v[ind], n + '_norm')()))
-    assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
+    c.scal(1. + atol * 0.9 / np.max(norm(v[ind])))
+    assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, sup_norm=sup_norm))
 
     if atol > 0 or rtol > 0:
         c = v.copy()
-        c.scal(1 + rtol * 1.1 + atol * 1.1 / np.max(getattr(v[ind], n + '_norm')()))
-        assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=n))
+        c.scal(1 + rtol * 1.1 + atol * 1.1 / np.max(norm(v[ind])))
+        assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, sup_norm=sup_norm))
 
 
 def test_almost_equal_self_product(operator_with_arrays_and_products):
     _, _, v, _, product, _ = operator_with_arrays_and_products
-    norm = induced_norm(product)
     for ind in valid_inds(v):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)):
-            r = almost_equal(v[ind], v[ind], norm=norm)
-            assert isinstance(r, np.ndarray)
-            assert r.shape == (v.len_ind(ind),)
-            assert np.all(r)
-            if v.len_ind(ind) == 0 or np.max(v[ind].sup_norm() == 0):
-                continue
-
             r = almost_equal(v[ind], v[ind], product=product)
             assert isinstance(r, np.ndarray)
             assert r.shape == (v.len_ind(ind),)
@@ -139,36 +126,30 @@ def test_almost_equal_self_product(operator_with_arrays_and_products):
                 continue
 
             c = v.copy()
-            c.scal(atol * (1 - 1e-10) / (np.max(norm(v[ind]))))
-            assert np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=norm))
+            c.scal(atol * (1 - 1e-10) / (np.max((v[ind]).norm(product))))
             assert np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, product=product))
 
             if atol > 0:
                 c = v.copy()
-                c.scal(2. * atol / (np.max(norm(v[ind]))))
-                assert not np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, norm=norm))
+                c.scal(2. * atol / (np.max((v[ind]).norm(product))))
                 assert not np.all(almost_equal(c[ind], c.zeros(v.len_ind(ind)), atol=atol, rtol=rtol, product=product))
 
             c = v.copy()
             c.scal(1. + rtol * 0.9)
-            assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=norm))
             assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, product=product))
 
             if rtol > 0:
                 c = v.copy()
                 c.scal(2. + rtol * 1.1)
-                assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=norm))
                 assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, product=product))
 
             c = v.copy()
-            c.scal(1. + atol * 0.9 / np.max(np.max(norm(v[ind]))))
-            assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=norm))
+            c.scal(1. + atol * 0.9 / np.max(np.max((v[ind]).norm(product))))
             assert np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, product=product))
 
             if atol > 0 or rtol > 0:
                 c = v.copy()
-                c.scal(1 + rtol * 1.1 + atol * 1.1 / np.max(np.max(norm(v[ind]))))
-                assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, norm=norm))
+                c.scal(1 + rtol * 1.1 + atol * 1.1 / np.max(np.max((v[ind]).norm(product))))
                 assert not np.all(almost_equal(c[ind], v[ind], atol=atol, rtol=rtol, product=product))
 
 
@@ -176,10 +157,10 @@ def test_almost_equal_self_product(operator_with_arrays_and_products):
 def test_almost_equal_incompatible(vector_arrays):
     v1, v2 = vector_arrays
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
-        for n in ['sup', 'l2']:
+        for sup_norm in (False, True):
             c1, c2 = v1.copy(), v2.copy()
             with pytest.raises(Exception):
-                almost_equal(c1[ind1], c2[ind2], norm=n)
+                almost_equal(c1[ind1], c2[ind2], sup_norm=sup_norm)
 
 
 @given(pyst.base_vector_arrays(count=2))
