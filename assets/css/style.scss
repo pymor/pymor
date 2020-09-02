@@ -1,0 +1,53 @@
+---
+---
+
+$header-bg-color: #3155a0;
+
+$section-headings-color: #3155a0;
+
+@import "{{ site.theme }}";
+
+.page-header {
+  background-image: none;
+  background-color: $header-bg-color;
+
+  @include large {
+    padding: 0.5rem 6rem;
+  }
+
+  @include medium {
+    padding: 0.5rem 4rem;
+  }
+
+  @include small {
+    padding: 0.5rem 1rem;
+  }
+}
+
+.project-tagline {
+  margin-bottom: 0.5rem;
+  opacity: 1.0;
+}
+
+.banner-logo {
+  @include large {
+    padding: 3rem 6rem;
+  }
+
+  @include medium {
+    padding: 3rem 4rem;
+  }
+
+  @include small {
+    padding: 2rem 1rem;
+  }
+
+  max-width: 100%;
+
+  text-align: center;
+}
+
+.logo {
+  width: 100%;
+  max-width: 500px;
+}
