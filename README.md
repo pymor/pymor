@@ -1,3 +1,5 @@
+![pyMOR Logo](./logo/pymor_logo.svg)
+
 pyMOR - Model Order Reduction with Python
 =========================================
 
