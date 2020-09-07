@@ -77,4 +77,4 @@ PYBIND11_MODULE(model, m)
         return py::buffer_info(
             vec.data(), sizeof(double), py::format_descriptor<double>::format(), 1, {vec.dim}, {sizeof(double)});
     });
-}
+} // end PYBIND11_MODULE(model, m)

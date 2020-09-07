@@ -116,7 +116,7 @@ construct the right-hand side vector for our problem.
 
 
 .. literalinclude:: minimal_cpp_demo/model.cc
-    :lines: 76-79
+    :lines: 76-80
     :language: cpp
 
 
