@@ -9,7 +9,7 @@
     overflow:hidden;
 }
 
-.cell_output {
+.output.text_html {
     display: inline-block;
 }
 
