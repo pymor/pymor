@@ -160,7 +160,7 @@ html_theme_options = {
     'base_url': 'https://gh-docs.pymor.org/',
     'html_minify': on_gitlab_ci,
     'css_minify': on_gitlab_ci,
-    'nav_title': 'pyMOR Documentation',
+    'nav_title': 'Documentation',
     'globaltoc_depth': 5,
     'theme_color': 'indigo',
     'color_primary': 'indigo',
