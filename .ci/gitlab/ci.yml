@@ -18,7 +18,7 @@ stages:
             - stuck_or_timeout_failure
             - api_failure
     rules:
-        - if: '$CI_COMMIT_REF_NAME =~ /^staging.*/'
+        - if: $CI_COMMIT_REF_NAME =~ /^staging.*/
           when: never
         - when: on_success
     variables:
@@ -60,7 +60,7 @@ stages:
     environment:
         name: safe
     rules:
-        - if: '${CI_COMMIT_REF_NAME} =~ /^github/PR.*/'
+        - if: $CI_COMMIT_REF_NAME =~ /^github\/PR_.*/
           when: never
         - when: on_success
     stage: deploy
@@ -98,7 +98,7 @@ stages:
     extends: .docker-in-docker
     stage: install_checks
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     variables:
@@ -110,7 +110,7 @@ stages:
     extends: .docker-in-docker
     stage: build
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
 
@@ -119,7 +119,7 @@ stages:
     extends: .test_base
     stage: install_checks
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -167,7 +167,7 @@ ci setup:
 minimal_cpp_demo:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -178,7 +178,7 @@ minimal_cpp_demo:
 mpi 3 6:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -198,7 +198,7 @@ mpi 3 6:
 mpi 3 7:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -218,7 +218,7 @@ mpi 3 7:
 mpi 3 8:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -238,7 +238,7 @@ mpi 3 8:
 notebooks_dir 3 6:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -258,7 +258,7 @@ notebooks_dir 3 6:
 notebooks_dir 3 7:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -278,7 +278,7 @@ notebooks_dir 3 7:
 notebooks_dir 3 8:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -298,7 +298,7 @@ notebooks_dir 3 8:
 pip_installed 3 6:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -318,7 +318,7 @@ pip_installed 3 6:
 pip_installed 3 7:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -338,7 +338,7 @@ pip_installed 3 7:
 pip_installed 3 8:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -358,7 +358,7 @@ pip_installed 3 8:
 vanilla 3 6:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -378,7 +378,7 @@ vanilla 3 6:
 vanilla 3 7:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -398,7 +398,7 @@ vanilla 3 7:
 vanilla 3 8:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -418,7 +418,7 @@ vanilla 3 8:
 numpy_git 3 8:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -438,7 +438,7 @@ numpy_git 3 8:
 oldest 3 6:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -459,7 +459,7 @@ ci_weekly 3 6:
     extends: .pytest
     timeout: 5h
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     services:
         - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
@@ -471,7 +471,7 @@ ci_weekly 3 7:
     extends: .pytest
     timeout: 5h
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     services:
         - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
@@ -483,7 +483,7 @@ ci_weekly 3 8:
     extends: .pytest
     timeout: 5h
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     services:
         - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
@@ -494,7 +494,7 @@ ci_weekly 3 8:
 submit vanilla 3 6:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     image: pymor/python:3.6
@@ -505,7 +505,7 @@ submit vanilla 3 6:
 submit vanilla 3 7:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     image: pymor/python:3.7
@@ -516,7 +516,7 @@ submit vanilla 3 7:
 submit vanilla 3 8:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     image: pymor/python:3.8
@@ -527,7 +527,7 @@ submit vanilla 3 8:
 submit numpy_git 3 8:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     image: pymor/python:3.8
@@ -538,7 +538,7 @@ submit numpy_git 3 8:
 submit oldest 3 6:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     image: pymor/python:3.6
@@ -549,7 +549,7 @@ submit oldest 3 6:
 submit ci_weekly 3 6:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     image: pymor/python:3.6
     variables:
@@ -559,7 +559,7 @@ submit ci_weekly 3 6:
 submit ci_weekly 3 7:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     image: pymor/python:3.7
     variables:
@@ -569,7 +569,7 @@ submit ci_weekly 3 7:
 submit ci_weekly 3 8:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     image: pymor/python:3.8
     variables:
@@ -585,7 +585,7 @@ pip 1/3:
         - name: pymor/pypi-mirror_stable_py3.6:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     stage: install_checks
@@ -598,7 +598,7 @@ pip 2/3:
         - name: pymor/pypi-mirror_stable_py3.7:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     stage: install_checks
@@ -611,7 +611,7 @@ pip 3/3:
         - name: pymor/pypi-mirror_stable_py3.8:6482589aa9345c76ae77437661ecb4d67a1963d4
           alias: pypi_mirror
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     stage: install_checks
@@ -639,9 +639,9 @@ trigger_binder 1/3:
     stage: deploy
     image: alpine:3.10
     rules:
-        - if: '$CI_COMMIT_REF_NAME == "master"'
+        - if: $CI_COMMIT_REF_NAME == "master"
           when: on_success
-        - if: '$CI_COMMIT_TAG'
+        - if: $CI_COMMIT_TAG != null
           when: on_success
     before_script:
         - apk --update add bash python3
@@ -654,9 +654,9 @@ trigger_binder 2/3:
     stage: deploy
     image: alpine:3.10
     rules:
-        - if: '$CI_COMMIT_REF_NAME == "master"'
+        - if: $CI_COMMIT_REF_NAME == "master"
           when: on_success
-        - if: '$CI_COMMIT_TAG'
+        - if: $CI_COMMIT_TAG != null
           when: on_success
     before_script:
         - apk --update add bash python3
@@ -669,9 +669,9 @@ trigger_binder 3/3:
     stage: deploy
     image: alpine:3.10
     rules:
-        - if: '$CI_COMMIT_REF_NAME == "master"'
+        - if: $CI_COMMIT_REF_NAME == "master"
           when: on_success
-        - if: '$CI_COMMIT_TAG'
+        - if: $CI_COMMIT_TAG != null
           when: on_success
     before_script:
         - apk --update add bash python3
@@ -805,9 +805,9 @@ pypi deploy:
     
     
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
-        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
+        - if: $CI_COMMIT_REF_NAME =~ /^github.*/
           when: never
         - when: on_success
     variables:
@@ -843,7 +843,7 @@ docs build:
     extends: .test_base
     tags: [mike]
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -873,10 +873,11 @@ docs:
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
-        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
+        - if: $CI_COMMIT_REF_NAME =~ /^github\/PR_.*/
           when: never
+        - when: on_success
     environment:
         name: safe
 

@@ -20,7 +20,7 @@ stages:
             - stuck_or_timeout_failure
             - api_failure
     rules:
-        - if: '$CI_COMMIT_REF_NAME =~ /^staging.*/'
+        - if: $CI_COMMIT_REF_NAME =~ /^staging.*/
           when: never
         - when: on_success
     variables:
@@ -62,7 +62,7 @@ stages:
     environment:
         name: safe
     rules:
-        - if: '${CI_COMMIT_REF_NAME} =~ /^github/PR.*/'
+        - if: $CI_COMMIT_REF_NAME =~ /^github\/PR_.*/
           when: never
         - when: on_success
     stage: deploy
@@ -100,7 +100,7 @@ stages:
     extends: .docker-in-docker
     stage: install_checks
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     variables:
@@ -112,7 +112,7 @@ stages:
     extends: .docker-in-docker
     stage: build
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
 
@@ -121,7 +121,7 @@ stages:
     extends: .test_base
     stage: install_checks
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -165,7 +165,7 @@ ci setup:
 minimal_cpp_demo:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -179,7 +179,7 @@ minimal_cpp_demo:
 {{script}} {{py[0]}} {{py[2]}}:
     extends: .pytest
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -207,7 +207,7 @@ ci_weekly {{py[0]}} {{py[2]}}:
     extends: .pytest
     timeout: 5h
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     services:
         - name: pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
@@ -221,7 +221,7 @@ ci_weekly {{py[0]}} {{py[2]}}:
 submit {{script}} {{py[0]}} {{py[2]}}:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     image: pymor/python:{{py}}
@@ -235,7 +235,7 @@ submit {{script}} {{py[0]}} {{py[2]}}:
 submit ci_weekly {{py[0]}} {{py[2]}}:
     extends: .submit
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     image: pymor/python:{{py}}
     variables:
@@ -252,7 +252,7 @@ pip {{loop.index}}/{{loop.length}}:
         - name: pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
           alias: pypi_mirror
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     stage: install_checks
@@ -280,9 +280,9 @@ trigger_binder {{loop.index}}/{{loop.length}}:
     stage: deploy
     image: alpine:3.10
     rules:
-        - if: '$CI_COMMIT_REF_NAME == "master"'
+        - if: $CI_COMMIT_REF_NAME == "master"
           when: on_success
-        - if: '$CI_COMMIT_TAG'
+        - if: $CI_COMMIT_TAG != null
           when: on_success
     before_script:
         - apk --update add bash python3
@@ -320,9 +320,9 @@ pypi deploy:
     {% endfor %}
     {% endfor %}
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
-        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
+        - if: $CI_COMMIT_REF_NAME =~ /^github.*/
           when: never
         - when: on_success
     variables:
@@ -348,7 +348,7 @@ docs build:
     extends: .test_base
     tags: [mike]
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
@@ -378,10 +378,11 @@ docs:
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
     rules:
-        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
-        - if: '$CI_COMMIT_REF_NAME =~ /^github.*/'
+        - if: $CI_COMMIT_REF_NAME =~ /^github\/PR_.*/
           when: never
+        - when: on_success
     environment:
         name: safe
 
