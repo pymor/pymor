@@ -86,7 +86,7 @@ solving the FOM works. Let's take a look, what
     print_source(fom.solve)
 
 This does not look too interesting. Actually, :meth:`~pymor.models.interface.Model.solve`
-is just a thin wrapper around the `solve_` method, which performs the actual
+is just a thin wrapper around the `_solve` method, which performs the actual
 computations. All that :meth:`~pymor.models.interface.Model.solve` does is
 checking the input |parameter values| `mu` and :mod:`caching <pymor.core.cache>`
 the results. So let's take a look at `_solve`:
@@ -119,7 +119,7 @@ the :attr:`~pymor.models.basic.StationaryModel.operator` attribute. So ::
 
     self.operator.apply_inverse(X, mu=mu)
 
-determines the solution of this equation for the |parameter values| mu and a right-hand
+determines the solution of this equation for the |parameter values| `mu` and a right-hand
 side given by `X`. As you see above, the right-hand side of the equation encoded by
 the model is given by the :attr:`~pymor.models.basic.StationaryModel.rhs` attribute.
 However, while :meth:`~pymor.operators.interface.Operator.apply_inverse` expects a
@@ -149,7 +149,7 @@ is one-dimensional, and if we look at the base-class implementation of
 we see that all that :meth:`~pymor.operators.interface.Operator.as_range_array`
 does is to apply the operator to :math:`1`. (`NumpyMatrixOperator.as_range_array`
 has an optimized implementation which just converts the stored matrix to a
-|NumpyVectorArray|.
+|NumpyVectorArray|.)
 
 Let's try solving the model on our own:
 
@@ -328,7 +328,7 @@ So far, we only constructed the ROM in the form of |NumPy| data structures:
 
     type(reduced_operator)
 
-To build a proper pyMOR |Model| for the ROM, which can be used everywhere a |Model| is
+To build a proper pyMOR |Model| for the ROM, which can be used everywhere, a |Model| is
 expected, we first wrap these data structures as pyMOR |Operators|:
 
 
@@ -392,7 +392,7 @@ system matrix and right-hand side. However, if we compare the timings:
 
 we see that we actually don't save anything in terms of computation time,
 as the assembly of the FOM (which involves a lot of full-order dimensional
-operations eats up all of the speedup of the ROM.
+operations) eats up all of the speedup of the ROM.
 
 To solve this issue, we need to find a way to pre-compute everything we need
 to solve the ROM once-and-for-all for all possible |parameter values|. Luckily,
@@ -636,7 +636,7 @@ find some well-known code:
 
     print_source(reductor.project_operators)
 
-We also see that the reductor also takes care of projecting output functionals and
+We also see that the reductor takes care of projecting output functionals and
 inner products associated with the |Model|. The construction of the ROM from
 the projected operators is performed by a separate method:
 
