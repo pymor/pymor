@@ -3,15 +3,15 @@ Tutorial: Projecting a Model
 
 .. include:: jupyter_init.txt
 
-In this tutorial we will show how pyMOR builds a reduced order model by
-projecting the full order model onto a given reduced space. If you want to learn
+In this tutorial we will show how pyMOR builds a reduced-order model by
+projecting the full-order model onto a given reduced space. If you want to learn
 more about building a reduced space, you can find an introduction in
 :doc:`tutorial_basis_generation`.
 
 We will start by revisiting the concept of Galerkin projection and then manually
 project the model ourselves. We will then discuss offline/online decomposition of
 parametric models and see how pyMOR's algorithms automatically handle building
-an online-efficient reduced order model. Along the way, we will take a look at
+an online-efficient reduced-order model. Along the way, we will take a look at
 some of pyMOR's source code to get a better understanding of how pyMOR's components
 fit together.
 
@@ -49,7 +49,7 @@ To get started, we take a look at one solution of the FOM for some fixed |parame
     U = fom.solve([1., 0.1, 0.1, 1.])
     fom.visualize(U)
 
-To build the ROM, we will need a reduced space :meth:`V_N` of small dimension :math:`N`.
+To build the ROM, we will need a reduced space :math:`V_N` of small dimension :math:`N`.
 Any subspace of the :attr:`~pymor.models.interface.Model.solution_space` of the FOM will
 do for our purposes here. We choose to build a basic POD space from some random solution
 snapshots.
@@ -68,7 +68,7 @@ The singular value decay looks promising:
 
 .. jupyter-execute::
 
-    plt.semilogy(singular_values)
+    _ = plt.semilogy(singular_values)
 
 
 
@@ -77,7 +77,7 @@ Solving the Model
 
 Now that we have our FOM and a reduce space :math:`V_N` spanned by `basis`, we can project
 the |Model|. However, before doing so, we need to understand how actually
-solving the FOM works. Let's take a look, what
+solving the FOM works. Let's take a look at what
 :meth:`~pymor.models.interface.Model.solve` actually does:
 
 .. jupyter-execute::
@@ -96,7 +96,7 @@ the results. So let's take a look at `_solve`:
     print_source(fom._solve)
 
 There is some code related to logging and the computation of an output functional.
-The interesting line, however is::
+The interesting line is::
 
     U = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
@@ -106,7 +106,7 @@ What does this mean? If we look at the type of `fom`,
 
     type(fom)
 
-we see that `fom` is a |StationaryModel| which basically encodes an equation of the
+we see that `fom` is a |StationaryModel| which encodes an equation of the
 form
 
 .. math::
@@ -120,8 +120,8 @@ the :attr:`~pymor.models.basic.StationaryModel.operator` attribute. So ::
     self.operator.apply_inverse(X, mu=mu)
 
 determines the solution of this equation for the |parameter values| `mu` and a right-hand
-side given by `X`. As you see above, the right-hand side of the equation encoded by
-the model is given by the :attr:`~pymor.models.basic.StationaryModel.rhs` attribute.
+side given by `X`. As you see above, the right-hand side of the equation is given by the
+:attr:`~pymor.models.basic.StationaryModel.rhs` attribute.
 However, while :meth:`~pymor.operators.interface.Operator.apply_inverse` expects a
 |VectorArray|,  we see that :attr:`~pymor.models.basic.StationaryModel.rhs` is actually
 an |Operator|:
@@ -132,7 +132,7 @@ an |Operator|:
 
 This is due to the fact, that |VectorArrays| in pyMOR cannot be parametric. So to allow
 for parametric right-hand sides, this right-hand side is encoded by a linear |Operator|
-mapping numbers to scalar multiples of the right-hand side vector. Indeed, we see that
+that maps numbers to scalar multiples of the right-hand side vector. Indeed, we see that
 
 .. jupyter-execute::
 
@@ -146,7 +146,7 @@ is one-dimensional, and if we look at the base-class implementation of
     from pymor.operators.interface import Operator
     print_source(Operator.as_range_array)
 
-we see that all that :meth:`~pymor.operators.interface.Operator.as_range_array`
+we see all that :meth:`~pymor.operators.interface.Operator.as_range_array`
 does is to apply the operator to :math:`1`. (`NumpyMatrixOperator.as_range_array`
 has an optimized implementation which just converts the stored matrix to a
 |NumpyVectorArray|.)
@@ -156,8 +156,7 @@ Let's try solving the model on our own:
 .. jupyter-execute::
     :raises:
 
-    mu = [1., 0.1, 0.1, 1.]
-    U2 = fom.operator.apply_inverse(fom.rhs.as_range_array(mu), mu=mu)
+    U2 = fom.operator.apply_inverse(fom.rhs.as_range_array(mu), mu=[1., 0.1, 0.1, 1.])
 
 That did not work too well! In pyMOR, all parametric objects expect the
 `mu` argument to be an instance of the :class:`~pymor.parameters.base.Mu`
@@ -165,7 +164,7 @@ class. :meth:`~pymor.models.interface.Model.solve` is an exception: for
 convenience, it accepts as a `mu` argument anything that can be converted
 to a :class:`~pymor.parameters.base.Mu` instance using the
 :meth:`~pymor.parameters.base.Parameters.parse` method of the
-:class:`pymor.parameters.base.Parameters` class. In fact, if you look
+:class:`~pymor.parameters.base.Parameters` class. In fact, if you look
 back at the implementation of :meth:`~pymor.models.interface.Model.solve`,
 you see the explicit call to :meth:`~pymor.parameters.base.Parameters.parse`.
 We try again:
@@ -186,24 +185,24 @@ to :meth:`~pymor.models.interface.Model.solve`:
 Galerkin Projection
 -------------------
 
-Now we want to build a reduced-order model which approximates the
-FOM solution :math:`U(\mu)` in :math:`V_N`.
-To that end, we call :math:`\mathbb{V}_N` the matrix that has the vectors in
+Now that we understand how the FOM works, we want to build a reduced-order model
+which approximates the FOM solution :math:`U(\mu)` in :math:`V_N`.
+To that end we call :math:`\mathbb{V}_N` the matrix that has the vectors in
 `basis` as columns. The coefficients of the solution of the ROM w.r.t. these
 basis vectors will be called :math:`u_N(\mu)`. We want that
 
 .. math::
 
-    U_N := \mathbb{V}_N \cdot u_N(\mu) \approx u(\mu)
+    U_N := \mathbb{V}_N \cdot u_N(\mu) \approx u(\mu).
 
 Substituting :math:`\mathbb{V}_N \cdot u_N(\mu)` for :math:`u(\mu)` into the equation system
 defining the FOM, we arrive at: 
 
 .. math::
 
-    L(\mathbb{V}_N\cdot u_N(\mu); \mu) = F(\mu)
+    L(\mathbb{V}_N\cdot u_N(\mu); \mu) = F(\mu).
 
-However, this is an overdetermined system: we have decreased the degrees of
+However, this is an over-determined system: we have decreased the degrees of
 freedom of the solution, but did not change the number of constraints (the dimension
 of :math:`F(\mu)`). So in general, this system will not have a solution.
 
@@ -213,7 +212,7 @@ the defect by which :math:`u_N` fails to satisfy the equations:
 
 .. math::
 
-    u_N(\mu) := \operatorname{argmin}_{u \in \mathbb{R}^N} \|F(\mu) - L(\mathbb{V}_N \cdot u)\|
+    u_N(\mu) := \operatorname{argmin}_{u \in \mathbb{R}^N} \|F(\mu) - L(\mathbb{V}_N \cdot u)\|.
 
 While this is a feasible (and sometimes necessary) approach that can be realized with
 pyMOR as well, we choose here an even simpler method by requiring that the residual is
@@ -221,20 +220,20 @@ orthogonal to our reduced space, i.e.
 
 .. math::
 
-    (\mathbb{V}_{N,i}, F(\mu) - L(\mathbb{V}_N \cdot u_N)) = 0 \qquad i=1,...,N
+    (\mathbb{V}_{N,i},\, F(\mu) - L(\mathbb{V}_N \cdot u_N)) = 0 \qquad i=1,...,N,
 
-where the :math:`\mathbb{V}_{N,i}` denotes the columns of :math:`\mathbb{V}_N`,
+where the :math:`\mathbb{V}_{N,i}` denote the columns of :math:`\mathbb{V}_N`
 and :math:`(\cdot, \cdot)` denotes some inner product on our
 :attr:`~pymor.models.interface.Model.solution_space`.
 
 Let us assume that :math:`L` is actually linear for all parameter values :math:`\mu`,
-with matrix representation :math:`\mathbb{A}(\mu)` and that :math:`(\cdot, \cdot)` is the
-Euclidean inner product. Then we arrive at
+and that :math:`\mathbb{A}(\mu)` is its matrix representation. Further assume
+that :math:`(\cdot, \cdot)` is the Euclidean inner product. Then we arrive at
 
 .. math::
 
-    (\mathbb{V}_N^T \cdot \mathbb{A}(\mu) \cdot \mathbb{V}_N) \cdot u_N =
-    \mathbb{V}_N^T \cdot F(\mu)
+    [\mathbb{V}_N^T \cdot \mathbb{A}(\mu) \cdot \mathbb{V}_N] \cdot u_N =
+    \mathbb{V}_N^T \cdot F(\mu),
 
 which is a :math:`N\times N` linear equation system. In the common case that
 :math:`\mathbb{A}(\mu)` is positive definite, the reduced system matrix
@@ -247,19 +246,19 @@ is positive definite as well, and :math:`u_N(\mu)` is uniquely determined. We ca
 :math:`U_N(\mu)` the Galerkin projection of :math:`U(\mu)` onto :math:`V_N`.
 
 You may know the concept of Galerkin projection from finite element methods. Indeed, if our
-equation system comes from a weak formulation of a PDE of the form
+equation system comes from the weak formulation of a PDE of the form
 
 .. math::
 
-    a(v, U(\mu); \mu) = f(v; \mu) \qquad \forall v \in V_h
+    a(v, U(\mu); \mu) = f(v; \mu) \qquad \forall v \in V_h,
 
-and the matrix of the bilinear form :math:`a` w.r.t. a finite element basis is :math:`\mathbb{A}`
-and :math:`F(\mu)` is the vector representation of the linear functional :math:`f` in the dual
-finite element basis, then 
+the matrix of the bilinear form :math:`a(\cdot, \cdot; \mu)` w.r.t. a finite element basis
+is :math:`\mathbb{A}(\mu)`, and :math:`F(\mu)` is the vector representation of the linear
+functional :math:`f` w.r.t. the dual finite element basis, then 
 
 .. math::
 
-    \mathbb{A}_N(\mu) \cdot u_N = \mathbb{V}_N^T \cdot F(\mu) =: F_{red}(\mu)
+    \mathbb{A}_N(\mu) \cdot u_N = \mathbb{V}_N^T \cdot F(\mu)
 
 is exactly the equation system obtained from Galerkin projection of the weak PDE formulation onto
 the reduced space, i.e. solving
@@ -270,19 +269,18 @@ the reduced space, i.e. solving
 
 for :math:`U_N(\mu) \in V_N`. As for finite element methods,
 `Cea's Lemma <https://en.wikipedia.org/wiki/Cea's_lemma>`_ guarantees that when :math:`a(\cdot, \cdot, \mu)`
-is positive definite, then :math:`U_N` will be a quasi-best approximation
+is positive definite, :math:`U_N` will be a quasi-best approximation
 of :math:`U(\mu)` in :math:`V_N`. So, if we have constructed a good reduced space :math:`V_N`, then
 Galerkin projection will also give us a good ROM to actually find a good approximation in :math:`V_N`. 
 
 Let's compute the Galerkin ROM for our FOM at hand with pyMOR. To compute :math:`\mathbb{A}_N` 
 we use the :meth:`~pymor.operators.interface.Operator.apply2` method of `fom.operator`.
 For computing the inner products :math:`\mathbb{V}_N^T \cdot F(\mu)` we can simply compute the
-inner product with the `basis` |VectorArray| using its :meth:`~pymor.VectorArrays.interface.VectorArray.inner`
+inner product with the `basis` |VectorArray| using its :meth:`~pymor.vectorarrays.interface.VectorArray.inner`
 method:
 
 .. jupyter-execute::
 
-    mu = fom.parameters.parse([1., 0.1, 0.1, 1.])
     reduced_operator = fom.operator.apply2(basis, basis, mu=mu)
     reduced_rhs = basis.inner(fom.rhs.as_range_array(mu))
 
@@ -322,13 +320,13 @@ We can also visually inspect our solution and the approximation error:
 Building the ROM
 ----------------
 
-So far, we only constructed the ROM in the form of |NumPy| data structures:
+So far, we have only constructed the ROM in the form of |NumPy| data structures:
 
 .. jupyter-execute::
 
     type(reduced_operator)
 
-To build a proper pyMOR |Model| for the ROM, which can be used everywhere, a |Model| is
+To build a proper pyMOR |Model| for the ROM, which can be used everywhere a |Model| is
 expected, we first wrap these data structures as pyMOR |Operators|:
 
 
@@ -362,8 +360,8 @@ We get exactly the same result, so we have successfully built a pyMOR ROM.
 Offline/Online Decomposition
 ----------------------------
 
-There is one issue however. Our ROM has lost the parametrization as we
-only assembled the reduced order system for a specific set of
+There is one issue however. Our ROM has lost the parametrization since we
+have assembled the reduced-order system for a specific set of
 |parameter values|:
 
 .. jupyter-execute::
@@ -371,8 +369,8 @@ only assembled the reduced order system for a specific set of
     print(fom.parameters)
     print(rom.parameters)
 
-Solving the ROM for a new `mu`, would mean to build a new ROM with updated
-system matrix and right-hand side. However, if we compare the timings:
+Solving the ROM for a new `mu` would mean to build a new ROM with updated
+system matrix and right-hand side. However, if we compare the timings,
 
 .. jupyter-execute::
 
@@ -387,14 +385,13 @@ system matrix and right-hand side. However, if we compare the timings:
     rom.solve()
     tuc = perf_counter()
     print(f'FOM:          {toc-tic:.5f} (s)')
-    print(f'ROM assemble: {tac-tic:.5f} (s)')
+    print(f'ROM assemble: {tac-toc:.5f} (s)')
     print(f'ROM solve:    {tuc-tac:.5f} (s)')
 
-we see that we actually don't save anything in terms of computation time,
-as the assembly of the FOM (which involves a lot of full-order dimensional
-operations) eats up all of the speedup of the ROM.
+we see that we loose a lot of our speedup when we assemble the ROM
+(which involves a lot of full-order dimensional operations).
 
-To solve this issue, we need to find a way to pre-compute everything we need
+To solve this issue we need to find a way to pre-compute everything we need
 to solve the ROM once-and-for-all for all possible |parameter values|. Luckily,
 the system operator of our FOM has a special structure:
 
@@ -404,24 +401,22 @@ the system operator of our FOM has a special structure:
 
 We see that `operator` is a |LincombOperator|, a linear combination of |Operators|
 with coefficients that may either be a number or a parameter-dependent number,
-which is called a |ParameterFunctional| in pyMOR. In our case, all
-:attr:`pymor.operators.constructions.LincombOperator.operators` are
+called a |ParameterFunctional| in pyMOR. In our case, all
+:attr:`~pymor.operators.constructions.LincombOperator.operators` are
 |NumpyMatrixOperators|, which themselves don't depend on any parameter. Only the
-:attr:`pymor.operators.constructions.LincombOperator.coefficients` are
-parameter-dependent.
-
-This allows us to easily build a parametric ROM that no longer requires any
-high-dimensional operations for its solution by projecting each |Operator| in the
-sum separately:
+:attr:`~pymor.operators.constructions.LincombOperator.coefficients` are
+parameter-dependent.  This allows us to easily build a parametric ROM that no longer
+requires any high-dimensional operations for its solution by projecting each
+|Operator| in the sum separately:
 
 .. jupyter-execute::
 
     reduced_operators = [NumpyMatrixOperator(op.apply2(basis, basis))
                          for op in fom.operator.operators]
 
-We could instantiate a new |LincombOperator| of these `reduced_operator` manually.
-An easier way is to use the :meth:`pymor.core.base.ImmutableObject.with_` method,
-which allows us to create a new object of a given |ImmutableObject| by replacing
+We could instantiate a new |LincombOperator| of these `reduced_operators` manually.
+An easier way is to use the :meth:`~pymor.core.base.ImmutableObject.with_` method,
+which allows us to create a new object from a given |ImmutableObject| by replacing
 some of its attributes by new values:
 
 .. jupyter-execute::
@@ -469,8 +464,8 @@ You should see a significant speedup of around two orders of magnitude.
 In model order reduction, problems where the |parameter values| only enter
 as linear coefficients are called parameter separable. Many real-life
 application problems are actually of this type, and as you have seen in this
-section, these problems admit an 'offline/online decomposition' that
-enables the 'online efficient' solution of the ROM.
+section, these problems admit an *offline/online decomposition* that
+enables the *online efficient* solution of the ROM.
 
 For problems that do not allow such an decomposition and also for non-linear
 problems, more advanced techniques are necessary such as
@@ -481,14 +476,14 @@ problems, more advanced techniques are necessary such as
 Letting pyMOR do the work
 -------------------------
 
-So far, we completely built the ROM ourselves. While this may not have been
+So far we completely built the ROM ourselves. While this may not have been
 very complicated after all, you'd expect a model order reduction library
 to do the work for you and to automatically keep an eye on proper
 offline/online decomposition.
 
-In pymor, the heavy lifting is handled by the
+In pyMOR, the heavy lifting is handled by the
 :meth:`~pymor.algorithms.projection.project` method, which is able to perform
-a Gelerkin projection, or more general a Petrov-Galerkin projection, of any
+a Galerkin projection, or more general a Petrov-Galerkin projection, of any
 pyMOR |Operator|. Let's see, how it works:
 
 .. jupyter-execute::
@@ -501,13 +496,11 @@ pyMOR |Operator|. Let's see, how it works:
 The arguments of :meth:`~pymor.algorithms.projection.project` are the |Operator|
 to project, a reduced basis for the :attr:`~pymor.operators.interface.Operator.range`
 (test) space and a reduced basis for the :attr:`~pymor.operators.interface.Operator.source`
-(ansatz) space of the |Operator|. If no projection in a space shall be performed
-`None` is passed.
-
-Since we are performing Galerkin-projection, where test space into which the residual
-is projected is the same as the ansatz space in which the solution is determined,
-we pass `basis` twice when projecting `fom.operator`. `fom.rhs` only takes scalars
-as input, so we do not need to project anything in the ansatz space.
+(ansatz) space of the |Operator|. If no projection for one of these spaces shall be performed,
+`None` is passed.  Since we are performing Galerkin-projection, where test space into
+which the residual is projected is the same as the ansatz space in which the solution
+is determined, we pass `basis` twice when projecting `fom.operator`. Note that
+`fom.rhs` only takes scalars as input, so we do not need to project anything in the ansatz space.
 
 If we check the result,
 
@@ -537,7 +530,7 @@ The actual work is done by the :meth:`~pymor.algorithms.rules.RuleTable.apply` m
 of the `ProjectRules` object. 
 
 `ProjectRules` is a |RuleTable|, an ordered list of conditions with corresponding actions.
-The list is traversed from top to bottom and the action of the first matching condition is
+The list is traversed from top to bottom, and the action of the first matching condition is
 executed. These |RuleTables| can also be modified by the user to customize the behavior
 of an algorithm for a specific application. We will not go into the details of defining
 or modifying a |RuleTable| here, but we will look at the rules of `ProjectRules` by looking
@@ -562,16 +555,16 @@ be the first matching rule. We can take a look at it:
     ProjectRules.rules[8]
 
 The implementation of the action for |LincombOperators| uses the
-:meth:`~pymor.algorithms.rules.RuleTable.replace_children` method of |RuleTable|
+:meth:`~pymor.algorithms.rules.RuleTable.replace_children` method of |RuleTable|,
 which will recursively apply `ProjectionRules` to all
 :meth:`children <pymor.algorithms.rules.RuleTable.get_children>` of the
-|Operator|, collects the results, and then returns a new |Operator| where
-the children have been replaced by the results of the application of the
+|Operator|, collect the results and then return a new |Operator| where
+the children have been replaced by the results of the applications of the
 |RuleTable|. Here, the :meth:`children <pymor.algorithms.rules.RuleTable.get_children>`
-of an |Operator| are all of its attribute that are either |Operators| or list or dicts
+of an |Operator| are all of its attribute that are either |Operators| or lists or dicts
 of |Operators|.
 
-In our case `ProjectRules` will be applied to all |NumpyMatrixOperators| held by
+In our case, `ProjectRules` will be applied to all |NumpyMatrixOperators| held by
 `fom.operator`. These are linear, non-parametric operators, for which rule 3
 will apply:
 
@@ -589,13 +582,13 @@ will apply:
 This action has special cases for all possible combinations of given or not-given
 :attr:`~pymor.operators.interface.Operator.range` and :attr:`~pymor.operators.interface.Operator.source`
 bases. In our case, the `else` block of the second `else` block applies,
-where we see our old :meth:`pymor.operators.interface.Operator.apply2` call.
+where we see our familiar :meth:`~pymor.operators.interface.Operator.apply2` call.
 
 If you look at the rules of `ProjectRules` again, you see that
-:meth:`~pymor.algorithms.projection.project` can handle many more special cases.
+:meth:`~pymor.algorithms.projection.project` can handle many more cases.
 If all rules fail, a `NoMatchingRuleError` will be raised, in which case, 
 :meth:`~pymor.algorithms.projection.project` will return a
-:class:`~pymor.operators.constructions.ProjectedOperator` which just stores the
+:class:`~pymor.operators.constructions.ProjectedOperator`, which just stores the
 projection bases and performs the projection for each call to the |Operator| interface
 methods. Thus, even when offline/online decomposition fails, still a mathematically correct
 representation of the projected |Operator| is returned to allow testing the approximation
@@ -606,7 +599,7 @@ Using Reductors
 ---------------
 
 Instead of projecting each |Operator| of our FOM separately and then instantiating
-the ROM with the projected |Operators|, we can use a :mod:`reductor <pymor.models.reductors>`,
+the ROM with the projected |Operators|, we can use a :mod:`reductor <pymor.reductors>`,
 which does all the work for us. For a simple Galerkin projection of a |StationaryModel|,
 we can use :class:`~pymor.reductors.basic.StationaryRBReductor`:
 
@@ -626,17 +619,17 @@ Again, we get the same ROM as before:
 
 As an additional feature, :meth:`~pymor.reductors.basic.StationaryRBReductor.reduce`
 allows to project the model onto a smaller dimensional subspace of :math:`V_N` by
-extracting the ROM from a previously computed ROM for the full :math:`V_N`, which
-in particular is useful when assessing the ROM for different basis sizes. The
+extracting the ROM from a previously computed ROM for the full :math:`V_N`. This
+is useful, in particular, when assessing the ROM for different basis sizes. The
 actual projection is handled in the
-:meth:`~pymor.reductor.basic.StationaryRBReductor.project_operators` where we can
-find some well-known code:
+:meth:`~pymor.reductor.basic.StationaryRBReductor.project_operators` method,
+where we can find some well-known code:
 
 .. jupyter-execute::
 
     print_source(reductor.project_operators)
 
-We also see that the reductor takes care of projecting output functionals and
+We see that the reductor also takes care of projecting output functionals and
 inner products associated with the |Model|. The construction of the ROM from
 the projected operators is performed by a separate method:
 
