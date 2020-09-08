@@ -655,3 +655,7 @@ Again, if we look at the source code, we see a familiar expression:
 .. jupyter-execute::
 
     print_source(reductor.reconstruct)
+
+Download the code:
+:jupyter-download:script:`tutorial_projection`
+:jupyter-download:notebook:`tutorial_projection`
