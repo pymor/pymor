@@ -160,11 +160,10 @@ html_theme_options = {
     'base_url': 'https://gh-docs.pymor.org/',
     'html_minify': on_gitlab_ci,
     'css_minify': on_gitlab_ci,
-    'nav_title': 'pyMOR Documentation',
-    'logo_icon': '&#xe869',
+    'nav_title': 'Documentation',
     'globaltoc_depth': 5,
-    'theme_color': '58c9f5',
-    'color_primary': 'light-blue',
+    'theme_color': 'indigo',
+    'color_primary': 'indigo',
     'color_accent': 'blue',
     'version_dropdown': True,
     'version_json': '/versions.json'
@@ -175,7 +174,7 @@ html_title = "%s v%s Manual" % (project, version)
 
 # The name of an image file (within the static path) to place at the top of
 # the sidebar.
-#html_logo = 'scipyshiny_small.png'
+html_logo = '../../logo/pymor_logo_white.svg'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
