@@ -62,21 +62,18 @@ class Function(ParametricObject):
                 return self
             other = ConstantFunction(other, dim_domain=self.dim_domain)
 
-        if self.name != 'LincombFunction':
-            if other.name == 'LincombFunction':
-                assert isinstance(other, LincombFunction)
+        if self.name != 'LincombFunction' or (self.name == 'LincombFunction'
+                                              and not isinstance(self, LincombFunction)):
+            if other.name == 'LincombFunction' and isinstance(other, LincombFunction):
                 functions = (self,) + other.functions
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
             else:
                 functions, coefficients = (self, other), (1., sign)
-        elif other.name == 'LincombFunction':
-            assert isinstance(self, LincombFunction)
-            assert isinstance(other, LincombFunction)
+        elif other.name == 'LincombFunction' and isinstance(other, LincombFunction):
             functions = self.functions + other.functions
             coefficients = self.coefficients + (other.coefficients if sign == 1.
                                                 else tuple(-c for c in other.coefficients))
         else:
-            assert isinstance(self, LincombFunction)
             functions, coefficients = self.functions + (other,), self.coefficients + (sign,)
 
         return LincombFunction(functions, coefficients)
@@ -92,10 +89,10 @@ class Function(ParametricObject):
             other = ConstantFunction(other, dim_domain=self.dim_domain)
 
         # note that 'other' can never be a LincombFunction
-        if self.name != 'LincombFunction':
+        if self.name != 'LincombFunction' or (self.name == 'LincombFunction'
+                                              and not isinstance(self, LincombFunction)):
             functions, coefficients = (other, self), (1., sign)
         else:
-            assert isinstance(self, LincombFunction)
             functions = (other,) + self.functions
             coefficients = (1.,) + (self.coefficients if sign == 1. else tuple(-c for c in self.coefficients))
 
