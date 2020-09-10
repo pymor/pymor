@@ -314,7 +314,7 @@ We can also visually inspect our solution and the approximation error:
 
 .. jupyter-execute::
 
-    fom.visualize((U, U_N, U-U_N), title=('FOM', 'ROM', 'Error'), separate_colorbars=True)
+    fom.visualize((U, U_N, U-U_N), separate_colorbars=True)
 
 
 Building the ROM
