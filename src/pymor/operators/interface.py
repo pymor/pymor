@@ -540,17 +540,10 @@ class Operator(ParametricObject):
         return LincombOperator(operators, coefficients, solver_options=self.solver_options)
 
     def _radd_sub(self, other, sign):
+        if other == 0:
+             return self
         if not isinstance(other, Operator):
             return NotImplemented
-        from pymor.operators.constructions import LincombOperator
-        # note that 'other' can never be a LincombOperator
-        if self.name != 'LincombOperator' or not isinstance(self, LincombOperator)):
-            operators, coefficients = (other, self), (1., sign)
-        else:
-            operators = (other,) + self.operators
-            coefficients = (1.,) + (self.coefficients if sign == 1. else tuple(-c for c in self.coefficients))
-
-        return LincombOperator(operators, coefficients, solver_options=other.solver_options)
 
     def __add__(self, other):
         return self._add_sub(other, 1.)
