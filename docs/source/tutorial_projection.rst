@@ -29,7 +29,7 @@ by an external PDE solver (see :doc:`tutorial_external_solver`).
 
 Since this tutorial is also supposed to give you a better overview of pyMOR's
 architecture, we will not import everything from the :mod:`pymor.basic` convenience 
-module but directly import all classes and methods from there original locations in
+module but directly import all classes and methods from their original locations in
 pyMOR's subpackages.
 
 Let's build a 2-by-2 thermal block |Model| as our FOM:
@@ -75,7 +75,7 @@ The singular value decay looks promising:
 Solving the Model
 -----------------
 
-Now that we have our FOM and a reduce space :math:`V_N` spanned by `basis`, we can project
+Now that we have our FOM and a reduced space :math:`V_N` spanned by `basis`, we can project
 the |Model|. However, before doing so, we need to understand how actually
 solving the FOM works. Let's take a look at what
 :meth:`~pymor.models.interface.Model.solve` actually does:
@@ -130,7 +130,7 @@ an |Operator|:
 
     fom.rhs
 
-This is due to the fact, that |VectorArrays| in pyMOR cannot be parametric. So to allow
+This is due to the fact that |VectorArrays| in pyMOR cannot be parametric. So to allow
 for parametric right-hand sides, this right-hand side is encoded by a linear |Operator|
 that maps numbers to scalar multiples of the right-hand side vector. Indeed, we see that
 
@@ -212,7 +212,7 @@ the defect by which :math:`u_N` fails to satisfy the equations:
 
 .. math::
 
-    u_N(\mu) := \operatorname{argmin}_{u \in \mathbb{R}^N} \|F(\mu) - L(\mathbb{V}_N \cdot u)\|.
+    u_N(\mu) := \operatorname{arg\,min}_{u \in \mathbb{R}^N} \|F(\mu) - L(\mathbb{V}_N \cdot u; \mu)\|.
 
 While this is a feasible (and sometimes necessary) approach that can be realized with
 pyMOR as well, we choose here an even simpler method by requiring that the residual is
@@ -220,7 +220,7 @@ orthogonal to our reduced space, i.e.
 
 .. math::
 
-    (\mathbb{V}_{N,i},\, F(\mu) - L(\mathbb{V}_N \cdot u_N)) = 0 \qquad i=1,...,N,
+    (\mathbb{V}_{N,i},\, F(\mu) - L(\mathbb{V}_N \cdot u_N; \mu)) = 0 \qquad i=1,\ldots,N,
 
 where the :math:`\mathbb{V}_{N,i}` denote the columns of :math:`\mathbb{V}_N`
 and :math:`(\cdot, \cdot)` denotes some inner product on our
@@ -388,7 +388,7 @@ system matrix and right-hand side. However, if we compare the timings,
     print(f'ROM assemble: {tac-toc:.5f} (s)')
     print(f'ROM solve:    {tuc-tac:.5f} (s)')
 
-we see that we loose a lot of our speedup when we assemble the ROM
+we see that we lose a lot of our speedup when we assemble the ROM
 (which involves a lot of full-order dimensional operations).
 
 To solve this issue we need to find a way to pre-compute everything we need
