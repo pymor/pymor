@@ -115,17 +115,15 @@ class Function(ParametricObject):
             return NotImplemented
         if isinstance(other, (Number, ParameterFunctional)):
             return LincombFunction([self], [other])
-        if self.name != 'ProductFunction':
+        if self.name != 'ProductFunction' or not isinstance(self, ProductFunction):
             if isinstance(other, ProductFunction) and other.name == 'ProductFunction':
                 return other.with_(functions=other.functions + [self])
             else:
                 return ProductFunction([self, other])
         elif isinstance(other, ProductFunction) and other.name == 'ProductFunction':
-            assert isinstance(self, ProductFunction)
             functions = self.functions + other.functions
             return ProductFunction(functions)
         else:
-            assert isinstance(self, ProductFunction)
             return self.with_(functions=self.functions + [other])
 
     __rmul__ = __mul__
