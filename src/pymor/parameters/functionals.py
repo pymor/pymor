@@ -54,8 +54,7 @@ class ParameterFunctional(ParametricObject):
                 return self
             other = ConstantParameterFunctional(other)
 
-        if self.name != 'LincombParameterFunctional' or (self.name == 'LincombParameterFunctional'
-                                                         and not isinstance(self, LincombParameterFunctional)):
+        if self.name != 'LincombParameterFunctional' or not isinstance(self, LincombParameterFunctional):
             if other.name == 'LincombParameterFunctional' and isinstance(other, LincombParameterFunctional):
                 functionals = (self,) + other.functionals
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
@@ -79,8 +78,7 @@ class ParameterFunctional(ParametricObject):
             return self
         other = ConstantParameterFunctional(other)
 
-        if self.name != 'LincombParameterFunctional' or (self.name == 'LincombParameterFunctional'
-                                                         and not isinstance(self, LincombParameterFunctional)):
+        if self.name != 'LincombParameterFunctional' or not isinstance(self, LincombParameterFunctional):
             functionals, coefficients = (other, self), (1., sign)
         else:
             functionals = (other,) + self.functionals
@@ -103,8 +101,7 @@ class ParameterFunctional(ParametricObject):
     def __mul__(self, other):
         if not isinstance(other, (Number, ParameterFunctional)):
             return NotImplemented
-        if self.name != 'ProductParameterFunctional' or (self.name == 'LincombParameterFunctional'
-                                                         and not isinstance(self, LincombParameterFunctional)):
+        if self.name != 'ProductParameterFunctional' or not isinstance(self, ProductParameterFunctional):
             if isinstance(other, ProductParameterFunctional) and other.name == 'ProductParameterFunctional':
                 return other.with_(factors=other.factors + [self])
             else:

@@ -524,8 +524,7 @@ class Operator(ParametricObject):
         if not isinstance(other, Operator):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
-        if self.name != 'LincombOperator' or (self.name == 'LincombOperator'
-                                              and not isinstance(self, LincombOperator)):
+        if self.name != 'LincombOperator' or not isinstance(self, LincombOperator):
             if other.name == 'LincombOperator' and isinstance(other, LincombOperator):
                 operators = (self,) + other.operators
                 coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
@@ -545,8 +544,7 @@ class Operator(ParametricObject):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
         # note that 'other' can never be a LincombOperator
-        if self.name != 'LincombOperator' or (self.name == 'LincombOperator'
-                                              and not isinstance(self, LincombOperator)):
+        if self.name != 'LincombOperator' or not isinstance(self, LincombOperator)):
             operators, coefficients = (other, self), (1., sign)
         else:
             operators = (other,) + self.operators
@@ -569,8 +567,7 @@ class Operator(ParametricObject):
     def __mul__(self, other):
         assert isinstance(other, (Number, ParameterFunctional))
         from pymor.operators.constructions import LincombOperator
-        if self.name != 'LincombOperator' or (self.name == 'LincombOperator'
-                                              and not isinstance(self, LincombOperator)):
+        if self.name != 'LincombOperator' or not isinstance(self, LincombOperator):
             return LincombOperator((self,), (other,))
         else:
             return self.with_(coefficients=tuple(c * other for c in self.coefficients))
