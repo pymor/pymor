@@ -79,16 +79,16 @@ class Function(ParametricObject):
         return LincombFunction(functions, coefficients)
 
     def _radd_sub(self, other, sign):
+        assert not isinstance(other, Function)  # handled by __add__/__sub__
         if isinstance(other, Number) and other == 0:
             return self
-        elif not isinstance(other, Function):
-            other = np.array(other)
-            assert other.shape == self.shape_range
-            if np.all(other == 0.):
-                return self
-            other = ConstantFunction(other, dim_domain=self.dim_domain)
 
-        # note that 'other' can never be a LincombFunction
+        other = np.array(other)
+        assert other.shape == self.shape_range
+        if np.all(other == 0.):
+            return self
+        other = ConstantFunction(other, dim_domain=self.dim_domain)
+
         if self.name != 'LincombFunction' or (self.name == 'LincombFunction'
                                               and not isinstance(self, LincombFunction)):
             functions, coefficients = (other, self), (1., sign)
