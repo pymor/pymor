@@ -71,15 +71,14 @@ class ParameterFunctional(ParametricObject):
         return LincombParameterFunctional(functionals, coefficients)
 
     def _radd_sub(self, other, sign):
-        if not isinstance(other, (ParameterFunctional, Number)):
+        assert not isinstance(other, ParameterFunctional)  # handled by __add__/__sub__
+        if not isinstance(other, Number):
             return NotImplemented
 
-        if isinstance(other, Number):
-            if other == 0:
-                return self
-            other = ConstantParameterFunctional(other)
+        if other == 0:
+            return self
+        other = ConstantParameterFunctional(other)
 
-        # note that 'other' can never be a LincombParameterFunctional
         if self.name != 'LincombParameterFunctional' or (self.name == 'LincombParameterFunctional'
                                                          and not isinstance(self, LincombParameterFunctional)):
             functionals, coefficients = (other, self), (1., sign)
