@@ -57,13 +57,8 @@ class rule:
     condition_type = None
 
     def __repr__(self):
-        try:
-            from pygments import highlight
-            from pygments.lexers import PythonLexer
-            from pygments.formatters import Terminal256Formatter
-            return highlight(self.source, PythonLexer(), Terminal256Formatter())
-        except ImportError:
-            return self.source
+        from pymor.tools.formatsrc import source_repr
+        return source_repr(self.action)
 
     @property
     def action_description(self):
