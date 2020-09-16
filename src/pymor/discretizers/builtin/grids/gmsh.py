@@ -41,7 +41,8 @@ def load_gmsh(filename):
 
     if data.gmsh_periodic:
         raise NotImplementedError
-    if not data.cells.keys() <= {'line', 'triangle'}:
+    cells_dict = data.cells_dict
+    if not cells_dict.keys() <= {'line', 'triangle'}:
         raise NotImplementedError
     if not np.all(data.points[:, 2] == 0):
         raise NotImplementedError
@@ -50,7 +51,7 @@ def load_gmsh(filename):
     tic = time.time()
 
     vertices = data.points[:, :2]
-    faces = data.cells['triangle']
+    faces = cells_dict['triangle']
 
     grid = UnstructuredTriangleGrid.from_vertices(vertices, faces)
     toc = time.time()
@@ -61,7 +62,8 @@ def load_gmsh(filename):
 
     boundary_types = {k: v[0] for k, v in data.field_data.items() if v[1] == 1}
 
-    if 'line' in data.cells and 'line' in data.cell_data and 'gmsh:physical' in data.cell_data['line']:
+    cell_data_dict = data.cell_data_dict
+    if 'line' in cells_dict and 'line' in cell_data_dict and 'line' in cell_data_dict['gmsh:physical']:
         superentities = grid.superentities(2, 1)
 
         # find the edge for given vertices.
@@ -71,13 +73,13 @@ def load_gmsh(filename):
                 raise ValueError
             return next(iter(edge_set))
 
-        line_ids = np.array([find_edge(l) for l in data.cells['line']])
+        line_ids = np.array([find_edge(l) for l in cells_dict['line']])
 
         # compute boundary masks for all boundary types.
         masks = {}
         for bt, bt_id in boundary_types.items():
             masks[bt] = [np.zeros(grid.size(1), dtype=bool), np.zeros(grid.size(2), dtype=bool)]
-            masks[bt][0][line_ids] = data.cell_data['line']['gmsh:physical'] == bt_id
+            masks[bt][0][line_ids] = cell_data_dict['gmsh:physical']['line'] == bt_id
             vtx = np.sort(grid.subentities(1, 2)[np.where(masks[bt][0])])
             masks[bt][1][vtx] = True
 
