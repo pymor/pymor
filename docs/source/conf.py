@@ -214,10 +214,13 @@ html_use_modindex = True
 # If nonempty, this is the file name suffix for HTML files (e.g. ".html").
 #html_file_suffix = '.html'
 
+# Hide link to page source.
+html_show_sourcelink = False
+
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'pymor'
 
-# Pngmath should try to align formulas properly
+# Pngmath should try to align formulas properly.
 pngmath_use_preview = True
 
 

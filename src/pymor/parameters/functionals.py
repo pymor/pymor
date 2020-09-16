@@ -45,28 +45,72 @@ class ParameterFunctional(ParametricObject):
     def __call__(self, mu=None):
         return self.evaluate(mu)
 
-    def __add__(self, other):
+    def _add_sub(self, other, sign):
+        if not isinstance(other, (ParameterFunctional, Number)):
+            return NotImplemented
+
         if isinstance(other, Number):
             if other == 0:
                 return self
             other = ConstantParameterFunctional(other)
-        if isinstance(other, ParameterFunctional):
-            return LincombParameterFunctional([self, other], [1., 1.])
-        else:
-            return NotImplemented        
 
-    __radd__ = __add__
+        if self.name != 'LincombParameterFunctional' or not isinstance(self, LincombParameterFunctional):
+            if other.name == 'LincombParameterFunctional' and isinstance(other, LincombParameterFunctional):
+                functionals = (self,) + other.functionals
+                coefficients = (1.,) + (other.coefficients if sign == 1. else tuple(-c for c in other.coefficients))
+            else:
+                functionals, coefficients = (self, other), (1., sign)
+        elif other.name == 'LincombParameterFunctional' and isinstance(other, LincombParameterFunctional):
+            functionals = self.functionals + other.functionals
+            coefficients = self.coefficients + (other.coefficients if sign == 1.
+                                                else tuple(-c for c in other.coefficients))
+        else:
+            functionals, coefficients = self.functionals + (other,), self.coefficients + (sign,)
+
+        return LincombParameterFunctional(functionals, coefficients)
+
+    def _radd_sub(self, other, sign):
+        assert not isinstance(other, ParameterFunctional)  # handled by __add__/__sub__
+        if not isinstance(other, Number):
+            return NotImplemented
+
+        if other == 0:
+            return self
+        other = ConstantParameterFunctional(other)
+
+        if self.name != 'LincombParameterFunctional' or not isinstance(self, LincombParameterFunctional):
+            functionals, coefficients = (other, self), (1., sign)
+        else:
+            functionals = (other,) + self.functionals
+            coefficients = (1.,) + (self.coefficients if sign == 1. else tuple(-c for c in self.coefficients))
+
+        return LincombParameterFunctional(functionals, coefficients)
+
+    def __add__(self, other):
+        return self._add_sub(other, 1.)
 
     def __sub__(self, other):
-        if isinstance(other, ParameterFunctional):
-            return LincombParameterFunctional([self, other], [1., -1.])
-        else:
-            return self + (- other)
+        return self._add_sub(other, -1.)
+
+    def __radd__(self, other):
+        return self._radd_sub(other, 1.)
+
+    def __rsub__(self, other):
+        return self._radd_sub(other, -1.)
 
     def __mul__(self, other):
         if not isinstance(other, (Number, ParameterFunctional)):
             return NotImplemented
-        return ProductParameterFunctional([self, other])
+        if self.name != 'ProductParameterFunctional' or not isinstance(self, ProductParameterFunctional):
+            if isinstance(other, ProductParameterFunctional) and other.name == 'ProductParameterFunctional':
+                return other.with_(factors=other.factors + [self])
+            else:
+                return ProductParameterFunctional([self, other])
+        elif isinstance(other, ProductParameterFunctional) and other.name == 'ProductParameterFunctional':
+            factors = self.factors + other.factors
+            return ProductParameterFunctional(factors)
+        else:
+            return self.with_(factors=self.factors + [other])
 
     __rmul__ = __mul__
 
