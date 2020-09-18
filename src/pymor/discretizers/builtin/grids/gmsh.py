@@ -63,7 +63,7 @@ def load_gmsh(filename):
     boundary_types = {k: v[0] for k, v in data.field_data.items() if v[1] == 1}
 
     cell_data_dict = data.cell_data_dict
-    if 'line' in cells_dict and 'line' in cell_data_dict and 'line' in cell_data_dict['gmsh:physical']:
+    if 'line' in cells_dict and 'gmsh:physical' in cell_data_dict and 'line' in cell_data_dict['gmsh:physical']:
         superentities = grid.superentities(2, 1)
 
         # find the edge for given vertices.
