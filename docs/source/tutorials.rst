@@ -5,6 +5,7 @@ pyMOR Tutorials
     tutorial_builtin_discretizer
     tutorial_basis_generation
     tutorial_projection
+    tutorial_lti_systems
     tutorial_bt
     tutorial_mor_with_anns
     tutorial_external_solver
