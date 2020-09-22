@@ -718,7 +718,7 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
         D = self.advection_function(self.grid.centers(0), mu=mu)
-        SF_INTS = - np.einsum('pc,eqi,c,e,ec->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
+        SF_INTS = - np.einsum('pc,eqi,c,e,ei->eqp', SFQ, SF_GRADS, w, g.integration_elements(0), D).ravel()
         del D
         del SF_GRADS
 
