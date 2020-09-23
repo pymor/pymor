@@ -9,6 +9,36 @@ from pymor.operators.interface import Operator
 
 
 def expand(obj):
+    """Expand concatenations of LincombOperators.
+
+    To any given |Operator| or |Model|, the following
+    transformations are applied recursively:
+
+    - :class:`Concatenations <pymor.operators.constructions.ConcatenationOperator>`
+      of |LincombOperators| are expanded. E.g. ::
+
+          (O1 + O2) @ (O3 + O4)
+
+      becomes::
+
+          O1 @ O3 + O1 @ O4 + O2 @ O3 + O2 @ O4
+
+    - |LincombOperators| inside |LincombOperators| are merged into a single
+      |LincombOperator|
+
+    - |ConcatenationOperators| inside |ConcatenationOperators| are merged into a
+      single |ConcatenationOperator|.
+
+    Parameters
+    ----------
+    obj
+        Either a |Model| or an |Operator| to which the expansion rules are
+        applied recursively for all :meth:`children <pymor.algorithms.rules.RuleTable.get_children>`.
+
+    Returns
+    -------
+    The transformed object.
+    """
     return ExpandRules().apply(obj)
 
 
