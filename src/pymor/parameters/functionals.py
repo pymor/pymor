@@ -103,14 +103,14 @@ class ParameterFunctional(ParametricObject):
             return NotImplemented
         if self.name != 'ProductParameterFunctional' or not isinstance(self, ProductParameterFunctional):
             if isinstance(other, ProductParameterFunctional) and other.name == 'ProductParameterFunctional':
-                return other.with_(factors=other.factors + [self])
+                return other.with_(factors=(self,) + other.factors)
             else:
-                return ProductParameterFunctional([self, other])
+                return ProductParameterFunctional((self, other))
         elif isinstance(other, ProductParameterFunctional) and other.name == 'ProductParameterFunctional':
             factors = self.factors + other.factors
             return ProductParameterFunctional(factors)
         else:
-            return self.with_(factors=self.factors + [other])
+            return self.with_(factors=self.factors + (other,))
 
     __rmul__ = __mul__
 
@@ -328,6 +328,7 @@ class ProductParameterFunctional(ParameterFunctional):
     def __init__(self, factors, name=None):
         assert len(factors) > 0
         assert all(isinstance(f, (ParameterFunctional, Number)) for f in factors)
+        factors = tuple(factors)
         self.__auto_init(locals())
 
     def evaluate(self, mu=None):
@@ -350,7 +351,6 @@ class ProductParameterFunctional(ParameterFunctional):
             return ConstantParameterFunctional(0, name=f'{self.name}_d_{parameter}_{index}')
         else:
             return LincombParameterFunctional(summands, [1] * len(summands), name=f'{self.name}_d_{parameter}_{index}')
-
 
 
 class ConjugateParameterFunctional(ParameterFunctional):
