@@ -150,10 +150,19 @@ class ProjectRules(RuleTable):
         elif range_basis is not None and last.linear and not last.parametric:
             V = last.apply_adjoint(range_basis)
             return project(op.with_(operators=op.operators[1:]), V, source_basis)
-        else:
-            projected_first = project(first, None, source_basis)
-            projected_last = project(last, range_basis, None)
-            return ConcatenationOperator((projected_last,) + op.operators[1:-1] + (projected_first,), name=op.name)
+
+        # the concatenation is too complicated to directly project efficiently
+        # try to simplify the operators in the concatenation by expanding
+        from pymor.algorithms.simplify import expand
+        expanded_op = expand(op)
+        if not isinstance(expanded_op, ConcatenationOperator):
+            # expanding was successful
+            return self.apply(expanded_op)
+
+        # at least we can try to partially project the outer operators
+        projected_first = project(first, None, source_basis)
+        projected_last = project(last, range_basis, None)
+        return ConcatenationOperator((projected_last,) + op.operators[1:-1] + (projected_first,), name=op.name)
 
     @match_class(AdjointOperator)
     def action_AdjointOperator(self, op):
