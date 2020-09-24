@@ -248,8 +248,11 @@ class RBSurrogate(WeakGreedySurrogate):
             U = self.fom.solve(mu)
         with self.logger.block('Extending basis with solution snapshot ...'):
             extension_params = self.extension_params
-            if len(U) > 1 and extension_params is None:
-                extension_params = {'method': 'pod'}
+            if len(U) > 1:
+                if extension_params is None:
+                    extension_params = {'method': 'pod'}
+                else:
+                    extension_params.setdefault('method', 'pod')
             self.reductor.extend_basis(U, copy_U=False, **(extension_params or {}))
             if not self.use_error_estimator:
                 self.remote_reductor = self.pool.push(self.reductor)
