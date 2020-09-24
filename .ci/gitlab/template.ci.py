@@ -146,6 +146,10 @@ stages:
     stage: sanity
 #******** end definition of base jobs *********************************************************************************#
 
+# https://docs.gitlab.com/ee/ci/yaml/README.html#workflowrules-templates
+include:
+  - template: 'Workflows/Branch-Pipelines.gitlab-ci.yml'
+
 #******* sanity stage
 
 # this step makes sure that on older python our install fails with
