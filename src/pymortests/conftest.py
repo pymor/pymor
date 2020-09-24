@@ -5,7 +5,7 @@
 import os
 from hypothesis import settings, Verbosity, HealthCheck
 
-_common_settings = {"print_blob": True, "suppress_health_check": (HealthCheck.too_slow, HealthCheck.data_too_large,),
+_common_settings = {"print_blob": True, "suppress_health_check": (HealthCheck.too_slow, HealthCheck.data_too_large,HealthCheck.filter_too_much),
                     "deadline": 1000, "verbosity": Verbosity.normal}
 settings.register_profile("ci_large", max_examples=400, **_common_settings)
 settings.register_profile("ci_pr", max_examples=100, **_common_settings)
