@@ -97,6 +97,7 @@ stages:
 .binder:
     extends: .docker-in-docker
     stage: install_checks
+    needs: ["ci setup"]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
@@ -134,6 +135,7 @@ stages:
       - "wheel 1 py3 8"
       - "wheel 2010 py3 8"
       - "wheel 2014 py3 8"
+    needs: ["wheel 1 py3 6","wheel 2010 py3 6","wheel 2014 py3 6","wheel 1 py3 7","wheel 2010 py3 7","wheel 2014 py3 7","wheel 1 py3 8","wheel 2010 py3 8","wheel 2014 py3 8",]
     before_script:
       - pip3 install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
@@ -506,6 +508,7 @@ submit vanilla 3 6:
         COVERAGE_FLAG: vanilla
     dependencies:
         - vanilla 3 6
+    needs: ["vanilla 3 6"]
 submit vanilla 3 7:
     extends: .submit
     rules:
@@ -517,6 +520,7 @@ submit vanilla 3 7:
         COVERAGE_FLAG: vanilla
     dependencies:
         - vanilla 3 7
+    needs: ["vanilla 3 7"]
 submit vanilla 3 8:
     extends: .submit
     rules:
@@ -528,6 +532,7 @@ submit vanilla 3 8:
         COVERAGE_FLAG: vanilla
     dependencies:
         - vanilla 3 8
+    needs: ["vanilla 3 8"]
 submit numpy_git 3 8:
     extends: .submit
     rules:
@@ -539,6 +544,7 @@ submit numpy_git 3 8:
         COVERAGE_FLAG: numpy_git
     dependencies:
         - numpy_git 3 8
+    needs: ["numpy_git 3 8"]
 submit oldest 3 6:
     extends: .submit
     rules:
@@ -550,6 +556,7 @@ submit oldest 3 6:
         COVERAGE_FLAG: oldest
     dependencies:
         - oldest 3 6
+    needs: ["oldest 3 6"]
 submit ci_weekly 3 6:
     extends: .submit
     rules:
@@ -560,6 +567,7 @@ submit ci_weekly 3 6:
         COVERAGE_FLAG: ci_weekly
     dependencies:
         - ci_weekly 3 6
+    needs: ["ci_weekly 3 6"]
 submit ci_weekly 3 7:
     extends: .submit
     rules:
@@ -570,6 +578,7 @@ submit ci_weekly 3 7:
         COVERAGE_FLAG: ci_weekly
     dependencies:
         - ci_weekly 3 7
+    needs: ["ci_weekly 3 7"]
 submit ci_weekly 3 8:
     extends: .submit
     rules:
@@ -580,6 +589,7 @@ submit ci_weekly 3 8:
         COVERAGE_FLAG: ci_weekly
     dependencies:
         - ci_weekly 3 8
+    needs: ["ci_weekly 3 8"]
 
 
 
@@ -857,6 +867,7 @@ docs build:
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
+    needs: ["ci setup"]
     artifacts:
         paths:
             - docs/_build/html
@@ -871,6 +882,7 @@ docs:
     resource_group: docs_deploy
     dependencies:
         - docs build
+    needs: ["docs build"]
     before_script:
         - apk --update add make python3 bash
         - pip3 install jinja2 pathlib

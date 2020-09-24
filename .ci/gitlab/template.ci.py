@@ -99,6 +99,7 @@ stages:
 .binder:
     extends: .docker-in-docker
     stage: install_checks
+    needs: ["ci setup"]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
@@ -132,6 +133,11 @@ stages:
       - "wheel {{ML}} py{{PY[0]}} {{PY[2]}}"
     {%- endfor %}
     {%- endfor %}
+    needs: [{%- for PY in pythons -%}
+    {%- for ML in manylinuxs -%}
+      "wheel {{ML}} py{{PY[0]}} {{PY[2]}}",
+    {%- endfor -%}
+    {%- endfor -%}]
     before_script:
       - pip3 install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
@@ -233,6 +239,7 @@ submit {{script}} {{py[0]}} {{py[2]}}:
         COVERAGE_FLAG: {{script}}
     dependencies:
         - {{script}} {{py[0]}} {{py[2]}}
+    needs: ["{{script}} {{py[0]}} {{py[2]}}"]
 {%- endfor %}
 
 {%- for py in pythons %}
@@ -246,6 +253,7 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
         COVERAGE_FLAG: ci_weekly
     dependencies:
         - ci_weekly {{py[0]}} {{py[2]}}
+    needs: ["ci_weekly {{py[0]}} {{py[2]}}"]
 {%- endfor %}
 
 
@@ -362,6 +370,7 @@ docs build:
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
+    needs: ["ci setup"]
     artifacts:
         paths:
             - docs/_build/html
@@ -376,6 +385,7 @@ docs:
     resource_group: docs_deploy
     dependencies:
         - docs build
+    needs: ["docs build"]
     before_script:
         - apk --update add make python3 bash
         - pip3 install jinja2 pathlib
