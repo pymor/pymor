@@ -108,7 +108,7 @@ on_gitlab_ci = os.environ.get('GITLAB_CI', 'nope') != 'nope'
 html_theme = 'sphinx_material'
 html_theme_options = {
     'base_url': 'https://gh-docs.pymor.org/',
-    'html_minify': on_gitlab_ci,
+    'html_minify': False,
     'css_minify': on_gitlab_ci,
     'nav_title': 'Documentation',
     'globaltoc_depth': 5,
