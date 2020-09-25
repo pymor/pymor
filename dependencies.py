@@ -31,6 +31,7 @@ install_requires = ['scipy>=1.1;python_version < "3.8"','scipy>=1.3.3;python_ver
 install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',
+                    'gmsh': 'this downloads the proper Gmsh binary',
                     'meshio==4.2.0': 'needed to import Gmsh grids',
                     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
                     'pyamg': 'algebraic multigrid solvers',
