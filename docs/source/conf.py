@@ -6,52 +6,6 @@ import sys, os, re
 
 os.environ['PYMOR_WITH_SPHINX'] = '1'
 
-# Fix documentation generation for readthedocs.org
-
-if os.environ.get('READTHEDOCS', None) == 'True':
-
-    class Mock(object):
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def __setitem__(self, k, v):
-            pass
-
-        def __call__(self, *args, **kwargs):
-            return Mock()
-
-        @classmethod
-        def __getattr__(cls, name):
-            if name in ('__file__', '__path__'):
-                return '/dev/null'
-            elif name in ('__binding__', '__binding_version__'):
-                return ''
-            elif name == '__qt_version__':
-                return '5'
-            elif name in cls.__dict__:
-                return cls.__dict__.get(name)
-            elif name == 'QtWidgets':
-                return Mock()
-            elif name[0] == name[0].upper():
-                mockType = type(name, (), {})
-                mockType.__module__ = __name__
-                return mockType
-            else:
-                return Mock()
-
-        QWidget = object
-
-    MOCK_MODULES = ['docopt',
-                    'OpenGL', 'OpenGL.GL', 'psutil',
-                    'pyvtk',
-                    'pyvis', 'pythreejs', 'pythreejs._version',
-                    'sympy',
-                    'pytest']
-
-    for mod_name in MOCK_MODULES:
-        sys.modules[mod_name] = Mock()
-
-
 # Check Sphinx version
 import sphinx
 if sphinx.__version__ < "1.0.1":
@@ -63,12 +17,7 @@ needs_sphinx = '1.0'
 # General configuration
 # -----------------------------------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be extensions
-# coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-
-if os.environ.get('READTHEDOCS', None) != 'True':
-    sys.path.insert(0, os.path.abspath('../../src'))
-
+sys.path.insert(0, os.path.abspath('../../src'))
 sys.path.insert(0, os.path.abspath('.'))
 
 #generate autodoc
@@ -80,7 +29,8 @@ gen_apidoc.walk(pymor)
 # gen_apidoc.walk(pymortests)
 gen_apidoc.walk(pymordemos)
 
-
+# Add any Sphinx extension module names here, as strings. They can be extensions
+# coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
