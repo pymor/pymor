@@ -155,7 +155,7 @@ class InputOutputModel(Model):
         for i in range(self.output_dim):
             for j in range(self.input_dim):
                 if dB:
-                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log2(mag[:, i, j]),
+                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, i, j]),
                                                               **mpl_kwargs)
                 else:
                     artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, i, j],
@@ -205,7 +205,7 @@ class InputOutputModel(Model):
         freq = w / (2 * np.pi) if Hz else w
         mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
         if dB:
-            out = ax.semilogx(freq, 20 * np.log2(mag), **mpl_kwargs)
+            out = ax.semilogx(freq, 20 * np.log10(mag), **mpl_kwargs)
         else:
             out = ax.loglog(freq, mag, **mpl_kwargs)
 
