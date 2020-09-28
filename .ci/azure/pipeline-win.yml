@@ -42,7 +42,7 @@ jobs:
         conda config --add channels conda-forge
         conda install --only-deps pymor
         REM these ones are not in the 0.5.1 conda build yet
-        conda install pyevtk gmsh
+        conda install pyevtk
         REM these are build/test-time deps for the conda package, not runtime
         conda install cython pytest pytest-cov curl
         REM install anythin which might a niew dependency with pip
