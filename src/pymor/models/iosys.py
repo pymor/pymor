@@ -115,7 +115,7 @@ class InputOutputModel(Model):
         freq = w / (2 * np.pi) if Hz else w
         mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
         if dB:
-            out = ax.semilogx(freq, 20 * np.log2(mag), **mpl_kwargs)
+            out = ax.semilogx(freq, 20 * np.log10(mag), **mpl_kwargs)
         else:
             out = ax.loglog(freq, mag, **mpl_kwargs)
 
