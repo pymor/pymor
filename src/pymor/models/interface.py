@@ -349,6 +349,49 @@ class Model(CacheableObject, ParametricObject):
         else:
             return data['output']
 
+    def solve_d_mu(self, parameter, index, mu, U=None):
+        """Solve for the derivative of the solution w.r.t. a parameter index
+
+        Parameters
+        ----------
+        parameter
+            parameter for which to compute the sensitivity
+        index
+            parameter index for which to compute the sensitivity
+        mu
+            |Parameter value| for which to solve
+        U
+            |VectorArray| containing the solutions for the |Parameter values| mu
+
+        Return
+        ------
+        The sensitivity of the solution as a |VectorArray|.
+        """
+        return NotImplemented
+
+    @property
+    def dual(self):
+        """Instantiate the dual model which is used to solve for a dual solution of the |Model|."""
+        return NotImplemented
+
+    def output_d_mu(self, mu, U=None):
+        """compute the gradient w.r.t. the parameter of the output functional
+
+        Parameters
+        ----------
+        mu
+            |Parameters value| for which to compute the gradient
+        U
+            |VectorArray| containing the solutions for the |Parameter values| mu
+        P
+            |VectorArray| containing the dual solutions for the |Parameter values| mu
+        adjoint_approach
+            decided whether to use the adjoint approach for computing the gradient
+            True: use dual solution
+            False: use sensitivities of solutions
+        """
+        return NotImplemented
+
     def estimate_error(self, mu=None, **kwargs):
         """Estimate the error for the computed internal state.
 
