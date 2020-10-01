@@ -1196,15 +1196,15 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         for v in p.outputs:
             if v[0] == 'l2':
                 if isinstance(v[1], LincombFunction):
-                    ops = [L2Functional(grid, v_, dirichlet_clear_dofs=False).H
-                                for v_ in v[1].functions]
+                    ops = [L2Functional(grid, vv, dirichlet_clear_dofs=False).H
+                           for vv in v[1].functions]
                     outputs.append(LincombOperator(ops, v[1].coefficients))
                 else:
                     outputs.append(L2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
             else:
                 if isinstance(v[1], LincombFunction):
-                    ops = [BoundaryL2Functional(grid, v_, dirichlet_clear_dofs=False).H
-                                for v_ in v[1].functions]
+                    ops = [BoundaryL2Functional(grid, vv, dirichlet_clear_dofs=False).H
+                           for vv in v[1].functions]
                     outputs.append(LincombOperator(ops, v[1].coefficients))
                 else:
                     outputs.append(BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
