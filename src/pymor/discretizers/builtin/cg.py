@@ -997,7 +997,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         If `True`, preassemble all operators in the resulting |Model|.
     mu_energy_product
         If not `None`, |parameter values| for which to assemble the symmetric part of the |Operator| of the resulting
-        |Model| `fom` (ignoring the advection part). Thus, assuming no advection and a symmetric diffusion tensor,  
+        |Model| `fom` (ignoring the advection part). Thus, assuming no advection and a symmetric diffusion tensor,
         `fom.products['energy']` is equal to `fom.operator.assemble(mu)`, except for the fact that the former has
         cleared Dirichlet rows and columns, while the latter only has cleared Dirichlet rows).
 
@@ -1192,9 +1192,22 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     if p.outputs:
         if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
             raise NotImplementedError
-        outputs = [L2Functional(grid, v[1], dirichlet_clear_dofs=False).H if v[0] == 'l2' else
-                   BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H
-                   for v in p.outputs]
+        outputs = []
+        for v in p.outputs:
+            if v[0] == 'l2':
+                if isinstance(v[1], LincombFunction):
+                    ops = [L2Functional(grid, v_, dirichlet_clear_dofs=False).H
+                                for v_ in v[1].functions]
+                    outputs.append(LincombOperator(ops, v[1].coefficients))
+                else:
+                    outputs.append(L2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
+            else:
+                if isinstance(v[1], LincombFunction):
+                    ops = [BoundaryL2Functional(grid, v_, dirichlet_clear_dofs=False).H
+                                for v_ in v[1].functions]
+                    outputs.append(LincombOperator(ops, v[1].coefficients))
+                else:
+                    outputs.append(BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator
             output_functional = BlockColumnOperator(outputs)
