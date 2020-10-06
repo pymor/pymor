@@ -8,6 +8,7 @@ from pymor.operators.constructions import induced_norm
 from pymor.parameters.base import ParametricObject, Mu
 from pymor.tools.frozendict import FrozenDict
 from pymor.tools.deprecated import Deprecated
+from pymor.vectorarrays.interface import VectorArray
 
 
 class Model(CacheableObject, ParametricObject):
@@ -47,12 +48,95 @@ class Model(CacheableObject, ParametricObject):
 
         self.__auto_init(locals())
 
-    @abstractmethod
-    def _solve(self, mu=None, return_output=False, **kwargs):
-        """Perform the actual solving."""
-        pass
+    def _compute(self, solution=False, output=False,
+                 solution_error_estimate=False, output_error_estimate=False,
+                 mu=None, **kwargs):
+        return {}
 
-    def solve(self, mu=None, return_output=False, **kwargs):
+    def _compute_solution(self, mu=None, **kwargs):
+        raise NotImplementedError
+
+    def _compute_output(self, solution, mu=None, **kwargs):
+        if not hasattr(self, 'output_functional'):
+            raise NotImplementedError
+        if self.output_functional is None:
+            raise ValueError('Model has no output')
+        return self.output_functional.apply(solution, mu=mu)
+
+    def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
+        if self.error_estimator is None:
+            raise ValueError('Model has no error estimator')
+        return self.error_estimator.estimate_error(solution, mu, self)
+
+    def _compute_output_error_estimate(self, solution, mu=None, **kwargs):
+        if self.error_estimator is None:
+            raise ValueError('Model has no error estimator')
+        return self.error_estimator.estimate_output_error(solution, mu, self)
+
+    _compute_allowed_kwargs = frozenset()
+
+    def compute(self, solution=False, output=False,
+                solution_error_estimate=False, output_error_estimate=False, *,
+                mu=None, **kwargs):
+
+        # make sure no unknown kwargs are passed
+        assert kwargs.keys() <= self._compute_allowed_kwargs
+
+        # parse parameter values
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+
+        # log output
+        # explicitly checking if logging is disabled saves some cpu cycles
+        if not self.logging_disabled:
+            self.logger.info(f'Solving {self.name} for {mu} ...')
+
+        # first call _compute to give subclasses more control
+        data = self._compute(solution=solution, output=output,
+                             solution_error_estimate=solution_error_estimate,
+                             output_error_estimate=output_error_estimate,
+                             mu=mu, **kwargs)
+
+        if (solution or output or solution_error_estimate or output_error_estimate) and \
+                'solution' not in data:
+            retval = self.cached_method_call(self._compute_solution, mu=mu, **kwargs)
+            if isinstance(retval, dict):
+                assert 'solution' in retval
+                data.update(retval)
+            else:
+                data['solution'] = retval
+
+        if output and 'output' not in data:
+            # TODO use caching here (requires skipping args in key generation)
+            retval = self._compute_output(data['solution'], mu=mu, **kwargs)
+            if isinstance(retval, dict):
+                assert 'output' in retval
+                data.update(retval)
+            else:
+                data['output'] = retval
+
+        if solution_error_estimate and 'solution_error_estimate' not in data:
+            # TODO use caching here (requires skipping args in key generation)
+            retval = self._compute_solution_error_estimate(data['solution'], mu=mu, **kwargs)
+            if isinstance(retval, dict):
+                assert 'solution_error_estimate' in retval
+                data.update(retval)
+            else:
+                data['solution_error_estimate'] = retval
+
+        if output_error_estimate and 'output_error_estimate' not in data:
+            # TODO use caching here (requires skipping args in key generation)
+            retval = self._compute_output_error_estimate(data['solution'], mu=mu, **kwargs)
+            if isinstance(retval, dict):
+                assert 'output_error_estimate' in retval
+                data.update(retval)
+            else:
+                data['output_error_estimate'] = retval
+
+        return data
+
+    def solve(self, mu=None, return_error_estimate=False, **kwargs):
         """Solve the discrete problem for the |parameter values| `mu`.
 
         The result will be :mod:`cached <pymor.core.cache>`
@@ -71,12 +155,18 @@ class Model(CacheableObject, ParametricObject):
         The solution |VectorArray|. When `return_output` is `True`,
         the output |VectorArray| is returned as second value.
         """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        return self.cached_method_call(self._solve, mu=mu, return_output=return_output, **kwargs)
+        data = self.compute(
+            solution=True,
+            solution_error_estimate=return_error_estimate,
+            mu=mu,
+            **kwargs
+        )
+        if return_error_estimate:
+            return data['solution'], data['solution_error_estimate']
+        else:
+            return data['solution']
 
-    def output(self, mu=None, **kwargs):
+    def output(self, mu=None, return_error_estimate=False, **kwargs):
         """Return the model output for given |parameter values| `mu`.
 
         Parameters
@@ -88,9 +178,18 @@ class Model(CacheableObject, ParametricObject):
         -------
         The computed model output as a |VectorArray| from `output_space`.
         """
-        return self.solve(mu=mu, return_output=True, **kwargs)[1]
+        data = self.compute(
+            output=True,
+            output_error_estimate=return_error_estimate,
+            mu=mu,
+            **kwargs
+        )
+        if return_error_estimate:
+            return data['output'], data['output_error_estimate']
+        else:
+            return data['output']
 
-    def estimate_error(self, U, mu=None):
+    def estimate_error(self, mu=None, **kwargs):
         """Estimate the model error for a given solution.
 
         The model error could be the error w.r.t. the analytical
@@ -108,14 +207,39 @@ class Model(CacheableObject, ParametricObject):
         -------
         The estimated error.
         """
-        if getattr(self, 'error_estimator') is not None:
-            return self.error_estimator.estimate_error(U, mu=mu, m=self)
-        else:
-            raise NotImplementedError('Model has no error estimator.')
+        return self.compute(
+            solution_error_estimate=True,
+            mu=mu,
+            **kwargs
+        )['solution_error_estimate']
 
     @Deprecated('estimate_error')
     def estimate(self, U, mu=None):
-        return self.estimate_error(U, mu)
+        return self.estimate_error(mu)
+
+    def estimate_output_error(self, mu=None, **kwargs):
+        """Estimate the model error for a given solution.
+
+        The model error could be the error w.r.t. the analytical
+        solution of the given problem or the model reduction error w.r.t.
+        a corresponding high-dimensional |Model|.
+
+        Parameters
+        ----------
+        U
+            The solution obtained by :meth:`~solve`.
+        mu
+            |Parameter values| for which `U` has been obtained.
+
+        Returns
+        -------
+        The estimated error.
+        """
+        return self.compute(
+            output_error_estimate=True,
+            mu=mu,
+            **kwargs
+        )['output_error_estimate']
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.

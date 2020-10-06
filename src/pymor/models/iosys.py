@@ -45,9 +45,6 @@ class InputOutputModel(Model):
     def output_dim(self):
         return self.output_space.dim
 
-    def _solve(self, mu=None):
-        raise NotImplementedError
-
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function."""
         raise NotImplementedError

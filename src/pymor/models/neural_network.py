@@ -62,9 +62,7 @@ if config.HAVE_TORCH:
             if output_functional is not None:
                 self.output_space = output_functional.range
 
-        def _solve(self, mu=None, return_output=False):
-            if not self.logging_disabled:
-                self.logger.info(f'Solving {self.name} for {mu} ...')
+        def _compute_solution(self, mu=None, **kwargs):
 
             # convert the parameter `mu` into a form that is usable in PyTorch
             converted_input = torch.from_numpy(mu.to_numpy()).double()
@@ -73,13 +71,7 @@ if config.HAVE_TORCH:
             # convert plain numpy array to element of the actual solution space
             U = self.solution_space.make_array(U)
 
-            if return_output:
-                if self.output_functional is None:
-                    raise ValueError('Model has no output')
-                return U, self.output_functional.apply(U, mu=mu)
-            else:
-                return U
-
+            return U
 
     class FullyConnectedNN(nn.Module, BasicObject):
         """Class for neural networks with fully connected layers.
