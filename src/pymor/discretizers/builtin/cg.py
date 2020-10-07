@@ -378,7 +378,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
 
         # evaluate the shape functions on the quadrature points
         q, w = square.quadrature(order=2)
-        SF = LagrangeShapeFunctions[grid.reference_element][1]
+        SF = LagrangeShapeFunctions[g.reference_element][1]
         SF = np.array(tuple(f(q) for f in SF))
 
         self.logger.info('Integrate the products of the shape functions on each element')
@@ -390,7 +390,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         else:
             SF_INTS = np.einsum('iq,jq,q,e->eij', SF, SF, w, g.integration_elements(0)).ravel()
 
-        del SFQ
+        del SF
 
         self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, g.dim), 4, axis=1).ravel()
@@ -776,10 +776,12 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
         bi = self.boundary_info
 
         self.logger.info('Calculate gradients of shape functions transformed by reference map ...')
-        SF_GRAD = LagrangeShapeFunctionsGrads[g.reference_element][1]
+        q, w = g.reference_element.quadrature(order=2)
+        SF_GRAD = LagrangeShapeFunctionsGrads[g.reference_element][1](q)
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
         # SF_GRADS(element,function,component,quadraturepoint)
 
+        SF = LagrangeShapeFunctions[g.reference_element][1]
         SFQ = np.array(tuple(f(q) for f in SF))
         # SFQ(function, quadraturepoint)
 
