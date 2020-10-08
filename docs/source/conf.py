@@ -126,6 +126,9 @@ html_title = "%s v%s Manual" % (project, version)
 # the sidebar.
 html_logo = '../../logo/pymor_logo_white.svg'
 
+# The name of an image file to use as favicon.
+html_favicon = '../../logo/pymor_favicon.png'
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
