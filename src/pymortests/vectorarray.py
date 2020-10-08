@@ -469,7 +469,9 @@ def test_axpy_one_x(vector_arrays, random):
             assert len(c1) == len(v1)
             assert np.all(almost_equal(c1[ind1_complement], v1[ind1_complement]))
             assert np.all(almost_equal(c2, v2))
-            assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * (1. + 1e-10))
+            # for the openstack CI machines this could be 1 + 1e-10
+            rtol_factor = 1. + 147e-9
+            assert np.all(c1[ind1].sup_norm() <=  v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * rtol_factor)
             assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
             try:
                 x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
