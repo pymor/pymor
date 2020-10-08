@@ -32,7 +32,38 @@ from pymor.analyticalproblems.burgers import burgers_problem_2d
 
 
 def create_fom(args):
-    problem = burgers_problem()
+#    problem = burgers_problem()
+
+    problem = InstationaryProblem(
+
+            StationaryProblem(
+                domain=RectDomain(top='dirichlet', bottom='neumann'),
+
+                diffusion=LincombFunction(
+                    [ConstantFunction(1., dim_domain=2),
+                     ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
+                                        dim_domain=2),
+                     ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + '
+                                        '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
+                                        dim_domain=2)],
+                    [1.,
+                     100. - 1.,
+                     ExpressionParameterFunctional('top - 1.', {'top': 1})]
+                ),
+
+                rhs=ConstantFunction(value=0., dim_domain=2),
+
+                dirichlet_data=ConstantFunction(value=0., dim_domain=2),
+
+                neumann_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * -1000.',
+                                                dim_domain=2),
+            ),
+
+            T=1.,
+
+            initial_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 10.',
+                                            dim_domain=2)
+        )
 
     print('Discretize ...')
     discretizer = discretize_instationary_fv
@@ -47,28 +78,17 @@ def neural_networks_instationary_demo(args):
 
     fom = create_fom(args)
 
-    T = fom.T
     Nt = int(args['TIME_STEPS'])
 
-    parameter_space = fom.parameters.space((1., 2.))
+    parameter_space = fom.parameters.space(1., 100.)
 
     from pymor.reductors.neural_network import NeuralNetworkInstationaryReductor
 
-    training_set_temp = parameter_space.sample_uniformly(int(args['TRAINING_SAMPLES']))
+    training_set = parameter_space.sample_uniformly(int(args['TRAINING_SAMPLES']))
     validation_set = parameter_space.sample_randomly(int(args['VALIDATION_SAMPLES']))
 
-    dt = T / Nt
-
-    training_set = []
-    for mu in training_set_temp:
-        t = 0.
-        for i in range(Nt + 1):
-            mu = mu.with_(t=t)
-            t += dt
-            training_set.append(mu)
-
-    reductor = NeuralNetworkInstationaryReductor(fom, T, training_set, validation_set, basis_size=10)
-    rom = reductor.reduce(Nt=Nt, restarts=100)
+    reductor = NeuralNetworkInstationaryReductor(fom, Nt, training_set, validation_set, basis_size=10, ann_mse=None)
+    rom = reductor.reduce(hidden_layers='[30, 30]', restarts=100)
 
     test_set = parameter_space.sample_randomly(10)
 

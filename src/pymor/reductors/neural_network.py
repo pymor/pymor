@@ -184,7 +184,7 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkModel(self.neural_network, name=f'{self.fom.name}_reduced')
+                rom = NeuralNetworkModel(self.neural_network, self.fom.parameters, name=f'{self.fom.name}_reduced')
 
             return rom
 
@@ -325,6 +325,8 @@ if config.HAVE_TORCH:
         ----------
         fom
             The full-order |Model| to reduce.
+        Nt
+            The number of time steps.
         training_set
             Set of |parameter values| to use for POD and training of the
             neural network.
@@ -357,13 +359,14 @@ if config.HAVE_TORCH:
             error tolerance is found.
         """
 
-        def __init__(self, fom, T, training_set, validation_set=None, validation_ratio=0.1,
+        def __init__(self, fom, Nt, training_set, validation_set=None, validation_ratio=0.1,
                      basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
                      ann_mse='like_basis'):
+            assert isinstance(Nt, int)
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
-        def reduce(self, Nt, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
+        def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
                    optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
                    restarts=10, seed=0):
             """Reduce by training artificial neural networks.
@@ -399,13 +402,12 @@ if config.HAVE_TORCH:
             rom
                 Reduced-order |NeuralNetworkModel|.
             """
-            assert isinstance(Nt, int)
             assert restarts > 0
             assert epochs > 0
             assert batch_size > 0
             assert learning_rate > 0.
 
-            dt = self.T / Nt
+            dt = self.fom.T / self.Nt
 
             # set a seed for the PyTorch initialization of weights and biases and further PyTorch methods
             torch.manual_seed(seed)
@@ -429,12 +431,12 @@ if config.HAVE_TORCH:
                     if self.validation_set:
                         self.validation_data = []
                         for mu in self.validation_set:
+                            u = self.fom.solve(mu)
                             t = 0.
-                            for i in range(Nt + 1):
+                            for i in range(self.Nt + 1):
                                 mu = mu.with_(t=t)
                                 mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                                u = self.fom.solve(mu)
-                                u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u)[:,0])
+                                u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u[i])[:,0])
                                 self.validation_data.append((mu_tensor, u_tensor))
                                 t += dt
                     else:
@@ -484,7 +486,7 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkModel(self.neural_network, name=f'{self.fom.name}_reduced')
+                rom = NeuralNetworkInstationaryModel(self.fom.T, self.Nt, self.neural_network, self.fom.parameters, name=f'{self.fom.name}_reduced')
 
             return rom
 
@@ -492,8 +494,6 @@ if config.HAVE_TORCH:
             """Perform a single training iteration and return the resulting neural network."""
             assert hasattr(self, 'training_data')
             assert hasattr(self, 'validation_data')
-
-            print(len(self.training_data))
 
             # LBFGS-optimizer does not support mini-batching, so the batch size needs to be adjusted
             if optimizer == optim.LBFGS:
@@ -588,8 +588,16 @@ if config.HAVE_TORCH:
                 # compute snapshots for POD and training of neural networks
                 with self.logger.block('Computing training snapshots ...'):
                     U = self.fom.solution_space.empty()
+                    training_set_temp = []
                     for mu in self.training_set:
                         U.append(self.fom.solve(mu))
+                        dt = self.fom.T / (len(U) - 1)
+                        t = 0.
+                        for i in range(len(U)):
+                            training_set_temp.append(mu.with_(t=t))
+                            t += dt
+                    self.training_set = training_set_temp
+
 
                 # compute reduced basis via POD
                 reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,

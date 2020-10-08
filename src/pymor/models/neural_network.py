@@ -27,6 +27,9 @@ if config.HAVE_TORCH:
             :class:`~pymor.models.neural_network.FullyConnectedNN` with input size that
             matches the (total) number of parameters and output size equal to the
             dimension of the reduced space.
+        parameters
+            |Parameters| of the reduced order model (the same as used in the full-order
+            model).
         output_functional
             |Operator| mapping a given solution to the model output. In many applications,
             this will be a |Functional|, i.e. an |Operator| mapping to scalars.
@@ -51,8 +54,8 @@ if config.HAVE_TORCH:
             Name of the model.
         """
 
-        def __init__(self, neural_network, output_functional=None, products=None,
-                     error_estimator=None, visualizer=None, name=None):
+        def __init__(self, neural_network, parameters={}, output_functional=None,
+                     products=None, error_estimator=None, visualizer=None, name=None):
 
             super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
@@ -82,13 +85,18 @@ if config.HAVE_TORCH:
         ----------
         T
             The final time T.
+        Nt
+            The number of time steps.
         neural_network
             The neural network that approximates the mapping from parameter space
             to solution space. Should be an instance of
             :class:`~pymor.models.neural_network.FullyConnectedNN` with input size that
             matches the (total) number of parameters and output size equal to the
             dimension of the reduced space.
-        output_functional
+       parameters
+            |Parameters| of the reduced order model (the same as used in the full-order
+            model).
+       output_functional
             |Operator| mapping a given solution to the model output. In many applications,
             this will be a |Functional|, i.e. an |Operator| mapping to scalars.
             This is not required, however.
@@ -112,8 +120,8 @@ if config.HAVE_TORCH:
             Name of the model.
         """
 
-        def __init__(self, T, neural_network, output_functional=None, products=None,
-                     estimator=None, visualizer=None, name=None):
+        def __init__(self, T, Nt, neural_network, parameters={}, output_functional=None,
+                     products=None, estimator=None, visualizer=None, name=None):
 
             super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
 
@@ -123,17 +131,15 @@ if config.HAVE_TORCH:
             if output_functional is not None:
                 self.output_space = output_functional.range
 
-        def _solve(self, Nt=None, mu=None, return_output=False):
-            assert isinstance(Nt, int)
-
+        def _solve(self, mu=None, return_output=False):
             if not self.logging_disabled:
                 self.logger.info(f'Solving {self.name} for {mu} ...')
 
-            U = self.solution_space.empty(reserve=Nt + 1)
-            dt = self.T / Nt
+            U = self.solution_space.empty(reserve=self.Nt+1)
+            dt = self.T / self.Nt
             t = 0.
 
-            for i in range(Nt + 1):
+            for i in range(self.Nt + 1):
                 mu = mu.with_(t=t)
                 # convert the parameter `mu` into a form that is usable in PyTorch
                 converted_input = torch.from_numpy(mu.to_numpy()).double()
