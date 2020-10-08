@@ -20,6 +20,7 @@ provided for getting started quickly.
 [![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
 [![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/master/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/master)
 [![Azure Pipeline](https://dev.azure.com/pymor/pymor/_apis/build/status/pymor.pymor?branchName=master)](https://dev.azure.com/pymor/pymor/_build/latest?definitionId=1&branchName=master)
+[![codecov](https://codecov.io/gh/pymor/pymor/branch/master/graph/badge.svg)](https://codecov.io/gh/pymor/pymor)
 
 License
 -------
