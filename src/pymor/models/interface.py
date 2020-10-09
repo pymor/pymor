@@ -66,12 +66,12 @@ class Model(CacheableObject, ParametricObject):
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
         if self.error_estimator is None:
             raise ValueError('Model has no error estimator')
-        return self.error_estimator.estimate_error(solution, mu, self)
+        return self.error_estimator.estimate_error(solution, mu, self, **kwargs)
 
     def _compute_output_error_estimate(self, solution, mu=None, **kwargs):
         if self.error_estimator is None:
             raise ValueError('Model has no error estimator')
-        return self.error_estimator.estimate_output_error(solution, mu, self)
+        return self.error_estimator.estimate_output_error(solution, mu, self, **kwargs)
 
     _compute_allowed_kwargs = frozenset()
 
