@@ -167,12 +167,13 @@ Let's try solving the model on our own:
 
 That did not work too well! In pyMOR, all parametric objects expect the
 `mu` argument to be an instance of the :class:`~pymor.parameters.base.Mu`
-class. :meth:`~pymor.models.interface.Model.solve` is an exception: for
-convenience, it accepts as a `mu` argument anything that can be converted
+class. :meth:`~pymor.models.interface.Model.compute` and related methods
+like :meth:`~pymor.models.interface.Model.solve` are an exception: for
+convenience, they accept as a `mu` argument anything that can be converted
 to a :class:`~pymor.parameters.base.Mu` instance using the
 :meth:`~pymor.parameters.base.Parameters.parse` method of the
 :class:`~pymor.parameters.base.Parameters` class. In fact, if you look
-back at the implementation of :meth:`~pymor.models.interface.Model.solve`,
+back at the implementation of :meth:`~pymor.models.interface.Model.compute`,
 you see the explicit call to :meth:`~pymor.parameters.base.Parameters.parse`.
 We try again:
 
