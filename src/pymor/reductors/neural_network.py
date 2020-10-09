@@ -590,14 +590,14 @@ if config.HAVE_TORCH:
                     U = self.fom.solution_space.empty()
                     training_set_temp = []
                     for mu in self.training_set:
-                        U.append(self.fom.solve(mu))
-                        dt = self.fom.T / (len(U) - 1)
+                        u = self.fom.solve(mu)
+                        U.append(u)
+                        dt = self.fom.T / (len(u) - 1)
                         t = 0.
-                        for i in range(len(U)):
+                        for i in range(len(u)):
                             training_set_temp.append(mu.with_(t=t))
                             t += dt
                     self.training_set = training_set_temp
-
 
                 # compute reduced basis via POD
                 reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,

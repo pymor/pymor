@@ -77,7 +77,7 @@ if config.HAVE_TORCH:
             return U
 
     class NeuralNetworkInstationaryModel(Model):
-        """Class for models of stationary problems that use artificial neural networks.
+        """Class for models of instationary problems that use artificial neural networks.
 
         This class implements a |Model| that uses a neural network for solving.
 
@@ -139,6 +139,7 @@ if config.HAVE_TORCH:
             dt = self.T / self.Nt
             t = 0.
 
+            # iterate over time steps
             for i in range(self.Nt + 1):
                 mu = mu.with_(t=t)
                 # convert the parameter `mu` into a form that is usable in PyTorch

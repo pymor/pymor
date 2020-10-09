@@ -2,21 +2,20 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Example script for the usage of neural networks in model order reduction (approach by Hesthaven and Ubbiali)
+"""Example script for the usage of neural networks in model order reduction for an instationary problem (approach by Hesthaven and Ubbiali)
 
 Usage:
-    neural_networks_instationary.py [--fv] [--vis] GRID_INTERVALS TIME_STEPS TRAINING_SAMPLES VALIDATION_SAMPLES
+    neural_networks_instationary.py [--fv] GRID_INTERVALS TIME_STEPS TRAINING_SAMPLES VALIDATION_SAMPLES
 
 Arguments:
     GRID_INTERVALS       Grid interval count.
-    TIME_STEPS
+    TIME_STEPS           Number of time steps used for discretization.
     TRAINING_SAMPLES     Number of samples used for training the neural network.
     VALIDATION_SAMPLES   Number of samples used for validation during the training phase.
 
 Options:
     -h, --help   Show this message.
     --fv         Use finite volume discretization instead of finite elements.
-    --vis        Visualize full order solution and reduced solution for a test set.
 """
 
 from docopt import docopt
@@ -28,42 +27,9 @@ from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissing
 
-from pymor.analyticalproblems.burgers import burgers_problem_2d
-
 
 def create_fom(args):
-#    problem = burgers_problem()
-
-    problem = InstationaryProblem(
-
-            StationaryProblem(
-                domain=RectDomain(top='dirichlet', bottom='neumann'),
-
-                diffusion=LincombFunction(
-                    [ConstantFunction(1., dim_domain=2),
-                     ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
-                                        dim_domain=2),
-                     ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + '
-                                        '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
-                                        dim_domain=2)],
-                    [1.,
-                     100. - 1.,
-                     ExpressionParameterFunctional('top - 1.', {'top': 1})]
-                ),
-
-                rhs=ConstantFunction(value=0., dim_domain=2),
-
-                dirichlet_data=ConstantFunction(value=0., dim_domain=2),
-
-                neumann_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * -1000.',
-                                                dim_domain=2),
-            ),
-
-            T=1.,
-
-            initial_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 10.',
-                                            dim_domain=2)
-        )
+    problem = burgers_problem()
 
     print('Discretize ...')
     discretizer = discretize_instationary_fv
@@ -80,15 +46,15 @@ def neural_networks_instationary_demo(args):
 
     Nt = int(args['TIME_STEPS'])
 
-    parameter_space = fom.parameters.space(1., 100.)
+    parameter_space = fom.parameters.space(1., 2.)
 
     from pymor.reductors.neural_network import NeuralNetworkInstationaryReductor
 
     training_set = parameter_space.sample_uniformly(int(args['TRAINING_SAMPLES']))
     validation_set = parameter_space.sample_randomly(int(args['VALIDATION_SAMPLES']))
 
-    reductor = NeuralNetworkInstationaryReductor(fom, Nt, training_set, validation_set, basis_size=10, ann_mse=None)
-    rom = reductor.reduce(hidden_layers='[30, 30]', restarts=100)
+    reductor = NeuralNetworkInstationaryReductor(fom, Nt, training_set, validation_set, basis_size=15, ann_mse=None)
+    rom = reductor.reduce(hidden_layers='[30, 30, 30]', restarts=10)
 
     test_set = parameter_space.sample_randomly(10)
 
@@ -114,10 +80,6 @@ def neural_networks_instationary_demo(args):
 
     absolute_errors = (U - U_red).l2_norm()
     relative_errors = (U - U_red).l2_norm() / U.l2_norm()
-
-    if args['--vis']:
-        fom.visualize((U, U_red),
-                      legend=('Full solution', 'Reduced solution'))
 
     print(f'Average absolute error: {np.average(absolute_errors)}')
     print(f'Average relative error: {np.average(relative_errors)}')
