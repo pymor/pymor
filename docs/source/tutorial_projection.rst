@@ -78,7 +78,7 @@ Solving the Model
 Now that we have our FOM and a reduced space :math:`V_N` spanned by `basis`, we can project
 the |Model|. However, before doing so, we need to understand how actually
 solving the FOM works. Let's take a look at what
-:meth:`~pymor.models.interface.Model.solve` actually does:
+:meth:`~pymor.models.interface.Model.solve` does:
 
 .. jupyter-execute::
 
@@ -86,19 +86,26 @@ solving the FOM works. Let's take a look at what
     print_source(fom.solve)
 
 This does not look too interesting. Actually, :meth:`~pymor.models.interface.Model.solve`
-is just a thin wrapper around the `_solve` method, which performs the actual
-computations. All that :meth:`~pymor.models.interface.Model.solve` does is
-checking the input |parameter values| `mu` and :mod:`caching <pymor.core.cache>`
-the results. So let's take a look at `_solve`:
+is just a convenience method around :meth:`~pymor.models.interface.Model.compute` which
+handles the actual computation of the solution and various other associated values like
+outputs or error estimates. Next, we take a look at the implemenation of
+:meth:`~pymor.models.interface.Model.compute`: 
 
 .. jupyter-execute::
 
-    print_source(fom._solve)
+    print_source(fom.compute)
 
-There is some code related to logging and the computation of an output functional.
-The interesting line is::
+What we see is a default implementation from :class:`~pymor.models.interface.Model` that
+takes care of :mod:`caching <pymor.core.cache>` and :mod:`logging <pymor.core.logger>`,
+but defers the actual computations to further private methods. Implementors can directly implement
+:meth:`~pymor.models.interface.Model._compute` to compute multiple return values
+at once in an optimized way. Our given model, however, just implements 
+:meth:`~pymor.models.interface.Model._compute_solution` where we can find the
+actual code:
 
-    U = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
+.. jupyter-execute::
+
+    print_source(fom._compute_solution)
 
 What does this mean? If we look at the type of `fom`,
 
