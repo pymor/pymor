@@ -3,91 +3,105 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Thermalblock demo.
-
-Usage:
-  thermalblock.py [options] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
-  thermalblock.py -h | --help
-
-
-Arguments:
-  XBLOCKS    Number of blocks in x direction.
-  YBLOCKS    Number of blocks in y direction.
-
-  SNAPSHOTS  naive:           ignored
-
-             greedy/pod:      Number of training_set parameters per block
-                              (in total SNAPSHOTS^(XBLOCKS * YBLOCKS)
-                              parameters).
-
-             adaptive_greedy: size of validation set.
-
-  RBSIZE     Size of the reduced basis
-
-Options:
-  --adaptive-greedy-rho=RHO          See pymor.algorithms.adaptivegreedy [default: 1.1].
-  --adaptive-greedy-gamma=GAMMA      See pymor.algorithms.adaptivegreedy [default: 0.2].
-  --adaptive-greedy-theta=THETA      See pymor.algorithms.adaptivegreedy [default: 0.]
-  --alg=ALG                          The model reduction algorithm to use
-                                     (naive, greedy, adaptive_greedy, pod) [default: greedy].
-  --cache-region=REGION              Name of cache region to use for caching solution snapshots
-                                     (none, memory, disk, persistent) [default: none].
-  --extension-alg=ALG                Basis extension algorithm (trivial, gram_schmidt)
-                                     to be used [default: gram_schmidt].
-  --fenics                           Use FEniCS model.
-  --grid=NI                          Use grid with 4*NI*NI elements [default: 100].
-  -h, --help                         Show this message.
-  --ipython-engines=COUNT            If positive, the number of IPython cluster engines to use for
-                                     parallel greedy search. If zero, no parallelization is performed.
-                                     [default: 0]
-  --ipython-profile=PROFILE          IPython profile to use for parallelization.
-  --list-vector-array                Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
-  --order=ORDER                      Polynomial order of the Lagrange finite elements to use in FEniCS
-                                     model [default: 1].
-  --pickle=PREFIX                    Pickle reduced model, as well as reductor and high-dimensional
-                                     model to files with this prefix.
-  --plot-err                         Plot error.
-  --plot-solutions                   Plot some example solutions.
-  --plot-error-sequence              Plot reduction error vs. basis size.
-  --product=PROD                     Product (euclidean, h1) w.r.t. which to orthonormalize
-                                     and calculate Riesz representatives [default: h1].
-  --reductor=RED                     Reductor (error estimator) to choose (traditional, residual_basis)
-                                     [default: residual_basis]
-  --test=COUNT                       Use COUNT snapshots for stochastic error estimation
-                                     [default: 10].
-  --greedy-without-error-estimator   Do not use error estimator for basis generation.
-"""
-
 import sys
 import time
+from enum import Enum
 
-from docopt import docopt
+from typer import Argument, Option, run
 
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.core.pickle import dump
 from pymor.parallel.default import new_parallel_pool
 
 
-def main(args):
+def Choices(options):
 
-    args = parse_arguments(args)
+    class SE(str, Enum):
+        pass
 
-    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
+    return SE('Options', ((o, o) for o in options.split(' ')))
 
-    if args['--fenics']:
-        fom, fom_summary = discretize_fenics(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--order'])
+
+def main(
+    xblocks: int = Argument(..., help='Number of blocks in x direction.'),
+    yblocks: int = Argument(..., help='Number of blocks in y direction.'),
+    snapshots: int = Argument(
+        ...,
+        help='naive: ignored\n\n'
+             'greedy/pod: Number of training_set parameters per block '
+             '(in total SNAPSHOTS^(XBLOCKS * YBLOCKS) parameters).\n\n'
+             'adaptive_greedy: size of validation set.\n\n'
+    ),
+
+    rbsize: int = Argument(..., help='Size of the reduced basis.'),
+
+    adaptive_greedy_gamma: float = Option(0.2, help='See pymor.algorithms.adaptivegreedy.'),
+    adaptive_greedy_rho: float = Option(1.1, help='See pymor.algorithms.adaptivegreedy.'),
+    adaptive_greedy_theta: float = Option(0., help='See pymor.algorithms.adaptivegreedy.'),
+    alg: Choices('naive greedy adaptive_greedy pod') = Option('greedy', help='The model reduction algorithm to use.'),
+    cache_region: Choices('none memory disk persistent') = Option(
+        'none',
+        help='Name of cache region to use for caching solution snapshots.'
+    ),
+    extension_alg: Choices('trivial gram_schmidt') = Option(
+        'gram_schmidt',
+        help='Basis extension algorithm to be used.'
+    ),
+    fenics: bool = Option(False, help='Use FEniCS model.'),
+    greedy_without_error_estimator: bool = Option(False, help='Do not use error estimator for basis generation.'),
+    grid: int = Option(100, help='Use grid with 4*NI*NI elements'),
+    ipython_engines: int = Option(
+        None,
+        help='If positive, the number of IPython cluster engines to use for '
+             'parallel greedy search. If zero, no parallelization is performed.'
+    ),
+    ipython_profile: str = Option(None, help='IPython profile to use for parallelization.'),
+    list_vector_array: bool = Option(
+        False,
+        help='Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.'
+    ),
+    order: int = Option(1, help='Polynomial order of the Lagrange finite elements to use in FEniCS.'),
+    pickle: str = Option(
+        None,
+        help='Pickle reduced model, as well as reductor and high-dimensional model '
+             'to files with this prefix.'
+    ),
+    product: Choices('euclidean h1') = Option(
+        'h1',
+        help='Product w.r.t. which to orthonormalize and calculate Riesz representatives.'
+    ),
+    plot_err: bool = Option(False, help='Plot error'),
+    plot_error_sequence: bool = Option(False, help='Plot reduction error vs. basis size.'),
+    plot_solutions: bool = Option(False, help='Plot some example solutions.'),
+    reductor: Choices('traditional residual_basis') = Option(
+        'residual_basis',
+        help='Reductor (error estimator) to choose.'
+    ),
+    test: int = Option(10, help='Use COUNT snapshots for stochastic error estimation.'),
+):
+    """Thermalblock demo."""
+
+    if fenics and cache_region != 'none':
+        raise ValueError('Caching of high-dimensional solutions is not supported for FEniCS model.')
+    if not fenics and order != 1:
+        raise ValueError('Higher-order finite elements only supported for FEniCS model.')
+
+    pool = new_parallel_pool(ipython_num_engines=ipython_engines, ipython_profile=ipython_profile)
+
+    if fenics:
+        fom, fom_summary = discretize_fenics(xblocks, yblocks, grid, order)
     else:
-        fom, fom_summary = discretize_pymor(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
+        fom, fom_summary = discretize_pymor(xblocks, yblocks, grid, list_vector_array)
 
     parameter_space = fom.parameters.space(0.1, 1.)
 
-    if args['--cache-region'] != 'none':
+    if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
-        cache_id = (f"pymordemos.thermalblock {args['--fenics']} {args['XBLOCKS']} {args['YBLOCKS']}"
-                    f"{args['--grid']} {args['--order']}")
-        fom.enable_caching(args['--cache-region'], cache_id)
+        cache_id = (f"pymordemos.thermalblock {fenics} {xblocks} {yblocks}"
+                    f"{grid} {order}")
+        fom.enable_caching(cache_region, cache_id)
 
-    if args['--plot-solutions']:
+    if plot_solutions:
         print('Showing some solutions')
         Us = ()
         legend = ()
@@ -106,55 +120,55 @@ def main(args):
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
 
     # inner product for computation of Riesz representatives
-    product = fom.h1_0_semi_product if args['--product'] == 'h1' else None
+    product = fom.h1_0_semi_product if product == 'h1' else None
 
-    if args['--reductor'] == 'residual_basis':
+    if reductor == 'residual_basis':
         from pymor.reductors.coercive import CoerciveRBReductor
         reductor = CoerciveRBReductor(fom, product=product, coercivity_estimator=coercivity_estimator,
                                       check_orthonormality=False)
-    elif args['--reductor'] == 'traditional':
+    elif reductor == 'traditional':
         from pymor.reductors.coercive import SimpleCoerciveRBReductor
         reductor = SimpleCoerciveRBReductor(fom, product=product, coercivity_estimator=coercivity_estimator,
                                             check_orthonormality=False)
     else:
         assert False  # this should never happen
 
-    if args['--alg'] == 'naive':
+    if alg == 'naive':
         rom, red_summary = reduce_naive(fom=fom, reductor=reductor, parameter_space=parameter_space,
-                                        basis_size=args['RBSIZE'])
-    elif args['--alg'] == 'greedy':
-        parallel = not (args['--fenics'] and args['--greedy-without-error-estimator'])  # cannot pickle FEniCS model
+                                        basis_size=rbsize)
+    elif alg == 'greedy':
+        parallel = not (fenics and greedy_without_error_estimator)  # cannot pickle FEniCS model
         rom, red_summary = reduce_greedy(fom=fom, reductor=reductor, parameter_space=parameter_space,
-                                         snapshots_per_block=args['SNAPSHOTS'],
-                                         extension_alg_name=args['--extension-alg'],
-                                         max_extensions=args['RBSIZE'],
-                                         use_error_estimator=not args['--greedy-without-error-estimator'],
+                                         snapshots_per_block=snapshots,
+                                         extension_alg_name=extension_alg,
+                                         max_extensions=rbsize,
+                                         use_error_estimator=not greedy_without_error_estimator,
                                          pool=pool if parallel else None)
-    elif args['--alg'] == 'adaptive_greedy':
-        parallel = not (args['--fenics'] and args['--greedy-without-error-estimator'])  # cannot pickle FEniCS model
+    elif alg == 'adaptive_greedy':
+        parallel = not (fenics and greedy_without_error_estimator)  # cannot pickle FEniCS model
         rom, red_summary = reduce_adaptive_greedy(fom=fom, reductor=reductor, parameter_space=parameter_space,
-                                                  validation_mus=args['SNAPSHOTS'],
-                                                  extension_alg_name=args['--extension-alg'],
-                                                  max_extensions=args['RBSIZE'],
-                                                  use_error_estimator=not args['--greedy-without-error-estimator'],
-                                                  rho=args['--adaptive-greedy-rho'],
-                                                  gamma=args['--adaptive-greedy-gamma'],
-                                                  theta=args['--adaptive-greedy-theta'],
+                                                  validation_mus=snapshots,
+                                                  extension_alg_name=extension_alg,
+                                                  max_extensions=rbsize,
+                                                  use_error_estimator=not greedy_without_error_estimator,
+                                                  rho=adaptive_greedy_rho,
+                                                  gamma=adaptive_greedy_gamma,
+                                                  theta=adaptive_greedy_theta,
                                                   pool=pool if parallel else None)
-    elif args['--alg'] == 'pod':
+    elif alg == 'pod':
         rom, red_summary = reduce_pod(fom=fom, reductor=reductor, parameter_space=parameter_space,
-                                      snapshots_per_block=args['SNAPSHOTS'],
-                                      basis_size=args['RBSIZE'])
+                                      snapshots_per_block=snapshots,
+                                      basis_size=rbsize)
     else:
         assert False  # this should never happen
 
-    if args['--pickle']:
-        print(f"\nWriting reduced model to file {args['--pickle']}_reduced ...")
-        with open(args['--pickle'] + '_reduced', 'wb') as f:
+    if pickle:
+        print(f"\nWriting reduced model to file {pickle}_reduced ...")
+        with open(pickle + '_reduced', 'wb') as f:
             dump((rom, parameter_space), f)
-        if not args['--fenics']:  # FEniCS data structures do not support serialization
-            print(f"Writing detailed model and reductor to file {args['--pickle']}_detailed ...")
-            with open(args['--pickle'] + '_detailed', 'wb') as f:
+        if not fenics:  # FEniCS data structures do not support serialization
+            print(f"Writing detailed model and reductor to file {pickle}_detailed ...")
+            with open(pickle + '_detailed', 'wb') as f:
                 dump((fom, reductor), f)
 
     print('\nSearching for maximum error on random snapshots ...')
@@ -165,10 +179,10 @@ def main(args):
                                        error_estimator=True,
                                        error_norms=(fom.h1_0_semi_norm, fom.l2_norm),
                                        condition=True,
-                                       test_mus=parameter_space.sample_randomly(args['--test'], seed=999),
-                                       basis_sizes=0 if args['--plot-error-sequence'] else 1,
-                                       plot=args['--plot-error-sequence'],
-                                       pool=None if args['--fenics'] else pool  # cannot pickle FEniCS model
+                                       test_mus=parameter_space.sample_randomly(test, seed=999),
+                                       basis_sizes=0 if plot_error_sequence else 1,
+                                       plot=plot_error_sequence,
+                                       pool=None if fenics else pool  # cannot pickle FEniCS model
                                        )
 
     print('\n*** RESULTS ***\n')
@@ -177,53 +191,17 @@ def main(args):
     print(results['summary'])
     sys.stdout.flush()
 
-    if args['--plot-error-sequence']:
+    if plot_error_sequence:
         import matplotlib.pyplot
         matplotlib.pyplot.show(results['figure'])
-    if args['--plot-err']:
+    if plot_err:
         mumax = results['max_error_mus'][0, -1]
         U = fom.solve(mumax)
         URB = reductor.reconstruct(rom.solve(mumax))
         fom.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                    title='Maximum Error Solution', separate_colorbars=True, block=True)
+                      title='Maximum Error Solution', separate_colorbars=True, block=True)
 
     return results
-
-
-def parse_arguments(args):
-    args = docopt(__doc__, args)
-    args['XBLOCKS'] = int(args['XBLOCKS'])
-    args['YBLOCKS'] = int(args['YBLOCKS'])
-    args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
-    args['RBSIZE'] = int(args['RBSIZE'])
-
-    args['--adaptive-greedy-rho'] = float(args['--adaptive-greedy-rho'])
-    args['--adaptive-greedy-gamma'] = float(args['--adaptive-greedy-gamma'])
-    args['--adaptive-greedy-theta'] = float(args['--adaptive-greedy-theta'])
-    args['--alg'] = args['--alg'].lower()
-    args['--cache-region'] = args['--cache-region'].lower()
-    args['--extension-alg'] = args['--extension-alg'].lower()
-    args['--grid'] = int(args['--grid'])
-    args['--ipython-engines'] = int(args['--ipython-engines'])
-    args['--order'] = int(args['--order'])
-    args['--product'] = args['--product'].lower()
-    args['--reductor'] = args['--reductor'].lower()
-    args['--test'] = int(args['--test'])
-
-    assert args['--alg'] in {'naive', 'greedy', 'adaptive_greedy', 'pod'}
-    assert args['--cache-region'] in {'none', 'memory', 'disk', 'persistent'}
-    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
-    assert args['--product'] in {'euclidean', 'h1'}
-    assert args['--reductor'] in {'traditional', 'residual_basis'}
-
-    if args['--fenics']:
-        if args['--cache-region'] != 'none':
-            raise ValueError('Caching of high-dimensional solutions is not supported for FEniCS model.')
-    else:
-        if args['--order'] != 1:
-            raise ValueError('Higher-order finite elements only supported for FEniCS model.')
-
-    return args
 
 
 def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
@@ -461,4 +439,4 @@ def reduce_pod(fom, reductor, parameter_space, snapshots_per_block, basis_size):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    run(main)
