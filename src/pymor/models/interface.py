@@ -54,9 +54,56 @@ class Model(CacheableObject, ParametricObject):
         return {}
 
     def _compute_solution(self, mu=None, **kwargs):
+        """Compute the model's solution for |parameter values| `mu`.
+
+        This method is called by the default implementation of :meth:`compute`
+        in :class:`pymor.models.interface.Model`.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values| for which to compute the solution.
+        kwargs
+            Additional keyword arguments to customize how the solution is
+            computed or to select additional data to be returned.
+
+        Returns
+        -------
+        |VectorArray| with the computed solution or a dict which at least
+        must contain the key `'solution'`.
+        """
         raise NotImplementedError
 
     def _compute_output(self, solution, mu=None, **kwargs):
+        """Compute the model's output for |parameter values| `mu`.
+
+        This method is called by the default implementation of :meth:`compute`
+        in :class:`pymor.models.interface.Model`. The assumption is made
+        that the output is a derived quantity from the model's internal state
+        as returned my :meth:`_compute_solution`. When this is not the case,
+        the computation of the output should be implemented in :meth:`_compute`.
+
+        .. note::
+
+            The default implementation applies the |Operator| given by the
+            :attr:`output_functional` attribute to the given `solution`
+            |VectorArray|.
+
+        Parameters
+        ----------
+        solution
+            Internal model state for the given |parameter values|.
+        mu
+            |Parameter values| for which to compute the output.
+        kwargs
+            Additional keyword arguments to customize how the output is
+            computed or to select additional data to be returned.
+
+        Returns
+        -------
+        |VectorArray| with the computed output or a dict which at least
+        must contain the key `'output'`.
+        """
         if not hasattr(self, 'output_functional'):
             raise NotImplementedError
         if self.output_functional is None:
@@ -64,11 +111,69 @@ class Model(CacheableObject, ParametricObject):
         return self.output_functional.apply(solution, mu=mu)
 
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
+        """Compute an error estimate for the computed internal state.
+
+        This method is called by the default implementation of :meth:`compute`
+        in :class:`pymor.models.interface.Model`. The assumption is made
+        that the error estimate is a derived quantity from the model's internal state
+        as returned my :meth:`_compute_solution`. When this is not the case,
+        the computation of the error estimate should be implemented in :meth:`_compute`.
+
+        .. note::
+
+            The default implementation calls the `estimate_error` method of the object
+            given by the :attr:`error_estimator` attribute, passing `solution`,
+            `mu`, `self` and `**kwargs`.
+
+        Parameters
+        ----------
+        solution
+            Internal model state for the given |parameter values|.
+        mu
+            |Parameter values| for which to compute the error estimate.
+        kwargs
+            Additional keyword arguments to customize how the error estimate is
+            computed or to select additional data to be returned.
+
+        Returns
+        -------
+        The computed error estimate or a dict which at least must contain the key
+        `'solution_error_estimate'`.
+        """
         if self.error_estimator is None:
             raise ValueError('Model has no error estimator')
         return self.error_estimator.estimate_error(solution, mu, self, **kwargs)
 
     def _compute_output_error_estimate(self, solution, mu=None, **kwargs):
+        """Compute an error estimate for the computed model output.
+
+        This method is called by the default implementation of :meth:`compute`
+        in :class:`pymor.models.interface.Model`. The assumption is made
+        that the error estimate is a derived quantity from the model's internal state
+        as returned my :meth:`_compute_solution`. When this is not the case,
+        the computation of the error estimate should be implemented in :meth:`_compute`.
+
+        .. note::
+
+            The default implementation calls the `estimate_output_error` method of the object
+            given by the :attr:`error_estimator` attribute, passing `solution`,
+            `mu`, `self` and `**kwargs`.
+
+        Parameters
+        ----------
+        solution
+            Internal model state for the given |parameter values|.
+        mu
+            |Parameter values| for which to compute the error estimate.
+        kwargs
+            Additional keyword arguments to customize how the error estimate is
+            computed or to select additional data to be returned.
+
+        Returns
+        -------
+        The computed error estimate or a dict which at least must contain the key
+        `'solution_error_estimate'`.
+        """
         if self.error_estimator is None:
             raise ValueError('Model has no error estimator')
         return self.error_estimator.estimate_output_error(solution, mu, self, **kwargs)
@@ -78,6 +183,43 @@ class Model(CacheableObject, ParametricObject):
     def compute(self, solution=False, output=False,
                 solution_error_estimate=False, output_error_estimate=False, *,
                 mu=None, **kwargs):
+        """Compute the solution of the model and associated quantities.
+
+        This methods the output of the model it's internal state
+        and various associated quantities for given |parameter values|
+        `mu`.
+
+        .. note::
+
+            The default implementation defers the actual computations to
+            the methods :meth:`_compute_solution`, :meth:`_compute_output`,
+            :meth:`_compute_solution_error_estimate` and :meth:`_compute_output_error_estimate`.
+            The call to :meth:`_compute_solution` is :mod:`cached <pymor.core.cache>`.
+            In addition, |Model| implementors may implement :meth:`_compute` to
+            simultaneously compute multiple values in an optimized way. The corresponding
+            `_compute_XXX` methods will not be called for values already returned by
+            :meth:`_compute`.
+
+        Parameters
+        ----------
+        solution
+            If `True`, return the model's internal state.
+        output
+            If `True`, return the model output.
+        solution_error_estimate
+            If `True`, return an error estimate for the computed internal state.
+        output_error_estimate
+            If `True`, return an error estimate for the computed output.
+        mu
+            |Parameter values| for which to compute the values.
+        kwargs
+            Further keyword arguments to select further quantities that sould
+            be returned or to customize how the values are computed.
+
+        Returns
+        -------
+        A dict with the computed values.
+        """
 
         # make sure no unknown kwargs are passed
         assert kwargs.keys() <= self._compute_allowed_kwargs
@@ -139,21 +281,28 @@ class Model(CacheableObject, ParametricObject):
     def solve(self, mu=None, return_error_estimate=False, **kwargs):
         """Solve the discrete problem for the |parameter values| `mu`.
 
-        The result will be :mod:`cached <pymor.core.cache>`
+        This method returns a |VectorArray| with a internal state
+        representation of the model's solution for given
+        |parameter values|. It is a convenience wrapper around
+        :meth:`compute`.
+
+        The result may be :mod:`cached <pymor.core.cache>`
         in case caching has been activated for the given model.
 
         Parameters
         ----------
         mu
             |Parameter values| for which to solve.
-        return_output
-            If `True`, the model output for the given |parameter values| `mu` is
-            returned as a |VectorArray| from :attr:`output_space`.
+        return_error_estimate
+            If `True`, also return an error estimate for the computed solution.
+        kwargs
+            Additional keyword arguments passed to :meth:`compute` that
+            might affect how the solution is computed.
 
         Returns
         -------
-        The solution |VectorArray|. When `return_output` is `True`,
-        the output |VectorArray| is returned as second value.
+        The solution |VectorArray|. When `return_error_estimate` is `True`,
+        the estimate is returned as second value.
         """
         data = self.compute(
             solution=True,
@@ -169,14 +318,23 @@ class Model(CacheableObject, ParametricObject):
     def output(self, mu=None, return_error_estimate=False, **kwargs):
         """Return the model output for given |parameter values| `mu`.
 
+        This method is a convenience wrapper around :meth:`compute`.
+
         Parameters
         ----------
         mu
             |Parameter values| for which to compute the output.
+        return_error_estimate
+            If `True`, also return an error estimate for the computed output.
+        kwargs
+            Additional keyword arguments passed to :meth:`compute` that
+            might affect how the solution is computed.
 
         Returns
         -------
         The computed model output as a |VectorArray| from `output_space`.
+        When `return_error_estimate` is `True`, the estimate is returned as
+        second value.
         """
         data = self.compute(
             output=True,
@@ -190,7 +348,12 @@ class Model(CacheableObject, ParametricObject):
             return data['output']
 
     def estimate_error(self, mu=None, **kwargs):
-        """Estimate the model error for a given solution.
+        """Estimate the error for the computed internal state.
+
+        For given |parameter values| `mu` this method returns an
+        error estimate for the computed internal model state as returned
+        by :meth:`solve`. It is a convenience wrapper around
+        :meth:`compute`.
 
         The model error could be the error w.r.t. the analytical
         solution of the given problem or the model reduction error w.r.t.
@@ -198,10 +361,11 @@ class Model(CacheableObject, ParametricObject):
 
         Parameters
         ----------
-        U
-            The solution obtained by :meth:`~solve`.
         mu
-            |Parameter values| for which `U` has been obtained.
+            |Parameter values| for which to estimate the error.
+        kwargs
+            Additional keyword arguments passed to :meth:`compute` that
+            might affect how the error estimate (or the solution) is computed.
 
         Returns
         -------
@@ -218,18 +382,24 @@ class Model(CacheableObject, ParametricObject):
         return self.estimate_error(mu)
 
     def estimate_output_error(self, mu=None, **kwargs):
-        """Estimate the model error for a given solution.
+        """Estimate the error for the computed output.
 
-        The model error could be the error w.r.t. the analytical
+        For given |parameter values| `mu` this method returns an
+        error estimate for the computed model output as returned
+        by :meth:`output`. It is a convenience wrapper around
+        :meth:`compute`.
+
+        The output error could be the error w.r.t. the analytical
         solution of the given problem or the model reduction error w.r.t.
         a corresponding high-dimensional |Model|.
 
         Parameters
         ----------
-        U
-            The solution obtained by :meth:`~solve`.
         mu
-            |Parameter values| for which `U` has been obtained.
+            |Parameter values| for which to estimate the error.
+        kwargs
+            Additional keyword arguments passed to :meth:`compute` that
+            might affect how the error estimate (or the output) is computed.
 
         Returns
         -------
@@ -242,16 +412,16 @@ class Model(CacheableObject, ParametricObject):
         )['output_error_estimate']
 
     def visualize(self, U, **kwargs):
-        """Visualize a solution |VectorArray| U.
+        """Visualize a |VectorArray| U of the model's :attr:`solution_space`.
 
         Parameters
         ----------
         U
-            The |VectorArray| from
-            :attr:`~pymor.models.interface.Model.solution_space`
+            The |VectorArray| from :attr:`solution_space`
             that shall be visualized.
         kwargs
-            See docstring of `self.visualizer.visualize`.
+            Additional keyword arguments to customize the visualization.
+            See the docstring of `self.visualizer.visualize`.
         """
         if getattr(self, 'visualizer') is not None:
             return self.visualizer.visualize(U, self, **kwargs)
