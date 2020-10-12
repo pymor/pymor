@@ -84,18 +84,8 @@ class StationaryModel(Model):
             f'    output_space:    {self.output_space}\n'
         )
 
-    def _solve(self, mu=None, return_output=False):
-        # explicitly checking if logging is disabled saves the str(mu) call
-        if not self.logging_disabled:
-            self.logger.info(f'Solving {self.name} for {mu} ...')
-
-        U = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
-        if return_output:
-            if self.output_functional is None:
-                raise ValueError('Model has no output')
-            return U, self.output_functional.apply(U, mu=mu)
-        else:
-            return U
+    def _compute_solution(self, mu=None, **kwargs):
+        return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
 
 class InstationaryModel(Model):
@@ -195,21 +185,12 @@ class InstationaryModel(Model):
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
-    def _solve(self, mu=None, return_output=False):
-        # explicitly checking if logging is disabled saves the expensive str(mu) call
-        if not self.logging_disabled:
-            self.logger.info(f'Solving {self.name} for {mu} ...')
-
+    def _compute_solution(self, mu=None, **kwargs):
         mu = mu.with_(t=0.)
         U0 = self.initial_data.as_range_array(mu)
         U = self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                     initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
-        if return_output:
-            if self.output_functional is None:
-                raise ValueError('Model has no output')
-            return U, self.output_functional.apply(U, mu=mu)
-        else:
-            return U
+        return U
 
     def to_lti(self):
         """Convert model to |LTIModel|.

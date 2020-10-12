@@ -36,9 +36,9 @@ class MPIModel:
         self.parameters_internal = m.parameters_internal
         self.visualizer = MPIVisualizer(obj_id)
 
-    def _solve(self, mu=None):
+    def _compute_solution(self, mu=None, **kwargs):
         return self.solution_space.make_array(
-            mpi.call(mpi.method_call_manage, self.obj_id, 'solve', mu=mu)
+            mpi.call(mpi.method_call_manage, self.obj_id, '_compute_solution', mu=mu, **kwargs)
         )
 
     def visualize(self, U, **kwargs):
