@@ -131,9 +131,7 @@ if config.HAVE_TORCH:
             if output_functional is not None:
                 self.output_space = output_functional.range
 
-        def _solve(self, mu=None, return_output=False):
-            if not self.logging_disabled:
-                self.logger.info(f'Solving {self.name} for {mu} ...')
+        def _compute_solution(self, mu=None, **kwargs):
 
             U = self.solution_space.empty(reserve=self.Nt+1)
             dt = self.T / self.Nt
@@ -150,12 +148,7 @@ if config.HAVE_TORCH:
                 U.append(self.solution_space.make_array(result_neural_network))
                 t += dt
 
-            if return_output:
-                if self.output_functional is None:
-                    raise ValueError('Model has no output')
-                return U, self.output_functional.apply(U, mu=mu)
-            else:
-                return U
+            return U
 
 
     class FullyConnectedNN(nn.Module, BasicObject):
