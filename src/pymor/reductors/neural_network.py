@@ -323,13 +323,13 @@ if config.HAVE_TORCH:
 
     class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         """Reduced Basis reductor for instationary problems relying on
-           artificial neural networks.
+        artificial neural networks.
 
         This is a reductor that constructs a reduced basis using proper
         orthogonal decomposition and trains a neural network that approximates
         the mapping from parameter and time space to coefficients of the
         full-order solution in the reduced basis.
-        The approach is described in [HU18]_.
+        The approach is described in [WHR19]_.
 
         Parameters
         ----------
@@ -379,7 +379,7 @@ if config.HAVE_TORCH:
 
         def _compute_layers_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network
-               (make sure to increase the input dimension to account for the time)."""
+            (make sure to increase the input dimension to account for the time)."""
             return [len(self.fom.parameters) + 1,] + hidden_layers + [len(self.reduced_basis),]
 
 
@@ -394,7 +394,7 @@ if config.HAVE_TORCH:
 
         def _compute_samples(self, parameters, solutions, reduced_basis):
             """Transform parameters and corresponding solutions to tensors
-               (make sure to include the time instances in the inputs)."""
+            (make sure to include the time instances in the inputs)."""
             samples = []
             parameters_with_time = []
             dt = self.fom.T / self.Nt
