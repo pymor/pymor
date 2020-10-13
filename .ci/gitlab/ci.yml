@@ -497,6 +497,42 @@ ci_weekly 3 8:
     image: pymor/testing_py3.8:06d87fc5395c39231eb05b6df06266dab9a4dbf9
     
     script: ./.ci/gitlab/test_vanilla.bash
+submit mpi 3 6:
+    extends: .submit
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    image: pymor/python:3.6
+    variables:
+        COVERAGE_FLAG: mpi
+    dependencies:
+        - mpi 3 6
+    needs: ["mpi 3 6"]
+submit mpi 3 7:
+    extends: .submit
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    image: pymor/python:3.7
+    variables:
+        COVERAGE_FLAG: mpi
+    dependencies:
+        - mpi 3 7
+    needs: ["mpi 3 7"]
+submit mpi 3 8:
+    extends: .submit
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    image: pymor/python:3.8
+    variables:
+        COVERAGE_FLAG: mpi
+    dependencies:
+        - mpi 3 8
+    needs: ["mpi 3 8"]
 submit vanilla 3 6:
     extends: .submit
     rules:

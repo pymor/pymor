@@ -227,7 +227,7 @@ ci_weekly {{py[0]}} {{py[2]}}:
     script: ./.ci/gitlab/test_vanilla.bash
 {%- endfor %}
 
-{%- for script, py, para in matrix if script in ['vanilla', 'oldest', 'numpy_git'] %}
+{%- for script, py, para in matrix if script in ['vanilla', 'oldest', 'numpy_git', 'mpi'] %}
 submit {{script}} {{py[0]}} {{py[2]}}:
     extends: .submit
     rules:
