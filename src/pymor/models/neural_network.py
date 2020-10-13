@@ -93,10 +93,10 @@ if config.HAVE_TORCH:
             :class:`~pymor.models.neural_network.FullyConnectedNN` with input size that
             matches the (total) number of parameters and output size equal to the
             dimension of the reduced space.
-       parameters
+        parameters
             |Parameters| of the reduced order model (the same as used in the full-order
             model).
-       output_functional
+        output_functional
             |Operator| mapping a given solution to the model output. In many applications,
             this will be a |Functional|, i.e. an |Operator| mapping to scalars.
             This is not required, however.
