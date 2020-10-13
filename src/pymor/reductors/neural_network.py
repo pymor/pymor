@@ -70,6 +70,7 @@ if config.HAVE_TORCH:
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
+
         def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
                    optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
                    restarts=10, seed=0):
@@ -124,19 +125,17 @@ if config.HAVE_TORCH:
             # input and output size of the neural network are prescribed by the dimension of the parameter space
             # and the reduced basis size
             assert isinstance(hidden_layers, list)
-            layers = [len(self.fom.parameters),] + hidden_layers + [len(self.reduced_basis),]
+            layers = self._compute_layers_sizes(hidden_layers)
 
             # compute validation data
             if not hasattr(self, 'validation_data'):
                 with self.logger.block('Computing validation snapshots ...'):
 
                     if self.validation_set:
-                        self.validation_data = []
+                        U = self.fom.solution_space.empty()
                         for mu in self.validation_set:
-                            mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                            u = self.fom.solve(mu)
-                            u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u)[:,0])
-                            self.validation_data.append((mu_tensor, u_tensor))
+                            U.append(self.fom.solve(mu))
+                        self.validation_data = self._compute_samples(self.validation_set, U, self.reduced_basis)
                     else:
                         number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
                         self.validation_data = self.training_data[0:number_validation_snapshots]
@@ -179,6 +178,11 @@ if config.HAVE_TORCH:
                     return self._build_rom()
                 else:
                     raise ValueError('Unknown value for mean squared error of neural network')
+
+
+        def _compute_layers_sizes(self, hidden_layers):
+            """Compute the number of neurons in the layers of the neural network."""
+            return [len(self.fom.parameters),] + hidden_layers + [len(self.reduced_basis),]
 
 
         def _build_rom(self):
@@ -279,8 +283,6 @@ if config.HAVE_TORCH:
 
         def build_basis(self):
             """Compute a reduced basis using proper orthogonal decomposition."""
-            self.training_data = []
-
             with self.logger.block('Building reduced basis ...'):
 
                 # compute snapshots for POD and training of neural networks
@@ -296,15 +298,22 @@ if config.HAVE_TORCH:
 
                 # determine the coefficients of the full-order solutions in the reduced basis to obtain the
                 # training data; convert everything into tensors that are compatible with PyTorch
-                for mu, u in zip(self.training_set, U):
-                    mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                    u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
-                    self.training_data.append((mu_tensor, u_tensor))
+                self.training_data = self._compute_samples(self.training_set, U, reduced_basis)
 
             # compute mean square loss
             mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
 
             return reduced_basis, mean_square_loss
+
+
+        def _compute_samples(self, parameters, solutions, reduced_basis):
+            """Transform parameters and corresponding solutions to tensors."""
+            samples = []
+            for mu, u in zip(parameters, solutions):
+                mu_tensor = torch.DoubleTensor(mu.to_numpy())
+                u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
+                samples.append((mu_tensor, u_tensor))
+            return samples
 
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -312,13 +321,14 @@ if config.HAVE_TORCH:
             return self.reduced_basis.lincomb(u.to_numpy())
 
 
-    class NeuralNetworkInstationaryReductor(BasicObject):
-        """Reduced Basis reductor relying on artificial neural networks.
+    class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
+        """Reduced Basis reductor for instationary problems relying on
+           artificial neural networks.
 
         This is a reductor that constructs a reduced basis using proper
         orthogonal decomposition and trains a neural network that approximates
-        the mapping from parameter space to coefficients of the full-order
-        solution in the reduced basis.
+        the mapping from parameter and time space to coefficients of the
+        full-order solution in the reduced basis.
         The approach is described in [HU18]_.
 
         Parameters
@@ -366,260 +376,41 @@ if config.HAVE_TORCH:
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
-        def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
-                   optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
-                   restarts=10, seed=0):
-            """Reduce by training artificial neural networks.
 
-            Parameters
-            ----------
-            hidden_layers
-                Number of neurons in the hidden layers. Can either be fixed or
-                a Python expression string depending on the reduced basis size
-                `N` and the total dimension of the |Parameters| `P`.
-            activation_function
-                Activation function to use between the hidden layers.
-            optimizer
-                Algorithm to use as optimizer during training.
-            epochs
-                Maximum number of epochs for training.
-            batch_size
-                Batch size to use if optimizer allows mini-batching.
-            learning_rate
-                Step size to use in each optimization step.
-            restarts
-                Number of restarts of the training algorithm. Since the training
-                results highly depend on the initial starting point, i.e. the
-                initial weights and biases, it is advisable to train multiple
-                neural networks by starting with different initial values and
-                choose that one performing best on the validation set.
-            seed
-                Seed to use for various functions in PyTorch. Using a fixed seed,
-                it is possible to reproduce former results.
-
-            Returns
-            -------
-            rom
-                Reduced-order |NeuralNetworkModel|.
-            """
-            assert restarts > 0
-            assert epochs > 0
-            assert batch_size > 0
-            assert learning_rate > 0.
-
-            dt = self.fom.T / self.Nt
-
-            # set a seed for the PyTorch initialization of weights and biases and further PyTorch methods
-            torch.manual_seed(seed)
-
-            # build a reduced basis using POD and compute training data
-            if not hasattr(self, 'reduced_basis'):
-                self.reduced_basis, self.mse_basis = self.build_basis()
-
-            # determine the numbers of neurons in the hidden layers
-            if isinstance(hidden_layers, str):
-                hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
-            # input and output size of the neural network are prescribed by the dimension of the parameter space
-            # and the reduced basis size
-            assert isinstance(hidden_layers, list)
-            layers = [len(self.fom.parameters) + 1,] + hidden_layers + [len(self.reduced_basis),]
-
-            # compute validation data
-            if not hasattr(self, 'validation_data'):
-                with self.logger.block('Computing validation snapshots ...'):
-
-                    if self.validation_set:
-                        self.validation_data = []
-                        for mu in self.validation_set:
-                            u = self.fom.solve(mu)
-                            t = 0.
-                            for i in range(self.Nt + 1):
-                                mu = mu.with_(t=t)
-                                mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                                u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u[i])[:,0])
-                                self.validation_data.append((mu_tensor, u_tensor))
-                                t += dt
-                    else:
-                        number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
-                        self.validation_data = self.training_data[0:number_validation_snapshots]
-                        self.training_data = self.training_data[number_validation_snapshots+1:]
-
-            # run the actual training of the neural network
-            with self.logger.block(f'Performing {restarts} restarts for training ...'):
-
-                for run in range(restarts):
-                    neural_network, current_losses = self._train(layers, activation_function, optimizer,
-                                                       epochs, batch_size, learning_rate)
-                    if not hasattr(self, 'losses') or current_losses['val'] < self.losses['val']:
-                        self.losses = current_losses
-                        self.neural_network = neural_network
-
-                        # check if neural network is sufficient to guarantee certain error bounds
-                        with self.logger.block('Checking tolerances for error of neural network ...'):
-
-                            if isinstance(self.ann_mse, Number) and self.losses['full'] <= self.ann_mse:
-                                self.logger.info(f'Aborting training after {run} restarts ...')
-                                return self._build_rom()
-                            elif self.ann_mse == 'like_basis' and self.losses['full'] <= self.mse_basis:
-                                self.logger.info(f'Aborting training after {run} restarts ...')
-                                return self._build_rom()
-
-
-            # check if neural network is sufficient to guarantee certain error bounds
-            with self.logger.block('Checking tolerances for error of neural network ...'):
-
-                if isinstance(self.ann_mse, Number) and self.losses['full'] > self.ann_mse:
-                    raise NeuralNetworkTrainingFailed('Could not train a neural network that '
-                                                      'guarantees prescribed tolerance!')
-                elif self.ann_mse == 'like_basis' and self.losses['full'] > self.mse_basis:
-                    raise NeuralNetworkTrainingFailed('Could not train a neural network with an error as small as the '
-                                                      'reduced basis error! Maybe you can try a different neural '
-                                                      'network architecture or change the value of `ann_mse`.')
-                elif self.ann_mse is None:
-                    self.logger.info('Using neural network with smallest validation error ...')
-                    self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
-                    return self._build_rom()
-                else:
-                    raise ValueError('Unknown value for mean squared error of neural network')
+        def _compute_layers_sizes(self, hidden_layers):
+            """Compute the number of neurons in the layers of the neural network
+               (make sure to increase the input dimension to account for the time)."""
+            return [len(self.fom.parameters) + 1,] + hidden_layers + [len(self.reduced_basis),]
 
 
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkInstationaryModel(self.fom.T, self.Nt, self.neural_network, self.fom.parameters, name=f'{self.fom.name}_reduced')
+                rom = NeuralNetworkInstationaryModel(self.fom.T, self.Nt, self.neural_network,
+                                                     self.fom.parameters, name=f'{self.fom.name}_reduced')
 
             return rom
 
-        def _train(self, layers, activation_function, optimizer, epochs, batch_size, learning_rate):
-            """Perform a single training iteration and return the resulting neural network."""
-            assert hasattr(self, 'training_data')
-            assert hasattr(self, 'validation_data')
 
-            # LBFGS-optimizer does not support mini-batching, so the batch size needs to be adjusted
-            if optimizer == optim.LBFGS:
-                batch_size = max(len(self.training_data), len(self.validation_data))
+        def _compute_samples(self, parameters, solutions, reduced_basis):
+            """Transform parameters and corresponding solutions to tensors
+               (make sure to include the time instances in the inputs)."""
+            samples = []
+            parameters_with_time = []
+            dt = self.fom.T / self.Nt
 
-            with self.logger.block('Training the neural network ...'):
+            for mu in parameters:
+                t = 0.
+                for i in range(self.Nt + 1):
+                    parameters_with_time.append(mu.with_(t=t))
+                    t += dt
 
-                # initialize the neural network
-                neural_network = FullyConnectedNN(layers,
-                                                  activation_function=activation_function).double()
+            for mu, u in zip(parameters_with_time, solutions):
+                mu_tensor = torch.DoubleTensor(mu.to_numpy())
+                u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
+                samples.append((mu_tensor, u_tensor))
 
-                # initialize the optimizer
-                optimizer = optimizer(neural_network.parameters(),
-                                      lr=learning_rate)
-
-                loss_function = nn.MSELoss()
-                early_stopping_scheduler = EarlyStoppingScheduler(len(self.training_data) + len(self.validation_data))
-
-                # create the training and validation sets as well as the respective data loaders
-                training_dataset = CustomDataset(self.training_data)
-                validation_dataset = CustomDataset(self.validation_data)
-                phases = ['train', 'val']
-                training_loader = utils.data.DataLoader(training_dataset,
-                                                        batch_size=batch_size)
-                validation_loader = utils.data.DataLoader(validation_dataset,
-                                                          batch_size=batch_size)
-                dataloaders = {'train':  training_loader, 'val': validation_loader}
-
-                self.logger.info('Starting optimization procedure ...')
-
-                # perform optimization procedure
-                for epoch in range(epochs):
-                    losses = {'full': 0.}
-
-                    # alternate between training and validation phase
-                    for phase in phases:
-                        if phase == 'train':
-                            neural_network.train()
-                        else:
-                            neural_network.eval()
-
-                        running_loss = 0.0
-
-                        # iterate over batches
-                        for batch in dataloaders[phase]:
-                            inputs = batch[0]
-                            targets = batch[1]
-
-                            with torch.set_grad_enabled(phase == 'train'):
-                                def closure():
-                                    if torch.is_grad_enabled():
-                                        optimizer.zero_grad()
-                                    outputs = neural_network(inputs)
-                                    loss = loss_function(outputs, targets)
-                                    if loss.requires_grad:
-                                        loss.backward()
-                                    return loss
-
-                                # perform optimization step
-                                if phase == 'train':
-                                    optimizer.step(closure)
-
-                                # compute loss of current batch
-                                loss = closure()
-
-                            # update overall absolute loss
-                            running_loss += loss.item() * len(batch[0])
-
-                        # compute average loss
-                        epoch_loss = running_loss / len(dataloaders[phase].dataset)
-
-                        losses[phase] = epoch_loss
-
-                        losses['full'] += running_loss
-
-                        # check for early stopping
-                        if phase == 'val' and early_stopping_scheduler(losses, neural_network):
-                            if not self.logging_disabled:
-                                self.logger.info(f'Early stopping training process after {epoch + 1} epochs ...')
-                                self.logger.info('Minimum validation loss: '
-                                                 f'{early_stopping_scheduler.best_losses["val"]}')
-                            return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
-
-            return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
-
-        def build_basis(self):
-            """Compute a reduced basis using proper orthogonal decomposition."""
-            self.training_data = []
-
-            with self.logger.block('Building reduced basis ...'):
-
-                # compute snapshots for POD and training of neural networks
-                with self.logger.block('Computing training snapshots ...'):
-                    U = self.fom.solution_space.empty()
-                    training_set_temp = []
-                    for mu in self.training_set:
-                        u = self.fom.solve(mu)
-                        U.append(u)
-                        dt = self.fom.T / (len(u) - 1)
-                        t = 0.
-                        for i in range(len(u)):
-                            training_set_temp.append(mu.with_(t=t))
-                            t += dt
-                    self.training_set = training_set_temp
-
-                # compute reduced basis via POD
-                reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
-                                           atol=self.atol / 2., l2_err=self.l2_err / 2.,
-                                           **(self.pod_params or {}))
-
-                # determine the coefficients of the full-order solutions in the reduced basis to obtain the
-                # training data; convert everything into tensors that are compatible with PyTorch
-                for mu, u in zip(self.training_set, U):
-                    mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                    u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
-                    self.training_data.append((mu_tensor, u_tensor))
-
-            # compute mean square loss
-            mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
-
-            return reduced_basis, mean_square_loss
-
-        def reconstruct(self, u):
-            """Reconstruct high-dimensional vector from reduced vector `u`."""
-            assert hasattr(self, 'reduced_basis')
-            return self.reduced_basis.lincomb(u.to_numpy())
+            return samples
 
 
     class EarlyStoppingScheduler(BasicObject):

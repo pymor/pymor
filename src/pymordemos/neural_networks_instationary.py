@@ -53,8 +53,8 @@ def neural_networks_instationary_demo(args):
     training_set = parameter_space.sample_uniformly(int(args['TRAINING_SAMPLES']))
     validation_set = parameter_space.sample_randomly(int(args['VALIDATION_SAMPLES']))
 
-    reductor = NeuralNetworkInstationaryReductor(fom, Nt, training_set, validation_set, basis_size=15, ann_mse=None)
-    rom = reductor.reduce(hidden_layers='[30, 30, 30]', restarts=10)
+    reductor = NeuralNetworkInstationaryReductor(fom, Nt, training_set, validation_set, basis_size=10)
+    rom = reductor.reduce(hidden_layers='[30, 30, 30]', restarts=100)
 
     test_set = parameter_space.sample_randomly(10)
 
