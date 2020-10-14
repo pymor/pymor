@@ -143,7 +143,7 @@ class RectGrid(GridWithOrthogonalCenters):
         return (f'Rect-Grid on domain '
                 f'[{self.x0_range[0]},{self.x0_range[1]}] x [{self.x1_range[0]},{self.x1_range[1]}]\n'
                 f'x0-intervals: {self.x0_num_intervals}, x1-intervals: {self.x1_num_intervals}\n'
-                f'faces: {self.size(0)}, edges: {self.size(1)}, vertices: {self.size(2)}')
+                f'elements: {self.size(0)}, edges: {self.size(1)}, vertices: {self.size(2)}')
 
     def size(self, codim=0):
         assert 0 <= codim <= 2, 'Invalid codimension'
