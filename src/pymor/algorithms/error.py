@@ -16,7 +16,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
                              basis_sizes=0,
                              error_estimator=True, condition=False, error_norms=(),
                              error_norm_names=None,
-                             error_estimator_norm_index=0, custom=(),
+                             error_estimator_norm_index=0, custom=(), custom_names=None,
                              plot=False, plot_custom_logarithmic=True,
                              pool=dummy_pool):
     """Analyze the model reduction error.
@@ -263,7 +263,8 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     result['summary'] = summary
 
     if plot:
-        result['figure'] = plot_reduction_error_analysis(result, None, plot_custom_logarithmic=plot_custom_logarithmic, return_fig=True)
+        result['figure'] = plot_reduction_error_analysis(
+                result, None, plot_custom_logarithmic=plot_custom_logarithmic, return_fig=True)
 
     return result
 
@@ -273,17 +274,20 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
         plot_custom_logarithmic=True, plot_custom_with_errors=False, return_fig=False):
 
     error_norms = 'norms' in result
-    estimator = 'estimates' in result
+    error_estimator = 'error_estimates' in result
     condition = 'conditions' in result
     custom = 'custom_values' in result
 
-    error_norm_names = result['error_norm_names']
-    max_errors = result['max_errors']
     basis_sizes = result['basis_sizes']
-    errors = result['errors']
-    max_estimates = result['max_estimates']
-    min_effectivities = result['min_effectivities']
-    max_effectivities = result['max_effectivities']
+    if error_norms:
+        error_norm_names = result['error_norm_names']
+        max_errors = result['max_errors']
+        errors = result['errors']
+    if error_estimator:
+        max_estimates = result['max_error_estimates']
+    if error_norms and error_estimator:
+        min_effectivities = result['min_effectivities']
+        max_effectivities = result['max_effectivities']
     if condition:
         max_conditions = result['max_conditions']
     if custom:
@@ -303,20 +307,20 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
         return colors[0].pop()
 
     fig = plt.figure()
-    num_plots = (int(bool(error_norms) or estimator) + int(error_norms and estimator and plot_effectivities)
-                 + int(condition and plot_condition) + int(bool(custom) and not plot_custom_with_errors))
+    num_plots = (int(error_norms or error_estimator) + int(error_norms and error_estimator and plot_effectivities)
+                 + int(condition and plot_condition) + int(custom and not plot_custom_with_errors))
     current_plot = 1
 
-    if bool(error_norms) or error_estimator:
+    if error_norms or error_estimator:
         ax = fig.add_subplot(1, num_plots, current_plot)
         legend = []
         if error_norms:
             for name, errors in zip(error_norm_names, max_errors):
                 ax.semilogy(basis_sizes[:max_basis_size], errors[:max_basis_size], color=get_color())
                 legend.append(name)
-        if estimator:
+        if error_estimator:
             ax.semilogy(basis_sizes[:max_basis_size], max_estimates[:max_basis_size], color=get_color())
-            legend.append('estimator')
+            legend.append('error estimator')
         if custom and plot_custom_with_errors:
             axwithyright = ax.twinx()
             max_custom_values = np.max(custom_values, axis=0)
@@ -343,7 +347,7 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
         ax.set_title('maximum errors')
         current_plot += 1
 
-    if bool(error_norms) and error_estimator:
+    if error_norms and error_estimator:
         ax = fig.add_subplot(1, num_plots, current_plot)
         ax.semilogy(basis_sizes[:max_basis_size], min_effectivities[:max_basis_size])
         ax.semilogy(basis_sizes[:max_basis_size], max_effectivities[:max_basis_size])
