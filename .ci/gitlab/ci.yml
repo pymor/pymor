@@ -62,6 +62,8 @@ stages:
     rules:
         - if: $CI_COMMIT_REF_NAME =~ /^github\/PR_.*/
           when: never
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
         - when: on_success
     stage: deploy
     script: .ci/gitlab/submit.bash
@@ -499,100 +501,60 @@ ci_weekly 3 8:
     script: ./.ci/gitlab/test_vanilla.bash
 submit mpi 3 6:
     extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
     image: pymor/python:3.6
     variables:
-        COVERAGE_FLAG: mpi
+        COVERAGE_FLAG: mpi__3.6
     dependencies:
         - mpi 3 6
-    needs: ["mpi 3 6"]
 submit mpi 3 7:
     extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
     image: pymor/python:3.7
     variables:
-        COVERAGE_FLAG: mpi
+        COVERAGE_FLAG: mpi__3.7
     dependencies:
         - mpi 3 7
-    needs: ["mpi 3 7"]
 submit mpi 3 8:
     extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
     image: pymor/python:3.8
     variables:
-        COVERAGE_FLAG: mpi
+        COVERAGE_FLAG: mpi__3.8
     dependencies:
         - mpi 3 8
-    needs: ["mpi 3 8"]
 submit vanilla 3 6:
     extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
     image: pymor/python:3.6
     variables:
-        COVERAGE_FLAG: vanilla
+        COVERAGE_FLAG: vanilla__3.6
     dependencies:
         - vanilla 3 6
-    needs: ["vanilla 3 6"]
 submit vanilla 3 7:
     extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
     image: pymor/python:3.7
     variables:
-        COVERAGE_FLAG: vanilla
+        COVERAGE_FLAG: vanilla__3.7
     dependencies:
         - vanilla 3 7
-    needs: ["vanilla 3 7"]
 submit vanilla 3 8:
     extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
     image: pymor/python:3.8
     variables:
-        COVERAGE_FLAG: vanilla
+        COVERAGE_FLAG: vanilla__3.8
     dependencies:
         - vanilla 3 8
-    needs: ["vanilla 3 8"]
 submit numpy_git 3 8:
     extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
     image: pymor/python:3.8
     variables:
-        COVERAGE_FLAG: numpy_git
+        COVERAGE_FLAG: numpy_git__3.8
     dependencies:
         - numpy_git 3 8
-    needs: ["numpy_git 3 8"]
 submit oldest 3 6:
     extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
     image: pymor/python:3.6
     variables:
-        COVERAGE_FLAG: oldest
+        COVERAGE_FLAG: oldest__3.6
     dependencies:
         - oldest 3 6
-    needs: ["oldest 3 6"]
 submit ci_weekly 3 6:
     extends: .submit
     rules:
