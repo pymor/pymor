@@ -264,13 +264,15 @@ class LTIModel(InputStateOutputModel):
     solver_options
         The solver options to use to solve the Lyapunov equations.
     error_estimator
-        An error estimator for the problem. This can be any object with an `estimate_error(U, mu, model)`
-        method. If `error_estimator` is not `None`, an `estimate_error(U, mu)` method is added to the model
-        which will call `error_estimator.estimate_error(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an
+        `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+        `estimate_error(U, mu)` method is added to the model which will call
+        `error_estimator.estimate_error(U, mu, self)`.
     visualizer
-        A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
-        method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
-        the model which forwards its arguments to the visualizer's `visualize` method.
+        A visualizer for the problem. This can be any object with a
+        `visualize(U, model, ...)` method. If `visualizer` is not `None`, a
+        `visualize(U, *args, **kwargs)` method is added to the model which forwards its arguments to
+        the visualizer's `visualize` method.
     name
         Name of the system.
 
@@ -358,8 +360,9 @@ class LTIModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         error_estimator
             An error estimator for the problem. This can be any object with an
-            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an `estimate_error(U, mu)`
-            method is added to the model which will call `error_estimator.estimate_error(U, mu, self)`.
+            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+            `estimate_error(U, mu)` method is added to the model which will call
+            `error_estimator.estimate_error(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
@@ -416,8 +419,9 @@ class LTIModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         error_estimator
             An error estimator for the problem. This can be any object with an
-            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an `estimate_error(U, mu)`
-            method is added to the model which will call `error_estimator.estimate_error(U, mu, self)`.
+            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+            `estimate_error(U, mu)` method is added to the model which will call
+            `error_estimator.estimate_error(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
@@ -461,8 +465,9 @@ class LTIModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         error_estimator
             An error estimator for the problem. This can be any object with an
-            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an `estimate_error(U, mu)`
-            method is added to the model which will call `error_estimator.estimate_error(U, mu, self)`.
+            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+            `estimate_error(U, mu)` method is added to the model which will call
+            `error_estimator.estimate_error(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
@@ -508,8 +513,9 @@ class LTIModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         error_estimator
             An error estimator for the problem. This can be any object with an
-            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an `estimate_error(U, mu)`
-            method is added to the model which will call `error_estimator.estimate_error(U, mu, self)`.
+            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+            `estimate_error(U, mu)` method is added to the model which will call
+            `error_estimator.estimate_error(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
@@ -1161,9 +1167,10 @@ class SecondOrderModel(InputStateOutputModel):
     solver_options
         The solver options to use to solve the Lyapunov equations.
     error_estimator
-        An error estimator for the problem. This can be any object with an `estimate_error(U, mu, model)`
-        method. If `error_estimator` is not `None`, an `estimate_error(U, mu)` method is added to the model
-        which will call `error_estimator.estimate_error(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an
+        `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+        `estimate_error(U, mu)` method is added to the model which will call
+        `error_estimator.estimate_error(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
         method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
@@ -1257,8 +1264,9 @@ class SecondOrderModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         error_estimator
             An error estimator for the problem. This can be any object with an
-            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an `estimate_error(U, mu)`
-            method is added to the model which will call `error_estimator.estimate_error(U, mu, self)`.
+            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+            `estimate_error(U, mu)` method is added to the model which will call
+            `error_estimator.estimate_error(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
@@ -1322,8 +1330,9 @@ class SecondOrderModel(InputStateOutputModel):
             The solver options to use to solve the Lyapunov equations.
         error_estimator
             An error estimator for the problem. This can be any object with an
-            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an `estimate_error(U, mu)`
-            method is added to the model which will call `error_estimator.estimate_error(U, mu, self)`.
+            `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+            `estimate_error(U, mu)` method is added to the model which will call
+            `error_estimator.estimate_error(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
             method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added
@@ -1407,7 +1416,9 @@ class SecondOrderModel(InputStateOutputModel):
                            if isinstance(self.M, IdentityOperator) else
                            BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
                         cont_time=self.cont_time,
-                        solver_options=self.solver_options, error_estimator=self.error_estimator, visualizer=self.visualizer,
+                        solver_options=self.solver_options,
+                        error_estimator=self.error_estimator,
+                        visualizer=self.visualizer,
                         name=self.name + '_first_order')
 
     def __add__(self, other):
@@ -1878,9 +1889,10 @@ class LinearDelayModel(InputStateOutputModel):
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     error_estimator
-        An error estimator for the problem. This can be any object with an `estimate_error(U, mu, model)`
-        method. If `error_estimator` is not `None`, an `estimate_error(U, mu)` method is added to the model
-        which will call `error_estimator.estimate_error(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an
+        `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+        `estimate_error(U, mu)` method is added to the model which will call
+        `error_estimator.estimate_error(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
         method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
@@ -2261,9 +2273,10 @@ class LinearStochasticModel(InputStateOutputModel):
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     error_estimator
-        An error estimator for the problem. This can be any object with an `estimate_error(U, mu, model)`
-        method. If `error_estimator` is not `None`, an `estimate_error(U, mu)` method is added to the model
-        which will call `error_estimator.estimate_error(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an
+        `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+        `estimate_error(U, mu)` method is added to the model which will call
+        `error_estimator.estimate_error(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
         method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
@@ -2381,9 +2394,10 @@ class BilinearModel(InputStateOutputModel):
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     error_estimator
-        An error estimator for the problem. This can be any object with an `estimate_error(U, mu, model)`
-        method. If `error_estimator` is not `None`, an `estimate_error(U, mu)` method is added to the model
-        which will call `error_estimator.estimate_error(U, mu, self)`.
+        An error estimator for the problem. This can be any object with an
+        `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
+        `estimate_error(U, mu)` method is added to the model which will call
+        `error_estimator.estimate_error(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
         method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
