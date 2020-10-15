@@ -64,6 +64,8 @@ stages:
     rules:
         - if: $CI_COMMIT_REF_NAME =~ /^github\/PR_.*/
           when: never
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
         - when: on_success
     stage: deploy
     script: .ci/gitlab/submit.bash
@@ -230,16 +232,11 @@ ci_weekly {{py[0]}} {{py[2]}}:
 {%- for script, py, para in matrix if script in ['vanilla', 'oldest', 'numpy_git', 'mpi'] %}
 submit {{script}} {{py[0]}} {{py[2]}}:
     extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
     image: pymor/python:{{py}}
     variables:
-        COVERAGE_FLAG: {{script}}
+        COVERAGE_FLAG: {{script}}__{{py}}
     dependencies:
         - {{script}} {{py[0]}} {{py[2]}}
-    needs: ["{{script}} {{py[0]}} {{py[2]}}"]
 {%- endfor %}
 
 {%- for py in pythons %}
