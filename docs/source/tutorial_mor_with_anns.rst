@@ -270,3 +270,7 @@ Since :class:`~pymor.reductors.neural_network.NeuralNetworkReductor` only calls
 the :meth:`~pymor.models.interface.Model.solve` method of the |Model|, it can easily
 be applied to |Models| originating from external solvers, without requiring any access to
 |Operators| internal to the solver.
+
+Download the code:
+:jupyter-download:script:`tutorial_mor_with_anns`
+:jupyter-download:notebook:`tutorial_mor_with_anns`
