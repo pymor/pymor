@@ -86,12 +86,14 @@ class StationaryModel(Model):
 
     @property
     def dual(self):
-        if not hasattr(self, '_dual'):
+        try:
+            return self._dual
+        except AttributeError:
             assert self.output_functional is not None
             assert self.output_functional.linear
             # TODO: assert that the operator is symmetric
             self._dual = self.with_(rhs=self.output_functional.H)
-        return self._dual
+            return self._dual
 
     def _compute_solution_d_mu(self, parameter, index, solution, mu):
         residual_dmu_lhs = VectorOperator(self.operator.d_mu(parameter, index).apply(solution, mu=mu))
