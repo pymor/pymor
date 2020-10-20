@@ -48,7 +48,7 @@ class Model(CacheableObject, ParametricObject):
 
         self.__auto_init(locals())
 
-    def _compute(self, solution=False, output=False,
+    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                  solution_error_estimate=False, output_error_estimate=False,
                  mu=None, **kwargs):
         return {}
@@ -108,6 +108,54 @@ class Model(CacheableObject, ParametricObject):
             return np.zeros(len(solution), 0)
         else:
             return self.output_functional.apply(solution, mu=mu).to_numpy()
+
+    def _compute_solution_d_mu(self, parameter, index, solution, mu=None, **kwargs):
+        """Compute the partial derivative of the solution w.r.t. a parameter index
+
+        Parameters
+        ----------
+        parameter
+            parameter for which to compute the sensitivity
+        index
+            parameter index for which to compute the sensitivity
+        mu
+            |Parameter value| for which to solve
+
+        Return
+        ------
+        The sensitivity of the solution as a |VectorArray|.
+        """
+        raise NotImplementedError
+
+    def _compute_solution_d_mus(self, solution, mu=None, **kwargs):
+        """Compute all partial derivative of the solution w.r.t. a parameter index
+
+        Parameters
+        ----------
+        mu
+            |Parameter value| for which to solve
+
+        Return
+        ------
+        A dict of all partial sensitivities of the solution.
+        """
+        sensitivities = {}
+        for (parameter, size) in sorted(self.parameters.items()):
+            sens_for_param = self.solution_space.empty()
+            for l in range(size):
+                sens_for_param.append(self._compute_solution_d_mu(parameter, l, solution, mu))
+            sensitivities[parameter] = sens_for_param
+        return sensitivities
+
+    def _compute_output_d_mu(self, solution, mu=None, **kwargs):
+        """compute the gradient w.r.t. the parameter of the output functional
+
+        Parameters
+        ----------
+        mu
+            |Parameters value| for which to compute the gradient
+        """
+        raise NotImplementedError
 
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
         """Compute an error estimate for the computed internal state.
@@ -179,7 +227,7 @@ class Model(CacheableObject, ParametricObject):
 
     _compute_allowed_kwargs = frozenset()
 
-    def compute(self, solution=False, output=False,
+    def compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                 solution_error_estimate=False, output_error_estimate=False, *,
                 mu=None, **kwargs):
         """Compute the solution of the model and associated quantities.
@@ -205,6 +253,11 @@ class Model(CacheableObject, ParametricObject):
             If `True`, return the model's internal state.
         output
             If `True`, return the model output.
+        solution_d_mu
+            If `True`, return the derivative of the model's internal state w.r.t. a
+            parameter component.
+        output_d_mu
+            If `True`, return the derivative model output w.r.t. a parameter component.
         solution_error_estimate
             If `True`, return an error estimate for the computed internal state.
         output_error_estimate
@@ -235,12 +288,14 @@ class Model(CacheableObject, ParametricObject):
 
         # first call _compute to give subclasses more control
         data = self._compute(solution=solution, output=output,
+                             solution_d_mu=solution_d_mu, output_d_mu=output_d_mu,
                              solution_error_estimate=solution_error_estimate,
                              output_error_estimate=output_error_estimate,
                              mu=mu, **kwargs)
 
-        if (solution or output or solution_error_estimate or output_error_estimate) and \
-                'solution' not in data:
+        if (solution or output or solution_error_estimate or
+                output_error_estimate or solution_d_mu or output_d_mu) \
+           and 'solution' not in data:
             retval = self.cached_method_call(self._compute_solution, mu=mu, **kwargs)
             if isinstance(retval, dict):
                 assert 'solution' in retval
@@ -256,6 +311,23 @@ class Model(CacheableObject, ParametricObject):
                 data.update(retval)
             else:
                 data['output'] = retval
+
+        if solution_d_mu and 'solution_d_mu' not in data:
+            retval = self._compute_solution_d_mus(data['solution'], mu=mu, **kwargs)
+            if isinstance(retval, dict):
+                assert 'solution_d_mu' in retval
+                data.update(retval)
+            else:
+                data['solution'] = retval
+
+        if output_d_mu and 'output_d_mu' not in data:
+            # TODO use caching here (requires skipping args in key generation)
+            retval = self._compute_output_d_mu(data['solution'], mu=mu, **kwargs)
+            if isinstance(retval, dict):
+                assert 'output_d_mu' in retval
+                data.update(retval)
+            else:
+                data['output_d_mu'] = retval
 
         if solution_error_estimate and 'solution_error_estimate' not in data:
             # TODO use caching here (requires skipping args in key generation)
@@ -349,8 +421,8 @@ class Model(CacheableObject, ParametricObject):
         else:
             return data['output']
 
-    def solve_d_mu(self, parameter, index, mu, U=None):
-        """Solve for the derivative of the solution w.r.t. a parameter index
+    def solve_d_mu(self, parameter, index, mu=None, **kwargs):
+        """Solve for the partial derivative of the solution w.r.t. a parameter index
 
         Parameters
         ----------
@@ -360,36 +432,37 @@ class Model(CacheableObject, ParametricObject):
             parameter index for which to compute the sensitivity
         mu
             |Parameter value| for which to solve
-        U
-            |VectorArray| containing the solutions for the |Parameter values| mu
 
         Return
         ------
         The sensitivity of the solution as a |VectorArray|.
         """
-        return NotImplemented
+        data = self.compute(
+            solution_d_mu=True,
+            mu=mu,
+            **kwargs
+        )
+        return data['solution_d_mu'][parameter][index]
 
-    @property
-    def dual(self):
-        """Instantiate the dual model which is used to solve for a dual solution of the |Model|."""
-        return NotImplemented
-
-    def output_d_mu(self, mu, U=None):
+    def output_d_mu(self, mu=None, **kwargs):
         """compute the gradient w.r.t. the parameter of the output functional
 
         Parameters
         ----------
         mu
             |Parameters value| for which to compute the gradient
-        U
-            |VectorArray| containing the solutions for the |Parameter values| mu
-        P
-            |VectorArray| containing the dual solutions for the |Parameter values| mu
-        adjoint_approach
-            decided whether to use the adjoint approach for computing the gradient
-            True: use dual solution
-            False: use sensitivities of solutions
         """
+
+        data = self.compute(
+            output_d_mu=True,
+            mu=mu,
+            **kwargs
+        )
+        return data['output_d_mu']
+
+    @property
+    def dual(self):
+        """Instantiate the dual model which is used to solve for a dual solution of the |Model|."""
         return NotImplemented
 
     def estimate_error(self, mu=None, **kwargs):
