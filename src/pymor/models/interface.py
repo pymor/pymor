@@ -433,8 +433,8 @@ class Model(CacheableObject, ParametricObject):
         mu
             |Parameter value| for which to solve
 
-        Return
-        ------
+        Returns
+        -------
         The sensitivity of the solution as a |VectorArray|.
         """
         data = self.compute(
@@ -450,9 +450,12 @@ class Model(CacheableObject, ParametricObject):
         Parameters
         ----------
         mu
-            |Parameters value| for which to compute the gradient
-        """
+            |Parameter value| for which to compute the gradient
 
+        Returns
+        -------
+        The gradient as a numpy array
+        """
         data = self.compute(
             output_d_mu=True,
             mu=mu,
