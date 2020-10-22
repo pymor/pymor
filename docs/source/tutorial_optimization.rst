@@ -13,10 +13,9 @@ a local minimizer :math:`\mu \in \mathcal{P}` of
 
 .. math::
 
-
    \min_{\mu \in \mathcal{P}} J(u_{\mu}, \mu),  \tag{P.a}
 
- where :math:`u_{\mu} \in V := H^1_0(\Omega)` is the solution of
+where :math:`u_{\mu} \in V := H^1_0(\Omega)` is the solution of
 
 .. math::
 
@@ -25,7 +24,7 @@ a local minimizer :math:`\mu \in \mathcal{P}` of
    \end{equation}
 
 The equation :raw-latex:`\eqref{eq:primal}` is called the primal
-equation and can be arbitrariry complex. MOR methods in the context of
+equation and can be arbitrarily complex. MOR methods in the context of
 PDE-constrained optimization problems thus aim to find a surrogate model
 of :raw-latex:`\eqref{eq:primal}` to reduce the computational costs of
 an evaluation of :math:`J(u_{\mu}, \mu)`.
@@ -44,14 +43,14 @@ problem: Find a local minimizer of
 There exist plenty of different methods to solve (:math:`\hat{P}`) by
 using MOR methods. Some of them rely on an RB method with traditional
 offline/online splitting, which typically result in a very online
-efficient approach. Recent reasearch also tackles overall efficiency by
+efficient approach. Recent research also tackles overall efficiency by
 overcoming the expensive offline approach which we will discuss further
 below.
 
-In this tutorial, we use a simple linear objective functional and an
-elliptic primal equation to compare different approaches to solve
-(:math:`\hat{P}`). For a more advanced problem class, we refer to `this
-project <https://github.com/TiKeil/NCD-corrected-TR-RB-approach-for-pde-opt>`__.
+In this tutorial, we use a simple linear scalar valued objective functional
+and an elliptic primal equation to compare different approaches that solve
+(:math:`\hat{P}`). For a more advanced problem class, we refer to 
+`this project <https://github.com/TiKeil/NCD-corrected-TR-RB-approach-for-pde-opt>`__.
 
 An elliptic model problem with a linear objective functional
 ------------------------------------------------------------
@@ -64,9 +63,9 @@ We consider a domain :math:`\Omega:= [-1, 1]^2`, a parameter set
 
    - \nabla \cdot \big( \lambda_\mu \nabla u_\mu \big) = l
 
- with data functions
+with data functions
 
-.. raw:: latex
+.. math::
 
    \begin{align}
    l(x, y) &= \tfrac{1}{2} \pi^2 cos(\tfrac{1}{2} \pi x) cos(\tfrac{1}{2} \pi y),\\
@@ -101,13 +100,15 @@ equation. Moreover, we consider the linear objective functional
 
    \mathcal{J}(\mu) := \theta_{\mathcal{J}}(\mu)\, f_\mu(u_\mu) 
 
- where
-:math:`\theta_{\mathcal{J}}(\mu) := 1 + \frac{1}{5}(\mu_0 + \mu_1)`.
+where :math:`\theta_{\mathcal{J}}(\mu) := 1 + \frac{1}{5}(\mu_0 + \mu_1)`.
 
-With this data, we can build a \|StationaryProblem\| in pyMOR.
+With this data, we can construct a \|StationaryProblem\| in pyMOR.
 
 .. jupyter-execute::
-
+    
+    from pymor.basic import *
+    import numpy as np
+    
     domain = RectDomain(([-1,-1], [1,1]))
     indicator_domain = ExpressionFunction(
         '(-2/3. <= x[..., 0]) * (x[..., 0] <= -1/3.) * (-2/3. <= x[..., 1]) * (x[..., 1] <= -1/3.) * 1. \
@@ -133,15 +134,15 @@ With this data, we can build a \|StationaryProblem\| in pyMOR.
     
     problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
 
-pyMOR supports to choose an output function in the
-\|StationaryProblem\|. So far :math:`L^2` and :math:`L^2`-boundary
+pyMOR supports to choose an output in \|StationaryProblem\|.
+So far :math:`L^2` and :math:`L^2`-boundary
 integrals over :math:`u_\mu`, multiplied by an arbitrary \|Function\|,
 are supported. These outputs can also be handled by the discretizer. In
 our case, we make use of the :math:`L^2` output and multiply it by the
 term :math:`\theta_\mu l_\mu`.
 
-We now use the standard builtin discretization tool (see tutorial) to
-get a full order \|StationaryModel\|. Since we intend to use a fixed
+We now use the standard builtin discretization tool (see :doc:`tutorial_builtin_discretizer`)
+to construct a full order \|StationaryModel\|. Since we intend to use a fixed
 energy norm
 
 .. math:: \|\,.\|_{\bar{\mu}} : = a_{\,\bar{\mu}}(.,.),
@@ -158,8 +159,6 @@ we also define :math:`\bar{\mu}`, which we parse via the argument
     parameter_space = fom.parameters.space(0, np.pi)
 
 
-
-
 In case, you need an output functional that can not be defined in the
 \|StationaryProblem\|, you can also directly define the
 ``output_functional`` in the \|StationaryModel\|.
@@ -170,14 +169,14 @@ In case, you need an output functional that can not be defined in the
     fom = fom.with_(output_functional=output_functional)
 
 To overcome that pyMORs outputs return a \|NumpyVectorArray\|, we have
-to define a function that returns numpy arrays instead.
+to define a function that returns NumPy arrays instead.
 
 .. jupyter-execute::
 
     def fom_objective_functional(mu):
-        return fom.output(mu).to_numpy()
+        return fom.output(mu)[0]
 
-Of course, all optimization methods need a certain starting parameter,
+Of course, all optimization methods need a starting parameter,
 which in our case is :math:`\mu_0 = (0.25,0.5)`.
 
 .. jupyter-execute::
@@ -212,7 +211,19 @@ Before we start the first optimization method, we define helpful
 functions for visualizations.
 
 .. jupyter-execute::
+   
+    import matplotlib as mpl
+    mpl.rcParams['figure.figsize'] = (12.0, 8.0)
+    mpl.rcParams['font.size'] = 12
+    mpl.rcParams['savefig.dpi'] = 300
+    mpl.rcParams['figure.subplot.bottom'] = .1 
 
+    from mpl_toolkits.mplot3d import Axes3D # required for 3d plots
+    from matplotlib import cm # required for colors
+
+    import matplotlib.pyplot as plt
+    from time import perf_counter
+    
     def compute_value_matrix(f, x, y):
         f_of_x = np.zeros((len(x), len(y)))
         for ii in range(len(x)):
@@ -240,16 +251,12 @@ Now, we can visualize the objective functional on the parameter space
 
 .. jupyter-execute::
 
-    logger.info('plotting ...')
-    
     ranges = parameter_space.ranges['diffusion']
     XX = np.linspace(ranges[0] + 0.05, ranges[1], 10)
     YY = XX
     
     plot_3d_surface(fom_objective_functional, XX, YY)
     
-    logger.info('... done')
-
 
 
 Taking a closer look at the functional, we see that it is at least
@@ -275,7 +282,6 @@ helpful functions for recording and reporting the results.
         data['evaluation_points'].append([fom.parameters.parse(mu)['diffusion'][:][0], 
                                           fom.parameters.parse(mu)['diffusion'][:][1]])
         data['evaluations'].append(QoI[0])
-        print('.', end='')
         return QoI
     
     def report(result, data, reference_mu=None):
@@ -333,7 +339,7 @@ primal equation. We anyway start with this approach.
     report(fom_result, reference_minimization_data)
 
 
-taking a look at the result, we see that the optimizer needs :math:`9`
+Taking a look at the result, we see that the optimizer needs :math:`9`
 iterations to converge, but actually needs :math:`48` evaluations of the
 full order model. Obiously, this is related to the computation of the
 finite differences. We can visualize the optimization path by plotting
@@ -401,8 +407,8 @@ optimum.
     
     rom = RB_greedy_data['rom']
     
-    logger.info('RB system is of size {}x{}'.format(num_RB_greedy_extensions, num_RB_greedy_extensions))
-    logger.info('maximum estimated model reduction error over training set: {}'.format(RB_greedy_errors[-1]))
+    print('RB system is of size {}x{}'.format(num_RB_greedy_extensions, num_RB_greedy_extensions))
+    print('maximum estimated model reduction error over training set: {}'.format(RB_greedy_errors[-1]))
 
 As we can see the greedy already stops after :math:`3` basis functions.
 Next, we plot the chosen parameters.
@@ -425,7 +431,7 @@ the resulting ROM objective functional.
 .. jupyter-execute::
 
     def rom_objective_functional(mu):
-        return rom.output(mu).to_numpy()
+        return rom.output(mu)[0]
     
     RB_minimization_data = {'num_evals': 0,
                             'evaluations' : [],
@@ -568,12 +574,16 @@ Optimizing using a gradient in FOM
 ----------------------------------
 
 We can easily include a function to compute the gradient to ``minimize``.
-
+For using the adjoint approach we have to explicitly enable the ``use_adjoint`` argument.
+Note that using the (more general) default implementation ``use_adjoint=False`` results
+in the exact same gradient but lacks computational speed.
+Moreover, the function ``output_d_mu`` returns a dict w.r.t. the parameter space as default.
+In order to use the output for ``minimize`` we thus use the ``return_array`` argument. 
 
 .. jupyter-execute::
 
     def fom_gradient_of_functional(mu):
-        return fom.output_functional_gradient(opt_fom.parameters.parse(mu))
+        return fom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
     
     opt_fom_minimization_data = {'num_evals': 0,
                                 'evaluations' : [],
@@ -614,7 +624,7 @@ output functional.
 .. jupyter-execute::
 
     def rom_gradient_of_functional(mu):
-        return rom.output_functional_gradient(opt_rom.parameters.parse(mu))
+        return rom.output_d_mu(rom.parameters.parse(mu), return_array=True, use_adjoint=True)
                 
     
     opt_rom_minimization_data = {'num_evals': 0,
@@ -671,7 +681,7 @@ code, we will test this method.
 
 .. jupyter-execute::
 
-    pdeopt_reductor = StationaryCoerciveRBReductor(
+    pdeopt_reductor = CoerciveRBReductor(
         fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
 
 In the next function, we implement the above mentioned way of enriching
@@ -685,21 +695,20 @@ the basis along the path of optimization.
             pdeopt_reductor.extend_basis(U)
             data['enrichments'] += 1
         except:
-            logger.info('Extension failed')
+            print('Extension failed')
         opt_rom = pdeopt_reductor.reduce()
-        QoI = rom.output(mu).to_numpy()
+        QoI = rom.output(mu)
         data['num_evals'] += 1
         # we need to make sure to copy the data, since the added mu will be changed inplace by minimize afterwards
         data['evaluation_points'].append([fom.parameters.parse(mu)['diffusion'][:][0], 
                                           fom.parameters.parse(mu)['diffusion'][:][1]])
         data['evaluations'].append(QoI[0])
         opt_dict['opt_rom'] = rom 
-        print('.', end='')
         return QoI
     
     def compute_gradient_with_opt_rom(opt_dict, mu):
-        rom = opt_dict['opt_rom']
-        return opt_rom.output_functional_gradient(rom.parameters.parse(mu))
+        opt_rom = opt_dict['opt_rom']
+        return opt_rom.output_d_mu(opt_rom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
 .. jupyter-execute::
 
@@ -748,8 +757,8 @@ the greedy.
 
 .. jupyter-execute::
 
-    pdeopt_reductor = StationaryCoerciveRBReductor(
-        opt_fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
+    pdeopt_reductor = CoerciveRBReductor(
+        fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
     opt_rom = pdeopt_reductor.reduce()
 
 
@@ -759,32 +768,31 @@ the greedy.
 
     def record_results_and_enrich_adaptively(function, data, opt_dict, mu):
         opt_rom = opt_dict['opt_rom'] 
-        primal_estimate = opt_rom.estimate_error(opt_rom.solve(mu), opt_rom.parameters.parse(mu))
+        primal_estimate = opt_rom.estimate_error(opt_rom.parameters.parse(mu))
         if primal_estimate > 1e-2:
-            logger.info('Enriching the space because primal estimate is {} ...'.format(primal_estimate))
-            U = opt_fom.solve(mu)
+            print('Enriching the space because primal estimate is {} ...'.format(primal_estimate))
+            U = fom.solve(mu)
             try:
                 pdeopt_reductor.extend_basis(U)
                 data['enrichments'] += 1
                 opt_rom = pdeopt_reductor.reduce()
             except:
-                logger.info('... Extension failed')
+                print('... Extension failed')
         else:
-            logger.info('Do NOT enrich the space because primal estimate is {} ...'.format(primal_estimate))
+            print('Do NOT enrich the space because primal estimate is {} ...'.format(primal_estimate))
         opt_rom = pdeopt_reductor.reduce()
-        QoI = opt_rom.output(mu).to_numpy()
+        QoI = opt_rom.output(mu)
         data['num_evals'] += 1
         # we need to make sure to copy the data, since the added mu will be changed inplace by minimize afterwards
         data['evaluation_points'].append([fom.parameters.parse(mu)['diffusion'][:][0], 
                                           fom.parameters.parse(mu)['diffusion'][:][1]])
         data['evaluations'].append(QoI[0])
         opt_dict['opt_rom'] = opt_rom 
-        print('.', end='')
         return QoI
     
     def compute_gradient_with_opt_rom(opt_dict, mu):
         opt_rom = opt_dict['opt_rom']
-        return opt_rom.output_functional_gradient(opt_rom.parameters.parse(mu))
+        return opt_rom.output_d_mu(opt_rom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
 .. jupyter-execute::
 
