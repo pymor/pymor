@@ -145,17 +145,38 @@ def linear_optimization_demo(args):
                                  'offline_time': RB_greedy_data['time']}
 
     tic = perf_counter()
-    opt_rom_result = minimize(partial(record_results, rom_objective_functional, fom.parameters.parse, opt_rom_minimization_data),
+    opt_rom_result = minimize(partial(record_results, rom_objective_functional, fom.parameters.parse,
+                                      opt_rom_minimization_data),
                   initial_guess.to_numpy(),
                   method='L-BFGS-B',
                   jac=rom_gradient_of_functional,
                   bounds=(ranges, ranges),
                   options={'ftol': 1e-15})
     opt_rom_minimization_data['time'] = perf_counter()-tic
-    print("\nResult of optimization with FOM model")
+
+    def rom_gradient_of_functional_standard_sensitivities(mu):
+        return rom.output_d_mu(fom.parameters.parse(mu), adjoint_approach=False)
+    opt_rom_minimization_data_sensitivities = {'num_evals': 0,
+                                               'evaluations' : [],
+                                               'evaluation_points': [],
+                                               'time': np.inf,
+                                               'offline_time': RB_greedy_data['time']}
+
+    tic = perf_counter()
+    opt_rom_result_sensitivities = minimize(partial(record_results, rom_objective_functional,
+                                                    fom.parameters.parse, opt_rom_minimization_data_sensitivities),
+                  initial_guess.to_numpy(),
+                  method='L-BFGS-B',
+                  jac=rom_gradient_of_functional_standard_sensitivities,
+                  bounds=(ranges, ranges),
+                  options={'ftol': 1e-15})
+    opt_rom_minimization_data_sensitivities['time'] = perf_counter()-tic
+    print("\nResult of optimization with FOM model and adjoint gradient")
     report(opt_fom_result, fom.parameters.parse, opt_fom_minimization_data, reference_mu)
-    print("Result of optimization with ROM model")
+    print("Result of optimization with ROM model and adjoint gradient")
     report(opt_rom_result, fom.parameters.parse, opt_rom_minimization_data, reference_mu)
+    print("Result of optimization with ROM model but sensitivity gradient")
+    report(opt_rom_result_sensitivities, fom.parameters.parse, opt_rom_minimization_data_sensitivities, reference_mu)
 
 if __name__ == '__main__':
     args = docopt(__doc__)
