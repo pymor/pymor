@@ -44,6 +44,11 @@ class StationaryModel(Model):
         an `estimate_error(U, mu, m)` method. If `error_estimator` is
         not `None`, an `estimate_error(U, mu)` method is added to the
         model which will call `error_estimator.estimate_error(U, mu, self)`.
+    dual_operator
+        The dual |Operator| L* of L such that p(μ) solves
+            L*(p(μ),μ) = G(μ)
+    dual_rhs
+        The right hand side vector G of the dual problem.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, m, ...)` method. If `visualizer`
@@ -55,7 +60,8 @@ class StationaryModel(Model):
     """
 
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 error_estimator=None, visualizer=None, name=None):
+                 error_estimator=None, dual_operator=None, dual_rhs=None,
+                 visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -86,13 +92,14 @@ class StationaryModel(Model):
 
     @property
     def dual(self):
+        """Instantiate the dual model which is used to solve for a dual solution of the |StationaryModel|."""
         try:
             return self._dual
         except AttributeError:
-            assert self.output_functional is not None
-            assert self.output_functional.linear
-            # TODO: assert that the operator is symmetric
-            self._dual = self.with_(rhs=self.output_functional.H)
+            assert self.dual_rhs is not None
+            assert self.dual_rhs.linear
+            assert self.dual_operator is not None
+            self._dual = self.with_(operator=self.dual_operator, rhs=self.dual_rhs)
             return self._dual
 
     def _compute_solution_d_mu(self, parameter, index, solution, mu):

@@ -463,11 +463,6 @@ class Model(CacheableObject, ParametricObject):
         )
         return data['output_d_mu']
 
-    @property
-    def dual(self):
-        """Instantiate the dual model which is used to solve for a dual solution of the |Model|."""
-        return NotImplemented
-
     def estimate_error(self, mu=None, **kwargs):
         """Estimate the error for the computed internal state.
 
