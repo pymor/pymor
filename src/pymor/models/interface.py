@@ -109,7 +109,7 @@ class Model(CacheableObject, ParametricObject):
         else:
             return self.output_functional.apply(solution, mu=mu).to_numpy()
 
-    def _compute_solution_d_mu(self, parameter, index, solution, mu=None, **kwargs):
+    def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu=None, **kwargs):
         """Compute the partial derivative of the solution w.r.t. a parameter index
 
         Parameters
@@ -127,7 +127,7 @@ class Model(CacheableObject, ParametricObject):
         """
         raise NotImplementedError
 
-    def _compute_solution_d_mus(self, solution, mu=None, **kwargs):
+    def _compute_solution_d_mu(self, solution, mu=None, **kwargs):
         """Compute all partial derivative of the solution w.r.t. a parameter index
 
         Parameters
@@ -143,7 +143,8 @@ class Model(CacheableObject, ParametricObject):
         for (parameter, size) in sorted(self.parameters.items()):
             sens_for_param = self.solution_space.empty()
             for l in range(size):
-                sens_for_param.append(self._compute_solution_d_mu(parameter, l, solution, mu))
+                sens_for_param.append(self._compute_solution_d_mu_single_direction(
+                    parameter, l, solution, mu))
             sensitivities[parameter] = sens_for_param
         return sensitivities
 
@@ -155,7 +156,14 @@ class Model(CacheableObject, ParametricObject):
         mu
             |Parameters value| for which to compute the gradient
         """
-        raise NotImplementedError
+        gradient = []
+        U_d_mus = self._compute_solution_d_mu(solution, mu)
+        for (parameter, size) in self.parameters.items():
+            for index in range(size):
+                output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution, mu=mu).to_numpy()[0,0]
+                U_d_mu = U_d_mus[parameter][index]
+                gradient.append(output_partial_dmu + self.output_functional.apply(U_d_mu, mu).to_numpy()[0,0])
+        return np.array(gradient)
 
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
         """Compute an error estimate for the computed internal state.
@@ -254,10 +262,11 @@ class Model(CacheableObject, ParametricObject):
         output
             If `True`, return the model output.
         solution_d_mu
-            If `True`, return the derivative of the model's internal state w.r.t. a
-            parameter component.
+            If not `False`, either `True` to return the derivative of the model's
+            internal state w.r.t. all parameter components or a tuple `(parameter, index)`
+            to return the derivative of a single parameter component.
         output_d_mu
-            If `True`, return the derivative model output w.r.t. a parameter component.
+            If `True`, return the gradient of the model output w.r.t. the |Parameter|.
         solution_error_estimate
             If `True`, return an error estimate for the computed internal state.
         output_error_estimate
@@ -313,12 +322,16 @@ class Model(CacheableObject, ParametricObject):
                 data['output'] = retval
 
         if solution_d_mu and 'solution_d_mu' not in data:
-            retval = self._compute_solution_d_mus(data['solution'], mu=mu, **kwargs)
+            if isinstance(solution_d_mu, tuple):
+                retval = self._compute_solution_d_mu_single_direction(
+                    solution_d_mu[0], solution_d_mu[1], data['solution'], mu=mu, **kwargs)
+            else:
+                retval = self._compute_solution_d_mu(data['solution'], mu=mu, **kwargs)
             if isinstance(retval, dict):
                 assert 'solution_d_mu' in retval
                 data.update(retval)
             else:
-                data['solution'] = retval
+                data['solution_d_mu'] = retval
 
         if output_d_mu and 'output_d_mu' not in data:
             # TODO use caching here (requires skipping args in key generation)

@@ -102,33 +102,27 @@ class StationaryModel(Model):
             self._dual = self.with_(operator=self.dual_operator, rhs=self.dual_rhs)
             return self._dual
 
-    def _compute_solution_d_mu(self, parameter, index, solution, mu):
-        residual_dmu_lhs = VectorOperator(self.operator.d_mu(parameter, index).apply(solution, mu=mu))
-        residual_dmu_rhs = self.rhs.d_mu(parameter, index)
-        rhs_operator = residual_dmu_rhs-residual_dmu_lhs
+    def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu):
+        lhs_d_mu = VectorOperator(self.operator.d_mu(parameter, index).apply(solution, mu=mu))
+        rhs_d_mu = self.rhs.d_mu(parameter, index)
+        rhs_operator = rhs_d_mu - lhs_d_mu
         return self.operator.apply_inverse(rhs_operator.as_range_array(mu), mu=mu)
 
     _compute_allowed_kwargs = frozenset({'adjoint_approach'})
 
     def _compute_output_d_mu(self, U, mu, adjoint_approach=True):
-        gradient = []
-        if adjoint_approach:
-            # Use dual solution for gradient
-            P = self.dual.solve(mu)
+        if adjoint_approach is False:
+            return super()._compute_output_d_mu(U, mu)
         else:
-            # Use sensitivities for gradient
-            U_d_mus = self._compute_solution_d_mus(U, mu)
-        for (parameter, size) in self.parameters.items():
-            for index in range(size):
-                output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(U, mu=mu).to_numpy()[0,0]
-                if adjoint_approach:
-                    residual_dmu_lhs = self.operator.d_mu(parameter, index).apply2(U, P, mu=mu)
-                    residual_dmu_rhs = self.rhs.d_mu(parameter, index).apply_adjoint(P, mu=mu).to_numpy()[0,0]
-                    gradient.append((output_partial_dmu + residual_dmu_rhs - residual_dmu_lhs)[0,0])
-                else:
-                    U_d_mu = U_d_mus[parameter][index]
-                    gradient.append(output_partial_dmu + \
-                            self.output_functional.apply(U_d_mu, mu).to_numpy()[0,0])
+            # Use the adjoint approach for computing the gradient, see _[HPUU09]
+            gradient = []
+            P = self.dual.solve(mu)
+            for (parameter, size) in self.parameters.items():
+                for index in range(size):
+                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(U, mu=mu).to_numpy()[0,0]
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(U, P, mu=mu)
+                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(P, mu=mu).to_numpy()[0,0]
+                    gradient.append((output_partial_dmu + rhs_d_mu - lhs_d_mu)[0,0])
         return np.array(gradient)
 
 
