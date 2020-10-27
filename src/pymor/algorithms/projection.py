@@ -9,7 +9,7 @@ from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
 from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
 from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, ProjectedOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           IdentityOperator)
+                                           IdentityOperator, VectorArrayOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -329,6 +329,17 @@ class ProjectToSubbasisRules(RuleTable):
         return ProjectedEmpiciralInterpolatedOperator(restricted_operator, op.interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, op.triangular,
                                                       solver_options=op.solver_options, name=op.name)
+
+    @match_class(VectorArrayOperator)
+    def action_VectorArrayOperator(self, op):
+        dim_range, dim_source = self.dim_range, self.dim_source
+        if op.adjoint and dim_source is not None:
+            raise RuleNotMatchingError
+        if not op.adjoint and dim_range is not None:
+            raise RuleNotMatchingError
+        array = op.array[:(dim_range if op.adjoint else dim_source)]
+        # use new_type to ensure this also works for child classes
+        return op.with_(array=array, new_type=VectorArrayOperator)
 
     @match_class(ProjectedOperator)
     def action_ProjectedOperator(self, op):
