@@ -306,6 +306,13 @@ class ProjectToSubbasisRules(RuleTable):
         space = op.source if dim_source is None else NumpyVectorSpace(dim_source)
         return IdentityOperator(space, name=op.name)
 
+    @match_class(ZeroOperator)
+    def action_ZeroOperator(self, op):
+        dim_range, dim_source = self.dim_range, self.dim_source
+        range_space = op.range if dim_range is None else NumpyVectorSpace(dim_range)
+        source_space = op.source if dim_source is None else NumpyVectorSpace(dim_source)
+        return ZeroOperator(range_space, source_space, name=op.name)
+
     @match_class(ProjectedEmpiciralInterpolatedOperator)
     def action_ProjectedEmpiciralInterpolatedOperator(self, op):
         if not isinstance(op.projected_collateral_basis.space, NumpyVectorSpace):
