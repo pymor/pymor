@@ -63,6 +63,7 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 
 import atexit
 from collections import OrderedDict
+from copy import deepcopy
 import functools
 import getpass
 import hashlib
@@ -150,10 +151,7 @@ class MemoryRegion(CacheRegion):
         if value is self.NO_VALUE:
             return False, None
         else:
-            from pymor.vectorarrays.interface import VectorArray
-            if isinstance(value, VectorArray):
-                value = value.copy()
-            return True, value
+            return True, deepcopy(value)
 
     def set(self, key, value):
         if key in self._cache:
@@ -161,11 +159,7 @@ class MemoryRegion(CacheRegion):
             return
         if len(self._cache) == self.max_keys:
             self._cache.popitem(last=False)
-
-        import numpy as np
-        if isinstance(value, np.ndarray):
-            value.setflags(write=False)
-        self._cache[key] = value
+        self._cache[key] = deepcopy(value)
 
     def clear(self):
         self._cache = OrderedDict()
