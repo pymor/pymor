@@ -288,7 +288,8 @@ class ProjectToSubbasisRules(RuleTable):
     def action_NumpyMatrixOperator(self, op):
         # copy instead of just slicing the matrix to ensure contiguous memory
         return NumpyMatrixOperator(op.matrix[:self.dim_range, :self.dim_source].copy(),
-                                   solver_options=op.solver_options, name=op.name)
+                                   solver_options=op.solver_options, name=op.name,
+                                   source_id=op.source.id, range_id=op.range.id)
 
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op):
