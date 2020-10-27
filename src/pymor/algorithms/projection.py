@@ -280,7 +280,7 @@ class ProjectToSubbasisRules(RuleTable):
         super().__init__(use_caching=True)
         self.__auto_init(locals())
 
-    @match_class(LincombOperator)
+    @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op):
         return self.replace_children(op)
 
