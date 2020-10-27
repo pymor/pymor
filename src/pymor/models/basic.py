@@ -2,14 +2,11 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
-from pymor.operators.constructions import VectorOperator
-from pymor.parameters.base import Parameters
-from pymor.tools.formatrepr import indent_value
+from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator
 from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class StationaryModel(Model):
@@ -155,14 +152,14 @@ class InstationaryModel(Model):
         if isinstance(initial_data, VectorArray):
             assert initial_data in operator.source
             initial_data = VectorOperator(initial_data, name='initial_data')
+        mass = mass or IdentityOperator(operator.source)
+        rhs = rhs or ZeroOperator(operator.source, NumpyVectorSpace(1))
 
         assert isinstance(time_stepper, TimeStepper)
         assert initial_data.source.is_scalar
         assert operator.source == initial_data.range
-        assert rhs is None \
-            or rhs.linear and rhs.range == operator.range and rhs.source.is_scalar
-        assert mass is None \
-            or mass.linear and mass.source == mass.range == operator.source
+        assert rhs.linear and rhs.range == operator.range and rhs.source.is_scalar
+        assert mass.linear and mass.source == mass.range == operator.source
         assert output_functional is None or output_functional.source == operator.source
 
         super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
@@ -188,7 +185,10 @@ class InstationaryModel(Model):
     def _compute_solution(self, mu=None, **kwargs):
         mu = mu.with_(t=0.)
         U0 = self.initial_data.as_range_array(mu)
-        U = self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
+        U = self.time_stepper.solve(operator=self.operator,
+                                    rhs=None if isinstance(self.rhs, ZeroOperator) else self.rhs,
+                                    initial_data=U0,
+                                    mass=None if isinstance(self.mass, IdentityOperator) else self.mass,
                                     initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
         return U
 
