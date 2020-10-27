@@ -7,7 +7,11 @@ import os
 from uuid import uuid4
 from datetime import datetime, timedelta
 
+import numpy as np
+
 from pymor.core import cache
+from pymor.models.basic import StationaryModel
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import runmodule
 
 
@@ -84,6 +88,22 @@ def test_region_api():
             # second set is ignored
             backend.set('mykey', 2)
             assert backend.get('mykey') == (True, 1)
+
+
+def test_memory_region_safety():
+
+    op = NumpyMatrixOperator(np.eye(1))
+    rhs = op.range.make_array(np.array([1]))
+    m = StationaryModel(op, rhs)
+    m.enable_caching('memory')
+
+    U = m.solve()
+    del U[:]
+    U = m.solve()
+    assert len(U) == 1
+    del U[:]
+    U = m.solve()
+    assert len(U) == 1
 
 
 if __name__ == "__main__":
