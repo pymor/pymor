@@ -118,11 +118,13 @@ class Model(CacheableObject, ParametricObject):
             parameter for which to compute the sensitivity
         index
             parameter index for which to compute the sensitivity
+        solution
+            Internal model state for the given |Parameter value|.
         mu
             |Parameter value| for which to solve
 
-        Return
-        ------
+        Returns
+        -------
         The sensitivity of the solution as a |VectorArray|.
         """
         raise NotImplementedError
@@ -132,11 +134,13 @@ class Model(CacheableObject, ParametricObject):
 
         Parameters
         ----------
+        solution
+            Internal model state for the given |Parameter value|.
         mu
             |Parameter value| for which to solve
 
-        Return
-        ------
+        Returns
+        -------
         A dict of all partial sensitivities of the solution.
         """
         sensitivities = {}
@@ -153,8 +157,14 @@ class Model(CacheableObject, ParametricObject):
 
         Parameters
         ----------
+        solution
+            Internal model state for the given |Parameter value|.
         mu
             |Parameters value| for which to compute the gradient
+
+        Returns
+        -------
+        The gradient as a numpy array
         """
         gradient = []
         U_d_mus = self._compute_solution_d_mu(solution, mu)

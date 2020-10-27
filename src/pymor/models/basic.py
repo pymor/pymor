@@ -45,8 +45,9 @@ class StationaryModel(Model):
         not `None`, an `estimate_error(U, mu)` method is added to the
         model which will call `error_estimator.estimate_error(U, mu, self)`.
     dual_operator
-        The dual |Operator| L* of L such that p(μ) solves
-            L*(p(μ),μ) = G(μ)
+        The dual |Operator| L* of L such that p(μ) solves L*(p(μ),μ) = G(μ).
+        This equation is used for the adjoint approach to compute the gradient.
+        See Section 1.6.2 in [HPUU09]_ for more details.
     dual_rhs
         The right hand side vector G of the dual problem.
     visualizer
@@ -111,10 +112,25 @@ class StationaryModel(Model):
     _compute_allowed_kwargs = frozenset({'adjoint_approach'})
 
     def _compute_output_d_mu(self, U, mu, adjoint_approach=True):
+        """compute the gradient of the output functional  w.r.t. the parameters
+
+        Parameters
+        ----------
+        U
+            Internal model state for the given |Parameter value|
+        mu
+            |Parameter value| for which to compute the gradient
+        adjoint_approach
+            Use the adjoint approach for a more efficient way of computing the gradient.
+            See Section 1.6.2 in [HPUU09]_ for more details.
+
+        Returns
+        -------
+        The gradient as a numpy array.
+        """
         if adjoint_approach is False:
             return super()._compute_output_d_mu(U, mu)
         else:
-            # Use the adjoint approach for computing the gradient, see _[HPUU09]
             gradient = []
             P = self.dual.solve(mu)
             for (parameter, size) in self.parameters.items():

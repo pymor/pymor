@@ -92,8 +92,8 @@ Bibliography
            SIAM J. Sci. Comput. 40, A3267-A3292, 2018.
 
 .. [HPUU09] M. Hinze, R. Pinnau, M. Ulbrich, S. Ulbrich,
-              Optimization with PDE constraints,
-              Springer Netherlands, 2009
+            Optimization with PDE constraints,
+            Springer Netherlands, 2009.
 
 .. [HU18]  J. Hesthaven, S. Ubbiali,
            Non-intrusive reduced order modeling of nonlinear problems using neural networks,
