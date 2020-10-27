@@ -267,6 +267,9 @@ def project_to_subbasis(op, dim_range=None, dim_source=None):
     assert dim_source is None or (isinstance(op.source, NumpyVectorSpace) and dim_source <= op.source.dim)
     assert dim_range is None or (isinstance(op.range, NumpyVectorSpace) and dim_range <= op.range.dim)
 
+    if dim_range is None and dim_source is None:
+        return op
+
     return ProjectToSubbasisRules(dim_range, dim_source).apply(op)
 
 
