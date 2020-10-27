@@ -8,6 +8,7 @@ import numpy as np
 
 from pymor.algorithms import genericsolvers
 from pymor.core.base import abstractmethod
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
@@ -368,6 +369,7 @@ class Operator(ParametricObject):
             The |VectorArray| defined above.
         """
         assert isinstance(self.source, NumpyVectorSpace) and self.linear
+        assert self.source.dim <= as_array_max_length()
         return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
 
     def as_source_array(self, mu=None):
@@ -394,6 +396,7 @@ class Operator(ParametricObject):
             The |VectorArray| defined above.
         """
         assert isinstance(self.range, NumpyVectorSpace) and self.linear
+        assert self.range.dim <= as_array_max_length()
         return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
     def as_vector(self, mu=None):
@@ -541,7 +544,7 @@ class Operator(ParametricObject):
 
     def _radd_sub(self, other, sign):
         if other == 0:
-             return self
+            return self
         if not isinstance(other, Operator):
             return NotImplemented
 
@@ -584,3 +587,8 @@ class Operator(ParametricObject):
     def __str__(self):
         return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
                f'(parameters: {self.parameters}, class: {self.__class__.__name__})'
+
+
+@defaults('value')
+def as_array_max_length(value=100):
+    return value
