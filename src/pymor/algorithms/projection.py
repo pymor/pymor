@@ -295,7 +295,7 @@ class ProjectToSubbasisRules(RuleTable):
     def action_ConstantOperator(self, op):
         dim_range, dim_source = self.dim_range, self.dim_source
         source = op.source if dim_source is None else NumpyVectorSpace(dim_source)
-        value = op.value if dim_range is None else NumpyVectorSpace(op.value.to_numpy()[:, :dim_range])
+        value = op.value if dim_range is None else NumpyVectorSpace.make_array(op.value.to_numpy()[:, :dim_range])
         return ConstantOperator(value, source, name=op.name)
 
     @match_class(IdentityOperator)
@@ -340,6 +340,20 @@ class ProjectToSubbasisRules(RuleTable):
         array = op.array[:(dim_range if op.adjoint else dim_source)]
         # use new_type to ensure this also works for child classes
         return op.with_(array=array, new_type=VectorArrayOperator)
+
+    @match_class(BlockColumnOperator)
+    def action_BlockColumnOperator(self, op):
+        if self.dim_range is not None:
+            raise RuleNotMatchingError
+        blocks = [self.apply(b) for b in op.blocks.ravel()]
+        return op.with_(blocks=blocks)
+
+    @match_class(BlockRowOperator)
+    def action_BlockRowOperator(self, op):
+        if self.dim_source is not None:
+            raise RuleNotMatchingError
+        blocks = [self.apply(b) for b in op.blocks.ravel()]
+        return op.with_(blocks=blocks)
 
     @match_class(ProjectedOperator)
     def action_ProjectedOperator(self, op):
