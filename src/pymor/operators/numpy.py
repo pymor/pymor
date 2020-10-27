@@ -221,12 +221,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
     def as_range_array(self, mu=None):
         if self.sparse:
-            raise NotImplementedError
+            return Operator.as_range_array(self)
         return self.range.from_numpy(self.matrix.T.copy())
 
     def as_source_array(self, mu=None):
         if self.sparse:
-            raise NotImplementedError
+            return Operator.as_source_array(self)
         return self.source.from_numpy(self.matrix.copy()).conj()
 
     def apply(self, U, mu=None):
