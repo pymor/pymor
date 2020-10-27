@@ -335,8 +335,6 @@ if config.HAVE_TORCH:
         ----------
         fom
             The full-order |Model| to reduce.
-        Nt
-            The number of time steps.
         training_set
             Set of |parameter values| to use for POD and training of the
             neural network.
@@ -369,12 +367,12 @@ if config.HAVE_TORCH:
             error tolerance is found.
         """
 
-        def __init__(self, fom, Nt, training_set, validation_set=None, validation_ratio=0.1,
+        def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
                      basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
                      ann_mse='like_basis'):
-            assert isinstance(Nt, int)
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
+            self.nt = fom.time_stepper.nt
 
 
         def _compute_layers_sizes(self, hidden_layers):
@@ -386,7 +384,7 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkInstationaryModel(self.fom.T, self.Nt, self.neural_network,
+                rom = NeuralNetworkInstationaryModel(self.fom.T, self.nt, self.neural_network,
                                                      self.fom.parameters, name=f'{self.fom.name}_reduced')
 
             return rom
@@ -397,11 +395,11 @@ if config.HAVE_TORCH:
             (make sure to include the time instances in the inputs)."""
             samples = []
             parameters_with_time = []
-            dt = self.fom.T / self.Nt
+            dt = self.fom.T / self.nt
 
             for mu in parameters:
                 t = 0.
-                for i in range(self.Nt + 1):
+                for i in range(self.nt + 1):
                     parameters_with_time.append(mu.with_(t=t))
                     t += dt
 

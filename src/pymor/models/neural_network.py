@@ -57,11 +57,11 @@ if config.HAVE_TORCH:
         def __init__(self, neural_network, parameters={}, output_functional=None,
                      products=None, error_estimator=None, visualizer=None, name=None):
 
-            super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
+            super().__init__(products=products, error_estimator=error_estimator,
+                             visualizer=visualizer, name=name)
 
             self.__auto_init(locals())
             self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
-            self.linear = output_functional is None or output_functional.linear
             if output_functional is not None:
                 self.output_space = output_functional.range
 
@@ -85,7 +85,7 @@ if config.HAVE_TORCH:
         ----------
         T
             The final time T.
-        Nt
+        nt
             The number of time steps.
         neural_network
             The neural network that approximates the mapping from parameter space
@@ -105,11 +105,11 @@ if config.HAVE_TORCH:
             problem is posed on. For each product with key `'x'` a corresponding
             attribute `x_product`, as well as a norm method `x_norm` is added to
             the model.
-        estimator
+        error_estimator
             An error estimator for the problem. This can be any object with
-            an `estimate(U, mu, m)` method. If `estimator` is
-            not `None`, an `estimate(U, mu)` method is added to the
-            model which will call `estimator.estimate(U, mu, self)`.
+            an `estimate_error(U, mu, m)` method. If `error_estimator` is
+            not `None`, an `estimate_error(U, mu)` method is added to the
+            model which will call `error_estimator.estimate_error(U, mu, self)`.
         visualizer
             A visualizer for the problem. This can be any object with
             a `visualize(U, m, ...)` method. If `visualizer`
@@ -120,25 +120,25 @@ if config.HAVE_TORCH:
             Name of the model.
         """
 
-        def __init__(self, T, Nt, neural_network, parameters={}, output_functional=None,
-                     products=None, estimator=None, visualizer=None, name=None):
+        def __init__(self, T, nt, neural_network, parameters={}, output_functional=None,
+                     products=None, error_estimator=None, visualizer=None, name=None):
 
-            super().__init__(products=products, estimator=estimator, visualizer=visualizer, name=name)
+            super().__init__(products=products, error_estimator=error_estimator,
+                             visualizer=visualizer, name=name)
 
             self.__auto_init(locals())
             self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
-            self.linear = output_functional is None or output_functional.linear
             if output_functional is not None:
                 self.output_space = output_functional.range
 
         def _compute_solution(self, mu=None, **kwargs):
 
-            U = self.solution_space.empty(reserve=self.Nt+1)
-            dt = self.T / self.Nt
+            U = self.solution_space.empty(reserve=self.nt+1)
+            dt = self.T / self.nt
             t = 0.
 
             # iterate over time steps
-            for i in range(self.Nt + 1):
+            for i in range(self.nt + 1):
                 mu = mu.with_(t=t)
                 # convert the parameter `mu` into a form that is usable in PyTorch
                 converted_input = torch.from_numpy(mu.to_numpy()).double()
