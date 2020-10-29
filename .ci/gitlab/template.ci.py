@@ -46,7 +46,7 @@ stages:
         expire_in: 3 months
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
-            - coverage.xml
+            - coverage*
             - memory_usage.txt
             - .hypothesis
         reports:
@@ -55,6 +55,9 @@ stages:
 {# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
 .submit:
     extends: .test_base
+    image: pymor/ci_sanity:{{ci_image_tag}}
+    variables:
+        XDG_CACHE_DIR: /tmp
     retry:
         max: 2
         when:
@@ -194,6 +197,8 @@ minimal_cpp_demo:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_{{script}}__{{py}}
     services:
     {%- if script == "oldest" %}
         - name: pymor/pypi-mirror_oldest_py{{py}}:{{pypi_mirror_tag}}
@@ -212,12 +217,16 @@ minimal_cpp_demo:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_{{script}}.bash
+        - find . -name "coverage*"
+        - ls -la *
 {%- endfor %}
 
 {%- for py in pythons %}
 ci_weekly {{py[0]}} {{py[2]}}:
     extends: .pytest
     timeout: 5h
+    variables:
+        COVERAGE_FILE: coverage_ci_weekly
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
@@ -229,15 +238,18 @@ ci_weekly {{py[0]}} {{py[2]}}:
     script: ./.ci/gitlab/test_vanilla.bash
 {%- endfor %}
 
-{%- for script, py, para in matrix if script in ['vanilla', 'oldest', 'numpy_git', 'mpi'] %}
-submit {{script}} {{py[0]}} {{py[2]}}:
+submit coverage:
     extends: .submit
-    image: pymor/python:{{py}}
-    variables:
-        COVERAGE_FLAG: {{script}}__{{py}}
+    artifacts:
+        when: always
+        name: "submit"
+        paths:
+            - cover/*
+            - .coverage
     dependencies:
+    {%- for script, py, para in matrix if script in ['vanilla', 'oldest', 'numpy_git', 'mpi'] %}
         - {{script}} {{py[0]}} {{py[2]}}
-{%- endfor %}
+    {%- endfor %}
 
 {%- for py in pythons %}
 submit ci_weekly {{py[0]}} {{py[2]}}:
@@ -246,8 +258,6 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     image: pymor/python:{{py}}
-    variables:
-        COVERAGE_FLAG: ci_weekly
     dependencies:
         - ci_weekly {{py[0]}} {{py[2]}}
     needs: ["ci_weekly {{py[0]}} {{py[2]}}"]

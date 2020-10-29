@@ -44,7 +44,7 @@ stages:
         expire_in: 3 months
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
-            - coverage.xml
+            - coverage*
             - memory_usage.txt
             - .hypothesis
         reports:
@@ -53,6 +53,9 @@ stages:
 
 .submit:
     extends: .test_base
+    image: pymor/ci_sanity:cf9d070824d28b8341afdb14d86145012c7b974b
+    variables:
+        XDG_CACHE_DIR: /tmp
     retry:
         max: 2
         when:
@@ -189,6 +192,8 @@ mpi 3 6:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_mpi__3.6
     services:
         - name: pymor/pypi-mirror_stable_py3.6:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -203,12 +208,16 @@ mpi 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_mpi.bash
+        - find . -name "coverage*"
+        - ls -la *
 mpi 3 7:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_mpi__3.7
     services:
         - name: pymor/pypi-mirror_stable_py3.7:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -223,12 +232,16 @@ mpi 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_mpi.bash
+        - find . -name "coverage*"
+        - ls -la *
 mpi 3 8:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_mpi__3.8
     services:
         - name: pymor/pypi-mirror_stable_py3.8:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -243,12 +256,16 @@ mpi 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_mpi.bash
+        - find . -name "coverage*"
+        - ls -la *
 notebooks_dir 3 6:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_notebooks_dir__3.6
     services:
         - name: pymor/pypi-mirror_stable_py3.6:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -263,12 +280,16 @@ notebooks_dir 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_notebooks_dir.bash
+        - find . -name "coverage*"
+        - ls -la *
 notebooks_dir 3 7:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_notebooks_dir__3.7
     services:
         - name: pymor/pypi-mirror_stable_py3.7:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -283,12 +304,16 @@ notebooks_dir 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_notebooks_dir.bash
+        - find . -name "coverage*"
+        - ls -la *
 notebooks_dir 3 8:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_notebooks_dir__3.8
     services:
         - name: pymor/pypi-mirror_stable_py3.8:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -303,12 +328,16 @@ notebooks_dir 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_notebooks_dir.bash
+        - find . -name "coverage*"
+        - ls -la *
 pip_installed 3 6:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_pip_installed__3.6
     services:
         - name: pymor/pypi-mirror_stable_py3.6:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -323,12 +352,16 @@ pip_installed 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_pip_installed.bash
+        - find . -name "coverage*"
+        - ls -la *
 pip_installed 3 7:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_pip_installed__3.7
     services:
         - name: pymor/pypi-mirror_stable_py3.7:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -343,12 +376,16 @@ pip_installed 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_pip_installed.bash
+        - find . -name "coverage*"
+        - ls -la *
 pip_installed 3 8:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_pip_installed__3.8
     services:
         - name: pymor/pypi-mirror_stable_py3.8:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -363,12 +400,16 @@ pip_installed 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_pip_installed.bash
+        - find . -name "coverage*"
+        - ls -la *
 vanilla 3 6:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_vanilla__3.6
     services:
         - name: pymor/pypi-mirror_stable_py3.6:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -383,12 +424,16 @@ vanilla 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_vanilla.bash
+        - find . -name "coverage*"
+        - ls -la *
 vanilla 3 7:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_vanilla__3.7
     services:
         - name: pymor/pypi-mirror_stable_py3.7:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -403,12 +448,16 @@ vanilla 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_vanilla.bash
+        - find . -name "coverage*"
+        - ls -la *
 vanilla 3 8:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_vanilla__3.8
     services:
         - name: pymor/pypi-mirror_stable_py3.8:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -423,12 +472,16 @@ vanilla 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_vanilla.bash
+        - find . -name "coverage*"
+        - ls -la *
 numpy_git 3 8:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_numpy_git__3.8
     services:
         - name: pymor/pypi-mirror_stable_py3.8:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -443,12 +496,16 @@ numpy_git 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_numpy_git.bash
+        - find . -name "coverage*"
+        - ls -la *
 oldest 3 6:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_oldest__3.6
     services:
         - name: pymor/pypi-mirror_oldest_py3.6:cf9d070824d28b8341afdb14d86145012c7b974b
           alias: pypi_mirror
@@ -463,9 +520,13 @@ oldest 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_oldest.bash
+        - find . -name "coverage*"
+        - ls -la *
 ci_weekly 3 6:
     extends: .pytest
     timeout: 5h
+    variables:
+        COVERAGE_FILE: coverage_ci_weekly
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
@@ -478,6 +539,8 @@ ci_weekly 3 6:
 ci_weekly 3 7:
     extends: .pytest
     timeout: 5h
+    variables:
+        COVERAGE_FILE: coverage_ci_weekly
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
@@ -490,6 +553,8 @@ ci_weekly 3 7:
 ci_weekly 3 8:
     extends: .pytest
     timeout: 5h
+    variables:
+        COVERAGE_FILE: coverage_ci_weekly
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
@@ -499,61 +564,23 @@ ci_weekly 3 8:
     image: pymor/testing_py3.8:cf9d070824d28b8341afdb14d86145012c7b974b
     
     script: ./.ci/gitlab/test_vanilla.bash
-submit mpi 3 6:
+
+submit coverage:
     extends: .submit
-    image: pymor/python:3.6
-    variables:
-        COVERAGE_FLAG: mpi__3.6
+    artifacts:
+        when: always
+        name: "submit"
+        paths:
+            - cover/*
+            - .coverage
     dependencies:
         - mpi 3 6
-submit mpi 3 7:
-    extends: .submit
-    image: pymor/python:3.7
-    variables:
-        COVERAGE_FLAG: mpi__3.7
-    dependencies:
         - mpi 3 7
-submit mpi 3 8:
-    extends: .submit
-    image: pymor/python:3.8
-    variables:
-        COVERAGE_FLAG: mpi__3.8
-    dependencies:
         - mpi 3 8
-submit vanilla 3 6:
-    extends: .submit
-    image: pymor/python:3.6
-    variables:
-        COVERAGE_FLAG: vanilla__3.6
-    dependencies:
         - vanilla 3 6
-submit vanilla 3 7:
-    extends: .submit
-    image: pymor/python:3.7
-    variables:
-        COVERAGE_FLAG: vanilla__3.7
-    dependencies:
         - vanilla 3 7
-submit vanilla 3 8:
-    extends: .submit
-    image: pymor/python:3.8
-    variables:
-        COVERAGE_FLAG: vanilla__3.8
-    dependencies:
         - vanilla 3 8
-submit numpy_git 3 8:
-    extends: .submit
-    image: pymor/python:3.8
-    variables:
-        COVERAGE_FLAG: numpy_git__3.8
-    dependencies:
         - numpy_git 3 8
-submit oldest 3 6:
-    extends: .submit
-    image: pymor/python:3.6
-    variables:
-        COVERAGE_FLAG: oldest__3.6
-    dependencies:
         - oldest 3 6
 submit ci_weekly 3 6:
     extends: .submit
@@ -561,8 +588,6 @@ submit ci_weekly 3 6:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     image: pymor/python:3.6
-    variables:
-        COVERAGE_FLAG: ci_weekly
     dependencies:
         - ci_weekly 3 6
     needs: ["ci_weekly 3 6"]
@@ -572,8 +597,6 @@ submit ci_weekly 3 7:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     image: pymor/python:3.7
-    variables:
-        COVERAGE_FLAG: ci_weekly
     dependencies:
         - ci_weekly 3 7
     needs: ["ci_weekly 3 7"]
@@ -583,8 +606,6 @@ submit ci_weekly 3 8:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     image: pymor/python:3.8
-    variables:
-        COVERAGE_FLAG: ci_weekly
     dependencies:
         - ci_weekly 3 8
     needs: ["ci_weekly 3 8"]
