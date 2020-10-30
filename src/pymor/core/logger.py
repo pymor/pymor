@@ -58,7 +58,7 @@ INDENT_BLOCKS = True
 INDENT = 0
 LAST_TIMESTAMP_LENGTH = 0
 
-start_time = time.time()
+start_time = time.perf_counter()
 
 
 class ColoredFormatter(logging.Formatter):
@@ -87,7 +87,7 @@ class ColoredFormatter(logging.Formatter):
         msg = super().format(record)  # call base class to support exception formatting
 
         # format time
-        elapsed = int(time.time() - start_time)
+        elapsed = int(time.perf_counter() - start_time)
         days, remainder = divmod(elapsed, 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
@@ -303,7 +303,7 @@ class LogIndenter:
         global INDENT
         global BLOCK_TIMINGS
         if BLOCK_TIMINGS:
-            self.tic = time.time()
+            self.tic = time.perf_counter()
         if self.doit:
             INDENT += 1
 
@@ -312,7 +312,7 @@ class LogIndenter:
         global BLOCK_TIMINGS
         if self.doit:
             if BLOCK_TIMINGS:
-                duration = time.time() - self.tic
+                duration = time.perf_counter() - self.tic
                 self.logger.log(BLOCK_TIME, f'duration: {duration}s')
             INDENT -= 1
 

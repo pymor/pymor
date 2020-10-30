@@ -86,7 +86,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
     else:
         logger.info(f'Using pool of {len(pool)} workers for parallel greedy search.')
 
-    tic = time.time()
+    tic = time.perf_counter()
 
     # setup training and validation sets
     sample_set = AdaptiveSampleSet(parameter_space)
@@ -217,7 +217,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
             logger.info(f'Maximum number of {max_extensions} extensions reached.')
             break
 
-    tictoc = time.time() - tic
+    tictoc = time.perf_counter() - tic
     logger.info(f'Greedy search took {tictoc} seconds')
     return {'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'max_val_errs': max_val_errs, 'max_val_err_mus': max_val_err_mus,

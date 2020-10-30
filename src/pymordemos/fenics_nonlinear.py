@@ -118,13 +118,13 @@ def fenics_nonlinear_demo(args):
     errs = []
     speedups = []
     for mu in parameter_space.sample_randomly(10):
-        tic = time.time()
+        tic = time.perf_counter()
         U = fom.solve(mu)
-        t_fom = time.time() - tic
+        t_fom = time.perf_counter() - tic
 
-        tic = time.time()
+        tic = time.perf_counter()
         u_red = rom.solve(mu)
-        t_rom = time.time() - tic
+        t_rom = time.perf_counter() - tic
 
         U_red = reductor.reconstruct(u_red)
         errs.append(((U - U_red).norm() / U.norm())[0])

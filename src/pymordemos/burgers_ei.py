@@ -178,7 +178,7 @@ def main(args):
 
     print('\nSearching for maximum error on random snapshots ...')
 
-    tic = time.time()
+    tic = time.perf_counter()
 
     mus = problem.parameter_space.sample_randomly(args['--test'])
 
@@ -221,7 +221,7 @@ def main(args):
 
     l2_err_max = errs[-1, -1]
     mumax = err_mus[-1, -1]
-    toc = time.time()
+    toc = time.perf_counter()
     t_est = toc - tic
 
     print('''

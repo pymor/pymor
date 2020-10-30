@@ -43,10 +43,10 @@ class Timer:
 
     def start(self):
         self.dt = -1
-        self._start = time.process_time()
+        self._start = time.perf_counter()
 
     def stop(self):
-        self.dt = time.process_time() - self._start
+        self.dt = time.perf_counter() - self._start
 
     def __enter__(self):
         self.start()
