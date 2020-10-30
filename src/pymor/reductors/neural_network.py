@@ -132,10 +132,11 @@ if config.HAVE_TORCH:
                 with self.logger.block('Computing validation snapshots ...'):
 
                     if self.validation_set:
-                        U = self.fom.solution_space.empty()
+                        self.validation_data = []
                         for mu in self.validation_set:
-                            U.append(self.fom.solve(mu))
-                        self.validation_data = self._compute_samples(self.validation_set, U, self.reduced_basis)
+                            sample = self._compute_sample(mu, self.fom.solve(mu), self.reduced_basis)
+                            for elem in sample:
+                                self.validation_data.append(elem)
                     else:
                         number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
                         self.validation_data = self.training_data[0:number_validation_snapshots]
@@ -296,9 +297,11 @@ if config.HAVE_TORCH:
                                            atol=self.atol / 2., l2_err=self.l2_err / 2.,
                                            **(self.pod_params or {}))
 
-                # determine the coefficients of the full-order solutions in the reduced basis to obtain the
-                # training data; convert everything into tensors that are compatible with PyTorch
-                self.training_data = self._compute_samples(self.training_set, U, reduced_basis)
+                self.training_data = []
+                for mu, u in zip(self.training_set, U):
+                    sample = self._compute_sample(mu, u, reduced_basis)
+                    for elem in sample:
+                        self.training_data.append(elem)
 
             # compute mean square loss
             mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
@@ -306,14 +309,14 @@ if config.HAVE_TORCH:
             return reduced_basis, mean_square_loss
 
 
-        def _compute_samples(self, parameters, solutions, reduced_basis):
-            """Transform parameters and corresponding solutions to tensors."""
-            samples = []
-            for mu, u in zip(parameters, solutions):
-                mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
-                samples.append((mu_tensor, u_tensor))
-            return samples
+        def _compute_sample(self, mu, u, reduced_basis):
+            """Transform parameter and corresponding solution to tensors."""
+            # determine the coefficients of the full-order solutions in the reduced basis to obtain the
+            # training data; convert everything into tensors that are compatible with PyTorch
+            mu_tensor = torch.DoubleTensor(mu.to_numpy())
+            u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
+            return [(mu_tensor, u_tensor),]
+
 
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -372,7 +375,6 @@ if config.HAVE_TORCH:
                      ann_mse='like_basis'):
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
-            self.nt = fom.time_stepper.nt
 
 
         def _compute_layers_sizes(self, hidden_layers):
@@ -390,22 +392,53 @@ if config.HAVE_TORCH:
             return rom
 
 
-        def _compute_samples(self, parameters, solutions, reduced_basis):
-            """Transform parameters and corresponding solutions to tensors
+        def build_basis(self):
+            """Compute a reduced basis using proper orthogonal decomposition."""
+            with self.logger.block('Building reduced basis ...'):
+
+                # compute snapshots for POD and training of neural networks
+                with self.logger.block('Computing training snapshots ...'):
+                    U = self.fom.solution_space.empty()
+                    for mu in self.training_set:
+                        u = self.fom.solve(mu)
+                        if hasattr(self, 'nt'):
+                            assert self.nt == len(u) - 1
+                        else:
+                            self.nt = len(u) - 1
+                        U.append(u)
+
+                # compute reduced basis via POD
+                reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
+                                           atol=self.atol / 2., l2_err=self.l2_err / 2.,
+                                           **(self.pod_params or {}))
+
+                self.training_data = []
+                for i, mu in enumerate(self.training_set):
+                    sample = self._compute_sample(mu, U[i*(self.nt+1):(i+1)*(self.nt+1)], reduced_basis)
+                    for elem in sample:
+                        self.training_data.append(elem)
+
+            # compute mean square loss
+            mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
+
+            return reduced_basis, mean_square_loss
+
+
+        def _compute_sample(self, mu, u, reduced_basis):
+            """Transform parameter and corresponding solution to tensors
             (make sure to include the time instances in the inputs)."""
             samples = []
             parameters_with_time = []
             dt = self.fom.T / self.nt
 
-            for mu in parameters:
-                t = 0.
-                for i in range(self.nt + 1):
-                    parameters_with_time.append(mu.with_(t=t))
-                    t += dt
+            t = 0.
+            for i in range(self.nt + 1):
+                parameters_with_time.append(mu.with_(t=t))
+                t += dt
 
-            for mu, u in zip(parameters_with_time, solutions):
+            for mu, u_t in zip(parameters_with_time, u):
                 mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
+                u_tensor = torch.DoubleTensor(reduced_basis.inner(u_t)[:,0])
                 samples.append((mu_tensor, u_tensor))
 
             return samples
