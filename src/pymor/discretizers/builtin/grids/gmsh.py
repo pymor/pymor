@@ -34,9 +34,9 @@ def load_gmsh(filename):
     logger = getLogger('pymor.discretizers.builtin.grids.gmsh.load_gmsh')
 
     logger.info('Parsing Gmsh file ...')
-    tic = time.time()
+    tic = time.perf_counter()
     data = meshio.read(filename)
-    toc = time.time()
+    toc = time.perf_counter()
     t_parse = toc - tic
 
     if data.gmsh_periodic:
@@ -48,17 +48,17 @@ def load_gmsh(filename):
         raise NotImplementedError
 
     logger.info('Create Grid ...')
-    tic = time.time()
+    tic = time.perf_counter()
 
     vertices = data.points[:, :2]
     faces = cells_dict['triangle']
 
     grid = UnstructuredTriangleGrid.from_vertices(vertices, faces)
-    toc = time.time()
+    toc = time.perf_counter()
     t_grid = toc - tic
 
     logger.info('Create GmshBoundaryInfo ...')
-    tic = time.time()
+    tic = time.perf_counter()
 
     boundary_types = {k: v[0] for k, v in data.field_data.items() if v[1] == 1}
 
@@ -88,7 +88,7 @@ def load_gmsh(filename):
         logger.warning('Boundary data not found. Creating empty BoundaryInfo ...')
         bi = EmptyBoundaryInfo(grid)
 
-    toc = time.time()
+    toc = time.perf_counter()
     t_bi = toc - tic
 
     logger.info(f'Parsing took {t_parse}s; Grid creation took {t_grid}s; BoundaryInfo creation took {t_bi}s')

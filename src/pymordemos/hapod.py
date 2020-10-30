@@ -27,7 +27,7 @@ Options:
 """
 
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from time import time
+import time
 
 from docopt import docopt
 import numpy as np
@@ -64,17 +64,17 @@ def hapod_demo(args):
     for mu in p.parameter_space.sample_randomly(args['--snap']):
         U.append(m.solve(mu))
 
-    tic = time()
+    tic = time.perf_counter()
     pod_modes = pod(U, l2_err=tol * np.sqrt(len(U)), product=m.l2_product)[0]
-    pod_time = time() - tic
+    pod_time = time.perf_counter() - tic
 
-    tic = time()
+    tic = time.perf_counter()
     dist_modes = dist_vectorarray_hapod(args['DIST'], U, tol, omega, product=m.l2_product, executor=executor)[0]
-    dist_time = time() - tic
+    dist_time = time.perf_counter() - tic
 
-    tic = time()
+    tic = time.perf_counter()
     inc_modes = inc_vectorarray_hapod(args['INC'], U, tol, omega, product=m.l2_product)[0]
-    inc_time = time() - tic
+    inc_time = time.perf_counter() - tic
 
     print(f'Snapshot matrix: {U.dim} x {len(U)}')
     print(format_table([

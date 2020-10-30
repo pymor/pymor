@@ -115,13 +115,13 @@ def neural_networks_demo(args):
     U_red = fom.solution_space.empty(reserve=len(test_set))
 
     for mu in test_set:
-        tic = time.time()
+        tic = time.perf_counter()
         U.append(fom.solve(mu))
-        time_fom = time.time() - tic
+        time_fom = time.perf_counter() - tic
 
-        tic = time.time()
+        tic = time.perf_counter()
         U_red.append(reductor.reconstruct(rom.solve(mu)))
-        time_red = time.time() - tic
+        time_red = time.perf_counter() - tic
 
         speedups.append(time_fom / time_red)
 

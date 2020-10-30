@@ -76,9 +76,9 @@ def burgers_demo(args):
     mu = args['EXP']
     print(f'Solving for exponent = {mu} ... ')
     sys.stdout.flush()
-    tic = time.time()
+    tic = time.perf_counter()
     U = m.solve(mu)
-    print(f'Solving took {time.time()-tic}s')
+    print(f'Solving took {time.perf_counter()-tic}s')
     m.visualize(U)
 
 if __name__ == '__main__':

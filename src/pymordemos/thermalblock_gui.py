@@ -98,17 +98,17 @@ class SimPanel(QtWidgets.QWidget):
         self.setLayout(box)
 
     def solve_update(self):
-        tic = time.time()
+        tic = time.perf_counter()
         self.param_panel.enable(False)
         args = self.sim.args
         shape = (args['YBLOCKS'], args['XBLOCKS'])
         mu = {'diffusion': np.array([s.value() for s in self.param_panel.spins]).reshape(shape)}
         U = self.sim.solve(mu)
-        print(f'Simtime {time.time()-tic}')
-        tic = time.time()
+        print(f'Simtime {time.perf_counter()-tic}')
+        tic = time.perf_counter()
         self.solution.set(U.to_numpy().ravel())
         self.param_panel.enable(True)
-        print(f'Drawtime {time.time()-tic}')
+        print(f'Drawtime {time.perf_counter()-tic}')
 
 
 class AllPanel(QtWidgets.QWidget):

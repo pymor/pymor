@@ -202,22 +202,22 @@ def analyze_pickle_convergence(args):
         us = []
         print('solve ', end='')
         sys.stdout.flush()
-        start = time.time()
+        start = time.perf_counter()
         for mu in mus:
             us.append(rom.solve(mu))
-        T_SOLVES.append((time.time() - start) * 1000. / len(mus))
+        T_SOLVES.append((time.perf_counter() - start) * 1000. / len(mus))
 
         print('estimate ', end='')
         sys.stdout.flush()
         if hasattr(rom, 'estimate'):
             ests = []
-            start = time.time()
+            start = time.perf_counter()
             for mu in mus:
                 # print('e', end='')
                 # sys.stdout.flush()
                 ests.append(rom.estimate_error(mu))
             ESTS.append(max(ests))
-            T_ESTS.append((time.time() - start) * 1000. / len(mus))
+            T_ESTS.append((time.perf_counter() - start) * 1000. / len(mus))
 
         print('errors', end='')
         sys.stdout.flush()

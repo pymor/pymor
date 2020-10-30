@@ -350,7 +350,7 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
 
 def reduce_naive(fom, reductor, parameter_space, basis_size):
 
-    tic = time.time()
+    tic = time.perf_counter()
 
     training_set = parameter_space.sample_randomly(basis_size)
 
@@ -359,7 +359,7 @@ def reduce_naive(fom, reductor, parameter_space, basis_size):
 
     rom = reductor.reduce()
 
-    elapsed_time = time.time() - tic
+    elapsed_time = time.perf_counter() - tic
 
     summary = f'''Naive basis generation:
    basis size set: {basis_size}
@@ -429,7 +429,7 @@ def reduce_adaptive_greedy(fom, reductor, parameter_space, validation_mus,
 def reduce_pod(fom, reductor, parameter_space, snapshots_per_block, basis_size):
     from pymor.algorithms.pod import pod
 
-    tic = time.time()
+    tic = time.perf_counter()
 
     training_set = parameter_space.sample_uniformly(snapshots_per_block)
 
@@ -445,7 +445,7 @@ def reduce_pod(fom, reductor, parameter_space, snapshots_per_block, basis_size):
     reductor.extend_basis(basis, method='trivial')
     rom = reductor.reduce()
 
-    elapsed_time = time.time() - tic
+    elapsed_time = time.perf_counter() - tic
 
     # generate summary
     real_rb_size = rom.solution_space.dim

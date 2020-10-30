@@ -165,7 +165,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             msh_file_path = msh_file.name
             msh_file.close()
 
-        tic = time.time()
+        tic = time.perf_counter()
 
         # run Gmsh; initial meshing
         logger.info('Calling Gmsh ...')
@@ -179,7 +179,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             logger.info(f'Performing Gmsh refinement step {i+1}')
             subprocess.check_call(cmd, env=env)
 
-        toc = time.time()
+        toc = time.perf_counter()
         t_gmsh = toc - tic
         logger.info(f'Gmsh took {t_gmsh} s')
 

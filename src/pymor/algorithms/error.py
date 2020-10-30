@@ -169,7 +169,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     else:
         logger.info(f'Using pool of {len(pool)} workers for error analysis')
 
-    tic = time.time()
+    tic = time.perf_counter()
 
     if isinstance(basis_sizes, Number):
         if basis_sizes == 1:
@@ -245,7 +245,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
             summary.append((f'maximum custom value {i}',
                             f'{value:.7e} (mu = {mu})'))
 
-    toc = time.time()
+    toc = time.perf_counter()
     result['time'] = toc - tic
     summary.append(('elapsed time', str(toc - tic)))
 

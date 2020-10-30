@@ -58,11 +58,11 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
     training_set = list(training_set)
     logger.info(f'Started greedy search on training set of size {len(training_set)}.')
 
-    tic = time.time()
+    tic = time.perf_counter()
     if not training_set:
         logger.info('There is nothing else to do for an empty training set.')
         return {'max_errs': [], 'max_err_mus': [], 'extensions': 0,
-                'time': time.time() - tic}
+                'time': time.perf_counter() - tic}
 
     if pool is None:
         pool = dummy_pool
@@ -107,7 +107,7 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
             logger.info(f'Maximum number of {max_extensions} extensions reached.')
             break
 
-    tictoc = time.time() - tic
+    tictoc = time.perf_counter() - tic
     logger.info(f'Greedy search took {tictoc} seconds')
     return {'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'time': tictoc}
