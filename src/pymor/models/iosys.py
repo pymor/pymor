@@ -845,6 +845,10 @@ class LTIModel(InputStateOutputModel):
             raise NotImplementedError
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
+        D_norm2 = np.sum(self.D.as_range_array(mu=mu).norm2())
+        if D_norm2 != 0:
+            self.logger.warning('The D operator is not exactly zero '
+                                f'(squared Frobenius norm is {D_norm2}).')
         assert self.parameters.assert_compatible(mu)
         if self.input_dim <= self.output_dim:
             cf = self.gramian('c_lrcf', mu=mu)
