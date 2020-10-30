@@ -562,25 +562,7 @@ class LTIModel(InputStateOutputModel):
 
     def __sub__(self, other):
         """Subtract an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
-
-        if not isinstance(other, LTIModel):
-            return NotImplemented
-
-        A = BlockDiagonalOperator([self.A, other.A])
-        B = BlockColumnOperator([self.B, other.B])
-        C = BlockRowOperator([self.C, -other.C])
-        if self.D is other.D:
-            D = ZeroOperator(self.output_space, self.input_space)
-        else:
-            D = self.D - other.D
-        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
-        else:
-            E = BlockDiagonalOperator([self.E, other.E])
-        return self.with_(A=A, B=B, C=C, D=D, E=E)
+        return self + (-other)
 
     def __neg__(self):
         """Negate the |LTIModel|."""
@@ -1021,14 +1003,7 @@ class TransferFunction(InputOutputModel):
     __radd__ = __add__
 
     def __sub__(self, other):
-        assert isinstance(other, InputOutputModel)
-        assert self.cont_time == other.cont_time
-        assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
-
-        tf = lambda s, mu=None: self.eval_tf(s, mu=mu) - other.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) - other.eval_dtf(s, mu=mu)
-        return self.with_(tf=tf, dtf=dtf)
+        return self + (-other)
 
     def __rsub__(self, other):
         assert isinstance(other, InputOutputModel)
@@ -1451,27 +1426,7 @@ class SecondOrderModel(InputStateOutputModel):
 
     def __sub__(self, other):
         """Subtract a |SecondOrderModel| or an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
-
-        if isinstance(other, LTIModel):
-            return self.to_lti() - other
-
-        if not isinstance(other, SecondOrderModel):
-            return NotImplemented
-
-        M = BlockDiagonalOperator([self.M, other.M])
-        E = BlockDiagonalOperator([self.E, other.E])
-        K = BlockDiagonalOperator([self.K, other.K])
-        B = BlockColumnOperator([self.B, other.B])
-        Cp = BlockRowOperator([self.Cp, -other.Cp])
-        Cv = BlockRowOperator([self.Cv, -other.Cv])
-        if self.D is other.D:
-            D = ZeroOperator(self.output_space, self.input_space)
-        else:
-            D = self.D - other.D
-        return self.with_(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D)
+        return self + (-other)
 
     def __rsub__(self, other):
         """Subtract from an |LTIModel|."""
@@ -2010,43 +1965,7 @@ class LinearDelayModel(InputStateOutputModel):
 
     def __sub__(self, other):
         """Subtract an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
-
-        if isinstance(other, SecondOrderModel):
-            other = other.to_lti()
-
-        if isinstance(other, LTIModel):
-            Ad = tuple(BlockDiagonalOperator([op, ZeroOperator(other.solution_space, other.solution_space)])
-                       for op in self.Ad)
-            tau = self.tau
-        elif isinstance(other, LinearDelayModel):
-            tau = tuple(set(self.tau).union(set(other.tau)))
-            Ad = [None for _ in tau]
-            for i, taui in enumerate(tau):
-                if taui in self.tau and taui in other.tau:
-                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
-                                                   other.Ad[other.tau.index(taui)]])
-                elif taui in self.tau:
-                    Ad[i] = BlockDiagonalOperator([self.Ad[self.tau.index(taui)],
-                                                   ZeroOperator(other.solution_space, other.solution_space)])
-                else:
-                    Ad[i] = BlockDiagonalOperator([ZeroOperator(self.solution_space, self.solution_space),
-                                                   other.Ad[other.tau.index(taui)]])
-            Ad = tuple(Ad)
-        else:
-            return NotImplemented
-
-        E = BlockDiagonalOperator([self.E, other.E])
-        A = BlockDiagonalOperator([self.A, other.A])
-        B = BlockColumnOperator([self.B, other.B])
-        C = BlockRowOperator([self.C, -other.C])
-        if self.D is other.D:
-            D = ZeroOperator(self.output_space, self.input_space)
-        else:
-            D = self.D - other.D
-        return self.with_(E=E, A=A, Ad=Ad, tau=tau, B=B, C=C, D=D)
+        return self + (-other)
 
     def __rsub__(self, other):
         """Subtract from an |LTIModel| or a |SecondOrderModel|."""
