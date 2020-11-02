@@ -51,9 +51,9 @@ def create_fom(args):
     mu_bar = problem.parameters.parse([np.pi/2,np.pi/2])
     fom, _ = discretize_stationary_cg(problem, diameter=1. / int(args['GRID_INTERVALS']),
                                       mu_energy_product=mu_bar)
-    # define the dual quantities
-    fom = fom.with_(dual_operator=fom.operator, dual_rhs=fom.output_functional.H)
 
+    # define the dual operator
+    fom = fom.with_(dual_operator=fom.operator)
     return fom, mu_bar
 
 def record_results(function, parse, data, mu):

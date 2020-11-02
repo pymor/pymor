@@ -45,11 +45,8 @@ class StationaryModel(Model):
         not `None`, an `estimate_error(U, mu)` method is added to the
         model which will call `error_estimator.estimate_error(U, mu, self)`.
     dual_operator
-        The dual |Operator| L* of L such that p(μ) solves L*(p(μ),μ) = G(μ).
-        This equation is used for the adjoint approach to compute the gradient.
-        See Section 1.6.2 in [HPUU09]_ for more details.
-    dual_rhs
-        The right hand side vector G of the dual problem.
+        The dual |Operator| L* of L, which is e.g. used for computing the gradient
+        of the output_functional. See Section 1.6.2 in [HPUU09]_ for more details.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, m, ...)` method. If `visualizer`
@@ -61,7 +58,7 @@ class StationaryModel(Model):
     """
 
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 error_estimator=None, dual_operator=None, dual_rhs=None,
+                 error_estimator=None, dual_operator=None,
                  visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
@@ -91,18 +88,6 @@ class StationaryModel(Model):
     def _compute_solution(self, mu=None, **kwargs):
         return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
-    @property
-    def dual(self):
-        """Instantiate the dual model which is used to solve for a dual solution of the |StationaryModel|."""
-        try:
-            return self._dual
-        except AttributeError:
-            assert self.dual_rhs is not None
-            assert self.dual_rhs.linear
-            assert self.dual_operator is not None
-            self._dual = self.with_(operator=self.dual_operator, rhs=self.dual_rhs)
-            return self._dual
-
     def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu):
         lhs_d_mu = VectorOperator(self.operator.d_mu(parameter, index).apply(solution, mu=mu))
         rhs_d_mu = self.rhs.d_mu(parameter, index)
@@ -123,6 +108,7 @@ class StationaryModel(Model):
         adjoint_approach
             Use the adjoint approach for a more efficient way of computing the gradient.
             See Section 1.6.2 in [HPUU09]_ for more details.
+            So far, this approach is only valid for linear output functionals and symmetric operators.
 
         Returns
         -------
@@ -131,8 +117,12 @@ class StationaryModel(Model):
         if adjoint_approach is False:
             return super()._compute_output_d_mu(U, mu)
         else:
+            assert self.output_functional is not None
+            assert self.output_functional.linear
+            assert self.dual_operator is not None
+            dual_problem = self.with_(operator=self.dual_operator, rhs=self.output_functional.H)
+            P = dual_problem.solve(mu)
             gradient = []
-            P = self.dual.solve(mu)
             for (parameter, size) in self.parameters.items():
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(U, mu=mu).to_numpy()[0,0]

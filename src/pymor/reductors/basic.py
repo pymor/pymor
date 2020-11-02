@@ -181,8 +181,6 @@ class StationaryRBReductor(ProjectionBasedReductor):
         }
         if self.fom.dual_operator:
             projected_operators['dual_operator'] = project(fom.dual_operator, RB, RB)
-        if self.fom.dual_rhs:
-            projected_operators['dual_rhs'] = project(fom.dual_rhs, RB, None)
         return projected_operators
 
     def project_operators_to_subbasis(self, dims):
@@ -197,8 +195,6 @@ class StationaryRBReductor(ProjectionBasedReductor):
         }
         if self.fom.dual_operator:
             projected_operators['dual_operator'] = project_to_subbasis(rom.dual_operator, dim, dim)
-        if self.fom.dual_rhs:
-            projected_operators['dual_rhs'] = project_to_subbasis(rom.dual_rhs, dim, None)
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
