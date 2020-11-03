@@ -16,7 +16,7 @@ from pymor.core.exceptions import ExtensionError, AccuracyError
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.operators.constructions import ConcatenationOperator, InverseOperator
+from pymor.operators.constructions import ConcatenationOperator, IdentityOperator, InverseOperator
 
 
 class ProjectionBasedReductor(BasicObject):
@@ -247,9 +247,11 @@ class InstationaryRBReductor(ProjectionBasedReductor):
                                              product=product)
 
         projected_operators = {
-            'mass':              None if fom.mass is None or self.product_is_mass else project(fom.mass, RB, RB),
+            'mass':              (None if (isinstance(fom.mass, IdentityOperator) and product is None
+                                           or self.product_is_mass) else
+                                  project(fom.mass, RB, RB)),
             'operator':          project(fom.operator, RB, RB),
-            'rhs':               project(fom.rhs, RB, None) if fom.rhs is not None else None,
+            'rhs':               project(fom.rhs, RB, None),
             'initial_data':      projected_initial_data,
             'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
             'output_functional': project(fom.output_functional, None, RB) if fom.output_functional else None
@@ -274,10 +276,9 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             projected_initial_data = project_to_subbasis(rom.initial_data, dim_range=dim, dim_source=None)
 
         projected_operators = {
-            'mass':              (None if rom.mass is None or self.product_is_mass else
-                                  project_to_subbasis(rom.mass, dim, dim)),
+            'mass':              project_to_subbasis(rom.mass, dim, dim),
             'operator':          project_to_subbasis(rom.operator, dim, dim),
-            'rhs':               project_to_subbasis(rom.rhs, dim, None) if rom.rhs is not None else None,
+            'rhs':               project_to_subbasis(rom.rhs, dim, None),
             'initial_data':      projected_initial_data,
             'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
             'output_functional': (project_to_subbasis(rom.output_functional, None, dim)

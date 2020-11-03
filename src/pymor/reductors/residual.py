@@ -8,6 +8,7 @@ from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.base import BasicObject
 from pymor.core.exceptions import ImageCollectionError
+from pymor.operators.constructions import ZeroOperator
 from pymor.operators.interface import Operator
 
 
@@ -211,8 +212,7 @@ class ImplicitEulerResidualReductor(BasicObject):
     """
     def __init__(self, RB, operator, mass, dt, rhs=None, product=None):
         assert RB in operator.source
-        assert rhs is None \
-            or rhs.source.is_scalar and rhs.range == operator.range and rhs.linear
+        assert rhs.source.is_scalar and rhs.range == operator.range and rhs.linear
         assert product is None or product.source == product.range == operator.range
 
         self.__auto_init(locals())
@@ -264,13 +264,13 @@ class ImplicitEulerResidualOperator(Operator):
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
-        self.rhs_vector = rhs.as_range_array() if rhs and not rhs.parametric else None
+        self.rhs_vector = rhs.as_range_array() if not rhs.parametric else None
 
     def apply(self, U, U_old, mu=None):
         V = self.operator.apply(U, mu=mu)
         V.axpy(1./self.dt, self.mass.apply(U, mu=mu))
         V.axpy(-1./self.dt, self.mass.apply(U_old, mu=mu))
-        if self.rhs:
+        if not isinstance(self.rhs, ZeroOperator):
             F = self.rhs_vector or self.rhs.as_range_array(mu)
             if len(V) > 1:
                 V -= F[[0]*len(V)]
