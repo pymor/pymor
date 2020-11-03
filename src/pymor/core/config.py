@@ -33,6 +33,9 @@ def is_macos_platform():
 
 
 def _get_matplotib_version():
+    # ref https://github.com/pymor/pymor/issues/1119
+    # always import qt abstraction before mpl
+    _get_qt_version()
     import matplotlib
     if is_windows_platform():
         matplotlib.use('Qt4Agg')
