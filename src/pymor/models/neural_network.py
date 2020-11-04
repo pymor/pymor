@@ -76,6 +76,7 @@ if config.HAVE_TORCH:
 
             return U
 
+
     class NeuralNetworkInstationaryModel(Model):
         """Class for models of instationary problems that use artificial neural networks.
 

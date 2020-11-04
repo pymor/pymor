@@ -72,7 +72,6 @@ if config.HAVE_TORCH:
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
-
         def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
                    optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
                    restarts=10, seed=0):
@@ -181,11 +180,9 @@ if config.HAVE_TORCH:
                 else:
                     raise ValueError('Unknown value for mean squared error of neural network')
 
-
         def _compute_layers_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network."""
             return [len(self.fom.parameters),] + hidden_layers + [len(self.reduced_basis),]
-
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -308,7 +305,6 @@ if config.HAVE_TORCH:
 
             return reduced_basis, mean_square_loss
 
-
         def _compute_sample(self, mu, u, reduced_basis):
             """Transform parameter and corresponding solution to tensors."""
             # determine the coefficients of the full-order solutions in the reduced basis to obtain the
@@ -316,7 +312,6 @@ if config.HAVE_TORCH:
             mu_tensor = torch.DoubleTensor(mu.to_numpy())
             u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
             return [(mu_tensor, u_tensor),]
-
 
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -376,12 +371,10 @@ if config.HAVE_TORCH:
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
-
         def _compute_layers_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network
             (make sure to increase the input dimension to account for the time)."""
             return [len(self.fom.parameters) + 1,] + hidden_layers + [len(self.reduced_basis),]
-
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -390,7 +383,6 @@ if config.HAVE_TORCH:
                                                      self.fom.parameters, name=f'{self.fom.name}_reduced')
 
             return rom
-
 
         def build_basis(self):
             """Compute a reduced basis using proper orthogonal decomposition."""
@@ -421,7 +413,6 @@ if config.HAVE_TORCH:
             mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
 
             return reduced_basis, mean_square_loss
-
 
         def _compute_sample(self, mu, u, reduced_basis):
             """Transform parameter and corresponding solution to tensors
