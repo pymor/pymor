@@ -44,9 +44,9 @@ DISCRETIZATION_ARGS = (
     ('burgers', ['--num-flux=lax_friedrichs', '0.1']),
     ('burgers', ['--num-flux=engquist_osher', '0.1']),
     ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
-    ('neural_networks', [50, 100, 20]),
-    ('neural_networks_fenics', [30, 5]),
-    ('neural_networks_instationary', [30, 30, 30, 5]),
+    ('neural_networks', [25, 50, 10]),
+    ('neural_networks_fenics', [15, 3]),
+    ('neural_networks_instationary', [25, 25, 30, 5]),
     ('parabolic', ['heat', 1]),
     ('parabolic', ['heat', '--rect', 1]),
     ('parabolic', ['heat', '--fv', 1]),
@@ -76,9 +76,9 @@ THERMALBLOCK_ADAPTIVE_ARGS = (
 )
 
 THERMALBLOCK_SIMPLE_ARGS = (
-    ('thermalblock_simple', ['pymor', 'naive', 2, 10, 10]),
-    ('thermalblock_simple', ['fenics', 'greedy', 2, 10, 10]),
-    ('thermalblock_simple', ['ngsolve', 'pod', 2, 10, 10]),
+    ('thermalblock_simple', ['pymor', 'naive', 2, 5, 5]),
+    ('thermalblock_simple', ['fenics', 'greedy', 2, 5, 5]),
+    ('thermalblock_simple', ['ngsolve', 'pod', 2, 5, 5]),
     ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
 
