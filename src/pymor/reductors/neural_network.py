@@ -8,6 +8,8 @@ from pymor.core.config import config
 if config.HAVE_TORCH:
     from numbers import Number
 
+    import numpy as np
+
     import torch
     import torch.nn as nn
     import torch.optim as optim
@@ -400,9 +402,9 @@ if config.HAVE_TORCH:
                     for mu in self.training_set:
                         u = self.fom.solve(mu)
                         if hasattr(self, 'nt'):
-                            assert self.nt == len(u) - 1
+                            assert self.nt == len(u)
                         else:
-                            self.nt = len(u) - 1
+                            self.nt = len(u)
                         U.append(u)
 
                 # compute reduced basis via POD
@@ -412,7 +414,7 @@ if config.HAVE_TORCH:
 
                 self.training_data = []
                 for i, mu in enumerate(self.training_set):
-                    sample = self._compute_sample(mu, U[i*(self.nt+1):(i+1)*(self.nt+1)], reduced_basis)
+                    sample = self._compute_sample(mu, U[i*self.nt:(i+1)*self.nt], reduced_basis)
                     self.training_data.extend(sample)
 
             # compute mean square loss
@@ -424,19 +426,10 @@ if config.HAVE_TORCH:
         def _compute_sample(self, mu, u, reduced_basis):
             """Transform parameter and corresponding solution to tensors
             (make sure to include the time instances in the inputs)."""
-            samples = []
-            parameters_with_time = []
-            dt = self.fom.T / self.nt
+            parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
-            t = 0.
-            for i in range(self.nt + 1):
-                parameters_with_time.append(mu.with_(t=t))
-                t += dt
-
-            for mu, u_t in zip(parameters_with_time, u):
-                mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                u_tensor = torch.DoubleTensor(reduced_basis.inner(u_t)[:,0])
-                samples.append((mu_tensor, u_tensor))
+            samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:,0]))
+                       for mu, u_t in zip(parameters_with_time, u)]
 
             return samples
 

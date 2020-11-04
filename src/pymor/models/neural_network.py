@@ -133,12 +133,12 @@ if config.HAVE_TORCH:
 
         def _compute_solution(self, mu=None, **kwargs):
 
-            U = self.solution_space.empty(reserve=self.nt+1)
-            dt = self.T / self.nt
+            U = self.solution_space.empty(reserve=self.nt)
+            dt = self.T / (self.nt - 1)
             t = 0.
 
             # iterate over time steps
-            for i in range(self.nt + 1):
+            for i in range(self.nt):
                 mu = mu.with_(t=t)
                 # convert the parameter `mu` into a form that is usable in PyTorch
                 converted_input = torch.from_numpy(mu.to_numpy()).double()
