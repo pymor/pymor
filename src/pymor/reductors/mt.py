@@ -2,17 +2,19 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.algorithms.eigs import eigs
+from scipy.linalg import eig
 from pymor.algorithms.samdp import samdp
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
+from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+import numpy as np
 
 
 class MTReductor(BasicObject):
-    """Generic Modal Truncation reductor.
+    """Modal Truncation reductor.
 
     See Section 9.2 in [A05]_.
 
@@ -37,22 +39,19 @@ class MTReductor(BasicObject):
 
     def reduce(self, r=None, decomposition='samdp', projection='orth',
                symmetric=False, method_options=None):
-        """Generic Modal Truncation.
+        """Modal Truncation.
 
         Parameters
         ----------
         r
-            Order of the reduced model if `tol` is `None`, maximum order
-            if `tol` is specified.
+            Order of the reduced model
         decomposition
             Algortihm to use for the decomposition:
 
-            -`'eigs'`: approximate eigenvalues with implicitly restarted arnoldi
-            algorithm
+            -`'eigs'`: use scipy.linalg.eig algorithm
             -`'samdp'`: find dominant poles
-            projection
+        projection
             Projection method:
-
             - `'orth'`: projection matrices are orthogonalized with
               respect to the Euclidean inner product
             - `'biorth'`: projection matrices are biorthogolized with
@@ -74,16 +73,43 @@ class MTReductor(BasicObject):
         assert method_options is None or isinstance(method_options, dict)
         if not method_options:
             method_options = {}
+            method_options['which'] = 'LR'
+            
+        self.V = self.fom.B.as_range_array().empty(reserve=r)
+        self.W = self.fom.C.as_source_array().empty(reserve=r)
 
         if decomposition == 'eigs':
-            if 'which' not in method_options.keys():
-                method_options['which'] = 'SR'
-            if symmetric:
-                self.V = eigs(self.fom.A, k=r, **method_options)[1]
-                self.W = self.V
+            if self.fom.A.sparse:
+                A = self.fom.A.matrix.toarray()
             else:
-                self.V = eigs(self.fom.A, k=r, **method_options)[1]
-                self.W = eigs(self.fom.A.H, k=r, **method_options)[1]
+                A = self.fom.A.matrix
+            which = method_options['which']
+            if symmetric:
+                poles, ev_r = eig(A, right=True)
+                if which == 'SM':
+                    idx = np.argsort(np.abs(poles))
+                elif which == 'LR':
+                    idx = np.argsort(-poles.real)
+                rev = ev_r[:, idx]
+                poles = poles[:r]
+                rev = NumpyVectorArray(rev[:, :r].T,
+                                       self.fom.B.as_range_array().space)
+                lev = rev.copy()
+            else:
+                poles, ev_l, ev_r = eig(A,
+                                        left=True, right=True)
+                if which == 'SM':
+                    idx = np.argsort(np.abs(poles))
+                elif which == 'LR':
+                    idx = np.argsort(-poles.real)
+                poles = poles[idx]
+                rev = ev_r[:, idx]
+                lev = ev_l[:, idx]
+                poles = poles[:r]
+                rev = NumpyVectorArray(rev[:, :r].T,
+                                       self.fom.B.as_range_array().space)
+                lev = NumpyVectorArray(lev[:, :r].T,
+                                       self.fom.B.as_range_array().space)
 
         elif decomposition == 'samdp':
 
@@ -91,24 +117,22 @@ class MTReductor(BasicObject):
                                          self.fom.B.as_range_array(),
                                          self.fom.C.as_source_array(),
                                          r, **method_options)
-            if np.iscomplexobj(poles):
-                self.V = rev.empty(reserve=r)
-                self.W = lev.empty(reserve=r)
+        if np.iscomplexobj(poles):
 
-                real_index = np.where(np.isreal(poles))[0]
-                complex_index = np.where(poles.imag > 0)[0]
+            real_index = np.where(np.isreal(poles))[0]
+            complex_index = np.where(poles.imag > 0)[0]
 
-                self.V.append(rev[real_index].real)
-                self.V.append(rev[complex_index].real)
-                self.V.append(rev[complex_index].imag)
+            self.V.append(rev[real_index].real)
+            self.V.append(rev[complex_index].real)
+            self.V.append(rev[complex_index].imag)
 
-                self.W.append(lev[real_index].real)
-                self.W.append(lev[complex_index].real)
-                self.W.append(lev[complex_index].imag)
+            self.W.append(lev[real_index].real)
+            self.W.append(lev[complex_index].real)
+            self.W.append(lev[complex_index].imag)
 
-            else:
-                self.V = rev
-                self.W = lev
+        else:
+            self.V = rev
+            self.W = lev
 
 
         if projection == 'orth':
