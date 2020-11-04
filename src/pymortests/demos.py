@@ -40,6 +40,7 @@ DISCRETIZATION_ARGS = (
     ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
     ('neural_networks', [50, 100, 20]),
     ('neural_networks_fenics', [30, 5]),
+    ('neural_networks_instationary', [30, 30, 30, 5]),
     ('parabolic', ['heat', 1]),
     ('parabolic', ['heat', '--rect', 1]),
     ('parabolic', ['heat', '--fv', 1]),

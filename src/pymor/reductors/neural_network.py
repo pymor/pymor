@@ -8,6 +8,8 @@ from pymor.core.config import config
 if config.HAVE_TORCH:
     from numbers import Number
 
+    import numpy as np
+
     import torch
     import torch.nn as nn
     import torch.optim as optim
@@ -16,7 +18,7 @@ if config.HAVE_TORCH:
     from pymor.algorithms.pod import pod
     from pymor.core.base import BasicObject
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
-    from pymor.models.neural_network import FullyConnectedNN, NeuralNetworkModel
+    from pymor.models.neural_network import FullyConnectedNN, NeuralNetworkModel, NeuralNetworkInstationaryModel
 
 
     class NeuralNetworkReductor(BasicObject):
@@ -124,7 +126,7 @@ if config.HAVE_TORCH:
             # input and output size of the neural network are prescribed by the dimension of the parameter space
             # and the reduced basis size
             assert isinstance(hidden_layers, list)
-            layers = [len(self.fom.parameters),] + hidden_layers + [len(self.reduced_basis),]
+            layers = self._compute_layers_sizes(hidden_layers)
 
             # compute validation data
             if not hasattr(self, 'validation_data'):
@@ -133,10 +135,8 @@ if config.HAVE_TORCH:
                     if self.validation_set:
                         self.validation_data = []
                         for mu in self.validation_set:
-                            mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                            u = self.fom.solve(mu)
-                            u_tensor = torch.DoubleTensor(self.reduced_basis.inner(u)[:,0])
-                            self.validation_data.append((mu_tensor, u_tensor))
+                            sample = self._compute_sample(mu, self.fom.solve(mu), self.reduced_basis)
+                            self.validation_data.extend(sample)
                     else:
                         number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
                         self.validation_data = self.training_data[0:number_validation_snapshots]
@@ -180,11 +180,14 @@ if config.HAVE_TORCH:
                 else:
                     raise ValueError('Unknown value for mean squared error of neural network')
 
+        def _compute_layers_sizes(self, hidden_layers):
+            """Compute the number of neurons in the layers of the neural network."""
+            return [len(self.fom.parameters),] + hidden_layers + [len(self.reduced_basis),]
 
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkModel(self.neural_network, name=f'{self.fom.name}_reduced')
+                rom = NeuralNetworkModel(self.neural_network, self.fom.parameters, name=f'{self.fom.name}_reduced')
 
             return rom
 
@@ -279,8 +282,6 @@ if config.HAVE_TORCH:
 
         def build_basis(self):
             """Compute a reduced basis using proper orthogonal decomposition."""
-            self.training_data = []
-
             with self.logger.block('Building reduced basis ...'):
 
                 # compute snapshots for POD and training of neural networks
@@ -294,22 +295,134 @@ if config.HAVE_TORCH:
                                            atol=self.atol / 2., l2_err=self.l2_err / 2.,
                                            **(self.pod_params or {}))
 
-                # determine the coefficients of the full-order solutions in the reduced basis to obtain the
-                # training data; convert everything into tensors that are compatible with PyTorch
+                self.training_data = []
                 for mu, u in zip(self.training_set, U):
-                    mu_tensor = torch.DoubleTensor(mu.to_numpy())
-                    u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
-                    self.training_data.append((mu_tensor, u_tensor))
+                    sample = self._compute_sample(mu, u, reduced_basis)
+                    self.training_data.extend(sample)
 
             # compute mean square loss
             mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
 
             return reduced_basis, mean_square_loss
 
+        def _compute_sample(self, mu, u, reduced_basis):
+            """Transform parameter and corresponding solution to tensors."""
+            # determine the coefficients of the full-order solutions in the reduced basis to obtain the
+            # training data; convert everything into tensors that are compatible with PyTorch
+            mu_tensor = torch.DoubleTensor(mu.to_numpy())
+            u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
+            return [(mu_tensor, u_tensor),]
+
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
             assert hasattr(self, 'reduced_basis')
             return self.reduced_basis.lincomb(u.to_numpy())
+
+
+    class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
+        """Reduced Basis reductor for instationary problems relying on
+        artificial neural networks.
+
+        This is a reductor that constructs a reduced basis using proper
+        orthogonal decomposition and trains a neural network that approximates
+        the mapping from parameter and time space to coefficients of the
+        full-order solution in the reduced basis.
+        The approach is described in [WHR19]_.
+
+        Parameters
+        ----------
+        fom
+            The full-order |Model| to reduce.
+        training_set
+            Set of |parameter values| to use for POD and training of the
+            neural network.
+        validation_set
+            Set of |parameter values| to use for validation in the training
+            of the neural network.
+        validation_ratio
+            Fraction of the training set to use for validation in the training
+            of the neural network (only used if no validation set is provided).
+        basis_size
+            Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
+            be provided.
+        rtol
+            Relative tolerance the basis should guarantee on the training set.
+        atol
+            Absolute tolerance the basis should guarantee on the training set.
+        l2_err
+            L2-approximation error the basis should not exceed on the training
+            set.
+        pod_params
+            Dict of additional parameters for the POD-method.
+        ann_mse
+            If `'like_basis'`, the mean squared error of the neural network on
+            the training set should not exceed the error of projecting onto the basis.
+            If `None`, the neural network with smallest validation error is
+            used to build the ROM.
+            If a tolerance is prescribed, the mean squared error of the neural
+            network on the training set should not exceed this threshold.
+            Training is interrupted if a neural network that undercuts the
+            error tolerance is found.
+        """
+
+        def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
+                     basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
+                     ann_mse='like_basis'):
+            assert 0 < validation_ratio < 1 or validation_set
+            self.__auto_init(locals())
+
+        def _compute_layers_sizes(self, hidden_layers):
+            """Compute the number of neurons in the layers of the neural network
+            (make sure to increase the input dimension to account for the time)."""
+            return [len(self.fom.parameters) + 1,] + hidden_layers + [len(self.reduced_basis),]
+
+        def _build_rom(self):
+            """Construct the reduced order model."""
+            with self.logger.block('Building ROM ...'):
+                rom = NeuralNetworkInstationaryModel(self.fom.T, self.nt, self.neural_network,
+                                                     self.fom.parameters, name=f'{self.fom.name}_reduced')
+
+            return rom
+
+        def build_basis(self):
+            """Compute a reduced basis using proper orthogonal decomposition."""
+            with self.logger.block('Building reduced basis ...'):
+
+                # compute snapshots for POD and training of neural networks
+                with self.logger.block('Computing training snapshots ...'):
+                    U = self.fom.solution_space.empty()
+                    for mu in self.training_set:
+                        u = self.fom.solve(mu)
+                        if hasattr(self, 'nt'):
+                            assert self.nt == len(u)
+                        else:
+                            self.nt = len(u)
+                        U.append(u)
+
+                # compute reduced basis via POD
+                reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
+                                           atol=self.atol / 2., l2_err=self.l2_err / 2.,
+                                           **(self.pod_params or {}))
+
+                self.training_data = []
+                for i, mu in enumerate(self.training_set):
+                    sample = self._compute_sample(mu, U[i*self.nt:(i+1)*self.nt], reduced_basis)
+                    self.training_data.extend(sample)
+
+            # compute mean square loss
+            mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
+
+            return reduced_basis, mean_square_loss
+
+        def _compute_sample(self, mu, u, reduced_basis):
+            """Transform parameter and corresponding solution to tensors
+            (make sure to include the time instances in the inputs)."""
+            parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
+
+            samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:,0]))
+                       for mu, u_t in zip(parameters_with_time, u)]
+
+            return samples
 
 
     class EarlyStoppingScheduler(BasicObject):
