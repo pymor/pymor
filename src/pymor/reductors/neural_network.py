@@ -135,8 +135,7 @@ if config.HAVE_TORCH:
                         self.validation_data = []
                         for mu in self.validation_set:
                             sample = self._compute_sample(mu, self.fom.solve(mu), self.reduced_basis)
-                            for elem in sample:
-                                self.validation_data.append(elem)
+                            self.validation_data.extend(sample)
                     else:
                         number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
                         self.validation_data = self.training_data[0:number_validation_snapshots]
@@ -300,8 +299,7 @@ if config.HAVE_TORCH:
                 self.training_data = []
                 for mu, u in zip(self.training_set, U):
                     sample = self._compute_sample(mu, u, reduced_basis)
-                    for elem in sample:
-                        self.training_data.append(elem)
+                    self.training_data.extend(sample)
 
             # compute mean square loss
             mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
@@ -415,8 +413,7 @@ if config.HAVE_TORCH:
                 self.training_data = []
                 for i, mu in enumerate(self.training_set):
                     sample = self._compute_sample(mu, U[i*(self.nt+1):(i+1)*(self.nt+1)], reduced_basis)
-                    for elem in sample:
-                        self.training_data.append(elem)
+                    self.training_data.extend(sample)
 
             # compute mean square loss
             mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
