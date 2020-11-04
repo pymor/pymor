@@ -13,6 +13,7 @@ from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
                                            LincombOperator, VectorArrayOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.interface import as_array_max_length
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -431,3 +432,13 @@ def test_adjoint_vectorarray_op_apply_inverse_lstsq():
     v = V.to_numpy()
     u = np.linalg.lstsq(O, v.ravel())[0]
     assert np.all(almost_equal(U, U.space.from_numpy(u)))
+
+
+def test_as_range_array(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    if (not op.linear
+            or not isinstance(op.source, NumpyVectorSpace)
+            or op.source.dim > as_array_max_length()):
+        return
+    array = op.as_range_array(mu)
+    assert np.all(almost_equal(array.lincomb(U.to_numpy()), op.apply(U, mu=mu)))
