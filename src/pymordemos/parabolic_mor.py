@@ -14,9 +14,9 @@ from pymor.tools.typer import Choices
 
 
 # parameters for high-dimensional models
-GRID_INTERVALS = 100
+GRID_INTERVALS = 50
 FENICS_ORDER = 2
-NT = 100
+NT = 50
 DT = 1. / NT
 
 
