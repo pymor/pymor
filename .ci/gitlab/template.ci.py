@@ -45,6 +45,7 @@ stages:
         paths:
           - .hypothesis
     artifacts:
+        when: always
         name: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
         expire_in: 3 months
         paths:
@@ -52,8 +53,7 @@ stages:
             - coverage*
             - memory_usage.txt
             - .hypothesis
-        reports:
-            junit: test_results*.xml
+            - test_results*.xml
 
 {# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
 .submit:
