@@ -173,6 +173,7 @@ def setup_package():
                      'Programming Language :: Python :: 3.6',
                      'Programming Language :: Python :: 3.7',
                      'Programming Language :: Python :: 3.8',
+                     'Programming Language :: Python :: 3.9',
                      'Intended Audience :: Science/Research',
                      'Topic :: Scientific/Engineering :: Mathematics'],
         license='LICENSE.txt',
