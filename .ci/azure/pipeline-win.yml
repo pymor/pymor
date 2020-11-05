@@ -54,3 +54,6 @@ jobs:
         python setup.py build_ext -i
         py.test -r sxX -k "thermalblock_adaptive"
     displayName: 'Tests'
+  - publish: src/pymortests/testdata/check_results/
+    artifact: changed_results_win_$(python.version)
+    condition: always()
