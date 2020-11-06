@@ -3,6 +3,7 @@
 PyQt5
 check-manifest
 codecov
+docutils
 hypothesis[numpy,pytest]>=5.19
 nbconvert
 pypi-oldest-requirements>=2020.2
@@ -14,5 +15,4 @@ pytest-xdist
 pytest>=4.4
 readme_renderer[md]
 rstcheck
-testipynb
 twine
