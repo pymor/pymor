@@ -18,7 +18,7 @@ def format_source(obj):
             from pygments import highlight
             from pygments.lexers import PythonLexer
             from pygments.formatters import Terminal256Formatter
-            return highlight(self.source, PythonLexer(), Terminal256Formatter())
+            return highlight(source, PythonLexer(), Terminal256Formatter())
         except ImportError:
             return source
 
@@ -26,6 +26,7 @@ def format_source(obj):
 def print_source(obj):
     source = format_source(obj)
     if is_jupyter():
+        from IPython.display import display, Code
         display(source)
     else:
         print(source)
@@ -34,6 +35,7 @@ def print_source(obj):
 def source_repr(obj):
     source = format_source(obj)
     if is_jupyter():
+        from IPython.display import display, Code
         display(source)
         return ''
     else:
