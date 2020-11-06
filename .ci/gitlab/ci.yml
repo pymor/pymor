@@ -48,6 +48,7 @@ stages:
         expire_in: 3 months
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
+            - docs/source/*_extracted.py
             - coverage*
             - memory_usage.txt
             - .hypothesis
@@ -355,6 +356,78 @@ pip_installed 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_pip_installed.bash
+        - find . -name "coverage*"
+        - ls -la *
+tutorials 3 6:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_tutorials__3.6
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.6:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.6:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_tutorials.bash
+        - find . -name "coverage*"
+        - ls -la *
+tutorials 3 7:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_tutorials__3.7
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_tutorials.bash
+        - find . -name "coverage*"
+        - ls -la *
+tutorials 3 8:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_tutorials__3.8
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_tutorials.bash
         - find . -name "coverage*"
         - ls -la *
 vanilla 3 6:
