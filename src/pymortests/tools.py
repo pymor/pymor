@@ -1,6 +1,7 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+import inspect
 import operator
 from math import sin, pi, exp, factorial
 import numpy as np
@@ -10,6 +11,7 @@ import itertools
 from hypothesis import given
 
 from pymor.core.logger import getLogger
+from pymor.tools.formatsrc import print_source, source_repr
 from pymor.tools.io import SafeTemporaryFileName
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
@@ -18,8 +20,7 @@ from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import float_cmp, float_cmp_all, compare_with_tolerance, almost_less
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymor.tools import timing
-
+from pymor.tools import timing, formatsrc
 
 logger = getLogger('pymortests.tools')
 
@@ -181,6 +182,22 @@ def testDeprecated():
         assert len(w) == 1
         assert issubclass(w[-1].category, DeprecationWarning)
         assert "DeprecationWarning" in str(w[-1].message)
+
+
+def test_formatsrc():
+    obj = formatsrc.format_source
+    formatsrc.format_source(obj)
+    print_source(obj)
+    source_repr(obj)
+
+
+def test_formatsrc_nopygments(monkeypatch):
+    try:
+        from pygments import highlight
+        monkeypatch.delattr('pygments.highlight')
+    except ImportError:
+        pass
+    test_formatsrc()
 
 
 if __name__ == "__main__":
