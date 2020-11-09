@@ -5,11 +5,13 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.lyapunov import solve_lyap_lrcf
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
-from pymor.operators.constructions import IdentityOperator
+from pymor.operators.constructions import IdentityOperator, LowRankOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 
@@ -135,6 +137,54 @@ class BTReductor(GenericBTReductor):
 
     def _gramians(self):
         return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
+
+    def error_bounds(self):
+        sv = self._sv_U_V()[0]
+        return 2 * sv[:0:-1].cumsum()[::-1]
+
+
+class FDBTReductor(GenericBTReductor):
+    """Balanced Truncation reductor using frequency domain representation of gramians.
+
+    See [ZSW99]_.
+
+    Parameters
+    ----------
+    fom
+        The full-order |LTIModel| to reduce.
+    ast_pole_data
+        Can be:
+
+        - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
+        - list of anti-stable eigenvalues (scalars),
+        - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
+          and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
+        - `None` if the |LTIModel| has only asymptotically stable poles.
+    mu
+        |Parameter values|.
+    """
+    def __init__(self, fom, ast_pole_data={'k': 50, 'sigma': 0, 'which': 'LM'}, mu=None, solver_options=None):
+        super().__init__(fom, mu=mu)
+        self.ast_pole_data = ast_pole_data
+        self.solver_options = solver_options
+
+    def _gramians(self):
+        A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
+                      for op in ['A', 'B', 'C', 'E'])
+        options = self.solver_options
+
+        self.ast_spectrum = self.fom._get_ast_spectrum(self.ast_pole_data, mu=self.mu)
+        K = bernoulli_stabilize(A, E, B.as_range_array(mu=self.mu), self.ast_spectrum, trans=True)
+        BK = LowRankOperator(B.as_range_array(mu=self.mu), np.eye(len(K)), K)
+        bsc_lrcf = solve_lyap_lrcf(A-BK, E, B.as_range_array(mu=self.mu),
+                                   trans=False, options=options)
+
+        K = bernoulli_stabilize(A, E, C.as_source_array(mu=self.mu), self.ast_spectrum, trans=False)
+        KC = LowRankOperator(K, np.eye(len(K)), C.as_source_array(mu=self.mu))
+        bso_lrcf = solve_lyap_lrcf(A-KC, E, C.as_source_array(mu=self.mu),
+                                   trans=True, options=options)
+
+        return bsc_lrcf, bso_lrcf
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]

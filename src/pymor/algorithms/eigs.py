@@ -7,12 +7,12 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import IdentityOperator
+from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.operators.interface import Operator
 
 
-def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
-         imag_tol=1e-12, complex_pair_tol=1e-12, seed=0):
+def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, tol=1e-12,
+         imag_tol=1e-12, complex_pair_tol=1e-12, complex_evp=False, left_evp=False, seed=0):
     """Approximate a few eigenvalues of a linear |Operator|.
 
     Computes `k` eigenvalues `w` with corresponding eigenvectors `v` which solve
@@ -33,11 +33,14 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
     Parameters
     ----------
     A
-        The real linear |Operator| for which the eigenvalues are to be computed.
+        The linear |Operator| for which the eigenvalues are to be computed.
     E
-        The real linear |Operator| which defines the generalized eigenvalue problem.
+        The linear |Operator| which defines the generalized eigenvalue problem.
     k
         The number of eigenvalues and eigenvectors which are to be computed.
+    sigma
+        If not `None` transforms the eigenvalue problem such that the k eigenvalues
+        closest to sigma are computed.
     which
         A string specifying which `k` eigenvalues and eigenvectors to compute:
 
@@ -59,6 +62,10 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
         Relative imaginary parts below this tolerance are set to 0.
     complex_pair_tol
         Tolerance for detecting pairs of complex conjugate eigenvalues.
+    complex_evp
+        Wether to consider an eigenvalue problem with complex operators.
+    left_evp
+        If set to `True` compute left eigenvectors else compute right eigenvectors.
     seed
         Random seed which is used for computing the initial vector for the Arnoldi
         iteration.
@@ -98,14 +105,28 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
     assert k < n
     assert l > k
 
-    V, H, f = _arnoldi(A, E, k, b)
+    if sigma is None:
+        if left_evp:
+            Aop = InverseOperator(E).H @ A.H
+        else:
+            Aop = InverseOperator(E) @ A
+    else:
+        if left_evp:
+            Aop = InverseOperator(A - sigma * E).H @ E.H
+        else:
+            Aop = InverseOperator(A - sigma * E) @ E
+        if sigma.imag != 0:
+            complex_evp = True
+
+    V, H, f = _arnoldi(Aop, k, b, complex_evp)
+
     k0 = k
     i = 0
 
     while True:
         i += 1
 
-        V, H, f = _extend_arnoldi(A, E, V, H, f, l - k)
+        V, H, f = _extend_arnoldi(Aop, V, H, f, l - k)
 
         ew, ev = spla.eig(H)
 
@@ -129,10 +150,10 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
         ews = ew[idx]
         evs = ev[:, idx]
 
-        rres = f.norm()[0] * np.abs(evs[l - 1]) / np.abs(ews)
+        rres = f.l2_norm()[0] * np.abs(evs[l - 1]) / np.abs(ews)
 
         # increase k by one in order to keep complex conjugate pairs together
-        if ews[k - 1].imag != 0 and ews[k - 1].imag + ews[k].imag < complex_pair_tol:
+        if not complex_evp and ews[k - 1].imag != 0 and ews[k - 1].imag + ews[k].imag < complex_pair_tol:
             k += 1
 
         logger.info(f'Maximum of relative Ritz estimates at step {i}: {rres[:k].max():.5e}')
@@ -153,31 +174,34 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
         # don't use converged unwanted Ritz values as shifts
         shifts = shifts[srres != 0]
         k += np.count_nonzero(srres == 0)
-        if shifts[0].imag != 0 and shifts[0].imag + ews[1].imag >= complex_pair_tol:
+        if not complex_evp and shifts[0].imag != 0 and shifts[0].imag + ews[1].imag >= complex_pair_tol:
             shifts = shifts[1:]
             k += 1
 
-        H, Qs = _qr_iteration(H, shifts)
+        H, Qs = _qr_iteration(H, shifts, complex_evp=complex_evp)
 
         V = V.lincomb(Qs.T)
         f = V[k] * H[k, k - 1] + f * Qs[l - 1, k - 1]
         V = V[:k]
         H = H[:k, :k]
 
+    if sigma is not None:
+        ews = 1 / ews + sigma
+
     return ews[:k0], V.lincomb(evs[:, :k0].T)
 
 
-def _arnoldi(A, E, l, b):
+def _arnoldi(A, l, b, complex_evp):
     """Compute an Arnoldi factorization."""
     v = b * (1 / b.norm()[0])
 
-    H = np.zeros((l, l))
+    H = np.zeros((l, l), dtype=np.complex if complex_evp else np.float)
     V = A.source.empty(reserve=l)
 
     V.append(v)
 
     for i in range(l):
-        v = E.apply_inverse(A.apply(v))
+        v = A.apply(v)
         V.append(v)
 
         _, R = gram_schmidt(V, return_R=True, atol=0, rtol=0, offset=len(V) - 1, copy=False)
@@ -187,11 +211,11 @@ def _arnoldi(A, E, l, b):
     return V[:l], H, v * R[l, l]
 
 
-def _extend_arnoldi(A, E, V, H, f, p):
+def _extend_arnoldi(A, V, H, f, p):
     """Extend an existing Arnoldi factorization."""
     k = len(V)
 
-    res = f.norm()[0]
+    res = f.l2_norm()[0]
     H = np.pad(H, ((0, p), (0, p)))
     H[k, k - 1] = res
     v = f * (1 / res)
@@ -199,9 +223,8 @@ def _extend_arnoldi(A, E, V, H, f, p):
     V.append(v)
 
     for i in range(k, k + p):
-        v = E.apply_inverse(A.apply(v))
+        v = A.apply(v)
         V.append(v)
-
         _, R = gram_schmidt(V, return_R=True, atol=0, rtol=0, offset=len(V) - 1, copy=False)
         H[:i + 2, i] = R[:k + p, i + 1]
 
@@ -210,14 +233,14 @@ def _extend_arnoldi(A, E, V, H, f, p):
     return V[:k + p], H, v * R[k + p, k + p]
 
 
-def _qr_iteration(H, shifts):
+def _qr_iteration(H, shifts, complex_evp=False):
     """Perform the QR iteration."""
     Qs = np.eye(len(H))
 
     i = 0
     while i < len(shifts) - 1:
         s = shifts[i]
-        if shifts[i].imag != 0:
+        if not complex_evp and shifts[i].imag != 0:
             Q, _ = np.linalg.qr(H @ H - 2 * s.real * H + np.abs(s)**2 * np.eye(len(H)))
             i += 2
         else:

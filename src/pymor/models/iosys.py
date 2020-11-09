@@ -6,6 +6,8 @@ import numpy as np
 import scipy.linalg as spla
 import scipy.sparse as sps
 
+from pymor.algorithms.bernoulli import bernoulli_stabilize
+from pymor.algorithms.eigs import eigs
 from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
@@ -14,7 +16,7 @@ from pymor.core.defaults import defaults
 from pymor.models.interface import Model
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
-from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
+from pymor.operators.constructions import IdentityOperator, LincombOperator, LowRankOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu
 from pymor.vectorarrays.block import BlockVectorSpace
@@ -916,6 +918,148 @@ class LTIModel(InputStateOutputModel):
             Hankel-norm.
         """
         return self.hsv(mu=mu)[0]
+
+    @cached
+    def l2_norm(self, ast_pole_data={'k': 50, 'sigma': 0, 'which': 'LM'}, mu=None):
+        """Compute the L2-norm of the |LTIModel|.
+
+        Parameters
+        ----------
+        ast_pole_data
+            Can be:
+
+            - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
+            - list of anti-stable eigenvalues (scalars),
+            - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
+              and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
+            - `None` if the `LTIModel` has only asymptotically stable poles.
+        mu
+            |Parameter|.
+
+        Returns
+        -------
+        norm
+            L_2-norm.
+        """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+
+        A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
+        options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
+
+        ast_spectrum = self._get_ast_spectrum(ast_pole_data, mu)
+
+        if len(self._ast_spectrum[0]) == 0:
+            return self.h2_norm()
+
+        K = bernoulli_stabilize(A, E, C.as_source_array(mu=mu), ast_spectrum, trans=False)
+        KC = LowRankOperator(K, np.eye(len(K)), C.as_source_array(mu=mu))
+
+        if not isinstance(D, ZeroOperator):
+            BmKD = B - LowRankOperator(K, np.eye(len(K)), D.as_source_array(mu=mu))
+        else:
+            BmKD = B
+
+        if self.input_dim <= self.output_dim:
+            cf = solve_lyap_lrcf(A - KC, E, BmKD.as_range_array(mu=mu),
+                                 trans=False, options=options_lrcf)
+            return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum())
+        else:
+            of = solve_lyap_lrcf(A - KC, E, C.as_range_array(mu=mu),
+                                 trans=True, options=options_lrcf)
+            return np.sqrt(BmKD.apply_adjoint(of, mu=mu).norm2().sum())
+
+    @cached
+    def linf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
+        """Compute the L_infinity-norm of the |LTIModel|.
+
+        Parameters
+        ----------
+        mu
+            |Parameter|.
+        return_fpeak
+            Whether to return the frequency at which the maximum is achieved.
+        ab13dd_equilibrate
+            Whether `slycot.ab13dd` should use equilibration.
+
+        Returns
+        -------
+        norm
+            L_infinity-norm.
+        fpeak
+            Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
+        """
+        return self.hinf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate)
+
+    def _get_ast_spectrum(self, ast_pole_data={'k': 50, 'sigma': 0, 'which': 'LM'}, mu=None):
+        """Compute anti-stable subset of the poles of the |LTIModel|.
+
+        Parameters
+        ----------
+        ast_pole_data
+            Can be:
+
+            - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
+            - list of anti-stable eigenvalues (scalars),
+            - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
+              and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
+            - `None` if the |LTIModel| has only asymptotically stable poles.
+        mu
+            |Parameter|.
+
+        Returns
+        -------
+        ast_spectrum
+            Tuple `(lev, ew, rev)` containing the left and right eigenvectors
+            `lev`, `rev` as |VectorArrays| and the of list anti-stable eigenvalues `ew`.
+        """
+        A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
+
+        if self.order >= sparse_min_size():
+            if self._ast_spectrum is None:
+                if type(ast_pole_data) == dict:
+                    ew, rev = eigs(A, E=E if self.E else None, left_evp=False, **ast_pole_data)
+                    ast_idx = np.where(ew.real > 0.)
+                    ast_ews = ew[ast_idx]
+                    if len(ast_ews) == 0:
+                        self._ast_spectrum = (self.solution_space.empty(), [],
+                                              self.solution_space.empty())
+
+                    ast_levs = A.source.empty(reserve=len(ast_ews))
+                    for ae in ast_ews:
+                        # l=3 avoids issues with complex conjugate pairs
+                        _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
+                        ast_levs.append(lev)
+                    self._ast_spectrum = (ast_levs, ast_ews, rev[ast_idx[0]])
+
+                elif type(ast_pole_data) == list:
+                    ast_levs = A.source.empty(reserve=len(ast_ews))
+                    ast_revs = A.source.empty(reserve=len(ast_ews))
+                    for ae in ast_pole_data:
+                        _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
+                        ast_levs.append(lev)
+                        _, rev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae)
+                        ast_revs.append(rev)
+                    self._ast_spectrum = (ast_levs, ast_ews, rev[ast_idx[0]])
+
+                elif type(ast_pole_data) == tuple:
+                    self._ast_spectrum = ast_pole_data
+
+                else:
+                    # assume there is only asymptotically stable system poles
+                    self._ast_spectrum = (self.solution_space.empty(), [], self.solution_space.empty())
+        else:
+            A, E = (to_matrix(op, format='dense') for op in [A, E])
+            ew, lev, rev = spla.eig(A, E if self.E else None, True)
+            ast_idx = np.where(ew.real > 0.)
+            ast_ews = ew[ast_idx]
+
+            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, 0, :].T)
+            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, 0, :].T)
+            self._ast_spectrum = (ast_lev, ast_ews, ast_rev)
+
+        return self._ast_spectrum
 
 
 class TransferFunction(InputOutputModel):
