@@ -306,11 +306,6 @@ wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
     extends: .wheel
     variables:
         PYVER: "{{PY}}"
-    {%- if ML == 1 -%}
-    {# only the ml 1 wheels fail on current runner/docker/os machines#}
-    tags:
-      - amm-old-ci
-    {%- endif %}
     artifacts:
         paths:
         - ${CI_PROJECT_DIR}/shared/pymor*manylinux{{ML}}_*whl

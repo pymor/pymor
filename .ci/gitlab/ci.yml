@@ -695,8 +695,6 @@ wheel 1 py3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
-    tags:
-      - amm-old-ci
     artifacts:
         paths:
         - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
@@ -728,8 +726,6 @@ wheel 1 py3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"
-    tags:
-      - amm-old-ci
     artifacts:
         paths:
         - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
@@ -761,8 +757,6 @@ wheel 1 py3 8:
     extends: .wheel
     variables:
         PYVER: "3.8"
-    tags:
-      - amm-old-ci
     artifacts:
         paths:
         - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
