@@ -2,7 +2,9 @@ jobs:
 - job: 'OSX_CI'
   pool:
     vmImage: macOS-10.15
-  timeoutInMinutes: 30
+  timeoutInMinutes: 45
+  variables:
+      PYMOR_HYPOTHESIS_PROFILE: ci
   strategy:
     maxParallel: 8
     matrix:
@@ -18,12 +20,8 @@ jobs:
 
   steps:
   - script: |
-      echo "Removing homebrew from Azure to avoid conflicts."
-      curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
-      chmod +x ~/uninstall_homebrew
-      ~/uninstall_homebrew -fq
-      rm ~/uninstall_homebrew
-    displayName: Remove homebrew
+      brew cask install xquartz
+    displayName: install X11
 
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
@@ -37,23 +35,24 @@ jobs:
       conda update -y --all
       conda install -y --only-deps pymor
       # these ones are not in the 2020.1 conda build yet
-      conda install -y pyevtk mpi4py slycot pytorch
+      conda install -y pyevtk mpi4py slycot pytorch pytest-xvfb pyside2
       # these are buildtime, not a runtime,  deps for our conda package
       conda install -y cython pytest-cov pytest
       # install anything which might be a new dependency with pip
       pip install -r requirements.txt
       pip install -r requirements-ci.txt
       pip install -r requirements-optional.txt
-      pip install pytest-azurepipelines
-      conda list
+
     displayName: Configure conda and conda-build
 
   - script: |
       set -ex
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
       python setup.py build_ext -i
-      py.test -r sxX -k "demos"
-      coverage xml
+      python -c "from Qt.QtWidgets import QSizePolicy"
+      py.test -sv --junitxml=test_results.xml --cov=src/pymor  \
+        --memprof-top-n 50 --memprof-csv-file=memory_usage.txt --cov-context=test \
+        --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}
     displayName: py.test
 
   - publish: src/pymortests/testdata/check_results/

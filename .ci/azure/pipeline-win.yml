@@ -2,6 +2,8 @@ jobs:
 - job: 'Windows_CI'
   pool:
     vmImage: 'windows-2019'
+  variables:
+      PYMOR_HYPOTHESIS_PROFILE: ci
   strategy:
     matrix:
       Python36:
@@ -13,10 +15,6 @@ jobs:
     maxParallel: 4
 
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-      architecture: 'x64'
   - script: |
         curl -o D:\opengl32.dll.7z --retry 5 --retry-connrefused --retry-delay 30 -v https://pymor.github.io/dist/opengl32.dll.7z
     displayName: download OpenGL Library
@@ -36,27 +34,35 @@ jobs:
     displayName: 'Install OpenGL Library'
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
-  - script: conda create --yes --quiet --name pyMORenv
-    displayName: Create Anaconda environment
+  - task: CondaEnvironment@1
+    inputs:
+      packageSpecs: 'python=$(python.version) numpy pip'
+      installOptions: "-c conda-forge"
+      updateConda: true
+    displayName: Install conda base
+  - task: CondaEnvironment@1
+    inputs:
+      packageSpecs: pymor
+      installOptions: "-c conda-forge --only-deps"
+      updateConda: false
+    displayName: Install pymor deps
+  - task: CondaEnvironment@1
+    inputs:
+      packageSpecs: pyevtk slycot cython pytest pytest-cov curl hypothesis pyqt
+      installOptions: "-c conda-forge"
+      updateConda: false
+    displayName: Install extra packages
   - script: |
-        call activate pyMORenv
-        conda config --set always_yes yes --set changeps1 no
-        conda config --add channels conda-forge
-        conda install --only-deps pymor
-        REM these ones are not in the 2020.1 conda build yet
-        conda install pyevtk slycot pytorch
-        REM these are build/test-time deps for the conda package, not runtime
-        conda install cython pytest pytest-cov curl
-        REM install anything which might be a new dependency with pip
-        pip install -r requirements-optional.txt
-        pip install -r requirements.txt
-        pip install pytest-azurepipelines
+        call activate base
+        pip install typer
         python -c "import numpy"
         python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_RENDERER)); print(gl.glGetString(gl.GL_VERSION))"
+        python -m pip install pytest-azurepipelines
         python setup.py build_ext -i
-        py.test -r sxX -k "demos"
+        py.test --cov-context=test --junitxml=test_results.xml --cov=src/pymor --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
         coverage xml
     displayName: 'Tests'
+
   - publish: src/pymortests/testdata/check_results/
     artifact: changed_results_win_$(python.version)
     condition: always()
