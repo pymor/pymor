@@ -43,11 +43,11 @@ jobs:
         conda config --set always_yes yes --set changeps1 no
         conda config --add channels conda-forge
         conda install --only-deps pymor
-        REM these ones are not in the 0.5.1 conda build yet
-        conda install pyevtk
+        REM these ones are not in the 2020.1 conda build yet
+        conda install pyevtk slycot pytorch
         REM these are build/test-time deps for the conda package, not runtime
         conda install cython pytest pytest-cov curl
-        REM install anythin which might a niew dependency with pip
+        REM install anything which might be a new dependency with pip
         pip install -r requirements-optional.txt
         pip install -r requirements.txt
         pip install pytest-azurepipelines
@@ -55,6 +55,7 @@ jobs:
         python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_RENDERER)); print(gl.glGetString(gl.GL_VERSION))"
         python setup.py build_ext -i
         py.test -r sxX -k "demos"
+        coverage xml
     displayName: 'Tests'
   - publish: src/pymortests/testdata/check_results/
     artifact: changed_results_win_$(python.version)

@@ -12,6 +12,9 @@ jobs:
       osx_python3.7:
         CONFIG: osx_python3.7
         UPLOAD_PACKAGES: False
+      osx_python3.8:
+        CONFIG: osx_python3.8
+        UPLOAD_PACKAGES: False
 
   steps:
   - script: |
@@ -33,13 +36,14 @@ jobs:
       conda config --add channels conda-forge
       conda update -y --all
       conda install -y --only-deps pymor
-      # these ones are not in the 0.5.1 conda build yet
-      conda install -y pyevtk mpi4py
+      # these ones are not in the 2020.1 conda build yet
+      conda install -y pyevtk mpi4py slycot pytorch
       # these are buildtime, not a runtime,  deps for our conda package
       conda install -y cython pytest-cov pytest
-      # install anything which might a new dependency with pip
+      # install anything which might be a new dependency with pip
       pip install -r requirements.txt
       pip install -r requirements-ci.txt
+      pip install -r requirements-optional.txt
       pip install pytest-azurepipelines
       conda list
     displayName: Configure conda and conda-build
@@ -49,6 +53,7 @@ jobs:
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
       python setup.py build_ext -i
       py.test -r sxX -k "demos"
+      coverage xml
     displayName: py.test
 
   - publish: src/pymortests/testdata/check_results/
