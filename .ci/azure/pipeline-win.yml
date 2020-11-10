@@ -1,13 +1,15 @@
 jobs:
 - job: 'Windows_CI'
   pool:
-    vmImage: 'VS2017-Win2016'
+    vmImage: 'windows-2019'
   strategy:
     matrix:
       Python36:
         python.version: '3.6'
       Python37:
         python.version: '3.7'
+      Python38:
+        python.version: '3.8'
     maxParallel: 4
 
   steps:
@@ -52,7 +54,7 @@ jobs:
         python -c "import numpy"
         python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_RENDERER)); print(gl.glGetString(gl.GL_VERSION))"
         python setup.py build_ext -i
-        py.test -r sxX -k "thermalblock_adaptive"
+        py.test -r sxX -k "demos"
     displayName: 'Tests'
   - publish: src/pymortests/testdata/check_results/
     artifact: changed_results_win_$(python.version)
