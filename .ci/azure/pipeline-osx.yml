@@ -48,7 +48,6 @@ jobs:
       set -ex
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
       python setup.py build_ext -i
-      py.test -r sxX -k "demos"
     displayName: py.test
 
   - publish: src/pymortests/testdata/check_results/
