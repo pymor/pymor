@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 from pymor.models.iosys import TransferFunction
 from pymor.reductors.interpolation import TFBHIReductor
 from pymor.reductors.h2 import TFIRKAReductor
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if __name__ == '__main__':
     tau = 0.1
@@ -78,8 +77,8 @@ if __name__ == '__main__':
 
     # match steady state (add interpolation point at 0)
     sigma_ss = list(sigma_list[-1]) + [0]
-    b_ss = NumpyVectorSpace(tf.input_dim).ones(r + 1)
-    c_ss = NumpyVectorSpace(tf.output_dim).ones(r + 1)
+    b_ss = np.ones((r+1, tf.input_dim))
+    c_ss = np.ones((r+1, tf.output_dim))
     interp_reductor = TFBHIReductor(tf)
     rom_ss = interp_reductor.reduce(sigma_ss, b_ss, c_ss)
 
