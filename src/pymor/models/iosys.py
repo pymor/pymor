@@ -31,7 +31,7 @@ class InputOutputModel(Model):
 
     cache_region = 'memory'
 
-    def __init__(self, input_space, output_space, cont_time=True,
+    def __init__(self, input_space, output_dim, cont_time=True,
                  error_estimator=None, visualizer=None, name=None):
         assert cont_time in (True, False)
         super().__init__(error_estimator=error_estimator, visualizer=visualizer, name=name)
@@ -40,10 +40,6 @@ class InputOutputModel(Model):
     @property
     def input_dim(self):
         return self.input_space.dim
-
-    @property
-    def output_dim(self):
-        return self.output_space.dim
 
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function."""
@@ -218,9 +214,9 @@ class InputOutputModel(Model):
 class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
 
-    def __init__(self, input_space, solution_space, output_space, cont_time=True,
+    def __init__(self, input_space, solution_space, output_dim, cont_time=True,
                  error_estimator=None, visualizer=None, name=None):
-        super().__init__(input_space, output_space, cont_time=cont_time,
+        super().__init__(input_space, output_dim, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
@@ -318,7 +314,7 @@ class LTIModel(InputStateOutputModel):
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
+        super().__init__(B.source, A.source, C.range.dim, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
@@ -545,7 +541,7 @@ class LTIModel(InputStateOutputModel):
         """Add an |LTIModel|."""
         assert self.cont_time == other.cont_time
         assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.D.range == other.D.range
 
         if not isinstance(other, LTIModel):
             return NotImplemented
@@ -571,7 +567,7 @@ class LTIModel(InputStateOutputModel):
     def __mul__(self, other):
         """Postmultiply by an |LTIModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.input_space == other.D.range
 
         if not isinstance(other, LTIModel):
             return NotImplemented
@@ -936,8 +932,8 @@ class TransferFunction(InputOutputModel):
     ----------
     input_space
         The input |VectorSpace|. Typically `NumpyVectorSpace(m)` where m is the number of inputs.
-    output_space
-        The output |VectorSpace|. Typically `NumpyVectorSpace(p)` where p is the number of outputs.
+    output_dim
+        The number of outputs.
     tf
         The transfer function defined at least on the open right complex half-plane.
         `tf(s, mu)` is a |NumPy array| of shape `(p, m)`.
@@ -960,8 +956,8 @@ class TransferFunction(InputOutputModel):
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, input_space, output_space, tf, dtf, parameters={}, cont_time=True, name=None):
-        super().__init__(input_space, output_space, cont_time=cont_time, name=name)
+    def __init__(self, input_space, output_dim, tf, dtf, parameters={}, cont_time=True, name=None):
+        super().__init__(input_space, output_dim, cont_time=cont_time, name=name)
         self.parameters_own = parameters
         self.__auto_init(locals())
 
@@ -998,7 +994,7 @@ class TransferFunction(InputOutputModel):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
         assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.output_dim == other.output_dim
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) + other.eval_tf(s, mu=mu)
         dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) + other.eval_dtf(s, mu=mu)
@@ -1013,7 +1009,7 @@ class TransferFunction(InputOutputModel):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
         assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.output_dim == other.output_dim
 
         tf = lambda s, mu=None: other.eval_tf(s, mu=mu) - self.eval_tf(s, mu=mu)
         dtf = lambda s, mu=None: other.eval_dtf(s, mu=mu) - self.eval_dtf(s, mu=mu)
@@ -1027,7 +1023,7 @@ class TransferFunction(InputOutputModel):
     def __mul__(self, other):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.input_space.dim == other.output_dim
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
         dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) @ other.eval_dtf(s, mu=mu)
@@ -1036,7 +1032,7 @@ class TransferFunction(InputOutputModel):
     def __rmul__(self, other):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
-        assert self.output_space == other.input_space
+        assert self.output_dim == other.input_space.dim
 
         tf = lambda s, mu=None: other.eval_tf(s, mu=mu) @ self.eval_tf(s, mu=mu)
         dtf = lambda s, mu=None: other.eval_dtf(s, mu=mu) @ self.eval_dtf(s, mu=mu)
@@ -1198,7 +1194,7 @@ class SecondOrderModel(InputStateOutputModel):
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
+        super().__init__(B.source, M.source, Cp.range.dim, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
@@ -1404,7 +1400,7 @@ class SecondOrderModel(InputStateOutputModel):
         """Add a |SecondOrderModel| or an |LTIModel|."""
         assert self.cont_time == other.cont_time
         assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.D.range == other.D.range
 
         if isinstance(other, LTIModel):
             return self.to_lti() + other
@@ -1446,7 +1442,7 @@ class SecondOrderModel(InputStateOutputModel):
     def __mul__(self, other):
         """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.input_space == other.D.range
 
         if isinstance(other, LTIModel):
             return self.to_lti() * other
@@ -1925,7 +1921,7 @@ class LinearDelayModel(InputStateOutputModel):
         """Add an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
         assert self.cont_time == other.cont_time
         assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.D.range == other.D.range
 
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
@@ -1985,7 +1981,7 @@ class LinearDelayModel(InputStateOutputModel):
     def __mul__(self, other):
         """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.input_space == other.D.range
 
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
@@ -2022,7 +2018,7 @@ class LinearDelayModel(InputStateOutputModel):
     def __rmul__(self, other):
         """Premultiply by an |LTIModel| or a |SecondOrderModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.input_space == other.D.range
 
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()

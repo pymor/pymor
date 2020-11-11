@@ -41,7 +41,7 @@ class SORIRKAReductor(GenericIRKAReductor):
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|VectorArray| from
               `fom.input_space`), and left tangential directions
-              (|VectorArray| from `fom.output_space`), all of the same
+              (|VectorArray| from `fom.D.range`), all of the same
               length (the order of the reduced model),
             - initial reduced-order model (|LTIModel|).
 

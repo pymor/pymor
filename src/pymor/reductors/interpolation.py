@@ -12,6 +12,7 @@ from pymor.operators.constructions import LincombOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
                                    DelayLTIPGReductor)
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericBHIReductor(BasicObject):
@@ -90,7 +91,7 @@ class GenericBHIReductor(BasicObject):
             from `self.fom.input_space`.
         c
             Left tangential directions, |VectorArray| of length `r` from
-            `self.fom.output_space`.
+            `self.fom.D.range`.
         projection
             Projection method:
 
@@ -106,12 +107,12 @@ class GenericBHIReductor(BasicObject):
         """
         r = len(sigma)
         assert b in self.fom.input_space and len(b) == r
-        assert c in self.fom.output_space and len(c) == r
+        assert c in self.fom.D.range and len(c) == r
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
         b = b * (1 / b.norm()) if b.dim > 1 else self.fom.input_space.ones(r)
-        c = c * (1 / c.norm()) if c.dim > 1 else self.fom.output_space.ones(r)
+        c = c * (1 / c.norm()) if c.dim > 1 else self.fom.D.range.ones(r)
 
         # compute projection matrices
         self.V = self.fom.solution_space.empty(reserve=r)
@@ -203,7 +204,7 @@ class LTIBHIReductor(GenericBHIReductor):
             from `self.fom.input_space`.
         c
             Left tangential directions, |VectorArray| of length `r` from
-            `self.fom.output_space`.
+            `self.fom.D.range`.
         projection
             Projection method:
 
@@ -361,7 +362,7 @@ class TFBHIReductor(BasicObject):
             `fom.input_space` of length `r`.
         c
             Left tangential directions, |VectorArray| from
-            `fom.output_space` of length `r`.
+            `fom.D.range` of length `r`.
 
         Returns
         -------
@@ -371,11 +372,11 @@ class TFBHIReductor(BasicObject):
         """
         r = len(sigma)
         assert b in self.fom.input_space and len(b) == r
-        assert c in self.fom.output_space and len(c) == r
+        assert c.dim == self.fom.output_dim and len(c) == r
 
         # rescale tangential directions (to avoid overflow or underflow)
         b = b * (1 / b.norm()) if b.dim > 1 else self.fom.input_space.ones(r)
-        c = c * (1 / c.norm()) if c.dim > 1 else self.fom.output_space.ones(r)
+        c = c * (1 / c.norm()) if c.dim > 1 else NumpyVectorSpace(self.fom.output_dim).ones(r)
 
         b = b.to_numpy()
         c = c.to_numpy()

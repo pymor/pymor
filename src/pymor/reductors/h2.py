@@ -19,6 +19,7 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericIRKAReductor(BasicObject):
@@ -67,7 +68,7 @@ class GenericIRKAReductor(BasicObject):
             assert isinstance(rom0_params['sigma'], np.ndarray)
             assert rom0_params['sigma'].ndim == 1
             assert rom0_params['b'] in self.fom.input_space
-            assert rom0_params['c'] in self.fom.output_space
+            assert rom0_params['c'] in self.fom.D.range
             assert len(rom0_params['sigma']) == len(rom0_params['b'])
             assert len(rom0_params['sigma']) == len(rom0_params['c'])
         elif isinstance(rom0_params, LTIModel):
@@ -75,7 +76,7 @@ class GenericIRKAReductor(BasicObject):
             if hasattr(self.fom, 'order'):  # self.fom can be a TransferFunction
                 assert rom0_params < self.fom.order
             assert rom0_params.input_space == self.fom.input_space
-            assert rom0_params.output_space == self.fom.output_space
+            assert rom0_params.D.range == self.fom.D.range
         else:
             raise ValueError(f'rom0_params is of wrong type ({type(rom0_params)}).')
 
@@ -91,9 +92,9 @@ class GenericIRKAReductor(BasicObject):
         b = (self.fom.input_space.ones(r)
              if self.fom.input_dim == 1
              else self.fom.input_space.random(r, distribution='normal', seed=0))
-        c = (self.fom.output_space.ones(r)
+        c = (NumpyVectorSpace(self.fom.output_dim).ones(r)
              if self.fom.output_dim == 1
-             else self.fom.output_space.random(r, distribution='normal', seed=0))
+             else NumpyVectorSpace(self.fom.output_dim).random(r, distribution='normal', seed=0))
         return sigma, b, c
 
     @staticmethod
@@ -210,7 +211,7 @@ class IRKAReductor(GenericIRKAReductor):
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|VectorArray| from
               `fom.input_space`), and left tangential directions
-              (|VectorArray| from `fom.output_space`), all of the same
+              (|VectorArray| from `fom.D.range`), all of the same
               length (the order of the reduced model),
             - initial reduced-order model (|LTIModel|).
 
@@ -324,7 +325,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|VectorArray| from
               `fom.input_space`), and left tangential directions
-              (|VectorArray| from `fom.output_space`), all of the same
+              (|VectorArray| from `fom.D.range`), all of the same
               length (the order of the reduced model),
             - initial reduced-order model (|LTIModel|).
 
@@ -458,7 +459,7 @@ class TSIAReductor(GenericIRKAReductor):
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|VectorArray| from
               `fom.input_space`), and left tangential directions
-              (|VectorArray| from `fom.output_space`), all of the same
+              (|VectorArray| from `fom.D.range`), all of the same
               length (the order of the reduced model),
             - initial reduced-order model (|LTIModel|).
 
@@ -575,7 +576,7 @@ class TFIRKAReductor(GenericIRKAReductor):
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|VectorArray| from
               `fom.input_space`), and left tangential directions
-              (|VectorArray| from `fom.output_space`), all of the same
+              (|VectorArray| from `fom.D.range`), all of the same
               length (the order of the reduced model),
             - initial reduced-order model (|LTIModel|).
 
