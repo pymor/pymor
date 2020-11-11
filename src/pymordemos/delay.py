@@ -26,7 +26,7 @@ if __name__ == '__main__':
     def dH(s):
         return np.array([[-(tau * s + tau + 1) * np.exp(-s) / (tau * s + 1) ** 2]])
 
-    tf = TransferFunction(NumpyVectorSpace(1), 1, H, dH)
+    tf = TransferFunction(1, 1, H, dH)
 
     r = 10
     tf_irka_reductor = TFIRKAReductor(tf)
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     # match steady state (add interpolation point at 0)
     sigma_ss = list(sigma_list[-1]) + [0]
-    b_ss = tf.input_space.ones(r + 1)
+    b_ss = NumpyVectorSpace(tf.input_dim).ones(r + 1)
     c_ss = NumpyVectorSpace(tf.output_dim).ones(r + 1)
     interp_reductor = TFBHIReductor(tf)
     rom_ss = interp_reductor.reduce(sigma_ss, b_ss, c_ss)

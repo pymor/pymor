@@ -40,7 +40,7 @@ class SORIRKAReductor(GenericIRKAReductor):
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|VectorArray| from
-              `fom.input_space`), and left tangential directions
+              `fom.D.source`), and left tangential directions
               (|VectorArray| from `fom.D.range`), all of the same
               length (the order of the reduced model),
             - initial reduced-order model (|LTIModel|).
