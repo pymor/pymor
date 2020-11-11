@@ -67,16 +67,16 @@ class GenericIRKAReductor(BasicObject):
             assert ('sigma', 'b', 'c') in rom0_params
             assert isinstance(rom0_params['sigma'], np.ndarray)
             assert rom0_params['sigma'].ndim == 1
-            assert rom0_params['b'] in self.fom.D.source
-            assert rom0_params['c'] in self.fom.D.range
-            assert len(rom0_params['sigma']) == len(rom0_params['b'])
-            assert len(rom0_params['sigma']) == len(rom0_params['c'])
+            assert rom0_params['b'].shape[1] == self.fom.input_dim
+            assert rom0_params['c'].shape[1] == self.fom.output_dim
+            assert len(rom0_params['sigma']) == rom0_params['b'].shape[0]
+            assert len(rom0_params['sigma']) == rom0_params['c'].shape[0]
         elif isinstance(rom0_params, LTIModel):
             assert rom0_params.order > 0
             if hasattr(self.fom, 'order'):  # self.fom can be a TransferFunction
                 assert rom0_params < self.fom.order
-            assert rom0_params.D.source == self.fom.D.source
-            assert rom0_params.D.range == self.fom.D.range
+            assert rom0_params.input_dim == self.fom.input_dim
+            assert rom0_params.output_dim == self.fom.output_dim
         else:
             raise ValueError(f'rom0_params is of wrong type ({type(rom0_params)}).')
 
@@ -89,12 +89,12 @@ class GenericIRKAReductor(BasicObject):
 
     def _order_to_sigma_b_c(self, r):
         sigma = np.logspace(-1, 1, r)
-        b = (NumpyVectorSpace(self.fom.input_dim).ones(r)
+        b = (np.ones((r, 1))
              if self.fom.input_dim == 1
-             else NumpyVectorSpace(self.fom.input_dim).random(r, distribution='normal', seed=0))
-        c = (NumpyVectorSpace(self.fom.output_dim).ones(r)
+             else np.random.RandomState(0).normal(size=(r, self.fom.input_dim)))
+        c = (np.ones((r, 1))
              if self.fom.output_dim == 1
-             else NumpyVectorSpace(self.fom.output_dim).random(r, distribution='normal', seed=0))
+             else np.random.RandomState(0).normal(size=(r, self.fom.output_dim)))
         return sigma, b, c
 
     @staticmethod
@@ -209,10 +209,9 @@ class IRKAReductor(GenericIRKAReductor):
             - initial interpolation points (a 1D |NumPy array|),
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
-              tangential directions (|VectorArray| from
-              `fom.D.source`), and left tangential directions
-              (|VectorArray| from `fom.D.range`), all of the same
-              length (the order of the reduced model),
+              tangential directions (|NumPy array| of shape
+              `(len(sigma), fom.D.input_dim)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.D.input_dim)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -323,10 +322,9 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
             - initial interpolation points (a 1D |NumPy array|),
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
-              tangential directions (|VectorArray| from
-              `fom.D.source`), and left tangential directions
-              (|VectorArray| from `fom.D.range`), all of the same
-              length (the order of the reduced model),
+              tangential directions (|NumPy array| of shape
+              `(len(sigma), fom.D.input_dim)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.D.input_dim)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -405,13 +403,13 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
             else self.fom
         )
         if self.version == 'V':
-            self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, b, sigma,
+            self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b), sigma,
                                                 orth=False)
             gram_schmidt(self.V, atol=0, rtol=0,
                          product=None if projection == 'orth' else fom.E,
                          copy=False)
         else:
-            self.V = tangential_rational_krylov(fom.A, fom.E, fom.C, c, sigma, trans=True,
+            self.V = tangential_rational_krylov(fom.A, fom.E, fom.C, fom.C.range.from_numpy(c), sigma, trans=True,
                                                 orth=False)
             gram_schmidt(self.V, atol=0, rtol=0,
                          product=None if projection == 'orth' else fom.E,
@@ -457,10 +455,9 @@ class TSIAReductor(GenericIRKAReductor):
             - initial interpolation points (a 1D |NumPy array|),
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
-              tangential directions (|VectorArray| from
-              `fom.D.source`), and left tangential directions
-              (|VectorArray| from `fom.D.range`), all of the same
-              length (the order of the reduced model),
+              tangential directions (|NumPy array| of shape
+              `(len(sigma), fom.D.input_dim)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.D.input_dim)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -574,10 +571,9 @@ class TFIRKAReductor(GenericIRKAReductor):
             - initial interpolation points (a 1D |NumPy array|),
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
-              tangential directions (|VectorArray| from
-              `fom.D.source`), and left tangential directions
-              (|VectorArray| from `fom.D.range`), all of the same
-              length (the order of the reduced model),
+              tangential directions (|NumPy array| of shape
+              `(len(sigma), fom.D.input_dim)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.D.input_dim)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -658,9 +654,9 @@ def _lti_to_poles_b_c(rom):
     poles
         1D |NumPy array| of poles.
     b
-        |VectorArray| from `rom.B.source`.
+        |NumPy array| of shape `(len(poles), rom.input_dim)`.
     c
-        |VectorArray| from `rom.C.range`.
+        |NumPy array| of shape `(len(poles), rom.output_dim)`.
     """
     A = to_matrix(rom.A, format='dense')
     B = to_matrix(rom.B, format='dense')
@@ -672,8 +668,8 @@ def _lti_to_poles_b_c(rom):
         E = to_matrix(rom.E, format='dense')
         poles, X = spla.eig(A, E)
         EX = E @ X
-    b = rom.B.source.from_numpy(spla.solve(EX, B))
-    c = rom.C.range.from_numpy((C @ X).T)
+    b = spla.solve(EX, B)
+    c = (C @ X).T
     return poles, b, c
 
 
@@ -694,9 +690,9 @@ def _poles_b_c_to_lti(poles, b, c):
     poles
         Sequence of poles.
     b
-        |VectorArray| of right residue rank-1 factors.
+        |NumPy array| of shape `(len(poles), rom.input_dim)`.
     c
-        |VectorArray| of left residue rank-1 factors.
+        |NumPy array| of shape `(len(poles), rom.output_dim)`.
 
     Returns
     -------
@@ -706,14 +702,14 @@ def _poles_b_c_to_lti(poles, b, c):
     for i, pole in enumerate(poles):
         if pole.imag == 0:
             A.append(pole.real)
-            B.append(b[i].to_numpy().real)
-            C.append(c[i].to_numpy().real.T)
+            B.append(b[i].real)
+            C.append(c[i].real.T)
         elif pole.imag > 0:
             A.append([[pole.real, pole.imag],
                       [-pole.imag, pole.real]])
-            bi = b[i].to_numpy()
+            bi = b[i]
             B.append(np.vstack([2 * bi.real, -2 * bi.imag]))
-            ci = c[i].to_numpy()
+            ci = c[i]
             C.append(np.hstack([ci.real.T, ci.imag.T]))
     A = spla.block_diag(*A)
     B = np.vstack(B)
