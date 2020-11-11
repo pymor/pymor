@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typer import Argument, run
 
+
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
@@ -141,6 +142,7 @@ def main(
     else:
         print('Skipped H_inf-norm calculation due to missing slycot.')
     print(f'FOM Hankel-norm: {lti.hankel_norm():e}')
+
 
     # Model order reduction
     run_mor_method(lti, w, BTReductor(lti), 'BT', r, tol=1e-5)
