@@ -80,7 +80,7 @@ class MTReductor(BasicObject):
 
         if decomposition == 'eigs':
             if self.fom.A.sparse:
-                A = self.fom.A.matrix.toarray()
+                raise NotImplementedError
             else:
                 A = self.fom.A.matrix
             which = method_options['which']
