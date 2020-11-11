@@ -1893,7 +1893,7 @@ class LinearDelayModel(InputStateOutputModel):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
+        super().__init__(B.source.dim, A.source, C.range.dim, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
 
         self.__auto_init(locals())
