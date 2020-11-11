@@ -2,13 +2,13 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.base import abstractmethod
+import numpy as np
+
 from pymor.core.cache import CacheableObject
 from pymor.operators.constructions import induced_norm
 from pymor.parameters.base import ParametricObject, Mu
 from pymor.tools.frozendict import FrozenDict
 from pymor.tools.deprecated import Deprecated
-from pymor.vectorarrays.interface import VectorArray
 
 
 class Model(CacheableObject, ParametricObject):
@@ -24,9 +24,9 @@ class Model(CacheableObject, ParametricObject):
     ----------
     solution_space
         |VectorSpace| of the solution |VectorArrays| returned by :meth:`solve`.
-    output_space
-        |VectorSpace| of the model output |VectorArrays| returned by
-        :meth:`output` (typically `NumpyVectorSpace(k)` where `k` is a small).
+    output_dim
+        Dimension of the model output returned by :meth:`output`. 0 if the
+        model has no output.
     linear
         `True` if the model describes a linear problem.
     products
@@ -34,12 +34,12 @@ class Model(CacheableObject, ParametricObject):
     """
 
     solution_space = None
-    output_space = None
+    output_dim = 0
     linear = False
     products = FrozenDict()
 
     def __init__(self, products=None, error_estimator=None, visualizer=None,
-                 name=None, **kwargs):
+                 name=None):
         products = FrozenDict(products or {})
         if products:
             for k, v in products.items():
@@ -101,14 +101,13 @@ class Model(CacheableObject, ParametricObject):
 
         Returns
         -------
-        |VectorArray| with the computed output or a dict which at least
+        |NumPy array| with the computed output or a dict which at least
         must contain the key `'output'`.
         """
-        if not hasattr(self, 'output_functional'):
-            raise NotImplementedError
-        if self.output_functional is None:
-            raise ValueError('Model has no output')
-        return self.output_functional.apply(solution, mu=mu)
+        if not getattr(self, 'output_functional', None):
+            return np.zeros(len(solution), 0)
+        else:
+            return self.output_functional.apply(solution, mu=mu).to_numpy()
 
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
         """Compute an error estimate for the computed internal state.
@@ -185,7 +184,7 @@ class Model(CacheableObject, ParametricObject):
                 mu=None, **kwargs):
         """Compute the solution of the model and associated quantities.
 
-        This methods the output of the model it's internal state
+        This methods computes the output of the model it's internal state
         and various associated quantities for given |parameter values|
         `mu`.
 
@@ -332,7 +331,10 @@ class Model(CacheableObject, ParametricObject):
 
         Returns
         -------
-        The computed model output as a |VectorArray| from `output_space`.
+        The computed model output as a 2D |NumPy array| with dimension
+        :attr:`output_dim` in axis 1. (For stationary problems, axis 0 has
+        dimension 1. For time-dependent problems, the dimension of axis 0 
+        depends on the number of time steps.)
         When `return_error_estimate` is `True`, the estimate is returned as
         second value.
         """
