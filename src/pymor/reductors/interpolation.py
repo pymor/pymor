@@ -88,7 +88,7 @@ class GenericBHIReductor(BasicObject):
             length `r`.
         b
             Right tangential directions, |VectorArray| of length `r`
-            from `self.fom.input_space`.
+            from `self.fom.D.source`.
         c
             Left tangential directions, |VectorArray| of length `r` from
             `self.fom.D.range`.
@@ -106,12 +106,12 @@ class GenericBHIReductor(BasicObject):
             Reduced-order model.
         """
         r = len(sigma)
-        assert b in self.fom.input_space and len(b) == r
+        assert b in self.fom.D.source and len(b) == r
         assert c in self.fom.D.range and len(c) == r
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
-        b = b * (1 / b.norm()) if b.dim > 1 else self.fom.input_space.ones(r)
+        b = b * (1 / b.norm()) if b.dim > 1 else self.fom.D.source.ones(r)
         c = c * (1 / c.norm()) if c.dim > 1 else self.fom.D.range.ones(r)
 
         # compute projection matrices
@@ -201,7 +201,7 @@ class LTIBHIReductor(GenericBHIReductor):
             length `r`.
         b
             Right tangential directions, |VectorArray| of length `r`
-            from `self.fom.input_space`.
+            from `self.fom.D.source`.
         c
             Left tangential directions, |VectorArray| of length `r` from
             `self.fom.D.range`.
@@ -359,7 +359,7 @@ class TFBHIReductor(BasicObject):
             length `r`.
         b
             Right tangential directions, |VectorArray| from
-            `fom.input_space` of length `r`.
+            `fom.D.source` of length `r`.
         c
             Left tangential directions, |VectorArray| from
             `fom.D.range` of length `r`.
@@ -371,11 +371,11 @@ class TFBHIReductor(BasicObject):
             function of `fom`.
         """
         r = len(sigma)
-        assert b in self.fom.input_space and len(b) == r
+        assert b.dim == self.fom.input_dim and len(b) == r
         assert c.dim == self.fom.output_dim and len(c) == r
 
         # rescale tangential directions (to avoid overflow or underflow)
-        b = b * (1 / b.norm()) if b.dim > 1 else self.fom.input_space.ones(r)
+        b = b * (1 / b.norm()) if b.dim > 1 else NumpyVectorSpace(self.fom.input_dim).ones(r)
         c = c * (1 / c.norm()) if c.dim > 1 else NumpyVectorSpace(self.fom.output_dim).ones(r)
 
         b = b.to_numpy()
