@@ -331,9 +331,9 @@ class Model(CacheableObject, ParametricObject):
 
         Returns
         -------
-        The computed model output as a 2D |NumPy array| with dimension
-        :attr:`output_dim` in axis 1. (For stationary problems, axis 0 has
-        dimension 1. For time-dependent problems, the dimension of axis 0 
+        The computed model output as a 2D |NumPy array|. The dimension
+        of axis 1 is :attr:`output_dim`. (For stationary problems, axis 0 has
+        dimension 1. For time-dependent problems, the dimension of axis 0
         depends on the number of time steps.)
         When `return_error_estimate` is `True`, the estimate is returned as
         second value.
