@@ -49,7 +49,7 @@ class MTReductor(BasicObject):
             Algortihm to use for the decomposition:
 
             -`'eigs'`: use scipy.linalg.eig algorithm
-            -`'samdp'`: find dominant poles
+            -`'samdp'`: find dominant poles using samdp algorithm
         projection
             Projection method:
             - `'orth'`: projection matrices are orthogonalized with
@@ -59,8 +59,8 @@ class MTReductor(BasicObject):
         symmetric
             True if Operator A is symmetric, False if not
         method_options
-            optional dict with options for the method used to calculate eigenvalues
-            and eigenvectors
+            optional dict with more options for the method used to calculate
+            eigenvalues and eigenvectors
 
         Returns
         -------
@@ -74,13 +74,13 @@ class MTReductor(BasicObject):
         if not method_options:
             method_options = {}
             method_options['which'] = 'LR'
-            
+
         self.V = self.fom.B.as_range_array().empty(reserve=r)
         self.W = self.fom.C.as_source_array().empty(reserve=r)
 
         if decomposition == 'eigs':
             if self.fom.A.sparse:
-                raise NotImplementedError
+                A = self.fom.A.as_source_array().to_numpy()
             else:
                 A = self.fom.A.matrix
             which = method_options['which']
@@ -133,7 +133,6 @@ class MTReductor(BasicObject):
         else:
             self.V = rev
             self.W = lev
-
 
         if projection == 'orth':
             gram_schmidt(self.V, atol=0, rtol=0, copy=False)
