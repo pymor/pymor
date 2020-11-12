@@ -55,7 +55,7 @@ stages:
 {# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
 .submit:
     extends: .test_base
-    image: pymor/ci_sanity:{{ci_image_tag}}
+    image: {{registry}}/pymor/ci_sanity:{{ci_image_tag}}
     variables:
         XDG_CACHE_DIR: /tmp
     retry:
@@ -153,7 +153,7 @@ stages:
 
 .sanity_checks:
     extends: .test_base
-    image: pymor/ci_sanity:{{ci_image_tag}}
+    image: {{registry}}/pymor/ci_sanity:{{ci_image_tag}}
     stage: sanity
 #******** end definition of base jobs *********************************************************************************#
 
@@ -173,6 +173,7 @@ verify setup.py:
 ci setup:
     extends: .sanity_checks
     script:
+        - apk add jq
         - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}"
 
 #****** test stage
@@ -184,9 +185,9 @@ minimal_cpp_demo:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
           alias: pypi_mirror
-    image: pymor/testing_py3.7:{{ci_image_tag}}
+    image: {{registry}}/pymor/testing_py3.7:{{ci_image_tag}}
     script: ./.ci/gitlab/cpp_demo.bash
 
 
@@ -201,12 +202,12 @@ minimal_cpp_demo:
         COVERAGE_FILE: coverage_{{script}}__{{py}}
     services:
     {%- if script == "oldest" %}
-        - name: pymor/pypi-mirror_oldest_py{{py}}:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_oldest_py{{py}}:{{pypi_mirror_tag}}
     {%- else %}
-        - name: pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
     {%- endif %}
           alias: pypi_mirror
-    image: pymor/testing_py{{py}}:{{ci_image_tag}}
+    image: {{registry}}/pymor/testing_py{{py}}:{{ci_image_tag}}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -231,9 +232,9 @@ ci_weekly {{py[0]}} {{py[2]}}:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     services:
-        - name: pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
           alias: pypi_mirror
-    image: pymor/testing_py{{py}}:{{ci_image_tag}}
+    image: {{registry}}/pymor/testing_py{{py}}:{{ci_image_tag}}
     {# PYMOR_HYPOTHESIS_PROFILE is overwritten from web schedule settings #}
     script: ./.ci/gitlab/test_vanilla.bash
 {%- endfor %}
@@ -257,7 +258,7 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
-    image: pymor/python:{{py}}
+    image: {{registry}}/pymor/python:{{py}}
     dependencies:
         - ci_weekly {{py[0]}} {{py[2]}}
     needs: ["ci_weekly {{py[0]}} {{py[2]}}"]
@@ -275,7 +276,7 @@ pip {{loop.index}}/{{loop.length}}:
           when: never
         - when: on_success
     stage: install_checks
-    image: pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
+    image: {{registry}}/pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
     script: ./.ci/gitlab/install_checks/{{OS}}/check.bash
 {% endfor %}
 
@@ -366,9 +367,9 @@ docs build:
           when: never
         - when: on_success
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
           alias: pypi_mirror
-    image: pymor/jupyter_py3.7:{{ci_image_tag}}
+    image: {{registry}}/pymor/jupyter_py3.7:{{ci_image_tag}}
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
@@ -429,6 +430,7 @@ env = dotenv_values(env_path)
 ci_image_tag = env['CI_IMAGE_TAG']
 pypi_mirror_tag = env['PYPI_MIRROR_TAG']
 manylinuxs = [1, 2010, 2014]
+registry="zivgitlab.wwu.io/pymor/docker"
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = [(sc, py, pa) for sc, pythons, pa in test_scripts for py in pythons]
     yml.write(tpl.render(**locals()))
