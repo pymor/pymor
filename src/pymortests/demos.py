@@ -44,9 +44,6 @@ DISCRETIZATION_ARGS = (
     ('burgers', ['--num-flux=lax_friedrichs', '0.1']),
     ('burgers', ['--num-flux=engquist_osher', '0.1']),
     ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
-    ('neural_networks', [25, 50, 10]),
-    ('neural_networks_fenics', [15, 3]),
-    ('neural_networks_instationary', [25, 25, 30, 5]),
     ('parabolic', ['heat', 1]),
     ('parabolic', ['heat', '--rect', 1]),
     ('parabolic', ['heat', '--fv', 1]),
@@ -57,6 +54,10 @@ DISCRETIZATION_ARGS = (
 
 if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
+if not is_windows_platform():
+    DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
+    ('neural_networks_fenics', [15, 3]),
+    ('neural_networks_instationary', [25, 25, 30, 5]))
 
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
@@ -79,8 +80,10 @@ THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 5, 5]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 5, 5]),
     ('thermalblock_simple', ['ngsolve', 'pod', 2, 5, 5]),
-    ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
+# Font file loading currently does not work on windows
+if not is_windows_platform():
+    THERMALBLOCK_SIMPLE_ARGS += (('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),)
 
 THERMALBLOCK_GUI_ARGS = (
     ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
