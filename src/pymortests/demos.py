@@ -88,6 +88,8 @@ if not is_windows_platform():
 THERMALBLOCK_GUI_ARGS = (
     ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
 )
+if is_windows_platform():
+    THERMALBLOCK_GUI_ARGS = tuple()
 
 BURGERS_EI_ARGS = (
     ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err']),
