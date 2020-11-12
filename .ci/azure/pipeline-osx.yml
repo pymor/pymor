@@ -42,7 +42,6 @@ jobs:
       pip install -r requirements.txt
       pip install -r requirements-ci.txt
       pip install -r requirements-optional.txt
-
     displayName: Configure conda and conda-build
 
   - script: |
@@ -55,6 +54,9 @@ jobs:
         --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}
     displayName: py.test
 
+  - script: |
+      bash <(curl -s https://codecov.io/bash)
+    displayName: 'Upload to codecov.io'
   - publish: src/pymortests/testdata/check_results/
     artifact: changed_results_$(CONFIG)
     condition: always()

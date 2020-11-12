@@ -57,12 +57,15 @@ jobs:
         pip install typer
         python -c "import numpy"
         python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_RENDERER)); print(gl.glGetString(gl.GL_VERSION))"
-        python -m pip install pytest-azurepipelines
         python setup.py build_ext -i
         py.test --cov-context=test --junitxml=test_results.xml --cov=src/pymor --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
-        coverage xml
     displayName: 'Tests'
 
+  - script: |
+      choco install codecov
+      coverage xml
+      codecov.exe -f coverage.xml
+    displayName: 'Upload to codecov.io'
   - publish: src/pymortests/testdata/check_results/
     artifact: changed_results_win_$(python.version)
     condition: always()
