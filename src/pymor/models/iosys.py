@@ -992,6 +992,7 @@ class LTIModel(InputStateOutputModel):
         """
         return self.hinf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate)
 
+    @cached
     def _get_ast_spectrum(self, ast_pole_data={'k': 50, 'sigma': 0, 'which': 'LM'}, mu=None):
         """Compute anti-stable subset of the poles of the |LTIModel|.
 
@@ -1017,38 +1018,36 @@ class LTIModel(InputStateOutputModel):
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
         if self.order >= sparse_min_size():
-            if self._ast_spectrum is None:
-                if type(ast_pole_data) == dict:
-                    ew, rev = eigs(A, E=E if self.E else None, left_evp=False, **ast_pole_data)
-                    ast_idx = np.where(ew.real > 0.)
-                    ast_ews = ew[ast_idx]
-                    if len(ast_ews) == 0:
-                        self._ast_spectrum = (self.solution_space.empty(), [],
-                                              self.solution_space.empty())
+            if type(ast_pole_data) == dict:
+                ew, rev = eigs(A, E=E if self.E else None, left_evp=False, **ast_pole_data)
+                ast_idx = np.where(ew.real > 0.)
+                ast_ews = ew[ast_idx]
+                if len(ast_ews) == 0:
+                    return (self.solution_space.empty(), [], self.solution_space.empty())
 
-                    ast_levs = A.source.empty(reserve=len(ast_ews))
-                    for ae in ast_ews:
-                        # l=3 avoids issues with complex conjugate pairs
-                        _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
-                        ast_levs.append(lev)
-                    self._ast_spectrum = (ast_levs, ast_ews, rev[ast_idx[0]])
+                ast_levs = A.source.empty(reserve=len(ast_ews))
+                for ae in ast_ews:
+                    # l=3 avoids issues with complex conjugate pairs
+                    _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
+                    ast_levs.append(lev)
+                return (ast_levs, ast_ews, rev[ast_idx[0]])
 
-                elif type(ast_pole_data) == list:
-                    ast_levs = A.source.empty(reserve=len(ast_ews))
-                    ast_revs = A.source.empty(reserve=len(ast_ews))
-                    for ae in ast_pole_data:
-                        _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
-                        ast_levs.append(lev)
-                        _, rev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae)
-                        ast_revs.append(rev)
-                    self._ast_spectrum = (ast_levs, ast_ews, rev[ast_idx[0]])
+            elif type(ast_pole_data) == list:
+                ast_levs = A.source.empty(reserve=len(ast_ews))
+                ast_revs = A.source.empty(reserve=len(ast_ews))
+                for ae in ast_pole_data:
+                    _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
+                    ast_levs.append(lev)
+                    _, rev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae)
+                    ast_revs.append(rev)
+                return (ast_levs, ast_ews, rev[ast_idx[0]])
 
-                elif type(ast_pole_data) == tuple:
-                    self._ast_spectrum = ast_pole_data
+            elif type(ast_pole_data) == tuple:
+                return ast_pole_data
 
-                else:
-                    # assume there is only asymptotically stable system poles
-                    self._ast_spectrum = (self.solution_space.empty(), [], self.solution_space.empty())
+            else:
+                # assume there is only asymptotically stable system poles
+                return (self.solution_space.empty(), [], self.solution_space.empty())
         else:
             A, E = (to_matrix(op, format='dense') for op in [A, E])
             ew, lev, rev = spla.eig(A, E if self.E else None, True)
@@ -1057,9 +1056,7 @@ class LTIModel(InputStateOutputModel):
 
             ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, 0, :].T)
             ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, 0, :].T)
-            self._ast_spectrum = (ast_lev, ast_ews, ast_rev)
-
-        return self._ast_spectrum
+            return (ast_lev, ast_ews, ast_rev)
 
 
 class TransferFunction(InputOutputModel):
