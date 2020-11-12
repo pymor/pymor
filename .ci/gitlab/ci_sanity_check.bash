@@ -1,7 +1,14 @@
 #!/bin/bash
 
 function docker_tag_exists() {
-    curl --silent -f -lSL https://hub.docker.com/v2/repositories/$1/tags/$2 > /dev/null
+  tag=$2
+  image=$1
+  private_token=${GITLAB_API_RO}
+  project=2758
+  baseurl="https://zivgitlab.uni-muenster.de/api/v4/projects/$project/registry"
+  repo_id=$( curl --silent --header "PRIVATE-TOKEN: $private_token" "${baseurl}/repositories?per_page=100" | jq --arg image $image '.[] | select(.name==$image) | .id')
+  name=$( curl --silent --header "PRIVATE-TOKEN: $private_token" "${baseurl}/repositories/$repo_id/tags/$tag" | jq -r '.name' )
+  [[ "$name" == "$tag" ]] || (echo "Repoid ${repo_id} -- image ${image} -- name ${name} -- tag ${tag}"; exit -1)
 }
 
 PYMOR_ROOT="$(cd "$(dirname "$0")" && cd ../../ && pwd -P )"
