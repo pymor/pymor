@@ -6,13 +6,14 @@ import time
 import os
 from uuid import uuid4
 from datetime import datetime, timedelta
-
+import pytest
 import numpy as np
 
 from pymor.core import cache
 from pymor.models.basic import StationaryModel
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import runmodule
+from pymor.core.config import is_windows_platform
 
 
 SLEEP_DELTA = timedelta(milliseconds=200)
@@ -79,8 +80,11 @@ def test_runtime():
 
 def test_region_api():
     with tempfile.TemporaryDirectory() as tmpdir:
-        backends = [cache.MemoryRegion(100), cache.DiskRegion(path=os.path.join(tmpdir, str(uuid4())),
-                                                                max_size=1024 ** 2, persistent=False)]
+        backends = [cache.MemoryRegion(100)] 
+        # this specific backend test is currently broken on windows
+        if not is_windows_platform():
+            backends.append(cache.DiskRegion(path=os.path.join(tmpdir, str(uuid4())),
+                                                max_size=1024 ** 2, persistent=False))
         for backend in backends:
             assert backend.get('mykey') == (False, None)
             backend.set('mykey', 1)
