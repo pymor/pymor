@@ -5,21 +5,13 @@
 
 import sys
 import time
-from enum import Enum
 
 from typer import Argument, Option, run
+from pymor.tools.typer import Choices
 
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.core.pickle import dump
 from pymor.parallel.default import new_parallel_pool
-
-
-def Choices(options):
-
-    class SE(str, Enum):
-        pass
-
-    return SE('Options', ((o, o) for o in options.split(' ')))
 
 
 def main(
