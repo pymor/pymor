@@ -703,14 +703,12 @@ def _poles_b_c_to_lti(poles, b, c):
         if pole.imag == 0:
             A.append(pole.real)
             B.append(b[i].real)
-            C.append(c[i].real.T)
+            C.append(c[i].real[:, np.newaxis])
         elif pole.imag > 0:
             A.append([[pole.real, pole.imag],
                       [-pole.imag, pole.real]])
-            bi = b[i]
-            B.append(np.vstack([2 * bi.real, -2 * bi.imag]))
-            ci = c[i]
-            C.append(np.hstack([ci.real.T, ci.imag.T]))
+            B.append(np.vstack([2 * b[i].real, -2 * b[i].imag]))
+            C.append(np.hstack([c[i].real[:, np.newaxis], c[i].imag[:, np.newaxis]]))
     A = spla.block_diag(*A)
     B = np.vstack(B)
     C = np.hstack(C)
