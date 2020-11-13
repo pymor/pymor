@@ -210,8 +210,8 @@ class IRKAReductor(GenericIRKAReductor):
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
-              `(len(sigma), fom.D.dim_input)`), and left tangential directions
-              (|NumPy array| of shape `(len(sigma), fom.D.dim_input)`),
+              `(len(sigma), fom.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.dim_input)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -323,8 +323,8 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
-              `(len(sigma), fom.D.dim_input)`), and left tangential directions
-              (|NumPy array| of shape `(len(sigma), fom.D.dim_input)`),
+              `(len(sigma), fom.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.dim_input)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -456,8 +456,8 @@ class TSIAReductor(GenericIRKAReductor):
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
-              `(len(sigma), fom.D.dim_input)`), and left tangential directions
-              (|NumPy array| of shape `(len(sigma), fom.D.dim_input)`),
+              `(len(sigma), fom.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.dim_input)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -572,8 +572,8 @@ class TFIRKAReductor(GenericIRKAReductor):
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
-              `(len(sigma), fom.D.dim_input)`), and left tangential directions
-              (|NumPy array| of shape `(len(sigma), fom.D.dim_input)`),
+              `(len(sigma), fom.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.dim_input)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
