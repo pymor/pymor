@@ -9,10 +9,9 @@ _PYTEST = 'pytest>=4.4'
 _PYSIDE='PySide2!=5.15.2,!=5.15.2.*,!=5.11.*'
 
 def _pymess(rev, major, minor, marker=True):
-    url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
-    # tmp workaround till next release
-    url = 'https://pymor.github.io/wheels/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
-    url = url.format(rev=rev, major=major, minor=minor)
+    cpm = 'm' if minor < 8 else ''
+    url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}{cpm}-manylinux2014_x86_64.whl'
+    url = url.format(rev=rev, major=major, minor=minor, cpm=cpm)
     if marker:
         return '{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'.format(url=url, major=major, minor=minor)
     return url
@@ -63,10 +62,12 @@ import_names = {'ipython': 'IPython',
                 'pytest-pep8': 'pytest_pep8',
                 _pymess('1.0.0', 3, 6, False): 'pymess',
                 _pymess('1.0.0', 3, 7, False): 'pymess',
+                _pymess('1.0.0', 3, 8, False): 'pymess',
+                _pymess('1.0.0', 3, 9, False): 'pymess',
                 'pyopengl': 'OpenGL'}
 # Slycot is pinned due to buildsystem changes + missing wheels
-optional_requirements_file_only = [_pymess('1.0.0', 3, 6),_pymess('1.0.0', 3, 7),
-                    'slycot>=0.4.0', 'mpi4py']
+optional_requirements_file_only = [_pymess('1.0.0', 3, i) for i in range(6,10)] + \
+                    ['slycot>=0.4.0', 'mpi4py']
 
 def strip_markers(name):
     for m in ';<>=':
