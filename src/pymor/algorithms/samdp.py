@@ -181,7 +181,16 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
 
             logger.info(f'Step: {k}, Theta: {theta:.5e}, Residual: {nres:.5e}')
 
-            if nres < dorqitol and do_rqi:
+            if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
+                rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
+                nrr = rres.norm() / np.abs(np.real(theta))
+                if nrr - nres < np.finfo(float).eps:
+                    schurvec = schurvec.real
+                    lschurvec = lschurvec.real
+                    theta = np.real(theta)
+                    nres = nrr
+
+            if nres < dorqitol and do_rqi and nres >= tol:
                 schurvec, lschurvec, theta, nres = _twosided_rqi(A, E, schurvec, lschurvec, theta, nres,
                                                                  imagtol, rqitol, rqi_maxiter)
                 do_rqi = False
@@ -196,14 +205,6 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 if nres >= tol:
                     logger.warning('Two-sided RQI did not reach desired tolerance.')
 
-            elif np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
-                rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
-                nrr = rres.norm() / np.abs(np.real(theta))
-                if nrr - nres < np.finfo(float).eps:
-                    schurvec = schurvec.real
-                    lschurvec = lschurvec.real
-                    theta = np.real(theta)
-                    nres = nrr
             found = nr_converged < nwanted and nres < tol
 
             if found:
