@@ -2,6 +2,8 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
 from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator
@@ -44,9 +46,6 @@ class StationaryModel(Model):
         an `estimate_error(U, mu, m)` method. If `error_estimator` is
         not `None`, an `estimate_error(U, mu)` method is added to the
         model which will call `error_estimator.estimate_error(U, mu, self)`.
-    dual_operator
-        The dual |Operator| L* of L, which is e.g. used for computing the gradient
-        of the output_functional. See Section 1.6.2 in [HPUU09]_ for more details.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, m, ...)` method. If `visualizer`
@@ -58,8 +57,7 @@ class StationaryModel(Model):
     """
 
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 error_estimator=None, dual_operator=None,
-                 visualizer=None, name=None):
+                 error_estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -119,14 +117,13 @@ class StationaryModel(Model):
         else:
             assert self.output_functional is not None
             assert self.output_functional.linear
-            assert self.dual_operator is not None
-            dual_problem = self.with_(operator=self.dual_operator, rhs=self.output_functional.H)
+            dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H)
             P = dual_problem.solve(mu)
             gradient = []
             for (parameter, size) in self.parameters.items():
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(U, mu=mu).to_numpy()[0,0]
-                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(U, P, mu=mu)
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(P, U, mu=mu)
                     rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(P, mu=mu).to_numpy()[0,0]
                     gradient.append((output_partial_dmu + rhs_d_mu - lhs_d_mu)[0,0])
         return np.array(gradient)

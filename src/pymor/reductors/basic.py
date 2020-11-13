@@ -179,8 +179,6 @@ class StationaryRBReductor(ProjectionBasedReductor):
             'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
             'output_functional': project(fom.output_functional, None, RB) if fom.output_functional else None
         }
-        if self.fom.dual_operator:
-            projected_operators['dual_operator'] = project(fom.dual_operator, RB, RB)
         return projected_operators
 
     def project_operators_to_subbasis(self, dims):
@@ -193,8 +191,6 @@ class StationaryRBReductor(ProjectionBasedReductor):
             'output_functional': (project_to_subbasis(rom.output_functional, None, dim)
                                   if rom.output_functional else None)
         }
-        if self.fom.dual_operator:
-            projected_operators['dual_operator'] = project_to_subbasis(rom.dual_operator, dim, dim)
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
