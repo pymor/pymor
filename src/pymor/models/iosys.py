@@ -17,6 +17,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
 from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
@@ -36,6 +37,16 @@ class InputOutputModel(Model):
         assert cont_time in (True, False)
         super().__init__(error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+
+    @property
+    @Deprecated('dim_input')
+    def input_dim(self):
+        return self.dim_input
+
+    @property
+    @Deprecated('dim_output')
+    def output_dim(self):
+        return self.dim_output
 
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function."""
