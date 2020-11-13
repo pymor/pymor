@@ -88,10 +88,10 @@ class GenericBHIReductor(BasicObject):
             length `r`.
         b
             Right tangential directions, |NumPy array| of shape
-            `(r, fom.input_dim)`.
+            `(r, fom.dim_input)`.
         c
             Left tangential directions, |NumPy array| of shape
-            `(r, fom.output_dim)`.
+            `(r, fom.dim_output)`.
         projection
             Projection method:
 
@@ -106,8 +106,8 @@ class GenericBHIReductor(BasicObject):
             Reduced-order model.
         """
         r = len(sigma)
-        assert b.shape == (r, self.fom.input_dim)
-        assert c.shape == (r, self.fom.output_dim)
+        assert b.shape == (r, self.fom.dim_input)
+        assert c.shape == (r, self.fom.dim_output)
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
@@ -203,10 +203,10 @@ class LTIBHIReductor(GenericBHIReductor):
             length `r`.
         b
             Right tangential directions, |NumPy array| of shape
-            `(r, fom.input_dim)`.
+            `(r, fom.dim_input)`.
         c
             Left tangential directions, |NumPy array| of shape
-            `(r, fom.output_dim)`.
+            `(r, fom.dim_output)`.
         projection
             Projection method:
 
@@ -226,10 +226,10 @@ class LTIBHIReductor(GenericBHIReductor):
         if projection != 'arnoldi':
             return super().reduce(sigma, b, c, projection=projection)
 
-        assert self.fom.input_dim == 1 and self.fom.output_dim == 1
+        assert self.fom.dim_input == 1 and self.fom.dim_output == 1
         r = len(sigma)
-        assert b.shape == (r, self.fom.input_dim)
-        assert c.shape == (r, self.fom.output_dim)
+        assert b.shape == (r, self.fom.dim_input)
+        assert c.shape == (r, self.fom.dim_output)
 
         # compute projection matrices
         self.V = rational_arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma)
@@ -361,10 +361,10 @@ class TFBHIReductor(BasicObject):
             length `r`.
         b
             Right tangential directions, |NumPy array| of shape
-            `(r, fom.input_dim)`.
+            `(r, fom.dim_input)`.
         c
             Left tangential directions, |NumPy array| of shape
-            `(r, fom.output_dim)`.
+            `(r, fom.dim_output)`.
 
         Returns
         -------
@@ -373,8 +373,8 @@ class TFBHIReductor(BasicObject):
             function of `fom`.
         """
         r = len(sigma)
-        assert b.shape == (r, self.fom.input_dim)
-        assert c.shape == (r, self.fom.output_dim)
+        assert b.shape == (r, self.fom.dim_input)
+        assert c.shape == (r, self.fom.dim_output)
 
         # rescale tangential directions (to avoid overflow or underflow)
         b = b * (1 / np.linalg.norm(b)) if b.shape[1] > 1 else np.ones((r, 1))
@@ -383,8 +383,8 @@ class TFBHIReductor(BasicObject):
         # matrices of the interpolatory LTI system
         Er = np.empty((r, r), dtype=np.complex_)
         Ar = np.empty((r, r), dtype=np.complex_)
-        Br = np.empty((r, self.fom.input_dim), dtype=np.complex_)
-        Cr = np.empty((self.fom.output_dim, r), dtype=np.complex_)
+        Br = np.empty((r, self.fom.dim_input), dtype=np.complex_)
+        Cr = np.empty((self.fom.dim_output, r), dtype=np.complex_)
 
         Hs = [self.fom.eval_tf(s, mu=self.mu) for s in sigma]
         dHs = [self.fom.eval_dtf(s, mu=self.mu) for s in sigma]

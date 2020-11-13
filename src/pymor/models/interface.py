@@ -24,7 +24,7 @@ class Model(CacheableObject, ParametricObject):
     ----------
     solution_space
         |VectorSpace| of the solution |VectorArrays| returned by :meth:`solve`.
-    output_dim
+    dim_output
         Dimension of the model output returned by :meth:`output`. 0 if the
         model has no output.
     linear
@@ -34,7 +34,7 @@ class Model(CacheableObject, ParametricObject):
     """
 
     solution_space = None
-    output_dim = 0
+    dim_output = 0
     linear = False
     products = FrozenDict()
 
@@ -332,7 +332,7 @@ class Model(CacheableObject, ParametricObject):
         Returns
         -------
         The computed model output as a 2D |NumPy array|. The dimension
-        of axis 1 is :attr:`output_dim`. (For stationary problems, axis 0 has
+        of axis 1 is :attr:`dim_output`. (For stationary problems, axis 0 has
         dimension 1. For time-dependent problems, the dimension of axis 0
         depends on the number of time steps.)
         When `return_error_estimate` is `True`, the estimate is returned as

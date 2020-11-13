@@ -204,10 +204,10 @@ class BRBTReductor(GenericBTReductor):
         options = self.solver_options
 
         cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(self.fom.output_dim) if self.gamma != 1 else None,
+                                 R=self.gamma**2 * np.eye(self.fom.dim_output) if self.gamma != 1 else None,
                                  trans=False, options=options)
         of = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(self.fom.input_dim) if self.gamma != 1 else None,
+                                 R=self.gamma**2 * np.eye(self.fom.dim_input) if self.gamma != 1 else None,
                                  trans=True, options=options)
         return cf, of
 

@@ -53,8 +53,8 @@ if __name__ == '__main__':
     lti = fom.to_lti()
 
     print(f'order of the model = {lti.order}')
-    print(f'number of inputs   = {lti.input_dim}')
-    print(f'number of outputs  = {lti.output_dim}')
+    print(f'number of inputs   = {lti.dim_input}')
+    print(f'number of outputs  = {lti.dim_output}')
 
     # System poles
     poles = lti.poles()
