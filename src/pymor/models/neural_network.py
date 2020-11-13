@@ -63,7 +63,7 @@ if config.HAVE_TORCH:
             self.__auto_init(locals())
             self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
             if output_functional is not None:
-                self.output_dim = output_functional.range.dim
+                self.dim_output = output_functional.range.dim
 
         def _compute_solution(self, mu=None, **kwargs):
 
@@ -130,7 +130,7 @@ if config.HAVE_TORCH:
             self.__auto_init(locals())
             self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
             if output_functional is not None:
-                self.output_dim = output_functional.range.dim
+                self.dim_output = output_functional.range.dim
 
         def _compute_solution(self, mu=None, **kwargs):
 

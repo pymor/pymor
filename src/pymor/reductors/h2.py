@@ -67,16 +67,16 @@ class GenericIRKAReductor(BasicObject):
             assert ('sigma', 'b', 'c') in rom0_params
             assert isinstance(rom0_params['sigma'], np.ndarray)
             assert rom0_params['sigma'].ndim == 1
-            assert rom0_params['b'].shape[1] == self.fom.input_dim
-            assert rom0_params['c'].shape[1] == self.fom.output_dim
+            assert rom0_params['b'].shape[1] == self.fom.dim_input
+            assert rom0_params['c'].shape[1] == self.fom.dim_output
             assert len(rom0_params['sigma']) == rom0_params['b'].shape[0]
             assert len(rom0_params['sigma']) == rom0_params['c'].shape[0]
         elif isinstance(rom0_params, LTIModel):
             assert rom0_params.order > 0
             if hasattr(self.fom, 'order'):  # self.fom can be a TransferFunction
                 assert rom0_params < self.fom.order
-            assert rom0_params.input_dim == self.fom.input_dim
-            assert rom0_params.output_dim == self.fom.output_dim
+            assert rom0_params.dim_input == self.fom.dim_input
+            assert rom0_params.dim_output == self.fom.dim_output
         else:
             raise ValueError(f'rom0_params is of wrong type ({type(rom0_params)}).')
 
@@ -90,11 +90,11 @@ class GenericIRKAReductor(BasicObject):
     def _order_to_sigma_b_c(self, r):
         sigma = np.logspace(-1, 1, r)
         b = (np.ones((r, 1))
-             if self.fom.input_dim == 1
-             else np.random.RandomState(0).normal(size=(r, self.fom.input_dim)))
+             if self.fom.dim_input == 1
+             else np.random.RandomState(0).normal(size=(r, self.fom.dim_input)))
         c = (np.ones((r, 1))
-             if self.fom.output_dim == 1
-             else np.random.RandomState(0).normal(size=(r, self.fom.output_dim)))
+             if self.fom.dim_output == 1
+             else np.random.RandomState(0).normal(size=(r, self.fom.dim_output)))
         return sigma, b, c
 
     @staticmethod
@@ -210,8 +210,8 @@ class IRKAReductor(GenericIRKAReductor):
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
-              `(len(sigma), fom.D.input_dim)`), and left tangential directions
-              (|NumPy array| of shape `(len(sigma), fom.D.input_dim)`),
+              `(len(sigma), fom.D.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.D.dim_input)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -265,7 +265,7 @@ class IRKAReductor(GenericIRKAReductor):
         self._check_common_args(tol, maxit, num_prev, conv_crit)
         assert projection in ('orth', 'biorth', 'arnoldi')
         if projection == 'arnoldi':
-            assert self.fom.input_dim == self.fom.output_dim == 1
+            assert self.fom.dim_input == self.fom.dim_output == 1
 
         self.logger.info('Starting IRKA')
         self._conv_data = (num_prev + 1) * [None]
@@ -323,8 +323,8 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
-              `(len(sigma), fom.D.input_dim)`), and left tangential directions
-              (|NumPy array| of shape `(len(sigma), fom.D.input_dim)`),
+              `(len(sigma), fom.D.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.D.dim_input)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -456,8 +456,8 @@ class TSIAReductor(GenericIRKAReductor):
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
-              `(len(sigma), fom.D.input_dim)`), and left tangential directions
-              (|NumPy array| of shape `(len(sigma), fom.D.input_dim)`),
+              `(len(sigma), fom.D.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.D.dim_input)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -572,8 +572,8 @@ class TFIRKAReductor(GenericIRKAReductor):
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
-              `(len(sigma), fom.D.input_dim)`), and left tangential directions
-              (|NumPy array| of shape `(len(sigma), fom.D.input_dim)`),
+              `(len(sigma), fom.D.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.D.dim_input)`),
             - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
@@ -654,9 +654,9 @@ def _lti_to_poles_b_c(rom):
     poles
         1D |NumPy array| of poles.
     b
-        |NumPy array| of shape `(len(poles), rom.input_dim)`.
+        |NumPy array| of shape `(len(poles), rom.dim_input)`.
     c
-        |NumPy array| of shape `(len(poles), rom.output_dim)`.
+        |NumPy array| of shape `(len(poles), rom.dim_output)`.
     """
     A = to_matrix(rom.A, format='dense')
     B = to_matrix(rom.B, format='dense')
@@ -690,9 +690,9 @@ def _poles_b_c_to_lti(poles, b, c):
     poles
         Sequence of poles.
     b
-        |NumPy array| of shape `(len(poles), rom.input_dim)`.
+        |NumPy array| of shape `(len(poles), rom.dim_input)`.
     c
-        |NumPy array| of shape `(len(poles), rom.output_dim)`.
+        |NumPy array| of shape `(len(poles), rom.dim_output)`.
 
     Returns
     -------

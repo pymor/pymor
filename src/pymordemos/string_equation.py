@@ -45,8 +45,8 @@ if __name__ == '__main__':
     so_sys = SecondOrderModel.from_matrices(M, E, K, B, Cp)
 
     print(f'order of the model = {so_sys.order}')
-    print(f'number of inputs   = {so_sys.input_dim}')
-    print(f'number of outputs  = {so_sys.output_dim}')
+    print(f'number of inputs   = {so_sys.dim_input}')
+    print(f'number of outputs  = {so_sys.dim_output}')
 
     poles = so_sys.poles()
     fig, ax = plt.subplots()
