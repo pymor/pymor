@@ -19,6 +19,8 @@ stages:
             - runner_system_failure
             - stuck_or_timeout_failure
             - api_failure
+    tags:
+      - autoscaling
     rules:
         - if: $CI_COMMIT_REF_NAME =~ /^staging.*/
           when: never
@@ -31,7 +33,8 @@ stages:
 .pytest:
     extends: .test_base
     tags:
-      - long execution time
+      - long execution time 
+      - autoscaling
     environment:
         name: unsafe
     stage: test
@@ -76,6 +79,7 @@ stages:
 .docker-in-docker:
     tags:
       - docker-in-docker
+      - autoscaling
     extends: .test_base
     timeout: 45 minutes
     retry:
