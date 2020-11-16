@@ -4,17 +4,23 @@
 
 import os
 import pymordemos
-import runpy
+from importlib import import_module
 import sys
 import pytest
 from tempfile import mkdtemp
 import shutil
+
+from typer import Typer
+from typer.testing import CliRunner
 
 from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing, TorchMissing
 from pymor.discretizers.builtin.gui.qt import stop_gui_processes
 from pymor.core.config import is_windows_platform, is_macos_platform
 from pymor.tools.mpi import parallel
+
+
+runner = CliRunner()
 
 
 DISCRETIZATION_ARGS = (
@@ -73,7 +79,7 @@ THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 10, 10]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 10, 10]),
     ('thermalblock_simple', ['ngsolve', 'pod', 2, 10, 10]),
-    ('thermalblock_simple', ['pymor-text', 'adaptive_greedy', -1, 3, 3]),
+    ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
 
 THERMALBLOCK_GUI_ARGS = (
@@ -121,11 +127,6 @@ DEMO_ARGS = (
     + FENICS_NONLINEAR_ARGS
 )
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
-
-
-def _run_module(module, args):
-    sys.argv = [module] + [str(a) for a in args]
-    return runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
 
 
 def _skip_if_no_solver(param):
@@ -207,8 +208,15 @@ def _test_demo(demo):
 
 def test_demos(demo_args):
     module, args = demo_args
-    result = _test_demo(lambda: _run_module(module, args))
-    assert result is not None
+    module = import_module(module)
+    if hasattr(module, 'app'):
+        app = module.app
+    else:
+        app = Typer()
+        app.command()(module.main)
+    args = [str(arg) for arg in args]
+    result = _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
+    assert result.exit_code == 0
 
 
 def test_analyze_pickle1():
@@ -226,8 +234,8 @@ def test_analyze_pickle2():
     try:
         test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
         test_demos(('pymordemos.analyze_pickle',
-                   ['histogram', '--detailed=' + os.path.join(d, 'data_detailed'),
-                    os.path.join(d, 'data_reduced'), 10]))
+                   ['histogram', '--detailed-data=' + os.path.join(d, 'data_detailed'), os.path.join(d, 'data_reduced'),
+                    10]))
     finally:
         shutil.rmtree(d)
 
@@ -237,8 +245,8 @@ def test_analyze_pickle3():
     try:
         test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
         test_demos(('pymordemos.analyze_pickle',
-                   ['convergence', '--detailed=' + os.path.join(d, 'data_detailed'),
-                    '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'), 10]))
+                   ['convergence', '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'),
+                    os.path.join(d, 'data_detailed'), 10]))
     finally:
         shutil.rmtree(d)
 
@@ -248,8 +256,8 @@ def test_analyze_pickle4():
     try:
         test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
         test_demos(('pymordemos.analyze_pickle',
-                   ['convergence', '--detailed=' + os.path.join(d, 'data_detailed'),
-                    os.path.join(d, 'data_reduced'), 10]))
+                   ['convergence', os.path.join(d, 'data_reduced'),
+                    os.path.join(d, 'data_detailed'), 10]))
     finally:
         shutil.rmtree(d)
 
@@ -271,7 +279,11 @@ def test_thermalblock_ipython(ipy_args):
 
 def test_thermalblock_results(thermalblock_args):
     from pymordemos import thermalblock
-    results = _test_demo(lambda: thermalblock.main(list(map(str, thermalblock_args[1]))))
+    app = Typer()
+    app.command()(thermalblock.main)
+    args = [str(arg) for arg in thermalblock_args[1]]
+    _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
+    results = thermalblock.test_results
     # due to the symmetry of the problem and the random test parameters, the estimated
     # error may change a lot
     # fenics varies more than others between MPI/serial
@@ -285,8 +297,11 @@ def test_thermalblock_results(thermalblock_args):
 
 def test_burgers_ei_results():
     from pymordemos import burgers_ei
+    app = Typer()
+    app.command()(burgers_ei.main)
     args = list(map(str, [1, 2, 10, 100, 10, 30]))
-    ei_results, greedy_results = _test_demo(lambda: burgers_ei.main(args))
+    _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
+    ei_results, greedy_results = burgers_ei.test_results
     ei_results['greedy_max_errs'] = greedy_results['max_errs']
     check_results('test_burgers_ei_results', args, ei_results,
                   (1e-13, 1e-7), 'errors', 'triangularity_errors', 'greedy_max_errs')

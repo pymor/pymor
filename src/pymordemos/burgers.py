@@ -5,75 +5,59 @@
 
 """Burgers demo.
 
-Solves a two-dimensional Burgers-type equation. See pymor.analyticalproblems.burgers for more details.
-
-Usage:
-  burgers.py [-h] [--grid=NI] [--grid-type=TYPE] [--initial-data=TYPE] [--lxf-lambda=VALUE] [--nt=COUNT]
-             [--not-periodic] [--num-flux=FLUX] [--vx=XSPEED] [--vy=YSPEED] EXP
-
-Arguments:
-  EXP                    Exponent
-
-Options:
-  --grid=NI              Use grid with (2*NI)*NI elements [default: 60].
-  --grid-type=TYPE       Type of grid to use (rect, tria) [default: rect].
-  --initial-data=TYPE    Select the initial data (sin, bump) [default: sin]
-  --lxf-lambda=VALUE     Parameter lambda in Lax-Friedrichs flux [default: 1].
-  --nt=COUNT             Number of time steps [default: 100].
-  --not-periodic         Solve with dirichlet boundary conditions on left
-                         and bottom boundary.
-  --num-flux=FLUX        Numerical flux to use (lax_friedrichs, engquist_osher)
-                         [default: engquist_osher].
-  -h, --help             Show this message.
-  --vx=XSPEED            Speed in x-direction [default: 1].
-  --vy=YSPEED            Speed in y-direction [default: 1].
 """
 
 import sys
 import math
 import time
 
-from docopt import docopt
+from typer import Argument, Option, run
 
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid, TriaGrid
+from pymor.tools.typer import Choices
 
 
-def burgers_demo(args):
-    args['--grid'] = int(args['--grid'])
-    args['--grid-type'] = args['--grid-type'].lower()
-    assert args['--grid-type'] in ('rect', 'tria')
-    args['--initial-data'] = args['--initial-data'].lower()
-    assert args['--initial-data'] in ('sin', 'bump')
-    args['--lxf-lambda'] = float(args['--lxf-lambda'])
-    args['--nt'] = int(args['--nt'])
-    args['--not-periodic'] = bool(args['--not-periodic'])
-    args['--num-flux'] = args['--num-flux'].lower()
-    assert args['--num-flux'] in ('lax_friedrichs', 'engquist_osher', 'simplified_engquist_osher')
-    args['--vx'] = float(args['--vx'])
-    args['--vy'] = float(args['--vy'])
-    args['EXP'] = float(args['EXP'])
+def main(
+    exp: float = Argument(..., help='Exponent'),
 
+    grid: int = Option(60, help='Use grid with (2*NI)*NI elements.'),
+    grid_type: Choices('rect tria') = Option('rect', help='Type of grid to use.'),
+    initial_data: Choices('sin bump') = Option('sin', help='Select the initial data.'),
+    lxf_lambda: float = Option(1., help='Parameter lambda in Lax-Friedrichs flux.'),
+    not_periodic: bool = Option(False, help='Solve with dirichlet boundary conditions on left and bottom boundary.'),
+    nt: int = Option(100, help='Number of time steps.'),
+    num_flux: Choices('lax_friedrichs engquist_osher simplified_engquist_osher') = Option(
+        'engquist_osher',
+        help='Numerical flux to use.'
+    ),
+    vx: float = Option(1., help='Speed in x-direction.'),
+    vy: float = Option(1., help='Speed in y-direction.'),
+):
+    """Solves a two-dimensional Burgers-type equation.
+
+    See pymor.analyticalproblems.burgers for more details.
+    """
     print('Setup Problem ...')
-    problem = burgers_problem_2d(vx=args['--vx'], vy=args['--vy'], initial_data_type=args['--initial-data'],
-                                 parameter_range=(0, 1e42), torus=not args['--not-periodic'])
+    problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data,
+                                 parameter_range=(0, 1e42), torus=not not_periodic)
 
     print('Discretize ...')
-    if args['--grid-type'] == 'rect':
-        args['--grid'] *= 1. / math.sqrt(2)
+    if grid_type == 'rect':
+        grid *= 1. / math.sqrt(2)
     m, data = discretize_instationary_fv(
         problem,
-        diameter=1. / args['--grid'],
-        grid_type=RectGrid if args['--grid-type'] == 'rect' else TriaGrid,
-        num_flux=args['--num-flux'],
-        lxf_lambda=args['--lxf-lambda'],
-        nt=args['--nt']
+        diameter=1. / grid,
+        grid_type=RectGrid if grid_type == 'rect' else TriaGrid,
+        num_flux=num_flux,
+        lxf_lambda=lxf_lambda,
+        nt=nt
     )
     print(m.operator.grid)
 
     print(f'The parameters are {m.parameters}')
 
-    mu = args['EXP']
+    mu = exp
     print(f'Solving for exponent = {mu} ... ')
     sys.stdout.flush()
     tic = time.perf_counter()
@@ -81,8 +65,6 @@ def burgers_demo(args):
     print(f'Solving took {time.perf_counter()-tic}s')
     m.visualize(U)
 
+
 if __name__ == '__main__':
-    # parse arguments
-    args = docopt(__doc__)
-    # run demo
-    burgers_demo(args)
+    run(main)

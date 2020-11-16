@@ -3,62 +3,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Burgers with EI demo.
-
-Model order reduction of a two-dimensional Burgers-type equation
-(see pymor.analyticalproblems.burgers) using the reduced basis method
-with empirical operator interpolation.
-
-Usage:
-  burgers_ei.py [options] EXP_MIN EXP_MAX EI_SNAPSHOTS EISIZE SNAPSHOTS RBSIZE
-
-Arguments:
-  EXP_MIN       Minimal exponent
-  EXP_MAX       Maximal exponent
-  EI_SNAPSHOTS  Number of snapshots for empirical interpolation.
-  EISIZE        Number of interpolation DOFs.
-  SNAPSHOTS     Number of snapshots for basis generation.
-  RBSIZE        Size of the reduced basis
-
-
-Options:
-  --cache-region=REGION           Name of cache region to use for caching solution snapshots
-                                  (NONE, MEMORY, DISK, PERSISTENT)
-                                  [default: DISK]
-  --ei-alg=ALG                    Interpolation algorithm to use (EI_GREEDY, DEIM)
-                                  [default: EI_GREEDY].
-  --grid=NI                       Use grid with (2*NI)*NI elements [default: 60].
-  --grid-type=TYPE                Type of grid to use (rect, tria) [default: rect].
-  --initial-data=TYPE             Select the initial data (sin, bump) [default: sin]
-  --lxf-lambda=VALUE              Parameter lambda in Lax-Friedrichs flux [default: 1].
-  --not-periodic                  Solve with dirichlet boundary conditions on left
-                                  and bottom boundary.
-  --nt=COUNT                      Number of time steps [default: 100].
-  --num-flux=FLUX                 Numerical flux to use (lax_friedrichs, engquist_osher)
-                                  [default: engquist_osher].
-  -h, --help                      Show this message.
-  -p, --plot-err                  Plot error.
-  --plot-ei-err                   Plot empirical interpolation error.
-  --plot-error-landscape          Calculate and show plot of reduction error vs. basis sizes.
-  --plot-error-landscape-N=COUNT  Number of basis sizes to test [default: 10]
-  --plot-error-landscape-M=COUNT  Number of collateral basis sizes to test [default: 10]
-  --plot-solutions                Plot some example solutions.
-  --test=COUNT                    Use COUNT snapshots for stochastic error estimation
-                                  [default: 10].
-  --vx=XSPEED                     Speed in x-direction [default: 1].
-  --vy=YSPEED                     Speed in y-direction [default: 1].
-  --ipython-engines=COUNT         If positive, the number of IPython cluster engines to use
-                                  for parallel greedy search. If zero, no parallelization
-                                  is performed. [default: 0]
-  --ipython-profile=PROFILE       IPython profile to use for parallelization.
-"""
-
 import sys
 import math
 import time
 
 import numpy as np
-from docopt import docopt
+from typer import Argument, Option, run
 
 from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.ei import interpolate_operators
@@ -66,64 +16,75 @@ from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid, TriaGrid
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import InstationaryRBReductor
+from pymor.tools.typer import Choices
 
 
-def main(args):
-    args = docopt(__doc__, args)
-    args['--cache-region'] = args['--cache-region'].lower()
-    args['--ei-alg'] = args['--ei-alg'].lower()
-    assert args['--ei-alg'] in ('ei_greedy', 'deim')
-    args['--grid'] = int(args['--grid'])
-    args['--grid-type'] = args['--grid-type'].lower()
-    assert args['--grid-type'] in ('rect', 'tria')
-    args['--initial-data'] = args['--initial-data'].lower()
-    assert args['--initial-data'] in ('sin', 'bump')
-    args['--lxf-lambda'] = float(args['--lxf-lambda'])
-    args['--nt'] = int(args['--nt'])
-    args['--not-periodic'] = bool(args['--not-periodic'])
-    args['--num-flux'] = args['--num-flux'].lower()
-    assert args['--num-flux'] in ('lax_friedrichs', 'engquist_osher')
-    args['--plot-error-landscape-N'] = int(args['--plot-error-landscape-N'])
-    args['--plot-error-landscape-M'] = int(args['--plot-error-landscape-M'])
-    args['--test'] = int(args['--test'])
-    args['--vx'] = float(args['--vx'])
-    args['--vy'] = float(args['--vy'])
-    args['--ipython-engines'] = int(args['--ipython-engines'])
-    args['EXP_MIN'] = int(args['EXP_MIN'])
-    args['EXP_MAX'] = int(args['EXP_MAX'])
-    args['EI_SNAPSHOTS'] = int(args['EI_SNAPSHOTS'])
-    args['EISIZE'] = int(args['EISIZE'])
-    args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
-    args['RBSIZE'] = int(args['RBSIZE'])
+def main(
+    exp_min: float = Argument(..., help='Minimal exponent'),
+    exp_max: float = Argument(..., help='Maximal exponent'),
+    ei_snapshots: int = Argument(..., help='Number of snapshots for empirical interpolation.'),
+    ei_size: int = Argument(..., help='Number of interpolation DOFs.'),
+    snapshots: int = Argument(..., help='Number of snapshots for basis generation.'),
+    rb_size: int = Argument(..., help='Size of the reduced basis.'),
 
+    cache_region: Choices('none memory disk persistent') = Option(
+        'disk',
+        help='Name of cache region to use for caching solution snapshots.'
+    ),
+    ei_alg: Choices('ei_greedy deim') = Option('ei_greedy', help='Interpolation algorithm to use.'),
+    grid: int = Option(60, help='Use grid with (2*NI)*NI elements.'),
+    grid_type: Choices('rect tria') = Option('rect', help='Type of grid to use.'),
+    initial_data: Choices('sin bump') = Option('sin', help='Select the initial data (sin, bump).'),
+    ipython_engines: int = Option(
+        0,
+        help='If positive, the number of IPython cluster engines to use for parallel greedy search. '
+             'If zero, no parallelization is performed.'),
+    ipython_profile: str = Option(None, help='IPython profile to use for parallelization.'),
+    lxf_lambda: float = Option(1., help='Parameter lambda in Lax-Friedrichs flux.'),
+    not_periodic: bool = Option(False, help='Solve with dirichlet boundary conditions on left and bottom boundary.'),
+    nt: int = Option(100, help='Number of time steps.'),
+    num_flux: Choices('lax_friedrichs engquist_osher') = Option('engquist_osher', help='Numerical flux to use.'),
+    plot_err: bool = Option(False, help='Plot error.'),
+    plot_ei_err: bool = Option(False, help='Plot empirical interpolation error.'),
+    plot_error_landscape: bool = Option(False, help='Calculate and show plot of reduction error vs. basis sizes.'),
+    plot_error_landscape_M: int = Option(10, help='Number of collateral basis sizes to test.'),
+    plot_error_landscape_N: int = Option(10, help='Number of basis sizes to test.'),
+    plot_solutions: bool = Option(False, help='Plot some example solutions.'),
+    test: int = Option(10, help='Number of snapshots to use for stochastic error estimation.'),
+    vx: float = Option(1., help='Speed in x-direction.'),
+    vy: float = Option(1., help='Speed in y-direction.'),
+):
+    """Model order reduction of a two-dimensional Burgers-type equation
+    (see pymor.analyticalproblems.burgers) using the reduced basis method
+    with empirical operator interpolation.
+    """
     print('Setup Problem ...')
-    problem = burgers_problem_2d(vx=args['--vx'], vy=args['--vy'], initial_data_type=args['--initial-data'],
-                                 parameter_range=(args['EXP_MIN'], args['EXP_MAX']), torus=not args['--not-periodic'])
+    problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data,
+                                 parameter_range=(exp_min, exp_max), torus=not not_periodic)
 
     print('Discretize ...')
-    if args['--grid-type'] == 'rect':
-        args['--grid'] *= 1. / math.sqrt(2)
+    if grid_type == 'rect':
+        grid *= 1. / math.sqrt(2)
     fom, _ = discretize_instationary_fv(
         problem,
-        diameter=1. / args['--grid'],
-        grid_type=RectGrid if args['--grid-type'] == 'rect' else TriaGrid,
-        num_flux=args['--num-flux'],
-        lxf_lambda=args['--lxf-lambda'],
-        nt=args['--nt']
+        diameter=1. / grid,
+        grid_type=RectGrid if grid_type == 'rect' else TriaGrid,
+        num_flux=num_flux,
+        lxf_lambda=lxf_lambda,
+        nt=nt
     )
 
-    if args['--cache-region'] != 'none':
+    if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
-        cache_id = (f"pymordemos.burgers_ei {args['--vx']} {args['--vy']} {args['--initial-data']}"
-                    f"{args['--not-periodic']} {args['--grid']} {args['--grid-type']} {args['--num-flux']}"
-                    f"{args['--lxf-lambda']} {args['--nt']}")
-        fom.enable_caching(args['--cache-region'], cache_id)
+        cache_id = (f"pymordemos.burgers_ei {vx} {vy} {initial_data}"
+                    f"{not_periodic} {grid} {grid_type} {num_flux} {lxf_lambda} {nt}")
+        fom.enable_caching(cache_region, cache_id)
 
     print(fom.operator.grid)
 
     print(f'The parameters are {fom.parameters}')
 
-    if args['--plot-solutions']:
+    if plot_solutions:
         print('Showing some solutions')
         Us = ()
         legend = ()
@@ -134,15 +95,15 @@ def main(args):
             legend = legend + (f"exponent: {mu['exponent']}",)
         fom.visualize(Us, legend=legend, title='Detailed Solutions', block=True)
 
-    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
+    pool = new_parallel_pool(ipython_num_engines=ipython_engines, ipython_profile=ipython_profile)
     eim, ei_data = interpolate_operators(fom, ['operator'],
-                                         problem.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
+                                         problem.parameter_space.sample_uniformly(ei_snapshots),
                                          error_norm=fom.l2_norm, product=fom.l2_product,
-                                         max_interpolation_dofs=args['EISIZE'],
-                                         alg=args['--ei-alg'],
+                                         max_interpolation_dofs=ei_size,
+                                         alg=ei_alg,
                                          pool=pool)
 
-    if args['--plot-ei-err']:
+    if plot_ei_err:
         print('Showing some EI errors')
         ERRs = ()
         legend = ()
@@ -169,9 +130,9 @@ def main(args):
 
     reductor = InstationaryRBReductor(eim)
 
-    greedy_data = rb_greedy(fom, reductor, problem.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+    greedy_data = rb_greedy(fom, reductor, problem.parameter_space.sample_uniformly(snapshots),
                             use_error_estimator=False, error_norm=lambda U: np.max(fom.l2_norm(U)),
-                            extension_params={'method': 'pod'}, max_extensions=args['RBSIZE'],
+                            extension_params={'method': 'pod'}, max_extensions=rb_size,
                             pool=pool)
 
     rom = greedy_data['rom']
@@ -180,7 +141,7 @@ def main(args):
 
     tic = time.perf_counter()
 
-    mus = problem.parameter_space.sample_randomly(args['--test'])
+    mus = problem.parameter_space.sample_randomly(test)
 
     def error_analysis(N, M):
         print(f'N = {N}, M = {M}: ', end='')
@@ -205,9 +166,9 @@ def main(args):
 
     real_rb_size = len(reductor.bases['RB'])
     real_cb_size = len(ei_data['basis'])
-    if args['--plot-error-landscape']:
-        N_count = min(real_rb_size - 1, args['--plot-error-landscape-N'])
-        M_count = min(real_cb_size - 1, args['--plot-error-landscape-M'])
+    if plot_error_landscape:
+        N_count = min(real_rb_size - 1, plot_error_landscape_N)
+        M_count = min(real_cb_size - 1, plot_error_landscape_M)
         Ns = np.linspace(1, real_rb_size, N_count).astype(np.int)
         Ms = np.linspace(1, real_cb_size, M_count).astype(np.int)
     else:
@@ -228,50 +189,51 @@ def main(args):
     *** RESULTS ***
 
     Problem:
-       parameter range:                    ({args[EXP_MIN]}, {args[EXP_MAX]})
-       h:                                  sqrt(2)/{args[--grid]}
-       grid-type:                          {args[--grid-type]}
-       initial-data:                       {args[--initial-data]}
-       lxf-lambda:                         {args[--lxf-lambda]}
-       nt:                                 {args[--nt]}
-       not-periodic:                       {args[--not-periodic]}
-       num-flux:                           {args[--num-flux]}
-       (vx, vy):                           ({args[--vx]}, {args[--vy]})
+       parameter range:                    ({exp_min}, {exp_max})
+       h:                                  sqrt(2)/{grid}
+       grid-type:                          {grid_type}
+       initial-data:                       {initial_data}
+       lxf-lambda:                         {lxf_lambda}
+       nt:                                 {nt}
+       not-periodic:                       {not_periodic}
+       num-flux:                           {num_flux}
+       (vx, vy):                           ({vx}, {vy})
 
     Greedy basis generation:
-       number of ei-snapshots:             {args[EI_SNAPSHOTS]}
-       prescribed collateral basis size:   {args[EISIZE]}
+       number of ei-snapshots:             {ei_snapshots}
+       prescribed collateral basis size:   {ei_size}
        actual collateral basis size:       {real_cb_size}
-       number of snapshots:                {args[SNAPSHOTS]}
-       prescribed basis size:              {args[RBSIZE]}
+       number of snapshots:                {snapshots}
+       prescribed basis size:              {rb_size}
        actual basis size:                  {real_rb_size}
        elapsed time:                       {greedy_data[time]}
 
     Stochastic error estimation:
-       number of samples:                  {args[--test]}
+       number of samples:                  {test}
        maximal L2-error:                   {l2_err_max}  (mu = {mumax})
        elapsed time:                       {t_est}
     '''.format(**locals()))
 
     sys.stdout.flush()
-    if args['--plot-error-landscape']:
+    if plot_error_landscape:
         import matplotlib.pyplot as plt
         import mpl_toolkits.mplot3d             # NOQA
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        # we have to rescale the errors since matplotlib does not support logarithmic scales on 3d plots
+        # rescale the errors since matplotlib does not support logarithmic scales on 3d plots
         # https://github.com/matplotlib/matplotlib/issues/209
         surf = ax.plot_surface(M_grid, N_grid, np.log(np.minimum(errs, 1)) / np.log(10),
                                rstride=1, cstride=1, cmap='jet')
         plt.show()
-    if args['--plot-err']:
+    if plot_err:
         U = fom.solve(mumax)
         URB = reductor.reconstruct(rom.solve(mumax))
         fom.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                       title='Maximum Error Solution', separate_colorbars=True)
 
-    return ei_data, greedy_data
+    global test_results
+    test_results = (ei_data, greedy_data)
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    run(main)

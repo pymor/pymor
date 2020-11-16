@@ -7,11 +7,11 @@ import sys
 import time
 
 from typer import Argument, Option, run
-from pymor.tools.typer import Choices
 
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.core.pickle import dump
 from pymor.parallel.default import new_parallel_pool
+from pymor.tools.typer import Choices
 
 
 def main(
@@ -24,7 +24,6 @@ def main(
              '(in total SNAPSHOTS^(XBLOCKS * YBLOCKS) parameters).\n\n'
              'adaptive_greedy: size of validation set.\n\n'
     ),
-
     rbsize: int = Argument(..., help='Size of the reduced basis.'),
 
     adaptive_greedy_gamma: float = Option(0.2, help='See pymor.algorithms.adaptivegreedy.'),
@@ -193,7 +192,8 @@ def main(
         fom.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                       title='Maximum Error Solution', separate_colorbars=True, block=True)
 
-    return results
+    global test_results
+    test_results = results
 
 
 def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array):

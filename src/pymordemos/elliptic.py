@@ -3,29 +3,8 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Simple demonstration of solving the Poisson equation in 2D using pyMOR's builtin discretizations.
-
-Usage:
-    elliptic.py [--fv] [--rect] PROBLEM-NUMBER DIRICHLET-NUMBER NEUMANN-NUMBER NEUMANN-COUNT
-
-Arguments:
-    PROBLEM-NUMBER    {0,1}, selects the problem to solve
-    DIRICHLET-NUMBER  {0,1,2}, selects the Dirichlet data function
-    NEUMANN-NUMBER    {0,1}, selects the Neumann data function
-
-    NEUMANN-COUNT     0: no neumann boundary
-                      1: right edge is neumann boundary
-                      2: right+top edges are neumann boundary
-                      3: right+top+bottom edges are neumann boundary
-
-Options:
-    -h, --help   Show this message.
-    --fv         Use finite volume discretization instead of finite elements.
-    --rect       Use RectGrid instead of TriaGrid.
-"""
-
-from docopt import docopt
 import numpy as np
+from typer import Argument, Option, run
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
@@ -33,15 +12,24 @@ from pymor.analyticalproblems.functions import ExpressionFunction, ConstantFunct
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv, RectGrid, TriaGrid
 
 
-def elliptic_demo(args):
-    args['PROBLEM-NUMBER'] = int(args['PROBLEM-NUMBER'])
-    assert 0 <= args['PROBLEM-NUMBER'] <= 1, ValueError('Invalid problem number')
-    args['DIRICHLET-NUMBER'] = int(args['DIRICHLET-NUMBER'])
-    assert 0 <= args['DIRICHLET-NUMBER'] <= 2, ValueError('Invalid Dirichlet boundary number.')
-    args['NEUMANN-NUMBER'] = int(args['NEUMANN-NUMBER'])
-    assert 0 <= args['NEUMANN-NUMBER'] <= 2, ValueError('Invalid Neumann boundary number.')
-    args['NEUMANN-COUNT'] = int(args['NEUMANN-COUNT'])
-    assert 0 <= args['NEUMANN-COUNT'] <= 3, ValueError('Invalid Neumann boundary count.')
+def main(
+    problem_number: int = Argument(..., min=0, max=1, help='Selects the problem to solve [0 or 1].'),
+    dirichlet_number: int = Argument(..., min=0, max=2, help='Selects the Dirichlet data function [0 to 2].'),
+    neumann_number: int = Argument(..., min=0, max=2, help='Selects the Neumann data function.'),
+    neumann_count: int = Argument(
+        ...,
+        min=0,
+        max=3,
+        help='0: no neumann boundary\n\n'
+             '1: right edge is neumann boundary\n\n'
+             '2: right+top edges are neumann boundary\n\n'
+             '3: right+top+bottom edges are neumann boundary\n\n'
+    ),
+
+    fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
+    rect: bool = Option(False, help='Use RectGrid instead of TriaGrid.'),
+):
+    """Solves the Poisson equation in 2D using pyMOR's builtin discreization toolkit."""
 
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
             ExpressionFunction('(x[..., 0] - 0.5) ** 2 * 1000', 2, ())]
@@ -57,10 +45,10 @@ def elliptic_demo(args):
                RectDomain(right='neumann', top='neumann'),
                RectDomain(right='neumann', top='neumann', bottom='neumann')]
 
-    rhs = rhss[args['PROBLEM-NUMBER']]
-    dirichlet = dirichlets[args['DIRICHLET-NUMBER']]
-    neumann = neumanns[args['NEUMANN-NUMBER']]
-    domain = domains[args['NEUMANN-COUNT']]
+    rhs = rhss[problem_number]
+    dirichlet = dirichlets[dirichlet_number]
+    neumann = neumanns[neumann_number]
+    domain = domains[neumann_count]
 
     problem = StationaryProblem(
         domain=domain,
@@ -72,11 +60,11 @@ def elliptic_demo(args):
 
     for n in [32, 128]:
         print('Discretize ...')
-        discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
+        discretizer = discretize_stationary_fv if fv else discretize_stationary_cg
         m, data = discretizer(
             analytical_problem=problem,
-            grid_type=RectGrid if args['--rect'] else TriaGrid,
-            diameter=np.sqrt(2) / n if args['--rect'] else 1. / n
+            grid_type=RectGrid if rect else TriaGrid,
+            diameter=np.sqrt(2) / n if rect else 1. / n
         )
         grid = data['grid']
         print(grid)
@@ -89,5 +77,4 @@ def elliptic_demo(args):
 
 
 if __name__ == '__main__':
-    args = docopt(__doc__)
-    elliptic_demo(args)
+    run(main)

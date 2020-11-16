@@ -3,11 +3,10 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""String equation example"""
-
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
-import matplotlib.pyplot as plt
+from typer import run
 
 from pymor.core.config import config
 from pymor.models.iosys import SecondOrderModel
@@ -21,7 +20,8 @@ import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
 
 
-if __name__ == '__main__':
+def main():
+    """String equation example."""
     # Assemble matrices
     n2 = 50
     n = 2 * n2 - 1  # dimension of the system
@@ -361,3 +361,7 @@ if __name__ == '__main__':
     err_sor_irka.mag_plot(w, ax=ax)
     ax.set_title('Magnitude plot of the SOR-IRKA error system')
     plt.show()
+
+
+if __name__ == '__main__':
+    run(main)

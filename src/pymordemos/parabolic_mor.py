@@ -3,30 +3,14 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Reduced basis approximation of the heat equation.
-
-Usage:
-  parabolic_mor.py BACKEND ALG SNAPSHOTS RBSIZE TEST
-
-Arguments:
-  BACKEND    Discretization toolkit to use (pymor, fenics).
-
-  ALG        The model reduction algorithm to use
-             (greedy, adaptive_greedy, pod).
-
-  SNAPSHOTS  greedy/pod:      number of training set parameters
-             adaptive_greedy: size of validation set.
-
-  RBSIZE     Size of the reduced basis.
-  TEST       Number of test parameters for reduction error estimation.
-"""
-
 from functools import partial    # fix parameters of given function
 
 import numpy as np
+from typer import Argument, run
 
 from pymor.basic import *        # most common pyMOR functions and classes
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+from pymor.tools.typer import Choices
 
 
 # parameters for high-dimensional models
@@ -34,6 +18,86 @@ GRID_INTERVALS = 100
 FENICS_ORDER = 2
 NT = 100
 DT = 1. / NT
+
+
+####################################################################################################
+# Main script                                                                                      #
+####################################################################################################
+
+def main(
+    backend: Choices('pymor fenics') = Argument(..., help='Discretization toolkit to use.'),
+    alg: Choices('greedy adaptive_greedy pod') = Argument(..., help='The model reduction algorithm to use.'),
+    snapshots: int = Argument(
+        ...,
+        help='greedy/pod: number of training set parameters\n\n'
+             'adaptive_greedy: size of validation set.'
+    ),
+    rbsize: int = Argument(..., help='Size of the reduced basis.'),
+    test: int = Argument(..., help='Number of test parameters for reduction error estimation.'),
+):
+    """Reduced basis approximation of the heat equation."""
+    # discretize
+    ############
+    if backend == 'pymor':
+        fom = discretize_pymor()
+    elif backend == 'fenics':
+        fom = discretize_fenics()
+    else:
+        raise NotImplementedError
+    parameter_space=fom.parameters.space(1, 100)
+
+    # select reduction algorithm with error estimator
+    #################################################
+    coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameters)
+    reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
+
+    # generate reduced model
+    ########################
+    if alg == 'greedy':
+        rom = reduce_greedy(fom, reductor, parameter_space, snapshots, rbsize)
+    elif alg == 'adaptive_greedy':
+        rom = reduce_adaptive_greedy(fom, reductor, parameter_space, snapshots, rbsize)
+    elif alg == 'pod':
+        rom = reduce_pod(fom, reductor, parameter_space, snapshots, rbsize)
+    else:
+        raise NotImplementedError
+
+    # evaluate the reduction error
+    ##############################
+    results = reduction_error_analysis(
+        rom, fom=fom, reductor=reductor, error_estimator=True,
+        error_norms=[lambda U: DT * np.sqrt(np.sum(fom.h1_0_semi_norm(U)[1:]**2))],
+        error_norm_names=['l^2-h^1'],
+        condition=False, test_mus=parameter_space.sample_randomly(test, seed=999), plot=True
+    )
+
+    # show results
+    ##############
+    print(results['summary'])
+    import matplotlib.pyplot as plt
+    plt.show(results['figure'])
+
+    # write results to disk
+    #######################
+    from pymor.core.pickle import dump
+    dump(rom, open('reduced_model.out', 'wb'))
+    results.pop('figure')  # matplotlib figures cannot be serialized
+    dump(results, open('results.out', 'wb'))
+
+    # visualize reduction error for worst-approximated mu
+    #####################################################
+    mumax = results['max_error_mus'][0, -1]
+    U = fom.solve(mumax)
+    U_RB = reductor.reconstruct(rom.solve(mumax))
+    if backend == 'fenics':  # right now the fenics visualizer does not support time trajectories
+        U = U[len(U) - 1].copy()
+        U_RB = U_RB[len(U_RB) - 1].copy()
+    fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                  separate_colorbars=True)
+
+    return results
+
+
 
 
 ####################################################################################################
@@ -220,78 +284,5 @@ def reduce_pod(fom, reductor, parameter_space, snapshots, basis_size):
     return rom
 
 
-####################################################################################################
-# Main script                                                                                      #
-####################################################################################################
-
-def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
-    # discretize
-    ############
-    if BACKEND == 'pymor':
-        fom = discretize_pymor()
-    elif BACKEND == 'fenics':
-        fom = discretize_fenics()
-    else:
-        raise NotImplementedError
-    parameter_space=fom.parameters.space(1, 100)
-
-    # select reduction algorithm with error estimator
-    #################################################
-    coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameters)
-    reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
-
-    # generate reduced model
-    ########################
-    if ALG == 'greedy':
-        rom = reduce_greedy(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
-    elif ALG == 'adaptive_greedy':
-        rom = reduce_adaptive_greedy(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
-    elif ALG == 'pod':
-        rom = reduce_pod(fom, reductor, parameter_space, SNAPSHOTS, RBSIZE)
-    else:
-        raise NotImplementedError
-
-    # evaluate the reduction error
-    ##############################
-    results = reduction_error_analysis(
-        rom, fom=fom, reductor=reductor, error_estimator=True,
-        error_norms=[lambda U: DT * np.sqrt(np.sum(fom.h1_0_semi_norm(U)[1:]**2))],
-        error_norm_names=['l^2-h^1'],
-        condition=False, test_mus=parameter_space.sample_randomly(TEST, seed=999), plot=True
-    )
-
-    # show results
-    ##############
-    print(results['summary'])
-    import matplotlib.pyplot as plt
-    plt.show(results['figure'])
-
-    # write results to disk
-    #######################
-    from pymor.core.pickle import dump
-    dump(rom, open('reduced_model.out', 'wb'))
-    results.pop('figure')  # matplotlib figures cannot be serialized
-    dump(results, open('results.out', 'wb'))
-
-    # visualize reduction error for worst-approximated mu
-    #####################################################
-    mumax = results['max_error_mus'][0, -1]
-    U = fom.solve(mumax)
-    U_RB = reductor.reconstruct(rom.solve(mumax))
-    if BACKEND == 'fenics':  # right now the fenics visualizer does not support time trajectories
-        U = U[len(U) - 1].copy()
-        U_RB = U_RB[len(U_RB) - 1].copy()
-    fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                separate_colorbars=True)
-
-    return results
-
-
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) != 6:
-        print(__doc__)
-        sys.exit(1)
-    BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST = sys.argv[1:]
-    BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST = BACKEND.lower(), ALG.lower(), int(SNAPSHOTS), int(RBSIZE), int(TEST)
-    main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST)
+    run(main)
