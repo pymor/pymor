@@ -39,7 +39,7 @@ def main(
     See pymor.analyticalproblems.burgers for more details.
     """
     print('Setup Problem ...')
-    problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data,
+    problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data.value,
                                  parameter_range=(0, 1e42), torus=periodic)
 
     print('Discretize ...')
@@ -49,7 +49,7 @@ def main(
         problem,
         diameter=1. / grid,
         grid_type=RectGrid if grid_type == 'rect' else TriaGrid,
-        num_flux=num_flux,
+        num_flux=num_flux.value,
         lxf_lambda=lxf_lambda,
         nt=nt
     )

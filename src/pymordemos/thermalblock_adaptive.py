@@ -80,7 +80,7 @@ def main(
     if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
         cache_id = f"pymordemos.thermalblock_adaptive {grid}"
-        fom.enable_caching(cache_region, cache_id)
+        fom.enable_caching(cache_region.value, cache_id)
 
     if plot_solutions:
         print('Showing some solutions')

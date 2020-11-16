@@ -90,7 +90,7 @@ def main(
         # building a cache_id is only needed for persistent CacheRegions
         cache_id = (f"pymordemos.thermalblock {fenics} {xblocks} {yblocks}"
                     f"{grid} {order}")
-        fom.enable_caching(cache_region, cache_id)
+        fom.enable_caching(cache_region.value, cache_id)
 
     if plot_solutions:
         print('Showing some solutions')
@@ -131,7 +131,7 @@ def main(
         parallel = greedy_with_error_estimator or not fenics  # cannot pickle FEniCS model
         rom, red_summary = reduce_greedy(fom=fom, reductor=reductor, parameter_space=parameter_space,
                                          snapshots_per_block=snapshots,
-                                         extension_alg_name=extension_alg,
+                                         extension_alg_name=extension_alg.value,
                                          max_extensions=rbsize,
                                          use_error_estimator=greedy_with_error_estimator,
                                          pool=pool if parallel else None)
@@ -139,7 +139,7 @@ def main(
         parallel = greedy_with_error_estimator or not fenics  # cannot pickle FEniCS model
         rom, red_summary = reduce_adaptive_greedy(fom=fom, reductor=reductor, parameter_space=parameter_space,
                                                   validation_mus=snapshots,
-                                                  extension_alg_name=extension_alg,
+                                                  extension_alg_name=extension_alg.value,
                                                   max_extensions=rbsize,
                                                   use_error_estimator=greedy_with_error_estimator,
                                                   rho=adaptive_greedy_rho,

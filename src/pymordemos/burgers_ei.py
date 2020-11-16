@@ -59,7 +59,7 @@ def main(
     with empirical operator interpolation.
     """
     print('Setup Problem ...')
-    problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data,
+    problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data.value,
                                  parameter_range=(exp_min, exp_max), torus=periodic)
 
     print('Discretize ...')
@@ -69,7 +69,7 @@ def main(
         problem,
         diameter=1. / grid,
         grid_type=RectGrid if grid_type == 'rect' else TriaGrid,
-        num_flux=num_flux,
+        num_flux=num_flux.value,
         lxf_lambda=lxf_lambda,
         nt=nt
     )
@@ -78,7 +78,7 @@ def main(
         # building a cache_id is only needed for persistent CacheRegions
         cache_id = (f"pymordemos.burgers_ei {vx} {vy} {initial_data}"
                     f"{periodic} {grid} {grid_type} {num_flux} {lxf_lambda} {nt}")
-        fom.enable_caching(cache_region, cache_id)
+        fom.enable_caching(cache_region.value, cache_id)
 
     print(fom.operator.grid)
 
@@ -100,7 +100,7 @@ def main(
                                          problem.parameter_space.sample_uniformly(ei_snapshots),
                                          error_norm=fom.l2_norm, product=fom.l2_product,
                                          max_interpolation_dofs=ei_size,
-                                         alg=ei_alg,
+                                         alg=ei_alg.value,
                                          pool=pool)
 
     if plot_ei_err:
