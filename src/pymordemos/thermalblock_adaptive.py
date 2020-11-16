@@ -25,6 +25,7 @@ def main(
         'none',
         help='Name of cache region to use for caching solution snapshots.'
     ),
+    error_estimator: bool = Option(True, help='Use error estimator for basis generation.'),
     gamma: float = Option(0.2, help='Weight factor for age penalty term in refinement indicators.'),
     grid: int = Option(100, help='Use grid with 2*NI*NI elements.'),
     ipython_engines: int = Option(
@@ -37,7 +38,6 @@ def main(
         False,
         help='Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.'
     ),
-    no_visualize_refinement: bool = Option(False, help='Do not visualize the training set refinement indicators.'),
     pickle: str = Option(
         None,
         help='Pickle reduced discretization, as well as reductor and high-dimensional model to files with this prefix.'
@@ -57,7 +57,7 @@ def main(
     test: int = Option(10, help='Use COUNT snapshots for stochastic error estimation.'),
     theta: float = Option(0., help='Ratio of elements to refine.'),
     validation_mus: int = Option(0, help='Size of validation set.'),
-    without_error_estimator: bool = Option(False, help='Do not use error estimator for basis generation.'),
+    visualize_refinement: bool = Option(True, help='Visualize the training set refinement indicators.'),
 ):
     """Modified thermalblock demo using adaptive greedy basis generation algorithm."""
 
@@ -111,10 +111,10 @@ def main(
         rho=rho,
         gamma=gamma,
         theta=theta,
-        use_error_estimator=not without_error_estimator,
+        use_error_estimator=error_estimator,
         error_norm=fom.h1_0_semi_norm,
         max_extensions=rbsize,
-        visualize=not no_visualize_refinement
+        visualize=visualize_refinement
     )
 
     rom = greedy_data['rom']
@@ -150,7 +150,7 @@ Problem:
    h:                                  sqrt(2)/{grid}
 
 Greedy basis generation:
-   error estimator disabled:           {without_error_estimator}
+   error estimator enalbed:            {error_estimator}
    product:                            {product}
    prescribed basis size:              {rbsize}
    actual basis size:                  {real_rb_size}

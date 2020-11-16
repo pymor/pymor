@@ -41,7 +41,7 @@ def main(
              'If zero, no parallelization is performed.'),
     ipython_profile: str = Option(None, help='IPython profile to use for parallelization.'),
     lxf_lambda: float = Option(1., help='Parameter lambda in Lax-Friedrichs flux.'),
-    not_periodic: bool = Option(False, help='Solve with dirichlet boundary conditions on left and bottom boundary.'),
+    periodic: bool = Option(True, help='If not, solve with dirichlet boundary conditions on left and bottom boundary.'),
     nt: int = Option(100, help='Number of time steps.'),
     num_flux: Choices('lax_friedrichs engquist_osher') = Option('engquist_osher', help='Numerical flux to use.'),
     plot_err: bool = Option(False, help='Plot error.'),
@@ -60,7 +60,7 @@ def main(
     """
     print('Setup Problem ...')
     problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data,
-                                 parameter_range=(exp_min, exp_max), torus=not not_periodic)
+                                 parameter_range=(exp_min, exp_max), torus=periodic)
 
     print('Discretize ...')
     if grid_type == 'rect':
@@ -77,7 +77,7 @@ def main(
     if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
         cache_id = (f"pymordemos.burgers_ei {vx} {vy} {initial_data}"
-                    f"{not_periodic} {grid} {grid_type} {num_flux} {lxf_lambda} {nt}")
+                    f"{periodic} {grid} {grid_type} {num_flux} {lxf_lambda} {nt}")
         fom.enable_caching(cache_region, cache_id)
 
     print(fom.operator.grid)
@@ -195,7 +195,7 @@ def main(
        initial-data:                       {initial_data}
        lxf-lambda:                         {lxf_lambda}
        nt:                                 {nt}
-       not-periodic:                       {not_periodic}
+       not-periodic:                       {periodic}
        num-flux:                           {num_flux}
        (vx, vy):                           ({vx}, {vy})
 

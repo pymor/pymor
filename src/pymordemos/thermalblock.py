@@ -39,7 +39,7 @@ def main(
         help='Basis extension algorithm to be used.'
     ),
     fenics: bool = Option(False, help='Use FEniCS model.'),
-    greedy_without_error_estimator: bool = Option(False, help='Do not use error estimator for basis generation.'),
+    greedy_with_error_estimator: bool = Option(True, help='Use error estimator for basis generation.'),
     grid: int = Option(100, help='Use grid with 4*NI*NI elements'),
     ipython_engines: int = Option(
         None,
@@ -128,20 +128,20 @@ def main(
         rom, red_summary = reduce_naive(fom=fom, reductor=reductor, parameter_space=parameter_space,
                                         basis_size=rbsize)
     elif alg == 'greedy':
-        parallel = not (fenics and greedy_without_error_estimator)  # cannot pickle FEniCS model
+        parallel = greedy_with_error_estimator or not fenics  # cannot pickle FEniCS model
         rom, red_summary = reduce_greedy(fom=fom, reductor=reductor, parameter_space=parameter_space,
                                          snapshots_per_block=snapshots,
                                          extension_alg_name=extension_alg,
                                          max_extensions=rbsize,
-                                         use_error_estimator=not greedy_without_error_estimator,
+                                         use_error_estimator=greedy_with_error_estimator,
                                          pool=pool if parallel else None)
     elif alg == 'adaptive_greedy':
-        parallel = not (fenics and greedy_without_error_estimator)  # cannot pickle FEniCS model
+        parallel = greedy_with_error_estimator or not fenics  # cannot pickle FEniCS model
         rom, red_summary = reduce_adaptive_greedy(fom=fom, reductor=reductor, parameter_space=parameter_space,
                                                   validation_mus=snapshots,
                                                   extension_alg_name=extension_alg,
                                                   max_extensions=rbsize,
-                                                  use_error_estimator=not greedy_without_error_estimator,
+                                                  use_error_estimator=greedy_with_error_estimator,
                                                   rho=adaptive_greedy_rho,
                                                   gamma=adaptive_greedy_gamma,
                                                   theta=adaptive_greedy_theta,

@@ -25,7 +25,7 @@ def main(
     grid_type: Choices('rect tria') = Option('rect', help='Type of grid to use.'),
     initial_data: Choices('sin bump') = Option('sin', help='Select the initial data.'),
     lxf_lambda: float = Option(1., help='Parameter lambda in Lax-Friedrichs flux.'),
-    not_periodic: bool = Option(False, help='Solve with dirichlet boundary conditions on left and bottom boundary.'),
+    periodic: bool = Option(True, help='If not, solve with dirichlet boundary conditions on left and bottom boundary.'),
     nt: int = Option(100, help='Number of time steps.'),
     num_flux: Choices('lax_friedrichs engquist_osher simplified_engquist_osher') = Option(
         'engquist_osher',
@@ -40,7 +40,7 @@ def main(
     """
     print('Setup Problem ...')
     problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data,
-                                 parameter_range=(0, 1e42), torus=not not_periodic)
+                                 parameter_range=(0, 1e42), torus=periodic)
 
     print('Discretize ...')
     if grid_type == 'rect':
