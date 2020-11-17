@@ -42,7 +42,7 @@ jobs:
     displayName: Install conda base
   - task: CondaEnvironment@1
     inputs:
-      packageSpecs: pymor pyevtk slycot cython pytest pytest-cov curl hypothesis
+      packageSpecs: pymor
       installOptions: "-c conda-forge --only-deps"
       updateConda: false
     displayName: Install pymor deps

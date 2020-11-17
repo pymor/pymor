@@ -5,6 +5,7 @@ jobs:
   timeoutInMinutes: 45
   variables:
       PYMOR_HYPOTHESIS_PROFILE: ci
+      QT_PREFERRED_BINDING: PyQt5
   strategy:
     maxParallel: 8
     matrix:
@@ -35,13 +36,14 @@ jobs:
       conda update -y --all
       conda install -y --only-deps pymor
       # these ones are not in the 2020.1 conda build yet
-      conda install -y pyevtk mpi4py slycot pytorch pytest-xvfb pyside2
+      conda install -y pyevtk mpi4py slycot pytorch pytest-xvfb pyqt
       # these are buildtime, not a runtime,  deps for our conda package
       conda install -y cython pytest-cov pytest
       # install anything which might be a new dependency with pip
       pip install -r requirements.txt
       pip install -r requirements-ci.txt
       pip install -r requirements-optional.txt
+
     displayName: Configure conda and conda-build
 
   - script: |
@@ -52,6 +54,7 @@ jobs:
       py.test -sv --junitxml=test_results.xml --cov=src/pymor  \
         --memprof-top-n 50 --memprof-csv-file=memory_usage.txt --cov-context=test \
         --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}
+      coverage xml
     displayName: py.test
 
   - script: |
