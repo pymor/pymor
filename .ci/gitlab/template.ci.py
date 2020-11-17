@@ -183,17 +183,19 @@ ci setup:
 
 #****** test stage
 
-minimal_cpp_demo:
+{%- for py in pythons %}
+minimal_cpp_demo {{py[0]}} {{py[2]}}:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     services:
-        - name: {{registry}}/pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
           alias: pypi_mirror
-    image: {{registry}}/pymor/testing_py3.7:{{ci_image_tag}}
+    image: {{registry}}/pymor/testing_py{{py}}:{{ci_image_tag}}
     script: ./.ci/gitlab/cpp_demo.bash
+{%- endfor %}
 
 
 {%- for script, py, para in matrix %}
