@@ -1,55 +1,36 @@
+#!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Example script for the usage of neural networks in model order reduction for an instationary problem (approach by Hesthaven and Ubbiali)
-
-Usage:
-    neural_networks_instationary.py [--fv] GRID_INTERVALS TIME_STEPS TRAINING_SAMPLES VALIDATION_SAMPLES
-
-Arguments:
-    GRID_INTERVALS       Grid interval count.
-    TIME_STEPS           Number of time steps used for discretization.
-    TRAINING_SAMPLES     Number of samples used for training the neural network.
-    VALIDATION_SAMPLES   Number of samples used for validation during the training phase.
-
-Options:
-    -h, --help   Show this message.
-    --fv         Use finite volume discretization instead of finite elements.
-"""
-
-from docopt import docopt
-
 import numpy as np
+from typer import Argument, run
 
 from pymor.basic import *
-
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissing
 
 
-def create_fom(args):
-    problem = burgers_problem()
-
-    print('Discretize ...')
-    discretizer = discretize_instationary_fv
-    fom, _ = discretizer(problem, diameter=1. / int(args['GRID_INTERVALS']), nt=int(args['TIME_STEPS']))
-
-    return fom
-
-
-def neural_networks_instationary_demo(args):
+def main(
+    grid_intervals: int = Argument(..., help='Grid interval count.'),
+    time_steps: int = Argument(..., help='Number of time steps used for discretization.'),
+    training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
+    validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
+):
+    """Model oder reduction with neural networks for an instationary problem
+    (approach by Hesthaven and Ubbiali).
+    """
     if not config.HAVE_TORCH:
         raise TorchMissing()
 
-    fom = create_fom(args)
+    fom = create_fom(grid_intervals, time_steps)
 
     parameter_space = fom.parameters.space(1., 2.)
 
     from pymor.reductors.neural_network import NeuralNetworkInstationaryReductor
 
-    training_set = parameter_space.sample_uniformly(int(args['TRAINING_SAMPLES']))
-    validation_set = parameter_space.sample_randomly(int(args['VALIDATION_SAMPLES']))
+    training_set = parameter_space.sample_uniformly(training_samples)
+    validation_set = parameter_space.sample_randomly(validation_samples)
 
     reductor = NeuralNetworkInstationaryReductor(fom, training_set, validation_set, basis_size=10)
     rom = reductor.reduce(hidden_layers='[30, 30, 30]', restarts=100)
@@ -84,6 +65,15 @@ def neural_networks_instationary_demo(args):
     print(f'Median of speedup: {np.median(speedups)}')
 
 
+def create_fom(grid_intervals, time_steps):
+    problem = burgers_problem()
+
+    print('Discretize ...')
+    discretizer = discretize_instationary_fv
+    fom, _ = discretizer(problem, diameter=1. / grid_intervals, nt=time_steps)
+
+    return fom
+
+
 if __name__ == '__main__':
-    args = docopt(__doc__)
-    neural_networks_instationary_demo(args)
+    run(main)

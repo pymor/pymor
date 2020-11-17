@@ -3,13 +3,6 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 if __name__ == '__main__':
-    # ensure that we have no locale set, otherwise PETSc will fail when
-    # matplotlib has been used before
-    import os
-    for k in ['LANG', 'LC_NUMERIC', 'LC_ALL']:
-        if k in os.environ:
-            del os.environ[k]
-
     from pymor.tools import mpi
     import runpy
 

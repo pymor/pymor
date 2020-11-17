@@ -96,7 +96,6 @@ def is_nbconvert():
 _PACKAGES = {
     'CYTHON': lambda: import_module('cython').__version__,
     'DEALII': lambda: import_module('pydealii'),
-    'DOCOPT': lambda: import_module('docopt').__version__,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYTHON': _get_ipython_version,
@@ -118,6 +117,7 @@ _PACKAGES = {
     'SLYCOT': lambda: _get_slycot_version(),
     'SPHINX': lambda: import_module('sphinx').__version__,
     'TORCH': lambda: import_module('torch').__version__,
+    'TYPER': lambda: import_module('typer').__version__,
 }
 
 

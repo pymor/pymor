@@ -3,28 +3,9 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-r"""2D heat equation demo
-
-Discretization of the PDE:
-
-.. math::
-    :nowrap:
-
-    \begin{align*}
-        \partial_t z(x, y, t) &= \Delta z(x, y, t),      & 0 < x, y < 1,\ t > 0 \\
-        -\nabla z(0, y, t) \cdot n &= z(0, y, t) - u(t), & 0 < y < 1, t > 0 \\
-        -\nabla z(1, y, t) \cdot n &= z(1, y, t),        & 0 < y < 1, t > 0 \\
-        -\nabla z(0, x, t) \cdot n &= z(0, x, t),        & 0 < x < 1, t > 0 \\
-        -\nabla z(1, x, t) \cdot n &= z(1, x, t),        & 0 < x < 1, t > 0 \\
-        z(x, y, 0) &= 0                                  & 0 < x, y < 1 \\
-        y(t) &= \int_0^1 z(1, y, t) dy,                  & t > 0 \\
-    \end{align*}
-
-where :math:`u(t)` is the input and :math:`y(t)` is the output.
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
+from typer import run
 
 from pymor.basic import (InstationaryProblem, StationaryProblem, RectDomain, ConstantFunction, ExpressionFunction,
                          discretize_instationary_cg, BTReductor, IRKAReductor)
@@ -34,7 +15,27 @@ import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
 
 
-if __name__ == '__main__':
+def main():
+    r"""2D heat equation demo
+
+    Discretization of the PDE:
+
+    .. math::
+        :nowrap:
+
+        \begin{align*}
+            \partial_t z(x, y, t) &= \Delta z(x, y, t),      & 0 < x, y < 1,\ t > 0 \\
+            -\nabla z(0, y, t) \cdot n &= z(0, y, t) - u(t), & 0 < y < 1, t > 0 \\
+            -\nabla z(1, y, t) \cdot n &= z(1, y, t),        & 0 < y < 1, t > 0 \\
+            -\nabla z(0, x, t) \cdot n &= z(0, x, t),        & 0 < x < 1, t > 0 \\
+            -\nabla z(1, x, t) \cdot n &= z(1, x, t),        & 0 < x < 1, t > 0 \\
+            z(x, y, 0) &= 0                                  & 0 < x, y < 1 \\
+            y(t) &= \int_0^1 z(1, y, t) dy,                  & t > 0 \\
+        \end{align*}
+
+    where :math:`u(t)` is the input and :math:`y(t)` is the output.
+    """
+
     p = InstationaryProblem(
         StationaryProblem(
             domain=RectDomain([[0., 0.], [1., 1.]], left='robin', right='robin', top='robin', bottom='robin'),
@@ -140,3 +141,7 @@ if __name__ == '__main__':
     err_irka.mag_plot(w, ax=ax)
     ax.set_title('Magnitude plot of the IRKA error system')
     plt.show()
+
+
+if __name__ == '__main__':
+    run(main)

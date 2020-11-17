@@ -3,34 +3,11 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""HAPOD demo.
-
-Demonstrates compression of snapshot data with the HAPOD algorithm from [HLR18].
-
-Usage:
-  hapod.py [options] TOL DIST INC
-
-
-Arguments:
-  TOL                    Prescribed mean l2 approximation error.
-  DIST                   Number of slices for distributed HAPOD.
-  INC                    Number of steps for incremental HAPOD.
-
-Options:
-  --grid=NI              Use grid with (2*NI)*NI elements [default: 60].
-  -h, --help             Show this message.
-  --nt=COUNT             Number of time steps [default: 100].
-  --omega=OMEGA          Parameter omega from HAPOD algorithm [default: 0.9].
-  --procs=PROCS          Number of processes to use for parallelization [default: 0].
-  --snap=SNAP            Number of snapshot trajectories to compute [default: 20].
-  --threads=THREADS      Number of threads to use for parallelization [default: 0].
-"""
-
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import time
 
-from docopt import docopt
 import numpy as np
+from typer import Argument, Option, run
 
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid
@@ -39,29 +16,31 @@ from pymor.algorithms.pod import pod
 from pymor.tools.table import format_table
 
 
-def hapod_demo(args):
-    args['--grid'] = int(args['--grid'])
-    args['--nt'] = int(args['--nt'])
-    args['--omega'] = float(args['--omega'])
-    args['--procs'] = int(args['--procs'])
-    args['--snap'] = int(args['--snap'])
-    args['--threads'] = int(args['--threads'])
-    args['TOL'] = float(args['TOL'])
-    args['DIST'] = int(args['DIST'])
-    args['INC'] = int(args['INC'])
-    assert args['--procs'] == 0 or args['--threads'] == 0
+def main(
+    tol: float = Argument(..., help='Prescribed mean l2 approximation error.'),
+    dist: int = Argument(..., help='Number of slices for distributed HAPOD.'),
+    inc: int = Argument(..., help='Number of steps for incremental HAPOD.'),
 
-    tol = args['TOL']
-    omega = args['--omega']
-    executor = ProcessPoolExecutor(args['--procs']) if args['--procs'] > 0 else \
-        ThreadPoolExecutor(args['--threads']) if args['--threads'] > 0 else \
+    grid: int = Option(60, help='Use grid with (2*NI)*NI elements.'),
+    nt: int = Option(100, help='Number of time steps.'),
+    omega: float = Option(0.9, help='Parameter omega from HAPOD algorithm.'),
+    procs: int = Option(0, help='Number of processes to use for parallelization.'),
+    snap: int = Option(20, help='Number of snapshot trajectories to compute.'),
+    threads: int = Option(0, help='Number of threads to use for parallelization.'),
+):
+    """Compression of snapshot data with the HAPOD algorithm from [HLR18]."""
+
+    assert procs == 0 or threads == 0
+
+    executor = ProcessPoolExecutor(procs) if procs > 0 else \
+        ThreadPoolExecutor(threads) if threads > 0 else \
         None
 
     p = burgers_problem_2d()
-    m, data = discretize_instationary_fv(p, grid_type=RectGrid, diameter=np.sqrt(2)/args['--grid'], nt=args['--nt'])
+    m, data = discretize_instationary_fv(p, grid_type=RectGrid, diameter=np.sqrt(2)/grid, nt=nt)
 
     U = m.solution_space.empty()
-    for mu in p.parameter_space.sample_randomly(args['--snap']):
+    for mu in p.parameter_space.sample_randomly(snap):
         U.append(m.solve(mu))
 
     tic = time.perf_counter()
@@ -69,11 +48,11 @@ def hapod_demo(args):
     pod_time = time.perf_counter() - tic
 
     tic = time.perf_counter()
-    dist_modes = dist_vectorarray_hapod(args['DIST'], U, tol, omega, product=m.l2_product, executor=executor)[0]
+    dist_modes = dist_vectorarray_hapod(dist, U, tol, omega, product=m.l2_product, executor=executor)[0]
     dist_time = time.perf_counter() - tic
 
     tic = time.perf_counter()
-    inc_modes = inc_vectorarray_hapod(args['INC'], U, tol, omega, product=m.l2_product)[0]
+    inc_modes = inc_vectorarray_hapod(inc, U, tol, omega, product=m.l2_product)[0]
     inc_time = time.perf_counter() - tic
 
     print(f'Snapshot matrix: {U.dim} x {len(U)}')
@@ -89,7 +68,4 @@ def hapod_demo(args):
 
 
 if __name__ == '__main__':
-    # parse arguments
-    args = docopt(__doc__)
-    # run demo
-    hapod_demo(args)
+    run(main)

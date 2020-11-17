@@ -27,7 +27,8 @@ def setup_requires():
     other = ['setuptools>=40.8.0,<49.2.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.28', 'packaging',]
     return numpys + other
 
-install_requires = ['scipy>=1.1;python_version < "3.8"','scipy>=1.3.3;python_version >= "3.8"', 'Qt.py>=1.2.4', 'packaging','diskcache', 'docopt-ng'] + setup_requires()
+install_requires = ['scipy>=1.1;python_version < "3.8"','scipy>=1.3.3;python_version >= "3.8"', 'Qt.py>=1.2.4',
+                    'packaging','diskcache', 'typer'] + setup_requires()
 install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',

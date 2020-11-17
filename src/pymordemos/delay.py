@@ -3,20 +3,22 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Delay demo
 
-Cascade of delay and integrator
-"""
-
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.linalg as spla
-import matplotlib.pyplot as plt
+from typer import run
 
 from pymor.models.iosys import TransferFunction
 from pymor.reductors.interpolation import TFBHIReductor
 from pymor.reductors.h2 import TFIRKAReductor
 
-if __name__ == '__main__':
+
+def main():
+    """Delay demo
+
+    Cascade of delay and integrator
+    """
     tau = 0.1
 
     def H(s):
@@ -101,3 +103,7 @@ if __name__ == '__main__':
     ax.set_title('Step responses of the full and reduced model 2')
     ax.set_xlabel('$t$')
     plt.show()
+
+
+if __name__ == '__main__':
+    run(main)

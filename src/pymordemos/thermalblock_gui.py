@@ -3,36 +3,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Thermalblock with GUI demo
-
-Usage:
-  thermalblock_gui.py [-h] [--product=PROD] [--grid=NI] [--testing]
-                  [--help] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
-
-
-Arguments:
-  XBLOCKS    Number of blocks in x direction.
-  YBLOCKS    Number of blocks in y direction.
-
-  SNAPSHOTS  Number of snapshots for basis generation per component.
-             In total SNAPSHOTS^(XBLOCKS * YBLOCKS).
-
-  RBSIZE     Size of the reduced basis
-
-
-Options:
-  --grid=NI              Use grid with 2*NI*NI elements [default: 60].
-  --product=PROD         Product (euclidean, h1) w.r.t. which to orthonormalize
-                         and calculate Riesz representatives [default: h1].
-  --testing              load the gui and exit right away (for functional testing)
-  -h, --help             Show this message.
-"""
-
 import sys
-from docopt import docopt
 import time
 import numpy as np
 import OpenGL
+
+from typer import Argument, Option, run
 
 from pymor.core.config import is_windows_platform
 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchWidget
@@ -49,11 +25,40 @@ from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.discretizers.builtin.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.coercive import CoerciveRBReductor
+from pymor.tools.typer import Choices
 
 
 PARAM_STEPS = 10
 PARAM_MIN = 0.1
 PARAM_MAX = 1
+
+
+def main(
+    xblocks: int = Argument(..., help='Number of blocks in x direction.'),
+    yblocks: int = Argument(..., help='Number of blocks in y direction.'),
+    snapshots: int = Argument(
+        ...,
+        help='Number of snapshots for basis generation per component. In total SNAPSHOTS^(XBLOCKS * YBLOCKS).'
+    ),
+    rbsize: int = Argument(..., help='Size of the reduced basis.'),
+
+    grid: int = Option(60, help='Use grid with 2*NI*NI elements.'),
+    product: Choices('euclidean h1') = Option(
+        'h1',
+        help='Product w.r.t. which to orthonormalize and calculate Riesz representatives.'
+    ),
+    testing: bool = Option(False, help='Load the gui and exit right away (for functional testing).'),
+):
+    """Thermalblock demo with GUI."""
+
+    if not testing:
+        app = QtWidgets.QApplication(sys.argv)
+        win = RBGui(xblocks, yblocks, snapshots, rbsize, grid, product)
+        win.show()
+        sys.exit(app.exec_())
+
+    from pymor.discretizers.builtin.gui import qt
+    qt._launch_qt_app(lambda: RBGui(xblocks, yblocks, snapshots, rbsize, grid, product), block=False)
 
 
 class ParamRuler(QtWidgets.QWidget):
@@ -125,47 +130,39 @@ class AllPanel(QtWidgets.QWidget):
 
 # noinspection PyShadowingNames
 class RBGui(QtWidgets.QMainWindow):
-    def __init__(self, args):
+    def __init__(self, *args):
         super().__init__()
-        args['XBLOCKS'] = int(args['XBLOCKS'])
-        args['YBLOCKS'] = int(args['YBLOCKS'])
-        args['--grid'] = int(args['--grid'])
-        args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
-        args['RBSIZE'] = int(args['RBSIZE'])
-        args['--product'] = args['--product'].lower()
-        assert args['--product'] in {'trivial', 'h1'}
-        reduced = ReducedSim(args)
-        detailed = DetailedSim(args)
+        reduced = ReducedSim(*args)
+        detailed = DetailedSim(*args)
         self.panel = AllPanel(self, reduced, detailed)
         self.setCentralWidget(self.panel)
 
 
 # noinspection PyShadowingNames
 class SimBase:
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, xblocks, yblocks, snapshots, rbsize, grid, product):
+        self.snapshots, self.rbsize, self.product = snapshots, rbsize, product
         self.first = True
-        self.problem = thermal_block_problem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']),
+        self.problem = thermal_block_problem(num_blocks=(xblocks, yblocks),
                                              parameter_range=(PARAM_MIN, PARAM_MAX))
-        self.m, pack = discretize_stationary_cg(self.problem, diameter=1. / args['--grid'])
+        self.m, pack = discretize_stationary_cg(self.problem, diameter=1. / grid)
         self.grid = pack['grid']
 
 
 # noinspection PyShadowingNames,PyShadowingNames
 class ReducedSim(SimBase):
 
-    def __init__(self, args):
-        super().__init__(args)
+    def __init__(self, *args):
+        super().__init__(*args)
 
     def _first(self):
-        args = self.args
-        product = self.m.h1_0_semi_product if args['--product'] == 'h1' else None
+        product = self.m.h1_0_semi_product if self.product == 'h1' else None
         reductor = CoerciveRBReductor(self.m, product=product)
 
         greedy_data = rb_greedy(self.m, reductor,
-                                self.problem.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                                self.problem.parameter_space.sample_uniformly(self.snapshots),
                                 use_error_estimator=True, error_norm=self.m.h1_0_semi_norm,
-                                max_extensions=args['RBSIZE'])
+                                max_extensions=self.rbsize)
         self.rom, self.reductor = greedy_data['rom'], reductor
         self.first = False
 
@@ -178,8 +175,8 @@ class ReducedSim(SimBase):
 # noinspection PyShadowingNames
 class DetailedSim(SimBase):
 
-    def __init__(self, args):
-        super().__init__(args)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.m.disable_caching()
 
     def solve(self, mu):
@@ -187,13 +184,4 @@ class DetailedSim(SimBase):
 
 
 if __name__ == '__main__':
-    args = docopt(__doc__)
-    testing = args['--testing']
-    if not testing:
-        app = QtWidgets.QApplication(sys.argv)
-        win = RBGui(args)
-        win.show()
-        sys.exit(app.exec_())
-
-    from pymor.discretizers.builtin.gui import qt
-    qt._launch_qt_app(lambda : RBGui(args), block=False)
+    run(main)

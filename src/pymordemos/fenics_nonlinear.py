@@ -3,84 +3,24 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Simple example script for reducing a FEniCS-based nonlinear diffusion problem.
-
-Usage:
-    fenics_nonlinear.py DIM N ORDER
-
-Arguments:
-    DIM               Spatial dimension of the problem.
-    N                 Number of mesh intervals per spatial dimension.
-    ORDER             Finite element order.
-
-Options:
-    -h, --help   Show this message.
-"""
-
-from docopt import docopt
+from typer import Argument, run
 
 
-def discretize(DIM, N, ORDER):
-    # ### problem definition
-    import dolfin as df
-
-    if DIM == 2:
-        mesh = df.UnitSquareMesh(N, N)
-    elif DIM == 3:
-        mesh = df.UnitCubeMesh(N, N, N)
-    else:
-        raise NotImplementedError
-
-    V = df.FunctionSpace(mesh, "CG", ORDER)
-
-    g = df.Constant(1.0)
-    c = df.Constant(1.)
-
-    class DirichletBoundary(df.SubDomain):
-        def inside(self, x, on_boundary):
-            return abs(x[0] - 1.0) < df.DOLFIN_EPS and on_boundary
-    db = DirichletBoundary()
-    bc = df.DirichletBC(V, g, db)
-
-    u = df.Function(V)
-    v = df.TestFunction(V)
-    f = df.Expression("x[0]*sin(x[1])", degree=2)
-    F = df.inner((1 + c*u**2)*df.grad(u), df.grad(v))*df.dx - f*v*df.dx
-
-    df.solve(F == 0, u, bc,
-             solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
-
-    # ### pyMOR wrapping
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer
-    from pymor.models.basic import StationaryModel
-    from pymor.operators.constructions import VectorOperator
-
-    space = FenicsVectorSpace(V)
-    op = FenicsOperator(F, space, space, u, (bc,),
-                        parameter_setter=lambda mu: c.assign(mu['c'].item()),
-                        parameters={'c': 1},
-                        solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
-    rhs = VectorOperator(op.range.zeros())
-
-    fom = StationaryModel(op, rhs,
-                          visualizer=FenicsVisualizer(space))
-
-    return fom
-
-
-def fenics_nonlinear_demo(args):
-    DIM = int(args['DIM'])
-    N = int(args['N'])
-    ORDER = int(args['ORDER'])
+def main(
+    dim: int = Argument(..., help='Spatial dimension of the problem.'),
+    n: int = Argument(..., help='Number of mesh intervals per spatial dimension.'),
+    order: int = Argument(..., help='Finite element order.'),
+):
+    """Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM."""
 
     from pymor.tools import mpi
 
     if mpi.parallel:
         from pymor.models.mpi import mpi_wrap_model
-        local_models = mpi.call(mpi.function_call_manage, discretize, DIM, N, ORDER)
+        local_models = mpi.call(mpi.function_call_manage, discretize, dim, n, order)
         fom = mpi_wrap_model(local_models, use_with=True, pickle_local_spaces=False)
     else:
-        fom = discretize(DIM, N, ORDER)
+        fom = discretize(dim, n, order)
 
     parameter_space = fom.parameters.space((0, 1000.))
 
@@ -133,6 +73,53 @@ def fenics_nonlinear_demo(args):
     print(f'Median of ROM speedup: {np.median(speedups)}')
 
 
+def discretize(dim, n, order):
+    # ### problem definition
+    import dolfin as df
+
+    if dim == 2:
+        mesh = df.UnitSquareMesh(n, n)
+    elif dim == 3:
+        mesh = df.UnitCubeMesh(n, n, n)
+    else:
+        raise NotImplementedError
+
+    V = df.FunctionSpace(mesh, "CG", order)
+
+    g = df.Constant(1.0)
+    c = df.Constant(1.)
+
+    class DirichletBoundary(df.SubDomain):
+        def inside(self, x, on_boundary):
+            return abs(x[0] - 1.0) < df.DOLFIN_EPS and on_boundary
+    db = DirichletBoundary()
+    bc = df.DirichletBC(V, g, db)
+
+    u = df.Function(V)
+    v = df.TestFunction(V)
+    f = df.Expression("x[0]*sin(x[1])", degree=2)
+    F = df.inner((1 + c*u**2)*df.grad(u), df.grad(v))*df.dx - f*v*df.dx
+
+    df.solve(F == 0, u, bc,
+             solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
+
+    # ### pyMOR wrapping
+    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer
+    from pymor.models.basic import StationaryModel
+    from pymor.operators.constructions import VectorOperator
+
+    space = FenicsVectorSpace(V)
+    op = FenicsOperator(F, space, space, u, (bc,),
+                        parameter_setter=lambda mu: c.assign(mu['c'].item()),
+                        parameters={'c': 1},
+                        solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
+    rhs = VectorOperator(op.range.zeros())
+
+    fom = StationaryModel(op, rhs,
+                          visualizer=FenicsVisualizer(space))
+
+    return fom
+
+
 if __name__ == '__main__':
-    args = docopt(__doc__)
-    fenics_nonlinear_demo(args)
+    run(main)
