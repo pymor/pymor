@@ -152,7 +152,7 @@ compilation.
 
    mkdir -p source/minimal_cpp_demo/build
    cd source/minimal_cpp_demo/build
-   cmake .. -DCMAKE_COLOR_MAKEFILE=OFF # prevent bash control chars in output
+   cmake .. -DPYTHON_EXECUTABLE=$(which python) -DCMAKE_COLOR_MAKEFILE=OFF # prevent bash control chars in output
    make
 
 You can download this snippet as a notebook file to be used with a bash kernel :jupyter-download:notebook:`make`.
