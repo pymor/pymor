@@ -302,7 +302,7 @@ local_jupyter:
 trigger_binder {{loop.index}}/{{loop.length}}:
     extends: .test_base
     stage: deploy
-    image: alpine:3.10
+    image: {{registry}}/alpine:3.11
     rules:
         - if: $CI_COMMIT_REF_NAME == "master"
           when: on_success
@@ -387,7 +387,7 @@ docs:
     extends: .test_base
     # makes sure this doesn't land on the test runner
     tags: [mike]
-    image: alpine:3.11
+    image: {{registry}}/alpine:3.11
     stage: deploy
     resource_group: docs_deploy
     dependencies:
