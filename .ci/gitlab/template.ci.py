@@ -91,7 +91,7 @@ stages:
             - unknown_failure
             - job_execution_timeout
     {# this is intentionally NOT moving with CI_IMAGE_TAG #}
-    image: pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
+    image: {{registry}}/pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
     variables:
         DOCKER_HOST: tcp://docker:2375/
         DOCKER_DRIVER: overlay2
