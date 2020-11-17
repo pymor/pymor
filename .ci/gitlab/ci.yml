@@ -771,6 +771,7 @@ pip 1/3:
     services:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.6:54837b6625c61f0954434cfaa27f89c023fe70cb
           alias: pypi_mirror
+    needs: ["ci setup"]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
@@ -784,6 +785,7 @@ pip 2/3:
     services:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:54837b6625c61f0954434cfaa27f89c023fe70cb
           alias: pypi_mirror
+    needs: ["ci setup"]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
@@ -797,6 +799,7 @@ pip 3/3:
     services:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
           alias: pypi_mirror
+    needs: ["ci setup"]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never

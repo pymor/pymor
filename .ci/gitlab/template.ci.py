@@ -273,6 +273,7 @@ pip {{loop.index}}/{{loop.length}}:
     services:
         - name: {{registry}}/pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
           alias: pypi_mirror
+    needs: ["ci setup"]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
