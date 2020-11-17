@@ -26,6 +26,7 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           UPDATE_METHOD: "rebase"
+          UPDATE_LABELS: "this-fake-label-stops-auto-updating"
           MERGE_METHOD: "rebase"
           UPDATE_LABELS: "automerge"
           MERGE_LABELS: "automerge"
