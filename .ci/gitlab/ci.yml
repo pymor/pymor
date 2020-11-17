@@ -180,8 +180,18 @@ ci setup:
         - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "3.6 3.7 3.8"
 
 #****** test stage
-
-minimal_cpp_demo:
+minimal_cpp_demo 3 6:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.6:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.6:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+    script: ./.ci/gitlab/cpp_demo.bash
+minimal_cpp_demo 3 7:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -191,6 +201,17 @@ minimal_cpp_demo:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
           alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+    script: ./.ci/gitlab/cpp_demo.bash
+minimal_cpp_demo 3 8:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
     script: ./.ci/gitlab/cpp_demo.bash
 mpi 3 6:
     extends: .pytest
