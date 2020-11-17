@@ -119,6 +119,7 @@ stages:
 .wheel:
     extends: .docker-in-docker
     stage: build
+    needs: ["ci setup"]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
