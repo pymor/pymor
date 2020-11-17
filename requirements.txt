@@ -2,7 +2,6 @@
 Qt.py>=1.2.4
 cython>=0.28
 diskcache
-docopt-ng
 numpy>=1.15.4;python_version == "3.7"
 numpy>=1.16.0;python_version != "3.6" and python_version != "3.7" and python_version != "3.8"
 numpy>=1.16.0;python_version == "3.6"
