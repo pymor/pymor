@@ -140,16 +140,13 @@ stages:
       - name: zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
         alias: pymor__devpi
     dependencies:
-      - "wheel 1 py3 6"
       - "wheel 2010 py3 6"
       - "wheel 2014 py3 6"
-      - "wheel 1 py3 7"
       - "wheel 2010 py3 7"
       - "wheel 2014 py3 7"
-      - "wheel 1 py3 8"
       - "wheel 2010 py3 8"
       - "wheel 2014 py3 8"
-    needs: ["wheel 1 py3 6","wheel 2010 py3 6","wheel 2014 py3 6","wheel 1 py3 7","wheel 2010 py3 7","wheel 2014 py3 7","wheel 1 py3 8","wheel 2010 py3 8","wheel 2014 py3 8",]
+    needs: ["wheel 2010 py3 6","wheel 2014 py3 6","wheel 2010 py3 7","wheel 2014 py3 7","wheel 2010 py3 8","wheel 2014 py3 8",]
     before_script:
       - pip3 install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
@@ -743,16 +740,6 @@ trigger_binder 3/3:
     script:
         - python3 .ci/gitlab/trigger_binder.py "https://gesis.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
-wheel 1 py3 6:
-    extends: .wheel
-    variables:
-        PYVER: "3.6"
-    artifacts:
-        paths:
-        - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
-        expire_in: 1 week
-    script: bash .ci/gitlab/wheels.bash 1
-
 wheel 2010 py3 6:
     extends: .wheel
     variables:
@@ -774,16 +761,6 @@ wheel 2014 py3 6:
     script: bash .ci/gitlab/wheels.bash 2014
 
 
-wheel 1 py3 7:
-    extends: .wheel
-    variables:
-        PYVER: "3.7"
-    artifacts:
-        paths:
-        - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
-        expire_in: 1 week
-    script: bash .ci/gitlab/wheels.bash 1
-
 wheel 2010 py3 7:
     extends: .wheel
     variables:
@@ -804,16 +781,6 @@ wheel 2014 py3 7:
         expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2014
 
-
-wheel 1 py3 8:
-    extends: .wheel
-    variables:
-        PYVER: "3.8"
-    artifacts:
-        paths:
-        - ${CI_PROJECT_DIR}/shared/pymor*manylinux1_*whl
-        expire_in: 1 week
-    script: bash .ci/gitlab/wheels.bash 1
 
 wheel 2010 py3 8:
     extends: .wheel
@@ -841,21 +808,15 @@ pypi deploy:
     extends: .sanity_checks
     stage: deploy
     dependencies:
-      - wheel 1 py3 6
-    
       - wheel 2010 py3 6
     
       - wheel 2014 py3 6
     
     
-      - wheel 1 py3 7
-    
       - wheel 2010 py3 7
     
       - wheel 2014 py3 7
     
-    
-      - wheel 1 py3 8
     
       - wheel 2010 py3 8
     
