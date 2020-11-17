@@ -12,7 +12,6 @@ from typer import run
 from pymor.models.iosys import TransferFunction
 from pymor.reductors.interpolation import TFBHIReductor
 from pymor.reductors.h2 import TFIRKAReductor
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def main():
@@ -28,7 +27,7 @@ def main():
     def dH(s):
         return np.array([[-(tau * s + tau + 1) * np.exp(-s) / (tau * s + 1) ** 2]])
 
-    tf = TransferFunction(NumpyVectorSpace(1), NumpyVectorSpace(1), H, dH)
+    tf = TransferFunction(1, 1, H, dH)
 
     r = 10
     tf_irka_reductor = TFIRKAReductor(tf)
@@ -80,8 +79,8 @@ def main():
 
     # match steady state (add interpolation point at 0)
     sigma_ss = list(sigma_list[-1]) + [0]
-    b_ss = tf.input_space.ones(r + 1)
-    c_ss = tf.output_space.ones(r + 1)
+    b_ss = np.ones((r+1, tf.dim_input))
+    c_ss = np.ones((r+1, tf.dim_output))
     interp_reductor = TFBHIReductor(tf)
     rom_ss = interp_reductor.reduce(sigma_ss, b_ss, c_ss)
 

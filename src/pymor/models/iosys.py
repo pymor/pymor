@@ -17,6 +17,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
 from pymor.operators.constructions import IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
@@ -31,19 +32,21 @@ class InputOutputModel(Model):
 
     cache_region = 'memory'
 
-    def __init__(self, input_space, output_space, cont_time=True,
+    def __init__(self, dim_input, dim_output, cont_time=True,
                  error_estimator=None, visualizer=None, name=None):
         assert cont_time in (True, False)
         super().__init__(error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
     @property
+    @Deprecated('dim_input')
     def input_dim(self):
-        return self.input_space.dim
+        return self.dim_input
 
     @property
+    @Deprecated('dim_output')
     def output_dim(self):
-        return self.output_space.dim
+        return self.dim_output
 
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function."""
@@ -68,7 +71,7 @@ class InputOutputModel(Model):
         -------
         tfw
             Transfer function values at frequencies in `w`, |NumPy array| of shape
-            `(len(w), self.output_dim, self.input_dim)`.
+            `(len(w), self.dim_output, self.dim_input)`.
         """
         if not self.cont_time:
             raise NotImplementedError
@@ -91,10 +94,10 @@ class InputOutputModel(Model):
         -------
         mag
             Transfer function magnitudes at frequencies in `w`, |NumPy array| of shape
-            `(len(w), self.output_dim, self.input_dim)`.
+            `(len(w), self.dim_output, self.dim_input)`.
         phase
             Transfer function phases (in radians) at frequencies in `w`, |NumPy array| of shape
-            `(len(w), self.output_dim, self.input_dim)`.
+            `(len(w), self.dim_output, self.dim_input)`.
         """
         w = np.asarray(w)
         mag = np.abs(self.freq_resp(w, mu=mu))
@@ -112,7 +115,7 @@ class InputOutputModel(Model):
         mu
             |Parameter| for which to evaluate the transfer function.
         ax
-            Axis of shape (2 * `self.output_dim`, `self.input_dim`) to which to plot.
+            Axis of shape (2 * `self.dim_output`, `self.dim_input`) to which to plot.
             If not given, `matplotlib.pyplot.gcf` is used to get the figure and create axis.
         Hz
             Should the frequency be in Hz on the plot.
@@ -132,11 +135,11 @@ class InputOutputModel(Model):
             import matplotlib.pyplot as plt
             fig = plt.gcf()
             width, height = plt.rcParams['figure.figsize']
-            fig.set_size_inches(self.input_dim * width, 2 * self.output_dim * height)
+            fig.set_size_inches(self.dim_input * width, 2 * self.dim_output * height)
             fig.set_constrained_layout(True)
-            ax = fig.subplots(2 * self.output_dim, self.input_dim, sharex=True, squeeze=False)
+            ax = fig.subplots(2 * self.dim_output, self.dim_input, sharex=True, squeeze=False)
         else:
-            assert isinstance(ax, np.ndarray) and ax.shape == (2 * self.output_dim, self.input_dim)
+            assert isinstance(ax, np.ndarray) and ax.shape == (2 * self.dim_output, self.dim_input)
             fig = ax[0, 0].get_figure()
 
         w = np.asarray(w)
@@ -149,8 +152,8 @@ class InputOutputModel(Model):
         freq_label = f'Frequency ({"Hz" if Hz else "rad/s"})'
         mag_label = f'Magnitude{" (dB)" if dB else ""}'
         phase_label = f'Phase ({"deg" if deg else "rad"})'
-        for i in range(self.output_dim):
-            for j in range(self.input_dim):
+        for i in range(self.dim_output):
+            for j in range(self.dim_input):
                 if dB:
                     artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, i, j]),
                                                               **mpl_kwargs)
@@ -159,10 +162,10 @@ class InputOutputModel(Model):
                                                             **mpl_kwargs)
                 artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, i, j],
                                                                   **mpl_kwargs)
-        for i in range(self.output_dim):
+        for i in range(self.dim_output):
             ax[2 * i, 0].set_ylabel(mag_label)
             ax[2 * i + 1, 0].set_ylabel(phase_label)
-        for j in range(self.input_dim):
+        for j in range(self.dim_input):
             ax[-1, j].set_xlabel(freq_label)
         fig.suptitle('Bode plot')
 
@@ -218,9 +221,9 @@ class InputOutputModel(Model):
 class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
 
-    def __init__(self, input_space, solution_space, output_space, cont_time=True,
+    def __init__(self, dim_input, solution_space, dim_output, cont_time=True,
                  error_estimator=None, visualizer=None, name=None):
-        super().__init__(input_space, output_space, cont_time=cont_time,
+        super().__init__(dim_input, dim_output, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
@@ -280,9 +283,9 @@ class LTIModel(InputStateOutputModel):
     ----------
     order
         The order of the system.
-    input_dim
+    dim_input
         The number of inputs.
-    output_dim
+    dim_output
         The number of outputs.
     A
         The |Operator| A.
@@ -318,7 +321,7 @@ class LTIModel(InputStateOutputModel):
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
+        super().__init__(B.source.dim, A.source, C.range.dim, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
@@ -327,8 +330,8 @@ class LTIModel(InputStateOutputModel):
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
-            f'    number of inputs:    {self.input_dim}\n'
-            f'    number of outputs:   {self.output_dim}\n'
+            f'    number of inputs:    {self.dim_input}\n'
+            f'    number of outputs:   {self.dim_output}\n'
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    linear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
@@ -544,8 +547,8 @@ class LTIModel(InputStateOutputModel):
     def __add__(self, other):
         """Add an |LTIModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.D.source == other.D.source
+        assert self.D.range == other.D.range
 
         if not isinstance(other, LTIModel):
             return NotImplemented
@@ -571,7 +574,7 @@ class LTIModel(InputStateOutputModel):
     def __mul__(self, other):
         """Postmultiply by an |LTIModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.D.source == other.D.range
 
         if not isinstance(other, LTIModel):
             return NotImplemented
@@ -640,7 +643,7 @@ class LTIModel(InputStateOutputModel):
         -------
         tfs
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.output_dim, self.input_dim)`.
+            `(self.dim_output, self.dim_input)`.
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -652,7 +655,7 @@ class LTIModel(InputStateOutputModel):
         E = self.E
 
         sEmA = s * E - A
-        if self.input_dim <= self.output_dim:
+        if self.dim_input <= self.dim_output:
             tfs = C.apply(sEmA.apply_inverse(B.as_range_array(mu=mu),
                                              mu=mu),
                           mu=mu).to_numpy().T
@@ -688,7 +691,7 @@ class LTIModel(InputStateOutputModel):
         -------
         dtfs
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
-            shape `(self.output_dim, self.input_dim)`.
+            shape `(self.dim_output, self.dim_input)`.
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -699,7 +702,7 @@ class LTIModel(InputStateOutputModel):
         E = self.E
 
         sEmA = (s * E - A).assemble(mu=mu)
-        if self.input_dim <= self.output_dim:
+        if self.dim_input <= self.dim_output:
             dtfs = -C.apply(
                 sEmA.apply_inverse(
                     E.apply(
@@ -850,7 +853,7 @@ class LTIModel(InputStateOutputModel):
             self.logger.warning('The D operator is not exactly zero '
                                 f'(squared Frobenius norm is {D_norm2}).')
         assert self.parameters.assert_compatible(mu)
-        if self.input_dim <= self.output_dim:
+        if self.dim_input <= self.dim_output:
             cf = self.gramian('c_lrcf', mu=mu)
             return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum())
         else:
@@ -903,7 +906,7 @@ class LTIModel(InputStateOutputModel):
         jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
         A, B, C, D, E = (to_matrix(op, format='dense') for op in [A, B, C, D, E])
         norm, fpeak = ab13dd(dico, jobe, equil, jobd,
-                             self.order, self.input_dim, self.output_dim,
+                             self.order, self.dim_input, self.dim_output,
                              A, E, B, C, D)
         return norm, fpeak
 
@@ -934,10 +937,10 @@ class TransferFunction(InputOutputModel):
 
     Parameters
     ----------
-    input_space
-        The input |VectorSpace|. Typically `NumpyVectorSpace(m)` where m is the number of inputs.
-    output_space
-        The output |VectorSpace|. Typically `NumpyVectorSpace(p)` where p is the number of outputs.
+    dim_input
+        The number of inputs.
+    dim_output
+        The number of outputs.
     tf
         The transfer function defined at least on the open right complex half-plane.
         `tf(s, mu)` is a |NumPy array| of shape `(p, m)`.
@@ -950,9 +953,9 @@ class TransferFunction(InputOutputModel):
 
     Attributes
     ----------
-    input_dim
+    dim_input
         The number of inputs.
-    output_dim
+    dim_output
         The number of outputs.
     tf
         The transfer function.
@@ -960,8 +963,8 @@ class TransferFunction(InputOutputModel):
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, input_space, output_space, tf, dtf, parameters={}, cont_time=True, name=None):
-        super().__init__(input_space, output_space, cont_time=cont_time, name=name)
+    def __init__(self, dim_input, dim_output, tf, dtf, parameters={}, cont_time=True, name=None):
+        super().__init__(dim_input, dim_output, cont_time=cont_time, name=name)
         self.parameters_own = parameters
         self.__auto_init(locals())
 
@@ -969,8 +972,8 @@ class TransferFunction(InputOutputModel):
         return (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
-            f'    number of inputs:  {self.input_dim}\n'
-            f'    number of outputs: {self.output_dim}\n'
+            f'    number of inputs:  {self.dim_input}\n'
+            f'    number of outputs: {self.dim_output}\n'
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    linear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
@@ -997,8 +1000,8 @@ class TransferFunction(InputOutputModel):
     def __add__(self, other):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.dim_input == other.dim_input
+        assert self.dim_output == other.dim_output
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) + other.eval_tf(s, mu=mu)
         dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) + other.eval_dtf(s, mu=mu)
@@ -1012,8 +1015,8 @@ class TransferFunction(InputOutputModel):
     def __rsub__(self, other):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.dim_input == other.dim_input
+        assert self.dim_output == other.dim_output
 
         tf = lambda s, mu=None: other.eval_tf(s, mu=mu) - self.eval_tf(s, mu=mu)
         dtf = lambda s, mu=None: other.eval_dtf(s, mu=mu) - self.eval_dtf(s, mu=mu)
@@ -1027,7 +1030,7 @@ class TransferFunction(InputOutputModel):
     def __mul__(self, other):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.dim_input == other.dim_input
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
         dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) @ other.eval_dtf(s, mu=mu)
@@ -1036,7 +1039,7 @@ class TransferFunction(InputOutputModel):
     def __rmul__(self, other):
         assert isinstance(other, InputOutputModel)
         assert self.cont_time == other.cont_time
-        assert self.output_space == other.input_space
+        assert self.dim_output == other.dim_input
 
         tf = lambda s, mu=None: other.eval_tf(s, mu=mu) @ self.eval_tf(s, mu=mu)
         dtf = lambda s, mu=None: other.eval_dtf(s, mu=mu) @ self.eval_dtf(s, mu=mu)
@@ -1161,9 +1164,9 @@ class SecondOrderModel(InputStateOutputModel):
     ----------
     order
         The order of the system (equal to M.source.dim).
-    input_dim
+    dim_input
         The number of inputs.
-    output_dim
+    dim_output
         The number of outputs.
     M
         The |Operator| M.
@@ -1198,7 +1201,7 @@ class SecondOrderModel(InputStateOutputModel):
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(B.source, M.source, Cp.range, cont_time=cont_time,
+        super().__init__(B.source.dim, M.source, Cp.range.dim, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
@@ -1207,8 +1210,8 @@ class SecondOrderModel(InputStateOutputModel):
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
-            f'    number of inputs:    {self.input_dim}\n'
-            f'    number of outputs:   {self.output_dim}\n'
+            f'    number of inputs:    {self.dim_input}\n'
+            f'    number of outputs:   {self.dim_output}\n'
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    second-order\n'
             f'    linear time-invariant\n'
@@ -1403,8 +1406,8 @@ class SecondOrderModel(InputStateOutputModel):
     def __add__(self, other):
         """Add a |SecondOrderModel| or an |LTIModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.D.source == other.D.source
+        assert self.D.range == other.D.range
 
         if isinstance(other, LTIModel):
             return self.to_lti() + other
@@ -1446,7 +1449,7 @@ class SecondOrderModel(InputStateOutputModel):
     def __mul__(self, other):
         """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.D.source == other.D.range
 
         if isinstance(other, LTIModel):
             return self.to_lti() * other
@@ -1515,7 +1518,7 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         tfs
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.output_dim, self.input_dim)`.
+            `(self.dim_output, self.dim_input)`.
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -1529,7 +1532,7 @@ class SecondOrderModel(InputStateOutputModel):
         D = self.D
 
         s2MpsEpK = s**2 * M + s * E + K
-        if self.input_dim <= self.output_dim:
+        if self.dim_input <= self.dim_output:
             CppsCv = Cp + s * Cv
             tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array(mu=mu),
                                                       mu=mu),
@@ -1570,7 +1573,7 @@ class SecondOrderModel(InputStateOutputModel):
         -------
         dtfs
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
-            shape `(self.output_dim, self.input_dim)`.
+            shape `(self.dim_output, self.dim_input)`.
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -1584,7 +1587,7 @@ class SecondOrderModel(InputStateOutputModel):
 
         s2MpsEpK = (s**2 * M + s * E + K).assemble(mu=mu)
         sM2pE = 2 * s * M + E
-        if self.input_dim <= self.output_dim:
+        if self.dim_input <= self.dim_output:
             dtfs = Cv.apply(s2MpsEpK.apply_inverse(B.as_range_array(mu=mu)),
                             mu=mu).to_numpy().T * s
             CppsCv = Cp + s * Cv
@@ -1863,9 +1866,9 @@ class LinearDelayModel(InputStateOutputModel):
     ----------
     order
         The order of the system (equal to A.source.dim).
-    input_dim
+    dim_input
         The number of inputs.
-    output_dim
+    dim_output
         The number of outputs.
     q
         The number of delay terms.
@@ -1901,7 +1904,7 @@ class LinearDelayModel(InputStateOutputModel):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
+        super().__init__(B.source.dim, A.source, C.range.dim, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
 
         self.__auto_init(locals())
@@ -1913,8 +1916,8 @@ class LinearDelayModel(InputStateOutputModel):
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
-            f'    number of inputs:    {self.input_dim}\n'
-            f'    number of outputs:   {self.output_dim}\n'
+            f'    number of inputs:    {self.dim_input}\n'
+            f'    number of outputs:   {self.dim_output}\n'
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    time-delay\n'
             f'    linear time-invariant\n'
@@ -1924,8 +1927,8 @@ class LinearDelayModel(InputStateOutputModel):
     def __add__(self, other):
         """Add an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.input_space
-        assert self.output_space == other.output_space
+        assert self.D.source == other.D.source
+        assert self.D.range == other.D.range
 
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
@@ -1985,7 +1988,7 @@ class LinearDelayModel(InputStateOutputModel):
     def __mul__(self, other):
         """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.D.source == other.D.range
 
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
@@ -2022,7 +2025,7 @@ class LinearDelayModel(InputStateOutputModel):
     def __rmul__(self, other):
         """Premultiply by an |LTIModel| or a |SecondOrderModel|."""
         assert self.cont_time == other.cont_time
-        assert self.input_space == other.output_space
+        assert self.D.source == other.D.range
 
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
@@ -2065,7 +2068,7 @@ class LinearDelayModel(InputStateOutputModel):
         -------
         tfs
             Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.output_dim, self.input_dim)`.
+            `(self.dim_output, self.dim_input)`.
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -2078,7 +2081,7 @@ class LinearDelayModel(InputStateOutputModel):
         E = self.E
 
         middle = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
-        if self.input_dim <= self.output_dim:
+        if self.dim_input <= self.dim_output:
             tfs = C.apply(middle.apply_inverse(B.as_range_array(mu=mu),
                                                mu=mu),
                           mu=mu).to_numpy().T
@@ -2118,7 +2121,7 @@ class LinearDelayModel(InputStateOutputModel):
         -------
         dtfs
             Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
-            shape `(self.output_dim, self.input_dim)`.
+            shape `(self.dim_output, self.dim_input)`.
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -2132,7 +2135,7 @@ class LinearDelayModel(InputStateOutputModel):
         left_and_right = LincombOperator((E, A) + Ad,
                                          (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)).assemble(mu=mu)
         middle = LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
-        if self.input_dim <= self.output_dim:
+        if self.dim_input <= self.dim_output:
             dtfs = -C.apply(
                 left_and_right.apply_inverse(
                     middle.apply(left_and_right.apply_inverse(B.as_range_array(mu=mu)),
@@ -2211,9 +2214,9 @@ class LinearStochasticModel(InputStateOutputModel):
     ----------
     order
         The order of the system (equal to A.source.dim).
-    input_dim
+    dim_input
         The number of inputs.
-    output_dim
+    dim_output
         The number of outputs.
     q
         The number of stochastic processes.
@@ -2259,8 +2262,8 @@ class LinearStochasticModel(InputStateOutputModel):
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
-            f'    number of inputs:    {self.input_dim}\n'
-            f'    number of outputs:   {self.output_dim}\n'
+            f'    number of inputs:    {self.dim_input}\n'
+            f'    number of outputs:   {self.dim_output}\n'
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    stochastic\n'
             f'    linear time-invariant\n'
@@ -2332,9 +2335,9 @@ class BilinearModel(InputStateOutputModel):
     ----------
     order
         The order of the system (equal to A.source.dim).
-    input_dim
+    dim_input
         The number of inputs.
-    output_dim
+    dim_output
         The number of outputs.
     A
         The |Operator| A.
@@ -2378,8 +2381,8 @@ class BilinearModel(InputStateOutputModel):
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
-            f'    number of inputs:    {self.input_dim}\n'
-            f'    number of outputs:   {self.output_dim}\n'
+            f'    number of inputs:    {self.dim_input}\n'
+            f'    number of outputs:   {self.dim_output}\n'
             f'    {"continuous" if self.cont_time else "discrete"}-time\n'
             f'    bilinear time-invariant\n'
             f'    solution_space:  {self.solution_space}'

@@ -91,7 +91,7 @@ stages:
             - unknown_failure
             - job_execution_timeout
     {# this is intentionally NOT moving with CI_IMAGE_TAG #}
-    image: pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
+    image: {{registry}}/pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
     variables:
         DOCKER_HOST: tcp://docker:2375/
         DOCKER_DRIVER: overlay2
@@ -302,7 +302,7 @@ local_jupyter:
 trigger_binder {{loop.index}}/{{loop.length}}:
     extends: .test_base
     stage: deploy
-    image: alpine:3.10
+    image: {{registry}}/alpine:3.11
     rules:
         - if: $CI_COMMIT_REF_NAME == "master"
           when: on_success
@@ -387,7 +387,7 @@ docs:
     extends: .test_base
     # makes sure this doesn't land on the test runner
     tags: [mike]
-    image: alpine:3.11
+    image: {{registry}}/alpine:3.11
     stage: deploy
     resource_group: docs_deploy
     dependencies:

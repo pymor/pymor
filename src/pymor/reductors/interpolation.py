@@ -12,6 +12,7 @@ from pymor.operators.constructions import LincombOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
                                    DelayLTIPGReductor)
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericBHIReductor(BasicObject):
@@ -86,11 +87,11 @@ class GenericBHIReductor(BasicObject):
             Interpolation points (closed under conjugation), sequence of
             length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r`
-            from `self.fom.input_space`.
+            Right tangential directions, |NumPy array| of shape
+            `(r, fom.dim_input)`.
         c
-            Left tangential directions, |VectorArray| of length `r` from
-            `self.fom.output_space`.
+            Left tangential directions, |NumPy array| of shape
+            `(r, fom.dim_output)`.
         projection
             Projection method:
 
@@ -105,13 +106,15 @@ class GenericBHIReductor(BasicObject):
             Reduced-order model.
         """
         r = len(sigma)
-        assert b in self.fom.input_space and len(b) == r
-        assert c in self.fom.output_space and len(c) == r
+        assert b.shape == (r, self.fom.dim_input)
+        assert c.shape == (r, self.fom.dim_output)
         assert projection in ('orth', 'biorth')
 
         # rescale tangential directions (to avoid overflow or underflow)
-        b = b * (1 / b.norm()) if b.dim > 1 else self.fom.input_space.ones(r)
-        c = c * (1 / c.norm()) if c.dim > 1 else self.fom.output_space.ones(r)
+        b = b * (1 / np.linalg.norm(b)) if b.shape[1] > 1 else np.ones((r, 1))
+        c = c * (1 / np.linalg.norm(c)) if c.shape[1] > 1 else np.ones((r, 1))
+        b = self.fom.D.source.from_numpy(b)
+        c = self.fom.D.range.from_numpy(c)
 
         # compute projection matrices
         self.V = self.fom.solution_space.empty(reserve=r)
@@ -199,11 +202,11 @@ class LTIBHIReductor(GenericBHIReductor):
             Interpolation points (closed under conjugation), sequence of
             length `r`.
         b
-            Right tangential directions, |VectorArray| of length `r`
-            from `self.fom.input_space`.
+            Right tangential directions, |NumPy array| of shape
+            `(r, fom.dim_input)`.
         c
-            Left tangential directions, |VectorArray| of length `r` from
-            `self.fom.output_space`.
+            Left tangential directions, |NumPy array| of shape
+            `(r, fom.dim_output)`.
         projection
             Projection method:
 
@@ -223,10 +226,10 @@ class LTIBHIReductor(GenericBHIReductor):
         if projection != 'arnoldi':
             return super().reduce(sigma, b, c, projection=projection)
 
-        assert self.fom.input_dim == 1 and self.fom.output_dim == 1
+        assert self.fom.dim_input == 1 and self.fom.dim_output == 1
         r = len(sigma)
-        assert b in self.fom.B.source and len(b) == r
-        assert c in self.fom.C.range and len(c) == r
+        assert b.shape == (r, self.fom.dim_input)
+        assert c.shape == (r, self.fom.dim_output)
 
         # compute projection matrices
         self.V = rational_arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma)
@@ -357,11 +360,11 @@ class TFBHIReductor(BasicObject):
             Interpolation points (closed under conjugation), sequence of
             length `r`.
         b
-            Right tangential directions, |VectorArray| from
-            `fom.input_space` of length `r`.
+            Right tangential directions, |NumPy array| of shape
+            `(r, fom.dim_input)`.
         c
-            Left tangential directions, |VectorArray| from
-            `fom.output_space` of length `r`.
+            Left tangential directions, |NumPy array| of shape
+            `(r, fom.dim_output)`.
 
         Returns
         -------
@@ -370,21 +373,18 @@ class TFBHIReductor(BasicObject):
             function of `fom`.
         """
         r = len(sigma)
-        assert b in self.fom.input_space and len(b) == r
-        assert c in self.fom.output_space and len(c) == r
+        assert b.shape == (r, self.fom.dim_input)
+        assert c.shape == (r, self.fom.dim_output)
 
         # rescale tangential directions (to avoid overflow or underflow)
-        b = b * (1 / b.norm()) if b.dim > 1 else self.fom.input_space.ones(r)
-        c = c * (1 / c.norm()) if c.dim > 1 else self.fom.output_space.ones(r)
-
-        b = b.to_numpy()
-        c = c.to_numpy()
+        b = b * (1 / np.linalg.norm(b)) if b.shape[1] > 1 else np.ones((r, 1))
+        c = c * (1 / np.linalg.norm(c)) if c.shape[1] > 1 else np.ones((r, 1))
 
         # matrices of the interpolatory LTI system
         Er = np.empty((r, r), dtype=np.complex_)
         Ar = np.empty((r, r), dtype=np.complex_)
-        Br = np.empty((r, self.fom.input_dim), dtype=np.complex_)
-        Cr = np.empty((self.fom.output_dim, r), dtype=np.complex_)
+        Br = np.empty((r, self.fom.dim_input), dtype=np.complex_)
+        Cr = np.empty((self.fom.dim_output, r), dtype=np.complex_)
 
         Hs = [self.fom.eval_tf(s, mu=self.mu) for s in sigma]
         dHs = [self.fom.eval_dtf(s, mu=self.mu) for s in sigma]

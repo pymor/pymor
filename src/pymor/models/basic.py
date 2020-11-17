@@ -70,7 +70,7 @@ class StationaryModel(Model):
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
         if output_functional is not None:
-            self.output_space = output_functional.range
+            self.dim_output = output_functional.range.dim
 
     def __str__(self):
         return (
@@ -78,7 +78,7 @@ class StationaryModel(Model):
             f'    class: {self.__class__.__name__}\n'
             f'    {"linear" if self.linear else "non-linear"}\n'
             f'    solution_space:  {self.solution_space}\n'
-            f'    output_space:    {self.output_space}\n'
+            f'    dim_output:      {self.dim_output}\n'
         )
 
     def _compute_solution(self, mu=None, **kwargs):
@@ -168,6 +168,8 @@ class InstationaryModel(Model):
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
+        if output_functional is not None:
+            self.dim_output = output_functional.range.dim
 
     def __str__(self):
         return (
@@ -176,7 +178,7 @@ class InstationaryModel(Model):
             f'    {"linear" if self.linear else "non-linear"}\n'
             f'    T: {self.T}\n'
             f'    solution_space:  {self.solution_space}\n'
-            f'    output_space:    {self.output_space}\n'
+            f'    dim_output:      {self.dim_output}\n'
         )
 
     def with_time_stepper(self, **kwargs):
