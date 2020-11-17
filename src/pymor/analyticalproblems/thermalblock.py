@@ -15,7 +15,7 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
 
     The problem is to solve the elliptic equation ::
 
-      - ∇ ⋅ [ d(x, μ) ∇ u(x, μ) ] = f(x, μ)
+      - ∇ ⋅ [ d(x, μ) ∇ u(x, μ) ] = 1
 
     on the domain [0,1]^2 with Dirichlet zero boundary values. The domain is
     partitioned into nx x ny blocks and the diffusion function d(x, μ) is
