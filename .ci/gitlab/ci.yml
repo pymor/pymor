@@ -892,8 +892,27 @@ check_wheel 3:
     image: pymor/deploy_checks:devpi_debian_bullseye
     script: devpi install pymor[full]
 
+docs build 3 6:
+    extends: .test_base
+    tags: [mike]
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.6:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.6:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+    script:
+        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
+    stage: build
+    needs: ["ci setup"]
+    artifacts:
+        paths:
+            - docs/_build/html
+            - docs/error.log
 
-docs build:
+docs build 3 7:
     extends: .test_base
     tags: [mike]
     rules:
@@ -913,6 +932,27 @@ docs build:
             - docs/_build/html
             - docs/error.log
 
+docs build 3 8:
+    extends: .test_base
+    tags: [mike]
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.8:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+    script:
+        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
+    stage: build
+    needs: ["ci setup"]
+    artifacts:
+        paths:
+            - docs/_build/html
+            - docs/error.log
+
+
 docs:
     extends: .test_base
     # makes sure this doesn't land on the test runner
@@ -921,8 +961,8 @@ docs:
     stage: deploy
     resource_group: docs_deploy
     dependencies:
-        - docs build
-    needs: ["docs build"]
+        - "docs build 3 7"
+    needs: ["docs build 3 7"]
     before_script:
         - apk --update add make python3 bash
         - pip3 install jinja2 pathlib
