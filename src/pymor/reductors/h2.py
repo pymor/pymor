@@ -66,6 +66,8 @@ class GenericIRKAReductor(BasicObject):
         elif isinstance(rom0_params, dict):
             assert ('sigma', 'b', 'c') in rom0_params
             assert isinstance(rom0_params['sigma'], np.ndarray)
+            assert isinstance(rom0_params['b'], np.ndarray)
+            assert isinstance(rom0_params['c'], np.ndarray)
             assert rom0_params['sigma'].ndim == 1
             assert rom0_params['b'].shape[1] == self.fom.dim_input
             assert rom0_params['c'].shape[1] == self.fom.dim_output
@@ -654,9 +656,9 @@ def _lti_to_poles_b_c(rom):
     poles
         1D |NumPy array| of poles.
     b
-        |NumPy array| of shape `(len(poles), rom.dim_input)`.
+        |NumPy array| of shape `(rom.order, rom.dim_input)`.
     c
-        |NumPy array| of shape `(len(poles), rom.dim_output)`.
+        |NumPy array| of shape `(rom.order, rom.dim_output)`.
     """
     A = to_matrix(rom.A, format='dense')
     B = to_matrix(rom.B, format='dense')
@@ -690,9 +692,9 @@ def _poles_b_c_to_lti(poles, b, c):
     poles
         Sequence of poles.
     b
-        |NumPy array| of shape `(len(poles), rom.dim_input)`.
+        |NumPy array| of shape `(rom.order, rom.dim_input)`.
     c
-        |NumPy array| of shape `(len(poles), rom.dim_output)`.
+        |NumPy array| of shape `(rom.order, rom.dim_output)`.
 
     Returns
     -------
