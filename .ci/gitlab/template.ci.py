@@ -366,7 +366,8 @@ check_wheel {{loop.index}}:
     script: devpi install pymor[full]
 {% endfor %}
 
-docs build:
+{%- for py in pythons %}
+docs build {{py[0]}} {{py[2]}}:
     extends: .test_base
     tags: [mike]
     rules:
@@ -374,9 +375,9 @@ docs build:
           when: never
         - when: on_success
     services:
-        - name: {{registry}}/pymor/pypi-mirror_stable_py3.7:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
           alias: pypi_mirror
-    image: {{registry}}/pymor/jupyter_py3.7:{{ci_image_tag}}
+    image: {{registry}}/pymor/jupyter_py{{py}}:{{ci_image_tag}}
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
@@ -385,6 +386,7 @@ docs build:
         paths:
             - docs/_build/html
             - docs/error.log
+{% endfor %}
 
 docs:
     extends: .test_base
@@ -394,8 +396,8 @@ docs:
     stage: deploy
     resource_group: docs_deploy
     dependencies:
-        - docs build
-    needs: ["docs build"]
+        - "docs build 3 7"
+    needs: ["docs build 3 7"]
     before_script:
         - apk --update add make python3 bash
         - pip3 install jinja2 pathlib
