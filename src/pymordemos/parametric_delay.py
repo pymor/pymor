@@ -10,12 +10,12 @@ import numpy as np
 import scipy.linalg as spla
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from typer import run
+from typer import Option, run
 
 from pymor.basic import *
 
 
-def main():
+def main(r: int = Option(10, help='Order of the TF-IRKA ROM.')):
     # # Model
 
     # In[ ]:
@@ -89,7 +89,6 @@ def main():
     # In[ ]:
 
 
-    r = 10
     roms_tf_irka = []
     for mu in mu_list_short:
         tf_irka = TFIRKAReductor(fom, mu=mu)

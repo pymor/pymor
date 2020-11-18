@@ -15,7 +15,7 @@ import numpy as np
 import scipy.linalg as spla
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from typer import run
+from typer import Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
@@ -23,7 +23,10 @@ from pymor.core.config import config
 from pymor.core.logger import set_log_levels
 
 
-def main():
+def main(
+        diameter: float = Option(0.01, help='Diameter option for the domain discretizer.'),
+        r: int = Option(5, help='Order of the ROMs.'),
+):
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
     set_defaults({'pymor.discretizers.builtin.gui.jupyter.get_visualizer.backend': 'not pythreejs'})
@@ -48,7 +51,7 @@ def main():
         T=3.
     )
 
-    fom, _ = discretize_instationary_cg(p, diameter=1/100, nt=100)
+    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=100)
 
 
     # In[ ]:
@@ -196,7 +199,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     mu_fine = np.logspace(-1, 1, 10)
     h2_bt_err_mu, hinf_bt_err_mu, hankel_bt_err_mu = reduction_errors(lti, r, mu_fine, BTReductor)
 

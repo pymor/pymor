@@ -13,7 +13,7 @@
 import numpy as np
 import scipy.sparse as sps
 import matplotlib.pyplot as plt
-from typer import run
+from typer import Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
@@ -21,7 +21,10 @@ from pymor.core.config import config
 from pymor.core.logger import set_log_levels
 
 
-def main():
+def main(
+        n: int = Option(101, help='Order of the full second-order model (odd number).'),
+        r: int = Option(5, help='Order of the ROMs.'),
+):
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
 
@@ -30,8 +33,9 @@ def main():
     # In[ ]:
 
 
-    n2 = 50
-    n = 2 * n2 - 1  # dimension of the system
+    assert n % 2 == 1, 'The order has to be an odd integer.'
+
+    n2 = (n + 1) // 2
 
     k = 0.01   # stiffness
 
@@ -147,7 +151,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     roms_sobtp = []
     for mu in mu_list:
         sobtp_reductor = SOBTpReductor(so_sys, mu=mu)
@@ -205,7 +208,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     roms_sobtv = []
     for mu in mu_list:
         sobtv_reductor = SOBTvReductor(so_sys, mu=mu)
@@ -263,7 +265,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     roms_sobtpv = []
     for mu in mu_list:
         sobtpv_reductor = SOBTpvReductor(so_sys, mu=mu)
@@ -321,7 +322,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     roms_sobtvp = []
     for mu in mu_list:
         sobtvp_reductor = SOBTvpReductor(so_sys, mu=mu)
@@ -379,7 +379,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     roms_sobtfv = []
     for mu in mu_list:
         sobtfv_reductor = SOBTfvReductor(so_sys, mu=mu)
@@ -437,7 +436,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     roms_sobt = []
     for mu in mu_list:
         sobt_reductor = SOBTReductor(so_sys, mu=mu)
@@ -495,7 +493,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     roms_bt = []
     for mu in mu_list:
         bt_reductor = BTReductor(so_sys.to_lti(), mu=mu)
@@ -553,7 +550,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     roms_irka = []
     for mu in mu_list:
         irka_reductor = IRKAReductor(so_sys.to_lti(), mu=mu)
@@ -611,7 +607,6 @@ def main():
     # In[ ]:
 
 
-    r = 5
     roms_sor_irka = []
     for mu in mu_list:
         sor_irka_reductor = SORIRKAReductor(so_sys, mu=mu)

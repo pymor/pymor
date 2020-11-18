@@ -6,7 +6,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
-from typer import run
+from typer import Option, run
 
 from pymor.core.config import config
 from pymor.models.iosys import SecondOrderModel
@@ -20,11 +20,15 @@ import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
 
 
-def main():
+def main(
+        n: int = Option(101, help='Order of the full second-order model (odd number).'),
+        r: int = Option(5, help='Order of the ROMs.'),
+):
     """String equation example."""
     # Assemble matrices
-    n2 = 50
-    n = 2 * n2 - 1  # dimension of the system
+    assert n % 2 == 1, 'The order has to be an odd integer.'
+
+    n2 = (n + 1) // 2
 
     d = 10  # damping
     k = 0.01   # stiffness
@@ -83,7 +87,6 @@ def main():
     print(f'FOM Hankel-norm: {so_sys.hankel_norm():e}')
 
     # Position Second-Order Balanced Truncation (SOBTp)
-    r = 5
     sobtp_reductor = SOBTpReductor(so_sys)
     rom_sobtp = sobtp_reductor.reduce(r)
 
@@ -113,7 +116,6 @@ def main():
     plt.show()
 
     # Velocity Second-Order Balanced Truncation (SOBTv)
-    r = 5
     sobtv_reductor = SOBTvReductor(so_sys)
     rom_sobtv = sobtv_reductor.reduce(r)
 
@@ -143,7 +145,6 @@ def main():
     plt.show()
 
     # Position-Velocity Second-Order Balanced Truncation (SOBTpv)
-    r = 5
     sobtpv_reductor = SOBTpvReductor(so_sys)
     rom_sobtpv = sobtpv_reductor.reduce(r)
 
@@ -173,7 +174,6 @@ def main():
     plt.show()
 
     # Velocity-Position Second-Order Balanced Truncation (SOBTvp)
-    r = 5
     sobtvp_reductor = SOBTvpReductor(so_sys)
     rom_sobtvp = sobtvp_reductor.reduce(r)
 
@@ -203,7 +203,6 @@ def main():
     plt.show()
 
     # Free-Velocity Second-Order Balanced Truncation (SOBTfv)
-    r = 5
     sobtfv_reductor = SOBTfvReductor(so_sys)
     rom_sobtfv = sobtfv_reductor.reduce(r)
 
@@ -233,7 +232,6 @@ def main():
     plt.show()
 
     # Second-Order Balanced Truncation (SOBT)
-    r = 5
     sobt_reductor = SOBTReductor(so_sys)
     rom_sobt = sobt_reductor.reduce(r)
 
@@ -263,7 +261,6 @@ def main():
     plt.show()
 
     # Balanced Truncation (BT)
-    r = 5
     bt_reductor = BTReductor(so_sys.to_lti())
     rom_bt = bt_reductor.reduce(r)
 
@@ -293,7 +290,6 @@ def main():
     plt.show()
 
     # Iterative Rational Krylov Algorithm (IRKA)
-    r = 5
     irka_reductor = IRKAReductor(so_sys.to_lti())
     rom_irka = irka_reductor.reduce(r)
 
@@ -328,7 +324,6 @@ def main():
     plt.show()
 
     # Second-Order Reduced Iterative Rational Krylov Algorithm (SOR-IRKA)
-    r = 5
     sor_irka_reductor = SORIRKAReductor(so_sys)
     rom_sor_irka = sor_irka_reductor.reduce(r)
 

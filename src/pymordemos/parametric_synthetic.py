@@ -11,7 +11,7 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from typer import run
+from typer import Option, run
 
 from pymor.core.config import config
 from pymor.models.iosys import LTIModel
@@ -21,15 +21,15 @@ from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
 
 
-def main():
+def main(
+        n: int = Option(100, help='Order of the FOM.'),
+        r: int = Option(20, help='Order of the ROMs.'),
+):
     # # Model
     #
     # https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Synthetic_parametric_model
 
     # In[ ]:
-
-
-    n = 100  # order of the resulting system
 
     # set coefficients
     a = -np.linspace(1e1, 1e3, n // 2)
@@ -179,7 +179,6 @@ def main():
     # In[ ]:
 
 
-    r = 20
     mu_fine = np.linspace(1/50, 1, 10)
     (
         h2_bt_err_mu,
