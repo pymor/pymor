@@ -1,0 +1,9 @@
+# do not merge when there any requested changes
+maxRequestedChanges:
+  NONE: 0
+requiredLabels:
+- automerge
+reportStatus: true
+deleteBranchAfterMerge: true
+mergeMethod: rebase
+updateBranch: false
