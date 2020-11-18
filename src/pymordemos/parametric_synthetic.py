@@ -23,7 +23,7 @@ from pymor.reductors.h2 import IRKAReductor
 
 def main(
         n: int = Option(100, help='Order of the FOM.'),
-        r: int = Option(20, help='Order of the ROMs.'),
+        r: int = Option(10, help='Order of the ROMs.'),
 ):
     # # Model
     #
@@ -98,7 +98,7 @@ def main(
     # In[ ]:
 
 
-    w_list = np.logspace(0.5, 3.5, 200)
+    w_list = np.logspace(0.5, 3.5, 100)
     mu_list = np.linspace(1/50, 1, 50)
 
     lti_w_mu = np.zeros((len(w_list), len(mu_list)))
@@ -141,7 +141,7 @@ def main(
 
 
     fig, ax = plt.subplots()
-    mu_fine = np.linspace(1/50, 1, 20)
+    mu_fine = np.linspace(1/50, 1, 5)
     h2_norm_mu = [lti.h2_norm(mu=mu) for mu in mu_fine]
     ax.plot(mu_fine, h2_norm_mu, '.-', label=r'$\mathcal{H}_2$-norm')
 
@@ -179,7 +179,6 @@ def main(
     # In[ ]:
 
 
-    mu_fine = np.linspace(1/50, 1, 10)
     (
         h2_bt_err_mu,
         hinf_bt_err_mu,
