@@ -13,6 +13,7 @@
 import numpy as np
 import scipy.sparse as sps
 import matplotlib.pyplot as plt
+from typer import run
 
 from pymor.basic import *
 from pymor.core.config import config
@@ -20,7 +21,7 @@ from pymor.core.config import config
 from pymor.core.logger import set_log_levels
 
 
-def run_demo():
+def main():
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
 
@@ -664,4 +665,4 @@ def run_demo():
 
 
 if __name__ == "__main__":
-    run_demo()
+    run(main)

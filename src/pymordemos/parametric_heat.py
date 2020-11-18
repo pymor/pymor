@@ -15,6 +15,7 @@ import numpy as np
 import scipy.linalg as spla
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from typer import run
 
 from pymor.basic import *
 from pymor.core.config import config
@@ -22,7 +23,7 @@ from pymor.core.config import config
 from pymor.core.logger import set_log_levels
 
 
-def run_demo():
+def main():
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
     set_defaults({'pymor.discretizers.builtin.gui.jupyter.get_visualizer.backend': 'not pythreejs'})
@@ -286,4 +287,4 @@ def run_demo():
     plt.show()
 
 if __name__ == "__main__":
-    run_demo()
+    run(main)
