@@ -11,6 +11,7 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from typer import run
 
 from pymor.core.config import config
 from pymor.models.iosys import LTIModel
@@ -20,7 +21,7 @@ from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
 
 
-def run_demo():
+def main():
     # # Model
     #
     # https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Synthetic_parametric_model
@@ -231,4 +232,4 @@ def run_demo():
     plt.show()
 
 if __name__ == "__main__":
-    run_demo()
+    run(main)

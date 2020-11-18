@@ -10,11 +10,12 @@ import numpy as np
 import scipy.linalg as spla
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from typer import run
 
 from pymor.basic import *
 
 
-def run_demo():
+def main():
     # # Model
 
     # In[ ]:
@@ -131,4 +132,4 @@ def run_demo():
 
 
 if __name__ == "__main__":
-    run_demo()
+    run(main)
