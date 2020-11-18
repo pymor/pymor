@@ -325,7 +325,7 @@ def main(
 
     # Second-Order Reduced Iterative Rational Krylov Algorithm (SOR-IRKA)
     sor_irka_reductor = SORIRKAReductor(so_sys)
-    rom_sor_irka = sor_irka_reductor.reduce(r)
+    rom_sor_irka = sor_irka_reductor.reduce(r, irka_options={'maxit': 10})
 
     fig, ax = plt.subplots()
     ax.semilogy(sor_irka_reductor.conv_crit, '.-')

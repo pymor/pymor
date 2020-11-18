@@ -610,7 +610,7 @@ def main(
     roms_sor_irka = []
     for mu in mu_list:
         sor_irka_reductor = SORIRKAReductor(so_sys, mu=mu)
-        rom_sor_irka = sor_irka_reductor.reduce(r)
+        rom_sor_irka = sor_irka_reductor.reduce(r, irka_options={'maxit': 10})
         roms_sor_irka.append(rom_sor_irka)
 
 
