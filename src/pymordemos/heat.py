@@ -143,7 +143,6 @@ def main(
         print('Skipped H_inf-norm calculation due to missing slycot.')
     print(f'FOM Hankel-norm: {lti.hankel_norm():e}')
 
-
     # Model order reduction
     run_mor_method(lti, w, BTReductor(lti), 'BT', r, tol=1e-5)
     run_mor_method(lti, w, LQGBTReductor(lti), 'LQGBT', r, tol=1e-5)
