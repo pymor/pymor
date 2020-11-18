@@ -7,20 +7,21 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.linalg as spla
-from typer import run
+from typer import Option, run
 
 from pymor.models.iosys import TransferFunction
 from pymor.reductors.interpolation import TFBHIReductor
 from pymor.reductors.h2 import TFIRKAReductor
 
 
-def main():
+def main(
+        tau: float = Option(0.1, help='The time delay.'),
+        r: int = Option(10, help='Order of the TF-IRKA ROM.'),
+):
     """Delay demo
 
     Cascade of delay and integrator
     """
-    tau = 0.1
-
     def H(s):
         return np.array([[np.exp(-s) / (tau * s + 1)]])
 
@@ -29,7 +30,6 @@ def main():
 
     tf = TransferFunction(1, 1, H, dH)
 
-    r = 10
     tf_irka_reductor = TFIRKAReductor(tf)
     rom = tf_irka_reductor.reduce(r, maxit=1000)
 

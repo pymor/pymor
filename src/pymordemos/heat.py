@@ -5,7 +5,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from typer import run
+from typer import Option, run
 
 from pymor.basic import (InstationaryProblem, StationaryProblem, RectDomain, ConstantFunction, ExpressionFunction,
                          discretize_instationary_cg, BTReductor, IRKAReductor)
@@ -15,7 +15,10 @@ import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
 
 
-def main():
+def main(
+        diameter: float = Option(0.1, help='Diameter option for the domain discretizer.'),
+        r: int = Option(5, help='Order of the ROMs.'),
+):
     r"""2D heat equation demo
 
     Discretization of the PDE:
@@ -47,7 +50,7 @@ def main():
         T=1.
     )
 
-    fom, _ = discretize_instationary_cg(p, diameter=1/10, nt=100)
+    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=100)
 
     fom.visualize(fom.solve())
 
@@ -87,7 +90,6 @@ def main():
     print(f'FOM Hankel-norm: {lti.hankel_norm():e}')
 
     # Balanced Truncation
-    r = 5
     reductor = BTReductor(lti)
     rom_bt = reductor.reduce(r, tol=1e-5)
     err_bt = lti - rom_bt
