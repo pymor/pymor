@@ -99,53 +99,34 @@ class MTReductor(BasicObject):
 
             if symmetric:
                 poles, ev_r = spla.eig(A, E, right=True)
-                rev = self.fom.A.source.from_numpy(ev_r.T)
-                if which == 'SM':
-                    idx = np.argsort(np.abs(poles))
-                elif which == 'LR':
-                    idx = np.argsort(-poles.real)
-                else:
-                    absres = np.empty(len(poles))
-                    for i in range(len(poles)):
-                        b_norm = spla.norm(rev[i].inner(self.fom.B.as_range_array()), ord=2)
-                        c_norm = spla.norm(self.fom.C.as_source_array().inner(rev[i]), ord=2)
-                        absres[i] = b_norm * c_norm
-                    if which == 'NR':
-                        idx = np.argsort(-absres / np.abs(np.real(poles)))
-                    elif which == 'NS':
-                        idx = np.argsort(-absres / np.abs(poles))
-                    elif which == 'NM':
-                        idx = np.argsort(-absres)
-                rev = rev[idx]
-                poles = poles[:r]
-                rev = rev[:r]
+                rev = self.fom.A.source.from_numpy(ev_r.T)                
                 lev = rev.copy()
             else:
                 poles, ev_l, ev_r = spla.eig(A, E, left=True, right=True)
                 rev = self.fom.A.source.from_numpy(ev_r.T)
                 lev = self.fom.A.source.from_numpy(ev_l.T)
-                if which == 'SM':
-                    idx = np.argsort(np.abs(poles))
-                elif which == 'LR':
-                    idx = np.argsort(-poles.real)
-                else:
-                    absres = np.empty(len(poles))
-                    for i in range(len(poles)):
-                        b_norm = spla.norm(lev[i].inner(self.fom.B.as_range_array()), ord=2)
-                        c_norm = spla.norm(self.fom.C.as_source_array().inner(rev[i]), ord=2)
-                        absres[i] = b_norm * c_norm
-                    if which == 'NR':
-                        idx = np.argsort(-absres / np.abs(np.real(poles)))
-                    elif which == 'NS':
-                        idx = np.argsort(-absres / np.abs(poles))
-                    elif which == 'NM':
-                        idx = np.argsort(-absres)
-                poles = poles[idx]
-                rev = rev[idx]
-                lev = lev[idx]
-                poles = poles[:r]
-                rev = rev[:r]
-                lev = lev[:r]
+            if which == 'SM':
+                idx = np.argsort(np.abs(poles))
+            elif which == 'LR':
+                idx = np.argsort(-poles.real)
+            else:
+                absres = np.empty(len(poles))
+                for i in range(len(poles)):
+                    b_norm = spla.norm(lev[i].inner(self.fom.B.as_range_array()), ord=2)
+                    c_norm = spla.norm(self.fom.C.as_source_array().inner(rev[i]), ord=2)
+                    absres[i] = b_norm * c_norm
+                if which == 'NR':
+                    idx = np.argsort(-absres / np.abs(np.real(poles)))
+                elif which == 'NS':
+                    idx = np.argsort(-absres / np.abs(poles))
+                elif which == 'NM':
+                    idx = np.argsort(-absres)
+            poles = poles[idx]
+            rev = rev[idx]
+            lev = lev[idx]
+            poles = poles[:r]
+            rev = rev[:r]
+            lev = lev[:r]
         elif decomposition == 'samdp':
             poles, res, rev, lev = samdp(self.fom.A, self.fom.E,
                                          self.fom.B.as_range_array(),
