@@ -14,7 +14,7 @@ import numpy as np
 import multiprocessing
 
 from pymor.core.config import config
-from pymor.core.config import is_windows_platform
+from pymor.core.config import is_windows_platform, is_macos_platform
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.core.exceptions import QtMissing
@@ -181,13 +181,14 @@ def _launch_qt_app(main_window_factory, block):
         except RuntimeError:
             app = QCoreApplication.instance()
         main_window = factory()
-        if getattr(sys, '_called_from_test', False) and is_windows_platform():
+        if getattr(sys, '_called_from_test', False) and (is_windows_platform() or is_macos_platform()):
             QTimer.singleShot(500, app, Slot('quit()'))
         main_window.show()
         app.exec_()
 
     import sys
-    if (block and not getattr(sys, '_called_from_test', False)) or is_windows_platform():
+    # we treat win and osx differently here since no (reliable) forking is possible with multiprocessing startup
+    if (block and not getattr(sys, '_called_from_test', False)) or (is_windows_platform() or is_macos_platform()):
         _doit(main_window_factory)
     else:
         p = multiprocessing.Process(target=_doit, args=(main_window_factory,))
