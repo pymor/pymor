@@ -17,9 +17,21 @@ from pymor.discretizers.builtin.grids.constructions import flatten_grid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 
 
+def figsize(height_over_width):
+    # figaspect increases the width, but we want to adjust the height
+    from matplotlib.figure import figaspect
+    w, h = figaspect(height_over_width)
+    from matplotlib import rcParams
+    reference_width = rcParams["figure.figsize"][0]
+    scaling = reference_width/w
+    return reference_width, h*scaling
+
+
 class MatplotlibAxesBase:
 
-    def __init__(self, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2, separate_axes=False, columns=2):
+    def __init__(self, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2, separate_axes=False, columns=2,
+            aspect_ratio=1):
+        # aspect_ratio is height/width
         self.vmin = vmin
         self.vmax = vmax
         self.codim = codim
@@ -29,9 +41,10 @@ class MatplotlibAxesBase:
             if len(U) == 1:
                 columns = 1 # otherwise we get a sep axes object with 0 data
             rows = int(np.ceil(len(U) / columns))
-            self.ax = figure.subplots(rows, columns, squeeze=False).flatten()
+            self.ax = figure.subplots(rows, columns, squeeze=False, figsize=figsize(aspect_ratio)).flatten()
         else:
             self.ax = (figure.gca(),)
+            self.ax[0].set_aspect(aspect_ratio)
         self.figure = figure
         self.codim = codim
         self.grid = grid
@@ -87,8 +100,13 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
         self.colorbar = colorbar
         self.animate = self.set
 
+        if bounding_box is None:
+            bounding_box = grid.bounding_box()
+        assert len(bounding_box) == 2 and all(len(b) == 2 for b in bounding_box)
+        aspect_ratio = (bounding_box[1][1] - bounding_box[0][1]) / (bounding_box[1][0] - bounding_box[0][0])
+
         super().__init__(U=U, figure=figure, grid=grid,  vmin=vmin, vmax=vmax, codim=codim, columns=columns,
-                         sync_timer=sync_timer)
+                         sync_timer=sync_timer, aspect_ratio=aspect_ratio)
 
     def _plot_init(self):
         if self.codim == 2:
