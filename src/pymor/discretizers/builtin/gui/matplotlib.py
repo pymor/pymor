@@ -56,7 +56,7 @@ class MatplotlibAxesBase:
         # assignment delayed to ensure _plot_init works w/o data
         self.U = U
         # Rest is only needed with animation
-        if not separate_axes and self.count == 1:
+        if U is not None and not separate_axes and self.count == 1:
             assert len(self.ax) == 1
             delay_between_frames = 200  # ms
             self.anim = animation.FuncAnimation(figure, self.animate,
