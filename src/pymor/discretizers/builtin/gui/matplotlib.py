@@ -17,16 +17,6 @@ from pymor.discretizers.builtin.grids.constructions import flatten_grid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 
 
-def figsize(height_over_width):
-    # figaspect increases the width, but we want to adjust the height
-    from matplotlib.figure import figaspect
-    w, h = figaspect(height_over_width)
-    from matplotlib import rcParams
-    reference_width = rcParams["figure.figsize"][0]
-    scaling = reference_width/w
-    return reference_width, h*scaling
-
-
 class MatplotlibAxesBase:
 
     def __init__(self, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2, separate_axes=False, columns=2,
@@ -41,10 +31,11 @@ class MatplotlibAxesBase:
             if len(U) == 1:
                 columns = 1 # otherwise we get a sep axes object with 0 data
             rows = int(np.ceil(len(U) / columns))
-            self.ax = figure.subplots(rows, columns, squeeze=False, figsize=figsize(aspect_ratio)).flatten()
+            self.ax = figure.subplots(rows, columns, squeeze=False).flatten()
         else:
             self.ax = (figure.gca(),)
-            self.ax[0].set_aspect(aspect_ratio)
+        for ax in self.ax:
+            ax.set_aspect(aspect_ratio)
         self.figure = figure
         self.codim = codim
         self.grid = grid
