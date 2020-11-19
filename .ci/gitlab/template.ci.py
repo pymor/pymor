@@ -183,7 +183,7 @@ ci setup:
     extends: .sanity_checks
     script:
         - apk add jq
-        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}"
+        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}" "{{ ' '.join(manylinuxs) }}"
 
 #****** test stage
 
@@ -441,7 +441,7 @@ env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)
 ci_image_tag = env['CI_IMAGE_TAG']
 pypi_mirror_tag = env['PYPI_MIRROR_TAG']
-manylinuxs = [2010, 2014]
+manylinuxs = ['2010', '2014']
 registry="zivgitlab.wwu.io/pymor/docker"
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = [(sc, py, pa) for sc, pythons, pa in test_scripts for py in pythons]

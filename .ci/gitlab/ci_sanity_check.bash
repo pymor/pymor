@@ -18,6 +18,7 @@ cd "${PYMOR_ROOT}"
 set -eux
 
 PYTHONS="${1}"
+MANYLINUXS="${2}"
 # make sure binder setup is current
 make docker_file && git diff --exit-code .binder/Dockerfile
 # make sure CI setup is current
@@ -30,7 +31,7 @@ for py in ${PYTHONS} ; do
   docker_tag_exists pymor/testing_py${py} ${CI_IMAGE_TAG}
   docker_tag_exists pymor/pypi-mirror_stable_py${py} ${PYPI_MIRROR_TAG}
   docker_tag_exists pymor/pypi-mirror_oldest_py${py} ${PYPI_MIRROR_TAG}
-  for ml in 1 2010 2014 ; do
+  for ml in ${MANYLINUXS}; do
     docker_tag_exists pymor/wheelbuilder_manylinux${ml}_py${py} ${PYPI_MIRROR_TAG}
   done
 done
