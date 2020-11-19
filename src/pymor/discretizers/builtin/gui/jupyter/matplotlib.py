@@ -52,12 +52,15 @@ class MPLPlotBase:
         # ratio in the respective axes created by base classes, we also need to provide a correct bounding_box.
         if bounding_box is None:
             bounding_box = grid.bounding_box()
-        assert len(bounding_box) == 2 and all(len(b) == 2 for b in bounding_box)
-        aspect_ratio = (bounding_box[1][1] - bounding_box[0][1]) / (bounding_box[1][0] - bounding_box[0][0])
+        figure_kwargs = {}
+        if grid.dim == 2:
+            assert len(bounding_box) == 2 and all(len(b) == 2 for b in bounding_box)
+            aspect_ratio = (bounding_box[1][1] - bounding_box[0][1]) / (bounding_box[1][0] - bounding_box[0][0])
+            figure_kwargs['figsize'] = figsize(aspect_ratio)
 
         if separate_plots:
             for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
-                figure = plt.figure(self.fig_ids[i], figsize=figsize(aspect_ratio))
+                figure = plt.figure(self.fig_ids[i], **figure_kwargs)
                 sync_timer = sync_timer or figure.canvas.new_timer()
                 if grid.dim == 2:
                     plot = MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin, vmax=vmax,
@@ -71,7 +74,7 @@ class MPLPlotBase:
                 self.plots.append(plot)
                     # plt.tight_layout()
         else:
-            figure = plt.figure(self.fig_ids[0], figsize=figaspect(aspect_ratio))
+            figure = plt.figure(self.fig_ids[0], **figure_kwargs)
             sync_timer = sync_timer or figure.canvas.new_timer()
             if grid.dim == 2:
                 plot = MatplotlibPatchAxes(U=U, figure=figure, sync_timer=sync_timer, grid=grid, vmin=self.vmins,
