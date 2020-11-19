@@ -44,6 +44,8 @@ jobs:
       pip install -r requirements-ci.txt
       pip install -r requirements-optional.txt
 
+      # this makes us fall back on MPL vis backend (gl shader compile fails otherwise)
+      cp .ci/azure/pymor_defaults.py_osx pymor_defaults.py
     displayName: Configure conda and conda-build
 
   - script: |
