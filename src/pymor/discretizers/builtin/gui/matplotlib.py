@@ -41,6 +41,7 @@ class MatplotlibAxesBase:
         self.grid = grid
         self.separate_axes = separate_axes
         self.count = len(U) if separate_axes or isinstance(U, tuple) else 1
+        self.aspect_ratio = aspect_ratio
 
         self._plot_init()
 
@@ -109,7 +110,12 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
                                  facecolors=np.zeros(len(self.subentities)),
                                  vmin=self.vmin, vmax=self.vmax, shading='flat')
         if self.colorbar:
-            self.figure.colorbar(self.p, ax=self.ax[0])
+            # thin plots look ugly with a huge colorbar on the right
+            if self.aspect_ratio < 0.75:
+                orientation = 'horizontal'
+            else:
+                orientation = 'vertical'
+            self.figure.colorbar(self.p, ax=self.ax[0], orientation=orientation)
 
     def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
