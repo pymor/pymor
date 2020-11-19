@@ -10,7 +10,7 @@ from ipywidgets import HTML, HBox, widgets, Layout
 import matplotlib.pyplot as plt
 
 from pymor.core.config import config
-from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes, Matplotlib1DAxes
+from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes, Matplotlib1DAxes, figsize
 from pymor.vectorarrays.interface import VectorArray
 
 
@@ -47,9 +47,20 @@ class MPLPlotBase:
 
         do_animation = not separate_axes and len(U[0]) > 1
 
+        # Setting the aspect ratio in figure() only works by specifying absolute values for figsize, which we calculate
+        # using figsize (matplotlib.figure.figaspect does not do exactly what we want). To ensure a correct aspect
+        # ratio in the respective axes created by base classes, we also need to provide a correct bounding_box.
+        if bounding_box is None:
+            bounding_box = grid.bounding_box()
+        figure_kwargs = {}
+        if grid.dim == 2:
+            assert len(bounding_box) == 2 and all(len(b) == 2 for b in bounding_box)
+            aspect_ratio = (bounding_box[1][1] - bounding_box[0][1]) / (bounding_box[1][0] - bounding_box[0][0])
+            figure_kwargs['figsize'] = figsize(aspect_ratio)
+
         if separate_plots:
             for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
-                figure = plt.figure(self.fig_ids[i])
+                figure = plt.figure(self.fig_ids[i], **figure_kwargs)
                 sync_timer = sync_timer or figure.canvas.new_timer()
                 if grid.dim == 2:
                     plot = MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin, vmax=vmax,
@@ -63,7 +74,7 @@ class MPLPlotBase:
                 self.plots.append(plot)
                     # plt.tight_layout()
         else:
-            figure = plt.figure(self.fig_ids[0])
+            figure = plt.figure(self.fig_ids[0], **figure_kwargs)
             sync_timer = sync_timer or figure.canvas.new_timer()
             if grid.dim == 2:
                 plot = MatplotlibPatchAxes(U=U, figure=figure, sync_timer=sync_timer, grid=grid, vmin=self.vmins,
@@ -94,7 +105,7 @@ class MPLPlotBase:
 
 
 
-def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
+def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
@@ -111,7 +122,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         provided, in which case a subplot is created for each entry of the tuple. The
         lengths of all arrays have to agree.
     bounding_box
-        A bounding box in which the grid is contained.
+        A bounding box in which the grid is contained (defaults to grid.bounding_box()).
     codim
         The codimension of the entities the data in `U` is attached to (either 0 or 2).
     title
