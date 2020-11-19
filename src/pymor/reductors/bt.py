@@ -144,7 +144,7 @@ class BTReductor(GenericBTReductor):
 
 
 class FDBTReductor(GenericBTReductor):
-    """Balanced Truncation reductor using frequency domain representation of gramians.
+    """Balanced Truncation reductor using frequency domain representation of Gramians.
 
     See [ZSW99]_.
 
@@ -163,7 +163,7 @@ class FDBTReductor(GenericBTReductor):
     mu
         |Parameter values|.
     """
-    def __init__(self, fom, ast_pole_data={'k': 50, 'sigma': 0, 'which': 'LM'}, mu=None, solver_options=None):
+    def __init__(self, fom, ast_pole_data=None, mu=None, solver_options=None):
         super().__init__(fom, mu=mu)
         self.ast_pole_data = ast_pole_data
         self.solver_options = solver_options

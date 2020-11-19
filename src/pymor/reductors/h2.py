@@ -684,7 +684,7 @@ class GapIRKAReductor(GenericIRKAReductor):
             If the order of reduced model is given, initial
             interpolation data is generated randomly.
         tol
-            Tolerance for the largest change in interpolation points.
+            Tolerance for the convergence criterion.
         maxit
             Maximum number of iterations.
         num_prev

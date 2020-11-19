@@ -919,8 +919,7 @@ class LTIModel(InputStateOutputModel):
         """
         return self.hsv(mu=mu)[0]
 
-    @cached
-    def l2_norm(self, ast_pole_data={'k': 50, 'sigma': 0, 'which': 'LM'}, mu=None):
+    def l2_norm(self, ast_pole_data=None, mu=None):
         """Compute the L2-norm of the |LTIModel|.
 
         Parameters
@@ -992,8 +991,7 @@ class LTIModel(InputStateOutputModel):
         """
         return self.hinf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate)
 
-    @cached
-    def _get_ast_spectrum(self, ast_pole_data={'k': 50, 'sigma': 0, 'which': 'LM'}, mu=None):
+    def _get_ast_spectrum(self, ast_pole_data=None, mu=None):
         """Compute anti-stable subset of the poles of the |LTIModel|.
 
         Parameters

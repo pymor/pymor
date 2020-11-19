@@ -38,7 +38,7 @@ def solve_bernoulli(A, E, B, trans=False, maxiter=100, after_maxiter=3, tol=1e-8
     B
         The operator B as a 2D |NumPy array|.
     trans
-        Wether to solve transposed or standard Bernoulli equation.
+        Whether to solve transposed or standard Bernoulli equation.
     maxiter
         The maximum amount of iterations.
     after_maxiter
@@ -70,14 +70,12 @@ def solve_bernoulli(A, E, B, trans=False, maxiter=100, after_maxiter=3, tol=1e-8
     for i in range(maxiter):
         Aprev = A
         lu, piv = spla.lu_factor(A.conj().T)
+        lndetA = np.sum(np.log(np.abs(np.diag(lu))))
         if E is not None:
-            detE = spla.det(E)
+            lndetE = np.linalg.slogdet(E)[1]
         else:
-            detE = 1
-        if detE.real > 0.:
-            c = np.abs(np.prod(np.diag(lu)) / detE)**(1. / n)  # |det(A_k)/det(E)|^(1/n)
-        else:
-            c = 1
+            lndetE = 0.
+        c = np.exp((1./n)*(lndetA - lndetE))
         AinvTET = spla.lu_solve((lu, piv), E.conj().T)
         if E is not None:
             A = 0.5 * ((1 / c) * A + c * AinvTET.conj().T @ E)
@@ -93,7 +91,6 @@ def solve_bernoulli(A, E, B, trans=False, maxiter=100, after_maxiter=3, tol=1e-8
         if rnorm <= tol:
             after_iter += 1
 
-    # Q = spla.null_space(E.conj().T - A.conj().T)
     Q, R, _ = spla.qr(E.conj() - A.conj(), pivoting=True)
     nsp_rk = 0
     for r in R:
@@ -127,6 +124,8 @@ def bernoulli_stabilize(A, E, B, ast_spectrum, trans=False):
 
       contains the eigenvalues of :math:`(A, E)` where anti-stable eigenvalues have
       been mirrored on the imaginary axis.
+
+    See e.g. [BBQ07]_.
 
     Parameters
     ----------
