@@ -86,7 +86,7 @@ def main(
     ##############
     print(results['summary'])
     import matplotlib.pyplot
-    matplotlib.pyplot.show(results['figure'])
+    matplotlib.pyplot.show()
 
     # write results to disk
     #######################

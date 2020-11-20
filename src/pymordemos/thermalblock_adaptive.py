@@ -162,7 +162,7 @@ Greedy basis generation:
 
     if plot_error_sequence:
         from matplotlib import pyplot as plt
-        plt.show(results['figure'])
+        plt.show()
     if plot_err:
         mumax = results['max_error_mus'][0, -1]
         U = fom.solve(mumax)
