@@ -5,7 +5,6 @@ jobs:
   timeoutInMinutes: 45
   variables:
       PYMOR_HYPOTHESIS_PROFILE: ci
-      QT_PREFERRED_BINDING: PyQt5
   strategy:
     maxParallel: 8
     matrix:
@@ -18,11 +17,10 @@ jobs:
       osx_python3.8:
         CONFIG: osx_python3.8
         UPLOAD_PACKAGES: False
-
+      osx_python3.9:
+        CONFIG: osx_python3.9
+        UPLOAD_PACKAGES: False
   steps:
-  - script: |
-      brew cask install xquartz
-    displayName: install X11
 
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
@@ -36,26 +34,25 @@ jobs:
       conda update -y --all
       conda install -y --only-deps pymor
       # these ones are not in the 2020.1 conda build yet
-      conda install -y pyevtk mpi4py slycot pytorch pytest-xvfb pyqt
+      conda install -y pyevtk mpi4py slycot pytorch pyqt 
       # these are buildtime, not a runtime,  deps for our conda package
       conda install -y cython pytest-cov pytest
       # install anything which might be a new dependency with pip
       pip install -r requirements.txt
       pip install -r requirements-ci.txt
-      pip install -r requirements-optional.txt
+      # this currently still introduces some conflicts
+      # pip install -r requirements-optional.txt
 
       # this makes us fall back on MPL vis backend (gl shader compile fails otherwise)
       cp .ci/azure/pymor_defaults.py_osx pymor_defaults.py
     displayName: Configure conda and conda-build
 
   - script: |
-      set -ex
+      #set -ex
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
       python setup.py build_ext -i
-      python -c "from Qt.QtWidgets import QSizePolicy"
-      py.test -sv --junitxml=test_results.xml --cov=src/pymor  \
-        --memprof-top-n 50 --memprof-csv-file=memory_usage.txt --cov-context=test \
-        --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}
+      export QT_PREFERRED_BINDING=PySide2: QT_DEBUG_PLUGINS=1
+      py.test -sv --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}
       coverage xml
     displayName: py.test
 
