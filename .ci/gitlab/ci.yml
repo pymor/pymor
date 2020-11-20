@@ -98,7 +98,7 @@ stages:
         - 'export SHARED_PATH="${CI_PROJECT_DIR}/shared"'
         - mkdir -p ${SHARED_PATH}
     services:
-        - docker:dind
+        - zivgitlab.wwu.io/pymor/docker/docker:dind
     environment:
         name: unsafe
 
@@ -121,6 +121,7 @@ stages:
     extends: .docker-in-docker
     stage: build
     needs: ["ci setup"]
+    tags: [mike]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
@@ -135,7 +136,7 @@ stages:
           when: never
         - when: on_success
     services:
-      - pymor/devpi:1
+      - zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
     dependencies:
       - "wheel 1 py3 6"
       - "wheel 2010 py3 6"
@@ -643,7 +644,7 @@ submit ci_weekly 3 8:
 pip 1/3:
     tags: [mike]
     services:
-        - name: pymor/pypi-mirror_stable_py3.6:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.6:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
           alias: pypi_mirror
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -656,7 +657,7 @@ pip 1/3:
 pip 2/3:
     tags: [mike]
     services:
-        - name: pymor/pypi-mirror_stable_py3.7:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
           alias: pypi_mirror
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -669,7 +670,7 @@ pip 2/3:
 pip 3/3:
     tags: [mike]
     services:
-        - name: pymor/pypi-mirror_stable_py3.8:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:f6acb8bdf750d965c15f7f90b01fac4b745b58bd
           alias: pypi_mirror
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -880,17 +881,17 @@ pypi deploy:
 
 check_wheel 1:
     extends: .check_wheel
-    image: pymor/deploy_checks:devpi_centos_8
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks:devpi_centos_8
     script: devpi install pymor[full]
 
 check_wheel 2:
     extends: .check_wheel
-    image: pymor/deploy_checks:devpi_debian_buster
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks:devpi_debian_buster
     script: devpi install pymor[full]
 
 check_wheel 3:
     extends: .check_wheel
-    image: pymor/deploy_checks:devpi_debian_bullseye
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks:devpi_debian_bullseye
     script: devpi install pymor[full]
 
 docs build 3 6:
