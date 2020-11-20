@@ -129,7 +129,7 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             self.shift = - np.array(bb[0]) - self.size / 2
 
             # setup buffers
-            buffer_dtype = [('position', 'f4', 2), ('color', 'f4', (1,))]
+            buffer_dtype = [('position', 'f4', 2), ('color', 'f4')]
             if self.reference_element == triangle:
                 if codim == 2:
                     self.vertex_data = np.empty(len(coordinates), dtype=buffer_dtype)
