@@ -100,7 +100,7 @@ stages:
         - 'export SHARED_PATH="${CI_PROJECT_DIR}/shared"'
         - mkdir -p ${SHARED_PATH}
     services:
-        - docker:dind
+        - {{registry}}/docker:dind
     environment:
         name: unsafe
 
@@ -123,6 +123,7 @@ stages:
     extends: .docker-in-docker
     stage: build
     needs: ["ci setup"]
+    tags: [mike]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
@@ -137,7 +138,7 @@ stages:
           when: never
         - when: on_success
     services:
-      - pymor/devpi:1
+      - {{registry}}/pymor/devpi:1
     dependencies:
     {%- for PY in pythons %}
     {%- for ML in manylinuxs %}
@@ -277,7 +278,7 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
 pip {{loop.index}}/{{loop.length}}:
     tags: [mike]
     services:
-        - name: pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
           alias: pypi_mirror
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -363,7 +364,7 @@ pypi deploy:
 {% for OS, PY in testos %}
 check_wheel {{loop.index}}:
     extends: .check_wheel
-    image: pymor/deploy_checks:devpi_{{OS}}
+    image: {{registry}}/pymor/deploy_checks:devpi_{{OS}}
     script: devpi install pymor[full]
 {% endfor %}
 
