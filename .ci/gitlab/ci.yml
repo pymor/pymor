@@ -138,7 +138,8 @@ stages:
           when: never
         - when: on_success
     services:
-      - zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
+      - name: zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
+        alias: pymor__devpi
     dependencies:
       - "wheel 1 py3 6"
       - "wheel 2010 py3 6"

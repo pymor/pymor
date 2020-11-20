@@ -140,7 +140,8 @@ stages:
           when: never
         - when: on_success
     services:
-      - {{registry}}/pymor/devpi:1
+      - name: {{registry}}/pymor/devpi:1
+        alias: pymor__devpi
     dependencies:
     {%- for PY in pythons %}
     {%- for ML in manylinuxs %}
