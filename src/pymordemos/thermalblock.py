@@ -184,7 +184,7 @@ def main(
 
     if plot_error_sequence:
         import matplotlib.pyplot
-        matplotlib.pyplot.show(results['figure'])
+        matplotlib.pyplot.show()
     if plot_err:
         mumax = results['max_error_mus'][0, -1]
         U = fom.solve(mumax)
