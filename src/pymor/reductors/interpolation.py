@@ -33,12 +33,12 @@ class GenericBHIReductor(BasicObject):
     and :math:`c_i`; if :math:`\sigma_i` is complex, there is
     :math:`\sigma_j` such that :math:`\sigma_j = \overline{\sigma_i}`,
     :math:`b_j = \overline{b_i}`, :math:`c_j = \overline{c_i}`), this
-    reductor finds a transfer function :math:`\widehat{H}` such that
+    reductor finds a transfer function :math:`\hat{H}` such that
 
     .. math::
-        H(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i, \\
-        c_i^T H(\sigma_i) & = c_i^T \widehat{H}(\sigma_i) b_i, \\
-        c_i^T H'(\sigma_i) b_i & = c_i^T \widehat{H}'(\sigma_i) b_i,
+        H(\sigma_i) b_i & = \hat{H}(\sigma_i) b_i, \\
+        c_i^T H(\sigma_i) & = c_i^T \hat{H}(\sigma_i) b_i, \ - \widehat{y}\
+        c_i^T H'(\sigma_i) b_i & = c_i^T \hat{H}'(\sigma_i) b_i,
 
     for all :math:`i = 1, 2, \ldots, r`.
 
