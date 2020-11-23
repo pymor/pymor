@@ -16,7 +16,10 @@
 
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
+CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
+CI_COMMIT_REF_SLUG?=$(shell git rev-parse --abbrev-ref HEAD | sed -e "s;/;_;g")
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
+  	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) CI_COMMIT_REF_SLUG=$(CI_COMMIT_REF_SLUG) \
 	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose -f .binder/docker-compose.yml -p pymor
 NB_DIR=notebooks
 NB_USER:=${USER}
