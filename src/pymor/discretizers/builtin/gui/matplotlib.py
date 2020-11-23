@@ -17,16 +17,6 @@ from pymor.discretizers.builtin.grids.constructions import flatten_grid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 
 
-def figsize(height_over_width):
-    # figaspect increases the width, but we want to adjust the height
-    from matplotlib.figure import figaspect
-    w, h = figaspect(height_over_width)
-    from matplotlib import rcParams
-    reference_width = rcParams["figure.figsize"][0]
-    scaling = reference_width/w
-    return reference_width, h*scaling
-
-
 class MatplotlibAxesBase:
 
     def __init__(self, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2, separate_axes=False, columns=2,
@@ -41,15 +31,17 @@ class MatplotlibAxesBase:
             if len(U) == 1:
                 columns = 1 # otherwise we get a sep axes object with 0 data
             rows = int(np.ceil(len(U) / columns))
-            self.ax = figure.subplots(rows, columns, squeeze=False, figsize=figsize(aspect_ratio)).flatten()
+            self.ax = figure.subplots(rows, columns, squeeze=False).flatten()
         else:
             self.ax = (figure.gca(),)
-            self.ax[0].set_aspect(aspect_ratio)
+        for ax in self.ax:
+            ax.set_aspect(aspect_ratio)
         self.figure = figure
         self.codim = codim
         self.grid = grid
         self.separate_axes = separate_axes
         self.count = len(U) if separate_axes or isinstance(U, tuple) else 1
+        self.aspect_ratio = aspect_ratio
 
         self._plot_init()
 
@@ -118,7 +110,12 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
                                  facecolors=np.zeros(len(self.subentities)),
                                  vmin=self.vmin, vmax=self.vmax, shading='flat')
         if self.colorbar:
-            self.figure.colorbar(self.p, ax=self.ax[0])
+            # thin plots look ugly with a huge colorbar on the right
+            if self.aspect_ratio < 0.75:
+                orientation = 'horizontal'
+            else:
+                orientation = 'vertical'
+            self.figure.colorbar(self.p, ax=self.ax[0], orientation=orientation)
 
     def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
