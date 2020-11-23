@@ -37,6 +37,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
               'pymordocstring',
+              'try_on_binder',
               'jupyter_sphinx',
               'sphinx.ext.mathjax',
               'sphinx_qt_documentation',
@@ -261,3 +262,7 @@ modindex_common_prefix = ['pymor.']
 
 # make intersphinx link to pyside2 docs
 qt_documentation = 'PySide2'
+
+branch = os.environ.get('CI_COMMIT_REF_SLUG', 'main')
+# this must match PYMOR_ROOT/.ci/gitlab/deploy_docs
+try_on_binder_branch = branch.replace('github/PUSH_', 'from_fork__')

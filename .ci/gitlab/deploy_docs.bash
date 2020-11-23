@@ -12,6 +12,9 @@ set -eux
 REPO=git@github.com:pymor/docs.git
 REPO_DIR=${CI_PROJECT_DIR}/repo
 TARGET_DIR=${REPO_DIR}/${CI_COMMIT_REF_SLUG/github\/PUSH_/from_fork__}
+# this must match PYMOR_ROOT/docs/source/conf.py:try_on_binder_branch
+SLUG=${CI_COMMIT_REF_SLUG/github\/PUSH_/from_fork__}
+TARGET_DIR=${REPO_DIR}/${SLUG}
 
 git clone --depth 2 ${REPO} ${REPO_DIR}
 
