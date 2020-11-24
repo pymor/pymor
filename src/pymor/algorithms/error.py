@@ -302,8 +302,7 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
 
     def get_color():
         if len(colors[0]) == 0:
-            colors[0] = list(COLORS.keys())
-            colors[0].reverse()
+            colors[0] = list(reversed(COLORS.keys()))
         return colors[0].pop()
 
     fig = plt.figure()
