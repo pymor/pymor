@@ -11,6 +11,7 @@ from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.algorithms.basic import contains_zero_vector
 from pymor.core.logger import log_levels
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import given_vector_arrays
@@ -55,6 +56,13 @@ def test_method_of_snapshots_with_product(operator_with_arrays_and_products, met
     U.scal(s)
     UsVh = U.lincomb(Vh.T)
     assert np.all(almost_equal(A, UsVh, rtol=4e-8))
+
+
+@pytest.mark.parametrize('method', methods)
+def test_not_too_many_modes(method):
+    vec_array = NumpyVectorSpace.from_numpy(np.logspace(-5, 0, 10).reshape((-1, 1)))
+    U, s, V = method(vec_array, atol=0, rtol=0)
+    assert len(U) == len(s) == len(V) == 1
 
 
 if __name__ == "__main__":
