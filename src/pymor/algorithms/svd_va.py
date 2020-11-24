@@ -97,7 +97,7 @@ def method_of_snapshots(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=
             selected_modes = min(selected_modes, modes)
 
         if selected_modes > A.dim:
-            logger.warning('Number of computed singluar vectors lager than array dimension! Truncating ...')
+            logger.warning('Number of computed singular vectors larger than array dimension! Truncating ...')
             selected_modes = A.dim
 
         s = np.sqrt(evals[:selected_modes])
