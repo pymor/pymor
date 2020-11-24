@@ -25,7 +25,6 @@ services:
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
             NB_USER: "${NB_USER}"
             NB_UID: 1000
-            BUILD_ENV: dev
 
     ports:
         - 9180:8888
@@ -34,7 +33,6 @@ services:
         - ./local_packages:/pymor/local_packages
     restart: "no"
     environment:
-      - CI_COMMIT_REF_SLUG
       - CI_COMMIT_REF_NAME
       - NB_DIR
       - PYMOR_HYPOTHESIS_PROFILE
@@ -52,7 +50,6 @@ services:
       - CI_PROJECT_DIR=/pymor
       - CI_PROJECT_URL=https://zivgitlab.uni-muenster.de/pymor/pymor
       - CI_COMMIT_SHA
-      - CI_COMMIT_REF_SLUG
       - CI_COMMIT_REF_NAME
       - PYMOR_HYPOTHESIS_PROFILE
     # this is a conservative estimate of available RAM on the gitlab ci runners
@@ -86,7 +83,6 @@ services:
       - PYMOR_FORCE_JUPYTER=1
       - PYMOR_WITH_SPHINX=1
       - CI_PROJECT_DIR=/pymor
-      - CI_COMMIT_REF_SLUG
       - CI_COMMIT_REF_NAME
     volumes:
         - ./..:/pymor

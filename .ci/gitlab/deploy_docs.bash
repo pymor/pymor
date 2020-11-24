@@ -11,6 +11,9 @@ set -eux
 
 REPO=git@github.com:pymor/docs.git
 REPO_DIR=${CI_PROJECT_DIR}/repo
+if [[ "x${CI_COMMIT_REF_SLUG}" == "x" ]] ; then
+  CI_COMMIT_REF_SLUG=$(slugify ${CI_COMMIT_REF_NAME})
+fi
 # this must match PYMOR_ROOT/docs/source/conf.py:try_on_binder_branch
 SLUG=${CI_COMMIT_REF_SLUG/github\/PUSH_/from_fork__}
 TARGET_DIR=${REPO_DIR}/${SLUG}
@@ -39,7 +42,8 @@ rm -rf ${REPO_DIR}/.binder
 mkdir ${REPO_DIR}/.binder
 
 # this needs to go into the repo root, not the subdir!
-cp ${PYMOR_ROOT}/.binder/Dockerfile ${REPO_DIR}/.binder/
+sed -e "s;BINDERIMAGE;${BINDERIMAGE};g" -e "s;SLUG;${SLUG};g" \
+	${PYMOR_ROOT}/.ci/gitlab/Dockerfile.binder.tocopy > ${REPO_DIR}/.binder/Dockerfile
 
 # for binder the notebooks need to exist alongside their .rst version
 cd ${TARGET_DIR}
@@ -51,9 +55,8 @@ git add ${TARGET_DIR}/*ipynb
 git add ${REPO_DIR}/.binder/
 
 git commit -am "Binder setup for ${CI_COMMIT_REF_NAME}"
+
+# makes sure the binder infra is usable
+repo2docker --user-id 2000 --user-name juno --no-run --debug .
+
 git push origin ${SLUG} -f
-
-
-
-du -sch ${REPO_DIR}/*
-du -sch ${TARGET_DIR}/*
