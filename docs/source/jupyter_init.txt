@@ -14,5 +14,8 @@
     pymor.tools.random._default_random_state = None
 
 
+.. try_on_binder::
+
+
 ..
   named .txt to avoid sphinx warning since it's not included in any toc

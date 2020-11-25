@@ -26,9 +26,13 @@ class TryOnBinder(Directive):
 
 def html_visit_binder_link_node(self, node):
     html = f'''
-    <a href=\"{node['target']}\">
+<div class="admonition">
+<p class="admonition-title">Run this tutorial</p>
+    <a href=\"{node['target']}\">Click here</a> to run this tutorial on mybinder.org: <a href=\"{node['target']}\">
         <img src=\"{node['badge']}\" alt=\"try on mybinder.org\">
-    </a>
+    </a><br/>
+    <emph>Please note that starting the notebook server make take a couple of minutes.</emph>
+</div>
     '''
     self.body.append(html)
     raise nodes.SkipNode
