@@ -68,8 +68,8 @@ class ParamRuler(QtWidgets.QWidget):
         self.setMinimumSize(200, 100)
         box = QtWidgets.QGridLayout()
         self.spins = []
-        for j in range(args['YBLOCKS']):
-            for i in range(args['XBLOCKS']):
+        for j in range(sim.xblocks):
+            for i in range(sim.yblocks):
                 spin = QtWidgets.QDoubleSpinBox()
                 spin.setRange(PARAM_MIN, PARAM_MAX)
                 spin.setSingleStep((PARAM_MAX - PARAM_MIN) / PARAM_STEPS)
@@ -105,8 +105,7 @@ class SimPanel(QtWidgets.QWidget):
     def solve_update(self):
         tic = time.perf_counter()
         self.param_panel.enable(False)
-        args = self.sim.args
-        shape = (args['YBLOCKS'], args['XBLOCKS'])
+        shape = (self.sim.yblocks, self.sim.xblocks)
         mu = {'diffusion': np.array([s.value() for s in self.param_panel.spins]).reshape(shape)}
         U = self.sim.solve(mu)
         print(f'Simtime {time.perf_counter()-tic}')
@@ -142,6 +141,7 @@ class RBGui(QtWidgets.QMainWindow):
 class SimBase:
     def __init__(self, xblocks, yblocks, snapshots, rbsize, grid, product):
         self.snapshots, self.rbsize, self.product = snapshots, rbsize, product
+        self.xblocks, self.yblocks = xblocks, yblocks
         self.first = True
         self.problem = thermal_block_problem(num_blocks=(xblocks, yblocks),
                                              parameter_range=(PARAM_MIN, PARAM_MAX))
