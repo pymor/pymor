@@ -6,6 +6,7 @@
 # DO NOT use any python features here that require 3.6 or newer
 
 _PYTEST = 'pytest>=4.4'
+_PYSIDE='PySide2!=5.15.2,!=5.15.2.*,!=5.11.*'
 
 def _pymess(rev, major, minor, marker=True):
     url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}m-manylinux1_x86_64.whl'
@@ -27,6 +28,7 @@ def setup_requires():
     other = ['setuptools>=40.8.0,<49.2.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.28', 'packaging',]
     return numpys + other
 
+# Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
 install_requires = ['scipy>=1.1;python_version < "3.8"','scipy>=1.3.3;python_version >= "3.8"', 'Qt.py>=1.2.4',
                     'packaging','diskcache', 'typer'] + setup_requires()
 install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
@@ -41,17 +43,17 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'pygments': 'highlighting code',
                     'pythreejs': 'threejs bindings for python notebook  visualization',
                     _PYTEST: 'testing framework required to execute unit tests',
-                    'PySide2': 'solution visualization for builtin discretizations',
+                    _PYSIDE: 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
                     'nbresuse': 'resource usage indicator for notebooks',
                     'torch': 'PyTorch open source machine learning framework',
                     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
                     'pillow': 'image library used for bitmap data functions'}
-doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', 'PySide2', 'ipyparallel>=6.2.5',
+doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel', 
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout', 
-               'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19', 'PyQt5']
+               'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19', 'PyQt5!=5.15.2,>5.7,!=5.15.2.*']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
                 'pytest-instafail': 'pytest_instafail',
