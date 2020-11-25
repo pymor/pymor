@@ -64,11 +64,15 @@ if config.HAVE_TORCH:
             network on the training set should not exceed this threshold.
             Training is interrupted if a neural network that undercuts the
             error tolerance is found.
+        save_training_state
+            Determines whether or not to save the currently best model when
+            training is interrupted. If `True`, the best model trained thus far
+            can be used later on without having to train again.
         """
 
         def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
                      basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
-                     ann_mse='like_basis'):
+                     ann_mse='like_basis', save_training_state=True):
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
@@ -147,6 +151,21 @@ if config.HAVE_TORCH:
 
             # run the actual training of the neural network
             with self.logger.block(f'Performing {restarts} restarts for training ...'):
+
+                # save the best neural network when training is interrupted (if desired)
+                if self.save_training_state:
+                    import signal
+                    import sys
+
+                    # define a signal handler to call in case of a `SIGINT` signal
+                    def signal_handler(sig, frame):
+                        if hasattr(self, 'neural_network'):
+                            self.logger.warning('Aborting training, but saving best model thus far ...')
+                            self.logger.warning(f'Best neural network produces validation loss of {self.losses["val"]} ...')
+                            self.save_model()
+                        sys.exit(0)
+                    # register signal handler
+                    signal.signal(signal.SIGINT, signal_handler)
 
                 for run in range(restarts):
                     neural_network, current_losses = self._train(layers, activation_function, optimizer,
@@ -313,8 +332,26 @@ if config.HAVE_TORCH:
             # determine the coefficients of the full-order solutions in the reduced basis to obtain the
             # training data; convert everything into tensors that are compatible with PyTorch
             mu_tensor = torch.DoubleTensor(mu.to_numpy())
-            u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
+            u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:, 0])
             return [(mu_tensor, u_tensor),]
+
+        def save_model(self, filepath=None):
+            """Write reduced basis and neural network to disk."""
+            if not filepath:
+                import time
+                date_time = time.strftime('%Y%m%d-%H%M%S')
+                filepath = f'model_{date_time}.pth'
+            model = {'reduced_basis': self.reduced_basis,
+                     'neural_network': self.neural_network}
+            torch.save(model, filepath)
+
+        def load_model(self, filepath, build_model=True):
+            """Read reduced basis and neural network from file and build the reduced model."""
+            model = torch.load(filepath)
+            self.reduced_basis = model['reduced_basis']
+            self.neural_network = model['neural_network']
+            if build_model:
+                return self._build_rom()
 
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -422,7 +459,7 @@ if config.HAVE_TORCH:
             (make sure to include the time instances in the inputs)."""
             parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
-            samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:,0]))
+            samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:, 0]))
                        for mu, u_t in zip(parameters_with_time, u)]
 
             return samples
