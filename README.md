@@ -14,7 +14,7 @@ provided for getting started quickly.
 
 [![PyPI](https://img.shields.io/pypi/pyversions/pymor.svg)](https://pypi.python.org/pypi/pymor)
 [![PyPI](https://img.shields.io/pypi/v/pymor.svg)](https://pypi.python.org/pypi/pymor)
-[![Docs](https://img.shields.io/endpoint?url=https%3A%2F%2Fdocs.pymor.org%2Fbadge.json)](https://docs.pymor.org/latest)
+[![Docs](https://img.shields.io/endpoint?url=https%3A%2F%2Fdocs.pymor.org%2Fbadge.json)](https://docs.pymor.org/)
 [![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
 [![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/master/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/master)
 [![Azure Pipeline](https://dev.azure.com/pymor/pymor/_apis/build/status/pymor.pymor?branchName=master)](https://dev.azure.com/pymor/pymor/_build/latest?definitionId=1&branchName=master)
@@ -113,8 +113,7 @@ which will require that the [git](https://git-scm.com/) version control system i
 installed on your system.
 
 From time to time, the master branch of pyMOR undergoes major changes and things
-might break (this is usually announced on our
-[mailing list](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)),
+might break (this is usually announced in our discussion forum (https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
     pip install git+https://github.com/pymor/pymor@2020.1.x#egg=pymor[full]
@@ -190,7 +189,7 @@ we provide bindings for the following solver libraries:
 
 
 Do not hesitate to contact
-[us](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev) if you
+[us](https://github.com/pymor/pymor/discussions) if you
 need help with the integration of your PDE solver.
 
 
@@ -253,6 +252,6 @@ Contact
 -------
 
 Should you have any questions regarding pyMOR or wish to contribute,
-do not hestitate to contact us via our development mailing list:
+do not hestitate to contact us via our GitHub discussions forum:
 
-<http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev>
+<https://github.com/pymor/pymor/discussions>
