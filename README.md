@@ -113,7 +113,7 @@ which will require that the [git](https://git-scm.com/) version control system i
 installed on your system.
 
 From time to time, the master branch of pyMOR undergoes major changes and things
-might break (this is usually announced in our discussion forum (https://github.com/pymor/pymor/discussions)),
+might break (this is usually announced in our [discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
     pip install git+https://github.com/pymor/pymor@2020.1.x#egg=pymor[full]
