@@ -264,15 +264,14 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     result['summary'] = summary
 
     if plot:
-        result['figure'] = plot_reduction_error_analysis(
-                result, None, plot_custom_logarithmic=plot_custom_logarithmic, return_fig=True)
+        plot_reduction_error_analysis(result, None, plot_custom_logarithmic=plot_custom_logarithmic)
 
     return result
 
 
 
 def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivities=True, plot_condition=True,
-        plot_custom_logarithmic=True, plot_custom_with_errors=False, return_fig=False):
+        plot_custom_logarithmic=True, plot_custom_with_errors=False):
 
     error_norms = 'norms' in result
     error_estimator = 'error_estimates' in result
@@ -370,9 +369,6 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
         ax.legend(legend)
         ax.set_title('maximum custom values')
         current_plot += 1
-
-    if return_fig:
-        return fig
 
 
 def _compute_errors(mu, fom, reductor, error_estimator, error_norms, condition, custom, basis_sizes):
