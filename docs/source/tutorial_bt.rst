@@ -65,10 +65,10 @@ Such a realization is called balanced.
 
 The truncation part is based on the controllability and observability energies.
 The controllability energy :math:`E_c(x_0)` is the minimum energy (squared
-:math:`\mathcal{L}_2_` norm of the input) necessary to steer the system from the
+:math:`\mathcal{L}_2` norm of the input) necessary to steer the system from the
 zero state to :math:`x_0`.
 The observability energy :math:`E_o(x_0)` is the energy of the output (squared
-:math:`\mathcal{L}_2_` norm of the output) for a system starting at the state
+:math:`\mathcal{L}_2` norm of the output) for a system starting at the state
 :math:`x_0` and with zero input.
 It can be shown for the balanced realization
 (and same for any other realization)
@@ -230,7 +230,7 @@ and its Bode plot
 
     _ = err.bode_plot(w)
 
-We can compute the relative errors in different system norms.
+Finally, we can compute the relative errors in different system norms.
 
 .. jupyter-execute::
 

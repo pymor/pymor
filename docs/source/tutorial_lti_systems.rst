@@ -139,8 +139,7 @@ Note that :math:`H` is a matrix-valued rational function
 
 The transfer function of a given |LTIModel| can be evaluated using its
 :meth:`~pymor.models.iosys.LTIModel.eval_tf` method.
-The result is a NumPy array,
-so the number of inputs and outputs needs to be sufficiently small.
+The result is a NumPy array.
 
 .. jupyter-execute::
 
@@ -150,7 +149,7 @@ so the number of inputs and outputs needs to be sufficiently small.
 
 Similarly, the derivative of the transfer function can be computed using the
 :meth:`~pymor.models.iosys.LTIModel.eval_dtf` method.
-The result is again a NumPy array,
+The result is again a NumPy array.
 
 .. jupyter-execute::
 
@@ -161,8 +160,8 @@ The result is again a NumPy array,
 To evaluate the transfer function over a sequence of points on the imaginary
 axis,
 the :meth:`~pymor.models.iosys.InputOutputModel.freq_resp` method can be used.
-The typical use case are plots,
-which are discussed in the next section.
+A typical use case is plotting the transfer function,
+which is discussed in the next section.
 
 
 Magnitude and Bode plots
@@ -204,7 +203,8 @@ using the :meth:`~pymor.models.iosys.InputOutputModel.mag_plot` method.
     w = np.logspace(-2, 8, 300)
     _ = fom.mag_plot(w)
 
-Note that it uses the Frobenius norm by default, just as `scipy.linalg.norm`.
+Note that :meth:`~pymor.models.iosys.InputOutputModel.mag_plot` computes the
+Frobenius norm of :math:`H(\boldsymbol{\imath} \omega)` by default, just as `scipy.linalg.norm`.
 Likewise, the choice of the norm :math:`\lVert \cdot \rVert` can be controlled
 using the `ord` parameter.
 
@@ -225,7 +225,7 @@ System poles
 ------------
 
 The poles of an LTI system are the poles of its transfer function.
-From the form of the transfer function,
+From the form of the transfer function
 it follows that the poles are eigenvalues of :math:`E^{-1} A`,
 assuming that :math:`E` is invertible.
 Conversely, the eigenvalues of :math:`E^{-1} A` are the poles of the system
