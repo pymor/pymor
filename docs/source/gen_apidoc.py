@@ -8,10 +8,10 @@ import pkgutil
 
 BUILD_DIR = 'generated'
 
-CLASS_OPTIONS = [':show-inheritance:', ':members:', ':special-members:', ':private-members:', ':exclude-members: __init__, __weakref__']
+CLASS_OPTIONS = [':show-inheritance:', ':members:', ':special-members:', ':private-members:', ':exclude-members: __init__, __weakref__, __auto_init']
 FUNCTION_OPTIONS = []
 MODULE_OPTIONS = [':show-inheritance:']
-
+NEVER_SKIPS = ['_BasicObject__auto_init']
 
 def section(name, level=0, section_levels='*=-'):
     return name + '\n' + section_levels[level] * len(name) + '\n'
@@ -69,3 +69,13 @@ def walk(module):
     for packagename in packages:
         package = __import__(packagename, fromlist='none')
         walk(package)
+
+
+def never_skip(app, what, name, obj, skip, options):
+    if obj.__qualname__ in NEVER_SKIPS:
+        return False
+    return None
+
+
+def setup(app):
+    app.connect('autodoc-skip-member', never_skip)
