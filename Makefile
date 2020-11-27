@@ -16,7 +16,9 @@
 
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
+CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
+  	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
 	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose -f .binder/docker-compose.yml -p pymor
 NB_DIR=notebooks
 NB_USER:=${USER}
@@ -77,22 +79,18 @@ full-test:
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
 
-template: docker_file
+template:
 	./dependencies.py
 	./.ci/gitlab/template.ci.py
 
 # docker targets
-docker_template: docker_file
+docker_template:
 	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/dependencies.py \
 	  || $(DOCKER_RUN) pymor/ci_sanity:latest /pymor/dependencies.py
 	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/.ci/gitlab/template.ci.py \
 	  || $(DOCKER_RUN) pymor/ci_sanity:latest /pymor/.ci/gitlab/template.ci.py
 
-docker_file:
-	 sed -e "s;CI_IMAGE_TAG;$(CI_IMAGE_TAG);g" -e "s;DOCKER_BASE_PYTHON;$(DOCKER_BASE_PYTHON);g" \
-		 .binder/Dockerfile.in > .binder/Dockerfile
-
-docker_image: docker_file
+docker_image:
 	$(DOCKER_COMPOSE) build
 
 docker_docs: docker_image

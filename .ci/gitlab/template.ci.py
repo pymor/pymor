@@ -29,11 +29,12 @@ stages:
         PYPI_MIRROR_TAG: {{pypi_mirror_tag}}
         CI_IMAGE_TAG: {{ci_image_tag}}
         PYMOR_HYPOTHESIS_PROFILE: ci
+        BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
 
 .pytest:
     extends: .test_base
     tags:
-      - long execution time 
+      - long execution time
       - autoscaling
     environment:
         name: unsafe
@@ -117,8 +118,6 @@ stages:
           when: never
         - when: on_success
     variables:
-        IMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
-        CMD: "jupyter nbconvert --to notebook --execute /pymor/.ci/ci_dummy.ipynb"
         USER: juno
 
 .wheel:
@@ -292,19 +291,19 @@ pip {{loop.index}}/{{loop.length}}:
     script: ./.ci/gitlab/install_checks/{{OS}}/check.bash
 {% endfor %}
 
-repo2docker:
+binder base image:
     extends: .binder
     script:
-        - repo2docker --user-id 2000 --user-name ${USER} --no-run --debug --image-name ${IMAGE} .
+        - docker build --build-arg CI_IMAGE_TAG=${CI_IMAGE_TAG} -t ${BINDERIMAGE} -f .ci/gitlab/Dockerfile.binder.base .
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-        - docker run ${IMAGE} ${CMD}
-        - docker push ${IMAGE}
+        - docker run ${BINDERIMAGE} ipython -c "from pymor.basic import *"
+        - docker push ${BINDERIMAGE}
 
 local_jupyter:
     extends: .binder
     script:
         - make docker_image
-        - make DOCKER_CMD="${CMD}" docker_exec
+        - make DOCKER_CMD="ipython -c 'from pymor.basic import *'" docker_exec
 
 {% for url in binder_urls %}
 trigger_binder {{loop.index}}/{{loop.length}}:
@@ -394,18 +393,17 @@ docs build {{py[0]}} {{py[2]}}:
 {% endfor %}
 
 docs:
-    extends: .test_base
+    extends: .docker-in-docker
     # makes sure this doesn't land on the test runner
     tags: [mike]
     image: {{registry}}/alpine:3.11
     stage: deploy
     resource_group: docs_deploy
-    dependencies:
-        - "docs build 3 7"
-    needs: ["docs build 3 7"]
+    needs: ["docs build 3 7", "binder base image"]
+    dependencies: ["docs build 3 7", "binder base image"]
     before_script:
         - apk --update add make python3 bash
-        - pip3 install jinja2 pathlib
+        - pip3 install jinja2 pathlib jupyter-repo2docker
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
     rules:

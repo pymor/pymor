@@ -1,0 +1,12 @@
+ARG CI_IMAGE_TAG
+
+FROM pymor/jupyter_py3.8:${CI_IMAGE_TAG}
+MAINTAINER rene.fritze@wwu.de
+
+COPY . /tmp/pymor
+
+RUN pip install /tmp/pymor[docs,ci,full] && rm -rf /tmp/pymor
+
+
+ENTRYPOINT []
+WORKDIR /pymor/notebooks

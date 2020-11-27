@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import sys, os, re
+import slugify
 
 os.environ['PYMOR_WITH_SPHINX'] = '1'
 
@@ -37,6 +38,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
               'pymordocstring',
+              'try_on_binder',
               'jupyter_sphinx',
               'sphinx.ext.mathjax',
               'sphinx_qt_documentation',
@@ -214,14 +216,6 @@ pngmath_use_preview = True
 latex_use_modindex = False
 
 
-
-# -----------------------------------------------------------------------------
-# Numpy extensions
-# -----------------------------------------------------------------------------
-
-# If we want to do a phantom import from an XML file for all autodocs
-phantom_import_file = 'dump.xml'
-
 # -----------------------------------------------------------------------------
 # Autosummary
 # -----------------------------------------------------------------------------
@@ -261,3 +255,8 @@ modindex_common_prefix = ['pymor.']
 
 # make intersphinx link to pyside2 docs
 qt_documentation = 'PySide2'
+
+branch = os.environ.get('CI_COMMIT_REF_NAME', 'master')
+# this must match PYMOR_ROOT/.ci/gitlab/deploy_docs
+try_on_binder_branch = branch.replace('github/PUSH_', 'from_fork__')
+try_on_binder_slug = os.environ.get('CI_COMMIT_REF_SLUG', slugify.slugify(try_on_binder_branch))
