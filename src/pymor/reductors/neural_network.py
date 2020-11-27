@@ -403,11 +403,15 @@ if config.HAVE_TORCH:
             network on the training set should not exceed this threshold.
             Training is interrupted if a neural network that undercuts the
             error tolerance is found.
+        save_training_state
+            Determines whether or not to save the currently best model when
+            training is interrupted. If `True`, the best model trained thus far
+            can be used later on without having to train again.
         """
 
         def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
                      basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
-                     ann_mse='like_basis'):
+                     ann_mse='like_basis', save_training_state=True):
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
