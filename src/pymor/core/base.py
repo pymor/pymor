@@ -138,9 +138,11 @@ class UberMeta(abc.ABCMeta):
                 if arg not in self.__dict__:
                     setattr(self, arg, locals_[arg])
 
-        classdict[f'_{classname}__auto_init'] = __auto_init
-
+        auto_init_name = f'_{classname}__auto_init'
+        classdict[auto_init_name] = __auto_init
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
+        # by updating the qualified name we make filtering in sphinx possible
+        getattr(c, auto_init_name).__qualname__ = auto_init_name
 
         # getargspec is deprecated and does not work with keyword only args
         init_sig = inspect.signature(c.__init__)
