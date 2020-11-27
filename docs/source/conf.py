@@ -42,6 +42,7 @@ extensions = ['sphinx.ext.autodoc',
               'jupyter_sphinx',
               'sphinx.ext.mathjax',
               'sphinx_qt_documentation',
+              'gen_apidoc'
               ]
 
 # Add any paths that contain templates here, relative to this directory.
