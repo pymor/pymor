@@ -10,8 +10,9 @@ RUN rm -rf /pymor && useradd -d /pymor --shell /bin/bash -u ${NB_UID} -o -c "" -
 ENV USER=${NB_USER} \
     HOME=/pymor
 
-USER ${NB_USER}
 COPY SLUG/* /pymor/
+RUN chown -R ${NB_USER} /pymor
+USER ${NB_USER}
 
 ENTRYPOINT []
 WORKDIR /pymor
