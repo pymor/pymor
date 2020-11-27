@@ -141,19 +141,10 @@ stages:
     services:
       - name: {{registry}}/pymor/devpi:1
         alias: pymor__devpi
-    dependencies:
-    {%- for PY in pythons %}
-    {%- for ML in manylinuxs %}
-      - "wheel {{ML}} py{{PY[0]}} {{PY[2]}}"
-    {%- endfor %}
-    {%- endfor %}
-    needs: [{%- for PY in pythons -%}
-    {%- for ML in manylinuxs -%}
-      "wheel {{ML}} py{{PY[0]}} {{PY[2]}}",
-    {%- endfor -%}
-    {%- endfor -%}]
     before_script:
-      - pip3 install devpi-client
+      # bump to our minimal version
+      - python3 -m pip install -U pip==19.0 
+      - python3 -m pip install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
       - devpi upload --from-dir --formats=* ./shared
@@ -366,8 +357,18 @@ pypi deploy:
 {% for OS, PY in testos %}
 check_wheel {{loop.index}}:
     extends: .check_wheel
-    image: {{registry}}/pymor/deploy_checks:devpi_{{OS}}
-    script: devpi install pymor[full]
+    dependencies:
+        {%- for ML in manylinuxs %}
+          - "wheel {{ML}} py{{PY[0]}} {{PY[2]}}"
+        {%- endfor %}
+    needs: [{%- for ML in manylinuxs -%}
+          "wheel {{ML}} py{{PY[0]}} {{PY[2]}}",
+        {%- endfor -%}]
+    image: {{registry}}/pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
+    script:
+      - echo "Testing wheel install on {{OS}} with Python {{PY}}"
+      - python3 -m pip --version
+      - devpi install pymor[full]
 {% endfor %}
 
 {%- for py in pythons %}

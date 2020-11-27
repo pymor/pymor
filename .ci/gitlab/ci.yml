@@ -139,16 +139,10 @@ stages:
     services:
       - name: zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
         alias: pymor__devpi
-    dependencies:
-      - "wheel 2010 py3 6"
-      - "wheel 2014 py3 6"
-      - "wheel 2010 py3 7"
-      - "wheel 2014 py3 7"
-      - "wheel 2010 py3 8"
-      - "wheel 2014 py3 8"
-    needs: ["wheel 2010 py3 6","wheel 2014 py3 6","wheel 2010 py3 7","wheel 2014 py3 7","wheel 2010 py3 8","wheel 2014 py3 8",]
     before_script:
-      - pip3 install devpi-client
+      # bump to our minimal version
+      - python3 -m pip install -U pip==19.0 
+      - python3 -m pip install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
       - devpi upload --from-dir --formats=* ./shared
@@ -844,18 +838,39 @@ pypi deploy:
 
 check_wheel 1:
     extends: .check_wheel
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks:devpi_centos_8
-    script: devpi install pymor[full]
+    dependencies:
+          - "wheel 2010 py3 6"
+          - "wheel 2014 py3 6"
+    needs: ["wheel 2010 py3 6","wheel 2014 py3 6",]
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_centos_8:54837b6625c61f0954434cfaa27f89c023fe70cb
+    script:
+      - echo "Testing wheel install on centos_8 with Python 3.6"
+      - python3 -m pip --version
+      - devpi install pymor[full]
 
 check_wheel 2:
     extends: .check_wheel
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks:devpi_debian_buster
-    script: devpi install pymor[full]
+    dependencies:
+          - "wheel 2010 py3 7"
+          - "wheel 2014 py3 7"
+    needs: ["wheel 2010 py3 7","wheel 2014 py3 7",]
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_buster:54837b6625c61f0954434cfaa27f89c023fe70cb
+    script:
+      - echo "Testing wheel install on debian_buster with Python 3.7"
+      - python3 -m pip --version
+      - devpi install pymor[full]
 
 check_wheel 3:
     extends: .check_wheel
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks:devpi_debian_bullseye
-    script: devpi install pymor[full]
+    dependencies:
+          - "wheel 2010 py3 8"
+          - "wheel 2014 py3 8"
+    needs: ["wheel 2010 py3 8","wheel 2014 py3 8",]
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_bullseye:54837b6625c61f0954434cfaa27f89c023fe70cb
+    script:
+      - echo "Testing wheel install on debian_bullseye with Python 3.8"
+      - python3 -m pip --version
+      - devpi install pymor[full]
 
 docs build 3 6:
     extends: .test_base
