@@ -2,6 +2,7 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import cycle
 from numbers import Number
 import time
 
@@ -298,12 +299,7 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
 
     import matplotlib.pyplot as plt
     from matplotlib.colors import TABLEAU_COLORS as COLORS
-    colors = [[]]
-
-    def get_color():
-        if len(colors[0]) == 0:
-            colors[0] = list(reversed(COLORS.keys()))
-        return colors[0].pop()
+    colors = cycle(COLORS.keys())
 
     fig = plt.figure()
     num_plots = (int(error_norms or error_estimator) + int(error_norms and error_estimator and plot_effectivities)
@@ -315,10 +311,10 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
         legend = []
         if error_norms:
             for name, errors in zip(error_norm_names, max_errors):
-                ax.semilogy(basis_sizes[:max_basis_size], errors[:max_basis_size], color=get_color())
+                ax.semilogy(basis_sizes[:max_basis_size], errors[:max_basis_size], color=next(colors))
                 legend.append(name)
         if error_estimator:
-            ax.semilogy(basis_sizes[:max_basis_size], max_estimates[:max_basis_size], color=get_color())
+            ax.semilogy(basis_sizes[:max_basis_size], max_estimates[:max_basis_size], color=next(colors))
             legend.append('error estimator')
         if custom and plot_custom_with_errors:
             axwithyright = ax.twinx()
@@ -326,7 +322,7 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
             axwithyright_legend = []
             for i, values in enumerate(max_custom_values):
                 values = values.reshape(basis_sizes.shape)
-                color = get_color()
+                color = next(colors)
                 if plot_custom_logarithmic:
                     axwithyright.semilogy(basis_sizes[:max_basis_size], values[:max_basis_size], color=color)
                 else:
