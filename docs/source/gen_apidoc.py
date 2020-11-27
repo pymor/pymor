@@ -72,8 +72,11 @@ def walk(module):
 
 
 def never_skip(app, what, name, obj, skip, options):
-    if obj.__qualname__ in NEVER_SKIPS:
-        return False
+    try:
+        if obj.__qualname__ in NEVER_SKIPS:
+            return False
+    except:
+        pass
     return None
 
 
