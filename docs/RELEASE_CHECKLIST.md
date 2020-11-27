@@ -12,6 +12,7 @@
  1. [ ] upload sdist+wheels to pypi (conda builds are automatic via forge)
  1. [ ] bump/create demo docker
  1. [ ] Update https://github.com/pymor/docs/edit/master/index.html to point to new release
+ 1. [ ] Update https://github.com/pymor/docs/edit/master/latest to point to new release
  1. [ ] Update Homepage
  1. [ ] Make a github release. Zenodo is hooked into that.
  1. [ ] update MOR Wiki:
