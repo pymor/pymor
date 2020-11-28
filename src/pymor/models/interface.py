@@ -160,7 +160,7 @@ class Model(CacheableObject, ParametricObject):
         solution
             Internal model state for the given |Parameter value|.
         mu
-            |Parameters value| for which to compute the gradient
+            |Parameter value| for which to compute the gradient
 
         Returns
         -------
