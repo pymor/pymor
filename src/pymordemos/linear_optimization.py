@@ -1,87 +1,21 @@
+#!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Example script for solving linear PDE-constrained parameter optimization problems
-
-Usage:
-    linear_optimzation GRID_INTERVALS TRAINING_SAMPLES
-
-Arguments:
-    GRID_INTERVALS       Grid interval count.
-    TRAINING_SAMPLES     Number of samples used for training the reduced model.
-
-Options:
-    -h, --help   Show this message.
-"""
 
 import numpy as np
-from docopt import docopt
+from typer import Argument, run
 
 from pymor.basic import *
 
-
-def create_fom(args):
-    domain = RectDomain(([-1,-1], [1,1]))
-    indicator_domain = ExpressionFunction(
-        '(-2/3. <= x[..., 0]) * (x[..., 0] <= -1/3.) * (-2/3. <= x[..., 1]) * (x[..., 1] <= -1/3.) * 1. \
-       + (-2/3. <= x[..., 0]) * (x[..., 0] <= -1/3.) *  (1/3. <= x[..., 1]) * (x[..., 1] <=  2/3.) * 1.',
-        dim_domain=2, shape_range=())
-    rest_of_domain = ConstantFunction(1, 2) - indicator_domain
-
-    f = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[..., 0])*cos(0.5*pi*x[..., 1])', dim_domain=2, shape_range=())
-
-    parameters = {'diffusion': 2}
-    thetas = [ExpressionParameterFunctional('1.1 + sin(diffusion[0])*diffusion[1]', parameters,
-                                       derivative_expressions={'diffusion': ['cos(diffusion[0])*diffusion[1]',
-                                                                             'sin(diffusion[0])']}),
-          ExpressionParameterFunctional('1.1 + sin(diffusion[1])', parameters,
-                                       derivative_expressions={'diffusion': ['0',
-                                                                             'cos(diffusion[1])']}),
-
-                                       ]
-    diffusion = LincombFunction([rest_of_domain, indicator_domain], thetas)
-
-    theta_J = ExpressionParameterFunctional('1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters,
-                                           derivative_expressions={'diffusion': ['1/5','1/5']})
-
-    problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
-
-    print('Discretize ...')
-    mu_bar = problem.parameters.parse([np.pi/2,np.pi/2])
-    fom, _ = discretize_stationary_cg(problem, diameter=1. / int(args['GRID_INTERVALS']),
-                                      mu_energy_product=mu_bar)
-
-    return fom, mu_bar
-
-def record_results(function, parse, data, mu):
-    QoI = function(mu)
-    data['num_evals'] += 1
-    # we need to make sure to copy the data, since the added mu will be changed inplace by minimize afterwards
-    data['evaluation_points'].append([parse(mu)['diffusion'][:][0],
-                                      parse(mu)['diffusion'][:][1]])
-    data['evaluations'].append(QoI[0])
-    print('.', end='')
-    return QoI
-
-def report(result, parse, data, reference_mu=None):
-    if (result.status != 0):
-        print('\n failed!')
-    else:
-        print('\n succeded!')
-        print('  mu_min:    {}'.format(parse(result.x)))
-        print('  J(mu_min): {}'.format(result.fun[0]))
-        if reference_mu is not None:
-            print('  absolute error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(result.x-reference_mu)))
-        print('  num iterations:     {}'.format(result.nit))
-        print('  num function calls: {}'.format(data['num_evals']))
-        print('  time: {:.5f} seconds'.format(data['time']))
-        if 'offline_time' in data:
-            print('  offline time: {:.5f} seconds'.format(data['offline_time']))
-    print('')
-
-def linear_optimization_demo(args):
-    fom, mu_bar = create_fom(args)
+def main(
+    grid_intervals: int = Argument(..., help='Grid interval count.'),
+    training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.')
+    ):
+    """Example script for solving linear PDE-constrained parameter optimization problems"""
+    
+    fom, mu_bar = create_fom(grid_intervals)
 
     parameter_space = fom.parameters.space(0, np.pi)
     ranges = parameter_space.ranges['diffusion']
@@ -118,7 +52,7 @@ def linear_optimization_demo(args):
 
     coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
 
-    training_set = parameter_space.sample_uniformly(int(args['TRAINING_SAMPLES']))
+    training_set = parameter_space.sample_uniformly(training_samples)
     training_set_simple = [mu['diffusion'] for mu in training_set]
 
     RB_reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
@@ -176,6 +110,64 @@ def linear_optimization_demo(args):
     print("Result of optimization with ROM model but sensitivity gradient")
     report(opt_rom_result_sensitivities, fom.parameters.parse, opt_rom_minimization_data_sensitivities, reference_mu)
 
+def create_fom(grid_intervals):
+    domain = RectDomain(([-1,-1], [1,1]))
+    indicator_domain = ExpressionFunction(
+        '(-2/3. <= x[..., 0]) * (x[..., 0] <= -1/3.) * (-2/3. <= x[..., 1]) * (x[..., 1] <= -1/3.) * 1. \
+       + (-2/3. <= x[..., 0]) * (x[..., 0] <= -1/3.) *  (1/3. <= x[..., 1]) * (x[..., 1] <=  2/3.) * 1.',
+        dim_domain=2, shape_range=())
+    rest_of_domain = ConstantFunction(1, 2) - indicator_domain
+
+    f = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[..., 0])*cos(0.5*pi*x[..., 1])', dim_domain=2, shape_range=())
+
+    parameters = {'diffusion': 2}
+    thetas = [ExpressionParameterFunctional('1.1 + sin(diffusion[0])*diffusion[1]', parameters,
+                                       derivative_expressions={'diffusion': ['cos(diffusion[0])*diffusion[1]',
+                                                                             'sin(diffusion[0])']}),
+          ExpressionParameterFunctional('1.1 + sin(diffusion[1])', parameters,
+                                       derivative_expressions={'diffusion': ['0',
+                                                                             'cos(diffusion[1])']}),
+
+                                       ]
+    diffusion = LincombFunction([rest_of_domain, indicator_domain], thetas)
+
+    theta_J = ExpressionParameterFunctional('1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters,
+                                           derivative_expressions={'diffusion': ['1/5','1/5']})
+
+    problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
+
+    print('Discretize ...')
+    mu_bar = problem.parameters.parse([np.pi/2,np.pi/2])
+    fom, _ = discretize_stationary_cg(problem, diameter=1. / grid_intervals),
+                                      mu_energy_product=mu_bar)
+
+    return fom, mu_bar
+
+def record_results(function, parse, data, mu):
+    QoI = function(mu)
+    data['num_evals'] += 1
+    # we need to make sure to copy the data, since the added mu will be changed inplace by minimize afterwards
+    data['evaluation_points'].append([parse(mu)['diffusion'][:][0],
+                                      parse(mu)['diffusion'][:][1]])
+    data['evaluations'].append(QoI[0])
+    print('.', end='')
+    return QoI
+
+def report(result, parse, data, reference_mu=None):
+    if (result.status != 0):
+        print('\n failed!')
+    else:
+        print('\n succeded!')
+        print('  mu_min:    {}'.format(parse(result.x)))
+        print('  J(mu_min): {}'.format(result.fun[0]))
+        if reference_mu is not None:
+            print('  absolute error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(result.x-reference_mu)))
+        print('  num iterations:     {}'.format(result.nit))
+        print('  num function calls: {}'.format(data['num_evals']))
+        print('  time: {:.5f} seconds'.format(data['time']))
+        if 'offline_time' in data:
+            print('  offline time: {:.5f} seconds'.format(data['offline_time']))
+    print('')
+
 if __name__ == '__main__':
-    args = docopt(__doc__)
-    linear_optimization_demo(args)
+    run(main)
