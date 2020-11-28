@@ -138,8 +138,7 @@ def create_fom(grid_intervals):
 
     print('Discretize ...')
     mu_bar = problem.parameters.parse([np.pi/2,np.pi/2])
-    fom, _ = discretize_stationary_cg(problem, diameter=1. / grid_intervals),
-                                      mu_energy_product=mu_bar)
+    fom, _ = discretize_stationary_cg(problem, diameter=1. / grid_intervals, mu_energy_product=mu_bar)
 
     return fom, mu_bar
 
