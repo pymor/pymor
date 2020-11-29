@@ -18,7 +18,8 @@ where
 :math:`u` is the input,
 :math:`x` the state, and
 :math:`y` the output of the system,
-and :math:`A, B, C, D, E` are matrices of appropriate dimensions.
+and :math:`A, B, C, D, E` are matrices of appropriate dimensions
+(more details can be found in [A05]_).
 In pyMOR, these models are captured by |LTIModels|,
 which contain the matrices :math:`A, B, C, D, E` as |Operators|.
 We start by building an |LTIModel| and then demonstrate some of its properties,
