@@ -384,7 +384,8 @@ Additionally, for systems with a single input or a single output
     \sup_{u \neq 0}
     \frac{\lVert y \rVert_{\mathcal{L}_\infty}}{\lVert u \rVert_{\mathcal{L}_2}}.
 
-The computation of the :math:`\mathcal{H}_2` is based on the system Gramians
+The computation of the :math:`\mathcal{H}_2` norm is based on the system
+Gramians
 
 .. math::
 
