@@ -3,8 +3,10 @@ Tutorial: Reducing an LTI system using balanced truncation
 
 .. include:: jupyter_init.txt
 
-Here we briefly describe the balanced truncation method and
-demonstrate it on the heat equation example from :doc:`tutorial_lti_systems`.
+Here we briefly describe the balanced truncation method,
+for asymptotically stable LTI systems with an invertible :math:`E` matrix,
+and demonstrate it on the heat equation example from
+:doc:`tutorial_lti_systems`.
 First, we import necessary packages, including
 :class:`~pymor.reductors.bt.BTReductor`.
 
