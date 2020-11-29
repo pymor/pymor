@@ -256,9 +256,29 @@ System Gramians
 ---------------
 
 The controllability and observability Gramians of an asymptotically stable
-system with invertible :math:`E` are respectively :math:`P` and
-:math:`E^{\operatorname{T}} Q E`,
-where :math:`P` and :math:`Q` are solutions to Lyapunov equation
+system with invertible :math:`E` are respectively
+
+.. math::
+
+    \begin{align*}
+        P & =
+        \int_0^\infty
+        e^{t E^{-1} A} E^{-1} B
+        B^{\operatorname{T}} E^{-\!\operatorname{T}}
+        e^{t A^{\operatorname{T}} E^{-\!\operatorname{T}}}
+        \operatorname{d}\!t, \text{ and} \\
+        E^{\operatorname{T}} Q E & =
+        \int_0^\infty
+        e^{t A^{\operatorname{T}} E^{-\!\operatorname{T}}}
+        C^{\operatorname{T}} C
+        e^{t E^{-1} A}
+        \operatorname{d}\!t.
+    \end{align*}
+
+From this,
+it is clear that :math:`P` and :math:`Q` are symmetric positive semidefinite.
+Furthermore,
+it can be shown that :math:`P` and :math:`Q` are solutions to Lyapunov equation
 
 .. math::
 
@@ -273,8 +293,21 @@ where :math:`P` and :math:`Q` are solutions to Lyapunov equation
         & = 0.
     \end{align*}
 
+The Gramians can be used to quantify how much does the input influence the state
+(controllability) and state the output (observability).
+This is used to motivate the balanced truncation method
+(see :doc:`tutorial_bt`).
+Also, they can be used to compute the :math:`\mathcal{H}_2` norm (see below).
+
 To find the "Gramians" :math:`P` and :math:`Q` of an |LTIModel|,
 the :meth:`~pymor.models.iosys.LTIModel.gramian` method can be used.
+Although solutions to Lyapunov equations are generally dense matrices,
+they can be often be very well approximated by a low-rank matrix.
+With :meth:`~pymor.models.iosys.LTIModel.gramian`,
+it is possible to compute the dense solution of only the low-rank Cholesky
+factor.
+For example, the following computes the low-rank Cholesky factor of the
+controllability Gramian as a |VectorArray|:
 
 .. jupyter-execute::
 
