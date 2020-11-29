@@ -23,7 +23,7 @@ def main(
     initial_guess = fom.parameters.parse([0.25, 0.5])
 
     def fom_objective_functional(mu):
-        return fom.output(mu).to_numpy()
+        return fom.output(mu)
     def fom_gradient_of_functional(mu):
         return fom.output_d_mu(fom.parameters.parse(mu))
 
@@ -66,7 +66,7 @@ def main(
         np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
 
     def rom_objective_functional(mu):
-        return rom.output(mu).to_numpy()
+        return rom.output(mu)
     def rom_gradient_of_functional(mu):
         return rom.output_d_mu(fom.parameters.parse(mu))
 
