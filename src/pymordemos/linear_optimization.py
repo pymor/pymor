@@ -61,8 +61,8 @@ def main(
 
     #verifying that the adjoint and sensitivity gradients are the samea
     for mu in training_set:
-        gradient_with_adjoint_approach = rom.output_d_mu(mu, adjoint_approach=True)
-        gradient_with_sensitivities = rom.output_d_mu(mu, adjoint_approach=False)
+        gradient_with_adjoint_approach = rom.output_d_mu(mu, use_adjoint=True)
+        gradient_with_sensitivities = rom.output_d_mu(mu, use_adjoint=False)
         assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
 
     def rom_objective_functional(mu):
@@ -87,7 +87,7 @@ def main(
     opt_rom_minimization_data['time'] = perf_counter()-tic
 
     def rom_gradient_of_functional_standard_sensitivities(mu):
-        return rom.output_d_mu(fom.parameters.parse(mu), adjoint_approach=False)
+        return rom.output_d_mu(fom.parameters.parse(mu), use_adjoint=False)
     opt_rom_minimization_data_sensitivities = {'num_evals': 0,
                                                'evaluations' : [],
                                                'evaluation_points': [],

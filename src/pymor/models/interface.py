@@ -170,9 +170,11 @@ class Model(CacheableObject, ParametricObject):
         U_d_mus = self._compute_solution_d_mu(solution, mu)
         for (parameter, size) in self.parameters.items():
             for index in range(size):
-                output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution, mu=mu).to_numpy()[0,0]
+                output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
+                    solution, mu=mu).to_numpy()[0,0]
                 U_d_mu = U_d_mus[parameter][index]
-                gradient.append(output_partial_dmu + self.output_functional.apply(U_d_mu, mu).to_numpy()[0,0])
+                gradient.append(output_partial_dmu + self.output_functional.apply(
+                    U_d_mu, mu).to_numpy()[0,0])
         return np.array(gradient)
 
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):

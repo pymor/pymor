@@ -87,24 +87,24 @@ class StationaryModel(Model):
         return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
     def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu):
-        lhs_d_mu = VectorOperator(self.operator.d_mu(parameter, index).apply(solution, mu=mu))
-        rhs_d_mu = self.rhs.d_mu(parameter, index)
+        lhs_d_mu = self.operator.d_mu(parameter, index).apply(solution, mu=mu)
+        rhs_d_mu = self.rhs.d_mu(parameter, index).as_range_array(mu)
         rhs_operator = rhs_d_mu - lhs_d_mu
-        return self.operator.apply_inverse(rhs_operator.as_range_array(mu), mu=mu)
+        return self.operator.apply_inverse(rhs_operator, mu=mu)
 
-    _compute_allowed_kwargs = frozenset({'adjoint_approach'})
+    _compute_allowed_kwargs = frozenset({'use_adjoint'})
 
-    def _compute_output_d_mu(self, U, mu, adjoint_approach=True):
+    def _compute_output_d_mu(self, solution, mu, use_adjoint=True):
         """compute the gradient of the output functional  w.r.t. the parameters
 
         Parameters
         ----------
-        U
+        solution
             Internal model state for the given |Parameter value|
         mu
             |Parameter value| for which to compute the gradient
-        adjoint_approach
-            Use the adjoint approach for a more efficient way of computing the gradient.
+        use_adjoint
+            Use the adjoint solution for a more efficient way of computing the gradient.
             See Section 1.6.2 in [HPUU09]_ for more details.
             So far, this approach is only valid for linear output functionals and symmetric operators.
 
@@ -112,19 +112,19 @@ class StationaryModel(Model):
         -------
         The gradient as a numpy array.
         """
-        if adjoint_approach is False:
-            return super()._compute_output_d_mu(U, mu)
+        if not use_adjoint:
+            return super()._compute_output_d_mu(solution, mu)
         else:
             assert self.output_functional is not None
             assert self.output_functional.linear
             dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H)
-            P = dual_problem.solve(mu)
+            dual_solution = dual_problem.solve(mu)
             gradient = []
             for (parameter, size) in self.parameters.items():
                 for index in range(size):
-                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(U, mu=mu).to_numpy()[0,0]
-                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(P, U, mu=mu)
-                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(P, mu=mu).to_numpy()[0,0]
+                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution, mu=mu).to_numpy()[0,0]
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solution, solution, mu=mu)
+                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solution, mu=mu).to_numpy()[0,0]
                     gradient.append((output_partial_dmu + rhs_d_mu - lhs_d_mu)[0,0])
         return np.array(gradient)
 
