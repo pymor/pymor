@@ -17,7 +17,11 @@ from pymortests.base import runmodule
 from pymortests.demos import _test_demo
 
 TUT_DIR = Path(os.path.dirname(__file__)).resolve() / 'source'
-EXCLUDE = [TUT_DIR / t for t in ['tutorial_external_solver.rst']]
+_exclude_files = ['tutorial_external_solver.rst']
+# pytorch currently does not support python 3.9
+if sys.version_info[0:2] > (3,8):
+    _exclude_files.append('tutorial_mor_with_anns.rst')
+EXCLUDE = [TUT_DIR / t for t in _exclude_files]
 TUTORIALS = [t for t in TUT_DIR.glob('tutorial_*rst') if t not in EXCLUDE]
 
 

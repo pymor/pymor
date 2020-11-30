@@ -146,6 +146,13 @@ def _skip_if_no_solver(param):
         pytest.skip('skipped test due to missing slycot')
 
 
+def _skip_unsupported_torch(param):
+    demo, args = param
+    unsupported_py = sys.version_info[0:2] > (3,8)
+    if unsupported_py and os.environ.get('DOCKER_PYMOR', False) and 'neural_network' in demo:
+        pytest.skip('skipped test due to torch unsupported on python f{sys.version_info[0:2]}')
+
+
 def _demo_ids(demo_args):
     def _key(b):
         return ' '.join((str(s) for s in b))
@@ -155,6 +162,7 @@ def _demo_ids(demo_args):
 @pytest.fixture(params=DEMO_ARGS, ids=_demo_ids(DEMO_ARGS))
 def demo_args(request):
     _skip_if_no_solver(request.param)
+    _skip_unsupported_torch(request.param)
     return request.param
 
 

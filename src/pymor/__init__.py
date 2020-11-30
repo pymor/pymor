@@ -21,13 +21,15 @@ elif sys.version_info.major == 3:
 def _init_mpi():
     """provides a way to manually set the thread init mode for MPI if necessary.
     Needs to happen as early as possible, otherwise mpi4py might auto-init somewhere else.
+
+
     """
     try:
         import mpi4py
     except ImportError:
         return
-    # only change finalize setting if unset
-    finalize = (mpi4py.rc.finalize is None) or mpi4py.rc.finalize
+
+    finalize = os.environ.get('PYMOR_MPI_FINALIZE', mpi4py.rc.finalize if mpi4py.rc.finalize is not None else False)
     mpi4py.rc(initialize=False, finalize=finalize)
     from mpi4py import MPI
     if not MPI.Is_initialized():

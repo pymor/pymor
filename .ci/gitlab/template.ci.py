@@ -141,19 +141,10 @@ stages:
     services:
       - name: {{registry}}/pymor/devpi:1
         alias: pymor__devpi
-    dependencies:
-    {%- for PY in pythons %}
-    {%- for ML in manylinuxs %}
-      - "wheel {{ML}} py{{PY[0]}} {{PY[2]}}"
-    {%- endfor %}
-    {%- endfor %}
-    needs: [{%- for PY in pythons -%}
-    {%- for ML in manylinuxs -%}
-      "wheel {{ML}} py{{PY[0]}} {{PY[2]}}",
-    {%- endfor -%}
-    {%- endfor -%}]
     before_script:
-      - pip3 install devpi-client
+      # bump to our minimal version
+      - python3 -m pip install -U pip==19.0 
+      - python3 -m pip install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
       - devpi upload --from-dir --formats=* ./shared
@@ -183,7 +174,7 @@ ci setup:
     extends: .sanity_checks
     script:
         - apk add jq
-        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}"
+        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}" "{{ ' '.join(manylinuxs) }}"
 
 #****** test stage
 
@@ -366,8 +357,18 @@ pypi deploy:
 {% for OS, PY in testos %}
 check_wheel {{loop.index}}:
     extends: .check_wheel
-    image: {{registry}}/pymor/deploy_checks:devpi_{{OS}}
-    script: devpi install pymor[full]
+    dependencies:
+        {%- for ML in manylinuxs %}
+          - "wheel {{ML}} py{{PY[0]}} {{PY[2]}}"
+        {%- endfor %}
+    needs: [{%- for ML in manylinuxs -%}
+          "wheel {{ML}} py{{PY[0]}} {{PY[2]}}",
+        {%- endfor -%}]
+    image: {{registry}}/pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
+    script:
+      - echo "Testing wheel install on {{OS}} with Python {{PY}}"
+      - python3 -m pip --version
+      - devpi install pymor[full]
 {% endfor %}
 
 {%- for py in pythons %}
@@ -428,7 +429,7 @@ from itertools import product
 from pathlib import Path  # python3 only
 from dotenv import dotenv_values
 tpl = jinja2.Template(tpl)
-pythons = ['3.6', '3.7', '3.8']
+pythons = ['3.6', '3.7', '3.8', '3.9']
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [("mpi", pythons, 1), ("pip_installed", pythons, 1), ("tutorials", pythons, 1),
@@ -441,7 +442,7 @@ env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)
 ci_image_tag = env['CI_IMAGE_TAG']
 pypi_mirror_tag = env['PYPI_MIRROR_TAG']
-manylinuxs = [1, 2010, 2014]
+manylinuxs = ['2010', '2014']
 registry="zivgitlab.wwu.io/pymor/docker"
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = [(sc, py, pa) for sc, pythons, pa in test_scripts for py in pythons]
