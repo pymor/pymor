@@ -429,7 +429,7 @@ from itertools import product
 from pathlib import Path  # python3 only
 from dotenv import dotenv_values
 tpl = jinja2.Template(tpl)
-pythons = ['3.6', '3.7', '3.8']
+pythons = ['3.6', '3.7', '3.8', '3.9']
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [("mpi", pythons, 1), ("pip_installed", pythons, 1), ("tutorials", pythons, 1),

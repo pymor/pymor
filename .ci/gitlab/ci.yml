@@ -172,7 +172,7 @@ ci setup:
     extends: .sanity_checks
     script:
         - apk add jq
-        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "3.6 3.7 3.8" "2010 2014"
+        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "3.6 3.7 3.8 3.9" "2010 2014"
 
 #****** test stage
 minimal_cpp_demo 3 6:
@@ -207,6 +207,17 @@ minimal_cpp_demo 3 8:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
           alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
+    script: ./.ci/gitlab/cpp_demo.bash
+minimal_cpp_demo 3 9:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
     script: ./.ci/gitlab/cpp_demo.bash
 mpi 3 6:
     extends: .pytest
@@ -268,6 +279,30 @@ mpi 3 8:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
           alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_mpi.bash
+        - find . -name "coverage*"
+        - ls -la *
+mpi 3 9:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_mpi__3.9
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -352,6 +387,30 @@ pip_installed 3 8:
         - ./.ci/gitlab/test_pip_installed.bash
         - find . -name "coverage*"
         - ls -la *
+pip_installed 3 9:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_pip_installed__3.9
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_pip_installed.bash
+        - find . -name "coverage*"
+        - ls -la *
 tutorials 3 6:
     extends: .pytest
     rules:
@@ -412,6 +471,30 @@ tutorials 3 8:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
           alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_tutorials.bash
+        - find . -name "coverage*"
+        - ls -la *
+tutorials 3 9:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_tutorials__3.9
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -496,18 +579,42 @@ vanilla 3 8:
         - ./.ci/gitlab/test_vanilla.bash
         - find . -name "coverage*"
         - ls -la *
-numpy_git 3 8:
+vanilla 3 9:
     extends: .pytest
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
     variables:
-        COVERAGE_FILE: coverage_numpy_git__3.8
+        COVERAGE_FILE: coverage_vanilla__3.9
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_vanilla.bash
+        - find . -name "coverage*"
+        - ls -la *
+numpy_git 3 9:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_numpy_git__3.9
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -586,6 +693,20 @@ ci_weekly 3 8:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
     
     script: ./.ci/gitlab/test_vanilla.bash
+ci_weekly 3 9:
+    extends: .pytest
+    timeout: 5h
+    variables:
+        COVERAGE_FILE: coverage_ci_weekly
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: always
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+    
+    script: ./.ci/gitlab/test_vanilla.bash
 
 submit coverage:
     extends: .submit
@@ -599,10 +720,12 @@ submit coverage:
         - mpi 3 6
         - mpi 3 7
         - mpi 3 8
+        - mpi 3 9
         - vanilla 3 6
         - vanilla 3 7
         - vanilla 3 8
-        - numpy_git 3 8
+        - vanilla 3 9
+        - numpy_git 3 9
         - oldest 3 6
 submit ci_weekly 3 6:
     extends: .submit
@@ -631,6 +754,15 @@ submit ci_weekly 3 8:
     dependencies:
         - ci_weekly 3 8
     needs: ["ci_weekly 3 8"]
+submit ci_weekly 3 9:
+    extends: .submit
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: always
+    image: zivgitlab.wwu.io/pymor/docker/pymor/python:3.9
+    dependencies:
+        - ci_weekly 3 9
+    needs: ["ci_weekly 3 9"]
 
 
 
@@ -797,6 +929,27 @@ wheel 2014 py3 8:
     script: bash .ci/gitlab/wheels.bash 2014
 
 
+wheel 2010 py3 9:
+    extends: .wheel
+    variables:
+        PYVER: "3.9"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2010_*whl
+        expire_in: 1 week
+    script: bash .ci/gitlab/wheels.bash 2010
+
+wheel 2014 py3 9:
+    extends: .wheel
+    variables:
+        PYVER: "3.9"
+    artifacts:
+        paths:
+        - ${CI_PROJECT_DIR}/shared/pymor*manylinux2014_*whl
+        expire_in: 1 week
+    script: bash .ci/gitlab/wheels.bash 2014
+
+
 
 pypi deploy:
     extends: .sanity_checks
@@ -815,6 +968,11 @@ pypi deploy:
       - wheel 2010 py3 8
     
       - wheel 2014 py3 8
+    
+    
+      - wheel 2010 py3 9
+    
+      - wheel 2014 py3 9
     
     
     rules:
@@ -923,6 +1081,26 @@ docs build 3 8:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
           alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.8:54837b6625c61f0954434cfaa27f89c023fe70cb
+    script:
+        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
+    stage: build
+    needs: ["ci setup"]
+    artifacts:
+        paths:
+            - docs/_build/html
+            - docs/error.log
+
+docs build 3 9:
+    extends: .test_base
+    tags: [mike]
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.9:54837b6625c61f0954434cfaa27f89c023fe70cb
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
