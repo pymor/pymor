@@ -59,11 +59,14 @@ def main(
     RB_greedy_data = rb_greedy(fom, RB_reductor, training_set, atol=1e-2)
     rom = RB_greedy_data['rom']
 
-    #verifying that the adjoint and sensitivity gradients are the samea
+    #verifying that the adjoint and sensitivity gradients are the same and that solve_d_mu also works
     for mu in training_set:
         gradient_with_adjoint_approach = rom.output_d_mu(mu, use_adjoint=True)
         gradient_with_sensitivities = rom.output_d_mu(mu, use_adjoint=False)
         assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
+        u_d_mu = rom.solve_d_mu('diffusion', 1, mu=mu).to_numpy()
+        u_d_mu_ = rom.compute(solution_d_mu=True, mu=mu)['solution_d_mu']['diffusion'][1].to_numpy()
+        assert np.allclose(u_d_mu, u_d_mu_)
 
     def rom_objective_functional(mu):
         return rom.output(mu)

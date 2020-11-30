@@ -339,8 +339,8 @@ class Model(CacheableObject, ParametricObject):
                     solution_d_mu[0], solution_d_mu[1], data['solution'], mu=mu, **kwargs)
             else:
                 retval = self._compute_solution_d_mu(data['solution'], mu=mu, **kwargs)
-            if isinstance(retval, dict):
-                assert 'solution_d_mu' in retval
+            # retval is always a dict
+            if isinstance(retval, dict) and 'solution_d_mu' in retval:
                 data.update(retval)
             else:
                 data['solution_d_mu'] = retval
@@ -463,11 +463,11 @@ class Model(CacheableObject, ParametricObject):
         The sensitivity of the solution as a |VectorArray|.
         """
         data = self.compute(
-            solution_d_mu=True,
+            solution_d_mu=(parameter, index),
             mu=mu,
             **kwargs
         )
-        return data['solution_d_mu'][parameter][index]
+        return data['solution_d_mu']
 
     def output_d_mu(self, mu=None, **kwargs):
         """compute the gradient w.r.t. the parameter of the output functional
