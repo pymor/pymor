@@ -629,8 +629,8 @@ class LTIModel(InputStateOutputModel):
             C(\mu) (s E(\mu) - A(\mu))^{-1} B(\mu) + D(\mu).
 
         .. note::
-            Assumes that either the number of inputs or the number of outputs is much smaller than
-            the order of the system.
+            Assumes that the number of inputs and outputs is much smaller than the order of the
+            system.
 
         Parameters
         ----------
@@ -677,8 +677,8 @@ class LTIModel(InputStateOutputModel):
                 (s E(\mu) - A(\mu))^{-1} B(\mu).
 
         .. note::
-            Assumes that either the number of inputs or the number of outputs is much smaller than
-            the order of the system.
+            Assumes that the number of inputs and outputs is much smaller than the order of the
+            system.
 
         Parameters
         ----------
@@ -1504,8 +1504,8 @@ class SecondOrderModel(InputStateOutputModel):
             + D(\mu).
 
         .. note::
-            Assumes that either the number of inputs or the number of outputs is much smaller than
-            the order of the system.
+            Assumes that the number of inputs and outputs is much smaller than the order of the
+            system.
 
         Parameters
         ----------
@@ -1559,8 +1559,8 @@ class SecondOrderModel(InputStateOutputModel):
                 B(\mu).
 
         .. note::
-            Assumes that either the number of inputs or the number of outputs is much smaller than
-            the order of the system.
+            Assumes that the number of inputs and outputs is much smaller than the order of the
+            system.
 
         Parameters
         ----------
@@ -2054,8 +2054,8 @@ class LinearDelayModel(InputStateOutputModel):
             + D.
 
         .. note::
-            Assumes that either the number of inputs or the number of outputs is much smaller than
-            the order of the system.
+            Assumes that the number of inputs and outputs is much smaller than the order of the
+            system.
 
         Parameters
         ----------
@@ -2107,8 +2107,8 @@ class LinearDelayModel(InputStateOutputModel):
                     - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
 
         .. note::
-            Assumes that either the number of inputs or the number of outputs is much smaller than
-            the order of the system.
+            Assumes that the number of inputs and outputs is much smaller than the order of the
+            system.
 
         Parameters
         ----------
