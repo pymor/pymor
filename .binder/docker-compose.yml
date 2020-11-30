@@ -1,4 +1,4 @@
-version: '2'
+version: '2.4'
 
 # you should not use this file directly, but rather via the targets in ../Makefile
 
@@ -6,7 +6,7 @@ version: '2'
 # requirements installed and the src directory added to PYTHONPATH
 
 # you should have a preset PYMOR_JUPYTER_TOKEN environment variable,
-# then start with ```docker-compose up --build```
+# then start with ```make docker_jupyter```
 # and connect to the server at http://localhost:9180/?token=${PYMOR_JUPYTER_TOKEN}
 
 # 3rd party libraries that need editing can be put in .binder/local_packages/
@@ -17,6 +17,7 @@ services:
   jupyter:
     depends_on:
       - pypi_mirror
+    image: pymor/local_dev:${CI_IMAGE_TAG}
     build:
         context: ../
         dockerfile: .binder/Dockerfile
@@ -76,9 +77,9 @@ services:
     restart: "no"
 
   docs:
-    image: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
+    image: pymor/local_dev:${CI_IMAGE_TAG}
     depends_on:
-      - pypi_mirror
+      - jupyter
     environment:
       - PYMOR_FORCE_JUPYTER=1
       - PYMOR_WITH_SPHINX=1
