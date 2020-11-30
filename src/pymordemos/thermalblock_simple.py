@@ -90,7 +90,6 @@ def main(
     #######################
     from pymor.core.pickle import dump
     dump((rom, parameter_space), open('reduced_model.out', 'wb'))
-    results.pop('figure')  # matplotlib figures cannot be serialized
     dump(results, open('results.out', 'wb'))
 
     # visualize reduction error for worst-approximated mu
