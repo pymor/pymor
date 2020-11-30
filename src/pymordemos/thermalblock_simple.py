@@ -79,14 +79,12 @@ def main(
     ##############################
     results = reduction_error_analysis(rom, fom=fom, reductor=reductor, error_estimator=True,
                                        error_norms=[fom.h1_0_semi_norm], condition=True,
-                                       test_mus=parameter_space.sample_randomly(test),
-                                       plot=True)
+                                       test_mus=parameter_space.sample_randomly(test))
 
     # show results
     ##############
     print(results['summary'])
-    import matplotlib.pyplot
-    matplotlib.pyplot.show()
+    plot_reduction_error_analysis(results)
 
     # write results to disk
     #######################
