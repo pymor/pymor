@@ -88,7 +88,7 @@ if not is_windows_platform():
 THERMALBLOCK_GUI_ARGS = (
     ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
 )
-if is_windows_platform():
+if is_windows_platform() or is_macos_platform():
     THERMALBLOCK_GUI_ARGS = tuple()
 
 BURGERS_EI_ARGS = (
