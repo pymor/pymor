@@ -14,7 +14,7 @@ def main(
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.')
     ):
     """Example script for solving linear PDE-constrained parameter optimization problems"""
-    
+
     fom, mu_bar = create_fom(grid_intervals)
 
     parameter_space = fom.parameters.space(0, np.pi)
@@ -63,7 +63,7 @@ def main(
     for mu in training_set:
         gradient_with_adjoint_approach = rom.output_d_mu(mu, adjoint_approach=True)
         gradient_with_sensitivities = rom.output_d_mu(mu, adjoint_approach=False)
-        np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
+        assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
 
     def rom_objective_functional(mu):
         return rom.output(mu)
