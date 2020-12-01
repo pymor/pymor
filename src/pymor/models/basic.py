@@ -89,12 +89,12 @@ class StationaryModel(Model):
     def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu):
         lhs_d_mu = self.operator.d_mu(parameter, index).apply(solution, mu=mu)
         rhs_d_mu = self.rhs.d_mu(parameter, index).as_range_array(mu)
-        rhs_operator = rhs_d_mu - lhs_d_mu
-        return self.operator.apply_inverse(rhs_operator, mu=mu)
+        rhs = rhs_d_mu - lhs_d_mu
+        return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
 
     _compute_allowed_kwargs = frozenset({'use_adjoint'})
 
-    def _compute_output_d_mu(self, solution, mu, use_adjoint=True):
+    def _compute_output_d_mu(self, solution, mu, use_adjoint=None):
         """compute the gradient of the output functional  w.r.t. the parameters
 
         Parameters
@@ -106,7 +106,7 @@ class StationaryModel(Model):
         use_adjoint
             Use the adjoint solution for a more efficient way of computing the gradient.
             See Section 1.6.2 in [HPUU09]_ for more details.
-            So far, this approach is only valid for linear output functionals and symmetric operators.
+            So far, this approach is only valid for linear models.
 
         Returns
         -------

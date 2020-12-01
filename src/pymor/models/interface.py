@@ -144,7 +144,7 @@ class Model(CacheableObject, ParametricObject):
         A dict of all partial sensitivities of the solution.
         """
         sensitivities = {}
-        for (parameter, size) in sorted(self.parameters.items()):
+        for (parameter, size) in self.parameters.items():
             sens_for_param = self.solution_space.empty()
             for l in range(size):
                 sens_for_param.append(self._compute_solution_d_mu_single_direction(
