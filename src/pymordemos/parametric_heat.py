@@ -1,45 +1,97 @@
 #!/usr/bin/env python
-# coding: utf-8
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-# In[ ]:
-
-
-
-
-# In[ ]:
-
 
 import numpy as np
-import scipy.linalg as spla
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 from typer import Option, run
 
-from pymor.basic import *
+from pymor.analyticalproblems.domaindescriptions import LineDomain
+from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
+from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.config import config
-
 from pymor.core.logger import set_log_levels
+from pymor.discretizers.builtin import discretize_instationary_cg
+from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
+from pymor.reductors.h2 import IRKAReductor, TSIAReductor, OneSidedIRKAReductor
+
+
+def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **reductor_kwargs):
+    """Plot reductor errors for different parameter values.
+
+    Parameters
+    ----------
+    fom
+        The full-order |LTIModel|.
+    r
+        The order of the reduced-order model.
+    w
+        Array of frequencies.
+    mus
+        An array of parameter values.
+    reductor_cls
+        The reductor class.
+    reductor_short_name
+        A short name for the reductor.
+    reductor_kwargs
+        Optional keyword arguments for the reductor class.
+    """
+    # Reduction
+    roms = []
+    for mu in mus:
+        rom = reductor_cls(fom, mu=mu, **reductor_kwargs).reduce(r)
+        roms.append(rom)
+
+    # Poles
+    fig, ax = plt.subplots()
+    for rom in roms:
+        poles_rom = rom.poles()
+        ax.plot(poles_rom.real, poles_rom.imag, '.', label=fr'$\mu = {mu}$')
+    ax.set_title(f"{reductor_short_name} reduced model's poles")
+    plt.show()
+
+    # Magnitude plots
+    fig, ax = plt.subplots()
+    for mu, rom in zip(mus, roms):
+        rom.mag_plot(w, ax=ax, label=fr'$\mu = {mu}$')
+    ax.set_title('Magnitude plot of {reductor_short_name} reduced models')
+    ax.legend()
+    plt.show()
+
+    fig, ax = plt.subplots()
+    for mu, rom in zip(mus, roms):
+        (fom - rom).mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
+    ax.set_title('Magnitude plot of the {reductor_short_name} error system')
+    ax.legend()
+    plt.show()
+
+    # Errors
+    for mu, rom in zip(mus, roms):
+        err = fom - rom
+        print(f'mu = {mu}')
+        print(f'    {reductor_short_name} relative H_2-error:'
+              f'    {err.h2_norm(mu=mu) / fom.h2_norm(mu=mu):e}')
+        if config.HAVE_SLYCOT:
+            print(f'    {reductor_short_name} relative H_inf-error:'
+                  f'  {err.hinf_norm(mu=mu) / fom.hinf_norm(mu=mu):e}')
+        print(f'    {reductor_short_name} relative Hankel-error:'
+              f' {err.hankel_norm(mu=mu) / fom.hankel_norm(mu=mu):e}')
 
 
 def main(
         diameter: float = Option(0.01, help='Diameter option for the domain discretizer.'),
         r: int = Option(5, help='Order of the ROMs.'),
 ):
+    """Parametric 1D heat equation example."""
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
-    set_defaults({'pymor.discretizers.builtin.gui.jupyter.get_visualizer.backend': 'not pythreejs'})
-
-
-    # # Model
-
-    # In[ ]:
-
-
+    # Model
     p = InstationaryProblem(
         StationaryProblem(
-            domain=LineDomain([0.,1.], left='robin', right='robin'),
+            domain=LineDomain([0., 1.], left='robin', right='robin'),
             diffusion=LincombFunction([ExpressionFunction('(x[...,0] <= 0.5) * 1.', 1),
                                        ExpressionFunction('(0.5 < x[...,0]) * 1.', 1)],
                                       [1,
@@ -53,101 +105,37 @@ def main(
 
     fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=100)
 
-
-    # In[ ]:
-
-
     fom.visualize(fom.solve(mu=0.1))
-
-
-    # In[ ]:
-
-
     fom.visualize(fom.solve(mu=1))
-
-
-    # In[ ]:
-
-
     fom.visualize(fom.solve(mu=10))
 
-
-    # In[ ]:
-
-
     lti = fom.to_lti()
-
-
-    # # System analysis
-
-    # In[ ]:
-
 
     print(f'order of the model = {lti.order}')
     print(f'number of inputs   = {lti.dim_input}')
     print(f'number of outputs  = {lti.dim_output}')
 
-
-    # In[ ]:
-
-
     mu_list = [0.1, 1, 10]
+    w_list = np.logspace(-1, 3, 100)
 
-    fig, ax = plt.subplots(len(mu_list), 1, sharex=True, sharey=True)
-    for i, mu in enumerate(mu_list):
-        poles = lti.poles(mu=mu)
-        ax[i].plot(poles.real, poles.imag, '.')
-        ax[i].set_xscale('symlog')
-        ax[i].set_title(fr'$\mu = {mu}$')
-    fig.suptitle('System poles')
-    fig.subplots_adjust(hspace=0.5)
-    plt.show()
-
-
-    # In[ ]:
-
-
-    mu_list = [0.1, 1, 10]
-
+    # System poles
     fig, ax = plt.subplots()
-    w = np.logspace(-1, 3, 100)
     for mu in mu_list:
-        lti.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
+        poles = lti.poles(mu=mu)
+        ax.plot(poles.real, poles.imag, '.', label=fr'$\mu = {mu}$')
+    ax.set_title('System poles')
     ax.legend()
     plt.show()
 
-
-    # In[ ]:
-
-
-    w_list = np.logspace(-1, 3, 100)
-    mu_list = np.logspace(-1, 1, 20)
-
-    lti_w_mu = np.zeros((len(w_list), len(mu_list)))
-    for i, mu in enumerate(mu_list):
-        lti_w_mu[:, i] = spla.norm(lti.freq_resp(w, mu=mu), axis=(1, 2))
-
-
-    # In[ ]:
-
-
+    # Magnitude plots
     fig, ax = plt.subplots()
-    out = ax.contourf(w_list, mu_list, lti_w_mu.T,
-                      norm=mpl.colors.LogNorm(),
-                      levels=np.logspace(-16, np.log10(lti_w_mu.max()), 100))
-    ax.set_xlabel(r'Frequency $\omega$')
-    ax.set_ylabel(r'Parameter $\mu$')
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    fig.colorbar(out, ticks=np.logspace(-16, 0, 17))
+    for mu in mu_list:
+        lti.mag_plot(w_list, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
+    ax.set_title('Magnitude plot of the full model')
+    ax.legend()
     plt.show()
 
-
-    # In[ ]:
-
-
-    mu_list = [0.1, 1, 10]
-
+    # Hankel singular values
     fig, ax = plt.subplots()
     for mu in mu_list:
         hsv = lti.hsv(mu=mu)
@@ -156,137 +144,22 @@ def main(
     ax.legend()
     plt.show()
 
+    # System norms
+    for mu in mu_list:
+        print(f'mu = {mu}:')
+        print(f'    H_2-norm of the full model:    {lti.h2_norm(mu=mu):e}')
+        if config.HAVE_SLYCOT:
+            print(f'    H_inf-norm of the full model:  {lti.hinf_norm(mu=mu):e}')
+        print(f'    Hankel-norm of the full model: {lti.hankel_norm(mu=mu):e}')
 
-    # In[ ]:
+    # Model order reduction
+    run_mor_method_param(lti, r, w_list, mu_list, BTReductor, 'BT')
+    run_mor_method_param(lti, r, w_list, mu_list, LQGBTReductor, 'LQGBT')
+    run_mor_method_param(lti, r, w_list, mu_list, BRBTReductor, 'BRBT')
+    run_mor_method_param(lti, r, w_list, mu_list, IRKAReductor, 'IRKA')
+    run_mor_method_param(lti, r, w_list, mu_list, TSIAReductor, 'TSIA')
+    run_mor_method_param(lti, r, w_list, mu_list, OneSidedIRKAReductor, 'OS-IRKA', version='V')
 
-
-    fig, ax = plt.subplots()
-    mu_fine = np.logspace(-1, 1, 20)
-    h2_norm_mu = [lti.h2_norm(mu=mu) for mu in mu_fine]
-    ax.plot(mu_fine, h2_norm_mu, label=r'$\mathcal{H}_2$-norm')
-
-    if config.HAVE_SLYCOT:
-        hinf_norm_mu = [lti.hinf_norm(mu=mu) for mu in mu_fine]
-        ax.plot(mu_fine, hinf_norm_mu, label=r'$\mathcal{H}_\infty$-norm')
-
-    hankel_norm_mu = [lti.hankel_norm(mu=mu) for mu in mu_fine]
-    ax.plot(mu_fine, hankel_norm_mu, label='Hankel norm')
-
-    ax.set_xlabel(r'$\mu$')
-    ax.set_title('System norms')
-    ax.legend()
-    plt.show()
-
-
-    # # Balanced truncation
-
-    # In[ ]:
-
-
-    def reduction_errors(lti, r, mu_fine, reductor, **kwargs):
-        h2_err_mu = []
-        hinf_err_mu = []
-        hankel_err_mu = []
-        for mu in mu_fine:
-            rom_mu = reductor(lti, mu=mu, **kwargs).reduce(r)
-            h2_err_mu.append((lti - rom_mu).h2_norm(mu=mu) / lti.h2_norm(mu=mu))
-            if config.HAVE_SLYCOT:
-                hinf_err_mu.append((lti - rom_mu).hinf_norm(mu=mu) / lti.hinf_norm(mu=mu))
-            hankel_err_mu.append((lti - rom_mu).hankel_norm(mu=mu) / lti.hankel_norm(mu=mu))
-        return h2_err_mu, hinf_err_mu, hankel_err_mu
-
-
-    # In[ ]:
-
-
-    mu_fine = np.logspace(-1, 1, 10)
-    h2_bt_err_mu, hinf_bt_err_mu, hankel_bt_err_mu = reduction_errors(lti, r, mu_fine, BTReductor)
-
-
-    # In[ ]:
-
-
-    fig, ax = plt.subplots()
-    ax.semilogy(mu_fine, h2_bt_err_mu, '.-', label=r'$\mathcal{H}_2$')
-    if config.HAVE_SLYCOT:
-        ax.semilogy(mu_fine, hinf_bt_err_mu, '.-', label=r'$\mathcal{H}_\infty$')
-    ax.semilogy(mu_fine, hankel_bt_err_mu, '.-', label='Hankel')
-
-    ax.set_xlabel(r'$\mu$')
-    ax.set_title('Balanced truncation errors')
-    ax.legend()
-    plt.show()
-
-
-    # # Iterative Rational Krylov Algorithm (IRKA)
-
-    # In[ ]:
-
-
-    h2_irka_err_mu, hinf_irka_err_mu, hankel_irka_err_mu = reduction_errors(lti, r, mu_fine, IRKAReductor)
-
-
-    # In[ ]:
-
-
-    fig, ax = plt.subplots()
-    ax.semilogy(mu_fine, h2_irka_err_mu, '.-', label=r'$\mathcal{H}_2$')
-    if config.HAVE_SLYCOT:
-        ax.semilogy(mu_fine, hinf_irka_err_mu, '.-', label=r'$\mathcal{H}_\infty$')
-    ax.semilogy(mu_fine, hankel_irka_err_mu, '.-', label='Hankel')
-
-    ax.set_xlabel(r'$\mu$')
-    ax.set_title('IRKA errors')
-    ax.legend()
-    plt.show()
-
-
-    # # Two-Sided Iteration Algorithm (TSIA)
-
-    # In[ ]:
-
-
-    h2_tsia_err_mu, hinf_tsia_err_mu, hankel_tsia_err_mu = reduction_errors(lti, r, mu_fine, TSIAReductor)
-
-
-    # In[ ]:
-
-
-    fig, ax = plt.subplots()
-    ax.semilogy(mu_fine, h2_tsia_err_mu, '.-', label=r'$\mathcal{H}_2$')
-    if config.HAVE_SLYCOT:
-        ax.semilogy(mu_fine, hinf_tsia_err_mu, '.-', label=r'$\mathcal{H}_\infty$')
-    ax.semilogy(mu_fine, hankel_tsia_err_mu, '.-', label='Hankel')
-
-    ax.set_xlabel(r'$\mu$')
-    ax.set_title('TSIA errors')
-    ax.legend()
-    plt.show()
-
-
-    # # One-sided IRKA
-
-    # In[ ]:
-
-
-    h2_osirka_err_mu, hinf_osirka_err_mu, hankel_osirka_err_mu = reduction_errors(
-        lti, r, mu_fine, OneSidedIRKAReductor, version='V'
-    )
-
-
-    # In[ ]:
-
-
-    fig, ax = plt.subplots()
-    ax.semilogy(mu_fine, h2_osirka_err_mu, '.-', label=r'$\mathcal{H}_2$')
-    if config.HAVE_SLYCOT:
-        ax.semilogy(mu_fine, hinf_osirka_err_mu, '.-', label=r'$\mathcal{H}_\infty$')
-    ax.semilogy(mu_fine, hankel_osirka_err_mu, '.-', label='Hankel')
-
-    ax.set_xlabel(r'$\mu$')
-    ax.set_title('One-sided IRKA errors')
-    ax.legend()
-    plt.show()
 
 if __name__ == "__main__":
     run(main)
