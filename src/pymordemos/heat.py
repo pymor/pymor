@@ -7,19 +7,73 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typer import Option, run
 
-from pymor.basic import (InstationaryProblem, StationaryProblem, RectDomain, ConstantFunction, ExpressionFunction,
-                         discretize_instationary_cg, BTReductor, IRKAReductor)
+from pymor.analyticalproblems.domaindescriptions import RectDomain
+from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
+from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.config import config
+from pymor.core.logger import set_log_levels
+from pymor.discretizers.builtin import discretize_instationary_cg
+from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
+from pymor.reductors.h2 import IRKAReductor, TSIAReductor, OneSidedIRKAReductor
 
-import logging
-logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
+
+def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
+    """Run a model order reduction method.
+
+    Parameters
+    ----------
+    lti
+        The full-order |LTIModel|.
+    w
+        Array of frequencies.
+    reductor
+        The reductor object.
+    reductor_short_name
+        A short name for the reductor.
+    r
+        The order of the reduced-order model.
+    reduce_kwargs
+        Optional keyword arguments for the reduce method.
+    """
+    # Reduction
+    rom = reductor.reduce(r, **reduce_kwargs)
+    err = lti - rom
+
+    # Poles of the reduced-order model
+    poles_rom = rom.poles()
+    fig, ax = plt.subplots()
+    ax.plot(poles_rom.real, poles_rom.imag, '.')
+    ax.set_title(f"{reductor_short_name} reduced model's poles")
+    plt.show()
+
+    # Errors
+    print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / lti.h2_norm():e}')
+    if config.HAVE_SLYCOT:
+        print(f'{reductor_short_name} relative H_inf-error:  {err.hinf_norm() / lti.hinf_norm():e}')
+    else:
+        print('Skipped H_inf-norm calculation due to missing slycot.')
+    print(f'{reductor_short_name} relative Hankel-error: {err.hankel_norm() / lti.hankel_norm():e}')
+
+    # Magnitude plot of the full and reduced model
+    fig, ax = plt.subplots()
+    lti.mag_plot(w, ax=ax)
+    rom.mag_plot(w, ax=ax, linestyle='dashed')
+    ax.set_title(f'Magnitude plot of the full and {reductor_short_name} reduced model')
+    plt.show()
+
+    # Magnitude plot of the error system
+    fig, ax = plt.subplots()
+    err.mag_plot(w, ax=ax)
+    ax.set_title(f'Magnitude plot of the {reductor_short_name} error system')
+    plt.show()
 
 
 def main(
         diameter: float = Option(0.1, help='Diameter option for the domain discretizer.'),
         r: int = Option(5, help='Order of the ROMs.'),
 ):
-    r"""2D heat equation demo
+    r"""2D heat equation demo.
 
     Discretization of the PDE:
 
@@ -38,6 +92,7 @@ def main(
 
     where :math:`u(t)` is the input and :math:`y(t)` is the output.
     """
+    set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
     p = InstationaryProblem(
         StationaryProblem(
@@ -89,60 +144,13 @@ def main(
         print('Skipped H_inf-norm calculation due to missing slycot.')
     print(f'FOM Hankel-norm: {lti.hankel_norm():e}')
 
-    # Balanced Truncation
-    reductor = BTReductor(lti)
-    rom_bt = reductor.reduce(r, tol=1e-5)
-    err_bt = lti - rom_bt
-    print(f'BT relative H_2-error:    {err_bt.h2_norm() / lti.h2_norm():e}')
-    if config.HAVE_SLYCOT:
-        print(f'BT relative H_inf-error:  {err_bt.hinf_norm() / lti.hinf_norm():e}')
-    else:
-        print('Skipped H_inf-norm calculation due to missing slycot.')
-    print(f'BT relative Hankel-error: {err_bt.hankel_norm() / lti.hankel_norm():e}')
-
-    # Magnitude plot of the full and BT reduced model
-    fig, ax = plt.subplots()
-    lti.mag_plot(w, ax=ax)
-    rom_bt.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Magnitude plot of the full and BT reduced model')
-    plt.show()
-
-    # Magnitude plot of the BT error system
-    fig, ax = plt.subplots()
-    err_bt.mag_plot(w, ax=ax)
-    ax.set_title('Magnitude plot of the BT error system')
-    plt.show()
-
-    # Iterative Rational Krylov Algorithm
-    irka_reductor = IRKAReductor(lti)
-    rom_irka = irka_reductor.reduce(r, compute_errors=True)
-
-    # Shift distances
-    fig, ax = plt.subplots()
-    ax.semilogy(irka_reductor.conv_crit, '.-')
-    ax.set_title('Distances between shifts in IRKA iterations')
-    plt.show()
-
-    err_irka = lti - rom_irka
-    print(f'IRKA relative H_2-error:    {err_irka.h2_norm() / lti.h2_norm():e}')
-    if config.HAVE_SLYCOT:
-        print(f'IRKA relative H_inf-error:  {err_irka.hinf_norm() / lti.hinf_norm():e}')
-    else:
-        print('Skipped H_inf-norm calculation due to missing slycot.')
-    print(f'IRKA relative Hankel-error: {err_irka.hankel_norm() / lti.hankel_norm():e}')
-
-    # Magnitude plot of the full and IRKA reduced model
-    fig, ax = plt.subplots()
-    lti.mag_plot(w, ax=ax)
-    rom_irka.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Magnitude plot of the full and IRKA reduced model')
-    plt.show()
-
-    # Magnitude plot of the IRKA error system
-    fig, ax = plt.subplots()
-    err_irka.mag_plot(w, ax=ax)
-    ax.set_title('Magnitude plot of the IRKA error system')
-    plt.show()
+    # Model order reduction
+    run_mor_method(lti, w, BTReductor(lti), 'BT', r, tol=1e-5)
+    run_mor_method(lti, w, LQGBTReductor(lti), 'LQGBT', r, tol=1e-5)
+    run_mor_method(lti, w, BRBTReductor(lti), 'BRBT', r, tol=1e-5)
+    run_mor_method(lti, w, IRKAReductor(lti), 'IRKA', r)
+    run_mor_method(lti, w, TSIAReductor(lti), 'TSIA', r)
+    run_mor_method(lti, w, OneSidedIRKAReductor(lti, 'V'), 'OS-IRKA', r)
 
 
 if __name__ == '__main__':
