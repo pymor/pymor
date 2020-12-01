@@ -605,7 +605,7 @@ class NonlinearReactionOperator(Operator):
         return NumpyMatrixOperator(A, source_id=self.source.id, range_id=self.range.id)
 
 
-class L2ProductFunctional(NumpyMatrixBasedOperator):
+class L2Functional(NumpyMatrixBasedOperator):
     """Finite volume functional representing the inner product with an L2-|Function|.
 
     Additionally, boundary conditions can be enforced by providing `dirichlet_data`
@@ -697,6 +697,11 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         F_INTS /= g.volumes(0)
 
         return F_INTS.reshape((-1, 1))
+
+
+@Deprecated(L2Functional)
+def L2ProductFunctional(*args, **kwargs):
+    return L2Functional(*args, **kwargs)
 
 
 class DiffusionOperator(NumpyMatrixBasedOperator):
