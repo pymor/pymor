@@ -148,7 +148,7 @@ def _skip_if_no_solver(param):
 
 def _skip_unsupported_torch(param):
     demo, args = param
-    unsupported_py = sys.version_info[0:2] > (3,8)
+    unsupported_py = sys.version_info[0:2] > (3, 8)
     if unsupported_py and os.environ.get('DOCKER_PYMOR', False) and 'neural_network' in demo:
         pytest.skip('skipped test due to torch unsupported on python f{sys.version_info[0:2]}')
 
@@ -156,7 +156,7 @@ def _skip_unsupported_torch(param):
 def _demo_ids(demo_args):
     def _key(b):
         return ' '.join((str(s) for s in b))
-    return [f"{a}:'{_key(b)}'".replace('pymordemos.','') for a,b in demo_args]
+    return [f"{a}:'{_key(b)}'".replace('pymordemos.', '') for a, b in demo_args]
 
 
 @pytest.fixture(params=DEMO_ARGS, ids=_demo_ids(DEMO_ARGS))
