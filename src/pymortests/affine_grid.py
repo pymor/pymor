@@ -128,7 +128,6 @@ def test_integration_elements_shape(grid):
         assert g.integration_elements(d).shape == (g.size(d),)
 
 
-@settings(deadline=500)
 @given(hy_grid)
 def test_integration_elements_values(grid):
     g = grid
