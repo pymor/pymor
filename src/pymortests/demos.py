@@ -98,13 +98,13 @@ PARABOLIC_MOR_ARGS = (
 )
 
 SYS_MOR_ARGS = (
-    ('heat', []),
-    ('delay', []),
-    ('string_equation', []),
-    ('parametric_heat', []),
-    ('parametric_delay', []),
-    ('parametric_string', []),
-    ('parametric_synthetic', []),
+    ('heat', [0.2, 2]),
+    ('delay', [1, 2]),
+    ('string_equation', [25, 2]),
+    ('parametric_heat', [0.02, 2]),
+    ('parametric_delay', [2]),
+    ('parametric_string', [25, 2]),
+    ('parametric_synthetic', [100, 2]),
 )
 
 HAPOD_ARGS = (
