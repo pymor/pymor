@@ -119,23 +119,23 @@ class StationaryModel(Model):
         else:
             assert self.output_functional is not None
             assert self.output_functional.linear
-            gradients = []
+            dual_solutions = self.operator.range.empty()
             for d in range(self.output_functional.range.dim):
                 dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H.as_range_array(mu)[d])
-                dual_solution = dual_problem.solve(mu)
-                gradient = [] if return_array else {}
-                for (parameter, size) in self.parameters.items():
-                    list_for_param = []
-                    for index in range(size):
-                        output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution, mu=mu).to_numpy()[0,d]
-                        lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solution, solution, mu=mu)
-                        rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solution, mu=mu).to_numpy()[0,0]
-                        list_for_param.append((output_partial_dmu + rhs_d_mu - lhs_d_mu)[0,0])
-                    if return_array:
-                        gradient.extend(list_for_param)
-                    else:
-                        gradient[parameter] = list_for_param
-                gradients.append(gradient)
+                dual_solutions.append(dual_problem.solve(mu))
+            gradients = [] if return_array else {}
+            for (parameter, size) in self.parameters.items():
+                list_for_param = []
+                for index in range(size):
+                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
+                                                                                             mu=mu).to_numpy()
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu).T
+                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy().T
+                    list_for_param.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
+                if return_array:
+                    gradients.extend(list_for_param)
+                else:
+                    gradients[parameter] = list_for_param
         if return_array:
             return np.array(gradients)
         else:

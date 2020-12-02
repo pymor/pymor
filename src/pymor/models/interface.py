@@ -167,27 +167,23 @@ class Model(CacheableObject, ParametricObject):
         The gradient as a numpy array
         """
         U_d_mus = self._compute_solution_d_mu(solution, mu)
-        gradient_for_outputs = []
-        for d in range(self.output_functional.range.dim):
-            gradient = [] if return_array else {}
-            for (parameter, size) in self.parameters.items():
-                list_for_param = []
-                for index in range(size):
-                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
-                        solution, mu=mu).to_numpy()[0,d]
-                    U_d_mu = U_d_mus[parameter][index]
-                    list_for_param.append(output_partial_dmu
-                                + self.output_functional.jacobian(solution, mu).apply(
-                        U_d_mu, mu).to_numpy()[0,d])
-                if return_array:
-                    gradient.extend(list_for_param)
-                else:
-                    gradient[parameter] = list_for_param
-            gradient_for_outputs.append(gradient)
+        gradients = [] if return_array else {}
+        for (parameter, size) in self.parameters.items():
+            list_for_param = []
+            for index in range(size):
+                output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
+                    solution, mu=mu).to_numpy()
+                U_d_mu = U_d_mus[parameter][index]
+                list_for_param.append(output_partial_dmu
+                    + self.output_functional.jacobian(solution, mu).apply(U_d_mu, mu).to_numpy())
+            if return_array:
+                gradients.extend(list_for_param)
+            else:
+                gradients[parameter] = list_for_param
         if return_array:
-            return np.array(gradient_for_outputs)
+            return np.array(gradients)
         else:
-            return gradient_for_outputs
+            return gradients
 
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
         """Compute an error estimate for the computed internal state.
