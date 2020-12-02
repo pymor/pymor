@@ -5,7 +5,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
@@ -70,8 +70,8 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
 
 
 def main(
-        diameter: float = Option(0.1, help='Diameter option for the domain discretizer.'),
-        r: int = Option(5, help='Order of the ROMs.'),
+        diameter: float = Argument(0.1, help='Diameter option for the domain discretizer.'),
+        r: int = Argument(5, help='Order of the ROMs.'),
 ):
     r"""2D heat equation demo.
 

@@ -6,7 +6,7 @@
 import numpy as np
 import scipy.sparse as sps
 import matplotlib.pyplot as plt
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.core.config import config
 from pymor.models.iosys import LTIModel
@@ -18,8 +18,8 @@ from pymordemos.parametric_heat import run_mor_method_param
 
 
 def main(
-        n: int = Option(100, help='Order of the FOM.'),
-        r: int = Option(10, help='Order of the ROMs.'),
+        n: int = Argument(100, help='Order of the FOM.'),
+        r: int = Argument(10, help='Order of the ROMs.'),
 ):
     """Synthetic parametric demo.
 

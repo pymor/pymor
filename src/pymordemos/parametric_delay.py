@@ -6,13 +6,13 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.models.iosys import TransferFunction
 from pymor.reductors.h2 import TFIRKAReductor
 
 
-def main(r: int = Option(10, help='Order of the TF-IRKA ROM.')):
+def main(r: int = Argument(10, help='Order of the TF-IRKA ROM.')):
     """Parametric delay demo."""
     # Model
     def H(s, mu):

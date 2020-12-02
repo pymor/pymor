@@ -5,7 +5,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.analyticalproblems.domaindescriptions import LineDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
@@ -82,8 +82,8 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
 
 
 def main(
-        diameter: float = Option(0.01, help='Diameter option for the domain discretizer.'),
-        r: int = Option(5, help='Order of the ROMs.'),
+        diameter: float = Argument(0.01, help='Diameter option for the domain discretizer.'),
+        r: int = Argument(5, help='Order of the ROMs.'),
 ):
     """Parametric 1D heat equation example."""
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})

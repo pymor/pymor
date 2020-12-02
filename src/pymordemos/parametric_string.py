@@ -6,7 +6,7 @@
 import numpy as np
 import scipy.sparse as sps
 import matplotlib.pyplot as plt
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.core.config import config
 from pymor.core.logger import set_log_levels
@@ -22,8 +22,8 @@ from pymordemos.parametric_heat import run_mor_method_param
 
 
 def main(
-        n: int = Option(101, help='Order of the full second-order model (odd number).'),
-        r: int = Option(5, help='Order of the ROMs.'),
+        n: int = Argument(101, help='Order of the full second-order model (odd number).'),
+        r: int = Argument(5, help='Order of the ROMs.'),
 ):
     """Parametric string example."""
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})

@@ -6,15 +6,15 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.models.iosys import TransferFunction
 from pymor.reductors.h2 import TFIRKAReductor
 
 
 def main(
-        tau: float = Option(0.1, help='The time delay.'),
-        r: int = Option(10, help='Order of the TF-IRKA ROM.'),
+        tau: float = Argument(0.1, help='The time delay.'),
+        r: int = Argument(10, help='Order of the TF-IRKA ROM.'),
 ):
     """Delay demo.
 
