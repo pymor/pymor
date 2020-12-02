@@ -6,6 +6,7 @@ import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
+from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -117,16 +118,25 @@ class StationaryModel(Model):
         else:
             assert self.output_functional is not None
             assert self.output_functional.linear
-            dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H)
-            dual_solution = dual_problem.solve(mu)
-            gradient = []
-            for (parameter, size) in self.parameters.items():
-                for index in range(size):
-                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution, mu=mu).to_numpy()[0,0]
-                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solution, solution, mu=mu)
-                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solution, mu=mu).to_numpy()[0,0]
-                    gradient.append((output_partial_dmu + rhs_d_mu - lhs_d_mu)[0,0])
-        return np.array(gradient)
+            gradients = []
+            for d in range(self.output_functional.range.dim):
+                if self.output_functional.range.dim == 1:
+                    dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H)
+                else:
+                    assert isinstance(self.output_functional, BlockOperatorBase)
+                    dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.blocks[d,0].H)
+                dual_solution = dual_problem.solve(mu)
+                gradient = {}
+                for (parameter, size) in self.parameters.items():
+                    list_for_param = []
+                    for index in range(size):
+                        output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution, mu=mu).to_numpy()[0,d]
+                        lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solution, solution, mu=mu)
+                        rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solution, mu=mu).to_numpy()[0,0]
+                        list_for_param.append((output_partial_dmu + rhs_d_mu - lhs_d_mu)[0,0])
+                    gradient[parameter] = list_for_param
+                gradients.append(gradient)
+        return gradients
 
 
 class InstationaryModel(Model):

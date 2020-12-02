@@ -166,16 +166,22 @@ class Model(CacheableObject, ParametricObject):
         -------
         The gradient as a numpy array
         """
-        gradient = []
         U_d_mus = self._compute_solution_d_mu(solution, mu)
-        for (parameter, size) in self.parameters.items():
-            for index in range(size):
-                output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
-                    solution, mu=mu).to_numpy()[0,0]
-                U_d_mu = U_d_mus[parameter][index]
-                gradient.append(output_partial_dmu + self.output_functional.apply(
-                    U_d_mu, mu).to_numpy()[0,0])
-        return np.array(gradient)
+        gradient_for_outputs = []
+        for d in range(self.output_functional.range.dim):
+            gradient = {}
+            for (parameter, size) in self.parameters.items():
+                list_for_param = []
+                for index in range(size):
+                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
+                        solution, mu=mu).to_numpy()[0,d]
+                    U_d_mu = U_d_mus[parameter][index]
+                    list_for_param.append(output_partial_dmu
+                                + self.output_functional.jacobian(solution, mu).apply(
+                        U_d_mu, mu).to_numpy()[0,d])
+                gradient[parameter] = list_for_param
+            gradient_for_outputs.append(gradient)
+        return gradient_for_outputs
 
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
         """Compute an error estimate for the computed internal state.
@@ -348,8 +354,8 @@ class Model(CacheableObject, ParametricObject):
         if output_d_mu and 'output_d_mu' not in data:
             # TODO use caching here (requires skipping args in key generation)
             retval = self._compute_output_d_mu(data['solution'], mu=mu, **kwargs)
-            if isinstance(retval, dict):
-                assert 'output_d_mu' in retval
+            # retval is always a dict
+            if isinstance(retval, dict) and 'output_d_mu' in retval:
                 data.update(retval)
             else:
                 data['output_d_mu'] = retval
@@ -469,24 +475,37 @@ class Model(CacheableObject, ParametricObject):
         )
         return data['solution_d_mu']
 
-    def output_d_mu(self, mu=None, **kwargs):
+    def output_d_mu(self, mu=None, return_array=False, **kwargs):
         """compute the gradient w.r.t. the parameter of the output functional
 
         Parameters
         ----------
         mu
             |Parameter value| for which to compute the gradient
+        return_array
+            if True, returning a |NumPy array| and if False, returning
+            a dict w.r.t. to the parameters
 
         Returns
         -------
-        The gradient as a numpy array
+        The gradient as a |NumPy array| or a dict.
         """
         data = self.compute(
             output_d_mu=True,
             mu=mu,
             **kwargs
         )
-        return data['output_d_mu']
+        if return_array:
+            gradients = []
+            for dict_gradient in data['output_d_mu']:
+                gradient = []
+                for (parameter, size) in self.parameters.items():
+                    for index in range(size):
+                        gradient.append(dict_gradient[parameter][index])
+                gradients.append(gradient)
+            return np.array(gradients)
+        else:
+            return data['output_d_mu']
 
     def estimate_error(self, mu=None, **kwargs):
         """Estimate the error for the computed internal state.
