@@ -277,3 +277,37 @@ def test_d_mu_of_LincombOperator():
     assert hes_nu_mu_1 == [0. ,0. ,0]
     assert hes_nu_mu_2 == [0. ,0. ,0]
     assert hes_nu_nu == [0. ,0. ,-0]
+
+def test_output_d_mu():
+    from pymordemos.linear_optimization import create_fom
+
+    grid_intervals = 10
+    training_samples = 5
+
+    fom, mu_bar = create_fom(grid_intervals, vector_valued_output=True)
+    easy_fom, _ = create_fom(grid_intervals, vector_valued_output=False)
+
+    parameter_space = fom.parameters.space(0, np.pi)
+    training_set = parameter_space.sample_uniformly(training_samples)
+
+    #verifying that the adjoint and sensitivity gradients are the same and that solve_d_mu works
+    for mu in training_set:
+        gradient_with_adjoint_approach = fom.output_d_mu(mu, return_array=True, use_adjoint=True)
+        gradient_with_sensitivities = fom.output_d_mu(mu, return_array=True, use_adjoint=False)
+        assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
+        u_d_mu = fom.solve_d_mu('diffusion', 1, mu=mu).to_numpy()
+        u_d_mu_ = fom.compute(solution_d_mu=True, mu=mu)['solution_d_mu']['diffusion'][1].to_numpy()
+        assert np.allclose(u_d_mu, u_d_mu_)
+
+        # test the complex case
+        complex_fom = easy_fom.with_(operator=easy_fom.operator.with_(
+            operators=[op* (1+2j) for op in easy_fom.operator.operators]))
+        complex_gradient_adjoint = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=True)
+        complex_gradient = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=False)
+        assert np.allclose(complex_gradient_adjoint, complex_gradient)
+
+        complex_fom = easy_fom.with_(output_functional=easy_fom.output_functional.with_(
+            operators=[op* (1+2j) for op in easy_fom.output_functional.operators]))
+        complex_gradient_adjoint = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=True)
+        complex_gradient = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=False)
+        assert np.allclose(complex_gradient_adjoint, complex_gradient)
