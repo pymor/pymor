@@ -4,23 +4,90 @@
 Release Notes
 *************
 
-pyMOR 2020.2 (?, 2020)
-----------------------
+pyMOR 2020.2 (December ?, 2020)
+--------------------------------
+We are proud to announce the release of pyMOR 2020.2! Highlights of this release
+are a non-intrusive model reduction method for instationary models based on artificial
+neural networks and an extension of our available tutorials through the new reduced
+basis projection tutorial. Additionally, as part of this release we happily present
+the new pyMOR logo to you!
 
+Over 400 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2020.1.x...2020.2.x>`__.
+
+pyMOR 2020.2 contains contributions by Tim Keil and Hendrik Kleikamp.
+See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for
+more details.
 
 Release highlights
 ^^^^^^^^^^^^^^^^^^
+
+Neural network reductor for instationary problems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1120] Neural networks for instationary problems <https://github.com/pymor/pymor/pull/1120>`_
+
+
+Tutorial: Projecting a model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1084] Add RB projection tutorial <https://github.com/pymor/pymor/pull/1084>`_
 
 
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+Handling of model outputs and error estimates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1113] add compute() to Model <https://github.com/pymor/pymor/pull/1113>`_
+
+
+Bode plot for input-output systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1051] Add Bode plot <https://github.com/pymor/pymor/pull/1051>`_
+
+
+Make VectorArrays iterable
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1068] Make VectorArrays iterable <https://github.com/pymor/pymor/pull/1068>`_
+
+
+Improved tutorial structure for system-theoretic methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1141] Restructure sys-mor tutorial  <https://github.com/pymor/pymor/pull/1141>`_
+- `[#1160] remove notebooks dir  <https://github.com/pymor/pymor/pull/1160>`_
+
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Adjust norms in VectorArrayInterface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1070] Remove l1_norm from VectorArrayInterface <https://github.com/pymor/pymor/pull/1070>`_
+- `[#1075] Deprecate l2_norm/l2_norm2 in favor of norm/norm2 <https://github.com/pymor/pymor/pull/1075>`_
+
+
+Rename estimate/estimators methods of models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1041] Rename Model.estimate to Model.estimate_error and estimators to error_estimators <https://github.com/pymor/pymor/pull/1041>`_
+
+
+Deprecate dot/pairwise_dot
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1066] Deprecate dot/pairwise_dot in favor of inner/pairwise_inner <https://github.com/pymor/pymor/pull/1066>`_
+
+
+Restructuring of grid classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1044] Restructuring of grid classes <https://github.com/pymor/pymor/pull/1044>`_
+
+
+Model outputs changed from VectorArray to NumPy array
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1089] Let Model outputs be NumPy arrays <https://github.com/pymor/pymor/pull/1089>`_
+
+
 Renaming of some Operators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1046] Append Operator to LinearAdvectionLaxFriedrichs, Concatenation and ComponentProjection <https://github.com/pymor/pymor/pull/1046>`_
 `ComponentProjection`, `Concatenation` and `LinearAdvectionLaxFriedrichs` were
 renamed to `ComponentProjectionOperator`, `ConcatenationOperator` and
 `LinearAdvectionLaxFriedrichsOperator`, respectively.
@@ -28,6 +95,11 @@ renamed to `ComponentProjectionOperator`, `ConcatenationOperator` and
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#960] Avoid nested parameter functionals and functions for sums and products <https://github.com/pymor/pymor/pull/960>`_
+- `[#1093] meshio4 <https://github.com/pymor/pymor/pull/1093>`_
+- `[#1098] Add algorithm to expand concatenations of LincombOperators  <https://github.com/pymor/pymor/pull/1098>`_
+- `[#1102] Improve projection of ConcatenationOperator <https://github.com/pymor/pymor/pull/1102>`_
+- `[#1144] Simplify __sub__ for iosys models, check D operator in h2_norm  <https://github.com/pymor/pymor/pull/1144>`_
 
 
 pyMOR 2020.1 (July 23, 2020)
@@ -67,7 +139,7 @@ the neural networks. No knowledge of PyTorch or neural networks is required to a
 New system analysis and linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The new :meth:`~pymor.algorithms.eigs.eigs` method
-`[#880] <https://github.com/pymor/pymor/pull/880>`_ computes 
+`[#880] <https://github.com/pymor/pymor/pull/880>`_ computes
 smallest/largest eigenvalues of an arbitary linear real |Operator|
 using the implicitly restarted Arnoldi method [RL95]_. It can also
 be used to solve generalized eigenvalue problems.
@@ -78,7 +150,7 @@ solver and converts the operators to dense matrices.
 The new :meth:`~pymor.algorithms.samdp.samdp` method
 `[#834] <https://github.com/pymor/pymor/pull/834>`_ implements the
 subspace accelerated dominant pole (SAMDP) algorithm  [RM06]_,
-which can be used to compute the dominant poles operators of an 
+which can be used to compute the dominant poles operators of an
 |LTIModel| with arbitrary (in particular sparse) system |Operators|
 without relying on dense matrix operations.
 
