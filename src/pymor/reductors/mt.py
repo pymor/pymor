@@ -8,8 +8,9 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.samdp import samdp
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
-from pymor.models.iosys import LTIModel
+from pymor.models.iosys import LTIModel, sparse_min_size
 from pymor.operators.constructions import IdentityOperator
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 
@@ -39,7 +40,7 @@ class MTReductor(BasicObject):
         self._pg_reductor = None
 
     def reduce(self, r=None, decomposition='samdp', projection='orth',
-               symmetric=False, which="LR", method_options=None):
+               symmetric=False, which="NR", method_options=None, take_complex=False):
         """Modal Truncation.
 
         Parameters
@@ -59,20 +60,23 @@ class MTReductor(BasicObject):
             - `'biorth'`: projection matrices are biorthogolized with
               respect to the E product
         symmetric
-            True if Operator A is symmetric and E is symmetric, positive
+            `True` if Operator A is symmetric and E is symmetric, positive
             definite, False if not.
-        method_options
-            Optional dict with more options for the samdp algorithm.
         which
             A string specifying which `k` eigenvalues and eigenvectors to
-            compute when using the eig decomposition, default is "LR":
+            compute when using the eig decomposition, default is "NR":
 
             - `'SM'`: select eigenvalues with smallest magnitude
             - `'LR'`: select eigenvalues with largest real part
             - `'NR'`: select eigenvalues with largest norm(residual) / abs(Re(pole))
             - `'NS'`: select eigenvalues with largest norm(residual) / abs(pole)
             - `'NM'`: select eigenvalues with largest norm(residual)
-             
+        method_options
+            Optional dict with more options for the samdp algorithm.
+        take_complex
+            If `True` the reduced model is complex when the poles of the reduced
+            model are not closed under complex conjugation.
+
         Returns
         -------
         rom
@@ -81,30 +85,38 @@ class MTReductor(BasicObject):
         assert 0 < r < self.fom.order
         assert projection in ('orth', 'biorth')
         assert decomposition in ('eig', 'samdp')
+        assert which in ('LR', 'SM', 'NR', 'NS', 'NM')
         assert method_options is None or isinstance(method_options, dict)
         if not method_options:
             method_options = {}
 
-        self.V = self.fom.B.as_range_array().empty(reserve=r)
-        self.W = self.fom.C.as_source_array().empty(reserve=r)
+        if self.fom.parametric:
+            fom = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
+                                    for op in ['A', 'B', 'C', 'D', 'E']})
+        else:
+            fom = self.fom
+
+        self.V = fom.A.source.empty(reserve=r)
+        self.W = fom.A.source.empty(reserve=r)
 
         if decomposition == 'eig':
-            if self.fom.A.sparse:
-                self.logger.warning('Converting operator A to a NumPy array.')
-            A = to_matrix(self.fom.A, format='dense')
-            if not isinstance(self.fom.E, IdentityOperator):
-                if self.fom.E.sparse:
-                    self.logger.warning('Converting operator E to a NumPy array.')
-            E = None if isinstance(self.fom.E, IdentityOperator) else to_matrix(self.fom.E, format='dense')
+            if fom.order >= sparse_min_size():
+                if not isinstance(fom.A, NumpyMatrixOperator) or fom.A.sparse:
+                    self.logger.warning('Converting operator A to a NumPy array.')
+                if not isinstance(fom.E, IdentityOperator):
+                    if not isinstance(fom.E, NumpyMatrixOperator) or fom.E.sparse:
+                        self.logger.warning('Converting operator E to a NumPy array.')
+            A = to_matrix(fom.A, format='dense')
+            E = None if isinstance(fom.E, IdentityOperator) else to_matrix(fom.E, format='dense')
 
             if symmetric:
                 poles, ev_r = spla.eig(A, E, right=True)
-                rev = self.fom.A.source.from_numpy(ev_r.T)                
+                rev = fom.A.source.from_numpy(ev_r.T)
                 lev = rev.copy()
             else:
                 poles, ev_l, ev_r = spla.eig(A, E, left=True, right=True)
-                rev = self.fom.A.source.from_numpy(ev_r.T)
-                lev = self.fom.A.source.from_numpy(ev_l.T)
+                rev = fom.A.source.from_numpy(ev_r.T)
+                lev = fom.A.source.from_numpy(ev_l.T)
             if which == 'SM':
                 idx = np.argsort(np.abs(poles))
             elif which == 'LR':
@@ -112,11 +124,12 @@ class MTReductor(BasicObject):
             else:
                 absres = np.empty(len(poles))
                 for i in range(len(poles)):
-                    b_norm = spla.norm(lev[i].inner(self.fom.B.as_range_array()), ord=2)
-                    c_norm = spla.norm(self.fom.C.as_source_array().inner(rev[i]), ord=2)
-                    absres[i] = b_norm * c_norm
+                    lev[i].scal(1 / lev[i].inner(fom.E.apply(rev[i]))[0][0])
+                    b_norm = fom.B.apply_adjoint(lev[i]).l2_norm()
+                    c_norm = fom.C.apply(rev[i]).l2_norm()
+                    absres[i] = b_norm @ c_norm
                 if which == 'NR':
-                    idx = np.argsort(-absres / np.abs(np.real(poles)))
+                    idx = np.argsort(-absres / np.abs(np.real(poles)), kind='stable')
                 elif which == 'NS':
                     idx = np.argsort(-absres / np.abs(poles))
                 elif which == 'NM':
@@ -124,43 +137,71 @@ class MTReductor(BasicObject):
             poles = poles[idx]
             rev = rev[idx]
             lev = lev[idx]
-            poles = poles[:r]
-            rev = rev[:r]
-            lev = lev[:r]
+
         elif decomposition == 'samdp':
-            poles, res, rev, lev = samdp(self.fom.A, self.fom.E,
-                                         self.fom.B.as_range_array(),
-                                         self.fom.C.as_source_array(),
+            poles, res, rev, lev = samdp(fom.A, fom.E,
+                                         fom.B.as_range_array(),
+                                         fom.C.as_source_array(),
                                          r, **method_options)
         if np.iscomplexobj(poles):
             real_index = np.where(np.isreal(poles))[0]
             complex_index = np.where(poles.imag > 0)[0]
+            if len(np.where(poles[:r].imag)[0]) % 2 == 1:
+                self.logger.warning('Chosen order r will split complex conjugated pair of poles.')
+                real_index = np.where(np.isreal(poles))[0]
+                complex_index = np.where(poles.imag > 0)[0]
+                if (take_complex):
+                    self.logger.info("Reduced model will be complex.")
+                    poles = poles[:r]
+                    self.V = rev[:r]
+                    self.W = lev[:r]
+                else:
+                    self.logger.info("Only real part of complex conjugated pair taken.")
+                    poles = poles[:r]
+                    lev = lev[:r]
+                    rev = rev[:r]
+                    real_index = np.where(np.isreal(poles))[0]
+                    complex_index = np.where(poles.imag > 0)[0] \
+                        if np.sum(np.where(poles.imag > 0)) > np.sum(np.where(poles.imag < 0)) \
+                        else np.where(poles.imag < 0)[0]
 
-            self.V.append(rev[real_index].real)
-            self.V.append(rev[complex_index].real)
-            self.V.append(rev[complex_index].imag)
+                    self.V.append(rev[real_index].real)
+                    self.V.append(rev[complex_index].real)
+                    self.V.append(rev[complex_index].imag)
 
-            self.W.append(lev[real_index].real)
-            self.W.append(lev[complex_index].real)
-            self.W.append(lev[complex_index].imag)
+                    self.W.append(lev[real_index].real)
+                    self.W.append(lev[complex_index].real)
+                    self.W.append(lev[complex_index].imag)
+
+                    self.V = self.V[:r]
+                    self.W = self.W[:r]
+            else:
+                poles = poles[:r]
+                lev = lev[:r]
+                rev = rev[:r]
+                real_index = np.where(np.isreal(poles))[0]
+                complex_index = np.where(poles.imag > 0)[0]
+                self.V.append(rev[real_index].real)
+                self.V.append(rev[complex_index].imag)
+                self.V.append(rev[complex_index].real)
+
+                self.W.append(lev[real_index].real)
+                self.W.append(lev[complex_index].imag)
+                self.W.append(lev[complex_index].real)
 
         else:
-            self.V = rev
-            self.W = lev
+            self.V = rev[:r]
+            self.W = lev[:r]
 
         if projection == 'orth':
             gram_schmidt(self.V, atol=0, rtol=0, copy=False)
             gram_schmidt(self.W, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
-            gram_schmidt_biorth(self.V, self.W, product=self.fom.E, copy=False)
+            gram_schmidt_biorth(self.V, self.W, product=fom.E, copy=False)
 
-        # find reduced-order model
-        if self.fom.parametric:
-            fom_mu = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
-                                       for op in ['A', 'B', 'C', 'D', 'E']})
-        else:
-            fom_mu = self.fom
-        self._pg_reductor = LTIPGReductor(fom_mu, self.W, self.V, projection == 'biorth')
+        # find reduced model
+
+        self._pg_reductor = LTIPGReductor(fom, self.W, self.V, projection == 'biorth')
         rom = self._pg_reductor.reduce()
         return rom
 
