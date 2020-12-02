@@ -119,6 +119,12 @@ class BlockOperatorBase(Operator):
         blocks = [process_col(col, space) for col, space in zip(self.blocks.T, subspaces)]
         return self.source.make_array(blocks) if self.blocked_source else blocks[0]
 
+    def d_mu(self, parameter, index=0):
+        blocks = np.empty(self.blocks.shape, dtype=object)
+        for (i, j) in np.ndindex(self.blocks.shape):
+            blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
+        return self.with_(blocks=blocks)
+
 
 class BlockOperator(BlockOperatorBase):
     """A matrix of arbitrary |Operators|.
