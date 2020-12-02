@@ -95,7 +95,7 @@ class StationaryModel(Model):
 
     _compute_allowed_kwargs = frozenset({'use_adjoint'})
 
-    def _compute_output_d_mu(self, solution, mu, use_adjoint=None):
+    def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
         """compute the gradient of the output functional  w.r.t. the parameters
 
         Parameters
@@ -114,7 +114,7 @@ class StationaryModel(Model):
         The gradient as a numpy array.
         """
         if not use_adjoint:
-            return super()._compute_output_d_mu(solution, mu)
+            return super()._compute_output_d_mu(solution, mu, return_array)
         else:
             assert self.output_functional is not None
             assert self.output_functional.linear
@@ -126,7 +126,7 @@ class StationaryModel(Model):
                     assert isinstance(self.output_functional, BlockOperatorBase)
                     dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.blocks[d,0].H)
                 dual_solution = dual_problem.solve(mu)
-                gradient = {}
+                gradient = [] if return_array else {}
                 for (parameter, size) in self.parameters.items():
                     list_for_param = []
                     for index in range(size):
@@ -134,9 +134,15 @@ class StationaryModel(Model):
                         lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solution, solution, mu=mu)
                         rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solution, mu=mu).to_numpy()[0,0]
                         list_for_param.append((output_partial_dmu + rhs_d_mu - lhs_d_mu)[0,0])
-                    gradient[parameter] = list_for_param
+                    if return_array:
+                        gradient.extend(list_for_param)
+                    else:
+                        gradient[parameter] = list_for_param
                 gradients.append(gradient)
-        return gradients
+        if return_array:
+            return np.array(gradients)
+        else:
+            return gradients
 
 
 class InstationaryModel(Model):
