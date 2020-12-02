@@ -141,7 +141,7 @@ stages:
         alias: pymor__devpi
     before_script:
       # bump to our minimal version
-      - python3 -m pip install -U pip==19.0 
+      - python3 -m pip install -U pip==19.0
       - python3 -m pip install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
@@ -175,50 +175,6 @@ ci setup:
         - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "3.6 3.7 3.8 3.9" "2010 2014"
 
 #****** test stage
-minimal_cpp_demo 3 6:
-    extends: .pytest
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.6:2f44a2ffd0e78749f55145db80e161b814693300
-          alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.6:2f44a2ffd0e78749f55145db80e161b814693300
-    script: ./.ci/gitlab/cpp_demo.bash
-minimal_cpp_demo 3 7:
-    extends: .pytest
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:2f44a2ffd0e78749f55145db80e161b814693300
-          alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:2f44a2ffd0e78749f55145db80e161b814693300
-    script: ./.ci/gitlab/cpp_demo.bash
-minimal_cpp_demo 3 8:
-    extends: .pytest
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:2f44a2ffd0e78749f55145db80e161b814693300
-          alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:2f44a2ffd0e78749f55145db80e161b814693300
-    script: ./.ci/gitlab/cpp_demo.bash
-minimal_cpp_demo 3 9:
-    extends: .pytest
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:2f44a2ffd0e78749f55145db80e161b814693300
-          alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:2f44a2ffd0e78749f55145db80e161b814693300
-    script: ./.ci/gitlab/cpp_demo.bash
 mpi 3 6:
     extends: .pytest
     rules:
@@ -649,6 +605,102 @@ oldest 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_oldest.bash
+        - find . -name "coverage*"
+        - ls -la *
+cpp_demo 3 6:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_cpp_demo__3.6
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.6:2f44a2ffd0e78749f55145db80e161b814693300
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.6:2f44a2ffd0e78749f55145db80e161b814693300
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_cpp_demo.bash
+        - find . -name "coverage*"
+        - ls -la *
+cpp_demo 3 7:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_cpp_demo__3.7
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:2f44a2ffd0e78749f55145db80e161b814693300
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:2f44a2ffd0e78749f55145db80e161b814693300
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_cpp_demo.bash
+        - find . -name "coverage*"
+        - ls -la *
+cpp_demo 3 8:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_cpp_demo__3.8
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:2f44a2ffd0e78749f55145db80e161b814693300
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:2f44a2ffd0e78749f55145db80e161b814693300
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_cpp_demo.bash
+        - find . -name "coverage*"
+        - ls -la *
+cpp_demo 3 9:
+    extends: .pytest
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_cpp_demo__3.9
+    services:
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:2f44a2ffd0e78749f55145db80e161b814693300
+          alias: pypi_mirror
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:2f44a2ffd0e78749f55145db80e161b814693300
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_cpp_demo.bash
         - find . -name "coverage*"
         - ls -la *
 ci_weekly 3 6:

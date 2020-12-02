@@ -143,7 +143,7 @@ stages:
         alias: pymor__devpi
     before_script:
       # bump to our minimal version
-      - python3 -m pip install -U pip==19.0 
+      - python3 -m pip install -U pip==19.0
       - python3 -m pip install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
@@ -177,21 +177,6 @@ ci setup:
         - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}" "{{ ' '.join(manylinuxs) }}"
 
 #****** test stage
-
-{%- for py in pythons %}
-minimal_cpp_demo {{py[0]}} {{py[2]}}:
-    extends: .pytest
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
-    services:
-        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
-          alias: pypi_mirror
-    image: {{registry}}/pymor/testing_py{{py}}:{{ci_image_tag}}
-    script: ./.ci/gitlab/cpp_demo.bash
-{%- endfor %}
-
 
 {%- for script, py, para in matrix %}
 {{script}} {{py[0]}} {{py[2]}}:
@@ -434,7 +419,7 @@ pythons = ['3.6', '3.7', '3.8', '3.9']
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [("mpi", pythons, 1), ("pip_installed", pythons, 1), ("tutorials", pythons, 1),
-    ("vanilla", pythons, 1), ("numpy_git", newest, 1), ("oldest", oldest, 1),]
+    ("vanilla", pythons, 1), ("numpy_git", newest, 1), ("oldest", oldest, 1), ("cpp_demo", pythons, 1)]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
 testos = [('centos_8','3.6'), ('debian_buster','3.7'), ('debian_bullseye','3.9')]
