@@ -17,7 +17,8 @@ set -eux
 
 # switches default index to pypi-mirror service
 [[ -d ~/.config/pip/ ]] || mkdir -p ~/.config/pip/
-cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
+# check makes this script usable on OSX azure too
+[[ -e /usr/local/share/ci.pip.conf ]] && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
 
 # most of these should be baked into the docker image already
 pip install --use-feature=2020-resolver -r requirements.txt

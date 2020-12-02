@@ -2,7 +2,9 @@ jobs:
 - job: 'OSX_CI'
   pool:
     vmImage: macOS-10.15
-  timeoutInMinutes: 30
+  timeoutInMinutes: 45
+  variables:
+      PYMOR_HYPOTHESIS_PROFILE: ci
   strategy:
     maxParallel: 8
     matrix:
@@ -12,15 +14,13 @@ jobs:
       osx_python3.7:
         CONFIG: osx_python3.7
         UPLOAD_PACKAGES: False
-
+      osx_python3.8:
+        CONFIG: osx_python3.8
+        UPLOAD_PACKAGES: False
+      osx_python3.9:
+        CONFIG: osx_python3.9
+        UPLOAD_PACKAGES: False
   steps:
-  - script: |
-      echo "Removing homebrew from Azure to avoid conflicts."
-      curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
-      chmod +x ~/uninstall_homebrew
-      ~/uninstall_homebrew -fq
-      rm ~/uninstall_homebrew
-    displayName: Remove homebrew
 
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
@@ -33,23 +33,32 @@ jobs:
       conda config --add channels conda-forge
       conda update -y --all
       conda install -y --only-deps pymor
-      # these ones are not in the 0.5.1 conda build yet
-      conda install -y pyevtk mpi4py
+      # these ones are not in the 2020.1 conda build yet
+      conda install -y pyevtk mpi4py slycot pytorch pyqt codecov
       # these are buildtime, not a runtime,  deps for our conda package
       conda install -y cython pytest-cov pytest
-      # install anything which might a new dependency with pip
+      # install anything which might be a new dependency with pip
       pip install -r requirements.txt
       pip install -r requirements-ci.txt
-      pip install pytest-azurepipelines
-      conda list
+      # this currently still introduces some conflicts
+      # pip install -r requirements-optional.txt
+
+      # this makes us fall back on MPL vis backend (gl shader compile fails otherwise)
+      cp .ci/azure/pymor_defaults.py_osx pymor_defaults.py
     displayName: Configure conda and conda-build
 
   - script: |
-      set -ex
+      #set -ex
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
       python setup.py build_ext -i
+      export QT_PREFERRED_BINDING=PySide2: QT_DEBUG_PLUGINS=1
+      py.test -sv --cov-context=test --cov=src/pymor --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}
+      coverage xml
     displayName: py.test
 
+  - script: |
+      codecov --file coverage.xml 
+    displayName: 'Upload to codecov.io'
   - publish: src/pymortests/testdata/check_results/
     artifact: changed_results_$(CONFIG)
     condition: always()

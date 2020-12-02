@@ -176,6 +176,9 @@ def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 
     def _doit(factory):
+        # for windows these needs to be repeated due to multiprocessing (?)
+        from Qt.QtWidgets import QApplication
+        from Qt.QtCore import QCoreApplication
         try:
             app = QApplication([])
         except RuntimeError:
