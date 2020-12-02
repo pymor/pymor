@@ -82,31 +82,10 @@ def main(
                   options={'ftol': 1e-15})
     opt_rom_minimization_data['time'] = perf_counter()-tic
 
-    def rom_gradient_of_functional_standard_sensitivities(mu):
-        return rom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=False)
-
-    opt_rom_minimization_data_sensitivities = {'num_evals': 0,
-                                               'evaluations' : [],
-                                               'evaluation_points': [],
-                                               'time': np.inf,
-                                               'offline_time': RB_greedy_data['time']}
-
-    tic = perf_counter()
-    opt_rom_result_sensitivities = minimize(partial(record_results, rom_objective_functional,
-                                                    fom.parameters.parse, opt_rom_minimization_data_sensitivities),
-                  initial_guess.to_numpy(),
-                  method='L-BFGS-B',
-                  jac=rom_gradient_of_functional_standard_sensitivities,
-                  bounds=(ranges, ranges),
-                  options={'ftol': 1e-15})
-    opt_rom_minimization_data_sensitivities['time'] = perf_counter()-tic
-
     print("\nResult of optimization with FOM model and adjoint gradient")
     report(opt_fom_result, fom.parameters.parse, opt_fom_minimization_data, reference_mu)
     print("Result of optimization with ROM model and adjoint gradient")
     report(opt_rom_result, fom.parameters.parse, opt_rom_minimization_data, reference_mu)
-    print("Result of optimization with ROM model but sensitivity gradient")
-    report(opt_rom_result_sensitivities, fom.parameters.parse, opt_rom_minimization_data_sensitivities, reference_mu)
 
 def create_fom(grid_intervals, vector_valued_output=False):
     domain = RectDomain(([-1,-1], [1,1]))
