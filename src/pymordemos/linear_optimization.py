@@ -25,7 +25,7 @@ def main(
     def fom_objective_functional(mu):
         return fom.output(mu)
     def fom_gradient_of_functional(mu):
-        return fom.output_d_mu(fom.parameters.parse(mu))
+        return fom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
     from functools import partial
     from scipy.optimize import minimize
@@ -36,7 +36,8 @@ def main(
                                 'evaluation_points': [],
                                 'time': np.inf}
     tic = perf_counter()
-    opt_fom_result = minimize(partial(record_results, fom_objective_functional, fom.parameters.parse, opt_fom_minimization_data),
+    opt_fom_result = minimize(partial(record_results, fom_objective_functional,
+                                      fom.parameters.parse, opt_fom_minimization_data),
                               initial_guess.to_numpy(),
                               method='L-BFGS-B',
                               jac=fom_gradient_of_functional,
@@ -59,25 +60,17 @@ def main(
     RB_greedy_data = rb_greedy(fom, RB_reductor, training_set, atol=1e-2)
     rom = RB_greedy_data['rom']
 
-    #verifying that the adjoint and sensitivity gradients are the same and that solve_d_mu also works
-    for mu in training_set:
-        gradient_with_adjoint_approach = rom.output_d_mu(mu, use_adjoint=True)
-        gradient_with_sensitivities = rom.output_d_mu(mu, use_adjoint=False)
-        assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
-        u_d_mu = rom.solve_d_mu('diffusion', 1, mu=mu).to_numpy()
-        u_d_mu_ = rom.compute(solution_d_mu=True, mu=mu)['solution_d_mu']['diffusion'][1].to_numpy()
-        assert np.allclose(u_d_mu, u_d_mu_)
-
     def rom_objective_functional(mu):
         return rom.output(mu)
     def rom_gradient_of_functional(mu):
-        return rom.output_d_mu(fom.parameters.parse(mu))
+        return rom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
     opt_rom_minimization_data = {'num_evals': 0,
                                  'evaluations' : [],
                                  'evaluation_points': [],
                                  'time': np.inf,
                                  'offline_time': RB_greedy_data['time']}
+
 
     tic = perf_counter()
     opt_rom_result = minimize(partial(record_results, rom_objective_functional, fom.parameters.parse,
@@ -90,7 +83,8 @@ def main(
     opt_rom_minimization_data['time'] = perf_counter()-tic
 
     def rom_gradient_of_functional_standard_sensitivities(mu):
-        return rom.output_d_mu(fom.parameters.parse(mu), use_adjoint=False)
+        return rom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=False)
+
     opt_rom_minimization_data_sensitivities = {'num_evals': 0,
                                                'evaluations' : [],
                                                'evaluation_points': [],
@@ -106,6 +100,7 @@ def main(
                   bounds=(ranges, ranges),
                   options={'ftol': 1e-15})
     opt_rom_minimization_data_sensitivities['time'] = perf_counter()-tic
+
     print("\nResult of optimization with FOM model and adjoint gradient")
     report(opt_fom_result, fom.parameters.parse, opt_fom_minimization_data, reference_mu)
     print("Result of optimization with ROM model and adjoint gradient")
@@ -113,7 +108,7 @@ def main(
     print("Result of optimization with ROM model but sensitivity gradient")
     report(opt_rom_result_sensitivities, fom.parameters.parse, opt_rom_minimization_data_sensitivities, reference_mu)
 
-def create_fom(grid_intervals):
+def create_fom(grid_intervals, vector_valued_output=False):
     domain = RectDomain(([-1,-1], [1,1]))
     indicator_domain = ExpressionFunction(
         '(-2/3. <= x[..., 0]) * (x[..., 0] <= -1/3.) * (-2/3. <= x[..., 1]) * (x[..., 1] <= -1/3.) * 1. \
@@ -137,12 +132,14 @@ def create_fom(grid_intervals):
     theta_J = ExpressionParameterFunctional('1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters,
                                            derivative_expressions={'diffusion': ['1/5','1/5']})
 
-    problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
+    if vector_valued_output:
+        problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J), ('l2', f *0.5* theta_J)])
+    else:
+        problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
 
     print('Discretize ...')
     mu_bar = problem.parameters.parse([np.pi/2,np.pi/2])
     fom, _ = discretize_stationary_cg(problem, diameter=1. / grid_intervals, mu_energy_product=mu_bar)
-
     return fom, mu_bar
 
 def record_results(function, parse, data, mu):
