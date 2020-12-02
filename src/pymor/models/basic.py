@@ -105,9 +105,10 @@ class StationaryModel(Model):
         mu
             |Parameter value| for which to compute the gradient
         use_adjoint
-            Use the adjoint solution for a more efficient way of computing the gradient.
+            if `None` use standard approach, if `True`, use
+            the adjoint solution for a more efficient way of computing the gradient.
             See Section 1.6.2 in [HPUU09]_ for more details.
-            So far, this approach is only valid for linear models.
+            So far, the adjoint approach is only valid for linear models.
 
         Returns
         -------
@@ -120,11 +121,7 @@ class StationaryModel(Model):
             assert self.output_functional.linear
             gradients = []
             for d in range(self.output_functional.range.dim):
-                if self.output_functional.range.dim == 1:
-                    dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H)
-                else:
-                    assert isinstance(self.output_functional, BlockOperatorBase)
-                    dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.blocks[d,0].H)
+                dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H.as_range_array(mu)[d])
                 dual_solution = dual_problem.solve(mu)
                 gradient = [] if return_array else {}
                 for (parameter, size) in self.parameters.items():

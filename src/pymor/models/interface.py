@@ -50,7 +50,7 @@ class Model(CacheableObject, ParametricObject):
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                  solution_error_estimate=False, output_error_estimate=False,
-                 return_output_d_mu_array=False, mu=None, **kwargs):
+                 output_d_mu_return_array=False, mu=None, **kwargs):
         return {}
 
     def _compute_solution(self, mu=None, **kwargs):
@@ -261,7 +261,7 @@ class Model(CacheableObject, ParametricObject):
 
     def compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                 solution_error_estimate=False, output_error_estimate=False,
-                return_output_d_mu_array=False, *, mu=None, **kwargs):
+                output_d_mu_return_array=False, *, mu=None, **kwargs):
         """Compute the solution of the model and associated quantities.
 
         This methods computes the output of the model it's internal state
@@ -295,7 +295,7 @@ class Model(CacheableObject, ParametricObject):
             If `True`, return an error estimate for the computed internal state.
         output_error_estimate
             If `True`, return an error estimate for the computed output.
-        return_output_d_mu_array
+        output_d_mu_return_array
             if `True`, return the output of :meth:`_compute_output_d_mu` as a |Numpy array|,
             otherwise, return it as a dict w.r.t. to the parameters.
         mu
@@ -363,7 +363,7 @@ class Model(CacheableObject, ParametricObject):
         if output_d_mu and 'output_d_mu' not in data:
             # TODO use caching here (requires skipping args in key generation)
             retval = self._compute_output_d_mu(data['solution'], mu=mu,
-                                               return_array=return_output_d_mu_array,
+                                               return_array=output_d_mu_return_array,
                                                **kwargs)
             # retval is always a dict
             if isinstance(retval, dict) and 'output_d_mu' in retval:
@@ -504,7 +504,7 @@ class Model(CacheableObject, ParametricObject):
         data = self.compute(
             output_d_mu=True,
             mu=mu,
-            return_output_d_mu_array=return_array,
+            output_d_mu_return_array=return_array,
             **kwargs
         )
         return data['output_d_mu']
