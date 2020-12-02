@@ -197,8 +197,6 @@ mpi 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_mpi.bash
-        - find . -name "coverage*"
-        - ls -la *
 mpi 3 7:
     extends: .pytest
     rules:
@@ -221,8 +219,6 @@ mpi 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_mpi.bash
-        - find . -name "coverage*"
-        - ls -la *
 mpi 3 8:
     extends: .pytest
     rules:
@@ -245,8 +241,6 @@ mpi 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_mpi.bash
-        - find . -name "coverage*"
-        - ls -la *
 mpi 3 9:
     extends: .pytest
     rules:
@@ -269,8 +263,6 @@ mpi 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_mpi.bash
-        - find . -name "coverage*"
-        - ls -la *
 pip_installed 3 6:
     extends: .pytest
     rules:
@@ -293,8 +285,6 @@ pip_installed 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_pip_installed.bash
-        - find . -name "coverage*"
-        - ls -la *
 pip_installed 3 7:
     extends: .pytest
     rules:
@@ -317,8 +307,6 @@ pip_installed 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_pip_installed.bash
-        - find . -name "coverage*"
-        - ls -la *
 pip_installed 3 8:
     extends: .pytest
     rules:
@@ -341,8 +329,6 @@ pip_installed 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_pip_installed.bash
-        - find . -name "coverage*"
-        - ls -la *
 pip_installed 3 9:
     extends: .pytest
     rules:
@@ -365,8 +351,6 @@ pip_installed 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_pip_installed.bash
-        - find . -name "coverage*"
-        - ls -la *
 tutorials 3 6:
     extends: .pytest
     rules:
@@ -389,8 +373,6 @@ tutorials 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_tutorials.bash
-        - find . -name "coverage*"
-        - ls -la *
 tutorials 3 7:
     extends: .pytest
     rules:
@@ -413,8 +395,6 @@ tutorials 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_tutorials.bash
-        - find . -name "coverage*"
-        - ls -la *
 tutorials 3 8:
     extends: .pytest
     rules:
@@ -437,8 +417,6 @@ tutorials 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_tutorials.bash
-        - find . -name "coverage*"
-        - ls -la *
 tutorials 3 9:
     extends: .pytest
     rules:
@@ -461,8 +439,6 @@ tutorials 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_tutorials.bash
-        - find . -name "coverage*"
-        - ls -la *
 vanilla 3 6:
     extends: .pytest
     rules:
@@ -485,8 +461,6 @@ vanilla 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_vanilla.bash
-        - find . -name "coverage*"
-        - ls -la *
 vanilla 3 7:
     extends: .pytest
     rules:
@@ -509,8 +483,6 @@ vanilla 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_vanilla.bash
-        - find . -name "coverage*"
-        - ls -la *
 vanilla 3 8:
     extends: .pytest
     rules:
@@ -533,8 +505,6 @@ vanilla 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_vanilla.bash
-        - find . -name "coverage*"
-        - ls -la *
 vanilla 3 9:
     extends: .pytest
     rules:
@@ -557,8 +527,6 @@ vanilla 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_vanilla.bash
-        - find . -name "coverage*"
-        - ls -la *
 numpy_git 3 9:
     extends: .pytest
     rules:
@@ -581,8 +549,6 @@ numpy_git 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_numpy_git.bash
-        - find . -name "coverage*"
-        - ls -la *
 oldest 3 6:
     extends: .pytest
     rules:
@@ -605,8 +571,6 @@ oldest 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_oldest.bash
-        - find . -name "coverage*"
-        - ls -la *
 cpp_demo 3 6:
     extends: .pytest
     rules:

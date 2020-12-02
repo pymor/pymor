@@ -205,8 +205,6 @@ ci setup:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_{{script}}.bash
-        - find . -name "coverage*"
-        - ls -la *
 {%- endfor %}
 
 {%- for py in pythons %}
