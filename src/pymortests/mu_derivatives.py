@@ -311,3 +311,15 @@ def test_output_d_mu():
         complex_gradient_adjoint = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=True)
         complex_gradient = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=False)
         assert np.allclose(complex_gradient_adjoint, complex_gradient)
+
+    # another fom to test the 3d case
+    ops, coefs = fom.operator.operators, fom.operator.coefficients
+    ops += (fom.operator.operators[1],)
+    coefs += (ProjectionParameterFunctional('nu', 1, 0),)
+    fom_ = fom.with_(operator=LincombOperator(ops, coefs))
+    parameter_space = fom_.parameters.space(0, np.pi)
+    training_set = parameter_space.sample_uniformly(training_samples)
+    for mu in training_set:
+        gradient_with_adjoint_approach = fom_.output_d_mu(mu, return_array=True, use_adjoint=True)
+        gradient_with_sensitivities = fom_.output_d_mu(mu, return_array=True, use_adjoint=False)
+        assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
