@@ -169,17 +169,17 @@ class Model(CacheableObject, ParametricObject):
         U_d_mus = self._compute_solution_d_mu(solution, mu)
         gradients = [] if return_array else {}
         for (parameter, size) in self.parameters.items():
-            list_for_param = []
+            array = np.empty(shape=(size,self.output_functional.range.dim))
             for index in range(size):
                 output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
-                    solution, mu=mu).to_numpy()
+                    solution, mu=mu).to_numpy()[0]
                 U_d_mu = U_d_mus[parameter][index]
-                list_for_param.append(output_partial_dmu
-                    + self.output_functional.jacobian(solution, mu).apply(U_d_mu, mu).to_numpy())
+                array[index] = output_partial_dmu + self.output_functional.jacobian(
+                    solution, mu).apply(U_d_mu, mu).to_numpy()[0]
             if return_array:
-                gradients.extend(list_for_param)
+                gradients.extend(array)
             else:
-                gradients[parameter] = list_for_param
+                gradients[parameter] = array
         if return_array:
             return np.array(gradients)
         else:

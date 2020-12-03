@@ -125,17 +125,17 @@ class StationaryModel(Model):
                 dual_solutions.append(dual_problem.solve(mu))
             gradients = [] if return_array else {}
             for (parameter, size) in self.parameters.items():
-                list_for_param = []
+                array = np.empty(shape=(size,self.output_functional.range.dim))
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
-                                                                                             mu=mu).to_numpy()
-                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu).T
-                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy().T
-                    list_for_param.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
+                                                                                             mu=mu).to_numpy()[0]
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:,0]
+                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:,0]
+                    array[index] = output_partial_dmu + rhs_d_mu - lhs_d_mu
                 if return_array:
-                    gradients.extend(list_for_param)
+                    gradients.extend(array)
                 else:
-                    gradients[parameter] = list_for_param
+                    gradients[parameter] = array
         if return_array:
             return np.array(gradients)
         else:
