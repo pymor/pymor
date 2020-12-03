@@ -276,5 +276,5 @@ growing set of :doc:`tutorials`, which focus on specific aspects of pyMOR.
 
 Should you have any problems regarding pyMOR, questions or
 `feature requests <https://github.com/pymor/pymor/issues>`_, do not hesitate
-to contact us at our
-`mailing list <http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev>`_!
+to contact us via
+`GitHub discussions <https://github.com/pymor/pymor/discussions>`_!
