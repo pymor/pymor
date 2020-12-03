@@ -1,17 +1,12 @@
 #!/usr/bin/env python
-# coding: utf-8
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-# In[ ]:
-
 
 import numpy as np
-import scipy.linalg as spla
 import scipy.sparse as sps
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.core.config import config
 from pymor.models.iosys import LTIModel
@@ -19,18 +14,18 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
+from pymordemos.parametric_heat import run_mor_method_param
 
 
 def main(
-        n: int = Option(100, help='Order of the FOM.'),
-        r: int = Option(10, help='Order of the ROMs.'),
+        n: int = Argument(100, help='Order of the FOM.'),
+        r: int = Argument(10, help='Order of the ROMs.'),
 ):
-    # # Model
-    #
-    # https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Synthetic_parametric_model
+    """Synthetic parametric demo.
 
-    # In[ ]:
-
+    See the `MOR Wiki page <http://modelreduction.org/index.php/Synthetic_parametric_model>`_.
+    """
+    # Model
     # set coefficients
     a = -np.linspace(1e1, 1e3, n // 2)
     b = np.linspace(1e1, 1e3, n // 2)
@@ -53,181 +48,56 @@ def main(
     C[0, ::2] = c
     C[0, 1::2] = d
 
-
-    # In[ ]:
-
-
+    # form operators
     A0 = NumpyMatrixOperator(A0)
     Amu = NumpyMatrixOperator(Amu)
     B = NumpyMatrixOperator(B)
     C = NumpyMatrixOperator(C)
-
-
-    # In[ ]:
-
-
     A = A0 + Amu * ProjectionParameterFunctional('mu')
 
-
-    # In[ ]:
-
-
+    # form a model
     lti = LTIModel(A, B, C)
 
-
-    # # Magnitude plot
-
-    # In[ ]:
-
-
-    mu_list_short = [1/50, 1/20, 1/10, 1/5, 1/2, 1]
-
-
-    # In[ ]:
-
-
+    mu_list = [1/50, 1/20, 1/10, 1/5, 1/2, 1]
     w = np.logspace(0.5, 3.5, 200)
 
+    # System poles
     fig, ax = plt.subplots()
-    for mu in mu_list_short:
+    for mu in mu_list:
+        poles = lti.poles(mu=mu)
+        ax.plot(poles.real, poles.imag, '.', label=fr'$\mu = {mu}$')
+    ax.set_title('System poles')
+    ax.legend()
+    plt.show()
+
+    # Magnitude plot
+    fig, ax = plt.subplots()
+    for mu in mu_list:
         lti.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
     ax.legend()
     plt.show()
 
-
-    # In[ ]:
-
-
-    w_list = np.logspace(0.5, 3.5, 100)
-    mu_list = np.linspace(1/50, 1, 50)
-
-    lti_w_mu = np.zeros((len(w_list), len(mu_list)))
-    for i, mu in enumerate(mu_list):
-        lti_w_mu[:, i] = spla.norm(lti.freq_resp(w_list, mu=mu), axis=(1, 2))
-
-
-    # In[ ]:
-
-
+    # Hankel singular values
     fig, ax = plt.subplots()
-    out = ax.contourf(w_list, mu_list, lti_w_mu.T,
-                      norm=mpl.colors.LogNorm(),
-                      levels=np.logspace(np.log10(lti_w_mu.min()), np.log10(lti_w_mu.max()), 100))
-    ax.set_xlabel(r'Frequency $\omega$')
-    ax.set_ylabel(r'Parameter $\mu$')
-    ax.set_xscale('log')
-    #ax.set_yscale('log')
-    fig.colorbar(out, ticks=np.logspace(-2, 1, 7))
-    plt.show()
-
-
-    # # Hankel singular values
-
-    # In[ ]:
-
-
-    fig, ax = plt.subplots()
-    for mu in mu_list_short:
+    for mu in mu_list:
         hsv = lti.hsv(mu=mu)
         ax.semilogy(range(1, len(hsv) + 1), hsv, '.-', label=fr'$\mu = {mu}$')
     ax.set_title('Hankel singular values')
     ax.legend()
     plt.show()
 
+    # System norms
+    for mu in mu_list:
+        print(f'mu = {mu}:')
+        print(f'    H_2-norm of the full model:    {lti.h2_norm(mu=mu):e}')
+        if config.HAVE_SLYCOT:
+            print(f'    H_inf-norm of the full model:  {lti.hinf_norm(mu=mu):e}')
+        print(f'    Hankel-norm of the full model: {lti.hankel_norm(mu=mu):e}')
 
-    # # System norms
+    # Model order reduction
+    run_mor_method_param(lti, r, w, mu_list, BTReductor, 'BT')
+    run_mor_method_param(lti, r, w, mu_list, IRKAReductor, 'IRKA')
 
-    # In[ ]:
-
-
-    fig, ax = plt.subplots()
-    mu_fine = np.linspace(1/50, 1, 5)
-    h2_norm_mu = [lti.h2_norm(mu=mu) for mu in mu_fine]
-    ax.plot(mu_fine, h2_norm_mu, '.-', label=r'$\mathcal{H}_2$-norm')
-
-    if config.HAVE_SLYCOT:
-        hinf_norm_mu = [lti.hinf_norm(mu=mu) for mu in mu_fine]
-        ax.plot(mu_fine, hinf_norm_mu, '.-', label=r'$\mathcal{H}_\infty$-norm')
-
-    hankel_norm_mu = [lti.hankel_norm(mu=mu) for mu in mu_fine]
-    ax.plot(mu_fine, hankel_norm_mu, '.-', label='Hankel norm')
-
-    ax.set_xlabel(r'$\mu$')
-    ax.set_title('System norms')
-    ax.legend()
-    plt.show()
-
-
-    # # Balanced truncation
-
-    # In[ ]:
-
-
-    def reduction_errors(lti, r, mu_fine, method):
-        h2_err_mu = []
-        hinf_err_mu = []
-        hankel_err_mu = []
-        for mu in mu_fine:
-            rom_mu = method(lti, r, mu=mu)
-            h2_err_mu.append((lti - rom_mu).h2_norm(mu=mu) / lti.h2_norm(mu=mu))
-            if config.HAVE_SLYCOT:
-                hinf_err_mu.append((lti - rom_mu).hinf_norm(mu=mu) / lti.hinf_norm(mu=mu))
-            hankel_err_mu.append((lti - rom_mu).hankel_norm(mu=mu) / lti.hankel_norm(mu=mu))
-        return h2_err_mu, hinf_err_mu, hankel_err_mu
-
-
-    # In[ ]:
-
-
-    (
-        h2_bt_err_mu,
-        hinf_bt_err_mu,
-        hankel_bt_err_mu
-    ) = reduction_errors(lti, r, mu_fine,
-                         lambda lti, r, mu=None: BTReductor(lti, mu=mu).reduce(r))
-
-
-    # In[ ]:
-
-
-    fig, ax = plt.subplots()
-    ax.semilogy(mu_fine, h2_bt_err_mu, '.-', label=r'$\mathcal{H}_2$')
-    if config.HAVE_SLYCOT:
-        ax.semilogy(mu_fine, hinf_bt_err_mu, '.-', label=r'$\mathcal{H}_\infty$')
-    ax.semilogy(mu_fine, hankel_bt_err_mu, '.-', label='Hankel')
-
-    ax.set_xlabel(r'$\mu$')
-    ax.set_title('Balanced truncation errors')
-    ax.legend()
-    plt.show()
-
-
-    # # Iterative Rational Krylov Algorithm (IRKA)
-
-    # In[ ]:
-
-
-    (
-        h2_irka_err_mu,
-        hinf_irka_err_mu,
-        hankel_irka_err_mu
-    ) = reduction_errors(lti, r, mu_fine,
-                         lambda lti, r, mu=mu: IRKAReductor(lti, mu=mu).reduce(r, conv_crit='h2'))
-
-
-    # In[ ]:
-
-
-    fig, ax = plt.subplots()
-    ax.semilogy(mu_fine, h2_irka_err_mu, '.-', label=r'$\mathcal{H}_2$')
-    if config.HAVE_SLYCOT:
-        ax.semilogy(mu_fine, hinf_irka_err_mu, '.-', label=r'$\mathcal{H}_\infty$')
-    ax.semilogy(mu_fine, hankel_irka_err_mu, '.-', label='Hankel')
-
-    ax.set_xlabel(r'$\mu$')
-    ax.set_title('IRKA errors')
-    ax.legend()
-    plt.show()
 
 if __name__ == "__main__":
     run(main)
