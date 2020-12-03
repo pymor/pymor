@@ -23,10 +23,10 @@ where :math:`u_{\mu} \in V := H^1_0(\Omega)` is the solution of
    a_{\mu}(u_{\mu}, v) = f_{\mu}(v) \qquad \forall \, v \in V \tag{P.b}.
    \end{equation}
 
-The equation :raw-latex:`\eqref{eq:primal}` is called the primal
+The equation :math:`\eqref{eq:primal}` is called the primal
 equation and can be arbitrarily complex. MOR methods in the context of
 PDE-constrained optimization problems thus aim to find a surrogate model
-of :raw-latex:`\eqref{eq:primal}` to reduce the computational costs of
+of :math:`\eqref{eq:primal}` to reduce the computational costs of
 an evaluation of :math:`J(u_{\mu}, \mu)`.
 
 Since :math:`u_{\mu}` is always related to :math:`\mu`, we can also
@@ -38,13 +38,13 @@ problem: Find a local minimizer of
 .. math::
 
     
-   \min_{\mu \in \mathcal{P}} \mathcal{J}(\mu),  \tag{$\hat{P}$}
+   \min_{\mu \in \mathcal{P}} \mathcal{J}(\mu).  \tag{$\hat{P}$}
 
 There exist plenty of different methods to solve (:math:`\hat{P}`) by
 using MOR methods. Some of them rely on an RB method with traditional
 offline/online splitting, which typically result in a very online
 efficient approach. Recent research also tackles overall efficiency by
-overcoming the expensive offline approach which we will discuss further
+overcoming the expensive offline phase, which we will discuss further
 below.
 
 In this tutorial, we use a simple linear scalar valued objective functional
@@ -68,10 +68,10 @@ with data functions
 .. math::
 
    \begin{align}
-   l(x, y) &= \tfrac{1}{2} \pi^2 cos(\tfrac{1}{2} \pi x) cos(\tfrac{1}{2} \pi y),\\
+   l(x, y) &= \tfrac{1}{2} \pi^2 \cos(\tfrac{1}{2} \pi x) \cos(\tfrac{1}{2} \pi y),\\
    \lambda(\mu) &= \theta_0(\mu) \lambda_0 + \theta_1(\mu) \lambda_1,\\
-   \theta_0(\mu) &= 1.1 + sin(\mu_0)\mu_1,\\
-   \theta_1(\mu) &= 1.1 + sin(\mu_1),\\
+   \theta_0(\mu) &= 1.1 + \sin(\mu_0)\mu_1,\\
+   \theta_1(\mu) &= 1.1 + \sin(\mu_1),\\
    \lambda_0 &= \chi_{\Omega \backslash \omega},\\
    \lambda_1 &= \chi_\omega,\\
    \omega &:= [-\tfrac{2}{3}, -\tfrac{1}{3}]^2 \cup ([-\tfrac{2}{3}, -\tfrac{1}{3}] \times [\tfrac{1}{3}, \tfrac{2}{3}]).
@@ -102,7 +102,7 @@ equation. Moreover, we consider the linear objective functional
 
 where :math:`\theta_{\mathcal{J}}(\mu) := 1 + \frac{1}{5}(\mu_0 + \mu_1)`.
 
-With this data, we can construct a \|StationaryProblem\| in pyMOR.
+With this data, we can construct a |StationaryProblem| in pyMOR.
 
 .. jupyter-execute::
     
@@ -134,15 +134,15 @@ With this data, we can construct a \|StationaryProblem\| in pyMOR.
     
     problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
 
-pyMOR supports to choose an output in \|StationaryProblem\|.
+pyMOR supports to choose an output in |StationaryProblem|.
 So far :math:`L^2` and :math:`L^2`-boundary
-integrals over :math:`u_\mu`, multiplied by an arbitrary \|Function\|,
+integrals over :math:`u_\mu`, multiplied by an arbitrary |Function|,
 are supported. These outputs can also be handled by the discretizer. In
 our case, we make use of the :math:`L^2` output and multiply it by the
 term :math:`\theta_\mu l_\mu`.
 
 We now use the standard builtin discretization tool (see :doc:`tutorial_builtin_discretizer`)
-to construct a full order \|StationaryModel\|. Since we intend to use a fixed
+to construct a full order |StationaryModel|. Since we intend to use a fixed
 energy norm
 
 .. math:: \|\,.\|_{\bar{\mu}} : = a_{\,\bar{\mu}}(.,.),
@@ -160,16 +160,15 @@ we also define :math:`\bar{\mu}`, which we parse via the argument
 
 
 In case, you need an output functional that can not be defined in the
-\|StationaryProblem\|, you can also directly define the
-``output_functional`` in the \|StationaryModel\|.
+|StationaryProblem|, we can also directly define the
+``output_functional`` in the |StationaryModel|.
 
 .. jupyter-execute::
 
     output_functional = fom.rhs.H * theta_J 
     fom = fom.with_(output_functional=output_functional)
 
-To overcome that pyMORs outputs return a \|NumpyVectorArray\|, we have
-to define a function that returns NumPy arrays instead.
+We now define a function that can be used by the minimizer below.
 
 .. jupyter-execute::
 
@@ -184,7 +183,7 @@ which in our case is :math:`\mu_0 = (0.25,0.5)`.
     initial_guess = fom.parameters.parse([0.25, 0.5])
 
 Next, we visualize the diffusion function :math:`\lambda_\mu` by using
-\|InterpolationOperator\| for interpolating it on the grid.
+|InterpolationOperator| for interpolating it on the grid.
 
 .. jupyter-execute::
 
@@ -315,7 +314,7 @@ It is optional to give an expression for the gradient of the objective
 functional to the ``minimize`` function. In case no gradient is given,
 ``minimize`` just approximates the gradient with finite differences.
 This is not recommended because the gradient is inexact and the
-computation of finite difference requires even more evalutations of the
+computation of finite differences requires even more evaluations of the
 primal equation. We anyway start with this approach.
 
 .. jupyter-execute::
@@ -360,9 +359,9 @@ Optimizing with the ROM using finite differences
 
 We can use a standard RB method to build a surrogate model for the FOM.
 As a result, the solution of the primal equation is no longer expensive
-and the optimization method has the chance to converge faster. For this,
-we define a standard ``reductor`` and use the
-``MinThetaParameterFunctional`` for an estimation of the coerciviy
+and the optimization method can evaluate the objective functional quickly.
+For this, we define a standard |CoerciveRBReductor| and use the
+|MinThetaParameterFunctional| for an estimation of the coerciviy
 constant.
 
 .. jupyter-execute::
@@ -495,7 +494,7 @@ the objective functional is the number of evaluations of the objective
 functional. In the FOM example from above we saw that
 :math:`48 - 9 = 39` evaluations of the model were only due to the
 computation of the finite differences. If the problem is more complex
-and the mesh is finer, this can lead us into a serious waste of
+and the mesh is finer, this can lead to a serious waste of
 computational time. Also from an optimizational point of view it is
 always better to compute the true gradient of the objective functional.
 
@@ -523,7 +522,7 @@ solve another equation: Find :math:`d_{\mu_i} u_{\mu} \in V`, such that
 
 where :math:`r_\mu^{\text{pr}}` denotes the residual of the primal
 equation. A major issue of this approach is that the computation of the
-full gradient requires :math:`P` solutions of :raw-latex:`\eqref{sens}`.
+full gradient requires :math:`P` solutions of :math:`\eqref{sens}`.
 Especially for high dimensional parameter spaces, we can instead use the
 adjoint approach to reduce the computational cost to only one solution
 of an additional problem.
@@ -656,7 +655,7 @@ MOR methods in the context of optimization.
 Breaking the traditional offline/online splitting: enrich along the path of optimization
 ----------------------------------------------------------------------------------------
 
-We already figured that the main drawback for using RB methods in the
+We already figured out that the main drawback for using RB methods in the
 context of optimization is the expensive offline time to build the
 surrogate model. In the example above, we overcame this issue by
 choosing a very high tolerance ``atol``. As a result, we can not be sure
@@ -666,9 +665,10 @@ face the danger of reducing with a bad surrogate for the whole parameter
 space. Thinking about this issue again, it is important to notice that
 we are solving an optimization problem which will eventually converge to
 a certain parameter. Thus, it only matters that the surrogate is good in
-this particular reason as long as we are able to arrive at it. This
-gives hope that there must exists a more efficient way of using RB
-methods without trying to approximate the whole parameter space.
+this particular region as long as we are able to arrive at it. This
+gives hope that there must exist a more efficient way of using RB
+methods without trying to approximate the FOM across the
+whole parameter space.
 
 One possible way for advanced RB methods is a reduction along the path
 of optimization. The idea is, that we start with an empty basis and only
@@ -738,17 +738,17 @@ the basis along the path of optimization.
 
 
 The computational time looks at least better than the FOM optimization
-and we are very close to the reference parameter saved some
-computational time. But we are following the exact same path than the
-FOM and thus we need to solve the FOM model as often as before. The only
-time that we safe is the one for the dual solution which we compute with
-the ROM instead.
+and we are very close to the reference parameter.
+But we are following the exact same path than the
+FOM and thus we need to solve the FOM model as often as before
+(due to the enrichments). The only time that we safe is the one
+for the dual solution which we compute with the ROM instead.
 
 Adaptively enriching along the path
 -----------------------------------
 
 This makes us think about another idea where we only enrich if it is
-neccessary. For example it could be that the model is already good at
+necessary. For example it could be the case that the model is already good at
 the next iteration, which we can easily check by evaluating the standard
 error estimator which is also used in the greedy algorithm. In the next
 example we will implement this adaptive way of enriching and set a
@@ -856,7 +856,7 @@ This notebook has shown several aspects on how to use RB methods for
 reducing a FOM for an optimization problem. One main result from this
 was that standard RB methods can help to reduce the computational time.
 Thus, standard RB methods are especially of interest if an optimization
-problem might need to solved multiple times.
+problem might need to be solved multiple times.
 
 However, for only a single optimization routine, their expensive offline
 time might make them unfavorable because they lack overall efficiency.
