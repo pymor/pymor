@@ -135,7 +135,7 @@ def report(result, parse, data, reference_mu=None):
     if (result.status != 0):
         print('\n failed!')
     else:
-        print('\n succeded!')
+        print('\n succeeded!')
         print('  mu_min:    {}'.format(parse(result.x)))
         print('  J(mu_min): {}'.format(result.fun[0]))
         if reference_mu is not None:
