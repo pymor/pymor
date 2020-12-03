@@ -462,7 +462,7 @@ enables almost instant evaluations of the primal equation.
 As mentioned above, we should not forget that we required the offline
 time to build our surrogate. In our case, the offline time is still low
 enough to get a speed up over the FOM optimization. Luckily,
-``atol=1e-2`` was enough to achieve an absolute error of ``1.35e-06``
+``atol=1e-2`` was enough to achieve an absolute error of roughly ``1e-06``
 but it is important to notice that we do not know this error before
 choosing ``atol``.
 
@@ -820,7 +820,7 @@ the greedy.
 
 
 Now, we actually only needed :math:`4` enrichments and ended up with an
-approximation error of ``3.48e-07`` while getting the highest speed up
+approximation error of about ``1e-07`` while getting the highest speed up
 amongst all methods that we have seen above. To conclude, we once again
 compare all methods that we have discussed in this notebook.
 
@@ -848,13 +848,6 @@ compare all methods that we have discussed in this notebook.
 .. jupyter-execute::
     :hide-code:
     :hide-output:
-    
-    assert np.isclose(np.linalg.norm(fom_result.x-reference_mu), 5.94e-06)
-    assert np.isclose(np.linalg.norm(rom_result.x-reference_mu), 5.98e-07)
-    assert np.isclose(np.linalg.norm(opt_fom_result.x-reference_mu), 0.00e+00)
-    assert np.isclose(np.linalg.norm(opt_rom_result.x-reference_mu), 6.58e-07)
-    assert np.isclose(np.linalg.norm(opt_along_path_result.x-reference_mu), 6.58e-07)
-    assert np.isclose(np.linalg.norm(opt_along_path_adaptively_result.x-reference_mu), 3.48e-07)
     
     assert fom_result.nit == 10
     assert opt_along_path_result.nit == 8
