@@ -24,7 +24,11 @@ Release highlights
 
 Neural network reductor for instationary problems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1120] Neural networks for instationary problems <https://github.com/pymor/pymor/pull/1120>`_
+A new reductor based on neural networks which deals with instationary problems was
+added in `[#1120] <https://github.com/pymor/pymor/pull/1120>`_. The usage of this
+reductor is presented in a corresponding demo where a Burgers' type equation is
+solved. As in the stationary case, the implementation allows for several
+customizations regarding the network architecture and training parameters.
 
 
 Tutorial: Projecting a model
