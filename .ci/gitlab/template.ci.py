@@ -251,7 +251,7 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
 
 
 {% for OS, PY in testos %}
-pip {{loop.index}}/{{loop.length}}:
+from source {{loop.index}}/{{loop.length}}:
     tags: [mike]
     services:
         - name: {{registry}}/pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
@@ -275,7 +275,7 @@ binder base image:
         - docker run ${BINDERIMAGE} ipython -c "from pymor.basic import *"
         - docker push ${BINDERIMAGE}
 
-local_jupyter:
+local docker:
     extends: .binder
     script:
         - make docker_image
@@ -312,7 +312,7 @@ wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
 {% endfor %}
 {% endfor %}
 
-pypi deploy:
+pypi:
     extends: .sanity_checks
     stage: deploy
     dependencies:
@@ -340,7 +340,7 @@ pypi deploy:
         name: safe
 
 {% for OS, PY in testos %}
-check_wheel {{loop.index}}:
+from wheel {{loop.index}}/{{loop.length}}:
     extends: .check_wheel
     dependencies:
         {%- for ML in manylinuxs %}
