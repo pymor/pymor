@@ -67,6 +67,9 @@ Additionally, the Jupyter notebooks from the `notebooks/` directory were
 converted to demos `[#1160] <https://github.com/pymor/pymor/pull/1160>`_,
 `[#1198] <https://github.com/pymor/pymor/pull/1198>`_.
 
+Support for Python 3.9
+~~~~~~~~~~~~~~~~~~~~~~
+- `[#1128] Enable publishing wheels for and running CI on Python 3.9 <https://github.com/pymor/pymor/pull/1128>`_
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -128,6 +131,14 @@ renamed to `ComponentProjectionOperator`, `ConcatenationOperator` and
 `LinearAdvectionLaxFriedrichsOperator`, respectively
 `[#1046] <https://github.com/pymor/pymor/pull/1046>`_.
 
+
+Minimal pip and Manylinux wheel version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to reduce special casing and infrastructure investment needed for older pip versions we decided to
+bump the minimal version to 19.0 (released Jan '19) and decided to no longer publish manylinux1 wheels.
+Pip 19.0 already understands the Manylinux 2010 tag, which going further is the oldest platform we will ship wheels
+for.
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
