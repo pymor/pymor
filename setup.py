@@ -153,7 +153,7 @@ def setup_package():
         name='pymor',
         version=versioneer.get_version(),
         author='pyMOR developers',
-        author_email='pymor-dev@listserv.uni-muenster.de',
+        author_email='main.developers@pymor.org',
         maintainer='Rene Fritze',
         maintainer_email='rene.fritze@wwu.de',
         package_dir={'': 'src'},
