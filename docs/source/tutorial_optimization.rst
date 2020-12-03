@@ -183,7 +183,7 @@ which in our case is :math:`\mu_0 = (0.25,0.5)`.
     initial_guess = fom.parameters.parse([0.25, 0.5])
 
 Next, we visualize the diffusion function :math:`\lambda_\mu` by using
-|InterpolationOperator| for interpolating it on the grid.
+:class:`~pymor.discretizers.builtin.cg.InterpolationOperator` for interpolating it on the grid.
 
 .. jupyter-execute::
 
@@ -306,13 +306,15 @@ Optimizing with the FOM using finite differences
 
 There exist plenty optimization methods and this tutorial is not meant
 to discuss the design and implementation of optimization methods. We
-simply use the ``minimize`` function from ``scipy.optimize`` and use the
+simply use the :func:`~scipy.optimize.minimize` function
+from ``scipy.optimize`` and use the
 builtin ``L-BFGS-B`` routine which is a quasi-Newton method that can
 also handle a constrained parameter space.
 
 It is optional to give an expression for the gradient of the objective
-functional to the ``minimize`` function. In case no gradient is given,
-``minimize`` just approximates the gradient with finite differences.
+functional to the :func:`~scipy.optimize.minimize` function.
+In case no gradient is given, :func:`~scipy.optimize.minimize`
+just approximates the gradient with finite differences.
 This is not recommended because the gradient is inexact and the
 computation of finite differences requires even more evaluations of the
 primal equation. We anyway start with this approach.
@@ -360,9 +362,9 @@ Optimizing with the ROM using finite differences
 We can use a standard RB method to build a surrogate model for the FOM.
 As a result, the solution of the primal equation is no longer expensive
 and the optimization method can evaluate the objective functional quickly.
-For this, we define a standard |CoerciveRBReductor| and use the
-|MinThetaParameterFunctional| for an estimation of the coerciviy
-constant.
+For this, we define a standard :class:`~pymor.reductors.coercive.CoerciveRBReductor` 
+and use the :class:`~pymor.parameters.functionals.MinThetaParameterFunctional` for an
+estimation of the coerciviy constant.
 
 .. jupyter-execute::
 
@@ -391,7 +393,7 @@ high dimensional.
 
 In order to decrease the offline time we realize that we do not require
 a perfect surrogate model in the sense that a low error tolerance for
-the ``rb_greedy`` already suffices to converge to the same minimum. In
+the :func:`~pymor.algorithms.greedy.rb_greedy` already suffices to converge to the same minimum. In
 our case we choose ``atol=1e-2`` and yield a very low dimensional space.
 In general, however, it is not a priorily clear how to choose ``atol``
 in order to arrive at a minimum which is close enough to the true
@@ -482,10 +484,6 @@ FOM optimization, we visualize both of them in the following plot.
 
 
 
-
-.. image:: output_44_1.png
-
-
 Computing the gradient of the objective functional
 --------------------------------------------------
 
@@ -562,7 +560,7 @@ functional by
 
 We conclude that we only need to solve for :math:`u_{\mu}` and
 :math:`p_{\mu}` if we want to compute the gradient with the adjoint
-approach.
+approach. For more information on this approach we refer to Section 1.6.2 in [HPUU09]_.
 
 We now intend to use the gradient to speed up the optimization methods
 from above. All technical requirements are
@@ -572,12 +570,12 @@ already available in pyMOR.
 Optimizing using a gradient in FOM
 ----------------------------------
 
-We can easily include a function to compute the gradient to ``minimize``.
+We can easily include a function to compute the gradient to :func:`~scipy.optimize.minimize`.
 For using the adjoint approach we have to explicitly enable the ``use_adjoint`` argument.
 Note that using the (more general) default implementation ``use_adjoint=False`` results
 in the exact same gradient but lacks computational speed.
 Moreover, the function ``output_d_mu`` returns a dict w.r.t. the parameter space as default.
-In order to use the output for ``minimize`` we thus use the ``return_array`` argument. 
+In order to use the output for :func:`~scipy.optimize.minimize` we thus use the ``return_array=True`` argument. 
 
 .. jupyter-execute::
 
