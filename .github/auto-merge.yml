@@ -1,5 +1,4 @@
 # config docs: https://github.com/bobvanderlinden/probot-auto-merge
-
 # do not merge when there any requested changes
 maxRequestedChanges:
   NONE: 0
@@ -8,6 +7,4 @@ requiredLabels:
 reportStatus: true
 deleteBranchAfterMerge: true
 mergeMethod: merge
-# show config eval as a check
-reportStatus: true
 updateBranch: false
