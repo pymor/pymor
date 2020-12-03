@@ -268,6 +268,7 @@ pip {{loop.index}}/{{loop.length}}:
 
 binder base image:
     extends: .binder
+    stage: build
     script:
         - docker build --build-arg CI_IMAGE_TAG=${CI_IMAGE_TAG} -t ${BINDERIMAGE} -f .ci/gitlab/Dockerfile.binder.base .
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
