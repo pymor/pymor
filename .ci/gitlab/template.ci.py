@@ -334,6 +334,9 @@ pypi:
          - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*manylinux*whl
         expire_in: 6 months
         name: pymor-wheels
+    before_script:
+        - apk add py3-pip
+        - pip3 install twine
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash
     environment:
