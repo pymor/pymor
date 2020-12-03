@@ -1,0 +1,40 @@
+
+pyMOR 0.3 (March 2, 2015)
+-------------------------
+
+- Introduction of the vector space concept for even simpler
+  integration with external solvers.
+
+- Addition of a generic Newton algorithm.
+
+- Support for Jacobian evaluation of empirically interpolated operators.
+
+- Greatly improved performance of the EI-Greedy algorithm. Addition of
+  the DEIM algorithm.
+
+- A new algorithm for residual operator projection and a new,
+  numerically stable a posteriori error estimator for stationary coercive
+  problems based on this algorithm. (cf. A. Buhr, C. Engwer, M. Ohlberger,
+  S. Rave, 'A numerically stable a posteriori error estimator for reduced
+  basis approximations of elliptic equations', proceedings of WCCM 2014,
+  Barcelona, 2014.)
+
+- A new, easy to use mechanism for setting and accessing default values.
+
+- Serialization via the pickle module is now possible for each class in
+  pyMOR. (See the new 'analyze_pickle' demo.)
+
+- Addition of generic iterative linear solvers which can be used in
+  conjunction with any operator satisfying pyMOR's operator interface.
+  Support for least squares solvers and PyAMG (http://www.pyamg.org/).
+
+- An improved SQLite-based cache backend.
+
+- Improvements to the built-in discretizations: support for bilinear
+  finite elements and addition of a finite volume diffusion operator.
+
+- Test coverage has been raised from 46% to 75%.
+
+Over 500 single commits have entered this release. A full list of
+all changes can be obtained under the following address:
+https://github.com/pymor/pymor/compare/0.2.2...0.3.0
