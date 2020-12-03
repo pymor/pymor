@@ -42,18 +42,30 @@ Handling of model outputs and error estimates
 
 Bode plot for input-output systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1051] Add Bode plot <https://github.com/pymor/pymor/pull/1051>`_
+The :meth:`~pymor.models.iosys.InputOutputModel.bode_plot` method for creating a
+Bode plot was added `[#1051] <https://github.com/pymor/pymor/pull/1051>`_,
+complementing the :meth:`~pymor.models.iosys.InputOutputModel.mag_plot` method.
+Additionally, the :meth:`~pymor.models.iosys.InputOutputModel.bode` method can
+be used to compute the magnitudes and phases over the imaginary axis (for
+continuous-time systems).
 
 
-Make VectorArrays iterable
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1068] Make VectorArrays iterable <https://github.com/pymor/pymor/pull/1068>`_
+VectorArrays are iterable
+~~~~~~~~~~~~~~~~~~~~~~~~~
+|VectorArrays| became iterable sequences with
+`[#1068] <https://github.com/pymor/pymor/pull/1068>`_, i.e.,
+`for v in V` can be used to work on individual vectors when needed.
 
 
 Improved tutorial structure for system-theoretic methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1141] Restructure sys-mor tutorial  <https://github.com/pymor/pymor/pull/1141>`_
-- `[#1160] remove notebooks dir  <https://github.com/pymor/pymor/pull/1160>`_
+A tutorial on linear time-invariant systems was added
+(:doc:`tutorial_lti_systems`) and the existing balanced truncation tutorial was
+appropriately simplified (:doc:`tutorial_bt`)
+`[#1141] <https://github.com/pymor/pymor/pull/1141>`_.
+Additionally, the Jupyter notebooks from the `notebooks/` directory were
+converted to demos `[#1160] <https://github.com/pymor/pymor/pull/1160>`_,
+`[#1198] <https://github.com/pymor/pymor/pull/1198>`_.
 
 
 Backward incompatible changes
@@ -70,27 +82,52 @@ Rename estimate/estimators methods of models
 - `[#1041] Rename Model.estimate to Model.estimate_error and estimators to error_estimators <https://github.com/pymor/pymor/pull/1041>`_
 
 
-Deprecate dot/pairwise_dot
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1066] Deprecate dot/pairwise_dot in favor of inner/pairwise_inner <https://github.com/pymor/pymor/pull/1066>`_
+Deprecate dot and pairwise_dot
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+At first, |VectorArrays| only had `dot` and `pairwise_dot` methods for computing
+inner products between vectors.
+Later, more general methods `inner` and `pairwise_inner` were added to simplify
+computing non-Euclidean inner products.
+To reduce the list of methods for |VectorArrays|,
+the `dot` and `pairwise_dot` methods are now deprecated and will be removed in
+the next release `[#1066] <https://github.com/pymor/pymor/pull/1066>`_.
 
 
 Restructuring of grid classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1044] Restructuring of grid classes <https://github.com/pymor/pymor/pull/1044>`_
+The inheritance structure of grid classes was simplified
+`[#1044] <https://github.com/pymor/pymor/pull/1044>`_.
+In particular,
+
+- `ConformalTopologicalGridDefaultImplementations`,
+  `ReferenceElementDefaultImplementations`,
+  `AffineGridDefaultImplementations`, and
+  `ConformalTopologicalGrid`
+  were removed,
+- `AffineGrid` was renamed to `Grid`,
+- `AffineGridWithOrthogonalCenters` was renamed to `GridWithOrthogonalCenters`.
 
 
-Model outputs changed from VectorArray to NumPy array
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1089] Let Model outputs be NumPy arrays <https://github.com/pymor/pymor/pull/1089>`_
+Model inputs and outputs changed from VectorArray to NumPy array
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To simplify interoperability with third-party packages,
+the model outputs, i.e., the results of :meth:`~pymor.models.interface.output`,
+are not longer generic |VectorArrays|,
+but NumPy arrays.
+For consistency,
+`input_space` and `output_space` were removed and
+`input_dim` and `output_dim` were renamed to `dim_input` and `dim_output`
+in :class:`~pymor.models.iosys.InputOutputModel`
+`[#1089] <https://github.com/pymor/pymor/pull/1089>`_.
 
 
 Renaming of some Operators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1046] Append Operator to LinearAdvectionLaxFriedrichs, Concatenation and ComponentProjection <https://github.com/pymor/pymor/pull/1046>`_
+For consistency in the naming of |Operators|,
 `ComponentProjection`, `Concatenation` and `LinearAdvectionLaxFriedrichs` were
 renamed to `ComponentProjectionOperator`, `ConcatenationOperator` and
-`LinearAdvectionLaxFriedrichsOperator`, respectively.
+`LinearAdvectionLaxFriedrichsOperator`, respectively
+`[#1046] <https://github.com/pymor/pymor/pull/1046>`_.
 
 
 Further notable improvements
