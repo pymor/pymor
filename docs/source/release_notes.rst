@@ -71,19 +71,13 @@ converted to demos `[#1160] <https://github.com/pymor/pymor/pull/1160>`_,
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Adjust norms in VectorArrayInterface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1070] Remove l1_norm from VectorArrayInterface <https://github.com/pymor/pymor/pull/1070>`_
-- `[#1075] Deprecate l2_norm/l2_norm2 in favor of norm/norm2 <https://github.com/pymor/pymor/pull/1075>`_
-
-
 Rename estimate/estimators methods of models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - `[#1041] Rename Model.estimate to Model.estimate_error and estimators to error_estimators <https://github.com/pymor/pymor/pull/1041>`_
 
 
-Deprecate dot and pairwise_dot
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changes in methods for inner products and norms of VectorArrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 At first, |VectorArrays| only had `dot` and `pairwise_dot` methods for computing
 inner products between vectors.
 Later, more general methods `inner` and `pairwise_inner` were added to simplify
@@ -91,6 +85,11 @@ computing non-Euclidean inner products.
 To reduce the list of methods for |VectorArrays|,
 the `dot` and `pairwise_dot` methods are now deprecated and will be removed in
 the next release `[#1066] <https://github.com/pymor/pymor/pull/1066>`_.
+In the same vein, the `l2_norm` and `l2_norm2` methods are deprecated in favor
+of `norm` and `norm2` `[#1075] <https://github.com/pymor/pymor/pull/1075>`_
+Finally, due to lack of usage and support in some external PDE solvers, the
+`l1_norm` method was deprecated
+`[#1070] <https://github.com/pymor/pymor/pull/1070>`_.
 
 
 Restructuring of grid classes
