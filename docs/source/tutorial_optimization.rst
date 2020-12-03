@@ -287,7 +287,7 @@ helpful functions for recording and reporting the results.
         if (result.status != 0):
             print('\n failed!')
         else:
-            print('\n succeded!')
+            print('\n succeeded!')
             print('  mu_min:    {}'.format(fom.parameters.parse(result.x)))
             print('  J(mu_min): {}'.format(result.fun[0]))
             if reference_mu is not None:
@@ -824,6 +824,7 @@ approximation error of ``3.48e-07`` while getting the highest speed up
 amongst all methods that we have seen above. To conclude, we once again
 compare all methods that we have discussed in this notebook.
 
+
 .. jupyter-execute::
 
     print('FOM with finite differences')
@@ -843,6 +844,23 @@ compare all methods that we have discussed in this notebook.
     
     print('\nAdaptively enrich along the path')
     report(opt_along_path_adaptively_result, opt_along_path_adaptively_minimization_data, reference_mu)
+
+.. jupyter-execute::
+    :hide-code:
+    :hide-output:
+    
+    assert np.isclose(np.linalg.norm(fom_result.x-reference_mu), 5.94e-06)
+    assert np.isclose(np.linalg.norm(rom_result.x-reference_mu), 5.98e-07)
+    assert np.isclose(np.linalg.norm(opt_fom_result.x-reference_mu), 0.00e+00)
+    assert np.isclose(np.linalg.norm(opt_rom_result.x-reference_mu), 6.58e-07)
+    assert np.isclose(np.linalg.norm(opt_along_path_result.x-reference_mu), 6.58e-07)
+    assert np.isclose(np.linalg.norm(opt_along_path_adaptively_result.x-reference_mu), 3.48e-07)
+    
+    assert fom_result.nit == 10
+    assert opt_along_path_result.nit == 8
+    assert opt_along_path_minimization_data['num_evals'] == 10
+    assert opt_along_path_minimization_data['enrichments'] == 9
+    assert opt_along_path_adaptively_minimization_data['enrichments'] == 4
 
 
     
