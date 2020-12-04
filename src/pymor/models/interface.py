@@ -169,6 +169,7 @@ class Model(CacheableObject, ParametricObject):
         -------
         The gradient as a |NumPy array| or a dict of |NumPy arrays|.
         """
+        assert self.output_functional is not None
         U_d_mus = self._compute_solution_d_mu(solution, mu)
         gradients = [] if return_array else {}
         for (parameter, size) in self.parameters.items():

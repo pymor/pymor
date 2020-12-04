@@ -117,10 +117,13 @@ class StationaryModel(Model):
         -------
         The gradient as a |NumPy array| or a dict of |NumPy arrays|.
         """
+        if use_adjoint is None:
+            use_adjoint = True if (self.output_functional.linear and self.operator.linear) else False
         if not use_adjoint:
             return super()._compute_output_d_mu(solution, mu, return_array)
         else:
             assert self.output_functional is not None
+            assert self.operator.linear
             assert self.output_functional.linear
             dual_solutions = self.operator.range.empty()
             for d in range(self.output_functional.range.dim):
