@@ -59,8 +59,8 @@ VectorArrays are iterable
 Improved tutorial structure for system-theoretic methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A tutorial on linear time-invariant systems was added
-(:doc:`tutorial_lti_systems`) and the existing balanced truncation tutorial was
-appropriately simplified (:doc:`tutorial_bt`)
+(:doc:`../tutorial_lti_systems`) and the existing balanced truncation tutorial was
+appropriately simplified (:doc:`../tutorial_bt`)
 `[#1141] <https://github.com/pymor/pymor/pull/1141>`_.
 Additionally, the Jupyter notebooks from the `notebooks/` directory were
 converted to demos `[#1160] <https://github.com/pymor/pymor/pull/1160>`_,
