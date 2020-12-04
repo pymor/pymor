@@ -282,7 +282,7 @@ def test_output_d_mu():
     from pymordemos.linear_optimization import create_fom
 
     grid_intervals = 10
-    training_samples = 5
+    training_samples = 3
 
     fom, mu_bar = create_fom(grid_intervals, vector_valued_output=True)
     easy_fom, _ = create_fom(grid_intervals, vector_valued_output=False)

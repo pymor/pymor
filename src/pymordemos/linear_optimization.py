@@ -124,9 +124,7 @@ def create_fom(grid_intervals, vector_valued_output=False):
 def record_results(function, parse, data, mu):
     QoI = function(mu)
     data['num_evals'] += 1
-    # we need to make sure to copy the data, since the added mu will be changed inplace by minimize afterwards
-    data['evaluation_points'].append([parse(mu)['diffusion'][:][0],
-                                      parse(mu)['diffusion'][:][1]])
+    data['evaluation_points'].append(parse(mu).to_numpy())
     data['evaluations'].append(QoI[0])
     print('.', end='')
     return QoI
