@@ -12,9 +12,10 @@
 ## pyMOR 2020.2
 
 * Tim Keil, tim.keil@uni-muenster.de
-    * Energy product in elliptic discretizer
+    * energy product in elliptic discretizer
     * rename estimate --> estimate_error and estimator -> error_estimator
     * avoid nested Product and Lincomb Functionals and Functions
+    * linear optimization (dual solution, sensitivities, output gradient)
 
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
     * artificial neural networks for instationary problems

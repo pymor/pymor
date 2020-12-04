@@ -2,8 +2,11 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
+from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -83,6 +86,66 @@ class StationaryModel(Model):
 
     def _compute_solution(self, mu=None, **kwargs):
         return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
+
+    def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu):
+        lhs_d_mu = self.operator.d_mu(parameter, index).apply(solution, mu=mu)
+        rhs_d_mu = self.rhs.d_mu(parameter, index).as_range_array(mu)
+        rhs = rhs_d_mu - lhs_d_mu
+        return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
+
+    _compute_allowed_kwargs = frozenset({'use_adjoint'})
+
+    def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
+        """compute the gradient of the output functional  w.r.t. the parameters
+
+        Parameters
+        ----------
+        solution
+            Internal model state for the given |Parameter value|
+        mu
+            |Parameter value| for which to compute the gradient
+        return_array
+            if `True`, return the output gradient as a |NumPy array|.
+            Otherwise, return a dict of gradients for each |Parameter|.
+        use_adjoint
+            if `None` use standard approach, if `True`, use
+            the adjoint solution for a more efficient way of computing the gradient.
+            See Section 1.6.2 in [HPUU09]_ for more details.
+            So far, the adjoint approach is only valid for linear models.
+
+        Returns
+        -------
+        The gradient as a |NumPy array| or a dict of |NumPy arrays|.
+        """
+        if use_adjoint is None:
+            use_adjoint = True if (self.output_functional.linear and self.operator.linear) else False
+        if not use_adjoint:
+            return super()._compute_output_d_mu(solution, mu, return_array)
+        else:
+            assert self.output_functional is not None
+            assert self.operator.linear
+            assert self.output_functional.linear
+            dual_solutions = self.operator.range.empty()
+            for d in range(self.output_functional.range.dim):
+                dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H.as_range_array(mu)[d])
+                dual_solutions.append(dual_problem.solve(mu))
+            gradients = [] if return_array else {}
+            for (parameter, size) in self.parameters.items():
+                array = np.empty(shape=(size,self.output_functional.range.dim))
+                for index in range(size):
+                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
+                                                                                             mu=mu).to_numpy()[0]
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:,0]
+                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:,0]
+                    array[index] = output_partial_dmu + rhs_d_mu - lhs_d_mu
+                if return_array:
+                    gradients.extend(array)
+                else:
+                    gradients[parameter] = array
+        if return_array:
+            return np.array(gradients)
+        else:
+            return gradients
 
 
 class InstationaryModel(Model):
