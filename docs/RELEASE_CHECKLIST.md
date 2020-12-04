@@ -21,7 +21,7 @@
  1. [ ] update researchgate https://www.researchgate.net/project/pyMOR-Model-Order-Reduction-with-Python
         (check formatting after submit!)
  1. [ ] Submit release to NA-digest: http://icl.utk.edu/na-digest/websubmit.html
- 1. [ ] Send release announcement to pymor-dev
+ 1. [ ] Announce release in [GitHub discussions](https://github.com/pymor/pymor/discussions)
  1. [ ] add a new section in https://github.com/pymor/docker/blob/master/docs/releases/Dockerfile
  1. [ ] all developers check if (stale) branches can be pruned
  1. [ ] Remove deprecated features in master

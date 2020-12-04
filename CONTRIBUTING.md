@@ -21,9 +21,6 @@ Therefore the recommended way to send us your code is to create a
 [fork](https://guides.github.com/activities/forking/) of pyMOR
 on GitHub (if you do not have one already) and push your commits into a branch 
 containing the code and create a pull request for it.
-Alternatively, you may send patches to our
-[mailinglist](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)
-that have been created using `git format-patch`.
 
 Once we have received your code, it will be reviewed and
 discussed with you by pyMOR's 
@@ -33,7 +30,8 @@ main repository. We may also make suggestions how to modify
 or improve your code to make it better fit into the project.
 
 Of course, were are happy to help you prepare contributions to pyMOR.
-Feel free to [ask](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)
+Feel free to
+[ask](https://github.com/pymor/pymor/discussions?discussions_q=category%3AQ%26A)
 for help at any time.
 
 
