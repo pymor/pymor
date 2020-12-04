@@ -161,10 +161,13 @@ class Model(CacheableObject, ParametricObject):
             Internal model state for the given |Parameter value|.
         mu
             |Parameter value| for which to compute the gradient
+        return_array
+            if `True`, return the output gradient as a |NumPy array|.
+            Otherwise, return a dict of gradients for each |Parameter|.
 
         Returns
         -------
-        The gradient as a numpy array
+        The gradient as a |NumPy array| or a dict of |NumPy arrays|.
         """
         U_d_mus = self._compute_solution_d_mu(solution, mu)
         gradients = [] if return_array else {}
@@ -292,8 +295,8 @@ class Model(CacheableObject, ParametricObject):
         output_error_estimate
             If `True`, return an error estimate for the computed output.
         output_d_mu_return_array
-            if `True`, return the output of :meth:`_compute_output_d_mu` as a |Numpy array|,
-            otherwise, return it as a dict w.r.t. to the parameters.
+            if `True`, return the output gradient as a |NumPy array|.
+            Otherwise, return a dict of gradients for each |Parameter|.
         mu
             |Parameter values| for which to compute the values.
         kwargs
@@ -490,12 +493,12 @@ class Model(CacheableObject, ParametricObject):
         mu
             |Parameter value| for which to compute the gradient
         return_array
-            if `True`, returning a |NumPy array| and if `False`, returning
-            a dict w.r.t. to the parameters
+            if `True`, return the output gradient as a |NumPy array|.
+            Otherwise, return a dict of gradients for each |Parameter|.
 
         Returns
         -------
-        The gradient as a |NumPy array| or a dict.
+        The gradient as a |NumPy array| or a dict of |NumPy arrays|.
         """
         data = self.compute(
             output_d_mu=True,

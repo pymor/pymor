@@ -104,6 +104,9 @@ class StationaryModel(Model):
             Internal model state for the given |Parameter value|
         mu
             |Parameter value| for which to compute the gradient
+        return_array
+            if `True`, return the output gradient as a |NumPy array|.
+            Otherwise, return a dict of gradients for each |Parameter|.
         use_adjoint
             if `None` use standard approach, if `True`, use
             the adjoint solution for a more efficient way of computing the gradient.
@@ -112,7 +115,7 @@ class StationaryModel(Model):
 
         Returns
         -------
-        The gradient as a numpy array.
+        The gradient as a |NumPy array| or a dict of |NumPy arrays|.
         """
         if not use_adjoint:
             return super()._compute_output_d_mu(solution, mu, return_array)
