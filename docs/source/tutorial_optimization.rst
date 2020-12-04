@@ -10,7 +10,7 @@ underlying PDE which has to be solved for all evaluations.
 A prototypical example of a PDE-constrained optimization problem can be defined
 in the following way. For a physical domain :math:`\Omega \subset \mathbb{R}^d` and a
 parameter set :math:`\mathcal{P} \subset \mathbb{R}^P`, we want to find
-a local minimizer :math:`\mu \in \mathcal{P}` of
+a solution of the minimization problem
 
 .. math::
 
@@ -33,7 +33,7 @@ an evaluation of :math:`J(u_{\mu}, \mu)`.
 Since :math:`u_{\mu}` is always related to :math:`\mu`, we can rewrite
 (P) by using the so-called reduced objective functional
 :math:`\mathcal{J}(\mu):= J(u_{\mu}, \mu)` leading to the equivalent
-problem: Find a local minimizer of
+problem: Find a solution of
 
 .. math::
 
@@ -143,8 +143,8 @@ we also define :math:`\bar{\mu}`, which we pass via the argument
 ``mu_energy_product``. Also, we define the parameter space
 :math:`\mathcal{P}` on which we want to optimize.
 
-.. code-block:: python
-
+.. jupyter-execute::
+    
     mu_bar = problem.parameters.parse([np.pi/2,np.pi/2])
 
     fom, data = discretize_stationary_cg(problem, diameter=1/50, mu_energy_product=mu_bar)
@@ -155,9 +155,9 @@ In case, you need an output functional that cannot be defined in the
 |StationaryProblem|, we can also directly define the
 ``output_functional`` in the |StationaryModel|.
 
-.. jupyter-execute::
+.. code-block:: python
 
-    output_functional = fom.rhs.H * theta_J 
+    output_functional = fom.rhs.H * theta_J
     fom = fom.with_(output_functional=output_functional)
 
 We now define a function that can be used by the minimizer below.
@@ -181,7 +181,7 @@ Next, we visualize the diffusion function :math:`\lambda_\mu` by using
 
     from pymor.discretizers.builtin.cg import InterpolationOperator
     
-    diff = InterpolationOperator(data['grid'], problem.diffusion).as_vector(initial_guess)
+    diff = InterpolationOperator(data['grid'], problem.diffusion).as_vector(fom.parameters.parse(initial_guess))
     fom.visualize(diff)
 
 
@@ -269,7 +269,6 @@ helpful functions for recording and reporting the results.
     def record_results(function, data, mu):
         QoI = function(mu)
         data['num_evals'] += 1
-        # we need to make sure to copy the data, since the added mu will be changed inplace by minimize afterwards
         data['evaluation_points'].append(fom.parameters.parse(mu).to_numpy())
         data['evaluations'].append(QoI[0])
         return QoI
@@ -285,11 +284,11 @@ helpful functions for recording and reporting the results.
                 print('  absolute error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(result.x-reference_mu)))
             print('  num iterations:     {}'.format(result.nit))
             print('  num function calls: {}'.format(data['num_evals']))
-            print('  time: {:.5f} seconds'.format(data['time']))
+            print('  time:               {:.5f} seconds'.format(data['time']))
             if 'offline_time' in data:
-                print('  offline time: {:.5f} seconds'.format(data['offline_time']))
+                    print('  offline time:       {:.5f} seconds'.format(data['offline_time']))
             if 'enrichments' in data:
-                print('  model enrichments: {}'.format(data['enrichments']))
+                    print('  model enrichments:  {}'.format(data['enrichments']))
         print('')
 
 Optimizing with the FOM using finite differences
@@ -366,8 +365,9 @@ estimation of the coerciviy constant.
     coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
     
 
-Using MOR for PDE-constrained optimization goes beyond the classical
-online efficiency of RB methods. It is not meaningful to ignore the
+The online efficiency of MOR methods most likely comes with a
+rather expensive offline phase. For PDE-constrained optimization, however,
+it is not meaningful to ignore the
 offline time of the surrogate model since it can happen that FOM
 optimization methods would already converge before the surrogate model
 is even ready. Thus, RB optimization methods (at least for only one
@@ -385,6 +385,7 @@ in order to arrive at a minimum which is close enough to the true
 optimum. 
 
 .. jupyter-execute::
+    
     training_set = parameter_space.sample_uniformly(25)
     
     RB_reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
@@ -506,7 +507,12 @@ solve another equation: Find :math:`d_{\mu_i} u_{\mu} \in V`, such that
    a_\mu(d_{\mu_i} u_{\mu}, v) = \partial_{\mu_i} r_\mu^{\text{pr}}(u_{\mu})[v] \qquad \qquad \forall v \in V
 
 where :math:`r_\mu^{\text{pr}}` denotes the residual of the primal
-equation. A major issue of this approach is that the computation of the
+equation, i.e.
+
+.. math::
+        r_\mu^{\text{pr}(u)[v] := l_\mu(v) - a_\mu(u, v) &&\text{for all }v \in V
+
+A major issue of this approach is that the computation of the
 full gradient requires :math:`P` solutions of :math:`\eqref{sens}`.
 Especially for high dimensional parameter spaces, we can instead use an
 adjoint approach to reduce the computational cost to only one solution
@@ -558,8 +564,9 @@ Optimizing using a gradient in FOM
 ----------------------------------
 
 We can easily include a function to compute the gradient to :func:`~scipy.optimize.minimize`.
-For using the adjoint approach we have to explicitly enable the ``use_adjoint`` argument.
-Note that using the (more general) default implementation ``use_adjoint=False`` results
+Since we use a linear operator and a linear objective functional, the ``use_adjoint`` argument
+is automatically enabled.
+Note that using the (more general) implementation ``use_adjoint=False`` results
 in the exact same gradient but lacks computational speed.
 Moreover, the function ``output_d_mu`` returns a dict w.r.t. the parameters as default.
 In order to use the output for :func:`~scipy.optimize.minimize` we thus use the ``return_array=True`` argument. 
@@ -681,9 +688,8 @@ the basis along the path of optimization.
         except:
             print('Extension failed')
         opt_rom = pdeopt_reductor.reduce()
-        QoI = rom.output(mu)
+        QoI = opt_rom.output(mu)
         data['num_evals'] += 1
-        # we need to make sure to copy the data, since the added mu will be changed inplace by minimize afterwards
         data['evaluation_points'].append(fom.parameters.parse(mu).to_numpy())
         data['evaluations'].append(QoI[0])
         opt_dict['opt_rom'] = rom 
@@ -767,7 +773,6 @@ in the greedy algorithm.
         opt_rom = pdeopt_reductor.reduce()
         QoI = opt_rom.output(mu)
         data['num_evals'] += 1
-        # we need to make sure to copy the data, since the added mu will be changed inplace by minimize afterwards
         data['evaluation_points'].append(fom.parameters.parse(mu).to_numpy())
         data['evaluations'].append(QoI[0])
         opt_dict['opt_rom'] = opt_rom 
@@ -848,42 +853,34 @@ compare all methods that we have discussed in this notebook.
 
     
 
-Some general words about MOR methods for optimization
------------------------------------------------------
+Conclusion and some general words about MOR methods for optimization
+--------------------------------------------------------------------
 
-This notebook has shown several aspects on how to use RB methods for
-reducing a FOM for an optimization problem. One main result from this
-was that standard RB methods can help to reduce the computational time.
-Thus, standard RB methods are especially of interest if an optimization
-problem might need to be solved multiple times.
+In this tutorial we have seen how PyMOR can be used to speedup the optimizer
+for PDE-constrained optimization problems.
+We focused on several aspects of RB methods and showed how explicit gradient information
+helps to reduce the computational cost of the optimizer.
+We also saw that already standard RB methods may help to reduce the computational time.
+It is clear that standard RB methods are especially of interest if an 
+optimization problem needs to be solved multiple times.
 
-However, for only a single optimization routine, their expensive offline
-time might make them unfavorable because they lack overall efficiency.
-The example that has been discussed in this notebook is a very simple
-and low dimensional problem with a linear output functional. Especially
-going to high dimensional parameter spaces and non linear output
-functionals would aggravate this effect even more.
-
-To resolve this issue we have seen a way to overcome the traditional
-offline/online splitting and saw that it is a good idea to enrich the
-model along the path of the optimization or (even better) only enrich
-the model if the standard error estimator goes above a certain
-tolerance.
+Moreover, we focused on the lack of overall efficiency of standard RB methods.
+To overcome this, we reduced the (normally) expensive offline time by choosing larger
+tolerances for the greedy algorithm. 
+We have also seen a way to overcome
+the traditional offline/online splitting by only enriching the model along
+the path of optimization or (even better) only enrich
+the model if the standard error estimator goes above a certain tolerance.
 
 Furthermore, higher order optmization methods with accessible gradient
 or hessian make FOM methods take even less steps. Also in this case,
 adaptive RB methods still reduce the computational demand of the
 optimization method.
 
-For more advanced methods and problems on this topic, we refer to
-Trust-Region methods, quadratic objective functionals, inverse problems
-or higher order optimization methods. A Trust-Region method for
-quadratic objective functionals with a non-conforming RB approach has
-been considered in `this (arXiv)
-paper <https://arxiv.org/abs/2006.09297>`__, where pyMOR has been used
-for the MOR part. You can see the whole code and all numerical results
-in `this
-project <https://github.com/TiKeil/NCD-corrected-TR-RB-approach-for-pde-opt>`__.
+A main drawback of the content in this tutorial was that the choice of
+the tolerance ``atol`` can not be known a priorily. This shows the need for
+certified and robust reduced methods. 
+
 
 Download the code:
 :jupyter-download:script:`tutorial_optimization`
