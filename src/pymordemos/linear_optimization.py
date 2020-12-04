@@ -129,20 +129,19 @@ def record_results(function, parse, data, mu):
     print('.', end='')
     return QoI
 
-def report(result, parse, data, reference_mu=None):
+def report(result, parse, data, reference_mu):
     if (result.status != 0):
         print('\n failed!')
     else:
         print('\n succeeded!')
         print('  mu_min:    {}'.format(parse(result.x)))
         print('  J(mu_min): {}'.format(result.fun[0]))
-        if reference_mu is not None:
-            print('  absolute error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(result.x-reference_mu)))
-        print('  num iterations:     {}'.format(result.nit))
-        print('  num function calls: {}'.format(data['num_evals']))
-        print('  time: {:.5f} seconds'.format(data['time']))
+        print('  absolute error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(result.x-reference_mu)))
+        print('  num iterations:        {}'.format(result.nit))
+        print('  num function calls:    {}'.format(data['num_evals']))
+        print('  time:                  {:.5f} seconds'.format(data['time']))
         if 'offline_time' in data:
-            print('  offline time: {:.5f} seconds'.format(data['offline_time']))
+            print('  offline time:          {:.5f} seconds'.format(data['offline_time']))
     print('')
 
 if __name__ == '__main__':
