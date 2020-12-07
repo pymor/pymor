@@ -433,7 +433,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
 
-            plot_widget = Matplotlib1DWidget(None, grid, count=len(U), vmin=[np.min(u) for u in U],
+            plot_widget = Matplotlib1DWidget(U, None, grid, len(U), vmin=[np.min(u) for u in U],
                                              vmax=[np.max(u) for u in U], legend=legend, codim=codim,
                                              separate_plots=separate_plots)
             super().__init__(U, plot_widget, title=title, length=len(U[0]))
