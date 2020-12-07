@@ -4,7 +4,9 @@ pyMOR 2020.2 (December ?, 2020)
 We are proud to announce the release of pyMOR 2020.2! Highlights of this release
 are a non-intrusive model reduction method for instationary models based on artificial
 neural networks and an extension of our available tutorials through the new reduced
-basis projection tutorial. Additionally, as part of this release we happily present
+basis projection tutorial. Furthermore, we have added tools for linear PDE-constrained
+parameter optimization including an elaborate tutorial to use them.
+Additionally, as part of this release we happily present
 the new pyMOR logo to you!
 
 Over 400 single commits have entered this release. For a full list of changes
@@ -26,10 +28,24 @@ solved. As in the stationary case, the implementation allows for several
 customizations regarding the network architecture and training parameters.
 
 
+Linear PDE-constrained parameter optimization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In `[#1110] <https://github.com/pymor/pymor/pull/1110>`_, some tools for
+PDE-constrained parameter optimization were added. These include partial derivatives
+of the solutions and the output with respect to the parameters.
+
+
+Tutorial: Model order reduction for PDE-constrained optimization problems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new features that were added in `[#1110] <https://github.com/pymor/pymor/pull/1110>`_
+are gathered in a new tutorial `[#1205] <https://github.com/pymor/pymor/pull/1205>`_ which
+also focuses on general questions and insights to MOR for
+linear PDE-constrained optimization problems. 
+
+
 Tutorial: Projecting a model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - `[#1084] Add RB projection tutorial <https://github.com/pymor/pymor/pull/1084>`_
-
 
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
