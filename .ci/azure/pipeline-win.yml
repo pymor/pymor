@@ -2,6 +2,7 @@ jobs:
 - job: 'Windows_CI'
   pool:
     vmImage: 'windows-2019'
+  timeoutInMinutes: 75
   variables:
       PYMOR_HYPOTHESIS_PROFILE: ci
   strategy:
