@@ -872,14 +872,21 @@ the traditional offline/online splitting by only enriching the model along
 the path of optimization or (even better) only enrich
 the model if the standard error estimator goes above a certain tolerance.
 
-Furthermore, higher order optmization methods with accessible gradient
-or hessian make FOM methods take even less steps. Also in this case,
-adaptive RB methods still reduce the computational demand of the
-optimization method.
-
 A main drawback of the content in this tutorial was that the choice of
-the tolerance ``atol`` can not be known a priorily. This shows the need for
+the tolerance ``atol`` that has been used to build the RB spaces
+cannot be known a priorily. This shows the need for
 certified and robust reduced methods. 
+
+For some standard literature for faster and robust optimization tools we refer to
+`CGT00 <https://epubs.siam.org/doi/book/10.1137/1.9780898719857?mobileUi=0>`__ and
+`NW06 <https://link.springer.com/book/10.1007/978-0-387-40065-5>`__.
+
+For recent research on using trust-region methods for MOR of PDE-constrained
+optimization problems, we refer to 
+`YM13 <https://epubs.siam.org/doi/abs/10.1137/120869171>`__, 
+`QGVW17 <https://epubs.siam.org/doi/abs/10.1137/16M1081981>`__ and 
+`KMSOV <https://arxiv.org/abs/2006.09297>`__ where for the latter, pyMOR
+has been used for the numerical experiments.
 
 
 Download the code:
