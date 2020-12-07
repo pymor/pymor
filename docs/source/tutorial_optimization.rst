@@ -30,10 +30,10 @@ PDE-constrained optimization problems thus aim to find a surrogate model
 of :math:`\eqref{eq:primal}` to reduce the computational costs of
 an evaluation of :math:`J(u_{\mu}, \mu)`.
 
-Since :math:`u_{\mu}` is always related to :math:`\mu`, we can rewrite
-(P) by using the so-called reduced objective functional
-:math:`\mathcal{J}(\mu):= J(u_{\mu}, \mu)` leading to the equivalent
-problem: Find a solution of
+If there exists a unique solution :math:`u_{\mu}` for all
+:math:`\mu \in \mathcal{P}`, we can rewrite (P) by using the so-called
+reduced objective functional :math:`\mathcal{J}(\mu):= J(u_{\mu}, \mu)`
+leading to the equivalent problem: Find a solution of
 
 .. math::
 
@@ -151,16 +151,7 @@ we also define :math:`\bar{\mu}`, which we pass via the argument
     parameter_space = fom.parameters.space(0, np.pi)
 
 
-In case, you need an output functional that cannot be defined in the
-|StationaryProblem|, we can also directly define the
-``output_functional`` in the |StationaryModel|.
-
-.. code-block:: python
-
-    output_functional = fom.rhs.H * theta_J
-    fom = fom.with_(output_functional=output_functional)
-
-We now define a function that can be used by the minimizer below.
+We now define a function for the output of the model that can be used by the minimizer below.
 
 .. jupyter-execute::
 
@@ -168,7 +159,7 @@ We now define a function that can be used by the minimizer below.
         return fom.output(mu)[0]
 
 We also pick a starting parameter for the optimization method, 
-which in our case is :math:`\mu_0 = (0.25,0.5)`.
+which in our case is :math:`\mu^0 = (0.25,0.5)`.
 
 .. jupyter-execute::
 
@@ -307,7 +298,7 @@ In case no gradient is given, :func:`~scipy.optimize.minimize`
 just approximates the gradient with finite differences.
 This is not recommended because the gradient is inexact and the
 computation of finite differences requires even more evaluations of the
-primal equation. We anyway start with this approach.
+primal equation. Here, we use this approach for a simple demonstration.
 
 .. jupyter-execute::
 
@@ -538,7 +529,8 @@ Find :math:`p_{\mu} \in V`, such that
 
 Note that in our case, we then have
 :math:`\mathcal{L}(u_{\mu}, \mu, p_{\mu}) = J(u, \mu)` because the
-residual term :math:`r_\mu^{\text{pr}}(u_{\mu}, p_{\mu})` vanishes. By
+residual term :math:`r_\mu^{\text{pr}}(u_{\mu}, p_{\mu})` vanishes since :math:`u_{\mu}`
+solves (P.b) and :math:`p_{\mu}` is in the test space :math:`V`. By
 using the solution of the dual problem, we can then derive the gradient of the objective
 functional by
 
@@ -643,13 +635,13 @@ phase is obviously still the same as before. We also conclude that the
 ROM model eventually gives less speedup by using a better optimization
 method for the FOM and ROM. 
 
-Breaking the traditional offline/online splitting: enrich along the path of optimization
+Beyond the traditional offline/online splitting: enrich along the path of optimization
 ----------------------------------------------------------------------------------------
 
 We already figured out that the main drawback for using RB methods in the
 context of optimization is the expensive offline time to build the
 surrogate model. In the example above, we overcame this issue by
-choosing a very high tolerance ``atol``. As a result, we cannot be sure
+choosing a large tolerance ``atol``. As a result, we cannot be sure
 that our surrogate model is accurate enough for our purpuses. In other
 words, either we invest too much time to build an accurate model or we
 face the danger of reducing with a bad surrogate for the whole parameter
@@ -737,12 +729,12 @@ for the gradients since we compute the dual solutions with the ROM.
 Adaptively enriching along the path
 -----------------------------------
 
-This makes us think about another idea where we only enrich if it is
+This gives rise to another idea where we only enrich if it is
 necessary. For example it could be the case that the model is already good at
 the next iteration, which we can easily check by evaluating the standard
 error estimator which is also used in the greedy algorithm. In the next
 example we will implement this adaptive way of enriching and set a
-tolerance which is equal to the one that we had in the as error tolerance
+tolerance which is equal to the one that we had as error tolerance
 in the greedy algorithm.
 
 .. jupyter-execute::
@@ -856,7 +848,7 @@ compare all methods that we have discussed in this notebook.
 Conclusion and some general words about MOR methods for optimization
 --------------------------------------------------------------------
 
-In this tutorial we have seen how PyMOR can be used to speedup the optimizer
+In this tutorial we have seen how pyMOR can be used to speedup the optimizer
 for PDE-constrained optimization problems.
 We focused on several aspects of RB methods and showed how explicit gradient information
 helps to reduce the computational cost of the optimizer.
