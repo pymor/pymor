@@ -46,7 +46,7 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     _PYSIDE: 'solution visualization for builtin discretizations',
                     'ipywidgets': 'notebook GUI elements',
                     'nbresuse': 'resource usage indicator for notebooks',
-                    'torch': 'PyTorch open source machine learning framework',
+                    'torch;python_version<"3.9"': 'PyTorch open source machine learning framework',
                     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
