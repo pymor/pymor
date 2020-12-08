@@ -3,6 +3,78 @@ Developer Documentation
 ******************************************
 
 
+Setting up an Environment for pyMOR Development
+###############################################
+
+Getting the source
+==================
+
+Clone the pyMOR git repository using::
+
+    git clone https://github.com/pymor/pymor pymor_source
+    cd pymor_source
+
+and, optionally, switch to the branch you are interested in, e.g.::
+
+    git checkout 2020.1.x
+
+
+Environment with Virtualenv
+===========================
+
+Create and activate a new virtualenv::
+
+    python3 -m virtualenv venv
+    source venv/bin/activate
+
+Then, make an editable installation of pyMOR with::
+
+    pip install -e .[full]
+
+
+Environment with docker-compose
+===============================
+
+To get a shell in a preconfigured container run
+(if required set `PYMOR_SUDO=1` in your environment to execute docker with elevated rights)::
+
+    make docker_run
+
+You can also use the setup in `.binder/docker-compose.yml` to easily
+work on pyMOR with `pyCharm <https://www.jetbrains.com/help/pycharm/docker-compose.html>`_.
+
+Coding guidelines and project management
+########################################
+
+
+Code style
+======================================
+
+pyMOR follows the coding style of
+`PEP8 <https://www.python.org/dev/peps/pep-0008/>`__ apart from a
+few exceptions. Configurations for the `PEP8 <https://pypi.python.org/pypi/pep8>`__ and
+`flake8 <https://pypi.python.org/pypi/flake8>`_ code checkers are contained in `setup.cfg`.
+
+
+As an additional rule when calling functions, positional
+arguments should generally be passed as positional arguments
+whereas keyword arguments should be passed as keyword arguments.
+This will make your code less likely to break, when the called
+function is extended.
+
+All functions and classes called or instantiated by users should
+be sufficiently well documented.
+
+
+GitHub project
+==============
+
+All new code enters pyMOR by means of a pull request. Pull requests (PR) trigger `automatic tests <ref_section_ci>`_
+which are mandatory to pass before the PR can be merged. A PR must also be tagged with either one of the
+`pr:new-feature`, `pr:fix`, `pr:removal`, `pr:deprecation` or `pr:change` labels to clearly identify the type of
+changes it introduces. See the `labels' descriptions <https://github.com/pymor/pymor/labels?q=pr%3A>`_ for more details.
+
+
 pyMOR's dependencies
 ######################################
 
@@ -19,6 +91,7 @@ a commit in our docker repository for the `constraints requirements <https://git
 so that updated images become available to CI after entering the new commit hash into ``.env``.
 
 
+.. _ref_makefile:
 
 The Makefile
 ######################################
@@ -26,6 +99,12 @@ The Makefile
 Via the ``Makefile`` it is possible to execute tests close to how they are run on CI with ``make docker_test``.
 All jobs described in :ref:`Gitlab CI Test Stage <ref_gitlab_ci_stage_test>` can be run this way by setting ``PYMOR_TEST_SCRIPT``
 accordingly.
+To run the test suite without docker,
+simply execute `make test` in the base directory of the pyMOR repository. This will
+run the pytest suite with the default hypothesis profile "dev". For available profiles
+see `src/pymortests/conftest.py`. A profile is selected by running `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME test`.
+Run `make full-test` to also enable
+`pyflakes <https://pypi.python.org/pypi/pyflakes>`_ and `pep8 <https://www.python.org/dev/peps/pep-0008/>`__ checks.
 
 
 the ``.env`` file
@@ -35,12 +114,17 @@ This file records defaults used when executing CI scripts. These are loaded by m
 overridden like this: ``make DOCKER_BASE_PYTHON=3.8 docker_test`` (see also the top of the ``Makefile``).
 
 
+.. _ref_section_ci:
+
 Continuous Testing / Integration Setup
 ######################################
 
-Our CI infrastructure is spread across three major platforms. These are Gitlab CI (Linux tests),
-Azure Pipelines (MacOS and Windows tests) and GitHub Actions (misc. checks).
+Our CI infrastructure is spread across three major platforms. These are Gitlab CI (Linux testsuite),
+Azure Pipelines (MacOS and Windows testsuite) and GitHub Actions (misc. checks).
 
+pyMOR uses `pytest` <https://pytest.org/>`_ for unit testing.
+All tests are contained within the `src/pymortests` directory and can be run
+individually by executing `python3 src/pymortests/the_module.py`.
 
 
 .. _ref_gitlab_ci:
@@ -142,7 +226,7 @@ docs
   matching the currently checked out git branch of pyMOR.
 
 pypi
-  **This is not yet functional. See `this issue <https://github.com/pymor/pymor/issues/551>`_**
+  **This is not yet functional.** See `this issue <https://github.com/pymor/pymor/issues/551>`_
 
   Upload wheels to either the test or the real instance of the pypi repository, depending on whether
   the pipeline runs for a tagged commit.
