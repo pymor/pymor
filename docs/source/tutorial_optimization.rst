@@ -183,7 +183,7 @@ to resolve the data structure in the diffusion. This suggests to use an
 even finer mesh. However, for enabling a faster runtime for this
 tutorial, we stick with this mesh and remark that refining the mesh does
 not change the interpretation of the methods that are discussed below.
-It rather furhter improves the speedups achieved by model reduction.
+It rather further improves the speedups achieved by model reduction.
 
 Before we discuss the first optimization method, we define helpful
 functions for visualizations.
@@ -360,7 +360,7 @@ a perfect surrogate model in the sense that a low error tolerance for
 the :func:`~pymor.algorithms.greedy.rb_greedy` already suffices to converge
 to the same minimum.
 In our case we choose ``atol=1e-2`` and yield a very low dimensional space.
-In general, however, it is not a priorily clear how to choose ``atol``
+In general, however, it is not a priori clear how to choose ``atol``
 in order to arrive at a minimum which is close enough to the true
 optimum. 
 
@@ -484,7 +484,7 @@ equation, i.e.
 
 .. math::
 
-        r_\mu^{\text{pr}(u)[v] := l_\mu(v) - a_\mu(u, v) &&\text{for all }v \in V
+        r_\mu^{\text{pr}}(u)[v] := l_\mu(v) - a_\mu(u, v) &&\text{for all }v \in V
 
 A major issue of this approach is that the computation of the
 full gradient requires :math:`P` solutions of :math:`\eqref{sens}`.
@@ -603,7 +603,7 @@ output functional.
     report(opt_rom_result, opt_rom_minimization_data, reference_mu)
 
 The online phase is even slightly faster than before but the offline
-phase is obviously still the same as before. We also conclude that the
+phase is still the same as before. We also conclude that the
 ROM model eventually gives less speedup by using a better optimization
 method for the FOM and ROM. 
 
@@ -697,8 +697,9 @@ for the gradients since we compute the dual solutions with the ROM.
 Adaptively enriching along the path
 -----------------------------------
 
-This gives rise to another idea where we only enrich if it is
-necessary. For example it could be the case that the model is already good at
+In order to further speedup the above algorithm, we enhance it
+by only adaptive enrichments of the model.
+For instance it may happen that the model is already good at
 the next iteration, which we can easily check by evaluating the standard
 error estimator which is also used in the greedy algorithm. In the next
 example we will implement this adaptive way of enriching and set a
@@ -821,21 +822,17 @@ the traditional offline/online splitting by only enriching the model along
 the path of optimization or (even better) only enrich
 the model if the standard error estimator goes above a certain tolerance.
 
-A main drawback of the content in this tutorial was that the choice of
-the tolerance ``atol`` that has been used to build the RB spaces
-cannot be known a priorily. This shows the need for
-certified and robust reduced methods. 
-
-For some standard literature for faster and robust optimization tools we refer to
-`CGT00 <https://epubs.siam.org/doi/book/10.1137/1.9780898719857?mobileUi=0>`__ and
+In this tutorial we have only covered a few basic approaches to combine model
+reduction with optimization.
+For faster and more robust optimization algorithms we refer to the textbooks
+`CGT00 <https://epubs.siam.org/doi/book/10.1137/1.9780898719857>`__ and
 `NW06 <https://link.springer.com/book/10.1007/978-0-387-40065-5>`__.
-
-For recent research on using trust-region methods for MOR of PDE-constrained
-optimization problems, we refer to 
+For recent research on combining trust-region methods with model reduction for
+PDE-constrained optimization problems we refer to 
 `YM13 <https://epubs.siam.org/doi/abs/10.1137/120869171>`__, 
 `QGVW17 <https://epubs.siam.org/doi/abs/10.1137/16M1081981>`__ and 
-`KMSOV <https://arxiv.org/abs/2006.09297>`__ where for the latter, pyMOR
-has been used for the numerical experiments.
+`KMSOV20 <https://arxiv.org/abs/2006.09297>`__ where for the latter a pyMOR
+implementation is available as supplementary material.
 
 Download the code:
 :jupyter-download:script:`tutorial_optimization`
