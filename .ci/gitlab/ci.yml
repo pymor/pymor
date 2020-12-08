@@ -593,8 +593,6 @@ cpp_demo 3 6:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_cpp_demo.bash
-        - find . -name "coverage*"
-        - ls -la *
 cpp_demo 3 7:
     extends: .pytest
     rules:
@@ -617,8 +615,6 @@ cpp_demo 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_cpp_demo.bash
-        - find . -name "coverage*"
-        - ls -la *
 cpp_demo 3 8:
     extends: .pytest
     rules:
@@ -641,8 +637,6 @@ cpp_demo 3 8:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_cpp_demo.bash
-        - find . -name "coverage*"
-        - ls -la *
 cpp_demo 3 9:
     extends: .pytest
     rules:
@@ -665,8 +659,6 @@ cpp_demo 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_cpp_demo.bash
-        - find . -name "coverage*"
-        - ls -la *
 ci_weekly 3 6:
     extends: .pytest
     timeout: 5h
@@ -972,7 +964,8 @@ wheel 2014 py3 9:
 
 
 pypi:
-    extends: .sanity_checks
+    extends: .test_base
+    image: zivgitlab.wwu.io/pymor/docker/pymor/python_3.9:2f44a2ffd0e78749f55145db80e161b814693300
     stage: deploy
     dependencies:
       - wheel 2010 py3 6
@@ -1009,7 +1002,7 @@ pypi:
         expire_in: 6 months
         name: pymor-wheels
     before_script:
-        - apk add py3-pip
+        - pip3 install -r requirements.txt
         - pip3 install twine
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash

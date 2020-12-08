@@ -313,7 +313,8 @@ wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
 {% endfor %}
 
 pypi:
-    extends: .sanity_checks
+    extends: .test_base
+    image: {{registry}}/pymor/python_3.9:{{ci_image_tag}}
     stage: deploy
     dependencies:
     {%- for PY in pythons %}
@@ -335,7 +336,7 @@ pypi:
         expire_in: 6 months
         name: pymor-wheels
     before_script:
-        - apk add py3-pip
+        - pip3 install -r requirements.txt
         - pip3 install twine
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash
