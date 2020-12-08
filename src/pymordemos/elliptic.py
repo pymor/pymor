@@ -54,7 +54,9 @@ def main(
         diffusion=ConstantFunction(1, dim_domain=2),
         rhs=rhs,
         dirichlet_data=dirichlet,
-        neumann_data=neumann
+        neumann_data=neumann,
+        outputs = (('l2', ConstantFunction(1, dim_domain=2)),             # average over the domain
+                   ('l2_boundary', ConstantFunction(0.25, dim_domain=2))) # average over the boundary
     )
 
     for n in [32, 128]:
@@ -73,6 +75,11 @@ def main(
         U = m.solve()
         m.visualize(U, title=repr(grid))
         print()
+
+        print('Computing outputs ...')
+        S = m.output()
+        print(f'  average solution over the domain:   {S.to_numpy()[0, 0]}')
+        print(f'  average solution over the boundary: {S.to_numpy()[0, 1]}')
 
 
 if __name__ == '__main__':
