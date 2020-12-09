@@ -8,4 +8,5 @@ pyMOR Tutorials
     tutorial_lti_systems
     tutorial_bt
     tutorial_mor_with_anns
+    tutorial_optimization
     tutorial_external_solver
