@@ -143,7 +143,7 @@ stages:
         alias: pymor__devpi
     before_script:
       # bump to our minimal version
-      - python3 -m pip install -U pip==19.0 
+      - python3 -m pip install -U pip==19.0
       - python3 -m pip install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
@@ -178,21 +178,6 @@ ci setup:
 
 #****** test stage
 
-{%- for py in pythons %}
-minimal_cpp_demo {{py[0]}} {{py[2]}}:
-    extends: .pytest
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
-    services:
-        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
-          alias: pypi_mirror
-    image: {{registry}}/pymor/testing_py{{py}}:{{ci_image_tag}}
-    script: ./.ci/gitlab/cpp_demo.bash
-{%- endfor %}
-
-
 {%- for script, py, para in matrix %}
 {{script}} {{py[0]}} {{py[2]}}:
     extends: .pytest
@@ -220,8 +205,6 @@ minimal_cpp_demo {{py[0]}} {{py[2]}}:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_{{script}}.bash
-        - find . -name "coverage*"
-        - ls -la *
 {%- endfor %}
 
 {%- for py in pythons %}
@@ -268,7 +251,7 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
 
 
 {% for OS, PY in testos %}
-pip {{loop.index}}/{{loop.length}}:
+from source {{loop.index}}/{{loop.length}}:
     tags: [mike]
     services:
         - name: {{registry}}/pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
@@ -285,13 +268,14 @@ pip {{loop.index}}/{{loop.length}}:
 
 binder base image:
     extends: .binder
+    stage: build
     script:
         - docker build --build-arg CI_IMAGE_TAG=${CI_IMAGE_TAG} -t ${BINDERIMAGE} -f .ci/gitlab/Dockerfile.binder.base .
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
         - docker run ${BINDERIMAGE} ipython -c "from pymor.basic import *"
         - docker push ${BINDERIMAGE}
 
-local_jupyter:
+local docker:
     extends: .binder
     script:
         - make docker_image
@@ -328,8 +312,9 @@ wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
 {% endfor %}
 {% endfor %}
 
-pypi deploy:
-    extends: .sanity_checks
+pypi:
+    extends: .test_base
+    image: {{registry}}/pymor/python_3.9:{{ci_image_tag}}
     stage: deploy
     dependencies:
     {%- for PY in pythons %}
@@ -350,13 +335,16 @@ pypi deploy:
          - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*manylinux*whl
         expire_in: 6 months
         name: pymor-wheels
+    before_script:
+        - pip3 install -r requirements.txt
+        - pip3 install twine
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash
     environment:
         name: safe
 
 {% for OS, PY in testos %}
-check_wheel {{loop.index}}:
+from wheel {{loop.index}}/{{loop.length}}:
     extends: .check_wheel
     dependencies:
         {%- for ML in manylinuxs %}
@@ -434,7 +422,7 @@ pythons = ['3.6', '3.7', '3.8', '3.9']
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [("mpi", pythons, 1), ("pip_installed", pythons, 1), ("tutorials", pythons, 1),
-    ("vanilla", pythons, 1), ("numpy_git", newest, 1), ("oldest", oldest, 1),]
+    ("vanilla", pythons, 1), ("numpy_git", newest, 1), ("oldest", oldest, 1), ("cpp_demo", pythons, 1)]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
 testos = [('centos_8','3.6'), ('debian_buster','3.7'), ('debian_bullseye','3.9')]

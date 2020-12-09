@@ -212,43 +212,10 @@ separately. Bindings for the following solver libraries are included:
     Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also used for Hardy norm computations (`pymor.bindings.slycot`).
 
 
-Setting up an Environment for pyMOR Development
+Environments for pyMOR Development and Tests
 -----------------------------------------------
 
-If you already installed a pyMOR release version, please uninstall it
-
-    pip uninstall pyMOR
-
-Then, clone the pyMOR git repository using
-
-    git clone https://github.com/pymor/pymor $PYMOR_SOURCE_DIR
-    cd $PYMOR_SOURCE_DIR
-
-and, optionally, switch to the branch you are interested in, e.g.
-
-    git checkout 2020.1.x
-
-Then, make an editable installation of pyMOR with
-
-    pip install -e .[full]
-
-
-Tests
------
-
-pyMOR uses [pytest](https://pytest.org/) for unit testing. To run the test suite,
-simply execute `make test` in the base directory of the pyMOR repository. This will
-run the pytest suite with the default hypothesis profile "dev". For available profiles
-see `src/pymortests/conftest.py`. A profile is selected by running `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME test`.
-If docker is available, use `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME docker_test` to execute the test suite
-in the same environment as on pyMOR's CI infrastructure. Additional customization points are listed at the top of the
-`Makefile`. If required set `PYMOR_SUDO=1` in your environment to execute docker with elevated rights.
-Run `make full-test` which will also enable
-[pyflakes](https://pypi.python.org/pypi/pyflakes) and
-[pep8](https://www.python.org/dev/peps/pep-0008/) checks.
-
-All tests are contained within the `src/pymortests` directory and can be run
-individually by executing `py.test src/pymortests/the_module.py`.
+Please see the [Developer Documentation](https://docs.pymor.org/latest/developer_docs.html).
 
 
 Contact

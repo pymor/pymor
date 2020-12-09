@@ -56,6 +56,7 @@ README.txt
 .cache/
 .kateproject*
 venvs
+venv
 .idea
 
 # coverage.py output
@@ -68,6 +69,6 @@ libpeerconnection.log
 # pycharm
 .idea/
 
-Pipfile 
+Pipfile
 Pipfile.lock
 .hypothesis
