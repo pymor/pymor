@@ -19,11 +19,16 @@ more details.
 Release highlights
 ^^^^^^^^^^^^^^^^^^
 
-Linear PDE-constrained parameter optimization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Parameter derivatives of solutions and outputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[#1110] <https://github.com/pymor/pymor/pull/1110>`_, some tools for
-PDE-constrained parameter optimization were added. These include partial derivatives
-of the solutions and the output with respect to the parameters.
+PDE-constrained parameter optimization were added. These include parameter derivatives
+of the solutions and the output of a |Model|. In particular,
+:meth:`~pymor.models.interface.Model.solve_d_mu` can be used to compute partial
+parameter derivatives. Moreover, :meth:`~pymor.models.interface.Model.output_d_mu`
+can be used to compute the parameter gradient of the output using the
+derivatives of the solutions. For a |StationaryModel| and a linear output, an
+adjoint variable can instead be used to speedup the computation of the gradient, see :meth:`~pymor.models.basic.StationaryModel._compute_output_d_mu`.
 
 
 Neural network reductor for non-stationary problems
