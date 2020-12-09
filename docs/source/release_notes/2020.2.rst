@@ -28,13 +28,17 @@ of the solutions and the output with respect to the parameters.
 
 Neural network reductor for non-stationary problems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-A new reductor based on neural networks which deals with non-stationary problems was
-added in `[#1120] <https://github.com/pymor/pymor/pull/1120>`_. The usage of this
-reductor is presented in a corresponding demo where a Burgers' type equation is
-solved. As in the stationary case, the implementation allows for several
-customizations regarding the network architecture and training parameters.
+A reductor based on neural networks which deals with non-stationary problems was
+added in `[#1120] <https://github.com/pymor/pymor/pull/1120>`_. The approach is an
+extension of the approach for stationary problems that was already implemented in
+pyMOR. Here, the time component is treated as an ordinary parameter. The usage of
+the newly introduced reductor is presented in a corresponding demo where a Burgers'
+type equation is solved. As in the stationary case, the implementation allows for
+several customizations regarding the network architecture and training parameters.
 
-- `[#1175] Randomly shuffle training data before splitting <https://github.com/pymor/pymor/pull/1205>`_
+To make training of neural networks more robust, the available data is now shuffled
+randomly before splitting it into training and validation set
+`[#1175] <https://github.com/pymor/pymor/pull/1175>`_.
 
 
 New tutorials
