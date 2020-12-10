@@ -7,6 +7,7 @@ import numpy as np
 from pymor.core.base import ImmutableObject
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.block import BlockOperatorBase
 from pymor.reductors.basic import StationaryRBReductor
 from pymor.reductors.residual import ResidualReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -45,11 +46,30 @@ class CoerciveRBReductor(StationaryRBReductor):
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
                                                   product=product, riesz_representatives=True)
+        if self.fom.output_functional.linear:
+            self.dual_residual_reductors = []
+            if fom.output_functional.range.dim == 1:
+                self.dual_residual_reductors.append(ResidualReductor(self.bases['RB'], self.fom.operator.H,
+                                                        self.fom.output_functional.H,
+                                                        product=product, riesz_representatives=True))
+            else:
+                for d in range(fom.output_functional.range.dim):
+                    assert isinstance(self.fom.output_functional, BlockOperatorBase)
+                    self.dual_residual_reductors.append(ResidualReductor(self.bases['RB'], self.fom.operator.H,
+                                                            self.fom.output_functional.blocks[d,0].H,
+                                                            product=product, riesz_representatives=True))
 
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
+        if self.fom.output_functional.linear:
+            dual_residuals = []
+            dual_range_dims = []
+            for dual_residual_reductor in self.dual_residual_reductors:
+                dual_residuals.append(dual_residual_reductor.reduce())
+                dual_range_dims.append(tuple(dual_residual_reductor.residual_range_dims))
         error_estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
-                                              self.coercivity_estimator)
+                                              self.coercivity_estimator,
+                                              dual_residuals, dual_range_dims)
         return error_estimator
 
     def assemble_error_estimator_for_subbasis(self, dims):
@@ -62,7 +82,8 @@ class CoerciveRBEstimator(ImmutableObject):
     Not to be used directly.
     """
 
-    def __init__(self, residual, residual_range_dims, coercivity_estimator):
+    def __init__(self, residual, residual_range_dims, coercivity_estimator,
+                 dual_residuals, dual_residuals_range_dims):
         self.__auto_init(locals())
 
     def estimate_error(self, U, mu, m):
@@ -70,6 +91,15 @@ class CoerciveRBEstimator(ImmutableObject):
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
         return est
+
+    def estimate_output_error(self, U, mu, m):
+        est_pr = self.estimate_error(U, mu, m)
+        est_dus = []
+        for d in range(m.output_functional.range.dim):
+            dual_problem = m.with_(operator=m.operator.H, rhs=m.output_functional.H.as_range_array(mu)[d])
+            dual_solution = dual_problem.solve(mu)
+            est_dus.append(self.dual_residuals[d].apply(dual_solution, mu=mu).norm())
+        return (est_pr * est_dus).T
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims:
