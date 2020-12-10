@@ -11,8 +11,8 @@
  1. [ ] Wait for CI build to finish
  1. [ ] upload sdist+wheels to pypi (conda builds are automatic via forge)
  1. [ ] bump/create demo docker
- 1. [ ] Update https://github.com/pymor/docs/edit/master/index.html to point to new release
- 1. [ ] Update https://github.com/pymor/docs/edit/master/latest to point to new release
+ 1. [ ] Update https://github.com/pymor/docs/edit/main/index.html to point to new release
+ 1. [ ] Update https://github.com/pymor/docs/edit/main/latest to point to new release
  1. [ ] Update Homepage
  1. [ ] Make a github release. Zenodo is hooked into that.
  1. [ ] update MOR Wiki:
@@ -22,7 +22,7 @@
         (check formatting after submit!)
  1. [ ] Submit release to NA-digest: http://icl.utk.edu/na-digest/websubmit.html
  1. [ ] Announce release in [GitHub discussions](https://github.com/pymor/pymor/discussions)
- 1. [ ] add a new section in https://github.com/pymor/docker/blob/master/docs/releases/Dockerfile
+ 1. [ ] add a new section in https://github.com/pymor/docker/blob/main/docs/releases/Dockerfile
  1. [ ] all developers check if (stale) branches can be pruned
- 1. [ ] Remove deprecated features in master
+ 1. [ ] Remove deprecated features in main
  1. [ ] close the GH milestone for the release https://github.com/pymor/pymor/milestones

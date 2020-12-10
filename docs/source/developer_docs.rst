@@ -87,7 +87,7 @@ The ``extra_requires`` dictionary here controls what 'extra' configurations are 
 ``pip install pymor[extra1,extra2,extra3]``.
 
 When adding new package dependencies, or version restrictions, these need to be reflected into
-a commit in our docker repository for the `constraints requirements <https://github.com/pymor/docker/tree/master/constraints>`_
+a commit in our docker repository for the `constraints requirements <https://github.com/pymor/docker/tree/main/constraints>`_
 so that updated images become available to CI after entering the new commit hash into ``.env``.
 
 
@@ -240,7 +240,7 @@ Github - Gitlab bridge
 ----------------------
 
 This a sanic based Python `application <https://github.com/pymor/ci_hooks_app>`_ that receives webhook
-events from GitHub for pull requests and pushes PR branches merged into master to Gitlab to run a
+events from GitHub for pull requests and pushes PR branches merged into main to Gitlab to run a
 parallel CI pipeline to check whether the main branch will still pass tests after the PR is merged.
 The bridge also does this for forks of pyMOR, but these have to be whitelisted in order to protect CI secrets.
 

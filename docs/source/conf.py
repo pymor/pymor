@@ -257,7 +257,7 @@ modindex_common_prefix = ['pymor.']
 # make intersphinx link to pyside2 docs
 qt_documentation = 'PySide2'
 
-branch = os.environ.get('CI_COMMIT_REF_NAME', 'master')
+branch = os.environ.get('CI_COMMIT_REF_NAME', 'main')
 # this must match PYMOR_ROOT/.ci/gitlab/deploy_docs
 try_on_binder_branch = branch.replace('github/PUSH_', 'from_fork__')
 try_on_binder_slug = os.environ.get('CI_COMMIT_REF_SLUG', slugify.slugify(try_on_binder_branch))

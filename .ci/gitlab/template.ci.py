@@ -287,7 +287,7 @@ trigger_binder {{loop.index}}/{{loop.length}}:
     stage: deploy
     image: {{registry}}/alpine:3.11
     rules:
-        - if: $CI_COMMIT_REF_NAME == "master"
+        - if: $CI_COMMIT_REF_NAME == "main"
           when: on_success
         - if: $CI_COMMIT_TAG != null
           when: on_success
