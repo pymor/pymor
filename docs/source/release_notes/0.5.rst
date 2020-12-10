@@ -20,7 +20,7 @@ Over 1,500 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/0.4.x...0.5.x>`__.
 
 pyMOR 0.5 contains contributions by Linus Balicki, Julia Brunken and Christoph
-Lehrenfeld. See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__
+Lehrenfeld. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
 for more details.
 
 

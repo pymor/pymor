@@ -40,8 +40,8 @@ def html_visit_binder_link_node(self, node):
 
 def setup(app):
     # since don;t want to replicate the slugify rules form gitlab we need to accept two params here
-    app.add_config_value('try_on_binder_branch', 'master', 'html')
-    app.add_config_value('try_on_binder_slug', 'master', 'html')
+    app.add_config_value('try_on_binder_branch', 'main', 'html')
+    app.add_config_value('try_on_binder_slug', 'main', 'html')
     app.add_node(binder_link_node,
                  html=(html_visit_binder_link_node, None))
     app.add_directive("try_on_binder", TryOnBinder)

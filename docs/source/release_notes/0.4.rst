@@ -7,14 +7,14 @@ pyMOR to
 
   Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 
-Moreover, we have added a `Contribution guideline <https://github.com/pymor/pymor/blob/master/CONTRIBUTING.md>`_
+Moreover, we have added a `Contribution guideline <https://github.com/pymor/pymor/blob/main/CONTRIBUTING.md>`_
 to help new users with starting to contribute to pyMOR.
 Over 800 single commits have entered this release.
 For a full list of changes see
 `here <https://github.com/pymor/pymor/compare/0.3.2...0.4.x>`__.
 pyMOR 0.4 contains contributions by Andreas Buhr, Michael Laier, Falk Meyer,
 Petar Mlinarić and Michael Schaefer. See
-`here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for more
+`here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
 details.
 
 

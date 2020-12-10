@@ -18,9 +18,9 @@ provided for getting started quickly.
 [![PyPI](https://img.shields.io/pypi/v/pymor.svg)](https://pypi.python.org/pypi/pymor)
 [![Docs](https://img.shields.io/endpoint?url=https%3A%2F%2Fdocs.pymor.org%2Fbadge.json)](https://docs.pymor.org/)
 [![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
-[![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/master/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/master)
-[![Azure Pipeline](https://dev.azure.com/pymor/pymor/_apis/build/status/pymor.pymor?branchName=master)](https://dev.azure.com/pymor/pymor/_build/latest?definitionId=1&branchName=master)
-[![codecov](https://codecov.io/gh/pymor/pymor/branch/master/graph/badge.svg)](https://codecov.io/gh/pymor/pymor)
+[![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/main/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/main)
+[![Azure Pipeline](https://dev.azure.com/pymor/pymor/_apis/build/status/pymor.pymor?branchName=main)](https://dev.azure.com/pymor/pymor/_build/latest?definitionId=1&branchName=main)
+[![codecov](https://codecov.io/gh/pymor/pymor/branch/main/graph/badge.svg)](https://codecov.io/gh/pymor/pymor)
 
 License
 -------
@@ -115,7 +115,7 @@ To install the latest development version of pyMOR, execute
 which will require that the [git](https://git-scm.com/) version control system is
 installed on your system.
 
-From time to time, the master branch of pyMOR undergoes major changes and things
+From time to time, the main branch of pyMOR undergoes major changes and things
 might break (this is usually announced in our [discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 

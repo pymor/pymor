@@ -37,7 +37,7 @@ git commit -m "Updated index for ${CI_COMMIT_REF_NAME}" || echo "nothing to add"
 
 git push || (git pull --rebase && git push )
 
-[[ "${SLUG}" != "master" ]] && git checkout -b ${SLUG}
+[[ "${SLUG}" != "main" ]] && git checkout -b ${SLUG}
 rm -rf ${REPO_DIR}/.binder
 mkdir ${REPO_DIR}/.binder
 

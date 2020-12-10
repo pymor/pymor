@@ -27,7 +27,7 @@ tpl = '''
 '''
 
 
-def _make_list(root, name='master'):
+def _make_list(root, name='main'):
     subdirs = []
     for it in root.iterdir():
         if it.is_dir() and (it / 'index.html').is_file():

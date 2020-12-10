@@ -12,7 +12,7 @@ Over 520 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2020.1.x...2020.2.x>`__.
 
 pyMOR 2020.2 contains contributions by Tim Keil and Hendrik Kleikamp.
-See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for
 more details.
 
 
