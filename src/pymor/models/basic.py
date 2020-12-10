@@ -125,12 +125,12 @@ class StationaryModel(Model):
             assert self.operator.linear
             assert self.output_functional.linear
             dual_solutions = self.operator.range.empty()
-            for d in range(self.output_functional.range.dim):
+            for d in range(self.dim_output):
                 dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H.as_range_array(mu)[d])
                 dual_solutions.append(dual_problem.solve(mu))
             gradients = [] if return_array else {}
             for (parameter, size) in self.parameters.items():
-                array = np.empty(shape=(size, self.output_functional.range.dim))
+                array = np.empty(shape=(size, self.dim_output))
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
                                                                                              mu=mu).to_numpy()[0]
