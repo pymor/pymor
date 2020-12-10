@@ -1,0 +1,209 @@
+
+pyMOR 2020.2 (December 10, 2020)
+--------------------------------
+We are proud to announce the release of pyMOR 2020.2! This release extends pyMOR's
+support for non-intrusive model reduction via artificial neural networks to
+non-stationary models. Built-in support for computing parameter sensitivities
+simplifies the use of pyMOR in PDE-constrained optimization applications.
+pyMOR's documentation has been extended by three new tutorials, and all tutorial
+code can now easily be executed using `binder <https://mybinder.org>`_.
+
+Over 520 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2020.1.x...2020.2.x>`__.
+
+pyMOR 2020.2 contains contributions by Tim Keil and Hendrik Kleikamp.
+See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for
+more details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+Parameter derivatives of solutions and outputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In `[#1110] <https://github.com/pymor/pymor/pull/1110>`_ tools for
+PDE-constrained parameter optimization were added. These include parameter derivatives
+of the solutions and the output of a |Model|. In particular,
+:meth:`~pymor.models.interface.Model.solve_d_mu` can now be used to compute partial
+parameter derivatives. Moreover, :meth:`~pymor.models.interface.Model.output_d_mu`
+can be used to compute the parameter gradient of the output using the
+derivatives of the solutions. Alternatively, for a |StationaryModel| and a linear output, an
+adjoint variable can be used to speed up the computation of the gradient
+(see :meth:`~pymor.models.basic.StationaryModel._compute_output_d_mu`).
+
+
+Neural network reductor for non-stationary problems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A reductor based on neural networks which deals with non-stationary problems was
+added in `[#1120] <https://github.com/pymor/pymor/pull/1120>`_. The implementation is an
+extension of the already existing approach for stationary problems in pyMOR.
+Here, the time component is treated as an ordinary parameter. The usage of
+the newly introduced reductor is presented in a corresponding demo where a Burgers'
+type equation is solved. As in the stationary case, the implementation allows for
+several customizations regarding the network architecture and training parameters.
+
+To make training of neural networks more robust, the available data is now shuffled
+randomly before splitting it into training and validation set
+`[#1175] <https://github.com/pymor/pymor/pull/1175>`_.
+
+
+New tutorials
+~~~~~~~~~~~~~
+A new tutorial on :doc:`using pyMOR for accelerating the solution of linear PDE-constrained
+optimization problems <../tutorial_optimization>` has been added
+with `[#1205] <https://github.com/pymor/pymor/pull/1205>`_.
+This tutorial showcases the new features added in `[#1110] <https://github.com/pymor/pymor/pull/1110>`_
+and also discusses general questions on using model order reduction for a class of optimization problems.
+
+The tutorial :doc:`'Projecting a Model' <../tutorial_projection>` explains how to use pyMOR to build an
+online-efficient reduced order model via (Petrov-)Galerkin projection onto a given reduced space
+`[#1084] <https://github.com/pymor/pymor/pull/1084>`_.
+Alongside the mathematical foundation, the user is introduced to the core elements of
+pyMOR's internal architecture that realize the projection.
+
+A tutorial on :doc:`linear time-invariant systems <../tutorial_lti_systems>` was added
+and the existing :doc:`balanced truncation tutorial <../tutorial_bt>` was appropriately simplified
+`[#1141] <https://github.com/pymor/pymor/pull/1141>`_.
+
+All tutorials now include a 'launch binder' button which allows to directly
+run the tutorial code in the web browser `[#1181] <https://github.com/pymor/pymor/pull/1181>`_.
+
+In order to consolidate our documentation all remaining Jupyter notebooks from the `notebooks/`
+directory were converted to demo scripts `[#1160] <https://github.com/pymor/pymor/pull/1160>`_,
+and the `notebooks/` directory was removed `[#1198] <https://github.com/pymor/pymor/pull/1198>`_.
+
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Bode plot for input-output systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :meth:`~pymor.models.iosys.InputOutputModel.bode_plot` method for creating a
+Bode plot was added `[#1051] <https://github.com/pymor/pymor/pull/1051>`_,
+complementing the :meth:`~pymor.models.iosys.InputOutputModel.mag_plot` method.
+Additionally, the :meth:`~pymor.models.iosys.InputOutputModel.bode` method can
+be used to compute the magnitudes and phases over the imaginary axis (for
+continuous-time systems).
+
+
+Iterable VectorArrays
+~~~~~~~~~~~~~~~~~~~~~
+|VectorArrays| became iterable sequences with
+`[#1068] <https://github.com/pymor/pymor/pull/1068>`_, i.e.,
+`for v in V` can be used to work on individual vectors
+(i.e. |VectorArray| views of length 1) when needed.
+
+
+Expansion of ConcatenationOperators and improved projection algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new :meth:`~pymor.algorithms.simplify.expand` allows to recursively
+expand :class:`concatenations <pymor.operators.constructions.ConcatenationOperator>`
+of |LincombOperators| in any given |Model| or |Operator|
+`[#1098] <https://github.com/pymor/pymor/pull/1098>`_.
+In particular, :meth:`~pymor.algorithms.simplify.expand` is now used
+in :meth:`~pymor.algorithms.projection.project` to improve the projection of
+such constructs `[#1102] <https://github.com/pymor/pymor/pull/1102>`_.
+Moreover, several minor improvements have been made to
+:meth:`~pymor.algorithms.projection.project_to_subbasis`
+`[#1138] <https://github.com/pymor/pymor/pull/1138>`_.
+
+
+Support for Python 3.9
+~~~~~~~~~~~~~~~~~~~~~~
+- `[#1128] Enable publishing wheels for and running CI on Python 3.9 <https://github.com/pymor/pymor/pull/1128>`_
+
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Updated Model interface
+~~~~~~~~~~~~~~~~~~~~~~~
+To make the simultaneous computation of multiple |Model| output quantities such as internal state,
+output, or error estimates more efficient and better customizable a :meth:`~pymor.models.interface.Model.compute`
+method was added to the |Model| interface which is now responsible for the computation of all
+relevant data that can be gathered from the simulation of a |Model|
+`[#1113] <https://github.com/pymor/pymor/pull/1113>`_.
+Existing interface methods such as :meth:`pymor.models.interface.Model.solve` or
+or :meth:`pymor.models.interface.Model.output` now act as convenience frontends for
+:meth:`~pymor.models.interface.Model.compute`.
+Existing custom |Models| have to be adapted to the new architecture.
+
+The `estimate` method has been renamed to :meth:`~pymor.model.interface.Model.estimate_error`
+`[#1041] <https://github.com/pymor/pymor/pull/1041>`_.
+The old method is deprecated and will be removed in the next release.
+
+Further, to simplify interoperability with third-party packages,
+the model outputs, i.e., the results of :meth:`~pymor.models.interface.output`,
+are no longer generic |VectorArrays|, but NumPy arrays.
+For consistency, `input_space` and `output_space` were removed and
+`input_dim` and `output_dim` were renamed to `dim_input` and `dim_output`
+in :class:`~pymor.models.iosys.InputOutputModel`
+`[#1089] <https://github.com/pymor/pymor/pull/1089>`_.
+
+
+
+Changes in methods for inner products and norms of VectorArrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+At first, |VectorArrays| only had `dot` and `pairwise_dot` methods for computing
+inner products between vectors.
+Later, more general methods `inner` and `pairwise_inner` were added to simplify
+computing non-Euclidean inner products.
+To reduce the list of methods for |VectorArrays|,
+the `dot` and `pairwise_dot` methods are now deprecated and will be removed in
+the next release `[#1066] <https://github.com/pymor/pymor/pull/1066>`_.
+In the same vein, the `l2_norm` and `l2_norm2` methods are deprecated in favor
+of `norm` and `norm2` `[#1075] <https://github.com/pymor/pymor/pull/1075>`_
+Finally, due to lack of usage and support in some external PDE solvers, the
+`l1_norm` method was deprecated
+`[#1070] <https://github.com/pymor/pymor/pull/1070>`_.
+
+
+Restructuring of grid classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The inheritance structure of grid classes was simplified
+`[#1044] <https://github.com/pymor/pymor/pull/1044>`_.
+In particular,
+
+- `ConformalTopologicalGridDefaultImplementations`,
+  `ReferenceElementDefaultImplementations`,
+  `AffineGridDefaultImplementations`, and
+  `ConformalTopologicalGrid`
+  were removed,
+- `AffineGrid` was renamed to `Grid`,
+- `AffineGridWithOrthogonalCenters` was renamed to `GridWithOrthogonalCenters`.
+
+
+Renaming of some Operators
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+For consistency in the naming of |Operators|,
+`ComponentProjection`, `Concatenation` and `LinearAdvectionLaxFriedrichs` were
+renamed to `ComponentProjectionOperator`, `ConcatenationOperator` and
+`LinearAdvectionLaxFriedrichsOperator`, respectively
+`[#1046] <https://github.com/pymor/pymor/pull/1046>`_.
+
+
+Minimal pip and Manylinux wheel version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to reduce special casing and infrastructure investment needed for
+maintaining compatibility with older versions we decided to
+increase the minimal required pip version to 19.0 (released Jan '19) and decided to no longer publish manylinux1 wheels.
+Pip 19.0 already understands the Manylinux 2010 tag, which going further is the oldest platform we will ship wheels
+for.
+
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#960] Avoid nested parameter functionals and functions for sums and products <https://github.com/pymor/pymor/pull/960>`_
+- `[#1008] Energy product in elliptic discretizer <https://github.com/pymor/pymor/pull/1008>`_
+- `[#1093] meshio4 <https://github.com/pymor/pymor/pull/1093>`_
+- `[#1103] Make changing number of POD modes for POD-greedy less error prone <https://github.com/pymor/pymor/pull/1103>`_
+- `[#1112] decompose output functional in discretizer <https://github.com/pymor/pymor/pull/1112>`_
+- `[#1136] Prevent corruption of memory cache <https://github.com/pymor/pymor/pull/1136>`_
+- `[#1137] Always initialize mass and rhs attributes of InstationaryModel <https://github.com/pymor/pymor/pull/1137>`_
+- `[#1139] Implement as_source_array/as_range_array for sparse NumpyMatrixOperators <https://github.com/pymor/pymor/pull/1139>`_
+- `[#1144] Simplify __sub__ for iosys models, check D operator in h2_norm  <https://github.com/pymor/pymor/pull/1144>`_
+- `[#1154] Increase gram_schmidt default reiteration_tol to 9e-1 <https://github.com/pymor/pymor/pull/1154>`_

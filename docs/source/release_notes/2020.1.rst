@@ -1,0 +1,220 @@
+
+
+pyMOR 2020.1 (July 23, 2020)
+----------------------------
+We are proud to announce the release of pyMOR 2020.1! Highlights of this release
+are support for non-intrusive model order reduction using artificial neural networks,
+the subspace accelerated dominant pole algorithm (SAMDP) and the implicitly restarted
+Arnoldi method for eigenvalue computation. Parameter handling in pyMOR has been
+simplified, and a new series of hands-on tutorials helps getting started using pyMOR
+more easily.
+
+Over 600 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2019.2.x...2020.1.x>`__.
+
+pyMOR 2020.1 contains contributions by Linus Balicki, Tim Keil, Hendrik Kleikamp
+and Luca Mechelli. We are also happy to welcome Linus as a new main developer!
+See `here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for more
+details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+Model order reduction using artificial neural networks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+With this release, we introduce a simple approach for non-intrusive model order
+reduction to pyMOR that makes use of artificial neural networks
+`[#1001] <https://github.com/pymor/pymor/pull/1001>`_. The method was first
+described in [HU18]_ and only requires being able to compute solution snapshots of
+the full-order |Model|. Thus, it can be applied to arbitrary (nonlinear) |Models| even when no
+access to the model's |Operators| is possible.
+
+Our implementation internally wraps `PyTorch <https://pytorch.org>`_ for the training and evaluation of
+the neural networks. No knowledge of PyTorch or neural networks is required to apply the method.
+
+
+New system analysis and linear algebra algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The new :meth:`~pymor.algorithms.eigs.eigs` method
+`[#880] <https://github.com/pymor/pymor/pull/880>`_ computes
+smallest/largest eigenvalues of an arbitary linear real |Operator|
+using the implicitly restarted Arnoldi method [RL95]_. It can also
+be used to solve generalized eigenvalue problems.
+
+So far, computing poles of an |LTIModel| was only supported by its
+:meth:`~pymor.models.iosys.LTIModel.poles` method, which uses a dense eigenvalue
+solver and converts the operators to dense matrices.
+The new :meth:`~pymor.algorithms.samdp.samdp` method
+`[#834] <https://github.com/pymor/pymor/pull/834>`_ implements the
+subspace accelerated dominant pole (SAMDP) algorithm  [RM06]_,
+which can be used to compute the dominant poles operators of an
+|LTIModel| with arbitrary (in particular sparse) system |Operators|
+without relying on dense matrix operations.
+
+
+Improved parameter handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+While pyMOR always had a powerful and flexible system for handling |parameters|,
+understanding this system was often a challenge for pyMOR newcomers. Therefore,
+we have completely overhauled parameter handling in pyMOR, removing some unneeded
+complexities and making the nomenclature more straightforward. In particular:
+
+- The `Parameter` class has been renamed to :class:`~pymor.parameters.base.Mu`.
+  `ParameterType` has been renamed to |Parameters|. The items of a |Parameters|
+  dict are the individual *parameters* of the corresponding |ParametricObject|.
+  The items of a :class:`~pymor.parameters.base.Mu` dict are the associated
+  *parameter values*.
+- All parameters are now one-dimensional NumPy arrays.
+- Instead of manually calling `build_parameter_type` in `__init__`, the |parameters|
+  of a |ParametricObject| are now automatically inferred from the object's `__init__`
+  arguments. The process can be customized using the new `parameters_own` and
+  `parameters_internal` properties.
+- `CubicParameterSpace` was renamed to |ParameterSpace| and is created using
+  `parametric_object.parameters.space(ranges)`.
+
+Further details can be found in `[#923] <https://github.com/pymor/pymor/pull/923>`_.
+Also see `[#949] <https://github.com/pymor/pymor/pull/949>`_ and
+`[#998] <https://github.com/pymor/pymor/pull/998>`_.
+
+
+pyMOR tutorial collection
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Hands-on tutorials provide a good opportunity for new users to get started with
+a software library. In this release a variety of tutorials have been added which
+introduce important pyMOR concepts and basic model order reduction methods. In
+particular users can now learn about:
+
+- :doc:`../tutorial_builtin_discretizer`.
+- :doc:`../tutorial_basis_generation`
+- :doc:`../tutorial_bt`
+- :doc:`../tutorial_mor_with_anns`
+- :doc:`../tutorial_external_solver`
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Improvements to ParameterFunctionals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Several improvements have been made to pyMOR's |ParameterFunctionals|:
+
+- `[#934] [parameters/functionals] Add derivative of products <https://github.com/pymor/pymor/pull/934>`_
+- `[#950] [parameters/functionals] Add LincombParameterFunctional <https://github.com/pymor/pymor/pull/950>`_
+- `[#959] verbose name for d_mu functionals <https://github.com/pymor/pymor/pull/959>`_
+- `[#861] Min-theta approach <https://github.com/pymor/pymor/pull/861>`_
+- `[#952] add BaseMaxThetaParameterFunctional to generalize max-theta approach  <https://github.com/pymor/pymor/pull/952>`_
+
+
+Extended Newton algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Finding a proper parameter for the step size in the Newton algorithm can be a difficult
+task. In this release an Armijo line search algorithm is added which allows for computing
+adequate step sizes in every step of the iteration. Details about the line search
+implementation in pyMOR can be found in `[#925] <https://github.com/pymor/pymor/pull/925>`_.
+
+Additionally, new options for determining convergence of the Newton method have been added.
+It is now possible to choose between the norm of the residual or the update vector as a
+measure for the error. Information about other noteworthy improvements that are related to
+this change can be found in `[#956] <https://github.com/pymor/pymor/pull/956>`_, as well as
+`[#932] <https://github.com/pymor/pymor/pull/932>`_.
+
+
+initial_guess parameter for apply_inverse
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :meth:`~pymor.operators.interface.Operator.apply_inverse` and
+:meth:`~pymor.operators.interface.Operator.apply_inverse_adjoint` methods of the |Operator| interface
+have gained an additional `initial_guess` parameter that can be passed to iterative linear solvers.
+For nonlinear |Operators| the initial guess is passed to the :meth:`~pymor.algorithms.newton.newton`
+algorithm `[#941] <https://github.com/pymor/pymor/pull/941>`_.
+
+
+manylinux 2010+2014 wheels
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+In addition to `manylinux1 <https://www.python.org/dev/peps/pep-0513/>`_ wheels we are now also shipping wheels
+conforming with the `manylinux2010 <https://www.python.org/dev/peps/pep-0571/>`_ and
+`manylinux2014 <https://www.python.org/dev/peps/pep-0599/>`_ standards. The infrastructure for this was added in
+`[#846] <https://github.com/pymor/pymor/pull/846>`_.
+
+
+Debugging improvements
+~~~~~~~~~~~~~~~~~~~~~~
+The :meth:`~pymor.core.defaults.defaults` decorator has been refactored to make stepping through it
+with a debugger faster `[#864] <https://github.com/pymor/pymor/pull/864>`_. Similar improvements
+have been made to :meth:`RuleTable.apply <pymor.algorithms.rules.RuleTable.apply>`. The new
+:meth:`~pymor.algorithms.rules.RuleTable.breakpoint_for_obj` and
+:meth:`~pymor.algorithms.rules.RuleTable.breakpoint_for_name` methods allow setting conditional
+breakpoints in :meth:`RuleTable.apply <pymor.algorithms.rules.RuleTable.apply>` that match
+specific objects to which the table might be applied `[#945] <https://github.com/pymor/pymor/pull/945>`_.
+
+
+WebGL-based visualizations
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+This release enables our `pythreejs <https://github.com/jupyter-widgets/pythreejs>`_-based visualization module
+for Jupyter Notebook environments by default. It acts as a drop in replacement for the previous default, which was
+matplotlib based. This new module improves interactive performance for visualizations
+with a large number of degrees of freedom by utilizing the user's graphics card via the browser's WebGL API.
+The old behaviour can be reactivated using
+
+.. jupyter-execute::
+
+    from pymor.basic import *
+    set_defaults({'pymor.discretizers.builtin.gui.jupyter.get_visualizer.backend': 'MPL'})
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Renamed interface classes
+~~~~~~~~~~~~~~~~~~~~~~~~~
+The names of pyMOR's interface classes have been shortened
+`[#859] <https://github.com/pymor/pymor/pull/859>`_.  In particular:
+
+- `VectorArrayInterface`, `OperatorInterface`, `ModelInterface` were renamed to
+  |VectorArray|, |Operator|, |Model|. The corresponding modules were renamed from
+  `pymor.*.interfaces` to `pymor.*.interface`.
+- `BasicInterface`, `ImmutableInterface`, `CacheableInterface` were renamed to
+  |BasicObject|, |ImmutableObject|, |CacheableObject|. `pymor.core.interfaces` has
+  been renamed to :mod:`pymor.core.base`.
+
+The base classes `OperatorBase`, `ModelBase`, `FunctionBase` were merged into
+their respective interface classes `[#859] <https://github.com/pymor/pymor/pull/859>`_,
+`[#867] <https://github.com/pymor/pymor/pull/867>`_.
+
+
+Module cleanup
+~~~~~~~~~~~~~~
+Modules associated with pyMOR's builtin discretization toolkit were moved to the
+:mod:`pymor.discretizers.builtin` package `[#847] <https://github.com/pymor/pymor/pull/847>`_.
+The `domaindescriptions` and `functions` packages were made sub-packages of
+:mod:`pymor.analyticalproblems` `[#855] <https://github.com/pymor/pymor/pull/855>`_,
+`[#858] <https://github.com/pymor/pymor/pull/858>`_. The obsolete code in
+`pymor.discretizers.disk` was removed `[#856] <https://github.com/pymor/pymor/pull/856>`_.
+Further, the `playground` package was removed `[#940] <https://github.com/pymor/pymor/pull/940>`_.
+
+
+State ids removed and caching simplified
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The unnecessarily complicated concept of *state ids*, which was used to build cache keys
+based on the actual state of a |CacheableObject|, has been completely removed from pyMOR.
+Instead, now a `cache_id` has to be manually specified when persistent caching over multiple
+program runs is desired `[#841] <https://github.com/pymor/pymor/pull/841>`_.
+
+
+Further API changes
+~~~~~~~~~~~~~~~~~~~
+- `[#938] Fix order of parameters in thermalblock_problem <https://github.com/pymor/pymor/pull/938>`_
+- `[#980] Set gram_schmidt tolerances in POD to 0 to never truncate pod modes <https://github.com/pymor/pymor/pull/980>`_
+- `[#1012] Change POD default rtol and fix analyze_pickle demo for numpy master <https://github.com/pymor/pymor/pull/1012>`_
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#885] Implement VectorArrayOperator.apply_inverse <https://github.com/pymor/pymor/pull/885>`_
+- `[#888] Implement FenicsVectorSpace.from_numpy <https://github.com/pymor/pymor/pull/888>`_
+- `[#895] Implement VectorArray.__deepcopy__ via VectorArray.copy(deep=True) <https://github.com/pymor/pymor/pull/895>`_
+- `[#905] Add from_files method to SecondOrderModel <https://github.com/pymor/pymor/pull/905>`_
+- `[#919] [reductors.coercive] remove unneccessary initialization in SimpleCoerciveReductor <https://github.com/pymor/pymor/pull/919>`_
+- `[#926] [Operators] Speed up apply methods for LincombOperator <https://github.com/pymor/pymor/pull/926>`_
+- `[#937] Move NumpyListVectorArrayMatrixOperator out of the playground <https://github.com/pymor/pymor/pull/937>`_
+- `[#943] [logger] adds a ctx manager that restores effective level on exit <https://github.com/pymor/pymor/pull/943>`_

@@ -18,7 +18,7 @@ provided for getting started quickly.
     technical_overview
     environment
     tutorials
-    release_notes
+    release_notes/all.rst
     bibliography
     developer_docs
 

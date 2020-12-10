@@ -1,0 +1,339 @@
+
+pyMOR 0.4 (September 28, 2016)
+------------------------------
+
+With the pyMOR 0.4 release we have changed the copyright of
+pyMOR to
+
+  Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+
+Moreover, we have added a `Contribution guideline <https://github.com/pymor/pymor/blob/master/CONTRIBUTING.md>`_
+to help new users with starting to contribute to pyMOR.
+Over 800 single commits have entered this release.
+For a full list of changes see
+`here <https://github.com/pymor/pymor/compare/0.3.2...0.4.x>`__.
+pyMOR 0.4 contains contributions by Andreas Buhr, Michael Laier, Falk Meyer,
+Petar Mlinarić and Michael Schaefer. See
+`here <https://github.com/pymor/pymor/blob/master/AUTHORS.md>`__ for more
+details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+FEniCS and deal.II support
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyMOR now includes wrapper classes for integrating PDE solvers
+written with the `dolfin` library of the `FEniCS <https://fenicsproject.org>`_
+project. For a usage example, see :meth:`pymordemos.thermalblock_simple.discretize_fenics`.
+Experimental support for `deal.II <http://dealii.org>`_ can be
+found in the `pymor-deal.II <https://github.com/pymor/pymor-deal.II>`_
+repository of the pyMOR GitHub organization.
+
+
+Parallelization of pyMOR's reduction algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We have added a parallelization framework to pyMOR which allows
+parallel execution of reduction algorithms based on a simple
+|WorkerPool| interface `[#14] <https://github.com/pymor/pymor/issues/14>`_.
+The :meth:`~pymor.algorithms.greedy.greedy` `[#155] <https://github.com/pymor/pymor/pull/155>`_
+and :meth:`~pymor.algorithms.ei.ei_greedy` algorithms `[#162] <https://github.com/pymor/pymor/pull/162>`_
+have been refactored to utilize this interface.
+Two |WorkerPool| implementations are shipped with pyMOR:
+:class:`~pymor.parallel.ipython.IPythonPool` utilizes the parallel
+computing features of `IPython <https://ipython.org/>`_, allowing
+parallel algorithm execution in large heterogeneous clusters of
+computing nodes. :class:`~pymor.parallel.mpi.MPIPool` can be used
+to benefit from existing MPI-based parallel HPC computing architectures
+`[#161] <https://github.com/pymor/pymor/issues/161>`_.
+
+
+Support classes for MPI distributed external PDE solvers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+While pyMOR's |VectorArray|, |Operator| and `Discretization`
+interfaces are agnostic to the concrete (parallel) implementation
+of the corresponding objects in the PDE solver, external solvers
+are often integrated by creating wrapper classes directly corresponding
+to the solvers data structures. However, when the solver is executed
+in an MPI distributed context, these wrapper classes will then only
+correspond to the rank-local data of a distributed |VectorArray| or
+|Operator|.
+
+To facilitate the integration of MPI parallel solvers, we have added
+MPI helper classes `[#163] <https://github.com/pymor/pymor/pull/163>`_
+in :mod:`pymor.vectorarrays.mpi`, :mod:`pymor.operators.mpi`
+and :mod:`pymor.discretizations.mpi` that allow an automatic
+wrapping of existing sequential bindings for MPI distributed use.
+These wrapper classes are based on a simple event loop provided
+by :mod:`pymor.tools.mpi`, which is used in the interface methods of
+the wrapper classes to dispatch into MPI distributed execution
+of the corresponding methods on the underlying MPI distributed
+objects.
+
+The resulting objects can be used on MPI rank 0 (including interactive
+Python sessions) without any further changes to pyMOR or the user code.
+For an example, see :meth:`pymordemos.thermalblock_simple.discretize_fenics`.
+
+
+New reduction algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~
+- :meth:`~pymor.algorithms.adaptivegreedy.adaptive_greedy` uses adaptive
+  parameter training set refinement according to [HDO11]_ to prevent
+  overfitting of the reduced model to the training set `[#213] <https://github.com/pymor/pymor/pull/213>`_.
+
+- :meth:`~pymor.reductors.parabolic.reduce_parabolic` reduces linear parabolic
+  problems using :meth:`~pymor.reductors.basic.reduce_generic_rb` and
+  assembles an error estimator similar to [GP05]_, [HO08]_.
+  The :mod:`~pymordemos.parabolic_mor` demo contains a simple sample
+  application using this reductor `[#190] <https://github.com/pymor/pymor/issues/190>`_.
+
+- The :meth:`~pymor.algorithms.image.estimate_image` and
+  :meth:`~pymor.algorithms.image.estimate_image_hierarchical` algorithms
+  can be used to find an as small as possible space in which the images of
+  a given list of operators for a given source space are contained for all
+  possible parameters `mu`. For possible applications, see
+  :meth:`~pymor.reductors.residual.reduce_residual` which now uses
+  :meth:`~pymor.algorithms.image.estimate_image_hierarchical` for
+  Petrov-Galerkin projection of the residual operator `[#223] <https://github.com/pymor/pymor/pull/223>`_.
+
+
+Copy-on-write semantics for |VectorArrays|
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.copy` method
+of the |VectorArray| interface is now assumed to have copy-on-write
+semantics. I.e., the returned |VectorArray| will contain a reference to the same
+data as the original array, and the actual data will only be copied when one of
+the arrays is changed. Both |NumpyVectorArray| and |ListVectorArray| have been
+updated accordingly `[#55] <https://github.com/pymor/pymor/issues/55>`_.
+As a main benefit of this approach, |immutable| objects having a |VectorArray| as
+an attribute now can safely create copies of the passed |VectorArrays| (to ensure
+the immutability of their state) without having to worry about unnecessarily
+increased memory consumption.
+
+
+Improvements to pyMOR's discretizaion tookit
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- An unstructured triangular |Grid| is now provided by :class:`~pymor.grids.unstructured.UnstructuredTriangleGrid`.
+  Such a |Grid| can be obtained using the :meth:`~pymor.domaindiscretizers.gmsh.discretize_gmsh`
+  method, which can parse `Gmsh <http://gmsh.info/>`_ output files. Moreover, this
+  method can generate `Gmsh` input files to create unstructured meshes for
+  an arbitrary :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`
+  `[#9] <https://github.com/pymor/pymor/issues/9>`_.
+
+- Basic support for parabolic problems has been added.
+  The :meth:`~pymor.discretizers.parabolic.discretize_parabolic_cg` and
+  :meth:`~pymor.discretizers.parabolic.discretize_parabolic_fv` methods can
+  be used to build continuous finite element or finite volume `Discretizations`
+  from a given :class:`pymor.analyticalproblems.parabolic.ParabolicProblem`.
+  The :mod:`~pymordemos.parabolic` demo demonstrates the use of these methods
+  `[#189] <https://github.com/pymor/pymor/issues/189>`_.
+
+- The :mod:`pymor.discretizers.disk` module contains methods to create stationary and
+  instationary affinely decomposed `Discretizations` from matrix data files
+  and an `.ini` file defining the given problem.
+
+- :class:`EllipticProblems <pymor.analyticalproblems.elliptic.EllipticProblem>`
+  can now also contain advection and reaction terms in addition to the diffusion part.
+  :meth:`~pymor.discretizers.cg.discretize_elliptic_cg` has been
+  extended accordingly `[#211] <https://github.com/pymor/pymor/pull/211>`_.
+
+- The :mod:`continuous Galerkin <pymor.operators.cg>` module has been extended to
+  support Robin boundary conditions `[#110] <https://github.com/pymor/pymor/pull/110>`_.
+
+- :class:`~pymor.functions.bitmap.BitmapFunction` allows to use grayscale
+  image data as data |Functions| `[#194] <https://github.com/pymor/pymor/issues/194>`_.
+
+- For the visualization of time-dependent data, the colorbars can now be
+  rescaled with each new frame `[#91] <https://github.com/pymor/pymor/pull/91>`_.
+
+
+Caching improvements
+~~~~~~~~~~~~~~~~~~~~
+- `state id` generation is now based on deterministic pickling.
+  In previous version of pyMOR, the `state id` of |immutable| objects
+  was computed from the state ids of the parameters passed to the
+  object's `__init__` method. This approach was complicated and error-prone.
+  Instead, we now compute the `state id` as a hash of a deterministic serialization
+  of the object's state. While this approach is more robust, it is also
+  slightly more expensive. However, due to the object's immutability,
+  the `state id` only has to be computed once, and state ids are now only
+  required for storing results in persistent cache regions (see below).
+  Computing such results will usually be much more expensive than the
+  `state id` calculation `[#106] <https://github.com/pymor/pymor/issues/106>`_.
+
+- :class:`CacheRegions <pymor.core.cache.CacheRegion>` now have a
+  :attr:`~pymor.core.cache.CacheRegion.persistent` attribute indicating
+  whether the cache data will be kept between program runs. For persistent
+  cache regions the `state id` of the object for which the cached method is
+  called has to be computed to obtain a unique persistent id for the given object.
+  For non-persistent regions the object's
+  `~pymor.core.interfaces.BasicInterface.uid` can be used instead.
+  :attr:`pymor.core.cache_regions` now by default contains `'memory'`,
+  `'disk'` and `'persistent'` cache regions
+  `[#182] <https://github.com/pymor/pymor/pull/182>`_, `[#121] <https://github.com/pymor/pymor/issues/121>`_ .
+
+- |defaults| can now be marked to not affect `state id` computation.
+  In previous version of pyMOR, changing any |default| value caused
+  a change of the `state id` pyMOR's defaults dictionary, leading to cache
+  misses. While this in general is desirable, as, for instance, changed linear
+  solver default error tolerances might lead to different solutions for
+  the same `Discretization` object, it is clear for many I/O related defaults,
+  that these will not affect the outcome of any computation. For these defaults,
+  the :meth:`~pymor.core.defaults.defaults` decorator now accepts a `sid_ignore`
+  parameter, to exclude these defaults from `state id` computation, preventing
+  changes of these defaults causing cache misses `[#81] <https://github.com/pymor/pymor/issues/81>`_.
+
+- As an alternative to using the :meth:`@cached <pymor.core.cache.cached>`
+  decorator, :meth:`~pymor.core.cache.CacheableInterface.cached_method_call`
+  can be used to cache the results of a function call. This is now used
+  in :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+  to enable parsing of the input parameter before it enters the cache key
+  calculation `[#231] <https://github.com/pymor/pymor/pull/231>`_.
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+- :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_adjoint` has been added to the |Operator| interface `[#133] <https://github.com/pymor/pymor/issues/133>`_.
+
+- Support for complex values in |NumpyVectorArray| and |NumpyMatrixOperator| `[#131] <https://github.com/pymor/pymor/issues/131>`_.
+
+- New :class:`~pymor.parameters.functionals.ProductParameterFunctional`.
+    This |ParameterFunctional| represents the product of a given list of
+    |ParameterFunctionals|.
+
+- New :class:`~pymor.operators.constructions.SelectionOperator` `[#105] <https://github.com/pymor/pymor/pull/105>`_.
+    This |Operator| represents one |Operator| of a given list of |Operators|,
+    depending on the evaluation of a provided |ParameterFunctional|,
+
+- New block matrix operators `[#215] <https://github.com/pymor/pymor/pull/215>`_.
+    :class:`~pymor.operators.block.BlockOperator` and
+    :class:`~pymor.operators.block.BlockDiagonalOperator` represent block
+    matrices of |Operators| which can be applied to appropriately shaped
+    :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>`.
+
+- `from_file` factory method for |NumpyVectorArray| and |NumpyMatrixOperator| `[#118] <https://github.com/pymor/pymor/issues/118>`_.
+    :meth:`NumpyVectorArray.from_file <pymor.vectorarrays.numpy.NumpyVectorArray.from_file>` and
+    :meth:`NumpyMatrixOperator.from_file <pymor.operators.numpy.NumpyMatrixOperator.from_file>`
+    can be used to construct such objects from data files of various formats
+    (MATLAB, matrix market, NumPy data files, text).
+
+- |ListVectorArray|-based |NumpyMatrixOperator| `[#164] <https://github.com/pymor/pymor/pull/164>`_.
+    The :mod:`~pymor.playground` now contains
+    :class:`~pymor.playground.operators.numpy.NumpyListVectorArrayMatrixOperator`
+    which can apply |NumPy|/|SciPy| matrices to a |ListVectorArray|.
+    This |Operator| is mainly intended for performance testing purposes.
+    The :mod:`~pymordemos.thermalblock` demo now has an option
+    `--list-vector-array` for using this operator instead of |NumpyMatrixOperator|.
+
+- Log indentation support `[#230] <https://github.com/pymor/pymor/pull/230>`_.
+    pyMOR's log output can now be indented via the `logger.block(msg)`
+    context manger to reflect the hierarchy of subalgorithms.
+
+- Additional `INFO2` and `INFO3` log levels `[#212] <https://github.com/pymor/pymor/pull/212>`_.
+    :mod:`Loggers <pymor.core.logger>` now have additional `info2`
+    and `info3` methods to highlight important information (which does
+    fall in the 'warning' category).
+
+- Default implementation of :meth:`~pymor.operators.interfaces.OperatorInterface.as_vector` for functionals `[#107] <https://github.com/pymor/pymor/issues/107>`_.
+    :meth:`OperatorBase.as_vector <pymor.operators.basic.OperatorBase>` now
+    contains a default implementation for functionals by calling
+    :meth:`~pymor.operators.interfaces.OperatorInterface.apply_adjoint`.
+
+- `pycontracts` has been removed as a dependency of pyMOR `[#127] <https://github.com/pymor/pymor/pull/127>`_.
+
+- Test coverage has been raised to 80 percent.
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- |VectorArray| implementations have been moved to the :mod:`pymor.vectorarrays` sub-package `[#89] <https://github.com/pymor/pymor/issues/89>`_.
+
+- The `dot` method of the |VectorArray| interface has been split into :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot` and :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.pairwise_dot` `[#76] <https://github.com/pymor/pymor/issues/76>`_.
+    The `pairwise` parameter of :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
+    has been removed, always assuming `pairwise == False`. The method
+    :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.pairwise_dot`
+    corresponds to the `pairwise == True` case. Similarly the `pariwise` parameter
+    of the :meth:`~pymor.operators.interfaces.OperatorInterface.apply2` method
+    of the |Operator| interface has been removed and a
+    :meth:`~pymor.operators.interfaces.OperatorInterface.pairwise_apply2` method
+    has been added.
+
+- `almost_equal` has been removed from the |VectorArray| interface `[#143] <https://github.com/pymor/pymor/issues/143>`_.
+    As a replacement, the new method :meth:`pymor.algorithms.basic.almost_equal`
+    can be used to compare |VectorArrays| for almost equality by the norm
+    of their difference.
+
+- `lincomb` has been removed from the |Operator| interface `[#83] <https://github.com/pymor/pymor/issues/83>`_.
+    Instead, a |LincombOperator| should be directly instantiated.
+
+- Removal of the `options` parameter of :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse` in favor of :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options` attribute `[#122] <https://github.com/pymor/pymor/issues/122>`_.
+    The `options` parameter of :meth:`OperatorInterface.apply_inverse <pymor.operators.interfaces.OperatorInterface.apply_inverse>`
+    has been replaced by the :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
+    attribute. This attribute controls which fixed (linear) solver options are
+    used when :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse` is
+    called. See `here <https://github.com/pymor/pymor/pull/184>`__ for more details.
+
+- Renaming of reductors for coercive problems `[#224] <https://github.com/pymor/pymor/issues/224>`_.
+    :meth:`pymor.reductors.linear.reduce_stationary_affine_linear` and
+    :meth:`pymor.reductors.stationary.reduce_stationary_coercive` have been
+    renamed to :meth:`pymor.reductors.coercive.reduce_coercive` and
+    :meth:`pymor.reductors.coercive.reduce_coercive_simple`. The old names
+    are deprecated and will be removed in pyMOR 0.5.
+
+- Non-parametric objects have now `~pymor.parameters.base.Parametric.parameter_type` `{}` instead of `None` `[#84] <https://github.com/pymor/pymor/issues/84>`_.
+
+- Sampling methods of |ParameterSpaces| now return iterables instead of iterators `[#108] <https://github.com/pymor/pymor/issues/108>`_.
+
+- Caching of :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve` is now disabled by default `[#178] <https://github.com/pymor/pymor/issues/178>`_.
+    Caching of :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    must now be explicitly enabled by using
+    :meth:`pymor.core.cache.CacheableInterface.enable_caching`.
+
+- The default value for `extension_algorithm` parameter of :meth:`~pymor.algorithms.greedy.greedy` has been removed `[#82] <https://github.com/pymor/pymor/issues/82>`_.
+
+- Changes to :meth:`~pymor.algorithms.ei.ei_greedy` `[#159] <https://github.com/pymor/pymor/issues/159>`_, `[#160] <https://github.com/pymor/pymor/issues/160>`_.
+    The default for the `projection` parameter has been changed from `'orthogonal'`
+    to `'ei'` to let the default algorithm agree with literature. In
+    addition a `copy` parameter with default `True` has been added.
+    When `copy` is `True`, the input data is copied before executing
+    the algorithm, ensuring, that the original |VectorArray| is left
+    unchanged. When possible, `copy` should be set to `False` in order
+    to reduce memory consumption.
+
+- The `copy` parameter of :meth:`pymor.algorithms.gram_schmidt.gram_schmidt` now defaults to `True` `[#123] <https://github.com/pymor/pymor/issues/123>`_.
+
+- `with_` has been moved from `BasicInterface` to `ImmutableInterface` `[#154] <https://github.com/pymor/pymor/issues/154>`_.
+
+- `BasicInterface.add_attributes` has been removed `[#158] <https://github.com/pymor/pymor/issues/158>`_.
+
+- Auto-generated names no longer contain the :attr:`~pymor.core.interfaces.BasicInterface.uid` `[#198] <https://github.com/pymor/pymor/issues/198>`_.
+    The auto-generated `~pymor.core.interfaces.BasicInterface.name`
+    of pyMOR objects no longer contains their
+    `~pymor.core.interfaces.BasicInterface.uid`. Instead, the name
+    is now simply set to the class name.
+
+- Python fallbacks to Cython functions have been removed `[#145] <https://github.com/pymor/pymor/issues/145>`_.
+    In order to use pyMOR's discretization toolkit, building of the
+    :mod:`~pymor.grids._unstructured`, :mod:`~pymor.tools.inplace`,
+    :mod:`~pymor.tools.relations` Cython extension modules is now
+    required.
+
+
+
+Further improvements
+^^^^^^^^^^^^^^^^^^^^
+
+- `[#78] update apply_inverse signature <https://github.com/pymor/pymor/issues/78>`_
+- `[#115] [algorithms.gram_schmidt] silence numpy warning <https://github.com/pymor/pymor/issues/115>`_
+- `[#144] L2ProductP1 uses wrong quadrature rule in 1D case <https://github.com/pymor/pymor/issues/144>`_
+- `[#147] Debian doc packages have weird title <https://github.com/pymor/pymor/issues/147>`_
+- `[#151] add tests for 'almost_equal' using different norms <https://github.com/pymor/pymor/issues/151>`_
+- `[#156] Let thermal block demo use error estimator by default <https://github.com/pymor/pymor/issues/156>`_
+- `[#195] Add more tests / fixtures for operators in pymor.operators.constructions <https://github.com/pymor/pymor/issues/195>`_
+- `[#197] possible problem in caching <https://github.com/pymor/pymor/issues/197>`_
+- `[#207] No useful error message in case PySide.QtOpenGL cannot be imported <https://github.com/pymor/pymor/issues/207>`_
+- `[#209] Allow 'pip install pymor' to work even when numpy/scipy are not installed yet <https://github.com/pymor/pymor/issues/209>`_
+- `[#219] add minimum versions for dependencies <https://github.com/pymor/pymor/issues/219>`_
+- `[#228] merge fixes in python3 branch back to master <https://github.com/pymor/pymor/issues/228>`_
+- `[#269] Provide a helpful error message when cython modules are missing <https://github.com/pymor/pymor/issues/269>`_
+- `[#276] Infinite recursion in apply for IdentityOperator * scalar <https://github.com/pymor/pymor/issues/276>`_
