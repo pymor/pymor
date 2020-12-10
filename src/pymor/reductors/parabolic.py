@@ -9,7 +9,6 @@ from pymor.reductors.basic import InstationaryRBReductor
 from pymor.reductors.residual import ResidualReductor, ImplicitEulerResidualReductor
 from pymor.operators.constructions import IdentityOperator
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-from pymor.tools.deprecated import Deprecated
 
 
 class ParabolicRBReductor(InstationaryRBReductor):
@@ -120,10 +119,6 @@ class ParabolicRBEstimator(ImmutableObject):
         est = np.sqrt(np.cumsum(est))
 
         return est if return_error_sequence else est[-1]
-
-    @Deprecated('estimate_error')
-    def estimate(self, U, mu, m, return_error_sequence=False):
-        return self.estimate_error(U, mu, m, return_error_sequence)
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims and self.initial_residual_range_dims:
