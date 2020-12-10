@@ -16,7 +16,7 @@ Clone the pyMOR git repository using::
 
 and, optionally, switch to the branch you are interested in, e.g.::
 
-    git checkout 2020.1.x
+    git checkout 2020.2.x
 
 
 Environment with Virtualenv
