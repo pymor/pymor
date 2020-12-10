@@ -90,7 +90,7 @@ stages:
             - api_failure
             - unknown_failure
             - job_execution_timeout
-
+    
     image: zivgitlab.wwu.io/pymor/docker/pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
     variables:
         DOCKER_HOST: tcp://docker:2375/
@@ -671,7 +671,7 @@ ci_weekly 3 6:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.6:5264e193853d1982ede68b70514838bbda217860
           alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.6:5264e193853d1982ede68b70514838bbda217860
-
+    
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 7:
     extends: .pytest
@@ -685,7 +685,7 @@ ci_weekly 3 7:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:5264e193853d1982ede68b70514838bbda217860
           alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:5264e193853d1982ede68b70514838bbda217860
-
+    
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 8:
     extends: .pytest
@@ -699,7 +699,7 @@ ci_weekly 3 8:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:5264e193853d1982ede68b70514838bbda217860
           alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:5264e193853d1982ede68b70514838bbda217860
-
+    
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 9:
     extends: .pytest
@@ -713,7 +713,7 @@ ci_weekly 3 9:
         - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:5264e193853d1982ede68b70514838bbda217860
           alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:5264e193853d1982ede68b70514838bbda217860
-
+    
     script: ./.ci/gitlab/test_vanilla.bash
 
 submit coverage:
@@ -969,25 +969,25 @@ pypi:
     stage: deploy
     dependencies:
       - wheel 2010 py3 6
-
+    
       - wheel 2014 py3 6
-
-
+    
+    
       - wheel 2010 py3 7
-
+    
       - wheel 2014 py3 7
-
-
+    
+    
       - wheel 2010 py3 8
-
+    
       - wheel 2014 py3 8
-
-
+    
+    
       - wheel 2010 py3 9
-
+    
       - wheel 2014 py3 9
-
-
+    
+    
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
