@@ -1,14 +1,14 @@
 
-pyMOR 2020.2 (December ?, 2020)
+pyMOR 2020.2 (December 10, 2020)
 --------------------------------
 We are proud to announce the release of pyMOR 2020.2! This release extends pyMOR's
 support for non-intrusive model reduction via artificial neural networks to
-non-stationary models. Built-in support for computing parameter sensitivies
+non-stationary models. Built-in support for computing parameter sensitivities
 simplifies the use of pyMOR in PDE-constrained optimization applications.
 pyMOR's documentation has been extended by three new tutorials, and all tutorial
 code can now easily be executed using `binder <https://mybinder.org>`_.
 
-Over 400 single commits have entered this release. For a full list of changes
+Over 520 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2020.1.x...2020.2.x>`__.
 
 pyMOR 2020.2 contains contributions by Tim Keil and Hendrik Kleikamp.
@@ -21,22 +21,23 @@ Release highlights
 
 Parameter derivatives of solutions and outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In `[#1110] <https://github.com/pymor/pymor/pull/1110>`_, some tools for
+In `[#1110] <https://github.com/pymor/pymor/pull/1110>`_ tools for
 PDE-constrained parameter optimization were added. These include parameter derivatives
 of the solutions and the output of a |Model|. In particular,
-:meth:`~pymor.models.interface.Model.solve_d_mu` can be used to compute partial
+:meth:`~pymor.models.interface.Model.solve_d_mu` can now be used to compute partial
 parameter derivatives. Moreover, :meth:`~pymor.models.interface.Model.output_d_mu`
 can be used to compute the parameter gradient of the output using the
-derivatives of the solutions. For a |StationaryModel| and a linear output, an
-adjoint variable can instead be used to speedup the computation of the gradient, see :meth:`~pymor.models.basic.StationaryModel._compute_output_d_mu`.
+derivatives of the solutions. Alternatively, for a |StationaryModel| and a linear output, an
+adjoint variable can be used to speed up the computation of the gradient
+(see :meth:`~pymor.models.basic.StationaryModel._compute_output_d_mu`).
 
 
 Neural network reductor for non-stationary problems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A reductor based on neural networks which deals with non-stationary problems was
-added in `[#1120] <https://github.com/pymor/pymor/pull/1120>`_. The approach is an
-extension of the approach for stationary problems that was already implemented in
-pyMOR. Here, the time component is treated as an ordinary parameter. The usage of
+added in `[#1120] <https://github.com/pymor/pymor/pull/1120>`_. The implementation is an
+extension of the already existing approach for stationary problems in pyMOR.
+Here, the time component is treated as an ordinary parameter. The usage of
 the newly introduced reductor is presented in a corresponding demo where a Burgers'
 type equation is solved. As in the stationary case, the implementation allows for
 several customizations regarding the network architecture and training parameters.
@@ -49,22 +50,22 @@ randomly before splitting it into training and validation set
 New tutorials
 ~~~~~~~~~~~~~
 A new tutorial on :doc:`using pyMOR for accelerating the solution of linear PDE-constrained
-optimization problems <../tutorial_optimization>` has been added `[#1205] <https://github.com/pymor/pymor/pull/1205>`_.
-The tutorial showcases the new features added in `[#1110] <https://github.com/pymor/pymor/pull/1110>`_
-and also discusses general questions on using model order reduction for this class
-of optimization problems.
+optimization problems <../tutorial_optimization>` has been added
+with `[#1205] <https://github.com/pymor/pymor/pull/1205>`_.
+This tutorial showcases the new features added in `[#1110] <https://github.com/pymor/pymor/pull/1110>`_
+and also discusses general questions on using model order reduction for a class of optimization problems.
 
-The tutorial :doc:`'Projecting a Model' <../tutorial_projection>` explains how pyMOR builds an
+The tutorial :doc:`'Projecting a Model' <../tutorial_projection>` explains how to use pyMOR to build an
 online-efficient reduced order model via (Petrov-)Galerkin projection onto a given reduced space
 `[#1084] <https://github.com/pymor/pymor/pull/1084>`_.
-Apart from a mathematical introduction, the user is introduced to some core elements
+Alongside the mathematical foundation, the user is introduced to the core elements of
 pyMOR's internal architecture that realize the projection.
 
 A tutorial on :doc:`linear time-invariant systems <../tutorial_lti_systems>` was added
 and the existing :doc:`balanced truncation tutorial <../tutorial_bt>` was appropriately simplified
 `[#1141] <https://github.com/pymor/pymor/pull/1141>`_.
 
-All tutorials now include a 'launch binder' button which allows to directly 
+All tutorials now include a 'launch binder' button which allows to directly
 run the tutorial code in the web browser `[#1181] <https://github.com/pymor/pymor/pull/1181>`_.
 
 In order to consolidate our documentation all remaining Jupyter notebooks from the `notebooks/`
@@ -90,7 +91,7 @@ Iterable VectorArrays
 ~~~~~~~~~~~~~~~~~~~~~
 |VectorArrays| became iterable sequences with
 `[#1068] <https://github.com/pymor/pymor/pull/1068>`_, i.e.,
-`for v in V` can be used to work on individual vectors 
+`for v in V` can be used to work on individual vectors
 (i.e. |VectorArray| views of length 1) when needed.
 
 
@@ -119,8 +120,8 @@ Backward incompatible changes
 
 Updated Model interface
 ~~~~~~~~~~~~~~~~~~~~~~~
-To make the simultaneous computation of multiple |Model| output quantities such internal state,
-output, or error estimates more efficient better customizable a :meth:`~pymor.models.interface.Model.compute`
+To make the simultaneous computation of multiple |Model| output quantities such as internal state,
+output, or error estimates more efficient and better customizable a :meth:`~pymor.models.interface.Model.compute`
 method was added to the |Model| interface which is now responsible for the computation of all
 relevant data that can be gathered from the simulation of a |Model|
 `[#1113] <https://github.com/pymor/pymor/pull/1113>`_.
@@ -135,7 +136,7 @@ The old method is deprecated and will be removed in the next release.
 
 Further, to simplify interoperability with third-party packages,
 the model outputs, i.e., the results of :meth:`~pymor.models.interface.output`,
-are not longer generic |VectorArrays|, but NumPy arrays.
+are no longer generic |VectorArrays|, but NumPy arrays.
 For consistency, `input_space` and `output_space` were removed and
 `input_dim` and `output_dim` were renamed to `dim_input` and `dim_output`
 in :class:`~pymor.models.iosys.InputOutputModel`
@@ -186,8 +187,9 @@ renamed to `ComponentProjectionOperator`, `ConcatenationOperator` and
 Minimal pip and Manylinux wheel version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to reduce special casing and infrastructure investment needed for older pip versions we decided to
-bump the minimal version to 19.0 (released Jan '19) and decided to no longer publish manylinux1 wheels.
+In order to reduce special casing and infrastructure investment needed for
+maintaining compatibility with older versions we decided to
+increase the minimal required pip version to 19.0 (released Jan '19) and decided to no longer publish manylinux1 wheels.
 Pip 19.0 already understands the Manylinux 2010 tag, which going further is the oldest platform we will ship wheels
 for.
 
