@@ -148,7 +148,7 @@ This will generate HTML documentation in `docs/_build/html`.
 Useful Links
 ------------
 
-* [Latest Changelog](https://docs.pymor.org/latest/release_notes.html)
+* [Latest Changelog](https://docs.pymor.org/latest/release_notes/all.html)
 * [Getting Started](https://docs.pymor.org/latest/getting_started.html)
 * [Dependencies](https://github.com/pymor/pymor/blob/2020.2.x/requirements.txt)
 
