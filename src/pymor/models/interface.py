@@ -8,7 +8,6 @@ from pymor.core.cache import CacheableObject
 from pymor.operators.constructions import induced_norm
 from pymor.parameters.base import ParametricObject, Mu
 from pymor.tools.frozendict import FrozenDict
-from pymor.tools.deprecated import Deprecated
 
 
 class Model(CacheableObject, ParametricObject):
@@ -538,10 +537,6 @@ class Model(CacheableObject, ParametricObject):
             mu=mu,
             **kwargs
         )['solution_error_estimate']
-
-    @Deprecated('estimate_error')
-    def estimate(self, U, mu=None):
-        return self.estimate_error(mu)
 
     def estimate_output_error(self, mu=None, **kwargs):
         """Estimate the error for the computed output.

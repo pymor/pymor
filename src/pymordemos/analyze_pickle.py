@@ -49,7 +49,7 @@ def histogram(
 
     print()
 
-    if hasattr(rom, 'estimate'):
+    if hasattr(rom, 'estimate_error'):
         ests = []
         for mu in mus:
             print(f'Estimating error for {mu} ... ', end='')
@@ -79,7 +79,7 @@ def histogram(
     except AttributeError:
         pass  # plt.style is only available in newer matplotlib versions
 
-    if hasattr(rom, 'estimate') and detailed_data:
+    if hasattr(rom, 'estimate_error') and detailed_data:
 
         # setup axes
         left, width = 0.1, 0.65
@@ -121,7 +121,7 @@ def histogram(
 
         plt.show()
 
-    elif hasattr(rom, 'estimate'):
+    elif hasattr(rom, 'estimate_error'):
 
         total_min = np.min(ests) * 0.9
         total_max = np.max(ests) * 1.1

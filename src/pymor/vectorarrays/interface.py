@@ -9,7 +9,6 @@ import numpy as np
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.tools.random import get_random_state
-from pymor.tools.deprecated import Deprecated
 
 
 class VectorArray(BasicObject):
@@ -346,10 +345,6 @@ class VectorArray(BasicObject):
         else:
             raise NotImplementedError
 
-    @Deprecated(inner)
-    def dot(self, other):
-        return self.inner(other)
-
     def pairwise_inner(self, other, product=None):
         """Returns the pairwise inner products between |VectorArray| elements.
 
@@ -404,10 +399,6 @@ class VectorArray(BasicObject):
             return product.pairwise_apply2(self, other)
         else:
             raise NotImplementedError
-
-    @Deprecated(pairwise_inner)
-    def pairwise_dot(self, other):
-        return self.pairwise_inner(other)
 
     @abstractmethod
     def lincomb(self, coefficients):
@@ -527,14 +518,6 @@ class VectorArray(BasicObject):
     def _norm2(self):
         """Implementation of :meth:`norm2` for the case that no `product` is given."""
         pass
-
-    @Deprecated(norm)
-    def l2_norm(self):
-        return self.norm()
-
-    @Deprecated(norm2)
-    def l2_norm2(self):
-        return self.norm2()
 
     def sup_norm(self):
         """The l-infinity-norms of the vectors contained in the array.

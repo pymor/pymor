@@ -49,7 +49,7 @@ from pymor.discretizers.builtin.domaindiscretizers.default import discretize_dom
 from pymor.discretizers.builtin.grids.boundaryinfos import (EmptyBoundaryInfo, GenericBoundaryInfo,
                                                             AllDirichletBoundaryInfo)
 
-from pymor.operators.constructions import (LincombOperator, Concatenation, ConcatenationOperator, ComponentProjection,
+from pymor.operators.constructions import (LincombOperator, ConcatenationOperator,
                                            ComponentProjectionOperator, IdentityOperator, ConstantOperator,
                                            ZeroOperator, VectorArrayOperator, VectorOperator, VectorFunctional,
                                            FixedParameterOperator, AdjointOperator, SelectionOperator, induced_norm)

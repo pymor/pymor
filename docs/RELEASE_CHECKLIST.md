@@ -13,6 +13,7 @@
  1. [ ] bump/create demo docker
  1. [ ] Update https://github.com/pymor/docs/edit/main/index.html to point to new release
  1. [ ] Update https://github.com/pymor/docs/edit/main/latest to point to new release
+ 1. [ ] Update https://github.com/pymor/docs/edit/master/badge.json to point to new release
  1. [ ] Update Homepage
  1. [ ] Make a github release. Zenodo is hooked into that.
  1. [ ] update MOR Wiki:

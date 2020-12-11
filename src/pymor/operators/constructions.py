@@ -15,7 +15,6 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
-from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -309,11 +308,6 @@ class ConcatenationOperator(Operator):
             operators = (other,) + self.operators
 
         return ConcatenationOperator(operators, solver_options=other.solver_options)
-
-
-@Deprecated(ConcatenationOperator)
-def Concatenation(*args, **kwargs):
-    return ConcatenationOperator(*args, **kwargs)
 
 
 class ProjectedOperator(Operator):
@@ -708,11 +702,6 @@ class ConstantOperator(Operator):
         if not least_squares:
             raise InversionError('ConstantOperator is not invertible.')
         return self.source.zeros(len(V))
-
-
-@Deprecated(ComponentProjectionOperator)
-def ComponentProjection(*args, **kwargs):
-    return ComponentProjectionOperator(*args, **kwargs)
 
 
 class ZeroOperator(Operator):
