@@ -88,7 +88,7 @@ class MTReductor(BasicObject):
         assert which in ('LR', 'SM', 'NR', 'NS', 'NM')
         assert method_options is None or isinstance(method_options, dict)
         if not method_options:
-            method_options = {}
+            method_options = {'which':'LR'}
 
         if self.fom.parametric:
             fom = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
@@ -119,37 +119,65 @@ class MTReductor(BasicObject):
                 lev = fom.A.source.from_numpy(ev_l.T)
             if which == 'SM':
                 idx = np.argsort(np.abs(poles))
+                dominance = np.abs(poles)
             elif which == 'LR':
                 idx = np.argsort(-poles.real)
+                dominance = np.ones(len(poles))
             else:
                 absres = np.empty(len(poles))
                 for i in range(len(poles)):
                     lev[i].scal(1 / lev[i].inner(fom.E.apply(rev[i]))[0][0])
-                    b_norm = fom.B.apply_adjoint(lev[i]).l2_norm()
-                    c_norm = fom.C.apply(rev[i]).l2_norm()
+                    b_norm = fom.B.apply_adjoint(lev[i]).norm()
+                    c_norm = fom.C.apply(rev[i]).norm()
                     absres[i] = b_norm @ c_norm
                 if which == 'NR':
-                    idx = np.argsort(-absres / np.abs(np.real(poles)), kind='stable')
+                    dominance = -(absres / np.abs(np.real(poles)))
+                    idx = np.argsort(dominance)
+
                 elif which == 'NS':
-                    idx = np.argsort(-absres / np.abs(poles))
+                    dominance = -(absres / np.abs(poles))
+                    idx = np.argsort(dominance)
+
                 elif which == 'NM':
                     idx = np.argsort(-absres)
-            poles = poles[idx]
-            rev = rev[idx]
-            lev = lev[idx]
+                    dominance = -np.array(absres)
 
+                poles = poles[idx]
+                rev = rev[idx]
+                lev = lev[idx]
+                dominance = dominance[idx]
+
+                poles = poles[:2*r]
+                lev = lev[:2*r]
+                rev = rev[:2*r]
+                dominance = dominance[:2*r]
         elif decomposition == 'samdp':
             poles, res, rev, lev = samdp(fom.A, fom.E,
                                          fom.B.as_range_array(),
                                          fom.C.as_source_array(),
                                          r, **method_options)
+            absres = [spla.norm(res[i], ord=2) for i in range(len(poles))]
+
+            if method_options['which'] == 'LR':
+                dominance = -(absres / np.abs(np.real(poles)))
+            elif method_options['which'] == 'LS':
+                dominance = -(absres / np.abs(poles))
+            elif method_options['which'] == 'LM':
+                dominance = -np.array(absres)
+
         if np.iscomplexobj(poles):
+            idx = sorted(range(len(poles)),
+                         key=lambda i: (dominance[i], -poles[i].real,
+                                        abs(poles[i].imag), 0 if poles[i].imag >= 0 else 1))
+            poles = poles[idx]
+            rev = rev[idx]
+            lev = lev[idx]
+
             real_index = np.where(np.isreal(poles))[0]
             complex_index = np.where(poles.imag > 0)[0]
             if len(np.where(poles[:r].imag)[0]) % 2 == 1:
                 self.logger.warning('Chosen order r will split complex conjugated pair of poles.')
-                real_index = np.where(np.isreal(poles))[0]
-                complex_index = np.where(poles.imag > 0)[0]
+
                 if (take_complex):
                     self.logger.info("Reduced model will be complex.")
                     poles = poles[:r]
@@ -161,9 +189,7 @@ class MTReductor(BasicObject):
                     lev = lev[:r]
                     rev = rev[:r]
                     real_index = np.where(np.isreal(poles))[0]
-                    complex_index = np.where(poles.imag > 0)[0] \
-                        if np.sum(np.where(poles.imag > 0)) > np.sum(np.where(poles.imag < 0)) \
-                        else np.where(poles.imag < 0)[0]
+                    complex_index = np.where(poles.imag > 0)[0]
 
                     self.V.append(rev[real_index].real)
                     self.V.append(rev[complex_index].real)
@@ -181,6 +207,7 @@ class MTReductor(BasicObject):
                 rev = rev[:r]
                 real_index = np.where(np.isreal(poles))[0]
                 complex_index = np.where(poles.imag > 0)[0]
+
                 self.V.append(rev[real_index].real)
                 self.V.append(rev[complex_index].imag)
                 self.V.append(rev[complex_index].real)
