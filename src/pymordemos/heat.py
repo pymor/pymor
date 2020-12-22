@@ -17,6 +17,7 @@ from pymor.core.logger import set_log_levels
 from pymor.discretizers.builtin import discretize_instationary_cg
 from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
 from pymor.reductors.h2 import IRKAReductor, TSIAReductor, OneSidedIRKAReductor
+from pymor.reductors.mt import MTReductor
 
 
 def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
@@ -150,6 +151,7 @@ def main(
     run_mor_method(lti, w, IRKAReductor(lti), 'IRKA', r)
     run_mor_method(lti, w, TSIAReductor(lti), 'TSIA', r)
     run_mor_method(lti, w, OneSidedIRKAReductor(lti, 'V'), 'OS-IRKA', r)
+    run_mor_method(lti, w, MTReductor(lti), 'MT', r)
 
 
 if __name__ == '__main__':
