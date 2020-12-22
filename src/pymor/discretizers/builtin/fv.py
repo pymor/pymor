@@ -737,12 +737,12 @@ class BoundaryL2Functional(NumpyMatrixBasedOperator):
         g = self.grid
 
         NI = self.boundary_info.boundaries(self.boundary_type, 1) if self.boundary_type else g.boundaries(1)
+        SUPE = g.superentities(1, 0)[NI][:, 0]
         F = self.function(g.centers(1)[NI], mu=mu)
         if g.dim == 1:
             I = np.zeros(self.range.dim)
-            I[NI] = F
+            I[SUPE] = F
         else:
-            SUPE = g.superentities(1, 0)[NI][:, 0]
             I = F*g.integration_elements(1)[NI]
             I = coo_matrix((I, (np.zeros_like(SUPE), SUPE)), shape=(1, g.size(0))).toarray().ravel()
 
