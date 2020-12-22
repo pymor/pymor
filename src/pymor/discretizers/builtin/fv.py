@@ -986,7 +986,9 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     # reaction part
     if isinstance(p.reaction, LincombFunction):
-        raise NotImplementedError
+        L += [ReactionOperator(grid, rf, name=f'reaction_{i}')
+              for i, rf in enumerate(p.reaction.functions)]
+        L_coefficients += list(p.reaction.coefficients)
     elif p.reaction is not None:
         L += [ReactionOperator(grid, p.reaction, name='reaction')]
         L_coefficients += [1.]
