@@ -859,6 +859,34 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         return A
 
 
+class InterpolationOperator(NumpyMatrixBasedOperator):
+    """Vector-like L^2-projection interpolation |Operator| for finite volume spaces.
+
+    Parameters
+    ----------
+    grid
+        The |Grid| on which to interpolate.
+    function
+        The |Function| to interpolate.
+    order
+        The quadrature order to compute the element-wise averages
+    """
+
+    source = NumpyVectorSpace(1)
+    linear = True
+
+    def __init__(self, grid, function, order=0):
+        assert function.dim_domain == grid.dim
+        assert function.shape_range == ()
+        if order != 0:
+            raise NotImplementedError('Higher orders not implemented yet!')
+        self.__auto_init(locals())
+        self.range = FVVectorSpace(grid)
+
+    def _assemble(self, mu=None):
+        return self.function.evaluate(self.grid.centers(0), mu=mu).reshape((-1, 1))
+
+
 def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                              num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                              grid=None, boundary_info=None, preassemble=True):
