@@ -5,14 +5,13 @@
 # file with configuration.  For more information, see:
 # https://github.com/actions/labeler/blob/master/README.md
 
-name: Labeler
+name: PR labels
 on: [pull_request]
 
 jobs:
   label:
-
+    name: Auto-add labels
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/labeler@v2
       with:
