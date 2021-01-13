@@ -40,7 +40,7 @@ class MTReductor(BasicObject):
         self._pg_reductor = None
 
     def reduce(self, r=None, decomposition='samdp', projection='orth',
-               symmetric=False, which="NR", method_options=None, take_complex=False):
+               symmetric=False, which='NR', method_options=None, allow_complex_rom=False):
         """Modal Truncation.
 
         Parameters
@@ -48,23 +48,25 @@ class MTReductor(BasicObject):
         r
             Order of the reduced model.
         decomposition
-            Algortihm to use for the decomposition:
+            Algorithm used for the decomposition:
 
-            - `'eig'`: use scipy.linalg.eig algorithm
-            - `'samdp'`: find dominant poles using samdp algorithm
+            - `'eig'`: scipy.linalg.eig algorithm
+            - `'samdp'`: find dominant poles using
+              :meth:`~pymor.algorithms.samdp.samdp` algorithm
         projection
-            Projection method:
+            Projection method used:
 
             - `'orth'`: projection matrices are orthogonalized with
               respect to the Euclidean inner product
             - `'biorth'`: projection matrices are biorthogolized with
               respect to the E product
         symmetric
-            `True` if Operator A is symmetric and E is symmetric, positive
-            definite, False if not.
+             If `True`, assume A is symmetric and E is symmetric positive
+            definite.
         which
-            A string specifying which `k` eigenvalues and eigenvectors to
-            compute when using the eig decomposition, default is "NR":
+            A string specifying which `r` eigenvalues and eigenvectors to
+            compute when using the eig decomposition.
+            Possible values are:
 
             - `'SM'`: select eigenvalues with smallest magnitude
             - `'LR'`: select eigenvalues with largest real part
@@ -73,8 +75,8 @@ class MTReductor(BasicObject):
             - `'NM'`: select eigenvalues with largest norm(residual)
         method_options
             Optional dict with more options for the samdp algorithm.
-        take_complex
-            If `True` the reduced model is complex when the poles of the reduced
+        allow_complex_rom
+            If `True`, the reduced model is complex when the poles of the reduced
             model are not closed under complex conjugation.
 
         Returns
@@ -88,7 +90,7 @@ class MTReductor(BasicObject):
         assert which in ('LR', 'SM', 'NR', 'NS', 'NM')
         assert method_options is None or isinstance(method_options, dict)
         if not method_options:
-            method_options = {'which':'LR'}
+            method_options = {'which': 'LR'}
 
         if self.fom.parametric:
             fom = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
@@ -102,19 +104,22 @@ class MTReductor(BasicObject):
         if decomposition == 'eig':
             if fom.order >= sparse_min_size():
                 if not isinstance(fom.A, NumpyMatrixOperator) or fom.A.sparse:
-                    self.logger.warning('Converting operator A to a NumPy array.')
+                    self.logger.warning(
+                        'Converting operator A to a NumPy array.')
                 if not isinstance(fom.E, IdentityOperator):
                     if not isinstance(fom.E, NumpyMatrixOperator) or fom.E.sparse:
-                        self.logger.warning('Converting operator E to a NumPy array.')
+                        self.logger.warning(
+                            'Converting operator E to a NumPy array.')
             A = to_matrix(fom.A, format='dense')
-            E = None if isinstance(fom.E, IdentityOperator) else to_matrix(fom.E, format='dense')
+            E = None if isinstance(fom.E, IdentityOperator) else to_matrix(
+                fom.E, format='dense')
 
             if symmetric:
-                poles, ev_r = spla.eig(A, E, right=True)
+                poles, ev_r = spla.eig(A, E)
                 rev = fom.A.source.from_numpy(ev_r.T)
                 lev = rev.copy()
             else:
-                poles, ev_l, ev_r = spla.eig(A, E, left=True, right=True)
+                poles, ev_l, ev_r = spla.eig(A, E, left=True)
                 rev = fom.A.source.from_numpy(ev_r.T)
                 lev = fom.A.source.from_numpy(ev_l.T)
             if which == 'SM':
@@ -127,21 +132,16 @@ class MTReductor(BasicObject):
                 absres = np.empty(len(poles))
                 for i in range(len(poles)):
                     lev[i].scal(1 / lev[i].inner(fom.E.apply(rev[i]))[0][0])
-                    b_norm = fom.B.apply_adjoint(lev[i]).norm()
-                    c_norm = fom.C.apply(rev[i]).norm()
-                    absres[i] = b_norm @ c_norm
+                    b_norm = fom.B.apply_adjoint(lev[i]).norm()[0]
+                    c_norm = fom.C.apply(rev[i]).norm()[0]
+                    absres[i] = b_norm * c_norm
                 if which == 'NR':
                     dominance = -(absres / np.abs(np.real(poles)))
-                    idx = np.argsort(dominance)
-
                 elif which == 'NS':
                     dominance = -(absres / np.abs(poles))
-                    idx = np.argsort(dominance)
-
                 elif which == 'NM':
-                    idx = np.argsort(-absres)
                     dominance = -np.array(absres)
-
+                idx = np.argsort(dominance)
                 poles = poles[idx]
                 rev = rev[idx]
                 lev = lev[idx]
@@ -156,7 +156,7 @@ class MTReductor(BasicObject):
                                          fom.B.as_range_array(),
                                          fom.C.as_source_array(),
                                          r, **method_options)
-            absres = [spla.norm(res[i], ord=2) for i in range(len(poles))]
+            absres = spla.norm(res, axis=(1, 2), ord=2)
 
             if method_options['which'] == 'LR':
                 dominance = -(absres / np.abs(np.real(poles)))
@@ -172,24 +172,25 @@ class MTReductor(BasicObject):
             poles = poles[idx]
             rev = rev[idx]
             lev = lev[idx]
+            poles = poles[:r]
+            lev = lev[:r]
+            rev = rev[:r]
 
-            real_index = np.where(np.isreal(poles))[0]
-            complex_index = np.where(poles.imag > 0)[0]
-            if len(np.where(poles[:r].imag)[0]) % 2 == 1:
-                self.logger.warning('Chosen order r will split complex conjugated pair of poles.')
+            if len(np.where(np.abs(poles[:r].imag) / np.abs(poles[:r]) >= 1e-6)[0]) % 2 == 1:
+                self.logger.warning(
+                    'Chosen order r will split complex conjugated pair of poles.')
 
-                if (take_complex):
-                    self.logger.info("Reduced model will be complex.")
-                    poles = poles[:r]
-                    self.V = rev[:r]
-                    self.W = lev[:r]
+                if allow_complex_rom:
+                    self.logger.info('Reduced model will be complex.')
+                    self.V = rev
+                    self.W = lev
                 else:
-                    self.logger.info("Only real part of complex conjugated pair taken.")
-                    poles = poles[:r]
-                    lev = lev[:r]
-                    rev = rev[:r]
-                    real_index = np.where(np.isreal(poles))[0]
-                    complex_index = np.where(poles.imag > 0)[0]
+                    self.logger.info(
+                        'Only real part of complex conjugated pair taken.')
+                    real_index = np.where(
+                        np.abs(poles.imag) / np.abs(poles) < 1e-6)[0]
+                    complex_index = np.where(
+                        (np.abs(poles.imag) / np.abs(poles) >= 1e-6) & (poles.imag > 0))[0]
 
                     self.V.append(rev[real_index].real)
                     self.V.append(rev[complex_index].real)
@@ -202,11 +203,10 @@ class MTReductor(BasicObject):
                     self.V = self.V[:r]
                     self.W = self.W[:r]
             else:
-                poles = poles[:r]
-                lev = lev[:r]
-                rev = rev[:r]
-                real_index = np.where(np.isreal(poles))[0]
-                complex_index = np.where(poles.imag > 0)[0]
+                real_index = np.where(
+                    np.abs(poles.imag) / np.abs(poles) < 1e-6)[0]
+                complex_index = np.where(
+                    (np.abs(poles.imag) / np.abs(poles) >= 1e-6) & (poles.imag > 0))[0]
 
                 self.V.append(rev[real_index].real)
                 self.V.append(rev[complex_index].imag)
@@ -217,8 +217,8 @@ class MTReductor(BasicObject):
                 self.W.append(lev[complex_index].real)
 
         else:
-            self.V = rev[:r]
-            self.W = lev[:r]
+            self.V = rev
+            self.W = lev
 
         if projection == 'orth':
             gram_schmidt(self.V, atol=0, rtol=0, copy=False)
@@ -228,7 +228,8 @@ class MTReductor(BasicObject):
 
         # find reduced model
 
-        self._pg_reductor = LTIPGReductor(fom, self.W, self.V, projection == 'biorth')
+        self._pg_reductor = LTIPGReductor(
+            fom, self.W, self.V, projection == 'biorth')
         rom = self._pg_reductor.reduce()
         return rom
 
