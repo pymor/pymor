@@ -13,6 +13,7 @@ from pymor.core.logger import set_log_levels
 from pymor.models.iosys import SecondOrderModel
 from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
+from pymor.reductors.mt import MTReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor,
                                   SOBTfvReductor, SOBTReductor)
 from pymor.reductors.sor_irka import SORIRKAReductor
@@ -98,6 +99,7 @@ def main(
                    irka_options={'maxit': 10})
     run_mor_method(so_sys, w, BTReductor(so_sys.to_lti()), 'BT', r)
     run_mor_method(so_sys, w, IRKAReductor(so_sys.to_lti()), 'IRKA', r)
+    run_mor_method(so_sys, w, MTReductor(so_sys.to_lti()), 'MT', r)
 
 
 if __name__ == '__main__':
