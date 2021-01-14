@@ -244,9 +244,11 @@ coverage_ignore_c_items = {}
 
 # PyQt5 inventory is only used internally, actual link targets PySide2
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       'numpy': ('https://docs.scipy.org/doc/numpy', None),
+                       'numpy': ('https://numpy.org/doc/stable/', None), 
                        'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
-                       'scipy': ('https://docs.scipy.org/doc/scipy/reference', None)}
+                       'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+                       'matplotlib': ('https://matplotlib.org', None),
+                       'Sphinx': ('https://www.sphinx-doc.org/en/stable/', None)}
 
 import substitutions
 rst_epilog = substitutions.substitutions
