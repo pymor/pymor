@@ -1,0 +1,22 @@
+# pinned to lintly 0.5.0 due to https://github.com/grantmcconnaughey/Lintly/issues/41
+name: Linter
+
+on: [pull_request]
+
+jobs:
+  lint:
+    name: flake8
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Install flake8 and plugins
+        run: pip install \
+                flake8 \
+                lintly==0.5.0
+      - name: Run flake8 linter
+        run: flake8 src | lintly --fail-on=new
+        env:
+          LINTLY_API_KEY: ${{ secrets.GITHUB_TOKEN }}
