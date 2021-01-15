@@ -66,7 +66,7 @@ class BlockOperatorBase(Operator):
         V_blocks = [None for i in range(self.num_range_blocks)]
         for (i, j), op in np.ndenumerate(self.blocks):
             if isinstance(op, ZeroOperator):
-                Vi = op.range.zeros()
+                Vi = op.range.zeros(len(U))
             else:
                 Vi = op.apply(U.block(j) if self.blocked_source else U, mu=mu)
             if V_blocks[i] is None:
@@ -82,7 +82,7 @@ class BlockOperatorBase(Operator):
         U_blocks = [None for j in range(self.num_source_blocks)]
         for (i, j), op in np.ndenumerate(self.blocks):
             if isinstance(op, ZeroOperator):
-                Uj = op.source.zeros()
+                Uj = op.source.zeros(len(V))
             else:
                 Uj = op.apply_adjoint(V.block(i) if self.blocked_range else V, mu=mu)
             if U_blocks[j] is None:
