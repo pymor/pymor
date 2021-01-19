@@ -5,7 +5,6 @@
 import os
 import platform
 import sys
-import datetime
 
 if sys.version_info.major < 3:
     raise RuntimeError('pyMOR requires Python 3.6 or newer')
