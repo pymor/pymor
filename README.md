@@ -192,7 +192,7 @@ we provide bindings for the following solver libraries:
 
 
 Do not hesitate to contact
-[us](https://github.com/pymor/pymor/discussions) if you
+[us](https://github.com/pymor2/pymor/discussions) if you
 need help with the integration of your PDE solver.
 
 
