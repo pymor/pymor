@@ -1,6 +1,6 @@
 on: pull_request
 
-name: Linter
+name: Git
 
 jobs:
   message-check:
