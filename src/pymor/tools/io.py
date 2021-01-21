@@ -11,6 +11,7 @@ import shutil
 
 from pymor.core.logger import getLogger
 
+import datetime
 
 def _loadmat(path, key=None):
 
