@@ -60,7 +60,7 @@ install_suggests = {
 }
 doc_requires = ['sphinx>=3.4', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
-                'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8'] + install_requires
+                'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
                'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir',
