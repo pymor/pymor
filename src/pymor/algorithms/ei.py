@@ -70,6 +70,8 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
             :triangularity_errors:  Sequence of maximum absolute values of interoplation
                                     matrix coefficients in the upper triangle (should
                                     be near zero).
+            :coefficients:          |NumPy array| of coefficients such that `collateral_basis`
+                                    is given by `U.lincomb(coefficients)`.
     """
     if pool:  # dispatch to parallel implemenation
         assert isinstance(U, (VectorArray, RemoteObject))
@@ -86,6 +88,8 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     collateral_basis = U.empty()
+    K = np.eye(len(U))  # matrix s.t. U = U_initial.lincomb(K)
+    coefficients = np.zeros((0, len(U)))
     max_errs = []
     triangularity_errs = []
 
@@ -130,11 +134,13 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         new_vec *= 1 / new_dof_value
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
         collateral_basis.append(new_vec)
+        coefficients = np.vstack([coefficients, K[max_err_ind] / new_dof_value])
         max_errs.append(max_err)
 
         # update U and ERR
         new_dof_values = U.dofs([new_dof])
         U.axpy(-new_dof_values[:, 0], new_vec)
+        K -= (K[max_err_ind] / new_dof_value) * new_dof_values
         errs = ERR.norm() if error_norm is None else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
@@ -147,7 +153,8 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     if len(triangularity_errs) > 0:
         logger.info(f'Interpolation matrix is not lower triangular with maximum error of {triangularity_errs[-1]}')
 
-    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
+    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
+            'coefficients': coefficients}
 
     return interpolation_dofs, collateral_basis, data
 
@@ -359,8 +366,13 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
     triangularity_errs = []
 
     with pool.push({}) as distributed_data:
-        errs = pool.apply(_parallel_ei_greedy_initialize,
-                          U=U, error_norm=error_norm, copy=copy, data=distributed_data)
+        errs, snapshot_counts = zip(
+            *pool.apply(_parallel_ei_greedy_initialize, U=U, error_norm=error_norm, copy=copy, data=distributed_data)
+        )
+        snapshot_count = sum(snapshot_counts)
+        cum_snapshot_counts = np.hstack(([0], np.cumsum(snapshot_counts)))
+        K = np.eye(snapshot_count)  # matrix s.t. U = U_initial.lincomb(K)
+        coefficients = np.zeros((0, snapshot_count))
         max_err_ind = np.argmax(errs)
         initial_max_err = max_err = errs[max_err_ind]
 
@@ -384,7 +396,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
                 break
 
             # compute new interpolation dof and collateral basis vector
-            new_vec = pool.apply_only(_parallel_ei_greedy_get_vector, max_err_ind, data=distributed_data)
+            new_vec, local_ind = pool.apply_only(_parallel_ei_greedy_get_vector, max_err_ind, data=distributed_data)
             new_dof = new_vec.amax()[0][0]
             if new_dof in interpolation_dofs:
                 logger.info(f'DOF {new_dof} selected twice for interpolation! Stopping extension loop.')
@@ -397,9 +409,15 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             new_vec *= 1 / new_dof_value
             interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
             collateral_basis.append(new_vec)
+            global_max_err_ind = cum_snapshot_counts[max_err_ind] + local_ind
+            coefficients = np.vstack([coefficients, K[global_max_err_ind] / new_dof_value])
             max_errs.append(max_err)
 
-            errs = pool.apply(_parallel_ei_greedy_update, new_vec=new_vec, new_dof=new_dof, data=distributed_data)
+            errs, new_dof_values = zip(
+                *pool.apply(_parallel_ei_greedy_update, new_vec=new_vec, new_dof=new_dof, data=distributed_data)
+            )
+            new_dof_values = np.hstack(new_dof_values)
+            K -= (K[global_max_err_ind] / new_dof_value) * new_dof_values[:, np.newaxis]
             max_err_ind = np.argmax(errs)
             max_err = errs[max_err_ind]
 
@@ -412,7 +430,8 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
         logger.info(f'Interpolation matrix is not lower triangular with maximum error of {triangularity_errs[-1]}')
         logger.info('')
 
-    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
+    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
+            'coefficients': coefficients}
 
     return interpolation_dofs, collateral_basis, data
 
@@ -428,23 +447,23 @@ def _parallel_ei_greedy_initialize(U=None, error_norm=None, copy=None, data=None
     data['error_norm'] = error_norm
     errs = U.norm() if error_norm is None else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
-    return errs[max_err_ind]
+    return errs[max_err_ind], len(U)
 
 
 def _parallel_ei_greedy_get_vector(data=None):
-    return data['U'][data['max_err_ind']].copy()
+    return data['U'][data['max_err_ind']].copy(), data['max_err_ind']
 
 
 def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
     U = data['U']
     error_norm = data['error_norm']
 
-    new_dof_values = U.dofs([new_dof])
-    U.axpy(-new_dof_values[:, 0], new_vec)
+    new_dof_values = U.dofs([new_dof])[:, 0]
+    U.axpy(-new_dof_values, new_vec)
 
     errs = U.norm() if error_norm is None else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
-    return errs[max_err_ind]
+    return errs[max_err_ind], new_dof_values
 
 
 def _identity(x):
