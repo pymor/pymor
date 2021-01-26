@@ -76,6 +76,8 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
                                     be near zero).
             :coefficients:          |NumPy array| of coefficients such that `collateral_basis`
                                     is given by `U.lincomb(coefficients)`.
+            :interpolation_matrix:  The interpolation matrix, i.e., the evaluation of
+                                    `collateral_basis` at `interpolation_dofs`.
     """
     if pool:  # dispatch to parallel implemenation
         assert isinstance(U, (VectorArray, RemoteObject))
@@ -162,9 +164,10 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         inv_interpolation_matrix = np.linalg.inv(interpolation_matrix)
         collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
         coefficients = inv_interpolation_matrix.T @ coefficients
+        interpolation_matrix = np.eye(len(collateral_basis))
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
-            'coefficients': coefficients}
+            'coefficients': coefficients, 'interpolation_matrix': interpolation_matrix}
 
     return interpolation_dofs, collateral_basis, data
 
@@ -446,9 +449,10 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
         inv_interpolation_matrix = np.linalg.inv(interpolation_matrix)
         collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
         coefficients = inv_interpolation_matrix.T @ coefficients
+        interpolation_matrix = np.eye(len(collateral_basis))
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
-            'coefficients': coefficients}
+            'coefficients': coefficients, 'interpolation_matrix': interpolation_matrix}
 
     return interpolation_dofs, collateral_basis, data
 
