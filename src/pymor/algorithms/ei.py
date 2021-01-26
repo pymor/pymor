@@ -26,7 +26,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None,
-              copy=True, pool=dummy_pool):
+              nodal_basis=False, copy=True, pool=dummy_pool):
     """Generate data for empirical interpolation using EI-Greedy algorithm.
 
     Given a |VectorArray| `U`, this method generates a collateral basis and
@@ -51,6 +51,10 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     max_interpolation_dofs
         Stop the greedy search if the number of interpolation DOF (= dimension of the collateral
         basis) reaches this value.
+    nodal_basis
+        If `True`, a nodal interpolation basis is constructed. Note that nodal bases are
+        not hierarchical. Their construction involves the inversion of the associated
+        interpolation matrix, which might lead to decreased numerical accuracy.
     copy
         If `False`, `U` will be modified during executing of the algorithm.
     pool
@@ -152,6 +156,12 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     if len(triangularity_errs) > 0:
         logger.info(f'Interpolation matrix is not lower triangular with maximum error of {triangularity_errs[-1]}')
+
+    if nodal_basis:
+        logger.info('Building nodal basis.')
+        inv_interpolation_matrix = np.linalg.inv(interpolation_matrix)
+        collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
+        coefficients = inv_interpolation_matrix.T @ coefficients
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
             'coefficients': coefficients}
@@ -352,7 +362,8 @@ def _interpolate_operators_build_evaluations(mu, fom=None, operators=None, evalu
         evaluations.append(op.apply(U, mu=mu))
 
 
-def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None, copy=True):
+def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None,
+                        nodal_basis=False, copy=True):
 
     assert isinstance(U, RemoteObject)
 
@@ -429,6 +440,12 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
     if len(triangularity_errs) > 0:
         logger.info(f'Interpolation matrix is not lower triangular with maximum error of {triangularity_errs[-1]}')
         logger.info('')
+
+    if nodal_basis:
+        logger.info('Building nodal basis.')
+        inv_interpolation_matrix = np.linalg.inv(interpolation_matrix)
+        collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
+        coefficients = inv_interpolation_matrix.T @ coefficients
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
             'coefficients': coefficients}
