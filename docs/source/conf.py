@@ -5,15 +5,18 @@
 import sys
 import os
 import slugify
+import glob
+import sphinx
+from pathlib import Path
 
-os.environ['PYMOR_WITH_SPHINX'] = '1'
+import substitutions
 
 # Check Sphinx version
-import sphinx
 if sphinx.__version__ < "1.7":
     raise RuntimeError("Sphinx 1.7 or newer required")
 
 needs_sphinx = '1.7'
+os.environ['PYMOR_WITH_SPHINX'] = '1'
 
 # -----------------------------------------------------------------------------
 # General configuration
@@ -224,7 +227,6 @@ latex_use_modindex = False
 # Autosummary
 # -----------------------------------------------------------------------------
 
-import glob
 autosummary_generate = glob.glob("generated/*.rst")
 
 # -----------------------------------------------------------------------------
@@ -253,7 +255,6 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'matplotlib': ('https://matplotlib.org', None),
                        'Sphinx': ('https://www.sphinx-doc.org/en/stable/', None)}
 
-import substitutions
 rst_epilog = substitutions.substitutions
 
 modindex_common_prefix = ['pymor.']
