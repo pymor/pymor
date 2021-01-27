@@ -8,7 +8,6 @@ import slugify
 import glob
 import sphinx
 from pathlib import Path
-import astroid
 
 # Check Sphinx version
 if sphinx.__version__ < "1.7":
@@ -269,25 +268,8 @@ def linkcode_resolve(domain, info):
         return f'https://github.com/pymor/pymor/tree/{branch}/src/{filename}.py'
     return None
 
-autoapi_dirs = [src_dir / 'pymor', src_dir / 'pymordemos']
+autoapi_dirs = [src_dir / 'pymor']
 autoapi_type = 'python'
 # allows incremental build
 autoapi_keep_files = True
-
-# astroid (parser base for sphinx-autoapi) has some problems with conditionally defined
-# objects and also does not look into cython generated ones
-autoapi_ignore = ['pymor.discretizers.builtin.grids._unstructured.compute_edges',
-    'pymor.core.pickle',
-    'Qt.QtWidgets',
-    'Qt.QtOpenGL', 'PyQt4', 'PySide', 'cPickle', 'ngsolve.comp', 'pymess']
-
-def failed_custom_import(modname):
-    if modname not in autoapi_ignore:
-        # Don't know about this module
-        raise astroid.AstroidBuildingError(modname=modname)
-    return astroid.parse('''
-    class ThisIsAFakeClass:
-        pass
-    ''')
-
-astroid.MANAGER.register_failed_import_hook(failed_custom_import)
+autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
