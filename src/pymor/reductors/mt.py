@@ -61,7 +61,7 @@ class MTReductor(BasicObject):
             - `'biorth'`: projection matrices are biorthogolized with
               respect to the E product
         symmetric
-             If `True`, assume A is symmetric and E is symmetric positive
+            If `True`, assume A is symmetric and E is symmetric positive
             definite.
         which
             A string specifying which `r` eigenvalues and eigenvectors to
@@ -98,9 +98,6 @@ class MTReductor(BasicObject):
         else:
             fom = self.fom
 
-        self.V = fom.A.source.empty(reserve=r)
-        self.W = fom.A.source.empty(reserve=r)
-
         if decomposition == 'eig':
             if fom.order >= sparse_min_size():
                 if not isinstance(fom.A, NumpyMatrixOperator) or fom.A.sparse:
@@ -115,7 +112,7 @@ class MTReductor(BasicObject):
                 fom.E, format='dense')
 
             if symmetric:
-                poles, ev_r = spla.eig(A, E)
+                poles, ev_r = spla.eigh(A, E)
                 rev = fom.A.source.from_numpy(ev_r.T)
                 lev = rev.copy()
             else:
@@ -123,11 +120,9 @@ class MTReductor(BasicObject):
                 rev = fom.A.source.from_numpy(ev_r.T)
                 lev = fom.A.source.from_numpy(ev_l.T)
             if which == 'SM':
-                idx = np.argsort(np.abs(poles))
                 dominance = np.abs(poles)
             elif which == 'LR':
-                idx = np.argsort(-poles.real)
-                dominance = np.ones(len(poles))
+                dominance = -poles.real
             else:
                 absres = np.empty(len(poles))
                 for i in range(len(poles)):
@@ -141,23 +136,12 @@ class MTReductor(BasicObject):
                     dominance = -(absres / np.abs(poles))
                 elif which == 'NM':
                     dominance = -np.array(absres)
-                idx = np.argsort(dominance)
-                poles = poles[idx]
-                rev = rev[idx]
-                lev = lev[idx]
-                dominance = dominance[idx]
-
-                poles = poles[:2*r]
-                lev = lev[:2*r]
-                rev = rev[:2*r]
-                dominance = dominance[:2*r]
         elif decomposition == 'samdp':
             poles, res, rev, lev = samdp(fom.A, fom.E,
                                          fom.B.as_range_array(),
                                          fom.C.as_source_array(),
                                          r, **method_options)
             absres = spla.norm(res, axis=(1, 2), ord=2)
-
             if method_options['which'] == 'LR':
                 dominance = -(absres / np.abs(np.real(poles)))
             elif method_options['which'] == 'LS':
@@ -165,60 +149,43 @@ class MTReductor(BasicObject):
             elif method_options['which'] == 'LM':
                 dominance = -np.array(absres)
 
-        if np.iscomplexobj(poles):
-            idx = sorted(range(len(poles)),
-                         key=lambda i: (dominance[i], -poles[i].real,
-                                        abs(poles[i].imag), 0 if poles[i].imag >= 0 else 1))
-            poles = poles[idx]
-            rev = rev[idx]
-            lev = lev[idx]
-            poles = poles[:r]
-            lev = lev[:r]
-            rev = rev[:r]
+        idx = sorted(range(len(poles)),
+                     key=lambda i: (dominance[i], -poles[i].real,
+                                    abs(poles[i].imag), 0 if poles[i].imag >= 0 else 1))
+        poles = poles[idx]
+        rev = rev[idx]
+        lev = lev[idx]
+        poles = poles[:r]
+        lev = lev[:r]
+        rev = rev[:r]
 
-            if len(np.where(np.abs(poles[:r].imag) / np.abs(poles[:r]) >= 1e-6)[0]) % 2 == 1:
-                self.logger.warning(
-                    'Chosen order r will split complex conjugated pair of poles.')
+        self.V = fom.A.source.empty(reserve=r)
+        self.W = fom.A.source.empty(reserve=r)
 
-                if allow_complex_rom:
-                    self.logger.info('Reduced model will be complex.')
-                    self.V = rev
-                    self.W = lev
-                else:
-                    self.logger.info(
-                        'Only real part of complex conjugated pair taken.')
-                    real_index = np.where(
-                        np.abs(poles.imag) / np.abs(poles) < 1e-6)[0]
-                    complex_index = np.where(
-                        (np.abs(poles.imag) / np.abs(poles) >= 1e-6) & (poles.imag > 0))[0]
+        real_index = np.where(np.abs(poles.imag) / np.abs(poles) < 1e-6)[0]
+        complex_index = np.where((np.abs(poles.imag) / np.abs(poles) >= 1e-6) & (poles.imag > 0))[0]
 
-                    self.V.append(rev[real_index].real)
-                    self.V.append(rev[complex_index].real)
-                    self.V.append(rev[complex_index].imag)
-
-                    self.W.append(lev[real_index].real)
-                    self.W.append(lev[complex_index].real)
-                    self.W.append(lev[complex_index].imag)
-
-                    self.V = self.V[:r]
-                    self.W = self.W[:r]
+        if complex_index.size > 0 and complex_index[-1] == r-1:
+            self.logger.warning(
+                'Chosen order r will split complex conjugated pair of poles.')
+            if allow_complex_rom:
+                self.logger.info('Reduced model will be complex.')
+                self.V.append(rev[r-1])
+                self.W.append(lev[r-1])
+                complex_index = complex_index[:-1]
             else:
-                real_index = np.where(
-                    np.abs(poles.imag) / np.abs(poles) < 1e-6)[0]
-                complex_index = np.where(
-                    (np.abs(poles.imag) / np.abs(poles) >= 1e-6) & (poles.imag > 0))[0]
+                self.logger.info('Only real part of complex conjugated pair taken.')
+                self.V.append(rev[r-1].real)
+                self.W.append(lev[r-1].real)
+                complex_index = complex_index[:-1]
 
-                self.V.append(rev[real_index].real)
-                self.V.append(rev[complex_index].imag)
-                self.V.append(rev[complex_index].real)
+        self.V.append(rev[real_index].real)
+        self.V.append(rev[complex_index].real)
+        self.V.append(rev[complex_index].imag)
 
-                self.W.append(lev[real_index].real)
-                self.W.append(lev[complex_index].imag)
-                self.W.append(lev[complex_index].real)
-
-        else:
-            self.V = rev
-            self.W = lev
+        self.W.append(lev[real_index].real)
+        self.W.append(lev[complex_index].real)
+        self.W.append(lev[complex_index].imag)
 
         if projection == 'orth':
             gram_schmidt(self.V, atol=0, rtol=0, copy=False)
@@ -227,9 +194,7 @@ class MTReductor(BasicObject):
             gram_schmidt_biorth(self.V, self.W, product=fom.E, copy=False)
 
         # find reduced model
-
-        self._pg_reductor = LTIPGReductor(
-            fom, self.W, self.V, projection == 'biorth')
+        self._pg_reductor = LTIPGReductor(fom, self.W, self.V, projection == 'biorth')
         rom = self._pg_reductor.reduce()
         return rom
 
