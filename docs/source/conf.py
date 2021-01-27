@@ -8,8 +8,7 @@ import slugify
 import glob
 import sphinx
 from pathlib import Path
-
-import substitutions
+import astroid
 
 # Check Sphinx version
 if sphinx.__version__ < "1.7":
@@ -22,17 +21,10 @@ os.environ['PYMOR_WITH_SPHINX'] = '1'
 # General configuration
 # -----------------------------------------------------------------------------
 
-sys.path.insert(0, os.path.abspath('../../src'))
-sys.path.insert(0, os.path.abspath('.'))
-
-# generate autodoc
-import gen_apidoc
-import pymor
-#import pymortests
-import pymordemos
-gen_apidoc.walk(pymor)
-#gen_apidoc.walk(pymortests)
-gen_apidoc.walk(pymordemos)
+this_dir = Path(__file__).resolve().parent
+src_dir = (this_dir / '..' / '..' / 'src').resolve()
+sys.path.insert(0, str(src_dir))
+sys.path.insert(0, str(this_dir))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -46,8 +38,8 @@ extensions = ['sphinx.ext.autodoc',
               'jupyter_sphinx',
               'sphinx.ext.mathjax',
               'sphinx_qt_documentation',
+              'autoapi.extension',
               'sphinxcontrib.bibtex',
-              'gen_apidoc'
               ]
 
 bibtex_bibfiles = ['bibliography.bib']
@@ -66,8 +58,11 @@ copyright = '2013-2021 pyMOR developers and contributors'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
-#
+# imports have to be delayed until after sys.path modification
+import pymor  # noqa
+import substitutions # noqa
 version = pymor.__version__
+rst_epilog = substitutions.substitutions
 
 # The full version, including alpha/beta/rc tags.
 release = version.split('-')[0]
@@ -253,9 +248,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
                        'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
                        'matplotlib': ('https://matplotlib.org', None),
-                       'Sphinx': ('https://www.sphinx-doc.org/en/stable/', None)}
-
-rst_epilog = substitutions.substitutions
+                       'Sphinx': (' https://www.sphinx-doc.org/en/master/', None)}
 
 modindex_common_prefix = ['pymor.']
 
@@ -275,3 +268,26 @@ def linkcode_resolve(domain, info):
         filename = info['module'].replace('.', '/')
         return f'https://github.com/pymor/pymor/tree/{branch}/src/{filename}.py'
     return None
+
+autoapi_dirs = [src_dir / 'pymor', src_dir / 'pymordemos']
+autoapi_type = 'python'
+# allows incremental build
+autoapi_keep_files = True
+
+# astroid (parser base for sphinx-autoapi) has some problems with conditionally defined
+# objects and also does not look into cython generated ones
+autoapi_ignore = ['pymor.discretizers.builtin.grids._unstructured.compute_edges',
+    'pymor.core.pickle',
+    'Qt.QtWidgets',
+    'Qt.QtOpenGL', 'PyQt4', 'PySide', 'cPickle', 'ngsolve.comp', 'pymess']
+
+def failed_custom_import(modname):
+    if modname not in autoapi_ignore:
+        # Don't know about this module
+        raise astroid.AstroidBuildingError(modname=modname)
+    return astroid.parse('''
+    class ThisIsAFakeClass:
+        pass
+    ''')
+
+astroid.MANAGER.register_failed_import_hook(failed_custom_import)
