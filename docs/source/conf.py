@@ -10,10 +10,10 @@ os.environ['PYMOR_WITH_SPHINX'] = '1'
 
 # Check Sphinx version
 import sphinx
-if sphinx.__version__ < "1.0.1":
-    raise RuntimeError("Sphinx 1.0.1 or newer required")
+if sphinx.__version__ < "1.7":
+    raise RuntimeError("Sphinx 1.7 or newer required")
 
-needs_sphinx = '1.0'
+needs_sphinx = '1.7'
 
 # -----------------------------------------------------------------------------
 # General configuration
