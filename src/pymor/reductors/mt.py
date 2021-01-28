@@ -101,15 +101,12 @@ class MTReductor(BasicObject):
         if decomposition == 'eig':
             if fom.order >= sparse_min_size():
                 if not isinstance(fom.A, NumpyMatrixOperator) or fom.A.sparse:
-                    self.logger.warning(
-                        'Converting operator A to a NumPy array.')
+                    self.logger.warning('Converting operator A to a NumPy array.')
                 if not isinstance(fom.E, IdentityOperator):
                     if not isinstance(fom.E, NumpyMatrixOperator) or fom.E.sparse:
-                        self.logger.warning(
-                            'Converting operator E to a NumPy array.')
+                        self.logger.warning('Converting operator E to a NumPy array.')
             A = to_matrix(fom.A, format='dense')
-            E = None if isinstance(fom.E, IdentityOperator) else to_matrix(
-                fom.E, format='dense')
+            E = None if isinstance(fom.E, IdentityOperator) else to_matrix(fom.E, format='dense')
 
             if symmetric:
                 poles, ev_r = spla.eigh(A, E)
@@ -152,12 +149,10 @@ class MTReductor(BasicObject):
         idx = sorted(range(len(poles)),
                      key=lambda i: (dominance[i], -poles[i].real,
                                     abs(poles[i].imag), 0 if poles[i].imag >= 0 else 1))
+        idx = idx[:r]
         poles = poles[idx]
         rev = rev[idx]
         lev = lev[idx]
-        poles = poles[:r]
-        lev = lev[:r]
-        rev = rev[:r]
 
         self.V = fom.A.source.empty(reserve=r)
         self.W = fom.A.source.empty(reserve=r)
@@ -166,17 +161,16 @@ class MTReductor(BasicObject):
         complex_index = np.where((np.abs(poles.imag) / np.abs(poles) >= 1e-6) & (poles.imag > 0))[0]
 
         if complex_index.size > 0 and complex_index[-1] == r-1:
-            self.logger.warning(
-                'Chosen order r will split complex conjugated pair of poles.')
+            self.logger.warning('Chosen order r will split complex conjugated pair of poles.')
             if allow_complex_rom:
                 self.logger.info('Reduced model will be complex.')
-                self.V.append(rev[r-1])
-                self.W.append(lev[r-1])
+                self.V.append(rev[-1])
+                self.W.append(lev[-1])
                 complex_index = complex_index[:-1]
             else:
                 self.logger.info('Only real part of complex conjugated pair taken.')
-                self.V.append(rev[r-1].real)
-                self.W.append(lev[r-1].real)
+                self.V.append(rev[-1].real)
+                self.W.append(lev[-1].real)
                 complex_index = complex_index[:-1]
 
         self.V.append(rev[real_index].real)
