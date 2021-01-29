@@ -1,0 +1,49 @@
+name: Process linter results
+
+# read-write repo token
+# access to secrets
+on:
+  workflow_run:
+    workflows: ["Linter"]
+    types:
+      - completed
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    if: >
+      ${{ github.event.workflow_run.event == 'pull_request' }}
+    steps:
+      - name: 'Download artifact'
+        uses: actions/github-script@v3.1.0
+        with:
+          script: |
+            var artifacts = await github.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: ${{github.event.workflow_run.id }},
+            });
+            var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "linter_output"
+            })[0];
+            var download = await github.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            var fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/linter_output.zip', Buffer.from(download.data));
+      - run: unzip linter_output.zip
+      - name: Set up Python
+        uses: actions/setup-python@v2
+      # pinned to lintly 0.5.0 due to https://github.com/grantmcconnaughey/Lintly/issues/41
+      - name: Install dependencies
+        run: pip install lintly==0.5.0
+      - name: 'Comment on PR'
+        run: |
+          cat ./flake8.out | lintly --fail-on=new \
+            --pr="$(cat ./pr_number)" \
+            --commit-sha="$(cat ./head_sha)"
+        env:
+          LINTLY_API_KEY: ${{ secrets.GITHUB_TOKEN }}
