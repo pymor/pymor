@@ -11,6 +11,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.krylov import tangential_rational_krylov
+from pymor.algorithms.riccati import solve_ricc_dense
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
@@ -656,9 +657,10 @@ class GapIRKAReductor(GenericIRKAReductor):
     mu
         |Parameter|.
     """
-    def __init__(self, fom, mu=None):
+    def __init__(self, fom, mu=None, solver_options=None):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, mu=mu)
+        self.solver_options = solver_options
 
     def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1, conv_crit='htwogap',
                projection='orth'):
@@ -773,26 +775,28 @@ class GapIRKAReductor(GenericIRKAReductor):
         self._pg_reductor = LTIPGReductor(fom, self.W, self.V,
                                           projection == 'Eorth')
 
-    @staticmethod
-    def _unstable_rom_to_sigma_b_c(rom):
-        poles, b, c, gap_rom = GapIRKAReductor._unstable_lti_to_poles_b_c(rom)
+    def _unstable_rom_to_sigma_b_c(self, rom):
+        poles, b, c, gap_rom = self._unstable_lti_to_poles_b_c(rom)
         return -poles, b, c, gap_rom
 
-    @staticmethod
-    def _unstable_lti_to_poles_b_c(rom):
+    def _unstable_lti_to_poles_b_c(self, rom):
         A = to_matrix(rom.A, format='dense')
         B = to_matrix(rom.B, format='dense')
         C = to_matrix(rom.C, format='dense')
 
+        options = self.solver_options
+
         if isinstance(rom.E, IdentityOperator):
-            P = spla.solve_continuous_are(A.T, C.T, B.dot(B.T), np.eye(len(C)))
+            # P = spla.solve_continuous_are(A.T, C.T, B.dot(B.T), np.eye(len(C)))
+            P = solve_ricc_dense(A, None, B, C, options=options)
             F = P @ C.T
             AF = A - F @ C
             poles, X = spla.eig(AF)
             EX = X
         else:
             E = to_matrix(rom.E, format='dense')
-            P = spla.solve_continuous_are(A.T, C.T, B.dot(B.T), np.eye(len(C)), e=E.T, balanced=False)
+            # P = spla.solve_continuous_are(A.T, C.T, B.dot(B.T), np.eye(len(C)), e=E.T, balanced=False)
+            P = solve_ricc_dense(A, E, B, C)
             F = E @ P @ C.T
             AF = A - F @ C
             poles, X = spla.eig(AF, E)

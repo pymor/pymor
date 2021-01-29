@@ -7,10 +7,12 @@ from pymor.core.config import config
 
 if config.HAVE_SLYCOT:
     import numpy as np
+    import scipy.linalg as spla
     import slycot
 
     from pymor.algorithms.genericsolvers import _parse_options
     from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args, _solve_lyap_dense_check_args, _chol
+    from pymor.algorithms.riccati import _solve_ricc_dense_check_args
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
     from pymor.core.logger import getLogger
@@ -138,6 +140,112 @@ if config.HAVE_SLYCOT:
             raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
         return X
+
+    def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None):
+        """Compute the solution of a Riccati equation.
+
+        See :func:`pymor.algorithms.riccati.solve_ricc_dense` for a
+        general description.
+
+        This function uses `slycot.sb02md` (if `E is None`) which is based on
+        the Schur vector approach and `slycot.sg02ad` (if `E is not None`) which
+        is based on the method of deflating subspaces.
+
+        Parameters
+        ----------
+        A
+            The operator A as a 2D |NumPy array|.
+        E
+            The operator E as a 2D |NumPy array| or `None`.
+        B
+            The operator B as a 2D |NumPy array|.
+        C
+            The operator C as a 2D |NumPy array|.
+        R
+            The operator R as a 2D |NumPy array| or `None`.
+        trans
+            Whether the first operator in the Riccati equation is
+            transposed.
+        options
+            The solver options to use (see
+            :func:`ricc_dense_solver_options`).
+
+        Returns
+        -------
+        X
+            Riccati equation solution as a |NumPy array|.
+        """
+
+        _solve_ricc_dense_check_args(A, E, B, C, R, trans)
+        options = _parse_options(options, ricc_dense_solver_options(), 'slycot', None, False)
+
+        if options['type'] == 'slycot':
+            dico = 'C'
+            n = A.shape[0]
+            if E is not None:
+                jobb = 'B'
+                fact = 'C'
+                uplo = 'U'
+                jobl = 'Z'
+                scal = 'N'
+                sort = 'S'
+                acc = 'N'
+                if trans:
+                    L = np.zeros(B.shape)
+                    M = B.shape[1]
+                    P = C.shape[0]
+                    if R is None:
+                        R = np.eye(B.shape[1])
+
+                    rcond, X, _, _, _, _, _, _, _ = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal,
+                                                                  sort, acc, n, M, P, A, E, B, C, R, L)
+                else:
+                    L = np.zeros(C.T.shape)
+                    M = C.shape[0]
+                    P = B.shape[1]
+                    if R is None:
+                        R = np.eye(C.shape[0])
+
+                    rcond, X, _, _, _, _, _, _, _ = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal,
+                                                                  sort, acc, n, M, P, A.T, E.T, C.T, B.T, R, L)
+                _solve_check_ricc('slycot.sg02ad', rcond)
+            else:
+                if trans:
+                    if R is None:
+                        G = B @ B.T
+                    else:
+                        G = B @ spla.solve(R, B.T)
+                    Q = C.T @ C
+                    X, rcond, _, _, _, _ = slycot.sb02md(n, A, G, Q, dico)
+                else:
+                    if R is None:
+                        G = C.T @ C
+                    else:
+                        G = C.T @ spla.solve(R, C)
+                    Q = B @ B.T
+                    X, rcond, _, _, _, _ = slycot.sb02md(n, A.T, G, Q, dico)
+
+                _solve_check_ricc('slycot.sb02md', rcond)
+        else:
+            raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
+
+        return X
+
+    def ricc_dense_solver_options():
+        """Return available Riccati solvers with default options for the slycot backend.
+
+        Returns
+        -------
+        A dict of available solvers with default solver options.
+        """
+
+        return {'slycot': {'type': 'slycot'}}
+
+    def _solve_check_ricc(solver, rcond):
+        if rcond > 1e6:
+            logger = getLogger(solver)
+            logger.warning(f'Estimated relative condition number is large (rcond={rcond:e}). '
+                           f'Result may not be accurate.')
 
     def _solve_check(dtype, solver, sep, ferr):
         if ferr > 1e-1:
