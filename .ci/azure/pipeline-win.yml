@@ -51,7 +51,7 @@ jobs:
     displayName: Install pymor deps
   - task: CondaEnvironment@1
     inputs:
-      packageSpecs: pyevtk slycot cython pytest pytest-cov curl hypothesis pyqt
+      packageSpecs: pyevtk slycot cython pytest pytest-cov curl hypothesis pyqt pyzmq=20
       installOptions: "-c conda-forge"
       updateConda: false
     displayName: Install extra packages
