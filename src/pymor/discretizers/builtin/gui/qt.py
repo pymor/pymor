@@ -185,7 +185,7 @@ def _launch_qt_app(main_window_factory, block):
             app = QCoreApplication.instance()
         main_window = factory()
         if getattr(sys, '_called_from_test', False) and (is_windows_platform() or is_macos_platform()):
-            QTimer.singleShot(500, app, Slot('quit()'))
+            QTimer.singleShot(1000, app.quit)
         main_window.show()
         app.exec_()
 
