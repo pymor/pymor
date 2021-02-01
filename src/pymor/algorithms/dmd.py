@@ -170,6 +170,11 @@ def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, powerIte
     Q = gram_schmidt(Y)
     B = Q.inner(A)
 
+    if not len(Q) == rank:
+        print('Cutting B to Dimension (', B.shape[0], ', ', len(Q), ').',
+              'Not enought orthonormal Vectors in random Projection.')
+        B = B[:, :len(Q)]
+
     return Q, B
 
 
