@@ -11,12 +11,6 @@ jobs:
       osx_python3.6:
         CONFIG: osx_python3.6
         UPLOAD_PACKAGES: False
-      osx_python3.7:
-        CONFIG: osx_python3.7
-        UPLOAD_PACKAGES: False
-      osx_python3.8:
-        CONFIG: osx_python3.8
-        UPLOAD_PACKAGES: False
       osx_python3.9:
         CONFIG: osx_python3.9
         UPLOAD_PACKAGES: False
