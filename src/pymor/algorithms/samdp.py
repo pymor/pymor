@@ -12,9 +12,9 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 
 
-@defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart',
-          'init_shifts', 'rqi_maxiter', 'seed')
-def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=1e-6, conjtol=1e-8,
+@defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
+          'rqi_maxiter', 'seed')
+def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=1e-6, conjtol=1e-8,
           dorqitol=1e-4, rqitol=1e-10, maxrestart=100, krestart=20, rqi_maxiter=10, seed=0):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
@@ -46,9 +46,9 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
         A string specifying the strategy by which the dominant poles and residues are selected.
         Possible values are:
 
-        - `'LR'`: select poles with largest norm(residual) / abs(Re(pole))
-        - `'LS'`: select poles with largest norm(residual) / abs(pole)
-        - `'LM'`: select poles with largest norm(residual)
+        - `'NR'`: select poles with largest norm(residual) / abs(Re(pole))
+        - `'NS'`: select poles with largest norm(residual) / abs(pole)
+        - `'NM'`: select poles with largest norm(residual)
     tol
         Tolerance for the residual of the poles.
     imagtol
@@ -338,11 +338,11 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                 absres[i] = spla.norm(residues[-1], ord=2)
             residues = np.array(residues)
 
-            if which == 'LR':
+            if which == 'NR':
                 idx = np.argsort(-absres / np.abs(np.real(poles)))
-            elif which == 'LS':
+            elif which == 'NS':
                 idx = np.argsort(-absres / np.abs(poles))
-            elif which == 'LM':
+            elif which == 'NM':
                 idx = np.argsort(-absres)
             else:
                 raise ValueError('Unknown SAMDP selection strategy.')
@@ -489,11 +489,11 @@ def _select_max_eig(H, G, X, V, B, C, which):
     X.scal(1 / X.norm())
     residue = spla.norm(C.inner(X), axis=0) * spla.norm(V.inner(B), axis=1)
 
-    if which == 'LR':
+    if which == 'NR':
         idx = np.argsort(-residue / np.abs(np.real(DP)))
-    elif which == 'LS':
+    elif which == 'NS':
         idx = np.argsort(-residue / np.abs(DP))
-    elif which == 'LM':
+    elif which == 'NM':
         idx = np.argsort(-residue)
     else:
         raise ValueError('Unknown SAMDP selection strategy.')

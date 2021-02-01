@@ -15,7 +15,7 @@ n_list = [50, 100]
 m_list = [1, 2]
 k_list = [2, 3]
 wanted_list = [15, 20]
-which_list = ['LR', 'LS', 'LM']
+which_list = ['NR', 'NS', 'NM']
 
 
 def conv_diff_1d_fd(n, a, b):
@@ -73,13 +73,13 @@ def test_samdp(n, m, k, wanted, with_E, which):
         lev[:, i] = lev[:, i] * (1 / lev[:, i].conj().dot(E @ rev[:, i]))
         absres[i] = spla.norm(np.outer(C @ rev[:, i], lev[:, i] @ B), ord=2)
 
-    if which == 'LR':
+    if which == 'NR':
         val = absres / np.abs(np.real(poles))
         dom_val = dom_absres / np.abs(np.real(dom_poles))
-    elif which == 'LS':
+    elif which == 'NS':
         val = absres / np.abs(poles)
         dom_val = dom_absres / np.abs(dom_poles)
-    elif which == 'LM':
+    elif which == 'NM':
         val = absres
         dom_val = dom_absres
 
