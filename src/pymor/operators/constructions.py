@@ -178,21 +178,23 @@ class LincombOperator(Operator):
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if len(self.operators) == 1:
-            if self.coefficients[0] == 0.:
+            coeff = self.evaluate_coefficients(mu)[0]
+            if not coeff:
                 if least_squares:
                     return self.source.zeros(len(V))
                 else:
                     raise InversionError
             else:
                 U = self.operators[0].apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
-                U *= (1. / self.coefficients[0])
+                U *= (1. / coeff)
                 return U
         else:
             return super().apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         if len(self.operators) == 1:
-            if self.coefficients[0] == 0.:
+            coeff = self.evaluate_coefficients(mu)[0]
+            if not coeff:
                 if least_squares:
                     return self.range.zeros(len(U))
                 else:
@@ -200,7 +202,7 @@ class LincombOperator(Operator):
             else:
                 V = self.operators[0].apply_inverse_adjoint(U, mu=mu,
                                                             initial_guess=initial_guess, least_squares=least_squares)
-                V *= (1. / self.coefficients[0])
+                V *= (1. / coeff)
                 return V
         else:
             return super().apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
