@@ -15,23 +15,16 @@ jobs:
 
   steps:
   - script: |
-        curl -o D:\opengl32.dll.7z --retry 5 --retry-connrefused --retry-delay 30 -v https://pymor.github.io/dist/opengl32.dll.7z
-    displayName: download OpenGL Library
-  - task: ExtractFiles@1
-    inputs:
-        archiveFilePatterns: D:\opengl32.dll.7z
-        destinationFolder: D:\tmp\
-        cleanDestinationFolder: false
-  - task: CopyFiles@2
-    inputs:
-        sourceFolder: D:\tmp\
-        contents: 'opengl32.dll*'
-        targetFolder: C:\Windows\SysWOW64\mesadrv.dll
-        overWrite: true
-  - script: |
-        REG IMPORT .ci\azure\replace_opengl_imp.reg
-        choco install codecov
-    displayName: 'Install OpenGL Library'
+        curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.1.1-2/mesa3d-20.1.1-release-mingw.7z
+        7z x mesa.7z -omesa -y
+
+        # The script requires user input (choice of options) so need to
+        # fiddle to get it to run automatically. Not a clean way to do it,
+        # but works.
+        sed -i 's/@echo Please make a deployment choice:/@GOTO desktopgl/g' mesa\systemwidedeploy.cmd
+        sed -i 's/@echo Desktop OpenGL drivers deploy complete./@exit/g' mesa\systemwidedeploy.cmd
+        mesa\systemwidedeploy.cmd
+    displayName: download MESA
 
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
@@ -77,6 +70,7 @@ jobs:
       py.test --cov-context=test --junitxml=test_results.xml --cov=src/pymor --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
 
   - script: |
+      choco install codecov
       coverage xml
       codecov.exe -f coverage.xml
     displayName: 'Upload to codecov.io'
