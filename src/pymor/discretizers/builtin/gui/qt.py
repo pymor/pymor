@@ -267,6 +267,9 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         if backend == 'matplotlib' and not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
     else:
+        if grid.dim == 1:
+            return visualize_matplotlib_1d(grid=grid, U=U, codim=1, title=title, legend=legend,
+                                           separate_plots=separate_colorbars, block=block)
         if not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
 
