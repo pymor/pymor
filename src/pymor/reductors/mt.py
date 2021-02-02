@@ -87,7 +87,10 @@ class MTReductor(BasicObject):
         assert 0 < r < self.fom.order
         assert projection in ('orth', 'biorth')
         assert decomposition in ('eig', 'samdp')
-        assert which in ('LR', 'SM', 'NR', 'NS', 'NM')
+        if decomposition == 'samdp':
+            assert which in ('NR', 'NS', 'NM')
+        else:
+            assert which in ('LR', 'SM', 'NR', 'NS', 'NM')
         assert method_options is None or isinstance(method_options, dict)
         if not method_options:
             method_options = {'which': which}
@@ -136,7 +139,6 @@ class MTReductor(BasicObject):
                 elif which == 'NM':
                     dominance = -np.array(absres)
         elif decomposition == 'samdp':
-            assert which in ('NR', 'NS', 'NM')
             poles, res, rev, lev = samdp(fom.A, fom.E,
                                          fom.B.as_range_array(),
                                          fom.C.as_source_array(),
@@ -148,7 +150,6 @@ class MTReductor(BasicObject):
                 dominance = -(absres / np.abs(poles))
             elif method_options['which'] == 'LM':
                 dominance = -np.array(absres)
-
         idx = sorted(range(len(poles)),
                      key=lambda i: (dominance[i], -poles[i].real,
                                     abs(poles[i].imag), 0 if poles[i].imag >= 0 else 1))
