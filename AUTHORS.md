@@ -10,6 +10,7 @@
 # Contributors
 
 ## pyMOR 2021.1
+
 * Meret Behrens, mbehrens@mpi-magdeburg.mpg.de
 
     * modal truncation for model order reduction
