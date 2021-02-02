@@ -65,11 +65,11 @@ class MTReductor(BasicObject):
             definite.
         which
             A string specifying which `r` eigenvalues and eigenvectors to
-            compute when using the eig decomposition.
+            compute.
             Possible values are:
 
-            - `'SM'`: select eigenvalues with smallest magnitude
-            - `'LR'`: select eigenvalues with largest real part
+            - `'SM'`: select eigenvalues with smallest magnitude (only for decomposition with eig)
+            - `'LR'`: select eigenvalues with largest real part (only for decomposition with eig)
             - `'NR'`: select eigenvalues with largest norm(residual) / abs(Re(pole))
             - `'NS'`: select eigenvalues with largest norm(residual) / abs(pole)
             - `'NM'`: select eigenvalues with largest norm(residual)
@@ -90,7 +90,9 @@ class MTReductor(BasicObject):
         assert which in ('LR', 'SM', 'NR', 'NS', 'NM')
         assert method_options is None or isinstance(method_options, dict)
         if not method_options:
-            method_options = {'which': 'LR'}
+            method_options = {'which': which}
+        else:
+            method_options['which'] = which
 
         if self.fom.parametric:
             fom = self.fom.with_(**{op: getattr(self.fom, op).assemble(mu=self.mu)
@@ -134,6 +136,7 @@ class MTReductor(BasicObject):
                 elif which == 'NM':
                     dominance = -np.array(absres)
         elif decomposition == 'samdp':
+            assert which in ('NR', 'NS', 'NM')
             poles, res, rev, lev = samdp(fom.A, fom.E,
                                          fom.B.as_range_array(),
                                          fom.C.as_source_array(),
