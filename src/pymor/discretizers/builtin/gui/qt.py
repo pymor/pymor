@@ -185,7 +185,7 @@ def _launch_qt_app(main_window_factory, block):
             app = QCoreApplication.instance()
         main_window = factory()
         if getattr(sys, '_called_from_test', False) and (is_windows_platform() or is_macos_platform()):
-            QTimer.singleShot(500, app, Slot('quit()'))
+            QTimer.singleShot(1000, app.quit)
         main_window.show()
         app.exec_()
 
@@ -267,6 +267,9 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         if backend == 'matplotlib' and not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
     else:
+        if grid.dim == 1:
+            return visualize_matplotlib_1d(grid=grid, U=U, codim=1, title=title, legend=legend,
+                                           separate_plots=separate_colorbars, block=block)
         if not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
 
