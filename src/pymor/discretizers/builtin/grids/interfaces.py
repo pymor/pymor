@@ -239,10 +239,10 @@ class Grid(CacheableObject):
             if codim == neighbour_codim:
                 intersection_codim = codim + 1
             else:
-                intersection_codim = min(codim, neighbour_codim)
+                intersection_codim = max(codim, neighbour_codim)
         assert max(codim, neighbour_codim) <= intersection_codim <= self.dim, 'Invalid codimension'
 
-        if intersection_codim == min(codim, neighbour_codim):
+        if intersection_codim == max(codim, neighbour_codim):
             if codim < neighbour_codim:
                 return self.subentities(codim, neighbour_codim)
             elif codim > neighbour_codim:
