@@ -29,11 +29,13 @@ cd ${REPO_DIR}
 git config user.name "pyMOR Bot"
 git config user.email "gitlab-ci@pymor.org"
 git add ${TARGET_DIR}
-git commit -m "Updated docs for ${CI_COMMIT_REF_NAME}"
+(git diff --quiet && git diff --staged --quiet) || \
+  git commit -m "Updated docs for ${CI_COMMIT_REF_NAME}"
 
 ${PYMOR_ROOT}/.ci/gitlab/docs_makeindex.py ${REPO_DIR}
 git add list.html
-git commit -m "Updated index for ${CI_COMMIT_REF_NAME}" || echo "nothing to add"
+(git diff --quiet && git diff --staged --quiet) || \
+  git commit -m "Updated index for ${CI_COMMIT_REF_NAME}"
 
 git push || (git pull --rebase && git push )
 
@@ -54,7 +56,8 @@ done
 git add ${TARGET_DIR}/*ipynb
 git add ${REPO_DIR}/.binder/
 
-git commit -am "Binder setup for ${CI_COMMIT_REF_NAME}"
+(git diff --quiet && git diff --staged --quiet) || \
+  git commit -am "Binder setup for ${CI_COMMIT_REF_NAME}"
 
 # makes sure the binder infra is usable
 repo2docker --user-id 2000 --user-name juno --no-run --debug .
