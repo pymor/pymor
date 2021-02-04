@@ -131,10 +131,13 @@ def test_identity_lincomb():
     identity = IdentityOperator(space)
     ones = space.ones()
     idid = (identity + identity)
+    idid_ = ExpressionParameterFunctional('2', {}) * identity
     assert almost_equal(ones * 2, idid.apply(ones))
     assert almost_equal(ones * 2, idid.apply_adjoint(ones))
     assert almost_equal(ones * 0.5, idid.apply_inverse(ones))
     assert almost_equal(ones * 0.5, idid.apply_inverse_adjoint(ones))
+    assert almost_equal(ones * 0.5, idid_.apply_inverse(ones))
+    assert almost_equal(ones * 0.5, idid_.apply_inverse_adjoint(ones))
 
 
 def test_identity_numpy_lincomb():
