@@ -77,6 +77,11 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
 
     print('SVD of XL...')
     U, SVALS, Vh = svd(XL, product=None, modes=rank)
+
+    if not len(U) == rank:
+        rank = len(U)
+        print('Cutting  to Dimension ', rank, ' - Not enought relevant Singularvectors.')
+
     # Invert the Singular Values
     SVALS_inv = np.reciprocal(SVALS)
     Sigma_inv = np.diag(SVALS_inv)
@@ -241,6 +246,8 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
     assert oversampling >= 0
     assert powerIterations >= 0
 
+    rank = len(A) if target_rank is None else target_rank
+
     Q, B = rand_QB(A, target_rank=target_rank, distribution=distribution, oversampling=oversampling,
                    powerIterations=powerIterations)
 
@@ -252,6 +259,7 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
     # transform Wk to numpy
     Wk = Wk.to_numpy()
 
-    Wk = Q.lincomb(Wk)
+    rank = min(rank, len(B))
+    Wk = Q[:rank].lincomb(Wk[:, :rank])
 
     return Wk, omega
