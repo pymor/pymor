@@ -438,26 +438,28 @@ class LincombParameterFunctional(ParameterFunctional):
 
 
 class MinThetaParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| implementing the min-theta approach from :cite:`Haa17` (Proposition 2.35).
+    """|ParameterFunctional| implementing the min-theta approach from :cite:`Haa17`
+    (Proposition 2.35).
 
-    Let V denote a Hilbert space and let a: V x V -> K denote a parametric coercive bilinear form with affine
-    decomposition ::
+    Let V denote a Hilbert space and let a: V x V -> K denote a parametric coercive bilinear form
+    with affine decomposition ::
 
       a(u, v, mu) = sum_{q = 1}^Q theta_q(mu) a_q(u, v),
 
-    for Q positive coefficient |ParameterFunctional| theta_1, ..., theta_Q and positive semi-definite component
-    bilinear forms a_1, ..., a_Q: V x V -> K. Let mu_bar be a parameter with respect to which the coercivity constant
+    for Q positive coefficient |ParameterFunctional| theta_1, ..., theta_Q and positive
+    semi-definite component bilinear forms a_1, ..., a_Q: V x V -> K. Let mu_bar be a
+    parameter with respect to which the coercivity constant
     of a(., ., mu_bar) is known, i.e. we known alpha_mu_bar > 0, s.t. ::
 
       alpha_mu_bar |u|_V^2 <= a(u, u, mu=mu_bar).
 
-    The min-theta approach from :cite:`Haa17` (Proposition 2.35) allows to obtain a computable bound for the coercivity
-    constant of a(., ., mu) for arbitrary parameters mu, since ::
+    The min-theta approach from :cite:`Haa17` (Proposition 2.35) allows to obtain a computable
+    bound for the coercivity constant of a(., ., mu) for arbitrary parameters mu, since ::
 
       a(u, u, mu=mu) >= min_{q = 1}^Q theta_q(mu)/theta_q(mu_bar) a(u, u, mu=mu_bar).
 
-    Given a list of the thetas, the |parameter values| mu_bar and the constant alpha_mu_bar, this functional thus evaluates
-    to ::
+    Given a list of the thetas, the |parameter values| mu_bar and the constant alpha_mu_bar, this
+    functional thus evaluates to ::
 
       alpha_mu_bar * min_{q = 1}^Q theta_q(mu)/theta_q(mu_bar)
 
@@ -498,21 +500,32 @@ class MinThetaParameterFunctional(ParameterFunctional):
 
 
 class BaseMaxThetaParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| implementing a generalization of the max-theta approach from :cite:`Haa17` (Exercise 5.12).
+    """|ParameterFunctional| implementing a generalization of the max-theta approach from
+    :cite:`Haa17` (Exercise 5.12).
 
-    Let V denote a Hilbert space and let a: V x V -> K denote a continuous bilinear form or l: V -> K a continuous
-    linear functional, either with affine decomposition ::
+    Let V denote a Hilbert space and let a: V x V -> K denote a continuous bilinear form or
+    l: V -> K a continuous linear functional, either with affine decomposition ::
 
-      a(u, v, mu) = sum_{q = 1}^Q theta_q(mu) a_q(u, v)  or  l(v, mu) = sum_{q = 1}^Q theta_q(mu) l_q(v)
+      a(u, v, mu) = sum_{q = 1}^Q theta_q(mu) a_q(u, v)
+
+    or ::
+
+      l(v, mu) = sum_{q = 1}^Q theta_q(mu) l_q(v)
 
     for Q coefficient |ParameterFunctional| theta_1, ..., theta_Q and continuous bilinear forms
-    a_1, ..., a_Q: V x V -> K or continuous linear functionals l_q: V -> K. Let mu_bar be a parameter with respect to
-    which the continuity constant of a(., ., mu_bar) or l(., mu_bar) is known, i.e. we known gamma_mu_bar > 0, s.t. ::
+    a_1, ..., a_Q: V x V -> K or continuous linear functionals l_q: V -> K. Let mu_bar be a
+    parameter with respect to which the continuity constant of a(., ., mu_bar) or l(., mu_bar)
+    is known, i.e. we known gamma_mu_bar > 0, s.t. ::
 
-      a(u, v, mu_bar) <= gamma_mu_bar |u|_V |v|_V  or  l(v, mu_bar) <= gamma_mu_bar |v|_V.
+      a(u, v, mu_bar) <= gamma_mu_bar |u|_V |v|_V
 
-    The max-theta approach (in its generalized form) from :cite:`Haa17` (Exercise 5.12) allows to obtain a computable bound
-    for the continuity constant of another bilinear form a_prime(., ., mu) or linear form l_prime(., mu) with the same
+    or::
+
+      l(v, mu_bar) <= gamma_mu_bar |v|_V.
+
+    The max-theta approach (in its generalized form) from :cite:`Haa17` (Exercise 5.12) allows
+    to obtain a computable bound for the continuity constant of another bilinear form
+    a_prime(., ., mu) or linear form l_prime(., mu) with the same
     affine decomposition but different theta_prime_q for arbitrary parameters mu, since ::
 
       a_prime(u, v, mu=mu) <= |max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)|  |a(u, v, mu=mu_bar)|
@@ -523,8 +536,8 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
 
     if all theta_q(mu_bar) != 0.
 
-    Given a list of the thetas, the |parameter values| mu_bar and the constant gamma_mu_bar, this functional thus evaluates
-    to ::
+    Given a list of the thetas, the |parameter values| mu_bar and the constant gamma_mu_bar,
+    this functional thus evaluates to ::
 
       |gamma_mu_bar * max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)|
 
@@ -587,10 +600,12 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
         raise NotImplementedError
 
 class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
-    """|ParameterFunctional| implementing the max-theta approach from :cite:`Haa17` (Exercise 5.12).
+    """|ParameterFunctional| implementing the max-theta approach from :cite:`Haa17`
+    (Exercise 5.12).
 
-    This is a specialized version of BaseMaxThetaParameterFunctional which allows to obtain a computable bound
-    for the continuity constant of the actual a(., ., mu) or l(., mu) for arbitrary parameters mu, since ::
+    This is a specialized version of BaseMaxThetaParameterFunctional which allows to obtain a
+    computable bound for the continuity constant of the actual a(., ., mu) or l(., mu) for
+    arbitrary parameters mu, since ::
 
       a(u, v, mu=mu) <= |max_{q = 1}^Q theta_q(mu)/theta_q(mu_bar)|  |a(u, v, mu=mu_bar)|
 
@@ -600,8 +615,8 @@ class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
 
     if all theta_q(mu_bar) != 0.
 
-    Given a list of the thetas, the |parameter values| mu_bar and the constant gamma_mu_bar, this functional thus evaluates
-    to ::
+    Given a list of the thetas, the |parameter values| mu_bar and the constant gamma_mu_bar, this
+    functional thus evaluates to ::
 
      |gamma_mu_bar * max{q = 1}^Q theta_q(mu)/theta_q(mu_bar)|
 
