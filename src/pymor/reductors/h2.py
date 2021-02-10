@@ -200,7 +200,7 @@ class IRKAReductor(GenericIRKAReductor):
                compute_errors=False):
         r"""Reduce using IRKA.
 
-        See [GAB08]_ (Algorithm 4.1) and [ABG10]_ (Algorithm 1).
+        See :cite:`GAB08` (Algorithm 4.1) and :cite:`ABG10` (Algorithm 1).
 
         Parameters
         ----------
@@ -439,7 +439,7 @@ class TSIAReductor(GenericIRKAReductor):
                conv_crit='sigma', compute_errors=False):
         r"""Reduce using TSIA.
 
-        See [XZ11]_ (Algorithm 1) and [BKS11]_.
+        See :cite:`XZ11` (Algorithm 1) and :cite:`BKS11`.
 
         In exact arithmetic, TSIA is equivalent to IRKA (under some
         assumptions on the poles of the reduced model). The main
@@ -547,7 +547,7 @@ class TSIAReductor(GenericIRKAReductor):
 class TFIRKAReductor(GenericIRKAReductor):
     """Realization-independent IRKA reductor.
 
-    See [BG12]_.
+    See :cite:`BG12`.
 
     Parameters
     ----------

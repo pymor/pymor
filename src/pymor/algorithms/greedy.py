@@ -14,7 +14,7 @@ from pymor.parallel.interface import RemoteObject
 
 
 def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=None, pool=None):
-    """Weak greedy basis generation algorithm [BCDDPW11]_.
+    """Weak greedy basis generation algorithm :cite:`BCDDPW11`.
 
     This algorithm generates an approximation basis for a given set of vectors
     associated with a training set of parameters by iteratively evaluating a
@@ -146,7 +146,7 @@ def rb_greedy(fom, reductor, training_set, use_error_estimator=True, error_norm=
     """Weak Greedy basis generation using the RB approximation error as surrogate.
 
     This algorithm generates a reduced basis using the :func:`weak greedy <weak_greedy>`
-    algorithm [BCDDPW11]_, where the approximation error is estimated from computing
+    algorithm :cite:`BCDDPW11`, where the approximation error is estimated from computing
     solutions of the reduced order model for the current reduced basis and then estimating
     the model reduction error.
 

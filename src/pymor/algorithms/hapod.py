@@ -69,7 +69,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
           executor=None, eval_snapshots_in_executor=False):
     """Compute the Hierarchical Approximate POD.
 
-    This is an implementation of the HAPOD algorithm from [HLR18]_.
+    This is an implementation of the HAPOD algorithm from :cite:`HLR18`.
 
     Parameters
     ----------
@@ -162,7 +162,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
 def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_snapshots_in_executor=False):
     """Incremental Hierarchical Approximate POD.
 
-    This computes the incremental HAPOD from [HLR18]_.
+    This computes the incremental HAPOD from :cite:`HLR18`.
 
     Parameters
     ----------
@@ -205,7 +205,7 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_sn
 def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, eval_snapshots_in_executor=False):
     """Distributed Hierarchical Approximate POD.
 
-    This computes the distributed HAPOD from [HLR18]_.
+    This computes the distributed HAPOD from :cite:`HLR18`.
 
     Parameters
     ----------
@@ -247,7 +247,7 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, e
 def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
     """Incremental Hierarchical Approximate POD.
 
-    This computes the incremental HAPOD from [HLR18]_ for a given |VectorArray|.
+    This computes the incremental HAPOD from :cite:`HLR18` for a given |VectorArray|.
 
     Parameters
     ----------
@@ -287,7 +287,7 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
 def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=None):
     """Distributed Hierarchical Approximate POD.
 
-    This computes the distributed HAPOD from [HLR18]_ of a given |VectorArray|.
+    This computes the distributed HAPOD from :cite:`HLR18` of a given |VectorArray|.
 
     Parameters
     ----------

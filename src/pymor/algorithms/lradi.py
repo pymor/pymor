@@ -58,7 +58,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     general description.
 
     This function uses the low-rank ADI iteration as described in
-    Algorithm 4.3 in [PK16]_.
+    Algorithm 4.3 in :cite:`PK16`.
 
     Parameters
     ----------
@@ -149,7 +149,7 @@ def projection_shifts_init(A, E, B, shift_options):
     """Find starting shift parameters for low-rank ADI iteration using
     Galerkin projection on spaces spanned by LR-ADI iterates.
 
-    See [PK16]_, pp. 92-95.
+    See :cite:`PK16`, pp. 92-95.
 
     Parameters
     ----------
@@ -184,7 +184,7 @@ def projection_shifts(A, E, V, prev_shifts):
     """Find further shift parameters for low-rank ADI iteration using
     Galerkin projection on spaces spanned by LR-ADI iterates.
 
-    See [PK16]_, pp. 92-95.
+    See :cite:`PK16`, pp. 92-95.
 
     Parameters
     ----------

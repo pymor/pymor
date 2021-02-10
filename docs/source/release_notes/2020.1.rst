@@ -26,7 +26,7 @@ Model order reduction using artificial neural networks
 With this release, we introduce a simple approach for non-intrusive model order
 reduction to pyMOR that makes use of artificial neural networks
 `[#1001] <https://github.com/pymor/pymor/pull/1001>`_. The method was first
-described in [HU18]_ and only requires being able to compute solution snapshots of
+described in :cite:`HU18` and only requires being able to compute solution snapshots of
 the full-order |Model|. Thus, it can be applied to arbitrary (nonlinear) |Models| even when no
 access to the model's |Operators| is possible.
 
@@ -39,7 +39,7 @@ New system analysis and linear algebra algorithms
 The new :meth:`~pymor.algorithms.eigs.eigs` method
 `[#880] <https://github.com/pymor/pymor/pull/880>`_ computes
 smallest/largest eigenvalues of an arbitary linear real |Operator|
-using the implicitly restarted Arnoldi method [RL95]_. It can also
+using the implicitly restarted Arnoldi method :cite:`RL95`. It can also
 be used to solve generalized eigenvalue problems.
 
 So far, computing poles of an |LTIModel| was only supported by its
@@ -47,7 +47,7 @@ So far, computing poles of an |LTIModel| was only supported by its
 solver and converts the operators to dense matrices.
 The new :meth:`~pymor.algorithms.samdp.samdp` method
 `[#834] <https://github.com/pymor/pymor/pull/834>`_ implements the
-subspace accelerated dominant pole (SAMDP) algorithm  [RM06]_,
+subspace accelerated dominant pole (SAMDP) algorithm  :cite:`RM06`,
 which can be used to compute the dominant poles operators of an
 |LTIModel| with arbitrary (in particular sparse) system |Operators|
 without relying on dense matrix operations.

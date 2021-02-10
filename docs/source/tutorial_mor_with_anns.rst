@@ -5,7 +5,7 @@ Tutorial: Model order reduction with artificial neural networks
 
 Recent success of artificial neural networks led to the development of several
 methods for model order reduction using neural networks. pyMOR provides the
-functionality for a simple approach developed by Hesthaven and Ubbiali in [HU18]_.
+functionality for a simple approach developed by Hesthaven and Ubbiali in :cite:`HU18`.
 For training and evaluation of the neural networks, `PyTorch <https://pytorch.org>`_ is used.
 
 In this tutorial we will learn about feedforward neural networks, the basic

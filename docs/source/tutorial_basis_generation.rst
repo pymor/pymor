@@ -52,7 +52,7 @@ However, we will only find a good :math:`V_N` of small dimension
 :math:`N` if the values :math:`d_N` decrease quickly for growing
 :math:`N`. It can be shown that this is the case as soon as :math:`u(\mu)`
 analytically depends on :math:`\mu`, which is true for many problems
-of interest. More precisely, it can be shown [BCDDPW11]_, [DPW13]_ that there are constants
+of interest. More precisely, it can be shown :cite:`BCDDPW11`, :cite:`DPW13` that there are constants
 :math:`C, c > 0` such that
 
 .. math:: d_N \leq C \cdot e^{-N^c}.

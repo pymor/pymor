@@ -18,7 +18,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class GenericSOBTpvReductor(BasicObject):
     """Generic Second-Order Balanced Truncation position/velocity reductor.
 
-    See [RS08]_.
+    See :cite:`RS08`.
 
     Parameters
     ----------
@@ -107,7 +107,7 @@ class GenericSOBTpvReductor(BasicObject):
 class SOBTpReductor(GenericSOBTpvReductor):
     """Second-Order Balanced Truncation position reductor.
 
-    See [RS08]_.
+    See :cite:`RS08`.
 
     Parameters
     ----------
@@ -134,7 +134,7 @@ class SOBTpReductor(GenericSOBTpvReductor):
 class SOBTvReductor(GenericSOBTpvReductor):
     """Second-Order Balanced Truncation velocity reductor.
 
-    See [RS08]_.
+    See :cite:`RS08`.
 
     Parameters
     ----------
@@ -158,7 +158,7 @@ class SOBTvReductor(GenericSOBTpvReductor):
 class SOBTpvReductor(GenericSOBTpvReductor):
     """Second-Order Balanced Truncation position-velocity reductor.
 
-    See [RS08]_.
+    See :cite:`RS08`.
 
     Parameters
     ----------
@@ -182,7 +182,7 @@ class SOBTpvReductor(GenericSOBTpvReductor):
 class SOBTvpReductor(GenericSOBTpvReductor):
     """Second-Order Balanced Truncation velocity-position reductor.
 
-    See [RS08]_.
+    See :cite:`RS08`.
 
     Parameters
     ----------
@@ -208,7 +208,7 @@ class SOBTvpReductor(GenericSOBTpvReductor):
 class SOBTfvReductor(BasicObject):
     """Free-velocity Second-Order Balanced Truncation reductor.
 
-    See [MS96]_.
+    See :cite:`MS96`.
 
     Parameters
     ----------
@@ -292,7 +292,7 @@ class SOBTfvReductor(BasicObject):
 class SOBTReductor(BasicObject):
     """Second-Order Balanced Truncation reductor.
 
-    See [CLVV06]_.
+    See :cite:`CLVV06`.
 
     Parameters
     ----------

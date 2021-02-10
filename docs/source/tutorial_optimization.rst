@@ -526,7 +526,7 @@ functional by
 
 We conclude that we only need to solve for :math:`u_{\mu}` and
 :math:`p_{\mu}` if we want to compute the gradient with the adjoint
-approach. For more information on this approach we refer to Section 1.6.2 in [HPUU09]_.
+approach. For more information on this approach we refer to Section 1.6.2 in :cite:`HPUU09`.
 
 We now intend to use the gradient to speed up the optimization methods
 from above. All technical requirements are

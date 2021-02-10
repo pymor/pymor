@@ -438,7 +438,7 @@ class LincombParameterFunctional(ParameterFunctional):
 
 
 class MinThetaParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| implementing the min-theta approach from [Haa17]_ (Proposition 2.35).
+    """|ParameterFunctional| implementing the min-theta approach from :cite:`Haa17` (Proposition 2.35).
 
     Let V denote a Hilbert space and let a: V x V -> K denote a parametric coercive bilinear form with affine
     decomposition ::
@@ -451,7 +451,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
 
       alpha_mu_bar |u|_V^2 <= a(u, u, mu=mu_bar).
 
-    The min-theta approach from [Haa17]_ (Proposition 2.35) allows to obtain a computable bound for the coercivity
+    The min-theta approach from :cite:`Haa17` (Proposition 2.35) allows to obtain a computable bound for the coercivity
     constant of a(., ., mu) for arbitrary parameters mu, since ::
 
       a(u, u, mu=mu) >= min_{q = 1}^Q theta_q(mu)/theta_q(mu_bar) a(u, u, mu=mu_bar).
@@ -498,7 +498,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
 
 
 class BaseMaxThetaParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| implementing a generalization of the max-theta approach from [Haa17]_ (Exercise 5.12).
+    """|ParameterFunctional| implementing a generalization of the max-theta approach from :cite:`Haa17` (Exercise 5.12).
 
     Let V denote a Hilbert space and let a: V x V -> K denote a continuous bilinear form or l: V -> K a continuous
     linear functional, either with affine decomposition ::
@@ -511,7 +511,7 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
 
       a(u, v, mu_bar) <= gamma_mu_bar |u|_V |v|_V  or  l(v, mu_bar) <= gamma_mu_bar |v|_V.
 
-    The max-theta approach (in its generalized form) from [Haa17]_ (Exercise 5.12) allows to obtain a computable bound
+    The max-theta approach (in its generalized form) from :cite:`Haa17` (Exercise 5.12) allows to obtain a computable bound
     for the continuity constant of another bilinear form a_prime(., ., mu) or linear form l_prime(., mu) with the same
     affine decomposition but different theta_prime_q for arbitrary parameters mu, since ::
 
@@ -587,7 +587,7 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
         raise NotImplementedError
 
 class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
-    """|ParameterFunctional| implementing the max-theta approach from [Haa17]_ (Exercise 5.12).
+    """|ParameterFunctional| implementing the max-theta approach from :cite:`Haa17` (Exercise 5.12).
 
     This is a specialized version of BaseMaxThetaParameterFunctional which allows to obtain a computable bound
     for the continuity constant of the actual a(., ., mu) or l(., mu) for arbitrary parameters mu, since ::

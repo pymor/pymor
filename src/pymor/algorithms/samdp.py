@@ -19,7 +19,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
-    [RM06]_ in Algorithm 2 in order to compute dominant pole triplets and residues of the transfer
+    :cite:`RM06` in Algorithm 2 in order to compute dominant pole triplets and residues of the transfer
     function
 
     .. math::

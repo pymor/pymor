@@ -16,7 +16,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
 
     This reductor uses :class:`~pymor.reductors.basic.InstationaryRBReductor` for the actual
     RB-projection. The only addition is the assembly of an error estimator which
-    bounds the discrete l2-in time / energy-in space error similar to [GP05]_, [HO08]_
+    bounds the discrete l2-in time / energy-in space error similar to :cite:`GP05`, :cite:`HO08`
     as follows:
 
     .. math::
@@ -36,7 +36,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
 
     where :math:`M` denotes the mass operator and :math:`f` the source term.
     The dual norm of the residual is computed using the numerically stable projection
-    from [BEOR14]_.
+    from :cite:`BEOR14`.
 
     Parameters
     ----------

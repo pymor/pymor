@@ -28,7 +28,7 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
 
     if `E` is not `None`.
 
-    The implementation is based on Algorithm 4.2 in [RL95]_.
+    The implementation is based on Algorithm 4.2 in :cite:`RL95`.
 
     Parameters
     ----------

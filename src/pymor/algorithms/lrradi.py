@@ -61,7 +61,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
     general description.
 
-    This function is an implementation of Algorithm 2 in [BBKS18]_.
+    This function is an implementation of Algorithm 2 in :cite:`BBKS18`.
 
     Parameters
     ----------
@@ -207,7 +207,7 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
     eigenvalue of the projected Hamiltonian with the most impact on convergence as the next shift
     parameter.
 
-    See [BBKS18]_, pp. 318-321.
+    See :cite:`BBKS18`, pp. 318-321.
 
     Parameters
     ----------
@@ -277,7 +277,7 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
     :math:`Z` and return the eigenvalue of the projected Hamiltonian with the most impact on
     convergence as the next shift parameter.
 
-    See [BBKS18]_, pp. 318-321.
+    See :cite:`BBKS18`, pp. 318-321.
 
     Parameters
     ----------

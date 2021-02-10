@@ -128,7 +128,7 @@ def gram_schmidt_biorth(V, W, product=None,
                         copy=True):
     """Biorthonormalize a pair of |VectorArrays| using the biorthonormal Gram-Schmidt process.
 
-    See Algorithm 1 in [BKS11]_.
+    See Algorithm 1 in :cite:`BKS11`.
 
     Parameters
     ----------
