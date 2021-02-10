@@ -21,7 +21,7 @@ class WrappedVector(CopyOnWriteVector):
         return cls(instance._impl)
 
     def to_numpy(self, ensure_copy=False):
-        result = np.frombuffer(self._impl, dtype=np.float)
+        result = np.frombuffer(self._impl, dtype=np.float64)
         if ensure_copy:
             result = result.copy()
         return result

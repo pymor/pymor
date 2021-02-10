@@ -165,7 +165,7 @@ class EngquistOsherFlux(NumericalConvectiveFlux):
         self.__auto_init(locals())
         points, weights = GaussQuadratures.quadrature(npoints=self.gausspoints)
         points = points / intervals
-        points = ((np.arange(self.intervals, dtype=np.float)[:, np.newaxis] * (1 / intervals))
+        points = ((np.arange(self.intervals, dtype=np.float64)[:, np.newaxis] * (1 / intervals))
                   + points[np.newaxis, :]).ravel()
         weights = np.tile(weights, intervals) * (1 / intervals)
         self.points = points
