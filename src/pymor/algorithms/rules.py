@@ -56,10 +56,6 @@ class rule:
     condition_description = None
     condition_type = None
 
-    def __repr__(self):
-        from pymor.tools.formatsrc import source_repr
-        return source_repr(self.action)
-
     @property
     def action_description(self):
         return self.action.__doc__ or self.action.__name__[len('action_'):]
