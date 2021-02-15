@@ -30,13 +30,3 @@ def print_source(obj):
         display(source)
     else:
         print(source)
-
-
-def source_repr(obj):
-    source = format_source(obj)
-    if is_jupyter():
-        from IPython.display import display
-        display(source)
-        return ''
-    else:
-        return source
