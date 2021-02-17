@@ -7,6 +7,9 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.algorithms.gram_schmidt import gram_schmidt
 
+from pymor.operators.constructions import VectorArrayOperator
+from pymor.algorithms.genericsolvers import lsqr
+
 
 @defaults('svd_method')
 def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=True, svd_method='qr_svd'):
@@ -263,3 +266,14 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
     Wk = Q[:rank].lincomb(Wk[:, :rank])
 
     return Wk, omega
+
+
+def get_amplitudes(A, Wk):
+    '''Compute amplitueds b using least-squares: Fb=x1'''
+    W_OP = VectorArrayOperator(Wk)
+    return lsqr(W_OP, A[0])[0].to_numpy()
+
+
+def get_vandermonde(A, EVals):
+    '''Compute Vandermonde matrix'''
+    return np.fliplr(np.vander(EVals, N=len(A)))
