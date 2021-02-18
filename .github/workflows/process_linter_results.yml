@@ -42,8 +42,11 @@ jobs:
         run: pip install lintly==0.5.0
       - name: 'Comment on PR'
         run: |
-          cat ./flake8.out | lintly --fail-on=new \
+          cat ./flake8.out | lintly --use-checks \
+            --fail-on new \
             --pr="$(cat ./pr_number)" \
+            --exit-zero \
+            --no-post-status \
             --commit-sha="$(cat ./head_sha)"
         env:
           LINTLY_API_KEY: ${{ secrets.GITHUB_TOKEN }}
