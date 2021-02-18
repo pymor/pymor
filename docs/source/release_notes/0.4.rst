@@ -78,12 +78,12 @@ For an example, see :meth:`pymordemos.thermalblock_simple.discretize_fenics`.
 New reduction algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~
 - :meth:`~pymor.algorithms.adaptivegreedy.adaptive_greedy` uses adaptive
-  parameter training set refinement according to [HDO11]_ to prevent
+  parameter training set refinement according to :cite:`HDO11` to prevent
   overfitting of the reduced model to the training set `[#213] <https://github.com/pymor/pymor/pull/213>`_.
 
 - :meth:`~pymor.reductors.parabolic.reduce_parabolic` reduces linear parabolic
   problems using :meth:`~pymor.reductors.basic.reduce_generic_rb` and
-  assembles an error estimator similar to [GP05]_, [HO08]_.
+  assembles an error estimator similar to :cite:`GP05`, :cite:`HO08`.
   The :mod:`~pymordemos.parabolic_mor` demo contains a simple sample
   application using this reductor `[#190] <https://github.com/pymor/pymor/issues/190>`_.
 

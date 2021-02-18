@@ -42,9 +42,11 @@ extensions = ['sphinx.ext.autodoc',
               'jupyter_sphinx',
               'sphinx.ext.mathjax',
               'sphinx_qt_documentation',
+              'sphinxcontrib.bibtex',
               'gen_apidoc'
               ]
 
+bibtex_bibfiles = ['bibliography.bib']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

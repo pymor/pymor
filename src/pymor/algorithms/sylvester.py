@@ -23,7 +23,7 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         A^T W E_r + E^T W A_r + C^T C_r = 0
 
     or both using (generalized) Schur decomposition (Algorithms 3 and 4
-    in [BKS11]_), if the necessary parameters are given.
+    in :cite:`BKS11`), if the necessary parameters are given.
 
     Parameters
     ----------

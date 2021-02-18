@@ -12,15 +12,15 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 
 
-@defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
-          'rqi_maxiter', 'seed')
+@defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart',
+          'init_shifts', 'rqi_maxiter', 'seed')
 def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=1e-6, conjtol=1e-8,
           dorqitol=1e-4, rqitol=1e-10, maxrestart=100, krestart=20, rqi_maxiter=10, seed=0):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
-    [RM06]_ in Algorithm 2 in order to compute dominant pole triplets and residues of the transfer
-    function
+    :cite:`RM06` in Algorithm 2 in order to compute dominant pole triplets and residues of the
+    transfer function
 
     .. math::
         H(s) = C (s E - A)^{-1} B
@@ -191,8 +191,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='LR', tol=1e-10, imagtol=
                     nres = nrr
 
             if nres < dorqitol and do_rqi and nres >= tol:
-                schurvec, lschurvec, theta, nres = _twosided_rqi(A, E, schurvec, lschurvec, theta, nres,
-                                                                 imagtol, rqitol, rqi_maxiter)
+                schurvec, lschurvec, theta, nres = _twosided_rqi(A, E, schurvec, lschurvec, theta,
+                                                                 nres, imagtol, rqitol, rqi_maxiter)
                 do_rqi = False
                 if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
                     rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)

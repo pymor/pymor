@@ -19,7 +19,7 @@ class CoerciveRBReductor(StationaryRBReductor):
     estimator which evaluates the dual norm of the residual with respect to a given inner
     product. For the reduction of the residual we use
     :class:`~pymor.reductors.residual.ResidualReductor` for improved numerical stability
-    [BEOR14]_.
+    :cite:`BEOR14`.
 
     Parameters
     ----------

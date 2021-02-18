@@ -274,7 +274,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
             #    feed in first some augmentation vectors, before
             #    starting to construct the Krylov basis on `v0`.
             #
-            #    It was shown in [BJM]_ that a good choice (the LGMRES choice)
+            #    It was shown in :cite:`BJM` that a good choice (the LGMRES choice)
             #    for these augmentation vectors are the `dx` vectors obtained
             #    from a couple of the previous restart cycles.
             #

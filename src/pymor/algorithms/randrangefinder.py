@@ -16,7 +16,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
                  failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False):
     r"""Adaptive randomized range approximation of `A`.
 
-    This is an implementation of Algorithm 1 in [BS18]_.
+    This is an implementation of Algorithm 1 in :cite:`BS18`.
 
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
     `B` with the property
@@ -98,7 +98,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
     """Randomized range approximation of `A`.
 
-    This is an implementation of Algorithm 4.4 in [HMT11]_.
+    This is an implementation of Algorithm 4.4 in :cite:`HMT11`.
 
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
     `Q` whose vectors form an approximate orthonomal basis for the range of `A`.

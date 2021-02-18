@@ -28,7 +28,7 @@ if config.HAVE_TORCH:
         orthogonal decomposition and trains a neural network that approximates
         the mapping from parameter space to coefficients of the full-order
         solution in the reduced basis.
-        The approach is described in [HU18]_.
+        The approach is described in :cite:`HU18`.
 
         Parameters
         ----------
@@ -330,7 +330,7 @@ if config.HAVE_TORCH:
         orthogonal decomposition and trains a neural network that approximates
         the mapping from parameter and time space to coefficients of the
         full-order solution in the reduced basis.
-        The approach is described in [WHR19]_.
+        The approach is described in :cite:`WHR19`.
 
         Parameters
         ----------

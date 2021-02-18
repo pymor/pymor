@@ -122,7 +122,7 @@ class GenericBTReductor(BasicObject):
 class BTReductor(GenericBTReductor):
     """Standard (Lyapunov) Balanced Truncation reductor.
 
-    See Section 7.3 in [A05]_.
+    See Section 7.3 in :cite:`A05`.
 
     Parameters
     ----------
@@ -142,7 +142,7 @@ class BTReductor(GenericBTReductor):
 class LQGBTReductor(GenericBTReductor):
     r"""Linear Quadratic Gaussian (LQG) Balanced Truncation reductor.
 
-    See Section 3 in [MG91]_.
+    See Section 3 in :cite:`MG91`.
 
     Parameters
     ----------
@@ -178,7 +178,7 @@ class LQGBTReductor(GenericBTReductor):
 class BRBTReductor(GenericBTReductor):
     r"""Bounded Real (BR) Balanced Truncation reductor.
 
-    See [A05]_ (Section 7.5.3) and [OJ88]_.
+    See :cite:`A05` (Section 7.5.3) and :cite:`OJ88`.
 
     Parameters
     ----------

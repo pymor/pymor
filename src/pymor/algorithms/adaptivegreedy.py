@@ -22,7 +22,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
 
     This method extends pyMOR's default :func:`~pymor.algorithms.greedy.weak_greedy`
     greedy basis generation algorithm by adaptive refinement of the
-    parameter training set according to [HDO11]_ to prevent overfitting
+    parameter training set according to :cite:`HDO11` to prevent overfitting
     of the approximation basis to the training set. This is achieved by
     estimating the approximation error on an additional validation set of
     parameters. If the ratio between the estimated errors on the validation
@@ -235,7 +235,7 @@ def rb_adaptive_greedy(fom, reductor, parameter_space,
 
     This method extends pyMOR's default :func:`~pymor.algorithms.greedy.rb_greedy`
     greedy reduced basis generation algorithm by adaptive refinement of the
-    parameter training set [HDO11]_ to prevent overfitting
+    parameter training set :cite:`HDO11` to prevent overfitting
     of the reduced basis to the training set as implemented in :func:`adaptive_weak_greedy`.
 
     Parameters

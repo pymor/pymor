@@ -22,7 +22,7 @@ class GenericBHIReductor(BasicObject):
     :class:`~pymor.models.iosys.InputStateOutputModel` with the transfer
     function which can be written in the generalized coprime
     factorization :math:`H(s) = \mathcal{C}(s) \mathcal{K}(s)^{-1}
-    \mathcal{B}(s)` as in [BG09]_. The interpolation here is limited to
+    \mathcal{B}(s)` as in :cite:`BG09`. The interpolation here is limited to
     only up to the first derivative. Interpolation points are assumed to
     be pairwise distinct.
 
@@ -335,7 +335,7 @@ class DelayBHIReductor(GenericBHIReductor):
 class TFBHIReductor(BasicObject):
     """Loewner bitangential Hermite interpolation reductor.
 
-    See [BG12]_.
+    See :cite:`BG12`.
 
     Parameters
     ----------

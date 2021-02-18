@@ -110,7 +110,7 @@ class StationaryModel(Model):
         use_adjoint
             if `None` use standard approach, if `True`, use
             the adjoint solution for a more efficient way of computing the gradient.
-            See Section 1.6.2 in [HPUU09]_ for more details.
+            See Section 1.6.2 in :cite:`HPUU09` for more details.
             So far, the adjoint approach is only valid for linear models.
 
         Returns

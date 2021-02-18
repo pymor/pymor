@@ -49,9 +49,10 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
                     'pillow': 'image library used for bitmap data functions'}
 doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
-                'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material'] + install_requires
-ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel', 
-               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout', 
+                'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
+                'sphinxcontrib-bibtex'] + install_requires
+ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
+               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
                'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19', 'PyQt5!=5.15.2,>5.7,!=5.15.2.*']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',

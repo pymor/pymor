@@ -29,7 +29,7 @@ class SORIRKAReductor(GenericIRKAReductor):
         r"""Reduce using SOR-IRKA.
 
         It uses IRKA as the intermediate reductor, to reduce from 2r to
-        r poles. See Section 5.3.2 in [W12]_.
+        r poles. See Section 5.3.2 in :cite:`W12`.
 
         Parameters
         ----------

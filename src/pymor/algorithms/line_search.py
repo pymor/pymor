@@ -11,7 +11,7 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None,
            alpha_init=1.0, tau=0.5, beta=0.0001, maxiter=10):
     """Armijo line search algorithm.
 
-    This method computes a step size such that the Armijo condition (see [NW06]_, p. 33)
+    This method computes a step size such that the Armijo condition (see :cite:`NW06`, p. 33)
     is fulfilled.
 
     Parameters

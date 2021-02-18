@@ -19,7 +19,7 @@ where
 :math:`x` the state, and
 :math:`y` the output of the system,
 and :math:`A, B, C, D, E` are matrices of appropriate dimensions
-(more details can be found in [A05]_).
+(more details can be found in :cite:`A05`).
 In pyMOR, these models are captured by |LTIModels|,
 which contain the matrices :math:`A, B, C, D, E` as |Operators|.
 We start by building an |LTIModel| and then demonstrate some of its properties,
@@ -232,7 +232,7 @@ assuming that :math:`E` is invertible.
 Conversely, the eigenvalues of :math:`E^{-1} A` are the poles of the system
 in the generic case
 (more precisely, if the system is minimal, i.e., controllable and observable;
-see [A05]_).
+see :cite:`A05`).
 
 The poles of an |LTIModel| can be obtained using its
 :meth:`~pymor.models.iosys.LTIModel.poles` method
