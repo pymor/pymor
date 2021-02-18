@@ -56,6 +56,11 @@ class rule:
     condition_description = None
     condition_type = None
 
+    def _ipython_display_(self):
+        from inspect import getsource
+        from IPython.display import Code, display
+        display(Code(getsource(self.action), language='python'))
+
     @property
     def action_description(self):
         return self.action.__doc__ or self.action.__name__[len('action_'):]
