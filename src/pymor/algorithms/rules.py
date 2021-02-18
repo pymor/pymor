@@ -61,6 +61,17 @@ class rule:
         from IPython.display import Code, display
         display(Code(getsource(self.action), language='python'))
 
+    def __repr__(self):
+        from inspect import getsource
+        source = getsource(self.action)
+        try:
+            from pygments import highlight
+            from pygments.lexers import PythonLexer
+            from pygments.formatters import Terminal256Formatter
+            return highlight(source, PythonLexer(), Terminal256Formatter())
+        except ImportError:
+            return source
+
     @property
     def action_description(self):
         return self.action.__doc__ or self.action.__name__[len('action_'):]
