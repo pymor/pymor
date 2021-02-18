@@ -560,7 +560,7 @@ be the first matching rule. We can take a look at it:
 
 .. jupyter-execute::
 
-    print_source(ProjectRules.rules[8].action)
+    ProjectRules.rules[8]
 
 The implementation of the action for |LincombOperators| uses the
 :meth:`~pymor.algorithms.rules.RuleTable.replace_children` method of |RuleTable|,
@@ -585,7 +585,7 @@ will apply:
 
 .. jupyter-execute::
 
-    print_source(ProjectRules.rules[3].action)
+    ProjectRules.rules[3]
 
 This action has special cases for all possible combinations of given or not-given
 :attr:`~pymor.operators.interface.Operator.range` and :attr:`~pymor.operators.interface.Operator.source`
