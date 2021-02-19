@@ -239,6 +239,7 @@ class classinstancemethod:
             @wraps(self.cls_meth)
             def the_class_method(*args, **kwargs):
                 return self.cls_meth(cls, *args, **kwargs)
+            the_class_method.autoapi_skip = True
             return the_class_method
         else:
             @wraps(self.inst_meth)

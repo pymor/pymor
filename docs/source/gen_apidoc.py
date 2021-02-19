@@ -79,6 +79,11 @@ def never_skip(app, what, name, obj, skip, options):
             return False
     except:
         pass
+    try:
+        if obj.autoapi_skip:
+            return True
+    except:
+        pass
     return None
 
 
