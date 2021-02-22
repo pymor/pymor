@@ -6,9 +6,10 @@ if config.HAVE_DUNEGDT:
     from functools import partial
 
     from dune.xt.grid import (
-            ApplyOnAllIntersectionsOnce,
+            ApplyOnBoundaryIntersections,
             ApplyOnCustomBoundaryIntersections,
             Dim,
+            DirichletBoundary,
             NeumannBoundary,
             RobinBoundary,
             Walker,
@@ -23,11 +24,14 @@ if config.HAVE_DUNEGDT:
             LocalElementIntegralBilinearForm,
             LocalElementIntegralFunctional,
             LocalElementProductIntegrand,
+            LocalIntersectionIntegralBilinearForm,
+            LocalIntersectionIntegralFunctional,
             LocalIntersectionProductIntegrand,
             LocalLaplaceIntegrand,
             LocalLinearAdvectionIntegrand,
             MatrixOperator,
             VectorFunctional,
+            boundary_interpolation,
             make_element_sparsity_pattern,
             )
 
@@ -41,9 +45,10 @@ if config.HAVE_DUNEGDT:
             DuneXTVector,
             DuneXTVectorSpace,
             )
+    from pymor.core.base import ImmutableObject
     from pymor.discretizers.dunegdt.domaindiscretizers.default import discretize_domain_default
     from pymor.models.basic import StationaryModel
-    from pymor.operators.constructions import LincombOperator, VectorArrayOperator
+    from pymor.operators.constructions import ConstantOperator, LincombOperator, VectorArrayOperator
 
 
     def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
@@ -53,6 +58,8 @@ if config.HAVE_DUNEGDT:
 
         Note: all data functions are replaced by their respective non-conforming interpolations. This allows to simply
               use pyMORs data |Function|s at the expense of one DoF vector for each data function during discretization.
+
+        WARNING: only works for advection 1 and Neumann 0 atm!
 
         Parameters
         ----------
@@ -100,12 +107,19 @@ if config.HAVE_DUNEGDT:
         p = analytical_problem
         d = p.domain.dim
 
+        assert p.dirichlet_data is None or not p.dirichlet_data.parametric
+
         if not (p.nonlinear_advection
                 == p.nonlinear_advection_derivative
                 == p.nonlinear_reaction
                 == p.nonlinear_reaction_derivative
                 is None):
             raise NotImplementedError
+
+        # see below
+        assert d == 1
+        assert all(p.advection.functions[0].value == [1])
+        assert p.neumann_data.value == 0
 
         if grid is None:
             domain_discretizer = domain_discretizer or discretize_domain_default
@@ -117,40 +131,41 @@ if config.HAVE_DUNEGDT:
                 grid, boundary_info = domain_discretizer(p.domain, diameter=diameter)
 
         # prepare to interpolate data functions
-        interpolation_space = {}
-        interpolation_points = {}
+        interpolation_space = {'scalar': {}, 'vector': {}}
+        interpolation_points = {'scalar': {}, 'vector': {}}
 
-        def interpolate_single(func):
+        def interpolate_single(func, pol_order=data_approximation_order):
             assert isinstance(func, Function)
             if func.shape_range in ((), (1,)):
-                if not 'scalar' in interpolation_space:
-                    interpolation_space['scalar'] = DiscontinuousLagrangeSpace(
-                            grid, order=data_approximation_order, dim_range=Dim(1))
-                if not 'scalar' in interpolation_points:
-                    interpolation_points['scalar'] = interpolation_space['scalar'].interpolation_points()
-                df = DiscreteFunction(interpolation_space['scalar'], la_backend)
+                if not pol_order in interpolation_space['scalar']:
+                    interpolation_space['scalar'][pol_order] = DiscontinuousLagrangeSpace(
+                            grid, order=pol_order, dim_range=Dim(1))
+                if not pol_order in interpolation_points['scalar']:
+                    interpolation_points['scalar'][pol_order] = interpolation_space['scalar'][pol_order].interpolation_points()
+                df = DiscreteFunction(interpolation_space['scalar'][pol_order], la_backend)
                 np_view = np.array(df.dofs.vector, copy=False)
-                np_view[:] = func.evaluate(interpolation_points['scalar'])[:].ravel()
+                np_view[:] = func.evaluate(interpolation_points['scalar'][pol_order])[:].ravel()
                 return df
             elif func.shape_range == (d,):
-                if not 'vector' in interpolation_space:
-                    interpolation_space['vector'] = DiscontinuousLagrangeSpace(
-                            grid, order=data_approximation_order, dim_range=Dim(d))
-                if not 'vector' in interpolation_points:
-                    interpolation_points['vector'] = interpolation_space['vector'].interpolation_points()
-                df = DiscreteFunction(interpolation_space['vector'], la_backend)
+                if not pol_order in interpolation_space['vector']:
+                    interpolation_space['vector'][pol_order] = DiscontinuousLagrangeSpace(
+                            grid, order=pol_order, dim_range=Dim(d))
+                if not pol_order in interpolation_points['vector']:
+                    interpolation_points['vector'][pol_order] = interpolation_space['vector'][pol_order].interpolation_points()
+                df = DiscreteFunction(interpolation_space['vector'][pol_order], la_backend)
                 np_view = np.array(df.dofs.vector, copy=False)
-                np_view[:] = func.evaluate(interpolation_points['vector'])[:].ravel()
+                np_view[:] = func.evaluate(interpolation_points['vector'][pol_order])[:].ravel()
                 return df
             else:
-                raise NotImplementedError(f'I do not know how to interpolate a function with {func.shape_range}!')
+                raise NotImplementedError(f'I do not know how to interpolate a {func.shape_range}d function!')
 
-        def interpolate(func):
+
+        def interpolate(func, pol_order=data_approximation_order):
             if isinstance(func, LincombFunction):
-                return [interpolate_single(ff) for ff in func.functions], func.coefficients
+                return [interpolate_single(ff, pol_order) for ff in func.functions], func.coefficients
             elif not isinstance(func, Function):
                 func = ConstantFunction(value_array=func, dim_domain=d)
-            return [interpolate_single(func)], [1]
+            return [interpolate_single(func, pol_order)], [1]
 
         # preparations for the actual discretization
         space = ContinuousLagrangeSpace(grid, order=order, dim_range=Dim(1))
@@ -223,7 +238,7 @@ if config.HAVE_DUNEGDT:
                 for r_bv_func, r_bv_coeff in zip(robin_boundary_values_funcs, robin_boundary_values_coeffs):
                     rhs_ops += [make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func)]
                     rhs_coeffs += [r_param_coeff*r_bv_coeff]
-        
+
         # source contribution
         if p.rhs:
             def make_l2_functional(func):
@@ -240,16 +255,29 @@ if config.HAVE_DUNEGDT:
         if p.neumann_data:
             def make_l2_neumann_boundary_functional(func):
                 op = VectorFunctional(grid, space, la_backend)
-                op += (LocalIntersectionIntegralFunctional(
-                            LocalIntersectionProductIntegrand(GF(grid, 1)).with_ansatz(-GF(grid, func))), {},
+                op += (LocalIntersectionIntegralFunctional( # TODO: should be -GF here!
+                            LocalIntersectionProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, func))), {},
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
                 return op
 
             neumann_data_funcs, neumann_data_coeffs = interpolate(p.neumann_data)
             rhs_ops += [make_l2_neumann_boundary_functional(func) for func in neumann_data_funcs]
             rhs_coeffs += list(neumann_data_coeffs)
+        if p.diffusion and p.advection:
+            # enforce total flux = Neumann, instead of only diffusive flux = Neumann
+            # WARNING: assumes func*normal = 1, TODO: should use (func*normal) instead of 1 below!
+            def make_total_flux_correction_neumann_boundary_operator(func):
+                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+                op += (LocalIntersectionIntegralBilinearForm(LocalIntersectionProductIntegrand(GF(grid, 1))), {},
+                       ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
+                return op
 
-        # dirichlet boundaries will be handled further below ...
+            # unconstrained_lhs_ops += [make_total_flux_correction_neumann_boundary_operator(func) for func in robin_parameter_funcs]
+            # unconstrained_lhs_coeffs += list(robin_parameter_coeffs)
+            unconstrained_lhs_ops += [make_total_flux_correction_neumann_boundary_operator(None),]
+            unconstrained_lhs_coeffs += [1,]
+
+        # Dirichlet boundaries will be handled further below ...
 
         # products
         l2_product = make_weighted_l2_operator(1)
@@ -261,16 +289,18 @@ if config.HAVE_DUNEGDT:
             if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
                 raise NotImplementedError(f'I do not know how to discretize a {v[0]} output!')
             for output_type, output_data in p.outputs:
-                output_data = interpolate_single(output_data)
                 if output_type == 'l2':
+                    output_data = interpolate_single(output_data)
                     op = VectorFunctional(grid, space, la_backend)
                     op += LocalElementIntegralFunctional(LocalElementProductIntegrand(grid).with_ansatz(output_data))
                     outputs.append(op)
                 elif output_type == 'l2_boundary':
+                    output_data = interpolate_single(output_data,
+                            pol_order=data_approximation_order if data_approximation_order > 0 else 1)
                     op = VectorFunctional(grid, space, la_backend)
-                    op += (LocalIntersectionIntegralBilinearForm(
-                            LocalIntersectionProductIntegrand(grid).with_ansatz(output_data)), {},
-                            ApplyOnAllIntersectionsOnce(grid))
+                    op += (LocalIntersectionIntegralFunctional(
+                            LocalIntersectionProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, output_data))), {},
+                            ApplyOnBoundaryIntersections(grid))
                     outputs.append(op)
                 else:
                     raise NotImplementedError(f'I do not know how to discretize a {v[0]} output!')
@@ -291,39 +321,43 @@ if config.HAVE_DUNEGDT:
             walker.append(op)
         walker.walk(thread_parallel=False) # support not stable/enabled yet
 
-        # apply the dirichlet constraints
-        for op in constrained_lhs_ops:
-            dirichlet_constraints.apply(op.matrix, only_clear=True, ensure_symmetry=True)
-        for op in rhs_ops:
-            dirichlet_constraints.apply(op.vector) # sets to zero
+        # extract vectors from functionals
+        rhs_ops = [op.vector for op in rhs_ops]
+
+        # compute the Dirichlet shift before constraining
+        if p.dirichlet_data:
+            # we first require an interpolation of first order
+            dirichlet_data = interpolate_single(p.dirichlet_data, pol_order=1)
+            # secondly, we restrict this interpolation to the Dirichlet boundary
+            dirichlet_data = boundary_interpolation(GF(grid, dirichlet_data), space, boundary_info, DirichletBoundary())
+
+            for op, coeff in zip(constrained_lhs_ops, constrained_lhs_coeffs):
+                rhs_ops += [op.apply(dirichlet_data.dofs.vector),]
+                rhs_coeffs += [-1*coeff]
+
+        # prepare additional products`
         l2_0_product = MatrixOperator(grid, space, space, l2_product.matrix.copy()) # using operators here just for
         h1_0_semi_product = MatrixOperator(grid, space, space, h1_semi_product.matrix.copy()) # unified handling below
+
+        # apply the Dirichlet constraints
+        for op in constrained_lhs_ops:
+            dirichlet_constraints.apply(op.matrix, only_clear=True, ensure_symmetry=True)
+        for vec in rhs_ops:
+            dirichlet_constraints.apply(vec) # sets to zero
         dirichlet_constraints.apply(l2_0_product.matrix, ensure_symmetry=True)
         dirichlet_constraints.apply(h1_0_semi_product.matrix, ensure_symmetry=True)
 
-        # ... and finally handle the dirichlet boundary values
-        # - lhs contribution: a matrix to hold the unit rows/cols
+        # create a matrix to hold the unit rows/cols corresponding to Dirichlet DoFs
         op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
         dirichlet_constraints.apply(op.matrix)
         lhs_ops = [op] + constrained_lhs_ops + unconstrained_lhs_ops
         lhs_coeffs = [1.] + constrained_lhs_coeffs + unconstrained_lhs_coeffs
 
-        # - rhs contribution: a vector to hold the boundary values
-        if p.dirichlet_data:
-            dirichlet_data = interpolate_single(p.dirichlet_data)
-
-            op = VectorFunctional(grid, space, la_backend) # just for the vector and unified handling below
-            dirichlet_DoFs = list(dirichlet_constraints.dirichlet_DoFs)
-            np.array(op.vector, copy=False)[dirichlet_DoFs] = np.array(dirichlet_data.dofs.vector, copy=False)[dirichlet_DoFs]
-
-            rhs_ops += [op]
-            rhs_coeffs += [1.]
-
         # wrap everything as pyMOR operators
         lhs_ops = [DuneXTMatrixOperator(op.matrix) for op in lhs_ops]
         L = LincombOperator(operators=lhs_ops, coefficients=lhs_coeffs, name='ellipticOperator')
 
-        rhs_ops = [VectorArrayOperator(lhs_ops[0].range.make_array([DuneXTVector(op.vector)])) for op in rhs_ops]
+        rhs_ops = [VectorArrayOperator(lhs_ops[0].range.make_array([DuneXTVector(vec)])) for vec in rhs_ops]
         F = LincombOperator(operators=rhs_ops, coefficients=rhs_coeffs, name='rhsOperator')
 
         products = {'h1': (DuneXTMatrixOperator(l2_product.matrix)
@@ -335,7 +369,14 @@ if config.HAVE_DUNEGDT:
                     'h1_0_semi': DuneXTMatrixOperator(h1_0_semi_product.matrix),
                     'l2_0': DuneXTMatrixOperator(l2_0_product.matrix)}
 
-        outputs = [DuneXTVector(op) for op in outputs]
+        outputs = [VectorArrayOperator(lhs_ops[0].source.make_array([DuneXTVector(op.vector)]), adjoint=True) for op in outputs]
+        if p.dirichlet_data:
+            dirichlet_data = lhs_ops[0].source.make_array([DuneXTVector(dirichlet_data.dofs.vector),])
+            # add Dirichlet shift
+            outputs = [func + ConstantOperator(value=func.apply(dirichlet_data), source=func.source) for func in outputs]
+        else:
+            dirichlet_data = lhs_ops[0].source.zeros(1)
+
         if len(outputs) == 0:
             output_functional = None
         elif len(outputs) == 1:
@@ -345,15 +386,28 @@ if config.HAVE_DUNEGDT:
             output_functional = BlockColumnOperator(outputs)
 
         # visualizer
+        class ShiftedVisualizer(ImmutableObject):
+            def __init__(self, visualizer, shift):
+                self.__auto_init(locals())
+
+            def visualize(self, U, m, **kwargs):
+                self.visualizer.visualize(U + self.shift, m, **kwargs)
+
+
         if d == 1:
-            visualizer = DuneGDT1dMatplotlibVisualizer(space)
+            unshifted_visualizer = DuneGDT1dMatplotlibVisualizer(space)
         else:
-            visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
+            unshifted_visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
+
+        visualizer = ShiftedVisualizer(unshifted_visualizer, dirichlet_data)
 
         m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
                              name=f'{p.name}_CG')
 
-        data = {'grid': grid, 'boundary_info': boundary_info}
+        data = {'grid': grid,
+                'boundary_info': boundary_info,
+                'dirichlet_shift': dirichlet_data,
+                'unshifted_visualizer': unshifted_visualizer}
 
         return m, data
 
