@@ -35,9 +35,12 @@ if config.HAVE_DUNEGDT:
             make_element_sparsity_pattern,
             )
 
+    from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
     from pymor.analyticalproblems.elliptic import StationaryProblem
+    from pymor.analyticalproblems.instationary import InstationaryProblem
     from pymor.analyticalproblems.functions import Function, ConstantFunction, LincombFunction
     from pymor.bindings.dunegdt import (
+            DuneGDT1dasNumpyVisualizer,
             DuneGDT1dMatplotlibVisualizer,
             DuneGDTK3dVisualizer,
             DuneGDTParaviewVisualizer,
@@ -47,7 +50,7 @@ if config.HAVE_DUNEGDT:
             )
     from pymor.core.base import ImmutableObject
     from pymor.discretizers.dunegdt.domaindiscretizers.default import discretize_domain_default
-    from pymor.models.basic import StationaryModel
+    from pymor.models.basic import InstationaryModel, StationaryModel
     from pymor.operators.constructions import ConstantOperator, LincombOperator, VectorArrayOperator
 
 
@@ -58,6 +61,11 @@ if config.HAVE_DUNEGDT:
 
         Note: all data functions are replaced by their respective non-conforming interpolations. This allows to simply
               use pyMORs data |Function|s at the expense of one DoF vector for each data function during discretization.
+
+        Note: non-trivial Dirichlet data is treated via shifting. the resulting solution is thus in H^1_0 and the shift
+              is added upon visualization or output computation.
+
+        TODO: check is all products still make sense!
 
         WARNING: only works for advection 1 and Neumann 0 atm!
 
@@ -94,8 +102,11 @@ if config.HAVE_DUNEGDT:
         data
             Dictionary with the following entries:
 
-                :grid:           The generated |Grid|.
-                :boundary_info:  The generated |BoundaryInfo|.
+                :grid:                  The generated grid from dune.xt.grid.
+                :boundary_info:         The generated boundary info from dune.xt.grid.
+                :space:                 The generated approximation space from dune.gdt.
+                :dirichlet_shift:       A |VectorArray| respresenting the Dirichlet shift.
+                :unshifted_visualizer:  A visualizer which does not add the dirichlet_shift.
         """
 
         assert isinstance(analytical_problem, StationaryProblem)
@@ -391,11 +402,12 @@ if config.HAVE_DUNEGDT:
                 self.__auto_init(locals())
 
             def visualize(self, U, m, **kwargs):
-                self.visualizer.visualize(U + self.shift, m, **kwargs)
+                return self.visualizer.visualize(U + self.shift, m, **kwargs)
 
 
         if d == 1:
-            unshifted_visualizer = DuneGDT1dMatplotlibVisualizer(space)
+            # unshifted_visualizer = DuneGDT1dMatplotlibVisualizer(space)
+            unshifted_visualizer = DuneGDT1dasNumpyVisualizer(space, grid)
         else:
             unshifted_visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
 
@@ -406,9 +418,96 @@ if config.HAVE_DUNEGDT:
 
         data = {'grid': grid,
                 'boundary_info': boundary_info,
+                'space': space,
+                'interpolate': interpolate_single,
                 'dirichlet_shift': dirichlet_data,
                 'unshifted_visualizer': unshifted_visualizer}
 
         return m, data
 
 
+def discretize_instationary_cg(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
+                               grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
+                               order=1, data_approximation_order=2, la_backend=Istl()):
+    """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
+    using finite elements.
+
+    Parameters
+    ----------
+    analytical_problem
+        The |InstationaryProblem| to discretize.
+    diameter
+        If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
+    domain_discretizer
+        Discretizer to be used for discretizing the analytical domain. This has
+        to be a function `domain_discretizer(domain_description, diameter, ...)`.
+        If `None`, |discretize_domain_default| is used.
+    grid_type
+        If not `None`, this parameter is forwarded to `domain_discretizer` to specify
+        the type of the generated |Grid|.
+    grid
+        Instead of using a domain discretizer, the |Grid| can also be passed directly
+        using this parameter.
+    boundary_info
+        A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
+        Must be provided if `grid` is specified.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
+    time_stepper
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+        to be used by :class:`~pymor.models.basic.InstationaryModel.solve`.
+    nt
+        If `time_stepper` is not specified, the number of time steps for implicit
+        Euler time stepping.
+    preassemble
+        If `True`, preassemble all operators in the resulting |Model|.
+
+    Returns
+    -------
+    m
+        The |Model| that has been generated.
+    data
+        Dictionary with the following entries:
+
+            :grid:           The generated |Grid|.
+            :boundary_info:  The generated |BoundaryInfo|.
+            :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
+                             before preassembling operators.
+    """
+
+    assert isinstance(analytical_problem, InstationaryProblem)
+    assert isinstance(analytical_problem.stationary_part, StationaryProblem)
+    assert (time_stepper is None) != (nt is None)
+
+    p = analytical_problem
+
+    assert not p.initial_data.parametric
+
+    m, data = discretize_stationary_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
+                                       grid_type=grid_type, grid=grid, boundary_info=boundary_info,
+                                       order=order, data_approximation_order=data_approximation_order,
+                                       la_backend=la_backend)
+
+    # interpolate initial data
+    df = DiscreteFunction(data['space'], la_backend)
+    np_view = np.array(df.dofs.vector, copy=False)
+    np_view[:] = p.initial_data.evaluate(data['space'].interpolation_points())[:].ravel()
+    I = m.solution_space.make_array([DuneXTVector(df.dofs.vector),])
+
+    if time_stepper is None:
+        if p.stationary_part.diffusion is None:
+            time_stepper = ExplicitEulerTimeStepper(nt=nt)
+        else:
+            time_stepper = ImplicitEulerTimeStepper(nt=nt)
+
+    mass = m.l2_0_product
+
+    m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=mass, initial_data=I, T=p.T,
+                          products=m.products,
+                          output_functional=m.output_functional,
+                          time_stepper=time_stepper,
+                          visualizer=m.visualizer,
+                          num_values=num_values, name=f'{p.name}_CG')
+
+    return m, data
