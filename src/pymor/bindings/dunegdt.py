@@ -46,16 +46,13 @@ if config.HAVE_DUNEGDT:
         def axpy(self, alpha, x):
             self.impl.axpy(alpha, x.impl)
 
-        def dot(self, other):
+        def inner(self, other):
             return self.impl.dot(other.impl)
 
-        def l1_norm(self):
-            return self.impl.l1_norm()
-
-        def l2_norm(self):
+        def norm(self):
             return self.impl.l2_norm()
 
-        def l2_norm2(self):
+        def norm2(self):
             return self.impl.l2_norm() ** 2
 
         def sup_norm(self):
@@ -371,7 +368,7 @@ if config.HAVE_DUNEGDT:
                         for i in range(len(U)):
                             pvd_file.write(f'<DataSet timestep=\'{i}\' part=\'1\' name=\'{self.name}\' file=\'{prefix}_{i}.{suffix}\'/>\n')
                         pvd_file.write('</Collection>\n')
-                        pvd_file.write('</VTKFile>\n') 
+                        pvd_file.write('</VTKFile>\n')
                     filename = f'{prefix}.pvd'
             else:
                 raise NotImplementedError
