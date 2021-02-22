@@ -21,10 +21,13 @@ if config.HAVE_DUNEGDT:
     from dune.gdt import DiscreteFunction
 
     from pymor.core.base import ImmutableObject
-    from pymor.operators.list import ListVectorArrayOperatorBase
+    from pymor.discretizers.builtin.grids.oned import OnedGrid
+    from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
     from pymor.operators.constructions import ZeroOperator
-    from pymor.vectorarrays.list import ListVectorArray, Vector, ComplexifiedVector, ComplexifiedListVectorSpace
+    from pymor.operators.list import ListVectorArrayOperatorBase
     from pymor.vectorarrays.interface import _create_random_values
+    from pymor.vectorarrays.list import ListVectorArray, Vector, ComplexifiedVector, ComplexifiedListVectorSpace
+    from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
     class DuneXTVector(Vector):
@@ -180,6 +183,44 @@ if config.HAVE_DUNEGDT:
             return DuneXTMatrixOperator(matrix, self.source.id, self.range.id, solver_options=solver_options, name=name)
 
 
+    class DuneGDT1dasNumpyVisualizer(ImmutableObject):
+        """Visualize a dune-gdt discrete function using OnedVisualizer.
+
+        Parameters
+        ----------
+        space
+            The dune-gdt space for which we want to visualize DOF vectors.
+        grid
+            The dune grid associated with space (assumed to be equidistant!).
+        """
+        def __init__(self, space, grid):
+            assert grid.dimension == 1
+            assert space.dimDomain == 1
+            # build pyMOR grid
+            centers = np.array(grid.centers(1), copy=False).ravel()
+            domain = (centers[0], centers[-1])
+            num_intervals = grid.size(0)
+            pymor_grid = OnedGrid(domain, num_intervals)
+            if space.max_polorder == 0:
+                assert space.num_DoFs == grid.size(0)
+                self.visualizer = OnedVisualizer(pymor_grid, codim=0)
+            elif space.min_polorder == space.max_polorder == 1:
+                assert space.num_DoFs == grid.size(1)
+                self.visualizer = OnedVisualizer(pymor_grid, codim=1)
+            else:
+                # TODO: add P1 interpolation?
+                raise NotImplementedError('Not available for higher polynomial orders!')
+            self.__auto_init(locals())
+
+        def visualize(self, U, m, **kwargs):
+            # convert to NumpyVectorArray
+            U_np = NumpyVectorSpace(U.dim).zeros(len(U))
+            for ii, u_dune in enumerate(U._list):
+                u_np = np.array(u_dune.impl, copy=False)
+                U_np._array[ii, :] = u_np[:]
+            return self.visualizer.visualize(U_np, None, **kwargs)
+
+
     class DuneGDT1dMatplotlibVisualizer(ImmutableObject):
         """Visualize a dune-gdt discrete function using paraview.
 
@@ -189,6 +230,7 @@ if config.HAVE_DUNEGDT:
             The dune-gdt space for which we want to visualize DOF vectors.
         """
         def __init__(self, space):
+            assert space.dimDomain == 1
             assert space.max_polorder == 1
             self.interpolation_points = space.interpolation_points()
             self.__auto_init(locals())
@@ -339,9 +381,6 @@ if config.HAVE_DUNEGDT:
         """
 
         def __init__(self, space, name='STATE'):
-            # self.dune_vec = CommonDenseVectorDouble(space.num_DoFs)
-            # self.np_view = np.array(self.dune_vec, copy=False)
-            # self.discrete_function = make_discrete_function(space, self.dune_vec, name)
             self.__auto_init(locals())
 
         def visualize(self, U, m):
