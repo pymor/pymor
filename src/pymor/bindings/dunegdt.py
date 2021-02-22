@@ -26,7 +26,7 @@ if config.HAVE_DUNEGDT:
     from pymor.operators.constructions import ZeroOperator
     from pymor.operators.list import ListVectorArrayOperatorBase
     from pymor.vectorarrays.interface import _create_random_values
-    from pymor.vectorarrays.list import ListVectorArray, Vector, ComplexifiedVector, ComplexifiedListVectorSpace
+    from pymor.vectorarrays.list import ListVectorArray, Vector, ListVectorSpace
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -96,7 +96,7 @@ if config.HAVE_DUNEGDT:
             return self * (-1)
 
 
-    class DuneXTVectorSpace(ComplexifiedListVectorSpace):
+    class DuneXTVectorSpace(ListVectorSpace):
 
         def __init__(self, vector_type, dim, id='STATE'):
             self.__auto_init(locals())
@@ -108,20 +108,20 @@ if config.HAVE_DUNEGDT:
         def __hash__(self):
             return id(self.vector_type) + hash(self.dim)
 
-        def real_zero_vector(self):
+        def zero_vector(self):
             return DuneXTVector(self.vector_type(self.dim, 0.))
 
-        def real_full_vector(self, value):
+        def full_vector(self, value):
             return DuneXTVector(self.vector_type(self.dim, value))
 
-        def real_random_vector(self, distribution, random_state, **kwargs):
+        def random_vector(self, distribution, random_state, **kwargs):
             values = _create_random_values(self.dim, distribution, random_state, **kwargs)
             return self.vector_from_numpy(values)
 
-        def real_make_vector(self, obj):
+        def make_vector(self, obj):
             return DuneXTVector(obj)
 
-        def real_vector_from_numpy(self, data, ensure_copy=False):
+        def vector_from_numpy(self, data, ensure_copy=False):
             v = self.zero_vector()
             np_view = np.array(v, copy=False)
             np_view[:] = data
@@ -139,12 +139,12 @@ if config.HAVE_DUNEGDT:
             self.__auto_init(locals())
 
         def _apply_one_vector(self, u, mu=None, prepare_data=None):
-            r = self.range.real_zero_vector()
+            r = self.range.zero_vector()
             self.matrix.mv(u.impl, r.impl)
             return r
 
         def _apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
-            r = self.source.real_zero_vector()
+            r = self.source.zero_vector()
             self.matrix.mtv(v.impl, r.impl)
             return r
 
@@ -152,7 +152,7 @@ if config.HAVE_DUNEGDT:
                                       least_squares=False, prepare_data=None):
             if least_squares:
                 raise NotImplementedError
-            r = (self.source.real_zero_vector() if initial_guess is None else
+            r = (self.source.zero_vector() if initial_guess is None else
                  initial_guess.copy(deep=True))
             options = self.solver_options.get('inverse') if self.solver_options else None
 
