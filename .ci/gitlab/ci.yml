@@ -740,7 +740,6 @@ submit ci_weekly 3 6:
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
-    image: zivgitlab.wwu.io/pymor/docker/pymor/python:3.6
     dependencies:
         - ci_weekly 3 6
     needs: ["ci_weekly 3 6"]
@@ -749,7 +748,6 @@ submit ci_weekly 3 7:
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
-    image: zivgitlab.wwu.io/pymor/docker/pymor/python:3.7
     dependencies:
         - ci_weekly 3 7
     needs: ["ci_weekly 3 7"]
@@ -758,7 +756,6 @@ submit ci_weekly 3 8:
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
-    image: zivgitlab.wwu.io/pymor/docker/pymor/python:3.8
     dependencies:
         - ci_weekly 3 8
     needs: ["ci_weekly 3 8"]
@@ -767,7 +764,6 @@ submit ci_weekly 3 9:
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
-    image: zivgitlab.wwu.io/pymor/docker/pymor/python:3.9
     dependencies:
         - ci_weekly 3 9
     needs: ["ci_weekly 3 9"]

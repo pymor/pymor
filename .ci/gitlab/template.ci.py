@@ -243,7 +243,6 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
-    image: {{registry}}/pymor/python:{{py}}
     dependencies:
         - ci_weekly {{py[0]}} {{py[2]}}
     needs: ["ci_weekly {{py[0]}} {{py[2]}}"]
