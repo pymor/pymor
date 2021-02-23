@@ -51,7 +51,6 @@ functionality:
 import abc
 from functools import wraps
 import inspect
-import itertools
 import os
 from types import FunctionType
 import uuid

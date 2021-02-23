@@ -19,7 +19,6 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericIRKAReductor(BasicObject):

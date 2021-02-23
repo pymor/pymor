@@ -1,12 +1,8 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-import itertools
-from pprint import pprint
-
 import numpy as np
-from IPython.core.display import display
-from ipywidgets import HTML, HBox, widgets, Layout
+from ipywidgets import widgets
 import matplotlib.pyplot as plt
 
 from pymor.core.config import config

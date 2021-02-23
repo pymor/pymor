@@ -203,7 +203,8 @@ def _launch_qt_app(main_window_factory, block):
 
 
 def stop_gui_processes():
-    import os, signal
+    import os
+    import signal
     kill_procs = {p for p in multiprocessing.active_children() if p.pid in _launch_qt_processes}
     for p in kill_procs:
         # active_children apparently contains false positives sometimes

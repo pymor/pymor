@@ -2,11 +2,8 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import asyncio
-import sys
-from time import sleep
 from io import BytesIO
 
-import IPython
 import numpy as np
 from ipywidgets import IntSlider, interact, widgets, Play, Layout
 import pythreejs as p3js

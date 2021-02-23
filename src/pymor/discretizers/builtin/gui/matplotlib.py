@@ -8,8 +8,8 @@ scalar data assigned to one- and two-dimensional grids using
 """
 
 import numpy as np
-from IPython.core.display import display, HTML
-from matplotlib import animation, pyplot
+from IPython.core.display import HTML
+from matplotlib import animation
 from pymor.core.base import abstractmethod
 
 from pymor.core.config import config
@@ -190,7 +190,6 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
     from Qt.QtWidgets import QSizePolicy
 
-    import Qt
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
 

@@ -22,7 +22,6 @@ try:
 except ImportError:
     import pickle as pickle
 from io import BytesIO as IOtype
-import sys
 import platform
 
 
