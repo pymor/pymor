@@ -83,7 +83,9 @@ class PatchVisualizer(ImmutableObject):
                 and all(len(u) == len(U[0]) for u in U))
         if filename:
             use_tikz = filename.endswith('.tex')
-            if not isinstance(U, tuple):
+            if not isinstance(U, tuple) or len(U) == 1:
+                if isinstance(U, tuple):
+                    U = U[0]
                 if use_tikz:
                     write_tikz(self.grid, U, filename, codim=self.codim, **kwargs)
                 else:
