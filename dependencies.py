@@ -53,6 +53,7 @@ doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipypara
                 'sphinxcontrib-bibtex'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
+               'flake8-rst-docstrings', 'flake8-docstrings',
                'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19', 'PyQt5!=5.15.2,>5.7,!=5.15.2.*']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
