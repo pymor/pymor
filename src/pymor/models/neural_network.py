@@ -13,7 +13,6 @@ if config.HAVE_TORCH:
     from pymor.models.interface import Model
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
-
     class NeuralNetworkModel(Model):
         """Class for models of stationary problems that use artificial neural networks.
 
@@ -75,7 +74,6 @@ if config.HAVE_TORCH:
             U = self.solution_space.make_array(U)
 
             return U
-
 
     class NeuralNetworkInstationaryModel(Model):
         """Class for models of instationary problems that use artificial neural networks.
@@ -150,7 +148,6 @@ if config.HAVE_TORCH:
                 t += dt
 
             return U
-
 
     class FullyConnectedNN(nn.Module, BasicObject):
         """Class for neural networks with fully connected layers.

@@ -106,7 +106,6 @@ def solver_options(bicgstab_tol=1e-15,
     -------
     A dict of available solvers with default |solver_options|.
     """
-
     opts = {'scipy_bicgstab_spilu':     {'type': 'scipy_bicgstab_spilu',
                                          'tol': bicgstab_tol,
                                          'maxiter': bicgstab_maxiter,
@@ -179,7 +178,6 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
     -------
     |VectorArray| of the solution vectors.
     """
-
     assert V in op.range
     assert initial_guess is None or initial_guess in op.source and len(initial_guess) == len(V)
 
@@ -310,7 +308,6 @@ def lyap_lrcf_solver_options():
     -------
     A dict of available solvers with default solver options.
     """
-
     return {'scipy': {'type': 'scipy'}}
 
 
@@ -351,7 +348,6 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         Low-rank Cholesky factor of the Lyapunov equation solution,
         |VectorArray| from `A.source`.
     """
-
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
 
@@ -369,7 +365,6 @@ def lyap_dense_solver_options():
     -------
     A dict of available solvers with default solver options.
     """
-
     return {'scipy': {'type': 'scipy'}}
 
 
@@ -406,7 +401,6 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
     X
         Lyapunov equation solution as a |NumPy array|.
     """
-
     _solve_lyap_dense_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_dense_solver_options(), 'scipy', None, False)
 
@@ -431,7 +425,6 @@ def ricc_lrcf_solver_options():
     -------
     A dict of available solvers with default solver options.
     """
-
     return {'scipy': {'type': 'scipy'}}
 
 
@@ -472,7 +465,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         Low-rank Cholesky factor of the Riccati equation solution,
         |VectorArray| from `A.source`.
     """
-
     _solve_ricc_check_args(A, E, B, C, R, trans)
     options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
@@ -502,7 +494,6 @@ def pos_ricc_lrcf_solver_options():
     -------
     A dict of available solvers with default solver options.
     """
-
     return {'scipy': {'type': 'scipy'}}
 
 
@@ -544,7 +535,6 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         Low-rank Cholesky factor of the positive Riccati equation
         solution, |VectorArray| from `A.source`.
     """
-
     _solve_ricc_check_args(A, E, B, C, R, trans)
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':

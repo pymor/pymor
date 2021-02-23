@@ -197,7 +197,6 @@ def rb_greedy(fom, reductor, training_set, use_error_estimator=True, error_norm=
         :extensions:             Number of performed basis extensions.
         :time:                   Total runtime of the algorithm.
     """
-
     surrogate = RBSurrogate(fom, reductor, use_error_estimator, error_norm, extension_params, pool or dummy_pool)
 
     result = weak_greedy(surrogate, training_set, atol=atol, rtol=rtol, max_extensions=max_extensions, pool=pool)

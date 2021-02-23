@@ -27,6 +27,7 @@ class GenericSOBTpvReductor(BasicObject):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         if not isinstance(mu, Mu):
@@ -116,6 +117,7 @@ class SOBTpReductor(GenericSOBTpvReductor):
     mu
         |Parameter values|.
     """
+
     def _gramians(self):
         pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
         pof = self.fom.gramian('po_lrcf', mu=self.mu)
@@ -143,6 +145,7 @@ class SOBTvReductor(GenericSOBTpvReductor):
     mu
         |Parameter values|.
     """
+
     def _gramians(self):
         vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
         vof = self.fom.gramian('vo_lrcf', mu=self.mu)
@@ -167,6 +170,7 @@ class SOBTpvReductor(GenericSOBTpvReductor):
     mu
         |Parameter values|.
     """
+
     def _gramians(self):
         pcf = self.fom.gramian('pc_lrcf', mu=self.mu)
         vof = self.fom.gramian('vo_lrcf', mu=self.mu)
@@ -191,6 +195,7 @@ class SOBTvpReductor(GenericSOBTpvReductor):
     mu
         |Parameter values|.
     """
+
     def _gramians(self):
         pof = self.fom.gramian('po_lrcf', mu=self.mu)
         vcf = self.fom.gramian('vc_lrcf', mu=self.mu)
@@ -217,6 +222,7 @@ class SOBTfvReductor(BasicObject):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         if not isinstance(mu, Mu):
@@ -301,6 +307,7 @@ class SOBTReductor(BasicObject):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         if not isinstance(mu, Mu):

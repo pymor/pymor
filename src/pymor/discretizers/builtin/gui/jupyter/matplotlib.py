@@ -92,8 +92,6 @@ class MPLPlotBase:
             self._ipython_display_ = self._out._ipython_display_
 
 
-
-
 def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
@@ -153,7 +151,6 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
                                        separate_axes=False)
 
     return Plot()
-
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=True, separate_axes=False,

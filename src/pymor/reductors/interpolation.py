@@ -344,6 +344,7 @@ class TFBHIReductor(BasicObject):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         if not isinstance(mu, Mu):
             mu = fom.parameters.parse(mu)

@@ -51,6 +51,7 @@ class MeshioMissing(Exception):
 
 class ImageCollectionError(Exception):
     """Is raised when a pymor.algorithms.image.estimate_image fails for given operator."""
+
     def __init__(self, op):
         super().__init__(f'Cannot estimage image for {op}')
         self.op = op
@@ -62,12 +63,15 @@ class NeuralNetworkTrainingFailed(Exception):
 
 class QtMissing(ImportError):
     """Raise me where having importable Qt bindings is non-optional"""
+
     def __init__(self, msg=None):
         msg = msg or 'cannot visualize: import of Qt bindings failed'
         super().__init__(msg)
 
+
 class TorchMissing(ImportError):
     """Raise me where having importable torch version is non-optional"""
+
     def __init__(self, msg=None):
         msg = msg or 'cannot use neural networks: import of torch failed'
         super().__init__(msg)

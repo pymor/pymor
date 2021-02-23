@@ -51,6 +51,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
         `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `fom.operator` w.r.t. `product`.
     """
+
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
                  check_orthonormality=None, check_tol=None):
         if not isinstance(fom.time_stepper, ImplicitEulerTimeStepper):

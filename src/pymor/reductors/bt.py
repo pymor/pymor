@@ -24,6 +24,7 @@ class GenericBTReductor(BasicObject):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
         if not isinstance(mu, Mu):
@@ -131,6 +132,7 @@ class BTReductor(GenericBTReductor):
     mu
         |Parameter values|.
     """
+
     def _gramians(self):
         return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
 
@@ -153,6 +155,7 @@ class LQGBTReductor(GenericBTReductor):
     solver_options
         The solver options to use to solve the Riccati equations.
     """
+
     def __init__(self, fom, mu=None, solver_options=None):
         super().__init__(fom, mu=mu)
         self.solver_options = solver_options
@@ -191,6 +194,7 @@ class BRBTReductor(GenericBTReductor):
     solver_options
         The solver options to use to solve the positive Riccati equations.
     """
+
     def __init__(self, fom, gamma=1, mu=None, solver_options=None):
         super().__init__(fom, mu=mu)
         self.gamma = gamma

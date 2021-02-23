@@ -82,4 +82,5 @@ class LoggingRedirector:
                 # loggers that have been created during the redirect get a default handler
                 logging.getLogger(name).handlers = logger.default_handler()
 
+
 redirect_logging = LoggingRedirector()

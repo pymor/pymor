@@ -205,7 +205,6 @@ class VectorArray(BasicObject):
         """
         raise NotImplementedError
 
-
     @abstractmethod
     def append(self, other, remove_from_other=False):
         """Append vectors to the array.
@@ -647,7 +646,6 @@ class VectorArray(BasicObject):
         except TypeError:
             return 1
 
-
     def len_ind_unique(self, ind):
         """Return the number of specified unique indices."""
         l = len(self)
@@ -656,7 +654,6 @@ class VectorArray(BasicObject):
         if isinstance(ind, Number):
             return 1
         return len({i if i >= 0 else l+i for i in ind})
-
 
     def normalize_ind(self, ind):
         """Normalize given indices such that they are independent of the array length."""

@@ -92,7 +92,6 @@ class UberMeta(abc.ABCMeta):
         I create a logger for each class I create.
         I add an `init_arguments` attribute to the class.
         """
-
         cls._logger = logger.getLogger(f'{cls.__module__.replace("__main__", "pymor")}.{name}')
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
@@ -177,6 +176,7 @@ class BasicObject(metaclass=UberMeta):
         A unique id for each instance. The uid is obtained by using
         :class:`UID` and is unique for all pyMOR objects ever created.
     """
+
     @property
     def name(self):
         n = getattr(self, '_name', None)

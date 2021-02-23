@@ -74,7 +74,6 @@ def solver_options(lgmres_tol=1e-5,
     -------
     A dict of available solvers with default |solver_options|.
     """
-
     return {'generic_lgmres': {'type': 'generic_lgmres',
                                'tol': lgmres_tol,
                                'maxiter': lgmres_maxiter,
@@ -129,7 +128,6 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
     -------
     |VectorArray| of the solution vectors.
     """
-
     assert V in op.range
     assert initial_guess is None or initial_guess in op.source and len(initial_guess) == len(V)
     options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)

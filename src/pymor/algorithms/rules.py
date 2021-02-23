@@ -145,6 +145,7 @@ class match_generic(rule):
 
 class RuleTableMeta(UberMeta):
     """Meta class for |RuleTable|."""
+
     def __new__(cls, name, parents, dct):
         assert 'rules' not in dct
         rules = []

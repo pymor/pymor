@@ -191,6 +191,7 @@ class IRKAReductor(GenericIRKAReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, mu=mu)
@@ -304,6 +305,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, version, mu=None):
         assert isinstance(fom, LTIModel)
         assert version in ('V', 'W')
@@ -431,6 +433,7 @@ class TSIAReductor(GenericIRKAReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, mu=mu)
@@ -556,6 +559,7 @@ class TFIRKAReductor(GenericIRKAReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, InputOutputModel)
         super().__init__(fom, mu=mu)

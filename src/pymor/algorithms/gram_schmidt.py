@@ -52,7 +52,6 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
     R
         The upper-triangular/trapezoidal matrix (if `compute_R` is `True`).
     """
-
     logger = getLogger('pymor.algorithms.gram_schmidt.gram_schmidt')
 
     if copy:

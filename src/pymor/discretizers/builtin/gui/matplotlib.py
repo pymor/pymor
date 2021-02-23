@@ -187,7 +187,6 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
             ax.set_ylim(self.vmin - pad, self.vmax + pad)
 
 
-
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
     from Qt.QtWidgets import QSizePolicy
 

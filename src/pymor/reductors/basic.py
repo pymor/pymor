@@ -163,6 +163,7 @@ class StationaryRBReductor(ProjectionBasedReductor):
     check_tol
         See :class:`ProjectionBasedReductor`.
     """
+
     def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None):
         assert isinstance(fom, StationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
@@ -220,6 +221,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
     check_tol
         See :class:`ProjectionBasedReductor`.
     """
+
     def __init__(self, fom, RB=None, product=None, initial_data_product=None, product_is_mass=False,
                  check_orthonormality=None, check_tol=None):
         assert isinstance(fom, InstationaryModel)
@@ -307,6 +309,7 @@ class LTIPGReductor(ProjectionBasedReductor):
         If `True`, no `E` matrix will be assembled for the reduced |Model|.
         Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
     """
+
     def __init__(self, fom, W, V, E_biorthonormal=False):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, {'W': W, 'V': V})
@@ -360,6 +363,7 @@ class SOLTIPGReductor(ProjectionBasedReductor):
         If `True`, no `E` matrix will be assembled for the reduced |Model|.
         Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
     """
+
     def __init__(self, fom, W, V, M_biorthonormal=False):
         assert isinstance(fom, SecondOrderModel)
         super().__init__(fom, {'W': W, 'V': V})
@@ -417,6 +421,7 @@ class DelayLTIPGReductor(ProjectionBasedReductor):
         If `True`, no `E` matrix will be assembled for the reduced |Model|.
         Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
     """
+
     def __init__(self, fom, W, V, E_biorthonormal=False):
         assert isinstance(fom, LinearDelayModel)
         super().__init__(fom, {'W': W, 'V': V})

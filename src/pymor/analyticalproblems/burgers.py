@@ -32,7 +32,6 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
     parameter_range
         The interval in which μ is allowed to vary.
     """
-
     assert initial_data_type in ('sin', 'bump')
 
     if initial_data_type == 'sin':
@@ -92,7 +91,6 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
     parameter_range
         The interval in which μ is allowed to vary.
     """
-
     assert initial_data_type in ('sin', 'bump')
 
     if initial_data_type == 'sin':

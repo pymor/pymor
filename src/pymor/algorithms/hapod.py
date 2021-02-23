@@ -105,7 +105,6 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     snap_count
         The total number of input snapshot vectors.
     """
-
     logger = getLogger('pymor.algorithms.hapod.hapod')
 
     async def hapod_step(node):

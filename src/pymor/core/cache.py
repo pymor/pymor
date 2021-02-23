@@ -357,7 +357,6 @@ class CacheableObject(ImmutableObject):
 
 def cached(function):
     """Decorator to make a method of `CacheableObject` actually cached."""
-
     params = inspect.signature(function).parameters
     if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
         raise NotImplementedError

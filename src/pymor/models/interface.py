@@ -307,7 +307,6 @@ class Model(CacheableObject, ParametricObject):
         -------
         A dict with the computed values.
         """
-
         # make sure no unknown kwargs are passed
         assert kwargs.keys() <= self._compute_allowed_kwargs
 

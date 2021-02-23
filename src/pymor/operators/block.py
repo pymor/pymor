@@ -150,12 +150,14 @@ class BlockOperator(BlockOperatorBase):
 
 class BlockRowOperator(BlockOperatorBase):
     """A row vector of arbitrary |Operators|."""
+
     blocked_source = True
     blocked_range = False
 
 
 class BlockColumnOperator(BlockOperatorBase):
     """A column vector of arbitrary |Operators|."""
+
     blocked_source = False
     blocked_range = True
 

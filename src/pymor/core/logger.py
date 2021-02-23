@@ -171,7 +171,6 @@ class ColoredFormatter(logging.Formatter):
         return f'{timestamp} {indent}{levelname}{path}: {msg}'
 
 
-
 @defaults('filename')
 def default_handler(filename=''):
     streamhandler = logging.StreamHandler()

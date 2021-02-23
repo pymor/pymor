@@ -165,7 +165,6 @@ if config.HAVE_TORCH:
                                 self.logger.info(f'Aborting training after {run} restarts ...')
                                 return self._build_rom()
 
-
             # check if neural network is sufficient to guarantee certain error bounds
             with self.logger.block('Checking tolerances for error of neural network ...'):
 
@@ -427,7 +426,6 @@ if config.HAVE_TORCH:
 
             return samples
 
-
     class EarlyStoppingScheduler(BasicObject):
         """Class for performing early stopping in training of neural networks.
 
@@ -486,7 +484,6 @@ if config.HAVE_TORCH:
                 self.counter = 0
 
             return False
-
 
     class CustomDataset(utils.data.Dataset):
         """Class that represents the dataset to use in PyTorch.

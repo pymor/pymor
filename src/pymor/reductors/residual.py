@@ -210,6 +210,7 @@ class ImplicitEulerResidualReductor(BasicObject):
     product
         Inner product |Operator| w.r.t. which to compute the Riesz representatives.
     """
+
     def __init__(self, RB, operator, mass, dt, rhs=None, product=None):
         assert RB in operator.source
         assert rhs.source.is_scalar and rhs.range == operator.range and rhs.linear

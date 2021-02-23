@@ -972,7 +972,6 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
-
     assert isinstance(analytical_problem, StationaryProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
@@ -1198,7 +1197,6 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
-
     if preassemble:
         data['unassembled_m'] = m
         m = preassemble_(m)
@@ -1255,7 +1253,6 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
             :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
-
     assert isinstance(analytical_problem, InstationaryProblem)
     assert isinstance(analytical_problem.stationary_part, StationaryProblem)
     assert grid is None or boundary_info is not None

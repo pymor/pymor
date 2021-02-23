@@ -108,7 +108,6 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None,
         Low-rank Cholesky factor of the Lyapunov equation solution,
         |VectorArray| from `A.source`.
     """
-
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
@@ -209,7 +208,6 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
     X
         Lyapunov equation solution as a |NumPy array|.
     """
-
     _solve_lyap_dense_check_args(A, E, B, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
@@ -254,7 +252,6 @@ def _chol(A):
     L
         Cholesky factor of A (in the sense that L * L^T approximates A).
     """
-
     assert isinstance(A, np.ndarray) and A.ndim == 2
     assert A.shape[0] == A.shape[1]
 

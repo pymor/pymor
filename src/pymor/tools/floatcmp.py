@@ -35,7 +35,6 @@ def float_cmp(x, y, rtol=1e-14, atol=1e-14):
     atol
         The absolute tolerance.
     """
-
     return np.abs(x - y) <= atol + np.abs(y) * rtol
 
 

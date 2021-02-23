@@ -275,7 +275,6 @@ def print_defaults(import_all=True, shorten_paths=2):
         Shorten the paths of all default values by `shorten_paths` components.
         The last two path components will always be printed.
     """
-
     if import_all:
         _default_container.import_all()
 

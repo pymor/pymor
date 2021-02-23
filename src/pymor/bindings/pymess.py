@@ -81,7 +81,6 @@ if config.HAVE_PYMESS:
         lradi_opts.adi.shifts.l0 = adi_shifts_l0
         lradi_opts.adi.shifts.p = adi_shifts_p
         lradi_opts.adi.shifts.paratype = adi_shifts_paratype
-
         return lradi_opts
 
     def lyap_lrcf_solver_options():
@@ -93,7 +92,6 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'pymess_glyap': {'type': 'pymess_glyap'},
                 'pymess_lradi': {'type': 'pymess_lradi',
                                  'opts': lradi_solver_options()}}
@@ -145,7 +143,6 @@ if config.HAVE_PYMESS:
             Low-rank Cholesky factor of the Lyapunov equation solution,
             |VectorArray| from `A.source`.
         """
-
         _solve_lyap_lrcf_check_args(A, E, B, trans)
         if default_solver is None:
             default_solver = 'pymess_lradi' if A.source.dim >= mat_eqn_sparse_min_size() else 'pymess_glyap'
@@ -179,7 +176,6 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'pymess_glyap': {'type': 'pymess_glyap'}}
 
     def solve_lyap_dense(A, E, B, trans=False, options=None):
@@ -210,7 +206,6 @@ if config.HAVE_PYMESS:
         X
             Lyapunov equation solution as a |NumPy array|.
         """
-
         _solve_lyap_dense_check_args(A, E, B, trans)
         options = _parse_options(options, lyap_lrcf_solver_options(), 'pymess_glyap', None, False)
 
@@ -251,7 +246,6 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'linesearch': linesearch,
                 'maxit':      maxit,
                 'absres_tol': absres_tol,
@@ -290,7 +284,6 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default solver options.
         """
-
         lrnm_opts = lradi_solver_options()
         lrnm_opts.nm.gstep = newton_gstep
         lrnm_opts.nm.k0 = newton_k0
@@ -312,7 +305,6 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
                                             'opts': dense_nm_gmpcare_solver_options()},
                 'pymess_lrnm':             {'type': 'pymess_lrnm',
@@ -370,7 +362,6 @@ if config.HAVE_PYMESS:
             Low-rank Cholesky factor of the Riccati equation solution,
             |VectorArray| from `A.source`.
         """
-
         _solve_ricc_check_args(A, E, B, C, R, trans)
         if default_solver is None:
             default_solver = 'pymess_lrnm' if A.source.dim >= mat_eqn_sparse_min_size() else 'pymess_dense_nm_gmpcare'
@@ -410,7 +401,6 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
                                             'opts': dense_nm_gmpcare_solver_options()}}
 
@@ -447,7 +437,6 @@ if config.HAVE_PYMESS:
             Low-rank Cholesky factor of the Riccati equation solution,
             |VectorArray| from `A.source`.
         """
-
         _solve_ricc_check_args(A, E, B, C, R, trans)
         options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'pymess_dense_nm_gmpcare', None, False)
 
@@ -531,6 +520,7 @@ if config.HAVE_PYMESS:
         B
             The operator B as a |VectorArray| from `A.source`.
         """
+
         def __init__(self, opt, A, E, B):
             super().__init__(name='LyapunovEquation', opt=opt, dim=A.source.dim)
             self.a = A
@@ -648,6 +638,7 @@ if config.HAVE_PYMESS:
         C
             The operator C as a |VectorArray| from `A.source`.
         """
+
         def __init__(self, opt, A, E, B, C):
             super().__init__(name='RiccatiEquation', opt=opt, dim=A.source.dim)
             self.a = A

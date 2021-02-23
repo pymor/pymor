@@ -24,7 +24,6 @@ def new_parallel_pool(ipython_num_engines=None, ipython_profile=None, allow_mpi=
     :attr:`pymor.parallel.dummy.dummy_pool <pymor.parallel.dummy.DummyPool>`
     is returned.
     """
-
     global _pool
     if _pool:
         logger = getLogger('pymor.parallel.default.new_parallel_pool')

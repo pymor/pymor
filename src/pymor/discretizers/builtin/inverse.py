@@ -11,7 +11,6 @@ def inv_two_by_two(A):
     |  retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:]).
 
     """
-
     assert A.shape[-1] == A.shape[-2] == 2, 'Wrong shape of argument.'
 
     D = A[..., 0, 0] * A[..., 1, 1] - A[..., 1, 0] * A[..., 0, 1]
@@ -33,7 +32,6 @@ def inv_transposed_two_by_two(A):
     |  retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:]).
 
     """
-
     assert A.shape[-1] == A.shape[-2] == 2, 'Wrong shape of argument.'
 
     D = A[..., 0, 0] * A[..., 1, 1] - A[..., 1, 0] * A[..., 0, 1]

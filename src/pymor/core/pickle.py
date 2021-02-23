@@ -72,8 +72,6 @@ def _generate_opcode(code_object):
         yield (ins.opcode, ins.arg)
 
 
-
-
 def _global_names(code_object):
     '''Return all names in code_object.co_names which are used in a LOAD_GLOBAL statement.'''
     LOAD_GLOBAL = opcode.opmap['LOAD_GLOBAL']

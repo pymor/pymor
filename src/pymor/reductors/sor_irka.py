@@ -19,6 +19,7 @@ class SORIRKAReductor(GenericIRKAReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, SecondOrderModel)
         super().__init__(fom, mu=mu)
