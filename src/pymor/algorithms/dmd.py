@@ -17,7 +17,7 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
 
     See Algorithm 1 and Algorithm 2 in [TRLBK14]_.
 
-    Parameters
+    Parametersk
     ----------
     A  :  optional
         The |VectorArray| for which the DMD Modes are to be computed.
@@ -66,7 +66,7 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
     assert isinstance(XL, VectorArray) or XL is None
     assert isinstance(XR, VectorArray) or XR is None
     assert XL is None and XR is None or len(XL) == len(XR)
-    assert target_rank is None or target_rank <= len(A)
+    # assert target_rank is None or target_rank <= len(A) or target_rank < len(XL)
     assert order in (True, False)
     assert svd_method in ('qr_svd', 'method_of_snapshots')
 
@@ -83,11 +83,16 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
 
     if not len(U) == rank:
         rank = len(U)
-        print('Cutting  to Dimension ', rank, ' - Not enought relevant Singularvectors.')
+        print('Cutting  to Dimension', rank, '- Not enought relevant Singularvectors.')
+
+    XL_approx = U.lincomb(np.diag(SVALS)).lincomb(Vh.T)
+    fehler = XL.__sub__(XL_approx)
+    mse = np.mean((fehler).norm())
+    print('Mean-squared-error of SVD: ', mse)
 
     # Invert the Singular Values
-    SVALS_inv = np.reciprocal(SVALS)
-    Sigma_inv = np.diag(SVALS_inv)
+    SVALS_diag = np.diag(SVALS)
+    Sigma_inv = np.linalg.inv(SVALS_diag)
     # Cut Vh to relevant modes
     Vh = Vh[:, :rank]
     V = Vh.conj().T
@@ -98,23 +103,35 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
     # A = XR[:k] @ V @ Sigma_inv.inner(Uh)
     A_tilde = U.inner(XR[:rank]) @ V @ Sigma_inv
 
+    # spla.eig expects column vectors
+    A_tilde = A_tilde.T
+
     print('Calculating eigenvalue dec. ...')
     EVALS, EVECS = spla.eig(A_tilde, b=None, left=True, right=False)
     # omega = np.log(EVALS) / dt
+
+    A_tilde_approx = EVECS @ np.diag(EVALS) @ np.linalg.inv(EVECS)
+    fehler = A_tilde.__sub__(A_tilde_approx)
+    mse = np.mean(np.linalg.norm(fehler))
+    print('Mean-squared-error of spla.eig: ', mse)
+
     omega = EVALS / dt
 
     if order:
+        print('Sorting...')
         # return ordered result
-        sort_idx = np.argsort(np.abs(omega))
+        sort_idx = np.argsort(np.abs(omega))[::-1]
         EVECS = EVECS[:, sort_idx]
         EVALS = EVALS[sort_idx]
         omega = omega[sort_idx]
 
     print('Reconstructing Eigenvectors...')
     if modes == 'standard':
-        Wk = U.lincomb(EVECS)
+        Wk = U.lincomb(EVECS.T)
     elif modes == 'exact' or 'exact_scaled':
-        Wk = XR[:rank].lincomb(V @ Sigma_inv @ EVECS)
+        # Wk = XR[:rank].lincomb(V).lincomb(Sigma_inv).lincomb(EVECS)
+        # TODO: transponieren wo und wie?
+        Wk = XR[:rank].lincomb((V.T @ Sigma_inv @ EVECS).T)
         if modes == 'exact_scaled':
             EVALS_inv = np.reciprocal(EVALS)
             Wk = Wk*EVALS_inv
@@ -255,7 +272,7 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
                    powerIterations=powerIterations)
 
     # transform B to VectorArray
-    B = NumpyVectorSpace.from_numpy(B)
+    B = NumpyVectorSpace.from_numpy(B.T)
 
     Wk, omega = dmd(A=B, target_rank=None, dt=1, modes=modes, svd_method=svd_method, order=order)
 
