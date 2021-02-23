@@ -72,7 +72,7 @@ def _generate_opcode(code_object):
 
 
 def _global_names(code_object):
-    '''Return all names in code_object.co_names which are used in a LOAD_GLOBAL statement.'''
+    """Return all names in code_object.co_names which are used in a LOAD_GLOBAL statement."""
     LOAD_GLOBAL = opcode.opmap['LOAD_GLOBAL']
     indices = {i for o, i in _generate_opcode(code_object) if o == LOAD_GLOBAL}
     names = code_object.co_names
@@ -106,7 +106,7 @@ class Module:
 
 
 def dumps_function(function):
-    '''Tries hard to pickle a function object:
+    """Tries hard to pickle a function object:
 
         1. The function's code object is serialized using the :mod:`marshal` module.
         2. For all global names used in the function's code object the corresponding
@@ -117,7 +117,7 @@ def dumps_function(function):
 
     Note that also this is heavily implementation specific and will probably only
     work with CPython. If possible, avoid using this method.
-    '''
+    """
     closure = None if function.__closure__ is None else [c.cell_contents for c in function.__closure__]
     code = marshal.dumps(function.__code__)
     func_globals = function.__globals__
@@ -133,7 +133,7 @@ def dumps_function(function):
 
 
 def loads_function(s):
-    '''Restores a function serialized with :func:`dumps_function`.'''
+    """Restores a function serialized with :func:`dumps_function`."""
     name, code, globals_, defaults, closure, func_dict, doc, qualname, kwdefaults, annotations = loads(s)
     code = marshal.loads(code)
     for k, v in globals_.items():

@@ -9,7 +9,7 @@ import numpy as np
 
 @defaults('compact_print')
 def format_array(array, compact_print=False):
-    '''Creates a formatted string representation of a |NumPy array|.
+    """Creates a formatted string representation of a |NumPy array|.
 
     Parameters
     ----------
@@ -21,7 +21,7 @@ def format_array(array, compact_print=False):
     Returns
     -------
     The string representation.
-    '''
+    """
     def format_element(e):
         if e > 1e15:
             return f'{e:.2e}'

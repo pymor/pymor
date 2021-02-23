@@ -64,7 +64,7 @@ NoneType = type(None)
 
 
 class UID:
-    '''Provides unique, quickly computed ids by combining a session UUID4 with a counter.'''
+    """Provides unique, quickly computed ids by combining a session UUID4 with a counter."""
 
     __slots__ = ['uid']
 
