@@ -53,7 +53,7 @@ class ImageCollectionError(Exception):
     """Is raised when a pymor.algorithms.image.estimate_image fails for given operator."""
 
     def __init__(self, op):
-        super().__init__(f'Cannot estimage image for {op}')
+        super().__init__(f'Cannot estimate image for {op}')
         self.op = op
 
 

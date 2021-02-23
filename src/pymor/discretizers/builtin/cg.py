@@ -1076,7 +1076,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             if mu_energy_product:
                 eLi += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data)]
         else:
-            Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name=f'robin')]
+            Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name='robin')]
             if mu_energy_product:
                 eLi += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data)]
             coefficients.append(1.)
