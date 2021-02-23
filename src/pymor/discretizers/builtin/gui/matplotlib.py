@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides widgets for displaying plots of
+"""This module provides widgets for displaying plots of
 scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. These widgets are not intended to be used directly.
 """
@@ -29,7 +29,7 @@ class MatplotlibAxesBase:
         self.grid = grid
         if separate_axes:
             if len(U) == 1:
-                columns = 1 # otherwise we get a sep axes object with 0 data
+                columns = 1  # otherwise we get a sep axes object with 0 data
             rows = int(np.ceil(len(U) / columns))
             self.ax = figure.subplots(rows, columns, squeeze=False).flatten()
         else:

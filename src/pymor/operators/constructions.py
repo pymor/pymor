@@ -1020,7 +1020,7 @@ class LinearOperator(ProxyOperator):
 
 
 class AffineOperator(ProxyOperator):
-    """Decompose an affine |Operator| into affine_shift and linear_part. """
+    """Decompose an affine |Operator| into affine_shift and linear_part."""
 
     def __init__(self, operator, name=None):
         if operator.parametric:

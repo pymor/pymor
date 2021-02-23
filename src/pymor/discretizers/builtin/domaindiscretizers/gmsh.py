@@ -21,7 +21,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     Parameters
     ----------
     domain_description
-        A |DomainDescription| of the |PolygonalDomain| or |RectDomain| to discretize. Has to be 
+        A |DomainDescription| of the |PolygonalDomain| or |RectDomain| to discretize. Has to be
         `None` when `geo_file` is given.
     geo_file
         File handle of the Gmsh Geo-file to discretize. Has to be `None` when

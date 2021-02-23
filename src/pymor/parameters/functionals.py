@@ -277,11 +277,11 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         exp_mapping = get_lambda(code)
         if derivative_expressions is not None:
             derivative_mappings = derivative_expressions.copy()
-            for (key,exp) in derivative_mappings.items():
+            for (key, exp) in derivative_mappings.items():
                 if isinstance(exp, str):
                     exp = [exp]
                 exp_array = np.array(exp, dtype=object)
-                for exp in np.nditer(exp_array, op_flags=['readwrite'], flags= ['refs_ok']):
+                for exp in np.nditer(exp_array, op_flags=['readwrite'], flags=['refs_ok']):
                     exp_code = compile(str(exp), '<expression>', 'eval')
                     mapping = get_lambda(exp_code)
                     exp[...] = mapping
@@ -294,12 +294,12 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
                 if isinstance(key_dicts, dict):
                     key_dicts = [key_dicts]
                 key_dicts_array = np.array(key_dicts, dtype=object)
-                for key_dict in np.nditer(key_dicts_array, op_flags=['readwrite'], flags= ['refs_ok']):
+                for key_dict in np.nditer(key_dicts_array, op_flags=['readwrite'], flags=['refs_ok']):
                     for (key_j, exp) in key_dict[()].items():
                         if isinstance(exp, str):
                             exp = [exp]
                         exp_array = np.array(exp, dtype=object)
-                        for exp in np.nditer(exp_array, op_flags=['readwrite'], flags= ['refs_ok']):
+                        for exp in np.nditer(exp_array, op_flags=['readwrite'], flags=['refs_ok']):
                             exp_code = compile(str(exp), '<expression>', 'eval')
                             mapping = get_lambda(exp_code)
                             exp[...] = mapping

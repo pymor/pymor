@@ -41,8 +41,7 @@ def almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):
     atol
         The absolute tolerance.
     """
-
-    assert product is None or not sup_norm 
+    assert product is None or not sup_norm
 
     V_norm = V.sup_norm() if sup_norm else V.norm(product)
     X = V.copy()

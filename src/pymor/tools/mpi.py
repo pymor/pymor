@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides helper methods to use pyMOR in parallel with MPI.
+"""This module provides helper methods to use pyMOR in parallel with MPI.
 
 Executing this module will run :func:`event_loop` on all MPI ranks
 except for rank 0 where either a given script is executed::

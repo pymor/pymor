@@ -31,7 +31,7 @@ class BlockVectorArray(VectorArray):
             # hstack will error out with empty input list
             return np.hstack([block.to_numpy() for block in self._blocks])
         else:
-            return np.empty((0,0))
+            return np.empty((0, 0))
 
     @property
     def real(self):

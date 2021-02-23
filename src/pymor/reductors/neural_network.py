@@ -185,7 +185,7 @@ if config.HAVE_TORCH:
 
         def _compute_layers_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network."""
-            return [len(self.fom.parameters),] + hidden_layers + [len(self.reduced_basis),]
+            return [len(self.fom.parameters), ] + hidden_layers + [len(self.reduced_basis), ]
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -313,7 +313,7 @@ if config.HAVE_TORCH:
             # determine the coefficients of the full-order solutions in the reduced basis to obtain
             # the training data; convert everything into tensors that are compatible with PyTorch
             mu_tensor = torch.DoubleTensor(mu.to_numpy())
-            u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
+            u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:, 0])
             return [(mu_tensor, u_tensor),]
 
         def reconstruct(self, u):

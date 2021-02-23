@@ -172,7 +172,7 @@ class Model(CacheableObject, ParametricObject):
         U_d_mus = self._compute_solution_d_mu(solution, mu)
         gradients = [] if return_array else {}
         for (parameter, size) in self.parameters.items():
-            array = np.empty(shape=(size,self.output_functional.range.dim))
+            array = np.empty(shape=(size, self.output_functional.range.dim))
             for index in range(size):
                 output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
                     solution, mu=mu).to_numpy()[0]

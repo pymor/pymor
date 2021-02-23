@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides a few methods and classes for visualizing data
+"""This module provides a few methods and classes for visualizing data
 associated to grids. We use the `Qt <http://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """

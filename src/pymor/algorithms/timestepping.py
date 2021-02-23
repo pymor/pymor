@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides generic time-stepping algorithms for the solution of
+"""This module provides generic time-stepping algorithms for the solution of
 instationary problems.
 
 The algorithms are generic in the sense that each algorithms operates exclusively

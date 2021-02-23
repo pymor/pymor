@@ -89,7 +89,7 @@ class Renderer(widgets.VBox):
                 indices = np.arange(len(subentities) * 6, dtype=np.uint32)
 
         max_tex_size = 512
-        cm = color_map(np.linspace(0,1, max_tex_size)).astype(np.float32)
+        cm = color_map(np.linspace(0, 1, max_tex_size)).astype(np.float32)
         cm.resize((max_tex_size, 1, 4))
         color_map = p3js.DataTexture(cm, format='RGBAFormat',  width=max_tex_size, height=1, type='FloatType')
         uniforms=dict(
@@ -184,7 +184,7 @@ class Renderer(widgets.VBox):
         self.light = p3js.AmbientLight(color='white', intensity=1.0)
         self.scene = p3js.Scene(children=[self.cam, self.light], background='white')
         self.controller = p3js.OrbitControls(controlling=self.cam, position=[0, 0, 0 + self.camera_distance],
-                                             target=[0,0,0])
+                                             target=[0, 0, 0])
         self.freeze_camera(True)
         self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
                                       controls=[self.controller], webgl_version=1,
@@ -210,7 +210,7 @@ class ColorBarRenderer(widgets.VBox):
         from PIL import Image, ImageFont, ImageDraw
         # upsacle to pow2
         sprite_size = (self.render_size[0], self.render_size[1])
-        image = Image.new('RGBA', sprite_size, color=(255,255,255,255))
+        image = Image.new('RGBA', sprite_size, color=(255, 255, 255, 255))
         draw = ImageDraw.Draw(image)
         ttf = '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'
         font_size = 12
@@ -224,7 +224,7 @@ class ColorBarRenderer(widgets.VBox):
             draw.line([(0, bar_padding+i), (bar_width, bar_padding+i)], cl, width=1)
 
         text_x = bar_width + 4
-        text_color = (0,0,0,255)
+        text_color = (0, 0, 0, 255)
         text_fmt = '{:+1.3e}'
         draw.text((text_x, 0), text_fmt.format(self.vmax), font=font, fill=text_color)
         draw.text((text_x, (bar_height-bar_padding)//2), text_fmt.format((self.vmax+self.vmin)/2),
@@ -243,7 +243,7 @@ class ColorBarRenderer(widgets.VBox):
 
 
 class ThreeJSPlot(widgets.VBox):
-    def __init__(self,grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size):
+    def __init__(self, grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size):
         render_size = (300, 300)
         self.renderer = [Renderer(u, grid, render_size, color_map, title, bounding_box=bounding_box, codim=codim,
                                   vmin=vmin, vmax=vmax)
