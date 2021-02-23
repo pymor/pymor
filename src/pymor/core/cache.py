@@ -322,37 +322,37 @@ class CacheableObject(ImmutableObject):
         return self._cached_method_call(method, False, argnames, defaults, args, kwargs)
 
     def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
-            if not cache_regions:
-                default_regions()
-            try:
-                region = cache_regions[self.cache_region]
-            except KeyError:
-                raise KeyError(f'No cache region "{self.cache_region}" found')
+        if not cache_regions:
+            default_regions()
+        try:
+            region = cache_regions[self.cache_region]
+        except KeyError:
+            raise KeyError(f'No cache region "{self.cache_region}" found')
 
-            # id for self
-            assert self.cache_id or not region.persistent
-            self_id = self.cache_id or self.uid
+        # id for self
+        assert self.cache_id or not region.persistent
+        self_id = self.cache_id or self.uid
 
-            # ensure that passing a value as positional or keyword argument does not matter
-            kwargs.update(zip(argnames, args))
+        # ensure that passing a value as positional or keyword argument does not matter
+        kwargs.update(zip(argnames, args))
 
-            # ensure the values of optional parameters enter the cache key
-            if defaults:
-                kwargs = dict(defaults, **kwargs)
+        # ensure the values of optional parameters enter the cache key
+        if defaults:
+            kwargs = dict(defaults, **kwargs)
 
-            key = build_cache_key((method.__name__, self_id, kwargs))
-            found, value = region.get(key)
+        key = build_cache_key((method.__name__, self_id, kwargs))
+        found, value = region.get(key)
 
-            if found:
-                value, cached_defaults_changes = value
-                if cached_defaults_changes != defaults_changes():
-                    getLogger('pymor.core.cache').warning('pyMOR defaults have been changed. Cached result may be wrong.')
-                return value
-            else:
-                self.logger.debug(f'creating new cache entry for {self.__class__.__name__}.{method.__name__}')
-                value = method(self, **kwargs) if pass_self else method(**kwargs)
-                region.set(key, (value, defaults_changes()))
-                return value
+        if found:
+            value, cached_defaults_changes = value
+            if cached_defaults_changes != defaults_changes():
+                getLogger('pymor.core.cache').warning('pyMOR defaults have been changed. Cached result may be wrong.')
+            return value
+        else:
+            self.logger.debug(f'creating new cache entry for {self.__class__.__name__}.{method.__name__}')
+            value = method(self, **kwargs) if pass_self else method(**kwargs)
+            region.set(key, (value, defaults_changes()))
+            return value
 
 
 def cached(function):

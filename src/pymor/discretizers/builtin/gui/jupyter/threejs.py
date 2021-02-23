@@ -102,7 +102,8 @@ class Renderer(widgets.VBox):
         if config.is_nbconvert():
             # need to ensure all data is loaded before cell execution is over
             class LoadDummy:
-                def done(self): return True
+                def done(self):
+                    return True
             self._load_data(U)
             self.load = LoadDummy()
         else:
@@ -277,8 +278,7 @@ class ThreeJSPlot(widgets.VBox):
 
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, columns=2,
-         color_map=get_cmap('viridis')):
+                    separate_colorbars=False, rescale_colorbars=False, columns=2, color_map=get_cmap('viridis')):
     """Generate a pythreejs Plot and associated controls for  scalar data associated to a two-dimensional |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either

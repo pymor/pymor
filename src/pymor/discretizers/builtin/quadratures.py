@@ -233,4 +233,4 @@ class GaussQuadratures:
     )
 
     for a in chain(points, weights):
-            a.setflags(write=False)
+        a.setflags(write=False)

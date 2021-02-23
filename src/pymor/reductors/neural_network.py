@@ -151,7 +151,7 @@ if config.HAVE_TORCH:
 
                 for run in range(restarts):
                     neural_network, current_losses = self._train(layers, activation_function, optimizer,
-                                                       epochs, batch_size, learning_rate)
+                                                                 epochs, batch_size, learning_rate)
                     if not hasattr(self, 'losses') or current_losses['val'] < self.losses['val']:
                         self.losses = current_losses
                         self.neural_network = neural_network

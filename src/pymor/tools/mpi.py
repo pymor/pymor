@@ -298,7 +298,7 @@ def method_call(obj_id, name_, *args, **kwargs):
     """
     obj = get_object(obj_id)
     return getattr(obj, name_)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-                                **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()})
+                               **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()})
 
 
 def method_call_manage(obj_id, name_, *args, **kwargs):

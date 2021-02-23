@@ -20,7 +20,7 @@ from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 class MatplotlibAxesBase:
 
     def __init__(self, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2, separate_axes=False, columns=2,
-            aspect_ratio=1):
+                 aspect_ratio=1):
         # aspect_ratio is height/width
         self.vmin = vmin
         self.vmax = vmax
@@ -52,8 +52,8 @@ class MatplotlibAxesBase:
             assert len(self.ax) == 1
             delay_between_frames = 200  # ms
             self.anim = animation.FuncAnimation(figure, self.animate,
-                                           frames=U, interval=delay_between_frames,
-                                           blit=True, event_source=sync_timer)
+                                                frames=U, interval=delay_between_frames,
+                                                blit=True, event_source=sync_timer)
             # generating the HTML instance outside this class causes the plot display to fail
             self.html = HTML(self.anim.to_jshtml())
         else:
@@ -103,12 +103,12 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
     def _plot_init(self):
         if self.codim == 2:
             self.p = self.ax[0].tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
-                                 np.zeros(len(self.coordinates)),
-                                 vmin=self.vmin, vmax=self.vmax, shading='gouraud')
+                                          np.zeros(len(self.coordinates)),
+                                          vmin=self.vmin, vmax=self.vmax, shading='gouraud')
         else:
             self.p = self.ax[0].tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
-                                 facecolors=np.zeros(len(self.subentities)),
-                                 vmin=self.vmin, vmax=self.vmax, shading='flat')
+                                          facecolors=np.zeros(len(self.subentities)),
+                                          vmin=self.vmin, vmax=self.vmax, shading='flat')
         if self.colorbar:
             # thin plots look ugly with a huge colorbar on the right
             if self.aspect_ratio < 0.75:
