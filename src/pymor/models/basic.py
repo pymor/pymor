@@ -95,7 +95,7 @@ class StationaryModel(Model):
     _compute_allowed_kwargs = frozenset({'use_adjoint'})
 
     def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
-        """compute the gradient of the output functional  w.r.t. the parameters
+        """Compute the gradient of the output functional  w.r.t. the parameters.
 
         Parameters
         ----------

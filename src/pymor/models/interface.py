@@ -152,7 +152,7 @@ class Model(CacheableObject, ParametricObject):
         return sensitivities
 
     def _compute_output_d_mu(self, solution, mu=None, return_array=False, **kwargs):
-        """compute the gradient w.r.t. the parameter of the output functional
+        """Compute the gradient w.r.t. the parameter of the output functional
 
         Parameters
         ----------
@@ -485,7 +485,7 @@ class Model(CacheableObject, ParametricObject):
         return data['solution_d_mu']
 
     def output_d_mu(self, mu=None, return_array=False, **kwargs):
-        """compute the gradient w.r.t. the parameter of the output functional
+        """Compute the gradient w.r.t. the parameter of the output functional.
 
         Parameters
         ----------

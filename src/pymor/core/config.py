@@ -71,7 +71,8 @@ def _get_qt_version():
 
 
 def is_jupyter():
-    """This Method is not foolprof and might fail with any given jupyter release
+    """This Method is not foolprof and might fail with any given jupyter release.
+
     :return: True if we believe to be running in a Jupyter Notebook or Lab
     """
     try:
@@ -87,7 +88,7 @@ def is_jupyter():
 
 def is_nbconvert():
     """In some visualization cases we need to be able to detect if a notebook
-    is executed with nbconvert to disable async loading
+    is executed with nbconvert to disable async loading.
     """
     from os import environ
     return is_jupyter() and bool(environ.get('PYMOR_NBCONVERT', False))
