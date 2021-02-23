@@ -376,7 +376,8 @@ if config.HAVE_TORCH:
 
         def _compute_layers_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network
-            (make sure to increase the input dimension to account for the time)."""
+            (make sure to increase the input dimension to account for the time).
+            """
             return [len(self.fom.parameters) + 1,] + hidden_layers + [len(self.reduced_basis),]
 
         def _build_rom(self):
@@ -419,7 +420,8 @@ if config.HAVE_TORCH:
 
         def _compute_sample(self, mu, u, reduced_basis):
             """Transform parameter and corresponding solution to tensors
-            (make sure to include the time instances in the inputs)."""
+            (make sure to include the time instances in the inputs).
+            """
             parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
             samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:,0]))

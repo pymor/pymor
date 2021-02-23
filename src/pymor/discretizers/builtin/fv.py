@@ -435,7 +435,8 @@ def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_l
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
                                                            dirichlet_data=None, solver_options=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using
-    :class:`SimplifiedEngquistOsherFlux`."""
+    :class:`SimplifiedEngquistOsherFlux`.
+    """
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 

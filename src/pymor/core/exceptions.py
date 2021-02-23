@@ -9,8 +9,8 @@ warn = warnings.warn
 
 class ConstError(Exception):
     """I get thrown when you try to add a new member to
-    a locked class instance"""
-    pass
+    a locked class instance.
+    """
 
 
 class AccuracyError(Exception):

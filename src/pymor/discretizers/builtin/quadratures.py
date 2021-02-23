@@ -36,8 +36,7 @@ class GaussQuadratures:
 
     @classmethod
     def iter_quadrature(cls, order=None, npoints=None):
-        """iterates over a quadrature tuple wise
-        """
+        """Iterates over a quadrature tuple wise."""
         p = cls._determine_order(order, npoints)
         for i in range(len(cls.points[p])):
             yield (cls.points[p][i], cls.weights[p][i])
