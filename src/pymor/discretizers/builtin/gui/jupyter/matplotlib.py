@@ -52,8 +52,8 @@ class MPLPlotBase:
                 figure = plt.figure(self.fig_ids[i])
                 sync_timer = sync_timer or figure.canvas.new_timer()
                 if grid.dim == 2:
-                    plot = MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin, vmax=vmax,
-                                               bounding_box=bounding_box, codim=codim, columns=columns,
+                    plot = MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin,
+                                               vmax=vmax, bounding_box=bounding_box, codim=codim, columns=columns,
                                                colorbar=separate_colorbars or i == len(U) - 1)
                 else:
                     plot = Matplotlib1DAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin, vmax=vmax,

@@ -116,7 +116,8 @@ def make_sub_grid_boundary_info(sub_grid, parent_grid, parent_grid_boundary_info
     Parameters
     ----------
     sub_grid
-        The :class:`~pymor.discretizers.builtin.grids.subgrid.SubGrid` for which a |BoundaryInfo| is created.
+        The :class:`~pymor.discretizers.builtin.grids.subgrid.SubGrid` for which a
+        |BoundaryInfo| is created.
     parent_grid
         The parent |Grid|.
     parent_grid_boundary_info

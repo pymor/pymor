@@ -95,7 +95,8 @@ class Renderer(widgets.VBox):
         uniforms=dict(
             colormap={'value': color_map, 'type': 'sampler2D'},
         )
-        self.material = p3js.ShaderMaterial(vertexShader=RENDER_VERTEX_SHADER, fragmentShader=RENDER_FRAGMENT_SHADER, uniforms=uniforms, )
+        self.material = p3js.ShaderMaterial(vertexShader=RENDER_VERTEX_SHADER, fragmentShader=RENDER_FRAGMENT_SHADER,
+                                            uniforms=uniforms)
 
         self.buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
         self.buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
@@ -130,8 +131,9 @@ class Renderer(widgets.VBox):
         )
         mesh = p3js.Mesh(geometry=geo, material=self.material)
         mesh.visible = False
-        # translate to origin where the camera is looking by default, avoids camera not updating in nbconvert run
-        mesh.position = tuple(p-i for p,i in zip(mesh.position, self.mesh_center))
+        # translate to origin where the camera is looking by default,
+        # avoids camera not updating in nbconvert run
+        mesh.position = tuple(p-i for p, i in zip(mesh.position, self.mesh_center))
         return mesh
 
     async def _async_load_data(self, data):
@@ -170,7 +172,8 @@ class Renderer(widgets.VBox):
 
         absx = np.abs(combined_bounds[0] - combined_bounds[3])
         not_mathematical_distance_scaling = 1.2
-        self.camera_distance = np.sin((90 - fov_angle / 2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle / 2 * np.pi / 180)
+        self.camera_distance = (np.sin((90 - fov_angle / 2) * np.pi / 180) * 0.5
+                                * absx / np.sin(fov_angle / 2 * np.pi / 180))
         self.camera_distance *= not_mathematical_distance_scaling
         xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
         yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
@@ -224,7 +227,8 @@ class ColorBarRenderer(widgets.VBox):
         text_color = (0,0,0,255)
         text_fmt = '{:+1.3e}'
         draw.text((text_x, 0), text_fmt.format(self.vmax), font=font, fill=text_color)
-        draw.text((text_x, (bar_height-bar_padding)//2), text_fmt.format((self.vmax+self.vmin)/2), font=font, fill=text_color)
+        draw.text((text_x, (bar_height-bar_padding)//2), text_fmt.format((self.vmax+self.vmin)/2),
+                  font=font, fill=text_color)
         draw.text((text_x, bar_height-bar_padding), text_fmt.format(self.vmin), font=font, fill=text_color)
 
         of = BytesIO()

@@ -113,7 +113,8 @@ if config.HAVE_TORCH:
             assert batch_size > 0
             assert learning_rate > 0.
 
-            # set a seed for the PyTorch initialization of weights and biases and further PyTorch methods
+            # set a seed for the PyTorch initialization of weights and biases
+            # and further PyTorch methods
             torch.manual_seed(seed)
 
             # build a reduced basis using POD and compute training data
@@ -123,8 +124,8 @@ if config.HAVE_TORCH:
             # determine the numbers of neurons in the hidden layers
             if isinstance(hidden_layers, str):
                 hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
-            # input and output size of the neural network are prescribed by the dimension of the parameter space
-            # and the reduced basis size
+            # input and output size of the neural network are prescribed by the
+            # dimension of the parameter space and the reduced basis size
             assert isinstance(hidden_layers, list)
             layers = self._compute_layers_sizes(hidden_layers)
 
@@ -309,8 +310,8 @@ if config.HAVE_TORCH:
 
         def _compute_sample(self, mu, u, reduced_basis):
             """Transform parameter and corresponding solution to tensors."""
-            # determine the coefficients of the full-order solutions in the reduced basis to obtain the
-            # training data; convert everything into tensors that are compatible with PyTorch
+            # determine the coefficients of the full-order solutions in the reduced basis to obtain
+            # the training data; convert everything into tensors that are compatible with PyTorch
             mu_tensor = torch.DoubleTensor(mu.to_numpy())
             u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
             return [(mu_tensor, u_tensor),]

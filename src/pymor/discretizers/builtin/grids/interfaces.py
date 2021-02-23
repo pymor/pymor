@@ -362,7 +362,8 @@ class Grid(CacheableObject):
         return A, B
 
     def jacobian_inverse_transposed(self, codim):
-        """`retval[e]` is the transposed (pseudo-)inverse of the Jacobian of `embeddings(codim)[e]`.
+        """`retval[e]` is the transposed (pseudo-)inverse of
+        the Jacobian of `embeddings(codim)[e]`.
         """
         return self._jacobian_inverse_transposed(codim)
 

@@ -21,15 +21,15 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     Parameters
     ----------
     domain_description
-        A |DomainDescription| of the |PolygonalDomain| or |RectDomain| to discretize. Has to be `None`
-        when `geo_file` is given.
+        A |DomainDescription| of the |PolygonalDomain| or |RectDomain| to discretize. Has to be 
+        `None` when `geo_file` is given.
     geo_file
         File handle of the Gmsh Geo-file to discretize. Has to be `None` when
         `domain_description` is given.
     geo_file_path
         Path of the created Gmsh GEO-file. When meshing a |PolygonalDomain| or |RectDomain| and
-        `geo_file_path` is `None`, a temporary file will be created. If `geo_file` is specified, this
-        is ignored and the path to `geo_file` will be used.
+        `geo_file_path` is `None`, a temporary file will be created. If `geo_file` is specified,
+        this is ignored and the path to `geo_file` will be used.
     msh_file_path
         Path of the created Gmsh MSH-file. If `None`, a temporary file will be created.
     mesh_algorithm
@@ -38,7 +38,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         Mesh element size scaling factor.
     options
         Other options to control the meshing procedure of Gmsh. See
-        http://geuz.org/gmsh/doc/texinfo/gmsh.html#Command_002dline-options for all available options.
+        http://geuz.org/gmsh/doc/texinfo/gmsh.html#Command_002dline-options for all available
+        options.
     refinement_steps
         Number of refinement steps to do after the initial meshing.
 
@@ -101,7 +102,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     # these two are referenced in a finally block, but were left undefined in some paths
     geo_file, msh_file = None, None
     try:
-        # When a |PolygonalDomain| or |RectDomain| has to be discretized create a Gmsh GE0-file and write all data.
+        # When a |PolygonalDomain| or |RectDomain| has to be discretized create a
+        # Gmsh GE0-file and write all data.
         if domain_description is not None:
             logger.info('Writing Gmsh geometry file ...')
             # Create a temporary GEO-file if None is specified
@@ -130,7 +132,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             points_deque = [collections.deque(ps) for ps in points]
             for ps_d in points_deque:
                 ps_d.rotate(-1)
-            # create lines by connecting the points with shifted points, such that they form a polygonal chains.
+            # create lines by connecting the points with shifted points,
+            # such that they form a polygonal chains.
             lines = [[point_ids[str(p0)], point_ids[str(p1)]]
                      for ps, ps_d in zip(points, points_deque) for p0, p1 in zip(ps, ps_d)]
             # assign ids to all lines and write them to the GEO-file.
@@ -145,7 +148,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
             # set this here explicitly for string conversion to make sense
             line_loop_ids = list(line_loop_ids)
-            # create the surface defined by line loops, starting with the exterior and then the holes.
+            # create the surface defined by line loops,
+            # starting with the exterior and then the holes.
             geo_file.write('Plane Surface(' + str(line_loop_ids[0]+1) + ')' + ' = '
                            + str(line_loop_ids).replace('[', '{').replace(']', '}') + ';\n')
             geo_file.write('Physical Surface("boundary") = {'+str(line_loop_ids[0]+1)+'};\n')

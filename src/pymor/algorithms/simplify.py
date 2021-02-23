@@ -33,7 +33,8 @@ def expand(obj):
     ----------
     obj
         Either a |Model| or an |Operator| to which the expansion rules are
-        applied recursively for all :meth:`children <pymor.algorithms.rules.RuleTable.get_children>`.
+        applied recursively for all
+        :meth:`children <pymor.algorithms.rules.RuleTable.get_children>`.
 
     Returns
     -------

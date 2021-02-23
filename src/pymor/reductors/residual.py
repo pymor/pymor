@@ -174,8 +174,8 @@ class ImplicitEulerResidualReductor(BasicObject):
     with the Riesz isomorphism is given by::
 
         riesz_residual.apply(U, U_old, mu)
-            == product.apply_inverse(operator.apply(U, mu) + 1/dt*mass.apply(U, mu) - 1/dt*mass.apply(U_old, mu)
-               - rhs.as_vector(mu))
+            == product.apply_inverse(operator.apply(U, mu) + 1/dt*mass.apply(U, mu)
+                - 1/dt*mass.apply(U_old, mu) - rhs.as_vector(mu))
 
     This reductor determines a low-dimensional subspace of the image of a reduced
     basis space under `riesz_residual` using :func:`~pymor.algorithms.image.estimate_image_hierarchical`,
@@ -240,7 +240,8 @@ class ImplicitEulerResidualReductor(BasicObject):
             return NonProjectedImplicitEulerResidualOperator(operator, mass, self.rhs, self.dt, self.product)
 
         with self.logger.block('Projecting residual operator ...'):
-            operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product always cancels out.
+            # the product always cancels out
+            operator = project(self.operator, self.residual_range, self.RB, product=None)
             mass = project(self.mass, self.residual_range, self.RB, product=None)
             rhs = project(self.rhs, self.residual_range, None, product=None)
 

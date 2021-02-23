@@ -181,7 +181,8 @@ class GenericParameterFunctional(ParameterFunctional):
         with the signature `derivative_mappings[parameter][index](mu)`
     second_derivative_mappings
         A dict containing all second order partial derivatives of each |Parameter| and index
-        with the signature `second_derivative_mappings[parameter_i][index_i][parameter_j][index_j](mu)`
+        with the signature
+        `second_derivative_mappings[parameter_i][index_i][parameter_j][index_j](mu)`
     """
 
     def __init__(self, mapping, parameters, name=None, derivative_mappings=None, second_derivative_mappings=None):
@@ -251,8 +252,8 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         A dict containing a Python expression for the partial derivatives of each
         parameter component.
     second_derivative_expressions
-        A dict containing a list of dicts of Python expressions for all second order partial derivatives of each
-        parameter component i and j.
+        A dict containing a list of dicts of Python expressions for all second order partial
+        derivatives of each parameter component i and j.
     """
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
@@ -264,7 +265,8 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
     functions['np'] = np
 
-    def __init__(self, expression, parameters, name=None, derivative_expressions=None, second_derivative_expressions=None):
+    def __init__(self, expression, parameters, name=None, derivative_expressions=None,
+                 second_derivative_expressions=None):
         self.expression = expression
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions

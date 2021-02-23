@@ -175,6 +175,8 @@ _launch_qt_processes = set()
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 
+    mac_or_win = is_windows_platform() or is_macos_platform()
+
     def _doit(factory):
         # for windows these needs to be repeated due to multiprocessing (?)
         from Qt.QtWidgets import QApplication
@@ -184,14 +186,15 @@ def _launch_qt_app(main_window_factory, block):
         except RuntimeError:
             app = QCoreApplication.instance()
         main_window = factory()
-        if getattr(sys, '_called_from_test', False) and (is_windows_platform() or is_macos_platform()):
+        if getattr(sys, '_called_from_test', False) and mac_or_win:
             QTimer.singleShot(1000, app.quit)
         main_window.show()
         app.exec_()
 
     import sys
-    # we treat win and osx differently here since no (reliable) forking is possible with multiprocessing startup
-    if (block and not getattr(sys, '_called_from_test', False)) or (is_windows_platform() or is_macos_platform()):
+    # we treat win and osx differently here since no (reliable)
+    # forking is possible with multiprocessing startup
+    if (block and not getattr(sys, '_called_from_test', False)) or mac_or_win:
         _doit(main_window_factory)
     else:
         p = multiprocessing.Process(target=_doit, args=(main_window_factory,))

@@ -83,7 +83,8 @@ class LinearComplexifiedListVectorArrayOperatorBase(ListVectorArrayOperatorBase)
     def _real_apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
         raise NotImplementedError
 
-    def _real_apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None, least_squares=False, prepare_data=None):
+    def _real_apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None, least_squares=False,
+                                               prepare_data=None):
         raise NotImplementedError
 
     def _apply_one_vector(self, u, mu=None, prepare_data=None):

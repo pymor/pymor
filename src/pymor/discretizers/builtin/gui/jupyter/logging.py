@@ -71,7 +71,8 @@ class LoggingRedirector:
 
     def stop(self):
         if self.old_default is None:
-            # %load_ext in the frist cell triggers a post_run_cell with no matching pre_run_cell event before
+            # %load_ext in the first cell triggers a post_run_cell
+            # with no matching pre_run_cell event before
             return
         self.new_handler.close()
         logger.default_handler = self.old_default

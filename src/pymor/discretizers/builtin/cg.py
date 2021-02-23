@@ -111,7 +111,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
 
 class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
-    """Linear finite element functional representing the inner product with an L2-|Function| on the boundary.
+    """Linear finite element functional representing the inner product with an
+    L2-|Function| on the boundary.
 
     Parameters
     ----------
@@ -232,7 +233,8 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         g = self.grid
         bi = self.boundary_info
 
-        # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points)
+        # evaluate function at all quadrature points ->
+        #   shape = (g.size(0), number of quadrature points)
         F = self.function(g.centers(0), mu=mu)
 
         # evaluate the shape functions at the quadrature points on the reference
@@ -955,10 +957,12 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     preassemble
         If `True`, preassemble all operators in the resulting |Model|.
     mu_energy_product
-        If not `None`, |parameter values| for which to assemble the symmetric part of the |Operator| of the resulting
-        |Model| `fom` (ignoring the advection part). Thus, assuming no advection and a symmetric diffusion tensor,
-        `fom.products['energy']` is equal to `fom.operator.assemble(mu)`, except for the fact that the former has
-        cleared Dirichlet rows and columns, while the latter only has cleared Dirichlet rows).
+        If not `None`, |parameter values| for which to assemble the symmetric part of the
+        |Operator| of the resulting |Model| `fom` (ignoring the advection part). Thus,
+        assuming no advection and a symmetric diffusion tensor, `fom.products['energy']`
+        is equal to `fom.operator.assemble(mu)`, except for the fact that the former has
+        cleared Dirichlet rows and columns, while the latter only
+        has cleared Dirichlet rows).
 
     Returns
     -------
