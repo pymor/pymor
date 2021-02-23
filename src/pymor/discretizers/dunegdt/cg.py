@@ -26,6 +26,7 @@ if config.HAVE_DUNEGDT:
             LocalElementProductIntegrand,
             LocalIntersectionIntegralBilinearForm,
             LocalIntersectionIntegralFunctional,
+            LocalIntersectionNormalComponentProductIntegrand,
             LocalIntersectionProductIntegrand,
             LocalLaplaceIntegrand,
             LocalLinearAdvectionIntegrand,
@@ -65,9 +66,7 @@ if config.HAVE_DUNEGDT:
         Note: non-trivial Dirichlet data is treated via shifting. the resulting solution is thus in H^1_0 and the shift
               is added upon visualization or output computation.
 
-        TODO: check is all products still make sense!
-
-        WARNING: only works for advection 1 and Neumann 0 atm!
+        TODO: check if all products still make sense!
 
         Parameters
         ----------
@@ -126,11 +125,6 @@ if config.HAVE_DUNEGDT:
                 == p.nonlinear_reaction_derivative
                 is None):
             raise NotImplementedError
-
-        # see below
-        assert d == 1
-        assert all(p.advection.functions[0].value == [1])
-        assert p.neumann_data.value == 0
 
         if grid is None:
             domain_discretizer = domain_discretizer or discretize_domain_default
@@ -202,9 +196,16 @@ if config.HAVE_DUNEGDT:
         # advection part
         if p.advection:
             def make_advection_operator(func):
-                 op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                 op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, func)))
-                 return op
+                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+                op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, func)))
+
+                if p.diffusion:
+                    # enforce total flux = Neumann, instead of only diffusive flux = Neumann
+                    op += (LocalIntersectionIntegralBilinearForm(
+                             LocalIntersectionNormalComponentProductIntegrand(GF(grid, func))), {},
+                           ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
+
+                return op
 
             advection_funcs, advection_coeffs = interpolate(p.advection)
             constrained_lhs_ops += [make_advection_operator(func) for func in advection_funcs]
@@ -274,19 +275,6 @@ if config.HAVE_DUNEGDT:
             neumann_data_funcs, neumann_data_coeffs = interpolate(p.neumann_data)
             rhs_ops += [make_l2_neumann_boundary_functional(func) for func in neumann_data_funcs]
             rhs_coeffs += list(neumann_data_coeffs)
-        if p.diffusion and p.advection:
-            # enforce total flux = Neumann, instead of only diffusive flux = Neumann
-            # WARNING: assumes func*normal = 1, TODO: should use (func*normal) instead of 1 below!
-            def make_total_flux_correction_neumann_boundary_operator(func):
-                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += (LocalIntersectionIntegralBilinearForm(LocalIntersectionProductIntegrand(GF(grid, 1))), {},
-                       ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
-                return op
-
-            # unconstrained_lhs_ops += [make_total_flux_correction_neumann_boundary_operator(func) for func in robin_parameter_funcs]
-            # unconstrained_lhs_coeffs += list(robin_parameter_coeffs)
-            unconstrained_lhs_ops += [make_total_flux_correction_neumann_boundary_operator(None),]
-            unconstrained_lhs_coeffs += [1,]
 
         # Dirichlet boundaries will be handled further below ...
 
