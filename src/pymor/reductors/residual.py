@@ -89,7 +89,7 @@ class ResidualReductor(BasicObject):
 
         with self.logger.block('Projecting residual operator ...'):
             if self.riesz_representatives:
-                operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product cancels out.
+                operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product cancels out
                 rhs = project(self.rhs, self.residual_range, None, product=None)
             else:
                 operator = project(self.operator, self.residual_range, self.RB, product=self.product)

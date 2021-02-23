@@ -330,7 +330,6 @@ def method_call_manage(obj_id, name_, *args, **kwargs):
 
 class ObjectId(int):
     """A handle to an MPI distributed object."""
-    pass
 
 
 def manage_object(obj):
