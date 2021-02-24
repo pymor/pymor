@@ -8,7 +8,8 @@ from pymor.core.config import config
 from pymor.discretizers.builtin.grids.rect import RectGrid
 
 
-def write_tikz(grid, data, filename, codim=2, colorbar=True):
+def write_tikz(grid, data, filename, codim=2, colorbar=True,
+               use_subplots=True, cols=2):
     """Output grid-associated data as a PGFPlots figure.
 
     Parameters
@@ -24,6 +25,10 @@ def write_tikz(grid, data, filename, codim=2, colorbar=True):
         The codimension associated with the data.
     colorbar
         If `True` include a colorbar in the plot.
+    use_subplots
+        Use subplots to visualize a time series.
+    cols
+        Number of colums when subplots are used.
     """
     if not config.HAVE_MATPLOTLIB:
         raise ImportError('matplotlib missing')
@@ -62,9 +67,33 @@ def write_tikz(grid, data, filename, codim=2, colorbar=True):
         tikzplotlib.save(filename, override_externals=True)
         plt.close(fig)
 
+    def write_subplots(filename, data):
+        fig = plt.figure()
+        rows = len(data)//cols + (1 if len(data) % cols != 0 else 0)
+        c_min = np.min(data.to_numpy())
+        c_max = np.max(data.to_numpy())
+        for i in range(len(data)):
+            plt.subplot(rows, cols, i+1)
+            if codim == 0:
+                dat = data[i].to_numpy().reshape((grid.num_intervals[1], grid.num_intervals[0]))
+                plt.pcolormesh(X, Y, dat, shading='flat', figure=fig)
+            elif codim == 2:
+                dat = data[i].to_numpy().reshape((grid.num_intervals[1] + 1, grid.num_intervals[0] + 1))
+                plt.pcolormesh(X, Y, dat, shading='gouraud', figure=fig)
+            else:
+                assert False
+            plt.clim(c_min, c_max)
+            if colorbar and i+1 == len(data):
+                plt.colorbar()
+        tikzplotlib.save(filename, override_externals=True)
+        plt.close(fig)
+
     if len(data) == 1:
         write_one_figure(filename, data)
     else:
-        filename_base = filename[:-4] if filename.endswith('.tex') else filename
-        for i, d in enumerate(data):
-            write_one_figure(f'{filename_base}_{i:03}.tex', d)
+        if use_subplots:
+            write_subplots(filename, data)
+        else:
+            filename_base = filename[:-4] if filename.endswith('.tex') else filename
+            for i, d in enumerate(data):
+                write_one_figure(f'{filename_base}_{i:03}.tex', d)
