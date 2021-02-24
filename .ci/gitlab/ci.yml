@@ -874,7 +874,7 @@ trigger_binder 3/3:
     script:
         - python3 .ci/gitlab/trigger_binder.py "https://gesis.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
-wheel 2010 py3 6:
+wheel 2010 py 3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
@@ -884,7 +884,7 @@ wheel 2010 py3 6:
         expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
-wheel 2014 py3 6:
+wheel 2014 py 3 6:
     extends: .wheel
     variables:
         PYVER: "3.6"
@@ -895,7 +895,7 @@ wheel 2014 py3 6:
     script: bash .ci/gitlab/wheels.bash 2014
 
 
-wheel 2010 py3 7:
+wheel 2010 py 3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"
@@ -905,7 +905,7 @@ wheel 2010 py3 7:
         expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
-wheel 2014 py3 7:
+wheel 2014 py 3 7:
     extends: .wheel
     variables:
         PYVER: "3.7"
@@ -916,7 +916,7 @@ wheel 2014 py3 7:
     script: bash .ci/gitlab/wheels.bash 2014
 
 
-wheel 2010 py3 8:
+wheel 2010 py 3 8:
     extends: .wheel
     variables:
         PYVER: "3.8"
@@ -926,7 +926,7 @@ wheel 2010 py3 8:
         expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
-wheel 2014 py3 8:
+wheel 2014 py 3 8:
     extends: .wheel
     variables:
         PYVER: "3.8"
@@ -937,7 +937,7 @@ wheel 2014 py3 8:
     script: bash .ci/gitlab/wheels.bash 2014
 
 
-wheel 2010 py3 9:
+wheel 2010 py 3 9:
     extends: .wheel
     variables:
         PYVER: "3.9"
@@ -947,7 +947,7 @@ wheel 2010 py3 9:
         expire_in: 1 week
     script: bash .ci/gitlab/wheels.bash 2010
 
-wheel 2014 py3 9:
+wheel 2014 py 3 9:
     extends: .wheel
     variables:
         PYVER: "3.9"
@@ -964,24 +964,24 @@ pypi:
     image: zivgitlab.wwu.io/pymor/docker/pymor/python_3.9:49abe9da568babd4884f38fb83f82f1bfcf0aeaf
     stage: deploy
     dependencies:
-      - wheel 2010 py3 6
+      - wheel 2010 py 3 6
     
-      - wheel 2014 py3 6
-    
-    
-      - wheel 2010 py3 7
-    
-      - wheel 2014 py3 7
+      - wheel 2014 py 3 6
     
     
-      - wheel 2010 py3 8
+      - wheel 2010 py 3 7
     
-      - wheel 2014 py3 8
+      - wheel 2014 py 3 7
     
     
-      - wheel 2010 py3 9
+      - wheel 2010 py 3 8
     
-      - wheel 2014 py3 9
+      - wheel 2014 py 3 8
+    
+    
+      - wheel 2010 py 3 9
+    
+      - wheel 2014 py 3 9
     
     
     rules:
@@ -1009,9 +1009,9 @@ pypi:
 from wheel 1/3:
     extends: .check_wheel
     dependencies:
-          - "wheel 2010 py3 6"
-          - "wheel 2014 py3 6"
-    needs: ["wheel 2010 py3 6","wheel 2014 py3 6",]
+          - "wheel 2010 py 3 6"
+          - "wheel 2014 py 3 6"
+    needs: ["wheel 2010 py 3 6","wheel 2014 py 3 6",]
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_centos_8:49abe9da568babd4884f38fb83f82f1bfcf0aeaf
     script:
       - echo "Testing wheel install on centos_8 with Python 3.6"
@@ -1021,9 +1021,9 @@ from wheel 1/3:
 from wheel 2/3:
     extends: .check_wheel
     dependencies:
-          - "wheel 2010 py3 7"
-          - "wheel 2014 py3 7"
-    needs: ["wheel 2010 py3 7","wheel 2014 py3 7",]
+          - "wheel 2010 py 3 7"
+          - "wheel 2014 py 3 7"
+    needs: ["wheel 2010 py 3 7","wheel 2014 py 3 7",]
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_buster:49abe9da568babd4884f38fb83f82f1bfcf0aeaf
     script:
       - echo "Testing wheel install on debian_buster with Python 3.7"
@@ -1033,9 +1033,9 @@ from wheel 2/3:
 from wheel 3/3:
     extends: .check_wheel
     dependencies:
-          - "wheel 2010 py3 9"
-          - "wheel 2014 py3 9"
-    needs: ["wheel 2010 py3 9","wheel 2014 py3 9",]
+          - "wheel 2010 py 3 9"
+          - "wheel 2014 py 3 9"
+    needs: ["wheel 2010 py 3 9","wheel 2014 py 3 9",]
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_bullseye:49abe9da568babd4884f38fb83f82f1bfcf0aeaf
     script:
       - echo "Testing wheel install on debian_bullseye with Python 3.9"

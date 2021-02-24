@@ -10,6 +10,10 @@ stages:
   - install_checks
   - deploy
 
+{% macro wheel_job_name(manylinux_version, pyver) -%}
+wheel {{manylinux_version}} py {{pyver[0]}} {{pyver[2]}}
+{%- endmacro -%}
+
 #************ definition of base jobs *********************************************************************************#
 
 .test_base:
@@ -299,7 +303,7 @@ trigger_binder {{loop.index}}/{{loop.length}}:
 
 {%- for PY in pythons %}
 {%- for ML in manylinuxs %}
-wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
+{{ wheel_job_name(ML, PY) }}:
     extends: .wheel
     variables:
         PYVER: "{{PY}}"
@@ -318,7 +322,7 @@ pypi:
     dependencies:
     {%- for PY in pythons %}
     {%- for ML in manylinuxs %}
-      - wheel {{ML}} py{{PY[0]}} {{PY[2]}}
+      - {{ wheel_job_name(ML, PY) }}
     {% endfor %}
     {% endfor %}
     rules:
@@ -347,10 +351,10 @@ from wheel {{loop.index}}/{{loop.length}}:
     extends: .check_wheel
     dependencies:
         {%- for ML in manylinuxs %}
-          - "wheel {{ML}} py{{PY[0]}} {{PY[2]}}"
+          - "{{ wheel_job_name(ML, PY) }}"
         {%- endfor %}
     needs: [{%- for ML in manylinuxs -%}
-          "wheel {{ML}} py{{PY[0]}} {{PY[2]}}",
+          "{{ wheel_job_name(ML, PY) }}",
         {%- endfor -%}]
     image: {{registry}}/pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
     script:
