@@ -68,11 +68,11 @@ stages:
     environment:
         name: safe
     rules:
-        - if: $CI_COMMIT_REF_NAME =~ /^github\/PR_.*/
-          when: never
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_REF_NAME =~ /^github.*/
+      when: never
+    - when: on_success
     stage: deploy
     script: .ci/gitlab/submit.bash
 
@@ -112,9 +112,9 @@ stages:
     stage: install_checks
     needs: ["ci setup"]
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         USER: juno
 
@@ -124,18 +124,18 @@ stages:
     needs: ["ci setup"]
     tags: [mike]
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
 
 
 .check_wheel:
     extends: .test_base
     stage: install_checks
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     services:
       - name: zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
         alias: pymor__devpi
@@ -178,9 +178,9 @@ ci setup:
 mpi 3 6:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_mpi__3.6
     services:
@@ -200,9 +200,9 @@ mpi 3 6:
 mpi 3 7:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_mpi__3.7
     services:
@@ -222,9 +222,9 @@ mpi 3 7:
 mpi 3 8:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_mpi__3.8
     services:
@@ -244,9 +244,9 @@ mpi 3 8:
 mpi 3 9:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_mpi__3.9
     services:
@@ -266,9 +266,9 @@ mpi 3 9:
 pip_installed 3 6:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_pip_installed__3.6
     services:
@@ -288,9 +288,9 @@ pip_installed 3 6:
 pip_installed 3 7:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_pip_installed__3.7
     services:
@@ -310,9 +310,9 @@ pip_installed 3 7:
 pip_installed 3 8:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_pip_installed__3.8
     services:
@@ -332,9 +332,9 @@ pip_installed 3 8:
 pip_installed 3 9:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_pip_installed__3.9
     services:
@@ -354,9 +354,9 @@ pip_installed 3 9:
 tutorials 3 6:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_tutorials__3.6
     services:
@@ -376,9 +376,9 @@ tutorials 3 6:
 tutorials 3 7:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_tutorials__3.7
     services:
@@ -398,9 +398,9 @@ tutorials 3 7:
 tutorials 3 8:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_tutorials__3.8
     services:
@@ -420,9 +420,9 @@ tutorials 3 8:
 tutorials 3 9:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_tutorials__3.9
     services:
@@ -442,9 +442,9 @@ tutorials 3 9:
 vanilla 3 6:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_vanilla__3.6
     services:
@@ -464,9 +464,9 @@ vanilla 3 6:
 vanilla 3 7:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_vanilla__3.7
     services:
@@ -486,9 +486,9 @@ vanilla 3 7:
 vanilla 3 8:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_vanilla__3.8
     services:
@@ -508,9 +508,9 @@ vanilla 3 8:
 vanilla 3 9:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_vanilla__3.9
     services:
@@ -530,9 +530,9 @@ vanilla 3 9:
 numpy_git 3 9:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_numpy_git__3.9
     services:
@@ -552,9 +552,9 @@ numpy_git 3 9:
 oldest 3 6:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_oldest__3.6
     services:
@@ -574,9 +574,9 @@ oldest 3 6:
 cpp_demo 3 6:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.6
     services:
@@ -596,9 +596,9 @@ cpp_demo 3 6:
 cpp_demo 3 7:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.7
     services:
@@ -618,9 +618,9 @@ cpp_demo 3 7:
 cpp_demo 3 8:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.8
     services:
@@ -640,9 +640,9 @@ cpp_demo 3 8:
 cpp_demo 3 9:
     extends: .pytest
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.9
     services:
@@ -777,9 +777,9 @@ from source 1/3:
           alias: pypi_mirror
     needs: ["ci setup"]
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     stage: install_checks
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_centos_8:49abe9da568babd4884f38fb83f82f1bfcf0aeaf
     script: ./.ci/gitlab/install_checks/centos_8/check.bash
@@ -791,9 +791,9 @@ from source 2/3:
           alias: pypi_mirror
     needs: ["ci setup"]
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     stage: install_checks
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_buster:49abe9da568babd4884f38fb83f82f1bfcf0aeaf
     script: ./.ci/gitlab/install_checks/debian_buster/check.bash
@@ -805,9 +805,9 @@ from source 3/3:
           alias: pypi_mirror
     needs: ["ci setup"]
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
     stage: install_checks
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_bullseye:49abe9da568babd4884f38fb83f82f1bfcf0aeaf
     script: ./.ci/gitlab/install_checks/debian_bullseye/check.bash
@@ -985,11 +985,11 @@ pypi:
     
     
     rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - if: $CI_COMMIT_REF_NAME =~ /^github.*/
-          when: never
-        - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_REF_NAME =~ /^github.*/
+      when: never
+    - when: on_success
     variables:
         ARCHIVE_DIR: pyMOR_wheels-${CI_COMMIT_REF_NAME}
     artifacts:
