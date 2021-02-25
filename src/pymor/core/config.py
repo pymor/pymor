@@ -116,6 +116,7 @@ _PACKAGES = {
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
     'SLYCOT': lambda: _get_slycot_version(),
     'SPHINX': lambda: import_module('sphinx').__version__,
+    'TIKZPLOTLIB': lambda: import_module('tikzplotlib').__version__,
     'TORCH': lambda: import_module('torch').__version__,
     'TYPER': lambda: import_module('typer').__version__,
 }

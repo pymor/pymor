@@ -47,7 +47,8 @@ install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'nbresuse': 'resource usage indicator for notebooks',
                     'torch;python_version<"3.9"': 'PyTorch open source machine learning framework',
                     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
-                    'pillow': 'image library used for bitmap data functions'}
+                    'pillow': 'image library used for bitmap data functions',
+                    'tikzplotlib': 'create PGFPlots figures for builtin discretizations',}
 doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex'] + install_requires

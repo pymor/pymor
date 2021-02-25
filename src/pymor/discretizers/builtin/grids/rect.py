@@ -202,7 +202,7 @@ class RectGrid(GridWithOrthogonalCenters):
     def orthogonal_centers(self):
         return self.centers(0)
 
-    def visualize(self, U, codim=2, **kwargs):
+    def visualize(self, U, codim=None, **kwargs):
         """Visualize scalar data associated to the grid as a patch plot.
 
         Parameters
@@ -212,14 +212,19 @@ class RectGrid(GridWithOrthogonalCenters):
             data is visualized as a time series of plots. Alternatively, a tuple of
             |Numpy arrays| can be provided, in which case a subplot is created for
             each entry of the tuple. The lengths of all arrays have to agree.
+            If `U` is a |VectorArray|, or the elements of `U` are |VectorArrays| in case
+            `U` is a `tuple`, the |VectorArrays| are converted using
+            :meth:`~pymor.vectorarrays.VectorArray.to_numpy`.
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).
+            If `None`, the codimension is derived from the dimension of the data.
         kwargs
-            See :func:`~pymor.discretizers.builtin.gui.qt.visualize_patch`
+            See :func:`~pymor.discretizers.builtin.gui.visualizers.PatchVisualizer.visualize`.
         """
-        from pymor.discretizers.builtin.gui.qt import visualize_patch
+        from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer
         from pymor.vectorarrays.interface import VectorArray
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
+
         if isinstance(U, (np.ndarray, VectorArray)):
             U = (U,)
         assert all(isinstance(u, (np.ndarray, VectorArray)) for u in U)
@@ -227,5 +232,17 @@ class RectGrid(GridWithOrthogonalCenters):
                   u if isinstance(u, NumpyVectorArray) else
                   NumpyVectorSpace.make_array(u.to_numpy())
                   for u in U)
+
+        if codim is None:
+            size = U[0].dim
+            if size == self.size(0):
+                codim = 0
+            elif size == self.size(2):
+                codim = 2
+            else:
+                raise ValueError('Invalid input data dimension.')
+
         bounding_box = kwargs.pop('bounding_box', self.domain)
-        visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
+
+        visualizer = PatchVisualizer(self, bounding_box, codim)
+        visualizer.visualize(U, None, **kwargs)

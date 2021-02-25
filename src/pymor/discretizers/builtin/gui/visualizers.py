@@ -7,6 +7,7 @@ from pymor.core.base import ImmutableObject
 from pymor.core.config import is_jupyter
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
+from pymor.discretizers.builtin.grids.tikzio import write_tikz
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.vectorarrays.interface import VectorArray
 
@@ -39,7 +40,8 @@ class PatchVisualizer(ImmutableObject):
         self.__auto_init(locals())
 
     def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
-                  rescale_colorbars=False, block=None, filename=None, columns=2):
+                  rescale_colorbars=False, block=None, filename=None, columns=2,
+                  **kwargs):
         """Visualize the provided data.
 
         Parameters
@@ -66,33 +68,47 @@ class PatchVisualizer(ImmutableObject):
         filename
             If specified, write the data to a VTK-file using
             :func:`~pymor.discretizers.builtin.grids.vtkio.write_vtk` instead of displaying it.
+            If `filename` ends with `'.tex'`, use
+            :func:`~pymor.discretizers.builtin.grids.tikzio.write_tikz` to create a PGFPlots
+            figure instead.
         columns
             The number of columns in the visualizer GUI in case multiple plots are displayed
             at the same time.
+        kwargs
+            Additional visualization options, depending on the backend.
         """
         assert isinstance(U, VectorArray) \
             or (isinstance(U, tuple)
                 and all(isinstance(u, VectorArray) for u in U)
                 and all(len(u) == len(U[0]) for u in U))
         if filename:
-            if not isinstance(U, tuple):
-                write_vtk(self.grid, U, filename, codim=self.codim)
+            use_tikz = filename.endswith('.tex')
+            if not isinstance(U, tuple) or len(U) == 1:
+                if isinstance(U, tuple):
+                    U = U[0]
+                if use_tikz:
+                    write_tikz(self.grid, U, filename, codim=self.codim, **kwargs)
+                else:
+                    write_vtk(self.grid, U, filename, codim=self.codim, **kwargs)
             else:
                 for i, u in enumerate(U):
-                    write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
+                    if use_tikz:
+                        write_tikz(self.grid, u, f'{filename[:-4]}-{i}.tex', codim=self.codim, **kwargs)
+                    else:
+                        write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim, **kwargs)
         else:
             if self.backend == 'jupyter':
                 from pymor.discretizers.builtin.gui.jupyter import get_visualizer
                 return get_visualizer()(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                         legend=legend, separate_colorbars=separate_colorbars,
-                                        rescale_colorbars=rescale_colorbars, columns=columns)
+                                        rescale_colorbars=rescale_colorbars, columns=columns, **kwargs)
             else:
                 block = self.block if block is None else block
                 from pymor.discretizers.builtin.gui.qt import visualize_patch
                 return visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                        legend=legend, separate_colorbars=separate_colorbars,
                                        rescale_colorbars=rescale_colorbars, backend=self.backend, block=block,
-                                       columns=columns)
+                                       columns=columns, **kwargs)
 
 
 class OnedVisualizer(ImmutableObject):
