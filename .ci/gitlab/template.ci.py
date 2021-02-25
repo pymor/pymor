@@ -10,6 +10,21 @@ stages:
   - install_checks
   - deploy
 
+{% macro wheel_job_name(manylinux_version, pyver) -%}
+wheel {{manylinux_version}} py {{pyver[0]}} {{pyver[2]}}
+{%- endmacro -%}
+
+{% macro never_on_schedule_rule(exclude_github=False) -%}
+rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+{%- if exclude_github %}
+    - if: $CI_COMMIT_REF_NAME =~ /^github.*/
+      when: never
+{%- endif %}
+    - when: on_success
+{%- endmacro -%}
+
 #************ definition of base jobs *********************************************************************************#
 
 .test_base:
@@ -69,12 +84,7 @@ stages:
             - always
     environment:
         name: safe
-    rules:
-        - if: $CI_COMMIT_REF_NAME =~ /^github\/PR_.*/
-          when: never
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    {{ never_on_schedule_rule(exclude_github=True) }}
     stage: deploy
     script: .ci/gitlab/submit.bash
 
@@ -113,10 +123,7 @@ stages:
     extends: .docker-in-docker
     stage: install_checks
     needs: ["ci setup"]
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    {{ never_on_schedule_rule() }}
     variables:
         USER: juno
 
@@ -125,19 +132,13 @@ stages:
     stage: build
     needs: ["ci setup"]
     tags: [mike]
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    {{ never_on_schedule_rule() }}
 
 
 .check_wheel:
     extends: .test_base
     stage: install_checks
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    {{ never_on_schedule_rule() }}
     services:
       - name: {{registry}}/pymor/devpi:1
         alias: pymor__devpi
@@ -181,10 +182,7 @@ ci setup:
 {%- for script, py, para in matrix %}
 {{script}} {{py[0]}} {{py[2]}}:
     extends: .pytest
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    {{ never_on_schedule_rule() }}
     variables:
         COVERAGE_FILE: coverage_{{script}}__{{py}}
     services:
@@ -256,10 +254,7 @@ from source {{loop.index}}/{{loop.length}}:
         - name: {{registry}}/pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
           alias: pypi_mirror
     needs: ["ci setup"]
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
+    {{ never_on_schedule_rule() }}
     stage: install_checks
     image: {{registry}}/pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
     script: ./.ci/gitlab/install_checks/{{OS}}/check.bash
@@ -299,7 +294,7 @@ trigger_binder {{loop.index}}/{{loop.length}}:
 
 {%- for PY in pythons %}
 {%- for ML in manylinuxs %}
-wheel {{ML}} py{{PY[0]}} {{PY[2]}}:
+{{ wheel_job_name(ML, PY) }}:
     extends: .wheel
     variables:
         PYVER: "{{PY}}"
@@ -318,15 +313,10 @@ pypi:
     dependencies:
     {%- for PY in pythons %}
     {%- for ML in manylinuxs %}
-      - wheel {{ML}} py{{PY[0]}} {{PY[2]}}
+      - {{ wheel_job_name(ML, PY) }}
     {% endfor %}
     {% endfor %}
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - if: $CI_COMMIT_REF_NAME =~ /^github.*/
-          when: never
-        - when: on_success
+    {{ never_on_schedule_rule(exclude_github=True) }}
     variables:
         ARCHIVE_DIR: pyMOR_wheels-${CI_COMMIT_REF_NAME}
     artifacts:
@@ -347,10 +337,10 @@ from wheel {{loop.index}}/{{loop.length}}:
     extends: .check_wheel
     dependencies:
         {%- for ML in manylinuxs %}
-          - "wheel {{ML}} py{{PY[0]}} {{PY[2]}}"
+          - "{{ wheel_job_name(ML, PY) }}"
         {%- endfor %}
     needs: [{%- for ML in manylinuxs -%}
-          "wheel {{ML}} py{{PY[0]}} {{PY[2]}}",
+          "{{ wheel_job_name(ML, PY) }}",
         {%- endfor -%}]
     image: {{registry}}/pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
     script:
