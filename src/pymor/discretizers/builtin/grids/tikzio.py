@@ -9,7 +9,7 @@ from pymor.discretizers.builtin.grids.rect import RectGrid
 
 
 def write_tikz(grid, data, filename, codim=2, colorbar=True,
-               use_subplots=True, cols=2):
+               use_subplots=True, cols=2, clim=None):
     """Output grid-associated data as a PGFPlots figure.
 
     Parameters
@@ -70,8 +70,11 @@ def write_tikz(grid, data, filename, codim=2, colorbar=True,
     def write_subplots(filename, data):
         fig = plt.figure()
         rows = len(data)//cols + (1 if len(data) % cols != 0 else 0)
-        c_min = np.min(data.to_numpy())
-        c_max = np.max(data.to_numpy())
+        if clim is not None:
+            c_min, c_max = clim
+        else:
+            c_min = np.min(data.to_numpy())
+            c_max = np.max(data.to_numpy())
         for i in range(len(data)):
             plt.subplot(rows, cols, i+1)
             if codim == 0:
