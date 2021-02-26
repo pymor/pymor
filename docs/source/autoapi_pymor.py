@@ -40,6 +40,8 @@ MANUAL_SKIPS = ('pymor.analyticalproblems.domaindescriptions.DomainDescription.d
                 'pymor.operators.interface.Operator.solver_options',
                 'pymor.operators.numpy.NumpyMatrixBasedOperator.sparse',
                 'pymor.discretizers.builtin.fv.NonlinearReactionOperator.linear',
+                'RENDER_VERTEX_SHADER',
+                'RENDER_FRAGMENT_SHADER',
                 'pymor.vectorarrays.interface.VectorArray.is_view',
                 'pymor.vectorarrays.interface.VectorArray.dim',
                 'pymor.vectorarrays.interface.VectorSpace.id',
