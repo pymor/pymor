@@ -83,3 +83,12 @@ class NoMatchingRuleError(NotImplementedError):
     def __init__(self, obj):
         super().__init__(f'No rule could be applied to {obj}')
         self.obj = obj
+
+
+class CythonExtensionNotBuiltError(ImportError):
+
+    def __init__(self):
+        super().__init__('''
+    Cython extension module 'pymor.discretizers.builtin.grids._unstructured' has not been built.
+    Please run 'python setup.py build_ext --inplace' in the root
+    directory of the pyMOR repository.''')
