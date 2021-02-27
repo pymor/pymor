@@ -289,8 +289,8 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
     data
         Dict containing the following fields:
 
-            :dofs:                  |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
-            :basis:                 |VectorArray| containing the generated collateral basis.
+            :dofs:     |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
+            :basis:    |VectorArray| containing the generated collateral basis.
 
         In addition, `data` contains the fields of the `data` `dict` returned by
         :func:`ei_greedy`/:func:`deim`.

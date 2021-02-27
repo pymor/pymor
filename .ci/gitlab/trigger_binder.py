@@ -9,7 +9,7 @@ try:
     for _ in response.iter_content():
         # we don't care what the reposne is, unless it's an http error
         pass
-except requests.exceptions.Timeout as e:
+except requests.exceptions.Timeout:
     # The timeout's triggered if nothing is received every x seconds
     print('timeout. assuming normal trigger')
     sys.exit(0)

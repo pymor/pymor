@@ -72,7 +72,8 @@ class SubGrid(Grid):
         return self.__parent_indices[codim]
 
     def indices_from_parent_indices(self, ind, codim):
-        """Maps a |NumPy array| of indicies of codim-`codim` entites of the parent grid to indicies of the subgrid.
+        """Maps a |NumPy array| of indicies of codim-`codim` entites of the parent grid to indicies
+        of the subgrid.
 
         Raises
         ------

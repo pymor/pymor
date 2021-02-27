@@ -177,10 +177,10 @@ class ImplicitEulerResidualReductor(BasicObject):
             == product.apply_inverse(operator.apply(U, mu) + 1/dt*mass.apply(U, mu)
                 - 1/dt*mass.apply(U_old, mu) - rhs.as_vector(mu))
 
-    This reductor determines a low-dimensional subspace of the image of a reduced
-    basis space under `riesz_residual` using :func:`~pymor.algorithms.image.estimate_image_hierarchical`,
-    computes an orthonormal basis `residual_range` of this range space and then
-    returns the Petrov-Galerkin projection ::
+    This reductor determines a low-dimensional subspace of the image of a reduced basis space under
+    `riesz_residual` using :func:`~pymor.algorithms.image.estimate_image_hierarchical`, computes an
+    orthonormal basis `residual_range` of this range space and then returns the Petrov-Galerkin
+    projection ::
 
         projected_riesz_residual
             == riesz_residual.projected(range_basis=residual_range, source_basis=RB)

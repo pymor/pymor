@@ -25,28 +25,28 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 LagrangeShapeFunctions = {
-        line: {1: [lambda X: 1 - X[..., 0],
-                   lambda X: X[..., 0]]},
-        square: {1: [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
-                     lambda X: (1 - X[..., 1]) * (X[..., 0]),
-                     lambda X:     (X[..., 0]) * (X[..., 1]),
-                     lambda X:     (X[..., 1]) * (1 - X[..., 0])]},
-        triangle: {1: [lambda X: 1 - X[..., 0] - X[..., 1],
-                       lambda X: X[..., 0],
-                       lambda X: X[..., 1]]},
-            }
+    line: {1: [lambda X: 1 - X[..., 0],
+               lambda X: X[..., 0]]},
+    square: {1: [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
+                 lambda X: (1 - X[..., 1]) * (X[..., 0]),
+                 lambda X:     (X[..., 0]) * (X[..., 1]),
+                 lambda X:     (X[..., 1]) * (1 - X[..., 0])]},
+    triangle: {1: [lambda X: 1 - X[..., 0] - X[..., 1],
+                   lambda X: X[..., 0],
+                   lambda X: X[..., 1]]},
+}
 
 LagrangeShapeFunctionsGrads = {
-        line: {1: np.array(([-1.],
-                            [1., ]))},
-        square: {1: lambda X: np.array(([X[..., 1] - 1., X[..., 0] - 1.],
-                                        [1. - X[..., 1], - X[..., 0]],
-                                        [X[..., 1], X[..., 0]],
-                                        [-X[..., 1], 1. - X[..., 0]]))},
-        triangle: {1: np.array(([-1., -1.],
-                                [1., 0.],
-                                [0., 1.]))}
-        }
+    line: {1: np.array(([-1.],
+                        [1., ]))},
+    square: {1: lambda X: np.array(([X[..., 1] - 1., X[..., 0] - 1.],
+                                    [1. - X[..., 1], - X[..., 0]],
+                                    [X[..., 1], X[..., 0]],
+                                    [-X[..., 1], 1. - X[..., 0]]))},
+    triangle: {1: np.array(([-1., -1.],
+                            [1., 0.],
+                            [0., 1.]))},
+}
 
 
 def CGVectorSpace(grid, id='STATE'):
@@ -1100,23 +1100,23 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     if p.neumann_data is not None and boundary_info.has_neumann:
         if isinstance(p.neumann_data, LincombFunction):
             Fi += [BoundaryL2Functional(grid, -ne, boundary_info=boundary_info,
-                                      boundary_type='neumann', dirichlet_clear_dofs=True, name=f'neumann_{i}')
+                                        boundary_type='neumann', dirichlet_clear_dofs=True, name=f'neumann_{i}')
                    for i, ne in enumerate(p.neumann_data.functions)]
             coefficients_F += list(p.neumann_data.coefficients)
         else:
             Fi += [BoundaryL2Functional(grid, -p.neumann_data, boundary_info=boundary_info,
-                                      boundary_type='neumann', dirichlet_clear_dofs=True)]
+                                        boundary_type='neumann', dirichlet_clear_dofs=True)]
             coefficients_F.append(1.)
 
     if p.robin_data is not None and boundary_info.has_robin:
         if isinstance(p.robin_data[0], LincombFunction):
             Fi += [BoundaryL2Functional(grid, rob * p.robin_data[1], boundary_info=boundary_info,
-                                      boundary_type='robin', dirichlet_clear_dofs=True, name=f'robin_{i}')
+                                        boundary_type='robin', dirichlet_clear_dofs=True, name=f'robin_{i}')
                    for i, rob in enumerate(p.robin_data[0].functions)]
             coefficients_F += list(p.robin_data[0].coefficients)
         else:
             Fi += [BoundaryL2Functional(grid, p.robin_data[0] * p.robin_data[1], boundary_info=boundary_info,
-                                      boundary_type='robin', dirichlet_clear_dofs=True)]
+                                        boundary_type='robin', dirichlet_clear_dofs=True)]
             coefficients_F.append(1.)
 
     if p.dirichlet_data is not None and boundary_info.has_dirichlet:

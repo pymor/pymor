@@ -2,12 +2,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from itertools import product, chain
+from itertools import product
 from numbers import Number
 
 import pytest
 import numpy as np
-from hypothesis import given, assume, settings, HealthCheck, reproduce_failure
+from hypothesis import assume, settings
 from hypothesis import strategies as hyst
 
 from pymor.algorithms.basic import almost_equal
@@ -114,7 +114,7 @@ def test_full(vector_array):
     with pytest.raises(Exception):
         vector_array.full(9, -1)
     for c in (0, 1, 2, 30):
-        for val in (-1e-3,0,7):
+        for val in (-1e-3, 0, 7):
             v = vector_array.full(val, count=c)
             assert v.space == vector_array.space
             assert len(v) == c
@@ -299,7 +299,7 @@ def test_copy_repeated_index(vector_array):
 @settings(deadline=None)
 def test_append(vector_arrays):
     v1, v2 = vector_arrays
-    len_v1, len_v2 = len(v1), len(v2)
+    len_v1 = len(v1)
     for ind in pyst.valid_inds(v2, random_module=False):
         c1, c2 = v1.copy(), v2.copy()
         c1.append(c2[ind])
@@ -457,7 +457,7 @@ def test_axpy_one_x(vector_arrays, random):
         gc = c1[ind1]
         gv = c2[ind2]
         # TODO this was somehow hardcoded in the old fixture, makes the test extremely slow
-        assume(len(gc) == 0 or len(gv) > 0 )
+        assume(len(gc) == 0 or len(gv) > 0)
         gc.axpy(0., gv)
         assert len(c1) == len(v1)
         assert np.all(almost_equal(c1, v1))
@@ -471,7 +471,7 @@ def test_axpy_one_x(vector_arrays, random):
             assert np.all(almost_equal(c2, v2))
             # for the openstack CI machines this could be 1 + 1e-10
             rtol_factor = 1. + 147e-9
-            assert np.all(c1[ind1].sup_norm() <=  v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * rtol_factor)
+            assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * rtol_factor)
             assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
             try:
                 x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
@@ -491,7 +491,7 @@ def test_axpy_one_x(vector_arrays, random):
             assert np.all(almost_equal(c1, v1))
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length , random=hyst.random_module())
+@pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length, random=hyst.random_module())
 # TODO replace indices loop
 @settings(deadline=None)
 def test_axpy_self(vectors_and_indices, random):
@@ -506,7 +506,7 @@ def test_axpy_self(vectors_and_indices, random):
     ind1_complement = ind_complement(v, ind1)
     c = v.copy()
     rr = c[ind2]
-    lp =c[ind1]
+    lp = c[ind1]
     lp.axpy(0., rr)
     assert len(c) == len(v)
     assert np.all(almost_equal(c, v))
@@ -572,7 +572,7 @@ def test_pairwise_inner_self(vectors_and_indices):
     assert np.allclose(r, r2.T.conj())
     assert np.all(r <= v[ind1].norm() * v[ind2].norm() * (1. + 1e-10))
     try:
-            assert np.allclose(r, np.sum(indexed(v.to_numpy(), ind1).conj() * indexed(v.to_numpy(), ind2), axis=1))
+        assert np.allclose(r, np.sum(indexed(v.to_numpy(), ind1).conj() * indexed(v.to_numpy(), ind2), axis=1))
     except NotImplementedError:
         pass
     ind = ind1
@@ -623,7 +623,7 @@ def test_inner_self(vectors_and_indices):
     assert np.allclose(r, r2.T.conj())
     assert np.all(r <= v[ind1].norm()[:, np.newaxis] * v[ind2].norm()[np.newaxis, :] * (1. + 1e-10))
     try:
-            assert np.allclose(r, indexed(v.to_numpy(), ind1).conj().dot(indexed(v.to_numpy(), ind2).T))
+        assert np.allclose(r, indexed(v.to_numpy(), ind1).conj().dot(indexed(v.to_numpy(), ind2).T))
     except NotImplementedError:
         pass
     r = v[ind1].inner(v[ind1])
@@ -686,7 +686,7 @@ def test_norm(vectors_and_indices):
     if v.dim == 0:
         assert np.all(norm == 0)
     try:
-            assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=1))
+        assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=1))
     except NotImplementedError:
         pass
     c.scal(4.)
@@ -708,7 +708,7 @@ def test_norm2(vectors_and_indices):
     if v.dim == 0:
         assert np.all(norm == 0)
     try:
-            assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=1)**2)
+        assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=1)**2)
     except NotImplementedError:
         pass
     c.scal(4.)
@@ -909,6 +909,7 @@ def test_imul_wrong_factor(vector_array):
     with pytest.raises(Exception):
         vector_array *= vector_array
 
+
 @pyst.given_vector_arrays()
 def test_iter(vector_array):
     v = vector_array
@@ -917,7 +918,9 @@ def test_iter(vector_array):
         w.append(vv)
     assert np.all(almost_equal(w, v))
 
-########################################################################################################################
+
+####################################################################################################
+
 
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_append_incompatible(vector_arrays):
@@ -994,7 +997,7 @@ def test_isub_incompatible(vector_arrays):
         v1 -= v2
 
 
-########################################################################################################################
+####################################################################################################
 
 
 @pyst.given_vector_arrays()

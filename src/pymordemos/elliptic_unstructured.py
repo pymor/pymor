@@ -22,7 +22,6 @@ def main(
 
     Note that Gmsh (http://geuz.org/gmsh/) is required for meshing.
     """
-
     problem = StationaryProblem(
         domain=CircularSectorDomain(angle, radius=1, num_points=num_points),
         diffusion=ConstantFunction(1, dim_domain=2),

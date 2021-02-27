@@ -2,7 +2,9 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""This module provides a few methods and classes for visualizing data
+"""Visualization of grid data using Qt.
+
+This module provides a few methods and classes for visualizing data
 associated to grids. We use the `Qt <http://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """
@@ -25,9 +27,9 @@ from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if config.HAVE_QT:
-    from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
+    from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QLCDNumber,
                               QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from Qt.QtCore import Qt, QCoreApplication, QTimer, Slot
+    from Qt.QtCore import Qt, QTimer
 
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
@@ -174,7 +176,6 @@ _launch_qt_processes = set()
 
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
-
     mac_or_win = is_windows_platform() or is_macos_platform()
 
     def _doit(factory):
@@ -367,7 +368,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             self.vmaxs = (max(np.max(u[ind]) for u in U),) * len(U)
 
                     for u, plot, colorbar, vmin, vmax in zip(U, self.plots, self.colorbarwidgets, self.vmins,
-                                                              self.vmaxs):
+                                                             self.vmaxs):
                         plot.set(u[ind], vmin=vmin, vmax=vmax)
                         if colorbar:
                             colorbar.set(vmin=vmin, vmax=vmax)

@@ -5,7 +5,6 @@
 import math as m
 from hypothesis import strategies as hyst
 import numpy as np
-import pytest
 
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.rect import RectGrid
@@ -21,10 +20,7 @@ def hy_rect_tria_kwargs(draw):
     interval_i = hyst.integers(min_value=1, max_value=42)
     num_intervals = draw(hyst.tuples(interval_i.filter(lambda x: (not identify_left_right) or x > 1),
                                      interval_i.filter(lambda y: (not identify_bottom_top) or y > 1)))
-    # domain_value = hyst.floats(allow_infinity=False, allow_nan=False)
-    # domain_point = hyst.tuples(domain_value, domain_value)
-    # domain = draw(hyst.tuples(domain_point, domain_point).filter(lambda d: d[0][0] < d[1][0] and d[0][1] < d[1][1]))
-    domain = ((0,0), (1,1))
+    domain = ((0, 0), (1, 1))
     return {"num_intervals": num_intervals, "domain": domain, "identify_left_right": identify_left_right,
             "identify_bottom_top": identify_bottom_top}
 

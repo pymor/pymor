@@ -67,7 +67,6 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default solver options.
         """
-
         lradi_opts = pymess.Options()
         lradi_opts.adi.maxit = adi_maxit
         lradi_opts.adi.memory_usage = adi_memory_usage

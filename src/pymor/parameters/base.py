@@ -149,7 +149,8 @@ class Parameters(SortedFrozenDict):
             set(mu.keys()) == set(self.keys()) or fail('parameters not matching')
 
             def parse_value(k, v):
-                isinstance(v, (Number, tuple, list, np.ndarray)) or fail(f"invalid value type '{type(v)}' for parameter {k}")
+                isinstance(v, (Number, tuple, list, np.ndarray)) \
+                    or fail(f"invalid value type '{type(v)}' for parameter {k}")
                 if isinstance(v, Number):
                     v = np.array([v])
                 elif isinstance(v, np.ndarray):

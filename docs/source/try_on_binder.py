@@ -17,8 +17,8 @@ class TryOnBinder(Directive):
         source = Path(self.state.document.attributes['source'])
         generated_nb = f'{source.stem}.ipynb'
         node = binder_link_node()
-        # this is somewhat confusing, but the docs repository's branches are named after the directories
-        # which are slugs to avoid slashes and such
+        # this is somewhat confusing, but the docs repository's branches are named after the
+        # directories which are slugs to avoid slashes and such
         node['target'] = f'https://mybinder.org/v2/gh/pymor/docs/{slug}?filepath={generated_nb}'
         node['badge'] = 'https://mybinder.org/badge_logo.svg'
         return [node]
@@ -39,7 +39,7 @@ def html_visit_binder_link_node(self, node):
 
 
 def setup(app):
-    # since don;t want to replicate the slugify rules form gitlab we need to accept two params here
+    # since don't want to replicate the slugify rules form gitlab we need to accept two params here
     app.add_config_value('try_on_binder_branch', 'main', 'html')
     app.add_config_value('try_on_binder_slug', 'main', 'html')
     app.add_node(binder_link_node,

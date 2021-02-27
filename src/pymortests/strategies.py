@@ -1,3 +1,7 @@
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
 from hypothesis import strategies as hyst
 from hypothesis import assume, given
 from hypothesis.extra import numpy as hynp
@@ -42,7 +46,7 @@ def _hy_dims(draw, count, compatible):
     if compatible:
         return draw(equal_tuples(dims, count))
     dim_tuple = draw(hyst.tuples(*[dims for _ in range(count)]))
-    for d in range(1,count):
+    for d in range(1, count):
         assume(dim_tuple[d] != dim_tuple[0])
     return dim_tuple
 
@@ -54,7 +58,7 @@ def nothing(*args, **kwargs):
 def _np_arrays(length, dim, dtype=None):
     if dtype is None:
         return hynp.arrays(dtype=np.float64, shape=(length, dim), elements=hy_float_array_elements) | \
-               hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements)
+            hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements)
     if dtype is np.complex128:
         return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_complex_array_elements)
     if dtype is np.float64:
@@ -94,11 +98,12 @@ def _block_vector_spaces(draw, np_data_list, compatible, count, dims):
         ret.append((BlockVectorSpace(constituent_spaces), ar))
     return ret
 
+
 _other_vector_space_types = []
 
 if config.HAVE_FENICS:
     _FENICS_spaces = {}
-    
+
     def _fenics_vector_spaces(draw, np_data_list, compatible, count, dims):
         ret = []
         for d, ar in zip(dims, np_data_list):
@@ -149,7 +154,8 @@ def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatibl
     assume(len(ret))
     if len(ret) == 1:
         assert count == 1
-        # in test funcs where we only need one array this saves a line to access the single list element
+        # in test funcs where we only need one array this saves a line to access the single list
+        # element
         return ret[0]
     assert count > 1
     return ret
@@ -158,9 +164,10 @@ def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatibl
 def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatible=True, index_strategy=None, **kwargs):
     """This decorator hides the combination details of given
 
-    the decorated function will be first wrapped in a |hypothesis.given| (with expanded `given_args` and then in
-    |pytest.mark.parametrize| with selected implementation names. The decorated test function must
-    still draw (which a vector_arrays or similar strategy) from the `data` argument in the default case.
+    the decorated function will be first wrapped in a |hypothesis.given| (with expanded `given_args`
+    and then in |pytest.mark.parametrize| with selected implementation names. The decorated test
+    function must still draw (which a vector_arrays or similar strategy) from the `data` argument in
+    the default case.
 
     Parameters
     ----------
@@ -171,18 +178,20 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
         passed to `given` decorator as is, use for additional strategies
 
     count
-        how many vector arrays to return (in a list), count=1 is special cased to just return the array
+        how many vector arrays to return (in a list), count=1 is special cased to just return the
+        array
     dtype
         dtype of the foundational numpy data the vector array is constructed from
     length
         a hypothesis.strategy how many vectors to generate in each vector array
     compatible
-        if count > 1, this switch toggles generation of vector_arrays with compatible `dim`, `length` and `dtype`
+        if count > 1, this switch toggles generation of vector_arrays with compatible `dim`,
+        `length` and `dtype`
     """
     def inner_backend_decorator(func):
         try:
             use_imps = {'all': _picklable_vector_space_types  + _other_vector_space_types,
-                           'picklable': _picklable_vector_space_types}[which]
+                        'picklable': _picklable_vector_space_types}[which]
         except KeyError:
             use_imps = which
         first_args = {}
@@ -191,7 +200,8 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
                 count=count, dtype=dtype, length=length, compatible=compatible, space_types=use_imps))
             first_args['vectors_and_indices'] = arr_ind_strategy
         else:
-            arr_strategy = vector_arrays(count=count, dtype=dtype, length=length, compatible=compatible, space_types=use_imps)
+            arr_strategy = vector_arrays(count=count, dtype=dtype, length=length, compatible=compatible,
+                                         space_types=use_imps)
             if count > 1:
                 first_args['vector_arrays'] = arr_strategy
             else:
@@ -221,7 +231,8 @@ def valid_inds(v, length=None, random_module=None):
             yield ind
         if len(v) == length:
             yield slice(None)
-        # this avoids managing random state "against" hypothesis when this function is used in a strategy
+        # this avoids managing random state "against" hypothesis when this function is used in a
+        # strategy
         if random_module is None:
             np.random.seed(len(v) * length)
         yield list(np.random.randint(-len(v), len(v), size=length))
@@ -254,7 +265,8 @@ def valid_inds_of_same_length(v1, v2, random_module=None):
         yield -len(v1), -len(v2)
         yield [0], 0
         yield (list(range(min(len(v1), len(v2))//2)),) * 2
-        # this avoids managing random state "against" hypothesis when this function is used in a strategy
+        # this avoids managing random state "against" hypothesis when this function is used in a
+        # strategy
         if random_module is None:
             np.random.seed(len(v1) * len(v2))
         for count in np.linspace(0, min(len(v1), len(v2)), 3).astype(int):
@@ -268,10 +280,12 @@ def valid_inds_of_same_length(v1, v2, random_module=None):
 def st_valid_inds_of_same_length(draw, v1, v2):
     len1, len2 = len(v1), len(v2)
     ret = hyst.just(([], []))
-    # TODO we should include integer arrays here by chaining `| hynp.integer_array_indices(shape=(LEN_X,))`
+    # TODO we should include integer arrays here by chaining
+    # `| hynp.integer_array_indices(shape=(LEN_X,))`
     val1 = hynp.basic_indices(shape=(len1,), allow_ellipsis=False)
     if len1 == len2:
-        ret = ret | hyst.tuples(hyst.shared(val1, key="st_valid_inds_of_same_length"), hyst.shared(val1, key="st_valid_inds_of_same_length"))
+        ret = ret | hyst.tuples(hyst.shared(val1, key="st_valid_inds_of_same_length"),
+                                hyst.shared(val1, key="st_valid_inds_of_same_length"))
     if len1 > 0 and len2 > 0:
         val2 = hynp.basic_indices(shape=(len2,), allow_ellipsis=False)
         ret = ret | hyst.tuples(val1, val2)
@@ -293,7 +307,8 @@ def valid_inds_of_different_length(v1, v2, random_module):
         if len(v2) > 1:
             yield 0, [0, 1]
             yield [0], [0, 1]
-        # this avoids managing random state "against" hypothesis when this function is used in a strategy
+        # this avoids managing random state "against" hypothesis when this function is used in a
+        # strategy
         if random_module is None:
             np.random.seed(len(v1) * len(v2))
         for count1 in np.linspace(0, len(v1), 3).astype(int):
@@ -315,9 +330,9 @@ def st_valid_inds_of_different_length(draw, v1, v2):
     val = hynp.basic_indices(shape=(len1,), allow_ellipsis=False)  # | hynp.integer_array_indices(shape=(len1,))
     if len1 != len2:
         ret = ret | hyst.just((slice(None), slice(None))) \
-              | hyst.tuples(hyst.shared(val, key="indfl"), hyst.shared(val, key="indfl"))
+            | hyst.tuples(hyst.shared(val, key="indfl"), hyst.shared(val, key="indfl"))
     if len1 > 0 and len2 > 0:
-        ret = ret | hyst.tuples(val, val).filter(lambda x: len(x[0])!=len(x[1]))
+        ret = ret | hyst.tuples(val, val).filter(lambda x: len(x[0]) != len(x[1]))
     return draw(ret)
 
 
@@ -370,9 +385,9 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     dtype dtype for the generated bases, defaults to `np.float_`
     max_dim size limit for the generated
 
-    Returns a list of |VectorArray| linear-independent objects of same dim and length
+    Returns
     -------
-
+    a list of |VectorArray| linear-independent objects of same dim and length
     """
     dtype = dtype or np.float_
     # simplest way currently of getting a |VectorSpace| to construct our new arrays from
@@ -388,7 +403,7 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     random_correlation = random_correlation_gen(random.seed)
 
     def _eigs():
-        """sum must equal to `length` for the scipy construct method"""
+        """Sum must equal to `length` for the scipy construct method"""
         min_eig, max_eig = 0.001, 1.
         eigs = np.asarray((max_eig-min_eig)*np.random.random(length-1) + min_eig, dtype=float)
         return np.append(eigs, [length - np.sum(eigs)])
@@ -397,7 +412,7 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
         mat = [random_correlation.rvs(_eigs(), tol=1e-12) for _ in range(count)]
         return [space.from_numpy(m) for m in mat]
     else:
-        scalar = 4*np.random.random((1,1))+0.1
+        scalar = 4*np.random.random((1, 1))+0.1
         return [space.from_numpy(scalar) for _ in range(count)]
 
 

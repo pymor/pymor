@@ -4,16 +4,15 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, assume, reproduce_failure, settings
+from hypothesis import assume, settings
 from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal
-from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
 from pymor.algorithms.basic import contains_zero_vector
 from pymor.core.logger import log_levels
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.strategies import vector_arrays, given_vector_arrays
+from pymortests.strategies import given_vector_arrays
 
 methods = ['method_of_snapshots', 'qr_svd']
 

@@ -88,8 +88,9 @@ def dar(
 
         T=1.,
 
-        initial_data=ExpressionFunction('(x[..., 0] > 0.3) * (x[..., 0] < 0.7) * (x[...,1]>0.3) * (x[..., 1] < 0.7) * 10.',
-                                        dim_domain=2),
+        initial_data=ExpressionFunction(
+            '(x[..., 0] > 0.3) * (x[..., 0] < 0.7) * (x[...,1]>0.3) * (x[..., 1] < 0.7) * 10.',
+            dim_domain=2),
     )
     mu = {'speed': speed}
     solve(problem, mu, fv, rect, grid, nt)
@@ -116,4 +117,4 @@ def solve(problem, mu, fv, rect, grid, nt):
 
 
 if __name__ == '__main__':
-    app() 
+    app()

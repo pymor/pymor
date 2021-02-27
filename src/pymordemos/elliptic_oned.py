@@ -19,7 +19,6 @@ def main(
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
 ):
     """Solves the Poisson equation in 1D using pyMOR's builtin discreization toolkit."""
-
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 1, ()),
             ExpressionFunction('(x - 0.5)**2 * 1000', 1, ())]
     rhs = rhss[problem_number]

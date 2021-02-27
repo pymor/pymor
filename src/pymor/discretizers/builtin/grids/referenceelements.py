@@ -303,7 +303,8 @@ class Triangle(ReferenceElement):
             assert npoints is None or npoints == 3
             # this would work for arbitrary reference elements
             # L, A = self.subentity_embedding(1)
-            # return np.array(L.dot(self.sub_reference_element().center()) + A), np.ones(3) / len(A) * self.volume
+            # return (np.array(L.dot(self.sub_reference_element().center()) + A),
+            #         np.ones(3) / len(A) * self.volume)
             return np.array(([0.5, 0.5], [0, 0.5], [0.5, 0])), np.ones(3) / 3 * self.volume
         else:
             raise NotImplementedError('quadrature_type must be "center" or "edge_centers"')

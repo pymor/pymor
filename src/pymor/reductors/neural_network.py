@@ -20,7 +20,6 @@ if config.HAVE_TORCH:
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
     from pymor.models.neural_network import FullyConnectedNN, NeuralNetworkModel, NeuralNetworkInstationaryModel
 
-
     class NeuralNetworkReductor(BasicObject):
         """Reduced Basis reductor relying on artificial neural networks.
 
@@ -314,17 +313,15 @@ if config.HAVE_TORCH:
             # the training data; convert everything into tensors that are compatible with PyTorch
             mu_tensor = torch.DoubleTensor(mu.to_numpy())
             u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:, 0])
-            return [(mu_tensor, u_tensor),]
+            return [(mu_tensor, u_tensor)]
 
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
             assert hasattr(self, 'reduced_basis')
             return self.reduced_basis.lincomb(u.to_numpy())
 
-
     class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
-        """Reduced Basis reductor for instationary problems relying on
-        artificial neural networks.
+        """Reduced Basis reductor for instationary problems relying on artificial neural networks.
 
         This is a reductor that constructs a reduced basis using proper
         orthogonal decomposition and trains a neural network that approximates
@@ -378,7 +375,7 @@ if config.HAVE_TORCH:
             """Compute the number of neurons in the layers of the neural network
             (make sure to increase the input dimension to account for the time).
             """
-            return [len(self.fom.parameters) + 1,] + hidden_layers + [len(self.reduced_basis),]
+            return [len(self.fom.parameters) + 1] + hidden_layers + [len(self.reduced_basis)]
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -424,7 +421,7 @@ if config.HAVE_TORCH:
             """
             parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
-            samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:,0]))
+            samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:, 0]))
                        for mu, u_t in zip(parameters_with_time, u)]
 
             return samples

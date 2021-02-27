@@ -1,11 +1,10 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-import operator
 
 import numpy as np
 import pytest
-from hypothesis import given, settings, reproduce_failure
+from hypothesis import given, settings
 
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymor.tools.floatcmp import almost_less
@@ -21,6 +20,8 @@ real_assert_allclose = np.testing.assert_allclose
 
 def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
     real_assert_allclose(a, b, rtol=rtol, atol=atol)
+
+
 np.testing.assert_allclose = monkey_allclose
 
 
@@ -334,7 +335,8 @@ def test_bounding_box(grid):
     assert bbox.shape == (2, g.dim)
     assert np.all(bbox[0] <= bbox[1])
     # compare with tolerance is necessary with very large domain boundaries values
-    # where the relative error in the centers computation introduces enough error to fail the test otherwise
+    # where the relative error in the centers computation introduces enough error to fail the test
+    # otherwise
     assert np.all(almost_less(bbox[0], g.centers(g.dim), rtol=1e-15, atol=0))
     assert np.all(almost_less(g.centers(g.dim), bbox[1], rtol=1e-15, atol=0))
 

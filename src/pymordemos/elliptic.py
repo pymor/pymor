@@ -30,7 +30,6 @@ def main(
     rect: bool = Option(False, help='Use RectGrid instead of TriaGrid.'),
 ):
     """Solves the Poisson equation in 2D using pyMOR's builtin discreization toolkit."""
-
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
             ExpressionFunction('(x[..., 0] - 0.5) ** 2 * 1000', 2, ())]
     dirichlets = [ExpressionFunction('zeros(x.shape[:-1])', 2, ()),

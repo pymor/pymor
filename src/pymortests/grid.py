@@ -2,7 +2,6 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pickle import dumps, loads
 from itertools import product
 
 import numpy as np
@@ -24,6 +23,8 @@ real_assert_allclose = np.testing.assert_allclose
 
 def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
     real_assert_allclose(a, b, rtol=rtol, atol=atol)
+
+
 np.testing.assert_allclose = monkey_allclose
 
 

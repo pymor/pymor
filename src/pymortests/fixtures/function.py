@@ -9,11 +9,12 @@ import pytest
 from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction, ExpressionFunction
 
 
-constant_functions = \
-    [ConstantFunction(),
-     ConstantFunction(np.array([1., 2., 3.]), dim_domain=7),
-     ConstantFunction(np.eye(27), dim_domain=2),
-     ConstantFunction(np.array(3), dim_domain=1)]
+constant_functions = [
+    ConstantFunction(),
+    ConstantFunction(np.array([1., 2., 3.]), dim_domain=7),
+    ConstantFunction(np.eye(27), dim_domain=2),
+    ConstantFunction(np.array(3), dim_domain=1),
+]
 
 
 def importable_function(x):
@@ -35,20 +36,23 @@ def get_function_with_closure(y):
     return function_with_closure
 
 
-generic_functions = \
-    [GenericFunction(lambda x: x, dim_domain=2, shape_range=(2,)),
-     GenericFunction(lambda x, mu: mu['c'][0]*x, dim_domain=1, shape_range=(1,), parameters={'c': 1}),
-     GenericFunction(A.unimportable_function, dim_domain=7, shape_range=()),
-     GenericFunction(get_function_with_closure(42), dim_domain=1, shape_range=(2,))]
+generic_functions = [
+    GenericFunction(lambda x: x, dim_domain=2, shape_range=(2,)),
+    GenericFunction(lambda x, mu: mu['c'][0]*x, dim_domain=1, shape_range=(1,), parameters={'c': 1}),
+    GenericFunction(A.unimportable_function, dim_domain=7, shape_range=()),
+    GenericFunction(get_function_with_closure(42), dim_domain=1, shape_range=(2,)),
+]
 
 
-picklable_generic_functions = \
-    [GenericFunction(importable_function, dim_domain=3, shape_range=(1,))]
+picklable_generic_functions = [
+    GenericFunction(importable_function, dim_domain=3, shape_range=(1,)),
+]
 
-expression_functions = \
-    [ExpressionFunction('x', dim_domain=2, shape_range=(2,)),
-     ExpressionFunction("c[0]*x", dim_domain=1, shape_range=(1,), parameters={'c': 1}),
-     ExpressionFunction("c[2]*sin(x)", dim_domain=1, shape_range=(1,), parameters={'c': 3})]
+expression_functions = [
+    ExpressionFunction('x', dim_domain=2, shape_range=(2,)),
+    ExpressionFunction("c[0]*x", dim_domain=1, shape_range=(1,), parameters={'c': 1}),
+    ExpressionFunction("c[2]*sin(x)", dim_domain=1, shape_range=(1,), parameters={'c': 3}),
+]
 
 
 @pytest.fixture(params=constant_functions + generic_functions + picklable_generic_functions + expression_functions)

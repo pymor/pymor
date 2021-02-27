@@ -92,7 +92,7 @@ def project_array(U, basis, product=None, orthonormal=True):
 
 
 def contains_zero_vector(vector_array, rtol=None, atol=None):
-    """returns `True` iff any vector in the array float_compares to 0s of the same dim
+    """Return `True` iff any vector in the array float_compares to 0s of the same dim.
 
     Parameters
     ----------

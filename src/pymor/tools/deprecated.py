@@ -9,9 +9,9 @@ import warnings
 
 
 class Deprecated:
-    """This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emitted
-    when the function is used.
+    """Decorator for marking functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
     """
 
     def __init__(self, alt='no alternative given'):

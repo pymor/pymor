@@ -8,10 +8,12 @@ import pkgutil
 
 BUILD_DIR = 'generated'
 
-CLASS_OPTIONS = [':show-inheritance:', ':members:', ':special-members:', ':private-members:', ':exclude-members: __init__, __weakref__, __auto_init']
+CLASS_OPTIONS = [':show-inheritance:', ':members:', ':special-members:', ':private-members:',
+                 ':exclude-members: __init__, __weakref__, __auto_init']
 FUNCTION_OPTIONS = []
 MODULE_OPTIONS = [':show-inheritance:']
 NEVER_SKIPS = ['_BasicObject__auto_init']
+
 
 def section(name, level=0, section_levels='*=-'):
     return name + '\n' + section_levels[level] * len(name) + '\n'

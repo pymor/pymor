@@ -4,4 +4,4 @@
 
 
 def test_importable():
-    import pymor.basic
+    __import__('pymor.basic')

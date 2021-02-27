@@ -2,9 +2,6 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymortests.base import runmodule
-import pytest
-
 import numpy as np
 
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
@@ -14,7 +11,7 @@ from pymor.basic import NumpyVectorSpace, Mu
 
 def test_ProjectionParameterFunctional():
     pf = ProjectionParameterFunctional('mu', 2, 0)
-    mu = Mu({'mu': (10,2)})
+    mu = Mu({'mu': (10, 2)})
 
     derivative_to_first_index = pf.d_mu('mu', 0)
     derivative_to_second_index = pf.d_mu('mu', 1)
@@ -101,7 +98,7 @@ def test_ExpressionParameterFunctional():
 
 def test_simple_ProductParameterFunctional():
     pf = ProjectionParameterFunctional('mu', 2, 0)
-    mu = Mu({'mu': (10,2)})
+    mu = Mu({'mu': (10, 2)})
     productf = pf * 2 * 3
 
     derivative_to_first_index = productf.d_mu('mu', 0)
@@ -161,7 +158,7 @@ def test_ProductParameterFunctional():
     epf = ExpressionParameterFunctional('nu**2', {'nu': 1},
                                         'expression_functional',
                                         dict_of_d_mus, dict_of_second_derivative)
-    mu = Mu({'mu': (10,2), 'nu': 3})
+    mu = Mu({'mu': (10, 2), 'nu': 3})
 
     productf = pf * epf * 2. * pf
 
@@ -268,15 +265,16 @@ def test_d_mu_of_LincombOperator():
     assert eval_mu_2 == [0., 0., 2. * 10]
     assert eval_nu == [0., 0., 1.]
 
-    assert hes_mu_1_mu_1 == [0. ,0. , 0.]
-    assert hes_mu_1_mu_2 == [0. ,0. ,2]
-    assert hes_mu_1_nu == [0. ,0. ,0]
-    assert hes_mu_2_mu_1 == [0. ,0. ,2]
-    assert hes_mu_2_mu_2 == [0. ,0. ,0]
-    assert hes_mu_2_nu == [0. ,0. ,0]
-    assert hes_nu_mu_1 == [0. ,0. ,0]
-    assert hes_nu_mu_2 == [0. ,0. ,0]
-    assert hes_nu_nu == [0. ,0. ,-0]
+    assert hes_mu_1_mu_1 == [0., 0., 0.]
+    assert hes_mu_1_mu_2 == [0., 0., 2]
+    assert hes_mu_1_nu == [0., 0., 0]
+    assert hes_mu_2_mu_1 == [0., 0., 2]
+    assert hes_mu_2_mu_2 == [0., 0., 0]
+    assert hes_mu_2_nu == [0., 0., 0]
+    assert hes_nu_mu_1 == [0., 0., 0]
+    assert hes_nu_mu_2 == [0., 0., 0]
+    assert hes_nu_nu == [0., 0., -0]
+
 
 def test_output_d_mu():
     from pymordemos.linear_optimization import create_fom
@@ -290,7 +288,7 @@ def test_output_d_mu():
     parameter_space = fom.parameters.space(0, np.pi)
     training_set = parameter_space.sample_uniformly(training_samples)
 
-    #verifying that the adjoint and sensitivity gradients are the same and that solve_d_mu works
+    # verifying that the adjoint and sensitivity gradients are the same and that solve_d_mu works
     for mu in training_set:
         gradient_with_adjoint_approach = fom.output_d_mu(mu, return_array=True, use_adjoint=True)
         gradient_with_sensitivities = fom.output_d_mu(mu, return_array=True, use_adjoint=False)
@@ -301,13 +299,13 @@ def test_output_d_mu():
 
         # test the complex case
         complex_fom = easy_fom.with_(operator=easy_fom.operator.with_(
-            operators=[op* (1+2j) for op in easy_fom.operator.operators]))
+            operators=[op * (1+2j) for op in easy_fom.operator.operators]))
         complex_gradient_adjoint = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=True)
         complex_gradient = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=False)
         assert np.allclose(complex_gradient_adjoint, complex_gradient)
 
         complex_fom = easy_fom.with_(output_functional=easy_fom.output_functional.with_(
-            operators=[op* (1+2j) for op in easy_fom.output_functional.operators]))
+            operators=[op * (1+2j) for op in easy_fom.output_functional.operators]))
         complex_gradient_adjoint = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=True)
         complex_gradient = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=False)
         assert np.allclose(complex_gradient_adjoint, complex_gradient)

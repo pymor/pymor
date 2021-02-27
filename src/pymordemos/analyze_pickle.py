@@ -241,9 +241,9 @@ def convergence(
 
 
 def _bins(start, stop, steps=100):
-    ''' numpy has a quirk in unreleased master where logspace
-    might sometimes not return a 1d array
-    '''
+    """NumPy has a quirk in unreleased master where logspace might sometimes not return a 1d
+    array.
+    """
     bins = np.logspace(np.log10(start), np.log10(stop), steps)
     if bins.shape == (steps, 1):
         bins = bins[:, 0]

@@ -13,7 +13,7 @@ Arguments:
 
 from typer import Argument, run
 
-from pymor.basic import *        # most common pyMOR functions and classes
+from pymor.basic import *
 from pymor.tools.typer import Choices
 
 
@@ -125,7 +125,7 @@ def discretize_fenics():
 
     if mpi.parallel:
         from pymor.models.mpi import mpi_wrap_model
-        fom =  mpi_wrap_model(_discretize_fenics, use_with=True, pickle_local_spaces=False)
+        fom = mpi_wrap_model(_discretize_fenics, use_with=True, pickle_local_spaces=False)
     else:
         fom = _discretize_fenics()
     return fom, fom.parameters.space((0.1, 1))

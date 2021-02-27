@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, reproduce_failure, assume, settings
+from hypothesis import assume, settings
 from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal

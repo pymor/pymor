@@ -71,9 +71,9 @@ def _get_qt_version():
 
 
 def is_jupyter():
-    """This Method is not foolprof and might fail with any given jupyter release.
+    """Check if we believe to be running in a Jupyter Notebook or Lab.
 
-    :return: True if we believe to be running in a Jupyter Notebook or Lab
+    This method is not foolproof and might fail with any given Jupyter release.
     """
     try:
         from IPython import get_ipython
@@ -87,8 +87,10 @@ def is_jupyter():
 
 
 def is_nbconvert():
-    """In some visualization cases we need to be able to detect if a notebook
-    is executed with nbconvert to disable async loading.
+    """Check if a notebook is executed with `nbconvert`.
+
+    In some visualization cases we need to be able to detect if a notebook
+    is executed with `nbconvert` to disable async loading.
     """
     from os import environ
     return is_jupyter() and bool(environ.get('PYMOR_NBCONVERT', False))

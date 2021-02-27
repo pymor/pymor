@@ -89,7 +89,7 @@ class Renderer(widgets.VBox):
         cm = color_map(np.linspace(0, 1, max_tex_size)).astype(np.float32)
         cm.resize((max_tex_size, 1, 4))
         color_map = p3js.DataTexture(cm, format='RGBAFormat',  width=max_tex_size, height=1, type='FloatType')
-        uniforms=dict(
+        uniforms = dict(
             colormap={'value': color_map, 'type': 'sampler2D'},
         )
         self.material = p3js.ShaderMaterial(vertexShader=RENDER_VERTEX_SHADER, fragmentShader=RENDER_FRAGMENT_SHADER,
@@ -279,7 +279,8 @@ class ThreeJSPlot(widgets.VBox):
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2, color_map=get_cmap('viridis')):
-    """Generate a pythreejs Plot and associated controls for  scalar data associated to a two-dimensional |Grid|.
+    """Generate a pythreejs Plot and associated controls for scalar data associated to a
+    two-dimensional |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
     be attached to the faces or vertices of the grid.

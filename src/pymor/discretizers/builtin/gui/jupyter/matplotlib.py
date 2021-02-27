@@ -57,7 +57,6 @@ class MPLPlotBase:
                 if self.legend:
                     plot.ax[0].set_title(self.legend[i])
                 self.plots.append(plot)
-                    # plt.tight_layout()
         else:
             figure = plt.figure(self.fig_ids[0])
             sync_timer = sync_timer or figure.canvas.new_timer()
@@ -79,7 +78,7 @@ class MPLPlotBase:
             html = [p.html for p in self.plots]
             template = """<div style="float: left; padding: 10px;">{0}</div>"""
             # IPython display system checks for presence and calls this func
-            self._repr_html_ = lambda : '\n'.join(template.format(a._repr_html_()) for a in html)
+            self._repr_html_ = lambda: '\n'.join(template.format(a._repr_html_()) for a in html)
         else:
             self._out = widgets.Output()
             with self._out:

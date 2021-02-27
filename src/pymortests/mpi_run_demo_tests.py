@@ -16,6 +16,7 @@ if __name__ == '__main__':
         os.unlink(result_file_fn)
     except FileNotFoundError:
         pass
+
     # ensure that FEniCS visualization does nothing on all MPI ranks
     def monkey_plot():
         def nop(*args, **kwargs):

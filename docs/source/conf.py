@@ -2,7 +2,8 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import sys, os, re
+import sys
+import os
 import slugify
 
 os.environ['PYMOR_WITH_SPHINX'] = '1'
@@ -21,13 +22,13 @@ needs_sphinx = '1.0'
 sys.path.insert(0, os.path.abspath('../../src'))
 sys.path.insert(0, os.path.abspath('.'))
 
-#generate autodoc
+# generate autodoc
 import gen_apidoc
 import pymor
 #import pymortests
 import pymordemos
 gen_apidoc.walk(pymor)
-# gen_apidoc.walk(pymortests)
+#gen_apidoc.walk(pymortests)
 gen_apidoc.walk(pymordemos)
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
@@ -155,7 +156,7 @@ html_sidebars = {
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
 #html_additional_pages = {
-    #'index': 'indexcontent.html',
+#    'index': 'indexcontent.html',
 #}
 
 # If false, no module index is generated.
@@ -196,10 +197,10 @@ pngmath_use_preview = True
 # (source start file, target name, title, author, document class [howto/manual]).
 #_stdauthor = 'Written by the NumPy community'
 #latex_documents = [
-  #('reference/index', 'numpy-ref.tex', 'NumPy Reference',
-   #_stdauthor, 'manual'),
-  #('user/index', 'numpy-user.tex', 'NumPy User Guide',
-   #_stdauthor, 'manual'),
+#    ('reference/index', 'numpy-ref.tex', 'NumPy Reference',
+#     _stdauthor, 'manual'),
+#    ('user/index', 'numpy-user.tex', 'NumPy User Guide',
+#     _stdauthor, 'manual'),
 #]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -246,7 +247,7 @@ coverage_ignore_c_items = {}
 
 # PyQt5 inventory is only used internally, actual link targets PySide2
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       'numpy': ('https://numpy.org/doc/stable/', None), 
+                       'numpy': ('https://numpy.org/doc/stable/', None),
                        'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
                        'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
                        'matplotlib': ('https://matplotlib.org', None),

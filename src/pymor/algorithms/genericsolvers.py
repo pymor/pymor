@@ -119,7 +119,8 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
     check_finite
         Test if solution only contains finite values.
     default_solver
-        Default solver to use (generic_lgmres, generic_least_squares_lsmr, generic_least_squares_lsqr).
+        Default solver to use (generic_lgmres, generic_least_squares_lsmr,
+        generic_least_squares_lsqr).
     default_least_squares_solver
         Default solver to use for least squares problems (generic_least_squares_lsmr,
         generic_least_squares_lsqr).

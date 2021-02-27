@@ -1,12 +1,12 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
 import tempfile
 import time
 import os
 from uuid import uuid4
 from datetime import datetime, timedelta
-import pytest
 import numpy as np
 
 from pymor.core import cache
@@ -73,18 +73,18 @@ def test_runtime():
         assert int0 < int1 <= int2
         delta1 = int1 - int0
         delta2 = int2 - int1
-        assert delta1>= SLEEP_DELTA, r
+        assert delta1 >= SLEEP_DELTA, r
         assert delta2 < delta1, r
         assert delta2 < 0.5 * SLEEP_DELTA, r
 
 
 def test_region_api():
     with tempfile.TemporaryDirectory() as tmpdir:
-        backends = [cache.MemoryRegion(100)] 
+        backends = [cache.MemoryRegion(100)]
         # this specific backend test is currently broken on windows
         if not is_windows_platform():
             backends.append(cache.DiskRegion(path=os.path.join(tmpdir, str(uuid4())),
-                                                max_size=1024 ** 2, persistent=False))
+                                             max_size=1024 ** 2, persistent=False))
         for backend in backends:
             assert backend.get('mykey') == (False, None)
             backend.set('mykey', 1)

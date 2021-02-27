@@ -314,7 +314,6 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
         recursively import all sub-modules of the named packages before
         creating the configuration file.
     """
-
     for package in packages:
         _import_all(package)
 

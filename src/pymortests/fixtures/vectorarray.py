@@ -2,17 +2,13 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from itertools import product
 import numpy as np
-import pytest
 
 from pymor.core.config import config
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.vectorarrays.list import NumpyListVectorSpace
 
-
-import os
 
 def random_integers(count, seed):
     np.random.seed(seed)
@@ -40,6 +36,7 @@ def block_vector_array_factory(length, dims, seed):
         numpy_vector_array_factory(length, sum(dims), seed).to_numpy()
     )
 
+
 if config.HAVE_FENICS:
     import dolfin as df
     from pymor.bindings.fenics import FenicsVectorSpace
@@ -64,29 +61,28 @@ if config.HAVE_FENICS:
 
     fenics_vector_array_factory_arguments = \
         list(zip([0,  0,  1, 43, 102],      # len
-            [0,  1,  3,  2,  2],      # ni
-            random_integers(5, 123)))   # seed
+                 [0,  1,  3,  2,  2],       # ni
+                 random_integers(5, 123)))  # seed
 
     fenics_vector_array_factory_arguments_pairs_with_same_dim = \
         list(zip([0,  0,   1, 43, 102,  2],         # len1
-            [0,  1,  37,  9, 104,  2],         # len2
-            [0,  1,   3,  2,   2,  2],         # dim
-            random_integers(5, 1234) + [42],  # seed1
-            random_integers(5, 1235) + [42]))  # seed2
+                 [0,  1,  37,  9, 104,  2],         # len2
+                 [0,  1,   3,  2,   2,  2],         # dim
+                 random_integers(5, 1234) + [42],   # seed1
+                 random_integers(5, 1235) + [42]))  # seed2
 
     fenics_vector_array_factory_arguments_pairs_with_different_dim = \
-        list(zip([0,  0,  1, 43, 102],      # len1
-            [0,  1,  1,  9,  10],      # len2
-            [0,  1,  2,  3,   1],      # dim1
-            [1,  2,  1,  2,   3],      # dim2
-            random_integers(5, 1234),  # seed1
-            random_integers(5, 1235)))  # seed2
+        list(zip([0,  0,  1, 43, 102],       # len1
+                 [0,  1,  1,  9,  10],       # len2
+                 [0,  1,  2,  3,   1],       # dim1
+                 [1,  2,  1,  2,   3],       # dim2
+                 random_integers(5, 1234),   # seed1
+                 random_integers(5, 1235)))  # seed2
 
 
 if config.HAVE_NGSOLVE:
     import ngsolve as ngs
     import netgen.meshing as ngmsh
-    from netgen.geom2d import unit_square
     from pymor.bindings.ngsolve import NGSolveVectorSpace
 
     NGSOLVE_spaces = {}
@@ -140,5 +136,3 @@ def vector_array_from_empty_reserve(v, reserve):
     c = v.empty(reserve=r)
     c.append(v)
     return c
-
-

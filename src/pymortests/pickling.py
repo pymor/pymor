@@ -7,7 +7,6 @@ from scipy.sparse import issparse
 from types import FunctionType, MethodType
 
 from pymor.core.base import BasicObject
-from pymor.core.config import config
 from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
 from pymor.discretizers.builtin.grids.subgrid import SubGrid
 from pymor.operators.numpy import NumpyMatrixBasedOperator
@@ -28,6 +27,7 @@ def func_with_closure_generator():
     def func_with_closure():
         print(x)
     return func_with_closure
+
 
 cell_type = type(func_with_closure_generator().__closure__[0])
 

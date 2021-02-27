@@ -2,12 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymortests.base import runmodule
-import pytest
-
-import numpy as np
-
-from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional, LincombParameterFunctional
+from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
 from pymor.basic import Mu
 
 
@@ -19,9 +14,9 @@ def test_LincombParameterFunctional():
                                         'functional_with_derivative_and_second_derivative',
                                         dict_of_d_mus)
     pf = ProjectionParameterFunctional('mu', 2, 0)
-    mu = Mu({'mu': [10,2], 'nu': [3]})
+    mu = Mu({'mu': [10, 2], 'nu': [3]})
 
-    zero = pf - pf 
+    zero = pf - pf
     two_pf = pf + pf
     two_pf_named = two_pf.with_(name='some_interesting_quantity')
     three_pf = pf + 2*pf
@@ -34,7 +29,7 @@ def test_LincombParameterFunctional():
     pf_squared_named = pf_squared_.with_(name='some_interesting_quantity')
     pf_times_pf_squared = pf * pf_squared_
     pf_times_pf_squared_named = pf * pf_squared_named
-    pf_squared =  4 * epf * epf * 1 + (pf + 2*epf) * (pf - 2*epf)
+    pf_squared = 4 * epf * epf * 1 + (pf + 2*epf) * (pf - 2*epf)
 
     assert zero(mu) == 0
     assert two_pf(mu) == 2 * pf(mu)

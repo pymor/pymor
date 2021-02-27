@@ -28,15 +28,36 @@ class GaussQuadratures:
 
     @classmethod
     def quadrature(cls, order=None, npoints=None):
-        """returns tuple (P, W) where P is an array of Gauss points with corresponding weights W for
-        the given integration order "order" or with "npoints" integration points
+        """Return Gauss points with corresponding weights.
+
+        Parameters
+        ----------
+        order
+            Integration order.
+        npoints
+            Number of integration points.
+
+        Returns
+        -------
+        points
+            Array of Gauss points.
+        weights
+            Integration weights.
         """
         p = cls._determine_order(order, npoints)
         return cls.points[p], cls.weights[p]
 
     @classmethod
     def iter_quadrature(cls, order=None, npoints=None):
-        """Iterates over a quadrature tuple wise."""
+        """Iterate over a quadrature tuple-wise.
+
+        Parameters
+        ----------
+        order
+            Integration order.
+        npoints
+            Number of integration points.
+        """
         p = cls._determine_order(order, npoints)
         for i in range(len(cls.points[p])):
             yield (cls.points[p][i], cls.weights[p][i])

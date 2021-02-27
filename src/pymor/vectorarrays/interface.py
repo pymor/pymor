@@ -622,7 +622,9 @@ class VectorArray(BasicObject):
         return self.copy()
 
     def check_ind(self, ind):
-        """Check if `ind` is an admissible list of indices in the sense
+        """Check if index is admissible.
+
+        Check if `ind` is an admissible list of indices in the sense
         of the class documentation.
         """
         l = len(self)
@@ -631,7 +633,9 @@ class VectorArray(BasicObject):
                 or isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind):
-        """Check if `ind` is an admissible list of non-repeated indices in
+        """Check if index is admissible and unique.
+
+        Check if `ind` is an admissible list of non-repeated indices in
         the sense of the class documentation.
         """
         l = len(self)

@@ -12,7 +12,6 @@ def main(
     order: int = Argument(..., help='Finite element order.'),
 ):
     """Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM."""
-
     from pymor.tools import mpi
 
     if mpi.parallel:

@@ -327,8 +327,8 @@ class Model(CacheableObject, ParametricObject):
                              output_error_estimate=output_error_estimate,
                              mu=mu, **kwargs)
 
-        if (solution or output or solution_error_estimate or
-                output_error_estimate or solution_d_mu or output_d_mu) \
+        if (solution or output or solution_error_estimate
+            or output_error_estimate or solution_d_mu or output_d_mu) \
            and 'solution' not in data:
             retval = self.cached_method_call(self._compute_solution, mu=mu, **kwargs)
             if isinstance(retval, dict):

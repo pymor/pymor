@@ -35,6 +35,5 @@ def test_log_levels():
     assert before_name == logging.getLevelName(logger.level)
 
 
-
 if __name__ == "__main__":
     runmodule(filename=__file__)
