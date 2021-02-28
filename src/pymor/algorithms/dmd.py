@@ -17,7 +17,7 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
 
     See Algorithm 1 and Algorithm 2 in [TRLBK14]_.
 
-    Parametersk
+    Parameters
     ----------
     A  :  optional
         The |VectorArray| for which the DMD Modes are to be computed.
@@ -86,32 +86,27 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
         print('Cutting  to Dimension', rank, '- Not enought relevant Singularvectors.')
 
     XL_approx = U.lincomb(np.diag(SVALS)).lincomb(Vh.T)
-    fehler = XL.__sub__(XL_approx)
+    fehler = XL - XL_approx
     mse = np.mean((fehler).norm())
     print('Mean-squared-error of SVD: ', mse)
 
     # Invert the Singular Values
     SVALS_diag = np.diag(SVALS)
     Sigma_inv = np.linalg.inv(SVALS_diag)
-    # Cut Vh to relevant modes
-    Vh = Vh[:, :rank]
     V = Vh.conj().T
 
     # Solve the least Sqaures Problem
     # real: A_tilde = U.T * XR * Vh.T * Sigma_inv
     # complex: A_tilde = U.H * XR * Vh.H * Sigma_inv
     # A = XR[:k] @ V @ Sigma_inv.inner(Uh)
-    A_tilde = U.inner(XR[:rank]) @ V @ Sigma_inv
-
-    # spla.eig expects column vectors
-    A_tilde = A_tilde.T
+    A_tilde = U.inner(XR) @ V @ Sigma_inv
 
     print('Calculating eigenvalue dec. ...')
-    EVALS, EVECS = spla.eig(A_tilde, b=None, left=True, right=False)
+    EVALS, EVECS = spla.eig(A_tilde, b=None, left=False, right=True)
     # omega = np.log(EVALS) / dt
 
     A_tilde_approx = EVECS @ np.diag(EVALS) @ np.linalg.inv(EVECS)
-    fehler = A_tilde.__sub__(A_tilde_approx)
+    fehler = A_tilde - A_tilde_approx
     mse = np.mean(np.linalg.norm(fehler))
     print('Mean-squared-error of spla.eig: ', mse)
 
@@ -129,9 +124,7 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
     if modes == 'standard':
         Wk = U.lincomb(EVECS.T)
     elif modes == 'exact' or 'exact_scaled':
-        # Wk = XR[:rank].lincomb(V).lincomb(Sigma_inv).lincomb(EVECS)
-        # TODO: transponieren wo und wie?
-        Wk = XR[:rank].lincomb((V.T @ Sigma_inv @ EVECS).T)
+        Wk = XR.lincomb(V.T).lincomb(Sigma_inv.T).lincomb(EVECS.T)
         if modes == 'exact_scaled':
             EVALS_inv = np.reciprocal(EVALS)
             Wk = Wk*EVALS_inv
