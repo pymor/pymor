@@ -201,10 +201,10 @@ ci setup:
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile \"ci_pr\" for branch $CI_COMMIT_REF_NAME
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
           else
-            echo selecting hypothesis profile \"ci\" for branch $CI_COMMIT_REF_NAME
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_{{script}}.bash
