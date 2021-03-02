@@ -159,7 +159,7 @@ class FDBTReductor(GenericBTReductor):
         - list of anti-stable eigenvalues (scalars),
         - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
           and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
-        - `None` if the |LTIModel| has only asymptotically stable poles.
+        - `None` if anti-stable eigenvalues should be computed via dense methods.
     mu
         |Parameter values|.
     """

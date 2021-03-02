@@ -707,7 +707,7 @@ class GapIRKAReductor(GenericIRKAReductor):
 
             - `'orth'`: projection matrix is orthogonalized with respect
               to the Euclidean inner product,
-            - `'Eorth'`: projection matrix is orthogonalized with
+            - `'biorth'`: projection matrix is orthogonalized with
               respect to the E product.
 
         Returns
@@ -721,15 +721,15 @@ class GapIRKAReductor(GenericIRKAReductor):
         self._clear_lists()
         sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params)
         self._store_sigma_b_c(sigma, b, c)
-        assert projection in ('orth', 'Eorth')
+        assert projection in ('orth', 'biorth')
 
         self.logger.info('Starting gap IRKA')
         self._conv_data = (num_prev + 1) * [None]
         if conv_crit == 'sigma':
             self._conv_data[0] = sigma
         for it in range(maxit):
-            self._set_V_W_reductor(sigma, b, c, projection)
-            rom = self._pg_reductor.reduce()
+            self._pg_reductor = LTIBHIReductor(self.fom, mu=self.mu)
+            rom = self._pg_reductor.reduce(sigma, b, c, projection)
             sigma, b, c, gap_rom = self._unstable_rom_to_sigma_b_c(rom)
             self._store_sigma_b_c(sigma, b, c)
             self._update_conv_data(sigma, gap_rom, rom, conv_crit)
@@ -755,26 +755,6 @@ class GapIRKAReductor(GenericIRKAReductor):
             sigma, b, c, _ = self._unstable_rom_to_sigma_b_c(rom0_params)
         return sigma, b, c
 
-    def _set_V_W_reductor(self, sigma, b, c, projection):
-        fom = (
-            self.fom.with_(
-                **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']},
-                parameter_space=None,
-            )
-            if self.fom.parametric
-            else self.fom
-        )
-        self.V = tangential_rational_krylov(self.fom.A, self.fom.E, self.fom.B, b, sigma, orth=False)
-        self.W = tangential_rational_krylov(self.fom.A, self.fom.E, self.fom.C, c, sigma, trans=True, orth=False)
-        if projection == 'orth':
-            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
-            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
-        elif projection == 'Eorth':
-            gram_schmidt_biorth(self.V, self.W, product=fom.E, copy=False)
-        self._pg_reductor = LTIPGReductor(fom, self.W, self.V,
-                                          projection == 'Eorth')
-
     def _unstable_rom_to_sigma_b_c(self, rom):
         poles, b, c, gap_rom = self._unstable_lti_to_poles_b_c(rom)
         return -poles, b, c, gap_rom
@@ -787,7 +767,6 @@ class GapIRKAReductor(GenericIRKAReductor):
         options = self.solver_options
 
         if isinstance(rom.E, IdentityOperator):
-            # P = spla.solve_continuous_are(A.T, C.T, B.dot(B.T), np.eye(len(C)))
             P = solve_ricc_dense(A, None, B, C, options=options)
             F = P @ C.T
             AF = A - F @ C
@@ -795,8 +774,7 @@ class GapIRKAReductor(GenericIRKAReductor):
             EX = X
         else:
             E = to_matrix(rom.E, format='dense')
-            # P = spla.solve_continuous_are(A.T, C.T, B.dot(B.T), np.eye(len(C)), e=E.T, balanced=False)
-            P = solve_ricc_dense(A, E, B, C)
+            P = solve_ricc_dense(A, E, B, C, options=options)
             F = E @ P @ C.T
             AF = A - F @ C
             poles, X = spla.eig(AF, E)

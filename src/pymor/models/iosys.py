@@ -931,7 +931,7 @@ class LTIModel(InputStateOutputModel):
             - list of anti-stable eigenvalues (scalars),
             - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
               and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
-            - `None` if the `LTIModel` has only asymptotically stable poles.
+            - `None` if anti-stable eigenvalues should be computed via dense methods.
         mu
             |Parameter|.
 
@@ -949,7 +949,7 @@ class LTIModel(InputStateOutputModel):
 
         ast_spectrum = self._get_ast_spectrum(ast_pole_data, mu)
 
-        if len(self._ast_spectrum[0]) == 0:
+        if len(ast_spectrum[0]) == 0:
             return self.h2_norm()
 
         K = bernoulli_stabilize(A, E, C.as_source_array(mu=mu), ast_spectrum, trans=False)
@@ -1003,7 +1003,7 @@ class LTIModel(InputStateOutputModel):
             - list of anti-stable eigenvalues (scalars),
             - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
               and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
-            - `None` if the |LTIModel| has only asymptotically stable poles.
+            - `None` if anti-stable eigenvalues should be computed via dense methods.
         mu
             |Parameter|.
 
@@ -1015,7 +1015,7 @@ class LTIModel(InputStateOutputModel):
         """
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
-        if self.order >= sparse_min_size():
+        if ast_pole_data is not None:
             if type(ast_pole_data) == dict:
                 ew, rev = eigs(A, E=E if self.E else None, left_evp=False, **ast_pole_data)
                 ast_idx = np.where(ew.real > 0.)
@@ -1044,9 +1044,16 @@ class LTIModel(InputStateOutputModel):
                 return ast_pole_data
 
             else:
-                # assume there is only asymptotically stable system poles
-                return (self.solution_space.empty(), [], self.solution_space.empty())
+                ValueError(f'ast_pole_data is of wrong type ({type(ast_pole_data)}).')
+
         else:
+            if self.order >= sparse_min_size():
+                if not isinstance(A, NumpyMatrixOperator) or A.sparse:
+                    self.logger.warning('Converting operator A to a NumPy array.')
+                if not isinstance(E, IdentityOperator):
+                    if not isinstance(E, NumpyMatrixOperator) or E.sparse:
+                        self.logger.warning('Converting operator E to a NumPy array.')
+
             A, E = (to_matrix(op, format='dense') for op in [A, E])
             ew, lev, rev = spla.eig(A, E if self.E else None, True)
             ast_idx = np.where(ew.real > 0.)

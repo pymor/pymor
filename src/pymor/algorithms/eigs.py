@@ -111,12 +111,15 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
         else:
             Aop = InverseOperator(E) @ A
     else:
+        if sigma.imag != 0:
+            complex_evp = True
+        else:
+            sigma = sigma.real
+
         if left_evp:
             Aop = InverseOperator(A - sigma * E).H @ E.H
         else:
             Aop = InverseOperator(A - sigma * E) @ E
-        if sigma.imag != 0:
-            complex_evp = True
 
     V, H, f = _arnoldi(Aop, k, b, complex_evp)
 
