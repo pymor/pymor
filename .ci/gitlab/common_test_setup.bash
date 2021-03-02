@@ -21,9 +21,9 @@ set -eux
 [[ -e /usr/local/share/ci.pip.conf ]] && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
 
 # most of these should be baked into the docker image already
-pip install --use-feature=2020-resolver -r requirements.txt
-pip install --use-feature=2020-resolver -r requirements-ci.txt
-pip install --use-feature=2020-resolver -r requirements-optional.txt
+pip install -r requirements.txt
+pip install -r requirements-ci.txt
+pip install -r requirements-optional.txt
 
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0

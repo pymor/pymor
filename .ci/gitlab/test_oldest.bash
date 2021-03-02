@@ -7,9 +7,9 @@ source ${THIS_DIR}/common_test_setup.bash
 sudo pip uninstall -y -r requirements-optional.txt
 sudo pip uninstall -y -r requirements-ci.txt
 sudo pip uninstall -y -r requirements.txt
-sudo pip install -U --use-feature=2020-resolver -r requirements.txt
-sudo pip install -U --use-feature=2020-resolver -r requirements-ci.txt
-sudo pip install -U --use-feature=2020-resolver -r requirements-optional.txt
+sudo pip install -U -r requirements.txt
+sudo pip install -U -r requirements-ci.txt
+sudo pip install -U -r requirements-optional.txt
 
 # we've changed numpy versions, recompile cyx
 find src/pymor/ -name _*.c | xargs rm -f
