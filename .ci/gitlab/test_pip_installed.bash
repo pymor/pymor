@@ -10,17 +10,17 @@ PIP_CLONE_URL="git+${CI_PROJECT_URL}@${CI_COMMIT_SHA}"
 # pip install virtualenv
 # virtualenv /tmp/venv
 # source /tmp/venv/bin/activate
-pip install --use-feature=2020-resolver ${PIP_CLONE_URL}
+pip install ${PIP_CLONE_URL}
 pip uninstall -y pymor
 
 # this is currently disabled because it erroneously pulls in pyqt5
 # pip install ${PIP_CLONE_URL}#egg=pymor[full]
 # pip uninstall -y pymor
 
-pip install --use-feature=2020-resolver .[full]
+pip install .[full]
 pip uninstall -y pymor
 # other requirements are installed from pymor[full]
-pip install --use-feature=2020-resolver -r requirements-ci.txt
+pip install -r requirements-ci.txt
 
 python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
 twine check ${SDIST_DIR}/*
