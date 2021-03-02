@@ -81,14 +81,9 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
     print('SVD of XL...')
     U, SVALS, Vh = svd(XL, product=None, modes=rank)
 
-    if not len(U) == rank:
-        rank = len(U)
-        print('Cutting  to Dimension', rank, '- Not enought relevant Singularvectors.')
-
-    XL_approx = U.lincomb(np.diag(SVALS)).lincomb(Vh.T)
-    fehler = XL - XL_approx
-    mse = np.mean((fehler).norm())
-    print('Mean-squared-error of SVD: ', mse)
+    # if not len(U) == rank:
+    #     rank = len(U)
+    #     print('Cutting  to Dimension', rank, '- Not enought relevant Singularvectors.')
 
     # Invert the Singular Values
     SVALS_diag = np.diag(SVALS)
@@ -104,11 +99,6 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
     print('Calculating eigenvalue dec. ...')
     EVALS, EVECS = spla.eig(A_tilde, b=None, left=False, right=True)
     # omega = np.log(EVALS) / dt
-
-    A_tilde_approx = EVECS @ np.diag(EVALS) @ np.linalg.inv(EVECS)
-    fehler = A_tilde - A_tilde_approx
-    mse = np.mean(np.linalg.norm(fehler))
-    print('Mean-squared-error of spla.eig: ', mse)
 
     omega = EVALS / dt
 
@@ -182,16 +172,12 @@ def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, powerIte
     if(powerIterations > 0):
         for i in range(powerIterations):
             Q = gram_schmidt(Y)
-            Z, _ = spla.qr(A.inner(Q))
+            AQ = A.inner(Q)
+            Z, _ = spla.qr(AQ)
             Y = A.lincomb(Z)
 
     Q = gram_schmidt(Y)
     B = Q.inner(A)
-
-    if not len(Q) == rank:
-        print('Cutting B to Dimension (', B.shape[0], ', ', len(Q), ').',
-              'Not enought orthonormal Vectors in random Projection.')
-        B = B[:, :len(Q)]
 
     return Q, B
 
@@ -261,7 +247,7 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
 
     rank = len(A) if target_rank is None else target_rank
 
-    Q, B = rand_QB(A, target_rank=target_rank, distribution=distribution, oversampling=oversampling,
+    Q, B = rand_QB(A, target_rank=rank, distribution=distribution, oversampling=oversampling,
                    powerIterations=powerIterations)
 
     # transform B to VectorArray
@@ -272,8 +258,7 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
     # transform Wk to numpy
     Wk = Wk.to_numpy()
 
-    rank = min(rank, len(B))
-    Wk = Q[:rank].lincomb(Wk[:, :rank])
+    Wk = Q.lincomb(Wk)
 
     return Wk, omega
 
@@ -281,9 +266,9 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
 def get_amplitudes(A, Wk):
     '''Compute amplitueds b using least-squares: Fb=x1'''
     W_OP = VectorArrayOperator(Wk)
-    return lsqr(W_OP, A[0])[0].to_numpy()
+    return lsqr(W_OP, A[0])[0].to_numpy()[0]
 
 
 def get_vandermonde(A, EVals):
     '''Compute Vandermonde matrix'''
-    return np.fliplr(np.vander(EVals, N=len(A)))
+    return np.vander(EVals, N=len(A), increasing=True)
