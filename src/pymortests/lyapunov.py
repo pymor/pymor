@@ -3,7 +3,6 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import os
-import sys
 
 import numpy as np
 import scipy.linalg as spla

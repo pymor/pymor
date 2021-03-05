@@ -72,7 +72,8 @@ class SubGrid(Grid):
         return self.__parent_indices[codim]
 
     def indices_from_parent_indices(self, ind, codim):
-        """Maps a |NumPy array| of indicies of codim-`codim` entites of the parent grid to indicies of the subgrid.
+        """Maps a |NumPy array| of indicies of codim-`codim` entites of the parent grid to indicies
+        of the subgrid.
 
         Raises
         ------
@@ -116,7 +117,8 @@ def make_sub_grid_boundary_info(sub_grid, parent_grid, parent_grid_boundary_info
     Parameters
     ----------
     sub_grid
-        The :class:`~pymor.discretizers.builtin.grids.subgrid.SubGrid` for which a |BoundaryInfo| is created.
+        The :class:`~pymor.discretizers.builtin.grids.subgrid.SubGrid` for which a
+        |BoundaryInfo| is created.
     parent_grid
         The parent |Grid|.
     parent_grid_boundary_info

@@ -11,7 +11,7 @@ def format_source(obj):
     source = getsource(obj)
 
     if is_jupyter():
-        from IPython.display import display, Code
+        from IPython.display import Code
         return Code(source, language='python')
     else:
         try:
@@ -26,7 +26,7 @@ def format_source(obj):
 def print_source(obj):
     source = format_source(obj)
     if is_jupyter():
-        from IPython.display import display, Code
+        from IPython.display import display
         display(source)
     else:
         print(source)
@@ -35,7 +35,7 @@ def print_source(obj):
 def source_repr(obj):
     source = format_source(obj)
     if is_jupyter():
-        from IPython.display import display, Code
+        from IPython.display import display
         display(source)
         return ''
     else:

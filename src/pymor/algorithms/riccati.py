@@ -105,7 +105,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None,
         Low-rank Cholesky factor of the Riccati equation solution,
         |VectorArray| from `A.source`.
     """
-
     _solve_ricc_check_args(A, E, B, C, R, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
@@ -197,7 +196,6 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None,
         Low-rank Cholesky factor of the positive Riccati equation
         solution, |VectorArray| from `A.source`.
     """
-
     _solve_ricc_check_args(A, E, B, C, R, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']

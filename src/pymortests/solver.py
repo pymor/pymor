@@ -7,6 +7,7 @@ from scipy.sparse import diags
 import pytest
 
 import pymor.algorithms.genericsolvers
+from pymor.bindings.scipy import solver_options as scipy_solver_options
 from pymor.core.config import config
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -33,8 +34,8 @@ class GenericOperator(Operator):
 def generic_solver(request):
     return {'inverse': request.param}
 
+
 all_sparse_solvers = set(pymor.algorithms.genericsolvers.solver_options().keys())
-from pymor.bindings.scipy import solver_options as scipy_solver_options
 all_sparse_solvers.update(scipy_solver_options().keys())
 if config.HAVE_PYAMG:
     from pymor.bindings.pyamg import solver_options as pyamg_solver_options

@@ -19,7 +19,6 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericIRKAReductor(BasicObject):
@@ -191,6 +190,7 @@ class IRKAReductor(GenericIRKAReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, mu=mu)
@@ -304,6 +304,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, version, mu=None):
         assert isinstance(fom, LTIModel)
         assert version in ('V', 'W')
@@ -431,6 +432,7 @@ class TSIAReductor(GenericIRKAReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, mu=mu)
@@ -556,6 +558,7 @@ class TFIRKAReductor(GenericIRKAReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         assert isinstance(fom, InputOutputModel)
         super().__init__(fom, mu=mu)

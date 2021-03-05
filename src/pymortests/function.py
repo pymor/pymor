@@ -21,6 +21,8 @@ real_assert_allclose = np.testing.assert_allclose
 
 def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
     real_assert_allclose(a, b, rtol=rtol, atol=atol)
+
+
 np.testing.assert_allclose = monkey_allclose
 
 
@@ -42,7 +44,7 @@ def test_lincomb_function():
             for one in (ConstantFunction(1.0, dim_domain=steps),
                         GenericFunction(lambda X: np.ones(X.shape[:-1]), dim_domain=steps), 1.0):
                 add = (zero + one) + 1 - 1
-                add_ =  1 - 1 + (zero + one)
+                add_ = 1 - 1 + (zero + one)
                 sub = (zero - one) + np.zeros(())
                 neg = - zero
                 assert np.allclose(sub(x), [-1])

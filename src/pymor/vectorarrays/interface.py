@@ -205,7 +205,6 @@ class VectorArray(BasicObject):
         """
         raise NotImplementedError
 
-
     @abstractmethod
     def append(self, other, remove_from_other=False):
         """Append vectors to the array.
@@ -623,14 +622,22 @@ class VectorArray(BasicObject):
         return self.copy()
 
     def check_ind(self, ind):
-        """Check if `ind` is an admissible list of indices in the sense of the class documentation."""
+        """Check if index is admissible.
+
+        Check if `ind` is an admissible list of indices in the sense
+        of the class documentation.
+        """
         l = len(self)
         return (type(ind) is slice
                 or isinstance(ind, Number) and -l <= ind < l
                 or isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind):
-        """Check if `ind` is an admissible list of non-repeated indices in the sense of the class documentation."""
+        """Check if index is admissible and unique.
+
+        Check if `ind` is an admissible list of non-repeated indices in
+        the sense of the class documentation.
+        """
         l = len(self)
         return (type(ind) is slice
                 or isinstance(ind, Number) and -l <= ind < l
@@ -647,7 +654,6 @@ class VectorArray(BasicObject):
         except TypeError:
             return 1
 
-
     def len_ind_unique(self, ind):
         """Return the number of specified unique indices."""
         l = len(self)
@@ -656,7 +662,6 @@ class VectorArray(BasicObject):
         if isinstance(ind, Number):
             return 1
         return len({i if i >= 0 else l+i for i in ind})
-
 
     def normalize_ind(self, ind):
         """Normalize given indices such that they are independent of the array length."""

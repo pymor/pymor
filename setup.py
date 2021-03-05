@@ -32,11 +32,13 @@ class DependencyMissing(Exception):
 
 
 def _numpy_monkey():
-    '''Apparently we need to monkey numpy's distutils to be able to build
+    """Monkey patch for NumPy's distutils.
+
+    Apparently we need to monkey NumPy's distutils to be able to build
     .pyx with Cython instead of Pyrex. The monkeying below is copied from
     https://github.com/matthew-brett/du-cy-numpy/blob/master/matthew_monkey.py
     via the discussion at http://comments.gmane.org/gmane.comp.python.numeric.general/37752
-    '''
+    """
     global _build_src
     from os.path import join as pjoin, dirname
     from distutils.dep_util import newer_group
@@ -49,12 +51,12 @@ def _numpy_monkey():
     _orig_generate_a_pyrex_source = build_src.build_src.generate_a_pyrex_source
 
     def generate_a_pyrex_source(self, base, ext_name, source, extension):
-        ''' Monkey patch for numpy build_src.build_src method
+        """Monkey patch for numpy build_src.build_src method
 
         Uses Cython instead of Pyrex, iff source contains 'pymor'
 
         Assumes Cython is present
-        '''
+        """
         if 'pymor' not in source:
             return _orig_generate_a_pyrex_source(self, base, ext_name, source, extension)
 
@@ -81,9 +83,7 @@ def _numpy_monkey():
     build_src.build_src.generate_a_pyrex_source = generate_a_pyrex_source
 
 
-
 cmdclass = versioneer.get_cmdclass()
-
 
 
 def _testdatafiles():
@@ -120,20 +120,32 @@ def _setup(**kwargs):
     if not hasattr(Cython.Distutils.build_ext, 'fcompiler'):
         Cython.Distutils.build_ext.fcompiler = None
     cmdclass.update({'build_ext': Cython.Distutils.build_ext})
-    # setuptools sdist command my to include some files apparently (https://github.com/numpy/numpy/pull/7131)
+    # setuptools sdist command my to include some files apparently
+    # (https://github.com/numpy/numpy/pull/7131)
     from distutils.command.sdist import sdist
     cmdclass.update({'sdist': sdist})
     from numpy import get_include
     include_dirs = [get_include()]
-    ext_modules = [Extension("pymor.discretizers.builtin.relations", ["src/pymor/discretizers/builtin/relations.pyx"], include_dirs=include_dirs),
-                   Extension("pymor.discretizers.builtin.inplace", ["src/pymor/discretizers/builtin/inplace.pyx"], include_dirs=include_dirs),
-                   Extension("pymor.discretizers.builtin.grids._unstructured", ["src/pymor/discretizers/builtin/grids/_unstructured.pyx"], include_dirs=include_dirs)]
-    # for some reason the *pyx files don't end up in sdist tarballs -> manually add them as package data
-    # this _still_ doesn't make them end up in the tarball however -> manually add them in MANIFEST.in
-    # duplication is necessary since Manifest sometime is only regarded in sdist, package_data in bdist
+    ext_modules = [Extension("pymor.discretizers.builtin.relations",
+                             ["src/pymor/discretizers/builtin/relations.pyx"],
+                             include_dirs=include_dirs),
+                   Extension("pymor.discretizers.builtin.inplace",
+                             ["src/pymor/discretizers/builtin/inplace.pyx"],
+                             include_dirs=include_dirs),
+                   Extension("pymor.discretizers.builtin.grids._unstructured",
+                             ["src/pymor/discretizers/builtin/grids/_unstructured.pyx"],
+                             include_dirs=include_dirs)]
+    # for some reason the *pyx files don't end up in sdist tarballs
+    # -> manually add them as package data
+    # this _still_ doesn't make them end up in the tarball however
+    # -> manually add them in MANIFEST.in
+    # duplication is necessary since Manifest sometime is only regarded in sdist, package_data in
+    # bdist
     # all filenames need to be relative to their package root, not the source root
-    kwargs['package_data'] = {'pymor': [f.replace('src/pymor/', '') for f in itertools.chain(*[i.sources for i in ext_modules])],
-                              'pymortests': _testdatafiles()}
+    kwargs['package_data'] = {
+        'pymor': [f.replace('src/pymor/', '') for f in itertools.chain(*[i.sources for i in ext_modules])],
+        'pymortests': _testdatafiles(),
+    }
 
     kwargs['cmdclass'] = cmdclass
     kwargs['ext_modules'] = ext_modules
@@ -167,7 +179,7 @@ def setup_package():
         long_description_content_type='text/markdown',
         tests_require=tests_require,
         install_requires=install_requires,
-        extras_require = dependencies.extras(),
+        extras_require=dependencies.extras(),
         classifiers=['Development Status :: 4 - Beta',
                      'License :: OSI Approved :: BSD License',
                      'Programming Language :: Python :: 3.6',

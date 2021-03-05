@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides helper methods to use pyMOR in parallel with MPI.
+"""This module provides helper methods to use pyMOR in parallel with MPI.
 
 Executing this module will run :func:`event_loop` on all MPI ranks
 except for rank 0 where either a given script is executed::
@@ -298,7 +298,7 @@ def method_call(obj_id, name_, *args, **kwargs):
     """
     obj = get_object(obj_id)
     return getattr(obj, name_)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-                                **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()})
+                               **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()})
 
 
 def method_call_manage(obj_id, name_, *args, **kwargs):
@@ -330,7 +330,6 @@ def method_call_manage(obj_id, name_, *args, **kwargs):
 
 class ObjectId(int):
     """A handle to an MPI distributed object."""
-    pass
 
 
 def manage_object(obj):

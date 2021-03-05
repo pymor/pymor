@@ -12,7 +12,6 @@ from pymor.operators.constructions import LincombOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
                                    DelayLTIPGReductor)
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericBHIReductor(BasicObject):
@@ -344,6 +343,7 @@ class TFBHIReductor(BasicObject):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, mu=None):
         if not isinstance(mu, Mu):
             mu = fom.parameters.parse(mu)

@@ -2,11 +2,8 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 import asyncio
-import sys
-from time import sleep
 from io import BytesIO
 
-import IPython
 import numpy as np
 from ipywidgets import IntSlider, interact, widgets, Play, Layout
 import pythreejs as p3js
@@ -89,13 +86,14 @@ class Renderer(widgets.VBox):
                 indices = np.arange(len(subentities) * 6, dtype=np.uint32)
 
         max_tex_size = 512
-        cm = color_map(np.linspace(0,1, max_tex_size)).astype(np.float32)
+        cm = color_map(np.linspace(0, 1, max_tex_size)).astype(np.float32)
         cm.resize((max_tex_size, 1, 4))
         color_map = p3js.DataTexture(cm, format='RGBAFormat',  width=max_tex_size, height=1, type='FloatType')
-        uniforms=dict(
+        uniforms = dict(
             colormap={'value': color_map, 'type': 'sampler2D'},
         )
-        self.material = p3js.ShaderMaterial(vertexShader=RENDER_VERTEX_SHADER, fragmentShader=RENDER_FRAGMENT_SHADER, uniforms=uniforms, )
+        self.material = p3js.ShaderMaterial(vertexShader=RENDER_VERTEX_SHADER, fragmentShader=RENDER_FRAGMENT_SHADER,
+                                            uniforms=uniforms)
 
         self.buffer_vertices = p3js.BufferAttribute(vertices.astype(np.float32), normalized=False)
         self.buffer_faces    = p3js.BufferAttribute(indices.astype(np.uint32).ravel(), normalized=False)
@@ -104,7 +102,8 @@ class Renderer(widgets.VBox):
         if config.is_nbconvert():
             # need to ensure all data is loaded before cell execution is over
             class LoadDummy:
-                def done(self): return True
+                def done(self):
+                    return True
             self._load_data(U)
             self.load = LoadDummy()
         else:
@@ -130,8 +129,9 @@ class Renderer(widgets.VBox):
         )
         mesh = p3js.Mesh(geometry=geo, material=self.material)
         mesh.visible = False
-        # translate to origin where the camera is looking by default, avoids camera not updating in nbconvert run
-        mesh.position = tuple(p-i for p,i in zip(mesh.position, self.mesh_center))
+        # translate to origin where the camera is looking by default,
+        # avoids camera not updating in nbconvert run
+        mesh.position = tuple(p-i for p, i in zip(mesh.position, self.mesh_center))
         return mesh
 
     async def _async_load_data(self, data):
@@ -170,7 +170,8 @@ class Renderer(widgets.VBox):
 
         absx = np.abs(combined_bounds[0] - combined_bounds[3])
         not_mathematical_distance_scaling = 1.2
-        self.camera_distance = np.sin((90 - fov_angle / 2) * np.pi / 180) * 0.5 * absx / np.sin(fov_angle / 2 * np.pi / 180)
+        self.camera_distance = (np.sin((90 - fov_angle / 2) * np.pi / 180) * 0.5
+                                * absx / np.sin(fov_angle / 2 * np.pi / 180))
         self.camera_distance *= not_mathematical_distance_scaling
         xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
         yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
@@ -181,7 +182,7 @@ class Renderer(widgets.VBox):
         self.light = p3js.AmbientLight(color='white', intensity=1.0)
         self.scene = p3js.Scene(children=[self.cam, self.light], background='white')
         self.controller = p3js.OrbitControls(controlling=self.cam, position=[0, 0, 0 + self.camera_distance],
-                                             target=[0,0,0])
+                                             target=[0, 0, 0])
         self.freeze_camera(True)
         self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
                                       controls=[self.controller], webgl_version=1,
@@ -207,7 +208,7 @@ class ColorBarRenderer(widgets.VBox):
         from PIL import Image, ImageFont, ImageDraw
         # upsacle to pow2
         sprite_size = (self.render_size[0], self.render_size[1])
-        image = Image.new('RGBA', sprite_size, color=(255,255,255,255))
+        image = Image.new('RGBA', sprite_size, color=(255, 255, 255, 255))
         draw = ImageDraw.Draw(image)
         ttf = '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'
         font_size = 12
@@ -221,10 +222,11 @@ class ColorBarRenderer(widgets.VBox):
             draw.line([(0, bar_padding+i), (bar_width, bar_padding+i)], cl, width=1)
 
         text_x = bar_width + 4
-        text_color = (0,0,0,255)
+        text_color = (0, 0, 0, 255)
         text_fmt = '{:+1.3e}'
         draw.text((text_x, 0), text_fmt.format(self.vmax), font=font, fill=text_color)
-        draw.text((text_x, (bar_height-bar_padding)//2), text_fmt.format((self.vmax+self.vmin)/2), font=font, fill=text_color)
+        draw.text((text_x, (bar_height-bar_padding)//2), text_fmt.format((self.vmax+self.vmin)/2),
+                  font=font, fill=text_color)
         draw.text((text_x, bar_height-bar_padding), text_fmt.format(self.vmin), font=font, fill=text_color)
 
         of = BytesIO()
@@ -239,7 +241,7 @@ class ColorBarRenderer(widgets.VBox):
 
 
 class ThreeJSPlot(widgets.VBox):
-    def __init__(self,grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size):
+    def __init__(self, grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size):
         render_size = (300, 300)
         self.renderer = [Renderer(u, grid, render_size, color_map, title, bounding_box=bounding_box, codim=codim,
                                   vmin=vmin, vmax=vmax)
@@ -276,9 +278,9 @@ class ThreeJSPlot(widgets.VBox):
 
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, columns=2,
-         color_map=get_cmap('viridis')):
-    """Generate a pythreejs Plot and associated controls for  scalar data associated to a two-dimensional |Grid|.
+                    separate_colorbars=False, rescale_colorbars=False, columns=2, color_map=get_cmap('viridis')):
+    """Generate a pythreejs Plot and associated controls for scalar data associated to a
+    two-dimensional |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
     be attached to the faces or vertices of the grid.

@@ -13,7 +13,6 @@ if config.HAVE_TORCH:
     from pymor.models.interface import Model
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
-
     class NeuralNetworkModel(Model):
         """Class for models of stationary problems that use artificial neural networks.
 
@@ -69,13 +68,13 @@ if config.HAVE_TORCH:
 
             # convert the parameter `mu` into a form that is usable in PyTorch
             converted_input = torch.from_numpy(mu.to_numpy()).double()
-            # obtain (reduced) coordinates by forward pass of the parameter values through the neural network
+            # obtain (reduced) coordinates by forward pass of the parameter values
+            # through the neural network
             U = self.neural_network(converted_input).data.numpy()
             # convert plain numpy array to element of the actual solution space
             U = self.solution_space.make_array(U)
 
             return U
-
 
     class NeuralNetworkInstationaryModel(Model):
         """Class for models of instationary problems that use artificial neural networks.
@@ -143,14 +142,14 @@ if config.HAVE_TORCH:
                 mu = mu.with_(t=t)
                 # convert the parameter `mu` into a form that is usable in PyTorch
                 converted_input = torch.from_numpy(mu.to_numpy()).double()
-                # obtain (reduced) coordinates by forward pass of the parameter values through the neural network
+                # obtain (reduced) coordinates by forward pass of the parameter values
+                # through the neural network
                 result_neural_network = self.neural_network(converted_input).data.numpy()
                 # convert plain numpy array to element of the actual solution space
                 U.append(self.solution_space.make_array(result_neural_network))
                 t += dt
 
             return U
-
 
     class FullyConnectedNN(nn.Module, BasicObject):
         """Class for neural networks with fully connected layers.

@@ -197,7 +197,6 @@ def rb_greedy(fom, reductor, training_set, use_error_estimator=True, error_norm=
         :extensions:             Number of performed basis extensions.
         :time:                   Total runtime of the algorithm.
     """
-
     surrogate = RBSurrogate(fom, reductor, use_error_estimator, error_norm, extension_params, pool or dummy_pool)
 
     result = weak_greedy(surrogate, training_set, atol=atol, rtol=rtol, max_extensions=max_extensions, pool=pool)
@@ -273,12 +272,11 @@ def _rb_surrogate_evaluate(rom=None, fom=None, reductor=None, mus=None, error_no
         errors = [error_norm(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))) for mu in mus]
     else:
         errors = [(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))).norm() for mu in mus]
-    # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
-    # if necessary
+    # most error_norms will return an array of length 1 instead of a number,
+    # so we extract the numbers if necessary
     errors = [x[0] if hasattr(x, '__len__') else x for x in errors]
     if return_all_values:
         return errors
     else:
         max_err_ind = np.argmax(errors)
         return errors[max_err_ind], mus[max_err_ind]
-

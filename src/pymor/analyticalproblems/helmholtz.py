@@ -31,7 +31,6 @@ def helmholtz_problem(domain=RectDomain(), rhs=None, parameter_range=(0., 100.),
     neumann_data
         |Function| providing the Neumann boundary values.
     """
-
     return StationaryProblem(
 
         domain=domain,

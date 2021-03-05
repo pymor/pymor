@@ -10,7 +10,9 @@ from pymor.core.logger import getLogger
 
 
 class Timer:
-    """You can use me as a context manager, plain instance or decorator to time execution
+    """Class for finding code runtime.
+
+    You can use me as a context manager, plain instance or decorator to time execution
     of a code scope::
 
         with Timer() as timer:

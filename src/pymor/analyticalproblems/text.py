@@ -25,12 +25,13 @@ def text_problem(text='pyMOR', font_name=None):
     if font is None:
         raise ValueError('Could not load TrueType font')
 
-    size = font.getsize(text)                             # compute width and height of rendered text
-    size = (size[0] + 20, size[1] + 20)                   # add a border of 10 pixels around the text
+    size = font.getsize(text)  # compute width and height of rendered text
+    size = (size[0] + 20, size[1] + 20)  # add a border of 10 pixels around the text
 
-    def make_bitmap_function(char_num):                   # we need to genereate a BitmapFunction for each character
-        img = Image.new('L', size)                        # create new Image object of given dimensions
-        d = ImageDraw.Draw(img)                           # create ImageDraw object for the given Image
+    def make_bitmap_function(char_num):
+        # we need to generate a BitmapFunction for each character
+        img = Image.new('L', size)  # create new Image object of given dimensions
+        d = ImageDraw.Draw(img)  # create ImageDraw object for the given Image
 
         # in order to position the character correctly, we first draw all characters from the first
         # up to the wanted character
@@ -41,8 +42,8 @@ def text_problem(text='pyMOR', font_name=None):
             d.rectangle(((0, 0), (font.getsize(text[:char_num])[0] + 10, size[1])), fill=0, outline=0)
 
         # open a new temporary file
-        with NamedTemporaryFile(suffix='.png') as f:    # after leaving this 'with' block, the temporary
-                                                        # file is automatically deleted
+        # after leaving this 'with' block, the temporary file is automatically deleted
+        with NamedTemporaryFile(suffix='.png') as f:
             img.save(f, format='png')
             return BitmapFunction(f.name, bounding_box=[(0, 0), size], range=[0., 1.])
 

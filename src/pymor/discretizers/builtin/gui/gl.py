@@ -2,7 +2,9 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides a widget for displaying patch plots of
+"""Visualization of grid data using OpenGL.
+
+This module provides a widget for displaying patch plots of
 scalar data assigned to 2D-grids using OpenGL. This widget is not
 intended to be used directly. Instead, use
 :meth:`~pymor.discretizers.builtin.gui.qt.visualize_patch` or
@@ -93,7 +95,8 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             cmap = get_cmap(name)
         except ValueError:
             from pymor.core.logger import getLogger
-            # this is our default which might not exist for older matplotlib so a warning would be annoying
+            # this is our default which might not exist for older matplotlib
+            # so a warning would be annoying
             if name != 'viridis':
                 msg = f'Unknown colormap {name}, using default colormap'
                 getLogger('pymor.discretizers.builtin.gui.gl.colormap_texture').warning(msg)

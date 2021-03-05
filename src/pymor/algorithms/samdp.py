@@ -81,7 +81,6 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
     leftev
         A |VectorArray| containing the left eigenvectors of the computed poles.
     """
-
     logger = getLogger('pymor.algorithms.samdp.samdp')
 
     if E is None:
@@ -393,7 +392,6 @@ def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter):
     residual
         Residual of the computed triplet.
     """
-
     i = 0
     nrq = 1
     while i < maxiter:
@@ -475,7 +473,6 @@ def _select_max_eig(H, G, X, V, B, C, which):
     residue
         A 1D |NumPy array| containing the norms of the residues.
     """
-
     D, Vt, Vs = spla.eig(H, G, left=True)
     idx = np.argsort(D)
     DP = D[idx]

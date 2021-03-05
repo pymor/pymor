@@ -1,3 +1,7 @@
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
 import ipywidgets
 import logging
 from IPython.display import display
@@ -71,7 +75,8 @@ class LoggingRedirector:
 
     def stop(self):
         if self.old_default is None:
-            # %load_ext in the frist cell triggers a post_run_cell with no matching pre_run_cell event before
+            # %load_ext in the first cell triggers a post_run_cell
+            # with no matching pre_run_cell event before
             return
         self.new_handler.close()
         logger.default_handler = self.old_default
@@ -81,5 +86,6 @@ class LoggingRedirector:
             except KeyError:
                 # loggers that have been created during the redirect get a default handler
                 logging.getLogger(name).handlers = logger.default_handler()
+
 
 redirect_logging = LoggingRedirector()

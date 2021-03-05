@@ -118,7 +118,6 @@ if config.HAVE_PYAMG:
         -------
         A dict of available solvers with default |solver_options|.
         """
-
         return {'pyamg_solve': {'type': 'pyamg_solve',
                                 'tol': tol,
                                 'maxiter': maxiter},
@@ -181,7 +180,6 @@ if config.HAVE_PYAMG:
         -------
         |VectorArray| of the solution vectors.
         """
-
         assert V in op.range
         assert initial_guess is None or initial_guess in op.source and len(initial_guess) == len(V)
 

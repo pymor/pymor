@@ -6,69 +6,94 @@
 # DO NOT use any python features here that require 3.6 or newer
 
 _PYTEST = 'pytest>=4.4'
-_PYSIDE='PySide2!=5.15.2,!=5.15.2.*,!=5.11.*'
+_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*'
+
 
 def _pymess(rev, major, minor, marker=True):
     cpm = 'm' if minor < 8 else ''
-    url = 'https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}{cpm}-manylinux2014_x86_64.whl'
-    url = url.format(rev=rev, major=major, minor=minor, cpm=cpm)
+    url = ('https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/'
+           f'{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}{cpm}-'
+           'manylinux2014_x86_64.whl')
     if marker:
-        return '{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'.format(url=url, major=major, minor=minor)
+        return f'{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'
     return url
+
 
 def setup_requires():
     NUMPY = '1.16.0'
     # numpy versions with filters according to minimal version with a wheel
-    numpys = ['numpy>={};python_version <= "3.6"'.format(NUMPY),
-      'numpy>=1.15.4;python_version == "3.7"',
-      'numpy>=1.17.5;python_version == "3.8"',
-      'numpy>=1.19.4;python_version >= "3.9"']
-    scipys = ['scipy>=1.1;python_version < "3.8"','scipy>=1.3.3;python_version == "3.8"', 'scipy>=1.5.4;python_version >= "3.9"']
-    # setuptools pin in accordance with numpy: https://github.com/numpy/numpy/pull/17000, see also https://github.com/pypa/setuptools/pull/2260 https://github.com/pypa/setuptools/pull/2259
-    other = ['setuptools>=40.8.0,<49.2.0', 'wheel', 'pytest-runner>=2.9', 'cython>=0.28', 'packaging',]
+    numpys = [
+        'numpy>={};python_version <= "3.6"'.format(NUMPY),
+        'numpy>=1.15.4;python_version == "3.7"',
+        'numpy>=1.17.5;python_version == "3.8"',
+        'numpy>=1.19.4;python_version >= "3.9"',
+    ]
+    scipys = [
+        'scipy>=1.1;python_version < "3.8"',
+        'scipy>=1.3.3;python_version == "3.8"',
+        'scipy>=1.5.4;python_version >= "3.9"',
+    ]
+    # setuptools pin in accordance with numpy: https://github.com/numpy/numpy/pull/17000,
+    # see also https://github.com/pypa/setuptools/pull/2260
+    # https://github.com/pypa/setuptools/pull/2259
+    other = [
+        'setuptools>=40.8.0,<49.2.0',
+        'wheel',
+        'pytest-runner>=2.9',
+        'cython>=0.28',
+        'packaging',
+    ]
     return numpys + other + scipys
 
+
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['Qt.py>=1.2.4', 'packaging','diskcache', 'typer'] + setup_requires()
-install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
-                    'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
-                    'matplotlib': 'needed for error plots in demo scipts',
-                    'gmsh': 'this downloads the proper Gmsh binary',
-                    'meshio==4.2.0': 'needed to import Gmsh grids',
-                    'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
-                    'pyamg;python_version<"3.8"': 'algebraic multigrid solvers',
-                    'pyevtk>=1.1': 'writing vtk output',
-                    'sympy': 'symbolic mathematics',
-                    'pygments': 'highlighting code',
-                    'pythreejs': 'threejs bindings for python notebook  visualization',
-                    _PYTEST: 'testing framework required to execute unit tests',
-                    _PYSIDE: 'solution visualization for builtin discretizations',
-                    'ipywidgets': 'notebook GUI elements',
-                    'nbresuse': 'resource usage indicator for notebooks',
-                    'torch;python_version<"3.9"': 'PyTorch open source machine learning framework',
-                    'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
-                    'pillow': 'image library used for bitmap data functions'}
+install_requires = ['Qt.py>=1.2.4', 'packaging', 'diskcache', 'typer'] + setup_requires()
+install_suggests = {
+    'ipython>=5.0': 'an enhanced interactive python shell',
+    'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
+    'matplotlib': 'needed for error plots in demo scipts',
+    'gmsh': 'this downloads the proper Gmsh binary',
+    'meshio==4.2.0': 'needed to import Gmsh grids',
+    'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
+    'pyamg;python_version<"3.8"': 'algebraic multigrid solvers',
+    'pyevtk>=1.1': 'writing vtk output',
+    'sympy': 'symbolic mathematics',
+    'pygments': 'highlighting code',
+    'pythreejs': 'threejs bindings for python notebook  visualization',
+    _PYTEST: 'testing framework required to execute unit tests',
+    _PYSIDE: 'solution visualization for builtin discretizations',
+    'ipywidgets': 'notebook GUI elements',
+    'nbresuse': 'resource usage indicator for notebooks',
+    'torch;python_version<"3.9"': 'PyTorch open source machine learning framework',
+    'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
+    'pillow': 'image library used for bitmap data functions',
+}
 doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
-               'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19', 'PyQt5!=5.15.2,>5.7,!=5.15.2.*']
-import_names = {'ipython': 'IPython',
-                'pytest-cache': 'pytest_cache',
-                'pytest-instafail': 'pytest_instafail',
-                'pytest-xdist': 'xdist',
-                'pytest-cov': 'pytest_cov',
-                'pytest-flakes': 'pytest_flakes',
-                'pytest-pep8': 'pytest_pep8',
-                _pymess('1.0.0', 3, 6, False): 'pymess',
-                _pymess('1.0.0', 3, 7, False): 'pymess',
-                _pymess('1.0.0', 3, 8, False): 'pymess',
-                _pymess('1.0.0', 3, 9, False): 'pymess',
-                'pyopengl': 'OpenGL'}
+               'flake8-rst-docstrings', 'flake8-docstrings',
+               'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19',
+               'PyQt5!=5.15.2,>5.7,!=5.15.2.*']
+import_names = {
+    'ipython': 'IPython',
+    'pytest-cache': 'pytest_cache',
+    'pytest-instafail': 'pytest_instafail',
+    'pytest-xdist': 'xdist',
+    'pytest-cov': 'pytest_cov',
+    'pytest-flakes': 'pytest_flakes',
+    'pytest-pep8': 'pytest_pep8',
+    _pymess('1.0.0', 3, 6, False): 'pymess',
+    _pymess('1.0.0', 3, 7, False): 'pymess',
+    _pymess('1.0.0', 3, 8, False): 'pymess',
+    _pymess('1.0.0', 3, 9, False): 'pymess',
+    'pyopengl': 'OpenGL',
+}
 # Slycot is pinned due to buildsystem changes + missing wheels
-optional_requirements_file_only = [_pymess('1.0.0', 3, i) for i in range(6,10)] + \
-                    ['slycot>=0.4.0', 'mpi4py']
+optional_requirements_file_only = ([_pymess('1.0.0', 3, i) for i in range(6, 10)]
+                                   + ['slycot>=0.4.0', 'mpi4py'])
+
 
 def strip_markers(name):
     for m in ';<>=':
@@ -113,6 +138,7 @@ def extras():
         'ci':  ci_requires,
         'docs': doc_requires,
     }
+
 
 toml_tpl = '''
 [build-system]

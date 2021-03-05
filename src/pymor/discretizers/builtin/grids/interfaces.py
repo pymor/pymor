@@ -362,7 +362,8 @@ class Grid(CacheableObject):
         return A, B
 
     def jacobian_inverse_transposed(self, codim):
-        """`retval[e]` is the transposed (pseudo-)inverse of the Jacobian of `embeddings(codim)[e]`.
+        """`retval[e]` is the transposed (pseudo-)inverse of
+        the Jacobian of `embeddings(codim)[e]`.
         """
         return self._jacobian_inverse_transposed(codim)
 
@@ -406,7 +407,8 @@ class Grid(CacheableObject):
 
     def volumes(self, codim):
         """`retval[e]` is the (dim-`codim`)-dimensional volume of the codim-`codim` entity with
-        global index `e`."""
+        global index `e`.
+        """
         return self._volumes(codim)
 
     @cached
@@ -427,7 +429,8 @@ class Grid(CacheableObject):
 
     def unit_outer_normals(self):
         """`retval[e,i]` is the unit outer normal to the i-th codim-1 subentity of the codim-0
-        entitiy with global index `e`."""
+        entitiy with global index `e`.
+        """
         return self._unit_outer_normals()
 
     @cached
@@ -478,7 +481,7 @@ class Grid(CacheableObject):
         return np.einsum('eij,kj->eki', A, P) + B[:, np.newaxis, :]
 
     def bounding_box(self):
-        """returns a `(2, dim)`-shaped array containing lower/upper bounding box coordinates."""
+        """Returns a `(2, dim)`-shaped array containing lower/upper bounding box coordinates."""
         return self._bounding_box()
 
     @cached
@@ -522,17 +525,20 @@ class BoundaryInfo(CacheableObject):
 
     def mask(self, boundary_type, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to the
-        boundary type `boundary_type`."""
+        boundary type `boundary_type`.
+        """
         raise ValueError(f'Has no boundary_type "{boundary_type}"')
 
     def unique_boundary_type_mask(self, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to one
-        and only one boundary type."""
+        and only one boundary type.
+        """
         return np.less_equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 1)
 
     def no_boundary_type_mask(self, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to no
-        boundary type."""
+        boundary type.
+        """
         return np.equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 0)
 
     def check_boundary_types(self, assert_unique_type=(1,), assert_some_type=()):

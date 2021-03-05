@@ -1020,7 +1020,7 @@ class LinearOperator(ProxyOperator):
 
 
 class AffineOperator(ProxyOperator):
-    """Decompose an affine |Operator| into affine_shift and linear_part. """
+    """Decompose an affine |Operator| into affine_shift and linear_part."""
 
     def __init__(self, operator, name=None):
         if operator.parametric:
@@ -1251,8 +1251,8 @@ class SelectionOperator(Operator):
         The interval boundaries as defined above.
     name
         Name of the operator.
-
     """
+
     def __init__(self, operators, parameter_functional, boundaries, name=None):
         assert len(operators) > 0
         assert len(boundaries) == len(operators) - 1

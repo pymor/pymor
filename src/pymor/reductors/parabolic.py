@@ -21,7 +21,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
 
     .. math::
         \left[ C_a^{-1}(\mu)\|e_N(\mu)\|^2 + \sum_{n=1}^{N} \Delta t\|e_n(\mu)\|^2_e \right]^{1/2}
-            \leq \left[ C_a^{-2}(\mu)\Delta t \sum_{n=1}^{N}\|\mathcal{R}^n(u_n(\mu), \mu)\|^2_{e,-1}
+            \le \left[ C_a^{-2}(\mu)\Delta t \sum_{n=1}^{N}\|\mathcal{R}^n(u_n(\mu), \mu)\|^2_{e,-1}
                         + C_a^{-1}(\mu)\|e_0\|^2 \right]^{1/2}
 
     Here, :math:`\|\cdot\|` denotes the norm induced by the problem's mass matrix
@@ -51,6 +51,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
         `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `fom.operator` w.r.t. `product`.
     """
+
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
                  check_orthonormality=None, check_tol=None):
         if not isinstance(fom.time_stepper, ImplicitEulerTimeStepper):
@@ -83,8 +84,8 @@ class ParabolicRBReductor(InstationaryRBReductor):
         initial_residual = self.initial_residual_reductor.reduce()
 
         error_estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
-                                         initial_residual, self.initial_residual_reductor.residual_range_dims,
-                                         self.coercivity_estimator)
+                                               initial_residual, self.initial_residual_reductor.residual_range_dims,
+                                               self.coercivity_estimator)
         return error_estimator
 
     def assemble_error_estimator_for_subbasis(self, dims):

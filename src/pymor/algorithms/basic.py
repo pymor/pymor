@@ -41,8 +41,7 @@ def almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):
     atol
         The absolute tolerance.
     """
-
-    assert product is None or not sup_norm 
+    assert product is None or not sup_norm
 
     V_norm = V.sup_norm() if sup_norm else V.norm(product)
     X = V.copy()
@@ -93,7 +92,7 @@ def project_array(U, basis, product=None, orthonormal=True):
 
 
 def contains_zero_vector(vector_array, rtol=None, atol=None):
-    """returns `True` iff any vector in the array float_compares to 0s of the same dim
+    """Return `True` iff any vector in the array float_compares to 0s of the same dim.
 
     Parameters
     ----------

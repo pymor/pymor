@@ -149,7 +149,8 @@ class Parameters(SortedFrozenDict):
             set(mu.keys()) == set(self.keys()) or fail('parameters not matching')
 
             def parse_value(k, v):
-                isinstance(v, (Number, tuple, list, np.ndarray)) or fail(f"invalid value type '{type(v)}' for parameter {k}")
+                isinstance(v, (Number, tuple, list, np.ndarray)) \
+                    or fail(f"invalid value type '{type(v)}' for parameter {k}")
                 if isinstance(v, Number):
                     v = np.array([v])
                 elif isinstance(v, np.ndarray):
@@ -276,7 +277,8 @@ class Mu(SortedFrozenDict):
         return Parameters({k: v.size for k, v in self.items()})
 
     def allclose(self, mu):
-        """Compare two dicts of |parameter values| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
+        """Compare two dicts of |parameter values| using
+        :meth:`~pymor.tools.floatcmp.float_cmp_all`.
 
         Parameters
         ----------

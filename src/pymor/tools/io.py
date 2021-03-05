@@ -118,6 +118,7 @@ def load_matrix(path, key=None):
 @contextmanager
 def SafeTemporaryFileName(name=None, parent_dir=None):
     """Cross Platform safe equivalent of re-opening a NamedTemporaryFile
+
     Creates an automatically cleaned up temporary directory with a single file therein.
 
     name: filename component, defaults to 'temp_file'

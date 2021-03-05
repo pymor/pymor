@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import os
-import pymordemos
+import pymordemos  # noqa: F401
 from importlib import import_module
 import sys
 import pytest
@@ -57,8 +57,8 @@ if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
 if not is_windows_platform():
     DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
-    ('neural_networks_fenics', [15, 3]),
-    ('neural_networks_instationary', [25, 25, 30, 5]))
+                            ('neural_networks_fenics', [15, 3]),
+                            ('neural_networks_instationary', [25, 25, 30, 5]))
 
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),

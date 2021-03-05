@@ -1,12 +1,8 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-import itertools
-from pprint import pprint
-
 import numpy as np
-from IPython.core.display import display
-from ipywidgets import HTML, HBox, widgets, Layout
+from ipywidgets import widgets
 import matplotlib.pyplot as plt
 
 from pymor.core.config import config
@@ -52,8 +48,8 @@ class MPLPlotBase:
                 figure = plt.figure(self.fig_ids[i])
                 sync_timer = sync_timer or figure.canvas.new_timer()
                 if grid.dim == 2:
-                    plot = MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin, vmax=vmax,
-                                               bounding_box=bounding_box, codim=codim, columns=columns,
+                    plot = MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin,
+                                               vmax=vmax, bounding_box=bounding_box, codim=codim, columns=columns,
                                                colorbar=separate_colorbars or i == len(U) - 1)
                 else:
                     plot = Matplotlib1DAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin, vmax=vmax,
@@ -61,7 +57,6 @@ class MPLPlotBase:
                 if self.legend:
                     plot.ax[0].set_title(self.legend[i])
                 self.plots.append(plot)
-                    # plt.tight_layout()
         else:
             figure = plt.figure(self.fig_ids[0])
             sync_timer = sync_timer or figure.canvas.new_timer()
@@ -83,15 +78,13 @@ class MPLPlotBase:
             html = [p.html for p in self.plots]
             template = """<div style="float: left; padding: 10px;">{0}</div>"""
             # IPython display system checks for presence and calls this func
-            self._repr_html_ = lambda : '\n'.join(template.format(a._repr_html_()) for a in html)
+            self._repr_html_ = lambda: '\n'.join(template.format(a._repr_html_()) for a in html)
         else:
             self._out = widgets.Output()
             with self._out:
                 plt.show()
             # IPython display system checks for presence and calls this func
             self._ipython_display_ = self._out._ipython_display_
-
-
 
 
 def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None,
@@ -153,7 +146,6 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
                                        separate_axes=False)
 
     return Plot()
-
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=True, separate_axes=False,

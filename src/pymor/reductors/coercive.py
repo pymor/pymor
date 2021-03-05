@@ -49,7 +49,7 @@ class CoerciveRBReductor(StationaryRBReductor):
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
         error_estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
-                                        self.coercivity_estimator)
+                                              self.coercivity_estimator)
         return error_estimator
 
     def assemble_error_estimator_for_subbasis(self, dims):

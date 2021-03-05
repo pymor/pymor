@@ -181,7 +181,8 @@ class GenericParameterFunctional(ParameterFunctional):
         with the signature `derivative_mappings[parameter][index](mu)`
     second_derivative_mappings
         A dict containing all second order partial derivatives of each |Parameter| and index
-        with the signature `second_derivative_mappings[parameter_i][index_i][parameter_j][index_j](mu)`
+        with the signature
+        `second_derivative_mappings[parameter_i][index_i][parameter_j][index_j](mu)`
     """
 
     def __init__(self, mapping, parameters, name=None, derivative_mappings=None, second_derivative_mappings=None):
@@ -251,8 +252,8 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         A dict containing a Python expression for the partial derivatives of each
         parameter component.
     second_derivative_expressions
-        A dict containing a list of dicts of Python expressions for all second order partial derivatives of each
-        parameter component i and j.
+        A dict containing a list of dicts of Python expressions for all second order partial
+        derivatives of each parameter component i and j.
     """
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
@@ -264,7 +265,8 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
     functions['np'] = np
 
-    def __init__(self, expression, parameters, name=None, derivative_expressions=None, second_derivative_expressions=None):
+    def __init__(self, expression, parameters, name=None, derivative_expressions=None,
+                 second_derivative_expressions=None):
         self.expression = expression
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions
@@ -275,11 +277,11 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         exp_mapping = get_lambda(code)
         if derivative_expressions is not None:
             derivative_mappings = derivative_expressions.copy()
-            for (key,exp) in derivative_mappings.items():
+            for key, exp in derivative_mappings.items():
                 if isinstance(exp, str):
                     exp = [exp]
                 exp_array = np.array(exp, dtype=object)
-                for exp in np.nditer(exp_array, op_flags=['readwrite'], flags= ['refs_ok']):
+                for exp in np.nditer(exp_array, op_flags=['readwrite'], flags=['refs_ok']):
                     exp_code = compile(str(exp), '<expression>', 'eval')
                     mapping = get_lambda(exp_code)
                     exp[...] = mapping
@@ -288,16 +290,16 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
             derivative_mappings = None
         if second_derivative_expressions is not None:
             second_derivative_mappings = second_derivative_expressions.copy()
-            for (key_i,key_dicts) in second_derivative_mappings.items():
+            for key_i, key_dicts in second_derivative_mappings.items():
                 if isinstance(key_dicts, dict):
                     key_dicts = [key_dicts]
                 key_dicts_array = np.array(key_dicts, dtype=object)
-                for key_dict in np.nditer(key_dicts_array, op_flags=['readwrite'], flags= ['refs_ok']):
-                    for (key_j, exp) in key_dict[()].items():
+                for key_dict in np.nditer(key_dicts_array, op_flags=['readwrite'], flags=['refs_ok']):
+                    for key_j, exp in key_dict[()].items():
                         if isinstance(exp, str):
                             exp = [exp]
                         exp_array = np.array(exp, dtype=object)
-                        for exp in np.nditer(exp_array, op_flags=['readwrite'], flags= ['refs_ok']):
+                        for exp in np.nditer(exp_array, op_flags=['readwrite'], flags=['refs_ok']):
                             exp_code = compile(str(exp), '<expression>', 'eval')
                             mapping = get_lambda(exp_code)
                             exp[...] = mapping
@@ -541,15 +543,17 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
 
       |gamma_mu_bar * max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)|
 
-    Note that we also get an upper bound if theta_prime_q(mu) == 0 for any q. However, if theta_prime_q(mu) == 0 for
-    at least one q, we need to use the absolute value in the denominator, i.e. ::
+    Note that we also get an upper bound if theta_prime_q(mu) == 0 for any q. However, if
+    theta_prime_q(mu) == 0 for at least one q, we need to use the absolute value in the denominator,
+    i.e. ::
 
       |gamma_mu_bar * max_{q = 1}^Q theta_prime_q(mu)/|theta_q(mu_bar)| |
 
     Parameters
     ----------
     thetas
-        List or tuple of |ParameterFunctional| of the base bilinear form a which is used for estimation.
+        List or tuple of |ParameterFunctional| of the base bilinear form a which is used for
+        estimation.
     thetas_prime
         List or tuple of |ParameterFunctional| of the bilinear form a_prime for the numerator of the
         MaxThetaParameterFunctional.
@@ -571,7 +575,7 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
         thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                        for f in thetas)
         thetas_prime = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
-                       for f in thetas_prime)
+                             for f in thetas_prime)
         if not isinstance(mu_bar, Mu):
             mu_bar = Parameters.of(thetas).parse(mu_bar)
         assert Parameters.of(thetas).assert_compatible(mu_bar)
@@ -599,9 +603,9 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
     def d_mu(self, component, index=()):
         raise NotImplementedError
 
+
 class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
-    """|ParameterFunctional| implementing the max-theta approach from :cite:`Haa17`
-    (Exercise 5.12).
+    """|ParameterFunctional| implementing the max-theta approach from :cite:`Haa17` (Exercise 5.12).
 
     This is a specialized version of BaseMaxThetaParameterFunctional which allows to obtain a
     computable bound for the continuity constant of the actual a(., ., mu) or l(., mu) for

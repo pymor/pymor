@@ -3,12 +3,10 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from functools import partial    # fix parameters of given function
-
 import numpy as np
 from typer import Argument, run
 
-from pymor.basic import *        # most common pyMOR functions and classes
+from pymor.basic import *
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.tools.typer import Choices
 
@@ -44,7 +42,7 @@ def main(
         fom = discretize_fenics()
     else:
         raise NotImplementedError
-    parameter_space=fom.parameters.space(1, 100)
+    parameter_space = fom.parameters.space(1, 100)
 
     # select reduction algorithm with error estimator
     #################################################
@@ -96,8 +94,6 @@ def main(
                   separate_colorbars=True)
 
     return results
-
-
 
 
 ####################################################################################################

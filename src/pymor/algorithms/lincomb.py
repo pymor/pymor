@@ -51,7 +51,6 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
     -------
     The assembled |Operator| if assembly is possible, otherwise `None`.
     """
-
     return AssembleLincombRules(tuple(coefficients), solver_options, name).apply(tuple(operators))
 
 

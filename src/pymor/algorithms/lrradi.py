@@ -88,7 +88,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         Low-rank Cholesky factor of the Riccati equation solution,
         |VectorArray| from `A.source`.
     """
-
     _solve_ricc_check_args(A, E, B, C, R, trans)
     options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
     logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
@@ -301,7 +300,6 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-
     l = shift_options['subspace_columns']
     # always use multiple of len(R) columns
     l = l // len(R) * len(R)

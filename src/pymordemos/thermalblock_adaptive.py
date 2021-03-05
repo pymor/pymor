@@ -60,7 +60,6 @@ def main(
     visualize_refinement: bool = Option(True, help='Visualize the training set refinement indicators.'),
 ):
     """Modified thermalblock demo using adaptive greedy basis generation algorithm."""
-
     problem = thermal_block_problem(num_blocks=(2, 2))
     functionals = [ExpressionParameterFunctional('diffusion[0]', {'diffusion': 2}),
                    ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': 2}),

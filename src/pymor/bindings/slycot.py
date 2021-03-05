@@ -22,7 +22,6 @@ if config.HAVE_SLYCOT:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
     def solve_lyap_lrcf(A, E, B, trans=False, options=None):
@@ -59,7 +58,6 @@ if config.HAVE_SLYCOT:
             Low-rank Cholesky factor of the Lyapunov equation solution,
             |VectorArray| from `A.source`.
         """
-
         _solve_lyap_lrcf_check_args(A, E, B, trans)
         options = _parse_options(options, lyap_lrcf_solver_options(), 'slycot_bartels-stewart', None, False)
 
@@ -81,7 +79,6 @@ if config.HAVE_SLYCOT:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
     def solve_lyap_dense(A, E, B, trans=False, options=None):
@@ -114,7 +111,6 @@ if config.HAVE_SLYCOT:
         X
             Lyapunov equation solution as a |NumPy array|.
         """
-
         _solve_lyap_dense_check_args(A, E, B, trans)
         options = _parse_options(options, lyap_dense_solver_options(), 'slycot_bartels-stewart', None, False)
 
@@ -156,7 +152,6 @@ if config.HAVE_SLYCOT:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'slycot': {'type': 'slycot'}}
 
     def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
@@ -197,7 +192,6 @@ if config.HAVE_SLYCOT:
             Low-rank Cholesky factor of the Riccati equation solution,
             |VectorArray| from `A.source`.
         """
-
         _solve_ricc_check_args(A, E, B, C, R, trans)
         options = _parse_options(options, ricc_lrcf_solver_options(), 'slycot', None, False)
         if options['type'] != 'slycot':
@@ -260,7 +254,6 @@ if config.HAVE_SLYCOT:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'slycot': {'type': 'slycot'}}
 
     def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
@@ -301,7 +294,6 @@ if config.HAVE_SLYCOT:
             Low-rank Cholesky factor of the positive Riccati equation
             solution, |VectorArray| from `A.source`.
         """
-
         _solve_ricc_check_args(A, E, B, C, R, trans)
         options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'slycot', None, False)
         if options['type'] != 'slycot':

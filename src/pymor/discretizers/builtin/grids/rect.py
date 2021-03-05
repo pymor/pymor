@@ -194,7 +194,8 @@ class RectGrid(GridWithOrthogonalCenters):
 
         I.e. ::
 
-           centers(2)[structured_to_global(2)[i, j]] == np.array([vertex_coordinates(0)[i], vertex_coordinates(1)[j]])
+           centers(2)[structured_to_global(2)[i, j]] == np.array([vertex_coordinates(0)[i],
+                                                                  vertex_coordinates(1)[j]])
         """
         assert 0 <= dim < 2
         return np.linspace(self.domain[0, dim], self.domain[1, dim], self.num_intervals[dim] + 1)

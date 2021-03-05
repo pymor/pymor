@@ -53,7 +53,6 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     B
         |VectorArray| which contains the basis, whose span approximates the range of A.
     """
-
     assert source_product is None or isinstance(source_product, Operator)
     assert range_product is None or isinstance(range_product, Operator)
     assert isinstance(A, Operator)
@@ -123,7 +122,6 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
     Q
         |VectorArray| which contains the basis, whose span approximates the range of A.
     """
-
     assert source_product is None or isinstance(source_product, Operator)
     assert range_product is None or isinstance(range_product, Operator)
     assert isinstance(A, Operator)

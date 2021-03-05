@@ -29,7 +29,6 @@ def main(
     threads: int = Option(0, help='Number of threads to use for parallelization.'),
 ):
     """Compression of snapshot data with the HAPOD algorithm from [HLR18]."""
-
     assert procs == 0 or threads == 0
 
     executor = ProcessPoolExecutor(procs) if procs > 0 else \
@@ -58,12 +57,18 @@ def main(
     print(f'Snapshot matrix: {U.dim} x {len(U)}')
     print(format_table([
         ['Method', 'Error', 'Modes', 'Time'],
-        ['POD', np.linalg.norm(m.l2_norm(U-pod_modes.lincomb(m.l2_product.apply2(U, pod_modes)))/np.sqrt(len(U))),
-         len(pod_modes), pod_time],
-        ['DIST HAPOD', np.linalg.norm(m.l2_norm(U-dist_modes.lincomb(m.l2_product.apply2(U, dist_modes)))/np.sqrt(len(U))),
-         len(dist_modes), dist_time],
-        ['INC HAPOD', np.linalg.norm(m.l2_norm(U-inc_modes.lincomb(m.l2_product.apply2(U, inc_modes)))/np.sqrt(len(U))),
-         len(inc_modes), inc_time]]
+        ['POD',
+         np.linalg.norm(m.l2_norm(U-pod_modes.lincomb(m.l2_product.apply2(U, pod_modes)))/np.sqrt(len(U))),
+         len(pod_modes),
+         pod_time],
+        ['DIST HAPOD',
+         np.linalg.norm(m.l2_norm(U-dist_modes.lincomb(m.l2_product.apply2(U, dist_modes)))/np.sqrt(len(U))),
+         len(dist_modes),
+         dist_time],
+        ['INC HAPOD',
+         np.linalg.norm(m.l2_norm(U-inc_modes.lincomb(m.l2_product.apply2(U, inc_modes)))/np.sqrt(len(U))),
+         len(inc_modes),
+         inc_time]]
     ))
 
 

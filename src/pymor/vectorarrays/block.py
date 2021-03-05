@@ -31,7 +31,7 @@ class BlockVectorArray(VectorArray):
             # hstack will error out with empty input list
             return np.hstack([block.to_numpy() for block in self._blocks])
         else:
-            return np.empty((0,0))
+            return np.empty((0, 0))
 
     @property
     def real(self):
@@ -45,9 +45,7 @@ class BlockVectorArray(VectorArray):
         return BlockVectorArray([block.conj() for block in self._blocks], self.space)
 
     def block(self, ind):
-        """
-        Returns a copy of each block (no slicing).
-        """
+        """Return a copy of a single block or a sequence of blocks."""
         assert self._blocks_are_valid()
         if isinstance(ind, (tuple, list)):
             assert all(isinstance(ii, Number) for ii in ind)

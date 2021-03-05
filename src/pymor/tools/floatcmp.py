@@ -4,7 +4,6 @@
 
 import operator
 import warnings
-from functools import partial
 
 import numpy as np
 
@@ -35,7 +34,6 @@ def float_cmp(x, y, rtol=1e-14, atol=1e-14):
     atol
         The absolute tolerance.
     """
-
     return np.abs(x - y) <= atol + np.abs(y) * rtol
 
 
@@ -51,8 +49,7 @@ def float_cmp_all(x, y, rtol=None, atol=None):
 
 
 def bounded(lower, upper, x, rtol=None, atol=None):
-    """Check if x is strictly in bounds (lower, upper)
-    or float_compares equal to lower or upper
+    """Check if x is strictly in bounds (lower, upper) or float_compares equal to lower or upper.
 
     Parameters
     ----------
@@ -72,7 +69,7 @@ def bounded(lower, upper, x, rtol=None, atol=None):
 
 @defaults('rtol', 'atol')
 def compare_with_tolerance(x, y, comparison_op, rtol=1e-14, atol=1e-14):
-    """ 'One-sided' Comparison x and y component-wise with given comparison op.
+    """'One-sided' Comparison x and y component-wise with given comparison op.
 
     For scalars we define almost equality as ::
 

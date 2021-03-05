@@ -38,10 +38,10 @@ def test_selection_op():
     x = np.linspace(-1., 1., num=3)
     vx = p1.source.make_array(x[:, np.newaxis])
     assert np.allclose(p1.apply(vx).to_numpy(),
-                       s1.apply(vx,mu=s1.parameters.parse(0)).to_numpy())
+                       s1.apply(vx, mu=s1.parameters.parse(0)).to_numpy())
 
     s2 = SelectionOperator(
-        operators=[p1,p1,p1,p1],
+        operators=[p1, p1, p1, p1],
         boundaries=[-3, 3, 7],
         parameter_functional=select_rhs_functional,
         name="Bar"
@@ -101,13 +101,13 @@ def test_lincomb_op_with_zero_coefficients():
     assert len(p0.apply(vx)) == len(vx)
     assert almost_equal(p10.apply(vx), p1.apply(vx)).all()
 
-    assert np.allclose(p0.apply2(vx,vx), [0.])
-    assert len(p0.apply2(vx,vx)) == len(vx)
-    assert np.allclose(p10.apply2(vx,vx), p1.apply2(vx,vx))
+    assert np.allclose(p0.apply2(vx, vx), [0.])
+    assert len(p0.apply2(vx, vx)) == len(vx)
+    assert np.allclose(p10.apply2(vx, vx), p1.apply2(vx, vx))
 
-    assert np.allclose(p0.pairwise_apply2(vx,vx), [0.])
-    assert len(p0.pairwise_apply2(vx,vx)) == len(vx)
-    assert np.allclose(p10.pairwise_apply2(vx,vx), p1.pairwise_apply2(vx,vx))
+    assert np.allclose(p0.pairwise_apply2(vx, vx), [0.])
+    assert len(p0.pairwise_apply2(vx, vx)) == len(vx)
+    assert np.allclose(p10.pairwise_apply2(vx, vx), p1.pairwise_apply2(vx, vx))
 
     assert np.allclose(pc0.apply_adjoint(vx).to_numpy(), [0.])
     assert len(pc0.apply_adjoint(vx)) == len(vx)

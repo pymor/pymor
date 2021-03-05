@@ -20,7 +20,6 @@ if config.HAVE_TORCH:
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
     from pymor.models.neural_network import FullyConnectedNN, NeuralNetworkModel, NeuralNetworkInstationaryModel
 
-
     class NeuralNetworkReductor(BasicObject):
         """Reduced Basis reductor relying on artificial neural networks.
 
@@ -113,7 +112,8 @@ if config.HAVE_TORCH:
             assert batch_size > 0
             assert learning_rate > 0.
 
-            # set a seed for the PyTorch initialization of weights and biases and further PyTorch methods
+            # set a seed for the PyTorch initialization of weights and biases
+            # and further PyTorch methods
             torch.manual_seed(seed)
 
             # build a reduced basis using POD and compute training data
@@ -123,8 +123,8 @@ if config.HAVE_TORCH:
             # determine the numbers of neurons in the hidden layers
             if isinstance(hidden_layers, str):
                 hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
-            # input and output size of the neural network are prescribed by the dimension of the parameter space
-            # and the reduced basis size
+            # input and output size of the neural network are prescribed by the
+            # dimension of the parameter space and the reduced basis size
             assert isinstance(hidden_layers, list)
             layers = self._compute_layers_sizes(hidden_layers)
 
@@ -150,7 +150,7 @@ if config.HAVE_TORCH:
 
                 for run in range(restarts):
                     neural_network, current_losses = self._train(layers, activation_function, optimizer,
-                                                       epochs, batch_size, learning_rate)
+                                                                 epochs, batch_size, learning_rate)
                     if not hasattr(self, 'losses') or current_losses['val'] < self.losses['val']:
                         self.losses = current_losses
                         self.neural_network = neural_network
@@ -164,7 +164,6 @@ if config.HAVE_TORCH:
                             elif self.ann_mse == 'like_basis' and self.losses['full'] <= self.mse_basis:
                                 self.logger.info(f'Aborting training after {run} restarts ...')
                                 return self._build_rom()
-
 
             # check if neural network is sufficient to guarantee certain error bounds
             with self.logger.block('Checking tolerances for error of neural network ...'):
@@ -185,7 +184,7 @@ if config.HAVE_TORCH:
 
         def _compute_layers_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network."""
-            return [len(self.fom.parameters),] + hidden_layers + [len(self.reduced_basis),]
+            return [len(self.fom.parameters), ] + hidden_layers + [len(self.reduced_basis), ]
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -310,21 +309,19 @@ if config.HAVE_TORCH:
 
         def _compute_sample(self, mu, u, reduced_basis):
             """Transform parameter and corresponding solution to tensors."""
-            # determine the coefficients of the full-order solutions in the reduced basis to obtain the
-            # training data; convert everything into tensors that are compatible with PyTorch
+            # determine the coefficients of the full-order solutions in the reduced basis to obtain
+            # the training data; convert everything into tensors that are compatible with PyTorch
             mu_tensor = torch.DoubleTensor(mu.to_numpy())
-            u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:,0])
-            return [(mu_tensor, u_tensor),]
+            u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:, 0])
+            return [(mu_tensor, u_tensor)]
 
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
             assert hasattr(self, 'reduced_basis')
             return self.reduced_basis.lincomb(u.to_numpy())
 
-
     class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
-        """Reduced Basis reductor for instationary problems relying on
-        artificial neural networks.
+        """Reduced Basis reductor for instationary problems relying on artificial neural networks.
 
         This is a reductor that constructs a reduced basis using proper
         orthogonal decomposition and trains a neural network that approximates
@@ -376,8 +373,9 @@ if config.HAVE_TORCH:
 
         def _compute_layers_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network
-            (make sure to increase the input dimension to account for the time)."""
-            return [len(self.fom.parameters) + 1,] + hidden_layers + [len(self.reduced_basis),]
+            (make sure to increase the input dimension to account for the time).
+            """
+            return [len(self.fom.parameters) + 1] + hidden_layers + [len(self.reduced_basis)]
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -419,14 +417,14 @@ if config.HAVE_TORCH:
 
         def _compute_sample(self, mu, u, reduced_basis):
             """Transform parameter and corresponding solution to tensors
-            (make sure to include the time instances in the inputs)."""
+            (make sure to include the time instances in the inputs).
+            """
             parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
-            samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:,0]))
+            samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:, 0]))
                        for mu, u_t in zip(parameters_with_time, u)]
 
             return samples
-
 
     class EarlyStoppingScheduler(BasicObject):
         """Class for performing early stopping in training of neural networks.
@@ -486,7 +484,6 @@ if config.HAVE_TORCH:
                 self.counter = 0
 
             return False
-
 
     class CustomDataset(utils.data.Dataset):
         """Class that represents the dataset to use in PyTorch.

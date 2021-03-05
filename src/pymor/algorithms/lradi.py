@@ -81,7 +81,6 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         Low-rank Cholesky factor of the Lyapunov equation solution,
         |VectorArray| from `A.source`.
     """
-
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_lrcf_solver_options(), 'lradi', None, False)
     logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')

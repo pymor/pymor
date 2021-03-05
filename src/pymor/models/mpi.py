@@ -119,7 +119,6 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
     space_type
         See :class:`~pymor.operators.mpi.MPIOperator`.
     """
-
     assert use_with or isinstance(base_type, Model)
 
     if not isinstance(local_models, mpi.ObjectId):

@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides some operators for continuous finite element discretizations."""
+"""This module provides some operators for continuous finite element discretizations."""
 
 from functools import partial
 
@@ -25,28 +25,28 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 LagrangeShapeFunctions = {
-        line: {1: [lambda X: 1 - X[..., 0],
-                   lambda X: X[..., 0]]},
-        square: {1: [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
-                     lambda X: (1 - X[..., 1]) * (X[..., 0]),
-                     lambda X:     (X[..., 0]) * (X[..., 1]),
-                     lambda X:     (X[..., 1]) * (1 - X[..., 0])]},
-        triangle: {1: [lambda X: 1 - X[..., 0] - X[..., 1],
-                       lambda X: X[..., 0],
-                       lambda X: X[..., 1]]},
-            }
+    line: {1: [lambda X: 1 - X[..., 0],
+               lambda X: X[..., 0]]},
+    square: {1: [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
+                 lambda X: (1 - X[..., 1]) * (X[..., 0]),
+                 lambda X:     (X[..., 0]) * (X[..., 1]),
+                 lambda X:     (X[..., 1]) * (1 - X[..., 0])]},
+    triangle: {1: [lambda X: 1 - X[..., 0] - X[..., 1],
+                   lambda X: X[..., 0],
+                   lambda X: X[..., 1]]},
+}
 
 LagrangeShapeFunctionsGrads = {
-        line: {1: np.array(([-1.],
-                            [1., ]))},
-        square: {1: lambda X: np.array(([X[..., 1] - 1., X[..., 0] - 1.],
-                                        [1. - X[..., 1], - X[..., 0]],
-                                        [X[..., 1], X[..., 0]],
-                                        [-X[..., 1], 1. - X[..., 0]]))},
-        triangle: {1: np.array(([-1., -1.],
-                                [1., 0.],
-                                [0., 1.]))}
-        }
+    line: {1: np.array(([-1.],
+                        [1., ]))},
+    square: {1: lambda X: np.array(([X[..., 1] - 1., X[..., 0] - 1.],
+                                    [1. - X[..., 1], - X[..., 0]],
+                                    [X[..., 1], X[..., 0]],
+                                    [-X[..., 1], 1. - X[..., 0]]))},
+    triangle: {1: np.array(([-1., -1.],
+                            [1., 0.],
+                            [0., 1.]))},
+}
 
 
 def CGVectorSpace(grid, id='STATE'):
@@ -111,7 +111,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
 
 class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
-    """Linear finite element functional representing the inner product with an L2-|Function| on the boundary.
+    """Linear finite element functional representing the inner product with an
+    L2-|Function| on the boundary.
 
     Parameters
     ----------
@@ -232,7 +233,8 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         g = self.grid
         bi = self.boundary_info
 
-        # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points)
+        # evaluate function at all quadrature points ->
+        #   shape = (g.size(0), number of quadrature points)
         F = self.function(g.centers(0), mu=mu)
 
         # evaluate the shape functions at the quadrature points on the reference
@@ -955,10 +957,12 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     preassemble
         If `True`, preassemble all operators in the resulting |Model|.
     mu_energy_product
-        If not `None`, |parameter values| for which to assemble the symmetric part of the |Operator| of the resulting
-        |Model| `fom` (ignoring the advection part). Thus, assuming no advection and a symmetric diffusion tensor,
-        `fom.products['energy']` is equal to `fom.operator.assemble(mu)`, except for the fact that the former has
-        cleared Dirichlet rows and columns, while the latter only has cleared Dirichlet rows).
+        If not `None`, |parameter values| for which to assemble the symmetric part of the
+        |Operator| of the resulting |Model| `fom` (ignoring the advection part). Thus,
+        assuming no advection and a symmetric diffusion tensor, `fom.products['energy']`
+        is equal to `fom.operator.assemble(mu)`, except for the fact that the former has
+        cleared Dirichlet rows and columns, while the latter only
+        has cleared Dirichlet rows).
 
     Returns
     -------
@@ -972,7 +976,6 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
-
     assert isinstance(analytical_problem, StationaryProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
@@ -1073,7 +1076,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             if mu_energy_product:
                 eLi += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data)]
         else:
-            Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name=f'robin')]
+            Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, name='robin')]
             if mu_energy_product:
                 eLi += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data)]
             coefficients.append(1.)
@@ -1097,23 +1100,23 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     if p.neumann_data is not None and boundary_info.has_neumann:
         if isinstance(p.neumann_data, LincombFunction):
             Fi += [BoundaryL2Functional(grid, -ne, boundary_info=boundary_info,
-                                      boundary_type='neumann', dirichlet_clear_dofs=True, name=f'neumann_{i}')
+                                        boundary_type='neumann', dirichlet_clear_dofs=True, name=f'neumann_{i}')
                    for i, ne in enumerate(p.neumann_data.functions)]
             coefficients_F += list(p.neumann_data.coefficients)
         else:
             Fi += [BoundaryL2Functional(grid, -p.neumann_data, boundary_info=boundary_info,
-                                      boundary_type='neumann', dirichlet_clear_dofs=True)]
+                                        boundary_type='neumann', dirichlet_clear_dofs=True)]
             coefficients_F.append(1.)
 
     if p.robin_data is not None and boundary_info.has_robin:
         if isinstance(p.robin_data[0], LincombFunction):
             Fi += [BoundaryL2Functional(grid, rob * p.robin_data[1], boundary_info=boundary_info,
-                                      boundary_type='robin', dirichlet_clear_dofs=True, name=f'robin_{i}')
+                                        boundary_type='robin', dirichlet_clear_dofs=True, name=f'robin_{i}')
                    for i, rob in enumerate(p.robin_data[0].functions)]
             coefficients_F += list(p.robin_data[0].coefficients)
         else:
             Fi += [BoundaryL2Functional(grid, p.robin_data[0] * p.robin_data[1], boundary_info=boundary_info,
-                                      boundary_type='robin', dirichlet_clear_dofs=True)]
+                                        boundary_type='robin', dirichlet_clear_dofs=True)]
             coefficients_F.append(1.)
 
     if p.dirichlet_data is not None and boundary_info.has_dirichlet:
@@ -1198,7 +1201,6 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     data = {'grid': grid, 'boundary_info': boundary_info}
 
-
     if preassemble:
         data['unassembled_m'] = m
         m = preassemble_(m)
@@ -1255,7 +1257,6 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
             :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
-
     assert isinstance(analytical_problem, InstationaryProblem)
     assert isinstance(analytical_problem.stationary_part, StationaryProblem)
     assert grid is None or boundary_info is not None

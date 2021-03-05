@@ -18,7 +18,8 @@ def main(
     validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
 ):
     """Model oder reduction with neural networks for an instationary problem
-    (approach by Hesthaven and Ubbiali).
+
+    Using the approach by Hesthaven and Ubbiali.
     """
     if not config.HAVE_TORCH:
         raise TorchMissing()

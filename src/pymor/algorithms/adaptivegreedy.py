@@ -78,7 +78,6 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
         :training_set_sizes:     The final size of the training set in each extension step.
         :time:                   Duration of the algorithm.
     """
-
     logger = getLogger('pymor.algorithms.adaptivegreedy.adaptive_weak_greedy')
 
     if pool is None or pool is dummy_pool:
@@ -286,7 +285,6 @@ def rb_adaptive_greedy(fom, reductor, parameter_space,
         :training_set_sizes:     The final size of the training set in each extension step.
         :time:                   Duration of the algorithm.
     """
-
     surrogate = RBSurrogate(fom, reductor, use_error_estimator, error_norm, extension_params, pool or dummy_pool)
 
     result = adaptive_weak_greedy(surrogate, parameter_space, target_error=target_error, max_extensions=max_extensions,

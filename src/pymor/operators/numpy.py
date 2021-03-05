@@ -2,13 +2,15 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""This module provides the following |NumPy| based |Operators|:
+"""|Operators| based on |NumPy| arrays.
 
-  - |NumpyMatrixOperator| wraps a 2D |NumPy array| as an |Operator|.
-  - |NumpyMatrixBasedOperator| should be used as base class for all |Operators|
-    which assemble into a |NumpyMatrixOperator|.
-  - |NumpyGenericOperator| wraps an arbitrary Python function between
-    |NumPy arrays| as an |Operator|.
+This module provides the following |NumPy|-based |Operators|:
+
+- |NumpyMatrixOperator| wraps a 2D |NumPy array| as an |Operator|.
+- |NumpyMatrixBasedOperator| should be used as base class for all |Operators|
+  which assemble into a |NumpyMatrixOperator|.
+- |NumpyGenericOperator| wraps an arbitrary Python function between
+  |NumPy arrays| as an |Operator|.
 """
 
 from functools import reduce

@@ -89,7 +89,7 @@ class ResidualReductor(BasicObject):
 
         with self.logger.block('Projecting residual operator ...'):
             if self.riesz_representatives:
-                operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product cancels out.
+                operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product cancels out
                 rhs = project(self.rhs, self.residual_range, None, product=None)
             else:
                 operator = project(self.operator, self.residual_range, self.RB, product=self.product)
@@ -174,13 +174,13 @@ class ImplicitEulerResidualReductor(BasicObject):
     with the Riesz isomorphism is given by::
 
         riesz_residual.apply(U, U_old, mu)
-            == product.apply_inverse(operator.apply(U, mu) + 1/dt*mass.apply(U, mu) - 1/dt*mass.apply(U_old, mu)
-               - rhs.as_vector(mu))
+            == product.apply_inverse(operator.apply(U, mu) + 1/dt*mass.apply(U, mu)
+                - 1/dt*mass.apply(U_old, mu) - rhs.as_vector(mu))
 
-    This reductor determines a low-dimensional subspace of the image of a reduced
-    basis space under `riesz_residual` using :func:`~pymor.algorithms.image.estimate_image_hierarchical`,
-    computes an orthonormal basis `residual_range` of this range space and then
-    returns the Petrov-Galerkin projection ::
+    This reductor determines a low-dimensional subspace of the image of a reduced basis space under
+    `riesz_residual` using :func:`~pymor.algorithms.image.estimate_image_hierarchical`, computes an
+    orthonormal basis `residual_range` of this range space and then returns the Petrov-Galerkin
+    projection ::
 
         projected_riesz_residual
             == riesz_residual.projected(range_basis=residual_range, source_basis=RB)
@@ -210,6 +210,7 @@ class ImplicitEulerResidualReductor(BasicObject):
     product
         Inner product |Operator| w.r.t. which to compute the Riesz representatives.
     """
+
     def __init__(self, RB, operator, mass, dt, rhs=None, product=None):
         assert RB in operator.source
         assert rhs.source.is_scalar and rhs.range == operator.range and rhs.linear
@@ -239,7 +240,8 @@ class ImplicitEulerResidualReductor(BasicObject):
             return NonProjectedImplicitEulerResidualOperator(operator, mass, self.rhs, self.dt, self.product)
 
         with self.logger.block('Projecting residual operator ...'):
-            operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product always cancels out.
+            # the product always cancels out
+            operator = project(self.operator, self.residual_range, self.RB, product=None)
             mass = project(self.mass, self.residual_range, self.RB, product=None)
             rhs = project(self.rhs, self.residual_range, None, product=None)
 

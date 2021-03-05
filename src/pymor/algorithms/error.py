@@ -157,7 +157,6 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
         :figure:                    The figure containing the generated plots.
                                     (Only present when `plot` is `True`.)
     """
-
     assert not error_norms or (fom and reductor)
     assert error_norm_names is None or len(error_norm_names) == len(error_norms)
     assert not condition \

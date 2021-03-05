@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides some operators for finite volume discretizations."""
+"""This module provides some operators for finite volume discretizations."""
 from functools import partial
 
 import numpy as np
@@ -435,7 +435,8 @@ def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_l
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
                                                            dirichlet_data=None, solver_options=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using
-    :class:`SimplifiedEngquistOsherFlux`."""
+    :class:`SimplifiedEngquistOsherFlux`.
+    """
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
@@ -860,7 +861,6 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
             :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
-
     assert isinstance(analytical_problem, StationaryProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
@@ -1048,7 +1048,6 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
             :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
-
     assert isinstance(analytical_problem, InstationaryProblem)
     assert isinstance(analytical_problem.stationary_part, StationaryProblem)
     assert grid is None or boundary_info is not None

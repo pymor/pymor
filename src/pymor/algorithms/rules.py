@@ -145,6 +145,7 @@ class match_generic(rule):
 
 class RuleTableMeta(UberMeta):
     """Meta class for |RuleTable|."""
+
     def __new__(cls, name, parents, dct):
         assert 'rules' not in dct
         rules = []
@@ -156,7 +157,8 @@ class RuleTableMeta(UberMeta):
                     raise ValueError('Rule definition names have to start with "action_"')
                 v.name = k
                 rules.append(v)
-        # note: since Python 3.6, the definition order is preserved in dct, so rules has the right order
+        # note: since Python 3.6, the definition order is preserved in dct,
+        # so rules has the right order
         dct['rules'] = rules
         dct['_breakpoint_for_obj'] = WeakValueDictionary()
         dct['_breakpoint_for_name'] = set()

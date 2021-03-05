@@ -6,7 +6,6 @@ import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
-from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -96,7 +95,7 @@ class StationaryModel(Model):
     _compute_allowed_kwargs = frozenset({'use_adjoint'})
 
     def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
-        """compute the gradient of the output functional  w.r.t. the parameters
+        """Compute the gradient of the output functional  w.r.t. the parameters.
 
         Parameters
         ----------
@@ -131,12 +130,12 @@ class StationaryModel(Model):
                 dual_solutions.append(dual_problem.solve(mu))
             gradients = [] if return_array else {}
             for (parameter, size) in self.parameters.items():
-                array = np.empty(shape=(size,self.output_functional.range.dim))
+                array = np.empty(shape=(size, self.output_functional.range.dim))
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
                                                                                              mu=mu).to_numpy()[0]
-                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:,0]
-                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:,0]
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
+                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
                     array[index] = output_partial_dmu + rhs_d_mu - lhs_d_mu
                 if return_array:
                     gradients.extend(array)

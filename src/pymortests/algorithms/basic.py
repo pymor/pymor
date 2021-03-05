@@ -2,10 +2,9 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
 import pytest
 import numpy as np
-from hypothesis import given, assume, reproduce_failure, settings, HealthCheck, example
+from hypothesis import given, assume, settings
 from hypothesis import strategies as hyst
 
 import pymor
@@ -14,10 +13,9 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 if pymor.config.HAVE_NGSOLVE:
     from pymor.bindings.ngsolve import NGSolveVectorSpace
 else:
-    class NGSolveVectorSpace: pass
-from pymor.operators.constructions import induced_norm
+    class NGSolveVectorSpace:
+        pass
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.tools.floatcmp import float_cmp
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
@@ -25,9 +23,11 @@ from pymortests.vectorarray import indexed
 import pymortests.strategies as pyst
 
 
-@pyst.given_vector_arrays(count=2,
-                          tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)]),
-                          sup_norm=hyst.booleans())
+@pyst.given_vector_arrays(
+    count=2,
+    tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)]),
+    sup_norm=hyst.booleans(),
+)
 def test_almost_equal(vector_arrays, tolerances, sup_norm):
     v1, v2 = vector_arrays
     rtol, atol = tolerances
@@ -43,8 +43,12 @@ def test_almost_equal(vector_arrays, tolerances, sup_norm):
         if dv1 is not None:
             if dv2.shape[1] == 0:
                 continue
-            assert np.all(r == (np.linalg.norm(indexed(dv1, ind1) - indexed(dv2, ind2), ord=np.inf if sup_norm else None, axis=1)
-                                <= atol + rtol * np.linalg.norm(indexed(dv2, ind2), ord=np.inf if sup_norm else None, axis=1)))
+            assert np.all(r == (np.linalg.norm(indexed(dv1, ind1) - indexed(dv2, ind2),
+                                               ord=np.inf if sup_norm else None,
+                                               axis=1)
+                                <= atol + rtol * np.linalg.norm(indexed(dv2, ind2),
+                                                                ord=np.inf if sup_norm else None,
+                                                                axis=1)))
 
 
 def test_almost_equal_product(operator_with_arrays_and_products):
@@ -63,12 +67,15 @@ def test_almost_equal_product(operator_with_arrays_and_products):
                                 <= atol + rtol * (v2[ind2]).norm(product)))
 
 
-@pyst.given_vector_arrays(count=1, index_strategy=pyst.pairs_same_length,
-                          tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)]),
-                          sup_norm=hyst.booleans())
+@pyst.given_vector_arrays(
+    count=1,
+    index_strategy=pyst.pairs_same_length,
+    tolerances=hyst.sampled_from([(1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)]),
+    sup_norm=hyst.booleans(),
+)
 @settings(print_blob=True)
 def test_almost_equal_self(vectors_and_indices, tolerances, sup_norm):
-    v, (ind,_) = vectors_and_indices
+    v, (ind, _) = vectors_and_indices
     rtol, atol = tolerances
     r = almost_equal(v[ind], v[ind], sup_norm=sup_norm)
     assert isinstance(r, np.ndarray)

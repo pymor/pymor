@@ -4,6 +4,8 @@ PyQt5!=5.15.2,>5.7,!=5.15.2.*
 check-manifest
 codecov
 docutils
+flake8-docstrings
+flake8-rst-docstrings
 hypothesis[numpy,pytest]>=5.19
 nbconvert
 pypi-oldest-requirements>=2020.2

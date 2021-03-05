@@ -71,7 +71,6 @@ def main(
     test: int = Option(10, help='Use COUNT snapshots for stochastic error estimation.'),
 ):
     """Thermalblock demo."""
-
     if fenics and cache_region != 'none':
         raise ValueError('Caching of high-dimensional solutions is not supported for FEniCS model.')
     if not fenics and order != 1:
@@ -382,7 +381,8 @@ def reduce_adaptive_greedy(fom, reductor, parameter_space, validation_mus,
 
     # generate summary
     real_rb_size = rom.solution_space.dim
-    # the validation set consists of `validation_mus` random parameters plus the centers of the adaptive sample set cells
+    # the validation set consists of `validation_mus` random parameters plus the centers of the
+    # adaptive sample set cells
     validation_mus += 1
     summary = f'''Adaptive greedy basis generation:
    initial size of validation set:  {validation_mus}

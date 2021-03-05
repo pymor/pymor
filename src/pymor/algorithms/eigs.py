@@ -70,7 +70,6 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
     v
         A |VectorArray| which contains the computed eigenvectors.
     """
-
     logger = getLogger('pymor.algorithms.eigs.eigs')
 
     assert isinstance(A, Operator) and A.linear
@@ -170,7 +169,6 @@ def eigs(A, E=None, k=3, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
 
 def _arnoldi(A, E, l, b):
     """Compute an Arnoldi factorization."""
-
     v = b * (1 / b.norm()[0])
 
     H = np.zeros((l, l))
@@ -191,7 +189,6 @@ def _arnoldi(A, E, l, b):
 
 def _extend_arnoldi(A, E, V, H, f, p):
     """Extend an existing Arnoldi factorization."""
-
     k = len(V)
 
     res = f.norm()[0]
@@ -215,7 +212,6 @@ def _extend_arnoldi(A, E, V, H, f, p):
 
 def _qr_iteration(H, shifts):
     """Perform the QR iteration."""
-
     Qs = np.eye(len(H))
 
     i = 0

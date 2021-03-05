@@ -287,7 +287,8 @@ class PolygonalDomain(DomainDescription):
         (`0` is the line connecting point `0` to `1`, `1` is the line connecting point `1` to `2`
         etc.), or a function that returns the boundary type for a given coordinate.
     holes
-        List of lists of points that describe the polygonal chains that bound the holes inside the domain.
+        List of lists of points that describe the polygonal chains that bound the holes
+        inside the domain.
 
     Attributes
     ----------
@@ -303,7 +304,8 @@ class PolygonalDomain(DomainDescription):
 
         if isinstance(boundary_types, dict):
             pass
-        # if the boundary types are not given as a dict, try to evaluate at the edge centers to get a dict.
+        # if the boundary types are not given as a dict, try to evaluate at
+        # the edge centers to get a dict.
         else:
             points = [points]
             points.extend(holes)
@@ -314,8 +316,8 @@ class PolygonalDomain(DomainDescription):
             # compute edge centers.
             centers = [[(p0[0]+p1[0])/2, (p0[1]+p1[1])/2] for ps, ps_d in zip(points, points_deque)
                        for p0, p1 in zip(ps, ps_d)]
-            # evaluate the boundary at the edge centers and save the boundary types together with the
-            # corresponding edge id.
+            # evaluate the boundary at the edge centers and save the boundary types together
+            # with the corresponding edge id.
             boundary_types = dict(zip([boundary_types(centers)], [list(range(1, len(centers)+1))]))
 
         for bt in boundary_types.keys():

@@ -2,7 +2,9 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides a few methods and classes for visualizing data
+"""Visualization of grid data using Qt.
+
+This module provides a few methods and classes for visualizing data
 associated to grids. We use the `Qt <http://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """
@@ -25,9 +27,9 @@ from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if config.HAVE_QT:
-    from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
+    from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QLCDNumber,
                               QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from Qt.QtCore import Qt, QCoreApplication, QTimer, Slot
+    from Qt.QtCore import Qt, QTimer
 
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
@@ -174,6 +176,7 @@ _launch_qt_processes = set()
 
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
+    mac_or_win = is_windows_platform() or is_macos_platform()
 
     def _doit(factory):
         # for windows these needs to be repeated due to multiprocessing (?)
@@ -184,14 +187,15 @@ def _launch_qt_app(main_window_factory, block):
         except RuntimeError:
             app = QCoreApplication.instance()
         main_window = factory()
-        if getattr(sys, '_called_from_test', False) and (is_windows_platform() or is_macos_platform()):
+        if getattr(sys, '_called_from_test', False) and mac_or_win:
             QTimer.singleShot(1000, app.quit)
         main_window.show()
         app.exec_()
 
     import sys
-    # we treat win and osx differently here since no (reliable) forking is possible with multiprocessing startup
-    if (block and not getattr(sys, '_called_from_test', False)) or (is_windows_platform() or is_macos_platform()):
+    # we treat win and osx differently here since no (reliable)
+    # forking is possible with multiprocessing startup
+    if (block and not getattr(sys, '_called_from_test', False)) or mac_or_win:
         _doit(main_window_factory)
     else:
         p = multiprocessing.Process(target=_doit, args=(main_window_factory,))
@@ -200,7 +204,8 @@ def _launch_qt_app(main_window_factory, block):
 
 
 def stop_gui_processes():
-    import os, signal
+    import os
+    import signal
     kill_procs = {p for p in multiprocessing.active_children() if p.pid in _launch_qt_processes}
     for p in kill_procs:
         # active_children apparently contains false positives sometimes
@@ -363,7 +368,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             self.vmaxs = (max(np.max(u[ind]) for u in U),) * len(U)
 
                     for u, plot, colorbar, vmin, vmax in zip(U, self.plots, self.colorbarwidgets, self.vmins,
-                                                              self.vmaxs):
+                                                             self.vmaxs):
                         plot.set(u[ind], vmin=vmin, vmax=vmax)
                         if colorbar:
                             colorbar.set(vmin=vmin, vmax=vmax)

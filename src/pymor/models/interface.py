@@ -152,7 +152,7 @@ class Model(CacheableObject, ParametricObject):
         return sensitivities
 
     def _compute_output_d_mu(self, solution, mu=None, return_array=False, **kwargs):
-        """compute the gradient w.r.t. the parameter of the output functional
+        """Compute the gradient w.r.t. the parameter of the output functional
 
         Parameters
         ----------
@@ -172,7 +172,7 @@ class Model(CacheableObject, ParametricObject):
         U_d_mus = self._compute_solution_d_mu(solution, mu)
         gradients = [] if return_array else {}
         for (parameter, size) in self.parameters.items():
-            array = np.empty(shape=(size,self.output_functional.range.dim))
+            array = np.empty(shape=(size, self.output_functional.range.dim))
             for index in range(size):
                 output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
                     solution, mu=mu).to_numpy()[0]
@@ -307,7 +307,6 @@ class Model(CacheableObject, ParametricObject):
         -------
         A dict with the computed values.
         """
-
         # make sure no unknown kwargs are passed
         assert kwargs.keys() <= self._compute_allowed_kwargs
 
@@ -328,8 +327,8 @@ class Model(CacheableObject, ParametricObject):
                              output_error_estimate=output_error_estimate,
                              mu=mu, **kwargs)
 
-        if (solution or output or solution_error_estimate or
-                output_error_estimate or solution_d_mu or output_d_mu) \
+        if (solution or output or solution_error_estimate
+            or output_error_estimate or solution_d_mu or output_d_mu) \
            and 'solution' not in data:
             retval = self.cached_method_call(self._compute_solution, mu=mu, **kwargs)
             if isinstance(retval, dict):
@@ -486,7 +485,7 @@ class Model(CacheableObject, ParametricObject):
         return data['solution_d_mu']
 
     def output_d_mu(self, mu=None, return_array=False, **kwargs):
-        """compute the gradient w.r.t. the parameter of the output functional
+        """Compute the gradient w.r.t. the parameter of the output functional.
 
         Parameters
         ----------

@@ -71,7 +71,6 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
                                     matrix coefficients in the upper triangle (should
                                     be near zero).
     """
-
     if pool:  # dispatch to parallel implemenation
         assert isinstance(U, (VectorArray, RemoteObject))
         with RemoteObjectManager() as rom:
@@ -192,7 +191,6 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
 
             :svals: POD singular values.
     """
-
     assert isinstance(U, VectorArray)
 
     logger = getLogger('pymor.algorithms.ei.deim')
@@ -291,13 +289,12 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
     data
         Dict containing the following fields:
 
-            :dofs:                  |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
-            :basis:                 |VectorArray| containing the generated collateral basis.
+            :dofs:     |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
+            :basis:    |VectorArray| containing the generated collateral basis.
 
         In addition, `data` contains the fields of the `data` `dict` returned by
         :func:`ei_greedy`/:func:`deim`.
     """
-
     assert alg in ('ei_greedy', 'deim')
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:

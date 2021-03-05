@@ -6,7 +6,6 @@ from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 from pymor.operators.interface import Operator
 from pymor.tools import mpi
 from pymor.vectorarrays.mpi import MPIVectorSpace, _register_local_space
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class MPIOperator(Operator):

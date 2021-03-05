@@ -21,9 +21,6 @@ def main(
     validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
 ):
     """Reduction of a FEniCS model using neural networks (approach by Hesthaven and Ubbiali)."""
-
-    logger = getLogger('pymordemos.neural_networks')
-
     if not config.HAVE_TORCH:
         raise TorchMissing()
 
@@ -109,7 +106,7 @@ def _discretize_fenics():
     df.solve(F == 0, u, bc,
              solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
 
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer
+    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator
 
     space = FenicsVectorSpace(V)
     op = FenicsOperator(F, space, space, u, (bc,),

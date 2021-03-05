@@ -51,7 +51,6 @@ functionality:
 import abc
 from functools import wraps
 import inspect
-import itertools
 import os
 from types import FunctionType
 import uuid
@@ -65,7 +64,7 @@ NoneType = type(None)
 
 
 class UID:
-    '''Provides unique, quickly computed ids by combining a session UUID4 with a counter.'''
+    """Provides unique, quickly computed ids by combining a session UUID4 with a counter."""
 
     __slots__ = ['uid']
 
@@ -92,7 +91,6 @@ class UberMeta(abc.ABCMeta):
         I create a logger for each class I create.
         I add an `init_arguments` attribute to the class.
         """
-
         cls._logger = logger.getLogger(f'{cls.__module__.replace("__main__", "pymor")}.{name}')
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
@@ -177,6 +175,7 @@ class BasicObject(metaclass=UberMeta):
         A unique id for each instance. The uid is obtained by using
         :class:`UID` and is unique for all pyMOR objects ever created.
     """
+
     @property
     def name(self):
         n = getattr(self, '_name', None)
@@ -313,8 +312,8 @@ class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
         pass
 
     def __setattr__(self, key, value):
-        """depending on _locked state I delegate the setattr call to object or
-        raise an Exception
+        """Depending on _locked state I delegate the setattr call to object or
+        raise an Exception.
         """
         if not self._locked or key[0] == '_':
             return object.__setattr__(self, key, value)
