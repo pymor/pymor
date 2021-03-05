@@ -3,7 +3,7 @@
 THIS_DIR="$(cd "$(dirname ${BASH_SOURCE[0]})" ; pwd -P )"
 source ${THIS_DIR}/common_test_setup.bash
 
-pip install git+https://github.com/numpy/numpy@master
+pip install git+https://github.com/numpy/numpy@main
 # numpy version changed, recompile extensions
 python setup.py build_ext -i
 # there seems to be no way of really overwriting -p no:warnings from setup.cfg
