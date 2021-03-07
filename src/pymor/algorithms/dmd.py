@@ -65,8 +65,9 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
     assert isinstance(A, VectorArray) or A is None
     assert isinstance(XL, VectorArray) or XL is None
     assert isinstance(XR, VectorArray) or XR is None
+    assert A is None or (target_rank is None or target_rank <= len(A))
+    assert XL is None or (target_rank is None or target_rank < len(XL))
     assert XL is None and XR is None or len(XL) == len(XR)
-    # assert target_rank is None or target_rank <= len(A) or target_rank < len(XL)
     assert order in (True, False)
     assert svd_method in ('qr_svd', 'method_of_snapshots')
 
@@ -80,10 +81,6 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
 
     print('SVD of XL...')
     U, SVALS, Vh = svd(XL, product=None, modes=rank)
-
-    # if not len(U) == rank:
-    #     rank = len(U)
-    #     print('Cutting  to Dimension', rank, '- Not enought relevant Singularvectors.')
 
     # Invert the Singular Values
     SVALS_diag = np.diag(SVALS)
@@ -154,7 +151,6 @@ def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, powerIte
     B :
         Numpy Array. Projection of the Input Matrix into the lower dimensional subspace.
     """
-    # TODO: weitere Assertions
     assert isinstance(A, VectorArray)
     assert target_rank is None or target_rank <= len(A)
     assert distribution in ('normal', 'uniform')
@@ -163,10 +159,11 @@ def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, powerIte
         return A.space.zeros(), np.zeros((target_rank, len(A)))
 
     rank = len(A) if target_rank is None else target_rank + oversampling
+    target_rank = len(A) if target_rank is None else target_rank
 
     Omega = np.random.normal(0, 1, (rank, len(A))) if distribution == 'normal' else np.random.rand(rank, len(A))
 
-    Y = A.lincomb(Omega)
+    Y = A.lincomb(Omega)[:target_rank]
 
     # Power Iterations
     if(powerIterations > 0):
@@ -183,7 +180,7 @@ def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, powerIte
 
 
 @defaults('svd_method', 'distribution')
-def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', distribution='normal',
+def rand_dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', distribution='normal',
              oversampling=0, powerIterations=0, order=True):
     """
     Ranzomized Dynamic Mode Decomposition
@@ -236,8 +233,14 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
 
     """
 
-    assert isinstance(A, VectorArray)
-    assert target_rank is None or target_rank <= len(A)
+    assert A is None or (XL is None and XR is None)
+    assert not(A is None and (XL and XR is None))
+    assert isinstance(A, VectorArray) or A is None
+    assert isinstance(XL, VectorArray) or XL is None
+    assert isinstance(XR, VectorArray) or XR is None
+    assert A is None or (target_rank is None or target_rank <= len(A))
+    assert XL is None or (target_rank is None or target_rank < len(XL))
+    assert XL is None and XR is None or len(XL) == len(XR)
     assert distribution in ('normal', 'uniform')
     assert modes in ('exact', 'standard', 'exact_scaled')
     assert order in (True, False)
