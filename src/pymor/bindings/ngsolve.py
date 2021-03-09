@@ -127,7 +127,10 @@ if config.HAVE_NGSOLVE:
 
         def _real_apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
             u = self.source.real_zero_vector()
-            mat = self.matrix.Transpose()
+            try:
+                mat = self.matrix.Transpose()
+            except AttributeError:
+                mat = self.matrix.T
             mat.Mult(v.impl.vec, u.impl.vec)
             return u
 
