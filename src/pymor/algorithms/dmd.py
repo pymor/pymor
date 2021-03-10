@@ -168,19 +168,18 @@ def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, powerIte
     # Power Iterations
     if(powerIterations > 0):
         for i in range(powerIterations):
-            Q = gram_schmidt(Y)
-            AQ = A.inner(Q)
-            Z, _ = spla.qr(AQ)
-            Y = A.lincomb(Z)
+            Q = gram_schmidt(Y)[:target_rank]
+            Z, _ = spla.qr(A.inner(Q))
+            Y = A.lincomb(Z)[:target_rank]
 
-    Q = gram_schmidt(Y)
+    Q = gram_schmidt(Y)[:target_rank]
     B = Q.inner(A)
 
     return Q, B
 
 
 @defaults('svd_method', 'distribution')
-def rand_dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', distribution='normal',
+def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', distribution='normal',
              oversampling=0, powerIterations=0, order=True):
     """
     Ranzomized Dynamic Mode Decomposition
@@ -233,14 +232,8 @@ def rand_dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', sv
 
     """
 
-    assert A is None or (XL is None and XR is None)
-    assert not(A is None and (XL and XR is None))
-    assert isinstance(A, VectorArray) or A is None
-    assert isinstance(XL, VectorArray) or XL is None
-    assert isinstance(XR, VectorArray) or XR is None
-    assert A is None or (target_rank is None or target_rank <= len(A))
-    assert XL is None or (target_rank is None or target_rank < len(XL))
-    assert XL is None and XR is None or len(XL) == len(XR)
+    assert isinstance(A, VectorArray)
+    assert target_rank is None or target_rank <= len(A)
     assert distribution in ('normal', 'uniform')
     assert modes in ('exact', 'standard', 'exact_scaled')
     assert order in (True, False)

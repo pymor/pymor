@@ -60,9 +60,8 @@ U = m.solve()
 Calculate Extrapolation Error
 """
 
-XL = U[:-1]
-XR = U[1:]
 U_k = U[-1]
+U = U[:-1]
 
 alle_fehler_dmd = []
 alle_fehler_rdmd = []
@@ -71,6 +70,14 @@ alle_fehler_r3dmd = []
 alle_fehler_r4dmd = []
 alle_fehler_r5dmd = []
 alle_fehler_r6dmd = []
+
+ex_fehler_dmd = []
+ex_fehler_rdmd = []
+ex_fehler_r2dmd = []
+ex_fehler_r3dmd = []
+ex_fehler_r4dmd = []
+ex_fehler_r5dmd = []
+ex_fehler_r6dmd = []
 
 alle_zeiten_dmd = []
 alle_zeiten_rdmd = []
@@ -90,12 +97,12 @@ fehler_r6dmd_EW = []
 # Testmoden = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 Testmoden = [1, 5, 10, 15, 20]
 # Testmoden = [1, 2, 3, 4, 5, 10]
-# Testmoden = [20]
+# Testmoden = [1, 20, 50, 80]
 
 for i in Testmoden:
     # dmd
     start_dmd = time.process_time()
-    W, E = dmd(A=None, target_rank=i, XL=XL, XR=XR, modes='standard')
+    W, E = dmd(A=U, target_rank=i, modes='exact')
     time_dmd = time.process_time() - start_dmd
 
     Amp_dmd = get_amplitudes(U, W)
@@ -106,15 +113,17 @@ for i in Testmoden:
     W = W[sort_idx]
 
     U_approx_dmd = W.lincomb(B_dmd.T).lincomb(V_dmd.T)
-    fehler = U - U_approx_dmd
-    mse = np.mean((fehler).norm())
-    alle_fehler_dmd.append(mse)
+    fehler = np.sqrt(np.sum((U - U_approx_dmd).norm2())) / np.sqrt(np.sum(U.norm2()))
+    alle_fehler_dmd.append(fehler)
     alle_zeiten_dmd.append(time_dmd)
-    print('Mean reconstruction Error of Snapshotmatrix - dmd: ', mse)
+
+    Uk_approx_dmd = W.lincomb(B_dmd.T).lincomb(E**(i-1))
+    ex_error = (U_k - Uk_approx_dmd).norm() / U_k.norm()
+    ex_fehler_dmd.append(ex_error)
 
     # randomized dmd, no oversampling, no power Iterations
     start_rdmd = time.process_time()
-    rW, rE = rand_dmd(A=U, target_rank=i, distribution='normal', modes='standard')
+    rW, rE = rand_dmd(A=U, target_rank=i, distribution='normal', modes='exact')
     time_rdmd = time.process_time() - start_rdmd
 
     Amp_rdmd = get_amplitudes(U, rW)
@@ -125,15 +134,17 @@ for i in Testmoden:
     rW = rW[sort_idx]
 
     U_approx_rdmd = rW.lincomb(B_rdmd).lincomb(V_rdmd.T)
-    fehler = U - U_approx_rdmd
-    mse = np.mean((fehler).norm())
-    alle_fehler_rdmd.append(mse)
+    fehler = np.sqrt(np.sum((U_approx_dmd - U_approx_rdmd).norm2())) / np.sqrt(np.sum(U_approx_dmd.norm2()))
+    alle_fehler_rdmd.append(fehler)
     alle_zeiten_rdmd.append(time_rdmd)
-    print('Mean reconstruction Error of Snapshotmatrix - rand. dmd: ', mse)
+
+    Uk_approx_rdmd = rW.lincomb(B_rdmd.T).lincomb(rE**(i-1))
+    ex_error = (U_k - Uk_approx_rdmd).norm() / U_k.norm()
+    ex_fehler_rdmd.append(ex_error)
 
     # randomized dmd, oversampling - 1,
     start_r2dmd = time.process_time()
-    r2W, r2E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='standard', oversampling=1, powerIterations=0)
+    r2W, r2E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='exact', oversampling=1, powerIterations=0)
     time_r2dmd = time.process_time() - start_r2dmd
 
     Amp_r2dmd = get_amplitudes(U, r2W)
@@ -144,15 +155,17 @@ for i in Testmoden:
     r2W = r2W[sort_idx]
 
     U_approx_r2dmd = r2W.lincomb(B_r2dmd).lincomb(V_r2dmd.T)
-    fehler = U - U_approx_r2dmd
-    mse = np.mean((fehler).norm())
-    alle_fehler_r2dmd.append(mse)
+    fehler = np.sqrt(np.sum((U_approx_dmd - U_approx_r2dmd).norm2())) / np.sqrt(np.sum(U_approx_dmd.norm2()))
+    alle_fehler_r2dmd.append(fehler)
     alle_zeiten_r2dmd.append(time_r2dmd)
-    print('Mean reconstruction Error of Snapshotmatrix - rand. dmd (ov. 1): ', mse)
+
+    Uk_approx_r2dmd = r2W.lincomb(B_r2dmd.T).lincomb(r2E**(i-1))
+    ex_error = (U_k - Uk_approx_r2dmd).norm() / U_k.norm()
+    ex_fehler_r2dmd.append(ex_error)
 
     # randomized dmd, oversampling - 2,
     start_r3dmd = time.process_time()
-    r3W, r3E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='standard', oversampling=2, powerIterations=0)
+    r3W, r3E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='exact', oversampling=2, powerIterations=0)
     time_r3dmd = time.process_time() - start_r3dmd
 
     Amp_r3dmd = get_amplitudes(U, r3W)
@@ -163,15 +176,17 @@ for i in Testmoden:
     r3W = r3W[sort_idx]
 
     U_approx_r3dmd = r3W.lincomb(B_r3dmd).lincomb(V_r3dmd.T)
-    fehler = U - U_approx_r3dmd
-    mse = np.mean((fehler).norm())
-    alle_fehler_r3dmd.append(mse)
+    fehler = np.sqrt(np.sum((U_approx_dmd - U_approx_r3dmd).norm2())) / np.sqrt(np.sum(U_approx_dmd.norm2()))
+    alle_fehler_r3dmd.append(fehler)
     alle_zeiten_r3dmd.append(time_r3dmd)
-    print('Mean reconstruction Error of Snapshotmatrix - rand. dmd (ov. & pI): ', mse)
+
+    Uk_approx_r3dmd = r3W.lincomb(B_r3dmd.T).lincomb(r3E**(i-1))
+    ex_error = (U_k - Uk_approx_r3dmd).norm() / U_k.norm()
+    ex_fehler_r3dmd.append(ex_error)
 
     # randomized dmd, oversampling - 4
     start_r4dmd = time.process_time()
-    r4W, r4E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='standard', oversampling=4, powerIterations=0)
+    r4W, r4E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='exact', oversampling=4, powerIterations=1)
     time_r4dmd = time.process_time() - start_r4dmd
 
     Amp_r4dmd = get_amplitudes(U, r4W)
@@ -182,15 +197,17 @@ for i in Testmoden:
     r4W = r4W[sort_idx]
 
     U_approx_r4dmd = r4W.lincomb(B_r4dmd).lincomb(V_r4dmd.T)
-    fehler = U - U_approx_r4dmd
-    mse = np.mean((fehler).norm())
-    alle_fehler_r4dmd.append(mse)
+    fehler = np.sqrt(np.sum((U_approx_dmd - U_approx_r4dmd).norm2())) / np.sqrt(np.sum(U_approx_dmd.norm2()))
+    alle_fehler_r4dmd.append(fehler)
     alle_zeiten_r4dmd.append(time_r4dmd)
-    print('Mean reconstruction Error of Snapshotmatrix - rand. dmd (ov. & pI): ', mse)
+
+    Uk_approx_r4dmd = r4W.lincomb(B_r4dmd.T).lincomb(r4E**(i-1))
+    ex_error = (U_k - Uk_approx_r4dmd).norm() / U_k.norm()
+    ex_fehler_r4dmd.append(ex_error)
 
     # randomized dmd, oversampling - 6
     start_r5dmd = time.process_time()
-    r5W, r5E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='standard', oversampling=6, powerIterations=0)
+    r5W, r5E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='exact', oversampling=6, powerIterations=1)
     time_r5dmd = time.process_time() - start_r5dmd
 
     Amp_r5dmd = get_amplitudes(U, r5W)
@@ -201,15 +218,17 @@ for i in Testmoden:
     r5W = r5W[sort_idx]
 
     U_approx_r5dmd = r5W.lincomb(B_r5dmd).lincomb(V_r5dmd.T)
-    fehler = U - U_approx_r5dmd
-    mse = np.mean((fehler).norm())
-    alle_fehler_r5dmd.append(mse)
+    fehler = np.sqrt(np.sum((U_approx_dmd - U_approx_r5dmd).norm2())) / np.sqrt(np.sum(U_approx_dmd.norm2()))
+    alle_fehler_r5dmd.append(fehler)
     alle_zeiten_r5dmd.append(time_r5dmd)
-    print('Mean reconstruction Error of Snapshotmatrix - rand. dmd (ov. & pI): ', mse)
+
+    Uk_approx_r5dmd = r5W.lincomb(B_r5dmd.T).lincomb(r5E**(i-1))
+    ex_error = (U_k - Uk_approx_r5dmd).norm() / U_k.norm()
+    ex_fehler_r5dmd.append(ex_error)
 
     # randomized dmd, oversampling - 10
     start_r6dmd = time.process_time()
-    r6W, r6E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='standard', oversampling=10, powerIterations=0)
+    r6W, r6E = rand_dmd(A=U, target_rank=i, distribution='normal', modes='exact', oversampling=10, powerIterations=2)
     time_r6dmd = time.process_time() - start_r6dmd
 
     Amp_r6dmd = get_amplitudes(U, r6W)
@@ -220,12 +239,15 @@ for i in Testmoden:
     r6W = r6W[sort_idx]
 
     U_approx_r6dmd = r6W.lincomb(B_r6dmd).lincomb(V_r6dmd.T)
-    fehler = U - U_approx_r6dmd
-    mse = np.mean((fehler).norm())
-    alle_fehler_r6dmd.append(mse)
+    fehler = np.sqrt(np.sum((U_approx_dmd - U_approx_r6dmd).norm2())) / np.sqrt(np.sum(U_approx_dmd.norm2()))
+    alle_fehler_r6dmd.append(fehler)
     alle_zeiten_r6dmd.append(time_r6dmd)
-    print('Mean reconstruction Error of Snapshotmatrix - rand. dmd (ov. & pI): ', mse)
 
+    Uk_approx_r6dmd = r6W.lincomb(B_r6dmd.T).lincomb(r6E**(i-1))
+    ex_error = (U_k - Uk_approx_r6dmd).norm() / U_k.norm()
+    ex_fehler_r6dmd.append(ex_error)
+
+    # Difference of first Eigenvalues to dmd
     fehler_rdmd_EW.append(np.abs(E[0]-rE[0]))
     fehler_r2dmd_EW.append(np.abs(E[0]-r2E[0]))
     fehler_r3dmd_EW.append(np.abs(E[0]-r3E[0]))
@@ -234,7 +256,6 @@ for i in Testmoden:
     fehler_r6dmd_EW.append(np.abs(E[0]-r6E[0]))
 
 # visualizing Reconstruction Error
-line1, = plt.plot(Testmoden, alle_fehler_dmd, color='blue', marker='x')
 line2, = plt.plot(Testmoden, alle_fehler_rdmd, color='orange', marker='x')
 line3, = plt.plot(Testmoden, alle_fehler_r2dmd, color='green', marker='x')
 line4, = plt.plot(Testmoden, alle_fehler_r3dmd, color='olive', marker='x')
@@ -242,12 +263,29 @@ line5, = plt.plot(Testmoden, alle_fehler_r4dmd, color='yellowgreen', marker='x')
 line6, = plt.plot(Testmoden, alle_fehler_r5dmd, color='palegreen', marker='x')
 line7, = plt.plot(Testmoden, alle_fehler_r6dmd, color='lime', marker='x')
 
-plt.title('DMD Reconstruction Error - exact')
+plt.title('Realtive Error - exact')
+plt.ylabel('Realtive error')
+plt.xlabel('Number of Modes')
+plt.yscale('log')
+plt.legend((line2, line3, line4, line5, line6, line7),
+           ('rdmd', 'rdmd p=1', 'rdmd p=2', 'rdmd p=4, q=1', 'rdmd p=6, q=1', 'rdmd p=10, q=2'))
+plt.show()
+
+# Visualizing Extrapolation Error
+line1, = plt.plot(Testmoden, ex_fehler_dmd, color='blue', marker='x')
+line2, = plt.plot(Testmoden, ex_fehler_rdmd, color='orange', marker='x')
+line3, = plt.plot(Testmoden, ex_fehler_r2dmd, color='green', marker='x')
+line4, = plt.plot(Testmoden, ex_fehler_r3dmd, color='olive', marker='x')
+line5, = plt.plot(Testmoden, ex_fehler_r4dmd, color='yellowgreen', marker='x')
+line6, = plt.plot(Testmoden, ex_fehler_r5dmd, color='palegreen', marker='x')
+line7, = plt.plot(Testmoden, ex_fehler_r6dmd, color='lime', marker='x')
+
+plt.title('Extrapolation Error - exact')
 plt.ylabel('Error')
 plt.xlabel('Number of Modes')
 plt.yscale('log')
 plt.legend((line1, line2, line3, line4, line5, line6, line7),
-           ('dmd', 'rdmd', 'rdmd p=1', 'rdmd p=2', 'rdmd p=4', 'rdmd p=6', 'rdmd p=10'))
+           ('dmd', 'rdmd', 'rdmd p=1', 'rdmd p=2', 'rdmd p=4, q=1', 'rdmd p=6, q=1', 'rdmd p=10, q=2'))
 plt.show()
 
 # Visualizing CPU time
@@ -263,7 +301,7 @@ plt.title('CPU time - exact')
 plt.ylabel('Time')
 plt.xlabel('Number of Modes')
 plt.legend((line1, line2, line3, line4, line5, line6, line7),
-           ('dmd', 'rdmd', 'rdmd p=1', 'rdmd p=2', 'rdmd p=4', 'rdmd p=6', 'rdmd p=10'))
+           ('dmd', 'rdmd', 'rdmd p=1', 'rdmd p=2', 'rdmd p=4, q=1', 'rdmd p=6, q=1', 'rdmd p=10, q=2'))
 plt.show()
 
 # Visualizing Error of randomized dmd Eigenvalues
@@ -279,30 +317,53 @@ plt.ylabel('Absolute Difference')
 plt.xlabel('Number of Modes')
 plt.yscale('log')
 plt.legend((line1, line2, line3, line4, line5, line6),
-           ('rdmd', 'rdmd p=1', 'rdmd p=2', 'rdmd p=4', 'rdmd p=6', 'rdmd p=10'))
+           ('rdmd', 'rdmd p=1', 'rdmd p=2', 'rdmd p=4, q=1', 'rdmd p=6, q=1', 'rdmd p=10, q=2'))
 plt.show()
 
 # Visualizing Error of randomized dmd Eigenvalues of last iteration
-# W_np = np.abs(W.real.to_numpy())
-# rW_np = np.abs(rW.real.to_numpy())
-# r2W_np = np.abs(r2W.real.to_numpy())
-# norm_EVECS = np.apply_along_axis(np.linalg.norm, 1, W_np)
-# norm_rEVECS = np.apply_along_axis(np.linalg.norm, 1, rW_np)
-# norm_r2EVECS = np.apply_along_axis(np.linalg.norm, 1, r2W_np)
+# sorted by Dominance of the Eigenvalue
+W_np = np.abs(W.real.to_numpy())
+rW_np = np.abs(rW.real.to_numpy())
+r2W_np = np.abs(r2W.real.to_numpy())
+r3W_np = np.abs(r3W.real.to_numpy())
+r4W_np = np.abs(r4W.real.to_numpy())
+r5W_np = np.abs(r5W.real.to_numpy())
+r6W_np = np.abs(r6W.real.to_numpy())
 
-# sort_idx = np.argsort(norm_EVECS)[::-1]
-# EVECS_dmd = norm_EVECS[sort_idx]
-# EVECS_rdmd = norm_rEVECS[sort_idx]
-# EVECS_r2dmd = norm_r2EVECS[sort_idx]
+norm_EVECS = np.apply_along_axis(np.linalg.norm, 1, W_np)
+norm_rEVECS = np.apply_along_axis(np.linalg.norm, 1, rW_np)
+norm_r2EVECS = np.apply_along_axis(np.linalg.norm, 1, r2W_np)
+norm_r3EVECS = np.apply_along_axis(np.linalg.norm, 1, r3W_np)
+norm_r4EVECS = np.apply_along_axis(np.linalg.norm, 1, r4W_np)
+norm_r5EVECS = np.apply_along_axis(np.linalg.norm, 1, r5W_np)
+norm_r6EVECS = np.apply_along_axis(np.linalg.norm, 1, r6W_np)
 
-# fehler_rdmd = np.abs(EVECS_dmd - EVECS_rdmd)
-# fehler_r2dmd = np.abs(EVECS_dmd - EVECS_r2dmd)
+sort_idx = np.argsort(norm_EVECS)[::-1]
+EVECS_dmd = norm_EVECS[sort_idx]
+EVECS_rdmd = norm_rEVECS[sort_idx]
+EVECS_r2dmd = norm_r2EVECS[sort_idx]
+EVECS_r3dmd = norm_r3EVECS[sort_idx]
+EVECS_r4dmd = norm_r4EVECS[sort_idx]
+EVECS_r5dmd = norm_r5EVECS[sort_idx]
+EVECS_r6dmd = norm_r6EVECS[sort_idx]
 
-# line1, = plt.plot(fehler_rdmd, color='orange', marker='x')
-# line2, = plt.plot(fehler_r2dmd, color='green', marker='x')
-# plt.title('Difference of the Eigenvectors to not rand. dmd')
-# plt.ylabel('Mean squared Error')
-# plt.xlabel('Dominance of Mode')
-# plt.yscale('log')
-# plt.legend((line1, line2), ('rdmd', 'rdmd + optim.'))
-# plt.show()
+fehler_rdmd = np.abs(EVECS_dmd - EVECS_rdmd)
+fehler_r2dmd = np.abs(EVECS_dmd - EVECS_r2dmd)
+fehler_r3dmd = np.abs(EVECS_dmd - EVECS_r3dmd)
+fehler_r4dmd = np.abs(EVECS_dmd - EVECS_r4dmd)
+fehler_r5dmd = np.abs(EVECS_dmd - EVECS_r5dmd)
+fehler_r6dmd = np.abs(EVECS_dmd - EVECS_r6dmd)
+
+line1, = plt.plot(fehler_rdmd, color='orange', marker='x')
+line2, = plt.plot(fehler_r2dmd, color='green', marker='x')
+line3, = plt.plot(fehler_r3dmd, color='olive', marker='x')
+line4, = plt.plot(fehler_r4dmd, color='yellowgreen', marker='x')
+line5, = plt.plot(fehler_r5dmd, color='palegreen', marker='x')
+line6, = plt.plot(fehler_r6dmd, color='lime', marker='x')
+plt.title('Difference of the Eigenvectors to not rand. dmd')
+plt.ylabel('Mean squared Error')
+plt.xlabel('Dominance of Mode')
+plt.yscale('log')
+plt.legend((line1, line2, line3, line4, line5, line6),
+           ('rdmd', 'rdmd p=1', 'rdmd p=2', 'rdmd p=4, q=1', 'rdmd p=6, q=1', 'rdmd p=10, q=2'))
+plt.show()
