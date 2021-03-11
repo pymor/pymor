@@ -1,12 +1,10 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
-from pymor.algorithms.dmd import dmd, rand_dmd, get_amplitudes
+from pymor.algorithms.dmd import dmd, rand_dmd
 
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import ExpressionFunction, ConstantFunction, LincombFunction
-from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.analyticalproblems.functions import ExpressionFunction, ConstantFunction
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.discretizers.builtin.cg import discretize_instationary_cg
 from pymor.discretizers.builtin.grids.tria import TriaGrid
@@ -18,21 +16,16 @@ problem = InstationaryProblem(
 
         diffusion=ConstantFunction(0.01, dim_domain=2),
 
-        # advection=LincombFunction([ConstantFunction(np.array([-1., 0]), dim_domain=2)],
-        #                           [ProjectionParameterFunctional('speed')]),
-
         reaction=ConstantFunction(0.5, dim_domain=2),
-
-        # rhs=ExpressionFunction('(x[..., 0] > 0.3) * (x[..., 0] < 0.7) * (x[..., 1] > 0.3)*(x[...,1]<0.7) * 0.',
-        #                        dim_domain=2),
 
         dirichlet_data=ConstantFunction(value=0., dim_domain=2),
     ),
 
     T=1.,
 
-    initial_data=ExpressionFunction('(x[..., 0] > 0.3) * (x[..., 0] < 0.7) * (x[...,1]>0.3) * (x[..., 1] < 0.7) * 10.',
-                                    dim_domain=2),
+    initial_data=ExpressionFunction(
+        '(x[..., 0] > 0.3) * (x[..., 0] < 0.7) * (x[...,1]>0.3) * (x[..., 1] < 0.7) * 10.', dim_domain=2),
+
 )
 
 print('Discretize ...')
@@ -47,7 +40,6 @@ print(grid)
 print()
 
 print('Solve ...')
-# U = m.solve({'speed': 0.3})
 U = m.solve()
 
 m.visualize(U, title='Solution of Parabolic Problem')
