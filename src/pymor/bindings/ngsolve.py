@@ -164,7 +164,7 @@ if config.HAVE_NGSOLVE:
             self.__auto_init(locals())
             self.space = NGSolveVectorSpace(fespace)
 
-        def visualize(self, U, m, legend=None, separate_colorbars=True, block=True):
+        def visualize(self, U, m, legend=None, separate_colorbars=True, filename=None, block=True):
             """Visualize the provided data."""
             if isinstance(U, VectorArray):
                 U = (U,)
@@ -173,7 +173,6 @@ if config.HAVE_NGSOLVE:
                 raise NotImplementedError
             if any(u._list[0].imag_part is not None for u in U):
                 raise NotImplementedError
-
             if legend is None:
                 legend = [f'VectorArray{i}' for i in range(len(U))]
             if isinstance(legend, str):
@@ -181,8 +180,13 @@ if config.HAVE_NGSOLVE:
             assert len(legend) == len(U)
             legend = [l.replace(' ', '_') for l in legend]  # NGSolve GUI will fail otherwise
 
-            if not separate_colorbars:
-                raise NotImplementedError
+            if filename:
+                coeffs = [u._list[0].real_part.impl for u in U]
+                vtk = ngs.VTKOutput(ma=self.mesh, coefs=coeffs, names=legend, filename=filename, subdivision=0)
+                vtk.Do()
+            else:
+                if not separate_colorbars:
+                    raise NotImplementedError
 
-            for u, name in zip(U, legend):
-                ngs.Draw(u._list[0].real_part.impl, self.mesh, name=name)
+                for u, name in zip(U, legend):
+                    ngs.Draw(u._list[0].real_part.impl, self.mesh, name=name)
