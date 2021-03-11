@@ -9,6 +9,7 @@ if config.HAVE_FENICS:
     import dolfin as df
     import ufl
     import numpy as np
+    from pathlib import Path
 
     from pymor.core.base import ImmutableObject
     from pymor.core.defaults import defaults
@@ -465,6 +466,12 @@ if config.HAVE_FENICS:
             if filename:
                 assert not isinstance(U, tuple)
                 assert U in self.space
+                supported = ('.pvd', '.xdmf', '.hdf5')
+                if not Path(filename).suffix in supported:
+                    msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n' +
+                           f'defaulting to .pvd (possible choices: {supported})')
+                    self.logger.warn(msg)
+                    filename = f'{filename}.pvd'
                 f = df.File(filename)
                 coarse_function = df.Function(self.space.V)
                 if self.mesh_refinements:
