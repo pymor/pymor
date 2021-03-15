@@ -5,9 +5,13 @@
 import hashlib
 import os
 import sys
+from pprint import pformat
+
 import numpy as np
 from pickle import dump, load
 from pkg_resources import resource_filename, resource_stream
+
+from pymor.algorithms.basic import almost_equal, relative_error
 
 
 def runmodule(filename):
@@ -63,3 +67,10 @@ def check_results(test_name, params, results, *args):
             assert False, (f'Results for test {test_name}({params}, key: {k}) have changed.\n'
                            f'(maximum error: {np.max(abs_errs)} abs / {np.max(rel_errs)} rel).\n'
                            f'Saved new results in {filename}_changed')
+
+
+def assert_all_almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):
+    cmp_array = almost_equal(U, V, product=product, sup_norm=sup_norm, rtol=rtol, atol=atol)
+    too_large_relative_errors = dict((i, relative_error(u, v, product=product))
+                                     for i, (u, v, f) in enumerate(zip(U, V, cmp_array)) if not f)
+    assert np.all(cmp_array), f'Relative errors for not-equal elements:{pformat(too_large_relative_errors)}'
