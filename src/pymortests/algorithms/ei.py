@@ -5,9 +5,7 @@
 import numpy as np
 
 from pymor.models.basic import StationaryModel
-from pymor.operators.constructions import VectorOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
-from pymor.algorithms.basic import almost_equal
 from pymortests.base import runmodule, assert_all_almost_equal
 from pymortests.fixtures.operator import operator
 from pymortests.fixtures.model import model, stationary_models
@@ -31,7 +29,7 @@ def test_ei_op_creation(operator):
     op = operator[0]
     cb = op.range.from_numpy(np.eye(op.range.dim))
     dofs = list(range(cb.dim))
-    ei_op = EmpiricalInterpolatedOperator(op, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
+    EmpiricalInterpolatedOperator(op, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
 
 
 if __name__ == "__main__":

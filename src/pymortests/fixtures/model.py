@@ -11,7 +11,8 @@ from pymortests.fixtures.analyticalproblem import (picklable_thermalblock_proble
                                                    burgers_problems)
 
 
-stationary_cg_generators = [lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]
+stationary_cg_generators = \
+    [lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]
      for p, d in product(picklable_thermalblock_problems, [1./50., 1./100.])]
 
 picklable_model_generators = stationary_cg_generators \
