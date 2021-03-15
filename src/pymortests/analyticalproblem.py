@@ -3,7 +3,6 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymortests.base import runmodule
-from pymortests.fixtures.analyticalproblem import analytical_problem, picklable_analytical_problem
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 
 

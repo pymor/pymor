@@ -7,8 +7,6 @@ import numpy as np
 from pymor.models.basic import StationaryModel
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymortests.base import runmodule, assert_all_almost_equal
-from pymortests.fixtures.operator import operator
-from pymortests.fixtures.model import model, stationary_models
 
 
 def test_ei_restricted_to_full(stationary_models):

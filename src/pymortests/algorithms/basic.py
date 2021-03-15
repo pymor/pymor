@@ -17,7 +17,6 @@ else:
         pass
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
 from pymortests.vectorarray import indexed
 import pymortests.strategies as pyst
