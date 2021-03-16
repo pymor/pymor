@@ -17,8 +17,8 @@ from pymor.operators.interface import as_array_max_length
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymortests.fixtures.operator import (operator, operator_with_arrays, operator_with_arrays_and_products,
-                                          picklable_operator, MonomOperator)
+from pymortests.base import assert_all_almost_equal
+from pymortests.fixtures.operator import MonomOperator
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
 
@@ -348,7 +348,28 @@ def test_restricted(operator_with_arrays):
             return
         op_U = rop.range.make_array(op.apply(U, mu=mu).dofs(dofs))
         rop_U = rop.apply(rop.source.make_array(U.dofs(source_dofs)), mu=mu)
-        assert np.all(almost_equal(op_U, rop_U))
+        assert_all_almost_equal(op_U, rop_U)
+
+
+def test_restricted_jacobian(operator_with_arrays):
+    op, mu, U, _, = operator_with_arrays
+    if op.range.dim == 0:
+        return
+    np.random.seed(4711 + U.dim)
+    for num in [0, 1, 3, 7]:
+        dofs = np.random.randint(0, op.range.dim, num)
+        try:
+            rop, source_dofs = op.restricted(dofs)
+        except NotImplementedError:
+            return
+        jac_U = U[0]
+        apply_to = U[0]
+        op_U = rop.range.make_array(op.jacobian(jac_U, mu=mu).apply(apply_to).dofs(dofs))
+        r_apply_to = rop.source.make_array(apply_to.dofs(source_dofs))
+        rop_U = rop.jacobian(r_apply_to, mu=mu).apply(r_apply_to)
+        assert len(rop_U) == len(op_U)
+        assert len(r_apply_to) == len(apply_to)
+        assert_all_almost_equal(op_U, rop_U)
 
 
 def test_InverseOperator(operator_with_arrays):
