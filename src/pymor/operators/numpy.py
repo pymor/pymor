@@ -322,7 +322,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             if least_squares:
                 try:
                     import pymor.config
-                    if tuple(int(v) for v in pymor.config.NUMPY_VERSION.split('.')) >= (1, 14, 0):
+                    from packaging.version import parse
+                    if parse(pymor.config.NUMPY_VERSION) >= parse('1.14'):
                         kwargs = {'rcond': None}
                     else:
                         kwargs = {}
