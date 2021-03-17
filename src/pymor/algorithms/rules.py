@@ -9,6 +9,7 @@ from weakref import WeakValueDictionary
 from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.operators.interface import Operator
+from pymor.tools.formatsrc import format_source, print_source
 from pymor.tools.table import format_table
 
 
@@ -57,20 +58,10 @@ class rule:
     condition_type = None
 
     def _ipython_display_(self):
-        from inspect import getsource
-        from IPython.display import Code, display
-        display(Code(getsource(self.action), language='python'))
+        print_source(self.action)
 
     def __repr__(self):
-        from inspect import getsource
-        source = getsource(self.action)
-        try:
-            from pygments import highlight
-            from pygments.lexers import PythonLexer
-            from pygments.formatters import Terminal256Formatter
-            return highlight(source, PythonLexer(), Terminal256Formatter())
-        except ImportError:
-            return source
+        return format_source(self.action)
 
     @property
     def action_description(self):
