@@ -18,22 +18,19 @@ def format_source(obj):
     Returns
     -------
     source
-        The source code as a `Code` widget in case a Jupyter notebook is used or as a string
-        otherwise.
+        The source code as a string, possibly highlighted when used in a
+        terminal.
     """
     source = getsource(obj)
-
     if is_jupyter():
-        from IPython.display import Code
-        return Code(source, language='python')
-    else:
-        try:
-            from pygments import highlight
-            from pygments.lexers import PythonLexer
-            from pygments.formatters import Terminal256Formatter
-            return highlight(source, PythonLexer(), Terminal256Formatter())
-        except ImportError:
-            return source
+        return source
+    try:
+        from pygments import highlight
+        from pygments.lexers import PythonLexer
+        from pygments.formatters import Terminal256Formatter
+        return highlight(source, PythonLexer(), Terminal256Formatter())
+    except ImportError:
+        return source
 
 
 def print_source(obj):
@@ -46,7 +43,7 @@ def print_source(obj):
     """
     source = format_source(obj)
     if is_jupyter():
-        from IPython.display import display
-        display(source)
+        from IPython.display import Code, display
+        display(Code(source, language='python'))
     else:
         print(source)
