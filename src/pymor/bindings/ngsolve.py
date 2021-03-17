@@ -1,9 +1,11 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+from pathlib import Path
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
+from pymor.tools.io import change_to_directory
 
 if config.HAVE_NGSOLVE:
     import ngsolve as ngs
@@ -181,9 +183,17 @@ if config.HAVE_NGSOLVE:
             legend = [l.replace(' ', '_') for l in legend]  # NGSolve GUI will fail otherwise
 
             if filename:
+                # ngsolve unconditionnaly appends ".vtk"
+                filename = Path(filename).resolve()
+                if filename.suffix == '.vtk':
+                    filename = filename.parent / filename.stem
+                else:
+                    self.logger.warn(f'NGSolve set VTKOutput filename to {filename}.vtk')
                 coeffs = [u._list[0].real_part.impl for u in U]
-                vtk = ngs.VTKOutput(ma=self.mesh, coefs=coeffs, names=legend, filename=filename, subdivision=0)
-                vtk.Do()
+                # ngsolve cannot handle full paths for filenames
+                with change_to_directory(filename.parent):
+                    vtk = ngs.VTKOutput(ma=self.mesh, coefs=coeffs, names=legend, filename=str(filename), subdivision=0)
+                    vtk.Do()
             else:
                 if not separate_colorbars:
                     raise NotImplementedError
