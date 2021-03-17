@@ -14,6 +14,7 @@ This module provides the following |NumPy|-based |Operators|:
 """
 
 from functools import reduce
+from typing import Optional
 
 import numpy as np
 from scipy.io import mmwrite, savemat
@@ -103,7 +104,7 @@ class NumpyMatrixBasedOperator(Operator):
     """
 
     linear = True
-    sparse = None
+    sparse: Optional[bool] = None
 
     @property
     def H(self):

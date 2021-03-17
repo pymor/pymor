@@ -23,7 +23,7 @@ class DomainDescription(ImmutableObject):
         Set of boundary types the domain has.
     """
 
-    dim = None
+    dim: int
     boundary_types = frozenset()
 
     @property

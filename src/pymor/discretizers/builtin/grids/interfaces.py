@@ -26,8 +26,8 @@ class ReferenceElement(CacheableObject):
         The volume of the reference element
     """
 
-    dim = None
-    volume = None
+    dim: int
+    volume: float
     cache_region = 'memory'
 
     @abstractmethod

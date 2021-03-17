@@ -54,8 +54,8 @@ class rule:
             else:
                 return self.next_rule.matches(obj)
 
-    condition_description = None
-    condition_type = None
+    condition_description: str
+    condition_type: str
 
     def _ipython_display_(self):
         print_source(self.action)
