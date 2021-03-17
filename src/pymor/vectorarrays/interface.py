@@ -2,13 +2,19 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
+from typing import Optional, Union, List, Tuple
 
 import numpy as np
+from numpy import ndarray
+from numpy.random import RandomState
 
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.tools.random import get_random_state
+
+
+Index = Union[int, slice, List[int], ndarray]
+RealOrComplex = Union[float, complex]
 
 
 class VectorArray(BasicObject):
@@ -59,9 +65,10 @@ class VectorArray(BasicObject):
         The |VectorSpace| the array belongs to.
     """
 
-    is_view = False
+    is_view: bool = False
+    space: 'VectorSpace'
 
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count: int = 1, reserve: int = 0) -> 'VectorArray':
         """Create a |VectorArray| of null vectors of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(count, reserve)`.
@@ -79,7 +86,7 @@ class VectorArray(BasicObject):
         """
         return self.space.zeros(count, reserve=reserve)
 
-    def ones(self, count=1, reserve=0):
+    def ones(self, count: int = 1, reserve: int = 0) -> 'VectorArray':
         """Create a |VectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
 
         This is a shorthand for `self.space.full(1., count, reserve)`.
@@ -97,7 +104,7 @@ class VectorArray(BasicObject):
         """
         return self.space.full(1., count, reserve)
 
-    def full(self, value, count=1, reserve=0):
+    def full(self, value: RealOrComplex, count: int = 1, reserve: int = 0) -> 'VectorArray':
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
 
         This is a shorthand for `self.space.full(value, count, reserve)`.
@@ -117,7 +124,8 @@ class VectorArray(BasicObject):
         """
         return self.space.full(value, count, reserve=reserve)
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count: int = 1, distribution: str = 'uniform', random_state: Optional[RandomState] = None,
+               seed: int = None, reserve: int = 0, **kwargs) -> 'VectorArray':
         """Create a |VectorArray| of vectors with random entries.
 
         This is a shorthand for
@@ -159,7 +167,7 @@ class VectorArray(BasicObject):
         """
         return self.space.random(count, distribution, random_state, seed, **kwargs)
 
-    def empty(self, reserve=0):
+    def empty(self, reserve: int = 0) -> 'VectorArray':
         """Create an empty |VectorArray| of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(0, reserve)`.
@@ -176,25 +184,25 @@ class VectorArray(BasicObject):
         return self.space.zeros(0, reserve=reserve)
 
     @property
-    def dim(self):
+    def dim(self) -> int:
         return self.space.dim
 
     @abstractmethod
-    def __len__(self):
+    def __len__(self) -> int:
         """The number of vectors in the array."""
         pass
 
     @abstractmethod
-    def __getitem__(self, ind):
+    def __getitem__(self, ind: Index) -> 'VectorArray':
         """Return a |VectorArray| view onto a subset of the vectors in the array."""
         pass
 
     @abstractmethod
-    def __delitem__(self, ind):
+    def __delitem__(self, ind: Index) -> None:
         """Remove vectors from the array."""
         pass
 
-    def to_numpy(self, ensure_copy=False):
+    def to_numpy(self, ensure_copy: bool = False) -> ndarray:
         """Return (len(self), self.dim) NumPy Array with the data stored in the array.
 
         Parameters
@@ -206,7 +214,7 @@ class VectorArray(BasicObject):
         raise NotImplementedError
 
     @abstractmethod
-    def append(self, other, remove_from_other=False):
+    def append(self, other: 'VectorArray', remove_from_other: bool = False) -> None:
         """Append vectors to the array.
 
         Parameters
@@ -221,7 +229,7 @@ class VectorArray(BasicObject):
         pass
 
     @abstractmethod
-    def copy(self, deep=False):
+    def copy(self, deep: bool = False) -> 'VectorArray':
         """Returns a copy of the array.
 
         All |VectorArray| implementations in pyMOR have copy-on-write semantics:
@@ -244,11 +252,11 @@ class VectorArray(BasicObject):
         """
         pass
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> 'VectorArray':
         return self.copy(deep=True)
 
     @abstractmethod
-    def scal(self, alpha):
+    def scal(self, alpha: RealOrComplex) -> None:
         """BLAS SCAL operation (in-place scalar multiplication).
 
         This method calculates ::
@@ -268,7 +276,7 @@ class VectorArray(BasicObject):
         pass
 
     @abstractmethod
-    def axpy(self, alpha, x):
+    def axpy(self, alpha: RealOrComplex, x: 'VectorArray') -> None:
         """BLAS AXPY operation.
 
         This method forms the sum ::
@@ -291,7 +299,7 @@ class VectorArray(BasicObject):
         """
         pass
 
-    def inner(self, other, product=None):
+    def inner(self, other: 'VectorArray', product: Optional['Operator'] = None) -> ndarray:
         """Returns the inner products between |VectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
@@ -344,7 +352,7 @@ class VectorArray(BasicObject):
         else:
             raise NotImplementedError
 
-    def pairwise_inner(self, other, product=None):
+    def pairwise_inner(self, other: 'VectorArray', product: Optional['Operator'] = None) -> ndarray:
         """Returns the pairwise inner products between |VectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
@@ -400,7 +408,7 @@ class VectorArray(BasicObject):
             raise NotImplementedError
 
     @abstractmethod
-    def lincomb(self, coefficients):
+    def lincomb(self, coefficients: ndarray) -> 'VectorArray':
         """Returns linear combinations of the vectors contained in the array.
 
         Parameters
@@ -423,7 +431,8 @@ class VectorArray(BasicObject):
         """
         pass
 
-    def norm(self, product=None, tol=None, raise_complex=None):
+    def norm(self, product: Optional['Operator'] = None, tol: Optional[float] = None,
+             raise_complex: Optional[bool] = None) -> ndarray:
         """Norm with respect to a given inner product.
 
         If `product` is `None`, the Euclidean norms of the :meth:`dofs`
@@ -465,7 +474,8 @@ class VectorArray(BasicObject):
             return np.sqrt(norm_squared.real)
 
     @defaults('tol', 'raise_complex')
-    def norm2(self, product=None, tol=1e-10, raise_complex=True):
+    def norm2(self, product: Optional['Operator'] = None, tol: Optional[float] = 1e-10,
+              raise_complex: Optional[bool] = True) -> ndarray:
         """Squared norm with respect to a given inner product.
 
         If `product` is `None`, the Euclidean norms of the :meth:`dofs`
@@ -509,16 +519,16 @@ class VectorArray(BasicObject):
             return norm_squared.real
 
     @abstractmethod
-    def _norm(self):
+    def _norm(self) -> ndarray:
         """Implementation of :meth:`norm` for the case that no `product` is given."""
         pass
 
     @abstractmethod
-    def _norm2(self):
+    def _norm2(self) -> ndarray:
         """Implementation of :meth:`norm2` for the case that no `product` is given."""
         pass
 
-    def sup_norm(self):
+    def sup_norm(self) -> ndarray:
         """The l-infinity-norms of the vectors contained in the array.
 
         Returns
@@ -533,7 +543,7 @@ class VectorArray(BasicObject):
             return max_val
 
     @abstractmethod
-    def dofs(self, dof_indices):
+    def dofs(self, dof_indices: ndarray) -> ndarray:
         """Extract DOFs of the vectors contained in the array.
 
         Parameters
@@ -549,7 +559,7 @@ class VectorArray(BasicObject):
         pass
 
     @abstractmethod
-    def amax(self):
+    def amax(self) -> ndarray:
         """The maximum absolute value of the DOFs contained in the array.
 
         Returns
@@ -563,65 +573,72 @@ class VectorArray(BasicObject):
         """
         pass
 
-    def gramian(self, product=None):
+    def gramian(self, product: Optional['Operator'] = None) -> ndarray:
         """Shorthand for `self.inner(self, product)`."""
         return self.inner(self, product)
 
-    def __add__(self, other):
-        if isinstance(other, Number):
-            assert other == 0
+    def __add__(self, other: Union['VectorArray', int]) -> 'VectorArray':
+        if isinstance(other, int):
+            if other != 0:
+                raise TypeError
             return self.copy()
+        elif isinstance(other, VectorArray):
+            result = self.copy()
+            result.axpy(1, other)
+            return result
+        else:
+            raise TypeError
 
-        result = self.copy()
-        result.axpy(1, other)
-        return result
-
-    def __iadd__(self, other):
+    def __iadd__(self, other: Union['VectorArray', int]) -> 'VectorArray':
+        if isinstance(other, int):
+            if other != 0:
+                raise TypeError
+            return self
         self.axpy(1, other)
         return self
 
     __radd__ = __add__
 
-    def __sub__(self, other):
+    def __sub__(self, other: 'VectorArray') -> 'VectorArray':
         result = self.copy()
         result.axpy(-1, other)
         return result
 
-    def __isub__(self, other):
+    def __isub__(self, other: 'VectorArray') -> 'VectorArray':
         self.axpy(-1, other)
         return self
 
-    def __mul__(self, other):
+    def __mul__(self, other: RealOrComplex) -> 'VectorArray':
         result = self.copy()
         result.scal(other)
         return result
 
     __rmul__ = __mul__
 
-    def __imul__(self, other):
+    def __imul__(self, other: RealOrComplex) -> 'VectorArray':
         self.scal(other)
         return self
 
-    def __neg__(self):
+    def __neg__(self) -> 'VectorArray':
         result = self.copy()
         result.scal(-1)
         return result
 
     @property
-    def real(self):
+    def real(self) -> 'VectorArray':
         """Real part."""
         return self.copy()
 
     @property
-    def imag(self):
+    def imag(self) -> 'VectorArray':
         """Imaginary part."""
         return self.zeros(len(self))
 
-    def conj(self):
+    def conj(self) -> 'VectorArray':
         """Complex conjugation."""
         return self.copy()
 
-    def check_ind(self, ind):
+    def check_ind(self, ind: Index) -> bool:
         """Check if index is admissible.
 
         Check if `ind` is an admissible list of indices in the sense
@@ -629,10 +646,10 @@ class VectorArray(BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, Number) and -l <= ind < l
+                or isinstance(ind, int) and -l <= ind < l
                 or isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
 
-    def check_ind_unique(self, ind):
+    def check_ind_unique(self, ind: Index) -> bool:
         """Check if index is admissible and unique.
 
         Check if `ind` is an admissible list of non-repeated indices in
@@ -640,60 +657,60 @@ class VectorArray(BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, Number) and -l <= ind < l
+                or isinstance(ind, int) and -l <= ind < l
                 or isinstance(ind, (list, np.ndarray))
                 and len(set(i if i >= 0 else l+i for i in ind if -l <= i < l)) == len(ind))
 
-    def len_ind(self, ind):
+    def len_ind(self, ind: Index) -> int:
         """Return the number of given indices."""
         l = len(self)
-        if type(ind) is slice:
+        if isinstance(ind, slice):
             return len(range(*ind.indices(l)))
-        try:
-            return len(ind)
-        except TypeError:
+        elif isinstance(ind, int):
             return 1
+        else:
+            return len(ind)
 
-    def len_ind_unique(self, ind):
+    def len_ind_unique(self, ind: Index) -> int:
         """Return the number of specified unique indices."""
         l = len(self)
-        if type(ind) is slice:
+        if isinstance(ind, slice):
             return len(range(*ind.indices(l)))
-        if isinstance(ind, Number):
+        if isinstance(ind, int):
             return 1
         return len({i if i >= 0 else l+i for i in ind})
 
-    def normalize_ind(self, ind):
+    def normalize_ind(self, ind: Index) -> Index:
         """Normalize given indices such that they are independent of the array length."""
-        if type(ind) is slice:
+        if isinstance(ind, slice):
             return slice(*ind.indices(len(self)))
-        elif not hasattr(ind, '__len__'):
+        elif isinstance(ind, int):
             ind = ind if 0 <= ind else len(self)+ind
             return slice(ind, ind+1)
         else:
             l = len(self)
             return [i if 0 <= i else l+i for i in ind]
 
-    def sub_index(self, ind, ind_ind):
+    def sub_index(self, ind: Index, ind_ind: Index) -> Index:
         """Return indices corresponding to the view `self[ind][ind_ind]`"""
-        if type(ind) is slice:
+        if isinstance(ind, slice):
             ind = range(*ind.indices(len(self)))
-            if type(ind_ind) is slice:
+            if isinstance(ind_ind, slice):
                 result = ind[ind_ind]
                 return slice(result.start, result.stop, result.step)
-            elif hasattr(ind_ind, '__len__'):
-                return [ind[i] for i in ind_ind]
-            else:
+            elif isinstance(ind_ind, int):
                 return [ind[ind_ind]]
+            else:
+                return [ind[i] for i in ind_ind]
         else:
-            if not hasattr(ind, '__len__'):
+            if isinstance(ind, int):
                 ind = [ind]
-            if type(ind_ind) is slice:
+            if isinstance(ind_ind, slice):
                 return ind[ind_ind]
-            elif hasattr(ind_ind, '__len__'):
-                return [ind[i] for i in ind_ind]
-            else:
+            elif isinstance(ind_ind, int):
                 return [ind[ind_ind]]
+            else:
+                return [ind[i] for i in ind_ind]
 
 
 class VectorSpace(ImmutableObject):
@@ -737,12 +754,12 @@ class VectorSpace(ImmutableObject):
         `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
     """
 
-    id = None
-    dim = None
-    is_scalar = False
+    id: Optional[str] = None
+    dim: int
+    is_scalar: bool = False
 
     @abstractmethod
-    def make_array(*args, **kwargs):
+    def make_array(*args, **kwargs) -> VectorArray:
         """Create a |VectorArray| from raw data.
 
         This method is used in the implementation of |Operators|
@@ -756,7 +773,7 @@ class VectorSpace(ImmutableObject):
         pass
 
     @abstractmethod
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count: int = 1, reserve: int = 0) -> VectorArray:
         """Create a |VectorArray| of null vectors
 
         Parameters
@@ -772,7 +789,7 @@ class VectorSpace(ImmutableObject):
         """
         pass
 
-    def ones(self, count=1, reserve=0):
+    def ones(self, count: int = 1, reserve: int = 0) -> VectorArray:
         """Create a |VectorArray| of vectors with all DOFs set to one.
 
         This is a shorthand for `self.full(1., count, reserve)`.
@@ -790,7 +807,7 @@ class VectorSpace(ImmutableObject):
         """
         return self.full(1., count, reserve)
 
-    def full(self, value, count=1, reserve=0):
+    def full(self, value: RealOrComplex, count: int = 1, reserve: int = 0) -> VectorArray:
         """Create a |VectorArray| of vectors with all DOFs set to the same value.
 
         Parameters
@@ -808,7 +825,8 @@ class VectorSpace(ImmutableObject):
         """
         return self.from_numpy(np.full((count, self.dim), value))
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count: int = 1, distribution: str = 'uniform', random_state: Optional[RandomState] = None,
+               seed: Optional[int] = None, reserve: int = 0, **kwargs) -> VectorArray:
         """Create a |VectorArray| of vectors with random entries.
 
         Supported random distributions::
@@ -850,7 +868,7 @@ class VectorSpace(ImmutableObject):
         values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
         return self.from_numpy(values)
 
-    def empty(self, reserve=0):
+    def empty(self, reserve: int = 0) -> VectorArray:
         """Create an empty |VectorArray|
 
         This is a shorthand for `self.zeros(0, reserve)`.
@@ -866,7 +884,7 @@ class VectorSpace(ImmutableObject):
         """
         return self.zeros(0, reserve=reserve)
 
-    def from_numpy(self, data, ensure_copy=False):
+    def from_numpy(self, data: ndarray, ensure_copy: bool = False) -> VectorArray:
         """Create a |VectorArray| from a |NumPy array|
 
         Note that this method will not be supported by all vector
@@ -887,20 +905,24 @@ class VectorSpace(ImmutableObject):
         """
         raise NotImplementedError
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, VectorSpace):
+            return NotImplemented
         return other is self
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
+        if not isinstance(other, VectorSpace):
+            return NotImplemented
         return not (self == other)
 
-    def __contains__(self, other):
+    def __contains__(self, other: VectorArray) -> bool:
         return self == getattr(other, 'space', None)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.id)
 
 
-def _create_random_values(shape, distribution, random_state, **kwargs):
+def _create_random_values(shape: Tuple[int, ...], distribution: str, random_state: RandomState, **kwargs) -> ndarray:
     if distribution not in ('uniform', 'normal'):
         raise NotImplementedError
 
@@ -920,3 +942,6 @@ def _create_random_values(shape, distribution, random_state, **kwargs):
         return random_state.normal(loc, scale, shape)
     else:
         assert False
+
+
+from pymor.operators.interface import Operator  # NOQA
