@@ -18,7 +18,7 @@ from pymor.reductors.basic import LTIPGReductor
 class MTReductor(BasicObject):
     """Modal Truncation reductor.
 
-    See Section 9.2 in [A05]_.
+    See Section 9.2 in :cite:`A05`.
 
     Parameters
     ----------
@@ -144,11 +144,11 @@ class MTReductor(BasicObject):
                                          fom.C.as_source_array(),
                                          r, **method_options)
             absres = spla.norm(res, axis=(1, 2), ord=2)
-            if method_options['which'] == 'LR':
+            if method_options['which'] == 'NR':
                 dominance = -(absres / np.abs(np.real(poles)))
-            elif method_options['which'] == 'LS':
+            elif method_options['which'] == 'NS':
                 dominance = -(absres / np.abs(poles))
-            elif method_options['which'] == 'LM':
+            elif method_options['which'] == 'NM':
                 dominance = -np.array(absres)
         idx = sorted(range(len(poles)),
                      key=lambda i: (dominance[i], -poles[i].real,
