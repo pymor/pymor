@@ -7,6 +7,7 @@ from numbers import Number
 import numpy as np
 from scipy.linalg import solve, solve_triangular
 
+from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
 from pymor.parameters.base import ParametricObject, Mu
 from pymor.parameters.functionals import ParameterFunctional, ExpressionParameterFunctional
@@ -253,11 +254,9 @@ class ExpressionFunction(GenericFunction):
 
     functions = ExpressionParameterFunctional.functions
 
-    def __init__(self, expression, dim_domain=1, shape_range=(), parameters={}, values=None, name=None):
-        values = values or {}
-        code = compile(expression, '<expression>', 'eval')
-        super().__init__(lambda x, mu={}: eval(code, dict(self.functions, **values), dict(mu, x=x, mu=mu)),
-                         dim_domain, shape_range, parameters, name)
+    def __init__(self, expression, dim_domain=1, parameters={}, values={}, name=None):
+        self.expression_obj = parse_expression(expression, dim_domain, parameters=parameters, values=values)
+        super().__init__(self.expression_obj.to_numpy(), dim_domain, self.expression_obj.shape, parameters, name)
         self.__auto_init(locals())
 
     def __reduce__(self):
