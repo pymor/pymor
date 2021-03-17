@@ -466,13 +466,14 @@ if config.HAVE_FENICS:
             if filename:
                 assert not isinstance(U, tuple)
                 assert U in self.space
-                supported = ('.pvd', '.xdmf', '.hdf5')
-                if not Path(filename).suffix in supported:
-                    msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n' +
-                           f'defaulting to .pvd (possible choices: {supported})')
+                supported = (".x3d", ".xml", ".pvd", ".raw")
+                suffix = Path(filename).suffix
+                if suffix not in supported:
+                    msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
+                           + f'defaulting to .pvd (possible choices: {supported})')
                     self.logger.warn(msg)
                     filename = f'{filename}.pvd'
-                f = df.File(filename)
+                f = df.File(str(filename))
                 coarse_function = df.Function(self.space.V)
                 if self.mesh_refinements:
                     mesh = self.space.V.mesh()
@@ -490,7 +491,7 @@ if config.HAVE_FENICS:
                     coarse_function.vector()[:] = u.real_part.impl
                     if self.mesh_refinements:
                         function.vector()[:] = df.interpolate(coarse_function, V_fine).vector()
-                    f << function
+                    f.write(function)
             else:
                 from matplotlib import pyplot as plt
 
