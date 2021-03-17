@@ -130,3 +130,13 @@ def SafeTemporaryFileName(name=None, parent_dir=None):
     path = os.path.join(dirname, name)
     yield path
     shutil.rmtree(dirname)
+
+
+@contextmanager
+def change_to_directory(name):
+    """Changes current working directory to `name` for the scope of the context"""
+    old_cwd = os.getcwd()
+    try:
+        yield os.chdir(name)
+    finally:
+        os.chdir(old_cwd)
