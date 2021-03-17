@@ -1379,7 +1379,7 @@ class SecondOrderModel(InputStateOutputModel):
         lti
             |LTIModel| equivalent to the second-order model.
         """
-        return LTIModel(A=SecondOrderModelOperator(self.E, self.K),
+        return LTIModel(A=SecondOrderModelOperator(0, 1, -self.E, -self.K),
                         B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
                         C=BlockRowOperator([self.Cp, self.Cv]),
                         D=self.D,

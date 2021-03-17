@@ -256,8 +256,8 @@ class SecondOrderModelOperator(BlockOperator):
     .. math::
         \mathcal{A} =
         \begin{bmatrix}
-            0 & I \\
-            -K & -E
+            \alpha I & \beta I \\
+            B & A
         \end{bmatrix},
 
     which satisfies
@@ -266,176 +266,79 @@ class SecondOrderModelOperator(BlockOperator):
         \mathcal{A}^H
         &=
         \begin{bmatrix}
-            0 & -K^H \\
-            I & -E^H
+            \overline{\alpha} I & B^H \\
+            \overline{\beta} I & A^H
         \end{bmatrix}, \\
         \mathcal{A}^{-1}
         &=
         \begin{bmatrix}
-            -K^{-1} E & -K^{-1} \\
-            I & 0
+            (\alpha A - \beta B)^{-1} A & -\beta (\alpha A - \beta B)^{-1} \\
+            -(\alpha A - \beta B)^{-1} B & \alpha (\alpha A - \beta B)^{-1}
         \end{bmatrix}, \\
         \mathcal{A}^{-H}
         &=
         \begin{bmatrix}
-            -E^H K^{-H} & I \\
-            -K^{-H} & 0
+            A^H (\alpha A - \beta B)^{-H}
+            & -B^H (\alpha A - \beta B)^{-H} \\
+            -\overline{\beta} (\alpha A - \beta B)^{-H}
+            & \overline{\alpha} (\alpha A - \beta B)^{-H}
         \end{bmatrix}.
 
     Parameters
     ----------
-    E
+    alpha
+        Scalar.
+    beta
+        Scalar.
+    A
         |Operator|.
-    K
+    B
         |Operator|.
     """
 
-    def __init__(self, E, K):
-        super().__init__([[None, IdentityOperator(E.source)],
-                          [K * (-1), E * (-1)]])
+    def __init__(self, alpha, beta, A, B):
+        eye = IdentityOperator(A.source)
+        super().__init__([[alpha * eye, beta * eye],
+                          [B, A]])
         self.__auto_init(locals())
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V_blocks = [U.block(1),
-                    -self.K.apply(U.block(0), mu=mu) - self.E.apply(U.block(1), mu=mu)]
+        V_blocks = [self.alpha * U.block(0) + self.beta * U.block(1),
+                    self.B.apply(U.block(0), mu=mu) + self.A.apply(U.block(1), mu=mu)]
         return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [-self.K.apply_adjoint(V.block(1), mu=mu),
-                    V.block(0) - self.E.apply_adjoint(V.block(1), mu=mu)]
+        U_blocks = [self.alpha.conjugate() * V.block(0) + self.B.apply_adjoint(V.block(1), mu=mu),
+                    self.beta.conjugate() * V.block(0) + self.A.apply_adjoint(V.block(1), mu=mu)]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
         assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
-        U_blocks = [-self.K.apply_inverse(self.E.apply(V.block(0), mu=mu) + V.block(1), mu=mu,
-                                          least_squares=least_squares),
-                    V.block(0)]
+        aAmbB = (self.alpha * self.A - self.beta * self.B).assemble(mu=mu)
+        aAmbB_V1 = aAmbB.apply_inverse(V.block(1), least_squares=least_squares)
+        aAmbB_A_V0 = aAmbB.apply_inverse(self.A.apply(V.block(0), mu=mu), least_squares=least_squares)
+        aAmbB_B_V0 = aAmbB.apply_inverse(self.B.apply(V.block(0), mu=mu), least_squares=least_squares)
+        U_blocks = [aAmbB_A_V0 - self.beta * aAmbB_V1,
+                    self.alpha * aAmbB_V1 - aAmbB_B_V0]
         return self.source.make_array(U_blocks)
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
         assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
-        KitU0 = self.K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
-        V_blocks = [-self.E.apply_adjoint(KitU0, mu=mu) + U.block(1),
-                    -KitU0]
+        aAmbB = (self.alpha * self.A - self.beta * self.B).assemble(mu=mu)
+        aAmbB_U0 = aAmbB.apply_inverse_adjoint(U.block(0), least_squares=least_squares)
+        aAmbB_U1 = aAmbB.apply_inverse_adjoint(U.block(1), least_squares=least_squares)
+        V_blocks = [self.A.apply_adjoint(aAmbB_U0, mu=mu) - self.B.apply_adjoint(aAmbB_U1, mu=mu),
+                    self.alpha.conjugate() * aAmbB_U1 - self.beta.conjugate() * aAmbB_U0]
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):
-        E = self.E.assemble(mu)
-        K = self.K.assemble(mu)
-        if E == self.E and K == self.K:
+        A = self.A.assemble(mu)
+        B = self.B.assemble(mu)
+        if A == self.A and B == self.B:
             return self
         else:
-            return self.__class__(E, K)
-
-
-class ShiftedSecondOrderModelOperator(BlockOperator):
-    r"""BlockOperator appearing in second-order systems.
-
-    This represents a block operator
-
-    .. math::
-        a \mathcal{E} + b \mathcal{A} =
-        \begin{bmatrix}
-            a I & b I \\
-            -b K & a M - b E
-        \end{bmatrix},
-
-    which satisfies
-
-    .. math::
-        (a \mathcal{E} + b \mathcal{A})^H
-        &=
-        \begin{bmatrix}
-            \overline{a} I & -\overline{b} K^H \\
-            \overline{b} I & \overline{a} M^H - \overline{b} E^H
-        \end{bmatrix}, \\
-        (a \mathcal{E} + b \mathcal{A})^{-1}
-        &=
-        \begin{bmatrix}
-            (a^2 M - a b E + b^2 K)^{-1} (a M - b E)
-            & -b (a^2 M - a b E + b^2 K)^{-1} \\
-            b (a^2 M - a b E + b^2 K)^{-1} K
-            & a (a^2 M - a b E + b^2 K)^{-1}
-        \end{bmatrix}, \\
-        (a \mathcal{E} + b \mathcal{A})^{-H}
-        &=
-        \begin{bmatrix}
-            (a M - b E)^H (a^2 M - a b E + b^2 K)^{-H}
-            & \overline{b} K^H (a^2 M - a b E + b^2 K)^{-H} \\
-            -\overline{b} (a^2 M - a b E + b^2 K)^{-H}
-            & \overline{a} (a^2 M - a b E + b^2 K)^{-H}
-        \end{bmatrix}.
-
-    Parameters
-    ----------
-    M
-        |Operator|.
-    E
-        |Operator|.
-    K
-        |Operator|.
-    a, b
-        Complex numbers.
-    """
-
-    def __init__(self, M, E, K, a, b):
-        super().__init__([[IdentityOperator(M.source) * a, IdentityOperator(M.source) * b],
-                          [((-b) * K).assemble(), (a * M - b * E).assemble()]])
-        self.__auto_init(locals())
-
-    def apply(self, U, mu=None):
-        assert U in self.source
-        V_blocks = [U.block(0) * self.a
-                    + U.block(1) * self.b,
-                    self.K.apply(U.block(0), mu=mu) * (-self.b)
-                    + self.M.apply(U.block(1), mu=mu) * self.a
-                    - self.E.apply(U.block(1), mu=mu) * self.b]
-        return self.range.make_array(V_blocks)
-
-    def apply_adjoint(self, V, mu=None):
-        assert V in self.range
-        U_blocks = [V.block(0) * self.a.conjugate()
-                    - self.K.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate(),
-                    V.block(0) * self.b.conjugate()
-                    + self.M.apply_adjoint(V.block(1), mu=mu) * self.a.conjugate()
-                    - self.E.apply_adjoint(V.block(1), mu=mu) * self.b.conjugate()]
-        return self.source.make_array(U_blocks)
-
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        assert V in self.range
-        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
-        aMmbEV0 = self.M.apply(V.block(0), mu=mu) * self.a - self.E.apply(V.block(0), mu=mu) * self.b
-        KV0 = self.K.apply(V.block(0), mu=mu)
-        a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
-        a2MmabEpb2KiV1 = a2MmabEpb2K.apply_inverse(V.block(1), mu=mu, least_squares=least_squares)
-        U_blocks = [a2MmabEpb2K.apply_inverse(aMmbEV0, mu=mu, least_squares=least_squares)
-                    - a2MmabEpb2KiV1 * self.b,
-                    a2MmabEpb2K.apply_inverse(KV0, mu=mu, least_squares=least_squares) * self.b
-                    + a2MmabEpb2KiV1 * self.a]
-        return self.source.make_array(U_blocks)
-
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        assert U in self.source
-        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
-        a2MmabEpb2K = (self.a**2 * self.M - self.a * self.b * self.E + self.b**2 * self.K).assemble(mu=mu)
-        a2MmabEpb2KitU0 = a2MmabEpb2K.apply_inverse_adjoint(U.block(0), mu=mu, least_squares=least_squares)
-        a2MmabEpb2KitU1 = a2MmabEpb2K.apply_inverse_adjoint(U.block(1), mu=mu, least_squares=least_squares)
-        V_blocks = [self.M.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.a.conjugate()
-                    - self.E.apply_adjoint(a2MmabEpb2KitU0, mu=mu) * self.b.conjugate()
-                    + self.K.apply_adjoint(a2MmabEpb2KitU1, mu=mu) * self.b.conjugate(),
-                    -a2MmabEpb2KitU0 * self.b.conjugate()
-                    + a2MmabEpb2KitU1 * self.a.conjugate()]
-        return self.range.make_array(V_blocks)
-
-    def assemble(self, mu=None):
-        M = self.M.assemble(mu)
-        E = self.E.assemble(mu)
-        K = self.K.assemble(mu)
-        if M == self.M and E == self.E and K == self.K:
-            return self
-        else:
-            return self.__class__(M, E, K, self.a, self.b)
+            return self.__class__(self.alpha, self.beta, A, B)

@@ -10,7 +10,7 @@ import scipy.linalg as spla
 from pymor.algorithms.rules import RuleTable, match_generic, match_class_all, match_class_any, match_always
 from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockOperatorBase,
-                                   BlockDiagonalOperator, SecondOrderModelOperator, ShiftedSecondOrderModelOperator)
+                                   BlockDiagonalOperator, SecondOrderModelOperator)
 from pymor.operators.constructions import (ZeroOperator, IdentityOperator, VectorArrayOperator, LincombOperator,
                                            LowRankOperator, LowRankUpdatedOperator)
 from pymor.vectorarrays.constructions import cat_arrays
@@ -124,22 +124,50 @@ class AssembleLincombRules(RuleTable):
 
         return VectorArrayOperator(array, adjoint=adjoint, space_id=ops[0].space_id, name=self.name)
 
-    @match_generic(lambda ops: len(ops) == 2)
     @match_class_any(SecondOrderModelOperator)
-    @match_class_any(BlockDiagonalOperator)
-    def action_IdentityAndSecondOrderModelOperator(self, ops):
-        if isinstance(ops[1], SecondOrderModelOperator):
-            ops, coeffs = ops[::-1], self.coefficients[::-1]
-        else:
-            ops, coeffs = ops, self. coefficients
-        if not isinstance(ops[1].blocks[0, 0], IdentityOperator):
+    def action_SecondOrderModelOperator(self, ops):
+        def is_scaled_iden_like(op):
+            if isinstance(op, (ZeroOperator, IdentityOperator)):
+                return True
+            if (isinstance(op, LincombOperator)
+                    and len(op.operators) == 1
+                    and isinstance(op.operators[0], IdentityOperator)):
+                return True
+            return False
+
+        def is_so_op_like(op):
+            if isinstance(op, SecondOrderModelOperator):
+                return True
+            if is_scaled_iden_like(op.blocks[0, 0]) and is_scaled_iden_like(op.blocks[0, 1]):
+                return True
+            return False
+
+        if not all(is_so_op_like(op) for op in ops):
             raise RuleNotMatchingError
 
-        return ShiftedSecondOrderModelOperator(ops[1].blocks[1, 1],
-                                               ops[0].E,
-                                               ops[0].K,
-                                               coeffs[1],
-                                               coeffs[0])
+        def so_op_parts(op):
+            if isinstance(op, SecondOrderModelOperator):
+                return op.alpha, op.beta, op.A, op.B
+
+            def scaled_iden_coeff(op):
+                if isinstance(op, ZeroOperator):
+                    return 0
+                if isinstance(op, IdentityOperator):
+                    return 1
+                return op.coefficients[0]
+
+            return (scaled_iden_coeff(op.blocks[0, 0]),
+                    scaled_iden_coeff(op.blocks[0, 1]),
+                    op.blocks[1, 1],
+                    op.blocks[1, 0])
+
+        alphas, betas, As, Bs = zip(*(so_op_parts(op) for op in ops))
+        alpha = sum(a * b for a, b in zip(self.coefficients, alphas))
+        beta = sum(a * b for a, b in zip(self.coefficients, betas))
+        A = assemble_lincomb(As, self.coefficients)
+        B = assemble_lincomb(Bs, self.coefficients)
+        so_op = SecondOrderModelOperator(alpha, beta, A, B)
+        return so_op
 
     @match_class_all(BlockDiagonalOperator)
     def action_BlockDiagonalOperator(self, ops):
