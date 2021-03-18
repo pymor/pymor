@@ -17,6 +17,7 @@ from pymor.discretizers.builtin import discretize_instationary_cg
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
 from pymor.reductors.h2 import IRKAReductor, TSIAReductor, OneSidedIRKAReductor
+from pymor.reductors.mt import MTReductor
 
 
 def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **reductor_kwargs):
@@ -57,14 +58,14 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
     fig, ax = plt.subplots()
     for mu, rom in zip(mus, roms):
         rom.mag_plot(w, ax=ax, label=fr'$\mu = {mu}$')
-    ax.set_title('Magnitude plot of {reductor_short_name} reduced models')
+    ax.set_title(f'Magnitude plot of {reductor_short_name} reduced models')
     ax.legend()
     plt.show()
 
     fig, ax = plt.subplots()
     for mu, rom in zip(mus, roms):
         (fom - rom).mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
-    ax.set_title('Magnitude plot of the {reductor_short_name} error system')
+    ax.set_title(f'Magnitude plot of the {reductor_short_name} error system')
     ax.legend()
     plt.show()
 
@@ -159,6 +160,7 @@ def main(
     run_mor_method_param(lti, r, w_list, mu_list, IRKAReductor, 'IRKA')
     run_mor_method_param(lti, r, w_list, mu_list, TSIAReductor, 'TSIA')
     run_mor_method_param(lti, r, w_list, mu_list, OneSidedIRKAReductor, 'OS-IRKA', version='V')
+    run_mor_method_param(lti, r, w_list, mu_list, MTReductor, 'MT')
 
 
 if __name__ == "__main__":

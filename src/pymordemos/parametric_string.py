@@ -15,6 +15,7 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
+from pymor.reductors.mt import MTReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor,
                                   SOBTfvReductor, SOBTReductor)
 from pymor.reductors.sor_irka import SORIRKAReductor
@@ -116,6 +117,7 @@ def main(
     run_mor_method_param(so_sys, r, w, mu_list, SORIRKAReductor, 'SOR-IRKA')
     run_mor_method_param(so_sys.to_lti(), r, w, mu_list, BTReductor, 'BT')
     run_mor_method_param(so_sys.to_lti(), r, w, mu_list, IRKAReductor, 'IRKA')
+    run_mor_method_param(so_sys.to_lti(), r, w, mu_list, MTReductor, 'MT')
 
 
 if __name__ == "__main__":
