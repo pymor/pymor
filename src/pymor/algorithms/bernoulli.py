@@ -12,7 +12,7 @@ from pymor.operators.constructions import IdentityOperator
 def solve_bernoulli(A, E, B, trans=False, maxiter=100, after_maxiter=3, tol=1e-8):
     """Compute a solution factor of a Bernoulli equation.
 
-    Returns a matrix :math:`Y` such that :math:`X = Y Y^H`is an approximate solution
+    Returns a matrix :math:`Y` such that :math:`X = Y Y^H` is an approximate solution
     of a (generalized) algebraic Bernoulli equation:
 
     - if trans is `True`
@@ -27,7 +27,7 @@ def solve_bernoulli(A, E, B, trans=False, maxiter=100, after_maxiter=3, tol=1e-8
           A X E^H + E X A^H
           - E X B^H B X E^H = 0.
 
-    This function is based on [BBQ07]_.
+    This function is based on :cite:`BBQ07`.
 
     Parameters
     ----------
@@ -125,7 +125,7 @@ def bernoulli_stabilize(A, E, B, ast_spectrum, trans=False):
       contains the eigenvalues of :math:`(A, E)` where anti-stable eigenvalues have
       been mirrored on the imaginary axis.
 
-    See e.g. [BBQ07]_.
+    See e.g. :cite:`BBQ07`.
 
     Parameters
     ----------
@@ -157,16 +157,16 @@ def bernoulli_stabilize(A, E, B, ast_spectrum, trans=False):
     At = A.apply2(ast_levs, ast_revs)
 
     if trans:
-        Bt = ast_levs.dot(B)
+        Bt = ast_levs.inner(B)
     else:
-        Bt = B.dot(ast_revs)
+        Bt = B.inner(ast_revs)
 
     Yz = solve_bernoulli(At, Mt, Bt, trans=trans)
     Xz = Yz @ Yz.conj().T
 
     if trans:
-        K = E.apply_adjoint(ast_levs.conj()).lincomb(B.dot(ast_levs) @ Xz)
+        K = E.apply_adjoint(ast_levs.conj()).lincomb(B.inner(ast_levs) @ Xz)
     else:
-        K = E.apply_adjoint(ast_revs.conj()).lincomb(B.dot(ast_revs) @ Xz)
+        K = E.apply_adjoint(ast_revs.conj()).lincomb(B.inner(ast_revs) @ Xz)
 
     return K.real

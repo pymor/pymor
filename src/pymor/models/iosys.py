@@ -947,7 +947,7 @@ class LTIModel(InputStateOutputModel):
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
 
-        ast_spectrum = self._get_ast_spectrum(ast_pole_data, mu)
+        ast_spectrum = self.get_ast_spectrum(ast_pole_data, mu)
 
         if len(ast_spectrum[0]) == 0:
             return self.h2_norm()
@@ -960,12 +960,12 @@ class LTIModel(InputStateOutputModel):
         else:
             BmKD = B
 
-        if self.input_dim <= self.output_dim:
+        if self.dim_input <= self.dim_output:
             cf = solve_lyap_lrcf(A - KC, E, BmKD.as_range_array(mu=mu),
                                  trans=False, options=options_lrcf)
             return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum())
         else:
-            of = solve_lyap_lrcf(A - KC, E, C.as_range_array(mu=mu),
+            of = solve_lyap_lrcf(A - KC, E, C.as_source_array(mu=mu),
                                  trans=True, options=options_lrcf)
             return np.sqrt(BmKD.apply_adjoint(of, mu=mu).norm2().sum())
 
@@ -991,7 +991,7 @@ class LTIModel(InputStateOutputModel):
         """
         return self.hinf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate)
 
-    def _get_ast_spectrum(self, ast_pole_data=None, mu=None):
+    def get_ast_spectrum(self, ast_pole_data=None, mu=None):
         """Compute anti-stable subset of the poles of the |LTIModel|.
 
         Parameters

@@ -662,11 +662,11 @@ class GapIRKAReductor(GenericIRKAReductor):
         super().__init__(fom, mu=mu)
         self.solver_options = solver_options
 
-    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1, conv_crit='htwogap',
+    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1, conv_crit='sigma',
                projection='orth'):
         r"""Reduce using gap-IRKA.
 
-        See [BBG19]_ Algorithm 1.
+        See :cite:`BBG19` Algorithm 1.
 
         Parameters
         ----------
@@ -779,8 +779,8 @@ class GapIRKAReductor(GenericIRKAReductor):
             AF = A - F @ C
             poles, X = spla.eig(AF, E)
             EX = E @ X
-        b = rom.B.source.from_numpy(spla.solve(EX, B))
-        c = rom.C.range.from_numpy((C @ X).T)
+        b = spla.solve(EX, B)
+        c = (C @ X).T
         mFB = np.concatenate((-F, B), axis=1)
         gap_rom = LTIModel.from_matrices(AF, mFB, C, E=None if isinstance(rom.E, IdentityOperator) else E)
         return poles, b, c, gap_rom

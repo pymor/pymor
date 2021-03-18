@@ -146,7 +146,7 @@ class BTReductor(GenericBTReductor):
 class FDBTReductor(GenericBTReductor):
     """Balanced Truncation reductor using frequency domain representation of Gramians.
 
-    See [ZSW99]_.
+    See :cite:`ZSW99`.
 
     Parameters
     ----------
@@ -173,7 +173,7 @@ class FDBTReductor(GenericBTReductor):
                       for op in ['A', 'B', 'C', 'E'])
         options = self.solver_options
 
-        self.ast_spectrum = self.fom._get_ast_spectrum(self.ast_pole_data, mu=self.mu)
+        self.ast_spectrum = self.fom.get_ast_spectrum(self.ast_pole_data, mu=self.mu)
         K = bernoulli_stabilize(A, E, B.as_range_array(mu=self.mu), self.ast_spectrum, trans=True)
         BK = LowRankOperator(B.as_range_array(mu=self.mu), np.eye(len(K)), K)
         bsc_lrcf = solve_lyap_lrcf(A-BK, E, B.as_range_array(mu=self.mu),
