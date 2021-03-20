@@ -63,7 +63,7 @@ First, we do the necessary imports and some matplotlib style choices.
 
 Next, we can assemble the matrices based on a centered finite difference
 approximation using standard methods of NumPy and SciPy. Here we use
-:math:`\lambda = 40`.
+:math:`\lambda = 50`.
 
 .. include:: unstable_heat_equation.txt
 
@@ -74,7 +74,7 @@ Then, we can create an |LTIModel| from NumPy and SciPy matrices `A`, `B`, `C`,
 
     fom = LTIModel.from_matrices(A, B, C, E=E)
 
-First lets check whether our system is indeed unstable. For this we can use the
+First, let's check whether our system is indeed unstable. For this, we can use the
 method :meth:`~pymor.models.iosys.LTIModel.get_ast_spectrum`, which will
 compute the subset of system poles with a positive real part and the corresponding
 eigenvectors as well.
@@ -88,12 +88,12 @@ In the code snippet above, all eigenvalues of the matrix pair :math:`(A, E)` are
 computed using dense methods. This works well for systems with a small state space
 dimension. For large-scale systems it is wiser to rely on iterative methods for
 computing eigenvalues. The code below computes 10 system poles which are
-close to 0 using pyMORs iterative eigensolver and filters the result for
+close to 0 using pyMOR's iterative eigensolver and filters the result for
 values with a positive real part.
 
 .. jupyter-execute::
 
-    ast_spectrum = fom.get_ast_spectrum(ast_pole_data={'k':10, 'sigma':0})
+    ast_spectrum = fom.get_ast_spectrum(ast_pole_data={'k': 10, 'sigma': 0})
     print(ast_spectrum[1])
 
 
@@ -121,7 +121,7 @@ frequency domain representations of the controllability and observability Gramia
         (-\imath \omega E^{\operatorname{T}} - A^{\operatorname{T}})^{-1}
         C^{\operatorname{T}} C
         (\imath \omega E - A)^{-1}
-        \operatorname{d}\!\omega.
+        \operatorname{d}\!\omega E.
     \end{align*}
 
 Again, two Lyapunov equations have to be solved in order to obtain these Gramians.
@@ -134,17 +134,17 @@ Let us start with initializing a reductor object
 .. jupyter-execute::
 
     from pymor.reductors.bt import FDBTReductor
-    fdbt = FDBTReductor(fom, ast_pole_data={'k':10, 'sigma':0})
+    fdbt = FDBTReductor(fom, ast_pole_data={'k': 10, 'sigma': 0})
 
 In order to perform a Bernoulli stabilization, knowledge about the anti-stable
 subset of system poles is required. With the `ast_pole_data` argument we can provide
 information about the system poles to the reductor (i.e. list of anti-stable
 eigenvalues with or without corresponding eigenvectors) or specify how eigenvalues
 should be computed (i.e. `None` for computing all eigenvalues using dense methods
-or arguments for pyMORs iterative eigensolver like in the code above).
+or arguments for pyMOR's iterative eigensolver like in the code above).
 
 Before we use the :meth:`~pymor.reductors.bt.FDBTReductor.reduce` method to
-obtain a reduced order model, we take a look at some a priori error bounds for
+obtain a reduced-order model, we take a look at some a priori error bounds for
 the reductor. In particular, we get a :math:`\mathcal{L}_\infty` rather than the
 :math:`\mathcal{H}_\infty` error bound from classic balanced truncation.
 
@@ -178,7 +178,7 @@ Gap-IRKA
 --------
 
 The :class:`~pymor.reductors.h2.IRKAReductor` is specifically designed to find
-:math:`\mathcal{H}_2`-optimal reduced order models (see e.g. :cite:`GAB08`).
+:math:`\mathcal{H}_2`-optimal reduced-order models (see e.g. :cite:`GAB08`).
 Since we cannot compute :math:`\mathcal{H}_2`-norms for unstable systems,
 we can not expect the IRKA to yield high-quality approximations for unstable
 full-order models.
@@ -201,9 +201,9 @@ reduced-order model of order 10 using the :class:`~pymor.reductors.h2.GapIRKARed
 
 Beside the desired order of the reduced model, the `reduce` method has a few
 other arguments as well: `conv_crit` allows for choosing the stopping criterion
-of the algorithm. By specifying `conv_crit=sigma` the relative change in
-interpolation points, `conv_crit=htwogap` the relative change in
-:math:`\mathcal{H}_2`-gap distance of the reduced-order models and `conv_crit=ltwo` the
+of the algorithm. By specifying `conv_crit='sigma'` the relative change in
+interpolation points, `conv_crit='htwogap'` the relative change in
+:math:`\mathcal{H}_2`-gap distance of the reduced-order models and `conv_crit='ltwo'` the
 relative change of :math:`\mathcal{L}_2` distances of the reduced-order models are
 used as a stopping criterion. The `tol` argument sets the tolerance for
 any of the choosen stopping criteria.

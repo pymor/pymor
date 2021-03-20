@@ -475,14 +475,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     E = to_matrix(E, format='dense') if E else None
     B = B.to_numpy().T
     C = C.to_numpy()
-    if R is None:
-        R = np.eye(C.shape[0] if not trans else B.shape[1])
-    if not trans:
-        if E is not None:
-            E = E.T
-        X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, E)
-    else:
-        X = solve_continuous_are(A, B, C.T.dot(C), R, E)
+    X = solve_ricc_dense(A, E, B, C, R, trans, options)
 
     return A_source.from_numpy(_chol(X).T)
 
@@ -501,39 +494,35 @@ def ricc_dense_solver_options():
 def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a Riccati equation.
 
-    See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a general
+    See :func:`pymor.algorithms.riccati.solve_ricc_dense` for a general
     description.
 
     This function uses `scipy.linalg.solve_continuous_are`, which
     is a dense solver.
-    Therefore, we assume all |Operators| and |VectorArrays| can be
-    converted to |NumPy arrays| using
-    :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
 
     Parameters
     ----------
     A
-        The non-parametric |Operator| A.
+        The operator A as a 2D |NumPy array|.
     E
-        The non-parametric |Operator| E or `None`.
+        The operator E as a 2D |NumPy array| or `None`.
     B
-        The operator B as a |VectorArray| from `A.source`.
+        The operator B as a 2D |NumPy array|.
     C
-        The operator C as a |VectorArray| from `A.source`.
+        The operator C as a 2D |NumPy array|.
     R
         The operator R as a 2D |NumPy array| or `None`.
     trans
-        Whether the first |Operator| in the Riccati equation is
+        Whether the first operator in the Riccati equation is
         transposed.
     options
-        The solver options to use (see :func:`ricc_lrcf_solver_options`).
+        The solver options to use (see
+        :func:`ricc_dense_solver_options`).
 
     Returns
     -------
-    Z
-        Low-rank Cholesky factor of the Riccati equation solution,
-        |VectorArray| from `A.source`.
+    X
+        Riccati equation solution as a |NumPy array|.
     """
 
     _solve_ricc_dense_check_args(A, E, B, C, R, trans)

@@ -189,26 +189,23 @@ if config.HAVE_SLYCOT:
                 jobl = 'Z'
                 scal = 'N'
                 sort = 'S'
-                acc = 'N'
-                if trans:
-                    L = np.zeros(B.shape)
-                    M = B.shape[1]
-                    P = C.shape[0]
-                    if R is None:
-                        R = np.eye(B.shape[1])
+                acc = 'R'
+                m = C.shape[0] if not trans else B.shape[1]
+                p = B.shape[1] if not trans else C.shape[0]
+                if R is None:
+                    R = np.eye(m)
+                S = np.empty((n, m))
+                if not trans:
+                    A = A.T
+                    E = E.T
+                    B, C = C.T, B.T
+                out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
+                                    n, m, p,
+                                    A, E, B, C, R, S)
+                X = out[1]
+                rcond = out[0]
+                _ricc_rcond_check('slycot.sg02ad', rcond)
 
-                    rcond, X, _, _, _, _, _, _, _ = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal,
-                                                                  sort, acc, n, M, P, A, E, B, C, R, L)
-                else:
-                    L = np.zeros(C.T.shape)
-                    M = C.shape[0]
-                    P = B.shape[1]
-                    if R is None:
-                        R = np.eye(C.shape[0])
-
-                    rcond, X, _, _, _, _, _, _, _ = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal,
-                                                                  sort, acc, n, M, P, A.T, E.T, C.T, B.T, R, L)
-                _solve_check_ricc('slycot.sg02ad', rcond)
             else:
                 if trans:
                     if R is None:
@@ -216,16 +213,16 @@ if config.HAVE_SLYCOT:
                     else:
                         G = B @ spla.solve(R, B.T)
                     Q = C.T @ C
-                    X, rcond, _, _, _, _ = slycot.sb02md(n, A, G, Q, dico)
+                    X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
                 else:
                     if R is None:
                         G = C.T @ C
                     else:
                         G = C.T @ spla.solve(R, C)
                     Q = B @ B.T
-                    X, rcond, _, _, _, _ = slycot.sb02md(n, A.T, G, Q, dico)
+                    X, rcond = slycot.sb02md(n, A.T, G, Q, dico)[:2]
 
-                _solve_check_ricc('slycot.sb02md', rcond)
+                _ricc_rcond_check('slycot.sb02md', rcond)
         else:
             raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
 
@@ -311,41 +308,7 @@ if config.HAVE_SLYCOT:
         B = B.to_numpy().T
         C = C.to_numpy()
 
-        n = A.shape[0]
-        dico = 'C'
-
-        if E is None:
-            if not trans:
-                A = A.T
-                G = C.T.dot(C) if R is None else slycot.sb02mt(n, C.shape[0], C.T, R)[-1]
-            else:
-                G = B.dot(B.T) if R is None else slycot.sb02mt(n, B.shape[1], B, R)[-1]
-            Q = B.dot(B.T) if not trans else C.T.dot(C)
-            X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
-            _ricc_rcond_check('slycot.sb02md', rcond)
-        else:
-            jobb = 'B'
-            fact = 'C'
-            uplo = 'U'
-            jobl = 'Z'
-            scal = 'N'
-            sort = 'S'
-            acc = 'R'
-            m = C.shape[0] if not trans else B.shape[1]
-            p = B.shape[1] if not trans else C.shape[0]
-            if R is None:
-                R = np.eye(m)
-            S = np.empty((n, m))
-            if not trans:
-                A = A.T
-                E = E.T
-                B, C = C.T, B.T
-            out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                                n, m, p,
-                                A, E, B, C, R, S)
-            X = out[1]
-            rcond = out[0]
-            _ricc_rcond_check('slycot.sg02ad', rcond)
+        X = solve_ricc_dense(A, E, B, C, R, trans, options)
 
         return A_source.from_numpy(_chol(X).T)
 

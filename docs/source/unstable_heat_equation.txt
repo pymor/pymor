@@ -2,7 +2,7 @@
 
     k = 50
     n = 2 * k + 1
-    l = 40
+    l = 50
 
     E = sps.eye(n, format='lil')
     E[0, 0] = E[-1, -1] = 0.5
