@@ -487,12 +487,11 @@ def ricc_dense_solver_options():
     -------
     A dict of available solvers with default solver options.
     """
-
     return {'scipy': {'type': 'scipy'}}
 
 
 def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None):
-    """Compute an approximate low-rank solution of a Riccati equation.
+    """Compute the solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_dense` for a general
     description.
@@ -524,7 +523,6 @@ def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None):
     X
         Riccati equation solution as a |NumPy array|.
     """
-
     _solve_ricc_dense_check_args(A, E, B, C, R, trans)
     options = _parse_options(options, ricc_dense_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':

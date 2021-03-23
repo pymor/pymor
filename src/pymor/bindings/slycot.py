@@ -175,7 +175,6 @@ if config.HAVE_SLYCOT:
         X
             Riccati equation solution as a |NumPy array|.
         """
-
         _solve_ricc_dense_check_args(A, E, B, C, R, trans)
         options = _parse_options(options, ricc_dense_solver_options(), 'slycot', None, False)
 
@@ -235,14 +234,7 @@ if config.HAVE_SLYCOT:
         -------
         A dict of available solvers with default solver options.
         """
-
         return {'slycot': {'type': 'slycot'}}
-
-    def _solve_check_ricc(solver, rcond):
-        if rcond > 1e6:
-            logger = getLogger(solver)
-            logger.warning(f'Estimated relative condition number is large (rcond={rcond:e}). '
-                           f'Result may not be accurate.')
 
     def _solve_check(dtype, solver, sep, ferr):
         if ferr > 1e-1:

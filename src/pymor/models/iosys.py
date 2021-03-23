@@ -1009,9 +1009,12 @@ class LTIModel(InputStateOutputModel):
 
         Returns
         -------
-        ast_spectrum
-            Tuple `(lev, ew, rev)` containing the left and right eigenvectors
-            `lev`, `rev` as |VectorArrays| and the of list anti-stable eigenvalues `ew`.
+        lev
+            |VectorArray| of left eigenvectors.
+        ew
+            One-dimensional |NumPy array| of anti-stable eigenvalues.
+        rev
+            |VectorArray| of right eigenvectors.
         """
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
@@ -1028,7 +1031,7 @@ class LTIModel(InputStateOutputModel):
                     # l=3 avoids issues with complex conjugate pairs
                     _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
                     ast_levs.append(lev)
-                return (ast_levs, ast_ews, rev[ast_idx[0]])
+                return ast_levs, ast_ews, rev[ast_idx[0]]
 
             elif type(ast_pole_data) == list:
                 ast_levs = A.source.empty(reserve=len(ast_ews))
@@ -1038,13 +1041,13 @@ class LTIModel(InputStateOutputModel):
                     ast_levs.append(lev)
                     _, rev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae)
                     ast_revs.append(rev)
-                return (ast_levs, ast_ews, rev[ast_idx[0]])
+                return ast_levs, ast_ews, rev[ast_idx[0]]
 
             elif type(ast_pole_data) == tuple:
                 return ast_pole_data
 
             else:
-                ValueError(f'ast_pole_data is of wrong type ({type(ast_pole_data)}).')
+                TypeError(f'ast_pole_data is of wrong type ({type(ast_pole_data)}).')
 
         else:
             if self.order >= sparse_min_size():
@@ -1055,13 +1058,13 @@ class LTIModel(InputStateOutputModel):
                         self.logger.warning('Converting operator E to a NumPy array.')
 
             A, E = (to_matrix(op, format='dense') for op in [A, E])
-            ew, lev, rev = spla.eig(A, E if self.E else None, True)
+            ew, lev, rev = spla.eig(A, E if self.E else None, left=True)
             ast_idx = np.where(ew.real > 0.)
             ast_ews = ew[ast_idx]
 
             ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, 0, :].T)
             ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, 0, :].T)
-            return (ast_lev, ast_ews, ast_rev)
+            return ast_lev, ast_ews, ast_rev
 
 
 class TransferFunction(InputOutputModel):

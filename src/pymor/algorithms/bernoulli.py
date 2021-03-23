@@ -51,7 +51,6 @@ def solve_bernoulli(A, E, B, trans=False, maxiter=100, after_maxiter=3, tol=1e-8
     Y
         The solution factor as a |NumPy array|.
     """
-
     logger = getLogger('pymor.algorithms.bernoulli.solve_bernoulli')
 
     n = len(A)
@@ -146,7 +145,6 @@ def bernoulli_stabilize(A, E, B, ast_spectrum, trans=False):
     K
         The stabilizing feedback as a |VectorArray|.
     """
-
     if E is None:
         E = IdentityOperator(A.source)
 
