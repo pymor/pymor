@@ -111,6 +111,7 @@ SYS_MOR_ARGS = (
     ('parametric_delay', [2]),
     ('parametric_string', [25, 2]),
     ('parametric_synthetic', [100, 2]),
+    ('unstable_heat', [50, 10]),
 )
 
 HAPOD_ARGS = (
