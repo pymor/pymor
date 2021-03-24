@@ -1024,7 +1024,7 @@ class LTIModel(InputStateOutputModel):
                 ast_idx = np.where(ew.real > 0.)
                 ast_ews = ew[ast_idx]
                 if len(ast_ews) == 0:
-                    return (self.solution_space.empty(), [], self.solution_space.empty())
+                    return self.solution_space.empty(), np.empty((0,)), self.solution_space.empty()
 
                 ast_levs = A.source.empty(reserve=len(ast_ews))
                 for ae in ast_ews:
