@@ -11,7 +11,7 @@ import itertools
 from hypothesis import given
 
 from pymor.core.logger import getLogger
-from pymor.tools.formatsrc import print_source, source_repr
+from pymor.tools.formatsrc import print_source
 from pymor.tools.io import SafeTemporaryFileName
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
@@ -187,7 +187,6 @@ def test_formatsrc():
     obj = formatsrc.format_source
     formatsrc.format_source(obj)
     print_source(obj)
-    source_repr(obj)
 
 
 def test_formatsrc_nopygments(monkeypatch):

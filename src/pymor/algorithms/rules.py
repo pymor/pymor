@@ -9,6 +9,7 @@ from weakref import WeakValueDictionary
 from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.operators.interface import Operator
+from pymor.tools.formatsrc import format_source, print_source
 from pymor.tools.table import format_table
 
 
@@ -56,9 +57,11 @@ class rule:
     condition_description = None
     condition_type = None
 
+    def _ipython_display_(self):
+        print_source(self.action)
+
     def __repr__(self):
-        from pymor.tools.formatsrc import source_repr
-        return source_repr(self.action)
+        return format_source(self.action)
 
     @property
     def action_description(self):
