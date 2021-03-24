@@ -466,3 +466,16 @@ def test_as_range_array(operator_with_arrays):
         return
     array = op.as_range_array(mu)
     assert np.all(almost_equal(array.lincomb(U.to_numpy()), op.apply(U, mu=mu)))
+
+
+def test_issue_1276():
+    from pymor.operators.block import BlockOperator
+    from pymor.operators.constructions import IdentityOperator
+    from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+    I = IdentityOperator(NumpyVectorSpace(1))
+    B = BlockOperator([[I * (-1)]])
+    v = B.source.ones()
+
+    B.apply_inverse(v)
+
