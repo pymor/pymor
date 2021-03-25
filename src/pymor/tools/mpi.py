@@ -104,7 +104,7 @@ def event_loop_settings(auto_launch=True):
     return {'auto_launch': auto_launch}
 
 
-if mpi4py_version == Version('2.0'):
+if mpi4py_version >= Version('2.0'):
     def event_loop():
         """Launches an MPI-based event loop.
 
