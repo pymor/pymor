@@ -160,24 +160,24 @@ if config.HAVE_TORCH:
 
         Parameters
         ----------
-        layers_sizes
+        layer_sizes
             List of sizes (i.e. number of neurons) for the layers of the neural network.
         activation_function
             Function to use as activation function between the single layers.
         """
 
-        def __init__(self, layers_sizes, activation_function=torch.tanh):
+        def __init__(self, layer_sizes, activation_function=torch.tanh):
             super().__init__()
 
-            if layers_sizes is None or not len(layers_sizes) > 1 or not all(size >= 1 for size in layers_sizes):
+            if layer_sizes is None or not len(layer_sizes) > 1 or not all(size >= 1 for size in layer_sizes):
                 raise ValueError
 
-            self.input_dimension = layers_sizes[0]
-            self.output_dimension = layers_sizes[-1]
+            self.input_dimension = layer_sizes[0]
+            self.output_dimension = layer_sizes[-1]
 
             self.layers = nn.ModuleList()
-            self.layers.extend([nn.Linear(int(layers_sizes[i]), int(layers_sizes[i+1]))
-                                for i in range(len(layers_sizes) - 1)])
+            self.layers.extend([nn.Linear(int(layer_sizes[i]), int(layer_sizes[i+1]))
+                                for i in range(len(layer_sizes) - 1)])
 
             self.activation_function = activation_function
 

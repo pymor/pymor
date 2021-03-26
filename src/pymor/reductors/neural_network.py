@@ -127,7 +127,7 @@ if config.HAVE_TORCH:
             # input and output size of the neural network are prescribed by the
             # dimension of the parameter space and the reduced basis size
             assert isinstance(hidden_layers, list)
-            layers_sizes = self._compute_layers_sizes(hidden_layers)
+            layer_sizes = self._compute_layer_sizes(hidden_layers)
 
             # compute validation data
             if not hasattr(self, 'validation_data'):
@@ -156,7 +156,7 @@ if config.HAVE_TORCH:
                     target_loss = self.mse_basis
 
                 # set parameters for neural network and training
-                neural_network_parameters = {'layers_sizes': layers_sizes,
+                neural_network_parameters = {'layer_sizes': layer_sizes,
                                              'activation_function': activation_function}
                 training_parameters = {'optimizer': optimizer, 'epochs': epochs,
                                        'batch_size': batch_size, 'learning_rate': learning_rate}
@@ -193,7 +193,7 @@ if config.HAVE_TORCH:
                 else:
                     raise ValueError('Unknown value for mean squared error of neural network')
 
-        def _compute_layers_sizes(self, hidden_layers):
+        def _compute_layer_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network."""
             return [len(self.fom.parameters), ] + hidden_layers + [len(self.reduced_basis), ]
 
@@ -293,7 +293,7 @@ if config.HAVE_TORCH:
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
-        def _compute_layers_sizes(self, hidden_layers):
+        def _compute_layer_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network
             (make sure to increase the input dimension to account for the time).
             """
