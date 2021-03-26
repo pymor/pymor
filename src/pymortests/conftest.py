@@ -20,3 +20,18 @@ settings.register_profile("dev", max_examples=10, **_common_settings)
 _common_settings["verbosity"] = Verbosity.verbose
 settings.register_profile("debug", max_examples=10, **_common_settings)
 settings.load_profile(os.getenv(u'PYMOR_HYPOTHESIS_PROFILE', 'dev'))
+
+""" This makes sure all our fixtures are available to all tests
+
+Individual test modules MUST NOT import fixtures from `pymortests.fixtures`,
+as this can have strange side effects.
+"""
+pytest_plugins = [
+    "pymortests.fixtures.analyticalproblem",
+    "pymortests.fixtures.function",
+    "pymortests.fixtures.grid",
+    "pymortests.fixtures.model",
+    "pymortests.fixtures.operator",
+    "pymortests.fixtures.parameter",
+    "pymortests.fixtures.vectorarray",
+]

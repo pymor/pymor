@@ -85,7 +85,7 @@ class EmpiricalInterpolatedOperator(Operator):
                 self._operator = operator
             interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
             self.interpolation_matrix = interpolation_matrix
-            self.collateral_basis = collateral_basis.copy()
+        self.collateral_basis = collateral_basis.copy()
 
     @property
     def operator(self):

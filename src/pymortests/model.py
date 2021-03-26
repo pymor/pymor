@@ -6,7 +6,6 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.core.pickle import dumps, loads
-from pymortests.fixtures.model import model, picklable_model
 from pymortests.base import runmodule
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 

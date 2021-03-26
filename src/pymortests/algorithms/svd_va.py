@@ -13,7 +13,6 @@ from pymor.algorithms.basic import contains_zero_vector
 from pymor.core.logger import log_levels
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
-from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import given_vector_arrays
 
 methods = [method_of_snapshots, qr_svd]

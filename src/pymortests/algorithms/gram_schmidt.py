@@ -10,7 +10,6 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.logger import log_levels
 from pymor.algorithms.basic import contains_zero_vector
 from pymortests.base import runmodule
-from pymortests.fixtures.operator import operator_with_arrays_and_products
 import pymortests.strategies as pyst
 
 
