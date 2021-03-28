@@ -196,7 +196,6 @@ def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None,
     X
         Riccati equation solution as a |NumPy array|.
     """
-
     _solve_ricc_dense_check_args(A, E, B, C, R, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']

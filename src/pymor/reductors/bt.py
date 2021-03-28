@@ -163,6 +163,7 @@ class FDBTReductor(GenericBTReductor):
     mu
         |Parameter values|.
     """
+
     def __init__(self, fom, ast_pole_data=None, mu=None, solver_options=None):
         super().__init__(fom, mu=mu)
         self.ast_pole_data = ast_pole_data

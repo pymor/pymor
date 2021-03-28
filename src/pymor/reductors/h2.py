@@ -657,6 +657,7 @@ class GapIRKAReductor(GenericIRKAReductor):
     mu
         |Parameter|.
     """
+
     def __init__(self, fom, mu=None, solver_options=None):
         assert isinstance(fom, LTIModel)
         super().__init__(fom, mu=mu)
