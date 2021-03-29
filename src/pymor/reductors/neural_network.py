@@ -19,7 +19,8 @@ if config.HAVE_TORCH:
     from pymor.core.base import BasicObject
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
     from pymor.core.logger import getLogger
-    from pymor.models.neural_network import FullyConnectedNN, NeuralNetworkModel, NeuralNetworkOutputModel, NeuralNetworkInstationaryModel
+    from pymor.models.neural_network import (FullyConnectedNN, NeuralNetworkModel, NeuralNetworkOutputModel,
+                                             NeuralNetworkInstationaryModel)
 
     class NeuralNetworkReductor(BasicObject):
         """Reduced Basis reductor relying on artificial neural networks.
@@ -360,8 +361,8 @@ if config.HAVE_TORCH:
                 neural_network = FullyConnectedNN(**neural_network_parameters).double()
                 # run training algorithm with multiple restarts
                 self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
-                                                                              neural_network, self.validation_loss, restarts,
-                                                                              training_parameters, seed)
+                                                                              neural_network, self.validation_loss,
+                                                                              restarts, training_parameters, seed)
 
             self.logger.info('Using neural network with smallest validation error ...')
             self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
@@ -374,7 +375,8 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkOutputModel(self.neural_network, self.fom.parameters, name=f'{self.fom.name}_reduced')
+                rom = NeuralNetworkOutputModel(self.neural_network, self.fom.parameters,
+                                               name=f'{self.fom.name}_output_reduced')
 
             return rom
 

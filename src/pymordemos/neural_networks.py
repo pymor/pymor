@@ -3,12 +3,14 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import time
 import numpy as np
 from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissing
+from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkOutputReductor
 
 
 def main(
@@ -27,7 +29,6 @@ def main(
 
     parameter_space = fom.parameters.space((0.1, 1))
 
-    from pymor.reductors.neural_network import NeuralNetworkReductor
 
     training_set = parameter_space.sample_uniformly(training_samples)
     validation_set = parameter_space.sample_randomly(validation_samples)
@@ -39,8 +40,6 @@ def main(
     test_set = parameter_space.sample_randomly(10)
 
     speedups = []
-
-    import time
 
     print(f'Performing test on set of size {len(test_set)} ...')
 
@@ -64,9 +63,6 @@ def main(
     if vis:
         fom.visualize((U, U_red),
                       legend=('Full solution', 'Reduced solution'))
-
-
-    from pymor.reductors.neural_network import NeuralNetworkOutputReductor
 
     output_reductor = NeuralNetworkOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
     output_rom = output_reductor.reduce(restarts=100)
@@ -108,8 +104,8 @@ def main(
 
 def create_fom(fv, grid_intervals):
     f = LincombFunction(
-              [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
-              [ProjectionParameterFunctional('mu'), 0.1])
+        [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
+        [ProjectionParameterFunctional('mu'), 0.1])
 
     problem = StationaryProblem(
         domain=RectDomain(),

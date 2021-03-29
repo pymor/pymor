@@ -77,9 +77,10 @@ if config.HAVE_TORCH:
             return U
 
     class NeuralNetworkOutputModel(Model):
-        """Class for models of the output of stationary problems that use artificial neural networks.
+        """Class for models of the output of stationary problems that use ANNs.
 
-        This class implements a |Model| that uses a neural network for solving for the output quantity.
+        This class implements a |Model| that uses a neural network for solving for the output
+        quantity.
 
         Parameters
         ----------
