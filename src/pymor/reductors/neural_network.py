@@ -195,7 +195,7 @@ if config.HAVE_TORCH:
 
         def _compute_layer_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network."""
-            return [len(self.fom.parameters), ] + hidden_layers + [len(self.reduced_basis), ]
+            return [self.fom.parameters.dim, ] + hidden_layers + [len(self.reduced_basis), ]
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -297,7 +297,7 @@ if config.HAVE_TORCH:
             """Compute the number of neurons in the layers of the neural network
             (make sure to increase the input dimension to account for the time).
             """
-            return [len(self.fom.parameters) + 1] + hidden_layers + [len(self.reduced_basis)]
+            return [self.fom.parameters.dim + 1, ] + hidden_layers + [len(self.reduced_basis), ]
 
         def _build_rom(self):
             """Construct the reduced order model."""
