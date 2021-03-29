@@ -15,6 +15,9 @@
 * Meret Behrens, mbehrens@mpi-magdeburg.mpg.de
   * modal truncation for model order reduction
 
+* Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
+  * artificial neural networks for approximation of output quantities
+
 ### pyMOR 2020.2
 
 * Tim Keil, tim.keil@uni-muenster.de
