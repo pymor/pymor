@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 Index = Union[int, slice, List[int], ndarray]
 RealOrComplex = Union[float, complex]
+ScalCoeffs = Union[float, complex, ndarray]
 
 
 class VectorArray(BasicObject):
@@ -261,7 +262,7 @@ class VectorArray(BasicObject):
         return self.copy(deep=True)
 
     @abstractmethod
-    def scal(self, alpha: RealOrComplex) -> None:
+    def scal(self, alpha: ScalCoeffs) -> None:
         """BLAS SCAL operation (in-place scalar multiplication).
 
         This method calculates ::
@@ -281,7 +282,7 @@ class VectorArray(BasicObject):
         pass
 
     @abstractmethod
-    def axpy(self, alpha: RealOrComplex, x: VectorArray) -> None:
+    def axpy(self, alpha: ScalCoeffs, x: VectorArray) -> None:
         """BLAS AXPY operation.
 
         This method forms the sum ::
