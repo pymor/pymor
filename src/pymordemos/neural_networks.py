@@ -65,23 +65,62 @@ def main(
         fom.visualize((U, U_red),
                       legend=('Full solution', 'Reduced solution'))
 
+
+    from pymor.reductors.neural_network import NeuralNetworkOutputReductor
+
+    output_reductor = NeuralNetworkOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
+    output_rom = output_reductor.reduce(restarts=100)
+
+    outputs = []
+    outputs_red = []
+    outputs_speedups = []
+
+    print(f'Performing test on set of size {len(test_set)} ...')
+
+    for mu in test_set:
+        tic = time.perf_counter()
+        outputs.append(fom.compute(output=True, mu=mu)['output'])
+        time_fom = time.perf_counter() - tic
+
+        tic = time.perf_counter()
+        outputs_red.append(output_rom.compute(output=True, mu=mu)['output'])
+        time_red = time.perf_counter() - tic
+
+        outputs_speedups.append(time_fom / time_red)
+
+    outputs = np.squeeze(np.array(outputs))
+    outputs_red = np.squeeze(np.array(outputs_red))
+
+    outputs_absolute_errors = np.abs(outputs - outputs_red)
+    outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+
+    print('Results for state approximation:')
     print(f'Average absolute error: {np.average(absolute_errors)}')
     print(f'Average relative error: {np.average(relative_errors)}')
     print(f'Median of speedup: {np.median(speedups)}')
 
+    print()
+    print('Results for output approximation:')
+    print(f'Average absolute error: {np.average(outputs_absolute_errors)}')
+    print(f'Average relative error: {np.average(outputs_relative_errors)}')
+    print(f'Median of speedup: {np.median(outputs_speedups)}')
+
 
 def create_fom(fv, grid_intervals):
+    f = LincombFunction(
+              [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
+              [ProjectionParameterFunctional('mu'), 0.1])
+
     problem = StationaryProblem(
         domain=RectDomain(),
-        rhs=LincombFunction(
-            [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
-            [ProjectionParameterFunctional('mu'), 0.1]),
+        rhs=f,
         diffusion=LincombFunction(
             [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],
             [ProjectionParameterFunctional('mu'), 1]),
         dirichlet_data=LincombFunction(
             [ExpressionFunction('2 * x[..., 0]', 2, ()), ConstantFunction(1., 2)],
             [ProjectionParameterFunctional('mu'), 0.5]),
+        outputs=[('l2', f)],
         name='2DProblem'
     )
 

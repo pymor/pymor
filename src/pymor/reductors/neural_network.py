@@ -19,7 +19,7 @@ if config.HAVE_TORCH:
     from pymor.core.base import BasicObject
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
     from pymor.core.logger import getLogger
-    from pymor.models.neural_network import FullyConnectedNN, NeuralNetworkModel, NeuralNetworkInstationaryModel
+    from pymor.models.neural_network import FullyConnectedNN, NeuralNetworkModel, NeuralNetworkOutputModel, NeuralNetworkInstationaryModel
 
     class NeuralNetworkReductor(BasicObject):
         """Reduced Basis reductor relying on artificial neural networks.
@@ -239,6 +239,148 @@ if config.HAVE_TORCH:
             """Reconstruct high-dimensional vector from reduced vector `u`."""
             assert hasattr(self, 'reduced_basis')
             return self.reduced_basis.lincomb(u.to_numpy())
+
+    class NeuralNetworkOutputReductor(BasicObject):
+        """Output reductor relying on artificial neural networks.
+
+        This is a reductor that trains a neural network that approximates
+        the mapping from parameter space to output space.
+
+        Parameters
+        ----------
+        fom
+            The full-order |Model| to reduce.
+        training_set
+            Set of |parameter values| to use for POD and training of the
+            neural network.
+        validation_set
+            Set of |parameter values| to use for validation in the training
+            of the neural network.
+        validation_ratio
+            Fraction of the training set to use for validation in the training
+            of the neural network (only used if no validation set is provided).
+        validation_loss
+            The validation loss to reach during training. If `None`, the neural
+            network with the smallest validation loss is returned.
+        """
+
+        def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
+                     validation_loss=None):
+            assert 0 < validation_ratio < 1 or validation_set
+            self.__auto_init(locals())
+
+        def reduce(self, hidden_layers='[30, 30]', activation_function=torch.tanh,
+                   optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
+                   restarts=10, seed=0):
+            """Reduce by training artificial neural networks.
+
+            Parameters
+            ----------
+            hidden_layers
+                Number of neurons in the hidden layers. Can either be fixed or
+                a Python expression string depending on the output size `O`
+                and the total dimension of the |Parameters| `P`.
+            activation_function
+                Activation function to use between the hidden layers.
+            optimizer
+                Algorithm to use as optimizer during training.
+            epochs
+                Maximum number of epochs for training.
+            batch_size
+                Batch size to use if optimizer allows mini-batching.
+            learning_rate
+                Step size to use in each optimization step.
+            restarts
+                Number of restarts of the training algorithm. Since the training
+                results highly depend on the initial starting point, i.e. the
+                initial weights and biases, it is advisable to train multiple
+                neural networks by starting with different initial values and
+                choose that one performing best on the validation set.
+            seed
+                Seed to use for various functions in PyTorch. Using a fixed seed,
+                it is possible to reproduce former results.
+
+            Returns
+            -------
+            rom
+                Reduced-order |NeuralNetworkOutputModel|.
+            """
+            assert restarts > 0
+            assert epochs > 0
+            assert batch_size > 0
+            assert learning_rate > 0.
+
+            # set a seed for the PyTorch initialization of weights and biases
+            # and further PyTorch methods
+            torch.manual_seed(seed)
+
+            # determine the numbers of neurons in the hidden layers
+            if isinstance(hidden_layers, str):
+                hidden_layers = eval(hidden_layers, {'O': self.fom.dim_output, 'P': self.fom.parameters.dim})
+            # input and output size of the neural network are prescribed by the
+            # dimension of the parameter space and the reduced basis size
+            assert isinstance(hidden_layers, list)
+            layer_sizes = self._compute_layer_sizes(hidden_layers)
+
+            # compute validation data
+            if not hasattr(self, 'training_data'):
+                with self.logger.block('Computing training data ...'):
+                    self.training_data = []
+                    for mu in self.training_set:
+                        sample = self._compute_sample(mu)
+                        self.training_data.extend(sample)
+
+            # compute validation data
+            if not hasattr(self, 'validation_data'):
+                with self.logger.block('Computing validation data ...'):
+
+                    if self.validation_set:
+                        self.validation_data = []
+                        for mu in self.validation_set:
+                            sample = self._compute_sample(mu)
+                            self.validation_data.extend(sample)
+                    else:
+                        number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
+                        # randomly shuffle training data before splitting into two sets
+                        np.random.shuffle(self.training_data)
+                        # split training data into validation and training set
+                        self.validation_data = self.training_data[0:number_validation_snapshots]
+                        self.training_data = self.training_data[number_validation_snapshots+1:]
+
+            # run the actual training of the neural network
+            with self.logger.block('Training of neural network ...'):
+                # set parameters for neural network and training
+                neural_network_parameters = {'layer_sizes': layer_sizes,
+                                             'activation_function': activation_function}
+                training_parameters = {'optimizer': optimizer, 'epochs': epochs,
+                                       'batch_size': batch_size, 'learning_rate': learning_rate}
+
+                self.logger.info('Initializing neural network ...')
+                # initialize the neural network
+                neural_network = FullyConnectedNN(**neural_network_parameters).double()
+                # run training algorithm with multiple restarts
+                self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
+                                                                              neural_network, self.validation_loss, restarts,
+                                                                              training_parameters, seed)
+
+            self.logger.info('Using neural network with smallest validation error ...')
+            self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
+            return self._build_rom()
+
+        def _compute_layer_sizes(self, hidden_layers):
+            """Compute the number of neurons in the layers of the neural network."""
+            return [self.fom.parameters.dim, ] + hidden_layers + [self.fom.dim_output, ]
+
+        def _build_rom(self):
+            """Construct the reduced order model."""
+            with self.logger.block('Building ROM ...'):
+                rom = NeuralNetworkOutputModel(self.neural_network, self.fom.parameters, name=f'{self.fom.name}_reduced')
+
+            return rom
+
+        def _compute_sample(self, mu):
+            """Transform parameter and corresponding output to tensors."""
+            return [(mu, self.fom.compute(output=True,  mu=mu)['output'].flatten())]
 
     class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         """Reduced Basis reductor for instationary problems relying on artificial neural networks.
