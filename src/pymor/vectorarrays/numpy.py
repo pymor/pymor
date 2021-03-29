@@ -2,14 +2,23 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import annotations
+
 from numbers import Number
+from typing import Optional, Union, TYPE_CHECKING
 
 import numpy as np
+from numpy import ndarray
+from numpy.random import RandomState
 from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interface import VectorArray, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import (VectorArray, VectorSpace, _create_random_values,
+                                          Index, RealOrComplex, ScalCoeffs)
+
+if TYPE_CHECKING:
+    from pymor.operators.interface import Operator
 
 
 class NumpyVectorArray(VectorArray):
@@ -31,13 +40,13 @@ class NumpyVectorArray(VectorArray):
         the associated :class:`VectorSpace <NumpyVectorSpace>` instead.
     """
 
-    def __init__(self, array, space):
+    def __init__(self, array: ndarray, space: VectorSpace):
         self._array = array
         self.space = space
         self._refcount = [1]
         self._len = len(array)
 
-    def to_numpy(self, ensure_copy=False):
+    def to_numpy(self, ensure_copy: bool = False) -> ndarray:
         if ensure_copy:
             return self._array[:self._len].copy()
         if self._refcount[0] > 1:
@@ -47,39 +56,39 @@ class NumpyVectorArray(VectorArray):
         return self._array[:self._len]
 
     @property
-    def _data(self):
+    def _data(self) -> ndarray:
         """Return NumPy Array view on data for hacking / interactive use."""
         return self.to_numpy()
 
     @property
-    def real(self):
+    def real(self) -> NumpyVectorArray:
         return NumpyVectorArray(self.to_numpy().real.copy(), self.space)
 
     @property
-    def imag(self):
+    def imag(self) -> NumpyVectorArray:
         return NumpyVectorArray(self.to_numpy().imag.copy(), self.space)
 
-    def conj(self):
+    def conj(self) -> NumpyVectorArray:
         if np.isrealobj(self.to_numpy()):
             return self.copy()
         return NumpyVectorArray(np.conj(self.to_numpy()), self.space)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._len
 
-    def __getitem__(self, ind):
-        if isinstance(ind, Number) and (ind >= self._len or ind < -self._len):
+    def __getitem__(self, ind: Index) -> NumpyVectorArrayView:
+        if isinstance(ind, int) and (ind >= self._len or ind < -self._len):
             raise IndexError('VectorArray index out of range')
         return NumpyVectorArrayView(self, ind)
 
-    def __delitem__(self, ind):
+    def __delitem__(self, ind: Index) -> None:
         assert self.check_ind(ind)
         if self._refcount[0] > 1:
             self._deep_copy()
 
-        if type(ind) is slice:
+        if isinstance(ind, slice):
             ind = set(range(*ind.indices(self._len)))
-        elif not hasattr(ind, '__len__'):
+        elif isinstance(ind, int):
             ind = {ind if 0 <= ind else self._len + ind}
         else:
             l = self._len
@@ -90,7 +99,7 @@ class NumpyVectorArray(VectorArray):
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy()
 
-    def copy(self, deep=False, *, _ind=None):
+    def copy(self, deep: bool = False, *, _ind=None) -> NumpyVectorArray:
         if _ind is None and not deep:
             C = NumpyVectorArray(self._array, self.space)
             C._len = self._len
@@ -103,7 +112,8 @@ class NumpyVectorArray(VectorArray):
                 new_array = new_array.copy()
             return NumpyVectorArray(new_array, self.space)
 
-    def append(self, other, remove_from_other=False):
+    def append(self, other: VectorArray, remove_from_other: bool = False) -> None:
+        assert isinstance(other, NumpyVectorArray)
         assert self.dim == other.dim
         assert not remove_from_other or (other is not self and getattr(other, 'base', None) is not self)
 
@@ -124,12 +134,12 @@ class NumpyVectorArray(VectorArray):
         self._len += len_other
 
         if remove_from_other:
-            if other.is_view:
+            if isinstance(other, NumpyVectorArrayView):
                 del other.base[other.ind]
             else:
                 del other[:]
 
-    def scal(self, alpha, *, _ind=None):
+    def scal(self, alpha: ScalCoeffs, *, _ind=None) -> None:
         if _ind is None:
             _ind = slice(0, self._len)
         assert isinstance(alpha, Number) \
@@ -138,7 +148,7 @@ class NumpyVectorArray(VectorArray):
         if self._refcount[0] > 1:
             self._deep_copy()
 
-        if type(alpha) is np.ndarray:
+        if isinstance(alpha, np.ndarray):
             alpha = alpha[:, np.newaxis]
 
         alpha_type = type(alpha)
@@ -147,9 +157,10 @@ class NumpyVectorArray(VectorArray):
             self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
         self._array[_ind] *= alpha
 
-    def axpy(self, alpha, x, *, _ind=None):
+    def axpy(self, alpha: ScalCoeffs, x: VectorArray, *, _ind=None) -> None:
         if _ind is None:
             _ind = slice(0, self._len)
+        assert isinstance(x, NumpyVectorArray)
         assert self.dim == x.dim
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(_ind),)
@@ -157,21 +168,21 @@ class NumpyVectorArray(VectorArray):
         if self._refcount[0] > 1:
             self._deep_copy()
 
-        B = x.base._array[x.ind] if x.is_view else x._array[:x._len]
+        B = x.base._array[x.ind] if isinstance(x, NumpyVectorArrayView) else x._array[:x._len]
         assert self.len_ind(_ind) == len(B) or len(B) == 1
 
-        alpha_type = type(alpha)
-        alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
+        alpha_dtype = alpha.dtype if isinstance(alpha, ndarray) else type(alpha)
         if self._array.dtype != alpha_dtype or self._array.dtype != B.dtype:
             dtype = np.promote_types(self._array.dtype, alpha_dtype)
             dtype = np.promote_types(dtype, B.dtype)
             self._array = self._array.astype(dtype)
 
-        if type(alpha) is np.ndarray:
+        if isinstance(alpha, np.ndarray):
             alpha = alpha[:, np.newaxis]
         self._array[_ind] += B * alpha
 
-    def inner(self, other, product=None, *, _ind=None):
+    def inner(self, other: VectorArray, product: Optional[Operator] = None,  *, _ind=None) -> ndarray:
+        assert isinstance(other, NumpyVectorArray)
         assert product is None or _ind is None
         if product is not None:
             return product.apply2(self, other)
@@ -180,12 +191,13 @@ class NumpyVectorArray(VectorArray):
         assert self.dim == other.dim
 
         A = self._array[_ind]
-        B = other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        B = other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else other._array[:other._len]
 
         # .conj() is a no-op on non-complex data types
         return A.conj().dot(B.T)
 
-    def pairwise_inner(self, other, product=None, *, _ind=None):
+    def pairwise_inner(self, other: VectorArray, product: Optional[Operator] = None, *, _ind=None) -> ndarray:
+        assert isinstance(other, NumpyVectorArray)
         assert product is None or _ind is None
         if product is not None:
             return product.pairwise_apply2(self, other)
@@ -194,14 +206,14 @@ class NumpyVectorArray(VectorArray):
         assert self.dim == other.dim
 
         A = self._array[_ind]
-        B = other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        B = other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else other._array[:other._len]
 
         assert len(A) == len(B)
 
         # .conj() is a no-op on non-complex data types
         return np.sum(A.conj() * B, axis=1)
 
-    def lincomb(self, coefficients, *, _ind=None):
+    def lincomb(self, coefficients: ndarray, *, _ind=None) -> NumpyVectorArray:
         if _ind is None:
             _ind = slice(0, self._len)
         assert 1 <= coefficients.ndim <= 2
@@ -211,18 +223,18 @@ class NumpyVectorArray(VectorArray):
 
         return NumpyVectorArray(coefficients.dot(self._array[_ind]), self.space)
 
-    def _norm(self, *, _ind=None):
+    def _norm(self, *, _ind=None) -> ndarray:
         if _ind is None:
             _ind = slice(0, self._len)
         return np.linalg.norm(self._array[_ind], axis=1)
 
-    def _norm2(self, *, _ind=None):
+    def _norm2(self, *, _ind=None) -> ndarray:
         if _ind is None:
             _ind = slice(0, self._len)
         A = self._array[_ind]
         return np.sum((A * A.conj()).real, axis=1)
 
-    def sup_norm(self, *, _ind=None):
+    def sup_norm(self, *, _ind=None) -> ndarray:
         if self.dim == 0:
             if _ind is None:
                 _ind = slice(0, self._len)
@@ -231,7 +243,7 @@ class NumpyVectorArray(VectorArray):
             _, max_val = self.amax(_ind=_ind)
             return max_val
 
-    def dofs(self, dof_indices, *, _ind=None):
+    def dofs(self, dof_indices: ndarray, *, _ind=None) -> ndarray:
         if _ind is None:
             _ind = slice(0, self._len)
         assert isinstance(dof_indices, list) and (len(dof_indices) == 0 or min(dof_indices) >= 0) \
@@ -247,7 +259,7 @@ class NumpyVectorArray(VectorArray):
 
         return self._array[:, dof_indices][_ind, :]
 
-    def amax(self, *, _ind=None):
+    def amax(self, *, _ind=None) -> ndarray:
         if _ind is None:
             _ind = slice(0, self._len)
         assert self.dim > 0
@@ -261,13 +273,13 @@ class NumpyVectorArray(VectorArray):
         max_val = A[np.arange(len(A)), max_ind]
         return max_ind, max_val
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self._array[:self._len].__str__()
 
     def _format_repr(self, max_width, verbosity):
         return super()._format_repr(max_width, verbosity, override={'array': str(self._array[:self._len].__str__())})
 
-    def __del__(self):
+    def __del__(self) -> None:
         self._refcount[0] -= 1
 
     def _deep_copy(self):
@@ -275,56 +287,68 @@ class NumpyVectorArray(VectorArray):
         self._refcount[0] -= 1            # decrease refcount for original array
         self._refcount = [1]              # create new reference counter
 
-    def __add__(self, other):
+    def __add__(self, other: Union[VectorArray, int]) -> NumpyVectorArray:
         if isinstance(other, Number):
             assert other == 0
             return self.copy()
+        assert isinstance(other, NumpyVectorArray)
         assert self.dim == other.dim
         return NumpyVectorArray(self._array[:self._len]
-                                + (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
+                                + (other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else
+                                   other._array[:other._len]),
                                 self.space)
 
-    def __iadd__(self, other):
+    def __iadd__(self, other: Union[VectorArray, int]) -> NumpyVectorArray:
+        if isinstance(other, int):
+            if other != 0:
+                raise TypeError
+            return self
+        assert isinstance(other, NumpyVectorArray)
         assert self.dim == other.dim
         if self._refcount[0] > 1:
             self._deep_copy()
-        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        other_dtype = other.base._array.dtype if isinstance(other, NumpyVectorArrayView) else other._array.dtype
         common_dtype = np.promote_types(self._array.dtype, other_dtype)
         if self._array.dtype != common_dtype:
             self._array = self._array.astype(common_dtype)
-        self._array[:self._len] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        self._array[:self._len] += (other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else
+                                    other._array[:other._len])
         return self
 
     __radd__ = __add__
 
-    def __sub__(self, other):
+    def __sub__(self, other: VectorArray) -> NumpyVectorArray:
+        assert isinstance(other, NumpyVectorArray)
         assert self.dim == other.dim
         return NumpyVectorArray(self._array[:self._len]
-                                - (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
+                                - (other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else
+                                   other._array[:other._len]),
                                 self.space)
 
-    def __isub__(self, other):
+    def __isub__(self, other: VectorArray) -> NumpyVectorArray:
+        assert isinstance(other, NumpyVectorArray)
         assert self.dim == other.dim
         if self._refcount[0] > 1:
             self._deep_copy()
-        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        other_dtype = other.base._array.dtype if isinstance(other, NumpyVectorArrayView) else other._array.dtype
         common_dtype = np.promote_types(self._array.dtype, other_dtype)
         if self._array.dtype != common_dtype:
             self._array = self._array.astype(common_dtype)
-        self._array[:self._len] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        self._array[:self._len] -= (other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else
+                                    other._array[:other._len])
         return self
 
-    def __mul__(self, other):
+    def __mul__(self, other: RealOrComplex) -> NumpyVectorArray:
         assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
-        if type(other) is np.ndarray:
+        if isinstance(other, np.ndarray):
             other = other[:, np.newaxis]
         return NumpyVectorArray(self._array[:self._len] * other, self.space)
 
-    def __imul__(self, other):
+    def __imul__(self, other: RealOrComplex) -> NumpyVectorArray:
         assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
-        if type(other) is np.ndarray:
+        if isinstance(other, np.ndarray):
             other = other[:, np.newaxis]
         if self._refcount[0] > 1:
             self._deep_copy()
@@ -335,7 +359,7 @@ class NumpyVectorArray(VectorArray):
         self._array[:self._len] *= other
         return self
 
-    def __neg__(self):
+    def __neg__(self) -> NumpyVectorArray:
         return NumpyVectorArray(-self._array[:self._len], self.space)
 
 
@@ -350,17 +374,17 @@ class NumpyVectorSpace(VectorSpace):
         See :attr:`~pymor.vectorarrays.interface.VectorSpace.id`.
     """
 
-    def __init__(self, dim, id=None):
+    def __init__(self, dim: int, id: Optional[str] = None):
         self.dim = dim
         self.id = id
 
-    def __eq__(self, other):
-        return type(other) is type(self) and self.dim == other.dim and self.id == other.id
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, NumpyVectorSpace) and self.dim == other.dim and self.id == other.id
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.dim) + hash(self.id)
 
-    def zeros(self, count=1, reserve=0):
+    def zeros(self, count: int = 1, reserve: int = 0) -> NumpyVectorArray:
         assert count >= 0
         assert reserve >= 0
         va = NumpyVectorArray(np.empty((0, 0)), self)
@@ -368,7 +392,7 @@ class NumpyVectorSpace(VectorSpace):
         va._len = count
         return va
 
-    def full(self, value, count=1, reserve=0):
+    def full(self, value: RealOrComplex, count: int = 1, reserve: int = 0) -> NumpyVectorArray:
         assert count >= 0
         assert reserve >= 0
         va = NumpyVectorArray(np.empty((0, 0)), self)
@@ -376,7 +400,8 @@ class NumpyVectorSpace(VectorSpace):
         va._len = count
         return va
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count: int = 1, distribution: str = 'uniform', random_state: Optional[RandomState] = None,
+               seed: int = None, reserve: int = 0, **kwargs) -> NumpyVectorArray:
         assert count >= 0
         assert reserve >= 0
         assert random_state is None or seed is None
@@ -386,23 +411,24 @@ class NumpyVectorSpace(VectorSpace):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj, id=None):
+    def make_array(cls, obj, id: Optional[str] = None) -> NumpyVectorArray:
         return cls._array_factory(obj, id=id)
 
-    @make_array.instancemethod
-    def make_array(self, obj):
+    @make_array.instancemethod  # type: ignore[no-redef]
+    def make_array(self, obj) -> NumpyVectorArray:
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data, id=None, ensure_copy=False):
+    def from_numpy(cls, data: ndarray, id: Optional[str] = None, ensure_copy: bool = False) -> NumpyVectorArray:
         return cls._array_factory(data.copy() if ensure_copy else data, id=id)
 
-    @from_numpy.instancemethod
-    def from_numpy(self, data, ensure_copy=False):
+    @from_numpy.instancemethod  # type: ignore[no-redef]
+    def from_numpy(self, data: ndarray, ensure_copy: bool = False) -> NumpyVectorArray:
         return self._array_factory(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
-    def from_file(cls, path, key=None, single_vector=False, transpose=False, id=None):
+    def from_file(cls, path: str, key: Optional[str] = None, single_vector: bool = False, transpose: bool = False,
+                  id: Optional[str] = None) -> NumpyVectorArray:
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
         array = load_matrix(path, key=key)
@@ -417,13 +443,14 @@ class NumpyVectorSpace(VectorSpace):
             array = array.T
         return cls.make_array(array, id=id)
 
-    @from_file.instancemethod
-    def from_file(self, path, key=None, single_vector=False, transpose=False):
+    @from_file.instancemethod  # type: ignore[no-redef]
+    def from_file(self, path: str, key: Optional[str] = None, single_vector: bool = False,
+                  transpose: bool = False) -> NumpyVectorArray:
         return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose, id=self.id)
 
     @classmethod
     def _array_factory(cls, array, space=None, id=None):
-        if type(array) is np.ndarray:
+        if isinstance(array, np.ndarray):
             pass
         elif issparse(array):
             array = array.toarray()
@@ -439,7 +466,7 @@ class NumpyVectorSpace(VectorSpace):
             return NumpyVectorArray(array, space)
 
     @property
-    def is_scalar(self):
+    def is_scalar(self) -> bool:  # type: ignore[override]
         return self.dim == 1 and self.id is None
 
 
@@ -447,127 +474,141 @@ class NumpyVectorArrayView(NumpyVectorArray):
 
     is_view = True
 
-    def __init__(self, array, ind):
+    def __init__(self, array: ndarray, ind: Index):
         assert array.check_ind(ind)
         self.base = array
         self.ind = array.normalize_ind(ind)
         self.space = array.space
 
-    def to_numpy(self, ensure_copy=False):
+    def to_numpy(self, ensure_copy: bool = False) -> ndarray:
         result = self.base.to_numpy()[self.ind]
         if ensure_copy and not result.flags['OWNDATA']:
             result = result.copy()
         return result
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.base.len_ind(self.ind)
 
-    def __getitem__(self, ind):
+    def __getitem__(self, ind: Index) -> NumpyVectorArrayView:
         try:
             return self.base[self.base.sub_index(self.ind, ind)]
         except IndexError:
             raise IndexError('VectorArray index out of range')
 
-    def __delitem__(self):
+    def __delitem__(self, ind: Index) -> None:
         raise ValueError('Cannot remove from NumpyVectorArrayView')
 
-    def append(self, other, remove_from_other=False):
+    def append(self, other: VectorArray, remove_from_other: bool = False) -> None:
         raise ValueError('Cannot append to NumpyVectorArrayView')
 
-    def copy(self, deep=False):
+    def copy(self, deep: bool = False, *, _ind=None) -> NumpyVectorArray:
         return self.base.copy(_ind=self.ind, deep=deep)
 
-    def scal(self, alpha):
+    def scal(self, alpha: ScalCoeffs, *, _ind=None) -> None:
         assert self.base.check_ind_unique(self.ind)
         self.base.scal(alpha, _ind=self.ind)
 
-    def axpy(self, alpha, x):
+    def axpy(self, alpha: ScalCoeffs, x: VectorArray, *, _ind=None) -> None:
+        assert isinstance(x, NumpyVectorArray)
         assert self.base.check_ind_unique(self.ind)
         self.base.axpy(alpha, x, _ind=self.ind)
 
-    def inner(self, other, product=None):
+    def inner(self, other: VectorArray, product: Optional[Operator] = None, *, _ind=None) -> ndarray:
+        assert isinstance(other, NumpyVectorArray)
         if product is not None:
             return product.apply2(self, other)
         return self.base.inner(other, _ind=self.ind)
 
-    def pairwise_inner(self, other, product=None):
+    def pairwise_inner(self, other: VectorArray, product: Optional[Operator] = None, *, _ind=None) -> ndarray:
+        assert isinstance(other, NumpyVectorArray)
         if product is not None:
             return product.pairwise_apply2(self, other)
         return self.base.pairwise_inner(other, _ind=self.ind)
 
-    def lincomb(self, coefficients):
+    def lincomb(self, coefficients: ndarray, *, _ind=None) -> NumpyVectorArray:
         return self.base.lincomb(coefficients, _ind=self.ind)
 
-    def _norm(self):
+    def _norm(self, *, _ind=None) -> ndarray:
         return self.base._norm(_ind=self.ind)
 
-    def _norm2(self):
+    def _norm2(self, *, _ind=None) -> ndarray:
         return self.base._norm2(_ind=self.ind)
 
-    def sup_norm(self):
+    def sup_norm(self, *, _ind=None) -> ndarray:
         return self.base.sup_norm(_ind=self.ind)
 
-    def dofs(self, dof_indices):
+    def dofs(self, dof_indices: ndarray, *, _ind=None) -> ndarray:
         return self.base.dofs(dof_indices, _ind=self.ind)
 
-    def amax(self):
+    def amax(self, *, _ind=None) -> ndarray:
         return self.base.amax(_ind=self.ind)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.base._array[:self.base._len][self.ind].__str__()
 
-    def __add__(self, other):
-        if isinstance(other, Number):
+    def __add__(self, other: Union[VectorArray, int]) -> NumpyVectorArray:
+        if isinstance(other, int):
             assert other == 0
             return self.copy()
+        assert isinstance(other, NumpyVectorArray)
         assert self.dim == other.dim
         return NumpyVectorArray(self.base._array[self.ind]
-                                + (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
+                                + (other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else
+                                   other._array[:other._len]),
                                 self.space)
 
-    def __iadd__(self, other):
+    def __iadd__(self, other: Union[VectorArray, int]) -> NumpyVectorArray:
+        if isinstance(other, int):
+            assert other == 0
+            return self
+        assert isinstance(other, NumpyVectorArray)
         assert self.dim == other.dim
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
             self._deep_copy()
-        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        other_dtype = other.base._array.dtype if isinstance(other, NumpyVectorArrayView) else other._array.dtype
         common_dtype = np.promote_types(self.base._array.dtype, other_dtype)
         if self.base._array.dtype != common_dtype:
             self.base._array = self.base._array.astype(common_dtype)
-        self.base.array[self.ind] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        self.base.array[self.ind] += (other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else
+                                      other._array[:other._len])
         return self
 
     __radd__ = __add__
 
-    def __sub__(self, other):
+    def __sub__(self, other: VectorArray) -> NumpyVectorArray:
+        assert isinstance(other, NumpyVectorArray)
         assert self.dim == other.dim
         return NumpyVectorArray(self.base._array[self.ind]
-                                - (other.base._array[other.ind] if other.is_view else other._array[:other._len]),
+                                - (other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else
+                                   other._array[:other._len]),
                                 self.space)
 
-    def __isub__(self, other):
+    def __isub__(self, other: VectorArray) -> NumpyVectorArray:
+        assert isinstance(other, NumpyVectorArray)
         assert self.dim == other.dim
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
             self._deep_copy()
-        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        other_dtype = other.base._array.dtype if isinstance(other, NumpyVectorArrayView) else other._array.dtype
         common_dtype = np.promote_types(self.base._array.dtype, other_dtype)
         if self.base._array.dtype != common_dtype:
             self.base._array = self.base._array.astype(common_dtype)
-        self.base._array[self.ind] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        self.base._array[self.ind] -= (other.base._array[other.ind] if isinstance(other, NumpyVectorArrayView) else
+                                       other._array[:other._len])
         return self
 
-    def __mul__(self, other):
+    def __mul__(self, other: RealOrComplex) -> NumpyVectorArray:
         assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
-        if type(other) is np.ndarray:
+        if isinstance(other, np.ndarray):
             other = other[:, np.newaxis]
         return NumpyVectorArray(self.base._array[self.ind] * other, self.space)
 
-    def __imul__(self, other):
+    def __imul__(self, other: RealOrComplex) -> NumpyVectorArray:
         assert isinstance(other, Number) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
-        if type(other) is np.ndarray:
+        if isinstance(other, np.ndarray):
             other = other[:, np.newaxis]
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
@@ -579,11 +620,11 @@ class NumpyVectorArrayView(NumpyVectorArray):
         self.base._array[self.ind] *= other
         return self
 
-    def __neg__(self):
+    def __neg__(self) -> NumpyVectorArray:
         return NumpyVectorArray(-self.base._array[self.ind], self.space)
 
-    def __del__(self):
+    def __del__(self) -> None:
         return
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'NumpyVectorArrayView({self.to_numpy()}, {self.space})'
