@@ -18,7 +18,7 @@ jupyter_contrib_nbextensions
 jupyter_sphinx
 matplotlib
 meshio==4.2.0
-mpi4py
+mpi4py>=3.0
 nbresuse
 numpy>=1.15.4;python_version == "3.7"
 numpy>=1.16.0;python_version <= "3.6"
