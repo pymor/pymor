@@ -36,7 +36,7 @@ gen_apidoc.walk(pymordemos)
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
-              'sphinx.ext.viewcode',
+              'sphinx.ext.linkcode',
               'sphinx.ext.intersphinx',
               'pymordocstring',
               'try_on_binder',
@@ -266,3 +266,11 @@ branch = os.environ.get('CI_COMMIT_REF_NAME', 'main')
 # this must match PYMOR_ROOT/.ci/gitlab/deploy_docs
 try_on_binder_branch = branch.replace('github/PUSH_', 'from_fork__')
 try_on_binder_slug = os.environ.get('CI_COMMIT_REF_SLUG', slugify.slugify(try_on_binder_branch))
+
+def linkcode_resolve(domain, info):
+    if domain == 'py':
+        if not info['module']:
+            return None
+        filename = info['module'].replace('.', '/')
+        return f'https://github.com/pymor/pymor/tree/{branch}/src/{filename}.py'
+    return None
