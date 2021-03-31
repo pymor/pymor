@@ -683,7 +683,7 @@ submit ci_weekly 3 9:
 from source 1/3:
     tags: [mike]
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.6:48b2b3e9cefc967c37e57af6119526664feddf2f
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:48b2b3e9cefc967c37e57af6119526664feddf2f
           alias: pypi_mirror
     needs: ["ci setup"]
     rules:
@@ -893,12 +893,12 @@ pypi:
 from wheel 1/3:
     extends: .check_wheel
     dependencies:
-          - "wheel 2010 py 3 6"
-          - "wheel 2014 py 3 6"
-    needs: ["wheel 2010 py 3 6","wheel 2014 py 3 6",]
+          - "wheel 2010 py 3 7"
+          - "wheel 2014 py 3 7"
+    needs: ["wheel 2010 py 3 7","wheel 2014 py 3 7",]
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_centos_8:48b2b3e9cefc967c37e57af6119526664feddf2f
     script:
-      - echo "Testing wheel install on centos_8 with Python 3.6"
+      - echo "Testing wheel install on centos_8 with Python 3.7"
       - python3 -m pip --version
       - devpi install pymor[full]
 
