@@ -480,8 +480,8 @@ class VectorArray(BasicObject):
             return np.sqrt(norm_squared.real)
 
     @defaults('tol', 'raise_complex')
-    def norm2(self, product: Optional[Operator] = None, tol: Optional[float] = 1e-10,
-              raise_complex: Optional[bool] = True) -> ndarray:
+    def norm2(self, product: Optional[Operator] = None, tol: float = 1e-10,
+              raise_complex: bool = True) -> ndarray:
         """Squared norm with respect to a given inner product.
 
         If `product` is `None`, the Euclidean norms of the :meth:`dofs`
