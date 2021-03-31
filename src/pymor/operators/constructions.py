@@ -5,13 +5,12 @@
 """Module containing some constructions to obtain new operators from old ones."""
 
 from __future__ import annotations
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Sequence, Union
 
 from functools import reduce
 from numbers import Number
 
 import numpy as np
-from numpy import ndarray
 import scipy.linalg as spla
 
 from pymor.core.defaults import defaults
@@ -19,10 +18,9 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
-from pymor.vectorarrays.interface import VectorArray, VectorSpace
+from pymor.vectorarrays.interface import VectorArray, VectorSpace, RealOrComplex
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
-RealOrComplex = Union[float, complex]
 Coefficient = Union[RealOrComplex, ParameterFunctional]
 OpTupleOrList = Union[Tuple[Operator, ...], List[Operator]]
 CoeffTupleOrList = Union[Tuple[Coefficient, ...], List[Coefficient]]
@@ -52,7 +50,7 @@ class LincombOperator(Operator):
     solver_options: Optional[dict]
     name: Optional[str]
 
-    def __init__(self, operators: OpTupleOrList, coefficients: CoeffTupleOrList,
+    def __init__(self, operators: Sequence[Operator], coefficients: Sequence[Coefficient],
                  solver_options: Optional[dict] = None, name: Optional[str] = None):
         assert len(operators) > 0
         assert len(operators) == len(coefficients)

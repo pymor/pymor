@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import annotations
-from typing import Any, List, Optional, Tuple, Union, TYPE_CHECKING
+from typing import Any, List, Optional, Tuple, Union
 
 from numbers import Number
 import numpy as np
@@ -13,16 +13,10 @@ from pymor.algorithms import genericsolvers
 from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError, LinAlgError
-from pymor.parameters.base import ParametricObject
+from pymor.parameters.base import ParametricObject, Mu
 from pymor.parameters.functionals import ParameterFunctional
-from pymor.vectorarrays.interface import VectorArray, VectorSpace
+from pymor.vectorarrays.interface import VectorArray, VectorSpace, RealOrComplex
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-
-Index = Union[int, slice, List[int], ndarray]
-RealOrComplex = Union[float, complex]
-
-if TYPE_CHECKING:
-    from pymor.parameters.base import Mu
 
 
 class Operator(ParametricObject):
@@ -578,7 +572,6 @@ class Operator(ParametricObject):
         return self._radd_sub(other, -1.)
 
     def __mul__(self, other: Union[RealOrComplex, ParameterFunctional]) -> Operator:
-        assert isinstance(other, (Number, ParameterFunctional))
         from pymor.operators.constructions import LincombOperator
         if self.name != 'LincombOperator' or not isinstance(self, LincombOperator):
             return LincombOperator((self,), (other,))
