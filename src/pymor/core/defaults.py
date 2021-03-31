@@ -235,6 +235,15 @@ def defaults(*args):
             kwargs = set_default_values(*wrapper_args, **wrapper_kwargs)
             return decorated_function(**kwargs)
 
+        annotations = defaults_wrapper.__annotations__.copy()
+        for arg in args:
+            try:
+                ann = annotations[arg]
+                annotations[arg] = f'Optional[{ann}]'
+            except KeyError:
+                pass
+        defaults_wrapper.__annotations__ = annotations
+
         return defaults_wrapper
 
     return the_decorator
