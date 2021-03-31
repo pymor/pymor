@@ -1,4 +1,4 @@
-ARG BASE=pymor/jupyter_py3.8:latest
+ARG BASE=pymor/jupyter_py3.9:latest
 FROM ${BASE}
 MAINTAINER rene.fritze@wwu.de
 
