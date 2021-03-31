@@ -256,7 +256,7 @@ class Model(CacheableObject, ParametricObject):
             raise ValueError('Model has no error estimator')
         return self.error_estimator.estimate_output_error(solution, mu, self, **kwargs)
 
-    _compute_allowed_kwargs = frozenset()
+    _compute_allowed_kwargs: frozenset = frozenset()
 
     def compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                 solution_error_estimate=False, output_error_estimate=False,

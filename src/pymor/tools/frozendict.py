@@ -13,8 +13,8 @@ class FrozenDict(dict):
     def _blocked_attribute(self):
         raise AttributeError(f'A {type(self).__name__} cannot be modified.')
 
-    __delitem__ = __setitem__ = clear = _blocked_attribute
-    pop = popitem = setdefault = update = _blocked_attribute
+    __delitem__ = __setitem__ = clear = _blocked_attribute    # type: ignore[assignment]
+    pop = popitem = setdefault = update = _blocked_attribute  # type: ignore[assignment]
 
     def __new__(cls, *args, **kwargs):
         new = dict.__new__(cls)

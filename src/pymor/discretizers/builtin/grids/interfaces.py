@@ -520,7 +520,7 @@ class BoundaryInfo(CacheableObject):
         set of all boundary types the grid has.
     """
 
-    boundary_types = frozenset()
+    boundary_types: frozenset = frozenset()
     cache_region = 'memory'
 
     def mask(self, boundary_type, codim):

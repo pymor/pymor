@@ -211,7 +211,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         assert isinstance(rule_, rule)
         cls.rules.insert(index, rule_)
 
-    @insert_rule.instancemethod
+    @insert_rule.instancemethod  # type: ignore[no-redef]
     def insert_rule(self, index, rule_):
         assert isinstance(rule_, rule)
         self.rules.insert(index, rule_)
@@ -221,7 +221,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         assert isinstance(rule_, rule)
         cls.rules.append(rule_)
 
-    @append_rule.instancemethod
+    @append_rule.instancemethod  # type: ignore[no-redef]
     def append_rule(self, rule_):
         assert isinstance(rule_, rule)
         self.rules.append(rule_)

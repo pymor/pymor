@@ -214,8 +214,6 @@ def getLogger(module, level=None, filename=''):
 
 class DummyLogger:
 
-    __slots__ = []
-
     def nop(self, *args, **kwargs):
         return None
 

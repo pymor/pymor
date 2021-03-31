@@ -2,6 +2,10 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import annotations
+
+from typing import Type
+
 import numpy as np
 
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
@@ -10,6 +14,8 @@ from pymor.vectorarrays.block import BlockVectorSpace
 
 
 class BlockOperatorBase(Operator):
+
+    adjoint_type: Type[BlockOperatorBase]
 
     def _operators(self):
         """Iterator over operators."""

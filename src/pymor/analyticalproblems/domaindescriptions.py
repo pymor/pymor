@@ -24,7 +24,7 @@ class DomainDescription(ImmutableObject):
     """
 
     dim: int
-    boundary_types = frozenset()
+    boundary_types: frozenset = frozenset()
 
     @property
     def has_dirichlet(self):

@@ -547,8 +547,6 @@ class ListVectorArray(VectorArray):
 class ListVectorSpace(VectorSpace):
     """|VectorSpace| of |ListVectorArrays|."""
 
-    dim = None
-
     @abstractmethod
     def zero_vector(self):
         pass
@@ -603,7 +601,7 @@ class ListVectorSpace(VectorSpace):
             raise NotImplementedError
         return cls.space_from_vector_obj(obj[0], id=id).make_array(obj)
 
-    @make_array.instancemethod
+    @make_array.instancemethod  # type: ignore[no-redef]
     def make_array(self, obj):
         return ListVectorArray([v if isinstance(v, Vector) else self.make_vector(v) for v in obj], self)
 
@@ -611,7 +609,7 @@ class ListVectorSpace(VectorSpace):
     def from_numpy(cls, data, id=None, ensure_copy=False):
         return cls.space_from_dim(data.shape[1], id=id).from_numpy(data, ensure_copy=ensure_copy)
 
-    @from_numpy.instancemethod
+    @from_numpy.instancemethod  # type: ignore[no-redef]
     def from_numpy(self, data, ensure_copy=False):
         return ListVectorArray([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
 

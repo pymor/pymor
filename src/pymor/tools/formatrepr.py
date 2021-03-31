@@ -5,6 +5,7 @@
 
 import inspect
 import textwrap
+from typing import Dict, Any, Callable
 
 import numpy as np
 
@@ -86,7 +87,7 @@ def _format_array(val, max_width, verbosity):
         return r
 
 
-_format_handlers = {}
+_format_handlers: Dict[type, Callable[[Any, int, bool], str]] = {}
 register_format_handler(list, _format_list_tuple)
 register_format_handler(tuple, _format_list_tuple)
 register_format_handler(dict, _format_dict)

@@ -273,11 +273,3 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
         def set(self, U, vmin=None, vmax=None):
             self.patch_axes.set(U, vmin, vmax)
             self.draw()
-
-else:
-
-    class Matplotlib1DWidget:
-        pass
-
-    class MatplotlibPatchWidget:
-        pass

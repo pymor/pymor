@@ -465,7 +465,7 @@ class NumpyVectorSpace(VectorSpace):
             assert array.shape[1] == space.dim
             return NumpyVectorArray(array, space)
 
-    @property
+    @property  # the following type: ignore is needed due to mypy issue #4125
     def is_scalar(self) -> bool:  # type: ignore[override]
         return self.dim == 1 and self.id is None
 

@@ -13,6 +13,8 @@ The implementations are based on the event loop provided
 by :mod:`pymor.tools.mpi`.
 """
 
+from typing import Dict
+
 import numpy as np
 
 from pymor.tools import mpi
@@ -167,8 +169,8 @@ class RegisteredLocalSpace(int):
         return f'{_local_space_registry[self]} (id: {int(self)})'
 
 
-_local_space_registry = {}
-_local_space_to_id = {}
+_local_space_registry: Dict[int, VectorSpace] = {}
+_local_space_to_id: Dict[VectorSpace, int] = {}
 
 
 def _register_local_space(local_space):

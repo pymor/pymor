@@ -14,6 +14,7 @@ if config.HAVE_TORCH:
     import torch.nn as nn
     import torch.optim as optim
     import torch.utils as utils
+    import torch.utils.data  # needed to make mypy happy
 
     from pymor.algorithms.pod import pod
     from pymor.core.base import BasicObject

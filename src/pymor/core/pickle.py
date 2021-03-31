@@ -19,8 +19,8 @@ import opcode
 from types import CodeType, FunctionType, ModuleType
 try:
     import cPickle as pickle
-except ImportError:
-    import pickle as pickle
+except ImportError:          # the following type: ignore is needed due to mypy issue #1153
+    import pickle as pickle  # type: ignore[no-redef]
 from io import BytesIO as IOtype
 import platform
 

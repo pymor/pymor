@@ -72,6 +72,7 @@ from numbers import Number
 import os
 import tempfile
 from types import MethodType
+from typing import Any, Dict, Optional
 
 import diskcache
 import numpy as np
@@ -140,7 +141,7 @@ class CacheRegion:
 
 class MemoryRegion(CacheRegion):
 
-    NO_VALUE = {}
+    NO_VALUE: Any = {}
 
     def __init__(self, max_keys):
         self.max_keys = max_keys
@@ -213,7 +214,7 @@ def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.'
     cache_regions['memory'] = MemoryRegion(memory_max_keys)
 
 
-cache_regions = {}
+cache_regions: Dict[str, CacheRegion] = {}
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
@@ -251,7 +252,7 @@ class CacheableObject(ImmutableObject):
         Identifier for the object instance on which a cached method is called.
     """
 
-    cache_region = None
+    cache_region: Optional[str] = None
     cache_id = None
 
     def disable_caching(self):

@@ -311,11 +311,3 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             p.drawText((self.width() - self.vmin_width)/2, self.height() - self.text_height + self.text_ascent,
                        self.vmin_str)
             p.end()
-
-else:
-
-    class GLPatchWidget:
-        pass
-
-    class ColorBarWidget:
-        pass

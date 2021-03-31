@@ -211,7 +211,7 @@ class BlockVectorSpace(VectorSpace):
         assert len(obj) > 0
         return cls(tuple(o.space for o in obj)).make_array(obj)
 
-    @make_array.instancemethod
+    @make_array.instancemethod  # type: ignore[no-redef]
     def make_array(self, obj):
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces))

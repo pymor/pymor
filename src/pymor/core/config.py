@@ -96,31 +96,35 @@ def is_nbconvert():
     return is_jupyter() and bool(environ.get('PYMOR_NBCONVERT', False))
 
 
+def get_package_version(package, attribute='__version__'):
+    return getattr(import_module(package), attribute)
+
+
 _PACKAGES = {
-    'CYTHON': lambda: import_module('cython').__version__,
+    'CYTHON': lambda: get_package_version('cython'),
     'DEALII': lambda: import_module('pydealii'),
     'FENICS': _get_fenics_version,
-    'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
+    'GL': lambda: import_module('OpenGL.GL') and get_package_version('OpenGL'),
     'IPYTHON': _get_ipython_version,
     'MATPLOTLIB': _get_matplotib_version,
-    'MESHIO': lambda: import_module('meshio').__version__,
-    'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
-    'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
+    'MESHIO': lambda: get_package_version('meshio'),
+    'IPYWIDGETS': lambda: get_package_version('ipywidgets'),
+    'MPI': lambda: import_module('mpi4py.MPI') and get_package_version('mpi4py'),
     'NGSOLVE': lambda: bool(import_module('ngsolve')),
-    'NUMPY': lambda: import_module('numpy').__version__,
-    'PYAMG': lambda: import_module('pyamg.version').full_version,
+    'NUMPY': lambda: get_package_version('numpy'),
+    'PYAMG': lambda: get_package_version('pyamg.version', 'full_version'),
     'PYMESS': lambda: bool(import_module('pymess')),
-    'PYTEST': lambda: import_module('pytest').__version__,
-    'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
+    'PYTEST': lambda: get_package_version('pytest'),
+    'PYTHREEJS': lambda: get_package_version('pythreejs._version'),
     'PYEVTK': lambda: _can_import('pyevtk'),
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(import_module('Qt.QtOpenGL')),
-    'SCIPY': lambda: import_module('scipy').__version__,
+    'SCIPY': lambda: get_package_version('scipy'),
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
     'SLYCOT': lambda: _get_slycot_version(),
-    'SPHINX': lambda: import_module('sphinx').__version__,
-    'TORCH': lambda: import_module('torch').__version__,
-    'TYPER': lambda: import_module('typer').__version__,
+    'SPHINX': lambda: get_package_version('sphinx'),
+    'TORCH': lambda: get_package_version('torch'),
+    'TYPER': lambda: get_package_version('typer'),
 }
 
 
