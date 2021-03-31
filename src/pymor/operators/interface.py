@@ -2,9 +2,13 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import annotations
+from typing import Any, List, Optional, Tuple, Union, TYPE_CHECKING
+
 from numbers import Number
 
 import numpy as np
+from numpy import ndarray
 
 from pymor.algorithms import genericsolvers
 from pymor.core.base import abstractmethod
@@ -14,6 +18,12 @@ from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+Index = Union[int, slice, List[int], ndarray]
+RealOrComplex = Union[float, complex]
+
+if TYPE_CHECKING:
+    from pymor.parameters.base import Mu
 
 
 class Operator(ParametricObject):
@@ -62,15 +72,15 @@ class Operator(ParametricObject):
         for all V, mu.
     """
 
-    solver_options = None
+    solver_options: Optional[dict] = None
 
     @property
-    def H(self):
+    def H(self) -> Operator:
         from pymor.operators.constructions import AdjointOperator
         return AdjointOperator(self)
 
     @abstractmethod
-    def apply(self, U, mu=None):
+    def apply(self, U: VectorArray, mu: Optional[Mu] = None) -> VectorArray:
         """Apply the operator to a |VectorArray|.
 
         Parameters
@@ -86,7 +96,7 @@ class Operator(ParametricObject):
         """
         pass
 
-    def apply2(self, V, U, mu=None):
+    def apply2(self, V: VectorArray, U: VectorArray, mu: Optional[Mu] = None) -> ndarray:
         """Treat the operator as a 2-form and apply it to V and U.
 
         This method is usually implemented as ``V.inner(self.apply(U))``.
@@ -118,7 +128,7 @@ class Operator(ParametricObject):
         AU = self.apply(U, mu=mu)
         return V.inner(AU)
 
-    def pairwise_apply2(self, V, U, mu=None):
+    def pairwise_apply2(self, V: VectorArray, U: VectorArray, mu: Optional[Mu] = None) -> ndarray:
         """Treat the operator as a 2-form and apply it to V and U in pairs.
 
         This method is usually implemented as ``V.pairwise_inner(self.apply(U))``.
@@ -152,7 +162,7 @@ class Operator(ParametricObject):
         AU = self.apply(U, mu=mu)
         return V.pairwise_inner(AU)
 
-    def apply_adjoint(self, V, mu=None):
+    def apply_adjoint(self, V: VectorArray, mu: Optional[Mu] = None) -> VectorArray:
         """Apply the adjoint operator.
 
         For any given linear |Operator| `op`, |parameter values| `mu` and
@@ -180,7 +190,8 @@ class Operator(ParametricObject):
         else:
             raise LinAlgError('Operator not linear.')
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def apply_inverse(self, V: VectorArray, mu: Optional[Mu] = None, initial_guess: Optional[VectorArray] = None,
+                      least_squares: Optional[bool] = False) -> VectorArray:
         """Apply the inverse operator.
 
         Parameters
@@ -254,7 +265,9 @@ class Operator(ParametricObject):
                         raise InversionError(e)
             return R
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def apply_inverse_adjoint(self, U: VectorArray, mu: Optional[Mu] = None,
+                              initial_guess: Optional[VectorArray] = None,
+                              least_squares: Optional[bool] = False) -> VectorArray:
         """Apply the inverse adjoint operator.
 
         Parameters
@@ -302,7 +315,7 @@ class Operator(ParametricObject):
             adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
             return adjoint_op.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
-    def jacobian(self, U, mu=None):
+    def jacobian(self, U: VectorArray, mu: Optional[Mu] = None) -> Operator:
         """Return the operator's Jacobian as a new |Operator|.
 
         Parameters
@@ -325,7 +338,7 @@ class Operator(ParametricObject):
         else:
             raise NotImplementedError
 
-    def d_mu(self, parameter, index=0):
+    def d_mu(self, parameter: Any, index: Optional[int] = 0) -> Operator:
         """Return the operator's derivative with respect to a given parameter.
 
         Parameters
@@ -345,7 +358,7 @@ class Operator(ParametricObject):
             from pymor.operators.constructions import ZeroOperator
             return ZeroOperator(self.range, self.source, name=self.name + '_d_mu')
 
-    def as_range_array(self, mu=None):
+    def as_range_array(self, mu: Optional[Mu] = None) -> VectorArray:
         """Return a |VectorArray| representation of the operator in its range space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
@@ -372,7 +385,7 @@ class Operator(ParametricObject):
         assert self.source.dim <= as_array_max_length()
         return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
 
-    def as_source_array(self, mu=None):
+    def as_source_array(self, mu: Optional[Mu] = None) -> VectorArray:
         """Return a |VectorArray| representation of the operator in its source space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
@@ -399,7 +412,7 @@ class Operator(ParametricObject):
         assert self.range.dim <= as_array_max_length()
         return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
-    def as_vector(self, mu=None):
+    def as_vector(self, mu: Optional[Mu] = None) -> VectorArray:
         """Return a vector representation of a linear functional or vector operator.
 
         Depending on the operator's :attr:`~Operator.source` and
@@ -426,7 +439,7 @@ class Operator(ParametricObject):
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
 
-    def assemble(self, mu=None):
+    def assemble(self, mu: Optional[Mu] = None) -> Operator:
         """Assemble the operator for given |parameter values|.
 
         The result of the method strongly depends on the given operator.
@@ -453,7 +466,9 @@ class Operator(ParametricObject):
         else:
             return self
 
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators: List[Operator], coefficients: List[RealOrComplex],
+                          identity_shift: Optional[RealOrComplex] = 0., solver_options: Optional[dict] = None,
+                          name: Optional[str] = None) -> Operator:
         """Try to assemble a linear combination of the given operators.
 
         Returns a new |Operator| which represents the sum ::
@@ -487,7 +502,7 @@ class Operator(ParametricObject):
         """
         return None
 
-    def restricted(self, dofs):
+    def restricted(self, dofs: ndarray) -> Tuple[Operator, ndarray]:
         """Restrict the operator range to a given set of degrees of freedom.
 
         This method returns a restricted version `restricted_op` of the
@@ -523,7 +538,7 @@ class Operator(ParametricObject):
         """
         raise NotImplementedError
 
-    def _add_sub(self, other, sign):
+    def _add_sub(self, other: Operator, sign: float) -> Operator:
         if not isinstance(other, Operator):
             return NotImplemented
         from pymor.operators.constructions import LincombOperator
@@ -542,25 +557,25 @@ class Operator(ParametricObject):
 
         return LincombOperator(operators, coefficients, solver_options=self.solver_options)
 
-    def _radd_sub(self, other, sign):
+    def _radd_sub(self, other: Operator, sign: float) -> Operator:
         if other == 0:
             return self
         if not isinstance(other, Operator):
             return NotImplemented
 
-    def __add__(self, other):
+    def __add__(self, other: Operator) -> Operator:
         return self._add_sub(other, 1.)
 
-    def __sub__(self, other):
+    def __sub__(self, other: Operator) -> Operator:
         return self._add_sub(other, -1.)
 
-    def __radd__(self, other):
+    def __radd__(self, other: Operator) -> Operator:
         return self._radd_sub(other, 1.)
 
-    def __rsub__(self, other):
+    def __rsub__(self, other: Operator) -> Operator:
         return self._radd_sub(other, -1.)
 
-    def __mul__(self, other):
+    def __mul__(self, other: Operator) -> Operator:
         assert isinstance(other, (Number, ParameterFunctional))
         from pymor.operators.constructions import LincombOperator
         if self.name != 'LincombOperator' or not isinstance(self, LincombOperator):
@@ -568,10 +583,10 @@ class Operator(ParametricObject):
         else:
             return self.with_(coefficients=tuple(c * other for c in self.coefficients))
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: Operator) -> Operator:
         return self * other
 
-    def __matmul__(self, other):
+    def __matmul__(self, other: Operator) -> Operator:
         """Concatenation of two operators."""
         if not isinstance(other, Operator):
             return NotImplemented
@@ -581,14 +596,14 @@ class Operator(ParametricObject):
         else:
             return ConcatenationOperator((self, other))
 
-    def __neg__(self):
+    def __neg__(self) -> Operator:
         return self * (-1.)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
                f'(parameters: {self.parameters}, class: {self.__class__.__name__})'
 
 
 @defaults('value')
-def as_array_max_length(value=100):
+def as_array_max_length(value: Optional[int] = 100) -> int:
     return value
