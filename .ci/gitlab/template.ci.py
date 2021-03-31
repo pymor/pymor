@@ -406,12 +406,13 @@ docs:
 
 
 tpl = jinja2.Template(tpl)
-pythons = ['3.6', '3.7', '3.8', '3.9']
+pythons = ['3.7', '3.8', '3.9']
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [
     ("mpi", pythons, 1),
     ("pip_installed", pythons, 1),
+    ("mypy", oldest+newest, 1),
     ("tutorials", pythons, 1),
     ("vanilla", pythons, 1),
     ("numpy_git", newest, 1),
