@@ -51,7 +51,7 @@ def _mmread(path, key=None):
 
 def _load(path, key=None):
     data = np.load(path)
-    if isinstance(data, dict):
+    if isinstance(data, (dict, np.lib.npyio.NpzFile)):
         if key:
             try:
                 matrix = data[key]
@@ -86,19 +86,20 @@ def load_matrix(path, key=None):
 
     # convert if path is str
     path = Path(path)
-    if len(path.suffixes[-1]) == 3:
+    suffix_count = len(path.suffixes)
+    if suffix_count and len(path.suffixes[-1]) == 4:
         extension = path.suffixes[-1].lower()
-    elif path.suffixes[-1].lower() == 'gz' and len(path.suffixes) >= 2 and len(path.suffixes[-2]) == 3:
+    elif path.suffixes[-1].lower() == '.gz' and suffix_count >= 2 and len(path.suffixes[-2]) == 4:
         extension = '.'.join(path.suffixes[-2:]).lower()
     else:
         extension = None
 
-    file_format_map = {'mat': ('MATLAB', _loadmat),
-                       'mtx': ('Matrix Market', _mmread),
-                       'mtz.gz': ('Matrix Market', _mmread),
-                       'npy': ('NPY/NPZ', _load),
-                       'npz': ('NPY/NPZ', _load),
-                       'txt': ('Text', _loadtxt)}
+    file_format_map = {'.mat': ('MATLAB', _loadmat),
+                       '.mtx': ('Matrix Market', _mmread),
+                       '.mtz.gz': ('Matrix Market', _mmread),
+                       '.npy': ('NPY/NPZ', _load),
+                       '.npz': ('NPY/NPZ', _load),
+                       '.txt': ('Text', _loadtxt)}
 
     if extension in file_format_map:
         file_type, loader = file_format_map[extension]

@@ -198,5 +198,14 @@ def test_formatsrc_nopygments(monkeypatch):
     test_formatsrc()
 
 
+def test_load_matrix(loadable_matrices):
+    from pymor.tools.io import load_matrix
+    for m in loadable_matrices:
+        if m.suffix == '.npz':
+            load_matrix(m, key='arr_0')
+        else:
+            load_matrix(m)
+
+
 if __name__ == "__main__":
     runmodule(filename=__file__)
