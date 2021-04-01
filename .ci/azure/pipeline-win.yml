@@ -68,7 +68,7 @@ jobs:
   - script: |
       call activate myEnvironment
       set PYTHONPATH=%PYTHONPATH%;%cd%\src
-      py.test --cov-context=test --junitxml=test_results.xml --cov=src/pymor --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
+      py.test --cov --cov-config=setup.cfg --cov-context=test --junitxml=test_results.xml --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
 
   - script: |
       choco install codecov
