@@ -1,0 +1,37 @@
+
+pyMOR 2021.2 (?? ??, 2021)
+--------------------------------
+We are proud to announce the release of pyMOR 2021.1! 
+
+Over ??? single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2020.2.x...2021.1.x>`__.
+
+pyMOR 2021.1 contains contributions by ??? and ???.
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for
+more details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Dropped support for Python 3.6
+~~~~~~~~~~~~~~~~~~~~~~~
+This release is the first to require Python 3.7 in order
+to lessen the effort  needed to implement type annotations.
+
+
+
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
