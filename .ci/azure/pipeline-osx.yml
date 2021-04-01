@@ -8,8 +8,8 @@ jobs:
   strategy:
     maxParallel: 8
     matrix:
-      osx_python3.6:
-        CONFIG: osx_python3.6
+      osx_python3.7:
+        CONFIG: osx_python3.7
         UPLOAD_PACKAGES: False
       osx_python3.9:
         CONFIG: osx_python3.9

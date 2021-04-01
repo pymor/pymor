@@ -23,7 +23,6 @@ def setup_requires():
     NUMPY = '1.16.0'
     # numpy versions with filters according to minimal version with a wheel
     numpys = [
-        'numpy>={};python_version <= "3.6"'.format(NUMPY),
         'numpy>=1.15.4;python_version == "3.7"',
         'numpy>=1.17.5;python_version == "3.8"',
         'numpy>=1.19.4;python_version >= "3.9"',
@@ -83,7 +82,6 @@ import_names = {
     'pytest-cov': 'pytest_cov',
     'pytest-flakes': 'pytest_flakes',
     'pytest-pep8': 'pytest_pep8',
-    _pymess('1.0.0', 3, 6, False): 'pymess',
     _pymess('1.0.0', 3, 7, False): 'pymess',
     _pymess('1.0.0', 3, 8, False): 'pymess',
     _pymess('1.0.0', 3, 9, False): 'pymess',
