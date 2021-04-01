@@ -8,6 +8,7 @@ import tempfile
 import os
 from contextlib import contextmanager
 import shutil
+from pathlib import Path
 
 from pymor.core.logger import getLogger
 
@@ -81,13 +82,14 @@ def _loadtxt(path, key=None):
 def load_matrix(path, key=None):
 
     logger = getLogger('pymor.tools.io.load_matrix')
-    logger.info('Loading matrix from file ' + path)
+    logger.info('Loading matrix from file %s', path)
 
-    path_parts = path.split('.')
-    if len(path_parts[-1]) == 3:
-        extension = path_parts[-1].lower()
-    elif path_parts[-1].lower() == 'gz' and len(path_parts) >= 2 and len(path_parts[-2]) == 3:
-        extension = '.'.join(path_parts[-2:]).lower()
+    # convert if path is str
+    path = Path(path)
+    if len(path.suffixes[-1]) == 3:
+        extension = path.suffixes[-1].lower()
+    elif path.suffixes[-1].lower() == 'gz' and len(path.suffixes) >= 2 and len(path.suffixes[-2]) == 3:
+        extension = '.'.join(path.suffixes[-2:]).lower()
     else:
         extension = None
 
