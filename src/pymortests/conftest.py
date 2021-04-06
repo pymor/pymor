@@ -33,5 +33,4 @@ pytest_plugins = [
     "pymortests.fixtures.model",
     "pymortests.fixtures.operator",
     "pymortests.fixtures.parameter",
-    "pymortests.fixtures.vectorarray",
 ]
