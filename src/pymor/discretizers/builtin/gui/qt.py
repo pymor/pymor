@@ -207,14 +207,19 @@ def stop_gui_processes():
     import os
     import signal
     kill_procs = {p for p in multiprocessing.active_children() if p.pid in _launch_qt_processes}
-    for p in kill_procs:
-        # active_children apparently contains false positives sometimes
-        p.terminate()
-        p.join(1)
+    logger = getLogger('pymor.discretizers.builtin.gui.qt')
+    with logger.block('stopping gui processes'):
+        for p in kill_procs:
+            logger.debug(f'terminating process {p}')
+            # active_children apparently contains false positives sometimes
+            p.terminate()
+            p.join(1)
 
-    for p in kill_procs:
-        if p.is_alive():
-            os.kill(p.pid, signal.SIGKILL)
+        for p in kill_procs:
+            if p.is_alive():
+                logger.debug(f'killing process {p}')
+                os.kill(p.pid, signal.SIGKILL)
+        logger.debug('all gui processes stopped')
 
 
 @defaults('backend')
