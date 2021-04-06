@@ -73,8 +73,8 @@ THERMALBLOCK_ARGS = (
 TB_IPYTHON_ARGS = THERMALBLOCK_ARGS[0:2]
 
 THERMALBLOCK_ADAPTIVE_ARGS = (
-    ('thermalblock_adaptive', [10]),
-    ('thermalblock_adaptive', ['--no-visualize-refinement', 10]),
+    ('thermalblock_adaptive', ['--pickle', '--cache-region=memory', '--plot-solutions', '--plot-error-sequence', 10]),
+    ('thermalblock_adaptive', ['--no-visualize-refinement', '--plot-err', 10]),
 )
 
 THERMALBLOCK_SIMPLE_ARGS = (
@@ -93,8 +93,8 @@ if is_windows_platform() or is_macos_platform():
     THERMALBLOCK_GUI_ARGS = tuple()
 
 BURGERS_EI_ARGS = (
-    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err']),
-    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--ei-alg=deim']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err', '--plot-err', '--plot-solutions']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--ei-alg=deim', '--plot-error-landscape']),
 )
 
 PARABOLIC_MOR_ARGS = (
