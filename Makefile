@@ -12,7 +12,8 @@
 # PYMOR_TEST_OS=debian_buster
 # hypothesis profiles: dev, debug, ci, ci-pr, ci-large
 # PYMOR_HYPOTHESIS_PROFILE=dev
-#
+# extra options to be passed to pytest
+# PYMOR_PYTEST_EXTRA="--lf"
 
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env

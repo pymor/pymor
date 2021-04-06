@@ -34,4 +34,4 @@ PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
 COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml \
   --cov --cov-config=setup.cfg --cov-context=test \
   --memprof-top-n 50 --memprof-csv-file=memory_usage.txt \
-  --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}"
+  --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE} ${PYMOR_PYTEST_EXTRA}"

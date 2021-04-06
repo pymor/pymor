@@ -49,6 +49,7 @@ rules:
         PYPI_MIRROR_TAG: {{pypi_mirror_tag}}
         CI_IMAGE_TAG: {{ci_image_tag}}
         PYMOR_HYPOTHESIS_PROFILE: ci
+        PYMOR_PYTEST_EXTRA: ""
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
 
 .pytest:
