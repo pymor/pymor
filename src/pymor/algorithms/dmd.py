@@ -15,7 +15,7 @@ from pymor.algorithms.genericsolvers import lsqr
 def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=True, svd_method='qr_svd'):
     """Dynamic Mode Decomposition.
 
-    See Algorithm 1 and Algorithm 2 in [TRLBK14]_.
+    See Algorithm 1 and Algorithm 2 in :cite:`TRLBK14`.
 
     Parameters
     ----------
@@ -119,37 +119,37 @@ def dmd(A=None, XL=None, XR=None, target_rank=None, dt=1, modes='exact', order=T
     return Wk, omega
 
 
-def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, powerIterations=0):
+def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, power_iterations=0):
     """
-    randomisierte QB-Zerlegung
+    Ramdomized QB decomposition
 
-    See Algorithm 3.1 in [EMKB19]_.
+    See Algorithm 3.1 in :cite:`EMKB19`.
 
     Parameters
     ----------
     A  :
-        The |VectorArray| for which the randomized QB Decomposition is to be computed.
+        The |VectorArray| for which the randomized QB decomposition is to be computed.
 
     target_rank  :  int
-        The desired rank for the decomposition. If None rank = len(A).
+        The desired rank for the decomposition. If `None`, rank = len(A).
 
     distribution : str
-        Distribution used for the random projectionmatrix Omega. (`'normal'` or `'uniform'`)
+        Distribution used for the random sample matrix (`'normal'` or `'uniform'`).
 
     oversampling : int
-        Oversamplingparameter. Number of extra columns of the projectionmatrix.
+        Oversampling parameter. Number of extra columns of the sample matrix.
 
-    powerIterations : int
-        Number of power Iterations.
+    power_iterations : int
+        Number of power iterations.
 
 
     Returns
     -------
     Q :
-        |VectorArray| containig an approximate optimal Basis for the Image of the Inputmatrix A.
+        |VectorArray| containig an approximate basis for the image of the input matrix A.
         len(Q) = target_rank
     B :
-        Numpy Array. Projection of the Input Matrix into the lower dimensional subspace.
+        Numpy array. Projection of the input matrix into the lower dimensional subspace.
     """
     assert isinstance(A, VectorArray)
     assert target_rank is None or target_rank <= len(A)
@@ -166,8 +166,8 @@ def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, powerIte
     Y = A.lincomb(Omega)[:target_rank]
 
     # Power Iterations
-    if(powerIterations > 0):
-        for i in range(powerIterations):
+    if(power_iterations > 0):
+        for i in range(power_iterations):
             Q = gram_schmidt(Y)[:target_rank]
             Z, _ = spla.qr(A.inner(Q))
             Y = A.lincomb(Z)[:target_rank]
@@ -180,20 +180,20 @@ def rand_QB(A, target_rank=None, distribution='normal', oversampling=0, powerIte
 
 @defaults('svd_method', 'distribution')
 def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', distribution='normal',
-             oversampling=0, powerIterations=0, order=True):
+             oversampling=0, power_iterations=0, order=True):
     """
     Ranzomized Dynamic Mode Decomposition
 
-    See Algorithm 4.1 in [EMKB19]_.
+    See Algorithm 4.1 in :cite:`EMKB19`.
 
 
     Parameters
     ----------
     A  :
-        The |VectorArray| for which the DMD Modes are to be computed.
+        The |VectorArray| for which the DMD modes are to be computed.
 
     target_rank : int
-        Number of DMD Modes to be computed. If None target_rank = len(A).
+        Number of DMD modes to be computed. If `None`, target_rank = len(A).
 
     dt : scalar, optional (default: 1)
         Factor specifying the time difference between the observations.
@@ -210,12 +210,12 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
         (`'method_of_snapshots'` or `'qr_svd'`).
 
     distribution : str
-        Distribution used for the randomized QB-Decomposition. (`'normal'` or `'uniform'`)
+        Distribution used for the randomized QB-Decomposition (`'normal'` or `'uniform'`).
 
     oversampling : int
-        Oversamplingparameter. Number of extra columns of the projectionmatrix.
+        Oversampling parameter. Number of extra columns of the sample matrix.
 
-    powerIterations : int
+    power_iterations : int
         Number of power Iterations.
 
     order : bool `{True, False}`
@@ -228,7 +228,7 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
         |VectorArray| containing the dynamic modes.
 
     omega :
-        Numpy Array containig time scaled eigenvalues: `ln(l)/dt`.
+        Numpy array containig time scaled eigenvalues: `ln(l)/dt`.
 
     """
 
@@ -239,12 +239,12 @@ def rand_dmd(A, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', dist
     assert order in (True, False)
     assert svd_method in ('qr_svd', 'method_of_snapshots')
     assert oversampling >= 0
-    assert powerIterations >= 0
+    assert power_iterations >= 0
 
     rank = len(A) if target_rank is None else target_rank
 
     Q, B = rand_QB(A, target_rank=rank, distribution=distribution, oversampling=oversampling,
-                   powerIterations=powerIterations)
+                   power_iterations=power_iterations)
 
     # transform B to VectorArray
     B = NumpyVectorSpace.from_numpy(B.T)
