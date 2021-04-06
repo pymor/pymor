@@ -185,6 +185,13 @@ def _test_demo(demo):
         dolfin.plot = nop
     except ImportError:
         pass
+    try:
+        import petsc4py
+        # the default X handlers can interfere with process termination
+        petsc4py.PETSc.Sys.popSignalHandler()
+        petsc4py.PETSc.Sys.popErrorHandler()
+    except ImportError:
+        pass
 
     # reset default RandomState
     import pymor.tools.random
@@ -195,7 +202,7 @@ def _test_demo(demo):
         result = demo()
     except (QtMissing, GmshMissing, MeshioMissing, TorchMissing) as e:
         if os.environ.get('DOCKER_PYMOR', False):
-            # these are all installed in our CI env so them missing a grave error
+            # these are all installed in our CI env so them missing is a grave error
             raise e
         else:
             miss = str(type(e)).replace('Missing', '')
