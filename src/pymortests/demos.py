@@ -176,7 +176,7 @@ def _test_demo(demo):
 
     try:
         from matplotlib import pyplot
-        pyplot.show = nop
+        pyplot.ion()
     except ImportError:
         pass
     try:
