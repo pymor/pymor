@@ -28,7 +28,7 @@ services:
             NB_UID: 1000
 
     ports:
-        - 9180:8888
+        - 9181:8888
     volumes:
         - ./..:/pymor
         - ./local_packages:/pymor/local_packages
