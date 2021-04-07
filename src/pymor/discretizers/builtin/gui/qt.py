@@ -183,8 +183,13 @@ def _launch_qt_app(main_window_factory, block):
         from Qt.QtWidgets import QApplication
         from Qt.QtCore import QCoreApplication
         try:
-            app = QApplication([])
-        except RuntimeError:
+            # pyside or pyqt (sometimes?) auto-create an app singleton,
+            # try to use this before creating a new app
+            app = QApplication.instance()
+            if app is None:
+                app = QApplication([])
+        except RuntimeError as re:
+            getLogger("Qt launcher").error(f'failed App startup, falling back on QtCoreApplication\n{re}')
             app = QCoreApplication.instance()
         main_window = factory()
         if getattr(sys, '_called_from_test', False) and mac_or_win:
