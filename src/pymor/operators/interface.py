@@ -6,7 +6,6 @@ from __future__ import annotations
 from typing import Any, List, Optional, Tuple, Union, TYPE_CHECKING
 
 from numbers import Number
-
 import numpy as np
 from numpy import ndarray
 
@@ -16,7 +15,7 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
-from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 Index = Union[int, slice, List[int], ndarray]
@@ -73,6 +72,9 @@ class Operator(ParametricObject):
     """
 
     solver_options: Optional[dict] = None
+    linear: bool
+    source: VectorSpace
+    range: VectorSpace
 
     @property
     def H(self) -> Operator:
@@ -191,7 +193,7 @@ class Operator(ParametricObject):
             raise LinAlgError('Operator not linear.')
 
     def apply_inverse(self, V: VectorArray, mu: Optional[Mu] = None, initial_guess: Optional[VectorArray] = None,
-                      least_squares: Optional[bool] = False) -> VectorArray:
+                      least_squares: bool = False) -> VectorArray:
         """Apply the inverse operator.
 
         Parameters
@@ -267,7 +269,7 @@ class Operator(ParametricObject):
 
     def apply_inverse_adjoint(self, U: VectorArray, mu: Optional[Mu] = None,
                               initial_guess: Optional[VectorArray] = None,
-                              least_squares: Optional[bool] = False) -> VectorArray:
+                              least_squares: bool = False) -> VectorArray:
         """Apply the inverse adjoint operator.
 
         Parameters
@@ -338,7 +340,7 @@ class Operator(ParametricObject):
         else:
             raise NotImplementedError
 
-    def d_mu(self, parameter: Any, index: Optional[int] = 0) -> Operator:
+    def d_mu(self, parameter: Any, index: int = 0) -> Operator:
         """Return the operator's derivative with respect to a given parameter.
 
         Parameters
@@ -467,8 +469,8 @@ class Operator(ParametricObject):
             return self
 
     def _assemble_lincomb(self, operators: List[Operator], coefficients: List[RealOrComplex],
-                          identity_shift: Optional[RealOrComplex] = 0., solver_options: Optional[dict] = None,
-                          name: Optional[str] = None) -> Operator:
+                          identity_shift: RealOrComplex = 0., solver_options: Optional[dict] = None,
+                          name: Optional[str] = None) -> Optional[Operator]:
         """Try to assemble a linear combination of the given operators.
 
         Returns a new |Operator| which represents the sum ::
@@ -557,10 +559,10 @@ class Operator(ParametricObject):
 
         return LincombOperator(operators, coefficients, solver_options=self.solver_options)
 
-    def _radd_sub(self, other: Operator, sign: float) -> Operator:
-        if other == 0:
+    def _radd_sub(self, other: Union[RealOrComplex, Operator], sign: float) -> Operator:
+        if isinstance(other, Number) and other == 0:
             return self
-        if not isinstance(other, Operator):
+        else:
             return NotImplemented
 
     def __add__(self, other: Operator) -> Operator:
@@ -575,7 +577,7 @@ class Operator(ParametricObject):
     def __rsub__(self, other: Operator) -> Operator:
         return self._radd_sub(other, -1.)
 
-    def __mul__(self, other: Operator) -> Operator:
+    def __mul__(self, other: Union[RealOrComplex, ParameterFunctional]) -> Operator:
         assert isinstance(other, (Number, ParameterFunctional))
         from pymor.operators.constructions import LincombOperator
         if self.name != 'LincombOperator' or not isinstance(self, LincombOperator):
@@ -583,7 +585,7 @@ class Operator(ParametricObject):
         else:
             return self.with_(coefficients=tuple(c * other for c in self.coefficients))
 
-    def __rmul__(self, other: Operator) -> Operator:
+    def __rmul__(self, other: Union[RealOrComplex, ParameterFunctional]) -> Operator:
         return self * other
 
     def __matmul__(self, other: Operator) -> Operator:
@@ -605,5 +607,5 @@ class Operator(ParametricObject):
 
 
 @defaults('value')
-def as_array_max_length(value: Optional[int] = 100) -> int:
+def as_array_max_length(value: int = 100) -> int:
     return value

@@ -4,6 +4,9 @@
 
 """Module containing some constructions to obtain new operators from old ones."""
 
+from __future__ import annotations
+from typing import Any, List, Optional, Tuple, Union, TYPE_CHECKING
+
 from functools import reduce
 from numbers import Number
 
@@ -18,6 +21,11 @@ from pymor.parameters.functionals import ParameterFunctional, ConjugateParameter
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
+RealOrComplex = Union[float, complex]
+Coefficient = Union[RealOrComplex, ParameterFunctional]
+OpTupleOrList = Union[Tuple[Operator, ...], List[Operator]]
+CoeffTupleOrList = Union[Tuple[Coefficient, ...], List[Coefficient]]
+
 
 class LincombOperator(Operator):
     """Linear combination of arbitrary |Operators|.
@@ -28,9 +36,9 @@ class LincombOperator(Operator):
     Parameters
     ----------
     operators
-        List of |Operators| whose linear combination is formed.
+        Tuple of |Operators| whose linear combination is formed.
     coefficients
-        A list of linear coefficients. A linear coefficient can
+        A tuple of linear coefficients. A linear coefficient can
         either be a fixed number or a |ParameterFunctional|.
     solver_options
         The |solver_options| for the operator.
@@ -38,7 +46,13 @@ class LincombOperator(Operator):
         Name of the operator.
     """
 
-    def __init__(self, operators, coefficients, solver_options=None, name=None):
+    operators: Tuple[Operator, ...]
+    coefficients: Tuple[Coefficient, ...]
+    solver_options: Optional[dict]
+    name: Optional[str]
+
+    def __init__(self, operators: OpTupleOrList, coefficients: CoeffTupleOrList,
+                 solver_options: Optional[dict] = None, name: Optional[str] = None):
         assert len(operators) > 0
         assert len(operators) == len(coefficients)
         assert all(isinstance(op, Operator) for op in operators)
