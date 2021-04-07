@@ -5,7 +5,6 @@
 import numpy as np
 
 from pymor.algorithms.pod import pod
-from pymor.models.basic import StationaryModel
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import StationaryRBReductor
 from pymortests.base import runmodule, assert_all_almost_equal

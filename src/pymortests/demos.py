@@ -5,7 +5,6 @@
 import os
 import pymordemos  # noqa: F401
 from importlib import import_module
-import sys
 import pytest
 from tempfile import mkdtemp
 import shutil

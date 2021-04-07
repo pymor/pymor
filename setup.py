@@ -7,15 +7,12 @@
 
 import sys
 import os
-
 from setuptools import find_packages
 from distutils.extension import Extension
-from distutils.command.build_py import build_py as _build_py
 import itertools
 # versioneer does not work in a pep518/7 context w/o modification here
 sys.path.append(os.path.dirname(__file__))
 import versioneer
-import pprint
 
 import dependencies
 
