@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pymor.algorithms.dmd import dmd, rand_dmd
-from typer import Argument, Option, Typer
+from typer import Option, Typer
 
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.elliptic import StationaryProblem
@@ -22,8 +22,6 @@ RECT = Option(False, help='Use RectGrid instead of TriaGrid.')
 
 @app.command()
 def heat(
-    top: float = Argument(..., help='The heat diffusion coefficient for the top bars.'),
-
     fv: bool = FV,
     grid: int = GRID,
     nt: int = NT,
@@ -46,11 +44,10 @@ def heat(
         initial_data=ExpressionFunction(
             '(x[..., 0] > 0.3) * (x[..., 0] < 0.7) * (x[...,1]>0.3) * (x[..., 1] < 0.7) * 10.', dim_domain=2),
     )
-    mu = {'top': top}
-    solve(problem, mu, fv, rect, grid, nt)
+    solve(problem, fv, rect, grid, nt)
 
 
-def solve(problem, mu, fv, rect, grid, nt):
+def solve(problem, fv, rect, grid, nt):
     print('Discretize ...')
     discretizer = discretize_instationary_fv if fv else discretize_instationary_cg
     m, data = discretizer(
@@ -64,7 +61,7 @@ def solve(problem, mu, fv, rect, grid, nt):
     print()
 
     print('Solve ...')
-    U = m.solve(mu)
+    U = m.solve()
     m.visualize(U, title='Solution')
 
     print('')
