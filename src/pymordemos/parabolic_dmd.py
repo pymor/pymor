@@ -127,7 +127,7 @@ def solve(problem, fv, rect, grid, nt):
     plt.ylabel('Imaginary')
     plt.show()
 
-    m.visualize(rW3, title='randomized DMD Modes - exact - normal distribution')
+    m.visualize(rW3, title='5 randomized DMD Modes - exact - normal distribution')
     plt.plot(rE3.real, rE3.imag, 'b.')
     plt.plot(E2.real, E2.imag, 'rx')
     plt.title('rDMD Eigenvalues - exact - normal distribution')
