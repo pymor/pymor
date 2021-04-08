@@ -263,7 +263,7 @@ if config.HAVE_FENICS:
                 raise NotImplementedError('SubMesh does not work in parallel')
             with self.logger.block(f'Restricting operator to {len(dofs)} dofs ...'):
                 if len(dofs) == 0:
-                    return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=np.int)
+                    return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=int)
 
                 if self.source.V.mesh().id() != self.range.V.mesh().id():
                     raise NotImplementedError

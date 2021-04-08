@@ -486,8 +486,8 @@ class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
         edge_volumes = g.volumes(1)
         boundary_edges = g.boundaries(1)
         inner_edges = np.setdiff1d(np.arange(g.size(1)), boundary_edges)
-        dirichlet_edges = bi.dirichlet_boundaries(1) if bi.has_dirichlet else np.array([], ndmin=1, dtype=np.int)
-        neumann_edges = bi.neumann_boundaries(1) if bi.has_neumann else np.array([], ndmin=1, dtype=np.int)
+        dirichlet_edges = bi.dirichlet_boundaries(1) if bi.has_dirichlet else np.array([], ndmin=1, dtype=int)
+        neumann_edges = bi.neumann_boundaries(1) if bi.has_neumann else np.array([], ndmin=1, dtype=int)
         outflow_edges = np.setdiff1d(boundary_edges, np.hstack([dirichlet_edges, neumann_edges]))
         normal_velocities = np.einsum('ei,ei->e',
                                       self.velocity_field(g.centers(1), mu=mu),

@@ -169,7 +169,7 @@ def convergence(
 
     dim = rom.solution_space.dim
     if ndim:
-        dims = np.linspace(0, dim, ndim, dtype=np.int)
+        dims = np.linspace(0, dim, ndim, dtype=int)
     else:
         dims = np.arange(dim + 1)
 

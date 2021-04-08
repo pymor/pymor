@@ -746,7 +746,7 @@ def test_sup_norm(vectors_and_indices):
 def test_dofs(vectors_and_indices, random_count):
     v, ind = vectors_and_indices
     c = v.copy()
-    dofs = c[ind].dofs(np.array([], dtype=np.int))
+    dofs = c[ind].dofs(np.array([], dtype=int))
     assert isinstance(dofs, np.ndarray)
     assert dofs.shape == (v.len_ind(ind), 0)
 

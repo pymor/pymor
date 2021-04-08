@@ -533,13 +533,13 @@ class BoundaryInfo(CacheableObject):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to one
         and only one boundary type.
         """
-        return np.less_equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 1)
+        return np.less_equal(sum(self.mask(bt, codim=codim).astype(int) for bt in self.boundary_types), 1)
 
     def no_boundary_type_mask(self, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to no
         boundary type.
         """
-        return np.equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 0)
+        return np.equal(sum(self.mask(bt, codim=codim).astype(int) for bt in self.boundary_types), 0)
 
     def check_boundary_types(self, assert_unique_type=(1,), assert_some_type=()):
         for bt in self.boundary_types:
