@@ -9,6 +9,7 @@ if config.HAVE_FENICS:
     import dolfin as df
     import ufl
     import numpy as np
+    import sys
     from pathlib import Path
 
     from pymor.core.base import ImmutableObject
@@ -466,6 +467,8 @@ if config.HAVE_FENICS:
             if filename:
                 assert not isinstance(U, tuple)
                 assert U in self.space
+                if block:
+                    self.logger.warning('visualize with filename!=None, block=True will not block')
                 supported = (".x3d", ".xml", ".pvd", ".raw")
                 suffix = Path(filename).suffix
                 if suffix not in supported:
@@ -528,7 +531,10 @@ if config.HAVE_FENICS:
                         plt.figure()
                         df.plot(function, title=tit,
                                 range_min=vmin, range_max=vmax)
-                plt.show(block=block)
+                if getattr(sys, '_called_from_test', False):
+                    plt.show(block=False)
+                else:
+                    plt.show(block=block)
 
     # adapted from dolfin.mesh.ale.init_parent_edge_indices
     def compute_parent_facet_indices(submesh, mesh):
