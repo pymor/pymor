@@ -188,7 +188,7 @@ if config.HAVE_NGSOLVE:
                 if filename.suffix == '.vtk':
                     filename = filename.parent / filename.stem
                 else:
-                    self.logger.warn(f'NGSolve set VTKOutput filename to {filename}.vtk')
+                    self.logger.warning(f'NGSolve set VTKOutput filename to {filename}.vtk')
                 coeffs = [u._list[0].real_part.impl for u in U]
                 # ngsolve cannot handle full paths for filenames
                 with change_to_directory(filename.parent):

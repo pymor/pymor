@@ -471,7 +471,7 @@ if config.HAVE_FENICS:
                 if suffix not in supported:
                     msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
                            + f'defaulting to .pvd (possible choices: {supported})')
-                    self.logger.warn(msg)
+                    self.logger.warning(msg)
                     filename = f'{filename}.pvd'
                 f = df.File(str(filename))
                 coarse_function = df.Function(self.space.V)

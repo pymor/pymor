@@ -20,7 +20,7 @@ def test_logger():
 
 
 def test_empty_log_message():
-    core.logger.getLogger('test').warn('')
+    core.logger.getLogger('test').warning('')
 
 
 def test_log_levels():
