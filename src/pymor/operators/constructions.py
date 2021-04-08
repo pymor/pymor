@@ -5,12 +5,13 @@
 """Module containing some constructions to obtain new operators from old ones."""
 
 from __future__ import annotations
-from typing import Any, List, Optional, Tuple, Union, TYPE_CHECKING
+from typing import List, Optional, Tuple, Union
 
 from functools import reduce
 from numbers import Number
 
 import numpy as np
+from numpy import ndarray
 import scipy.linalg as spla
 
 from pymor.core.defaults import defaults
