@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
-
+from pymor.tools.deprecated import Deprecated
 
 if config.HAVE_PYAMG:
 
@@ -151,6 +151,7 @@ if config.HAVE_PYAMG:
                                 'tol': sa_tol,
                                 'maxiter': sa_maxiter}}
 
+    @Deprecated('pyamg bindings will be removed after the 2021.1 release')
     @defaults('check_finite', 'default_solver')
     def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False,
                       check_finite=True, default_solver='pyamg_solve'):
