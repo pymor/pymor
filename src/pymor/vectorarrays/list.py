@@ -517,7 +517,7 @@ class ListVectorArray(VectorArray):
     def amax(self):
         assert self.dim > 0
 
-        MI = np.empty(len(self._list), dtype=np.int)
+        MI = np.empty(len(self._list), dtype=int)
         MV = np.empty(len(self._list))
 
         for k, v in enumerate(self._list):

@@ -55,7 +55,6 @@ install_suggests = {
     'gmsh': 'this downloads the proper Gmsh binary',
     'meshio==4.2.0': 'needed to import Gmsh grids',
     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
-    'pyamg;python_version<"3.8"': 'algebraic multigrid solvers',
     'pyevtk>=1.1': 'writing vtk output',
     'sympy': 'symbolic mathematics',
     'pygments': 'highlighting code',

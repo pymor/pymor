@@ -263,7 +263,7 @@ if config.HAVE_FENICS:
                 raise NotImplementedError('SubMesh does not work in parallel')
             with self.logger.block(f'Restricting operator to {len(dofs)} dofs ...'):
                 if len(dofs) == 0:
-                    return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=np.int)
+                    return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=int)
 
                 if self.source.V.mesh().id() != self.range.V.mesh().id():
                     raise NotImplementedError
@@ -471,7 +471,7 @@ if config.HAVE_FENICS:
                 if suffix not in supported:
                     msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
                            + f'defaulting to .pvd (possible choices: {supported})')
-                    self.logger.warn(msg)
+                    self.logger.warning(msg)
                     filename = f'{filename}.pvd'
                 f = df.File(str(filename))
                 coarse_function = df.Function(self.space.V)
