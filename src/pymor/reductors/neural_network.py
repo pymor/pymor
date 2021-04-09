@@ -436,22 +436,46 @@ if config.HAVE_TORCH:
         Parameters
         ----------
         training_data
-            Data to use during the training phase.
+            Data to use during the training phase. Has to be a list of tuples,
+            where each tuple consists of two PyTorch-tensors (`torch.DoubleTensor`).
+            The first tensor contains the input data, the second tensor contains
+            the target values.
         validation_data
-            Data to use during the validation phase.
+            Data to use during the validation phase. Has to be a list of tuples,
+            where each tuple consists of two PyTorch-tensors (`torch.DoubleTensor`).
+            The first tensor contains the input data, the second tensor contains
+            the target values.
         neural_network
             The neural network to train (can also be a pre-trained model).
+            Has to be a PyTorch-Module.
         training_parameters
             Dictionary with additional parameters for the training routine like
-            the type of the optimizer, the batch size, the learning rate or the
-            loss function to use.
+            the type of the optimizer, the (maximum) number of epochs, the batch
+            size, the learning rate or the loss function to use.
+            Possible keys are `'optimizer'` (an optimizer from the PyTorch `optim`
+            package; if not provided, the LBFGS-optimizer is taken as default),
+            `'epochs'` (an integer that determines the number of epochs to use
+            for training the neural network (if training is not interrupted
+            prematurely due to early stopping); if not provided, 1000 is taken as
+            default value), `'batch_size'` (an integer that determines the number
+            of samples to pass to the optimizer at once; if not provided, 20 is
+            taken as default value; not used in the case of the LBFGS-optimizer
+            since LBFGS does not support mini-batching), `'learning_rate'` (a
+            positive real number used as the (initial) step size of the optimizer;
+            if not provided, 1 is taken as default value; thus far, no learning
+            rate schedulers are supported in this implementation), and
+            `'loss_function'` (a loss function from PyTorch; if not provided, the
+            MSE loss is taken as default).
 
         Returns
         -------
         best_neural_network
             The best trained neural network with respect to validation loss.
         losses
-            The corresponding losses.
+            The corresponding losses as a dictionary with keys `'full'` (for the
+            full loss containing the training and the validation average loss),
+            `'train'` (for the average loss on the training set), and `'val'`
+            (for the average loss on the validation set).
         """
         assert isinstance(neural_network, nn.Module)
         for data in training_data, validation_data:
@@ -552,6 +576,8 @@ if config.HAVE_TORCH:
         This method either performs a predefined number of restarts and returns
         the best trained network or tries to reach a given target loss and
         stops training when the target loss is reached.
+
+        See :func:`train_neural_network` for more information on the parameters.
 
         Parameters
         ----------
