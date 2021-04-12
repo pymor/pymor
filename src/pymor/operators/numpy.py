@@ -321,13 +321,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    import pymor.config
-                    from packaging.version import parse
-                    if parse(pymor.config.NUMPY_VERSION) >= parse('1.14'):
-                        kwargs = {'rcond': None}
-                    else:
-                        kwargs = {}
-                    R, _, _, _ = np.linalg.lstsq(self.matrix, V.to_numpy().T, **kwargs)
+                    R, _, _, _ = np.linalg.lstsq(self.matrix, V.to_numpy().T, rcond=None)
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{str(type(e))}: {str(e)}')
                 R = R.T
