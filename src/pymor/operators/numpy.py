@@ -31,11 +31,11 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
+from pymor.parameters.functionals import ParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if TYPE_CHECKING:
     from pymor.parameters.base import Mu, Parameters
-    from pymor.parameters.functionals import ParameterFunctional
     from pymor.vectorarrays.interface import VectorArray
 
 Matrix = Union[ndarray, spmatrix]
