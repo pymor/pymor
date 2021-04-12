@@ -443,7 +443,7 @@ def test_vectorarray_op_apply_inverse_lstsq():
     V = op.range.random()
     U = op.apply_inverse(V, least_squares=True)
     v = V.to_numpy()
-    u = np.linalg.lstsq(O.T, v.ravel())[0]
+    u = np.linalg.lstsq(O.T, v.ravel(), rcond=None)[0]
     assert np.all(almost_equal(U, U.space.from_numpy(u)))
 
 
@@ -454,7 +454,7 @@ def test_adjoint_vectorarray_op_apply_inverse_lstsq():
     V = op.range.random()
     U = op.apply_inverse(V, least_squares=True)
     v = V.to_numpy()
-    u = np.linalg.lstsq(O, v.ravel())[0]
+    u = np.linalg.lstsq(O, v.ravel(), rcond=None)[0]
     assert np.all(almost_equal(U, U.space.from_numpy(u)))
 
 
