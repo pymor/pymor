@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pymor.algorithms.dmd import dmd, rand_dmd
-from typer import Option, Typer
+from typer import Option, run
 
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.elliptic import StationaryProblem
@@ -13,19 +13,12 @@ from pymor.discretizers.builtin.fv import discretize_instationary_fv
 from pymor.discretizers.builtin.grids.tria import TriaGrid
 from pymor.discretizers.builtin.grids.rect import RectGrid
 
-app = Typer(help="Solve parabolic equations using pyMOR's builtin discretization toolkit.")
-FV = Option(False, help='Use finite volume discretization instead of finite elements.')
-GRID = Option(400, help='Use grid with NIxNI intervals.')
-NT = Option(100, help='Number of time steps.')
-RECT = Option(False, help='Use RectGrid instead of TriaGrid.')
 
-
-@app.command()
-def heat(
-    fv: bool = FV,
-    grid: int = GRID,
-    nt: int = NT,
-    rect: bool = RECT,
+def main(
+    fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
+    grid: int = Option(400, help='Use grid with NIxNI intervals.'),
+    nt: int = Option(100, help='Number of time steps.'),
+    rect: bool = Option(False, help='Use RectGrid instead of TriaGrid.'),
 ):
     problem = InstationaryProblem(
 
@@ -44,10 +37,7 @@ def heat(
         initial_data=ExpressionFunction(
             '(x[..., 0] > 0.3) * (x[..., 0] < 0.7) * (x[...,1]>0.3) * (x[..., 1] < 0.7) * 10.', dim_domain=2),
     )
-    solve(problem, fv, rect, grid, nt)
 
-
-def solve(problem, fv, rect, grid, nt):
     print('Discretize ...')
     discretizer = discretize_instationary_fv if fv else discretize_instationary_cg
     m, data = discretizer(
@@ -62,7 +52,6 @@ def solve(problem, fv, rect, grid, nt):
 
     print('Solve ...')
     U = m.solve()
-    m.visualize(U, title='Solution')
 
     print('')
 
@@ -145,4 +134,4 @@ def solve(problem, fv, rect, grid, nt):
 
 
 if __name__ == '__main__':
-    app()
+    run(main)
