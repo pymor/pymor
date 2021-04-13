@@ -67,7 +67,7 @@ if config.HAVE_TORCH:
         def _compute_solution(self, mu=None, **kwargs):
 
             # convert the parameter `mu` into a form that is usable in PyTorch
-            converted_input = torch.from_numpy(mu.to_numpy()).double()
+            converted_input = torch.DoubleTensor(mu.to_numpy())
             # obtain (reduced) coordinates by forward pass of the parameter values
             # through the neural network
             U = self.neural_network(converted_input).data.numpy()
@@ -141,7 +141,7 @@ if config.HAVE_TORCH:
             for i in range(self.nt):
                 mu = mu.with_(t=t)
                 # convert the parameter `mu` into a form that is usable in PyTorch
-                converted_input = torch.from_numpy(mu.to_numpy()).double()
+                converted_input = torch.DoubleTensor(mu.to_numpy())
                 # obtain (reduced) coordinates by forward pass of the parameter values
                 # through the neural network
                 result_neural_network = self.neural_network(converted_input).data.numpy()

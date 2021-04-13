@@ -230,12 +230,10 @@ if config.HAVE_TORCH:
             return reduced_basis, mean_square_loss
 
         def _compute_sample(self, mu, u, reduced_basis):
-            """Transform parameter and corresponding solution to tensors."""
+            """Transform parameter and corresponding solution to |NumPy arrays|."""
             # determine the coefficients of the full-order solutions in the reduced basis to obtain
-            # the training data; convert everything into tensors that are compatible with PyTorch
-            mu_tensor = torch.DoubleTensor(mu.to_numpy())
-            u_tensor = torch.DoubleTensor(reduced_basis.inner(u)[:, 0])
-            return [(mu_tensor, u_tensor)]
+            # the training data
+            return [(mu.to_numpy(), reduced_basis.inner(u)[:, 0])]
 
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -338,12 +336,13 @@ if config.HAVE_TORCH:
             return reduced_basis, mean_square_loss
 
         def _compute_sample(self, mu, u, reduced_basis):
-            """Transform parameter and corresponding solution to tensors
-            (make sure to include the time instances in the inputs).
+            """Transform parameter and corresponding solution to |NumPy arrays|.
+
+            This function takes care of including the time instances in the inputs.
             """
             parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
-            samples = [(torch.DoubleTensor(mu.to_numpy()), torch.DoubleTensor(reduced_basis.inner(u_t)[:, 0]))
+            samples = [(mu.to_numpy(), reduced_basis.inner(u_t)[:, 0])
                        for mu, u_t in zip(parameters_with_time, u)]
 
             return samples
@@ -437,13 +436,15 @@ if config.HAVE_TORCH:
         ----------
         training_data
             Data to use during the training phase. Has to be a list of tuples,
-            where each tuple consists of two PyTorch-tensors (`torch.DoubleTensor`).
-            The first tensor contains the input data, the second tensor contains
+            where each tuple consists of two elements that are either
+            PyTorch-tensors (`torch.DoubleTensor`) or |NumPy arrays|.
+            The first element contains the input data, the second element contains
             the target values.
         validation_data
             Data to use during the validation phase. Has to be a list of tuples,
-            where each tuple consists of two PyTorch-tensors (`torch.DoubleTensor`).
-            The first tensor contains the input data, the second tensor contains
+            where each tuple consists of two elements that are either
+            PyTorch-tensors (`torch.DoubleTensor`) or |NumPy arrays|.
+            The first element contains the input data, the second element contains
             the target values.
         neural_network
             The neural network to train (can also be a pre-trained model).
@@ -481,8 +482,8 @@ if config.HAVE_TORCH:
         for data in training_data, validation_data:
             assert isinstance(data, list)
             assert all(isinstance(datum, tuple) and len(datum) == 2 for datum in data)
-            assert all(isinstance(datum[0], torch.DoubleTensor) for datum in data)
-            assert all(isinstance(datum[1], torch.DoubleTensor) for datum in data)
+            assert all(isinstance(datum[0], torch.DoubleTensor) or isinstance(datum[0], np.ndarray) for datum in data)
+            assert all(isinstance(datum[1], torch.DoubleTensor) or isinstance(datum[1], np.ndarray) for datum in data)
 
         optimizer = optim.LBFGS if 'optimizer' not in training_parameters else training_parameters['optimizer']
         epochs = 1000 if 'epochs' not in training_parameters else training_parameters['epochs']
