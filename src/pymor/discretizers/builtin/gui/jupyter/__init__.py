@@ -18,7 +18,9 @@ from pymor.core.config import config
 
 
 @defaults('backend')
-def get_visualizer(backend='MPL'):
+def get_visualizer(backend='py3js'):
+    if backend not in ('py3js', 'MPL'):
+        raise ValueError
     if backend == 'py3js' and config.HAVE_PYTHREEJS:
         from pymor.discretizers.builtin.gui.jupyter.threejs import visualize_py3js
         return visualize_py3js
