@@ -55,7 +55,7 @@ class Renderer(widgets.VBox):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
-        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='0px 0px 0px 20px ')
+        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='10px')
         self.grid = grid
         self.codim = codim
         self.vmin, self.vmax = vmin, vmax
@@ -193,7 +193,7 @@ class Renderer(widgets.VBox):
 class ColorBarRenderer(widgets.HBox):
     def __init__(self, render_size, color_map, vmin=None, vmax=None):
         self.render_size = render_size
-        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='0px 0px 0px 20px ')
+        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='10px ')
         self.color_map = color_map
         self.vmin, self.vmax = vmin, vmax
         self.image, labels = self._gen_sprite()
@@ -222,12 +222,12 @@ class ColorBarRenderer(widgets.HBox):
             cl = tuple((np.array(self.color_map(bar_height-i))*255).astype(np.int_))
             draw.line([(0, i), (bar_width, i)], cl, width=1)
 
-        text_fmt = '{:+1.3e}'
         label_layout = Layout(margin='0px 2px')
-        labels = widgets.VBox([Label(text_fmt.format(self.vmax), layout=label_layout),
-                               Label(text_fmt.format((self.vmax+self.vmin)/2), layout=label_layout),
-                               Label(text_fmt.format(self.vmin), layout=label_layout)],
-                              layout=Layout(justify_content='space-between'))
+        self.labels = widgets.VBox([Label('', layout=label_layout),
+                                    Label('', layout=label_layout),
+                                    Label('', layout=label_layout)],
+                                   layout=Layout(justify_content='space-between'))
+        self.goto(0)
 
         of = BytesIO()
         image.save(of, format='png')
@@ -238,7 +238,7 @@ class ColorBarRenderer(widgets.HBox):
             width=bar_width,
             height=self.render_size[1],
             layout=Layout(margin='0px'),
-        ), labels]
+        ), self.labels]
 
 
 class ThreeJSPlot(widgets.VBox):
@@ -250,7 +250,9 @@ class ThreeJSPlot(widgets.VBox):
         bar_size = (100, render_size[1])
         if not separate_colorbars:
             self.colorbars = [ColorBarRenderer(render_size=bar_size, vmin=vmins[0], vmax=vmaxs[0], color_map=color_map)]
-            self.r_hbox_items = self.renderer + self.colorbars
+            # prevent line break between last plot and colorbar
+            self.r_hbox_items = self.renderer[:-1]
+            self.r_hbox_items.append(widgets.HBox([self.renderer[-1], self.colorbars[0]]))
         else:
             self.r_hbox_items = []
             self.colorbars = []
@@ -258,7 +260,7 @@ class ThreeJSPlot(widgets.VBox):
                 cr = ColorBarRenderer(render_size=bar_size, vmin=vmin, vmax=vmax, color_map=color_map)
                 self.r_hbox_items.append(widgets.HBox([renderer, cr]))
                 self.colorbars.append(cr)
-        layout = Layout(display='flex', flex_flow='row wrap', align_items='stretch', justify_content='flex-start')
+        layout = Layout(display='flex', flex_flow='row wrap', align_items='stretch', justify_content='flex-start',)
         children = [widgets.Box(self.r_hbox_items, layout=layout)]
         if size > 1:
             def _goto_idx(idx):
@@ -270,7 +272,7 @@ class ThreeJSPlot(widgets.VBox):
             interact(idx=play).widget(_goto_idx)
             slider = IntSlider(min=0, max=size - 1, step=1, value=0, description='Timestep:')
             widgets.jslink((play, 'value'), (slider, 'value'))
-            controls = widgets.HBox([play, slider])
+            controls = widgets.HBox([play, slider], layout=Layout(margin='0px 10px'))
             children.append(controls)
 
         super().__init__(children=children)
