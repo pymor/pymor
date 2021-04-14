@@ -112,14 +112,14 @@ class Renderer(widgets.VBox):
         self._last_idx = None
         super().__init__(children=[self.renderer, ])
 
-    def _get_mesh(self, u):
+    def _get_mesh(self, i, u):
         if self.codim == 2:
             u = u[self.entity_map]
         elif self.grid.reference_element == triangle:
             u = np.repeat(u, 3)
         else:
             u = np.tile(np.repeat(u, 3), 2)
-        data = p3js.BufferAttribute(_normalize(u, self.vmin, self.vmax), normalized=True)
+        data = p3js.BufferAttribute(_normalize(u, self.vmin[i], self.vmax[i]), normalized=True)
         geo = p3js.BufferGeometry(
             index=self.buffer_faces,
             attributes=dict(
@@ -138,8 +138,8 @@ class Renderer(widgets.VBox):
         self._load_data(data)
 
     def _load_data(self, data):
-        for u in data:
-            m = self._get_mesh(u)
+        for i, u in enumerate(data):
+            m = self._get_mesh(i, u)
             self.scene.add(m)
             if len(self.meshes) == 0:
                 m.visible = True
@@ -202,8 +202,12 @@ class ColorBarRenderer(widgets.HBox):
     def freeze_camera(self, freeze=True):
         pass
 
-    def goto(self, _):
-        pass
+    def goto(self, idx):
+        labels = self.labels.children
+        text_fmt = '{:+1.3e}'
+        labels[0].value = text_fmt.format(self.vmax[idx])
+        labels[1].value = text_fmt.format((self.vmax[idx]+self.vmin[idx])/2)
+        labels[2].value = text_fmt.format(self.vmin[idx])
 
     def _gen_sprite(self):
         from PIL import Image, ImageDraw
@@ -260,7 +264,9 @@ class ThreeJSPlot(widgets.VBox):
             def _goto_idx(idx):
                 for c in self.renderer:
                     c.goto(idx)
-            play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:')
+                for c in self.colorbars:
+                    c.goto(idx)
+            play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:', layout=Layout(margin='0px'))
             interact(idx=play).widget(_goto_idx)
             slider = IntSlider(min=0, max=size - 1, step=1, value=0, description='Timestep:')
             widgets.jslink((play, 'value'), (slider, 'value'))
@@ -320,19 +326,14 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         size = len(U[0])
         U = tuple(u.to_numpy().astype(np.float32, copy=False) for u in U)
 
-    if separate_colorbars:
-        if rescale_colorbars:
-            vmins = tuple(np.min(u[0]) for u in U)
-            vmaxs = tuple(np.max(u[0]) for u in U)
-        else:
-            vmins = tuple(np.min(u) for u in U)
-            vmaxs = tuple(np.max(u) for u in U)
+    if rescale_colorbars:
+        vmins = tuple(np.min(u, axis=1) for u in U)
+        vmaxs = tuple(np.max(u, axis=1) for u in U)
     else:
-        if rescale_colorbars:
-            vmins = (min(np.min(u[0]) for u in U),) * len(U)
-            vmaxs = (max(np.max(u[0]) for u in U),) * len(U)
-        else:
-            vmins = (min(np.min(u) for u in U),) * len(U)
-            vmaxs = (max(np.max(u) for u in U),) * len(U)
+        vmins = tuple(np.repeat(np.min(u), len(u)) for u in U)
+        vmaxs = tuple(np.repeat(np.max(u), len(u)) for u in U)
+    if not separate_colorbars:
+        vmins = (np.min(np.vstack(vmins), axis=0),) * len(U)
+        vmaxs = (np.max(np.vstack(vmaxs), axis=0),) * len(U)
 
     return ThreeJSPlot(grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size)
