@@ -61,7 +61,7 @@ def main(
 
     W, E = dmd(A=U, modes='standard')
     W2, E2 = dmd(A=U, modes='exact')
-    W3, E3 = dmd(A=U, modes='exact_scaled')
+    W3, E3 = dmd(A=U, target_rank=5, modes='exact')
     W4, E4 = dmd(A=U, modes='standard', order=False)
 
     print('Visualize ...')
@@ -86,9 +86,9 @@ def main(
     plt.ylabel('Imaginary')
     plt.show()
 
-    m.visualize(W3, title='DMD Modes - exact_scaled')
+    m.visualize(W3, title='5 DMD Modes - exact')
     plt.plot(E3.real, E3.imag, 'b.')
-    plt.title('DMD Eigenvalues - exact_scaled')
+    plt.title('5 DMD Eigenvalues - exact')
     plt.xlabel('Real')
     plt.ylabel('Imaginary')
     plt.show()
@@ -118,7 +118,7 @@ def main(
 
     m.visualize(rW3, title='5 randomized DMD Modes - exact - normal distribution')
     plt.plot(rE3.real, rE3.imag, 'b.')
-    plt.plot(E2.real, E2.imag, 'rx')
+    plt.plot(E3.real, E3.imag, 'rx')
     plt.title('rDMD Eigenvalues - exact - normal distribution')
     plt.xlabel('Real')
     plt.ylabel('Imaginary')
