@@ -275,3 +275,4 @@ autoapi_type = 'python'
 # allows incremental build
 autoapi_keep_files = True
 autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
+suppress_warnings = ["autoapi"]
