@@ -13,7 +13,8 @@ class StationaryProblem(ParametricObject):
 
     The problem consists in solving ::
 
-        - ∇ ⋅ [d(x, μ) ∇ u(x, μ)] + ∇ ⋅ [f(x, u(x, μ), μ)] + c(x, u(x, μ), μ) = f(x, μ)
+        - ∇ ⋅ [d(x, μ) ∇ u(x, μ)] + ∇ ⋅ [f_l(x, μ)u(x, μ)]
+        + ∇ ⋅ f_n(u(x, μ), μ) + c_l(x, μ) + c_n(u(x, μ), μ) = g(x, μ)
 
     for u.
 
@@ -22,23 +23,23 @@ class StationaryProblem(ParametricObject):
     domain
         A |DomainDescription| of the domain the problem is posed on.
     rhs
-        The |Function| f(x, μ). `rhs.dim_domain` has to agree with the
+        The |Function| g. `rhs.dim_domain` has to agree with the
         dimension of `domain`, whereas `rhs.shape_range` has to be `()`.
     diffusion
-        The |Function| d(x, μ) with `shape_range` of either `()` or
+        The |Function| d with `shape_range` of either `()` or
         `(dim domain, dim domain)`.
     advection
-        The |Function| f, only depending on x, with `shape_range` of `(dim domain,)`.
+        The |Function| f_l, only depending on x, with `shape_range` of `(dim domain,)`.
     nonlinear_advection
-        The |Function| f, only depending on u, with `shape_range` of `(dim domain,)`.
+        The |Function| f_n, only depending on u, with `shape_range` of `(dim domain,)`.
     nonlinear_advection_derivative
-        The derivative of f, only depending on u, with respect to u.
+        The derivative of f_n, only depending on u, with respect to u.
     reaction
-        The |Function| c, only depending on x, with `shape_range` of `()`.
+        The |Function| c_l, only depending on x, with `shape_range` of `()`.
     nonlinear_reaction
-        The |Function| c, only depending on u, with `shape_range` of `()`.
+        The |Function| c_n, only depending on u, with `shape_range` of `()`.
     nonlinear_reaction_derivative
-        The derivative of the |Function| c, only depending on u, with `shape_range` of `()`.
+        The derivative of the |Function| c_n, only depending on u, with `shape_range` of `()`.
     dirichlet_data
         |Function| providing the Dirichlet boundary values.
     neumann_data
