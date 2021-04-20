@@ -13,6 +13,7 @@ from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import flag, register_directive
 import pytest
 
+from pymor.tools.io import change_to_directory
 from pymortests.base import runmodule
 from pymortests.demos import _test_demo
 
@@ -48,16 +49,14 @@ class CodeCell(Directive):
 @pytest.fixture(params=TUTORIALS, ids=[t.name for t in TUTORIALS])
 def tutorial_code(request):
     filename = request.param
-    current_dir = os.getcwd()
-    os.chdir(TUT_DIR)
-    code = io.StringIO()
-    register_directive('jupyter-execute', CodeCell)
-    with open(filename, 'rt') as f:
-        original = sys.stdout
-        sys.stdout = code
-        publish_doctree(f.read(), settings_overrides={'report_level': 42})
-        sys.stdout = original
-    os.chdir(current_dir)
+    with change_to_directory(TUT_DIR):
+        code = io.StringIO()
+        register_directive('jupyter-execute', CodeCell)
+        with open(filename, 'rt') as f:
+            original = sys.stdout
+            sys.stdout = code
+            publish_doctree(f.read(), settings_overrides={'report_level': 42})
+            sys.stdout = original
     code.seek(0)
     source_fn = Path(f'{str(filename).replace(".rst", "_rst")}_extracted.py')
     with open(source_fn, 'wt') as source:
@@ -70,21 +69,18 @@ def test_tutorial(tutorial_code):
     filename, source_module_path = tutorial_code
 
     # make sure (picture) resources can be loaded as in sphinx-build
-    current_dir = os.getcwd()
-    os.chdir(TUT_DIR)
-
-    def _run():
-        loader = importlib.machinery.SourceFileLoader(source_module_path.stem, str(source_module_path))
-        spec = importlib.util.spec_from_loader(loader.name, loader)
-        mod = importlib.util.module_from_spec(spec)
-        loader.exec_module(mod)
-    try:
-        # wrap module execution in hacks to auto-close Qt-Apps, etc.
-        _test_demo(_run)
-    except Exception as e:
-        print(f'Failed: {source_module_path}')
-        raise e
-    os.chdir(current_dir)
+    with change_to_directory(TUT_DIR):
+        def _run():
+            loader = importlib.machinery.SourceFileLoader(source_module_path.stem, str(source_module_path))
+            spec = importlib.util.spec_from_loader(loader.name, loader)
+            mod = importlib.util.module_from_spec(spec)
+            loader.exec_module(mod)
+        try:
+            # wrap module execution in hacks to auto-close Qt-Apps, etc.
+            _test_demo(_run)
+        except Exception as e:
+            print(f'Failed: {source_module_path}')
+            raise e
 
 
 if __name__ == "__main__":

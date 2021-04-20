@@ -57,7 +57,6 @@ from packaging.version import Version
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.core.pickle import dumps, loads
 
 if config.HAVE_MPI:
     import pymor.core.pickle

@@ -8,6 +8,7 @@ import tempfile
 import os
 from contextlib import contextmanager
 import shutil
+from pathlib import Path
 
 from pymor.core.logger import getLogger
 
@@ -50,7 +51,7 @@ def _mmread(path, key=None):
 
 def _load(path, key=None):
     data = np.load(path)
-    if isinstance(data, dict):
+    if isinstance(data, (dict, np.lib.npyio.NpzFile)):
         if key:
             try:
                 matrix = data[key]
@@ -81,22 +82,24 @@ def _loadtxt(path, key=None):
 def load_matrix(path, key=None):
 
     logger = getLogger('pymor.tools.io.load_matrix')
-    logger.info('Loading matrix from file ' + path)
+    logger.info('Loading matrix from file %s', path)
 
-    path_parts = path.split('.')
-    if len(path_parts[-1]) == 3:
-        extension = path_parts[-1].lower()
-    elif path_parts[-1].lower() == 'gz' and len(path_parts) >= 2 and len(path_parts[-2]) == 3:
-        extension = '.'.join(path_parts[-2:]).lower()
+    # convert if path is str
+    path = Path(path)
+    suffix_count = len(path.suffixes)
+    if suffix_count and len(path.suffixes[-1]) == 4:
+        extension = path.suffixes[-1].lower()
+    elif path.suffixes[-1].lower() == '.gz' and suffix_count >= 2 and len(path.suffixes[-2]) == 4:
+        extension = '.'.join(path.suffixes[-2:]).lower()
     else:
         extension = None
 
-    file_format_map = {'mat': ('MATLAB', _loadmat),
-                       'mtx': ('Matrix Market', _mmread),
-                       'mtz.gz': ('Matrix Market', _mmread),
-                       'npy': ('NPY/NPZ', _load),
-                       'npz': ('NPY/NPZ', _load),
-                       'txt': ('Text', _loadtxt)}
+    file_format_map = {'.mat': ('MATLAB', _loadmat),
+                       '.mtx': ('Matrix Market', _mmread),
+                       '.mtz.gz': ('Matrix Market', _mmread),
+                       '.npy': ('NPY/NPZ', _load),
+                       '.npz': ('NPY/NPZ', _load),
+                       '.txt': ('Text', _loadtxt)}
 
     if extension in file_format_map:
         file_type, loader = file_format_map[extension]

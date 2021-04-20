@@ -606,3 +606,8 @@ def operator(request):
 ))
 def picklable_operator(request):
     return request.param()
+
+
+@pytest.fixture
+def loadable_matrices(shared_datadir):
+    return (shared_datadir / "matrices").glob('*')

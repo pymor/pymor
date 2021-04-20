@@ -56,7 +56,7 @@ jobs:
       python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_RENDERER))"
       python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_VERSION))"
       python setup.py build_ext -i
-      pip install qt.py==1.3.3 pytest-azurepipelines
+      pip install qt.py==1.3.3 pytest-azurepipelines pytest-datadir
       set QT_VERBOSE=1
       set QT_PREFERRED_BINDING=PySide2;PyQt5
       set QT_DEBUG_PLUGINS=1
@@ -68,7 +68,7 @@ jobs:
   - script: |
       call activate myEnvironment
       set PYTHONPATH=%PYTHONPATH%;%cd%\src
-      py.test --cov-context=test --junitxml=test_results.xml --cov=src/pymor --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
+      py.test --cov --cov-config=setup.cfg --cov-context=test --junitxml=test_results.xml --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
 
   - script: |
       choco install codecov

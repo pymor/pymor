@@ -5,7 +5,6 @@
 import os
 import pymordemos  # noqa: F401
 from importlib import import_module
-import sys
 import pytest
 from tempfile import mkdtemp
 import shutil
@@ -73,8 +72,8 @@ THERMALBLOCK_ARGS = (
 TB_IPYTHON_ARGS = THERMALBLOCK_ARGS[0:2]
 
 THERMALBLOCK_ADAPTIVE_ARGS = (
-    ('thermalblock_adaptive', [10]),
-    ('thermalblock_adaptive', ['--no-visualize-refinement', 10]),
+    ('thermalblock_adaptive', ['--pickle', '--cache-region=memory', '--plot-solutions', '--plot-error-sequence', 10]),
+    ('thermalblock_adaptive', ['--no-visualize-refinement', '--plot-err', 10]),
 )
 
 THERMALBLOCK_SIMPLE_ARGS = (
@@ -93,8 +92,8 @@ if is_windows_platform() or is_macos_platform():
     THERMALBLOCK_GUI_ARGS = tuple()
 
 BURGERS_EI_ARGS = (
-    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err']),
-    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--ei-alg=deim']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err', '--plot-err', '--plot-solutions']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--ei-alg=deim', '--plot-error-landscape']),
 )
 
 PARABOLIC_MOR_ARGS = (
@@ -177,12 +176,25 @@ def _test_demo(demo):
 
     try:
         from matplotlib import pyplot
-        pyplot.show = nop
+        if sys.version_info[:2] > (3, 7) or (
+                sys.version_info[0] == 3 and sys.version_info[1] == 6):
+            pyplot.ion()
+        else:
+            # the ion switch results in interpreter segfaults during multiple
+            # demo tests on 3.7 -> fall back on old monkeying solution
+            pyplot.show = nop
     except ImportError:
         pass
     try:
         import dolfin
         dolfin.plot = nop
+    except ImportError:
+        pass
+    try:
+        import petsc4py
+        # the default X handlers can interfere with process termination
+        petsc4py.PETSc.Sys.popSignalHandler()
+        petsc4py.PETSc.Sys.popErrorHandler()
     except ImportError:
         pass
 
@@ -195,7 +207,7 @@ def _test_demo(demo):
         result = demo()
     except (QtMissing, GmshMissing, MeshioMissing, TorchMissing) as e:
         if os.environ.get('DOCKER_PYMOR', False):
-            # these are all installed in our CI env so them missing a grave error
+            # these are all installed in our CI env so them missing is a grave error
             raise e
         else:
             miss = str(type(e)).replace('Missing', '')

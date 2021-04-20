@@ -183,11 +183,16 @@ def _launch_qt_app(main_window_factory, block):
         from Qt.QtWidgets import QApplication
         from Qt.QtCore import QCoreApplication
         try:
-            app = QApplication([])
-        except RuntimeError:
+            # pyside or pyqt (sometimes?) auto-create an app singleton,
+            # try to use this before creating a new app
+            app = QApplication.instance()
+            if app is None:
+                app = QApplication([])
+        except RuntimeError as re:
+            getLogger("Qt launcher").error(f'failed App startup, falling back on QtCoreApplication\n{re}')
             app = QCoreApplication.instance()
         main_window = factory()
-        if getattr(sys, '_called_from_test', False) and mac_or_win:
+        if getattr(sys, '_called_from_test', False):
             QTimer.singleShot(1000, app.quit)
         main_window.show()
         app.exec_()
@@ -195,7 +200,7 @@ def _launch_qt_app(main_window_factory, block):
     import sys
     # we treat win and osx differently here since no (reliable)
     # forking is possible with multiprocessing startup
-    if (block and not getattr(sys, '_called_from_test', False)) or mac_or_win:
+    if block or getattr(sys, '_called_from_test', False) or mac_or_win:
         _doit(main_window_factory)
     else:
         p = multiprocessing.Process(target=_doit, args=(main_window_factory,))
@@ -207,14 +212,19 @@ def stop_gui_processes():
     import os
     import signal
     kill_procs = {p for p in multiprocessing.active_children() if p.pid in _launch_qt_processes}
-    for p in kill_procs:
-        # active_children apparently contains false positives sometimes
-        p.terminate()
-        p.join(1)
+    logger = getLogger('pymor.discretizers.builtin.gui.qt')
+    with logger.block('stopping gui processes'):
+        for p in kill_procs:
+            logger.debug(f'terminating process {p}')
+            # active_children apparently contains false positives sometimes
+            p.terminate()
+            p.join(1)
 
-    for p in kill_procs:
-        if p.is_alive():
-            os.kill(p.pid, signal.SIGKILL)
+        for p in kill_procs:
+            if p.is_alive():
+                logger.debug(f'killing process {p}')
+                os.kill(p.pid, signal.SIGKILL)
+        logger.debug('all gui processes stopped')
 
 
 @defaults('backend')

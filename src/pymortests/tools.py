@@ -5,14 +5,15 @@
 import operator
 from math import sin, pi, exp, factorial
 import numpy as np
+import os
 import pytest
 import itertools
-
+import tempfile
 from hypothesis import given
 
 from pymor.core.logger import getLogger
 from pymor.tools.formatsrc import print_source
-from pymor.tools.io import SafeTemporaryFileName
+from pymor.tools.io import SafeTemporaryFileName, change_to_directory
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
@@ -196,6 +197,24 @@ def test_formatsrc_nopygments(monkeypatch):
     except ImportError:
         pass
     test_formatsrc()
+
+
+def test_load_matrix(loadable_matrices):
+    from pymor.tools.io import load_matrix
+    for m in loadable_matrices:
+        if m.suffix == '.npz':
+            load_matrix(m, key='arr_0')
+        else:
+            load_matrix(m)
+
+
+def test_cwd_ctx_manager():
+    original_cwd = os.getcwd()
+    target = tempfile.gettempdir()
+    with change_to_directory(target) as result:
+        assert result is None
+        assert os.getcwd() == target
+    assert os.getcwd() == original_cwd
 
 
 if __name__ == "__main__":
