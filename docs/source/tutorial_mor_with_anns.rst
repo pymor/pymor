@@ -193,7 +193,7 @@ the full problem and the reduced model and visualize the result:
 
 .. jupyter-execute::
 
-    mu = parameter_space.sample_randomly(1)[0]
+    mu = parameter_space.sample_randomly()
 
     U = fom.solve(mu)
     U_red = rom.solve(mu)
