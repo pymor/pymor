@@ -233,7 +233,7 @@ if config.HAVE_TORCH:
             """Transform parameter and corresponding solution to |NumPy arrays|."""
             # determine the coefficients of the full-order solutions in the reduced basis to obtain
             # the training data
-            return [(mu.to_numpy(), reduced_basis.inner(u)[:, 0])]
+            return [(mu, reduced_basis.inner(u)[:, 0])]
 
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -342,7 +342,7 @@ if config.HAVE_TORCH:
             """
             parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
-            samples = [(mu.to_numpy(), reduced_basis.inner(u_t)[:, 0])
+            samples = [(mu, reduced_basis.inner(u_t)[:, 0])
                        for mu, u_t in zip(parameters_with_time, u)]
 
             return samples
@@ -479,11 +479,18 @@ if config.HAVE_TORCH:
             (for the average loss on the validation set).
         """
         assert isinstance(neural_network, nn.Module)
+
         for data in training_data, validation_data:
             assert isinstance(data, list)
             assert all(isinstance(datum, tuple) and len(datum) == 2 for datum in data)
-            assert all(isinstance(datum[0], torch.DoubleTensor) or isinstance(datum[0], np.ndarray) for datum in data)
-            assert all(isinstance(datum[1], torch.DoubleTensor) or isinstance(datum[1], np.ndarray) for datum in data)
+
+        def prepare_datum(datum):
+            if not (isinstance(datum, torch.DoubleTensor) or isinstance(datum, np.ndarray)):
+                return datum.to_numpy()
+            return datum
+
+        training_data = [(prepare_datum(datum[0]), prepare_datum(datum[1])) for datum in training_data]
+        validation_data = [(prepare_datum(datum[0]), prepare_datum(datum[1])) for datum in validation_data]
 
         optimizer = optim.LBFGS if 'optimizer' not in training_parameters else training_parameters['optimizer']
         epochs = 1000 if 'epochs' not in training_parameters else training_parameters['epochs']
