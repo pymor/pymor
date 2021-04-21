@@ -2,7 +2,7 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.parameters.base import Parameters
+from pymor.parameters.base import Parameters, Mu
 from pymortests.base import runmodule
 
 import pytest
@@ -28,6 +28,11 @@ def test_randomly(space):
     assert len(values) == num_samples
     for value in values:
         assert space.contains(value)
+
+
+def test_randomly_without_count(space):
+    mu = space.sample_randomly()
+    assert isinstance(mu, Mu)
 
 
 def test_parse_parameter():
