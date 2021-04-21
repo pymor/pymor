@@ -437,13 +437,15 @@ if config.HAVE_TORCH:
         training_data
             Data to use during the training phase. Has to be a list of tuples,
             where each tuple consists of two elements that are either
-            PyTorch-tensors (`torch.DoubleTensor`) or |NumPy arrays|.
+            PyTorch-tensors (`torch.DoubleTensor`) or |NumPy arrays| or pyMOR data
+            structures that have `to_numpy()` implemented.
             The first element contains the input data, the second element contains
             the target values.
         validation_data
             Data to use during the validation phase. Has to be a list of tuples,
             where each tuple consists of two elements that are either
-            PyTorch-tensors (`torch.DoubleTensor`) or |NumPy arrays|.
+            PyTorch-tensors (`torch.DoubleTensor`) or |NumPy arrays| or pyMOR data
+            structures that have `to_numpy()` implemented.
             The first element contains the input data, the second element contains
             the target values.
         neural_network
