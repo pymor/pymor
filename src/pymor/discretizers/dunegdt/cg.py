@@ -63,7 +63,7 @@ if config.HAVE_DUNEGDT:
         Note: all data functions are replaced by their respective non-conforming interpolations. This allows to simply
               use pyMORs data |Function|s at the expense of one DoF vector for each data function during discretization.
 
-        Note: non-trivial Dirichlet data is treated via shifting. the resulting solution is thus in H^1_0 and the shift
+        Note: non-trivial Dirichlet data is treated via shifting. The resulting solution is thus in H^1_0 and the shift
               is added upon visualization or output computation.
 
         TODO: check if all products still make sense!
@@ -267,8 +267,8 @@ if config.HAVE_DUNEGDT:
         if p.neumann_data:
             def make_l2_neumann_boundary_functional(func):
                 op = VectorFunctional(grid, space, la_backend)
-                op += (LocalIntersectionIntegralFunctional( # TODO: should be -GF here!
-                            LocalIntersectionProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, func))), {},
+                op += (LocalIntersectionIntegralFunctional(
+                            LocalIntersectionProductIntegrand(GF(grid, -1)).with_ansatz(GF(grid, func))), {},
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
                 return op
 
