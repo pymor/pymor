@@ -249,7 +249,7 @@ the best-approximation error in `trivial_basis` for some test vector
 
 .. jupyter-execute::
 
-    V = fom.solve(parameter_space.sample_randomly(1)[0])
+    V = fom.solve(parameter_space.sample_randomly())
 
 The matrix :math:`G` of all inner products between vectors in `trivial_basis`
 is a so called `Gramian matrix <https://en.wikipedia.org/wiki/Gramian_matrix>`_.
