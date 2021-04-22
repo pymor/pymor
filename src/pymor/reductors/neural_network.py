@@ -20,7 +20,7 @@ if config.HAVE_TORCH:
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
     from pymor.core.logger import getLogger
     from pymor.models.neural_network import (FullyConnectedNN, NeuralNetworkModel, NeuralNetworkOutputModel,
-                                             NeuralNetworkInstationaryModel)
+                                             NeuralNetworkInstationaryModel, NeuralNetworkInstationaryOutputModel)
 
     class NeuralNetworkReductor(BasicObject):
         """Reduced Basis reductor relying on artificial neural networks.
@@ -488,6 +488,62 @@ if config.HAVE_TORCH:
 
             samples = [(mu, reduced_basis.inner(u_t)[:, 0])
                        for mu, u_t in zip(parameters_with_time, u)]
+
+            return samples
+
+    class NeuralNetworkInstationaryOutputReductor(NeuralNetworkOutputReductor):
+        """Output reductor relying on artificial neural networks.
+
+        This is a reductor that trains a neural network that approximates
+        the mapping from parameter space to output space.
+
+        Parameters
+        ----------
+        fom
+            The full-order |Model| to reduce.
+        nt
+            Number of time steps in the reduced order model (does not have to
+            coincide with the number of time steps in the full order model).
+        training_set
+            Set of |parameter values| to use for POD and training of the
+            neural network.
+        validation_set
+            Set of |parameter values| to use for validation in the training
+            of the neural network.
+        validation_ratio
+            Fraction of the training set to use for validation in the training
+            of the neural network (only used if no validation set is provided).
+        validation_loss
+            The validation loss to reach during training. If `None`, the neural
+            network with the smallest validation loss is returned.
+        """
+
+        def __init__(self, fom, nt, training_set, validation_set=None, validation_ratio=0.1,
+                     validation_loss=None):
+            assert 0 < validation_ratio < 1 or validation_set
+            self.__auto_init(locals())
+
+        def _compute_layer_sizes(self, hidden_layers):
+            """Compute the number of neurons in the layers of the neural network."""
+            return [self.fom.parameters.dim + 1, ] + hidden_layers + [self.fom.dim_output, ]
+
+        def _build_rom(self):
+            """Construct the reduced order model."""
+            with self.logger.block('Building ROM ...'):
+                rom = NeuralNetworkInstationaryOutputModel(self.fom.T, self.nt, self.neural_network,
+                                                           self.fom.parameters, name=f'{self.fom.name}_output_reduced')
+
+            return rom
+
+        def _compute_sample(self, mu):
+            """Transform parameter and corresponding output to |NumPy arrays|.
+
+            This function takes care of including the time instances in the inputs.
+            """
+            output_trajectory = self.fom.compute(output=True, mu=mu)['output']
+            output_size = output_trajectory.shape[0]
+            samples = [(mu.with_(t=t), output)
+                       for t, output in zip(np.linspace(0, self.fom.T, output_size), output_trajectory)]
 
             return samples
 
