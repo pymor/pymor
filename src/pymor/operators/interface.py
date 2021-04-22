@@ -545,8 +545,8 @@ class Operator(ParametricObject):
     def _radd_sub(self, other, sign):
         if other == 0:
             return self
-        if not isinstance(other, Operator):
-            return NotImplemented
+        assert not isinstance(other, Operator)  # this is always handled by _add_sub
+        return NotImplemented
 
     def __add__(self, other):
         return self._add_sub(other, 1.)
