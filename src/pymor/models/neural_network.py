@@ -67,7 +67,7 @@ if config.HAVE_TORCH:
         def _compute_solution(self, mu=None, **kwargs):
 
             # convert the parameter `mu` into a form that is usable in PyTorch
-            converted_input = torch.from_numpy(mu.to_numpy()).double()
+            converted_input = torch.DoubleTensor(mu.to_numpy())
             # obtain (reduced) coordinates by forward pass of the parameter values
             # through the neural network
             U = self.neural_network(converted_input).data.numpy()
@@ -141,7 +141,7 @@ if config.HAVE_TORCH:
             for i in range(self.nt):
                 mu = mu.with_(t=t)
                 # convert the parameter `mu` into a form that is usable in PyTorch
-                converted_input = torch.from_numpy(mu.to_numpy()).double()
+                converted_input = torch.DoubleTensor(mu.to_numpy())
                 # obtain (reduced) coordinates by forward pass of the parameter values
                 # through the neural network
                 result_neural_network = self.neural_network(converted_input).data.numpy()
@@ -160,24 +160,24 @@ if config.HAVE_TORCH:
 
         Parameters
         ----------
-        layers_sizes
+        layer_sizes
             List of sizes (i.e. number of neurons) for the layers of the neural network.
         activation_function
             Function to use as activation function between the single layers.
         """
 
-        def __init__(self, layers_sizes, activation_function=torch.tanh):
+        def __init__(self, layer_sizes, activation_function=torch.tanh):
             super().__init__()
 
-            if layers_sizes is None or not len(layers_sizes) > 1 or not all(size >= 1 for size in layers_sizes):
+            if layer_sizes is None or not len(layer_sizes) > 1 or not all(size >= 1 for size in layer_sizes):
                 raise ValueError
 
-            self.input_dimension = layers_sizes[0]
-            self.output_dimension = layers_sizes[-1]
+            self.input_dimension = layer_sizes[0]
+            self.output_dimension = layer_sizes[-1]
 
             self.layers = nn.ModuleList()
-            self.layers.extend([nn.Linear(int(layers_sizes[i]), int(layers_sizes[i+1]))
-                                for i in range(len(layers_sizes) - 1)])
+            self.layers.extend([nn.Linear(int(layer_sizes[i]), int(layer_sizes[i+1]))
+                                for i in range(len(layer_sizes) - 1)])
 
             self.activation_function = activation_function
 
