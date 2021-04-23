@@ -158,19 +158,12 @@ class LincombOperator(Operator):
             return self
 
     def jacobian(self, U, mu=None):
-        from pymor.algorithms.lincomb import assemble_lincomb
         if self.linear:
             return self.assemble(mu)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
-        coefficients = self.evaluate_coefficients(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
-        jac = assemble_lincomb(jacobians, coefficients, solver_options=options,
-                               name=self.name + '_jacobian')
-        if jac is None:
-            return LincombOperator(jacobians, coefficients, solver_options=options,
-                                   name=self.name + '_jacobian')
-        else:
-            return jac
+        return LincombOperator(jacobians, self.coefficients, solver_options=options,
+                               name=self.name + '_jacobian').assemble(mu)
 
     def d_mu(self, parameter, index=0):
         for op in self.operators:
