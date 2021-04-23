@@ -478,4 +478,3 @@ def test_issue_1276():
     v = B.source.ones()
 
     B.apply_inverse(v)
-
