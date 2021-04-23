@@ -146,12 +146,12 @@ class LincombOperator(Operator):
         #   - The operator is parametric, so the the result of assemble *must* be a different,
         #     non-parametric operator.
         #   - One of self.operators changed by calling 'assemble' on it.
-        #   - The result of assemble_lincomb is no longer a LincombOperator.
+        #   - The result of assemble_lincomb is of a different type than the original operator.
         #   - assemble_lincomb could simplify the list of assembled operators,
         #     which we define to be the case when the number of operators has ben reduced.
         if (self.parametric
                 or operators != self.operators  # for this comparison to work self.operators always has to be a tuple!
-                or not isinstance(op, LincombOperator)
+                or type(op) != type(self)
                 or len(op.operators) < len(operators)):
             return op
         else:
