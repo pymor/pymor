@@ -17,5 +17,4 @@ else
     TWINE_PASSWORD=${PYPI_USER}
 fi
 export TWINE_NON_INTERACTIVE=1
-# disabled. See https://github.com/pymor/pymor/issues/551
-#twine upload --verbose ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*.whl ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*tar.gz
+twine upload --verbose ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*.whl ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*tar.gz
