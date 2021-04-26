@@ -1642,10 +1642,7 @@ def get_cmdclass():
         cmds["py2exe"] = cmd_py2exe
 
     # we override different "sdist" commands for both environments
-    if "setuptools" in sys.modules:
-        from setuptools.command.sdist import sdist as _sdist
-    else:
-        from distutils.command.sdist import sdist as _sdist
+    from distutils.command.sdist import sdist as _sdist
 
     class cmd_sdist(_sdist):
         def run(self):
