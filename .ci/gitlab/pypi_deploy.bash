@@ -8,13 +8,14 @@ cd ${CI_PROJECT_DIR}
 python3 setup.py sdist -d ${ARCHIVE_DIR} --format=gztar
 
 if [[ "x${CI_COMMIT_TAG}" == "x" ]] ; then
-    TWINE_REPOSITORY=testpypi
-    TWINE_USER=${TESTPYPI_USER}
-    TWINE_PASSWORD=${TESTPYPI_USER}
+    export TWINE_REPOSITORY_URL=https://test.pypi.org/legacy/
+    export TWINE_USERNAME=${TESTPYPI_USER}
+    export TWINE_PASSWORD=${TESTPYPI_TOKEN}
 else
-    TWINE_REPOSITORY=pypi
-    TWINE_USER=${PYPI_USER}
-    TWINE_PASSWORD=${PYPI_USER}
+    export TWINE_REPOSITORY_URL=https://pypi.org/legacy/
+    export TWINE_USERNAME=${PYPI_USER}
+    export TWINE_PASSWORD=${PYPI_TOKEN}
 fi
-export TWINE_NON_INTERACTIVE=1
+
+twine check ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*.whl ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*tar.gz
 twine upload --verbose ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*.whl ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*tar.gz
