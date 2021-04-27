@@ -331,6 +331,7 @@ pypi:
         expire_in: 6 months
         name: pymor-wheels
     before_script:
+        - apt update && apt install -y git
         - pip3 install -r requirements.txt
         - pip3 install twine
     script:
