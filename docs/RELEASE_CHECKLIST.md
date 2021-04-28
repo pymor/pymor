@@ -9,7 +9,6 @@
  1. [ ] produce tagged docker with `make VER=CURRENT_TAG && make VER=CURRENT_TAG push`
  1. [ ] Push tag
  1. [ ] Wait for CI build to finish
- 1. [ ] upload sdist+wheels to pypi (conda builds are automatic via forge)
  1. [ ] bump/create demo docker
  1. [ ] Update https://github.com/pymor/docs/edit/master/index.html to point to new release
  1. [ ] Update https://github.com/pymor/docs/edit/master/latest to point to new release
