@@ -3,7 +3,7 @@
 set -e
 
 if [[ "x${CI_COMMIT_TAG}" == "x" ]] ; then
-    sed -i -e 's;style\ \=\ pep440;style\ \=\ ci_wheel_builder;g' setup.cfg
+    sed -i -e 's;style\ \=\ pep440-pre;style\ \=\ ci_wheel_builder;g' setup.cfg
 fi
 
 set -u
