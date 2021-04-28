@@ -138,31 +138,32 @@ class LincombOperator(Operator):
         from pymor.algorithms.lincomb import assemble_lincomb
         operators = tuple(op.assemble(mu) for op in self.operators)
         coefficients = self.evaluate_coefficients(mu)
+        # try to form a linear combination
         op = assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
                               name=self.name + '_assembled')
-        if op:
+        # To avoid infinite recursions, only use the result if at least one of the following
+        # is true:
+        #   - The operator is parametric, so the the result of assemble *must* be a different,
+        #     non-parametric operator.
+        #   - One of self.operators changed by calling 'assemble' on it.
+        #   - The result of assemble_lincomb is of a different type than the original operator.
+        #   - assemble_lincomb could simplify the list of assembled operators,
+        #     which we define to be the case when the number of operators has ben reduced.
+        if (self.parametric
+                or operators != self.operators  # for this comparison to work self.operators always has to be a tuple!
+                or type(op) != type(self)
+                or len(op.operators) < len(operators)):
             return op
         else:
-            if self.parametric or operators != self.operators:
-                return LincombOperator(operators, coefficients, solver_options=self.solver_options,
-                                       name=self.name + '_assembled')
-            else:  # this can only happen when both operators and self.operators are tuples!
-                return self  # avoid infinite recursion
+            return self
 
     def jacobian(self, U, mu=None):
-        from pymor.algorithms.lincomb import assemble_lincomb
         if self.linear:
             return self.assemble(mu)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
-        coefficients = self.evaluate_coefficients(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
-        jac = assemble_lincomb(jacobians, coefficients, solver_options=options,
-                               name=self.name + '_jacobian')
-        if jac is None:
-            return LincombOperator(jacobians, coefficients, solver_options=options,
-                                   name=self.name + '_jacobian')
-        else:
-            return jac
+        return LincombOperator(jacobians, self.coefficients, solver_options=options,
+                               name=self.name + '_jacobian').assemble(mu)
 
     def d_mu(self, parameter, index=0):
         for op in self.operators:
