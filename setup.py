@@ -117,10 +117,9 @@ def _setup(**kwargs):
     if not hasattr(Cython.Distutils.build_ext, 'fcompiler'):
         Cython.Distutils.build_ext.fcompiler = None
     cmdclass.update({'build_ext': Cython.Distutils.build_ext})
-    # setuptools sdist command my to include some files apparently
-    # (https://github.com/numpy/numpy/pull/7131)
-    from distutils.command.sdist import sdist
-    cmdclass.update({'sdist': sdist})
+    # DO NOT modify the sdist class, it breaks versioneer
+    # the warning about using distutils.command.sdist is a lie
+    # versioneer already wraps it internally
     from numpy import get_include
     include_dirs = [get_include()]
     ext_modules = [Extension("pymor.discretizers.builtin.relations",
