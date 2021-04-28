@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 # DO NOT use any python features here that require 3.6 or newer
