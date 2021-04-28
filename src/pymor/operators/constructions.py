@@ -5,7 +5,7 @@
 """Module containing some constructions to obtain new operators from old ones."""
 
 from __future__ import annotations
-from typing import List, Optional, Tuple, Sequence, Union
+from typing import Optional, Tuple, Sequence, Union
 
 from functools import reduce
 from numbers import Number
@@ -22,8 +22,6 @@ from pymor.vectorarrays.interface import VectorArray, VectorSpace, RealOrComplex
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 Coefficient = Union[RealOrComplex, ParameterFunctional]
-OpTupleOrList = Union[Tuple[Operator, ...], List[Operator]]
-CoeffTupleOrList = Union[Tuple[Coefficient, ...], List[Coefficient]]
 
 
 class LincombOperator(Operator):

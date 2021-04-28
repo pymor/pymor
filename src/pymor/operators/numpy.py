@@ -14,7 +14,7 @@ This module provides the following |NumPy|-based |Operators|:
 """
 
 from __future__ import annotations
-from typing import Any, Tuple, List, Optional, Union, Callable, TYPE_CHECKING
+from typing import Any, Dict, Tuple, List, Optional, Union, Callable, cast
 
 from functools import reduce
 
@@ -31,17 +31,15 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
+from pymor.parameters.base import Mu, Parameters
 from pymor.parameters.functionals import ParameterFunctional
+from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
-if TYPE_CHECKING:
-    from pymor.parameters.base import Mu, Parameters
-    from pymor.vectorarrays.interface import VectorArray
 
 Matrix = Union[ndarray, spmatrix]
 RealOrComplex = Union[float, complex]
 Coefficient = Union[RealOrComplex, ParameterFunctional]
-CoeffTupleOrList = Union[Tuple[Coefficient, ...], List[Coefficient]]
 OpTupleOrList = Union[Tuple[Operator, ...], List[Operator]]
 
 
@@ -217,7 +215,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     source_id: Optional[str]
     range_id: Optional[str]
     solver_options: Optional[dict]
-    name: Optional[str]
 
     def __init__(self, matrix: Matrix, source_id: Optional[str] = None, range_id: Optional[str] = None,
                  solver_options: Optional[dict] = None, name: Optional[str] = None):
@@ -353,7 +350,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             elif backend == 'generic':
                 logger = getLogger('pymor.bindings.scipy.scipy_apply_inverse')
                 logger.warning('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
-                from pymor.algorithms.genericsolvers import apply_inverse as apply_inverse_impl
+                from pymor.algorithms.genericsolvers import apply_inverse as apply_inverse_impl  # type: ignore[no-redef] # NOQA
             else:
                 raise NotImplementedError
 
@@ -383,25 +380,27 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                               least_squares: bool = False) -> VectorArray:
         return self.H.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
-    def _assemble_lincomb(self, operators: OpTupleOrList, coefficients: List[RealOrComplex],
+    def _assemble_lincomb(self, operators: List[Operator], coefficients: List[RealOrComplex],
                           identity_shift: RealOrComplex = 0., solver_options: Optional[dict] = None,
                           name: Optional[str] = None) -> Optional[NumpyMatrixOperator]:
         if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
             return None
 
+        operators_ = cast(List[NumpyMatrixOperator], operators)
+
         common_mat_dtype = reduce(np.promote_types,
-                                  (op.matrix.dtype for op in operators if hasattr(op, 'matrix')))
+                                  (op.matrix.dtype for op in operators_ if hasattr(op, 'matrix')))
         common_coef_dtype = reduce(np.promote_types, (type(c) for c in coefficients + [identity_shift]))
         common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
 
         if coefficients[0] == 1:
-            matrix = operators[0].matrix.astype(common_dtype)
+            matrix = operators_[0].matrix.astype(common_dtype)
         else:
-            matrix = operators[0].matrix * coefficients[0]
+            matrix = operators_[0].matrix * coefficients[0]
             if matrix.dtype != common_dtype:
                 matrix = matrix.astype(common_dtype)
 
-        for op, c in zip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators_[1:], coefficients[1:]):
             if c == 1:
                 try:
                     matrix += op.matrix
@@ -421,7 +420,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         if identity_shift != 0:
             if identity_shift.imag == 0:
                 identity_shift = identity_shift.real
-            if operators[0].sparse:
+            if operators_[0].sparse:
                 try:
                     matrix += (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
                 except NotImplementedError:
@@ -439,7 +438,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             del self.matrix.factorization
         return self.__dict__
 
-    def _format_repr(self, max_width: int, verbosity: int) -> str:
+    def _format_repr(self, max_width: int, verbosity: int, override: Dict[str, str] = {}) -> str:
         if isinstance(self.matrix, spmatrix):
             matrix_repr = f'<{self.range.dim}x{self.source.dim} sparse, {self.matrix.nnz} nnz>'
         else:
