@@ -137,7 +137,7 @@ class LinearComplexifiedListVectorArrayOperatorBase(ListVectorArrayOperatorBase)
         return self.range.complexified_vector_type(real_part, imag_part)
 
 
-class NumpyListVectorArrayMatrixOperator(ListVectorArrayOperatorBase, NumpyMatrixOperator):
+class NumpyListVectorArrayMatrixOperator(ListVectorArrayOperatorBase, NumpyMatrixOperator):  # type: ignore[misc]
     """Variant of |NumpyMatrixOperator| using |ListVectorArray| instead of |NumpyVectorArray|.
 
     This class is mainly intended for performance tests of |ListVectorArray|.
