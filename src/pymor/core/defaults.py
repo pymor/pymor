@@ -185,7 +185,7 @@ Defaults
 _default_container = DefaultContainer()
 
 
-def defaults(*args):
+class defaults:
     """Function decorator for marking function arguments as user-configurable defaults.
 
     If a function decorated with :func:`defaults` is called, the values of the marked
@@ -209,15 +209,18 @@ def defaults(*args):
         function to mark as pyMOR defaults. Each of these arguments has to be
         a keyword argument (with a default value).
     """
-    assert all(isinstance(arg, str) for arg in args)
 
-    def the_decorator(decorated_function):
+    def __init__(self, *args):
+        assert all(isinstance(arg, str) for arg in args)
+        self.args = args
 
-        if not args:
+    def __call__(self, decorated_function):
+
+        if not self.args:
             return decorated_function
 
         global _default_container
-        _default_container._add_defaults_for_function(decorated_function, args=args)
+        _default_container._add_defaults_for_function(decorated_function, args=self.args)
 
         def set_default_values(*wrapper_args, **wrapper_kwargs):
             for k, v in zip(decorated_function.argnames, wrapper_args):
@@ -236,7 +239,7 @@ def defaults(*args):
             return decorated_function(**kwargs)
 
         annotations = defaults_wrapper.__annotations__.copy()
-        for arg in args:
+        for arg in self.args:
             try:
                 ann = annotations[arg]
                 annotations[arg] = f'Optional[{ann}]'
@@ -245,8 +248,6 @@ def defaults(*args):
         defaults_wrapper.__annotations__ = annotations
 
         return defaults_wrapper
-
-    return the_decorator
 
 
 def _import_all(package_name='pymor'):
