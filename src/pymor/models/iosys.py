@@ -536,12 +536,12 @@ class LTIModel(InputStateOutputModel):
 
     def __add__(self, other):
         """Add an |LTIModel|."""
+        if not isinstance(other, LTIModel):
+            return NotImplemented
+
         assert self.cont_time == other.cont_time
         assert self.D.source == other.D.source
         assert self.D.range == other.D.range
-
-        if not isinstance(other, LTIModel):
-            return NotImplemented
 
         A = BlockDiagonalOperator([self.A, other.A])
         B = BlockColumnOperator([self.B, other.B])
@@ -563,11 +563,11 @@ class LTIModel(InputStateOutputModel):
 
     def __mul__(self, other):
         """Postmultiply by an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.range
-
         if not isinstance(other, LTIModel):
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.range
 
         A = BlockOperator([[self.A, self.B @ other.C],
                            [None, other.A]])
@@ -1395,15 +1395,15 @@ class SecondOrderModel(InputStateOutputModel):
 
     def __add__(self, other):
         """Add a |SecondOrderModel| or an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.source
-        assert self.D.range == other.D.range
-
         if isinstance(other, LTIModel):
             return self.to_lti() + other
 
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.source
+        assert self.D.range == other.D.range
 
         M = BlockDiagonalOperator([self.M, other.M])
         E = BlockDiagonalOperator([self.E, other.E])
@@ -1438,14 +1438,14 @@ class SecondOrderModel(InputStateOutputModel):
 
     def __mul__(self, other):
         """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.range
-
         if isinstance(other, LTIModel):
             return self.to_lti() * other
 
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.range
 
         M = BlockDiagonalOperator([self.M, other.M])
         E = BlockOperator([[self.E, -(self.B @ other.Cv)],
@@ -1916,10 +1916,6 @@ class LinearDelayModel(InputStateOutputModel):
 
     def __add__(self, other):
         """Add an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.source
-        assert self.D.range == other.D.range
-
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
 
@@ -1943,6 +1939,10 @@ class LinearDelayModel(InputStateOutputModel):
             Ad = tuple(Ad)
         else:
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.source
+        assert self.D.range == other.D.range
 
         E = BlockDiagonalOperator([self.E, other.E])
         A = BlockDiagonalOperator([self.A, other.A])
@@ -1976,10 +1976,7 @@ class LinearDelayModel(InputStateOutputModel):
         return self.with_(C=-self.C, D=-self.D)
 
     def __mul__(self, other):
-        """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.range
-
+        """Postmultiply an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
 
@@ -2003,6 +2000,9 @@ class LinearDelayModel(InputStateOutputModel):
             Ad = tuple(Ad)
         else:
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.range
 
         E = BlockDiagonalOperator([self.E, other.E])
         A = BlockOperator([[self.A, self.B @ other.C],
