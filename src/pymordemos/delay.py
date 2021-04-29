@@ -3,13 +3,12 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-
-import matplotlib.pyplot as plt
 import numpy as np
 from typer import Argument, run
 
 from pymor.models.iosys import TransferFunction
 from pymor.reductors.h2 import TFIRKAReductor
+from pymordemos.heat import fom_properties, run_mor_method
 
 
 def main(
@@ -28,33 +27,11 @@ def main(
         return np.array([[-(tau * s + tau + 1) * np.exp(-s) / (tau * s + 1) ** 2]])
 
     tf = TransferFunction(1, 1, H, dH)
+    w = np.logspace(-1, 3, 500)
+    fom_properties(tf, w)
 
     # Transfer function IRKA (TF-IRKA)
-    tf_irka_reductor = TFIRKAReductor(tf)
-    rom = tf_irka_reductor.reduce(r, maxit=1000)
-
-    # Final interpolation points
-    sigma_list = tf_irka_reductor.sigma_list
-    fig, ax = plt.subplots()
-    ax.plot(sigma_list[-1].real, sigma_list[-1].imag, '.')
-    ax.set_title('Final interpolation points of TF-IRKA')
-    ax.set_xlabel('Re')
-    ax.set_ylabel('Im')
-    plt.show()
-
-    # Magnitude plots
-    w = np.logspace(-1, 3, 200)
-
-    fig, ax = plt.subplots()
-    tf.mag_plot(w, ax=ax)
-    rom.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title('Magnitude plots of the full and reduced model')
-    plt.show()
-
-    fig, ax = plt.subplots()
-    (tf - rom).mag_plot(w, ax=ax)
-    ax.set_title('Magnitude plots of the error system')
-    plt.show()
+    run_mor_method(tf, w, TFIRKAReductor(tf), 'TF-IRKA', r, maxit=1000)
 
 
 if __name__ == '__main__':

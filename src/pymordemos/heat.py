@@ -20,13 +20,52 @@ from pymor.reductors.h2 import IRKAReductor, TSIAReductor, OneSidedIRKAReductor
 from pymor.reductors.mt import MTReductor
 
 
+def fom_properties(fom, w):
+    """Show properties of the full-order model.
+
+    Parameters
+    ----------
+    fom
+        The full-order `InputStateOutputModel`.
+    w
+        Array of frequencies.
+    """
+    from pymor.models.iosys import TransferFunction
+    if not isinstance(fom, TransferFunction):
+        print(f'order of the model = {fom.order}')
+    print(f'number of inputs   = {fom.dim_input}')
+    print(f'number of outputs  = {fom.dim_output}')
+
+    # System norms
+    print(f'FOM H_2-norm:    {fom.h2_norm():e}')
+    if not isinstance(fom, TransferFunction):
+        if config.HAVE_SLYCOT:
+            print(f'FOM H_inf-norm:  {fom.hinf_norm():e}')
+        else:
+            print('Skipped H_inf-norm calculation due to missing slycot.')
+        print(f'FOM Hankel-norm: {fom.hankel_norm():e}')
+
+    # System poles
+    if not isinstance(fom, TransferFunction):
+        poles = fom.poles()
+        fig, ax = plt.subplots()
+        ax.plot(poles.real, poles.imag, '.')
+        ax.set_title('System poles')
+
+    # Bode plot of the full model
+    fig, ax = plt.subplots(2 * fom.dim_output, fom.dim_input, squeeze=False)
+    fom.bode_plot(w, ax=ax)
+    fig.suptitle('Bode plot of the full model')
+    plt.show()
+
+
 def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
     """Run a model order reduction method.
 
     Parameters
     ----------
     lti
-        The full-order |LTIModel|.
+        The full-order `InputStateOutputModel`.
     w
         Array of frequencies.
     reductor
@@ -42,27 +81,27 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
     rom = reductor.reduce(r, **reduce_kwargs)
     err = lti - rom
 
+    # Errors
+    print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / lti.h2_norm():e}')
+    from pymor.models.iosys import TransferFunction
+    if not isinstance(lti, TransferFunction):
+        if config.HAVE_SLYCOT:
+            print(f'{reductor_short_name} relative H_inf-error:  {err.hinf_norm() / lti.hinf_norm():e}')
+        else:
+            print('Skipped H_inf-norm calculation due to missing slycot.')
+        print(f'{reductor_short_name} relative Hankel-error: {err.hankel_norm() / lti.hankel_norm():e}')
+
     # Poles of the reduced-order model
     poles_rom = rom.poles()
     fig, ax = plt.subplots()
     ax.plot(poles_rom.real, poles_rom.imag, '.')
     ax.set_title(f"{reductor_short_name} reduced model's poles")
-    plt.show()
 
-    # Errors
-    print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / lti.h2_norm():e}')
-    if config.HAVE_SLYCOT:
-        print(f'{reductor_short_name} relative H_inf-error:  {err.hinf_norm() / lti.hinf_norm():e}')
-    else:
-        print('Skipped H_inf-norm calculation due to missing slycot.')
-    print(f'{reductor_short_name} relative Hankel-error: {err.hankel_norm() / lti.hankel_norm():e}')
-
-    # Magnitude plot of the full and reduced model
-    fig, ax = plt.subplots()
-    lti.mag_plot(w, ax=ax)
-    rom.mag_plot(w, ax=ax, linestyle='dashed')
-    ax.set_title(f'Magnitude plot of the full and {reductor_short_name} reduced model')
-    plt.show()
+    # Bode plot of the full and reduced model
+    fig, ax = plt.subplots(2 * lti.dim_output, lti.dim_input, squeeze=False)
+    lti.bode_plot(w, ax=ax)
+    rom.bode_plot(w, ax=ax, linestyle='dashed')
+    fig.suptitle(f'Bode plot of the full and {reductor_short_name} reduced model')
 
     # Magnitude plot of the error system
     fig, ax = plt.subplots()
@@ -109,25 +148,12 @@ def main(
 
     fom.visualize(fom.solve())
 
+    # LTI system
     lti = fom.to_lti()
 
-    print(f'order of the model = {lti.order}')
-    print(f'number of inputs   = {lti.dim_input}')
-    print(f'number of outputs  = {lti.dim_output}')
-
-    # System poles
-    poles = lti.poles()
-    fig, ax = plt.subplots()
-    ax.plot(poles.real, poles.imag, '.')
-    ax.set_title('System poles')
-    plt.show()
-
-    # Magnitude plot of the full model
+    # System properties
     w = np.logspace(-1, 3, 100)
-    fig, ax = plt.subplots()
-    lti.mag_plot(w, ax=ax)
-    ax.set_title('Magnitude plot of the full model')
-    plt.show()
+    fom_properties(lti, w)
 
     # Hankel singular values
     hsv = lti.hsv()
@@ -135,14 +161,6 @@ def main(
     ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
     ax.set_title('Hankel singular values')
     plt.show()
-
-    # Norms of the system
-    print(f'FOM H_2-norm:    {lti.h2_norm():e}')
-    if config.HAVE_SLYCOT:
-        print(f'FOM H_inf-norm:  {lti.hinf_norm():e}')
-    else:
-        print('Skipped H_inf-norm calculation due to missing slycot.')
-    print(f'FOM Hankel-norm: {lti.hankel_norm():e}')
 
     # Model order reduction
     run_mor_method(lti, w, BTReductor(lti), 'BT', r, tol=1e-5)
