@@ -1023,7 +1023,8 @@ class TransferFunction(InputOutputModel):
         assert self.dim_input == other.dim_input
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) @ other.eval_dtf(s, mu=mu)
+        dtf = lambda s, mu=None: (self.eval_dtf(s, mu=mu) @ other.eval_tf(s, mu=mu)
+                                  + self.eval_tf(s, mu=mu) @ other.eval_dtf(s, mu=mu))
         return self.with_(tf=tf, dtf=dtf)
 
     def __rmul__(self, other):
@@ -1032,7 +1033,8 @@ class TransferFunction(InputOutputModel):
         assert self.dim_output == other.dim_input
 
         tf = lambda s, mu=None: other.eval_tf(s, mu=mu) @ self.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: other.eval_dtf(s, mu=mu) @ self.eval_dtf(s, mu=mu)
+        dtf = lambda s, mu=None: (other.eval_dtf(s, mu=mu) @ self.eval_tf(s, mu=mu)
+                                  + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
         return self.with_(tf=tf, dtf=dtf)
 
     @cached
