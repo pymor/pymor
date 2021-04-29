@@ -1069,21 +1069,18 @@ class TransferFunction(InputOutputModel):
             raise NotImplementedError
 
         import scipy.integrate as spint
-        if 'epsabs' not in quad_kwargs:
-            quad_kwargs['epsabs'] = 0
+        quad_kwargs.setdefault('epsabs', 0)
         quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
-                              -np.inf, np.inf,
+                              0, np.inf,
                               **quad_kwargs)
-        norm = np.sqrt(quad_out[0] / (2 * np.pi))
+        norm = np.sqrt(quad_out[0] / np.pi)
         if return_norm_only:
             return norm
+        norm_relerr = quad_out[0] / (2 * quad_out[1])
+        if len(quad_out) == 2:
+            return norm, norm_relerr
         else:
-            abserr = quad_out[1]
-            norm_relerr = abserr / (2 * np.pi) / (2 * norm) / norm
-            if len(quad_out) == 2:
-                return norm, norm_relerr
-            else:
-                return norm, norm_relerr, quad_out[2:]
+            return norm, norm_relerr, quad_out[2:]
 
 
 class SecondOrderModel(InputStateOutputModel):
