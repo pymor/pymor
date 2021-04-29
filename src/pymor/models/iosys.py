@@ -8,6 +8,7 @@ import scipy.sparse as sps
 
 from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
+from pymor.core.base import abstractmethod
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -37,13 +38,13 @@ class InputOutputModel(Model):
         super().__init__(error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
+    @abstractmethod
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function."""
-        raise NotImplementedError
 
+    @abstractmethod
     def eval_dtf(self, s, mu=None):
         """Evaluate the derivative of the transfer function."""
-        raise NotImplementedError
 
     @cached
     def freq_resp(self, w, mu=None):
