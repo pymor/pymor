@@ -9,6 +9,11 @@ kernelspec:
   name: python3
 ---
 
+```{code-cell}
+:tags: [remove-cell]
+:load: myst_code_init.py
+```
+
 
 Tutorial: Building a Reduced Basis
 ==================================
