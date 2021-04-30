@@ -14,8 +14,8 @@ from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interface import (VectorArray, VectorSpace, _create_random_values,
-                                          Index, RealOrComplex, ScalCoeffs)
+from pymor.typing import Index, RealOrComplex, ScalCoeffs
+from pymor.vectorarrays.interface import VectorArray, VectorSpace, _create_random_values
 
 if TYPE_CHECKING:
     from pymor.operators.interface import Operator

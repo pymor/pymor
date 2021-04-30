@@ -15,7 +15,8 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.parameters.base import ParametricObject, Mu
 from pymor.parameters.functionals import ParameterFunctional
-from pymor.vectorarrays.interface import VectorArray, VectorSpace, RealOrComplex
+from pymor.typing import RealOrComplex
+from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 

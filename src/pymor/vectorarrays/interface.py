@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import annotations
-from typing import Optional, Union, List, Tuple, TYPE_CHECKING
+from typing import Optional, Union, Tuple, TYPE_CHECKING
 
 import numpy as np
 from numpy import ndarray
@@ -12,17 +12,11 @@ from numpy.random import RandomState
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.tools.random import get_random_state
+from pymor.typing import SCALAR_INDICES, Index, RealOrComplex, ScalCoeffs
 
 
 if TYPE_CHECKING:
     from pymor.operators.interface import Operator
-
-
-SCALAR_INDICES = (int, np.integer)
-ScalarIndex = Union[int, np.integer]
-Index = Union[int, np.integer, slice, List[Union[int, np.integer]], ndarray]
-RealOrComplex = Union[float, complex]
-ScalCoeffs = Union[float, complex, ndarray]
 
 
 class VectorArray(BasicObject):
