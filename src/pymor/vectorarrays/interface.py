@@ -18,7 +18,9 @@ if TYPE_CHECKING:
     from pymor.operators.interface import Operator
 
 
-Index = Union[int, slice, List[int], ndarray]
+SCALAR_INDICES = (int, np.integer)
+ScalarIndex = Union[int, np.integer]
+Index = Union[int, np.integer, slice, List[Union[int, np.integer]], ndarray]
 RealOrComplex = Union[float, complex]
 ScalCoeffs = Union[float, complex, ndarray]
 
@@ -652,7 +654,7 @@ class VectorArray(BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, int) and -l <= ind < l
+                or isinstance(ind, SCALAR_INDICES) and -l <= ind < l
                 or isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind: Index) -> bool:
@@ -663,7 +665,7 @@ class VectorArray(BasicObject):
         """
         l = len(self)
         return (type(ind) is slice
-                or isinstance(ind, int) and -l <= ind < l
+                or isinstance(ind, SCALAR_INDICES) and -l <= ind < l
                 or isinstance(ind, (list, np.ndarray))
                 and len(set(i if i >= 0 else l+i for i in ind if -l <= i < l)) == len(ind))
 
@@ -672,7 +674,7 @@ class VectorArray(BasicObject):
         l = len(self)
         if isinstance(ind, slice):
             return len(range(*ind.indices(l)))
-        elif isinstance(ind, int):
+        elif isinstance(ind, SCALAR_INDICES):
             return 1
         else:
             return len(ind)
@@ -682,7 +684,7 @@ class VectorArray(BasicObject):
         l = len(self)
         if isinstance(ind, slice):
             return len(range(*ind.indices(l)))
-        if isinstance(ind, int):
+        if isinstance(ind, SCALAR_INDICES):
             return 1
         return len({i if i >= 0 else l+i for i in ind})
 
@@ -690,7 +692,7 @@ class VectorArray(BasicObject):
         """Normalize given indices such that they are independent of the array length."""
         if isinstance(ind, slice):
             return slice(*ind.indices(len(self)))
-        elif isinstance(ind, int):
+        elif isinstance(ind, SCALAR_INDICES):
             ind = ind if 0 <= ind else len(self)+ind
             return slice(ind, ind+1)
         else:
@@ -704,16 +706,16 @@ class VectorArray(BasicObject):
             if isinstance(ind_ind, slice):
                 result = ind[ind_ind]
                 return slice(result.start, result.stop, result.step)
-            elif isinstance(ind_ind, int):
+            elif isinstance(ind_ind, SCALAR_INDICES):
                 return [ind[ind_ind]]
             else:
                 return [ind[i] for i in ind_ind]
         else:
-            if isinstance(ind, int):
+            if isinstance(ind, SCALAR_INDICES):
                 ind = [ind]
             if isinstance(ind_ind, slice):
                 return ind[ind_ind]
-            elif isinstance(ind_ind, int):
+            elif isinstance(ind_ind, SCALAR_INDICES):
                 return [ind[ind_ind]]
             else:
                 return [ind[i] for i in ind_ind]
