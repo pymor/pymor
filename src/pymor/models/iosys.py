@@ -1076,7 +1076,7 @@ class TransferFunction(InputOutputModel):
         norm = np.sqrt(quad_out[0] / np.pi)
         if return_norm_only:
             return norm
-        norm_relerr = quad_out[0] / (2 * quad_out[1])
+        norm_relerr = quad_out[1] / (2 * quad_out[0])
         if len(quad_out) == 2:
             return norm, norm_relerr
         else:
