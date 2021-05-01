@@ -3,6 +3,8 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import warnings
+
 import numpy as np
 from typer import Argument, run
 
@@ -31,7 +33,9 @@ def main(
     fom_properties(tf, w)
 
     # Transfer function IRKA (TF-IRKA)
-    run_mor_method(tf, w, TFIRKAReductor(tf), 'TF-IRKA', r, maxit=1000)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')  # suppress IntegrationWarning from H2 error computation
+        run_mor_method(tf, w, TFIRKAReductor(tf), 'TF-IRKA', r, maxit=1000)
 
 
 if __name__ == '__main__':
