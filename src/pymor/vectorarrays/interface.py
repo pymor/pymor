@@ -561,7 +561,7 @@ class VectorArray(BasicObject):
         pass
 
     @abstractmethod
-    def amax(self) -> ndarray:
+    def amax(self) -> Tuple[ndarray, ndarray]:
         """The maximum absolute value of the DOFs contained in the array.
 
         Returns

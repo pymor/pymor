@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from numbers import Number
-from typing import Optional, Union, TYPE_CHECKING
+from typing import Optional, Union, Tuple, TYPE_CHECKING
 
 import numpy as np
 from numpy import ndarray
@@ -259,7 +259,7 @@ class NumpyVectorArray(VectorArray):
 
         return self._array[:, dof_indices][_ind, :]
 
-    def amax(self, *, _ind=None) -> ndarray:
+    def amax(self, *, _ind=None) -> Tuple[ndarray, ndarray]:
         if _ind is None:
             _ind = slice(0, self._len)
         assert self.dim > 0
