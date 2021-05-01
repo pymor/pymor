@@ -2,8 +2,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from typing import Sequence
 
-def cat_arrays(vector_arrays):
+from pymor.vectorarrays.interface import VectorArray
+
+
+def cat_arrays(vector_arrays: Sequence[VectorArray]) -> VectorArray:
     """Return a new |VectorArray| which is a concatenation of the arrays in `vector_arrays`."""
     vector_arrays = list(vector_arrays)
     total_length = sum(map(len, vector_arrays))
