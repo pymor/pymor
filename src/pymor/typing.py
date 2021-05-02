@@ -4,7 +4,7 @@
 
 from typing import Union, List, TYPE_CHECKING
 
-from numpy import ndarray, integer, number
+from numpy import ndarray, integer, number, floating
 
 if TYPE_CHECKING:
     from pymor.parameters.functionals import ParameterFunctional
@@ -15,6 +15,7 @@ ScalarIndex = Union[int, integer]
 Index = Union[int, integer, slice, List[Union[int, integer]], ndarray]
 
 
+Real = Union[float, floating]
 RealOrComplex = Union[float, complex, number]
 ScalCoeffs = Union[float, complex, ndarray]  # admissable coefficents for VectorArray.scal/axpy
 
