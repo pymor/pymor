@@ -95,31 +95,18 @@ if config.HAVE_TORCH:
         parameters
             |Parameters| of the reduced order model (the same as used in the full-order
             model).
-        products
-            A dict of inner product |Operators| defined on the discrete space the
-            problem is posed on. For each product with key `'x'` a corresponding
-            attribute `x_product`, as well as a norm method `x_norm` is added to
-            the model.
         error_estimator
             An error estimator for the problem. This can be any object with
             an `estimate_error(U, mu, m)` method. If `error_estimator` is
             not `None`, an `estimate_error(U, mu)` method is added to the
             model which will call `error_estimator.estimate_error(U, mu, self)`.
-        visualizer
-            A visualizer for the problem. This can be any object with
-            a `visualize(U, m, ...)` method. If `visualizer`
-            is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the model which forwards its arguments to the
-            visualizer's `visualize` method.
         name
             Name of the model.
         """
 
-        def __init__(self, neural_network, parameters={}, products=None, error_estimator=None,
-                     visualizer=None, name=None):
+        def __init__(self, neural_network, parameters={}, error_estimator=None, name=None):
 
-            super().__init__(products=products, error_estimator=error_estimator,
-                             visualizer=visualizer, name=name)
+            super().__init__(error_estimator=error_estimator, name=name)
 
             self.__auto_init(locals())
 
@@ -228,31 +215,18 @@ if config.HAVE_TORCH:
         parameters
             |Parameters| of the reduced order model (the same as used in the full-order
             model).
-        products
-            A dict of inner product |Operators| defined on the discrete space the
-            problem is posed on. For each product with key `'x'` a corresponding
-            attribute `x_product`, as well as a norm method `x_norm` is added to
-            the model.
         error_estimator
             An error estimator for the problem. This can be any object with
             an `estimate_error(U, mu, m)` method. If `error_estimator` is
             not `None`, an `estimate_error(U, mu)` method is added to the
             model which will call `error_estimator.estimate_error(U, mu, self)`.
-        visualizer
-            A visualizer for the problem. This can be any object with
-            a `visualize(U, m, ...)` method. If `visualizer`
-            is not `None`, a `visualize(U, *args, **kwargs)` method is added
-            to the model which forwards its arguments to the
-            visualizer's `visualize` method.
         name
             Name of the model.
         """
 
-        def __init__(self, T, nt, neural_network, parameters={}, products=None, error_estimator=None,
-                     visualizer=None, name=None):
+        def __init__(self, T, nt, neural_network, parameters={}, error_estimator=None, name=None):
 
-            super().__init__(products=products, error_estimator=error_estimator,
-                             visualizer=visualizer, name=name)
+            super().__init__(error_estimator=error_estimator, name=name)
 
             self.__auto_init(locals())
 
