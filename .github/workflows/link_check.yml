@@ -12,3 +12,4 @@ jobs:
       with:
         use-verbose-mode: 'yes'
         check-modified-files-only: 'yes'
+        base-branch: 'main'
