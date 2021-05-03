@@ -1,8 +1,29 @@
-# Tutorial: Projecting a Model
+---
+jupytext:
+  text_representation:
+   format_name: myst
+jupyter:
+  jupytext:
+    cell_metadata_filter: -all
+    formats: ipynb,myst
+    main_language: python
+    text_representation:
+      format_name: myst
+      extension: .md
+      format_version: '1.3'
+      jupytext_version: 1.11.2
+kernelspec:
+  display_name: Python 3
+  name: python3
+---
 
-```{eval-rst}
-.. include:: jupyter_init.txt
+
+```{code-cell}
+:tags: [remove-cell]
+:load: myst_code_init.py
 ```
+
+# Tutorial: Projecting a Model
 
 In this tutorial we will show how pyMOR builds a reduced-order model by
 projecting the full-order model onto a given reduced space. If you want to learn
@@ -33,9 +54,7 @@ pyMOR's subpackages.
 
 Let's build a 2-by-2 thermal block {{ Model }} as our FOM:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.analyticalproblems.thermalblock import thermal_block_problem
     from pymor.discretizers.builtin import discretize_stationary_cg
 
@@ -45,9 +64,7 @@ Let's build a 2-by-2 thermal block {{ Model }} as our FOM:
 
 To get started, we take a look at one solution of the FOM for some fixed {{ parameter values }}.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     U = fom.solve([1., 0.1, 0.1, 1.])
     fom.visualize(U)
 ```
@@ -57,9 +74,7 @@ Any subspace of the {attr}`~pymor.models.interface.Model.solution_space` of the 
 do for our purposes here. We choose to build a basic POD space from some random solution
 snapshots.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.algorithms.pod import pod
     from matplotlib import pyplot as plt
 
@@ -71,9 +86,7 @@ snapshots.
 
 The singular value decay looks promising:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     _ = plt.semilogy(singular_values)
 
 
@@ -86,9 +99,7 @@ the {{ Model }}. However, before doing so, we need to understand how actually
 solving the FOM works. Let's take a look at what
 {meth}`~pymor.models.interface.Model.solve` does:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.tools.formatsrc import print_source
     print_source(fom.solve)
 ```
@@ -99,9 +110,7 @@ handles the actual computation of the solution and various other associated valu
 outputs or error estimates. Next, we take a look at the implemenation of
 {meth}`~pymor.models.interface.Model.compute`:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print_source(fom.compute)
 ```
 
@@ -113,17 +122,13 @@ multiple return values at once in an optimized way. Our given model, however, ju
 {meth}`~pymor.models.interface.Model._compute_solution` where we can find the
 actual code:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print_source(fom._compute_solution)
 ```
 
 What does this mean? If we look at the type of {}`fom`,
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     type(fom)
 ```
 
@@ -151,9 +156,7 @@ However, while {meth}`~pymor.operators.interface.Operator.apply_inverse` expects
 {{ VectorArray }},  we see that {attr}`~pymor.models.basic.StationaryModel.rhs` is actually
 an {{ Operator }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom.rhs
 ```
 
@@ -161,18 +164,14 @@ This is due to the fact that {{ VectorArrays }} in pyMOR cannot be parametric. S
 for parametric right-hand sides, this right-hand side is encoded by a linear {{ Operator }}
 that maps numbers to scalar multiples of the right-hand side vector. Indeed, we see that
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom.rhs.source
 ```
 
 is one-dimensional, and if we look at the base-class implementation of
 {meth}`~pymor.operators.interface.Operator.as_range_array`
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.operators.interface import Operator
     print_source(Operator.as_range_array)
 ```
@@ -184,9 +183,8 @@ has an optimized implementation which just converts the stored matrix to a
 
 Let's try solving the model on our own:
 
-```{eval-rst}
-.. jupyter-execute::
-    :raises:
+```{code-cell}
+:tags: [raises-exception]
 
     U2 = fom.operator.apply_inverse(fom.rhs.as_range_array(mu), mu=[1., 0.1, 0.1, 1.])
 ```
@@ -203,9 +201,7 @@ back at the implementation of {meth}`~pymor.models.interface.Model.compute`,
 you see the explicit call to {meth}`~pymor.parameters.base.Parameters.parse`.
 We try again:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     mu = fom.parameters.parse([1., 0.1, 0.1, 1.])
     U2 = fom.operator.apply_inverse(fom.rhs.as_range_array(mu), mu=mu)
 ```
@@ -213,9 +209,7 @@ We try again:
 We can check that we get exactly the same result as from our earlier call
 to {meth}`~pymor.models.interface.Model.solve`:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     (U-U2).norm()
 
 ```
@@ -334,9 +328,7 @@ For computing the inner products {math}`\mathbb{V}_N^T \cdot F(\mu)` we can simp
 inner product with the {}`basis` {{ VectorArray }} using its {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
 method:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     reduced_operator = fom.operator.apply2(basis, basis, mu=mu)
     reduced_rhs = basis.inner(fom.rhs.as_range_array(mu))
 ```
@@ -344,9 +336,7 @@ method:
 Now we just need to solve the resulting linear equation system using {{ NumPy }} to obtain
 {math}`u_N(\mu)`:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     import numpy as np
 
     u_N = np.linalg.solve(reduced_operator, reduced_rhs)
@@ -357,27 +347,21 @@ To reconstruct the high-dimensional approximation {math}`\mathbb{V}_N \cdot u_N(
 from {math}`u_N(\mu)` we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb`
 method:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     U_N = basis.lincomb(u_N.T)
     U_N
 ```
 
 Let's see, how good our reduced approximation is:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     (U-U_N).norm(fom.h1_0_product) / U.norm(fom.h1_0_product)
 ```
 
 With only 10 basis vectors, we have achieved a relative {math}`H^1`-error of 2%.
 We can also visually inspect our solution and the approximation error:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom.visualize((U, U_N, U-U_N), separate_colorbars=True)
 
 ```
@@ -386,18 +370,14 @@ We can also visually inspect our solution and the approximation error:
 
 So far, we have only constructed the ROM in the form of {{ NumPy }} data structures:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     type(reduced_operator)
 ```
 
 To build a proper pyMOR {{ Model }} for the ROM, which can be used everywhere a {{ Model }} is
 expected, we first wrap these data structures as pyMOR {{ Operators }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.operators.numpy import NumpyMatrixOperator
 
     reduced_operator = NumpyMatrixOperator(reduced_operator)
@@ -407,9 +387,7 @@ expected, we first wrap these data structures as pyMOR {{ Operators }}:
 Galerkin projection does not change the structure of the model. So the ROM should again
 be a {{ StationaryModel }}. We can construct it easily as follows:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.models.basic import StationaryModel
     rom = StationaryModel(reduced_operator, reduced_rhs)
     rom
@@ -417,9 +395,7 @@ be a {{ StationaryModel }}. We can construct it easily as follows:
 
 Let's check if it works as expected:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     u_N2 = rom.solve()
     u_N.T - u_N2.to_numpy()
 ```
@@ -432,9 +408,7 @@ There is one issue however. Our ROM has lost the parametrization since we
 have assembled the reduced-order system for a specific set of
 {{ parameter values }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print(fom.parameters)
     print(rom.parameters)
 ```
@@ -442,9 +416,7 @@ have assembled the reduced-order system for a specific set of
 Solving the ROM for a new {}`mu` would mean to build a new ROM with updated
 system matrix and right-hand side. However, if we compare the timings,
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from time import perf_counter
 
     tic = perf_counter()
@@ -467,9 +439,7 @@ To solve this issue we need to find a way to pre-compute everything we need
 to solve the ROM once-and-for-all for all possible {{ parameter values }}. Luckily,
 the system operator of our FOM has a special structure:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom.operator
 ```
 
@@ -483,9 +453,7 @@ parameter-dependent.  This allows us to easily build a parametric ROM that no lo
 requires any high-dimensional operations for its solution by projecting each
 {{ Operator }} in the sum separately:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     reduced_operators = [NumpyMatrixOperator(op.apply2(basis, basis))
                          for op in fom.operator.operators]
 ```
@@ -495,50 +463,38 @@ An easier way is to use the {meth}`~pymor.core.base.ImmutableObject.with_` metho
 which allows us to create a new object from a given {{ ImmutableObject }} by replacing
 some of its attributes by new values:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     reduced_operator = fom.operator.with_(operators=reduced_operators)
 ```
 
 The right-hand side of our problem is non-parametric,
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom.rhs.parameters
 ```
 
 so we don't need to do anything special about it. We build a new ROM,
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     rom = StationaryModel(reduced_operator, reduced_rhs)
 ```
 
 which now depends on the same {{ Parameters }} as the FOM:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     rom.parameters
 ```
 
 We check that our new ROM still computes the same solution:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     u_N3 = rom.solve(mu)
     u_N.T - u_N3.to_numpy()
 ```
 
 Let's see if our new ROM is actually faster than the FOM:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     tic = perf_counter()
     fom.solve(mu)
     toc = perf_counter()
@@ -571,9 +527,7 @@ In pyMOR, the heavy lifting is handled by the
 a Galerkin projection, or more general a Petrov-Galerkin projection, of any
 pyMOR {{ Operator }}. Let's see, how it works:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.algorithms.projection import project
 
     reduced_operator = project(fom.operator, basis, basis)
@@ -591,18 +545,14 @@ is determined, we pass {}`basis` twice when projecting {}`fom.operator`. Note th
 
 If we check the result,
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     reduced_operator
 ```
 
 we see, that pyMOR indeed has taken care of projecting each individual {{ Operator }}
 of the linear combination. We check again that we have built the same ROM:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     rom = StationaryModel(reduced_operator, reduced_rhs)
     u_N4 = rom.solve(mu)
     u_N.T - u_N4.to_numpy()
@@ -611,9 +561,7 @@ of the linear combination. We check again that we have built the same ROM:
 So how does {meth}`~pymor.algorithms.projection.project` actually work? Let's take
 a look at the source:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print_source(project)
 ```
 
@@ -629,9 +577,7 @@ of an algorithm for a specific application. We will not go into the details of d
 or modifying a {{ RuleTable }} here, but we will look at the rules of {}`ProjectRules` by looking
 at its string representation:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.algorithms.projection import ProjectRules
     ProjectRules
 ```
@@ -639,17 +585,13 @@ at its string representation:
 In the case of {}`fom.operator`, which is a {{ LincombOperator }}, the rule with index 8 will
 be the first matching rule. We can take a look at it:
 
-```{eval-rst}
-.. jupyter-execute::
-    :hide-code:
+```{code-cell}    :hide-code:
     :hide-output:
 
     assert ProjectRules.rules[8].action_description == 'LincombOperator'
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     ProjectRules.rules[8]
 ```
 
@@ -667,17 +609,13 @@ In our case, {}`ProjectRules` will be applied to all {{ NumpyMatrixOperators }} 
 {}`fom.operator`. These are linear, non-parametric operators, for which rule 3
 will apply:
 
-```{eval-rst}
-.. jupyter-execute::
-    :hide-code:
+```{code-cell}    :hide-code:
     :hide-output:
 
     assert ProjectRules.rules[3].action_description == 'apply_basis'
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     ProjectRules.rules[3]
 ```
 
@@ -703,9 +641,7 @@ the ROM with the projected {{ Operators }}, we can use a {mod}`reductor <pymor.r
 which does all the work for us. For a simple Galerkin projection of a {{ StationaryModel }},
 we can use {class}`~pymor.reductors.basic.StationaryRBReductor`:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.reductors.basic import StationaryRBReductor
 
     reductor = StationaryRBReductor(fom, basis)
@@ -714,9 +650,7 @@ we can use {class}`~pymor.reductors.basic.StationaryRBReductor`:
 
 Again, we get the same ROM as before:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     u_N5 = rom.solve(mu)
     u_N.T - u_N5.to_numpy()
 ```
@@ -729,9 +663,7 @@ actual projection is handled in the
 {meth}`~pymor.reductor.basic.StationaryRBReductor.project_operators` method,
 where we can find some well-known code:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print_source(reductor.project_operators)
 ```
 
@@ -739,9 +671,7 @@ We see that the reductor also takes care of projecting output functionals and
 inner products associated with the {{ Model }}. The construction of the ROM from
 the projected operators is performed by a separate method:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print_source(reductor.build_rom)
 ```
 
@@ -753,18 +683,14 @@ In the case of {class}`~pymor.reductors.basic.StationaryRBReductor`, however,
 Reductors also allow to compute {math}`U_N(\mu)` from {math}`u_N(\mu)` using
 the {meth}`~pymor.reductors.basic.StationaryRBReductor.reconstruct` method:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     U_N5 = reductor.reconstruct(u_N5)
     (U_N - U_N5).norm()
 ```
 
 Again, if we look at the source code, we see a familiar expression:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print_source(reductor.reconstruct)
 ```
 

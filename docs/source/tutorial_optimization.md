@@ -1,8 +1,29 @@
-# Tutorial: Model order reduction for PDE-constrained optimization problems
+---
+jupytext:
+  text_representation:
+   format_name: myst
+jupyter:
+  jupytext:
+    cell_metadata_filter: -all
+    formats: ipynb,myst
+    main_language: python
+    text_representation:
+      format_name: myst
+      extension: .md
+      format_version: '1.3'
+      jupytext_version: 1.11.2
+kernelspec:
+  display_name: Python 3
+  name: python3
+---
 
-```{eval-rst}
-.. include:: jupyter_init.txt
+
+```{code-cell}
+:tags: [remove-cell]
+:load: myst_code_init.py
 ```
+
+# Tutorial: Model order reduction for PDE-constrained optimization problems
 
 A typical application of model order reduction for PDEs are
 PDE-constrained parameter optimization problems. These problems aim to
@@ -112,9 +133,7 @@ where {math}`\theta_{\mathcal{J}}(\mu) := 1 + \frac{1}{5}(\mu_0 + \mu_1)`.
 
 With this data, we can construct a {{ StationaryProblem }} in pyMOR.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.basic import *
     import numpy as np
 
@@ -158,9 +177,7 @@ we also define {math}`\bar{\mu}`, which we pass via the argument
 `mu_energy_product`. Also, we define the parameter space
 {math}`\mathcal{P}` on which we want to optimize.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     mu_bar = problem.parameters.parse([np.pi/2,np.pi/2])
 
     fom, data = discretize_stationary_cg(problem, diameter=1/50, mu_energy_product=mu_bar)
@@ -169,9 +186,7 @@ we also define {math}`\bar{\mu}`, which we pass via the argument
 
 We now define a function for the output of the model that can be used by the minimizer below.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     def fom_objective_functional(mu):
         return fom.output(mu)[0]
 ```
@@ -179,27 +194,21 @@ We now define a function for the output of the model that can be used by the min
 We also pick a starting parameter for the optimization method,
 which in our case is {math}`\mu^0 = (0.25,0.5)`.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     initial_guess = [0.25, 0.5]
 ```
 
 Next, we visualize the diffusion function {math}`\lambda_\mu` by using
 {class}`~pymor.discretizers.builtin.cg.InterpolationOperator` for interpolating it on the grid.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.discretizers.builtin.cg import InterpolationOperator
 
     diff = InterpolationOperator(data['grid'], problem.diffusion).as_vector(fom.parameters.parse(initial_guess))
     fom.visualize(diff)
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print(data['grid'])
 ```
 
@@ -213,9 +222,7 @@ It rather further improves the speedups achieved by model reduction.
 Before we discuss the first optimization method, we define helpful
 functions for visualizations.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     import matplotlib as mpl
     mpl.rcParams['figure.figsize'] = (12.0, 8.0)
     mpl.rcParams['font.size'] = 12
@@ -254,9 +261,7 @@ functions for visualizations.
 
 Now, we can visualize the objective functional on the parameter space
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     ranges = parameter_space.ranges['diffusion']
     XX = np.linspace(ranges[0] + 0.05, ranges[1], 10)
     YY = XX
@@ -273,9 +278,7 @@ already result in a very different non-convex output functional.
 In order to record some data during the optimization, we also define two
 helpful functions for recording and reporting the results.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     reference_minimization_data = {'num_evals': 0,
                                    'evaluations' : [],
                                    'evaluation_points': [],
@@ -325,9 +328,7 @@ This is not recommended because the gradient is inexact and the
 computation of finite differences requires even more evaluations of the
 primal equation. Here, we use this approach for a simple demonstration.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from functools import partial
     from scipy.optimize import minimize
 
@@ -341,9 +342,7 @@ primal equation. Here, we use this approach for a simple demonstration.
     reference_mu = fom_result.x
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     report(fom_result, reference_minimization_data)
 ```
 
@@ -353,9 +352,7 @@ full order model. Obiously, this is related to the computation of the
 finite differences. We can visualize the optimization path by plotting
 the chosen points during the minimization.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     reference_plot = plot_3d_surface(fom_objective_functional, XX, YY, alpha=0.5)
 
     for mu in reference_minimization_data['evaluation_points']:
@@ -372,9 +369,7 @@ For this, we define a standard {class}`~pymor.reductors.coercive.CoerciveRBReduc
 and use the {class}`~pymor.parameters.functionals.MinThetaParameterFunctional` for an
 estimation of the coerciviy constant.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.algorithms.greedy import rb_greedy
     from pymor.parameters.functionals import MinThetaParameterFunctional
     from pymor.reductors.coercive import CoerciveRBReductor
@@ -401,9 +396,7 @@ In general, however, it is not a priori clear how to choose `atol`
 in order to arrive at a minimum which is close enough to the true
 optimum.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     training_set = parameter_space.sample_uniformly(25)
 
     RB_reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
@@ -422,9 +415,7 @@ optimum.
 We can see that greedy algorithm already stops after {math}`3` basis functions.
 Next, we plot the chosen parameters.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     ax = plot_3d_surface(fom_objective_functional, XX, YY, alpha=0.5)
 
     for mu in RB_greedy_mus[:-1]:
@@ -435,9 +426,7 @@ Next, we plot the chosen parameters.
 Analogously to above, we perform the same optimization method, but use
 the resulting ROM objective functional.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     def rom_objective_functional(mu):
         return rom.output(mu)[0]
 
@@ -457,9 +446,7 @@ the resulting ROM objective functional.
     RB_minimization_data['time'] = perf_counter()-tic
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     report(rom_result, RB_minimization_data, reference_mu)
 ```
 
@@ -478,9 +465,7 @@ choosing `atol`.
 To show that the ROM optimization roughly followed the same path as the
 FOM optimization, we visualize both of them in the following plot.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     reference_plot = plot_3d_surface(fom_objective_functional, XX, YY, alpha=0.5)
     reference_plot_mean_z_lim = 0.5*(reference_plot.get_zlim()[0] + reference_plot.get_zlim()[1])
 
@@ -600,9 +585,7 @@ in the exact same gradient but lacks computational speed.
 Moreover, the function `output_d_mu` returns a dict w.r.t. the parameters as default.
 In order to use the output for {func}`~scipy.optimize.minimize` we thus use the `return_array=True` argument.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     def fom_gradient_of_functional(mu):
         return fom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
@@ -623,9 +606,7 @@ In order to use the output for {func}`~scipy.optimize.minimize` we thus use the 
     reference_mu = opt_fom_result.x
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     report(opt_fom_result, opt_fom_minimization_data)
 ```
 
@@ -637,9 +618,7 @@ have a massive speed up by computing the gradient information properly.
 Obviously, we can also include the gradient of the ROM version of the
 output functional.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     def rom_gradient_of_functional(mu):
         return rom.output_d_mu(rom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
@@ -691,9 +670,7 @@ approach goes beyond the classical offline/online splitting of RB
 methods since it entirely skips the offline phase. In the following
 code, we will test this method.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     pdeopt_reductor = CoerciveRBReductor(
         fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
 ```
@@ -701,9 +678,7 @@ code, we will test this method.
 In the next function, we implement the above mentioned way of enriching
 the basis along the path of optimization.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     def record_results_and_enrich(function, data, opt_dict, mu):
         U = fom.solve(mu)
         try:
@@ -726,9 +701,7 @@ the basis along the path of optimization.
 
 With this definitions, we can start the optimization method.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     opt_along_path_minimization_data = {'num_evals': 0,
                                         'evaluations' : [],
                                         'evaluation_points': [],
@@ -746,9 +719,7 @@ With this definitions, we can start the optimization method.
     opt_along_path_minimization_data['time'] = perf_counter()-tic
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     report(opt_along_path_result, opt_along_path_minimization_data, reference_mu)
 ```
 
@@ -770,17 +741,13 @@ example we will implement this adaptive way of enriching and set a
 tolerance which is equal to the one that we had as error tolerance
 in the greedy algorithm.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     pdeopt_reductor = CoerciveRBReductor(
         fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
     opt_rom = pdeopt_reductor.reduce()
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     def record_results_and_enrich_adaptively(function, data, opt_dict, mu):
         opt_rom = opt_dict['opt_rom']
         primal_estimate = opt_rom.estimate_error(opt_rom.parameters.parse(mu))
@@ -808,9 +775,7 @@ in the greedy algorithm.
         return opt_rom.output_d_mu(opt_rom.parameters.parse(mu), return_array=True, use_adjoint=True)
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     opt_along_path_adaptively_minimization_data = {'num_evals': 0,
                                                    'evaluations' : [],
                                                    'evaluation_points': [],
@@ -828,9 +793,7 @@ in the greedy algorithm.
     opt_along_path_adaptively_minimization_data['time'] = perf_counter()-tic
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     report(opt_along_path_adaptively_result, opt_along_path_adaptively_minimization_data, reference_mu)
 ```
 
@@ -844,9 +807,7 @@ after converging. If this changes anything, the ROM tolerance `atol`
 was too large. To conclude, we once again
 compare all methods that we have discussed in this notebook.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print('FOM with finite differences')
     report(fom_result, reference_minimization_data, reference_mu)
 
@@ -866,9 +827,7 @@ compare all methods that we have discussed in this notebook.
     report(opt_along_path_adaptively_result, opt_along_path_adaptively_minimization_data, reference_mu)
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-    :hide-code:
+```{code-cell}    :hide-code:
     :hide-output:
 
     assert fom_result.nit == 7

@@ -1,3 +1,28 @@
+---
+jupytext:
+  text_representation:
+   format_name: myst
+jupyter:
+  jupytext:
+    cell_metadata_filter: -all
+    formats: ipynb,myst
+    main_language: python
+    text_representation:
+      format_name: myst
+      extension: .md
+      format_version: '1.3'
+      jupytext_version: 1.11.2
+kernelspec:
+  display_name: Python 3
+  name: python3
+---
+
+
+```{code-cell}
+:tags: [remove-cell]
+:load: myst_code_init.py
+```
+
 # Tutorial: Binding an external PDE solver to pyMOR
 
 One of pyMOR's main features is easy integration of external solvers that implement the full-order model. In this tutorial
@@ -161,38 +186,22 @@ In the next step, we will switch to a bash terminal and actually compile this mo
 After creating a build directory for the module, we let cmake initialize the build and call make to execute the
 compilation.
 
-```{eval-rst}
-.. jupyter-kernel:: bash
-    :id: make
+```{code-cell}
+:tags: [raises-exception]
+
+   %%bash
+   mkdir -p minimal_cpp_demo/build
+   cmake -B minimal_cpp_demo/build -S minimal_cpp_demo
+   make -C minimal_cpp_demo/build
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
-   mkdir -p source/minimal_cpp_demo/build
-   cd source/minimal_cpp_demo/build
-   cmake .. -DPYTHON_EXECUTABLE=$(which python) -DCMAKE_COLOR_MAKEFILE=OFF # prevent bash control chars in output
-   make
-```
-
-You can download this snippet as a notebook file to be used with a bash kernel {jupyter-download:notebook}`make`.
 
 To be able to use this extension module we need to insert the build directory into the path where the Python
 interpreter looks for things to import. Afterwards we can import the module and create and use the exported classes.
 
-```{eval-rst}
-.. jupyter-kernel::
-```
-
-```{eval-rst}
-.. include:: jupyter_init.txt
-```
-
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
   import sys
-  sys.path.insert(0, 'source/minimal_cpp_demo/build')
+  sys.path.insert(0, 'minimal_cpp_demo/build')
 
   import model
   mymodel = model.DiffusionOperator(10, 0, 1)
@@ -222,9 +231,7 @@ and {meth}`~pymor.vectorarrays.list.CopyOnWriteVector._axpy` in addition to all 
 methods from  {class}`~pymor.vectorarrays.list.CopyOnWriteVector`. We can get away
 with using just a stub that raises an {class}`~NotImplementedError` in some methods that are not actually called in our example.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
   from pymor.operators.interface import Operator
   from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
@@ -284,9 +291,7 @@ with using just a stub that raises an {class}`~NotImplementedError` in some meth
 The implementation of the {}`WrappedVectorSpace` is very short as most of the necessary methods
 of {{ VectorSpace }} are implemented in {class}`~pymor.vectorarrays.list.ListVectorSpace`.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
   class WrappedVectorSpace(ListVectorSpace):
 
       def __init__(self, dim):
@@ -308,9 +313,7 @@ Wrapping the {}`model.DiffusionOperator` is straightforward as well. We just nee
 suitable {{ VectorSpaces }} to the class and implement the application of the operator on a {{ VectorArray }}
 as a sequence of applications on single vectors.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
   class WrappedDiffusionOperator(Operator):
       def __init__(self, op):
           assert isinstance(op, DiffusionOperator)
@@ -350,9 +353,7 @@ coefficient  {math}`\alpha_\mu`.
 First up, we implement a {}`discretize` function that uses the {}`WrappedDiffusionOperator` and {}`WrappedVectorSpace`
 to assemble an {{ InstationaryModel }}.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
   from pymor.algorithms.pod import pod
   from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
   from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
@@ -393,9 +394,7 @@ to assemble an {{ InstationaryModel }}.
 Now we can build a reduced basis for our model. Note that this code is not specific to our wrapped classes.
 Those wrapped classes are only directly used in the {}`discretize` call.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
   %matplotlib inline
   # discretize
   fom = discretize(50, 10000, 4)
@@ -433,9 +432,7 @@ Those wrapped classes are only directly used in the {}`discretize` call.
 As you can see in this comparison, we get a good approximation of the full-order model here and
 the error plot confirms it:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
   fom.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))
 ```
 

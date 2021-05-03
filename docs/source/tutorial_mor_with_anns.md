@@ -1,8 +1,29 @@
-# Tutorial: Model order reduction with artificial neural networks
+---
+jupytext:
+  text_representation:
+   format_name: myst
+jupyter:
+  jupytext:
+    cell_metadata_filter: -all
+    formats: ipynb,myst
+    main_language: python
+    text_representation:
+      format_name: myst
+      extension: .md
+      format_version: '1.3'
+      jupytext_version: 1.11.2
+kernelspec:
+  display_name: Python 3
+  name: python3
+---
 
-```{eval-rst}
-.. include:: jupyter_init.txt
+
+```{code-cell}
+:tags: [remove-cell]
+:load: myst_code_init.py
 ```
+
+# Tutorial: Model order reduction with artificial neural networks
 
 Recent success of artificial neural networks led to the development of several
 methods for model order reduction using neural networks. pyMOR provides the
@@ -88,9 +109,7 @@ u((x_1, x_2), \mu) = 2x_1\mu + 0.5,\quad x=(x_1, x_2) \in \partial\Omega.
 We discretize the problem using pyMOR's builtin discretization toolkit as
 explained in {doc}`tutorial_builtin_discretizer`:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.basic import *
 
     problem = StationaryProblem(
@@ -117,9 +136,7 @@ explained in {doc}`tutorial_builtin_discretizer`:
 Since we employ a single {{ Parameter }}, and thus use the same range for each
 parameter, we can create the {{ ParameterSpace }} using the following line:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     parameter_space = fom.parameters.space((0.1, 1))
 ```
 
@@ -151,9 +168,7 @@ Furthermore, it is also possible to change the deployed activation function.
 To train the neural network, we create a training and a validation set
 consisting of 100 and 20 randomly chosen {{ parameter values }}, respectively:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     training_set = parameter_space.sample_uniformly(100)
     validation_set = parameter_space.sample_randomly(20)
 ```
@@ -181,9 +196,7 @@ model (perhaps with insufficient approximation properties).
 We can now construct a reductor with prescribed error for the basis and mean
 squared error of the neural network:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     from pymor.reductors.neural_network import NeuralNetworkReductor
 
     reductor = NeuralNetworkReductor(fom,
@@ -197,18 +210,14 @@ To reduce the model, i.e. compute a reduced basis via POD and train the neural
 network, we use the respective function of the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor`:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     rom = reductor.reduce(restarts=100)
 ```
 
 We are now ready to test our reduced model by solving for a random parameter value
 the full problem and the reduced model and visualize the result:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     mu = parameter_space.sample_randomly()
 
     U = fom.solve(mu)
@@ -223,18 +232,14 @@ Finally, we measure the error of our neural network and the performance
 compared to the solution of the full order problem on a training set. To this
 end, we sample randomly some {{ parameter values }} from our {{ ParameterSpace }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     test_set = parameter_space.sample_randomly(10)
 ```
 
 Next, we create empty solution arrays for the full and reduced solutions and an
 empty list for the speedups:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     U = fom.solution_space.empty(reserve=len(test_set))
     U_red = fom.solution_space.empty(reserve=len(test_set))
 
@@ -244,9 +249,7 @@ empty list for the speedups:
 Now, we iterate over the test set, compute full and reduced solutions to the
 respective parameters and measure the speedup:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     import time
 
     for mu in test_set:
@@ -263,18 +266,14 @@ respective parameters and measure the speedup:
 
 We can now derive the absolute and relative errors on the training set as
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     absolute_errors = (U - U_red).norm()
     relative_errors = (U - U_red).norm() / U.norm()
 ```
 
 The average absolute error amounts to
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     import numpy as np
 
     np.average(absolute_errors)
@@ -282,18 +281,14 @@ The average absolute error amounts to
 
 On the other hand, the average relative error is
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     np.average(relative_errors)
 ```
 
 Using neural networks results in the following median speedup compared to
 solving the full order problem:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     np.median(speedups)
 ```
 

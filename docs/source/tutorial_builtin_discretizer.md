@@ -1,8 +1,29 @@
-# Tutorial: Using pyMOR’s discretization toolkit
+---
+jupytext:
+  text_representation:
+   format_name: myst
+jupyter:
+  jupytext:
+    cell_metadata_filter: -all
+    formats: ipynb,myst
+    main_language: python
+    text_representation:
+      format_name: myst
+      extension: .md
+      format_version: '1.3'
+      jupytext_version: 1.11.2
+kernelspec:
+  display_name: Python 3
+  name: python3
+---
 
-```{eval-rst}
-.. include:: jupyter_init.txt
+
+```{code-cell}
+:tags: [remove-cell]
+:load: myst_code_init.py
 ```
+
+# Tutorial: Using pyMOR’s discretization toolkit
 
 pyMOR’s discretization toolkit allows to quickly build parameterized
 full-order models based on the NumPy/SciPy software stack. Currently
@@ -43,9 +64,7 @@ f(x, \mu) :=
 We start by importing commonly used pyMOR classes and methods from the
 {mod}`~pymor.basic` module:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    from pymor.basic import *
 ```
 
@@ -57,9 +76,7 @@ which all derive from the {{ DomainDescription }} interface class.
 
 In our case, we can use a {{ RectDomain }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     domain = RectDomain([[0.,0.], [1.,1.]])
 ```
 
@@ -67,9 +84,7 @@ Data functions are defined using classes which derive from
 the {{ Function }} interface. We specify the constant diffusivity {math}`\sigma`
 using a {{ ConstantFunction }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     diffusion = ConstantFunction(1, 2)
 ```
 
@@ -96,9 +111,7 @@ means that {}`x` can be an arbitrary dimensional NumPy array of
 coordinates where the last array index specifies the spacial dimension.
 Therefore, the correct definition of {math}`f` is:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    rhs = ExpressionFunction('(sqrt( (x[...,0]-0.5)**2 + (x[...,1]-0.5)**2) <= 0.3) * 1.', 2, ())
 ```
 
@@ -113,9 +126,7 @@ returning {math}`2\times 2` matrices we would specify {}`(2,2)`.
 Finally, the computational domain and all data functions are collected
 in a {{ StationaryProblem }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    problem = StationaryProblem(
        domain=domain,
        diffusion=diffusion,
@@ -130,26 +141,20 @@ discrete full-order models. For finite elements, we use
 which receives the maximum mesh element diameter via the {}`diameter`
 argument:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m, data = discretize_stationary_cg(problem, diameter=1/4)
 ```
 
 The resulting {{ Model }} can be {meth}`solved <pymor.models.interface.Model.solve>`,
 returning a {{ VectorArray }} with the solution data:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    U = m.solve()
 ```
 
 Finally, we visualize the solution:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m.visualize(U)
 ```
 
@@ -158,9 +163,7 @@ In case a specific grid type shall be used ({{ RectGrid }} or
 discretizer as the {}`grid_type` argument. By using {{ RectGrid }} we get
 bilinear finite elements:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m, data = discretize_stationary_cg(problem, diameter=1/4, grid_type=RectGrid)
    m.visualize(m.solve())
 ```
@@ -168,9 +171,7 @@ bilinear finite elements:
 We get a finite volume model using
 {func}`~pymor.discretizers.builtin.fv.discretize_stationary_fv`:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m, data = discretize_stationary_fv(problem, diameter=1/4, grid_type=TriaGrid)
    m.visualize(m.solve())
 
@@ -215,9 +216,7 @@ Before solving this problem, let us first silence pyMOR’s verbose log
 messages for the rest of this tutorial using the {func}`~pymor.core.logger.set_log_levels`
 method:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    set_log_levels({'pymor': 'WARN'})
 ```
 
@@ -225,9 +224,7 @@ To impose the correct boundary conditions we need to declare which type of
 boundary condition should be active on which part of
 {math}`\partial\Omega` when defining the computational domain:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    domain = RectDomain(bottom='neumann')
 ```
 
@@ -235,9 +232,7 @@ Then all we need is to pass the Neumann data function {math}`g_N` to the
 {{ StationaryProblem }}. Here, we can use again a {{ ConstantFunction }}.
 The diffusivity can be defined similarly as above:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    neumann_data = ConstantFunction(-1., 2)
 
    diffusion = ExpressionFunction('1. - (sqrt( (x[...,0]-0.5)**2 + (x[...,1]-0.5)**2) <= 0.3) * 0.999' , 2, ())
@@ -251,9 +246,7 @@ The diffusivity can be defined similarly as above:
 
 Finally, we discretize and solve:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m, data = discretize_stationary_cg(problem, diameter=1/32)
    m.visualize(m.solve())
 
@@ -266,9 +259,7 @@ For instance, to let {math}`\sigma` be given by a periodic pattern of
 {math}`K\times K` circular disks of radius {math}`0.3/K` we can use the
 following definition:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    diffusion = ExpressionFunction(
        '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
        2, (),
@@ -283,9 +274,7 @@ expression. In particular, we can easily change {}`K` programatically
 without having to resort to string manipulations. The solution looks
 like this:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    problem = StationaryProblem(
        domain=domain,
        diffusion=diffusion,
@@ -314,9 +303,7 @@ following graphic stored in {}`RB.png`:
 
 and a range of {}`[0.001 1]` we obtain:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    diffusion = BitmapFunction('RB.png', range=[0.001, 1])
    problem = StationaryProblem(
        domain=domain,
@@ -356,9 +343,7 @@ will be
 
 We can then make the following definition of the Neumann data:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    neumann_data = ExpressionFunction('-cos(pi*x[...,0])**2*neum[0]', 2, (), parameters= {'neum': 1})
 ```
 
@@ -371,9 +356,7 @@ the expression.
 We can then proceed as usual and automatically obtain a parametric
 {{ Model }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    diffusion = ExpressionFunction(
        '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
        2, (),
@@ -392,18 +375,14 @@ We can then proceed as usual and automatically obtain a parametric
 When solving the model, we now need to specify appropriate
 {{ parameter values }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m.visualize(m.solve({'neum': [1.]}))
 ```
 
 For the {meth}`~pymor.models.interface.Model.solve` method, the
 parameter value can also be specified as a single number:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m.visualize(m.solve(-100))
 
 ```
@@ -414,9 +393,7 @@ Next we also want to parameterize the diffusivity in the
 {math}`K \times K` circular disks by a scalar factor
 {math}`\mu_{diffu}`. To this end we define:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    diffusion = ExpressionFunction(
        '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * (1 - diffu[0])',
        2, (),
@@ -427,9 +404,7 @@ Next we also want to parameterize the diffusivity in the
 
 We proceed as usual:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    problem = StationaryProblem(
        domain=domain,
        diffusion=diffusion,
@@ -444,9 +419,7 @@ As we can see, pyMOR automatically derives that in this case the model
 depends on two {{ Parameters }}, and we have to provide two values
 when solving the model:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m.visualize(m.solve({'diffu': 0.001, 'neum': 1}))
 ```
 
@@ -454,9 +427,7 @@ For {meth}`~pymor.models.interface.Model.solve` we can also
 simply pass a list of parameter values, in which case
 pyMOR assumes an alphabetical ordering of the parameters:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m.visualize(m.solve([1, -1]))
 
 ```
@@ -505,9 +476,7 @@ the following image files:
 
 ```
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    f_R = BitmapFunction('R.png', range=[1, 0])
    f_B = BitmapFunction('B.png', range=[1, 0])
 ```
@@ -523,9 +492,7 @@ Next we need to define the {{ ParameterFunctionals }}
 Similar to an {{ ExpressionFunction }}, we can use
 {{ ExpressionParameterFunctionals }} for that:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    theta_R = ExpressionParameterFunctional('R[0] - 1', {'R': 1})
    theta_B = ExpressionParameterFunctional('B[0] - 1', {'B': 1})
 ```
@@ -536,9 +503,7 @@ combination using a {{ LincombFunction }} which is given a list of
 {{ Functions }} as the first and a corresponding list of
 {{ ParameterFunctionals }} or constants as the second argument:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    diffusion = LincombFunction(
        [ConstantFunction(1., 2), f_R, f_B],
        [1., theta_R, theta_B]
@@ -550,9 +515,7 @@ Again, pyMOR automatically derives that the evaluation of {}`diffusion`
 depends on the two {{ Parameters }} {}`'B'` and {}`'R'`. Now, we can
 proceed as usual:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    problem = StationaryProblem(
        domain=domain,
        diffusion=diffusion,
@@ -565,9 +528,7 @@ proceed as usual:
 Looking at the {{ Model }} {}`m`, we can see that the decomposition of
 {math}`\sigma` has been preserved by the discretizer:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
    m.operator
 ```
 

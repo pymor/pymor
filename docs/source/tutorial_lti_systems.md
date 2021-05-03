@@ -1,8 +1,29 @@
-# Tutorial: Linear time-invariant systems
+---
+jupytext:
+  text_representation:
+   format_name: myst
+jupyter:
+  jupytext:
+    cell_metadata_filter: -all
+    formats: ipynb,myst
+    main_language: python
+    text_representation:
+      format_name: myst
+      extension: .md
+      format_version: '1.3'
+      jupytext_version: 1.11.2
+kernelspec:
+  display_name: Python 3
+  name: python3
+---
 
-```{eval-rst}
-.. include:: jupyter_init.txt
+
+```{code-cell}
+:tags: [remove-cell]
+:load: myst_code_init.py
 ```
+
+# Tutorial: Linear time-invariant systems
 
 In this tutorial,
 we discuss finite-dimensional, continuous-time, linear time-invariant (LTI)
@@ -69,9 +90,7 @@ which instantiates an {{ LTIModel }} from NumPy or SciPy matrices.
 
 First, we do the necessary imports and some matplotlib style choices.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     import matplotlib.pyplot as plt
     import numpy as np
     import scipy.sparse as sps
@@ -83,24 +102,20 @@ First, we do the necessary imports and some matplotlib style choices.
 Next, we can assemble the matrices based on a centered finite difference
 approximation using standard methods of NumPy and SciPy.
 
-```{eval-rst}
-.. include:: heat_equation.txt
+```{code-cell}
+:load: heat_equation.py
 ```
 
 Then, we can create an {{ LTIModel }} from NumPy and SciPy matrices {}`A`, {}`B`, {}`C`,
 {}`E`.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom = LTIModel.from_matrices(A, B, C, E=E)
 ```
 
 We can take a look at the internal representation of the {{ LTIModel }} {}`fom`.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom
 ```
 
@@ -112,9 +127,7 @@ The operators in an {{ LTIModel }} can be accessed via its attributes, e.g.,
 
 We can also see some basic information from {}`fom`'s string representation
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print(fom)
 ```
 
@@ -157,9 +170,7 @@ The transfer function of a given {{ LTIModel }} can be evaluated using its
 {meth}`~pymor.models.iosys.LTIModel.eval_tf` method.
 The result is a NumPy array.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print(fom.eval_tf(0))
     print(fom.eval_tf(1))
     print(fom.eval_tf(1j))
@@ -169,9 +180,7 @@ Similarly, the derivative of the transfer function can be computed using the
 {meth}`~pymor.models.iosys.LTIModel.eval_dtf` method.
 The result is again a NumPy array.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     print(fom.eval_dtf(0))
     print(fom.eval_dtf(1))
     print(fom.eval_dtf(1j))
@@ -218,9 +227,7 @@ One way is the "magnitude plot", a visualization of the mapping
 {math}`\omega \mapsto \lVert H(\boldsymbol{\imath} \omega) \rVert`,
 using the {meth}`~pymor.models.iosys.InputOutputModel.mag_plot` method.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     w = np.logspace(-2, 8, 300)
     _ = fom.mag_plot(w)
 ```
@@ -238,9 +245,7 @@ is in subplot {math}`(2 i - 1, j)` and
 {math}`\omega \mapsto \arg(H_{ij}(\boldsymbol{\imath} \omega))`
 is in subplot {math}`(2 i, j)`.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     _ = fom.bode_plot(w)
 
 ```
@@ -260,9 +265,7 @@ The poles of an {{ LTIModel }} can be obtained using its
 {meth}`~pymor.models.iosys.LTIModel.poles` method
 (assuming the system is minimal).
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     poles = fom.poles()
     fig, ax = plt.subplots()
     ax.plot(poles.real, poles.imag, '.')
@@ -337,9 +340,7 @@ factor.
 For example, the following computes the low-rank Cholesky factor of the
 controllability Gramian as a {{ VectorArray }}:
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom.gramian('c_lrcf')
 
 ```
@@ -354,9 +355,7 @@ Plotting the Hankel singular values shows us how well an LTI system can be
 approximated by a reduced-order model.
 The {meth}`~pymor.models.iosys.LTIModel.hsv` method can be used to compute them.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     hsv = fom.hsv()
     fig, ax = plt.subplots()
     ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
@@ -431,9 +430,7 @@ Gramians
 The {meth}`~pymor.models.iosys.LTIModel.h2_norm` method of an {{ LTIModel }} can be
 used to compute it.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom.h2_norm()
 
 ```
@@ -478,9 +475,7 @@ The {meth}`~pymor.models.iosys.LTIModel.hinf_norm` method uses a dense solver
 from [Slycot](<https://github.com/python-control/Slycot>) to compute the
 {math}`\mathcal{H}_\infty` norm.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom.hinf_norm()
 
 ```
@@ -532,9 +527,7 @@ The computation of the Hankel norm in
 {meth}`~pymor.models.iosys.LTIModel.hankel_norm` relies on the
 {meth}`~pymor.models.iosys.LTIModel.hsv` method.
 
-```{eval-rst}
-.. jupyter-execute::
-
+```{code-cell}
     fom.hankel_norm()
 ```
 
