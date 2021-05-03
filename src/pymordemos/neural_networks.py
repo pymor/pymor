@@ -29,7 +29,6 @@ def main(
 
     parameter_space = fom.parameters.space((0.1, 1))
 
-
     training_set = parameter_space.sample_uniformly(training_samples)
     validation_set = parameter_space.sample_randomly(validation_samples)
 
@@ -70,6 +69,8 @@ def main(
     outputs = []
     outputs_red = []
     outputs_speedups = []
+    outputs_red_ann_reductor = []
+    outputs_speedups_ann_reductor = []
 
     print(f'Performing test on set of size {len(test_set)} ...')
 
@@ -82,13 +83,22 @@ def main(
         outputs_red.append(output_rom.compute(output=True, mu=mu)['output'])
         time_red = time.perf_counter() - tic
 
+        tic = time.perf_counter()
+        outputs_red_ann_reductor.append(rom.compute(output=True, mu=mu)['output'])
+        time_red_ann_reductor = time.perf_counter() - tic
+
         outputs_speedups.append(time_fom / time_red)
+        outputs_speedups_ann_reductor.append(time_fom / time_red_ann_reductor)
 
     outputs = np.squeeze(np.array(outputs))
     outputs_red = np.squeeze(np.array(outputs_red))
+    outputs_red_ann_reductor = np.squeeze(np.array(outputs_red_ann_reductor))
 
     outputs_absolute_errors = np.abs(outputs - outputs_red)
     outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+
+    outputs_absolute_errors_ann_reductor = np.abs(outputs - outputs_red_ann_reductor)
+    outputs_relative_errors_ann_reductor = np.abs(outputs - outputs_red_ann_reductor) / np.abs(outputs)
 
     print('Results for state approximation:')
     print(f'Average absolute error: {np.average(absolute_errors)}')
@@ -96,7 +106,13 @@ def main(
     print(f'Median of speedup: {np.median(speedups)}')
 
     print()
-    print('Results for output approximation:')
+    print('Results for output approximation with `NeuralNetworkReductor`:')
+    print(f'Average absolute error: {np.average(outputs_absolute_errors_ann_reductor)}')
+    print(f'Average relative error: {np.average(outputs_relative_errors_ann_reductor)}')
+    print(f'Median of speedup: {np.median(outputs_speedups_ann_reductor)}')
+
+    print()
+    print('Results for output approximation with `NeuralNetworkOutputReductor`:')
     print(f'Average absolute error: {np.average(outputs_absolute_errors)}')
     print(f'Average relative error: {np.average(outputs_relative_errors)}')
     print(f'Median of speedup: {np.median(outputs_speedups)}')

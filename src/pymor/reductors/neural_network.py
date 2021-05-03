@@ -16,6 +16,7 @@ if config.HAVE_TORCH:
     import torch.utils as utils
 
     from pymor.algorithms.pod import pod
+    from pymor.algorithms.projection import project
     from pymor.core.base import BasicObject
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
     from pymor.core.logger import getLogger
@@ -201,7 +202,11 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkModel(self.neural_network, self.fom.parameters, name=f'{self.fom.name}_reduced')
+                projected_output_functional = (project(self.fom.output_functional, None, self.reduced_basis)
+                                               if self.fom.output_functional else None)
+                rom = NeuralNetworkModel(self.neural_network, parameters=self.fom.parameters,
+                                         output_functional=projected_output_functional,
+                                         name=f'{self.fom.name}_reduced')
 
             return rom
 
@@ -444,8 +449,12 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
+                projected_output_functional = (project(self.fom.output_functional, None, self.reduced_basis)
+                                               if self.fom.output_functional else None)
                 rom = NeuralNetworkInstationaryModel(self.fom.T, self.nt, self.neural_network,
-                                                     self.fom.parameters, name=f'{self.fom.name}_reduced')
+                                                     parameters=self.fom.parameters,
+                                                     output_functional=projected_output_functional,
+                                                     name=f'{self.fom.name}_reduced')
 
             return rom
 
