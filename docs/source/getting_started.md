@@ -17,6 +17,8 @@ kernelspec:
   name: python3
 ---
 
+```{try_on_binder}
+```
 
 ```{code-cell}
 :tags: [remove-cell]
