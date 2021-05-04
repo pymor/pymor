@@ -63,13 +63,20 @@ import substitutions # noqa
 myst_substitutions = substitutions.myst_substitutions
 jupyter_execute_notebooks = "cache"
 execution_timeout = 120
+# print tracebacks to stdout
+execution_show_tb = True
 
 bibtex_bibfiles = ['bibliography.bib']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.ipynb': 'myst-nb',
+    '.md': 'myst-nb',
+}
+
 
 # The master toctree document.
 master_doc = 'index'
