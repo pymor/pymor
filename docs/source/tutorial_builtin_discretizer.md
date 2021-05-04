@@ -333,8 +333,8 @@ g_N((x_0, x_1), \mu_{neum}) := -\cos(\pi \cdot x_0)^2 \cdot\mu_{neum}
 
 with a single {{ Parameter }} {math}`\mu_{neum} \in \mathbb{R}`.
 
-In pyMOR, {{ parameter values }} are specified as a dictionary of one-dimensional
-{{ NumPy arrays }}. Each value in the dictionary must have a correct size specified by the
+In pyMOR, {{ parameter_values }} are specified as a dictionary of one-dimensional
+{{ NumPy_arrays }}. Each value in the dictionary must have a correct size specified by the
 {{ Parameters }} of the {{ ParametricObject }}. In this example we have a single scalar
 valued parameter which we call {}`'neum'`. Thus, the {{ Parameters }} of the function
 will be
@@ -375,7 +375,7 @@ We can then proceed as usual and automatically obtain a parametric
 ```
 
 When solving the model, we now need to specify appropriate
-{{ parameter values }}:
+{{ parameter_values }}:
 
 ```{code-cell}
    m.visualize(m.solve({'neum': [1.]}))

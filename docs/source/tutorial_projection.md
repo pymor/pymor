@@ -64,7 +64,7 @@ Let's build a 2-by-2 thermal block {{ Model }} as our FOM:
     fom, _ = discretize_stationary_cg(p, diameter=1/100)
 ```
 
-To get started, we take a look at one solution of the FOM for some fixed {{ parameter values }}.
+To get started, we take a look at one solution of the FOM for some fixed {{ parameter_values }}.
 
 ```{code-cell}
     U = fom.solve([1., 0.1, 0.1, 1.])
@@ -117,7 +117,7 @@ outputs or error estimates. Next, we take a look at the implemenation of
 ```
 
 What we see is a default implementation from {class}`~pymor.models.interface.Model` that
-takes care of checking the input {{ parameter values }} {}`mu`, {mod}`caching <pymor.core.cache>` and
+takes care of checking the input {{ parameter_values }} {}`mu`, {mod}`caching <pymor.core.cache>` and
 {mod}`logging <pymor.core.logger>`, but defers the actual computations to further private methods.
 Implementors can directly implement {meth}`~pymor.models.interface.Model._compute` to compute
 multiple return values at once in an optimized way. Our given model, however, just implements
@@ -151,7 +151,7 @@ the {attr}`~pymor.models.basic.StationaryModel.operator` attribute. So
 self.operator.apply_inverse(X, mu=mu)
 ```
 
-determines the solution of this equation for the {{ parameter values }} {}`mu` and a right-hand
+determines the solution of this equation for the {{ parameter_values }} {}`mu` and a right-hand
 side given by {}`X`. As you see above, the right-hand side of the equation is given by the
 {attr}`~pymor.models.basic.StationaryModel.rhs` attribute.
 However, while {meth}`~pymor.operators.interface.Operator.apply_inverse` expects a
@@ -408,7 +408,7 @@ We get exactly the same result, so we have successfully built a pyMOR ROM.
 
 There is one issue however. Our ROM has lost the parametrization since we
 have assembled the reduced-order system for a specific set of
-{{ parameter values }}:
+{{ parameter_values }}:
 
 ```{code-cell}
     print(fom.parameters)
@@ -438,7 +438,7 @@ we see that we lose a lot of our speedup when we assemble the ROM
 (which involves a lot of full-order dimensional operations).
 
 To solve this issue we need to find a way to pre-compute everything we need
-to solve the ROM once-and-for-all for all possible {{ parameter values }}. Luckily,
+to solve the ROM once-and-for-all for all possible {{ parameter_values }}. Luckily,
 the system operator of our FOM has a special structure:
 
 ```{code-cell}
@@ -507,7 +507,7 @@ Let's see if our new ROM is actually faster than the FOM:
 ```
 
 You should see a significant speedup of around two orders of magnitude.
-In model order reduction, problems where the {{ parameter values }} only enter
+In model order reduction, problems where the {{ parameter_values }} only enter
 as linear coefficients are called parameter separable. Many real-life
 application problems are actually of this type, and as you have seen in this
 section, these problems admit an *offline/online decomposition* that

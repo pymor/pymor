@@ -54,7 +54,7 @@ using a discretized heat equation as the example.
 We focus on a non-parametric example,
 but parametric LTI systems can be handled similarly
 by constructing {math}`A, B, C, D, E` as parametric {{ Operators }} and
-passing {{ parameter values }} via the {}`mu` argument to the methods of the
+passing {{ parameter_values }} via the {}`mu` argument to the methods of the
 {{ LTIModel }}.
 
 ## Building a model

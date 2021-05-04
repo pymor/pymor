@@ -198,7 +198,7 @@ Let's have a look:
 This tells us, that the {{ Parameters }} which
 {meth}`~pymor.models.interface.Model.solve` expects
 should be a dictionary with one key `'diffusion'` whose value is a one-dimensional
-{{ NumPy array }} of size `6`, corresponding to the block structure of
+{{ NumPy_array }} of size `6`, corresponding to the block structure of
 the problem. However, as an exception to this rule, the interface methods of
 {{ Models }} allow simply passing the list `[1.0, 0.1, 0.3, 0.1, 0.2, 1.0]` by
 internally calling {meth}`~pymor.parameters.Parameters.parse`.
@@ -217,7 +217,7 @@ the {attr}`h1_0_semi_product` attribute of the model as inner product to
 the reductor, which will also use it for computing the Riesz representatives
 required for error estimation. Moreover, we have to provide
 the reductor with a {{ ParameterFunctional }} which computes a lower bound for
-the coercivity of the problem for given {{ parameter values }}.
+the coercivity of the problem for given {{ parameter_values }}.
 
 ```{code-cell} 
 
@@ -228,7 +228,7 @@ the coercivity of the problem for given {{ parameter values }}.
    )
 ```
 
-Moreover, we need to select a training set of {{ parameter values }}. The problem
+Moreover, we need to select a training set of {{ parameter_values }}. The problem
 `p` already comes with a {{ ParameterSpace }}, from which we can easily sample
 these values.  E.g.:
 
@@ -285,7 +285,7 @@ method:
    print(np.max(np.abs(gram_matrix - np.eye(32))))
 ```
 
-Looks good! We can now solve the reduced model for the same {{ parameter values }}
+Looks good! We can now solve the reduced model for the same {{ parameter_values }}
 as above.  The result is a vector of coefficients w.r.t. the reduced basis, which is
 currently stored in `RB`. To form the linear combination, we can use the
 {}`reconstruct` method of the reductor:

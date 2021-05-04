@@ -168,7 +168,7 @@ number of layers and the number of neurons in each hidden layer, for instance.
 Furthermore, it is also possible to change the deployed activation function.
 
 To train the neural network, we create a training and a validation set
-consisting of 100 and 20 randomly chosen {{ parameter values }}, respectively:
+consisting of 100 and 20 randomly chosen {{ parameter_values }}, respectively:
 
 ```{code-cell}
     training_set = parameter_space.sample_uniformly(100)
@@ -232,7 +232,7 @@ the full problem and the reduced model and visualize the result:
 
 Finally, we measure the error of our neural network and the performance
 compared to the solution of the full order problem on a training set. To this
-end, we sample randomly some {{ parameter values }} from our {{ ParameterSpace }}:
+end, we sample randomly some {{ parameter_values }} from our {{ ParameterSpace }}:
 
 ```{code-cell}
     test_set = parameter_space.sample_randomly(10)
