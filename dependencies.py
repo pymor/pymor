@@ -36,7 +36,8 @@ def setup_requires():
     # see also https://github.com/pypa/setuptools/pull/2260
     # https://github.com/pypa/setuptools/pull/2259
     other = [
-        'setuptools>=40.8.0,<49.2.0',
+         'setuptools>=40.8.0,<49.2.0;python_version < "3.9"',
+         'setuptools>=49.1,<49.2.0;python_version >= "3.9"',
         'wheel',
         'pytest-runner>=2.9',
         'cython>=0.28;python_version < "3.9"',
