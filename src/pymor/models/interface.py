@@ -104,7 +104,7 @@ class Model(CacheableObject, ParametricObject):
         must contain the key `'output'`.
         """
         if not getattr(self, 'output_functional', None):
-            return np.zeros(len(solution), 0)
+            return np.zeros((len(solution), 0))
         else:
             return self.output_functional.apply(solution, mu=mu).to_numpy()
 
