@@ -17,7 +17,7 @@ OpenGL.ERROR_ON_COPY = True
 
 from pymor.core.exceptions import QtMissing
 try:
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
 except ImportError as e:
     raise QtMissing()
 from pymor.algorithms.greedy import rb_greedy

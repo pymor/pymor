@@ -30,7 +30,7 @@ def setup_requires():
     return numpys + other + scipys
 
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['Qt.py>=1.2.4', 'packaging','diskcache', 'typer'] + setup_requires()
+install_requires = ['qtpy', 'packaging', 'diskcache', 'typer'] + setup_requires()
 install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',

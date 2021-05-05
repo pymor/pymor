@@ -63,10 +63,10 @@ def _get_slycot_version():
 
 def _get_qt_version():
     try:
-        import Qt
-        return Qt.__binding__ + ' ' + Qt.__binding_version__
+        import qtpy
+        return f'{qtpy.API_NAME} (Qt {qtpy.QT_VERSION})'
     except AttributeError as ae:
-        warnings.warn(f'importing Qt.py abstraction failed:\n{ae}')
+        warnings.warn(f'importing qtpy abstraction failed:\n{ae}')
         return False
 
 
@@ -111,7 +111,7 @@ _PACKAGES = {
     'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
     'PYEVTK': lambda: _can_import('pyevtk'),
     'QT': _get_qt_version,
-    'QTOPENGL': lambda: bool(import_module('Qt.QtOpenGL')),
+    'QTOPENGL': lambda: bool(import_module('qtpy.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
     'SLYCOT': lambda: _get_slycot_version(),

@@ -189,7 +189,7 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
 
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
-    from Qt.QtWidgets import QSizePolicy
+    from qtpy.QtWidgets import QSizePolicy
 
     import Qt
     if Qt.__qt_version__[0] == '4':
