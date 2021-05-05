@@ -43,7 +43,7 @@ slycot>=0.4.0
 sphinx-autoapi>=1.8
 sphinx-material
 sphinx-qt-documentation
-sphinx>=1.7
+sphinx>=3.4
 sphinxcontrib-bibtex
 sympy
 torch
