@@ -44,6 +44,6 @@ sphinx-qt-documentation
 sphinx>=1.7
 sphinxcontrib-bibtex
 sympy
-torch;python_version<"3.9"
+torch
 typer
 wheel

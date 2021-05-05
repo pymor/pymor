@@ -62,7 +62,7 @@ install_suggests = {
     _PYSIDE: 'solution visualization for builtin discretizations',
     'ipywidgets': 'notebook GUI elements',
     'nbresuse': 'resource usage indicator for notebooks',
-    'torch;python_version<"3.9"': 'PyTorch open source machine learning framework',
+    'torch': 'PyTorch open source machine learning framework',
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
 }
