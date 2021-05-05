@@ -39,7 +39,8 @@ def setup_requires():
         'setuptools>=40.8.0,<49.2.0',
         'wheel',
         'pytest-runner>=2.9',
-        'cython>=0.28',
+        'cython>=0.28;python_version < "3.9"',
+        'cython>=0.29.12;python_version >= "3.9"',
         'packaging',
     ]
     return numpys + other + scipys
