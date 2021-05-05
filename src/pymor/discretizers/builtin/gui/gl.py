@@ -20,9 +20,9 @@ from pymor.core.config import config
 
 if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
     import OpenGL.GL as gl
-    from Qt.QtWidgets import QSizePolicy
-    from Qt.QtGui import QPainter, QFontMetrics
-    from Qt.QtOpenGL import QGLWidget
+    from qtpy.QtWidgets import QSizePolicy
+    from qtpy.QtGui import QPainter, QFontMetrics
+    from qtpy.QtOpenGL import QGLWidget
     from ctypes import c_void_p
 
     from pymor.core.defaults import defaults

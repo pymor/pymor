@@ -27,9 +27,9 @@ from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if config.HAVE_QT:
-    from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QLCDNumber,
-                              QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from Qt.QtCore import Qt, QTimer
+    from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QLCDNumber,
+                                QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
+    from qtpy.QtCore import Qt, QTimer
 
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
@@ -180,8 +180,8 @@ def _launch_qt_app(main_window_factory, block):
 
     def _doit(factory):
         # for windows these needs to be repeated due to multiprocessing (?)
-        from Qt.QtWidgets import QApplication
-        from Qt.QtCore import QCoreApplication
+        from qtpy.QtWidgets import QApplication
+        from qtpy.QtCore import QCoreApplication
         try:
             # pyside or pyqt (sometimes?) auto-create an app singleton,
             # try to use this before creating a new app

@@ -190,7 +190,7 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
 
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
-    from Qt.QtWidgets import QSizePolicy
+    from qtpy.QtWidgets import QSizePolicy
 
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
