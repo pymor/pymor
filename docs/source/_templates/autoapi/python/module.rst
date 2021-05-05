@@ -28,7 +28,7 @@ Subpackages
    :maxdepth: 3
 
 {% for subpackage in visible_subpackages %}
-   {{ subpackage.short_name }}/index.rst
+   {{ subpackage.short_name | replace(obj.name, "")}} <{{ subpackage.short_name }}/index.rst>
 {% endfor %}
 
 
@@ -44,7 +44,7 @@ Submodules
    :maxdepth: 1
 
 {% for submodule in visible_submodules %}
-   {{ submodule.short_name }}/index.rst
+   {{ submodule.short_name | replace(obj.name, "")}} <{{ submodule.short_name }}/index.rst>
 {% endfor %}
 
 
