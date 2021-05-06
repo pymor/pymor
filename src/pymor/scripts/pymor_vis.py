@@ -5,12 +5,12 @@
 
 import os
 
-from typer import Option, run
+import typer
 
 from pymor.core.pickle import load
 
 
-def main(filename: str, delete: bool = Option(False, help='Delete file when done.')):
+def main(filename: str, delete: bool = typer.Option(False, help='Delete file when done.')):
     try:
         with open(filename, 'rb') as f:
             data = load(f)
@@ -30,5 +30,9 @@ def main(filename: str, delete: bool = Option(False, help='Delete file when done
             os.remove(filename)
 
 
+def run():
+    typer.run(main)
+
+
 if __name__ == '__main__':
-    run(main)
+    run()
