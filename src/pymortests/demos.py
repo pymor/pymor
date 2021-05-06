@@ -15,7 +15,6 @@ from typer.testing import CliRunner
 
 from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing, TorchMissing
-from pymor.discretizers.builtin.gui.qt import stop_gui_processes
 from pymor.core.config import is_windows_platform, is_macos_platform
 from pymor.tools.mpi import parallel
 
@@ -209,8 +208,6 @@ def _test_demo(demo):
             miss = str(type(e)).replace('Missing', '')
             pytest.xfail(f'{miss} not installed')
     finally:
-        stop_gui_processes()
-
         from pymor.parallel.default import _cleanup
         _cleanup()
         try:
