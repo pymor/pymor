@@ -18,7 +18,7 @@ OpenGL.ERROR_ON_COPY = True
 from pymor.core.exceptions import QtMissing
 try:
     from qtpy import QtWidgets
-except ImportError as e:
+    from qtpy import QtCore
     raise QtMissing()
 from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
@@ -50,15 +50,14 @@ def main(
     testing: bool = Option(False, help='Load the gui and exit right away (for functional testing).'),
 ):
     """Thermalblock demo with GUI."""
-
-    if not testing:
+    app = QtWidgets.QApplication.instance()
+    if app is None:
         app = QtWidgets.QApplication(sys.argv)
-        win = RBGui(xblocks, yblocks, snapshots, rbsize, grid, product)
-        win.show()
-        sys.exit(app.exec_())
-
-    from pymor.discretizers.builtin.gui import qt
-    qt._launch_qt_app(lambda: RBGui(xblocks, yblocks, snapshots, rbsize, grid, product), block=False)
+    win = RBGui(xblocks, yblocks, snapshots, rbsize, grid, product)
+    win.show()
+    if testing:
+        QtCore.QTimer.singleShot(1000, app.quit)
+    app.exec_()
 
 
 class ParamRuler(QtWidgets.QWidget):
