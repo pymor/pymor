@@ -10,6 +10,7 @@ toolkit for the GUI.
 """
 
 import math as m
+import sys
 
 import numpy as np
 
@@ -170,61 +171,53 @@ if config.HAVE_QT:
             if ind >= 0:
                 self.slider.setValue(ind)
 
+        def closeEvent(self, event):
+            try:
+                _qt_windows.remove(self)
+            except KeyError:
+                pass  # we should be in blocking mode ...
+            event.accept()
 
-_launch_qt_processes = set()
+
+_qt_app = None
+_qt_windows = set()
 
 
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
-    mac_or_win = is_windows_platform() or is_macos_platform()
+    from qtpy.QtWidgets import QApplication
+    from qtpy.QtCore import QCoreApplication
 
-    def _doit(factory):
-        # for windows these needs to be repeated due to multiprocessing (?)
-        from qtpy.QtWidgets import QApplication
-        from qtpy.QtCore import QCoreApplication
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+
+    if not block:
         try:
-            # pyside or pyqt (sometimes?) auto-create an app singleton,
-            # try to use this before creating a new app
-            app = QApplication.instance()
-            if app is None:
-                app = QApplication([])
-        except RuntimeError as re:
-            getLogger("Qt launcher").error(f'failed App startup, falling back on QtCoreApplication\n{re}')
-            app = QCoreApplication.instance()
-        main_window = factory()
-        if getattr(sys, '_called_from_test', False):
-            QTimer.singleShot(1000, app.quit)
-        main_window.show()
+            from IPython import get_ipython
+            ip = get_ipython()
+        except ImportError:
+            ip = None
+        if ip is None:
+            logger = getLogger('pymor.discretizers.builtin.gui.qt')
+            logger.warn('Not running within IPython. Falling back to blocking visualization.')
+            block = True
+        else:
+            ip.run_line_magic('gui', 'qt')
+
+    main_window = main_window_factory()
+    main_window.show()
+
+    if getattr(sys, '_called_from_test', False):
+        QTimer.singleShot(1000, app.quit)
+        block = True
+
+    if block:
         app.exec_()
-
-    import sys
-    # we treat win and osx differently here since no (reliable)
-    # forking is possible with multiprocessing startup
-    if block or getattr(sys, '_called_from_test', False) or mac_or_win:
-        _doit(main_window_factory)
     else:
-        p = multiprocessing.Process(target=_doit, args=(main_window_factory,))
-        p.start()
-        _launch_qt_processes.add(p.pid)
-
-
-def stop_gui_processes():
-    import os
-    import signal
-    kill_procs = {p for p in multiprocessing.active_children() if p.pid in _launch_qt_processes}
-    logger = getLogger('pymor.discretizers.builtin.gui.qt')
-    with logger.block('stopping gui processes'):
-        for p in kill_procs:
-            logger.debug(f'terminating process {p}')
-            # active_children apparently contains false positives sometimes
-            p.terminate()
-            p.join(1)
-
-        for p in kill_procs:
-            if p.is_alive():
-                logger.debug(f'killing process {p}')
-                os.kill(p.pid, signal.SIGKILL)
-        logger.debug('all gui processes stopped')
+        global _qt_app
+        _qt_app = app                 # deleting the app ref somehow closes the window
+        _qt_windows.add(main_window)  # need to keep ref to keep window alive
 
 
 @defaults('backend')
