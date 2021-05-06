@@ -167,7 +167,7 @@ def setup_package():
         package_dir={'': 'src'},
         packages=find_packages('src'),
         include_package_data=True,
-        scripts=['src/pymor-demo', 'dependencies.py'],
+        scripts=['src/pymor-demo', 'src/pymor-vis', 'dependencies.py'],
         url='http://pymor.org',
         description=' ',
         python_requires='>=3.7',
