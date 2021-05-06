@@ -58,10 +58,7 @@ jobs:
       python setup.py build_ext -i
       pip install qt.py==1.3.3 pytest-azurepipelines pytest-datadir
       set QT_VERBOSE=1
-      set QT_PREFERRED_BINDING=PySide2;PyQt5
       set QT_DEBUG_PLUGINS=1
-      python -c "from PySide2.QtWidgets import QApplication, QLabel, QLineEdit; print(QLabel)"
-      python -c "import Qt;print(Qt.__binding__)"
     displayName: 'Sanity Checks'
 
 
