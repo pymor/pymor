@@ -300,7 +300,7 @@ class Model(CacheableObject, ParametricObject):
         mu
             |Parameter values| for which to compute the values.
         kwargs
-            Further keyword arguments to select further quantities that sould
+            Further keyword arguments to select further quantities that should
             be returned or to customize how the values are computed.
 
         Returns
