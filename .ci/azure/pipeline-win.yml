@@ -50,14 +50,13 @@ jobs:
       packageSpecs: pyevtk slycot cython pytest pytest-cov curl hypothesis pyqt
       conda install -v -c conda-forge --yes --name myEnvironment pyopengl cython pyevtk slycot cython pytest pytest-cov curl hypothesis pyside2 qtpy
       updateConda: false
-    displayName: Install extra packages
   - script: |
         call activate base
         pip install typer
         python -c "import numpy"
         python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_RENDERER)); print(gl.glGetString(gl.GL_VERSION))"
         python setup.py build_ext -i
-        py.test --cov-context=test --junitxml=test_results.xml --cov=src/pymor --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
+        pip install pytest-azurepipelines pytest-datadir
     displayName: 'Tests'
 
   - script: |
