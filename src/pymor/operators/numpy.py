@@ -14,7 +14,7 @@ This module provides the following |NumPy|-based |Operators|:
 """
 
 from __future__ import annotations
-from typing import Any, Dict, Tuple, List, Optional, Union, Callable, cast
+from typing import Any, Dict, List, Optional, Union, Callable, cast
 
 from functools import reduce
 
@@ -32,15 +32,12 @@ from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Mu, Parameters
-from pymor.parameters.functionals import ParameterFunctional
+from pymor.typing import RealOrComplex
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 Matrix = Union[ndarray, spmatrix]
-RealOrComplex = Union[float, complex]
-Coefficient = Union[RealOrComplex, ParameterFunctional]
-OpTupleOrList = Union[Tuple[Operator, ...], List[Operator]]
 
 
 class NumpyGenericOperator(Operator):
@@ -111,11 +108,10 @@ class NumpyGenericOperator(Operator):
             raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
         assert V in self.range
         assert self.parameters.assert_compatible(mu)
-        V = V.to_numpy()
         if self.parametric:
-            return self.source.make_array(self.adjoint_mapping(V, mu=mu))
+            return self.source.make_array(self.adjoint_mapping(V.to_numpy(), mu=mu))
         else:
-            return self.source.make_array(self.adjoint_mapping(V))
+            return self.source.make_array(self.adjoint_mapping(V.to_numpy()))
 
 
 class NumpyMatrixBasedOperator(Operator):
