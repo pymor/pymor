@@ -295,6 +295,115 @@ the {meth}`~pymor.models.interface.Model.solve` method of the {{ Model }}, it ca
 be applied to {{ Models }} originating from external solvers, without requiring any access to
 {{ Operators }} internal to the solver.
 
+Direct approximation of output quantities
+-----------------------------------------
+
+Thus far, we were mainly interested in approximating the solution state
+:math:`u(\mu)\equiv u(\cdot,\mu)` for some parameter :math:`\mu`. If we consider an output
+functional :math:`\mathcal{J}(\mu):= J(u(\mu), \mu)`, one can use the reduced solution
+:math:`u_N(\mu)` for computing the output as :math:`\mathcal{J}(\mu)\approx J(u_N(\mu),\mu)`.
+However, when dealing with neural networks, one could also think about directly learning the
+mapping from parameter to output. That is, one can use a neural network to approximate
+:math:`\mathcal{J}\colon\mathcal{P}\to\mathbb{R}^q`, where :math:`q\in\mathbb{N}` denotes
+the output dimension.
+
+In the following, we will extend our problem from the last section by an output functional
+and use the :class:`~pymor.reductors.neural_network.NeuralNetworkOutputReductor` to
+derive a reduced model that can solely be used to solve for the output quantity without
+computing a reduced state at all.
+
+For the definition of the output, we define the output of out problem as the l2-product of the
+solution with the right hand side respectively Dirichlet boundary data of our original problem:
+
+.. jupyter-execute::
+
+    problem = problem.with_(outputs=[('l2', problem.rhs), ('l2_boundary', problem.dirichlet_data)])
+
+Consequently, the output dimension is :math:`q=2`. After adjusting the problem definition,
+we also have to update the full order model to be aware of the output quantities:
+
+.. jupyter-execute::
+
+    fom, _ = discretize_stationary_cg(problem, diameter=1/50)
+
+We can now import the :class:`~pymor.reductors.neural_network.NeuralNetworkOutputReductor` and
+initialize the reductor using the same data as before:
+
+.. jupyter-execute::
+
+    from pymor.reductors.neural_network import NeuralNetworkOutputReductor
+
+    output_reductor = NeuralNetworkOutputReductor(fom,
+                                                  training_set,
+                                                  validation_set,
+                                                  validation_loss=1e-5)
+
+Similar to the `NeuralNetworkReductor`, we can call `reduce` to obtain a reduced order model.
+In this case, `reduce` trains a neural network to approximate the mapping from parameter to
+output directly. Therefore, we can only use the resulting reductor to solve for the outputs
+and not for state approximations. The `NeuralNetworkReductor` though can be used to do both by
+calling `solve` respectively `output` (if we had initialized the `NeuralNetworkReductor` with
+the problem including the output quantities).
+
+We now perform the reduction and run some tests with the resulting
+:class:`~pymor.models.neural_network.NeuralNetworkOutputModel`:
+
+.. jupyter-execute::
+
+    output_rom = output_reductor.reduce(restarts=100)
+
+    outputs = []
+    outputs_red = []
+    outputs_speedups = []
+
+    for mu in test_set:
+        tic = time.perf_counter()
+        outputs.append(fom.output(mu=mu))
+        time_fom = time.perf_counter() - tic
+
+        tic = time.perf_counter()
+        outputs_red.append(output_rom.output(mu=mu))
+        time_red = time.perf_counter() - tic
+
+        outputs_speedups.append(time_fom / time_red)
+
+    outputs = np.squeeze(np.array(outputs))
+    outputs_red = np.squeeze(np.array(outputs_red))
+
+    outputs_absolute_errors = np.abs(outputs - outputs_red)
+    outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+
+The average absolute error (component-wise) on the training set is given by
+
+.. jupyter-execute::
+
+    np.average(outputs_absolute_errors)
+
+The average relative error is
+
+.. jupyter-execute::
+
+    np.average(outputs_relative_errors)
+
+and the median of the speedups amounts to
+
+.. jupyter-execute::
+
+    np.median(outputs_speedups)
+
+Neural networks for instationary problems
+-----------------------------------------
+
+To solve instationary problems using neural networks, we have extended the
+:class:`~pymor.reductors.neural_network.NeuralNetworkReductor` to the
+:class:`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`, which treats time
+as an additional parameter (see :cite:`WHR19`). The resulting
+:class:`~pymor.models.neural_network.NeuralNetworkInstationaryModel` passes the input, together
+with the current time instance, through the neural network in each time step to obtain reduced
+coefficients. In the same fashion, there exists a
+:class:`~pymor.reductors.neural_network.NeuralNetworkInstationaryOutputReductor` and the
+corresponding :class:`~pymor.models.neural_network.NeuralNetworkInstationaryOutputModel`.
+
 Download the code:
 {download}`tutorial_mor_with_anns.md`
 {nb-download}`tutorial_mor_with_anns.ipynb`
