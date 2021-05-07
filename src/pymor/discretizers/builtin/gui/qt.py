@@ -291,7 +291,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             with NamedTemporaryFile(mode='wb', delete=False) as f:
                 dump(data, f)
                 filename = f.name
-            subprocess.Popen(['pymor-vis', '--delete', filename])
+            subprocess.Popen(['python', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
     if backend == 'gl':
@@ -472,7 +472,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             with NamedTemporaryFile(mode='wb', delete=False) as f:
                 dump(data, f)
                 filename = f.name
-            subprocess.Popen(['python3', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
+            subprocess.Popen(['python', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
     class MainWindow(PlotMainWindow):
