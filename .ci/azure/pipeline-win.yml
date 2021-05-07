@@ -43,7 +43,7 @@ jobs:
     displayName: Conda 2/4
   - script: |
       call activate myEnvironment
-      conda install -v -c conda-forge --yes --name myEnvironment pyopengl cython pyevtk slycot cython pytest pytest-cov curl hypothesis pyside2
+      conda install -v -c conda-forge --yes --name myEnvironment pyopengl cython pyevtk slycot cython pytest pytest-cov curl hypothesis pyside2 qtpy
     displayName: Conda 3/4
   - script: |
       call activate myEnvironment
