@@ -4,6 +4,8 @@
 
 import numpy as np
 
+import numpy as np
+
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
 from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator
@@ -202,6 +204,10 @@ class InstationaryModel(Model):
         Name of the model.
     """
 
+
+    _compute_allowed_kwargs = frozenset(('incremental',))
+
+
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None,
                  output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
 
@@ -242,6 +248,33 @@ class InstationaryModel(Model):
 
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
+
+    def _compute(self, solution=False, output=False,
+                 solution_error_estimate=False, output_error_estimate=False,
+                 mu=None, **kwargs):
+
+        # delegate standard case to other methods
+        if not ('incremental' in kwargs and kwargs['incremental']):
+            return {}
+
+        # the incremental output case
+        assert not solution
+        assert not solution_error_estimate
+        assert not output_error_estimate
+        if not hasattr(self, 'output_functional'):
+            raise NotImplementedError
+        if self.output_functional is None:
+            raise ValueError('Model has no output')
+
+        outputs = self.output_space.empty()
+        t, _, data = self.time_stepper.bootstrap(initial_data=self.initial_data, operator=self.operator, rhs=self.rhs,
+                                                 mass=self.mass, mu=mu, reserve=False)
+
+        while not (t > self.time_stepper.end_time or np.allclose(t, self.time_stepper.end_time)):
+            t, U_t = self.time_stepper.step(t, data, mu=mu)
+            outputs.append(self.output_functional.apply(U_t, mu=mu.with_(t=t) if mu else Mu({'t': t})))
+
+        return {'output': outputs, 'solution': None}
 
     def _compute_solution(self, mu=None, **kwargs):
         return self.time_stepper.solve(
