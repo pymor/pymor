@@ -10,6 +10,7 @@ import numpy as np
 from pymor.analyticalproblems.domaindescriptions import RectDomain, LineDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import GenericFunction
+from pymor.core.config import is_macos_platform
 from pymor.core.exceptions import QtMissing
 from pymor.discretizers.builtin import discretize_stationary_cg, RectGrid
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
@@ -24,6 +25,8 @@ def backend_gridtype(request):
 
 def test_visualize_patch(backend_gridtype):
     backend, gridtype = backend_gridtype
+    if is_macos_platform() and backend == 'gl':
+        pytest.xfail('GL not working on macos.')
     domain = LineDomain() if gridtype is OnedGrid else RectDomain()
     dim = 1 if gridtype is OnedGrid else 2
     rhs = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim)  # NOQA
