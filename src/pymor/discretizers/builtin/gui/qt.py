@@ -470,7 +470,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             with NamedTemporaryFile(mode='wb', delete=False) as f:
                 dump(data, f)
                 filename = f.name
-            subprocess.Popen(['pymor-vis', '--delete', filename])
+            subprocess.Popen(['python3', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
     class MainWindow(PlotMainWindow):
