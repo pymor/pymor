@@ -372,8 +372,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
             return self.source.make_array(R)
 
-    def apply_inverse_adjoint(self, U, mu: Optional[Mu] = None, initial_guess: Optional[VectorArray] = None,
-                              least_squares: bool = False) -> VectorArray:
+    def apply_inverse_adjoint(self, U: VectorArray, mu: Optional[Mu] = None,
+                              initial_guess: Optional[VectorArray] = None, least_squares: bool = False) -> VectorArray:
         return self.H.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
     def _assemble_lincomb(self, operators: List[Operator], coefficients: List[RealOrComplex],

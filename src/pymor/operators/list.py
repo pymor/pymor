@@ -2,39 +2,59 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import annotations
+
+from typing import Any, Optional, TYPE_CHECKING
+
 from pymor.core.base import abstractmethod
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.list import NumpyListVectorSpace
+from pymor.vectorarrays.list import (ComplexifiedListVectorSpace, ComplexifiedVector, ListVectorArray,
+                                     ListVectorSpace, NumpyListVectorSpace, Vector)
+
+if TYPE_CHECKING:
+    from pymor.vectorarrays.interface import VectorArray
+    from pymor.parameters.base import Mu
 
 
 class ListVectorArrayOperatorBase(Operator):
 
-    def _prepare_apply(self, U, mu, kind, least_squares=False):
+    source: ListVectorSpace
+    range: ListVectorSpace
+
+    def _prepare_apply(self, U: VectorArray, mu: Optional[Mu], kind: str, least_squares: bool = False) -> Optional[Any]:
         pass
 
     @abstractmethod
-    def _apply_one_vector(self, u, mu=None, prepare_data=None):
+    def _apply_one_vector(self, u: Vector, mu: Optional[Mu] = None,
+                          prepare_data: Optional[Any] = None) -> Vector:
         pass
 
-    def _apply_inverse_one_vector(self, v, mu=None, initial_guess=None, least_squares=False, prepare_data=None):
+    def _apply_inverse_one_vector(self, v: Vector, mu: Optional[Mu] = None,
+                                  initial_guess: Optional[Vector] = None, least_squares: bool = False,
+                                  prepare_data: Optional[Any] = None) -> Vector:
         raise NotImplementedError
 
-    def _apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
+    def _apply_adjoint_one_vector(self, v: Vector, mu: Optional[Mu] = None,
+                                  prepare_data: Optional[Any] = None) -> Vector:
         raise NotImplementedError
 
-    def _apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None, least_squares=False, prepare_data=None):
+    def _apply_inverse_adjoint_one_vector(self, u: Vector, mu: Optional[Mu] = None,
+                                          initial_guess: Optional[Vector] = None, least_squares: bool = False,
+                                          prepare_data: Optional[Any] = None) -> Vector:
         raise NotImplementedError
 
-    def apply(self, U, mu=None):
-        assert U in self.source
+    def apply(self, U: VectorArray, mu: Optional[Mu] = None) -> VectorArray:
+        assert isinstance(U, ListVectorArray) and U in self.source
         data = self._prepare_apply(U, mu, 'apply')
         V = [self._apply_one_vector(u, mu=mu, prepare_data=data) for u in U._list]
         return self.range.make_array(V)
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        assert V in self.range
-        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
+    def apply_inverse(self, V: VectorArray, mu: Optional[Mu] = None, initial_guess: Optional[VectorArray] = None,
+                      least_squares: bool = False) -> VectorArray:
+        assert isinstance(V, ListVectorArray) and V in self.range
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V) \
+            and isinstance(initial_guess, ListVectorArray)
         try:
             data = self._prepare_apply(V, mu, 'apply_inverse', least_squares=least_squares)
             U = [self._apply_inverse_one_vector(v, mu=mu,
@@ -46,8 +66,8 @@ class ListVectorArrayOperatorBase(Operator):
             return super().apply_inverse(V, mu=mu, least_squares=least_squares)
         return self.source.make_array(U)
 
-    def apply_adjoint(self, V, mu=None):
-        assert V in self.range
+    def apply_adjoint(self, V: VectorArray, mu: Optional[Mu] = None) -> VectorArray:
+        assert isinstance(V, ListVectorArray) and V in self.range
         try:
             data = self._prepare_apply(V, mu, 'apply_adjoint')
             U = [self._apply_adjoint_one_vector(v, mu=mu, prepare_data=data) for v in V._list]
@@ -55,8 +75,11 @@ class ListVectorArrayOperatorBase(Operator):
             return super().apply_adjoint(V, mu=mu)
         return self.source.make_array(U)
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        assert U in self.source
+    def apply_inverse_adjoint(self, U: VectorArray, mu: Optional[Mu] = None,
+                              initial_guess: Optional[VectorArray] = None, least_squares: bool = False) -> VectorArray:
+        assert isinstance(U, ListVectorArray) and U in self.source
+        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(U) \
+            and isinstance(initial_guess, ListVectorArray)
         try:
             data = self._prepare_apply(U, mu, 'apply_inverse_adjoint', least_squares=least_squares)
             V = [self._apply_inverse_adjoint_one_vector(u, mu=mu,
@@ -71,36 +94,49 @@ class ListVectorArrayOperatorBase(Operator):
 
 class LinearComplexifiedListVectorArrayOperatorBase(ListVectorArrayOperatorBase):
 
-    linear = True
+    linear: bool = True
+    range: ComplexifiedListVectorSpace
+    source: ComplexifiedListVectorSpace
 
     @abstractmethod
-    def _real_apply_one_vector(self, u, mu=None, prepare_data=None):
+    def _real_apply_one_vector(self, u: Vector, mu: Optional[Mu] = None, prepare_data: Optional[Any] = None) -> Vector:
         pass
 
-    def _real_apply_inverse_one_vector(self, v, mu=None, initial_guess=None, least_squares=False, prepare_data=None):
+    def _real_apply_inverse_one_vector(self, v: Vector, mu: Optional[Mu] = None, initial_guess: Optional[Vector] = None,
+                                       least_squares: bool = False, prepare_data: Optional[Any] = None) -> Vector:
         raise NotImplementedError
 
-    def _real_apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
+    def _real_apply_adjoint_one_vector(self, v: Vector, mu: Optional[Mu] = None,
+                                       prepare_data: Optional[Any] = None) -> Vector:
         raise NotImplementedError
 
-    def _real_apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None, least_squares=False,
-                                               prepare_data=None):
+    def _real_apply_inverse_adjoint_one_vector(self, u: Vector, mu: Optional[Mu] = None,
+                                               initial_guess: Optional[Vector] = None, least_squares: bool = False,
+                                               prepare_data: Optional[Any] = None) -> Vector:
         raise NotImplementedError
 
-    def _apply_one_vector(self, u, mu=None, prepare_data=None):
+    def _apply_one_vector(self, u: Vector, mu: Optional[Mu] = None,
+                          prepare_data: Optional[Any] = None) -> ComplexifiedVector:
+        assert isinstance(u, ComplexifiedVector)
         real_part = self._real_apply_one_vector(u.real_part, mu=mu, prepare_data=prepare_data)
+        imag_part: Optional[Vector]
         if u.imag_part is not None:
             imag_part = self._real_apply_one_vector(u.imag_part, mu=mu, prepare_data=prepare_data)
         else:
             imag_part = None
         return self.range.complexified_vector_type(real_part, imag_part)
 
-    def _apply_inverse_one_vector(self, v, mu=None, initial_guess=None, least_squares=False, prepare_data=None):
+    def _apply_inverse_one_vector(self, v: Vector, mu: Optional[Mu] = None, initial_guess: Optional[Vector] = None,
+                                  least_squares: bool = False,
+                                  prepare_data: Optional[Any] = None) -> ComplexifiedVector:
+        assert isinstance(v, ComplexifiedVector)
+        assert initial_guess is None or isinstance(initial_guess, ComplexifiedVector)
         real_part = self._real_apply_inverse_one_vector(v.real_part, mu=mu,
                                                         initial_guess=(initial_guess.real_part
                                                                        if initial_guess is not None else None),
                                                         least_squares=least_squares,
                                                         prepare_data=prepare_data)
+        imag_part: Optional[Vector]
         if v.imag_part is not None:
             imag_part = self._real_apply_inverse_one_vector(v.imag_part, mu=mu,
                                                             initial_guess=(initial_guess.imag_part
@@ -111,20 +147,28 @@ class LinearComplexifiedListVectorArrayOperatorBase(ListVectorArrayOperatorBase)
             imag_part = None
         return self.source.complexified_vector_type(real_part, imag_part)
 
-    def _apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
+    def _apply_adjoint_one_vector(self, v: Vector, mu: Optional[Mu] = None,
+                                  prepare_data: Optional[Any] = None) -> ComplexifiedVector:
+        assert isinstance(v, ComplexifiedVector)
         real_part = self._real_apply_adjoint_one_vector(v.real_part, mu=mu, prepare_data=prepare_data)
+        imag_part: Optional[Vector]
         if v.imag_part is not None:
             imag_part = self._real_apply_adjoint_one_vector(v.imag_part, mu=mu, prepare_data=prepare_data)
         else:
             imag_part = None
         return self.source.complexified_vector_type(real_part, imag_part)
 
-    def _apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None, least_squares=False, prepare_data=None):
+    def _apply_inverse_adjoint_one_vector(self, u: Vector, mu: Optional[Mu] = None,
+                                          initial_guess: Optional[Vector] = None, least_squares: bool = False,
+                                          prepare_data: Optional[Any] = None) -> ComplexifiedVector:
+        assert isinstance(u, ComplexifiedVector)
+        assert initial_guess is None or isinstance(initial_guess, ComplexifiedVector)
         real_part = self._real_apply_inverse_adjoint_one_vector(u.real_part, mu=mu,
                                                                 initial_guess=(initial_guess.real_part
                                                                                if initial_guess is not None else None),
                                                                 least_squares=least_squares,
                                                                 prepare_data=prepare_data)
+        imag_part: Optional[Vector]
         if u.imag_part is not None:
             imag_part = self._real_apply_inverse_adjoint_one_vector(u.imag_part, mu=mu,
                                                                     initial_guess=(initial_guess.imag_part
