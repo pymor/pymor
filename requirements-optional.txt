@@ -38,6 +38,7 @@ scipy>=1.3.3;python_version == "3.8"
 scipy>=1.5.4;python_version >= "3.9"
 setuptools>=40.8.0,<49.2.0
 slycot>=0.4.0
+sphinx-autoapi>=1.8
 sphinx-material
 sphinx-qt-documentation
 sphinx>=1.7

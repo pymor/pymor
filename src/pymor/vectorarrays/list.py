@@ -605,6 +605,7 @@ class ListVectorSpace(VectorSpace):
 
     @make_array.instancemethod
     def make_array(self, obj):
+        """:noindex:"""
         return ListVectorArray([v if isinstance(v, Vector) else self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
@@ -613,6 +614,7 @@ class ListVectorSpace(VectorSpace):
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
+        """:noindex:"""
         return ListVectorArray([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
 
 

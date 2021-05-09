@@ -5,31 +5,25 @@
 import sys
 import os
 import slugify
-
-os.environ['PYMOR_WITH_SPHINX'] = '1'
+import glob
+import sphinx
+from pathlib import Path
 
 # Check Sphinx version
-import sphinx
-if sphinx.__version__ < "1.0.1":
-    raise RuntimeError("Sphinx 1.0.1 or newer required")
+if sphinx.__version__ < "1.7":
+    raise RuntimeError("Sphinx 1.7 or newer required")
 
-needs_sphinx = '1.0'
+needs_sphinx = '1.7'
+os.environ['PYMOR_WITH_SPHINX'] = '1'
 
 # -----------------------------------------------------------------------------
 # General configuration
 # -----------------------------------------------------------------------------
 
-sys.path.insert(0, os.path.abspath('../../src'))
-sys.path.insert(0, os.path.abspath('.'))
-
-# generate autodoc
-import gen_apidoc
-import pymor
-#import pymortests
-import pymordemos
-gen_apidoc.walk(pymor)
-#gen_apidoc.walk(pymortests)
-gen_apidoc.walk(pymordemos)
+this_dir = Path(__file__).resolve().parent
+src_dir = (this_dir / '..' / '..' / 'src').resolve()
+sys.path.insert(0, str(src_dir))
+sys.path.insert(0, str(this_dir))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -43,8 +37,9 @@ extensions = ['sphinx.ext.autodoc',
               'jupyter_sphinx',
               'sphinx.ext.mathjax',
               'sphinx_qt_documentation',
+              'autoapi.extension',
+              'autoapi_pymor',
               'sphinxcontrib.bibtex',
-              'gen_apidoc'
               ]
 
 bibtex_bibfiles = ['bibliography.bib']
@@ -63,8 +58,12 @@ copyright = '2013-2021 pyMOR developers and contributors'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
-#
+# imports have to be delayed until after sys.path modification
+import pymor  # noqa
+import substitutions # noqa
+import autoapi_pymor # noqa
 version = pymor.__version__
+rst_epilog = substitutions.substitutions
 
 # The full version, including alpha/beta/rc tags.
 release = version.split('-')[0]
@@ -224,7 +223,6 @@ latex_use_modindex = False
 # Autosummary
 # -----------------------------------------------------------------------------
 
-import glob
 autosummary_generate = glob.glob("generated/*.rst")
 
 # -----------------------------------------------------------------------------
@@ -251,10 +249,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
                        'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
                        'matplotlib': ('https://matplotlib.org', None),
-                       'Sphinx': ('https://www.sphinx-doc.org/en/stable/', None)}
-
-import substitutions
-rst_epilog = substitutions.substitutions
+                       'Sphinx': (' https://www.sphinx-doc.org/en/master/', None)}
 
 modindex_common_prefix = ['pymor.']
 
@@ -274,3 +269,11 @@ def linkcode_resolve(domain, info):
         filename = info['module'].replace('.', '/')
         return f'https://github.com/pymor/pymor/tree/{branch}/src/{filename}.py'
     return None
+
+autoapi_dirs = [src_dir / 'pymor']
+autoapi_type = 'python'
+# allows incremental build
+autoapi_keep_files = True
+autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
+suppress_warnings = ["autoapi"]
+autoapi_template_dir = this_dir / '_templates' / 'autoapi'

@@ -26,10 +26,10 @@ API Documentation
 *****************
 
 .. toctree::
-    :maxdepth: 3
-    :glob:
+    :maxdepth: 5
 
-    generated/pymor
+    /autoapi/index
+    /autoapi/pymor/index
 
 Demo Applications
 *****************
@@ -38,4 +38,3 @@ Demo Applications
     :maxdepth: 3
     :glob:
 
-    generated/pymordemos
