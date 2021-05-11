@@ -113,3 +113,5 @@ docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
 docker_wheel_check: docker_image
 	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports wheel_check bash
+docker_install_check: docker_image
+	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports install_check bash
