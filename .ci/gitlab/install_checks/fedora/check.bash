@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 
-cp ${CI_PROJECT_DIR}/.ci/gitlab/install_checks/ci.pip.conf /etc/pip.conf
+\cp -f ${CI_PROJECT_DIR}/.ci/gitlab/install_checks/ci.pip.conf /etc/pip.conf
 
 # first section should ideally only need minimal setup for out extension modules to compile
 yum install -y gcc python3-devel
