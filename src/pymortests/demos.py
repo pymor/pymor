@@ -185,7 +185,6 @@ def _test_demo(demo):
             pyplot.show = nop
     except ImportError:
         pass
-    
     try:
         import petsc4py
         # the default X handlers can interfere with process termination
