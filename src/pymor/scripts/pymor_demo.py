@@ -14,6 +14,7 @@ import runpy
 import argparse
 import functools
 
+
 def run():
     parser = argparse.ArgumentParser(description='Launcher script for all available pyMOR demos.',
                                      epilog=f'Example: {sys.argv[0]} burgers 1')
