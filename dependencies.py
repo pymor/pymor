@@ -9,16 +9,6 @@ _PYTEST = 'pytest>=4.4'
 _PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*'
 
 
-def _pymess(rev, major, minor, marker=True):
-    cpm = 'm' if minor < 8 else ''
-    url = ('https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/'
-           f'{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}{cpm}-'
-           'manylinux2014_x86_64.whl')
-    if marker:
-        return f'{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'
-    return url
-
-
 def setup_requires():
     NUMPY = '1.16.0'
     # numpy versions with filters according to minimal version with a wheel
@@ -84,14 +74,10 @@ import_names = {
     'pytest-cov': 'pytest_cov',
     'pytest-flakes': 'pytest_flakes',
     'pytest-pep8': 'pytest_pep8',
-    _pymess('1.0.0', 3, 7, False): 'pymess',
-    _pymess('1.0.0', 3, 8, False): 'pymess',
-    _pymess('1.0.0', 3, 9, False): 'pymess',
     'pyopengl': 'OpenGL',
 }
 # Slycot is pinned due to buildsystem changes + missing wheels
-optional_requirements_file_only = ([_pymess('1.0.0', 3, i) for i in range(6, 10)]
-                                   + ['slycot>=0.4.0', 
+optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
                                        'mpi4py>=3.0.3;python_version >= "3.9"',
                                        'mpi4py>=3.0;python_version < "3.9"'])
 

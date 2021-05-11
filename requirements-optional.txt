@@ -8,10 +8,6 @@ cython>=0.28;python_version < "3.9"
 cython>=0.29.12;python_version >= "3.9"
 diskcache
 gmsh
-https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/1.0.0/pymess-1.0.0-cp36-cp36m-manylinux2014_x86_64.whl ; python_version == "3.6" and "linux" in sys_platform
-https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/1.0.0/pymess-1.0.0-cp37-cp37m-manylinux2014_x86_64.whl ; python_version == "3.7" and "linux" in sys_platform
-https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/1.0.0/pymess-1.0.0-cp38-cp38-manylinux2014_x86_64.whl ; python_version == "3.8" and "linux" in sys_platform
-https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/1.0.0/pymess-1.0.0-cp39-cp39-manylinux2014_x86_64.whl ; python_version == "3.9" and "linux" in sys_platform
 ipyparallel>=6.2.5
 ipython>=5.0
 ipywidgets
@@ -29,6 +25,7 @@ packaging
 pillow
 pyevtk>=1.1
 pygments
+pymess
 pyopengl
 pytest-runner>=2.9
 pytest>=4.4
