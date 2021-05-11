@@ -86,10 +86,12 @@ template:
 
 # docker targets
 docker_template:
-	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/dependencies.py \
+	@$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/dependencies.py \
 	  || $(DOCKER_RUN) pymor/ci_sanity:latest /pymor/dependencies.py
-	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/.ci/gitlab/template.ci.py \
+	@$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/.ci/gitlab/template.ci.py \
 	  || $(DOCKER_RUN) pymor/ci_sanity:latest /pymor/.ci/gitlab/template.ci.py
+	@echo Files changed:
+	@git diff --name-only
 
 docker_image:
 	$(DOCKER_COMPOSE) build
