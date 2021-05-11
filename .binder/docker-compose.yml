@@ -66,6 +66,13 @@ services:
     image: pymor/pypi-mirror_${PYPI_MIRROR}_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
     restart: "no"
 
+  install_check:
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_${PYMOR_TEST_OS}:${PYPI_MIRROR_TAG}
+    volumes:
+        - ./..:/pymor
+    depends_on:
+      - pypi_mirror
+    command: /bin/bash
   wheel_check:
     image: pymor/deploy_checks:devpi_${PYMOR_TEST_OS}
     volumes:

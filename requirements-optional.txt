@@ -4,7 +4,8 @@
 PySide2!=5.15.2,!=5.15.2.*,!=5.11.*
 Qt.py>=1.2.4
 bash_kernel
-cython>=0.28
+cython>=0.28;python_version < "3.9"
+cython>=0.29.12;python_version >= "3.9"
 diskcache
 gmsh
 https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/1.0.0/pymess-1.0.0-cp36-cp36m-manylinux2014_x86_64.whl ; python_version == "3.6" and "linux" in sys_platform
@@ -18,10 +19,10 @@ jupyter_contrib_nbextensions
 jupyter_sphinx
 matplotlib
 meshio==4.2.0
-mpi4py>=3.0
+mpi4py>=3.0.3;python_version >= "3.9"
+mpi4py>=3.0;python_version < "3.9"
 nbresuse
 numpy>=1.15.4;python_version == "3.7"
-numpy>=1.16.0;python_version <= "3.6"
 numpy>=1.17.5;python_version == "3.8"
 numpy>=1.19.4;python_version >= "3.9"
 packaging
@@ -36,14 +37,15 @@ pythreejs
 scipy>=1.1;python_version < "3.8"
 scipy>=1.3.3;python_version == "3.8"
 scipy>=1.5.4;python_version >= "3.9"
-setuptools>=40.8.0,<49.2.0
+setuptools>=40.8.0,<49.2.0;python_version < "3.9"
+setuptools>=49.1,<49.2.0;python_version >= "3.9"
 slycot>=0.4.0
 sphinx-autoapi>=1.8
 sphinx-material
 sphinx-qt-documentation
-sphinx>=1.7
+sphinx>=3.4
 sphinxcontrib-bibtex
 sympy
-torch;python_version<"3.9"
+torch
 typer
 wheel

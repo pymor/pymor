@@ -408,7 +408,7 @@ docs:
 
 
 tpl = jinja2.Template(tpl)
-pythons = ['3.6', '3.7', '3.8', '3.9']
+pythons = ['3.7', '3.8', '3.9']
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [
@@ -422,7 +422,7 @@ test_scripts = [
 ]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
-testos = [('centos_8', '3.6'), ('debian_buster', '3.7'), ('debian_bullseye', '3.9')]
+testos = [('fedora', '3.9'), ('debian_buster', '3.7'), ('debian_bullseye', '3.9')]
 
 env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)

@@ -23,7 +23,6 @@ def setup_requires():
     NUMPY = '1.16.0'
     # numpy versions with filters according to minimal version with a wheel
     numpys = [
-        'numpy>={};python_version <= "3.6"'.format(NUMPY),
         'numpy>=1.15.4;python_version == "3.7"',
         'numpy>=1.17.5;python_version == "3.8"',
         'numpy>=1.19.4;python_version >= "3.9"',
@@ -37,10 +36,12 @@ def setup_requires():
     # see also https://github.com/pypa/setuptools/pull/2260
     # https://github.com/pypa/setuptools/pull/2259
     other = [
-        'setuptools>=40.8.0,<49.2.0',
+         'setuptools>=40.8.0,<49.2.0;python_version < "3.9"',
+         'setuptools>=49.1,<49.2.0;python_version >= "3.9"',
         'wheel',
         'pytest-runner>=2.9',
-        'cython>=0.28',
+        'cython>=0.28;python_version < "3.9"',
+        'cython>=0.29.12;python_version >= "3.9"',
         'packaging',
     ]
     return numpys + other + scipys
@@ -63,11 +64,11 @@ install_suggests = {
     _PYSIDE: 'solution visualization for builtin discretizations',
     'ipywidgets': 'notebook GUI elements',
     'nbresuse': 'resource usage indicator for notebooks',
-    'torch;python_version<"3.9"': 'PyTorch open source machine learning framework',
+    'torch': 'PyTorch open source machine learning framework',
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
 }
-doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
+doc_requires = ['sphinx>=3.4', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
@@ -83,7 +84,6 @@ import_names = {
     'pytest-cov': 'pytest_cov',
     'pytest-flakes': 'pytest_flakes',
     'pytest-pep8': 'pytest_pep8',
-    _pymess('1.0.0', 3, 6, False): 'pymess',
     _pymess('1.0.0', 3, 7, False): 'pymess',
     _pymess('1.0.0', 3, 8, False): 'pymess',
     _pymess('1.0.0', 3, 9, False): 'pymess',
@@ -91,7 +91,9 @@ import_names = {
 }
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = ([_pymess('1.0.0', 3, i) for i in range(6, 10)]
-                                   + ['slycot>=0.4.0', 'mpi4py>=3.0'])
+                                   + ['slycot>=0.4.0', 
+                                       'mpi4py>=3.0.3;python_version >= "3.9"',
+                                       'mpi4py>=3.0;python_version < "3.9"'])
 
 
 def strip_markers(name):

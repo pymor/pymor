@@ -186,11 +186,6 @@ def _test_demo(demo):
     except ImportError:
         pass
     try:
-        import dolfin
-        dolfin.plot = nop
-    except ImportError:
-        pass
-    try:
         import petsc4py
         # the default X handlers can interfere with process termination
         petsc4py.PETSc.Sys.popSignalHandler()

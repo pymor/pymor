@@ -29,9 +29,11 @@ pip install -r requirements-optional.txt
 export PYTHONHASHSEED=0
 
 python setup.py build_ext -i
+# workaround import mpl with no ~/.cache/matplotlib/fontconfig*.json 
+# present segfaulting the interpreter
+python -c "from matplotlib import pyplot" || true
 
 PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
 COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml \
   --cov --cov-config=setup.cfg --cov-context=test \
-  --memprof-top-n 50 --memprof-csv-file=memory_usage.txt \
   --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE} ${PYMOR_PYTEST_EXTRA}"

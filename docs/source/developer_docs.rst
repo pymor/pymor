@@ -226,7 +226,6 @@ docs
   matching the currently checked out git branch of pyMOR.
 
 pypi
-  **This is not yet functional.** See `this issue <https://github.com/pymor/pymor/issues/551>`_
 
   Upload wheels to either the test or the real instance of the pypi repository, depending on whether
   the pipeline runs for a tagged commit.

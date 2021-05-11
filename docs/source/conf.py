@@ -10,10 +10,10 @@ import sphinx
 from pathlib import Path
 
 # Check Sphinx version
-if sphinx.__version__ < "1.7":
-    raise RuntimeError("Sphinx 1.7 or newer required")
+if sphinx.__version__ < "3.4":
+    raise RuntimeError("Sphinx 3.4 or newer required")
 
-needs_sphinx = '1.7'
+needs_sphinx = '3.4'
 os.environ['PYMOR_WITH_SPHINX'] = '1'
 
 # -----------------------------------------------------------------------------
