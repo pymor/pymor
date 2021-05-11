@@ -20,10 +20,10 @@ set -eux
 # check makes this script usable on OSX azure too
 [[ -e /usr/local/share/ci.pip.conf ]] && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
 
-# most of these should be baked into the docker image already
-pip install -r requirements.txt
-pip install -r requirements-ci.txt
-pip install -r requirements-optional.txt
+# make sure image correct packages are baked into the image
+python src/pymor/scripts/check_reqs.py requirements.txt
+python src/pymor/scripts/check_reqs.py requirements-ci.txt
+python src/pymor/scripts/check_reqs.py requirements-optional.txt
 
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0

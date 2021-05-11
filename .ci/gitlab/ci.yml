@@ -185,8 +185,6 @@ mpi 3 7:
     variables:
         COVERAGE_FILE: coverage_mpi__3.7
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -207,8 +205,6 @@ mpi 3 8:
     variables:
         COVERAGE_FILE: coverage_mpi__3.8
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -229,8 +225,6 @@ mpi 3 9:
     variables:
         COVERAGE_FILE: coverage_mpi__3.9
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -317,8 +311,6 @@ tutorials 3 7:
     variables:
         COVERAGE_FILE: coverage_tutorials__3.7
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -339,8 +331,6 @@ tutorials 3 8:
     variables:
         COVERAGE_FILE: coverage_tutorials__3.8
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -361,8 +351,6 @@ tutorials 3 9:
     variables:
         COVERAGE_FILE: coverage_tutorials__3.9
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -383,8 +371,6 @@ vanilla 3 7:
     variables:
         COVERAGE_FILE: coverage_vanilla__3.7
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -405,8 +391,6 @@ vanilla 3 8:
     variables:
         COVERAGE_FILE: coverage_vanilla__3.8
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -427,8 +411,6 @@ vanilla 3 9:
     variables:
         COVERAGE_FILE: coverage_vanilla__3.9
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -493,8 +475,6 @@ cpp_demo 3 7:
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.7
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -515,8 +495,6 @@ cpp_demo 3 8:
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.8
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |
@@ -537,8 +515,6 @@ cpp_demo 3 9:
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.9
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:df959816ed5cfc974dd930d80975b6ab366f8754
-          alias: pypi_mirror
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:df959816ed5cfc974dd930d80975b6ab366f8754
     script:
         - |

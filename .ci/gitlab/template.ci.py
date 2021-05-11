@@ -194,10 +194,11 @@ ci setup:
     services:
     {%- if script == "oldest" %}
         - name: {{registry}}/pymor/pypi-mirror_oldest_py{{py}}:{{pypi_mirror_tag}}
-    {%- else %}
-        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
-    {%- endif %}
           alias: pypi_mirror
+    {%- elif script in ["pip_installed", "numpy_git"] %}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
+          alias: pypi_mirror
+    {%- endif %}
     image: {{registry}}/pymor/testing_py{{py}}:{{ci_image_tag}}
     script:
         - |
