@@ -3,6 +3,7 @@ include *.html
 include src/discretizers/builtin/*.pyx
 include src/discretizers/builtin/grids/*.pyx
 include src/pymor/version.py
+include src/pymor/scripts/check_reqs.py
 
 include .coveragerc
 include Makefile
