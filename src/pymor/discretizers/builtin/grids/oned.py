@@ -84,9 +84,9 @@ class OnedGrid(GridWithOrthogonalCenters):
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).
         kwargs
-            See :func:`~pymor.discretizers.builtin.gui.qt.visualize_patch`
+            See :func:`~pymor.discretizers.builtin.gui.visualizers.OnedVisualizer.visualize`
         """
-        from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
+        from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
         from pymor.vectorarrays.interface import VectorArray
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArray)):
@@ -96,4 +96,4 @@ class OnedGrid(GridWithOrthogonalCenters):
                   u if isinstance(u, NumpyVectorArray) else
                   NumpyVectorSpace.make_array(u.to_numpy())
                   for u in U)
-        visualize_matplotlib_1d(self, U, codim=codim, **kwargs)
+        OnedVisualizer(self, codim=codim).visualize(U, **kwargs)
