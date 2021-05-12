@@ -229,6 +229,7 @@ if config.HAVE_QT:
 
         def closeEvent(self, event):
             try:
+                self.deleteLater()
                 _qt_windows.remove(self)
             except KeyError:
                 pass  # we should be in blocking mode ...
