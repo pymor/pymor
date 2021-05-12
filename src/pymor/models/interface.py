@@ -580,6 +580,6 @@ class Model(CacheableObject, ParametricObject):
             See the docstring of `self.visualizer.visualize`.
         """
         if getattr(self, 'visualizer') is not None:
-            return self.visualizer.visualize(U, self, **kwargs)
+            return self.visualizer.visualize(U, **kwargs)
         else:
             raise NotImplementedError('Model has no visualizer.')

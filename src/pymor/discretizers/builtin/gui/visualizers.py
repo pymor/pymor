@@ -42,7 +42,7 @@ class PatchVisualizer(ImmutableObject):
             backend = 'jupyter' if is_jupyter() else 'gl'
         self.__auto_init(locals())
 
-    def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
+    def visualize(self, U, title=None, legend=None, separate_colorbars=False,
                   rescale_colorbars=False, block=None, filename=None, columns=2):
         """Visualize the provided data.
 
@@ -53,8 +53,6 @@ class PatchVisualizer(ImmutableObject):
             as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
             provided, in which case a subplot is created for each entry of the tuple. The
             lengths of all arrays have to agree.
-        m
-            Filled in by :meth:`pymor.models.interface.Model.visualize` (ignored).
         title
             Title of the plot.
         legend
@@ -126,7 +124,7 @@ class OnedVisualizer(ImmutableObject):
             backend = 'jupyter' if is_jupyter() else 'matplotlib'
         self.__auto_init(locals())
 
-    def visualize(self, U, m, title=None, legend=None, separate_plots=True,
+    def visualize(self, U, title=None, legend=None, separate_plots=True,
                   separate_axes=False, block=None, filename=None, columns=2):
         """Visualize the provided data.
 
@@ -137,8 +135,6 @@ class OnedVisualizer(ImmutableObject):
             as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
             provided, in which case several plots are made into the same axes. The
             lengths of all arrays have to agree.
-        m
-            Filled in by :meth:`pymor.models.interface.Model.visualize` (ignored).
         title
             Title of the plot.
         legend
