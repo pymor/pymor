@@ -22,10 +22,10 @@ class PatchVisualizer(ImmutableObject):
     ----------
     grid
         The underlying |Grid|.
-    bounding_box
-        A bounding box in which the grid is contained.
     codim
         The codimension of the entities the data in `U` is attached to (either 0 or 2).
+    bounding_box
+        A bounding box in which the grid is contained.
     backend
         Plot backend to use ('jupyter_or_gl', 'jupyter', 'gl', 'matplotlib').
     block
@@ -33,13 +33,15 @@ class PatchVisualizer(ImmutableObject):
     """
 
     @defaults('backend')
-    def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend='jupyter_or_gl', block=False):
+    def __init__(self, grid, codim=2, bounding_box=None, backend='jupyter_or_gl', block=False):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
         assert backend in {'jupyter_or_gl', 'jupyter', 'gl', 'matplotlib'}
         if backend == 'jupyter_or_gl':
             backend = 'jupyter' if is_jupyter() else 'gl'
+        if bounding_box is None:
+            bounding_box = grid.bounding_box()
         self.__auto_init(locals())
 
     def visualize(self, U, title=None, legend=None, separate_colorbars=False,

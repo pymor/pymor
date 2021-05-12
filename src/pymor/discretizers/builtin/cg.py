@@ -1131,7 +1131,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     F = LincombOperator(operators=Fi, coefficients=coefficients_F, name='rhsOperator')
 
     if grid.reference_element in (triangle, square):
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)
+        visualizer = PatchVisualizer(grid=grid, codim=2)
     elif grid.reference_element is line:
         visualizer = OnedVisualizer(grid=grid, codim=1)
     else:
