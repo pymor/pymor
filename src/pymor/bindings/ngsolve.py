@@ -166,7 +166,7 @@ if config.HAVE_NGSOLVE:
             self.__auto_init(locals())
             self.space = NGSolveVectorSpace(fespace)
 
-        def visualize(self, U, m, legend=None, separate_colorbars=True, filename=None, block=True):
+        def visualize(self, U, legend=None, separate_colorbars=True, filename=None, block=True):
             """Visualize the provided data."""
             if isinstance(U, VectorArray):
                 U = (U,)
