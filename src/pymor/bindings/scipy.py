@@ -384,11 +384,11 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
     Parameters
     ----------
     A
-        The operator A as a 2D |NumPy array|.
+        The matrix A as a 2D |NumPy array|.
     E
-        The operator E as a 2D |NumPy array| or `None`.
+        The matrix E as a 2D |NumPy array| or `None`.
     B
-        The operator B as a 2D |NumPy array|.
+        The matrix B as a 2D |NumPy array|.
     trans
         Whether the first operator in the Lyapunov equation is
         transposed.
@@ -452,7 +452,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     C
         The operator C as a |VectorArray| from `A.source`.
     R
-        The operator R as a 2D |NumPy array| or `None`.
+        The matrix R as a 2D |NumPy array| or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.
@@ -502,15 +502,15 @@ def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None):
     Parameters
     ----------
     A
-        The operator A as a 2D |NumPy array|.
+        The matrix A as a 2D |NumPy array|.
     E
-        The operator E as a 2D |NumPy array| or `None`.
+        The matrix E as a 2D |NumPy array| or `None`.
     B
-        The operator B as a 2D |NumPy array|.
+        The matrix B as a 2D |NumPy array|.
     C
-        The operator C as a 2D |NumPy array|.
+        The matrix C as a 2D |NumPy array|.
     R
-        The operator R as a 2D |NumPy array| or `None`.
+        The matrix R as a 2D |NumPy array| or `None`.
     trans
         Whether the first operator in the Riccati equation is
         transposed.
@@ -574,7 +574,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     C
         The operator C as a |VectorArray| from `A.source`.
     R
-        The operator R as a 2D |NumPy array| or `None`.
+        The matrix R as a 2D |NumPy array| or `None`.
     trans
         Whether the first |Operator| in the positive Riccati equation is
         transposed.

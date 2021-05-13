@@ -184,11 +184,11 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
     Parameters
     ----------
     A
-        The operator A as a 2D |NumPy array|.
+        The matrix A as a 2D |NumPy array|.
     E
-        The operator E as a 2D |NumPy array| or `None`.
+        The matrix E as a 2D |NumPy array| or `None`.
     B
-        The operator B as a 2D |NumPy array|.
+        The matrix B as a 2D |NumPy array|.
     trans
         Whether the first operator in the Lyapunov equation is
         transposed.

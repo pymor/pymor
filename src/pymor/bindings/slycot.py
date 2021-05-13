@@ -96,11 +96,11 @@ if config.HAVE_SLYCOT:
         Parameters
         ----------
         A
-            The operator A as a 2D |NumPy array|.
+            The matrix A as a 2D |NumPy array|.
         E
-            The operator E as a 2D |NumPy array| or `None`.
+            The matrix E as a 2D |NumPy array| or `None`.
         B
-            The operator B as a 2D |NumPy array|.
+            The matrix B as a 2D |NumPy array|.
         trans
             Whether the first operator in the Lyapunov equation is
             transposed.
@@ -154,15 +154,15 @@ if config.HAVE_SLYCOT:
         Parameters
         ----------
         A
-            The operator A as a 2D |NumPy array|.
+            The matrix A as a 2D |NumPy array|.
         E
-            The operator E as a 2D |NumPy array| or `None`.
+            The matrix E as a 2D |NumPy array| or `None`.
         B
-            The operator B as a 2D |NumPy array|.
+            The matrix B as a 2D |NumPy array|.
         C
-            The operator C as a 2D |NumPy array|.
+            The matrix C as a 2D |NumPy array|.
         R
-            The operator R as a 2D |NumPy array| or `None`.
+            The matrix R as a 2D |NumPy array| or `None`.
         trans
             Whether the first operator in the Riccati equation is
             transposed.
@@ -178,52 +178,49 @@ if config.HAVE_SLYCOT:
         _solve_ricc_dense_check_args(A, E, B, C, R, trans)
         options = _parse_options(options, ricc_dense_solver_options(), 'slycot', None, False)
 
-        if options['type'] == 'slycot':
-            dico = 'C'
-            n = A.shape[0]
-            if E is not None:
-                jobb = 'B'
-                fact = 'C'
-                uplo = 'U'
-                jobl = 'Z'
-                scal = 'N'
-                sort = 'S'
-                acc = 'R'
-                m = C.shape[0] if not trans else B.shape[1]
-                p = B.shape[1] if not trans else C.shape[0]
-                if R is None:
-                    R = np.eye(m)
-                S = np.empty((n, m))
-                if not trans:
-                    A = A.T
-                    E = E.T
-                    B, C = C.T, B.T
-                out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                                    n, m, p,
-                                    A, E, B, C, R, S)
-                X = out[1]
-                rcond = out[0]
-                _ricc_rcond_check('slycot.sg02ad', rcond)
-
-            else:
-                if trans:
-                    if R is None:
-                        G = B @ B.T
-                    else:
-                        G = B @ spla.solve(R, B.T)
-                    Q = C.T @ C
-                    X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
-                else:
-                    if R is None:
-                        G = C.T @ C
-                    else:
-                        G = C.T @ spla.solve(R, C)
-                    Q = B @ B.T
-                    X, rcond = slycot.sb02md(n, A.T, G, Q, dico)[:2]
-
-                _ricc_rcond_check('slycot.sb02md', rcond)
-        else:
+        if options['type'] != 'slycot':
             raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
+
+        dico = 'C'
+        n = A.shape[0]
+        if E is not None:
+            jobb = 'B'
+            fact = 'C'
+            uplo = 'U'
+            jobl = 'Z'
+            scal = 'N'
+            sort = 'S'
+            acc = 'R'
+            m = C.shape[0] if not trans else B.shape[1]
+            p = B.shape[1] if not trans else C.shape[0]
+            if R is None:
+                R = np.eye(m)
+            S = np.empty((n, m))
+            if not trans:
+                A = A.T
+                E = E.T
+                B, C = C.T, B.T
+            out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
+                                n, m, p,
+                                A, E, B, C, R, S)
+            X = out[1]
+            rcond = out[0]
+        else:
+            if trans:
+                if R is None:
+                    G = B @ B.T
+                else:
+                    G = B @ spla.solve(R, B.T)
+                Q = C.T @ C
+                X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
+            else:
+                if R is None:
+                    G = C.T @ C
+                else:
+                    G = C.T @ spla.solve(R, C)
+                Q = B @ B.T
+                X, rcond = slycot.sb02md(n, A.T, G, Q, dico)[:2]
+        _ricc_rcond_check('slycot.sb02md', rcond)
 
         return X
 
@@ -275,7 +272,7 @@ if config.HAVE_SLYCOT:
         C
             The operator C as a |VectorArray| from `A.source`.
         R
-            The operator R as a 2D |NumPy array| or `None`.
+            The matrix R as a 2D |NumPy array| or `None`.
         trans
             Whether the first |Operator| in the Riccati equation is
             transposed.
@@ -343,7 +340,7 @@ if config.HAVE_SLYCOT:
         C
             The operator C as a |VectorArray| from `A.source`.
         R
-            The operator R as a 2D |NumPy array| or `None`.
+            The matrix R as a 2D |NumPy array| or `None`.
         trans
             Whether the first |Operator| in the positive Riccati
             equation is transposed.

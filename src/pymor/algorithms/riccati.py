@@ -84,7 +84,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None,
     C
         The operator C as a |VectorArray| from `A.source`.
     R
-        The operator R as a 2D |NumPy array| or `None`.
+        The matrix R as a 2D |NumPy array| or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.
@@ -154,9 +154,7 @@ def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None,
 
     We assume:
 
-    - A and E are real |Operators|,
-    - B and C are real |VectorArrays| from `A.source`,
-    - R is a real |NumPy array|,
+    - A, E, B, C, R are real |NumPy arrays|,
     - (E, A, B, C) is stabilizable and detectable, and
     - R is symmetric positive definite.
 
@@ -169,17 +167,17 @@ def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None,
     Parameters
     ----------
     A
-        The operator A as a 2D |NumPy array|.
+        The matrix A as a 2D |NumPy array|.
     E
-        The operator E as a 2D |NumPy array| or `None`.
+        The matrix E as a 2D |NumPy array| or `None`.
     B
-        The operator B as a 2D |NumPy array|.
+        The matrix B as a 2D |NumPy array|.
     C
-        The operator C as a 2D |NumPy array|.
+        The matrix C as a 2D |NumPy array|.
     R
-        The operator B as a 2D |NumPy array| or `None`.
+        The matrix B as a 2D |NumPy array| or `None`.
     trans
-        Whether the first operator in the Riccati equation is
+        Whether the first matrix in the Riccati equation is
         transposed.
     options
         The solver options to use.
@@ -277,7 +275,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None,
     C
         The operator C as a |VectorArray| from `A.source`.
     R
-        The operator R as a 2D |NumPy array| or `None`.
+        The matrix R as a 2D |NumPy array| or `None`.
     trans
         Whether the first |Operator| in the positive Riccati equation is
         transposed.

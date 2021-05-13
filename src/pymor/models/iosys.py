@@ -874,32 +874,7 @@ class LTIModel(InputStateOutputModel):
         fpeak
             Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
-        if not config.HAVE_SLYCOT:
-            raise NotImplementedError
-        if not return_fpeak:
-            return self.hinf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-
-        A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
-
-        if self.order >= sparse_min_size():
-            for op_name in ['A', 'B', 'C', 'D', 'E']:
-                op = locals()[op_name]
-                if not isinstance(op, NumpyMatrixOperator) or op.sparse:
-                    self.logger.warning(f'Converting operator {op_name} to a NumPy array.')
-
-        from slycot import ab13dd
-        dico = 'C' if self.cont_time else 'D'
-        jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
-        equil = 'S' if ab13dd_equilibrate else 'N'
-        jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
-        A, B, C, D, E = (to_matrix(op, format='dense') for op in [A, B, C, D, E])
-        norm, fpeak = ab13dd(dico, jobe, equil, jobd,
-                             self.order, self.dim_input, self.dim_output,
-                             A, E, B, C, D)
-        return norm, fpeak
+        return self.linf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate)
 
     def hankel_norm(self, mu=None):
         """Compute the Hankel-norm of the |LTIModel|.
@@ -920,7 +895,19 @@ class LTIModel(InputStateOutputModel):
         return self.hsv(mu=mu)[0]
 
     def l2_norm(self, ast_pole_data=None, mu=None):
-        """Compute the L2-norm of the |LTIModel|.
+        r"""Compute the L2-norm of the |LTIModel|.
+
+        The L2-norm of an |LTIModel| is defined via the integral
+
+        .. math::
+            \lVert H \rVert_{\mathcal{L}_2}
+            =
+            \left(
+              \frac{1}{2 \pi}
+              \int_{-\infty}^{\infty}
+              \lVert H(\boldsymbol{\imath} \omega) \rVert_{\operatorname{F}}^2
+              \operatorname{d}\!\omega
+            \right)^{\frac{1}{2}}.
 
         Parameters
         ----------
@@ -971,7 +958,15 @@ class LTIModel(InputStateOutputModel):
 
     @cached
     def linf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
-        """Compute the L_infinity-norm of the |LTIModel|.
+        r"""Compute the L_infinity-norm of the |LTIModel|.
+
+        The L-infinity norm of an |LTIModel| is defined via
+
+        .. math::
+
+            \lVert H \rVert_{\mathcal{L}_\infty}
+            = \sup_{\omega \in \mathbb{R}}
+            \lVert H(\boldsymbol{\imath} \omega) \rVert_2.
 
         Parameters
         ----------
@@ -989,7 +984,32 @@ class LTIModel(InputStateOutputModel):
         fpeak
             Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
-        return self.hinf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate)
+        if not config.HAVE_SLYCOT:
+            raise NotImplementedError
+        if not return_fpeak:
+            return self.hinf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+
+        A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
+
+        if self.order >= sparse_min_size():
+            for op_name in ['A', 'B', 'C', 'D', 'E']:
+                op = locals()[op_name]
+                if not isinstance(op, NumpyMatrixOperator) or op.sparse:
+                    self.logger.warning(f'Converting operator {op_name} to a NumPy array.')
+
+        from slycot import ab13dd
+        dico = 'C' if self.cont_time else 'D'
+        jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
+        equil = 'S' if ab13dd_equilibrate else 'N'
+        jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
+        A, B, C, D, E = (to_matrix(op, format='dense') for op in [A, B, C, D, E])
+        norm, fpeak = ab13dd(dico, jobe, equil, jobd,
+                             self.order, self.dim_input, self.dim_output,
+                             A, E, B, C, D)
+        return norm, fpeak
 
     def get_ast_spectrum(self, ast_pole_data=None, mu=None):
         """Compute anti-stable subset of the poles of the |LTIModel|.
@@ -1001,7 +1021,7 @@ class LTIModel(InputStateOutputModel):
 
             - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
             - list of anti-stable eigenvalues (scalars),
-            - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
+            - tuple `(lev, ew, rev)` where `ew` contains the sorted anti-stable eigenvalues
               and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
             - `None` if anti-stable eigenvalues should be computed via dense methods.
         mu
@@ -1012,7 +1032,8 @@ class LTIModel(InputStateOutputModel):
         lev
             |VectorArray| of left eigenvectors.
         ew
-            One-dimensional |NumPy array| of anti-stable eigenvalues.
+            One-dimensional |NumPy array| of anti-stable eigenvalues sorted from smallest to
+            largest.
         rev
             |VectorArray| of right eigenvectors.
         """
@@ -1034,14 +1055,16 @@ class LTIModel(InputStateOutputModel):
                 return ast_levs, ast_ews, rev[ast_idx[0]]
 
             elif type(ast_pole_data) == list:
-                ast_levs = A.source.empty(reserve=len(ast_ews))
-                ast_revs = A.source.empty(reserve=len(ast_ews))
+                assert all(np.real(ast_pole_data) > 0)
+                ast_pole_data = np.sort(ast_pole_data)
+                ast_levs = A.source.empty(reserve=len(ast_pole_data))
+                ast_revs = A.source.empty(reserve=len(ast_pole_data))
                 for ae in ast_pole_data:
                     _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
                     ast_levs.append(lev)
                     _, rev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae)
                     ast_revs.append(rev)
-                return ast_levs, ast_ews, rev[ast_idx[0]]
+                return ast_levs, ast_pole_data, ast_revs
 
             elif type(ast_pole_data) == tuple:
                 return ast_pole_data
@@ -1061,10 +1084,12 @@ class LTIModel(InputStateOutputModel):
             ew, lev, rev = spla.eig(A, E if self.E else None, left=True)
             ast_idx = np.where(ew.real > 0.)
             ast_ews = ew[ast_idx]
+            idx = ast_ews.argsort()
 
-            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, 0, :].T)
-            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, 0, :].T)
-            return ast_lev, ast_ews, ast_rev
+            ast_lev = self.A.source.from_numpy(lev[:, idx][:, ast_idx][:, 0, :].T)
+            ast_rev = self.A.range.from_numpy(rev[:, idx][:, ast_idx][:, 0, :].T)
+
+            return ast_lev, ast_ews[idx], ast_rev
 
 
 class TransferFunction(InputOutputModel):

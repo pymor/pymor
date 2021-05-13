@@ -121,7 +121,7 @@ frequency domain representations of the controllability and observability Gramia
         (-\imath \omega E^{\operatorname{T}} - A^{\operatorname{T}})^{-1}
         C^{\operatorname{T}} C
         (\imath \omega E - A)^{-1}
-        \operatorname{d}\!\omega E.
+        \operatorname{d}\!\omega\, E.
     \end{align*}
 
 Again, two Lyapunov equations have to be solved in order to obtain these Gramians.
@@ -166,13 +166,22 @@ appropriate argument:
 Alternatively, we can specify a desired error tolerance rather than the order
 of the reduced model.
 
-Finally, we can compute the relative :math:`\mathcal{L}_\infty`-error to check
+Finally, we can compute the relative :math:`\mathcal{L}_\infty` error to check
 the quality of the reduced-order model.
 
 .. jupyter-execute::
 
     err = fom - rom
     print(f'Relative Linf error:   {err.linf_norm() / fom.linf_norm():.3e}')
+
+Clearly, this result is in accordance with our previously computed
+:math:`\mathcal{L}_\infty` error bound:
+
+.. jupyter-execute::
+
+    print(f'Linf error:   {err.linf_norm():.3e}')
+    print(f'Linf upper bound:   {error_bounds[9]:.3e}')
+
 
 Gap-IRKA
 --------
@@ -206,9 +215,9 @@ interpolation points, `conv_crit='htwogap'` the relative change in
 :math:`\mathcal{H}_2`-gap distance of the reduced-order models and `conv_crit='ltwo'` the
 relative change of :math:`\mathcal{L}_2` distances of the reduced-order models are
 used as a stopping criterion. The `tol` argument sets the tolerance for
-any of the choosen stopping criteria.
+any of the chosen stopping criterion.
 
-Again, we can compute the relative :math:`\mathcal{L}_\infty`-error.
+Again, we can compute the relative :math:`\mathcal{L}_\infty` error.
 
 .. jupyter-execute::
 

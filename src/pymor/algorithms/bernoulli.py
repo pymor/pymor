@@ -12,8 +12,8 @@ from pymor.operators.constructions import IdentityOperator
 def solve_bernoulli(A, E, B, trans=False, maxiter=100, after_maxiter=3, tol=1e-8):
     """Compute a solution factor of a Bernoulli equation.
 
-    Returns a matrix :math:`Y` such that :math:`X = Y Y^H` is an approximate solution
-    of a (generalized) algebraic Bernoulli equation:
+    Returns a matrix :math:`Y` with identical dimensions to the matrix :math:`A` such that
+    :math:`X = Y Y^H` is an approximate solution of a (generalized) algebraic Bernoulli equation:
 
     - if trans is `True`
 
@@ -32,17 +32,19 @@ def solve_bernoulli(A, E, B, trans=False, maxiter=100, after_maxiter=3, tol=1e-8
     Parameters
     ----------
     A
-        The operator A as a 2D |NumPy array|.
+        The matrix A as a 2D |NumPy array|.
     E
-        The operator E as a 2D |NumPy array| or `None`.
+        The matrix E as a 2D |NumPy array| or `None`.
     B
-        The operator B as a 2D |NumPy array|.
+        The matrix B as a 2D |NumPy array|.
     trans
         Whether to solve transposed or standard Bernoulli equation.
     maxiter
         The maximum amount of iterations.
     after_maxiter
         The number of iterations which are to be performed after tolerance is reached.
+        This will improve the quality of the solution in cases where the iterates which are used
+        by the stopping criterion stagnate prematurely.
     tol
         Tolerance for stopping criterion based on relative change of iterates.
 
@@ -89,6 +91,10 @@ def solve_bernoulli(A, E, B, trans=False, maxiter=100, after_maxiter=3, tol=1e-8
         logger.info(f'Relative change of iterates at step {i}: {rnorm:.5e}')
         if rnorm <= tol:
             after_iter += 1
+
+    if rnorm > tol:
+        logger.warning(f'Prescribed tolerance for relative change of iterates not achieved '
+                       f'({rnorm:e} > {tol:e}) after ' f'{maxiter} steps.')
 
     Q, R, _ = spla.qr(E.conj() - A.conj(), pivoting=True)
     nsp_rk = 0

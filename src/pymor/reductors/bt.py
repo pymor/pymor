@@ -188,6 +188,7 @@ class FDBTReductor(GenericBTReductor):
         return bsc_lrcf, bso_lrcf
 
     def error_bounds(self):
+        """L-infinity error bounds for reduced order models."""
         sv = self._sv_U_V()[0]
         return 2 * sv[:0:-1].cumsum()[::-1]
 
