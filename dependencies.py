@@ -65,7 +65,7 @@ ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconve
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
                'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir',
                'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19',
-               'PyQt5!=5.15.2,>5.7,!=5.15.2.*']
+               'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3']
 import_names = {
     'ipython': 'IPython',
     'pytest-cache': 'pytest_cache',
