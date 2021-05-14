@@ -1,3 +1,2 @@
-# shader compilation fails on software OGL on headless dockerized osx
-d = {'pymor.discretizers.builtin.gui.qt.visualize_patch.backend': 'matplotlib'}
-
+d = {
+}

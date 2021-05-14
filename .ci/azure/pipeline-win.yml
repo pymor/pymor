@@ -59,6 +59,9 @@ jobs:
         pip install pytest-azurepipelines pytest-datadir
     displayName: 'Tests'
 
+      # this allows azure-specific defaults
+      cp .ci/azure/pymor_defaults.py_win pymor_defaults.py
+
   - script: |
       choco install codecov
       coverage xml

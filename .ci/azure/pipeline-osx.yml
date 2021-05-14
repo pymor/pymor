@@ -37,8 +37,6 @@ jobs:
       # this currently still introduces some conflicts
       # pip install -r requirements-optional.txt
 
-      # this makes us fall back on MPL vis backend (gl shader compile fails otherwise)
-      cp .ci/azure/pymor_defaults.py_osx pymor_defaults.py
     displayName: Configure conda and conda-build
 
   - script: |
@@ -46,12 +44,15 @@ jobs:
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
       python setup.py build_ext -i
       export QT_DEBUG_PLUGINS=1
-      py.test -sv --cov-context=test --cov=src/pymor --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}
+
+      # this allows azure-specific defaults
+      cp .ci/azure/pymor_defaults.py_osx pymor_defaults.py
+
       coverage xml
     displayName: py.test
 
   - script: |
-      codecov --file coverage.xml 
+      codecov --file coverage.xml
     displayName: 'Upload to codecov.io'
   - publish: src/pymortests/testdata/check_results/
     artifact: changed_results_$(CONFIG)
