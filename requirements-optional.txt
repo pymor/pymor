@@ -3,6 +3,7 @@
 -r requirements-ci.txt
 PySide2!=5.15.2,!=5.15.2.*,!=5.11.*
 bash_kernel
+click<8
 cython>=0.28
 diskcache
 gmsh
