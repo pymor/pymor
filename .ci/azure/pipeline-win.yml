@@ -61,6 +61,9 @@ jobs:
   - script: |
       call activate myEnvironment
       set PYTHONPATH=%PYTHONPATH%;%cd%\src
+
+      # this allows azure-specific defaults
+      cp .ci/azure/pymor_defaults.py_win pymor_defaults.py
       py.test --cov --cov-config=setup.cfg --cov-context=test --junitxml=test_results.xml --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
 
   - script: |

@@ -261,6 +261,8 @@ Azure Pipelines
 
 Setup test environments with conda and run pytest. Also generate and upload coverage reports.
 
+.. note:: ``.ci/azure/pymor_defaults.py_*`` may override defaults 
+
 .. _ref_docker_images:
 
 Docker images
