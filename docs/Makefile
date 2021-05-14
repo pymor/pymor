@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -W 
+SPHINXOPTS    = -W
 # serial build is necessary until sphinx-autoapi supports parallel
 SPHINXBUILD   = PYMOR_FORCE_JUPYTER=1 sphinx-build -j 1 -v source
 PAPER         =

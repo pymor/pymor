@@ -52,11 +52,11 @@ operating on objects of the following types:
     communication with a specific PDE solver instance. Additionally,
     each |VectorSpace| has a string |id|, defaulting to `None`, which
     is used to signify the mathematical identity of the given space.
-    
+
     Two arrays in pyMOR are compatible (e.g. can be added) if they are from
     the same |VectorSpace|. If a |VectorArray| is contained in a given
     |VectorSpace| can be tested with the `in` operator.
-    
+
     .. |apply|            replace:: :meth:`~pymor.operators.interface.Operator.apply`
     .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interface.VectorArray.append>`
     .. |axpy|             replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.axpy`
@@ -81,7 +81,7 @@ operating on objects of the following types:
     |VectorSpace| of the given array. The result will be a vector array from
     the |range| space. An operator can be |linear| or not.  The |apply_inverse|
     method provides an interface for (linear) solvers.
-    
+
     Operators in pyMOR are also used to represent bilinear forms via the
     |apply2| method. A functional in pyMOR is simply an operator with
     `NumpyVectorSpace(1)` as |range|. Dually, a vector-like operator is an operator
@@ -224,7 +224,7 @@ Finally these operators are used to instatiate one of the provided
 |Model| classes.
 
 In pyMOR, |analytical problems|, |Functions|, |DomainDescriptions|,
-|BoundaryInfos| and |Grids| are all immutable, enabling efficient 
+|BoundaryInfos| and |Grids| are all immutable, enabling efficient
 disk |caching| for the resulting |Models|, persistent over various
 runs of the applications written with pyMOR.
 
@@ -245,7 +245,7 @@ code without any recompilation. A minimal example for such an integration using
 `pybind11 <https://github.com/pybind/pybind11>`_ can be found in the
 ``src/pymordemos/minimal_cpp_demo`` directory of the pyMOR repository.
 Bindings for `FEnicS <https://fenicsproject.org>`_ and
-`NGSolve <https://ngsolve.org>`_ packages are available in the 
+`NGSolve <https://ngsolve.org>`_ packages are available in the
 :mod:`bindings.fenics <pymor.bindings.fenics>` and
 :mod:`bindings.ngsolve <pymor.bindings.ngsolve>` modules.
 The `pymor-deal.II <https://github.com/pymor/pymor-deal.II>`_ repository contains
@@ -370,7 +370,7 @@ offline/online-decompose affinely |Parameter|-dependent linear problems.
 Non-linear problems or such with no affine |Parameter| dependence require
 additional techniques such as :mod:`empirical interpolation <pymor.algorithms.ei>`.
 
-If you want to further dive into the inner workings of pyMOR, we 
+If you want to further dive into the inner workings of pyMOR, we
 recommend to study the source code of :class:`~pymor.reductors.basic.GenericRBReductor`
-and to step through calls of it's `reduce` method with a Python debugger, such as 
+and to step through calls of it's `reduce` method with a Python debugger, such as
 `ipdb <https://pypi.python.org/pypi/ipdb>`_.

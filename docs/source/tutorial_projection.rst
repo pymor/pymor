@@ -28,7 +28,7 @@ works exactly the same when a FOM of the same mathematical structure is provided
 by an external PDE solver (see :doc:`tutorial_external_solver`).
 
 Since this tutorial is also supposed to give you a better overview of pyMOR's
-architecture, we will not import everything from the :mod:`pymor.basic` convenience 
+architecture, we will not import everything from the :mod:`pymor.basic` convenience
 module but directly import all classes and methods from their original locations in
 pyMOR's subpackages.
 
@@ -38,7 +38,7 @@ Let's build a 2-by-2 thermal block |Model| as our FOM:
 
     from pymor.analyticalproblems.thermalblock import thermal_block_problem
     from pymor.discretizers.builtin import discretize_stationary_cg
-    
+
     p = thermal_block_problem((2,2))
     fom, _ = discretize_stationary_cg(p, diameter=1/100)
 
@@ -58,12 +58,12 @@ snapshots.
 
     from pymor.algorithms.pod import pod
     from matplotlib import pyplot as plt
-    
+
     snapshots = fom.solution_space.empty()
     for mu in p.parameter_space.sample_randomly(20):
         snapshots.append(fom.solve(mu))
     basis, singular_values = pod(snapshots, modes=10)
-    
+
 The singular value decay looks promising:
 
 .. jupyter-execute::
@@ -89,7 +89,7 @@ This does not look too interesting. Actually, :meth:`~pymor.models.interface.Mod
 is just a convenience method around :meth:`~pymor.models.interface.Model.compute` which
 handles the actual computation of the solution and various other associated values like
 outputs or error estimates. Next, we take a look at the implemenation of
-:meth:`~pymor.models.interface.Model.compute`: 
+:meth:`~pymor.models.interface.Model.compute`:
 
 .. jupyter-execute::
 
@@ -99,7 +99,7 @@ What we see is a default implementation from :class:`~pymor.models.interface.Mod
 takes care of checking the input |parameter values| `mu`, :mod:`caching <pymor.core.cache>` and
 :mod:`logging <pymor.core.logger>`, but defers the actual computations to further private methods.
 Implementors can directly implement :meth:`~pymor.models.interface.Model._compute` to compute
-multiple return values at once in an optimized way. Our given model, however, just implements 
+multiple return values at once in an optimized way. Our given model, however, just implements
 :meth:`~pymor.models.interface.Model._compute_solution` where we can find the
 actual code:
 
@@ -204,7 +204,7 @@ basis vectors will be called :math:`u_N(\mu)`. We want that
     U_N := \mathbb{V}_N \cdot u_N(\mu) \approx u(\mu).
 
 Substituting :math:`\mathbb{V}_N \cdot u_N(\mu)` for :math:`u(\mu)` into the equation system
-defining the FOM, we arrive at: 
+defining the FOM, we arrive at:
 
 .. math::
 
@@ -262,7 +262,7 @@ equation system comes from the weak formulation of a PDE of the form
 
 the matrix of the bilinear form :math:`a(\cdot, \cdot; \mu)` w.r.t. a finite element basis
 is :math:`\mathbb{A}(\mu)`, and :math:`F(\mu)` is the vector representation of the linear
-functional :math:`f` w.r.t. the dual finite element basis, then 
+functional :math:`f` w.r.t. the dual finite element basis, then
 
 .. math::
 
@@ -279,9 +279,9 @@ for :math:`U_N(\mu) \in V_N`. As for finite element methods,
 `Cea's Lemma <https://en.wikipedia.org/wiki/Cea's_lemma>`_ guarantees that when :math:`a(\cdot, \cdot, \mu)`
 is positive definite, :math:`U_N` will be a quasi-best approximation
 of :math:`U(\mu)` in :math:`V_N`. So, if we have constructed a good reduced space :math:`V_N`, then
-Galerkin projection will also give us a good ROM to actually find a good approximation in :math:`V_N`. 
+Galerkin projection will also give us a good ROM to actually find a good approximation in :math:`V_N`.
 
-Let's compute the Galerkin ROM for our FOM at hand with pyMOR. To compute :math:`\mathbb{A}_N` 
+Let's compute the Galerkin ROM for our FOM at hand with pyMOR. To compute :math:`\mathbb{A}_N`
 we use the :meth:`~pymor.operators.interface.Operator.apply2` method of `fom.operator`.
 For computing the inner products :math:`\mathbb{V}_N^T \cdot F(\mu)` we can simply compute the
 inner product with the `basis` |VectorArray| using its :meth:`~pymor.vectorarrays.interface.VectorArray.inner`
@@ -341,7 +341,7 @@ expected, we first wrap these data structures as pyMOR |Operators|:
 .. jupyter-execute::
 
     from pymor.operators.numpy import NumpyMatrixOperator
-    
+
     reduced_operator = NumpyMatrixOperator(reduced_operator)
     reduced_rhs = NumpyMatrixOperator(reduced_rhs)
 
@@ -497,7 +497,7 @@ pyMOR |Operator|. Let's see, how it works:
 .. jupyter-execute::
 
     from pymor.algorithms.projection import project
-    
+
     reduced_operator = project(fom.operator, basis, basis)
     reduced_rhs      = project(fom.rhs,      basis, None )
 
@@ -535,7 +535,7 @@ a look at the source:
 We see there is error checking and some code to handle the optional `product` |Operator|
 used to project into the reduced :attr:`~pymor.operators.interface.Operator.range` space.
 The actual work is done by the :meth:`~pymor.algorithms.rules.RuleTable.apply` method
-of the `ProjectRules` object. 
+of the `ProjectRules` object.
 
 `ProjectRules` is a |RuleTable|, an ordered list of conditions with corresponding actions.
 The list is traversed from top to bottom, and the action of the first matching condition is
@@ -594,7 +594,7 @@ where we see our familiar :meth:`~pymor.operators.interface.Operator.apply2` cal
 
 If you look at the rules of `ProjectRules` again, you see that
 :meth:`~pymor.algorithms.projection.project` can handle many more cases.
-If all rules fail, a `NoMatchingRuleError` will be raised, in which case, 
+If all rules fail, a `NoMatchingRuleError` will be raised, in which case,
 :meth:`~pymor.algorithms.projection.project` will return a
 :class:`~pymor.operators.constructions.ProjectedOperator`, which just stores the
 projection bases and performs the projection for each call to the |Operator| interface
@@ -614,7 +614,7 @@ we can use :class:`~pymor.reductors.basic.StationaryRBReductor`:
 .. jupyter-execute::
 
     from pymor.reductors.basic import StationaryRBReductor
-    
+
     reductor = StationaryRBReductor(fom, basis)
     rom = reductor.reduce()
 

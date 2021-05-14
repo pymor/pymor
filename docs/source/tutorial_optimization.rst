@@ -36,7 +36,7 @@ reduced objective functional :math:`\mathcal{J}(\mu):= J(u_{\mu}, \mu)`
 leading to the equivalent problem: Find a solution of
 
 .. math::
-    
+
    \min_{\mu \in \mathcal{P}} \mathcal{J}(\mu).  \tag{$\hat{P}$}
 
 There exist plenty of different methods to solve (:math:`\hat{P}`) by
@@ -95,26 +95,26 @@ equation. Moreover, we consider the linear objective functional
 
 .. math::
 
-   \mathcal{J}(\mu) := \theta_{\mathcal{J}}(\mu)\, f_\mu(u_\mu) 
+   \mathcal{J}(\mu) := \theta_{\mathcal{J}}(\mu)\, f_\mu(u_\mu)
 
 where :math:`\theta_{\mathcal{J}}(\mu) := 1 + \frac{1}{5}(\mu_0 + \mu_1)`.
 
 With this data, we can construct a |StationaryProblem| in pyMOR.
 
 .. jupyter-execute::
-    
+
     from pymor.basic import *
     import numpy as np
-    
+
     domain = RectDomain(([-1,-1], [1,1]))
     indicator_domain = ExpressionFunction(
         '(-2/3. <= x[..., 0]) * (x[..., 0] <= -1/3.) * (-2/3. <= x[..., 1]) * (x[..., 1] <= -1/3.) * 1. \
-       + (-2/3. <= x[..., 0]) * (x[..., 0] <= -1/3.) *  (1/3. <= x[..., 1]) * (x[..., 1] <=  2/3.) * 1.', 
+       + (-2/3. <= x[..., 0]) * (x[..., 0] <= -1/3.) *  (1/3. <= x[..., 1]) * (x[..., 1] <=  2/3.) * 1.',
         dim_domain=2, shape_range=())
     rest_of_domain = ConstantFunction(1, 2) - indicator_domain
-    
+
     f = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[..., 0])*cos(0.5*pi*x[..., 1])', dim_domain=2, shape_range=())
-    
+
     parameters = {'diffusion': 2}
     thetas = [ExpressionParameterFunctional('1.1 + sin(diffusion[0])*diffusion[1]', parameters,
                                            derivative_expressions={'diffusion': ['cos(diffusion[0])*diffusion[1]',
@@ -122,21 +122,21 @@ With this data, we can construct a |StationaryProblem| in pyMOR.
               ExpressionParameterFunctional('1.1 + sin(diffusion[1])', parameters,
                                            derivative_expressions={'diffusion': ['0',
                                                                                  'cos(diffusion[1])']}),
-    
+
                                            ]
     diffusion = LincombFunction([rest_of_domain, indicator_domain], thetas)
-    
+
     theta_J = ExpressionParameterFunctional('1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters,
                                             derivative_expressions={'diffusion': ['1/5','1/5']})
-    
+
     problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
 
 We now use pyMOR's builtin discretization toolkit (see :doc:`tutorial_builtin_discretizer`)
 to construct a full order |StationaryModel|. Since we intend to use a fixed
 energy norm
 
-.. math:: 
-        
+.. math::
+
    \|\,.\|_{\bar{\mu}} : = a_{\,\bar{\mu}}(.,.),
 
 we also define :math:`\bar{\mu}`, which we pass via the argument
@@ -144,7 +144,7 @@ we also define :math:`\bar{\mu}`, which we pass via the argument
 :math:`\mathcal{P}` on which we want to optimize.
 
 .. jupyter-execute::
-    
+
     mu_bar = problem.parameters.parse([np.pi/2,np.pi/2])
 
     fom, data = discretize_stationary_cg(problem, diameter=1/50, mu_energy_product=mu_bar)
@@ -156,8 +156,8 @@ We now define a function for the output of the model that can be used by the min
 
     def fom_objective_functional(mu):
         return fom.output(mu)[0]
-  
-We also pick a starting parameter for the optimization method, 
+
+We also pick a starting parameter for the optimization method,
 which in our case is :math:`\mu^0 = (0.25,0.5)`.
 
 .. jupyter-execute::
@@ -170,7 +170,7 @@ Next, we visualize the diffusion function :math:`\lambda_\mu` by using
 .. jupyter-execute::
 
     from pymor.discretizers.builtin.cg import InterpolationOperator
-    
+
     diff = InterpolationOperator(data['grid'], problem.diffusion).as_vector(fom.parameters.parse(initial_guess))
     fom.visualize(diff)
 
@@ -189,19 +189,19 @@ Before we discuss the first optimization method, we define helpful
 functions for visualizations.
 
 .. jupyter-execute::
-   
+
     import matplotlib as mpl
     mpl.rcParams['figure.figsize'] = (12.0, 8.0)
     mpl.rcParams['font.size'] = 12
     mpl.rcParams['savefig.dpi'] = 300
-    mpl.rcParams['figure.subplot.bottom'] = .1 
+    mpl.rcParams['figure.subplot.bottom'] = .1
 
     from mpl_toolkits.mplot3d import Axes3D # required for 3d plots
     from matplotlib import cm # required for colors
 
     import matplotlib.pyplot as plt
     from time import perf_counter
-    
+
     def compute_value_matrix(f, x, y):
         f_of_x = np.zeros((len(x), len(y)))
         for ii in range(len(x)):
@@ -209,7 +209,7 @@ functions for visualizations.
                 f_of_x[ii][jj] = f((x[ii], y[jj]))
         x, y = np.meshgrid(x, y)
         return x, y, f_of_x
-    
+
     def plot_3d_surface(f, x, y, alpha=1):
         X, Y = x, y
         fig = plt.figure()
@@ -221,7 +221,7 @@ functions for visualizations.
         ax.set_xlim3d([-0.10457963, 3.2961723])
         ax.set_ylim3d([-0.10457963, 3.29617229])
         return ax
-    
+
     def addplot_xy_point_as_bar(ax, x, y, color='orange', z_range=None):
         ax.plot([y, y], [x, x], z_range if z_range else ax.get_zlim(), color)
 
@@ -232,7 +232,7 @@ Now, we can visualize the objective functional on the parameter space
     ranges = parameter_space.ranges['diffusion']
     XX = np.linspace(ranges[0] + 0.05, ranges[1], 10)
     YY = XX
-    
+
     plot_3d_surface(fom_objective_functional, XX, YY)
 
 Taking a closer look at the functional, we see that it is at least
@@ -250,14 +250,14 @@ helpful functions for recording and reporting the results.
                                    'evaluations' : [],
                                    'evaluation_points': [],
                                    'time': np.inf}
-    
+
     def record_results(function, data, mu):
         QoI = function(mu)
         data['num_evals'] += 1
         data['evaluation_points'].append(fom.parameters.parse(mu).to_numpy())
         data['evaluations'].append(QoI[0])
         return QoI
-    
+
     def report(result, data, reference_mu=None):
         if (result.status != 0):
             print('\n failed!')
@@ -299,7 +299,7 @@ primal equation. Here, we use this approach for a simple demonstration.
 
     from functools import partial
     from scipy.optimize import minimize
-    
+
     tic = perf_counter()
     fom_result = minimize(partial(record_results, fom_objective_functional, reference_minimization_data),
                           initial_guess,
@@ -322,7 +322,7 @@ the chosen points during the minimization.
 .. jupyter-execute::
 
     reference_plot = plot_3d_surface(fom_objective_functional, XX, YY, alpha=0.5)
-    
+
     for mu in reference_minimization_data['evaluation_points']:
         addplot_xy_point_as_bar(reference_plot, mu[0], mu[1])
 
@@ -333,7 +333,7 @@ Optimizing with the ROM using finite differences
 We can use a standard RB method to build a surrogate model for the FOM.
 As a result, the solution of the primal equation is no longer expensive
 and the optimization method can evaluate the objective functional quickly.
-For this, we define a standard :class:`~pymor.reductors.coercive.CoerciveRBReductor` 
+For this, we define a standard :class:`~pymor.reductors.coercive.CoerciveRBReductor`
 and use the :class:`~pymor.parameters.functionals.MinThetaParameterFunctional` for an
 estimation of the coerciviy constant.
 
@@ -342,9 +342,9 @@ estimation of the coerciviy constant.
     from pymor.algorithms.greedy import rb_greedy
     from pymor.parameters.functionals import MinThetaParameterFunctional
     from pymor.reductors.coercive import CoerciveRBReductor
-    
+
     coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
-    
+
 The online efficiency of MOR methods most likely comes with a
 rather expensive offline phase. For PDE-constrained optimization, however,
 it is not meaningful to ignore the
@@ -362,21 +362,21 @@ to the same minimum.
 In our case we choose ``atol=1e-2`` and yield a very low dimensional space.
 In general, however, it is not a priori clear how to choose ``atol``
 in order to arrive at a minimum which is close enough to the true
-optimum. 
+optimum.
 
 .. jupyter-execute::
-    
+
     training_set = parameter_space.sample_uniformly(25)
-    
+
     RB_reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
 
     RB_greedy_data = rb_greedy(fom, RB_reductor, training_set, atol=1e-2)
-    
+
     num_RB_greedy_extensions = RB_greedy_data['extensions']
     RB_greedy_mus, RB_greedy_errors = RB_greedy_data['max_err_mus'], RB_greedy_data['max_errs']
-    
+
     rom = RB_greedy_data['rom']
-    
+
     print('RB system is of size {}x{}'.format(num_RB_greedy_extensions, num_RB_greedy_extensions))
     print('maximum estimated model reduction error over training set: {}'.format(RB_greedy_errors[-1]))
 
@@ -386,7 +386,7 @@ Next, we plot the chosen parameters.
 .. jupyter-execute::
 
     ax = plot_3d_surface(fom_objective_functional, XX, YY, alpha=0.5)
-    
+
     for mu in RB_greedy_mus[:-1]:
         mu = mu.to_numpy()
         addplot_xy_point_as_bar(ax, mu[0], mu[1])
@@ -398,14 +398,14 @@ the resulting ROM objective functional.
 
     def rom_objective_functional(mu):
         return rom.output(mu)[0]
-    
+
     RB_minimization_data = {'num_evals': 0,
                             'evaluations' : [],
                             'evaluation_points': [],
                             'time': np.inf,
                             'offline_time': RB_greedy_data['time']
                             }
-    
+
     tic = perf_counter()
     rom_result = minimize(partial(record_results, rom_objective_functional, RB_minimization_data),
                           initial_guess,
@@ -437,11 +437,11 @@ FOM optimization, we visualize both of them in the following plot.
 
     reference_plot = plot_3d_surface(fom_objective_functional, XX, YY, alpha=0.5)
     reference_plot_mean_z_lim = 0.5*(reference_plot.get_zlim()[0] + reference_plot.get_zlim()[1])
-    
+
     for mu in reference_minimization_data['evaluation_points']:
         addplot_xy_point_as_bar(reference_plot, mu[0], mu[1], color='green',
                                 z_range=(reference_plot.get_zlim()[0], reference_plot_mean_z_lim))
-    
+
     for mu in RB_minimization_data['evaluation_points']:
         addplot_xy_point_as_bar(reference_plot, mu[0], mu[1], color='orange',
                                z_range=(reference_plot_mean_z_lim, reference_plot.get_zlim()[1]))
@@ -466,7 +466,7 @@ For computing the gradient of the linear objective functional
 .. math::
 
    \begin{align} \label{gradient:sens} \tag{1}
-   d_{\mu_i} \mathcal{J}(\mu) = \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_u J(u_{\mu}, \mu)[d_{\mu_i} u_{\mu}] 
+   d_{\mu_i} \mathcal{J}(\mu) = \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_u J(u_{\mu}, \mu)[d_{\mu_i} u_{\mu}]
       =   \partial_{\mu_i} J(u_{\mu}, \mu) + J(d_{\mu_i} u_{\mu}, \mu)
    \end{align}
 
@@ -518,8 +518,8 @@ functional by
 
 .. math::
 
-   \begin{align} 
-   d_{\mu_i} \mathcal{J}(\mu) &= \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_u J(u_{\mu}, \mu)[d_{\mu_i} u_{\mu}] \\ 
+   \begin{align}
+   d_{\mu_i} \mathcal{J}(\mu) &= \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_u J(u_{\mu}, \mu)[d_{\mu_i} u_{\mu}] \\
       &=   \partial_{\mu_i} J(u_{\mu}, \mu) + a_\mu(d_{\mu_i} u_{\mu}, p_\mu) \\
       &=   \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_{\mu_i} r_\mu^{\text{pr}}(d_{\mu_i} u_{\mu})[p_\mu]
    \end{align}
@@ -542,13 +542,13 @@ is automatically enabled.
 Note that using the (more general) implementation ``use_adjoint=False`` results
 in the exact same gradient but lacks computational speed.
 Moreover, the function ``output_d_mu`` returns a dict w.r.t. the parameters as default.
-In order to use the output for :func:`~scipy.optimize.minimize` we thus use the ``return_array=True`` argument. 
+In order to use the output for :func:`~scipy.optimize.minimize` we thus use the ``return_array=True`` argument.
 
 .. jupyter-execute::
 
     def fom_gradient_of_functional(mu):
         return fom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
-    
+
     opt_fom_minimization_data = {'num_evals': 0,
                                  'evaluations' : [],
                                  'evaluation_points': [],
@@ -556,12 +556,12 @@ In order to use the output for :func:`~scipy.optimize.minimize` we thus use the 
     tic = perf_counter()
     opt_fom_result = minimize(partial(record_results, fom_objective_functional, opt_fom_minimization_data),
                               initial_guess,
-                              method='L-BFGS-B', 
+                              method='L-BFGS-B',
                               jac=fom_gradient_of_functional,
                               bounds=(ranges, ranges),
                               options={'ftol': 1e-15, 'gtol': 5e-5})
     opt_fom_minimization_data['time'] = perf_counter()-tic
-    
+
     # update the reference_mu because this is more accurate!
     reference_mu = opt_fom_result.x
 
@@ -583,19 +583,19 @@ output functional.
 
     def rom_gradient_of_functional(mu):
         return rom.output_d_mu(rom.parameters.parse(mu), return_array=True, use_adjoint=True)
-                
-    
+
+
     opt_rom_minimization_data = {'num_evals': 0,
                                  'evaluations' : [],
                                  'evaluation_points': [],
                                  'time': np.inf,
                                  'offline_time': RB_greedy_data['time']}
-    
-    
+
+
     tic = perf_counter()
     opt_rom_result = minimize(partial(record_results, rom_objective_functional, opt_rom_minimization_data),
                       initial_guess,
-                      method='L-BFGS-B', 
+                      method='L-BFGS-B',
                       jac=rom_gradient_of_functional,
                       bounds=(ranges, ranges),
                       options={'ftol': 1e-15, 'gtol': 5e-5})
@@ -605,7 +605,7 @@ output functional.
 The online phase is even slightly faster than before but the offline
 phase is still the same as before. We also conclude that the
 ROM model eventually gives less speedup by using a better optimization
-method for the FOM and ROM. 
+method for the FOM and ROM.
 
 
 Beyond the traditional offline/online splitting: enrich along the path of optimization
@@ -655,13 +655,13 @@ the basis along the path of optimization.
         data['num_evals'] += 1
         data['evaluation_points'].append(fom.parameters.parse(mu).to_numpy())
         data['evaluations'].append(QoI[0])
-        opt_dict['opt_rom'] = rom 
+        opt_dict['opt_rom'] = rom
         return QoI
-    
+
     def compute_gradient_with_opt_rom(opt_dict, mu):
         opt_rom = opt_dict['opt_rom']
         return opt_rom.output_d_mu(opt_rom.parameters.parse(mu), return_array=True, use_adjoint=True)
-   
+
 With this definitions, we can start the optimization method.
 
 .. jupyter-execute::
@@ -671,12 +671,12 @@ With this definitions, we can start the optimization method.
                                         'evaluation_points': [],
                                         'time': np.inf,
                                         'enrichments': 0}
-    opt_dict = {} 
+    opt_dict = {}
     tic = perf_counter()
-    opt_along_path_result = minimize(partial(record_results_and_enrich, rom_objective_functional, 
+    opt_along_path_result = minimize(partial(record_results_and_enrich, rom_objective_functional,
                                              opt_along_path_minimization_data, opt_dict),
                                      initial_guess,
-                                     method='L-BFGS-B', 
+                                     method='L-BFGS-B',
                                      jac=partial(compute_gradient_with_opt_rom, opt_dict),
                                      bounds=(ranges, ranges),
                                      options={'ftol': 1e-15, 'gtol': 5e-5})
@@ -715,7 +715,7 @@ in the greedy algorithm.
 .. jupyter-execute::
 
     def record_results_and_enrich_adaptively(function, data, opt_dict, mu):
-        opt_rom = opt_dict['opt_rom'] 
+        opt_rom = opt_dict['opt_rom']
         primal_estimate = opt_rom.estimate_error(opt_rom.parameters.parse(mu))
         if primal_estimate > 1e-2:
             print('Enriching the space because primal estimate is {} ...'.format(primal_estimate))
@@ -733,9 +733,9 @@ in the greedy algorithm.
         data['num_evals'] += 1
         data['evaluation_points'].append(fom.parameters.parse(mu).to_numpy())
         data['evaluations'].append(QoI[0])
-        opt_dict['opt_rom'] = opt_rom 
+        opt_dict['opt_rom'] = opt_rom
         return QoI
-    
+
     def compute_gradient_with_opt_rom(opt_dict, mu):
         opt_rom = opt_dict['opt_rom']
         return opt_rom.output_d_mu(opt_rom.parameters.parse(mu), return_array=True, use_adjoint=True)
@@ -749,10 +749,10 @@ in the greedy algorithm.
                                                    'enrichments': 0}
     opt_dict = {'opt_rom': opt_rom}
     tic = perf_counter()
-    opt_along_path_adaptively_result = minimize(partial(record_results_and_enrich_adaptively, rom_objective_functional, 
+    opt_along_path_adaptively_result = minimize(partial(record_results_and_enrich_adaptively, rom_objective_functional,
                                                         opt_along_path_adaptively_minimization_data, opt_dict),
                                                 initial_guess,
-                                                method='L-BFGS-B', 
+                                                method='L-BFGS-B',
                                                 jac=partial(compute_gradient_with_opt_rom, opt_dict),
                                                 bounds=(ranges, ranges),
                                                 options={'ftol': 1e-15, 'gtol': 5e-5})
@@ -776,26 +776,26 @@ compare all methods that we have discussed in this notebook.
 
     print('FOM with finite differences')
     report(fom_result, reference_minimization_data, reference_mu)
-    
+
     print('\nROM with finite differences')
     report(rom_result, RB_minimization_data, reference_mu)
-    
+
     print('\nFOM with gradient')
     report(opt_fom_result, opt_fom_minimization_data, reference_mu)
-    
+
     print('\nROM with gradient')
     report(opt_rom_result, opt_rom_minimization_data, reference_mu)
-    
+
     print('\nAlways enrich along the path')
     report(opt_along_path_result, opt_along_path_minimization_data, reference_mu)
-    
+
     print('\nAdaptively enrich along the path')
     report(opt_along_path_adaptively_result, opt_along_path_adaptively_minimization_data, reference_mu)
 
 .. jupyter-execute::
     :hide-code:
     :hide-output:
-    
+
     assert fom_result.nit == 7
     assert opt_along_path_result.nit == 7
     assert opt_along_path_minimization_data['num_evals'] == 9
@@ -811,12 +811,12 @@ for PDE-constrained optimization problems.
 We focused on several aspects of RB methods and showed how explicit gradient information
 helps to reduce the computational cost of the optimizer.
 We also saw that already standard RB methods may help to reduce the computational time.
-It is clear that standard RB methods are especially of interest if an 
+It is clear that standard RB methods are especially of interest if an
 optimization problem needs to be solved multiple times.
 
 Moreover, we focused on the lack of overall efficiency of standard RB methods.
 To overcome this, we reduced the (normally) expensive offline time by choosing larger
-tolerances for the greedy algorithm. 
+tolerances for the greedy algorithm.
 We have also seen a way to overcome
 the traditional offline/online splitting by only enriching the model along
 the path of optimization or (even better) only enrich
@@ -828,9 +828,9 @@ For faster and more robust optimization algorithms we refer to the textbooks
 `CGT00 <https://epubs.siam.org/doi/book/10.1137/1.9780898719857>`__ and
 `NW06 <https://link.springer.com/book/10.1007/978-0-387-40065-5>`__.
 For recent research on combining trust-region methods with model reduction for
-PDE-constrained optimization problems we refer to 
-`YM13 <https://epubs.siam.org/doi/abs/10.1137/120869171>`__, 
-`QGVW17 <https://epubs.siam.org/doi/abs/10.1137/16M1081981>`__ and 
+PDE-constrained optimization problems we refer to
+`YM13 <https://epubs.siam.org/doi/abs/10.1137/120869171>`__,
+`QGVW17 <https://epubs.siam.org/doi/abs/10.1137/16M1081981>`__ and
 `KMSOV20 <https://arxiv.org/abs/2006.09297>`__ where for the latter a pyMOR
 implementation is available as supplementary material.
 
