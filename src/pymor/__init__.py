@@ -68,7 +68,8 @@ if 'PYMOR_DEFAULTS' in os.environ:
 else:
     filename = os.path.join(os.getcwd(), 'pymor_defaults.py')
     if os.path.exists(filename):
-        if os.stat(filename).st_uid != os.getuid():
+        from pymor.tools.io import file_owned_by_current_user
+        if not file_owned_by_current_user(filename):
             raise IOError('Cannot load pyMOR defaults from config file ' + filename
                           + ': not owned by user running Python interpreter')
         print('Loading pyMOR defaults from file ' + filename)
