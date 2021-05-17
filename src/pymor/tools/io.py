@@ -11,7 +11,7 @@ from typing import Optional, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
-from scipy.io import loadmat, mmread
+from scipy.io import loadmat, mmread, mmwrite, savemat
 from scipy.sparse import issparse, spmatrix
 
 from pymor.core.logger import getLogger
@@ -41,6 +41,15 @@ def _loadmat(path: Path, key: Optional[str] = None) -> MatrixType:
         return data[0]
 
 
+def _savemat(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+    if key is None:
+        raise IOError('"key" must be specified for MATLAB file')
+    try:
+        savemat(path, {key: matrix})
+    except Exception as e:
+        raise IOError(e)
+
+
 def _mmread(path: Path, key: Optional[str] = None) -> MatrixType:
     if key:
         raise IOError('Cannot specify "key" for Matrix Market file')
@@ -49,6 +58,17 @@ def _mmread(path: Path, key: Optional[str] = None) -> MatrixType:
         if issparse(matrix):
             matrix = matrix.tocsc()
         return matrix
+    except Exception as e:
+        raise IOError(e)
+
+
+def _mmwrite(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+    if key:
+        raise IOError('Cannot specify "key" for Matrix Market file')
+    try:
+        with open(path, 'wb') as f:
+            # when mmwrite is given a string, it will append '.mtx'
+            mmwrite(f, matrix)
     except Exception as e:
         raise IOError(e)
 
@@ -77,11 +97,39 @@ def _load(path: Path, key: Optional[str] = None) -> MatrixType:
     return matrix
 
 
+def _save(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+    if key:
+        raise IOError('Cannot specify "key" for NPY file')
+    try:
+        np.save(path, matrix)
+    except Exception as e:
+        raise IOError(e)
+
+
+def _savez(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+    try:
+        if key is None:
+            np.savez(path, matrix)
+        else:
+            np.savez(path, **{key: matrix})
+    except Exception as e:
+        raise IOError(e)
+
+
 def _loadtxt(path: Path, key: Optional[str] = None) -> MatrixType:
     if key:
         raise IOError('Cannot specify "key" for TXT file')
     try:
         return np.loadtxt(path)
+    except Exception as e:
+        raise IOError(e)
+
+
+def _savetxt(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+    if key:
+        raise IOError('Cannot specify "key" for TXT file')
+    try:
+        return np.savetxt(path, matrix)
     except Exception as e:
         raise IOError(e)
 
@@ -148,6 +196,47 @@ def load_matrix(path: Union[str, Path], key: Optional[str] = None) -> Union[Arra
             pass
 
     raise IOError(f'Could not load file {path} (key = {key})')
+
+
+def save_matrix(path: Union[str, Path], matrix: Union[ArrayLike, spmatrix], key: Optional[str] = None) -> None:
+    """Save matrix to file.
+
+    Parameters
+    ----------
+    path
+        Path to the file.
+    matrix
+        Matrix to save.
+    key
+        Key of the matrix (only for NPY, NPZ, and MATLAB files).
+
+    Raises
+    ------
+    IOError
+        If saving fails.
+    """
+    logger = getLogger('pymor.tools.io.save_matrix')
+    logger.info('Saving matrix to file %s', path)
+
+    # convert if path is str
+    path = Path(path)
+    extension = _get_file_extension(path)
+
+    file_format_map = {
+        '.mat': ('MATLAB', _savemat),
+        '.mtx': ('Matrix Market', _mmwrite),
+        '.mtz.gz': ('Matrix Market', _mmwrite),
+        '.npy': ('NPY', _save),
+        '.npz': ('NPZ', _savez),
+        '.txt': ('Text', _savetxt),
+    }
+
+    if extension in file_format_map:
+        file_type, saver = file_format_map[extension]
+        logger.info(file_type + ' file detected.')
+        return saver(path, matrix, key)
+
+    raise IOError(f'Unknown extension "{extension}"')
 
 
 @contextmanager
