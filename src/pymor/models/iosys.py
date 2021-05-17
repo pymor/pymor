@@ -1359,6 +1359,35 @@ class SecondOrderModel(InputStateOutputModel):
         return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
+    def to_matrices(self):
+        """Return operators as matrices.
+
+        Returns
+        -------
+        M
+            The |NumPy array| or |SciPy spmatrix| M.
+        E
+            The |NumPy array| or |SciPy spmatrix| E.
+        K
+            The |NumPy array| or |SciPy spmatrix| K.
+        B
+            The |NumPy array| or |SciPy spmatrix| B.
+        Cp
+            The |NumPy array| or |SciPy spmatrix| Cp.
+        Cv
+            The |NumPy array| or |SciPy spmatrix| Cv or `None` (if Cv is a `ZeroOperator`).
+        D
+            The |NumPy array| or |SciPy spmatrix| D or `None` (if D is a `ZeroOperator`).
+        """
+        M = to_matrix(self.M)
+        E = to_matrix(self.E)
+        K = to_matrix(self.K)
+        B = to_matrix(self.B)
+        Cp = to_matrix(self.Cp)
+        Cv = None if isinstance(self.Cv, ZeroOperator) else to_matrix(self.Cv)
+        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D)
+        return M, E, K, B, Cp, Cv, D
+
     @classmethod
     def from_files(cls, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, cont_time=True,
                    state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
@@ -1417,6 +1446,40 @@ class SecondOrderModel(InputStateOutputModel):
         return cls.from_matrices(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
+
+    def to_files(self, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None):
+        """Write operators to files as matrices.
+
+        Parameters
+        ----------
+        M_file
+            The name of the file (with extension) containing M.
+        E_file
+            The name of the file (with extension) containing E.
+        K_file
+            The name of the file (with extension) containing K.
+        B_file
+            The name of the file (with extension) containing B.
+        Cp_file
+            The name of the file (with extension) containing Cp.
+        Cv_file
+            The name of the file (with extension) containing Cv or `None` if D is a `ZeroOperator`.
+        D_file
+            The name of the file (with extension) containing D or `None` if D is a `ZeroOperator`.
+        """
+        if Cv_file is None and not isinstance(self.Cv, ZeroOperator):
+            raise ValueError('Cv is not zero, Cv_file must be given')
+        if D_file is None and not isinstance(self.D, ZeroOperator):
+            raise ValueError('D is not zero, D_file must be given')
+
+        from pymor.tools.io import save_matrix
+
+        M, E, K, B, Cp, Cv, D = self.to_matrices()
+        for mat, file in [(M, M_file), (E, E_file), (K, K_file),
+                          (B, B_file), (Cp, Cp_file), (Cv, Cv_file), (D, D_file)]:
+            if mat is None:
+                continue
+            save_matrix(file, mat)
 
     @cached
     def to_lti(self):
