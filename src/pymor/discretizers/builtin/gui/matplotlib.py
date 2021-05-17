@@ -190,17 +190,8 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
     from qtpy.QtWidgets import QSizePolicy
-
-    import Qt
-    if Qt.__qt_version__[0] == '4':
-        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-    elif Qt.__qt_version__[0] == '5':
-        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-    else:
-        raise NotImplementedError
-
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
-
     from pymor.discretizers.builtin.grids.oned import OnedGrid
 
     # noinspection PyShadowingNames

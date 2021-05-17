@@ -19,6 +19,7 @@ from pymor.core.exceptions import QtMissing
 try:
     from qtpy import QtWidgets
     from qtpy import QtCore
+except ImportError:
     raise QtMissing()
 from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
