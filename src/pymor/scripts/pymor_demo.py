@@ -14,7 +14,8 @@ import runpy
 import argparse
 import functools
 
-if __name__ == '__main__':
+
+def run():
     parser = argparse.ArgumentParser(description='Launcher script for all available pyMOR demos.',
                                      epilog=f'Example: {sys.argv[0]} burgers 1')
 
@@ -65,3 +66,7 @@ Arguments:
             sys.exit(-1)
         _run(modules[shorts.index(demo)])
     usage()
+
+
+if __name__ == '__main__':
+    run()

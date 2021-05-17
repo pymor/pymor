@@ -963,7 +963,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
         F = LincombOperator(operators=F, coefficients=F_coefficients, name='rhs')
 
     if grid.reference_element in (triangle, square):
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=0)
+        visualizer = PatchVisualizer(grid=grid, codim=0)
     elif grid.reference_element is line:
         visualizer = OnedVisualizer(grid=grid, codim=0)
     else:

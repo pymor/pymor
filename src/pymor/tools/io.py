@@ -143,3 +143,15 @@ def change_to_directory(name):
         yield os.chdir(name)
     finally:
         os.chdir(old_cwd)
+
+def file_owned_by_current_user(filename):
+    try:
+        return os.stat(filename).st_uid == os.getuid()
+    except AttributeError:
+        # this is actually less secure than above since getuser looks in env for username
+        # a portable way to getuid might be in psutil
+        from getpass import getuser
+        import win32security
+        f = win32security.GetFileSecurity(filename, win32security.OWNER_SECURITY_INFORMATION)
+        username, _, _ =  win32security.LookupAccountSid(None, f.GetSecurityDescriptorOwner())
+        return username == getuser()
