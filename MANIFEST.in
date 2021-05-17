@@ -13,7 +13,7 @@ graft src/pymordemos/minimal_cpp_demo
 graft src/pymortests/testdata
 graft src/pymortests/data
 graft docs
-graft notebooks 
+graft notebooks
 
 include *.md
 include *.py

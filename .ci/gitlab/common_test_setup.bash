@@ -29,7 +29,7 @@ python src/pymor/scripts/check_reqs.py requirements-optional.txt
 export PYTHONHASHSEED=0
 
 python setup.py build_ext -i
-# workaround import mpl with no ~/.cache/matplotlib/fontconfig*.json 
+# workaround import mpl with no ~/.cache/matplotlib/fontconfig*.json
 # present segfaulting the interpreter
 python -c "from matplotlib import pyplot" || true
 
