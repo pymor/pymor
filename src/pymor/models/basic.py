@@ -280,6 +280,14 @@ class InstationaryModel(Model):
         return self.time_stepper.solve(
                 initial_data=self.initial_data, operator=self.operator, rhs=self.rhs, mass=self.mass, mu=mu)
 
+    def _compute_solution_bootstrap(self, mu=None):
+        return self.time_stepper.bootstrap(
+                initial_data=self.initial_data, operator=self.operator, rhs=self.rhs, mass=self.mass, mu=mu,
+                reserve=False)
+
+    def _compute_solution_step(self, t, data, mu=None):
+        return self.time_stepper.step(t, data, mu=mu)
+
     def to_lti(self):
         """Convert model to |LTIModel|.
 
