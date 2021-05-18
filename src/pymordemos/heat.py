@@ -5,7 +5,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.linalg as spla
 from typer import Argument, run
 
 
@@ -17,7 +16,6 @@ from pymor.core.config import config
 from pymor.core.logger import set_log_levels
 from pymor.discretizers.builtin import discretize_instationary_cg
 from pymor.models.iosys import LTIModel
-from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
 from pymor.reductors.h2 import IRKAReductor, TSIAReductor, OneSidedIRKAReductor
 from pymor.reductors.mt import MTReductor
@@ -94,19 +92,7 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
             print('Skipped H_inf-norm calculation due to missing slycot.')
         print(f'{reductor_short_name} relative Hankel-error: {err.hankel_norm() / lti.hankel_norm():e}')
     elif isinstance(rom, LTIModel):
-        # use inner product formula based on the pole-residue form
-        A = rom.A.matrix
-        B = rom.B.matrix
-        C = rom.C.matrix
-        E = None if isinstance(rom.E, IdentityOperator) else rom.E.matrix
-        lam, X = spla.eig(A, E)
-        C = C @ X
-        B = spla.solve(X if E is None else E @ X, B)
-        fom_norm = lti.h2_norm()
-        rom_norm = rom.h2_norm()
-        inner_product = sum((C[:, i:i+1].T @ lti.eval_tf(-lam[i]) @ B[i:i+1, :].T)[0, 0]
-                            for i in range(r))
-        error = np.sqrt(fom_norm**2 - 2 * inner_product.real + rom_norm**2)
+        error = np.sqrt(lti.h2_norm()**2 - 2 * lti.h2_inner(rom).real + rom.h2_norm()**2)
         print(f'{reductor_short_name} relative H_2-error:    {error / lti.h2_norm():e}')
     else:
         print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / lti.h2_norm():e}')
