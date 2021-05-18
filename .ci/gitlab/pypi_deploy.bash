@@ -12,7 +12,6 @@ if [[ "x${CI_COMMIT_TAG}" == "x" ]] ; then
     export TWINE_USERNAME=${TESTPYPI_USER}
     export TWINE_PASSWORD=${TESTPYPI_TOKEN}
 else
-    export TWINE_REPOSITORY_URL=https://pypi.org/legacy/
     export TWINE_USERNAME=${PYPI_USER}
     export TWINE_PASSWORD=${PYPI_TOKEN}
 fi
