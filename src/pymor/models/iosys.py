@@ -2376,3 +2376,78 @@ class BilinearModel(InputStateOutputModel):
             f'    bilinear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
         )
+
+
+def _lti_to_poles_b_c(lti):
+    """Compute poles and residues.
+
+    Parameters
+    ----------
+    lti
+        |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
+        The D operator is ignored.
+
+    Returns
+    -------
+    poles
+        1D |NumPy array| of poles.
+    b
+        |NumPy array| of shape `(lti.order, lti.dim_input)`.
+    c
+        |NumPy array| of shape `(lti.order, lti.dim_output)`.
+    """
+    A = to_matrix(lti.A, format='dense')
+    B = to_matrix(lti.B, format='dense')
+    C = to_matrix(lti.C, format='dense')
+    if isinstance(lti.E, IdentityOperator):
+        poles, X = spla.eig(A)
+        EX = X
+    else:
+        E = to_matrix(lti.E, format='dense')
+        poles, X = spla.eig(A, E)
+        EX = E @ X
+    b = spla.solve(EX, B)
+    c = (C @ X).T
+    return poles, b, c
+
+
+def _poles_b_c_to_lti(poles, b, c):
+    r"""Create an |LTIModel| from poles and residue rank-1 factors.
+
+    Returns an |LTIModel| with real matrices such that its transfer
+    function is
+
+    .. math::
+        \sum_{i = 1}^r \frac{c_i b_i^T}{s - \lambda_i}
+
+    where :math:`\lambda_i, b_i, c_i` are the poles and residue rank-1
+    factors.
+
+    Parameters
+    ----------
+    poles
+        Sequence of poles.
+    b
+        |NumPy array| of shape `(rom.order, rom.dim_input)`.
+    c
+        |NumPy array| of shape `(rom.order, rom.dim_output)`.
+
+    Returns
+    -------
+    |LTIModel|.
+    """
+    A, B, C = [], [], []
+    for i, pole in enumerate(poles):
+        if pole.imag == 0:
+            A.append(pole.real)
+            B.append(b[i].real)
+            C.append(c[i].real[:, np.newaxis])
+        elif pole.imag > 0:
+            A.append([[pole.real, pole.imag],
+                      [-pole.imag, pole.real]])
+            B.append(np.vstack([2 * b[i].real, -2 * b[i].imag]))
+            C.append(np.hstack([c[i].real[:, np.newaxis], c[i].imag[:, np.newaxis]]))
+    A = spla.block_diag(*A)
+    B = np.vstack(B)
+    C = np.hstack(C)
+    return LTIModel.from_matrices(A, B, C)
