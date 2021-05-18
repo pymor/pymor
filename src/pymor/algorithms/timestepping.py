@@ -595,6 +595,159 @@ class ExplicitEulerTimeStepper(TimeStepper):
         return t_np1, U_np1, interpolate
 
 
+class ExplicitRungeKuttaTimeStepper(TimeStepper):
+    """Explicit Runge-Kutta :class:`TimeStepper`.
+
+    Solves equations of the form ::
+
+        M * d_t u + A(u, mu, t) = F(mu, t).
+                     u(mu, t_0) = u_0(mu),
+
+    by a Runge-Kutta method.
+
+    Parameters
+    ----------
+    method
+        Either a string identifying the method or a tuple (c, A, b) of butcher arrays.
+    nt
+        The number of time-steps the time-stepper will perform.
+    initial_time
+        The time at which to begin time-stepping.
+    end_time
+        The time until which to perform time-stepping.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
+        calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
+        returned, using an appropriate interpolation of the respective time stepper.
+    """
+
+    # TODO: add Hermite interpolation
+
+    steps = 1
+    _methods = {'explicit_euler': (np.array([0,]), np.array([[0,],]), np.array([1,])),
+                'RK1':            (np.array([0,]), np.array([[0,],]), np.array([1,])),
+                'heun2':          (np.array([0, 1]), np.array([[0, 0], [1, 0]]), np.array([1/2, 1/2])),
+                'midpoint' :      (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
+                'ralston' :       (np.array([0, 2/3]), np.array([[0, 0], [2/3, 0]]), np.array([1/4, 3/4])),
+                'RK2' :           (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
+                'simpson' :       (np.array([0, 1/2, 1]),
+                                   np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
+                                   np.array([1/6, 4/6, 1/6])),
+                'heun3' :         (np.array([0, 1/3, 2/3]),
+                                   np.array([[0, 0, 0], [1/3, 0, 0], [0, 2/3, 0]]),
+                                   np.array([1/4, 0, 3/4])),
+                'RK3' :           (np.array([0, 1/2, 1]),
+                                   np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
+                                   np.array([1/6, 4/6, 1/6])),
+                '3/8' :           (np.array([0, 1/3, 2/3, 1]),
+                                   np.array([[0, 0, 0, 0], [1/3, 0, 0, 0], [-1/3, 1, 0, 0], [1, -1, 1, 0]]),
+                                   np.array([1/8, 3/8, 3/8, 1/8])),
+                'RK4' :           (np.array([0, 1/2, 1/2, 1]),
+                                   np.array([[0, 0, 0, 0], [1/2, 0, 0, 0], [0, 1/2, 0, 0], [0, 0, 1, 0]]),
+                                   np.array([1/6, 1/3, 1/3, 1/6])),
+                }
+
+    def __init__(self, method, nt, initial_time, end_time, num_values=None):
+        super().__init__(initial_time=initial_time, end_time=end_time, num_values=num_values)
+
+        assert isinstance(method, (tuple, str))
+        if isinstance(method, str):
+            assert method in self._methods.keys()
+            self._c, self._A, self._b = self._methods[method]
+        else:
+            raise RuntimeError('Arbitrary butcher arrays not implemented yet!')
+
+        assert isinstance(nt, Number)
+        assert nt > 0
+        self.dt = (self.end_time - self.initial_time) / nt
+        self.__auto_init(locals())
+
+
+    def _bootstrap(self, initial_data, operator, rhs, mass, mu):
+        # prepare operator
+        if not (operator.parametric and 't' in operator.parameters):
+            operator = operator.assemble(mu=mu)
+        # prepare the func f in d_t y = f(t, y)
+        if isinstance(rhs, ZeroOperator):
+            if isinstance(mass, IdentityOperator):
+                def func(t, y):
+                    mu_t = mu.with_(t=t) or Mu({'t': t})
+                    f_y = operator.apply(y, mu=mu_t)
+                    f_y *= -1
+                    return f_y
+            else:
+                def func(t, y):
+                    mu_t = mu.with_(t=t) or Mu({'t': t})
+                    f_y = operator.apply(y, mu=mu_t)
+                    f_y *= -1
+                    return mass.apply_inverse(f_y)
+        elif not (rhs.parametric and 't' in rhs.parameters):
+            rhs = rhs.as_vector(mu=mu)
+            if isinstance(mass, IdentityOperator):
+                def func(t, y):
+                    mu_t = mu.with_(t=t) or Mu({'t': t})
+                    f_y = operator.apply(y, mu=mu_t)
+                    f_y *= -1
+                    f_y += rhs
+                    return f_y
+            else:
+                def func(t, y):
+                    mu_t = mu.with_(t=t) or Mu({'t': t})
+                    f_y = operator.apply(y, mu=mu_t)
+                    f_y *= -1
+                    f_y += rhs
+                    return mass.apply_inverse(f_y)
+        else:
+            if isinstance(mass, IdentityOperator):
+                def func(t, y):
+                    mu_t = mu.with_(t=t) or Mu({'t': t})
+                    f_y = operator.apply(y, mu=mu_t)
+                    f_y *= -1
+                    f_y += rhs.as_vector(mu=mu_t)
+                    return f_y
+            else:
+                def func(t, y):
+                    mu_t = mu.with_(t=t) or Mu({'t': t})
+                    f_y = operator.apply(y, mu=mu_t)
+                    f_y *= -1
+                    f_y += rhs.as_vector(mu=mu_t)
+                    return mass.apply_inverse(f_y)
+        data = {'_func': func}
+        return initial_data.as_range_array(mu=mu.with_(t=self.initial_time) or Mu({'t': initial_time})), data
+
+    def _step(self, t_n, data, mu=None):
+        mu = mu.with_(t=t_n) or Mu({'t': t_n})
+        # extract data
+        f = data['_func']
+        U_n = data['_previous_steps'][-1]
+        t_np1 = t_n + self.dt
+        # get method
+        c, A, b = self._c, self._A, self._b
+        # compute stages
+        s = len(c)
+        stages = U_n.space.empty(reserve=s)
+        for j in range(s):
+            t_n_j = t_n + self.dt*c[j]
+            U_n_j = U_n.copy()
+            for l in range(j):
+                U_n_j.axpy(self.dt*A[j][l], stages[l])
+            U_n_j = f(t_n_j, U_n_j)
+            stages.append(U_n_j, remove_from_other=True)
+        # compute step
+        U_np1 = U_n.copy()
+        for j in range(s):
+            U_np1.axpy(self.dt*b[j], stages[j])
+
+        def interpolate(t):
+            assert floatcmp.almost_less(t_n, t)
+            assert floatcmp.almost_less(t, t_np1)
+            # compute P1-Lagrange interpolation
+            dt = t_np1 - t_n
+            return (t_np1 - t)/dt * U_n + (t - t_n)/dt * U_np1
+
+        return t_np1, U_np1, interpolate
+
+
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
     time_stepper = ImplicitEulerTimeStepper(nt=nt, initial_time=t0, end_time=t1, num_values=num_values,
                                             solver_options=solver_options, interpolation_order=0)
