@@ -6,6 +6,7 @@ import asyncio
 from math import ceil
 import numpy as np
 from queue import LifoQueue
+from threading import Lock
 
 from pymor.algorithms.pod import pod
 from pymor.core.base import BasicObject, abstractmethod
@@ -281,6 +282,104 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
     return inc_hapod(len(slices),
                      lambda i: U[slices[i]: slices[i]+chunk_size],
                      eps, omega, product=product, executor=executor)
+
+
+def inc_model_hapod(m, mus, num_steps_per_chunk, eps, omega, product=None):
+    """Incremental Hierarchical Approximate POD.
+
+    This computes the incremental HAPOD from [HLR18]_ for a given instationary |Model| and given parameters during
+    timestepping.
+
+    Note: currently restricted to time steppers with either num_values or nt specified (i.e. those with an apriori
+          fixed trajectory length).
+
+    Parameters
+    ----------
+    m
+        The model used to obtain the solution trajectories.
+	mus
+		List of parameters used to obtain solution trajectories.
+    num_steps_per_chunk
+        The maximum number of vectors to consider for a single POD.
+    eps
+        Desired l2-mean approximation error.
+    omega
+        Tuning parameter (0 < omega < 1) to balance performance with
+        approximation quality.
+    product
+        Inner product |Operator| w.r.t. which to compute the POD.
+
+    Returns
+    -------
+    modes
+        The computed POD modes.
+    svals
+        The associated singular values.
+    snap_count
+        The total number of input snapshot vectors.
+    """
+    logger = getLogger('pymor.algorithms.hapod.inc_model_hapod')
+
+    assert isinstance(mus, (tuple, list))
+    num_trajectories = len(mus)
+
+    assert m.time_stepper.num_values or m.time_stepper.nt #
+    num_steps_per_trajectory = m.time_stepper.num_values or m.time_stepper.nt
+
+    lock = Lock() # does not matter which kind of lock we use
+    persistent_data = {
+        'mu_ind': 0,
+        't': m.time_stepper.initial_time,
+        'data': None}
+
+    # function to be called within hapod
+    def compute_next_snapshots(step):
+        if lock.locked():
+            raise RuntimeError('Not implemented for parallel executors yet!')
+        with lock:
+            U = m.solution_space.empty(reserve=num_steps_per_chunk)
+            if persistent_data['mu_ind'] >= num_trajectories:
+                logger.debug('all mus processed, returning empty U')
+                return U
+            while persistent_data['mu_ind'] < num_trajectories:
+                mu = mus[persistent_data['mu_ind']]
+                if not persistent_data['data']:
+                    logger.debug(f'bootstrapping for mu={mu} ...')
+                    # we are the first to process this mu, prepare
+                    persistent_data['t'], _, persistent_data['data'] = \
+                        m._compute_solution_bootstrap(mu=mu)
+                # get data for this mu
+                t, data = persistent_data['t'], persistent_data['data']
+                # compute steps
+                if not (t > m.T or np.allclose(t, m.T)):
+                    logger.debug(f'stepping for mu={mu} ...')
+                while not (t > m.T or np.allclose(t, m.T)):
+                    t, U_t = m._compute_solution_step(t=t, data=data, mu=mu)
+                    U.append(U_t)
+                    if len(U) == num_steps_per_chunk:
+                        logger.debug(f'  reached maximum chunk length of {num_steps_per_chunk} for mu={mu}, interrupting!')
+                        # we are done with this U, save checkpoint and exit
+                        persistent_data['t'] = t
+                        persistent_data['data'] = data
+                        return U
+                # we are done with this trajectory, but U is not full
+                # reset persistent data and continue with the next mu
+                logger.debug(f'  done stepping for mu={mu}!')
+                persistent_data['t'] = m.time_stepper.initial_time
+                persistent_data['data'] = None
+                persistent_data['mu_ind'] += 1
+                continue
+            return U
+
+    logger.info(f'computing HAPOD of {num_trajectories} trajectories of length {num_steps_per_trajectory} each ...')
+
+    return inc_hapod(steps=int(np.ceil((num_trajectories*num_steps_per_trajectory)/num_steps_per_chunk + 1)),
+                     snapshots=compute_next_snapshots,
+                     eps=eps,
+                     omega=omega,
+                     product=product,
+                     executor=None,
+                     eval_snapshots_in_executor=False)
 
 
 def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=None):
