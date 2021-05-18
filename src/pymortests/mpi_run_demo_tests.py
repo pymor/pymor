@@ -4,8 +4,18 @@
 
 if __name__ == '__main__':
     from pymor.tools import mpi
-    import runpy
+    import pytest
+    import os
+    from pathlib import Path
 
+    this_dir = Path(__file__).resolve().parent
+    pymor_root_dir = (this_dir / '..' / '..').resolve()
+
+    result_file_fn = pymor_root_dir / 'pytest.mpirun.success'
+    try:
+        os.unlink(result_file_fn)
+    except FileNotFoundError:
+        pass
     # ensure that FEniCS visualization does nothing on all MPI ranks
     def monkey_plot():
         def nop(*args, **kwargs):
@@ -14,7 +24,7 @@ if __name__ == '__main__':
         try:
             # for MPI runs we need to import qtgui before pyplot
             # otherwise, if both pyside and pyqt5 are installed we'll get an error later
-            from Qt import QtGui
+            from qtpy import QtGui  # noqa F401
         except ImportError:
             pass
         try:
@@ -31,4 +41,7 @@ if __name__ == '__main__':
 
     mpi.call(monkey_plot)
 
-    runpy.run_module('pymortests.demos', init_globals=None, run_name='__main__', alter_sys=True)
+    demo = str(pymor_root_dir / 'src' / 'pymortests' / 'demos.py')
+    success = pytest.main(['-svx', '-k', 'test_demo', demo]) == pytest.ExitCode.OK
+    with open(result_file_fn, 'wt') as result_file:
+        result_file.write(f'{success}')

@@ -30,14 +30,13 @@ def setup_requires():
     return numpys + other + scipys
 
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['Qt.py>=1.2.4', 'packaging','diskcache', 'typer'] + setup_requires()
+install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click<8'] + setup_requires()
 install_suggests = {'ipython>=5.0': 'an enhanced interactive python shell',
                     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',
                     'gmsh': 'this downloads the proper Gmsh binary',
                     'meshio==4.2.0': 'needed to import Gmsh grids',
                     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
-                    'pyamg;python_version<"3.8"': 'algebraic multigrid solvers',
                     'pyevtk>=1.1': 'writing vtk output',
                     'sympy': 'symbolic mathematics',
                     'pygments': 'highlighting code',
@@ -53,7 +52,7 @@ doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipypara
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel', 
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout', 
-               'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19', 'PyQt5!=5.15.2,>5.7,!=5.15.2.*']
+               'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19', 'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3']
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
                 'pytest-instafail': 'pytest_instafail',

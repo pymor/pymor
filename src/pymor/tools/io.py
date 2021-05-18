@@ -8,6 +8,7 @@ import tempfile
 import os
 from contextlib import contextmanager
 import shutil
+from pathlib import Path
 
 from pymor.core.logger import getLogger
 
@@ -81,13 +82,14 @@ def _loadtxt(path, key=None):
 def load_matrix(path, key=None):
 
     logger = getLogger('pymor.tools.io.load_matrix')
-    logger.info('Loading matrix from file ' + path)
+    logger.info('Loading matrix from file %s', path)
 
-    path_parts = path.split('.')
-    if len(path_parts[-1]) == 3:
-        extension = path_parts[-1].lower()
-    elif path_parts[-1].lower() == 'gz' and len(path_parts) >= 2 and len(path_parts[-2]) == 3:
-        extension = '.'.join(path_parts[-2:]).lower()
+    # convert if path is str
+    path = Path(path)
+    if len(path.suffixes[-1]) == 3:
+        extension = path.suffixes[-1].lower()
+    elif path.suffixes[-1].lower() == 'gz' and len(path.suffixes) >= 2 and len(path.suffixes[-2]) == 3:
+        extension = '.'.join(path.suffixes[-2:]).lower()
     else:
         extension = None
 
@@ -129,3 +131,16 @@ def SafeTemporaryFileName(name=None, parent_dir=None):
     path = os.path.join(dirname, name)
     yield path
     shutil.rmtree(dirname)
+
+
+def file_owned_by_current_user(filename):
+    try:
+        return os.stat(filename).st_uid == os.getuid()
+    except AttributeError:
+        # this is actually less secure than above since getuser looks in env for username
+        # a portable way to getuid might be in psutil
+        from getpass import getuser
+        import win32security
+        f = win32security.GetFileSecurity(filename, win32security.OWNER_SECURITY_INFORMATION)
+        username, _, _ =  win32security.LookupAccountSid(None, f.GetSecurityDescriptorOwner())
+        return username == getuser()

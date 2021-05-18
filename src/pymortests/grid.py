@@ -10,7 +10,6 @@ import pytest
 from hypothesis import given, settings
 
 from pymor.core.exceptions import QtMissing
-from pymor.discretizers.builtin.gui.qt import stop_gui_processes
 from pymortests.fixtures.grid import hy_grids_with_visualize, hy_grid
 from pymortests.pickling import assert_picklable_without_dumps_function
 
@@ -507,5 +506,3 @@ def test_visualize(grids_with_visualize):
         g.visualize(U, g.dim)
     except QtMissing:
         pytest.xfail("Qt missing")
-    finally:
-        stop_gui_processes()
