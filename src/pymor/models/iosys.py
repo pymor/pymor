@@ -207,6 +207,51 @@ class InputOutputModel(Model):
 
         return out
 
+    @cached
+    def h2_norm(self, return_norm_only=True, **quad_kwargs):
+        """Compute the H2-norm using quadrature.
+
+        This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
+        function.
+
+        By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
+        optional argument `epsabs`).
+        It can be changed by using the `epsabs` keyword argument.
+
+        Parameters
+        ----------
+        return_norm_only
+            Whether to only return the approximate H2-norm.
+        quad_kwargs
+            Keyword arguments passed to `scipy.integrate.quad`.
+
+        Returns
+        -------
+        norm
+            Computed H2-norm.
+        norm_relerr
+            Relative error estimate (returned if `return_norm_only` is `False`).
+        info
+            Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`).
+            See `scipy.integrate.quad` documentation for more details.
+        """
+        if not self.cont_time:
+            raise NotImplementedError
+
+        import scipy.integrate as spint
+        quad_kwargs.setdefault('epsabs', 0)
+        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
+                              0, np.inf,
+                              **quad_kwargs)
+        norm = np.sqrt(quad_out[0] / np.pi)
+        if return_norm_only:
+            return norm
+        norm_relerr = quad_out[1] / (2 * quad_out[0])
+        if len(quad_out) == 2:
+            return norm, norm_relerr
+        else:
+            return norm, norm_relerr, quad_out[2:]
+
 
 class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
@@ -1036,51 +1081,6 @@ class TransferFunction(InputOutputModel):
         dtf = lambda s, mu=None: (other.eval_dtf(s, mu=mu) @ self.eval_tf(s, mu=mu)
                                   + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
         return self.with_(tf=tf, dtf=dtf)
-
-    @cached
-    def h2_norm(self, return_norm_only=True, **quad_kwargs):
-        """Compute the H2-norm using quadrature.
-
-        This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
-        function.
-
-        By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
-        optional argument `epsabs`).
-        It can be changed by using the `epsabs` keyword argument.
-
-        Parameters
-        ----------
-        return_norm_only
-            Whether to only return the approximate H2-norm.
-        quad_kwargs
-            Keyword arguments passed to `scipy.integrate.quad`.
-
-        Returns
-        -------
-        norm
-            Computed H2-norm.
-        norm_relerr
-            Relative error estimate (returned if `return_norm_only` is `False`).
-        info
-            Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`).
-            See `scipy.integrate.quad` documentation for more details.
-        """
-        if not self.cont_time:
-            raise NotImplementedError
-
-        import scipy.integrate as spint
-        quad_kwargs.setdefault('epsabs', 0)
-        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
-                              0, np.inf,
-                              **quad_kwargs)
-        norm = np.sqrt(quad_out[0] / np.pi)
-        if return_norm_only:
-            return norm
-        norm_relerr = quad_out[1] / (2 * quad_out[0])
-        if len(quad_out) == 2:
-            return norm, norm_relerr
-        else:
-            return norm, norm_relerr, quad_out[2:]
 
 
 class SecondOrderModel(InputStateOutputModel):
