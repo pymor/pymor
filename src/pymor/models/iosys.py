@@ -252,6 +252,32 @@ class InputOutputModel(Model):
         else:
             return norm, norm_relerr, quad_out[2:]
 
+    def h2_inner(self, lti):
+        """Compute H2 inner product with an |LTIModel|.
+
+        Uses the inner product formula based on the pole-residue form
+        (see, e.g., Lemma 1 in :cite:`ABG10`).
+
+        Parameters
+        ----------
+        lti
+            |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
+            The D operator is ignored.
+
+        Returns
+        -------
+        inner
+            H2 inner product.
+        """
+        assert isinstance(lti, LTIModel)
+
+        poles, b, c = _lti_to_poles_b_c(lti)
+        inner = sum(c[i].dot(lti.eval_tf(-poles[i]).dot(b[i]))
+                    for i in range(len(poles)))
+        inner = inner.conjugate()
+
+        return inner
+
 
 class InputStateOutputModel(InputOutputModel):
     """Base class for input-output systems with state space."""
