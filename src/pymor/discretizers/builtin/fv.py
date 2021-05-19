@@ -21,7 +21,6 @@ from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenter
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
 from pymor.discretizers.builtin.grids.subgrid import SubGrid, make_sub_grid_boundary_info
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
-from pymor.discretizers.builtin.inplace import iadd_masked, isub_masked
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.operators.constructions import ComponentProjectionOperator, LincombOperator, ZeroOperator
@@ -308,8 +307,8 @@ class NonlinearAdvectionOperator(Operator):
             if bi.has_neumann:
                 NUM_FLUX[NEUMANN_BOUNDARIES] = 0
 
-            iadd_masked(Ri, NUM_FLUX, SUPE[:, 0])
-            isub_masked(Ri, NUM_FLUX, SUPE[:, 1])
+            np.add.at(Ri, SUPE[:, 0], NUM_FLUX)
+            np.subtract.at(Ri, SUPE[:, 1], NUM_FLUX)
 
         R /= VOLS0
 
