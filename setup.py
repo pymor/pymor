@@ -122,9 +122,7 @@ def _setup(**kwargs):
     # versioneer already wraps it internally
     from numpy import get_include
     include_dirs = [get_include()]
-    ext_modules = [Extension("pymor.discretizers.builtin.grids._unstructured",
-                             ["src/pymor/discretizers/builtin/grids/_unstructured.pyx"],
-                             include_dirs=include_dirs)]
+    ext_modules = []
     # for some reason the *pyx files don't end up in sdist tarballs
     # -> manually add them as package data
     # this _still_ doesn't make them end up in the tarball however
