@@ -2376,3 +2376,178 @@ class BilinearModel(InputStateOutputModel):
             f'    bilinear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
         )
+
+
+class StokesDescriptorModel(InputStateOutputModel):
+    r"""Class for structured index-2 descriptor system.
+
+    This class describes input-state-output systems given by
+
+    .. math::
+        E x'(t)
+        & =
+            A x(t)
+            + G p(t)
+            + B u(t), \\
+        0
+        &=
+            G^T x(t), \\
+        y(t)
+        & =
+            C x(t)
+            + D u(t)
+
+    Parameters
+    ----------
+    A
+        The |Operator| A.
+    G
+        The |Operator| G.
+    B
+        The |Operator| B.
+    C
+        The |Operator| C.
+    D
+        The |Operator| D or `None` (then D is assumed to be zero).
+    E
+        The |Operator| E or `None` (then E is assumed to be identity).
+    estimator
+        An error estimator for the problem. This can be any object with an `estimate(U, mu, model)`
+        method. If `estimator` is not `None`, an `estimate(U, mu)` method is added to the model
+        which will call `estimator.estimate(U, mu, self)`.
+    visualizer
+        A visualizer for the problem. This can be any object with a `visualize(U, model, ...)`
+        method. If `visualizer` is not `None`, a `visualize(U, *args, **kwargs)` method is added to
+        the model which forwards its arguments to the visualizer's `visualize` method.
+    name
+        Name of the system.
+
+    Attributes
+    ----------
+    order
+        The order of the system.
+    input_dim
+        The number of inputs.
+    output_dim
+        The number of outputs.
+    A
+        The |Operator| A.
+    G
+        The |Operator| G.
+    B
+        The |Operator| B.
+    C
+        The |Operator| C.
+    D
+        The |Operator| D.
+    E
+        The |Operator| E.
+    """
+
+    def __init__(self, A, G, B, C, D=None, E=None, solver_options=None, error_estimator=None,
+                 visualizer=None, name=None):
+
+        assert A.linear and A.source == A.range
+        assert B.linear and B.range == A.source
+        assert C.linear and C.source == A.range
+
+        E = E or IdentityOperator(A.source)
+        assert E.linear and E.source == E.range == A.source
+
+        D = D or ZeroOperator(C.range, B.source)
+        assert D.linear and D.source == B.source and D.range == C.range
+
+        from pymor.vectorarrays.constructions import DivergenceFreeSubSpace
+
+        super().__init__(B.source.dim, DivergenceFreeSubSpace(E, G, True), C.range.dim, cont_time=True,
+                         error_estimator=error_estimator, visualizer=visualizer, name=name)
+        self.__auto_init(locals())
+
+    def leray_projection(self, solver_options=None, error_estimator=None, visualizer=None, name=None):
+        r"""Project system onto divergence free subspace resulting in an |LTIModel|.
+
+        Based on the |Operator|s :math:`E` and :math:`G` the projector
+
+        .. math::
+            P = I - G (G^T E^{-1} G)^{-1} G^T E^{-1}
+
+        can be defined. This function returns an |LTIModel| representing
+
+        .. math::
+            P E P^T x'(t)
+            & =
+                P A P^T x(t)
+                + P B u(t), \\
+            y(t)
+            & =
+                C P^T x(t)
+                + D u(t).
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        lti
+            |LTIModel| representing projected system.
+        """
+
+        from pymor.operators.constructions import LerayProjectedOperator
+        Aproj = LerayProjectedOperator(self.A, self.G, self.E)
+        Bproj = LerayProjectedOperator(self.B, self.G, self.E, projection_space='range')
+        Cproj = LerayProjectedOperator(self.C, self.G, self.E, projection_space='source')
+        Eproj = LerayProjectedOperator(self.E, self.G, self.E)
+
+        return LTIModel(Aproj, Bproj, Cproj, D=self.D, E=Eproj, cont_time=True, solver_options=solver_options,
+                        error_estimator=error_estimator, visualizer=visualizer, name=name)
+
+    def eval_tf(self, s, mu=None):
+        r"""Evaluate the transfer function.
+
+        The transfer function at :math:`s` is
+
+        .. math::
+            C(\mu) (s E(\mu) - A(\mu))^{-1} B(\mu) + D(\mu).
+
+        .. note::
+            Assumes that either the number of inputs or the number of outputs is much smaller than
+            the order of the system.
+
+        Parameters
+        ----------
+        s
+            Complex number.
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        tfs
+            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
+            `(self.output_dim, self.input_dim)`.
+        """
+        from pymor.vectorarrays.constructions import DivergenceFreeVectorArray
+
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+        A = self.A
+        B = self.B
+        C = self.C
+        D = self.D
+        E = self.E
+
+        sEmA = s * E - A
+        if self.input_dim <= self.output_dim:
+            tfs = C.apply(sEmA.apply_inverse(DivergenceFreeVectorArray(B.operator.as_range_array(),
+                                             self.B.range, is_projected=False), mu=mu),
+                          mu=mu).to_numpy().T
+        else:
+            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(DivergenceFreeVectorArray(
+                                                             C.operator.as_source_array(),
+                                                             self.C.source, is_projected=False),
+                                                             mu=mu),
+                                  mu=mu).to_numpy().conj()
+        if not isinstance(D, ZeroOperator):
+            tfs += to_matrix(D, format='dense', mu=mu)
+        return tfs

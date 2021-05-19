@@ -10,11 +10,14 @@ from numbers import Number
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
+from pymor.vectorarrays.block import BlockVectorArray
+from pymor.vectorarrays.constructions import DivergenceFreeVectorArray
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -1360,3 +1363,138 @@ class InducedNorm(ParametricObject):
         if self.raise_negative and np.any(norm_squared < 0):
             raise ValueError(f'norm is negative (square = {norm_squared})')
         return np.sqrt(norm_squared)
+
+
+class LerayProjectedOperator(CacheableObject, Operator):
+    """An |Operator| that implicitly handles a projected operator from a |StokesDescriptorModel|.
+
+    Based on linear |Operator|s :math:`E` and :math:`G` the projector
+
+    .. math::
+        P = I - G (G^T E^{-1} G)^{-1} G^T E^{-1}
+
+    can be defined. This operator represents a projected operator of the type
+    `P op P^T` if `projection_space` is `None`. If `projection_space == 'range'`
+    or `projection_space == 'source'` this operator represents `P op` or `op P^T`,
+    respectively. Additionally, the source and/or range space of this operator
+    is a |DivergenceFreeSubSpace|.
+    """
+
+    cache_region = 'memory'
+
+    def __init__(self, operator, div_op, mass_op, projection_space=None, solver_options=None, name=None):
+        from pymor.vectorarrays.constructions import DivergenceFreeSubSpace
+        if projection_space is None:
+            self.source = DivergenceFreeSubSpace(mass_op, div_op, trans=True)
+            self.range = DivergenceFreeSubSpace(mass_op, div_op, trans=False)
+        elif projection_space == 'range':
+            self.source = operator.source
+            self.range = DivergenceFreeSubSpace(mass_op, div_op, trans=False)
+        elif projection_space == 'source':
+            self.source = DivergenceFreeSubSpace(mass_op, div_op, trans=True)
+            self.range = operator.range
+        else:
+            raise ValueError('Unkown projection space.')
+
+        self.operator = operator
+        self.div_op = div_op
+        self.mass_op = mass_op
+        self.linear = operator.linear
+        self.projection_space = projection_space
+
+        from pymor.operators.block import BlockOperator
+        if self.projection_space is None:
+            self.block_operator = BlockOperator([
+                [operator, div_op],
+                [div_op.H, None]
+            ])
+        self.__auto_init(locals())
+
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        if self.projection_space is None and V in self.range:
+            rhs = BlockVectorArray([V._va, self.div_op.source.zeros(len(V))])
+            sps_sol = self.block_operator.apply_inverse(rhs, mu=mu, initial_guess=initial_guess,
+                                                        least_squares=least_squares).block(0)
+            return DivergenceFreeVectorArray(sps_sol, self.source)
+        else:
+            raise NotImplementedError
+
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        if self.projection_space is None and U in self.range:
+            rhs = BlockVectorArray([U._va, self.div_op.source.zeros(len(U))])
+            sps_sol = self.block_operator.apply_inverse_adjoint(rhs, mu=mu, initial_guess=initial_guess,
+                                                                least_squares=least_squares).block(0)
+            return DivergenceFreeVectorArray(sps_sol, self.source)
+        else:
+            raise NotImplementedError
+
+    def apply(self, U, mu=None):
+        if self.projection_space is None:
+            if U not in self.source:
+                raise NotImplementedError
+            else:
+                if self.operator == self.mass_op or self.operator.H == self.mass_op:
+                    return DivergenceFreeVectorArray(self.operator.apply(U.get_va(), mu=mu), self.range)
+                else:
+                    return DivergenceFreeVectorArray(self.operator.apply(U.get_va(), mu=mu),
+                                                     self.range, is_projected=False)
+        elif self.projection_space == 'source':
+            if U not in self.source:
+                raise NotImplementedError
+            else:
+                return self.operator.apply(U.get_va(), mu=mu)
+        elif self.projection_space == 'range':
+            if U not in self.operator.source:
+                raise NotImplementedError
+            else:
+                return DivergenceFreeVectorArray(self.operator.apply(U, mu=mu), self.range, is_projected=False)
+
+    def apply_adjoint(self, V, mu=None):
+        if self.projection_space is None:
+            if V not in self.source:
+                raise NotImplementedError
+            else:
+                if self.operator == self.mass_op or self.operator.H == self.mass_op:
+                    return DivergenceFreeVectorArray(self.operator.apply_adjoint(V.get_va(), mu=mu), self.range)
+                else:
+                    return DivergenceFreeVectorArray(self.operator.apply_adjoint(V.get_va(), mu=mu),
+                                                     self.range, is_projected=False)
+        elif self.projection_space == 'range':
+            if V not in self.range:
+                raise NotImplementedError
+            else:
+                return self.operator.apply_adjoint(V.get_va(), mu=mu)
+        elif self.projection_space == 'source':
+            if V not in self.operator.range:
+                raise NotImplementedError
+            else:
+                return DivergenceFreeVectorArray(self.operator.apply_adjoint(V, mu=mu),
+                                                 self.source.trans_projector(), is_projected=False)
+
+    def apply2(self, V, U, mu=None):
+        if self.projection_space is None:
+            if V in self.range and U in self.range:
+                return self.operator.apply2(V.get_va(), U.get_va(), mu=mu)
+            else:
+                raise NotImplementedError
+        else:
+            raise NotImplementedError
+
+    @cached
+    def as_range_array(self, mu=None):
+        ra = self.operator.as_range_array(mu=mu)
+        return self.range.project_onto_subspace(ra)
+
+    @cached
+    def as_source_array(self, mu=None):
+        sa = self.operator.as_source_array(mu=mu)
+        return self.source.project_onto_subspace(sa)
+
+    def assemble(self, mu=None):
+        operator = self.operator.assemble(mu)
+        div_op = self.div_op.assemble(mu)
+        mass_op = self.mass_op.assemble(mu)
+        if operator == self.operator and div_op == self.div_op and mass_op == self.mass_op:
+            return self
+        else:
+            return self.__class__(operator, div_op, mass_op, projection_space=self.projection_space)

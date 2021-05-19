@@ -12,7 +12,7 @@ from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockOperatorBase,
                                    BlockDiagonalOperator, SecondOrderModelOperator)
 from pymor.operators.constructions import (ZeroOperator, IdentityOperator, VectorArrayOperator, LincombOperator,
-                                           LowRankOperator, LowRankUpdatedOperator)
+                                           LowRankOperator, LowRankUpdatedOperator, LerayProjectedOperator)
 from pymor.vectorarrays.constructions import cat_arrays
 
 
@@ -212,6 +212,14 @@ class AssembleLincombRules(RuleTable):
             for (i, j) in np.ndindex(shape):
                 blocks[i, j] = ops[0].blocks[i, j] * c
             return operator_type(blocks)
+
+    @match_class_all(LerayProjectedOperator)
+    def action_LerayProjectedOperator(self, ops):
+        if not all(op.div_op == ops[0].div_op and op.mass_op == ops[0].mass_op
+                   and op.projection_space == ops[0].projection_space for op in ops):
+            raise RuleNotMatchingError
+        return LerayProjectedOperator(LincombOperator([o.operator for o in ops], self.coefficients),
+                                      ops[0].div_op, ops[0].mass_op, ops[0].projection_space)
 
     @match_generic(lambda ops: sum(1 for op in ops if isinstance(op, LowRankOperator)) >= 2)
     def action_merge_low_rank_operators(self, ops):

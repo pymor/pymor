@@ -21,9 +21,12 @@ class BlockVectorArray(VectorArray):
     :class:`~pymor.operators.block.BlockOperator`.
     """
 
-    def __init__(self, blocks, space):
+    def __init__(self, blocks, space=None):
         self._blocks = tuple(blocks)
-        self.space = space
+        if space is None:
+            self.space = BlockVectorSpace([block.space for block in self._blocks])
+        else:
+            self.space = space
         assert self._blocks_are_valid()
 
     def to_numpy(self, ensure_copy=False):
