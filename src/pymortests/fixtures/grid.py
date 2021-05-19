@@ -61,9 +61,11 @@ def hy_subgrid(draw):
         return SubGrid(grid, np.array(sample))
 
 
-hy_grid = hy_rect_grid() | hy_tria_grid() | hy_oned_grid() | hy_subgrid()
-hy_rect_or_tria_grid = hy_rect_grid() | hy_tria_grid()
 hy_unstructured_grid = hyst.just(UnstructuredTriangleGrid.from_vertices(
     np.array([[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]), np.array([[0, 1, 2], [0, 3, 4], [0, 4, 1]])))
+
+
+hy_grid = hy_rect_grid() | hy_tria_grid() | hy_oned_grid() | hy_subgrid() | hy_unstructured_grid
+hy_rect_or_tria_grid = hy_rect_grid() | hy_tria_grid()
 hy_grid_with_orthogonal_centers = hy_rect_grid() | hy_oned_grid()
 hy_grids_with_visualize = hy_rect_grid() | hy_tria_grid() | hy_oned_grid() | hy_unstructured_grid
