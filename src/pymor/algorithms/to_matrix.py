@@ -11,7 +11,7 @@ from pymor.algorithms.rules import RuleTable, match_class
 from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import (AdjointOperator, ComponentProjectionOperator, ConcatenationOperator,
                                            IdentityOperator, LincombOperator, LowRankOperator, LowRankUpdatedOperator,
-                                           VectorArrayOperator, ZeroOperator)
+                                           VectorArrayOperator, ZeroOperator, LerayProjectedOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
@@ -172,3 +172,7 @@ class ToMatrixRules(RuleTable):
             return np.zeros((op.range.dim, op.source.dim))
         else:
             return getattr(sps, format + '_matrix')((op.range.dim, op.source.dim))
+
+    @match_class(LerayProjectedOperator)
+    def action_LerayProjectedOperator(self, op):
+        raise NotImplementedError

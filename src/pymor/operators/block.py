@@ -6,7 +6,8 @@ import numpy as np
 
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.operators.interface import Operator
-from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.block import BlockVectorArray, BlockVectorSpace
 
 
 class BlockOperatorBase(Operator):
@@ -91,6 +92,35 @@ class BlockOperatorBase(Operator):
                 U_blocks[j] += Uj
 
         return self.source.make_array(U_blocks) if self.blocked_source else U_blocks[0]
+
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        # remove this or check if each block can be efficiently converted to NumpyMatrixOperator?
+        from pymor.algorithms.to_matrix import to_matrix
+        block_mat = NumpyMatrixOperator(to_matrix(self))
+        va = block_mat.source.from_numpy(V.to_numpy())
+        np_sol = block_mat.apply_inverse(va, mu=mu, initial_guess=None, least_squares=least_squares).to_numpy()
+        block_sol = []
+        start, end = 0, 0
+        for i in range(len(self.source.subspaces)):
+            end += self.source.subspaces[i].dim
+            block_sol.append(np_sol[:, start:end])
+            start += self.source.subspaces[i].dim
+        return BlockVectorArray([self.source.subspaces[i].from_numpy(block_sol[i]) for i in range(len(block_sol))])
+
+    def apply_inverse_adjoint(self, V, mu=None, initial_guess=None, least_squares=False):
+        # remove this or check if each block can be efficiently converted to NumpyMatrixOperator?
+        from pymor.algorithms.to_matrix import to_matrix
+        block_mat = NumpyMatrixOperator(to_matrix(self))
+        va = block_mat.source.from_numpy(V.to_numpy())
+        np_sol = block_mat.apply_inverse_adjoint(va, mu=mu, initial_guess=None,
+                                                 least_squares=least_squares).to_numpy()
+        block_sol = []
+        start, end = 0, 0
+        for i in range(len(self.source.subspaces)):
+            end += self.source.subspaces[i].dim
+            block_sol.append(np_sol[:, start:end])
+            start += self.source.subspaces[i].dim
+        return BlockVectorArray([self.source.subspaces[i].from_numpy(block_sol[i]) for i in range(len(block_sol))])
 
     def assemble(self, mu=None):
         blocks = np.empty(self.blocks.shape, dtype=object)
@@ -214,6 +244,11 @@ class BlockDiagonalOperator(BlockOperator):
         assert V in self.range
         U_blocks = [self.blocks[i, i].apply_adjoint(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
+
+    def apply2(self, V, U, mu=None):
+        assert U in self.source
+        assert V in self.range
+        return sum([self.blocks[i, i].apply2(V.block(i), U.block(i), mu=mu) for i in range(self.num_range_blocks)])
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
