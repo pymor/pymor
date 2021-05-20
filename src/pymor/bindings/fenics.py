@@ -194,6 +194,21 @@ if config.HAVE_FENICS:
             _apply_inverse(self.matrix, r.impl, v.impl, options)
             return r
 
+        def _real_apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None,
+                                                   least_squares=False, prepare_data=None):
+            if least_squares:
+                raise NotImplementedError
+            r = (self.range.real_zero_vector() if initial_guess is None else
+                 initial_guess.copy(deep=True))
+            options = self.solver_options.get('inverse') if self.solver_options else None
+            if not hasattr(self, '_matrix_transpose'):
+                self._matrix_transpose = self.matrix.copy()
+                mat = df.as_backend_type(self.matrix).mat()
+                mat_tr = df.as_backend_type(self._matrix_transpose).mat()
+                mat.transpose(mat_tr)
+            _apply_inverse(self._matrix_transpose, r.impl, u.impl, options)
+            return r
+
         def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
             if not all(isinstance(op, FenicsMatrixOperator) for op in operators):
                 return None
