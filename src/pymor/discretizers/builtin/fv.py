@@ -267,7 +267,7 @@ class NonlinearAdvectionOperator(Operator):
             self._fetch_grid_data()
 
         U = U.to_numpy()
-        R = np.zeros((len(U), self.source.dim))
+        R = np.zeros((len(U), self.source.dim + 1))
 
         bi = self.boundary_info
         gd = self._grid_data
@@ -310,9 +310,9 @@ class NonlinearAdvectionOperator(Operator):
             np.add.at(Ri, SUPE[:, 0], NUM_FLUX)
             np.subtract.at(Ri, SUPE[:, 1], NUM_FLUX)
 
-        R /= VOLS0
+        R[:, :-1] /= VOLS0
 
-        return self.range.make_array(R)
+        return self.range.make_array(R[:, :-1])
 
     def jacobian(self, U, mu=None):
         assert U in self.source and len(U) == 1
