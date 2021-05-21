@@ -6,6 +6,7 @@ import asyncio
 from math import ceil
 import numpy as np
 from queue import LifoQueue
+from threading import Thread
 
 from pymor.algorithms.pod import pod
 from pymor.core.base import BasicObject, abstractmethod
@@ -132,14 +133,6 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
             else:
                 return U.copy(), np.ones(len(U)), snap_count
 
-    # setup asyncio event loop
-    loop = asyncio.get_event_loop()
-    if loop.is_closed():
-        # probably we have closed the event loop ourselves in an earlier hapod call
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    loop_was_running = loop.is_running()
-
     # wrap Executer to ensure LIFO ordering of tasks
     # this ensures that PODs of parent nodes are computed as soon as all input data
     # is available
@@ -148,13 +141,16 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     else:
         executor = FakeExecutor
 
-    # perform HAPOD
-    result = loop.run_until_complete(hapod_step(tree.root))
+    # run new asyncio event loop in separate thread to not interfere with
+    # already running event loops (e.g. jupyter)
 
-    # shutdown event loop
-    if not loop_was_running:  # we haven't been inside a running event loop
-        loop.close()
-
+    def main():
+        nonlocal result
+        result = asyncio.run(hapod_step(tree.root))
+    result = None
+    hapod_thread = Thread(target=main)
+    hapod_thread.start()
+    hapod_thread.join()
     return result
 
 
@@ -342,19 +338,18 @@ class LifoExecutor:
         self.executor = executor
         self.max_workers = max_workers or executor._max_workers
         self.queue = LifoQueue()
-        self.loop = asyncio.get_event_loop()
         self.sem = asyncio.Semaphore(self.max_workers)
 
     def submit(self, f, *args):
-        future = self.loop.create_future()
+        future = asyncio.get_event_loop().create_future()
         self.queue.put((future, f, args))
-        self.loop.create_task(self.run_task())
+        asyncio.get_event_loop().create_task(self.run_task())
         return future
 
     async def run_task(self):
         await self.sem.acquire()
         future, f, args = self.queue.get()
-        executor_future = self.loop.run_in_executor(self.executor, f, *args)
+        executor_future = asyncio.get_event_loop().run_in_executor(self.executor, f, *args)
         executor_future.add_done_callback(lambda f, ff=future: self.done_callback(future, f))
 
     def done_callback(self, future, executor_future):
