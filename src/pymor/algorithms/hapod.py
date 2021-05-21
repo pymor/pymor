@@ -54,6 +54,10 @@ class IncHAPODTree(Tree):
         else:
             return (node - 1, -node)
 
+    def after(self, node):
+        if node < -1:
+            return (node+1,)
+
 
 class DistHAPODTree(Tree):
 
@@ -176,10 +180,11 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_sn
     Parameters
     ----------
     steps
-        The number of incremental POD updates.
+        The number of incremental POD updates. Has to agree with the lenght
+        of `snapshots`.
     snapshots
-        A mapping `snapshots(step)` returning for each incremental POD
-        step the associated snapshot vectors.
+        An iterable returning for each incremental POD step the associated
+        snapshot vectors.
     eps
         Desired l2-mean approximation error.
     omega
@@ -203,12 +208,24 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_sn
         The total number of input snapshot vectors.
     """
     tree = IncHAPODTree(steps)
-    return hapod(tree,
-                 lambda node: snapshots(-node - 1),
-                 std_local_eps(tree, eps, omega, False),
-                 product=product,
-                 executor=executor,
-                 eval_snapshots_in_executor=eval_snapshots_in_executor)
+    last_step = -1
+    snapshots = iter(snapshots)
+
+    def get_snapshots(node):
+        nonlocal last_step
+        step = -node - 1
+        assert step == last_step + 1
+        last_step += 1
+        return next(snapshots)
+
+    result = hapod(tree,
+                   get_snapshots,
+                   std_local_eps(tree, eps, omega, False),
+                   product=product,
+                   executor=executor,
+                   eval_snapshots_in_executor=eval_snapshots_in_executor)
+    assert last_step == steps - 1
+    return result
 
 
 def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, eval_snapshots_in_executor=False):
@@ -274,8 +291,6 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
     executor
         If not `None`, a :class:`concurrent.futures.Executor` object to use
         for parallelization.
-    eval_snapshots_in_executor
-        If `True` also parallelize the evaluation of the snapshot map.
 
     Returns
     -------
@@ -288,8 +303,12 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
     """
     chunk_size = ceil(len(U) / steps)
     slices = range(0, len(U), chunk_size)
-    return inc_hapod(len(slices),
-                     lambda i: U[slices[i]: slices[i]+chunk_size],
+
+    def snapshots():
+        for slice in slices:
+            yield U[slice: slice+chunk_size]
+
+    return inc_hapod(len(slices), snapshots(),
                      eps, omega, product=product, executor=executor)
 
 
