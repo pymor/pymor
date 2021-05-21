@@ -72,6 +72,12 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
 
     This is an implementation of the HAPOD algorithm from :cite:`HLR18`.
 
+    The HAPOD tree is traversed concurrently, ensuring that for each
+    for each node `n` the leaf children of `n` are visited only after
+    all non-leaf children of `n` have been handled. In particular for
+    incremental POD computation this property is used to ensure that
+    the input data is requested in correct order.
+
     Parameters
     ----------
     tree
@@ -111,7 +117,35 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     async def hapod_step(node):
         children = tree.children(node)
         if children:
-            modes, svals, snap_counts = zip(*await asyncio.gather(*(hapod_step(c) for c in children)))
+            # receive data from all children
+            leaf_children, non_leaf_children = [], []
+            for child in children:
+                if tree.children(child):
+                    non_leaf_children.append(child)
+                else:
+                    leaf_children.append(child)
+
+            # first process non-leaf children
+            if non_leaf_children:
+                non_leaf_modes, non_leaf_svals, non_leaf_snap_counts = zip(
+                    *await asyncio.gather(*(hapod_step(c) for c in non_leaf_children))
+                )
+            else:
+                non_leaf_modes, non_leaf_svals, non_leaf_snap_counts = (), (), ()
+
+            # then process leaf children
+            if leaf_children:
+                leaf_modes, leaf_svals, leaf_snap_counts = zip(
+                    *await asyncio.gather(*(hapod_step(c) for c in leaf_children))
+                )
+            else:
+                leaf_modes, leaf_svals, leaf_snap_counts = (), (), ()
+
+            modes = non_leaf_modes + leaf_modes
+            svals = non_leaf_svals + leaf_svals
+            snap_counts = non_leaf_snap_counts + leaf_snap_counts
+
+            # accumulate and scale data
             for m, sv in zip(modes, svals):
                 m.scal(sv)
             U = modes[0]
@@ -119,12 +153,14 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
                 U.append(V, remove_from_other=True)
             snap_count = sum(snap_counts)
         else:
+            # obtain snapshot data
             if eval_snapshots_in_executor:
                 U = await executor.submit(snapshots, node)
             else:
                 U = snapshots(node)
             snap_count = len(U)
 
+        # compute local POD after all input data has been received
         with logger.block(f'Processing node {node}'):
             eps = local_eps(node, snap_count, len(U))
             if eps:
@@ -134,8 +170,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
                 return U.copy(), np.ones(len(U)), snap_count
 
     # wrap Executer to ensure LIFO ordering of tasks
-    # this ensures that PODs of parent nodes are computed as soon as all input data
-    # is available
+    # this ensures that PODs are scheduled as soon as all input data availabe
     if executor is not None:
         executor = LifoExecutor(executor)
     else:
@@ -143,7 +178,6 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
 
     # run new asyncio event loop in separate thread to not interfere with
     # already running event loops (e.g. jupyter)
-
     def main():
         nonlocal result
         result = asyncio.run(hapod_step(tree.root))
