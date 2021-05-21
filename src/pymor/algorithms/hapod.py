@@ -299,7 +299,7 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
                      eps, omega, product=product, executor=executor)
 
 
-def inc_model_hapod(m, mus, num_steps_per_chunk, eps, omega, product=None):
+def inc_model_hapod(m, mus, num_steps_per_chunk, l2_err, omega, product=None, modes=None, transform=None):
     """Incremental Hierarchical Approximate POD.
 
     This computes the incremental HAPOD from [HLR18]_ for a given instationary |Model| and given parameters during
@@ -316,13 +316,16 @@ def inc_model_hapod(m, mus, num_steps_per_chunk, eps, omega, product=None):
 		List of parameters used to obtain solution trajectories.
     num_steps_per_chunk
         The maximum number of vectors to consider for a single POD.
-    eps
-        Desired l2-mean approximation error.
+    l2_err
+        The desired l2-mean approximation error.
     omega
-        Tuning parameter (0 < omega < 1) to balance performance with
-        approximation quality.
+        Tuning parameter (0 < omega < 1) to balance performance with approximation quality.
     product
         Inner product |Operator| w.r.t. which to compute the POD.
+    modes
+        If specified, the maximum number of POD modes to return.
+    transform
+        If specified, a mapping `U = transform(U)` applied to the computed snapshots before further processing.
 
     Returns
     -------
@@ -376,6 +379,8 @@ def inc_model_hapod(m, mus, num_steps_per_chunk, eps, omega, product=None):
                         # we are done with this U, save checkpoint and exit
                         persistent_data['t'] = t
                         persistent_data['data'] = data
+                        if transform:
+                            U = transform(U)
                         return U
                 # we are done with this trajectory, but U is not full
                 # reset persistent data and continue with the next mu
@@ -384,17 +389,24 @@ def inc_model_hapod(m, mus, num_steps_per_chunk, eps, omega, product=None):
                 persistent_data['data'] = None
                 persistent_data['mu_ind'] += 1
                 continue
+            # just in case
+            if transform:
+                U = transform(U)
             return U
 
     logger.info(f'computing HAPOD of {num_trajectories} trajectories of length {num_steps_per_trajectory} each ...')
 
-    return inc_hapod(steps=int(np.ceil((num_trajectories*num_steps_per_trajectory)/num_steps_per_chunk + 1)),
-                     snapshots=compute_next_snapshots,
-                     eps=eps,
-                     omega=omega,
-                     product=product,
-                     executor=None,
-                     eval_snapshots_in_executor=False)
+    pod_method = default_pod_method
+    tree = IncHAPODTree(steps=int(np.ceil((num_trajectories*num_steps_per_trajectory)/num_steps_per_chunk + 1)))
+    return hapod(tree,
+                 snapshots=compute_next_snapshots,
+                 local_eps=std_local_eps(tree, l2_err, omega, False),
+                 pod_method=lambda U, local_l2_err, is_root_node, prod: \
+                         pod(U, atol=0., rtol=0., l2_err=local_l2_err, modes=modes, product=prod, \
+                             orth_tol=None if is_root_node else np.inf),
+                 product=product,
+                 executor=None,
+                 eval_snapshots_in_executor=False)
 
 
 def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=None):
