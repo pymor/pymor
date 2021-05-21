@@ -22,15 +22,24 @@ class Tree(BasicObject):
     def children(self, node):
         pass
 
+    # Allows trees to provide their dept, since the generic depth() computation below easily exceeds Python's recursion
+    # limit (i.e. the IncHAPODTree for a vectorarray of length larger than `import sys; sys.getrecursionlimit()`).
+    def _depth(self):
+        return None
+
     @property
     def depth(self):
-        def get_depth(node):
-            children = self.children(node)
-            if children:
-                return 1 + max(get_depth(c) for c in children)
-            else:
-                return 1
-        return get_depth(self.root)
+        d = self._depth()
+        if d:
+            return d
+        else:
+            def get_depth(node):
+                children = self.children(node)
+                if children:
+                    return 1 + max(get_depth(c) for c in children)
+                else:
+                    return 1
+            return get_depth(self.root)
 
     def is_leaf(self, node):
         return not self.children(node)
@@ -50,6 +59,9 @@ class IncHAPODTree(Tree):
         else:
             return (node - 1, -node)
 
+    def _depth(self):
+        return self.steps + 1
+
 
 class DistHAPODTree(Tree):
 
@@ -58,6 +70,9 @@ class DistHAPODTree(Tree):
 
     def children(self, node):
         return tuple(range(self.root)) if node == self.root else ()
+
+    def _depth(self):
+        return 2
 
 
 def default_pod_method(U, eps, is_root_node, product):
