@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import asyncio
+from collections import defaultdict
 from math import ceil
 import numpy as np
 from queue import LifoQueue
@@ -21,6 +22,9 @@ class Tree(BasicObject):
     @abstractmethod
     def children(self, node):
         pass
+
+    def after(self, node):
+        return ()
 
     @property
     def depth(self):
@@ -108,10 +112,18 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     """
     logger = getLogger('pymor.algorithms.hapod.hapod')
 
+    node_finished_events = defaultdict(asyncio.Event)
+
     async def hapod_step(node):
+        after = tree.after(node)
+        if after:
+            await asyncio.wait([node_finished_events[a].wait() for a in after])
+
         children = tree.children(node)
         if children:
-            modes, svals, snap_counts = zip(*await asyncio.gather(*(hapod_step(c) for c in children)))
+            modes, svals, snap_counts = zip(
+                *await asyncio.gather(*(hapod_step(c) for c in children))
+            )
             for m, sv in zip(modes, svals):
                 m.scal(sv)
             U = modes[0]
@@ -129,8 +141,10 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
             eps = local_eps(node, snap_count, len(U))
             if eps:
                 modes, svals = await executor.submit(pod_method, U, eps, node == tree.root, product)
+                node_finished_events[node].set()
                 return modes, svals, snap_count
             else:
+                node_finished_events[node].set()
                 return U.copy(), np.ones(len(U)), snap_count
 
     # wrap Executer to ensure LIFO ordering of tasks
