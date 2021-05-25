@@ -172,7 +172,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     return result
 
 
-def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_snapshots_in_executor=False):
+def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None):
     """Incremental Hierarchical Approximate POD.
 
     This computes the incremental HAPOD from :cite:`HLR18`.
@@ -194,9 +194,7 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_sn
         Inner product |Operator| w.r.t. which to compute the POD.
     executor
         If not `None`, a :class:`concurrent.futures.Executor` object to use
-        for parallelization.
-    eval_snapshots_in_executor
-        If `True` also parallelize the evaluation of the snapshot map.
+        to compute new snapshot vectors and POD updates in parallel.
 
     Returns
     -------
@@ -223,7 +221,7 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_sn
                    std_local_eps(tree, eps, omega, False),
                    product=product,
                    executor=executor,
-                   eval_snapshots_in_executor=eval_snapshots_in_executor)
+                   eval_snapshots_in_executor=True)
     assert last_step == steps - 1
     return result
 
@@ -270,7 +268,7 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, e
                  eval_snapshots_in_executor=eval_snapshots_in_executor)
 
 
-def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
+def inc_vectorarray_hapod(steps, U, eps, omega, product=None):
     """Incremental Hierarchical Approximate POD.
 
     This computes the incremental HAPOD from :cite:`HLR18` for a given |VectorArray|.
@@ -288,9 +286,6 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
         approximation quality.
     product
         Inner product |Operator| w.r.t. which to compute the POD.
-    executor
-        If not `None`, a :class:`concurrent.futures.Executor` object to use
-        for parallelization.
 
     Returns
     -------
@@ -309,7 +304,7 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
             yield U[slice: slice+chunk_size]
 
     return inc_hapod(len(slices), snapshots(),
-                     eps, omega, product=product, executor=executor)
+                     eps, omega, product=product)
 
 
 def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=None):
