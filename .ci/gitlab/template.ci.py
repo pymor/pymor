@@ -191,6 +191,11 @@ ci setup:
     {{ never_on_schedule_rule() }}
     variables:
         COVERAGE_FILE: coverage_{{script}}__{{py}}
+    {%- if script == "mpi" %}
+    retry:
+        max: 2
+        when: always
+    {%- endif %}
     services:
     {%- if script == "oldest" %}
         - name: {{registry}}/pymor/pypi-mirror_oldest_py{{py}}:{{pypi_mirror_tag}}
