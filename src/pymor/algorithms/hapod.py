@@ -49,10 +49,26 @@ def inc_hapod_tree(steps):
     return tree
 
 
-def dist_hapod_tree(num_slices):
+def dist_hapod_tree(num_slices, arity=None):
     tree = Node()
-    for s in range(num_slices):
-        tree.add_child(s)
+    if arity is None:
+        arity = num_slices
+
+    def add_children(node, slices):
+        if len(slices) > arity:
+            sub_slices = np.array_split(slices, arity)
+            for s in sub_slices:
+                if len(s) > 1:
+                    child = node.add_child()
+                    add_children(child, s)
+                else:
+                    child = node.add_child(s.item())
+        else:
+            for s in slices:
+                node.add_child(s)
+
+    add_children(tree, np.arange(num_slices))
+
     return tree
 
 
@@ -212,7 +228,8 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None):
     return result
 
 
-def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, eval_snapshots_in_executor=False):
+def dist_hapod(num_slices, snapshots, eps, omega, arity=None,
+               product=None, executor=None, eval_snapshots_in_executor=False):
     """Distributed Hierarchical Approximate POD.
 
     This computes the distributed HAPOD from :cite:`HLR18`.
@@ -229,6 +246,10 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, e
     omega
         Tuning parameter (0 < omega < 1) to balance performance with
         approximation quality.
+    arity
+        If not `None`, the arity of the HAPOD tree. Otherwise, a
+        tree of depth 2 is used (one POD per slice and one additional
+        POD of the resulting data).
     product
         Inner product |Operator| w.r.t. which to compute the POD.
     executor
@@ -246,7 +267,7 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, e
     snap_count
         The total number of input snapshot vectors.
     """
-    tree = dist_hapod_tree(num_slices)
+    tree = dist_hapod_tree(num_slices, arity)
     return hapod(tree,
                  snapshots,
                  std_local_eps(tree, eps, omega, True),
@@ -293,7 +314,7 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None):
                      eps, omega, product=product)
 
 
-def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=None):
+def dist_vectorarray_hapod(num_slices, U, eps, omega, arity=None, product=None, executor=None):
     """Distributed Hierarchical Approximate POD.
 
     This computes the distributed HAPOD from :cite:`HLR18` of a given |VectorArray|.
@@ -309,6 +330,10 @@ def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=Non
     omega
         Tuning parameter (0 < omega < 1) to balance performance with
         approximation quality.
+    arity
+        If not `None`, the arity of the HAPOD tree. Otherwise, a
+        tree of depth 2 is used (one POD per slice and one additional
+        POD of the resulting data).
     product
         Inner product |Operator| w.r.t. which to compute the POD.
     executor
@@ -328,7 +353,7 @@ def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=Non
     slices = range(0, len(U), chunk_size)
     return dist_hapod(len(slices),
                       lambda i: U[slices[i.tag]: slices[i.tag]+chunk_size],
-                      eps, omega, product=product, executor=executor)
+                      eps, omega, arity=arity, product=product, executor=executor)
 
 
 def std_local_eps(tree, eps, omega, pod_on_leafs=True):
