@@ -94,7 +94,7 @@ _ = plt.semilogy(singular_values)
 
 ## Solving the Model
 
-Now that we have our FOM and a reduced space {math}`V_N` spanned by {}`basis`, we can project
+Now that we have our FOM and a reduced space {math}`V_N` spanned by `basis`, we can project
 the {{ Model }}. However, before doing so, we need to understand how actually
 solving the FOM works. Let's take a look at what
 {meth}`~pymor.models.interface.Model.solve` does:
@@ -115,7 +115,7 @@ print_source(fom.compute)
 ```
 
 What we see is a default implementation from {class}`~pymor.models.interface.Model` that
-takes care of checking the input {{ parameter_values }} {}`mu`, {mod}`caching <pymor.core.cache>` and
+takes care of checking the input {{ parameter_values }} `mu`, {mod}`caching <pymor.core.cache>` and
 {mod}`logging <pymor.core.logger>`, but defers the actual computations to further private methods.
 Implementors can directly implement {meth}`~pymor.models.interface.Model._compute` to compute
 multiple return values at once in an optimized way. Our given model, however, just implements
@@ -126,13 +126,13 @@ actual code:
 print_source(fom._compute_solution)
 ```
 
-What does this mean? If we look at the type of {}`fom`,
+What does this mean? If we look at the type of `fom`,
 
 ```{code-cell}
 type(fom)
 ```
 
-we see that {}`fom` is a {{ StationaryModel }} which encodes an equation of the
+we see that `fom` is a {{ StationaryModel }} which encodes an equation of the
 form
 
 ```{math}
@@ -147,8 +147,8 @@ the {attr}`~pymor.models.basic.StationaryModel.operator` attribute. So
 self.operator.apply_inverse(X, mu=mu)
 ```
 
-determines the solution of this equation for the {{ parameter_values }} {}`mu` and a right-hand
-side given by {}`X`. As you see above, the right-hand side of the equation is given by the
+determines the solution of this equation for the {{ parameter_values }} `mu` and a right-hand
+side given by `X`. As you see above, the right-hand side of the equation is given by the
 {attr}`~pymor.models.basic.StationaryModel.rhs` attribute.
 However, while {meth}`~pymor.operators.interface.Operator.apply_inverse` expects a
 {{ VectorArray }},  we see that {attr}`~pymor.models.basic.StationaryModel.rhs` is actually
@@ -175,7 +175,7 @@ print_source(Operator.as_range_array)
 ```
 
 we see all that {meth}`~pymor.operators.interface.Operator.as_range_array`
-does is to apply the operator to {math}`1`. ({}`NumpyMatrixOperator.as_range_array`
+does is to apply the operator to {math}`1`. (`NumpyMatrixOperator.as_range_array`
 has an optimized implementation which just converts the stored matrix to a
 {{ NumpyVectorArray }}.)
 
@@ -188,10 +188,10 @@ U2 = fom.operator.apply_inverse(fom.rhs.as_range_array(mu), mu=[1., 0.1, 0.1, 1.
 ```
 
 That did not work too well! In pyMOR, all parametric objects expect the
-{}`mu` argument to be an instance of the {class}`~pymor.parameters.base.Mu`
+`mu` argument to be an instance of the {class}`~pymor.parameters.base.Mu`
 class. {meth}`~pymor.models.interface.Model.compute` and related methods
 like {meth}`~pymor.models.interface.Model.solve` are an exception: for
-convenience, they accept as a {}`mu` argument anything that can be converted
+convenience, they accept as a `mu` argument anything that can be converted
 to a {class}`~pymor.parameters.base.Mu` instance using the
 {meth}`~pymor.parameters.base.Parameters.parse` method of the
 {class}`~pymor.parameters.base.Parameters` class. In fact, if you look
@@ -216,7 +216,7 @@ to {meth}`~pymor.models.interface.Model.solve`:
 Now that we understand how the FOM works, we want to build a reduced-order model
 which approximates the FOM solution {math}`U(\mu)` in {math}`V_N`.
 To that end we call {math}`\mathbb{V}_N` the matrix that has the vectors in
-{}`basis` as columns. The coefficients of the solution of the ROM w.r.t. these
+`basis` as columns. The coefficients of the solution of the ROM w.r.t. these
 basis vectors will be called {math}`u_N(\mu)`. We want that
 
 ```{math}
@@ -302,9 +302,9 @@ of {math}`U(\mu)` in {math}`V_N`. So, if we have constructed a good reduced spac
 Galerkin projection will also give us a good ROM to actually find a good approximation in {math}`V_N`.
 
 Let's compute the Galerkin ROM for our FOM at hand with pyMOR. To compute {math}`\mathbb{A}_N`
-we use the {meth}`~pymor.operators.interface.Operator.apply2` method of {}`fom.operator`.
+we use the {meth}`~pymor.operators.interface.Operator.apply2` method of `fom.operator`.
 For computing the inner products {math}`\mathbb{V}_N^T \cdot F(\mu)` we can simply compute the
-inner product with the {}`basis` {{ VectorArray }} using its {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
+inner product with the `basis` {{ VectorArray }} using its {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
 method:
 
 ```{code-cell}
@@ -391,7 +391,7 @@ print(fom.parameters)
 print(rom.parameters)
 ```
 
-Solving the ROM for a new {}`mu` would mean to build a new ROM with updated
+Solving the ROM for a new `mu` would mean to build a new ROM with updated
 system matrix and right-hand side. However, if we compare the timings,
 
 ```{code-cell}
@@ -421,7 +421,7 @@ the system operator of our FOM has a special structure:
 fom.operator
 ```
 
-We see that {}`operator` is a {{ LincombOperator }}, a linear combination of {{ Operators }}
+We see that `operator` is a {{ LincombOperator }}, a linear combination of {{ Operators }}
 with coefficients that may either be a number or a parameter-dependent number,
 called a {{ ParameterFunctional }} in pyMOR. In our case, all
 {attr}`~pymor.operators.constructions.LincombOperator.operators` are
@@ -436,7 +436,7 @@ reduced_operators = [NumpyMatrixOperator(op.apply2(basis, basis))
                      for op in fom.operator.operators]
 ```
 
-We could instantiate a new {{ LincombOperator }} of these {}`reduced_operators` manually.
+We could instantiate a new {{ LincombOperator }} of these `reduced_operators` manually.
 An easier way is to use the {meth}`~pymor.core.base.ImmutableObject.with_` method,
 which allows us to create a new object from a given {{ ImmutableObject }} by replacing
 some of its attributes by new values:
@@ -516,10 +516,10 @@ The arguments of {meth}`~pymor.algorithms.projection.project` are the {{ Operato
 to project, a reduced basis for the {attr}`~pymor.operators.interface.Operator.range`
 (test) space and a reduced basis for the {attr}`~pymor.operators.interface.Operator.source`
 (ansatz) space of the {{ Operator }}. If no projection for one of these spaces shall be performed,
-{}`None` is passed.  Since we are performing Galerkin-projection, where test space into
+`None` is passed.  Since we are performing Galerkin-projection, where test space into
 which the residual is projected is the same as the ansatz space in which the solution
-is determined, we pass {}`basis` twice when projecting {}`fom.operator`. Note that
-{}`fom.rhs` only takes scalars as input, so we do not need to project anything in the ansatz space.
+is determined, we pass `basis` twice when projecting `fom.operator`. Note that
+`fom.rhs` only takes scalars as input, so we do not need to project anything in the ansatz space.
 
 If we check the result,
 
@@ -543,16 +543,16 @@ a look at the source:
 print_source(project)
 ```
 
-We see there is error checking and some code to handle the optional {}`product` {{ Operator }}
+We see there is error checking and some code to handle the optional `product` {{ Operator }}
 used to project into the reduced {attr}`~pymor.operators.interface.Operator.range` space.
 The actual work is done by the {meth}`~pymor.algorithms.rules.RuleTable.apply` method
-of the {}`ProjectRules` object.
+of the `ProjectRules` object.
 
-{}`ProjectRules` is a {{ RuleTable }}, an ordered list of conditions with corresponding actions.
+`ProjectRules` is a {{ RuleTable }}, an ordered list of conditions with corresponding actions.
 The list is traversed from top to bottom, and the action of the first matching condition is
 executed. These {{ RuleTables }} can also be modified by the user to customize the behavior
 of an algorithm for a specific application. We will not go into the details of defining
-or modifying a {{ RuleTable }} here, but we will look at the rules of {}`ProjectRules` by looking
+or modifying a {{ RuleTable }} here, but we will look at the rules of `ProjectRules` by looking
 at its string representation:
 
 ```{code-cell}
@@ -560,7 +560,7 @@ from pymor.algorithms.projection import ProjectRules
 ProjectRules
 ```
 
-In the case of {}`fom.operator`, which is a {{ LincombOperator }}, the rule with index 8 will
+In the case of `fom.operator`, which is a {{ LincombOperator }}, the rule with index 8 will
 be the first matching rule. We can take a look at it:
 
 ```{code-cell}
@@ -575,7 +575,7 @@ ProjectRules.rules[8]
 
 The implementation of the action for {{ LincombOperators }} uses the
 {meth}`~pymor.algorithms.rules.RuleTable.replace_children` method of {{ RuleTable }},
-which will recursively apply {}`ProjectionRules` to all
+which will recursively apply `ProjectionRules` to all
 {meth}`children <pymor.algorithms.rules.RuleTable.get_children>` of the
 {{ Operator }}, collect the results and then return a new {{ Operator }} where
 the children have been replaced by the results of the applications of the
@@ -583,8 +583,8 @@ the children have been replaced by the results of the applications of the
 of an {{ Operator }} are all of its attribute that are either {{ Operators }} or lists or dicts
 of {{ Operators }}.
 
-In our case, {}`ProjectRules` will be applied to all {{ NumpyMatrixOperators }} held by
-{}`fom.operator`. These are linear, non-parametric operators, for which rule 3
+In our case, `ProjectRules` will be applied to all {{ NumpyMatrixOperators }} held by
+`fom.operator`. These are linear, non-parametric operators, for which rule 3
 will apply:
 
 ```{code-cell}
@@ -598,12 +598,12 @@ ProjectRules.rules[3]
 
 This action has special cases for all possible combinations of given or not-given
 {attr}`~pymor.operators.interface.Operator.range` and {attr}`~pymor.operators.interface.Operator.source`
-bases. In our case, the {}`else` block of the second {}`else` block applies,
+bases. In our case, the `else` block of the second `else` block applies,
 where we see our familiar {meth}`~pymor.operators.interface.Operator.apply2` call.
 
-If you look at the rules of {}`ProjectRules` again, you see that
+If you look at the rules of `ProjectRules` again, you see that
 {meth}`~pymor.algorithms.projection.project` can handle many more cases.
-If all rules fail, a {}`NoMatchingRuleError` will be raised, in which case,
+If all rules fail, a `NoMatchingRuleError` will be raised, in which case,
 {meth}`~pymor.algorithms.projection.project` will return a
 {class}`~pymor.operators.constructions.ProjectedOperator`, which just stores the
 projection bases and performs the projection for each call to the {{ Operator }} interface
@@ -655,7 +655,7 @@ print_source(reductor.build_rom)
 More advanced reductors, such as {class}`~pymor.reductors.coercive.CoerciveRBReductor`
 also assemble an a posteriori error estimator for the model order reduction error.
 In the case of {class}`~pymor.reductors.basic.StationaryRBReductor`, however,
-{}`error_estimator` is always {}`None`.
+`error_estimator` is always `None`.
 
 Reductors also allow to compute {math}`U_N(\mu)` from {math}`u_N(\mu)` using
 the {meth}`~pymor.reductors.basic.StationaryRBReductor.reconstruct` method:

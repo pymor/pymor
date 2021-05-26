@@ -52,7 +52,7 @@ using a discretized heat equation as the example.
 We focus on a non-parametric example,
 but parametric LTI systems can be handled similarly
 by constructing {math}`A, B, C, D, E` as parametric {{ Operators }} and
-passing {{ parameter_values }} via the {}`mu` argument to the methods of the
+passing {{ parameter_values }} via the {math}`mu` argument to the methods of the
 {{ LTIModel }}.
 
 ## Building a model
@@ -104,14 +104,14 @@ approximation using standard methods of NumPy and SciPy.
 :load: heat_equation.py
 ```
 
-Then, we can create an {{ LTIModel }} from NumPy and SciPy matrices {}`A`, {}`B`, {}`C`,
-{}`E`.
+Then, we can create an {{ LTIModel }} from NumPy and SciPy matrices `A`, `B`, `C`,
+`E`.
 
 ```{code-cell}
 fom = LTIModel.from_matrices(A, B, C, E=E)
 ```
 
-We can take a look at the internal representation of the {{ LTIModel }} {}`fom`.
+We can take a look at the internal representation of the {{ LTIModel }} `fom`.
 
 ```{code-cell}
 fom
@@ -121,9 +121,9 @@ From this, we see that the matrices were wrapped in {{ NumpyMatrixOperators }},
 while the default value was chosen for the {math}`D` matrix
 ({class}`~pymor.operators.constructions.ZeroOperator`).
 The operators in an {{ LTIModel }} can be accessed via its attributes, e.g.,
-{}`fom.A` is the {{ Operator }} representing the {math}`A` matrix.
+`fom.A` is the {{ Operator }} representing the {math}`A` matrix.
 
-We can also see some basic information from {}`fom`'s string representation
+We can also see some basic information from `fom`'s string representation
 
 ```{code-cell}
 print(fom)
@@ -225,9 +225,9 @@ _ = fom.mag_plot(w)
 ```
 
 Note that {meth}`~pymor.models.iosys.InputOutputModel.mag_plot` computes the
-Frobenius norm of {math}`H(\boldsymbol{\imath} \omega)` by default, just as {}`scipy.linalg.norm`.
+Frobenius norm of {math}`H(\boldsymbol{\imath} \omega)` by default, just as `scipy.linalg.norm`.
 Likewise, the choice of the norm {math}`\lVert \cdot \rVert` can be controlled
-using the {}`ord` parameter.
+using the `ord` parameter.
 
 Another visualization is the Bode plot,
 which shows the magnitude and phase of each component of the transfer function.

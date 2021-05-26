@@ -160,7 +160,7 @@ bt = BTReductor(fom)
 ```
 
 Calling its {meth}`~pymor.reductors.bt.GenericBTReductor.reduce` method runs the
-balanced truncation algorithm. This reductor additionally has an {}`error_bounds`
+balanced truncation algorithm. This reductor additionally has an `error_bounds`
 method which can compute the a priori {math}`\mathcal{H}_\infty` error bounds
 based on the Hankel singular values:
 
@@ -174,7 +174,7 @@ ax.set_xlabel('Reduced order')
 _ = ax.set_title(r'Upper and lower $\mathcal{H}_\infty$ error bounds')
 ```
 
-To get a reduced-order model of order 10, we call the {}`reduce` method with the
+To get a reduced-order model of order 10, we call the `reduce` method with the
 appropriate argument:
 
 ```{code-cell}
@@ -184,7 +184,7 @@ rom = bt.reduce(10)
 Instead, or in addition, a tolerance for the {math}`\mathcal{H}_\infty` error
 can be specified, as well as the projection algorithm (by default, the
 balancing-free square root method is used).
-The used Petrov-Galerkin bases are stored in {}`bt.V` and {}`bt.W`.
+The used Petrov-Galerkin bases are stored in `bt.V` and `bt.W`.
 
 We can compare the magnitude plots between the full-order and reduced-order
 models
