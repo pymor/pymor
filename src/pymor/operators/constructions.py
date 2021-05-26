@@ -187,7 +187,8 @@ class LincombOperator(Operator):
                     raise InversionError
             else:
                 U = self.operators[0].apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
-                U *= (1. / coeff)
+                coefficients = self.evaluate_coefficients(mu)
+                U *= (1. / coefficients[0])
                 return U
         else:
             return super().apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)

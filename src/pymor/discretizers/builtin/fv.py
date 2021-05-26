@@ -15,6 +15,7 @@ from pymor.analyticalproblems.functions import Function, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
+from pymor.tools.deprecated import Deprecated
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
@@ -605,7 +606,7 @@ class NonlinearReactionOperator(Operator):
         return NumpyMatrixOperator(A, source_id=self.source.id, range_id=self.range.id)
 
 
-class L2ProductFunctional(NumpyMatrixBasedOperator):
+class L2Functional(NumpyMatrixBasedOperator):
     """Finite volume functional representing the inner product with an L2-|Function|.
 
     Additionally, boundary conditions can be enforced by providing `dirichlet_data`
@@ -697,6 +698,56 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         F_INTS /= g.volumes(0)
 
         return F_INTS.reshape((-1, 1))
+
+
+@Deprecated(L2Functional)
+def L2ProductFunctional(*args, **kwargs):
+    return L2Functional(*args, **kwargs)
+
+
+class BoundaryL2Functional(NumpyMatrixBasedOperator):
+    """Finite volume functional representing the inner product with an L2-|Function| on the boundary.
+
+    Parameters
+    ----------
+    grid
+        |Grid| for which to assemble the functional.
+    function
+        The |Function| with which to take the inner product.
+    boundary_type
+        The type of domain boundary (e.g. 'neumann') on which to assemble the functional.
+        If `None` the functional is assembled over the whole boundary.
+    boundary_info
+        If `boundary_type` is specified, the
+        |BoundaryInfo| determining which boundary entity belongs to which physical boundary.
+    name
+        The name of the functional.
+    """
+
+    sparse = False
+    source = NumpyVectorSpace(1)
+
+    def __init__(self, grid, function, boundary_type=None, boundary_info=None, name=None):
+        assert grid.reference_element(0) in {line, triangle, square}
+        assert function.shape_range == ()
+        assert not boundary_type or boundary_info
+        self.__auto_init(locals())
+        self.range = FVVectorSpace(grid)
+
+    def _assemble(self, mu=None):
+        g = self.grid
+
+        NI = self.boundary_info.boundaries(self.boundary_type, 1) if self.boundary_type else g.boundaries(1)
+        SUPE = g.superentities(1, 0)[NI][:, 0]
+        F = self.function(g.centers(1)[NI], mu=mu)
+        if g.dim == 1:
+            I = np.zeros(self.range.dim)
+            I[SUPE] = F
+        else:
+            I = F*g.integration_elements(1)[NI]
+            I = coo_matrix((I, (np.zeros_like(SUPE), SUPE)), shape=(1, g.size(0))).toarray().ravel()
+
+        return I.reshape((-1, 1))
 
 
 class DiffusionOperator(NumpyMatrixBasedOperator):
@@ -809,6 +860,34 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         return A
 
 
+class InterpolationOperator(NumpyMatrixBasedOperator):
+    """Vector-like L^2-projection interpolation |Operator| for finite volume spaces.
+
+    Parameters
+    ----------
+    grid
+        The |Grid| on which to interpolate.
+    function
+        The |Function| to interpolate.
+    order
+        The quadrature order to compute the element-wise averages
+    """
+
+    source = NumpyVectorSpace(1)
+    linear = True
+
+    def __init__(self, grid, function, order=0):
+        assert function.dim_domain == grid.dim
+        assert function.shape_range == ()
+        if order != 0:
+            raise NotImplementedError('Higher orders not implemented yet!')
+        self.__auto_init(locals())
+        self.range = FVVectorSpace(grid)
+
+    def _assemble(self, mu=None):
+        return self.function.evaluate(self.grid.centers(0), mu=mu).reshape((-1, 1))
+
+
 def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                              num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                              grid=None, boundary_info=None, preassemble=True):
@@ -870,8 +949,6 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     p = analytical_problem
 
     if analytical_problem.robin_data is not None:
-        raise NotImplementedError
-    if p.outputs:
         raise NotImplementedError
 
     if grid is None:
@@ -938,7 +1015,9 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     # reaction part
     if isinstance(p.reaction, LincombFunction):
-        raise NotImplementedError
+        L += [ReactionOperator(grid, rf, name=f'reaction_{i}')
+              for i, rf in enumerate(p.reaction.functions)]
+        L_coefficients += list(p.reaction.coefficients)
     elif p.reaction is not None:
         L += [ReactionOperator(grid, p.reaction, name='reaction')]
         L_coefficients += [1.]
@@ -972,7 +1051,35 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     l2_product = L2Product(grid, name='l2')
     products = {'l2': l2_product}
 
-    m = StationaryModel(L, F, products=products, visualizer=visualizer,
+    # assemble additional output functionals
+    if p.outputs:
+        if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
+            raise NotImplementedError
+        outputs = []
+        for v in p.outputs:
+            if v[0] == 'l2':
+                if isinstance(v[1], LincombFunction):
+                    ops = [L2Functional(grid, vv).H
+                           for vv in v[1].functions]
+                    outputs.append(LincombOperator(ops, v[1].coefficients))
+                else:
+                    outputs.append(L2Functional(grid, v[1]).H)
+            else:
+                if isinstance(v[1], LincombFunction):
+                    ops = [BoundaryL2Functional(grid, vv).H
+                           for vv in v[1].functions]
+                    outputs.append(LincombOperator(ops, v[1].coefficients))
+                else:
+                    outputs.append(BoundaryL2Functional(grid, v[1]).H)
+        if len(outputs) > 1:
+            from pymor.operators.block import BlockColumnOperator
+            output_functional = BlockColumnOperator(outputs)
+        else:
+            output_functional = outputs[0]
+    else:
+        output_functional = None
+
+    m = StationaryModel(L, F, products=products, output_functional=output_functional, visualizer=visualizer,
                         name=f'{p.name}_FV')
 
     data = {'grid': grid, 'boundary_info': boundary_info}
@@ -1084,8 +1191,10 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     rhs = None if isinstance(m.rhs, ZeroOperator) else m.rhs
 
-    m = InstationaryModel(operator=m.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
-                          products=m.products, time_stepper=time_stepper,
+    m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=None, initial_data=I, T=p.T,
+                          products=m.products,
+                          output_functional=m.output_functional,
+                          time_stepper=time_stepper,
                           visualizer=m.visualizer,
                           num_values=num_values, name=f'{p.name}_FV')
 
