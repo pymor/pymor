@@ -113,6 +113,7 @@ def test_compare_with_tolerance():
         op = operator.le
         assert almost_less(0., 1, rtol, atol), msg
         assert almost_less(-1., -0., rtol, atol), msg
+        assert almost_less(-1, -0.9, rtol, atol), msg
         assert compare_with_tolerance(0., 1, op, rtol, atol), msg
         assert compare_with_tolerance(-1., -0., op, rtol, atol), msg
         assert compare_with_tolerance(-1., 1., op, rtol, atol), msg
