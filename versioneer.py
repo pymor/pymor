@@ -721,7 +721,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     date = date.splitlines()[-1]
     pieces["date"] = date.strip().replace(" ", "T", 1).replace(" ", "", 1)
     pieces["run_number"] = int(os.environ.get("GITHUB_RUN_NUMBER",
-            os.environ.get("CI_CONCURRENT_PROJECT_ID", pieces["distance"])))
+            os.environ.get("CI_PIPELINE_IID", pieces["distance"])))
 
     return pieces
 
@@ -759,19 +759,19 @@ def render_pep440(pieces):
 
 
 def render_pep440_pre(pieces):
-    """TAG[.post1.devDISTANCE] -- No -dirty.
+    """TAG[.post2.devDISTANCE] -- No -dirty.
 
     Exceptions:
-    1: no tags. 0.post1.devDISTANCE
+    1: no tags. 0.post2.devDISTANCE
     """
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
         # this needs to stay distance, run_number is always non-zero
         if pieces["distance"]:
-            rendered += ".post1.dev%%d" %% pieces["run_number"]
+            rendered += ".post2.dev%%d" %% pieces["run_number"]
     else:
         # exception #1
-        rendered = "0.post1.dev%%d" %% pieces["distance"]
+        rendered = "0.post2.dev%%d" %% pieces["distance"]
     return rendered
 
 
@@ -999,7 +999,7 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
     # starting in git-1.8.3, tags are listed as "tag: foo-1.0" instead of
     # just "foo-1.0". If we see a "tag: " prefix, prefer those.
     TAG = "tag: "
-    tags = set([r[len(TAG) :] for r in refs if r.startswith(TAG)])
+    tags = set([r[len(TAG):] for r in refs if r.startswith(TAG)])
     if not tags:
         # Either we're using git < 1.8.3, or there really are no tags. We use
         # a heuristic: assume all version tags have a digit. The old git %d
@@ -1016,7 +1016,7 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
     for ref in sorted(tags):
         # sorting will prefer e.g. "2.0" over "2.0rc1"
         if ref.startswith(tag_prefix):
-            r = ref[len(tag_prefix) :]
+            r = ref[len(tag_prefix):]
             if verbose:
                 print("picking %s" % r)
             return {
@@ -1103,7 +1103,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
                 print(fmt % (full_tag, tag_prefix))
             pieces["error"] = "tag '%s' doesn't start with prefix '%s'" % (full_tag, tag_prefix)
             return pieces
-        pieces["closest-tag"] = full_tag[len(tag_prefix) :]
+        pieces["closest-tag"] = full_tag[len(tag_prefix):]
 
         # distance: number of commits since tag
         pieces["distance"] = int(mo.group(2))
@@ -1124,7 +1124,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     date = date.splitlines()[-1]
     pieces["date"] = date.strip().replace(" ", "T", 1).replace(" ", "", 1)
     pieces["run_number"] = int(
-        os.environ.get("GITHUB_RUN_NUMBER", os.environ.get("CI_CONCURRENT_PROJECT_ID", pieces["distance"]))
+        os.environ.get("GITHUB_RUN_NUMBER", os.environ.get("CI_PIPELINE_IID", pieces["distance"]))
     )
 
     return pieces
@@ -1181,7 +1181,7 @@ def versions_from_parentdir(parentdir_prefix, root, verbose):
         dirname = os.path.basename(root)
         if dirname.startswith(parentdir_prefix):
             return {
-                "version": dirname[len(parentdir_prefix) :],
+                "version": dirname[len(parentdir_prefix):],
                 "full-revisionid": None,
                 "dirty": False,
                 "error": None,
@@ -1271,19 +1271,19 @@ def render_pep440(pieces):
 
 
 def render_pep440_pre(pieces):
-    """TAG[.post1.devRUN_NUMBER] -- No -dirty.
+    """TAG[.post2.devRUN_NUMBER] -- No -dirty.
 
     Exceptions:
-    1: no tags. 0.post1.devRUN_NUMBER
+    1: no tags. 0.post2.devRUN_NUMBER
     """
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
         # this needs to stay distance, run_number is always non-zero
         if pieces["distance"]:
-            rendered += ".post1.dev%d" % pieces["run_number"]
+            rendered += ".post2.dev%d" % pieces["run_number"]
     else:
         # exception #1
-        rendered = "0.post1.dev%d" % pieces["distance"]
+        rendered = "0.post2.dev%d" % pieces["distance"]
     return rendered
 
 
