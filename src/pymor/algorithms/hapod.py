@@ -6,7 +6,6 @@ import asyncio
 from collections import defaultdict
 from math import ceil
 import numpy as np
-from queue import LifoQueue
 from threading import Thread
 
 from pymor.algorithms.pod import pod
@@ -430,18 +429,19 @@ class LifoExecutor:
     def __init__(self, executor, max_workers=None):
         self.executor = executor
         self.max_workers = max_workers or executor._max_workers
-        self.queue = LifoQueue()
-        self.sem = asyncio.Semaphore(self.max_workers)
+        self.queue = []
 
     def submit(self, f, *args):
         future = asyncio.get_event_loop().create_future()
-        self.queue.put((future, f, args))
+        self.queue.append((future, f, args))
         asyncio.get_event_loop().create_task(self.run_task())
         return future
 
     async def run_task(self):
+        if not hasattr(self, 'sem'):
+            self.sem = asyncio.Semaphore(self.max_workers)
         await self.sem.acquire()
-        future, f, args = self.queue.get()
+        future, f, args = self.queue.pop()
         executor_future = asyncio.get_event_loop().run_in_executor(self.executor, f, *args)
         executor_future.add_done_callback(lambda f, ff=future: self.done_callback(future, f))
 
