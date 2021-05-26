@@ -137,21 +137,22 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
                 U.append(V, remove_from_other=True)
             snap_count = sum(snap_counts)
         else:
+            logger.info(f'Obtaining snapshots for node {node.tag or ""} ...')
             if eval_snapshots_in_executor:
                 U = await executor.submit(snapshots, node)
             else:
                 U = snapshots(node)
             snap_count = len(U)
 
-        with logger.block(f'Processing node {node}'):
-            eps = local_eps(node, snap_count, len(U))
-            if eps:
-                modes, svals = await executor.submit(pod_method, U, eps, not node.parent, product)
-            else:
-                modes, svals = U.copy(), np.ones(len(U))
-            if node.tag is not None:
-                node_finished_events[node.tag].set()
-            return modes, svals, snap_count
+        eps = local_eps(node, snap_count, len(U))
+        if eps:
+            logger.info('Computing intermediate POD ...')
+            modes, svals = await executor.submit(pod_method, U, eps, not node.parent, product)
+        else:
+            modes, svals = U.copy(), np.ones(len(U))
+        if node.tag is not None:
+            node_finished_events[node.tag].set()
+        return modes, svals, snap_count
 
     # wrap Executer to ensure LIFO ordering of tasks
     # this ensures that PODs of parent nodes are computed as soon as all input data
