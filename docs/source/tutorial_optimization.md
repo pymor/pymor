@@ -502,7 +502,7 @@ where {math}`r_\mu^{\text{pr}}` denotes the residual of the primal
 equation, i.e.
 
 ```{math}
-r_\mu^{\text{pr}}(u)[v] := l_\mu(v) - a_\mu(u, v) &&\text{for all }v \in V
+r_\mu^{\text{pr}}(u)[v] := l_\mu(v) - a_\mu(u, v) \qquad \qquad \text{for all }v \in V
 ```
 
 A major issue of this approach is that the computation of the
@@ -845,5 +845,4 @@ implementation is available as supplementary material.
 Download the code:
 {jupyter-download:script}`tutorial_optimization`
 {jupyter-download:notebook}`tutorial_optimization`
-
 
