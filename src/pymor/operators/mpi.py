@@ -163,7 +163,11 @@ class MPIOperator(Operator):
 
     def assemble(self, mu=None):
         assert self.parameters.assert_compatible(mu)
-        return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
+        assembled_op = mpi.call(_MPIOperator_assemble, self.obj_id, mu)
+        if assembled_op is not None:
+            return self.with_(obj_id=assembled_op)
+        else:
+            return self
 
     def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
         if not all(isinstance(op, MPIOperator) for op in operators):
@@ -207,6 +211,15 @@ def _MPIOperator_restriced(self, dofs):
     try:
         return self.restricted(dofs)
     except NotImplementedError:
+        return None
+
+
+def _MPIOperator_assemble(self, mu):
+    self = mpi.get_object(self)
+    assembled_op = self.assemble(mu)
+    if assembled_op is not self:
+        return mpi.manage_object(assembled_op)
+    else:
         return None
 
 
