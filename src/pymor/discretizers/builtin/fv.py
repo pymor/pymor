@@ -15,6 +15,7 @@ from pymor.analyticalproblems.functions import Function, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
+from pymor.tools.deprecated import Deprecated
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
