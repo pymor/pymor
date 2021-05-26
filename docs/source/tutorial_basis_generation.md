@@ -78,7 +78,7 @@ However, we will only find a good {math}`V_N` of small dimension
 {math}`N` if the values {math}`d_N` decrease quickly for growing
 {math}`N`. It can be shown that this is the case as soon as {math}`u(\mu)`
 analytically depends on {math}`\mu`, which is true for many problems
-of interest. More precisely, it can be shown :cite:`BCDDPW11`, :cite:`DPW13` that there are constants
+of interest. More precisely, it can be shown {cite}`BCDDPW11`, {cite}`DPW13` that there are constants
 {math}`C, c > 0` such that
 
 $$ d_N \leq C \cdot e^{-N^c}. $$
@@ -807,5 +807,5 @@ a certain degree, whereas the weak-greedy algorithm could select the snapshots f
 
 
 Download the code:
-:jupyter-download:script:`tutorial_basis_generation`
-:jupyter-download:notebook:`tutorial_basis_generation`
+{jupyter-download:script}`tutorial_basis_generation`
+{jupyter-download:notebook}`tutorial_basis_generation`
