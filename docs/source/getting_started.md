@@ -126,20 +126,19 @@ inside the IPython shell.
 First, we will import the most commonly used methods and classes of pyMOR
 by executing:
 
-```{code-cell} 
+```{code-cell}
 
-   from pymor.basic import *
-   from pymor.core.logger import set_log_levels
-   set_log_levels({'pymor.algorithms.greedy': 'ERROR', 'pymor.algorithms.gram_schmidt.gram_schmidt': 'ERROR', 'pymor.algorithms.image.estimate_image_hierarchical': 'ERROR'})
+from pymor.basic import *
+from pymor.core.logger import set_log_levels
+set_log_levels({'pymor.algorithms.greedy': 'ERROR', 'pymor.algorithms.gram_schmidt.gram_schmidt': 'ERROR', 'pymor.algorithms.image.estimate_image_hierarchical': 'ERROR'})
 ```
 
 Next we will instantiate a class describing the analytical problem
 we want so solve. In this case, a
 {meth}`~pymor.analyticalproblems.thermalblock.thermal_block_problem`:
 
-```{code-cell} 
-
-   p = thermal_block_problem(num_blocks=(3, 2))
+```{code-cell}
+p = thermal_block_problem(num_blocks=(3, 2))
 ```
 
 We want to discretize this problem using the finite element method.
@@ -154,9 +153,8 @@ a {class}`~pymor.analyticalproblems.elliptic.StationaryProblem`, we can use
 a predifined *discretizer* to do the work for us. In this case, we use
 {func}`~pymor.discretizers.builtin.cg.discretize_stationary_cg`:
 
-```{code-cell} 
-
-   fom, fom_data = discretize_stationary_cg(p, diameter=1./50.)
+```{code-cell}
+fom, fom_data = discretize_stationary_cg(p, diameter=1./50.)
 ```
 
 `fom` is the {{ StationaryModel }} which has been created for us,
@@ -164,9 +162,8 @@ whereas `fom_data` contains some additional data, in particular the {{ Grid }}
 and the {{ BoundaryInfo }} which have been created during discretization. We
 can have a look at the grid,
 
-```{code-cell} 
-
-   print(fom_data['grid'])
+```{code-cell}
+print(fom_data['grid'])
 ```
 
 and, as always, we can display its class documentation using
@@ -174,10 +171,9 @@ and, as always, we can display its class documentation using
 
 Let's solve the thermal block problem and visualize the solution:
 
-```{code-cell} 
-
-   U = fom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
-   fom.visualize(U, title='Solution')
+```{code-cell}
+U = fom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
+fom.visualize(U, title='Solution')
 ```
 
 Each class in pyMOR that describes a {{ Parameter }}-dependent mathematical
@@ -190,9 +186,8 @@ as {meth}`__init__` arguments and from the
 attributes that have been set in {meth}`__init__`.
 Let's have a look:
 
-```{code-cell} 
-
-   print(fom.parameters)
+```{code-cell}
+print(fom.parameters)
 ```
 
 This tells us, that the {{ Parameters }} which
@@ -219,70 +214,63 @@ required for error estimation. Moreover, we have to provide
 the reductor with a {{ ParameterFunctional }} which computes a lower bound for
 the coercivity of the problem for given {{ parameter_values }}.
 
-```{code-cell} 
-
-   reductor = CoerciveRBReductor(
-       fom,
-       product=fom.h1_0_semi_product,
-       coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', fom.parameters)
-   )
+```{code-cell}
+reductor = CoerciveRBReductor(
+   fom,
+   product=fom.h1_0_semi_product,
+   coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', fom.parameters)
+)
 ```
 
 Moreover, we need to select a training set of {{ parameter_values }}. The problem
 `p` already comes with a {{ ParameterSpace }}, from which we can easily sample
 these values.  E.g.:
 
-```{code-cell} 
-
-   training_set = p.parameter_space.sample_uniformly(4)
-   print(training_set[0])
+```{code-cell}
+training_set = p.parameter_space.sample_uniformly(4)
+print(training_set[0])
 ```
 
 Now we start the basis generation:
 
-```{code-cell} 
-
-  greedy_data = rb_greedy(fom, reductor, training_set, max_extensions=32)
+```{code-cell}
+greedy_data = rb_greedy(fom, reductor, training_set, max_extensions=32)
 ```
 
 The `max_extensions` parameter defines how many basis vectors we want to
 obtain. `greedy_data` is a dictionary containing various data that has
 been generated during the run of the algorithm:
 
-```{code-cell} 
-
-   print(greedy_data.keys())
+```{code-cell}
+print(greedy_data.keys())
 ```
 
 The most important items is `'rom'` which holds the reduced {{ Model }}
 obtained from applying our reductor with the final reduced basis.
 
-```{code-cell} 
-
-   rom = greedy_data['rom']
+```{code-cell}
+rom = greedy_data['rom']
 ```
 
 All vectors in pyMOR are stored in so called {{ VectorArrays }}. For example
 the solution `U` computed above is given as a {{ VectorArray }} of length 1.
 For the reduced basis we have:
 
-```{code-cell} 
-
-   RB = reductor.bases['RB']
-   print(type(RB))
-   print(len(RB))
-   print(RB.dim)
+```{code-cell}
+RB = reductor.bases['RB']
+print(type(RB))
+print(len(RB))
+print(RB.dim)
 ```
 
 Let us check if the reduced basis really is orthonormal with respect to
 the H1-product. For this we use the {meth}`~pymor.vectorarrays.interface.VectorArray.gramian`
 method:
 
-```{code-cell} 
-
-   import numpy as np
-   gram_matrix = RB.gramian(fom.h1_0_semi_product)
-   print(np.max(np.abs(gram_matrix - np.eye(32))))
+```{code-cell}
+import numpy as np
+gram_matrix = RB.gramian(fom.h1_0_semi_product)
+print(np.max(np.abs(gram_matrix - np.eye(32))))
 ```
 
 Looks good! We can now solve the reduced model for the same {{ parameter_values }}
@@ -290,24 +278,22 @@ as above.  The result is a vector of coefficients w.r.t. the reduced basis, whic
 currently stored in `RB`. To form the linear combination, we can use the
 {}`reconstruct` method of the reductor:
 
-```{code-cell} 
-
-   u = rom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
-   print(u)
-   U_red = reductor.reconstruct(u)
-   print(U_red.dim)
+```{code-cell}
+u = rom.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
+print(u)
+U_red = reductor.reconstruct(u)
+print(U_red.dim)
 ```
 
 Finally we compute the reduction error and display the reduced solution along with
 the detailed solution and the error:
 
-```{code-cell} 
-
-   ERR = U - U_red
-   print(ERR.norm(fom.h1_0_semi_product))
-   fom.visualize((U, U_red, ERR),
-                 legend=('Detailed', 'Reduced', 'Error'),
-                 separate_colorbars=True)
+```{code-cell}
+ERR = U - U_red
+print(ERR.norm(fom.h1_0_semi_product))
+fom.visualize((U, U_red, ERR),
+             legend=('Detailed', 'Reduced', 'Error'),
+             separate_colorbars=True)
 ```
 
 We can nicely observe that, as expected, the error is maximized along the

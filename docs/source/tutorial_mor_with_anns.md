@@ -91,9 +91,7 @@ example, we consider the following two-dimensional diffusion problem with
 parametrized diffusion, right hand side and Dirichlet boundary condition:
 
 ```{math}
-
 -\nabla \cdot \big(\sigma(x, \mu) \nabla u(x, \mu) \big) = f(x, \mu),\quad x=(x_1,x_2) \in \Omega,
-
 ```
 
 on the domain {math}`\Omega:= (0, 1)^2 \subset \mathbb{R}^2` with data
@@ -103,43 +101,41 @@ functions {math}`f((x_1, x_2), \mu) = 10 \cdot \mu + 0.1`,
 Dirichlet boundary conditions
 
 ```{math}
-
 u((x_1, x_2), \mu) = 2x_1\mu + 0.5,\quad x=(x_1, x_2) \in \partial\Omega.
-
 ```
 
 We discretize the problem using pyMOR's builtin discretization toolkit as
 explained in {doc}`tutorial_builtin_discretizer`:
 
 ```{code-cell}
-    from pymor.basic import *
+from pymor.basic import *
 
-    problem = StationaryProblem(
-          domain=RectDomain(),
+problem = StationaryProblem(
+      domain=RectDomain(),
 
-          rhs=LincombFunction(
-              [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
-              [ProjectionParameterFunctional('mu'), 0.1]),
+      rhs=LincombFunction(
+          [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
+          [ProjectionParameterFunctional('mu'), 0.1]),
 
-          diffusion=LincombFunction(
-              [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],
-              [ProjectionParameterFunctional('mu'), 1]),
+      diffusion=LincombFunction(
+          [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],
+          [ProjectionParameterFunctional('mu'), 1]),
 
-          dirichlet_data=LincombFunction(
-              [ExpressionFunction('2 * x[..., 0]', 2, ()), ConstantFunction(1., 2)],
-              [ProjectionParameterFunctional('mu'), 0.5]),
+      dirichlet_data=LincombFunction(
+          [ExpressionFunction('2 * x[..., 0]', 2, ()), ConstantFunction(1., 2)],
+          [ProjectionParameterFunctional('mu'), 0.5]),
 
-          name='2DProblem'
-      )
+      name='2DProblem'
+  )
 
-    fom, _ = discretize_stationary_cg(problem, diameter=1/50)
+fom, _ = discretize_stationary_cg(problem, diameter=1/50)
 ```
 
 Since we employ a single {{ Parameter }}, and thus use the same range for each
 parameter, we can create the {{ ParameterSpace }} using the following line:
 
 ```{code-cell}
-    parameter_space = fom.parameters.space((0.1, 1))
+parameter_space = fom.parameters.space((0.1, 1))
 ```
 
 The main idea of the approach by Hesthaven et al. is to approximate the mapping
@@ -171,8 +167,8 @@ To train the neural network, we create a training and a validation set
 consisting of 100 and 20 randomly chosen {{ parameter_values }}, respectively:
 
 ```{code-cell}
-    training_set = parameter_space.sample_uniformly(100)
-    validation_set = parameter_space.sample_randomly(20)
+  training_set = parameter_space.sample_uniformly(100)
+  validation_set = parameter_space.sample_randomly(20)
 ```
 
 In this tutorial, we construct the reduced basis such that no more modes than
@@ -199,13 +195,13 @@ We can now construct a reductor with prescribed error for the basis and mean
 squared error of the neural network:
 
 ```{code-cell}
-    from pymor.reductors.neural_network import NeuralNetworkReductor
+from pymor.reductors.neural_network import NeuralNetworkReductor
 
-    reductor = NeuralNetworkReductor(fom,
-                                     training_set,
-                                     validation_set,
-                                     l2_err=1e-5,
-                                     ann_mse=1e-5)
+reductor = NeuralNetworkReductor(fom,
+                                 training_set,
+                                 validation_set,
+                                 l2_err=1e-5,
+                                 ann_mse=1e-5)
 ```
 
 To reduce the model, i.e. compute a reduced basis via POD and train the neural
@@ -213,21 +209,21 @@ network, we use the respective function of the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor`:
 
 ```{code-cell}
-    rom = reductor.reduce(restarts=100)
+rom = reductor.reduce(restarts=100)
 ```
 
 We are now ready to test our reduced model by solving for a random parameter value
 the full problem and the reduced model and visualize the result:
 
 ```{code-cell}
-    mu = parameter_space.sample_randomly()
+mu = parameter_space.sample_randomly()
 
-    U = fom.solve(mu)
-    U_red = rom.solve(mu)
-    U_red_recon = reductor.reconstruct(U_red)
+U = fom.solve(mu)
+U_red = rom.solve(mu)
+U_red_recon = reductor.reconstruct(U_red)
 
-    fom.visualize((U, U_red_recon),
-                  legend=(f'Full solution for parameter {mu}', f'Reduced solution for parameter {mu}'))
+fom.visualize((U, U_red_recon),
+              legend=(f'Full solution for parameter {mu}', f'Reduced solution for parameter {mu}'))
 ```
 
 Finally, we measure the error of our neural network and the performance
@@ -235,63 +231,63 @@ compared to the solution of the full order problem on a training set. To this
 end, we sample randomly some {{ parameter_values }} from our {{ ParameterSpace }}:
 
 ```{code-cell}
-    test_set = parameter_space.sample_randomly(10)
+test_set = parameter_space.sample_randomly(10)
 ```
 
 Next, we create empty solution arrays for the full and reduced solutions and an
 empty list for the speedups:
 
 ```{code-cell}
-    U = fom.solution_space.empty(reserve=len(test_set))
-    U_red = fom.solution_space.empty(reserve=len(test_set))
+U = fom.solution_space.empty(reserve=len(test_set))
+U_red = fom.solution_space.empty(reserve=len(test_set))
 
-    speedups = []
+speedups = []
 ```
 
 Now, we iterate over the test set, compute full and reduced solutions to the
 respective parameters and measure the speedup:
 
 ```{code-cell}
-    import time
+import time
 
-    for mu in test_set:
-        tic = time.perf_counter()
-        U.append(fom.solve(mu))
-        time_fom = time.perf_counter() - tic
+for mu in test_set:
+    tic = time.perf_counter()
+    U.append(fom.solve(mu))
+    time_fom = time.perf_counter() - tic
 
-        tic = time.perf_counter()
-        U_red.append(reductor.reconstruct(rom.solve(mu)))
-        time_red = time.perf_counter() - tic
+    tic = time.perf_counter()
+    U_red.append(reductor.reconstruct(rom.solve(mu)))
+    time_red = time.perf_counter() - tic
 
-        speedups.append(time_fom / time_red)
+    speedups.append(time_fom / time_red)
 ```
 
 We can now derive the absolute and relative errors on the training set as
 
 ```{code-cell}
-    absolute_errors = (U - U_red).norm()
-    relative_errors = (U - U_red).norm() / U.norm()
+absolute_errors = (U - U_red).norm()
+relative_errors = (U - U_red).norm() / U.norm()
 ```
 
 The average absolute error amounts to
 
 ```{code-cell}
-    import numpy as np
+import numpy as np
 
-    np.average(absolute_errors)
+np.average(absolute_errors)
 ```
 
 On the other hand, the average relative error is
 
 ```{code-cell}
-    np.average(relative_errors)
+np.average(relative_errors)
 ```
 
 Using neural networks results in the following median speedup compared to
 solving the full order problem:
 
 ```{code-cell}
-    np.median(speedups)
+np.median(speedups)
 ```
 
 Since {class}`~pymor.reductors.neural_network.NeuralNetworkReductor` only calls

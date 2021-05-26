@@ -37,13 +37,13 @@ First, we import necessary packages, including
 {class}`~pymor.reductors.bt.BTReductor`.
 
 ```{code-cell}
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import scipy.sparse as sps
-    from pymor.models.iosys import LTIModel
-    from pymor.reductors.bt import BTReductor
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.sparse as sps
+from pymor.models.iosys import LTIModel
+from pymor.reductors.bt import BTReductor
 
-    plt.rcParams['axes.grid'] = True
+plt.rcParams['axes.grid'] = True
 ```
 
 Then we build the matrices
@@ -55,8 +55,7 @@ Then we build the matrices
 and form the full-order model.
 
 ```{code-cell}
-    fom = LTIModel.from_matrices(A, B, C, E=E)
-
+fom = LTIModel.from_matrices(A, B, C, E=E)
 ```
 
 ## Balanced truncation
@@ -71,12 +70,10 @@ realizations.
 For example, starting from a realization
 
 ```{math}
-
 \begin{align}
     E \dot{x}(t) & = A x(t) + B u(t), \\
     y(t) & = C x(t) + D u(t),
 \end{align}
-
 ```
 
 another realization can be obtained by replacing {math}`x(t)` with
@@ -108,10 +105,8 @@ if {math}`\tilde{P}` is invertible,
 then
 
 ```{math}
-
 E_c(x_0) = x_0 \tilde{P}^{-1} x_0, \quad
 E_o(x_0) = x_0 \tilde{Q} x_0.
-
 ```
 
 Therefore, states corresponding to small Hankel singular values are more
@@ -125,14 +120,12 @@ possibly after orthonormalization,
 giving a reduced-order model
 
 ```{math}
-
 \begin{align}
     \hat{E} \dot{\hat{x}}(t)
     & = \hat{A} \hat{x}(t) + \hat{B} u(t), \\
     \hat{y}(t)
     & = \hat{C} \hat{x}(t) + D u(t),
 \end{align}
-
 ```
 
 with
@@ -146,20 +139,16 @@ It is known that the reduced-order model is asymptotically stable if
 Furthermore, it satisfies the {math}`\mathcal{H}_\infty` error bound
 
 ```{math}
-
 \lVert H - \hat{H} \rVert_{\mathcal{H}_\infty}
 \leqslant 2 \sum_{i = r + 1}^n \sigma_i.
-
 ```
 
 Note that any reduced-order model (not only from balanced truncation) satisfies
 the lower bound
 
 ```{math}
-
 \lVert H - \hat{H} \rVert_{\mathcal{H}_\infty}
 \geqslant \sigma_{r + 1}.
-
 ```
 
 ## Balanced truncation in pyMOR
@@ -167,7 +156,7 @@ the lower bound
 To run balanced truncation in pyMOR, we first need the reductor object
 
 ```{code-cell}
-    bt = BTReductor(fom)
+bt = BTReductor(fom)
 ```
 
 Calling its {meth}`~pymor.reductors.bt.GenericBTReductor.reduce` method runs the
@@ -176,20 +165,20 @@ method which can compute the a priori {math}`\mathcal{H}_\infty` error bounds
 based on the Hankel singular values:
 
 ```{code-cell}
-    error_bounds = bt.error_bounds()
-    hsv = fom.hsv()
-    fig, ax = plt.subplots()
-    ax.semilogy(range(1, len(error_bounds) + 1), error_bounds, '.-')
-    ax.semilogy(range(1, len(hsv)), hsv[1:], '.-')
-    ax.set_xlabel('Reduced order')
-    _ = ax.set_title(r'Upper and lower $\mathcal{H}_\infty$ error bounds')
+error_bounds = bt.error_bounds()
+hsv = fom.hsv()
+fig, ax = plt.subplots()
+ax.semilogy(range(1, len(error_bounds) + 1), error_bounds, '.-')
+ax.semilogy(range(1, len(hsv)), hsv[1:], '.-')
+ax.set_xlabel('Reduced order')
+_ = ax.set_title(r'Upper and lower $\mathcal{H}_\infty$ error bounds')
 ```
 
 To get a reduced-order model of order 10, we call the {}`reduce` method with the
 appropriate argument:
 
 ```{code-cell}
-    rom = bt.reduce(10)
+rom = bt.reduce(10)
 ```
 
 Instead, or in addition, a tolerance for the {math}`\mathcal{H}_\infty` error
@@ -201,26 +190,25 @@ We can compare the magnitude plots between the full-order and reduced-order
 models
 
 ```{code-cell}
-    w = np.logspace(-2, 8, 300)
-    fig, ax = plt.subplots()
-    fom.mag_plot(w, ax=ax, label='FOM')
-    rom.mag_plot(w, ax=ax, linestyle='--', label='ROM')
-    _ = ax.legend()
+w = np.logspace(-2, 8, 300)
+fig, ax = plt.subplots()
+fom.mag_plot(w, ax=ax, label='FOM')
+rom.mag_plot(w, ax=ax, linestyle='--', label='ROM')
+_ = ax.legend()
 ```
 
 as well as Bode plots
 
 ```{code-cell}
-    fig, axs = plt.subplots(6, 2, figsize=(12, 24), sharex=True, constrained_layout=True)
-    fom.bode_plot(w, ax=axs)
-    _ = rom.bode_plot(w, ax=axs, linestyle='--')
+fig, axs = plt.subplots(6, 2, figsize=(12, 24), sharex=True, constrained_layout=True)
+fom.bode_plot(w, ax=axs)
+_ = rom.bode_plot(w, ax=axs, linestyle='--')
 ```
 
 Also, we can plot the magnitude plot of the error system,
 which is again an LTI system.
 
 ```{math}
-
 \begin{align}
     \begin{bmatrix}
         E & 0 \\
@@ -255,26 +243,25 @@ which is again an LTI system.
         \hat{x}(t)
     \end{bmatrix}.
 \end{align}
-
 ```
 
 ```{code-cell}
-    err = fom - rom
-    _ = err.mag_plot(w)
+err = fom - rom
+_ = err.mag_plot(w)
 ```
 
 and its Bode plot
 
 ```{code-cell}
-    _ = err.bode_plot(w)
+_ = err.bode_plot(w)
 ```
 
 Finally, we can compute the relative errors in different system norms.
 
 ```{code-cell}
-    print(f'Relative Hinf error:   {err.hinf_norm() / fom.hinf_norm():.3e}')
-    print(f'Relative H2 error:     {err.h2_norm() / fom.h2_norm():.3e}')
-    print(f'Relative Hankel error: {err.hankel_norm() / fom.hankel_norm():.3e}')
+print(f'Relative Hinf error:   {err.hinf_norm() / fom.hinf_norm():.3e}')
+print(f'Relative H2 error:     {err.h2_norm() / fom.h2_norm():.3e}')
+print(f'Relative Hankel error: {err.hankel_norm() / fom.hankel_norm():.3e}')
 ```
 
 Download the code:

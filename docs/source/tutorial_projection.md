@@ -57,18 +57,18 @@ pyMOR's subpackages.
 Let's build a 2-by-2 thermal block {{ Model }} as our FOM:
 
 ```{code-cell}
-    from pymor.analyticalproblems.thermalblock import thermal_block_problem
-    from pymor.discretizers.builtin import discretize_stationary_cg
+from pymor.analyticalproblems.thermalblock import thermal_block_problem
+from pymor.discretizers.builtin import discretize_stationary_cg
 
-    p = thermal_block_problem((2,2))
-    fom, _ = discretize_stationary_cg(p, diameter=1/100)
+p = thermal_block_problem((2,2))
+fom, _ = discretize_stationary_cg(p, diameter=1/100)
 ```
 
 To get started, we take a look at one solution of the FOM for some fixed {{ parameter_values }}.
 
 ```{code-cell}
-    U = fom.solve([1., 0.1, 0.1, 1.])
-    fom.visualize(U)
+U = fom.solve([1., 0.1, 0.1, 1.])
+fom.visualize(U)
 ```
 
 To build the ROM, we will need a reduced space {math}`V_N` of small dimension {math}`N`.
@@ -77,21 +77,19 @@ do for our purposes here. We choose to build a basic POD space from some random 
 snapshots.
 
 ```{code-cell}
-    from pymor.algorithms.pod import pod
-    from matplotlib import pyplot as plt
+from pymor.algorithms.pod import pod
+from matplotlib import pyplot as plt
 
-    snapshots = fom.solution_space.empty()
-    for mu in p.parameter_space.sample_randomly(20):
-        snapshots.append(fom.solve(mu))
-    basis, singular_values = pod(snapshots, modes=10)
+snapshots = fom.solution_space.empty()
+for mu in p.parameter_space.sample_randomly(20):
+    snapshots.append(fom.solve(mu))
+basis, singular_values = pod(snapshots, modes=10)
 ```
 
 The singular value decay looks promising:
 
 ```{code-cell}
-    _ = plt.semilogy(singular_values)
-
-
+_ = plt.semilogy(singular_values)
 ```
 
 ## Solving the Model
@@ -102,8 +100,8 @@ solving the FOM works. Let's take a look at what
 {meth}`~pymor.models.interface.Model.solve` does:
 
 ```{code-cell}
-    from pymor.tools.formatsrc import print_source
-    print_source(fom.solve)
+from pymor.tools.formatsrc import print_source
+print_source(fom.solve)
 ```
 
 This does not look too interesting. Actually, {meth}`~pymor.models.interface.Model.solve`
@@ -113,7 +111,7 @@ outputs or error estimates. Next, we take a look at the implemenation of
 {meth}`~pymor.models.interface.Model.compute`:
 
 ```{code-cell}
-    print_source(fom.compute)
+print_source(fom.compute)
 ```
 
 What we see is a default implementation from {class}`~pymor.models.interface.Model` that
@@ -125,22 +123,20 @@ multiple return values at once in an optimized way. Our given model, however, ju
 actual code:
 
 ```{code-cell}
-    print_source(fom._compute_solution)
+print_source(fom._compute_solution)
 ```
 
 What does this mean? If we look at the type of {}`fom`,
 
 ```{code-cell}
-    type(fom)
+type(fom)
 ```
 
 we see that {}`fom` is a {{ StationaryModel }} which encodes an equation of the
 form
 
 ```{math}
-
 L(u(\mu); \mu) = F(\mu)
-
 ```
 
 Here, {math}`L` is a linear or non-linear parametric {{ Operator }} and {math}`F` is a
@@ -159,7 +155,7 @@ However, while {meth}`~pymor.operators.interface.Operator.apply_inverse` expects
 an {{ Operator }}:
 
 ```{code-cell}
-    fom.rhs
+fom.rhs
 ```
 
 This is due to the fact that {{ VectorArrays }} in pyMOR cannot be parametric. So to allow
@@ -167,15 +163,15 @@ for parametric right-hand sides, this right-hand side is encoded by a linear {{ 
 that maps numbers to scalar multiples of the right-hand side vector. Indeed, we see that
 
 ```{code-cell}
-    fom.rhs.source
+fom.rhs.source
 ```
 
 is one-dimensional, and if we look at the base-class implementation of
 {meth}`~pymor.operators.interface.Operator.as_range_array`
 
 ```{code-cell}
-    from pymor.operators.interface import Operator
-    print_source(Operator.as_range_array)
+from pymor.operators.interface import Operator
+print_source(Operator.as_range_array)
 ```
 
 we see all that {meth}`~pymor.operators.interface.Operator.as_range_array`
@@ -188,7 +184,7 @@ Let's try solving the model on our own:
 ```{code-cell}
 :tags: [raises-exception]
 
-    U2 = fom.operator.apply_inverse(fom.rhs.as_range_array(mu), mu=[1., 0.1, 0.1, 1.])
+U2 = fom.operator.apply_inverse(fom.rhs.as_range_array(mu), mu=[1., 0.1, 0.1, 1.])
 ```
 
 That did not work too well! In pyMOR, all parametric objects expect the
@@ -204,16 +200,15 @@ you see the explicit call to {meth}`~pymor.parameters.base.Parameters.parse`.
 We try again:
 
 ```{code-cell}
-    mu = fom.parameters.parse([1., 0.1, 0.1, 1.])
-    U2 = fom.operator.apply_inverse(fom.rhs.as_range_array(mu), mu=mu)
+mu = fom.parameters.parse([1., 0.1, 0.1, 1.])
+U2 = fom.operator.apply_inverse(fom.rhs.as_range_array(mu), mu=mu)
 ```
 
 We can check that we get exactly the same result as from our earlier call
 to {meth}`~pymor.models.interface.Model.solve`:
 
 ```{code-cell}
-    (U-U2).norm()
-
+(U-U2).norm()
 ```
 
 ## Galerkin Projection
@@ -225,18 +220,14 @@ To that end we call {math}`\mathbb{V}_N` the matrix that has the vectors in
 basis vectors will be called {math}`u_N(\mu)`. We want that
 
 ```{math}
-
 U_N := \mathbb{V}_N \cdot u_N(\mu) \approx u(\mu).
-
 ```
 
 Substituting {math}`\mathbb{V}_N \cdot u_N(\mu)` for {math}`u(\mu)` into the equation system
 defining the FOM, we arrive at:
 
 ```{math}
-
 L(\mathbb{V}_N\cdot u_N(\mu); \mu) = F(\mu).
-
 ```
 
 However, this is an over-determined system: we have decreased the degrees of
@@ -248,9 +239,7 @@ as a minimizer of norm of the residual of the equations system, i.e. to minimize
 the defect by which {math}`u_N` fails to satisfy the equations:
 
 ```{math}
-
 u_N(\mu) := \operatorname{arg\,min}_{u \in \mathbb{R}^N} \|F(\mu) - L(\mathbb{V}_N \cdot u; \mu)\|.
-
 ```
 
 While this is a feasible (and sometimes necessary) approach that can be realized with
@@ -258,9 +247,7 @@ pyMOR as well, we choose here an even simpler method by requiring that the resid
 orthogonal to our reduced space, i.e.
 
 ```{math}
-
 (\mathbb{V}_{N,i},\, F(\mu) - L(\mathbb{V}_N \cdot u_N; \mu)) = 0 \qquad i=1,\ldots,N,
-
 ```
 
 where the {math}`\mathbb{V}_{N,i}` denote the columns of {math}`\mathbb{V}_N`
@@ -272,19 +259,15 @@ and that {math}`\mathbb{A}(\mu)` is its matrix representation. Further assume
 that {math}`(\cdot, \cdot)` is the Euclidean inner product. Then we arrive at
 
 ```{math}
-
 [\mathbb{V}_N^T \cdot \mathbb{A}(\mu) \cdot \mathbb{V}_N] \cdot u_N =
 \mathbb{V}_N^T \cdot F(\mu),
-
 ```
 
 which is a {math}`N\times N` linear equation system. In the common case that
 {math}`\mathbb{A}(\mu)` is positive definite, the reduced system matrix
 
 ```{math}
-
 \mathbb{A}_N(\mu) := \mathbb{V}_N^T \cdot \mathbb{A}(\mu) \cdot \mathbb{V}_N
-
 ```
 
 is positive definite as well, and {math}`u_N(\mu)` is uniquely determined. We call
@@ -294,9 +277,7 @@ You may know the concept of Galerkin projection from finite element methods. Ind
 equation system comes from the weak formulation of a PDE of the form
 
 ```{math}
-
 a(v, U(\mu); \mu) = f(v; \mu) \qquad \forall v \in V_h,
-
 ```
 
 the matrix of the bilinear form {math}`a(\cdot, \cdot; \mu)` w.r.t. a finite element basis
@@ -304,18 +285,14 @@ is {math}`\mathbb{A}(\mu)`, and {math}`F(\mu)` is the vector representation of t
 functional {math}`f` w.r.t. the dual finite element basis, then
 
 ```{math}
-
 \mathbb{A}_N(\mu) \cdot u_N = \mathbb{V}_N^T \cdot F(\mu)
-
 ```
 
 is exactly the equation system obtained from Galerkin projection of the weak PDE formulation onto
 the reduced space, i.e. solving
 
 ```{math}
-
 a(v, u_N(\mu); \mu) = f(v; \mu) \qquad \forall v \in V_N
-
 ```
 
 for {math}`U_N(\mu) \in V_N`. As for finite element methods,
@@ -331,18 +308,18 @@ inner product with the {}`basis` {{ VectorArray }} using its {meth}`~pymor.vecto
 method:
 
 ```{code-cell}
-    reduced_operator = fom.operator.apply2(basis, basis, mu=mu)
-    reduced_rhs = basis.inner(fom.rhs.as_range_array(mu))
+reduced_operator = fom.operator.apply2(basis, basis, mu=mu)
+reduced_rhs = basis.inner(fom.rhs.as_range_array(mu))
 ```
 
 Now we just need to solve the resulting linear equation system using {{ NumPy }} to obtain
 {math}`u_N(\mu)`:
 
 ```{code-cell}
-    import numpy as np
+import numpy as np
 
-    u_N = np.linalg.solve(reduced_operator, reduced_rhs)
-    u_N
+u_N = np.linalg.solve(reduced_operator, reduced_rhs)
+u_N
 ```
 
 To reconstruct the high-dimensional approximation {math}`\mathbb{V}_N \cdot u_N(\mu)`
@@ -350,22 +327,21 @@ from {math}`u_N(\mu)` we can use the {meth}`~pymor.vectorarrays.interface.Vector
 method:
 
 ```{code-cell}
-    U_N = basis.lincomb(u_N.T)
-    U_N
+U_N = basis.lincomb(u_N.T)
+U_N
 ```
 
 Let's see, how good our reduced approximation is:
 
 ```{code-cell}
-    (U-U_N).norm(fom.h1_0_product) / U.norm(fom.h1_0_product)
+(U-U_N).norm(fom.h1_0_product) / U.norm(fom.h1_0_product)
 ```
 
 With only 10 basis vectors, we have achieved a relative {math}`H^1`-error of 2%.
 We can also visually inspect our solution and the approximation error:
 
 ```{code-cell}
-    fom.visualize((U, U_N, U-U_N), separate_colorbars=True)
-
+fom.visualize((U, U_N, U-U_N), separate_colorbars=True)
 ```
 
 ## Building the ROM
@@ -373,33 +349,33 @@ We can also visually inspect our solution and the approximation error:
 So far, we have only constructed the ROM in the form of {{ NumPy }} data structures:
 
 ```{code-cell}
-    type(reduced_operator)
+type(reduced_operator)
 ```
 
 To build a proper pyMOR {{ Model }} for the ROM, which can be used everywhere a {{ Model }} is
 expected, we first wrap these data structures as pyMOR {{ Operators }}:
 
 ```{code-cell}
-    from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.numpy import NumpyMatrixOperator
 
-    reduced_operator = NumpyMatrixOperator(reduced_operator)
-    reduced_rhs = NumpyMatrixOperator(reduced_rhs)
+reduced_operator = NumpyMatrixOperator(reduced_operator)
+reduced_rhs = NumpyMatrixOperator(reduced_rhs)
 ```
 
 Galerkin projection does not change the structure of the model. So the ROM should again
 be a {{ StationaryModel }}. We can construct it easily as follows:
 
 ```{code-cell}
-    from pymor.models.basic import StationaryModel
-    rom = StationaryModel(reduced_operator, reduced_rhs)
-    rom
+from pymor.models.basic import StationaryModel
+rom = StationaryModel(reduced_operator, reduced_rhs)
+rom
 ```
 
 Let's check if it works as expected:
 
 ```{code-cell}
-    u_N2 = rom.solve()
-    u_N.T - u_N2.to_numpy()
+u_N2 = rom.solve()
+u_N.T - u_N2.to_numpy()
 ```
 
 We get exactly the same result, so we have successfully built a pyMOR ROM.
@@ -411,27 +387,27 @@ have assembled the reduced-order system for a specific set of
 {{ parameter_values }}:
 
 ```{code-cell}
-    print(fom.parameters)
-    print(rom.parameters)
+print(fom.parameters)
+print(rom.parameters)
 ```
 
 Solving the ROM for a new {}`mu` would mean to build a new ROM with updated
 system matrix and right-hand side. However, if we compare the timings,
 
 ```{code-cell}
-    from time import perf_counter
+from time import perf_counter
 
-    tic = perf_counter()
-    fom.solve(mu)
-    toc = perf_counter()
-    fom.operator.apply2(basis, basis, mu=mu)
-    basis.inner(fom.rhs.as_range_array(mu))
-    tac = perf_counter()
-    rom.solve()
-    tuc = perf_counter()
-    print(f'FOM:          {toc-tic:.5f} (s)')
-    print(f'ROM assemble: {tac-toc:.5f} (s)')
-    print(f'ROM solve:    {tuc-tac:.5f} (s)')
+tic = perf_counter()
+fom.solve(mu)
+toc = perf_counter()
+fom.operator.apply2(basis, basis, mu=mu)
+basis.inner(fom.rhs.as_range_array(mu))
+tac = perf_counter()
+rom.solve()
+tuc = perf_counter()
+print(f'FOM:          {toc-tic:.5f} (s)')
+print(f'ROM assemble: {tac-toc:.5f} (s)')
+print(f'ROM solve:    {tuc-tac:.5f} (s)')
 ```
 
 we see that we lose a lot of our speedup when we assemble the ROM
@@ -442,7 +418,7 @@ to solve the ROM once-and-for-all for all possible {{ parameter_values }}. Lucki
 the system operator of our FOM has a special structure:
 
 ```{code-cell}
-    fom.operator
+fom.operator
 ```
 
 We see that {}`operator` is a {{ LincombOperator }}, a linear combination of {{ Operators }}
@@ -456,8 +432,8 @@ requires any high-dimensional operations for its solution by projecting each
 {{ Operator }} in the sum separately:
 
 ```{code-cell}
-    reduced_operators = [NumpyMatrixOperator(op.apply2(basis, basis))
-                         for op in fom.operator.operators]
+reduced_operators = [NumpyMatrixOperator(op.apply2(basis, basis))
+                     for op in fom.operator.operators]
 ```
 
 We could instantiate a new {{ LincombOperator }} of these {}`reduced_operators` manually.
@@ -466,44 +442,44 @@ which allows us to create a new object from a given {{ ImmutableObject }} by rep
 some of its attributes by new values:
 
 ```{code-cell}
-    reduced_operator = fom.operator.with_(operators=reduced_operators)
+reduced_operator = fom.operator.with_(operators=reduced_operators)
 ```
 
 The right-hand side of our problem is non-parametric,
 
 ```{code-cell}
-    fom.rhs.parameters
+fom.rhs.parameters
 ```
 
 so we don't need to do anything special about it. We build a new ROM,
 
 ```{code-cell}
-    rom = StationaryModel(reduced_operator, reduced_rhs)
+rom = StationaryModel(reduced_operator, reduced_rhs)
 ```
 
 which now depends on the same {{ Parameters }} as the FOM:
 
 ```{code-cell}
-    rom.parameters
+rom.parameters
 ```
 
 We check that our new ROM still computes the same solution:
 
 ```{code-cell}
-    u_N3 = rom.solve(mu)
-    u_N.T - u_N3.to_numpy()
+u_N3 = rom.solve(mu)
+u_N.T - u_N3.to_numpy()
 ```
 
 Let's see if our new ROM is actually faster than the FOM:
 
 ```{code-cell}
-    tic = perf_counter()
-    fom.solve(mu)
-    toc = perf_counter()
-    rom.solve(mu)
-    tac = perf_counter()
-    print(f'FOM: {toc-tic:.5f} (s)')
-    print(f'ROM: {tac-toc:.5f} (s)')
+tic = perf_counter()
+fom.solve(mu)
+toc = perf_counter()
+rom.solve(mu)
+tac = perf_counter()
+print(f'FOM: {toc-tic:.5f} (s)')
+print(f'ROM: {tac-toc:.5f} (s)')
 ```
 
 You should see a significant speedup of around two orders of magnitude.
@@ -530,10 +506,10 @@ a Galerkin projection, or more general a Petrov-Galerkin projection, of any
 pyMOR {{ Operator }}. Let's see, how it works:
 
 ```{code-cell}
-    from pymor.algorithms.projection import project
+from pymor.algorithms.projection import project
 
-    reduced_operator = project(fom.operator, basis, basis)
-    reduced_rhs      = project(fom.rhs,      basis, None )
+reduced_operator = project(fom.operator, basis, basis)
+reduced_rhs      = project(fom.rhs,      basis, None )
 ```
 
 The arguments of {meth}`~pymor.algorithms.projection.project` are the {{ Operator }}
@@ -548,23 +524,23 @@ is determined, we pass {}`basis` twice when projecting {}`fom.operator`. Note th
 If we check the result,
 
 ```{code-cell}
-    reduced_operator
+reduced_operator
 ```
 
 we see, that pyMOR indeed has taken care of projecting each individual {{ Operator }}
 of the linear combination. We check again that we have built the same ROM:
 
 ```{code-cell}
-    rom = StationaryModel(reduced_operator, reduced_rhs)
-    u_N4 = rom.solve(mu)
-    u_N.T - u_N4.to_numpy()
+rom = StationaryModel(reduced_operator, reduced_rhs)
+u_N4 = rom.solve(mu)
+u_N.T - u_N4.to_numpy()
 ```
 
 So how does {meth}`~pymor.algorithms.projection.project` actually work? Let's take
 a look at the source:
 
 ```{code-cell}
-    print_source(project)
+print_source(project)
 ```
 
 We see there is error checking and some code to handle the optional {}`product` {{ Operator }}
@@ -580,21 +556,21 @@ or modifying a {{ RuleTable }} here, but we will look at the rules of {}`Project
 at its string representation:
 
 ```{code-cell}
-    from pymor.algorithms.projection import ProjectRules
-    ProjectRules
+from pymor.algorithms.projection import ProjectRules
+ProjectRules
 ```
 
 In the case of {}`fom.operator`, which is a {{ LincombOperator }}, the rule with index 8 will
 be the first matching rule. We can take a look at it:
 
-```{code-cell}    :hide-code:
-    :hide-output:
+```{code-cell}
+:tags: [hide-code,hide-output]
 
-    assert ProjectRules.rules[8].action_description == 'LincombOperator'
+assert ProjectRules.rules[8].action_description == 'LincombOperator'
 ```
 
 ```{code-cell}
-    ProjectRules.rules[8]
+ProjectRules.rules[8]
 ```
 
 The implementation of the action for {{ LincombOperators }} uses the
@@ -611,14 +587,13 @@ In our case, {}`ProjectRules` will be applied to all {{ NumpyMatrixOperators }} 
 {}`fom.operator`. These are linear, non-parametric operators, for which rule 3
 will apply:
 
-```{code-cell}    :hide-code:
-    :hide-output:
-
-    assert ProjectRules.rules[3].action_description == 'apply_basis'
+```{code-cell}
+:tags: [hide-code,hide-output]
+assert ProjectRules.rules[3].action_description == 'apply_basis'
 ```
 
 ```{code-cell}
-    ProjectRules.rules[3]
+ProjectRules.rules[3]
 ```
 
 This action has special cases for all possible combinations of given or not-given
@@ -644,17 +619,17 @@ which does all the work for us. For a simple Galerkin projection of a {{ Station
 we can use {class}`~pymor.reductors.basic.StationaryRBReductor`:
 
 ```{code-cell}
-    from pymor.reductors.basic import StationaryRBReductor
+from pymor.reductors.basic import StationaryRBReductor
 
-    reductor = StationaryRBReductor(fom, basis)
-    rom = reductor.reduce()
+reductor = StationaryRBReductor(fom, basis)
+rom = reductor.reduce()
 ```
 
 Again, we get the same ROM as before:
 
 ```{code-cell}
-    u_N5 = rom.solve(mu)
-    u_N.T - u_N5.to_numpy()
+u_N5 = rom.solve(mu)
+u_N.T - u_N5.to_numpy()
 ```
 
 As an additional feature, {meth}`~pymor.reductors.basic.StationaryRBReductor.reduce`
@@ -666,7 +641,7 @@ actual projection is handled in the
 where we can find some well-known code:
 
 ```{code-cell}
-    print_source(reductor.project_operators)
+print_source(reductor.project_operators)
 ```
 
 We see that the reductor also takes care of projecting output functionals and
@@ -674,7 +649,7 @@ inner products associated with the {{ Model }}. The construction of the ROM from
 the projected operators is performed by a separate method:
 
 ```{code-cell}
-    print_source(reductor.build_rom)
+print_source(reductor.build_rom)
 ```
 
 More advanced reductors, such as {class}`~pymor.reductors.coercive.CoerciveRBReductor`
@@ -686,14 +661,14 @@ Reductors also allow to compute {math}`U_N(\mu)` from {math}`u_N(\mu)` using
 the {meth}`~pymor.reductors.basic.StationaryRBReductor.reconstruct` method:
 
 ```{code-cell}
-    U_N5 = reductor.reconstruct(u_N5)
-    (U_N - U_N5).norm()
+U_N5 = reductor.reconstruct(u_N5)
+(U_N - U_N5).norm()
 ```
 
 Again, if we look at the source code, we see a familiar expression:
 
 ```{code-cell}
-    print_source(reductor.reconstruct)
+print_source(reductor.reconstruct)
 ```
 
 Download the code:

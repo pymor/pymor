@@ -32,12 +32,10 @@ we discuss finite-dimensional, continuous-time, linear time-invariant (LTI)
 systems of the form
 
 ```{math}
-
 \begin{align}
     E \dot{x}(t) & = A x(t) + B u(t), \\
     y(t) & = C x(t) + D u(t).
 \end{align}
-
 ```
 
 where
@@ -63,7 +61,6 @@ We consider the following one-dimensional heat equation over {math}`(0, 1)` with
 two inputs {math}`u_1, u_2` and three outputs {math}`y_1, y_2, y_2`:
 
 ```{math}
-
 \begin{align}
     \partial_t T(\xi, t) & = \partial_{\xi \xi} T(\xi, t) + u_1(t),
     & 0 < \xi < 1,\ t > 0, \\
@@ -78,7 +75,6 @@ two inputs {math}`u_1, u_2` and three outputs {math}`y_1, y_2, y_2`:
     y_3(t) & = T(1, t),
     & t > 0.
 \end{align}
-
 ```
 
 There are many ways of building an {{ LTIModel }}.
@@ -93,12 +89,12 @@ which instantiates an {{ LTIModel }} from NumPy or SciPy matrices.
 First, we do the necessary imports and some matplotlib style choices.
 
 ```{code-cell}
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import scipy.sparse as sps
-    from pymor.models.iosys import LTIModel
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.sparse as sps
+from pymor.models.iosys import LTIModel
 
-    plt.rcParams['axes.grid'] = True
+plt.rcParams['axes.grid'] = True
 ```
 
 Next, we can assemble the matrices based on a centered finite difference
@@ -112,13 +108,13 @@ Then, we can create an {{ LTIModel }} from NumPy and SciPy matrices {}`A`, {}`B`
 {}`E`.
 
 ```{code-cell}
-    fom = LTIModel.from_matrices(A, B, C, E=E)
+fom = LTIModel.from_matrices(A, B, C, E=E)
 ```
 
 We can take a look at the internal representation of the {{ LTIModel }} {}`fom`.
 
 ```{code-cell}
-    fom
+fom
 ```
 
 From this, we see that the matrices were wrapped in {{ NumpyMatrixOperators }},
@@ -130,7 +126,7 @@ The operators in an {{ LTIModel }} can be accessed via its attributes, e.g.,
 We can also see some basic information from {}`fom`'s string representation
 
 ```{code-cell}
-    print(fom)
+print(fom)
 ```
 
 which gives the dimensions of the underlying system more directly,
@@ -147,21 +143,17 @@ The expression for {math}`H` can be found by applying the Laplace transform
 to the system equations to obtain
 
 ```{math}
-
 \begin{align}
     s E X(s) & = A X(s) + B U(s), \\
     Y(s) & = C X(s) + D U(s).
 \end{align}
-
 ```
 
 using that {math}`s X(s)` is the Laplace transform of {math}`\dot{x}(t)`.
 Eliminating {math}`X(s)` leads to
 
 ```{math}
-
 Y(s) = \left( C (s E - A)^{-1} B + D \right) U(s),
-
 ```
 
 i.e., {math}`H(s) = C (s E - A)^{-1} B + D`.
@@ -173,9 +165,9 @@ The transfer function of a given {{ LTIModel }} can be evaluated using its
 The result is a NumPy array.
 
 ```{code-cell}
-    print(fom.eval_tf(0))
-    print(fom.eval_tf(1))
-    print(fom.eval_tf(1j))
+print(fom.eval_tf(0))
+print(fom.eval_tf(1))
+print(fom.eval_tf(1j))
 ```
 
 Similarly, the derivative of the transfer function can be computed using the
@@ -183,9 +175,9 @@ Similarly, the derivative of the transfer function can be computed using the
 The result is again a NumPy array.
 
 ```{code-cell}
-    print(fom.eval_dtf(0))
-    print(fom.eval_dtf(1))
-    print(fom.eval_dtf(1j))
+print(fom.eval_dtf(0))
+print(fom.eval_dtf(1))
+print(fom.eval_dtf(1j))
 ```
 
 To evaluate the transfer function over a sequence of points on the imaginary
@@ -202,7 +194,6 @@ It is known that if the input is chosen as
 then
 
 ```{math}
-
 \lim_{t \to \infty}
 \left(
   y_i(t)
@@ -210,7 +201,6 @@ then
   \sin(\omega t + \varphi + \arg(H_{ij}(\xi + \boldsymbol{\imath} \omega)))
 \right)
 = 0.
-
 ```
 
 In words, if the input is a pure exponential,
@@ -230,8 +220,8 @@ One way is the "magnitude plot", a visualization of the mapping
 using the {meth}`~pymor.models.iosys.InputOutputModel.mag_plot` method.
 
 ```{code-cell}
-    w = np.logspace(-2, 8, 300)
-    _ = fom.mag_plot(w)
+w = np.logspace(-2, 8, 300)
+_ = fom.mag_plot(w)
 ```
 
 Note that {meth}`~pymor.models.iosys.InputOutputModel.mag_plot` computes the
@@ -248,8 +238,7 @@ is in subplot {math}`(2 i - 1, j)` and
 is in subplot {math}`(2 i, j)`.
 
 ```{code-cell}
-    _ = fom.bode_plot(w)
-
+_ = fom.bode_plot(w)
 ```
 
 ## System poles
@@ -268,10 +257,10 @@ The poles of an {{ LTIModel }} can be obtained using its
 (assuming the system is minimal).
 
 ```{code-cell}
-    poles = fom.poles()
-    fig, ax = plt.subplots()
-    ax.plot(poles.real, poles.imag, '.')
-    _ = ax.set_title('Poles')
+poles = fom.poles()
+fig, ax = plt.subplots()
+ax.plot(poles.real, poles.imag, '.')
+_ = ax.set_title('Poles')
 ```
 
 :::{note}
@@ -288,7 +277,6 @@ The controllability and observability Gramians of an asymptotically stable
 system with invertible {math}`E` are respectively
 
 ```{math}
-
 \begin{align*}
     P & =
     \int_0^\infty
@@ -303,7 +291,6 @@ system with invertible {math}`E` are respectively
     e^{t E^{-1} A}
     \operatorname{d}\!t.
 \end{align*}
-
 ```
 
 From this,
@@ -312,7 +299,6 @@ Furthermore,
 it can be shown that {math}`P` and {math}`Q` are solutions to Lyapunov equation
 
 ```{math}
-
 \begin{align*}
     A P E^{\operatorname{T}}
     + E P A^{\operatorname{T}}
@@ -323,7 +309,6 @@ it can be shown that {math}`P` and {math}`Q` are solutions to Lyapunov equation
     + C^{\operatorname{T}} C
     & = 0.
 \end{align*}
-
 ```
 
 The Gramians can be used to quantify how much does the input influence the state
@@ -343,8 +328,7 @@ For example, the following computes the low-rank Cholesky factor of the
 controllability Gramian as a {{ VectorArray }}:
 
 ```{code-cell}
-    fom.gramian('c_lrcf')
-
+fom.gramian('c_lrcf')
 ```
 
 ## Hankel singular values
@@ -358,10 +342,10 @@ approximated by a reduced-order model.
 The {meth}`~pymor.models.iosys.LTIModel.hsv` method can be used to compute them.
 
 ```{code-cell}
-    hsv = fom.hsv()
-    fig, ax = plt.subplots()
-    ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
-    _ = ax.set_title('Hankel singular values')
+hsv = fom.hsv()
+fig, ax = plt.subplots()
+ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
+_ = ax.set_title('Hankel singular values')
 ```
 
 As expected for a heat equation, the Hankel singular values decay rapidly.
@@ -383,7 +367,6 @@ The {math}`\mathcal{H}_2` norm is
 {math}`D` is zero)
 
 ```{math}
-
 \lVert H \rVert_{\mathcal{H}_2}
 =
 \left(
@@ -392,49 +375,41 @@ The {math}`\mathcal{H}_2` norm is
   \lVert H(\boldsymbol{\imath} \omega) \rVert_{\operatorname{F}}^2
   \operatorname{d}\!\omega
 \right)^{\frac{1}{2}}.
-
 ```
 
 It can be shown that
 
 ```{math}
-
 \lVert y \rVert_{\mathcal{L}_\infty}
 \leqslant
 \lVert H \rVert_{\mathcal{H}_2}
 \lVert u \rVert_{\mathcal{L}_2}.
-
 ```
 
 Additionally, for systems with a single input or a single output
 (i.e., {math}`u(t) \in \mathbb{R}` or {math}`y(t) \in \mathbb{R}`),
 
 ```{math}
-
 \lVert H \rVert_{\mathcal{H}_2}
 =
 \sup_{u \neq 0}
 \frac{\lVert y \rVert_{\mathcal{L}_\infty}}{\lVert u \rVert_{\mathcal{L}_2}}.
-
 ```
 
 The computation of the {math}`\mathcal{H}_2` norm is based on the system
 Gramians
 
 ```{math}
-
 \lVert H \rVert_{\mathcal{H}_2}^2
 = \operatorname{tr}\!\left(C P C^{\operatorname{T}}\right)
 = \operatorname{tr}\!\left(B^{\operatorname{T}} Q B\right).
-
 ```
 
 The {meth}`~pymor.models.iosys.LTIModel.h2_norm` method of an {{ LTIModel }} can be
 used to compute it.
 
 ```{code-cell}
-    fom.h2_norm()
-
+fom.h2_norm()
 ```
 
 ### {math}`\mathcal{H}_\infty` norm
@@ -444,33 +419,27 @@ The {math}`\mathcal{H}_\infty` norm is
 {math}`E^{-1} A` has eigenvalues in the open left half plane)
 
 ```{math}
-
 \lVert H \rVert_{\mathcal{H}_\infty}
 = \sup_{\omega \in \mathbb{R}}
 \lVert H(\boldsymbol{\imath} \omega) \rVert_2.
-
 ```
 
 It is always true that
 
 ```{math}
-
 \lVert H \rVert_{\mathcal{H}_\infty}
 =
 \sup_{u \neq 0}
 \frac{\lVert y \rVert_{\mathcal{L}_2}}{\lVert u \rVert_{\mathcal{L}_2}},
-
 ```
 
 and, in particular,
 
 ```{math}
-
 \lVert y \rVert_{\mathcal{L}_2}
 \leqslant
 \lVert H \rVert_{\mathcal{H}_\infty}
 \lVert u \rVert_{\mathcal{L}_2}.
-
 ```
 
 The {meth}`~pymor.models.iosys.LTIModel.hinf_norm` method uses a dense solver
@@ -478,8 +447,7 @@ from [Slycot](<https://github.com/python-control/Slycot>) to compute the
 {math}`\mathcal{H}_\infty` norm.
 
 ```{code-cell}
-    fom.hinf_norm()
-
+fom.hinf_norm()
 ```
 
 ### Hankel norm
@@ -489,10 +457,8 @@ The Hankel norm is
 {math}`E^{-1} A` has eigenvalues in the open left half plane)
 
 ```{math}
-
 \lVert H \rVert_{\operatorname{H}}
 = \sigma_1,
-
 ```
 
 i.e., the largest Hankel singular value.
@@ -504,11 +470,9 @@ It can be shown that the Hankel norm is the norm of the Hankel operator
 mapping past inputs {math}`u_-` to future outputs {math}`y_+`
 
 ```{math}
-
 y_+(t)
 = \mathcal{H}(u_-)(t)
 = \int_{-\infty}^0 h(t - \tau) u_-(\tau) \operatorname{d}\!\tau,
-
 ```
 
 where {math}`h` is the impulse response
@@ -517,12 +481,10 @@ where {math}`h` is the impulse response
 Thus,
 
 ```{math}
-
 \lVert H \rVert_{\operatorname{H}}
 =
 \sup_{u_- \neq 0}
 \frac{\lVert y_+ \rVert_{\mathcal{L}_2}}{\lVert u_- \rVert_{\mathcal{L}_2}},
-
 ```
 
 The computation of the Hankel norm in
@@ -530,7 +492,7 @@ The computation of the Hankel norm in
 {meth}`~pymor.models.iosys.LTIModel.hsv` method.
 
 ```{code-cell}
-    fom.hankel_norm()
+fom.hankel_norm()
 ```
 
 Download the code:
