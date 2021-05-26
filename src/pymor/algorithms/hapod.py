@@ -10,62 +10,50 @@ from queue import LifoQueue
 from threading import Thread
 
 from pymor.algorithms.pod import pod
-from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.logger import getLogger
 
 
-class Tree(BasicObject):
-    """A rooted tree."""
+class Node:
 
-    root = 0
+    def __init__(self, tag=None, parent=None, after=None):
+        after = after or []
+        self.tag, self.parent, self.after = tag, parent, after
+        self.children = []
+        if parent:
+            parent.children.append(self)
 
-    @abstractmethod
-    def children(self, node):
-        pass
-
-    def after(self, node):
-        return ()
+    def add_child(self, tag=None, after=None, **kwargs):
+        return Node(tag=tag, parent=self, after=after, **kwargs)
 
     @property
     def depth(self):
-        def get_depth(node):
-            children = self.children(node)
-            if children:
-                return 1 + max(get_depth(c) for c in children)
-            else:
-                return 1
-        return get_depth(self.root)
+        return 1 + max(c.depth for c in self.children) if self.children else 1
 
-    def is_leaf(self, node):
-        return not self.children(node)
+    @property
+    def is_leaf(self):
+        return not self.children
 
-
-class IncHAPODTree(Tree):
-
-    def __init__(self, steps):
-        self.steps = steps
-        self.root = steps
-
-    def children(self, node):
-        if node < 0:
-            return ()
-        elif node == 1:
-            return (-1,)
-        else:
-            return (node - 1, -node)
-
-    def after(self, node):
-        if node < -1:
-            return (node+1,)
+    @property
+    def is_root(self):
+        return not self.parent
 
 
-class DistHAPODTree(Tree):
+def inc_hapod_tree(steps):
+    tree = node = Node()
+    for step in range(steps)[::-1]:
+        # add leaf node for a new snapshot and set local_eps to 0 to prevent computing a POD
+        node.add_child(step, after=(step-1,) if step > 0 else None)
+        if step > 0:
+            # add node for the previous POD step
+            node = node.add_child()
+    return tree
 
-    def __init__(self, slices):
-        self.root = slices
 
-    def children(self, node):
-        return tuple(range(self.root)) if node == self.root else ()
+def dist_hapod_tree(num_slices):
+    tree = Node()
+    for s in range(num_slices):
+        tree.add_child(s)
+    return tree
 
 
 def default_pod_method(U, eps, is_root_node, product):
@@ -119,14 +107,12 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     node_finished_events = defaultdict(asyncio.Event)
 
     async def hapod_step(node):
-        after = tree.after(node)
-        if after:
-            await asyncio.wait([node_finished_events[a].wait() for a in after])
+        if node.after:
+            await asyncio.wait([node_finished_events[a].wait() for a in node.after])
 
-        children = tree.children(node)
-        if children:
+        if node.children:
             modes, svals, snap_counts = zip(
-                *await asyncio.gather(*(hapod_step(c) for c in children))
+                *await asyncio.gather(*(hapod_step(c) for c in node.children))
             )
             for m, sv in zip(modes, svals):
                 m.scal(sv)
@@ -144,12 +130,12 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
         with logger.block(f'Processing node {node}'):
             eps = local_eps(node, snap_count, len(U))
             if eps:
-                modes, svals = await executor.submit(pod_method, U, eps, node == tree.root, product)
-                node_finished_events[node].set()
-                return modes, svals, snap_count
+                modes, svals = await executor.submit(pod_method, U, eps, not node.parent, product)
             else:
-                node_finished_events[node].set()
-                return U.copy(), np.ones(len(U)), snap_count
+                modes, svals = U.copy(), np.ones(len(U))
+            if node.tag is not None:
+                node_finished_events[node.tag].set()
+            return modes, svals, snap_count
 
     # wrap Executer to ensure LIFO ordering of tasks
     # this ensures that PODs of parent nodes are computed as soon as all input data
@@ -164,7 +150,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
 
     def main():
         nonlocal result
-        result = asyncio.run(hapod_step(tree.root))
+        result = asyncio.run(hapod_step(tree))
     result = None
     hapod_thread = Thread(target=main)
     hapod_thread.start()
@@ -205,14 +191,14 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None):
     snap_count
         The total number of input snapshot vectors.
     """
-    tree = IncHAPODTree(steps)
+    tree = inc_hapod_tree(steps)
+
     last_step = -1
     snapshots = iter(snapshots)
 
     def get_snapshots(node):
         nonlocal last_step
-        step = -node - 1
-        assert step == last_step + 1
+        assert node.tag == last_step + 1
         last_step += 1
         return next(snapshots)
 
@@ -260,7 +246,7 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, e
     snap_count
         The total number of input snapshot vectors.
     """
-    tree = DistHAPODTree(num_slices)
+    tree = dist_hapod_tree(num_slices)
     return hapod(tree,
                  snapshots,
                  std_local_eps(tree, eps, omega, True),
@@ -341,7 +327,7 @@ def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=Non
     chunk_size = ceil(len(U) / num_slices)
     slices = range(0, len(U), chunk_size)
     return dist_hapod(len(slices),
-                      lambda i: U[slices[i]: slices[i]+chunk_size],
+                      lambda i: U[slices[i.tag]: slices[i.tag]+chunk_size],
                       eps, omega, product=product, executor=executor)
 
 
@@ -350,9 +336,9 @@ def std_local_eps(tree, eps, omega, pod_on_leafs=True):
     L = tree.depth if pod_on_leafs else tree.depth - 1
 
     def local_eps(node, snap_count, input_count):
-        if node == tree.root:
+        if node.is_root:
             return np.sqrt(snap_count) * omega * eps
-        elif not pod_on_leafs and tree.is_leaf(node):
+        elif node.is_leaf and not pod_on_leafs:
             return 0.
         else:
             return np.sqrt(snap_count) / np.sqrt(L - 1) * np.sqrt(1 - omega**2) * eps
