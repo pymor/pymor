@@ -27,7 +27,10 @@ class Node:
 
     @property
     def depth(self):
-        return 1 + max(c.depth for c in self.children) if self.children else 1
+        max_level = 0
+        for _, level in self.traverse(True):
+            max_level = max(max_level, level)
+        return max_level + 1
 
     @property
     def is_leaf(self):
@@ -36,6 +39,56 @@ class Node:
     @property
     def is_root(self):
         return not self.parent
+
+    def traverse(self, return_level=False):
+        current_node = self
+        last_child = None
+        level = 0
+        while True:
+            if last_child is None:
+                if return_level:
+                    yield current_node, level
+                else:
+                    yield current_node
+            if current_node.children:
+                if last_child is None:
+                    current_node = current_node.children[0]
+                    level += 1
+                    continue
+                else:
+                    last_child_pos = current_node.children.index(last_child)
+                    if last_child_pos + 1 < len(current_node.children):
+                        current_node = current_node.children[last_child_pos+1]
+                        last_child = None
+                        level += 1
+                        continue
+            if not current_node.parent:
+                return
+            last_child = current_node
+            current_node = current_node.parent
+            level -= 1
+
+    def __str__(self):
+        lines = []
+        for node, level in self.traverse(True):
+            line = ''
+            if node.parent:
+                p = node.parent
+                while p.parent:
+                    if p.parent.children.index(p) + 1 == len(p.parent.children):
+                        line = '  ' + line
+                    else:
+                        line = '| ' + line
+                    p = p.parent
+                line += '+-o'
+            else:
+                line += 'o'
+            if node.tag is not None:
+                line += f' {node.tag}'
+            if node.after:
+                line += f' (after {",".join(str(a) for a in node.after)})'
+            lines.append(line)
+        return '\n'.join(lines)
 
 
 def inc_hapod_tree(steps):
