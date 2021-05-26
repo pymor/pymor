@@ -183,6 +183,9 @@ mpi 3 7:
     - when: on_success
     variables:
         COVERAGE_FILE: coverage_mpi__3.7
+    retry:
+        max: 2
+        when: always
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:a377b6d920122c12907ad440cf4b49bb07a3dbb5
     script:
@@ -203,6 +206,9 @@ mpi 3 8:
     - when: on_success
     variables:
         COVERAGE_FILE: coverage_mpi__3.8
+    retry:
+        max: 2
+        when: always
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:a377b6d920122c12907ad440cf4b49bb07a3dbb5
     script:
@@ -223,6 +229,9 @@ mpi 3 9:
     - when: on_success
     variables:
         COVERAGE_FILE: coverage_mpi__3.9
+    retry:
+        max: 2
+        when: always
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:a377b6d920122c12907ad440cf4b49bb07a3dbb5
     script:
