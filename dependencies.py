@@ -9,8 +9,7 @@ _PYTEST = 'pytest>=4.4'
 _PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*'
 
 
-def setup_requires():
-    NUMPY = '1.16.0'
+def _numpy_scipy():
     # numpy versions with filters according to minimal version with a wheel
     numpys = [
         'numpy>=1.15.4;python_version == "3.7"',
@@ -22,23 +21,26 @@ def setup_requires():
         'scipy>=1.3.3;python_version == "3.8"',
         'scipy>=1.5.4;python_version >= "3.9"',
     ]
+    return numpys + scipys
+
+
+def setup_requires():
     # setuptools pin in accordance with numpy: https://github.com/numpy/numpy/pull/17000,
     # see also https://github.com/pypa/setuptools/pull/2260
     # https://github.com/pypa/setuptools/pull/2259
-    other = [
-         'setuptools>=40.8.0,<49.2.0;python_version < "3.9"',
-         'setuptools>=49.1,<49.2.0;python_version >= "3.9"',
+    return [
+        'setuptools>=40.8.0,<49.2.0;python_version < "3.9"',
+        'setuptools>=49.1,<49.2.0;python_version >= "3.9"',
         'wheel',
         'pytest-runner>=2.9',
         'cython>=0.28;python_version < "3.9"',
         'cython>=0.29.12;python_version >= "3.9"',
         'packaging',
     ]
-    return numpys + other + scipys
 
 
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click<8'] + setup_requires()
+install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click<8'] + setup_requires() + _numpy_scipy()
 install_suggests = {
     'ipython>=5.0': 'an enhanced interactive python shell',
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
@@ -78,8 +80,8 @@ import_names = {
 }
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
-                                       'mpi4py>=3.0.3;python_version >= "3.9"',
-                                       'mpi4py>=3.0;python_version < "3.9"'])
+                                    'mpi4py>=3.0.3;python_version >= "3.9"',
+                                    'mpi4py>=3.0;python_version < "3.9"'])
 
 
 def strip_markers(name):
