@@ -93,8 +93,8 @@ class Node:
 def inc_hapod_tree(steps):
     tree = node = Node()
     for step in range(steps)[::-1]:
-        # add leaf node for a new snapshot and set local_eps to 0 to prevent computing a POD
-        node.add_child(step, after=(step-1,) if step > 0 else None)
+        # add leaf node for a new snapshot
+        node.add_child(tag=step, after=(step-1,) if step > 0 else None)
         if step > 0:
             # add node for the previous POD step
             node = node.add_child()
