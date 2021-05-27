@@ -129,7 +129,6 @@ class TimeStepper(ImmutableObject):
         mass = mass or IdentityOperator(operator.source)
         assert isinstance(mass, Operator)
         assert operator.source == mass.source == mass.range
-        assert not mass.parametric
 
         if isinstance(initial_data, Operator):
             assert initial_data.source.dim == 1
