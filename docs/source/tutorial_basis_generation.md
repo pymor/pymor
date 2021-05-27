@@ -438,7 +438,6 @@ However, we can do better. If we want to use a smaller basis than we
 have snapshots available, just picking the first of these obviously
 won't be optimal.
 
-.. _stronggreedy:
 
 Strong greedy algorithm
 -----------------------
@@ -691,8 +690,6 @@ As you can see, the first (more important) basis vectors account for the approxi
 the solutions in the bulk of the subdomains, whereas the higher modes are responsible for
 approximating the solutions at the subdomain interfaces.
 
-
-.. _weakgreedy:
 
 Weak greedy algorithm
 ---------------------
