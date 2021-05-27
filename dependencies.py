@@ -33,8 +33,6 @@ def setup_requires():
         'setuptools>=49.1,<49.2.0;python_version >= "3.9"',
         'wheel',
         'pytest-runner>=2.9',
-        'cython>=0.28;python_version < "3.9"',
-        'cython>=0.29.12;python_version >= "3.9"',
         'packaging',
     ]
 
