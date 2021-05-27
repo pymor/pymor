@@ -2,10 +2,10 @@
 
 set -e
 
-mkdir ${CI_PROJECT_DIR}/${ARCHIVE_DIR} && mv ${CI_PROJECT_DIR}/shared/*whl ${CI_PROJECT_DIR}/${ARCHIVE_DIR}
+mkdir ${CI_PROJECT_DIR}/${ARCHIVE_DIR}
+mv ${CI_PROJECT_DIR}/dist/pymor*.whl ${CI_PROJECT_DIR}/dist/pymor*tar.gz ${CI_PROJECT_DIR}/${ARCHIVE_DIR}
 
 cd ${CI_PROJECT_DIR}
-python3 setup.py sdist -d ${ARCHIVE_DIR} --format=gztar
 
 if [[ "x${CI_COMMIT_TAG}" == "x" ]] ; then
     export TWINE_REPOSITORY_URL=https://test.pypi.org/legacy/

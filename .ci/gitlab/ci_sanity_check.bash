@@ -6,7 +6,6 @@ cd "${PYMOR_ROOT}"
 set -eux
 
 PYTHONS="${1}"
-MANYLINUXS="${2}"
 # make sure CI setup is current
 ./.ci/gitlab/template.ci.py && git diff --exit-code .ci/gitlab/ci.yml
 # check if requirements files are up-to-date
