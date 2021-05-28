@@ -20,8 +20,10 @@ if config.HAVE_TORCH:
     from pymor.core.base import BasicObject
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
     from pymor.core.logger import getLogger
-    from pymor.models.neural_network import (FullyConnectedNN, NeuralNetworkModel, NeuralNetworkOutputModel,
-                                             NeuralNetworkInstationaryModel, NeuralNetworkInstationaryOutputModel)
+    from pymor.models.neural_network import (FullyConnectedNN, NeuralNetworkModel,
+                                             NeuralNetworkStatefreeOutputModel,
+                                             NeuralNetworkInstationaryModel,
+                                             NeuralNetworkInstationaryStatefreeOutputModel)
 
     class NeuralNetworkReductor(BasicObject):
         """Reduced Basis reductor relying on artificial neural networks.
@@ -251,7 +253,7 @@ if config.HAVE_TORCH:
             assert hasattr(self, 'reduced_basis')
             return self.reduced_basis.lincomb(u.to_numpy())
 
-    class NeuralNetworkOutputReductor(NeuralNetworkReductor):
+    class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         """Output reductor relying on artificial neural networks.
 
         This is a reductor that trains a neural network that approximates
@@ -314,8 +316,8 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkOutputModel(self.neural_network, self.fom.parameters,
-                                               name=f'{self.fom.name}_output_reduced')
+                rom = NeuralNetworkStatefreeOutputModel(self.neural_network, self.fom.parameters,
+                                                        name=f'{self.fom.name}_output_reduced')
 
             return rom
 
@@ -438,7 +440,7 @@ if config.HAVE_TORCH:
 
             return rom
 
-    class NeuralNetworkInstationaryOutputReductor(NeuralNetworkOutputReductor):
+    class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOutputReductor):
         """Output reductor relying on artificial neural networks.
 
         This is a reductor that trains a neural network that approximates
@@ -495,8 +497,9 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                rom = NeuralNetworkInstationaryOutputModel(self.fom.T, self.nt, self.neural_network,
-                                                           self.fom.parameters, name=f'{self.fom.name}_output_reduced')
+                rom = NeuralNetworkInstationaryStatefreeOutputModel(self.fom.T, self.nt, self.neural_network,
+                                                                    self.fom.parameters,
+                                                                    name=f'{self.fom.name}_output_reduced')
 
             return rom
 

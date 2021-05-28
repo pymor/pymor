@@ -10,7 +10,8 @@ from typer import Argument, run
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissing
-from pymor.reductors.neural_network import NeuralNetworkInstationaryReductor, NeuralNetworkInstationaryOutputReductor
+from pymor.reductors.neural_network import (NeuralNetworkInstationaryReductor,
+                                            NeuralNetworkInstationaryStatefreeOutputReductor)
 
 
 def main(
@@ -59,8 +60,8 @@ def main(
     absolute_errors = (U - U_red).norm2()
     relative_errors = (U - U_red).norm2() / U.norm2()
 
-    output_reductor = NeuralNetworkInstationaryOutputReductor(fom, time_steps+1, training_set,
-                                                              validation_set, validation_loss=1e-5)
+    output_reductor = NeuralNetworkInstationaryStatefreeOutputReductor(fom, time_steps+1, training_set,
+                                                                       validation_set, validation_loss=1e-5)
     output_rom = output_reductor.reduce(restarts=100)
 
     outputs = []

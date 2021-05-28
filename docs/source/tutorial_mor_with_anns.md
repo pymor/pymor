@@ -308,7 +308,7 @@ mapping from parameter to output. That is, one can use a neural network to appro
 the output dimension.
 
 In the following, we will extend our problem from the last section by an output functional
-and use the :class:`~pymor.reductors.neural_network.NeuralNetworkOutputReductor` to
+and use the :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor` to
 derive a reduced model that can solely be used to solve for the output quantity without
 computing a reduced state at all.
 
@@ -326,17 +326,17 @@ we also have to update the full order model to be aware of the output quantities
 
     fom, _ = discretize_stationary_cg(problem, diameter=1/50)
 
-We can now import the :class:`~pymor.reductors.neural_network.NeuralNetworkOutputReductor` and
-initialize the reductor using the same data as before:
+We can now import the :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`
+and initialize the reductor using the same data as before:
 
 .. jupyter-execute::
 
-    from pymor.reductors.neural_network import NeuralNetworkOutputReductor
+    from pymor.reductors.neural_network import NeuralNetworkStatefreeOutputReductor
 
-    output_reductor = NeuralNetworkOutputReductor(fom,
-                                                  training_set,
-                                                  validation_set,
-                                                  validation_loss=1e-5)
+    output_reductor = NeuralNetworkStatefreeOutputReductor(fom,
+                                                           training_set,
+                                                           validation_set,
+                                                           validation_loss=1e-5)
 
 Similar to the `NeuralNetworkReductor`, we can call `reduce` to obtain a reduced order model.
 In this case, `reduce` trains a neural network to approximate the mapping from parameter to
@@ -346,7 +346,7 @@ calling `solve` respectively `output` (if we had initialized the `NeuralNetworkR
 the problem including the output quantities).
 
 We now perform the reduction and run some tests with the resulting
-:class:`~pymor.models.neural_network.NeuralNetworkOutputModel`:
+:class:`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel`:
 
 .. jupyter-execute::
 
@@ -401,8 +401,8 @@ as an additional parameter (see :cite:`WHR19`). The resulting
 :class:`~pymor.models.neural_network.NeuralNetworkInstationaryModel` passes the input, together
 with the current time instance, through the neural network in each time step to obtain reduced
 coefficients. In the same fashion, there exists a
-:class:`~pymor.reductors.neural_network.NeuralNetworkInstationaryOutputReductor` and the
-corresponding :class:`~pymor.models.neural_network.NeuralNetworkInstationaryOutputModel`.
+:class:`~pymor.reductors.neural_network.NeuralNetworkInstationaryStatefreeOutputReductor` and the
+corresponding :class:`~pymor.models.neural_network.NeuralNetworkInstationaryStatefreeOutputModel`.
 
 Download the code:
 {download}`tutorial_mor_with_anns.md`

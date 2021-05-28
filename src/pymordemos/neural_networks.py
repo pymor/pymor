@@ -10,7 +10,7 @@ from typer import Argument, Option, run
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissing
-from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkOutputReductor
+from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkStatefreeOutputReductor
 
 
 def main(
@@ -63,7 +63,7 @@ def main(
         fom.visualize((U, U_red),
                       legend=('Full solution', 'Reduced solution'))
 
-    output_reductor = NeuralNetworkOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
+    output_reductor = NeuralNetworkStatefreeOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
     output_rom = output_reductor.reduce(restarts=100)
 
     outputs = []
@@ -112,7 +112,7 @@ def main(
     print(f'Median of speedup: {np.median(outputs_speedups_ann_reductor)}')
 
     print()
-    print('Results for output approximation with `NeuralNetworkOutputReductor`:')
+    print('Results for output approximation with `NeuralNetworkStatefreeOutputReductor`:')
     print(f'Average absolute error: {np.average(outputs_absolute_errors)}')
     print(f'Average relative error: {np.average(outputs_relative_errors)}')
     print(f'Median of speedup: {np.median(outputs_speedups)}')

@@ -78,7 +78,7 @@ if config.HAVE_TORCH:
 
             return U
 
-    class NeuralNetworkOutputModel(Model):
+    class NeuralNetworkStatefreeOutputModel(Model):
         """Class for models of the output of stationary problems that use ANNs.
 
         This class implements a |Model| that uses a neural network for solving for the output
@@ -194,7 +194,7 @@ if config.HAVE_TORCH:
 
             return U
 
-    class NeuralNetworkInstationaryOutputModel(Model):
+    class NeuralNetworkInstationaryStatefreeOutputModel(Model):
         """Class for models of the output of instationary problems that use ANNs.
 
         This class implements a |Model| that uses a neural network for solving for the output
