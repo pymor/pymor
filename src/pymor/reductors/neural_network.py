@@ -84,7 +84,8 @@ if config.HAVE_TORCH:
             hidden_layers
                 Number of neurons in the hidden layers. Can either be fixed or
                 a Python expression string depending on the reduced basis size
-                `N` and the total dimension of the |Parameters| `P`.
+                respectively output dimension `N` and the total dimension of
+                the |Parameters| `P`.
             activation_function
                 Activation function to use between the hidden layers.
             optimizer
@@ -120,15 +121,9 @@ if config.HAVE_TORCH:
             torch.manual_seed(seed)
 
             # build a reduced basis using POD and compute training data
-            if not hasattr(self, 'reduced_basis'):
-                self.reduced_basis, self.mse_basis = self.build_basis()
+            if not hasattr(self, 'training_data'):
+                self.compute_training_data()
 
-            # determine the numbers of neurons in the hidden layers
-            if isinstance(hidden_layers, str):
-                hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
-            # input and output size of the neural network are prescribed by the
-            # dimension of the parameter space and the reduced basis size
-            assert isinstance(hidden_layers, list)
             layer_sizes = self._compute_layer_sizes(hidden_layers)
 
             # compute validation data
@@ -138,7 +133,7 @@ if config.HAVE_TORCH:
                     if self.validation_set:
                         self.validation_data = []
                         for mu in self.validation_set:
-                            sample = self._compute_sample(mu, self.fom.solve(mu), self.reduced_basis)
+                            sample = self._compute_sample(mu)
                             self.validation_data.extend(sample)
                     else:
                         number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
@@ -150,13 +145,7 @@ if config.HAVE_TORCH:
 
             # run the actual training of the neural network
             with self.logger.block('Training of neural network ...'):
-                # set target loss depending on value of ann_mse
-                target_loss = None
-                if isinstance(self.ann_mse, Number):
-                    target_loss = self.ann_mse
-                elif self.ann_mse == 'like_basis':
-                    target_loss = self.mse_basis
-
+                target_loss = self._compute_target_loss()
                 # set parameters for neural network and training
                 neural_network_parameters = {'layer_sizes': layer_sizes,
                                              'activation_function': activation_function}
@@ -171,33 +160,80 @@ if config.HAVE_TORCH:
                                                                               neural_network, target_loss, restarts,
                                                                               training_parameters, seed)
 
-            # check if neural network is sufficient to guarantee certain error bounds
+            self._check_tolerances()
+
+            return self._build_rom()
+
+        def compute_training_data(self):
+            """Compute a reduced basis using proper orthogonal decomposition."""
+            # compute snapshots for POD and training of neural networks
+            with self.logger.block('Computing training snapshots ...'):
+                U = self.fom.solution_space.empty()
+                for mu in self.training_set:
+                    U.append(self.fom.solve(mu))
+
+            # compute reduced basis via POD
+            with self.logger.block('Building reduced basis ...'):
+                self.reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
+                                                atol=self.atol / 2., l2_err=self.l2_err / 2.,
+                                                **(self.pod_params or {}))
+
+            # compute training samples
+            with self.logger.block('Computing training samples ...'):
+                self.training_data = []
+                for mu, u in zip(self.training_set, U):
+                    sample = self._compute_sample(mu, u)
+                    self.training_data.extend(sample)
+
+            # compute mean square loss
+            self.mse_basis = (sum(U.norm2()) - sum(svals**2)) / len(U)
+
+        def _compute_sample(self, mu, u=None):
+            """Transform parameter and corresponding solution to |NumPy arrays|."""
+            # determine the coefficients of the full-order solutions in the reduced basis to obtain
+            # the training data
+            if u is None:
+                u = self.fom.solve(mu)
+            return [(mu, self.reduced_basis.inner(u)[:, 0])]
+
+        def _compute_layer_sizes(self, hidden_layers):
+            """Compute the number of neurons in the layers of the neural network."""
+            # determine the numbers of neurons in the hidden layers
+            if isinstance(hidden_layers, str):
+                hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
+            # input and output size of the neural network are prescribed by the
+            # dimension of the parameter space and the reduced basis size
+            assert isinstance(hidden_layers, list)
+            return [self.fom.parameters.dim, ] + hidden_layers + [len(self.reduced_basis), ]
+
+        def _compute_target_loss(self):
+            """Compute target loss depending on value of `ann_mse`."""
+            target_loss = None
+            if isinstance(self.ann_mse, Number):
+                target_loss = self.ann_mse
+            elif self.ann_mse == 'like_basis':
+                target_loss = self.mse_basis
+            return target_loss
+
+        def _check_tolerances(self):
+            """Check if trained neural network is sufficient to guarantee certain error bounds."""
             with self.logger.block('Checking tolerances for error of neural network ...'):
 
                 if isinstance(self.ann_mse, Number):
                     if self.losses['full'] > self.ann_mse:
                         raise NeuralNetworkTrainingFailed('Could not train a neural network that '
                                                           'guarantees prescribed tolerance!')
-                    else:
-                        return self._build_rom()
                 elif self.ann_mse == 'like_basis':
                     if self.losses['full'] > self.mse_basis:
                         raise NeuralNetworkTrainingFailed('Could not train a neural network with an error as small as '
                                                           'the reduced basis error! Maybe you can try a different '
                                                           'neural network architecture or change the value of '
                                                           '`ann_mse`.')
-                    else:
-                        return self._build_rom()
                 elif self.ann_mse is None:
                     self.logger.info('Using neural network with smallest validation error ...')
                     self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
-                    return self._build_rom()
                 else:
                     raise ValueError('Unknown value for mean squared error of neural network')
-
-        def _compute_layer_sizes(self, hidden_layers):
-            """Compute the number of neurons in the layers of the neural network."""
-            return [self.fom.parameters.dim, ] + hidden_layers + [len(self.reduced_basis), ]
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -210,43 +246,12 @@ if config.HAVE_TORCH:
 
             return rom
 
-        def build_basis(self):
-            """Compute a reduced basis using proper orthogonal decomposition."""
-            with self.logger.block('Building reduced basis ...'):
-
-                # compute snapshots for POD and training of neural networks
-                with self.logger.block('Computing training snapshots ...'):
-                    U = self.fom.solution_space.empty()
-                    for mu in self.training_set:
-                        U.append(self.fom.solve(mu))
-
-                # compute reduced basis via POD
-                reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
-                                           atol=self.atol / 2., l2_err=self.l2_err / 2.,
-                                           **(self.pod_params or {}))
-
-                self.training_data = []
-                for mu, u in zip(self.training_set, U):
-                    sample = self._compute_sample(mu, u, reduced_basis)
-                    self.training_data.extend(sample)
-
-            # compute mean square loss
-            mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
-
-            return reduced_basis, mean_square_loss
-
-        def _compute_sample(self, mu, u, reduced_basis):
-            """Transform parameter and corresponding solution to |NumPy arrays|."""
-            # determine the coefficients of the full-order solutions in the reduced basis to obtain
-            # the training data
-            return [(mu, reduced_basis.inner(u)[:, 0])]
-
         def reconstruct(self, u):
             """Reconstruct high-dimensional vector from reduced vector `u`."""
             assert hasattr(self, 'reduced_basis')
             return self.reduced_basis.lincomb(u.to_numpy())
 
-    class NeuralNetworkOutputReductor(BasicObject):
+    class NeuralNetworkOutputReductor(NeuralNetworkReductor):
         """Output reductor relying on artificial neural networks.
 
         This is a reductor that trains a neural network that approximates
@@ -275,107 +280,36 @@ if config.HAVE_TORCH:
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
-        def reduce(self, hidden_layers='[30, 30]', activation_function=torch.tanh,
-                   optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
-                   restarts=10, seed=0):
-            """Reduce by training artificial neural networks.
+        def compute_training_data(self):
+            """Compute the training samples (the outputs to the parameters of the training set)."""
+            with self.logger.block('Computing training samples ...'):
+                self.training_data = []
+                for mu in self.training_set:
+                    sample = self._compute_sample(mu)
+                    self.training_data.extend(sample)
 
-            Parameters
-            ----------
-            hidden_layers
-                Number of neurons in the hidden layers. Can either be fixed or
-                a Python expression string depending on the output size `O`
-                and the total dimension of the |Parameters| `P`.
-            activation_function
-                Activation function to use between the hidden layers.
-            optimizer
-                Algorithm to use as optimizer during training.
-            epochs
-                Maximum number of epochs for training.
-            batch_size
-                Batch size to use if optimizer allows mini-batching.
-            learning_rate
-                Step size to use in each optimization step.
-            restarts
-                Number of restarts of the training algorithm. Since the training
-                results highly depend on the initial starting point, i.e. the
-                initial weights and biases, it is advisable to train multiple
-                neural networks by starting with different initial values and
-                choose that one performing best on the validation set.
-            seed
-                Seed to use for various functions in PyTorch. Using a fixed seed,
-                it is possible to reproduce former results.
-
-            Returns
-            -------
-            rom
-                Reduced-order |NeuralNetworkOutputModel|.
-            """
-            assert restarts > 0
-            assert epochs > 0
-            assert batch_size > 0
-            assert learning_rate > 0.
-
-            # set a seed for the PyTorch initialization of weights and biases
-            # and further PyTorch methods
-            torch.manual_seed(seed)
-
-            # determine the numbers of neurons in the hidden layers
-            if isinstance(hidden_layers, str):
-                hidden_layers = eval(hidden_layers, {'O': self.fom.dim_output, 'P': self.fom.parameters.dim})
-            # input and output size of the neural network are prescribed by the
-            # dimension of the parameter space and the reduced basis size
-            assert isinstance(hidden_layers, list)
-            layer_sizes = self._compute_layer_sizes(hidden_layers)
-
-            # compute validation data
-            if not hasattr(self, 'training_data'):
-                with self.logger.block('Computing training data ...'):
-                    self.training_data = []
-                    for mu in self.training_set:
-                        sample = self._compute_sample(mu)
-                        self.training_data.extend(sample)
-
-            # compute validation data
-            if not hasattr(self, 'validation_data'):
-                with self.logger.block('Computing validation data ...'):
-
-                    if self.validation_set:
-                        self.validation_data = []
-                        for mu in self.validation_set:
-                            sample = self._compute_sample(mu)
-                            self.validation_data.extend(sample)
-                    else:
-                        number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
-                        # randomly shuffle training data before splitting into two sets
-                        np.random.shuffle(self.training_data)
-                        # split training data into validation and training set
-                        self.validation_data = self.training_data[0:number_validation_snapshots]
-                        self.training_data = self.training_data[number_validation_snapshots+1:]
-
-            # run the actual training of the neural network
-            with self.logger.block('Training of neural network ...'):
-                # set parameters for neural network and training
-                neural_network_parameters = {'layer_sizes': layer_sizes,
-                                             'activation_function': activation_function}
-                training_parameters = {'optimizer': optimizer, 'epochs': epochs,
-                                       'batch_size': batch_size, 'learning_rate': learning_rate}
-
-                self.logger.info('Initializing neural network ...')
-                # initialize the neural network
-                neural_network = FullyConnectedNN(**neural_network_parameters).double()
-                # run training algorithm with multiple restarts
-                self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
-                                                                              neural_network, self.validation_loss,
-                                                                              restarts, training_parameters, seed)
-
-            self.logger.info('Using neural network with smallest validation error ...')
-            self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
-            return self._build_rom()
+        def _compute_sample(self, mu):
+            """Transform parameter and corresponding output to tensors."""
+            return [(mu, self.fom.output(mu).flatten())]
 
         def _compute_layer_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network."""
+            # determine the numbers of neurons in the hidden layers
+            if isinstance(hidden_layers, str):
+                hidden_layers = eval(hidden_layers, {'N': self.fom.dim_output, 'P': self.fom.parameters.dim})
+            # input and output size of the neural network are prescribed by the
+            # dimension of the parameter space and the output dimension
+            assert isinstance(hidden_layers, list)
             return [self.fom.parameters.dim, ] + hidden_layers + [self.fom.dim_output, ]
+
+        def _compute_target_loss(self):
+            """Compute target loss depending on value of `ann_mse`."""
+            return self.validation_loss
+
+        def _check_tolerances(self):
+            """Check if trained neural network is sufficient to guarantee certain error bounds."""
+            self.logger.info('Using neural network with smallest validation error ...')
+            self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -384,10 +318,6 @@ if config.HAVE_TORCH:
                                                name=f'{self.fom.name}_output_reduced')
 
             return rom
-
-        def _compute_sample(self, mu):
-            """Transform parameter and corresponding output to tensors."""
-            return [(mu, self.fom.compute(output=True,  mu=mu)['output'].flatten())]
 
     class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         """Reduced Basis reductor for instationary problems relying on artificial neural networks.
@@ -440,10 +370,60 @@ if config.HAVE_TORCH:
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
+        def compute_training_data(self):
+            """Compute a reduced basis using proper orthogonal decomposition."""
+            # compute snapshots for POD and training of neural networks
+            with self.logger.block('Computing training snapshots ...'):
+                U = self.fom.solution_space.empty()
+                for mu in self.training_set:
+                    u = self.fom.solve(mu)
+                    if hasattr(self, 'nt'):
+                        assert self.nt == len(u)
+                    else:
+                        self.nt = len(u)
+                    U.append(u)
+
+            # compute reduced basis via POD
+            with self.logger.block('Building reduced basis ...'):
+                self.reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
+                                                atol=self.atol / 2., l2_err=self.l2_err / 2.,
+                                                **(self.pod_params or {}))
+
+            # compute training samples
+            with self.logger.block('Computing training samples ...'):
+                self.training_data = []
+                for i, mu in enumerate(self.training_set):
+                    sample = self._compute_sample(mu, U[i*self.nt:(i+1)*self.nt])
+                    self.training_data.extend(sample)
+
+            # compute mean square loss
+            self.mse_basis = (sum(U.norm2()) - sum(svals**2)) / len(U)
+
+        def _compute_sample(self, mu, u=None):
+            """Transform parameter and corresponding solution to |NumPy arrays|.
+
+            This function takes care of including the time instances in the inputs.
+            """
+            if u is None:
+                u = self.fom.solve(mu)
+
+            parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
+
+            samples = [(mu, self.reduced_basis.inner(u_t)[:, 0])
+                       for mu, u_t in zip(parameters_with_time, u)]
+
+            return samples
+
         def _compute_layer_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network
             (make sure to increase the input dimension to account for the time).
             """
+            # determine the numbers of neurons in the hidden layers
+            if isinstance(hidden_layers, str):
+                hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
+            # input and output size of the neural network are prescribed by the
+            # dimension of the parameter space and the reduced basis size
+            assert isinstance(hidden_layers, list)
             return [self.fom.parameters.dim + 1, ] + hidden_layers + [len(self.reduced_basis), ]
 
         def _build_rom(self):
@@ -457,48 +437,6 @@ if config.HAVE_TORCH:
                                                      name=f'{self.fom.name}_reduced')
 
             return rom
-
-        def build_basis(self):
-            """Compute a reduced basis using proper orthogonal decomposition."""
-            with self.logger.block('Building reduced basis ...'):
-
-                # compute snapshots for POD and training of neural networks
-                with self.logger.block('Computing training snapshots ...'):
-                    U = self.fom.solution_space.empty()
-                    for mu in self.training_set:
-                        u = self.fom.solve(mu)
-                        if hasattr(self, 'nt'):
-                            assert self.nt == len(u)
-                        else:
-                            self.nt = len(u)
-                        U.append(u)
-
-                # compute reduced basis via POD
-                reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
-                                           atol=self.atol / 2., l2_err=self.l2_err / 2.,
-                                           **(self.pod_params or {}))
-
-                self.training_data = []
-                for i, mu in enumerate(self.training_set):
-                    sample = self._compute_sample(mu, U[i*self.nt:(i+1)*self.nt], reduced_basis)
-                    self.training_data.extend(sample)
-
-            # compute mean square loss
-            mean_square_loss = (sum(U.norm2()) - sum(svals**2)) / len(U)
-
-            return reduced_basis, mean_square_loss
-
-        def _compute_sample(self, mu, u, reduced_basis):
-            """Transform parameter and corresponding solution to |NumPy arrays|.
-
-            This function takes care of including the time instances in the inputs.
-            """
-            parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
-
-            samples = [(mu, reduced_basis.inner(u_t)[:, 0])
-                       for mu, u_t in zip(parameters_with_time, u)]
-
-            return samples
 
     class NeuralNetworkInstationaryOutputReductor(NeuralNetworkOutputReductor):
         """Output reductor relying on artificial neural networks.
@@ -532,8 +470,26 @@ if config.HAVE_TORCH:
             assert 0 < validation_ratio < 1 or validation_set
             self.__auto_init(locals())
 
+        def _compute_sample(self, mu):
+            """Transform parameter and corresponding output to |NumPy arrays|.
+
+            This function takes care of including the time instances in the inputs.
+            """
+            output_trajectory = self.fom.output(mu)
+            output_size = output_trajectory.shape[0]
+            samples = [(mu.with_(t=t), output.flatten())
+                       for t, output in zip(np.linspace(0, self.fom.T, output_size), output_trajectory)]
+
+            return samples
+
         def _compute_layer_sizes(self, hidden_layers):
             """Compute the number of neurons in the layers of the neural network."""
+            # determine the numbers of neurons in the hidden layers
+            if isinstance(hidden_layers, str):
+                hidden_layers = eval(hidden_layers, {'N': self.fom.dim_output, 'P': self.fom.parameters.dim})
+            # input and output size of the neural network are prescribed by the
+            # dimension of the parameter space and the output dimension
+            assert isinstance(hidden_layers, list)
             return [self.fom.parameters.dim + 1, ] + hidden_layers + [self.fom.dim_output, ]
 
         def _build_rom(self):
@@ -543,18 +499,6 @@ if config.HAVE_TORCH:
                                                            self.fom.parameters, name=f'{self.fom.name}_output_reduced')
 
             return rom
-
-        def _compute_sample(self, mu):
-            """Transform parameter and corresponding output to |NumPy arrays|.
-
-            This function takes care of including the time instances in the inputs.
-            """
-            output_trajectory = self.fom.compute(output=True, mu=mu)['output']
-            output_size = output_trajectory.shape[0]
-            samples = [(mu.with_(t=t), output)
-                       for t, output in zip(np.linspace(0, self.fom.T, output_size), output_trajectory)]
-
-            return samples
 
     class EarlyStoppingScheduler(BasicObject):
         """Class for performing early stopping in training of neural networks.
