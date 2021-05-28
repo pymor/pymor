@@ -337,7 +337,7 @@ report(fom_result, reference_minimization_data)
 
 Taking a look at the result, we see that the optimizer needs {math}`7`
 iterations to converge, but actually needs {math}`27` evaluations of the
-full order model. Obiously, this is related to the computation of the
+full order model. Obviously, this is related to the computation of the
 finite differences. We can visualize the optimization path by plotting
 the chosen points during the minimization.
 
@@ -531,7 +531,7 @@ a_\mu(v, p_\mu) = \partial_u J(u_\mu, \mu)[v]
 Note that in our case, we then have
 {math}`\mathcal{L}(u_{\mu}, \mu, p_{\mu}) = J(u, \mu)` because the
 residual term {math}`r_\mu^{\text{pr}}(u_{\mu}, p_{\mu})` vanishes since {math}`u_{\mu}`
-solves (P.b) and {math}`p_{\mu}` is in the test space {math}`V`. By
+solves {math}`\eqref{eq:primal}` and {math}`p_{\mu}` is in the test space {math}`V`. By
 using the solution of the dual problem, we can then derive the gradient of the objective
 functional by
 
@@ -845,4 +845,3 @@ implementation is available as supplementary material.
 Download the code:
 {jupyter-download:script}`tutorial_optimization`
 {jupyter-download:notebook}`tutorial_optimization`
-
