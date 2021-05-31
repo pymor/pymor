@@ -7,19 +7,15 @@ import shutil
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, Union
 
 import numpy as np
-from numpy.typing import ArrayLike
 from scipy.io import loadmat, mmread, mmwrite, savemat
-from scipy.sparse import issparse, spmatrix
+from scipy.sparse import issparse
 
 from pymor.core.logger import getLogger
 
-MatrixType = Union[ArrayLike, spmatrix]
 
-
-def _loadmat(path: Path, key: Optional[str] = None) -> MatrixType:
+def _loadmat(path, key):
     try:
         data = loadmat(path, mat_dtype=True)
     except Exception as e:
@@ -41,7 +37,7 @@ def _loadmat(path: Path, key: Optional[str] = None) -> MatrixType:
         return data[0]
 
 
-def _savemat(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+def _savemat(path, matrix, key):
     if key is None:
         raise IOError('"key" must be specified for MATLAB file')
     try:
@@ -50,7 +46,7 @@ def _savemat(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
         raise IOError(e)
 
 
-def _mmread(path: Path, key: Optional[str] = None) -> MatrixType:
+def _mmread(path, key):
     if key:
         raise IOError('Cannot specify "key" for Matrix Market file')
     try:
@@ -62,7 +58,7 @@ def _mmread(path: Path, key: Optional[str] = None) -> MatrixType:
         raise IOError(e)
 
 
-def _mmwrite(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+def _mmwrite(path, matrix, key):
     if key:
         raise IOError('Cannot specify "key" for Matrix Market file')
     try:
@@ -73,7 +69,7 @@ def _mmwrite(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
         raise IOError(e)
 
 
-def _load(path: Path, key: Optional[str] = None) -> MatrixType:
+def _load(path, key):
     try:
         data = np.load(path)
     except Exception as e:
@@ -97,7 +93,7 @@ def _load(path: Path, key: Optional[str] = None) -> MatrixType:
     return matrix
 
 
-def _save(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+def _save(path, matrix, key):
     if key:
         raise IOError('Cannot specify "key" for NPY file')
     try:
@@ -106,7 +102,7 @@ def _save(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
         raise IOError(e)
 
 
-def _savez(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+def _savez(path, matrix, key):
     try:
         if key is None:
             np.savez(path, matrix)
@@ -116,7 +112,7 @@ def _savez(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
         raise IOError(e)
 
 
-def _loadtxt(path: Path, key: Optional[str] = None) -> MatrixType:
+def _loadtxt(path, key):
     if key:
         raise IOError('Cannot specify "key" for TXT file')
     try:
@@ -125,7 +121,7 @@ def _loadtxt(path: Path, key: Optional[str] = None) -> MatrixType:
         raise IOError(e)
 
 
-def _savetxt(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
+def _savetxt(path, matrix, key):
     if key:
         raise IOError('Cannot specify "key" for TXT file')
     try:
@@ -134,7 +130,7 @@ def _savetxt(path: Path, matrix: MatrixType, key: Optional[str] = None) -> None:
         raise IOError(e)
 
 
-def _get_file_extension(path: Path) -> str:
+def _get_file_extension(path):
     suffix_count = len(path.suffixes)
     if suffix_count and len(path.suffixes[-1]) == 4:
         extension = path.suffixes[-1].lower()
@@ -145,13 +141,13 @@ def _get_file_extension(path: Path) -> str:
     return extension
 
 
-def load_matrix(path: Union[str, Path], key: Optional[str] = None) -> Union[ArrayLike, spmatrix]:
+def load_matrix(path, key):
     """Load matrix from file.
 
     Parameters
     ----------
     path
-        Path to the file.
+        Path to the file (`str` or `pathlib.Path`).
     key
         Key of the matrix (only for NPY, NPZ, and MATLAB files).
 
@@ -198,13 +194,13 @@ def load_matrix(path: Union[str, Path], key: Optional[str] = None) -> Union[Arra
     raise IOError(f'Could not load file {path} (key = {key})')
 
 
-def save_matrix(path: Union[str, Path], matrix: Union[ArrayLike, spmatrix], key: Optional[str] = None) -> None:
+def save_matrix(path, matrix, key):
     """Save matrix to file.
 
     Parameters
     ----------
     path
-        Path to the file.
+        Path to the file (`str` or `pathlib.Path`).
     matrix
         Matrix to save.
     key
