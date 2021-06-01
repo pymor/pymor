@@ -198,6 +198,25 @@ def test_load_matrix(loadable_matrices):
             load_matrix(m)
 
 
+@pytest.mark.parametrize('ext', ['.mat', '.mtx', '.mtz.gz', '.npy', '.npz', '.txt'])
+def test_save_load_matrix(ext):
+    import filecmp
+    from pymor.tools.io import load_matrix, save_matrix
+    A = np.eye(2)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        path = os.path.join(tmpdirname, 'matrix' + ext)
+        key = None
+        if ext == '.mat':
+            key = 'A'
+        save_matrix(path, A, key)
+        B = load_matrix(path, key)
+        assert np.all(A == B)
+        path2 = os.path.join(tmpdirname, 'matrix2' + ext)
+        save_matrix(path2, A, key)
+        if ext != '.mtz.gz':
+            assert filecmp.cmp(path, path2)
+
+
 def test_cwd_ctx_manager():
     original_cwd = os.getcwd()
     target = tempfile.gettempdir()
