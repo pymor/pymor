@@ -62,7 +62,12 @@ def _mmwrite(path, matrix, key=None):
     if key:
         raise IOError('Cannot specify "key" for Matrix Market file')
     try:
-        with open(path, 'wb') as f:
+        if path.suffix != '.gz':
+            open_file = open
+        else:
+            import gzip
+            open_file = gzip.open
+        with open_file(path, 'wb') as f:
             # when mmwrite is given a string, it will append '.mtx'
             mmwrite(f, matrix)
     except Exception as e:
