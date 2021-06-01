@@ -3,60 +3,125 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import asyncio
+from collections import defaultdict
 from math import ceil
 import numpy as np
-from queue import LifoQueue
+from threading import Thread
 
 from pymor.algorithms.pod import pod
-from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.logger import getLogger
 
 
-class Tree(BasicObject):
-    """A rooted tree."""
+class Node:
 
-    root = 0
+    def __init__(self, tag=None, parent=None, after=None):
+        after = after or []
+        self.tag, self.parent, self.after = tag, parent, after
+        self.children = []
+        if parent:
+            parent.children.append(self)
 
-    @abstractmethod
-    def children(self, node):
-        pass
+    def add_child(self, tag=None, after=None, **kwargs):
+        return Node(tag=tag, parent=self, after=after, **kwargs)
 
     @property
     def depth(self):
-        def get_depth(node):
-            children = self.children(node)
-            if children:
-                return 1 + max(get_depth(c) for c in children)
+        max_level = 0
+        for _, level in self.traverse(True):
+            max_level = max(max_level, level)
+        return max_level + 1
+
+    @property
+    def is_leaf(self):
+        return not self.children
+
+    @property
+    def is_root(self):
+        return not self.parent
+
+    def traverse(self, return_level=False):
+        current_node = self
+        last_child = None
+        level = 0
+        while True:
+            if last_child is None:
+                if return_level:
+                    yield current_node, level
+                else:
+                    yield current_node
+            if current_node.children:
+                if last_child is None:
+                    current_node = current_node.children[0]
+                    level += 1
+                    continue
+                else:
+                    last_child_pos = current_node.children.index(last_child)
+                    if last_child_pos + 1 < len(current_node.children):
+                        current_node = current_node.children[last_child_pos+1]
+                        last_child = None
+                        level += 1
+                        continue
+            if not current_node.parent:
+                return
+            last_child = current_node
+            current_node = current_node.parent
+            level -= 1
+
+    def __str__(self):
+        lines = []
+        for node, level in self.traverse(True):
+            line = ''
+            if node.parent:
+                p = node.parent
+                while p.parent:
+                    if p.parent.children.index(p) + 1 == len(p.parent.children):
+                        line = '  ' + line
+                    else:
+                        line = '| ' + line
+                    p = p.parent
+                line += '+-o'
             else:
-                return 1
-        return get_depth(self.root)
+                line += 'o'
+            if node.tag is not None:
+                line += f' {node.tag}'
+            if node.after:
+                line += f' (after {",".join(str(a) for a in node.after)})'
+            lines.append(line)
+        return '\n'.join(lines)
 
-    def is_leaf(self, node):
-        return not self.children(node)
+
+def inc_hapod_tree(steps):
+    tree = node = Node()
+    for step in range(steps)[::-1]:
+        # add leaf node for a new snapshot
+        node.add_child(tag=step, after=(step-1,) if step > 0 else None)
+        if step > 0:
+            # add node for the previous POD step
+            node = node.add_child()
+    return tree
 
 
-class IncHAPODTree(Tree):
+def dist_hapod_tree(num_slices, arity=None):
+    tree = Node()
+    if arity is None:
+        arity = num_slices
 
-    def __init__(self, steps):
-        self.steps = steps
-        self.root = steps
-
-    def children(self, node):
-        if node < 0:
-            return ()
-        elif node == 1:
-            return (-1,)
+    def add_children(node, slices):
+        if len(slices) > arity:
+            sub_slices = np.array_split(slices, arity)
+            for s in sub_slices:
+                if len(s) > 1:
+                    child = node.add_child()
+                    add_children(child, s)
+                else:
+                    child = node.add_child(s.item())
         else:
-            return (node - 1, -node)
+            for s in slices:
+                node.add_child(s)
 
+    add_children(tree, np.arange(num_slices))
 
-class DistHAPODTree(Tree):
-
-    def __init__(self, slices):
-        self.root = slices
-
-    def children(self, node):
-        return tuple(range(self.root)) if node == self.root else ()
+    return tree
 
 
 def default_pod_method(U, eps, is_root_node, product):
@@ -107,10 +172,16 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     """
     logger = getLogger('pymor.algorithms.hapod.hapod')
 
+    node_finished_events = defaultdict(asyncio.Event)
+
     async def hapod_step(node):
-        children = tree.children(node)
-        if children:
-            modes, svals, snap_counts = zip(*await asyncio.gather(*(hapod_step(c) for c in children)))
+        if node.after:
+            await asyncio.wait([node_finished_events[a].wait() for a in node.after])
+
+        if node.children:
+            modes, svals, snap_counts = zip(
+                *await asyncio.gather(*(hapod_step(c) for c in node.children))
+            )
             for m, sv in zip(modes, svals):
                 m.scal(sv)
             U = modes[0]
@@ -118,27 +189,22 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
                 U.append(V, remove_from_other=True)
             snap_count = sum(snap_counts)
         else:
+            logger.info(f'Obtaining snapshots for node {node.tag or ""} ...')
             if eval_snapshots_in_executor:
                 U = await executor.submit(snapshots, node)
             else:
                 U = snapshots(node)
             snap_count = len(U)
 
-        with logger.block(f'Processing node {node}'):
-            eps = local_eps(node, snap_count, len(U))
-            if eps:
-                modes, svals = await executor.submit(pod_method, U, eps, node == tree.root, product)
-                return modes, svals, snap_count
-            else:
-                return U.copy(), np.ones(len(U)), snap_count
-
-    # setup asyncio event loop
-    loop = asyncio.get_event_loop()
-    if loop.is_closed():
-        # probably we have closed the event loop ourselves in an earlier hapod call
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    loop_was_running = loop.is_running()
+        eps = local_eps(node, snap_count, len(U))
+        if eps:
+            logger.info('Computing intermediate POD ...')
+            modes, svals = await executor.submit(pod_method, U, eps, not node.parent, product)
+        else:
+            modes, svals = U.copy(), np.ones(len(U))
+        if node.tag is not None:
+            node_finished_events[node.tag].set()
+        return modes, svals, snap_count
 
     # wrap Executer to ensure LIFO ordering of tasks
     # this ensures that PODs of parent nodes are computed as soon as all input data
@@ -148,17 +214,20 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     else:
         executor = FakeExecutor
 
-    # perform HAPOD
-    result = loop.run_until_complete(hapod_step(tree.root))
+    # run new asyncio event loop in separate thread to not interfere with
+    # already running event loops (e.g. jupyter)
 
-    # shutdown event loop
-    if not loop_was_running:  # we haven't been inside a running event loop
-        loop.close()
-
+    def main():
+        nonlocal result
+        result = asyncio.run(hapod_step(tree))
+    result = None
+    hapod_thread = Thread(target=main)
+    hapod_thread.start()
+    hapod_thread.join()
     return result
 
 
-def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_snapshots_in_executor=False):
+def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None):
     """Incremental Hierarchical Approximate POD.
 
     This computes the incremental HAPOD from :cite:`HLR18`.
@@ -166,10 +235,11 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_sn
     Parameters
     ----------
     steps
-        The number of incremental POD updates.
+        The number of incremental POD updates. Has to agree with the lenght
+        of `snapshots`.
     snapshots
-        A mapping `snapshots(step)` returning for each incremental POD
-        step the associated snapshot vectors.
+        An iterable returning for each incremental POD step the associated
+        snapshot vectors.
     eps
         Desired l2-mean approximation error.
     omega
@@ -179,9 +249,7 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_sn
         Inner product |Operator| w.r.t. which to compute the POD.
     executor
         If not `None`, a :class:`concurrent.futures.Executor` object to use
-        for parallelization.
-    eval_snapshots_in_executor
-        If `True` also parallelize the evaluation of the snapshot map.
+        to compute new snapshot vectors and POD updates in parallel.
 
     Returns
     -------
@@ -192,16 +260,29 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None, eval_sn
     snap_count
         The total number of input snapshot vectors.
     """
-    tree = IncHAPODTree(steps)
-    return hapod(tree,
-                 lambda node: snapshots(-node - 1),
-                 std_local_eps(tree, eps, omega, False),
-                 product=product,
-                 executor=executor,
-                 eval_snapshots_in_executor=eval_snapshots_in_executor)
+    tree = inc_hapod_tree(steps)
+
+    last_step = -1
+    snapshots = iter(snapshots)
+
+    def get_snapshots(node):
+        nonlocal last_step
+        assert node.tag == last_step + 1
+        last_step += 1
+        return next(snapshots)
+
+    result = hapod(tree,
+                   get_snapshots,
+                   std_local_eps(tree, eps, omega, False),
+                   product=product,
+                   executor=executor,
+                   eval_snapshots_in_executor=True)
+    assert last_step == steps - 1
+    return result
 
 
-def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, eval_snapshots_in_executor=False):
+def dist_hapod(num_slices, snapshots, eps, omega, arity=None,
+               product=None, executor=None, eval_snapshots_in_executor=False):
     """Distributed Hierarchical Approximate POD.
 
     This computes the distributed HAPOD from :cite:`HLR18`.
@@ -218,6 +299,10 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, e
     omega
         Tuning parameter (0 < omega < 1) to balance performance with
         approximation quality.
+    arity
+        If not `None`, the arity of the HAPOD tree. Otherwise, a
+        tree of depth 2 is used (one POD per slice and one additional
+        POD of the resulting data).
     product
         Inner product |Operator| w.r.t. which to compute the POD.
     executor
@@ -235,7 +320,7 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, e
     snap_count
         The total number of input snapshot vectors.
     """
-    tree = DistHAPODTree(num_slices)
+    tree = dist_hapod_tree(num_slices, arity)
     return hapod(tree,
                  snapshots,
                  std_local_eps(tree, eps, omega, True),
@@ -243,7 +328,7 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None, executor=None, e
                  eval_snapshots_in_executor=eval_snapshots_in_executor)
 
 
-def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
+def inc_vectorarray_hapod(steps, U, eps, omega, product=None):
     """Incremental Hierarchical Approximate POD.
 
     This computes the incremental HAPOD from :cite:`HLR18` for a given |VectorArray|.
@@ -261,11 +346,6 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
         approximation quality.
     product
         Inner product |Operator| w.r.t. which to compute the POD.
-    executor
-        If not `None`, a :class:`concurrent.futures.Executor` object to use
-        for parallelization.
-    eval_snapshots_in_executor
-        If `True` also parallelize the evaluation of the snapshot map.
 
     Returns
     -------
@@ -278,12 +358,16 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None, executor=None):
     """
     chunk_size = ceil(len(U) / steps)
     slices = range(0, len(U), chunk_size)
-    return inc_hapod(len(slices),
-                     lambda i: U[slices[i]: slices[i]+chunk_size],
-                     eps, omega, product=product, executor=executor)
+
+    def snapshots():
+        for slice in slices:
+            yield U[slice: slice+chunk_size]
+
+    return inc_hapod(len(slices), snapshots(),
+                     eps, omega, product=product)
 
 
-def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=None):
+def dist_vectorarray_hapod(num_slices, U, eps, omega, arity=None, product=None, executor=None):
     """Distributed Hierarchical Approximate POD.
 
     This computes the distributed HAPOD from :cite:`HLR18` of a given |VectorArray|.
@@ -299,6 +383,10 @@ def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=Non
     omega
         Tuning parameter (0 < omega < 1) to balance performance with
         approximation quality.
+    arity
+        If not `None`, the arity of the HAPOD tree. Otherwise, a
+        tree of depth 2 is used (one POD per slice and one additional
+        POD of the resulting data).
     product
         Inner product |Operator| w.r.t. which to compute the POD.
     executor
@@ -317,8 +405,8 @@ def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None, executor=Non
     chunk_size = ceil(len(U) / num_slices)
     slices = range(0, len(U), chunk_size)
     return dist_hapod(len(slices),
-                      lambda i: U[slices[i]: slices[i]+chunk_size],
-                      eps, omega, product=product, executor=executor)
+                      lambda i: U[slices[i.tag]: slices[i.tag]+chunk_size],
+                      eps, omega, arity=arity, product=product, executor=executor)
 
 
 def std_local_eps(tree, eps, omega, pod_on_leafs=True):
@@ -326,9 +414,9 @@ def std_local_eps(tree, eps, omega, pod_on_leafs=True):
     L = tree.depth if pod_on_leafs else tree.depth - 1
 
     def local_eps(node, snap_count, input_count):
-        if node == tree.root:
+        if node.is_root:
             return np.sqrt(snap_count) * omega * eps
-        elif not pod_on_leafs and tree.is_leaf(node):
+        elif node.is_leaf and not pod_on_leafs:
             return 0.
         else:
             return np.sqrt(snap_count) / np.sqrt(L - 1) * np.sqrt(1 - omega**2) * eps
@@ -341,20 +429,20 @@ class LifoExecutor:
     def __init__(self, executor, max_workers=None):
         self.executor = executor
         self.max_workers = max_workers or executor._max_workers
-        self.queue = LifoQueue()
-        self.loop = asyncio.get_event_loop()
-        self.sem = asyncio.Semaphore(self.max_workers)
+        self.queue = []
 
     def submit(self, f, *args):
-        future = self.loop.create_future()
-        self.queue.put((future, f, args))
-        self.loop.create_task(self.run_task())
+        future = asyncio.get_event_loop().create_future()
+        self.queue.append((future, f, args))
+        asyncio.get_event_loop().create_task(self.run_task())
         return future
 
     async def run_task(self):
+        if not hasattr(self, 'sem'):
+            self.sem = asyncio.Semaphore(self.max_workers)
         await self.sem.acquire()
-        future, f, args = self.queue.get()
-        executor_future = self.loop.run_in_executor(self.executor, f, *args)
+        future, f, args = self.queue.pop()
+        executor_future = asyncio.get_event_loop().run_in_executor(self.executor, f, *args)
         executor_future.add_done_callback(lambda f, ff=future: self.done_callback(future, f))
 
     def done_callback(self, future, executor_future):
