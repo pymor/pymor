@@ -105,16 +105,15 @@ class MPIVectorArray(VectorArray):
     @property
     def real(self):
         real_id = mpi.call(_MPIVectorArray_real, self.obj_id)
-        return MPIVectorArray(real_id, self.space)
+        return type(self)(real_id, self.space)
 
     @property
     def imag(self):
         imag_id = mpi.call(_MPIVectorArray_imag, self.obj_id)
-        return MPIVectorArray(imag_id, self.space)
+        return type(self)(imag_id, self.space)
 
     def conj(self):
-        conj_id = mpi.call(_MPIVectorArray_conj, self.obj_id)
-        return MPIVectorArray(conj_id, self.space)
+        return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'conj'), self.space)
 
 
 class MPIVectorSpace(VectorSpace):
@@ -232,10 +231,6 @@ def _MPIVectorArray_real(obj_id):
 
 def _MPIVectorArray_imag(obj_id):
     return mpi.manage_object(mpi.get_object(obj_id).imag)
-
-
-def _MPIVectorArray_conj(obj_id):
-    return mpi.manage_object(mpi.get_object(obj_id).conj())
 
 
 class MPIVectorArrayNoComm(MPIVectorArray):
