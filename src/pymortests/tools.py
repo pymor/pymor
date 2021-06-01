@@ -2,25 +2,26 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from math import sin, pi, exp, factorial
-import numpy as np
-import os
-import pytest
 import itertools
+import os
 import tempfile
+from math import exp, factorial, pi, sin
+
+import numpy as np
+import pytest
 from hypothesis import given
 
 from pymor.core.logger import getLogger
-from pymor.tools.formatsrc import print_source
-from pymor.tools.io import SafeTemporaryFileName, change_to_directory
-from pymortests.base import runmodule
-from pymortests.fixtures.grid import hy_rect_or_tria_grid
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
+from pymor.tools import formatsrc, timing
 from pymor.tools.deprecated import Deprecated
-from pymor.tools.floatcmp import float_cmp, float_cmp_all, almost_less
+from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
+from pymor.tools.formatsrc import print_source
+from pymor.tools.io import SafeTemporaryFileName, change_to_directory
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymor.tools import timing, formatsrc
+from pymortests.base import runmodule
+from pymortests.fixtures.grid import hy_rect_or_tria_grid
 
 logger = getLogger('pymortests.tools')
 
