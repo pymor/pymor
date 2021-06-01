@@ -15,7 +15,7 @@ from scipy.sparse import issparse
 from pymor.core.logger import getLogger
 
 
-def _loadmat(path, key):
+def _loadmat(path, key=None):
     try:
         data = loadmat(path, mat_dtype=True)
     except Exception as e:
@@ -37,7 +37,7 @@ def _loadmat(path, key):
         return data[0]
 
 
-def _savemat(path, matrix, key):
+def _savemat(path, matrix, key=None):
     if key is None:
         raise IOError('"key" must be specified for MATLAB file')
     try:
@@ -46,7 +46,7 @@ def _savemat(path, matrix, key):
         raise IOError(e)
 
 
-def _mmread(path, key):
+def _mmread(path, key=None):
     if key:
         raise IOError('Cannot specify "key" for Matrix Market file')
     try:
@@ -58,7 +58,7 @@ def _mmread(path, key):
         raise IOError(e)
 
 
-def _mmwrite(path, matrix, key):
+def _mmwrite(path, matrix, key=None):
     if key:
         raise IOError('Cannot specify "key" for Matrix Market file')
     try:
@@ -69,7 +69,7 @@ def _mmwrite(path, matrix, key):
         raise IOError(e)
 
 
-def _load(path, key):
+def _load(path, key=None):
     try:
         data = np.load(path)
     except Exception as e:
@@ -93,7 +93,7 @@ def _load(path, key):
     return matrix
 
 
-def _save(path, matrix, key):
+def _save(path, matrix, key=None):
     if key:
         raise IOError('Cannot specify "key" for NPY file')
     try:
@@ -102,7 +102,7 @@ def _save(path, matrix, key):
         raise IOError(e)
 
 
-def _savez(path, matrix, key):
+def _savez(path, matrix, key=None):
     try:
         if key is None:
             np.savez(path, matrix)
@@ -112,7 +112,7 @@ def _savez(path, matrix, key):
         raise IOError(e)
 
 
-def _loadtxt(path, key):
+def _loadtxt(path, key=None):
     if key:
         raise IOError('Cannot specify "key" for TXT file')
     try:
@@ -121,7 +121,7 @@ def _loadtxt(path, key):
         raise IOError(e)
 
 
-def _savetxt(path, matrix, key):
+def _savetxt(path, matrix, key=None):
     if key:
         raise IOError('Cannot specify "key" for TXT file')
     try:
@@ -141,7 +141,7 @@ def _get_file_extension(path):
     return extension
 
 
-def load_matrix(path, key):
+def load_matrix(path, key=None):
     """Load matrix from file.
 
     Parameters
@@ -194,7 +194,7 @@ def load_matrix(path, key):
     raise IOError(f'Could not load file {path} (key = {key})')
 
 
-def save_matrix(path, matrix, key):
+def save_matrix(path, matrix, key=None):
     """Save matrix to file.
 
     Parameters
