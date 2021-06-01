@@ -135,7 +135,7 @@ def _get_file_extension(path):
     if suffix_count and len(path.suffixes[-1]) == 4:
         extension = path.suffixes[-1].lower()
     elif path.suffixes[-1].lower() == '.gz' and suffix_count >= 2 and len(path.suffixes[-2]) == 4:
-        extension = '.'.join(path.suffixes[-2:]).lower()
+        extension = ''.join(path.suffixes[-2:]).lower()
     else:
         extension = ''
     return extension
