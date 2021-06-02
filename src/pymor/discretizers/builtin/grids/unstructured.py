@@ -6,7 +6,6 @@ import numpy as np
 
 from pymor.discretizers.builtin.grids.interfaces import Grid
 from pymor.discretizers.builtin.grids.referenceelements import triangle
-from pymor.discretizers.builtin.grids._unstructured import compute_edges
 
 
 class UnstructuredTriangleGrid(Grid):
@@ -47,7 +46,7 @@ class UnstructuredTriangleGrid(Grid):
 
         vertices = vertices.astype(np.float64, copy=False)
         faces = faces.astype(np.int32, copy=False)
-        edges, num_edges = compute_edges(faces, len(vertices))
+        edges, num_edges = compute_edges(faces)
 
         COORDS = vertices[faces]
         SHIFTS = COORDS[:, 0, :]
@@ -109,3 +108,17 @@ class UnstructuredTriangleGrid(Grid):
 
     def __str__(self):
         return 'UnstructuredTriangleGrid with {} triangles, {} edges, {} vertices'.format(*self.sizes)
+
+
+def compute_edges(subentities):
+    X = np.empty_like(subentities, dtype=[('l', np.int32), ('h', np.int32)])
+
+    X['l'][:, 0] = np.min(subentities[:, 1:3], axis=1)
+    X['l'][:, 1] = np.min(subentities[:, 0:3:2], axis=1)
+    X['l'][:, 2] = np.min(subentities[:, 0:2], axis=1)
+    X['h'][:, 0] = np.max(subentities[:, 1:3], axis=1)
+    X['h'][:, 1] = np.max(subentities[:, 0:3:2], axis=1)
+    X['h'][:, 2] = np.max(subentities[:, 0:2], axis=1)
+
+    U, I = np.unique(X, return_inverse=True)
+    return I.reshape(subentities.shape).astype(np.int32), len(U)

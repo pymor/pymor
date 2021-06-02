@@ -1,7 +1,5 @@
 include *.txt
 include *.html
-include src/pymor/discretizers/builtin/*.pyx
-include src/pymor/discretizers/builtin/grids/*.pyx
 include src/pymor/version.py
 include src/pymor/scripts/check_reqs.py
 

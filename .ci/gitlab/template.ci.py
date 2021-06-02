@@ -18,10 +18,6 @@ stages:
   - install_checks
   - deploy
 
-{% macro wheel_job_name(manylinux_version, pyver) -%}
-wheel {{manylinux_version}} py {{pyver[0]}} {{pyver[2]}}
-{%- endmacro -%}
-
 {% macro never_on_schedule_rule(exclude_github=False) -%}
 rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -136,14 +132,6 @@ rules:
     variables:
         USER: juno
 
-.wheel:
-    extends: .docker-in-docker
-    stage: build
-    needs: ["ci setup"]
-    tags: [mike]
-    {{ never_on_schedule_rule() }}
-
-
 .check_wheel:
     extends: .test_base
     stage: install_checks
@@ -157,7 +145,7 @@ rules:
       - python3 -m pip install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password none
-      - devpi upload --from-dir --formats=* ./shared
+      - devpi upload --from-dir --formats=* ./dist/*.whl
     # the docker service adressing fails on other runners
     tags: [mike]
 
@@ -183,7 +171,7 @@ verify setup.py:
 ci setup:
     extends: .sanity_checks
     script:
-        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}" "{{ ' '.join(manylinuxs) }}"
+        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "{{ ' '.join(pythons) }}"
 
 #****** test stage
 
@@ -306,36 +294,31 @@ trigger_binder {{loop.index}}/{{loop.length}}:
         - python3 .ci/gitlab/trigger_binder.py "{{url}}/${CI_COMMIT_REF}"
 {% endfor %}
 
-{%- for PY in pythons %}
-{%- for ML in manylinuxs %}
-{{ wheel_job_name(ML, PY) }}:
-    extends: .wheel
-    variables:
-        PYVER: "{{PY}}"
+sdist_and_wheel:
+    extends: .sanity_checks
+    stage: build
+    needs: ["ci setup"]
+    {{ never_on_schedule_rule() }}
     artifacts:
         paths:
-        - ${CI_PROJECT_DIR}/shared/pymor*manylinux{{ML}}_*whl
+        - dist/pymor*.whl
+        - dist/pymor*.tar.gz
         expire_in: 1 week
-    script: bash .ci/gitlab/wheels.bash {{ML}}
-{% endfor %}
-{% endfor %}
+    script: python3 -m build
 
 pypi:
     extends: .test_base
     image: {{registry}}/pymor/python_3.9:{{ci_image_tag}}
     stage: deploy
     dependencies:
-    {%- for PY in pythons %}
-    {%- for ML in manylinuxs %}
-      - {{ wheel_job_name(ML, PY) }}
-    {% endfor %}
-    {% endfor %}
+      - sdist_and_wheel
     {{ never_on_schedule_rule(exclude_github=True) }}
     variables:
         ARCHIVE_DIR: pyMOR_wheels-${CI_COMMIT_REF_NAME}
     artifacts:
         paths:
-         - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*manylinux*whl
+         - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*whl
+         - ${CI_PROJECT_DIR}/${ARCHIVE_DIR}/pymor*tar.gz
         expire_in: 6 months
         name: pymor-wheels
     before_script:
@@ -350,13 +333,8 @@ pypi:
 {% for OS, PY in testos %}
 from wheel {{loop.index}}/{{loop.length}}:
     extends: .check_wheel
-    dependencies:
-        {%- for ML in manylinuxs %}
-          - "{{ wheel_job_name(ML, PY) }}"
-        {%- endfor %}
-    needs: [{%- for ML in manylinuxs -%}
-          "{{ wheel_job_name(ML, PY) }}",
-        {%- endfor -%}]
+    dependencies: ["sdist_and_wheel"]
+    needs: ["sdist_and_wheel"]
     image: {{registry}}/pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
     script:
       - echo "Testing wheel install on {{OS}} with Python {{PY}}"
@@ -436,7 +414,6 @@ env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)
 ci_image_tag = env['CI_IMAGE_TAG']
 pypi_mirror_tag = env['PYPI_MIRROR_TAG']
-manylinuxs = ['2010', '2014']
 registry = "zivgitlab.wwu.io/pymor/docker"
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = [(sc, py, pa) for sc, pythons, pa in test_scripts for py in pythons]
@@ -444,7 +421,7 @@ with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
 
 try:
     token = sys.argv[1]
-except:
+except IndexError:
     print("not checking image availability, no token given")
     sys.exit(0)
 
@@ -457,11 +434,11 @@ pymor = gl.projects.get(pymor_id)
 
 image_tag = ci_image_tag
 mirror_tag = pypi_mirror_tag
-images = ["testing", "jupyter"] + [f"wheelbuilder_manylinux{m}" for m in manylinuxs]
+images = ["testing", "jupyter"]
 mirrors = [f"{r}_py{py}"
-    for r, py in product(["pypi-mirror_stable", "pypi-mirror_oldest"], pythons)]
+           for r, py in product(["pypi-mirror_stable", "pypi-mirror_oldest"], pythons)]
 images = [f"{r}_py{py}" for r, py in product(images, pythons)]
-images += [f"deploy_checks_{os}" for os,_ in testos] + ["python_3.9"]
+images += [f"deploy_checks_{os}" for os, _ in testos] + ["python_3.9"]
 
 missing = set((r, mirror_tag) for r in mirrors) | set((r, image_tag) for r in images)
 for repo in pymor.repositories.list(all=True):

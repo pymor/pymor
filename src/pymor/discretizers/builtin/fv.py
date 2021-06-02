@@ -21,7 +21,6 @@ from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenter
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
 from pymor.discretizers.builtin.grids.subgrid import SubGrid, make_sub_grid_boundary_info
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
-from pymor.discretizers.builtin.inplace import iadd_masked, isub_masked
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.models.basic import StationaryModel, InstationaryModel
 from pymor.operators.constructions import ComponentProjectionOperator, LincombOperator, ZeroOperator
@@ -268,7 +267,7 @@ class NonlinearAdvectionOperator(Operator):
             self._fetch_grid_data()
 
         U = U.to_numpy()
-        R = np.zeros((len(U), self.source.dim))
+        R = np.zeros((len(U), self.source.dim + 1))
 
         bi = self.boundary_info
         gd = self._grid_data
@@ -308,12 +307,12 @@ class NonlinearAdvectionOperator(Operator):
             if bi.has_neumann:
                 NUM_FLUX[NEUMANN_BOUNDARIES] = 0
 
-            iadd_masked(Ri, NUM_FLUX, SUPE[:, 0])
-            isub_masked(Ri, NUM_FLUX, SUPE[:, 1])
+            np.add.at(Ri, SUPE[:, 0], NUM_FLUX)
+            np.subtract.at(Ri, SUPE[:, 1], NUM_FLUX)
 
-        R /= VOLS0
+        R[:, :-1] /= VOLS0
 
-        return self.range.make_array(R)
+        return self.range.make_array(R[:, :-1])
 
     def jacobian(self, U, mu=None):
         assert U in self.source and len(U) == 1
