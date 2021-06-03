@@ -95,7 +95,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     if E is None:
         E = IdentityOperator(A.source)
 
-    Z = A.source.empty(reserve=len(B) * options['maxiter'])
+    Z = A.source.empty()
     W = B.copy()
 
     j = 0
