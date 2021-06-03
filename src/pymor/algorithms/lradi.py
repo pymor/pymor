@@ -145,9 +145,11 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
 
 
 def projection_shifts_init(A, E, B, shift_options):
-    """Find starting shift parameters for low-rank ADI iteration using
-    Galerkin projection on spaces spanned by LR-ADI iterates.
+    """Find starting projection shifts.
 
+    Uses Galerkin projection on the space spanned by the right-hand side if
+    it produces stable shifts.
+    Otherwise, uses a randomly generated subspace.
     See :cite:`PK16`, pp. 92-95.
 
     Parameters
@@ -180,9 +182,9 @@ def projection_shifts_init(A, E, B, shift_options):
 
 
 def projection_shifts(A, E, V, prev_shifts):
-    """Find further shift parameters for low-rank ADI iteration using
-    Galerkin projection on spaces spanned by LR-ADI iterates.
+    """Find further projection shifts.
 
+    Uses Galerkin projection on spaces spanned by LR-ADI iterates.
     See :cite:`PK16`, pp. 92-95.
 
     Parameters
