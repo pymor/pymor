@@ -90,7 +90,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         init_shifts = projection_shifts_init
         iteration_shifts = projection_shifts
     else:
-        raise ValueError('Unknown lradi shift strategy.')
+        raise ValueError('Unknown low-rank ADI shift strategy.')
 
     if E is None:
         E = IdentityOperator(A.source)
