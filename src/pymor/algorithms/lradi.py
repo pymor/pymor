@@ -209,17 +209,12 @@ def projection_shifts(A, E, V, prev_shifts):
     else:
         Q = gram_schmidt(V, atol=0, rtol=0)
 
-    Ap = A.apply2(Q, Q)
-    Ep = E.apply2(Q, Q)
-
-    shifts = spla.eigvals(Ap, Ep)
-    shifts.imag[abs(shifts.imag) < np.finfo(float).eps] = 0
-    shifts = shifts[np.real(shifts) < 0]
+    shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
+    shifts = shifts[shifts.real < 0]
+    shifts = shifts[shifts.imag >= 0]
     if shifts.size == 0:
         return prev_shifts
     else:
-        if np.any(shifts.imag != 0):
-            shifts = shifts[np.abs(shifts).argsort()]
-        else:
-            shifts.sort()
+        shifts.imag[-shifts.imag / shifts.real < 1e-12] = 0
+        shifts = shifts[np.abs(shifts).argsort()]
         return shifts
