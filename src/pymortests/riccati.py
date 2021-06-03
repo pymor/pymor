@@ -93,7 +93,8 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
     except NotImplementedError:
         return
 
-    assert len(Zva) <= n
+    if solver != 'pymess_lrnm':
+        assert len(Zva) <= n
 
     Z = Zva.to_numpy().T
     assert relative_residual(A, E, B, C, R, Z, trans) < 1e-8
