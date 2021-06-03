@@ -272,7 +272,7 @@ class InputOutputModel(Model):
         assert isinstance(lti, LTIModel)
 
         poles, b, c = _lti_to_poles_b_c(lti)
-        inner = sum(c[i].dot(lti.eval_tf(-poles[i]).dot(b[i]))
+        inner = sum(c[i].dot(self.eval_tf(-poles[i]).dot(b[i]))
                     for i in range(len(poles)))
         inner = inner.conjugate()
 
