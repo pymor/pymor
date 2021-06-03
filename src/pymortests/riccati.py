@@ -2,19 +2,18 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import chain, product
+
 import numpy as np
+import pytest
 import scipy.linalg as spla
 
-from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
+from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_lrcf
 from pymor.operators.numpy import NumpyMatrixOperator
-
-from itertools import chain, product
-import pytest
-from .lyapunov import fro_norm, conv_diff_1d_fd, conv_diff_1d_fem, _check_availability
-
+from pymortests.lyapunov import _check_availability, conv_diff_1d_fd, conv_diff_1d_fem, fro_norm
 
 n_list_small = [10, 20]
-n_list_big = [200, 300]
+n_list_big = [250]
 m_list = [1, 2]
 p_list = [1, 2]
 ricc_lrcf_solver_list_small = [
@@ -93,8 +92,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
     except NotImplementedError:
         return
 
-    if solver != 'pymess_lrnm':
-        assert len(Zva) <= n
+    assert len(Zva) <= n
 
     Z = Zva.to_numpy().T
     assert relative_residual(A, E, B, C, R, Z, trans) < 1e-8
