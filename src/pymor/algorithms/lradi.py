@@ -16,12 +16,13 @@ from pymor.vectorarrays.constructions import cat_arrays
 
 
 @defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_init_maxiter',
-          'projection_shifts_init_seed')
+          'projection_shifts_init_seed', 'projection_shifts_subspace_columns')
 def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              lradi_maxiter=500,
                              lradi_shifts='projection_shifts',
                              projection_shifts_init_maxiter=20,
-                             projection_shifts_init_seed=None):
+                             projection_shifts_init_seed=None,
+                             projection_shifts_subspace_columns=6):
     """Return available Lyapunov solvers with default options.
 
     Parameters
@@ -36,6 +37,8 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
         See :func:`projection_shifts_init`.
     projection_shifts_init_seed
         See :func:`projection_shifts_init`.
+    projection_shifts_subspace_columns
+        See :func:`projection_shifts`.
 
     Returns
     -------
@@ -48,7 +51,8 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                       'shift_options':
                       {'projection_shifts': {'type': 'projection_shifts',
                                              'init_maxiter': projection_shifts_init_maxiter,
-                                             'init_seed': projection_shifts_init_seed}}}}
+                                             'init_seed': projection_shifts_init_seed,
+                                             'subspace_columns': projection_shifts_subspace_columns}}}}
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, options=None):
@@ -134,7 +138,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         res = np.linalg.norm(W.gramian(), ord=2)
         logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
         if j_shift >= shifts.size:
-            shifts = iteration_shifts(A, E, V, shifts)
+            shifts = iteration_shifts(A, E, V, Z, shifts, shift_options)
             j_shift = 0
 
     if res > Btol:
@@ -181,7 +185,7 @@ def projection_shifts_init(A, E, B, shift_options):
     raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')
 
 
-def projection_shifts(A, E, V, prev_shifts):
+def projection_shifts(A, E, V, Z, prev_shifts, shift_options):
     """Find further projection shifts.
 
     Uses Galerkin projection on spaces spanned by LR-ADI iterates.
@@ -195,19 +199,27 @@ def projection_shifts(A, E, V, prev_shifts):
         The |Operator| E from the corresponding Lyapunov equation.
     V
         A |VectorArray| representing the currently computed iterate.
+    Z
+        A |VectorArray| representing the current approximate solution.
     prev_shifts
         A |NumPy array| containing the set of all previously used shift
         parameters.
+    shift_options
+        The shift options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-    if prev_shifts[-1].imag != 0:
-        Q = gram_schmidt(cat_arrays([V.real, V.imag]), atol=0, rtol=0)
+    if shift_options['subspace_columns'] == 1:
+        if prev_shifts[-1].imag != 0:
+            Q = gram_schmidt(cat_arrays([V.real, V.imag]), atol=0, rtol=0)
+        else:
+            Q = gram_schmidt(V, atol=0, rtol=0)
     else:
-        Q = gram_schmidt(V, atol=0, rtol=0)
+        num_columns = shift_options['subspace_columns'] * len(V)
+        Q = gram_schmidt(Z[-num_columns:], atol=0, rtol=0)
 
     shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
     shifts = shifts[shifts.real < 0]
