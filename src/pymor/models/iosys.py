@@ -385,6 +385,29 @@ class LTIModel(InputStateOutputModel):
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
+    def to_matrices(self):
+        """Return operators as matrices.
+
+        Returns
+        -------
+        A
+            The |NumPy array| or |SciPy spmatrix| A.
+        B
+            The |NumPy array| or |SciPy spmatrix| B.
+        C
+            The |NumPy array| or |SciPy spmatrix| C.
+        D
+            The |NumPy array| or |SciPy spmatrix| D or `None` (if D is a `ZeroOperator`).
+        E
+            The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
+        """
+        A = to_matrix(self.A)
+        B = to_matrix(self.B)
+        C = to_matrix(self.C)
+        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D)
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
+        return A, B, C, D, E
+
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True,
                    state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
@@ -438,6 +461,36 @@ class LTIModel(InputStateOutputModel):
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
+    def to_files(self, A_file, B_file, C_file, D_file=None, E_file=None):
+        """Write operators to files as matrices.
+
+        Parameters
+        ----------
+        A_file
+            The name of the file (with extension) containing A.
+        B_file
+            The name of the file (with extension) containing B.
+        C_file
+            The name of the file (with extension) containing C.
+        D_file
+            The name of the file (with extension) containing D or `None` if D is a `ZeroOperator`.
+        E_file
+            The name of the file (with extension) containing E or `None` if E is an
+            `IdentityOperator`.
+        """
+        if D_file is None and not isinstance(self.D, ZeroOperator):
+            raise ValueError('D is not zero, D_file must be given')
+        if E_file is None and not isinstance(self.E, IdentityOperator):
+            raise ValueError('E is not identity, E_file must be given')
+
+        from pymor.tools.io import save_matrix
+
+        A, B, C, D, E = self.to_matrices()
+        for mat, file in [(A, A_file), (B, B_file), (C, C_file), (D, D_file), (E, E_file)]:
+            if mat is None:
+                continue
+            save_matrix(file, mat)
+
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True,
                       state_id='STATE', solver_options=None, error_estimator=None,
@@ -487,11 +540,28 @@ class LTIModel(InputStateOutputModel):
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
+    def to_mat_file(self, file_name):
+        """Save operators as matrices to .mat file.
+
+        Parameters
+        ----------
+        file_name
+            The name of the .mat file (extension .mat does not need to be included).
+        """
+        import scipy.io as spio
+        A, B, C, D, E = self.to_matrices()
+        mat_dict = {'A': A, 'B': B, 'C': C}
+        if D is not None:
+            mat_dict['D'] = D
+        if E is not None:
+            mat_dict['E'] = E
+        spio.savemat(file_name, mat_dict)
+
     @classmethod
     def from_abcde_files(cls, files_basename, cont_time=True,
                          state_id='STATE', solver_options=None, error_estimator=None,
                          visualizer=None, name=None):
-        """Create |LTIModel| from matrices stored in a .[ABCDE] files.
+        """Create |LTIModel| from matrices stored in .[ABCDE] files.
 
         Parameters
         ----------
@@ -532,6 +602,25 @@ class LTIModel(InputStateOutputModel):
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
+
+    def to_abcde_files(self, files_basename):
+        """Save operators as matrices to .[ABCDE] files in Matrix Market format.
+
+        Parameters
+        ----------
+        files_basename
+            The basename of files containing the operators.
+        """
+        from pathlib import Path
+        from pymor.tools.io import _mmwrite
+        A, B, C, D, E = self.to_matrices()
+        _mmwrite(Path(files_basename + '.A'), A)
+        _mmwrite(Path(files_basename + '.B'), B)
+        _mmwrite(Path(files_basename + '.C'), C)
+        if D is not None:
+            _mmwrite(Path(files_basename + '.D'), D)
+        if E is not None:
+            _mmwrite(Path(files_basename + '.E'), E)
 
     def __add__(self, other):
         """Add an |LTIModel|."""
@@ -1271,6 +1360,35 @@ class SecondOrderModel(InputStateOutputModel):
         return cls(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
+    def to_matrices(self):
+        """Return operators as matrices.
+
+        Returns
+        -------
+        M
+            The |NumPy array| or |SciPy spmatrix| M.
+        E
+            The |NumPy array| or |SciPy spmatrix| E.
+        K
+            The |NumPy array| or |SciPy spmatrix| K.
+        B
+            The |NumPy array| or |SciPy spmatrix| B.
+        Cp
+            The |NumPy array| or |SciPy spmatrix| Cp.
+        Cv
+            The |NumPy array| or |SciPy spmatrix| Cv or `None` (if Cv is a `ZeroOperator`).
+        D
+            The |NumPy array| or |SciPy spmatrix| D or `None` (if D is a `ZeroOperator`).
+        """
+        M = to_matrix(self.M)
+        E = to_matrix(self.E)
+        K = to_matrix(self.K)
+        B = to_matrix(self.B)
+        Cp = to_matrix(self.Cp)
+        Cv = None if isinstance(self.Cv, ZeroOperator) else to_matrix(self.Cv)
+        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D)
+        return M, E, K, B, Cp, Cv, D
+
     @classmethod
     def from_files(cls, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, cont_time=True,
                    state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
@@ -1329,6 +1447,40 @@ class SecondOrderModel(InputStateOutputModel):
         return cls.from_matrices(M, E, K, B, Cp, Cv, D, cont_time=cont_time,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
+
+    def to_files(self, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None):
+        """Write operators to files as matrices.
+
+        Parameters
+        ----------
+        M_file
+            The name of the file (with extension) containing M.
+        E_file
+            The name of the file (with extension) containing E.
+        K_file
+            The name of the file (with extension) containing K.
+        B_file
+            The name of the file (with extension) containing B.
+        Cp_file
+            The name of the file (with extension) containing Cp.
+        Cv_file
+            The name of the file (with extension) containing Cv or `None` if D is a `ZeroOperator`.
+        D_file
+            The name of the file (with extension) containing D or `None` if D is a `ZeroOperator`.
+        """
+        if Cv_file is None and not isinstance(self.Cv, ZeroOperator):
+            raise ValueError('Cv is not zero, Cv_file must be given')
+        if D_file is None and not isinstance(self.D, ZeroOperator):
+            raise ValueError('D is not zero, D_file must be given')
+
+        from pymor.tools.io import save_matrix
+
+        M, E, K, B, Cp, Cv, D = self.to_matrices()
+        for mat, file in [(M, M_file), (E, E_file), (K, K_file),
+                          (B, B_file), (Cp, Cp_file), (Cv, Cv_file), (D, D_file)]:
+            if mat is None:
+                continue
+            save_matrix(file, mat)
 
     @cached
     def to_lti(self):

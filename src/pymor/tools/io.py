@@ -1,20 +1,21 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
-from scipy.io import loadmat, mmread
-from scipy.sparse import issparse
-import numpy as np
-import tempfile
+
 import os
-from contextlib import contextmanager
 import shutil
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path
+
+import numpy as np
+from scipy.io import loadmat, mmread, mmwrite, savemat
+from scipy.sparse import issparse
 
 from pymor.core.logger import getLogger
 
 
 def _loadmat(path, key=None):
-
     try:
         data = loadmat(path, mat_dtype=True)
     except Exception as e:
@@ -36,8 +37,16 @@ def _loadmat(path, key=None):
         return data[0]
 
 
-def _mmread(path, key=None):
+def _savemat(path, matrix, key=None):
+    if key is None:
+        raise IOError('"key" must be specified for MATLAB file')
+    try:
+        savemat(path, {key: matrix})
+    except Exception as e:
+        raise IOError(e)
 
+
+def _mmread(path, key=None):
     if key:
         raise IOError('Cannot specify "key" for Matrix Market file')
     try:
@@ -49,8 +58,27 @@ def _mmread(path, key=None):
         raise IOError(e)
 
 
+def _mmwrite(path, matrix, key=None):
+    if key:
+        raise IOError('Cannot specify "key" for Matrix Market file')
+    try:
+        if path.suffix != '.gz':
+            open_file = open
+        else:
+            import gzip
+            open_file = gzip.open
+        with open_file(path, 'wb') as f:
+            # when mmwrite is given a string, it will append '.mtx'
+            mmwrite(f, matrix)
+    except Exception as e:
+        raise IOError(e)
+
+
 def _load(path, key=None):
-    data = np.load(path)
+    try:
+        data = np.load(path)
+    except Exception as e:
+        raise IOError(e)
     if isinstance(data, (dict, np.lib.npyio.NpzFile)):
         if key:
             try:
@@ -70,6 +98,25 @@ def _load(path, key=None):
     return matrix
 
 
+def _save(path, matrix, key=None):
+    if key:
+        raise IOError('Cannot specify "key" for NPY file')
+    try:
+        np.save(path, matrix)
+    except Exception as e:
+        raise IOError(e)
+
+
+def _savez(path, matrix, key=None):
+    try:
+        if key is None:
+            np.savez(path, matrix)
+        else:
+            np.savez(path, **{key: matrix})
+    except Exception as e:
+        raise IOError(e)
+
+
 def _loadtxt(path, key=None):
     if key:
         raise IOError('Cannot specify "key" for TXT file')
@@ -79,27 +126,61 @@ def _loadtxt(path, key=None):
         raise IOError(e)
 
 
-def load_matrix(path, key=None):
+def _savetxt(path, matrix, key=None):
+    if key:
+        raise IOError('Cannot specify "key" for TXT file')
+    try:
+        return np.savetxt(path, matrix)
+    except Exception as e:
+        raise IOError(e)
 
+
+def _get_file_extension(path):
+    suffix_count = len(path.suffixes)
+    if suffix_count and len(path.suffixes[-1]) == 4:
+        extension = path.suffixes[-1].lower()
+    elif path.suffixes[-1].lower() == '.gz' and suffix_count >= 2 and len(path.suffixes[-2]) == 4:
+        extension = ''.join(path.suffixes[-2:]).lower()
+    else:
+        extension = ''
+    return extension
+
+
+def load_matrix(path, key=None):
+    """Load matrix from file.
+
+    Parameters
+    ----------
+    path
+        Path to the file (`str` or `pathlib.Path`).
+    key
+        Key of the matrix (only for NPY, NPZ, and MATLAB files).
+
+    Returns
+    -------
+    matrix
+        |NumPy array| of |SciPy spmatrix|.
+
+    Raises
+    ------
+    IOError
+        If loading fails.
+    """
     logger = getLogger('pymor.tools.io.load_matrix')
     logger.info('Loading matrix from file %s', path)
 
     # convert if path is str
     path = Path(path)
-    suffix_count = len(path.suffixes)
-    if suffix_count and len(path.suffixes[-1]) == 4:
-        extension = path.suffixes[-1].lower()
-    elif path.suffixes[-1].lower() == '.gz' and suffix_count >= 2 and len(path.suffixes[-2]) == 4:
-        extension = '.'.join(path.suffixes[-2:]).lower()
-    else:
-        extension = None
+    extension = _get_file_extension(path)
 
-    file_format_map = {'.mat': ('MATLAB', _loadmat),
-                       '.mtx': ('Matrix Market', _mmread),
-                       '.mtz.gz': ('Matrix Market', _mmread),
-                       '.npy': ('NPY/NPZ', _load),
-                       '.npz': ('NPY/NPZ', _load),
-                       '.txt': ('Text', _loadtxt)}
+    file_format_map = {
+        '.mat': ('MATLAB', _loadmat),
+        '.mtx': ('Matrix Market', _mmread),
+        '.mtz.gz': ('Matrix Market', _mmread),
+        '.npy': ('NPY/NPZ', _load),
+        '.npz': ('NPY/NPZ', _load),
+        '.txt': ('Text', _loadtxt),
+    }
 
     if extension in file_format_map:
         file_type, loader = file_format_map[extension]
@@ -118,14 +199,60 @@ def load_matrix(path, key=None):
     raise IOError(f'Could not load file {path} (key = {key})')
 
 
+def save_matrix(path, matrix, key=None):
+    """Save matrix to file.
+
+    Parameters
+    ----------
+    path
+        Path to the file (`str` or `pathlib.Path`).
+    matrix
+        Matrix to save.
+    key
+        Key of the matrix (only for NPY, NPZ, and MATLAB files).
+
+    Raises
+    ------
+    IOError
+        If saving fails.
+    """
+    logger = getLogger('pymor.tools.io.save_matrix')
+    logger.info('Saving matrix to file %s', path)
+
+    # convert if path is str
+    path = Path(path)
+    extension = _get_file_extension(path)
+
+    file_format_map = {
+        '.mat': ('MATLAB', _savemat),
+        '.mtx': ('Matrix Market', _mmwrite),
+        '.mtz.gz': ('Matrix Market', _mmwrite),
+        '.npy': ('NPY', _save),
+        '.npz': ('NPZ', _savez),
+        '.txt': ('Text', _savetxt),
+    }
+
+    if extension in file_format_map:
+        file_type, saver = file_format_map[extension]
+        logger.info(file_type + ' file detected.')
+        return saver(path, matrix, key)
+
+    raise IOError(f'Unknown extension "{extension}"')
+
+
 @contextmanager
 def SafeTemporaryFileName(name=None, parent_dir=None):
-    """Cross Platform safe equivalent of re-opening a NamedTemporaryFile
+    """Cross~platform safe equivalent of re-opening a NamedTemporaryFile.
 
     Creates an automatically cleaned up temporary directory with a single file therein.
 
-    name: filename component, defaults to 'temp_file'
-    dir: the parent dir of the new tmp dir. defaults to tempfile.gettempdir()
+    Parameters
+    ----------
+    name
+        Filename component, defaults to 'temp_file'.
+    dir
+        The parent dir of the new temporary directory.
+        Defaults to tempfile.gettempdir().
     """
     parent_dir = parent_dir or tempfile.gettempdir()
     name = name or 'temp_file'
@@ -137,12 +264,13 @@ def SafeTemporaryFileName(name=None, parent_dir=None):
 
 @contextmanager
 def change_to_directory(name):
-    """Changes current working directory to `name` for the scope of the context"""
+    """Change current working directory to `name` for the scope of the context."""
     old_cwd = os.getcwd()
     try:
         yield os.chdir(name)
     finally:
         os.chdir(old_cwd)
+
 
 def file_owned_by_current_user(filename):
     try:
@@ -153,5 +281,5 @@ def file_owned_by_current_user(filename):
         from getpass import getuser
         import win32security
         f = win32security.GetFileSecurity(filename, win32security.OWNER_SECURITY_INFORMATION)
-        username, _, _ =  win32security.LookupAccountSid(None, f.GetSecurityDescriptorOwner())
+        username, _, _ = win32security.LookupAccountSid(None, f.GetSecurityDescriptorOwner())
         return username == getuser()

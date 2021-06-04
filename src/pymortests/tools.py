@@ -2,25 +2,26 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from math import sin, pi, exp, factorial
-import numpy as np
-import os
-import pytest
 import itertools
+import os
 import tempfile
+from math import exp, factorial, pi, sin
+
+import numpy as np
+import pytest
 from hypothesis import given
 
 from pymor.core.logger import getLogger
-from pymor.tools.formatsrc import print_source
-from pymor.tools.io import SafeTemporaryFileName, change_to_directory
-from pymortests.base import runmodule
-from pymortests.fixtures.grid import hy_rect_or_tria_grid
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
+from pymor.tools import formatsrc, timing
 from pymor.tools.deprecated import Deprecated
-from pymor.tools.floatcmp import float_cmp, float_cmp_all, almost_less
+from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
+from pymor.tools.formatsrc import print_source
+from pymor.tools.io import SafeTemporaryFileName, change_to_directory
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymor.tools import timing, formatsrc
+from pymortests.base import runmodule
+from pymortests.fixtures.grid import hy_rect_or_tria_grid
 
 logger = getLogger('pymortests.tools')
 
@@ -195,6 +196,25 @@ def test_load_matrix(loadable_matrices):
             load_matrix(m, key='arr_0')
         else:
             load_matrix(m)
+
+
+@pytest.mark.parametrize('ext', ['.mat', '.mtx', '.mtz.gz', '.npy', '.npz', '.txt'])
+def test_save_load_matrix(ext):
+    import filecmp
+    from pymor.tools.io import load_matrix, save_matrix
+    A = np.eye(2)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        path = os.path.join(tmpdirname, 'matrix' + ext)
+        key = None
+        if ext == '.mat':
+            key = 'A'
+        save_matrix(path, A, key)
+        B = load_matrix(path, key)
+        assert np.all(A == B)
+        path2 = os.path.join(tmpdirname, 'matrix2' + ext)
+        save_matrix(path2, A, key)
+        if ext != '.mtz.gz':
+            assert filecmp.cmp(path, path2)
 
 
 def test_cwd_ctx_manager():
