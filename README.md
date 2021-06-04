@@ -16,8 +16,9 @@ provided for getting started quickly.
 [![PyPI](https://img.shields.io/pypi/v/pymor.svg)](https://pypi.python.org/pypi/pymor)
 [![Docs](https://img.shields.io/endpoint?url=https%3A%2F%2Fdocs.pymor.org%2Fbadge.json)](https://docs.pymor.org/)
 [![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
-[![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/master/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/master)
-[![Azure Pipeline](https://dev.azure.com/pymor/pymor/_apis/build/status/pymor.pymor?branchName=master)](https://dev.azure.com/pymor/pymor/_build/latest?definitionId=1&branchName=master)
+[![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/main/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/main)
+[![Azure Pipeline](https://dev.azure.com/pymor/pymor/_apis/build/status/pymor.pymor?branchName=main)](https://dev.azure.com/pymor/pymor/_build/latest?definitionId=1&branchName=main)
+[![codecov](https://codecov.io/gh/pymor/pymor/branch/main/graph/badge.svg)](https://codecov.io/gh/pymor/pymor)
 
 License
 -------
@@ -40,7 +41,6 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSE
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 The following files contain source code originating from other open source software projects:
 
 * docs/source/pymordocstring.py  (sphinxcontrib-napoleon)
@@ -48,17 +48,15 @@ The following files contain source code originating from other open source softw
 
 See these files for more information.
 
-
 Citing
 ------
 
 If you use pyMOR for academic work, please consider citing our
 [publication](https://doi.org/10.1137/15M1026614):
 
-	R. Milk, S. Rave, F. Schindler
-	pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
-	SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
-
+    R. Milk, S. Rave, F. Schindler
+    pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
+    SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
 
 Installation via pip
 --------------------
@@ -71,7 +69,7 @@ command:
     pip install --upgrade pip  # make sure that pip is reasonably new
     pip install pymor[full]
 
-(Please note that pip must be at least version 9.0.0)
+(Please note that pip must be at least version 19.0)
 
 This will install the latest release of pyMOR on your system with most optional
 dependencies.
@@ -84,22 +82,22 @@ for an installation with minimal dependencies.
 There are some optional packages not included with `pymor[full]`
 because they need additional setup on your system:
 
-- for support of MPI distributed models and parallelization of greedy algorithms
+* for support of MPI distributed models and parallelization of greedy algorithms
   (requires MPI development headers and a C compiler):
 
       pip install mpi4py
 
-- dense matrix equation solver for system-theoretic MOR methods, required for
+* dense matrix equation solver for system-theoretic MOR methods, required for
   H-infinity norm calculation (requires OpenBLAS headers and a Fortran
   compiler):
 
       pip install slycot
 
-- dense and sparse matrix equation solver for system-theoretic MOR methods
+* dense and sparse matrix equation solver for system-theoretic MOR methods
   (other backends available):
-    - from [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)
-      (recommended)
-    - using a [wheel](https://www.mpi-magdeburg.mpg.de/projects/mess)
+  * from [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)
+    (recommended)
+  * using a [wheel](https://www.mpi-magdeburg.mpg.de/projects/mess)
 
 If you are not operating in a virtual environment, you can pass the optional `--user`
 argument to pip. pyMOR will then only be installed for your
@@ -112,7 +110,7 @@ To install the latest development version of pyMOR, execute
 which will require that the [git](https://git-scm.com/) version control system is
 installed on your system.
 
-From time to time, the master branch of pyMOR undergoes major changes and things
+From time to time, the main branch of pyMOR undergoes major changes and things
 might break (this is usually announced in our [discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
@@ -121,14 +119,12 @@ so you might prefer to install pyMOR from the current release branch:
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
 
-
 Installation via conda
 ----------------------
 
 pyMOR can be installed using `conda` by running
 
     conda install -c conda-forge pymor
-
 
 Documentation
 -------------
@@ -141,14 +137,12 @@ by executing:
 
 This will generate HTML documentation in `docs/_build/html`.
 
-
 Useful Links
 ------------
 
 * [Latest Changelog](https://docs.pymor.org/latest/release_notes/all.html)
 * [Getting Started](https://docs.pymor.org/latest/getting_started.html)
 * [Dependencies](https://github.com/pymor/pymor/blob/2020.2.x/requirements.txt)
-
 
 External PDE solvers
 --------------------
@@ -172,7 +166,7 @@ we provide bindings for the following solver libraries:
 
     MPI-compatible wrapper classes for dolfin linear algebra data structures are
     shipped with pyMOR (`pymor.bindings.fenics`).
-    For an example see `pymordemos.thermalbock`, `pymordemos.thermalblock_simple`.
+    For an example see `pymordemos.thermalblock`, `pymordemos.thermalblock_simple`.
     It is tested using version 2019.1.0.
 
 * [deal.II](https://dealii.org)
@@ -187,11 +181,9 @@ we provide bindings for the following solver libraries:
     For an example see `pymordemos.thermalblock_simple`.
     It is tested using version v6.2.2006.
 
-
 Do not hesitate to contact
 [us](https://github.com/pymor/pymor/discussions) if you
 need help with the integration of your PDE solver.
-
 
 External Matrix Equation Solvers
 --------------------------------
@@ -208,50 +200,15 @@ separately. Bindings for the following solver libraries are included:
 
     Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also used for Hardy norm computations (`pymor.bindings.slycot`).
 
-
-Setting up an Environment for pyMOR Development
+Environments for pyMOR Development and Tests
 -----------------------------------------------
 
-If you already installed a pyMOR release version, please uninstall it
-
-    pip uninstall pyMOR
-
-Then, clone the pyMOR git repository using
-
-    git clone https://github.com/pymor/pymor $PYMOR_SOURCE_DIR
-    cd $PYMOR_SOURCE_DIR
-
-and, optionally, switch to the branch you are interested in, e.g.
-
-    git checkout 2020.2.x
-
-Then, make an editable installation of pyMOR with
-
-    pip install -e .[full]
-
-
-Tests
------
-
-pyMOR uses [pytest](https://pytest.org/) for unit testing. To run the test suite,
-simply execute `make test` in the base directory of the pyMOR repository. This will
-run the pytest suite with the default hypothesis profile "dev". For available profiles
-see `src/pymortests/conftest.py`. A profile is selected by running `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME test`.
-If docker is available, use `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME docker_test` to execute the test suite
-in the same environment as on pyMOR's CI infrastructure. Additional customization points are listed at the top of the
-`Makefile`.
-Run `make full-test` which will also enable
-[pyflakes](https://pypi.python.org/pypi/pyflakes) and
-[pep8](https://www.python.org/dev/peps/pep-0008/) checks.
-
-All tests are contained within the `src/pymortests` directory and can be run
-individually by executing `py.test src/pymortests/the_module.py`.
-
+Please see the [Developer Documentation](https://docs.pymor.org/latest/developer_docs.html).
 
 Contact
 -------
 
 Should you have any questions regarding pyMOR or wish to contribute,
-do not hestitate to contact us via our GitHub discussions forum:
+do not hesitate to contact us via our GitHub discussions forum:
 
 <https://github.com/pymor/pymor/discussions>
