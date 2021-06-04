@@ -102,6 +102,19 @@ class MPIVectorArray(VectorArray):
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
 
+    @property
+    def real(self):
+        real_id = mpi.call(_MPIVectorArray_real, self.obj_id)
+        return type(self)(real_id, self.space)
+
+    @property
+    def imag(self):
+        imag_id = mpi.call(_MPIVectorArray_imag, self.obj_id)
+        return type(self)(imag_id, self.space)
+
+    def conj(self):
+        return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'conj'), self.space)
+
 
 class MPIVectorSpace(VectorSpace):
     """|VectorSpace| of :class:`MPIVectorArrays <MPIVectorArray>`.
@@ -210,6 +223,14 @@ def _MPIVectorArray_axpy(obj_id, alpha, x_obj_id):
     obj = mpi.get_object(obj_id)
     x = mpi.get_object(x_obj_id)
     obj.axpy(alpha, x)
+
+
+def _MPIVectorArray_real(obj_id):
+    return mpi.manage_object(mpi.get_object(obj_id).real)
+
+
+def _MPIVectorArray_imag(obj_id):
+    return mpi.manage_object(mpi.get_object(obj_id).imag)
 
 
 class MPIVectorArrayNoComm(MPIVectorArray):
