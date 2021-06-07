@@ -8,6 +8,7 @@ import scipy.sparse as sps
 
 from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
+from pymor.core.base import abstractmethod
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -37,13 +38,13 @@ class InputOutputModel(Model):
         super().__init__(error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
+    @abstractmethod
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function."""
-        raise NotImplementedError
 
+    @abstractmethod
     def eval_dtf(self, s, mu=None):
         """Evaluate the derivative of the transfer function."""
-        raise NotImplementedError
 
     @cached
     def freq_resp(self, w, mu=None):
@@ -205,6 +206,77 @@ class InputOutputModel(Model):
         ax.set_ylabel('Magnitude' + mag_unit)
 
         return out
+
+    @cached
+    def h2_norm(self, return_norm_only=True, **quad_kwargs):
+        """Compute the H2-norm using quadrature.
+
+        This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
+        function.
+
+        By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
+        optional argument `epsabs`).
+        It can be changed by using the `epsabs` keyword argument.
+
+        Parameters
+        ----------
+        return_norm_only
+            Whether to only return the approximate H2-norm.
+        quad_kwargs
+            Keyword arguments passed to `scipy.integrate.quad`.
+
+        Returns
+        -------
+        norm
+            Computed H2-norm.
+        norm_relerr
+            Relative error estimate (returned if `return_norm_only` is `False`).
+        info
+            Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`).
+            See `scipy.integrate.quad` documentation for more details.
+        """
+        if not self.cont_time:
+            raise NotImplementedError
+
+        import scipy.integrate as spint
+        quad_kwargs.setdefault('epsabs', 0)
+        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
+                              0, np.inf,
+                              **quad_kwargs)
+        norm = np.sqrt(quad_out[0] / np.pi)
+        if return_norm_only:
+            return norm
+        norm_relerr = quad_out[1] / (2 * quad_out[0])
+        if len(quad_out) == 2:
+            return norm, norm_relerr
+        else:
+            return norm, norm_relerr, quad_out[2:]
+
+    def h2_inner(self, lti):
+        """Compute H2 inner product with an |LTIModel|.
+
+        Uses the inner product formula based on the pole-residue form
+        (see, e.g., Lemma 1 in :cite:`ABG10`).
+
+        Parameters
+        ----------
+        lti
+            |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
+            The D operator is ignored.
+
+        Returns
+        -------
+        inner
+            H2 inner product.
+        """
+        assert isinstance(lti, LTIModel)
+
+        poles, b, c = _lti_to_poles_b_c(lti)
+        inner = sum(c[i].dot(self.eval_tf(-poles[i]).dot(b[i]))
+                    for i in range(len(poles)))
+        inner = inner.conjugate()
+
+        return inner
 
 
 class InputStateOutputModel(InputOutputModel):
@@ -624,12 +696,12 @@ class LTIModel(InputStateOutputModel):
 
     def __add__(self, other):
         """Add an |LTIModel|."""
+        if not isinstance(other, LTIModel):
+            return NotImplemented
+
         assert self.cont_time == other.cont_time
         assert self.D.source == other.D.source
         assert self.D.range == other.D.range
-
-        if not isinstance(other, LTIModel):
-            return NotImplemented
 
         A = BlockDiagonalOperator([self.A, other.A])
         B = BlockColumnOperator([self.B, other.B])
@@ -651,11 +723,11 @@ class LTIModel(InputStateOutputModel):
 
     def __mul__(self, other):
         """Postmultiply by an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.range
-
         if not isinstance(other, LTIModel):
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.range
 
         A = BlockOperator([[self.A, self.B @ other.C],
                            [None, other.A]])
@@ -1111,7 +1183,8 @@ class TransferFunction(InputOutputModel):
         assert self.dim_input == other.dim_input
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) @ other.eval_dtf(s, mu=mu)
+        dtf = lambda s, mu=None: (self.eval_dtf(s, mu=mu) @ other.eval_tf(s, mu=mu)
+                                  + self.eval_tf(s, mu=mu) @ other.eval_dtf(s, mu=mu))
         return self.with_(tf=tf, dtf=dtf)
 
     def __rmul__(self, other):
@@ -1120,56 +1193,9 @@ class TransferFunction(InputOutputModel):
         assert self.dim_output == other.dim_input
 
         tf = lambda s, mu=None: other.eval_tf(s, mu=mu) @ self.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: other.eval_dtf(s, mu=mu) @ self.eval_dtf(s, mu=mu)
+        dtf = lambda s, mu=None: (other.eval_dtf(s, mu=mu) @ self.eval_tf(s, mu=mu)
+                                  + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
         return self.with_(tf=tf, dtf=dtf)
-
-    @cached
-    def h2_norm(self, return_norm_only=True, **quad_kwargs):
-        """Compute the H2-norm using quadrature.
-
-        This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
-        function.
-
-        By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
-        optional argument `epsabs`).
-        It can be changed by using the `epsabs` keyword argument.
-
-        Parameters
-        ----------
-        return_norm_only
-            Whether to only return the approximate H2-norm.
-        quad_kwargs
-            Keyword arguments passed to `scipy.integrate.quad`.
-
-        Returns
-        -------
-        norm
-            Computed H2-norm.
-        norm_relerr
-            Relative error estimate (returned if `return_norm_only` is `False`).
-        info
-            Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`).
-            See `scipy.integrate.quad` documentation for more details.
-        """
-        if not self.cont_time:
-            raise NotImplementedError
-
-        import scipy.integrate as spint
-        if 'epsabs' not in quad_kwargs:
-            quad_kwargs['epsabs'] = 0
-        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
-                              -np.inf, np.inf,
-                              **quad_kwargs)
-        norm = np.sqrt(quad_out[0] / (2 * np.pi))
-        if return_norm_only:
-            return norm
-        else:
-            abserr = quad_out[1]
-            norm_relerr = abserr / (2 * np.pi) / (2 * norm) / norm
-            if len(quad_out) == 2:
-                return norm, norm_relerr
-            else:
-                return norm, norm_relerr, quad_out[2:]
 
 
 class SecondOrderModel(InputStateOutputModel):
@@ -1546,15 +1572,15 @@ class SecondOrderModel(InputStateOutputModel):
 
     def __add__(self, other):
         """Add a |SecondOrderModel| or an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.source
-        assert self.D.range == other.D.range
-
         if isinstance(other, LTIModel):
             return self.to_lti() + other
 
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.source
+        assert self.D.range == other.D.range
 
         M = BlockDiagonalOperator([self.M, other.M])
         E = BlockDiagonalOperator([self.E, other.E])
@@ -1589,14 +1615,14 @@ class SecondOrderModel(InputStateOutputModel):
 
     def __mul__(self, other):
         """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.range
-
         if isinstance(other, LTIModel):
             return self.to_lti() * other
 
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.range
 
         M = BlockDiagonalOperator([self.M, other.M])
         E = BlockOperator([[self.E, -(self.B @ other.Cv)],
@@ -2067,10 +2093,6 @@ class LinearDelayModel(InputStateOutputModel):
 
     def __add__(self, other):
         """Add an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.source
-        assert self.D.range == other.D.range
-
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
 
@@ -2094,6 +2116,10 @@ class LinearDelayModel(InputStateOutputModel):
             Ad = tuple(Ad)
         else:
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.source
+        assert self.D.range == other.D.range
 
         E = BlockDiagonalOperator([self.E, other.E])
         A = BlockDiagonalOperator([self.A, other.A])
@@ -2127,10 +2153,7 @@ class LinearDelayModel(InputStateOutputModel):
         return self.with_(C=-self.C, D=-self.D)
 
     def __mul__(self, other):
-        """Postmultiply by a |SecondOrderModel| or an |LTIModel|."""
-        assert self.cont_time == other.cont_time
-        assert self.D.source == other.D.range
-
+        """Postmultiply an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
         if isinstance(other, SecondOrderModel):
             other = other.to_lti()
 
@@ -2154,6 +2177,9 @@ class LinearDelayModel(InputStateOutputModel):
             Ad = tuple(Ad)
         else:
             return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.D.source == other.D.range
 
         E = BlockDiagonalOperator([self.E, other.E])
         A = BlockOperator([[self.A, self.B @ other.C],
@@ -2528,3 +2554,78 @@ class BilinearModel(InputStateOutputModel):
             f'    bilinear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
         )
+
+
+def _lti_to_poles_b_c(lti):
+    """Compute poles and residues.
+
+    Parameters
+    ----------
+    lti
+        |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
+        The D operator is ignored.
+
+    Returns
+    -------
+    poles
+        1D |NumPy array| of poles.
+    b
+        |NumPy array| of shape `(lti.order, lti.dim_input)`.
+    c
+        |NumPy array| of shape `(lti.order, lti.dim_output)`.
+    """
+    A = to_matrix(lti.A, format='dense')
+    B = to_matrix(lti.B, format='dense')
+    C = to_matrix(lti.C, format='dense')
+    if isinstance(lti.E, IdentityOperator):
+        poles, X = spla.eig(A)
+        EX = X
+    else:
+        E = to_matrix(lti.E, format='dense')
+        poles, X = spla.eig(A, E)
+        EX = E @ X
+    b = spla.solve(EX, B)
+    c = (C @ X).T
+    return poles, b, c
+
+
+def _poles_b_c_to_lti(poles, b, c):
+    r"""Create an |LTIModel| from poles and residue rank-1 factors.
+
+    Returns an |LTIModel| with real matrices such that its transfer
+    function is
+
+    .. math::
+        \sum_{i = 1}^r \frac{c_i b_i^T}{s - \lambda_i}
+
+    where :math:`\lambda_i, b_i, c_i` are the poles and residue rank-1
+    factors.
+
+    Parameters
+    ----------
+    poles
+        Sequence of poles.
+    b
+        |NumPy array| of shape `(rom.order, rom.dim_input)`.
+    c
+        |NumPy array| of shape `(rom.order, rom.dim_output)`.
+
+    Returns
+    -------
+    |LTIModel|.
+    """
+    A, B, C = [], [], []
+    for i, pole in enumerate(poles):
+        if pole.imag == 0:
+            A.append(pole.real)
+            B.append(b[i].real)
+            C.append(c[i].real[:, np.newaxis])
+        elif pole.imag > 0:
+            A.append([[pole.real, pole.imag],
+                      [-pole.imag, pole.real]])
+            B.append(np.vstack([2 * b[i].real, -2 * b[i].imag]))
+            C.append(np.hstack([c[i].real[:, np.newaxis], c[i].imag[:, np.newaxis]]))
+    A = spla.block_diag(*A)
+    B = np.vstack(B)
+    C = np.hstack(C)
+    return LTIModel.from_matrices(A, B, C)

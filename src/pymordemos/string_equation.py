@@ -8,7 +8,6 @@ import numpy as np
 import scipy.sparse as sps
 from typer import Argument, run
 
-from pymor.core.config import config
 from pymor.core.logger import set_log_levels
 from pymor.models.iosys import SecondOrderModel
 from pymor.reductors.bt import BTReductor
@@ -17,7 +16,7 @@ from pymor.reductors.mt import MTReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor,
                                   SOBTfvReductor, SOBTReductor)
 from pymor.reductors.sor_irka import SORIRKAReductor
-from pymordemos.heat import run_mor_method
+from pymordemos.heat import fom_properties, run_mor_method
 
 
 def main(
@@ -33,7 +32,7 @@ def main(
     n2 = (n + 1) // 2
 
     d = 10  # damping
-    k = 0.01   # stiffness
+    k = 0.01  # stiffness
 
     M = sps.eye(n, format='csc')
     E = d * sps.eye(n, format='csc')
@@ -50,22 +49,11 @@ def main(
     # Second-order system
     so_sys = SecondOrderModel.from_matrices(M, E, K, B, Cp)
 
-    print(f'order of the model = {so_sys.order}')
-    print(f'number of inputs   = {so_sys.dim_input}')
-    print(f'number of outputs  = {so_sys.dim_output}')
-
-    poles = so_sys.poles()
-    fig, ax = plt.subplots()
-    ax.plot(poles.real, poles.imag, '.')
-    ax.set_title('System poles')
-    plt.show()
-
+    # System properties
     w = np.logspace(-4, 2, 200)
-    fig, ax = plt.subplots()
-    so_sys.mag_plot(w, ax=ax)
-    ax.set_title('Magnitude plot of the full model')
-    plt.show()
+    fom_properties(so_sys, w)
 
+    # Singular values
     psv = so_sys.psv()
     vsv = so_sys.vsv()
     pvsv = so_sys.pvsv()
@@ -80,13 +68,6 @@ def main(
     ax[1, 1].semilogy(range(1, len(vpsv) + 1), vpsv, '.-')
     ax[1, 1].set_title('Velocity-position singular values')
     plt.show()
-
-    print(f'FOM H_2-norm:    {so_sys.h2_norm():e}')
-    if config.HAVE_SLYCOT:
-        print(f'FOM H_inf-norm:  {so_sys.hinf_norm():e}')
-    else:
-        print('H_inf-norm calculation is skipped due to missing slycot.')
-    print(f'FOM Hankel-norm: {so_sys.hankel_norm():e}')
 
     # Model order reduction
     run_mor_method(so_sys, w, SOBTpReductor(so_sys), 'SOBTp', r)
