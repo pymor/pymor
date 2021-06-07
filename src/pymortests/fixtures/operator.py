@@ -489,6 +489,24 @@ unpicklable_misc_operator_with_arrays_and_products_generators = \
 
 
 if config.HAVE_FENICS:
+    def fenics_matrix_operator_factory():
+        import dolfin as df
+        from pymor.bindings.fenics import FenicsMatrixOperator
+
+        mesh = df.UnitSquareMesh(10, 10)
+        V = df.FunctionSpace(mesh, "CG", 2)
+
+        u = df.TrialFunction(V)
+        v = df.TestFunction(V)
+        c = df.Constant([1, 1])
+
+        op = FenicsMatrixOperator(
+            df.assemble(u * v * df.dx + df.inner(c, df.grad(u)) * v * df.dx),
+            V, V)
+
+        prod = FenicsMatrixOperator(df.assemble(u*v*df.dx), V, V)
+        return op, None, op.source.random(), op.range.random(), prod, prod
+
     def fenics_nonlinear_operator_factory():
         import dolfin as df
         from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsMatrixOperator
@@ -520,11 +538,15 @@ if config.HAVE_FENICS:
         prod = FenicsMatrixOperator(df.assemble(u*v*df.dx), V, V)
         return op, op.parameters.parse(42), op.source.random(), op.range.random(), prod, prod
 
-    fenics_with_arrays_and_products_generators = [lambda: fenics_nonlinear_operator_factory()]
-    fenics_with_arrays_generators = [lambda: fenics_nonlinear_operator_factory()[:4]]
-
+    fenics_with_arrays_and_products_generators = [
+        lambda: fenics_matrix_operator_factory(),
+        lambda: fenics_nonlinear_operator_factory(),
+    ]
+    fenics_with_arrays_generators = [
+        lambda: fenics_matrix_operator_factory()[:4],
+        lambda: fenics_nonlinear_operator_factory()[:4],
+    ]
 else:
-
     fenics_with_arrays_and_products_generators = []
     fenics_with_arrays_generators = []
 
