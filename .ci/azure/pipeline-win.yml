@@ -64,7 +64,9 @@ jobs:
 
       # this allows azure-specific defaults
       cp .ci/azure/pymor_defaults.py_win pymor_defaults.py
-      py.test --cov --cov-config=setup.cfg --cov-context=test --junitxml=test_results.xml --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
+      # async + converage data in sqlite -> errors
+      python -m pytest -k hapod --junitxml=test_results.xml --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
+      python -m pytest -k "not hapod" --cov --cov-config=setup.cfg --cov-context=test --junitxml=test_results.xml --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
 
   - script: |
       choco install codecov
