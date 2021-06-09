@@ -99,6 +99,9 @@ def event_loop_settings(auto_launch=True):
 def launch_event_loop():
     global _event_loop
     if rank0:
+        from pymor.core import defaults
+        if defaults.defaults_changes() > 0:
+            call(defaults.set_defaults, defaults.user_defaults())
         _event_loop = True
     else:
         event_loop()
