@@ -77,6 +77,7 @@ parallel = (size > 1)
 
 _managed_objects = {}
 _object_counter = 0
+_event_loop = False
 
 
 ################################################################################
@@ -93,6 +94,14 @@ def event_loop_settings(auto_launch=True):
         all MPI ranks (except 0) when pyMOR is imported.
     """
     return {'auto_launch': auto_launch}
+
+
+def launch_event_loop():
+    global _event_loop
+    if rank0:
+        _event_loop = True
+    else:
+        event_loop()
 
 
 def event_loop():
@@ -150,9 +159,10 @@ def quit():
     This will cause :func:`event_loop` to terminate on all
     MPI ranks.
     """
-    global finished
+    global finished, _event_loop
     comm.bcast(('QUIT', None, None))
     finished = True
+    _event_loop = False
 
 
 ################################################################################
@@ -286,6 +296,7 @@ def remove_object(obj_id):
 
 if __name__ == '__main__':
     assert config.HAVE_MPI
+    launch_event_loop()
     if rank0:
         if len(sys.argv) >= 2:
             filename = sys.argv[1]
@@ -300,5 +311,3 @@ if __name__ == '__main__':
             except ImportError:
                 import code
                 code.interact()
-    else:
-        event_loop()
