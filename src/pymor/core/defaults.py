@@ -415,3 +415,12 @@ def defaults_changes():
         worker.
     """
     return _default_container.changes
+
+
+def user_defaults():
+    defaults = {}
+    for k in sorted(_default_container.keys()):
+        v, t = _default_container.get(k)
+        if t == 'user':
+            defaults[k] = v
+    return defaults
