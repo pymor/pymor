@@ -101,7 +101,7 @@ def launch_event_loop():
     if rank0:
         from pymor.core import defaults
         if defaults.defaults_changes() > 0:
-            call(defaults.set_defaults, defaults.user_defaults())
+            call(defaults.set_defaults, defaults.get_defaults(user=True, file=True, code=False))
         _event_loop = True
     else:
         event_loop()

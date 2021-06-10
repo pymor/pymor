@@ -397,6 +397,33 @@ def set_defaults(defaults):
         raise KeyError(f'Error setting defaults. Key {e} does not correspond to a default')
 
 
+def get_defaults(user=True, file=True, code=True):
+    """Get |default| values.
+
+    Returns all |default| values as a dict. The parameters can be set to filter by type.
+
+    Parameters
+    ----------
+    user
+        If `True`, returned dict contains defaults that have been set by the user
+        with :func:`set_defaults`.
+    file
+        If `True`, returned dict contains defaults that have been loaded from file.
+    code
+        If `True`, returned dict contains unmodified default values.
+    """
+    defaults = {}
+    for k in _default_container.keys():
+        v, t = _default_container.get(k)
+        if t == 'user' and user:
+            defaults[k] = v
+        if t == 'file' and file:
+            defaults[k] = v
+        if t == 'code' and code:
+            defaults[k] = v
+    return defaults
+
+
 def defaults_changes():
     """Returns the number of changes made to to pyMOR's global |defaults|.
 
@@ -415,12 +442,3 @@ def defaults_changes():
         worker.
     """
     return _default_container.changes
-
-
-def user_defaults():
-    defaults = {}
-    for k in sorted(_default_container.keys()):
-        v, t = _default_container.get(k)
-        if t == 'user':
-            defaults[k] = v
-    return defaults

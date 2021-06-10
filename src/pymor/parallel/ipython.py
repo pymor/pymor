@@ -175,8 +175,8 @@ class IPythonPool(WorkerPoolBase):
         self.view.apply(_remove_object, remote_id)
 
     def _update_defaults(self):
-        self._apply(defaults.set_defaults, defaults.user_defaults())
         self._updated_defaults = defaults.defaults_changes()
+        self._apply(defaults.set_defaults, defaults.get_defaults(user=True, file=True, code=False))
 
 
 class RemoteId(int):
