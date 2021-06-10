@@ -9,6 +9,7 @@ import time
 
 from pymor.core.base import BasicObject
 from pymor.core.config import config
+from pymor.core import defaults
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools.counter import Counter
 
@@ -134,6 +135,7 @@ class IPythonPool(WorkerPoolBase):
     kwargs
         Keyword arguments used to instantiate the IPython cluster client.
     """
+    _updated_defaults = 0
 
     def __init__(self, num_engines=None, **kwargs):
         super().__init__()
@@ -145,6 +147,9 @@ class IPythonPool(WorkerPoolBase):
         self.logger.info(f'Connected to {len(self.view)} engines')
         self.view.map_sync(_setup_worker, range(len(self.view)))
         self._remote_objects_created = Counter()
+
+        if defaults.defaults_changes() > 0:
+            self._update_defaults()
 
     def __len__(self):
         return len(self.view)
@@ -168,6 +173,10 @@ class IPythonPool(WorkerPoolBase):
 
     def _remove_object(self, remote_id):
         self.view.apply(_remove_object, remote_id)
+
+    def _update_defaults(self):
+        self._apply(defaults.set_defaults, defaults.user_defaults())
+        self._updated_defaults = defaults.defaults_changes()
 
 
 class RemoteId(int):
