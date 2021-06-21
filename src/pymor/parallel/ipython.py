@@ -160,13 +160,19 @@ class IPythonPool(WorkerPoolBase):
         return remote_id
 
     def _apply(self, function, *args, **kwargs):
+        if defaults.defaults_changes() > self._updated_defaults:
+            self._update_defaults()
         return self.view.apply_sync(_worker_call_function, function, False, args, kwargs)
 
     def _apply_only(self, function, worker, *args, **kwargs):
+        if defaults.defaults_changes() > self._updated_defaults:
+            self._update_defaults()
         view = self.client[int(worker)]
         return view.apply_sync(_worker_call_function, function, False, args, kwargs)
 
     def _map(self, function, chunks, **kwargs):
+        if defaults.defaults_changes() > self._updated_defaults:
+            self._update_defaults()
         result = self.view.map_sync(_worker_call_function,
                                     *zip(*((function, True, a, kwargs) for a in zip(*chunks))))
         return list(chain(*result))
