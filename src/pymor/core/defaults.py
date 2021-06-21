@@ -389,7 +389,7 @@ def set_defaults(defaults):
         values (see :func:`defaults`).
     """
     from pymor.tools import mpi
-    if mpi._event_loop and mpi.rank0:
+    if mpi._event_loop_running and mpi.rank0:
         mpi.call(_set_defaults, defaults)
     try:
         _default_container.update(defaults, type='user')

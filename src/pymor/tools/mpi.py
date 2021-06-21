@@ -77,7 +77,7 @@ parallel = (size > 1)
 
 _managed_objects = {}
 _object_counter = 0
-_event_loop = False
+_event_loop_running = False
 
 
 ################################################################################
@@ -97,12 +97,12 @@ def event_loop_settings(auto_launch=True):
 
 
 def launch_event_loop():
-    global _event_loop
+    global _event_loop_running
     if rank0:
         from pymor.core import defaults
         if defaults.defaults_changes() > 0:
             call(defaults.set_defaults, defaults.get_defaults(user=True, file=True, code=False))
-        _event_loop = True
+        _event_loop_running = True
     else:
         event_loop()
 
@@ -162,10 +162,10 @@ def quit():
     This will cause :func:`event_loop` to terminate on all
     MPI ranks.
     """
-    global finished, _event_loop
+    global finished, _event_loop_running
     comm.bcast(('QUIT', None, None))
     finished = True
-    _event_loop = False
+    _event_loop_running = False
 
 
 ################################################################################
