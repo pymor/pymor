@@ -230,7 +230,7 @@ def _discretize_fenics():
                   'h1': FenicsMatrixOperator(h1_mat, V, V, name='h1'),
                   'h1_0_semi': FenicsMatrixOperator(h1_0_mat, V, V, name='h1_0_semi')},
 
-        time_stepper=ImplicitEulerTimeStepper(nt=NT, initial_time=0, end_time=1.),
+        time_stepper=ImplicitEulerTimeStepper(nt=NT),
 
         visualizer=FenicsVisualizer(FenicsVectorSpace(V))
     )
