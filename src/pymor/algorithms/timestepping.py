@@ -19,7 +19,7 @@ by |InstationaryModel|.
 from numbers import Number
 import numpy as np
 
-from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.operators.constructions import IdentityOperator, VectorArrayOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Mu
@@ -36,327 +36,28 @@ class TimeStepper(ImmutableObject):
         M * d_t u + A(u, mu, t) = F(mu, t),
                      u(mu, t_0) = u_0(mu).
 
-    Time-steppers used by |InstationaryModel| have to fulfill this interface. Time evolution can either be performed
-    by calling :meth:`solve`, or by manually calling :meth:`bootstrap` and :meth:`step`.
+    Time-steppers used by |InstationaryModel| have to fulfill this interface. Time evolution can be performed
+    by calling :meth:`solve`.
 
-    Note that :meth:`bootstrap` and :meth:`step` are designed to support a minimal implementation of :meth:`solve`,
-    as the outer loop in :meth:`solve` may arise manually in several places.
+    Note that the actual work is done in an iterator derived from :class:`TimeStepperIterator`.
 
     Parameters
     ----------
-    initial_time
-        The time at which to begin time-stepping.
-    end_time
-        The time until which to perform time-stepping.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
         calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
         returned, using an appropriate interpolation of the respective time stepper.
-
-    Attributes
-    ----------
-    steps
-        The number of previous steps required to determine the next. I.e. steps == 1 for a single-step method and
-        steps > 1 for a multi-step method.
     """
 
-    initial_time = None
-    end_time = None
-    steps = None
-    implicit = False
-    num_values = None
+    IteratorType = None
+    available_interpolations = ('P0', 'P1')
 
-    def __init__(self, initial_time, end_time, num_values=None):
-        assert isinstance(initial_time, Number)
-        assert isinstance(end_time, Number)
-        assert end_time > initial_time
+    def __init__(self, num_values=None, interpolation='P1'):
         assert not num_values or (isinstance(num_values, Number) and num_values > 1)
-        if num_values:
-            self._save_every = (end_time - initial_time) / (num_values - 1)
+        assert interpolation in self.available_interpolations
         self.__auto_init(locals())
 
-    def bootstrap(self, initial_data, operator, rhs=None, mass=None, mu=None, reserve=False):
-        """Performs required initial work, e.g.
-
-        - setting the initial values for single-step methods or an initial bootstrapping for multi-step methods; or
-        - pre-assembling stationary operators.
-
-        Note: internally calls :meth:_bootstrap, which has to be implemented by every time stepper.
-
-        Parameters
-        ----------
-        initial_data
-            The solution vector at `initial_time`.
-        operator
-            The |Operator| A.
-        rhs
-            The right-hand side F (either |VectorArray| of length 1 or |Operator| with
-            `source.dim == 1`). If `None`, zero right-hand side is assumed.
-        mass
-            The |Operator| M. If `None`, the identity operator is assumed.
-        mu
-            |Parameter values| for which `operator` and `rhs` are to be evaluated. The current
-            time is added to `mu` with key `t`.
-        reserve
-            If True and self.num_values is specified, pre-allocates the returned |VectorArray| for all time steps.
-
-        Returns
-        -------
-        t
-            Simply self.initial_time, to be used in loops as in :meth:`solve`
-        U
-            An empty |VectorArray| to hold the solution trajectory, to be used in loops as in :meth:`solve`.
-        data
-            A dictionary containing information required in :meth:`step` (like previously computed steps), as well
-            as cached data required by the time stepper (such as pre-assembled operators).
-        """
-        if not self.logging_disabled: # explicitly checking if logging is disabled saves some cpu cycles
-            self.logger.debug(f'bootstrapping (mu={mu}) ...')
-
-        assert isinstance(operator, Operator)
-        assert operator.source == operator.range
-
-        rhs = rhs or ZeroOperator(operator.source, NumpyVectorSpace(1))
-        assert isinstance(rhs, (Operator, VectorArray))
-        if isinstance(rhs, Operator):
-            assert rhs.source.dim == 1
-            assert rhs.range == operator.range
-        else:
-            assert rhs in operator.range
-            assert len(rhs) == 1
-            rhs = VectorArrayOperator(rhs)
-
-        mass = mass or IdentityOperator(operator.source)
-        assert isinstance(mass, Operator)
-        assert operator.source == mass.source == mass.range
-
-        if isinstance(initial_data, Operator):
-            assert initial_data.source.dim == 1
-            assert initial_data.range == operator.source
-        else:
-            assert initial_data in operator.source and len(initial_data) == 1
-            initial_data = VectorOperator(initial_data)
-
-        assert isinstance(self.steps, Number) and self.steps >= 1
-
-        if self.steps == 1:
-            # single-step method
-            U0, data = self._bootstrap(initial_data=initial_data, operator=operator, rhs=rhs, mass=mass, mu=mu)
-            assert len(U0) == 1
-            data['time_points'] = [self.initial_time,]
-            data['_previous_steps'] = U0
-            data['_previous_interpolation'] = lambda t: U0
-        else:
-            # multi-step method
-            time_points, steps, interpolation, data = self._bootstrap(
-                    initial_data=initial_data, operator=operator, rhs=rhs, mass=mass, mu=mu)
-            assert len(time_points) == self.steps
-            assert len(steps) == self.steps
-            assert floatcmp.float_cmp(self.initial_time, time_points[0])
-            data['time_points'] = time_points
-            data['_previous_steps'] = steps
-            data['_previous_interpolation'] = interpolation
-
-        data['mu'] = mu
-        if self.num_values:
-            data['_next_requested'] = self.initial_time
-        else:
-            data['_next_requested'] = 0
-
-        if reserve and self.num_values:
-            solution_array = operator.source.empty(reserve=self.num_values)
-        else:
-            solution_array = operator.source.empty()
-
-        return self.initial_time, solution_array, data
-
-    @abstractmethod
-    def _bootstrap(self, initial_data, operator, rhs, mass, mu):
-        """Called in :meth:`bootstrap` to allow for any preparatory work and interpolation of initial values.
-
-        The provided arguments are checked in
-        :meth:`bootstrap` before being passed along. Implementors are expected to carry out any possible pre-assembly
-        and to store all required data (including operator, rhs, mass) in data. In addition to this data,
-
-        - single-step methods are expected to simply return the interpolated initial data, while
-        - multi-step methods are expected return the required initial steps along with their corresponding time points
-          and an interpolation method.
-
-        We thus have
-        - U0, data = self._bootstrap(...) if self.steps == 1 and
-        - time_points, steps, interpolation, data = self._bootstrap(...) if self.steps > 1
-
-        Parameters
-        ----------
-        initial_data
-            An |Operator| representing the solution at self.initial_time.
-        operator
-            An |Operator| representing A.
-        rhs
-            An |Operator| representing F.
-        mass
-            An |Operator| representing M.
-        mu
-            |Parameter values| for which `operator` and `rhs` are to be evaluated. The current
-            time is added to `mu` with key `t`.
-
-        Returns
-        -------
-        (U0, data)
-            If self.steps == 1, where U0 is the solution at self.initial_time for the given mu.
-        (time_points, steps, interpolation, data)
-            If self.steps > 1, where time_points is a list of time instances (with time_points[0] == self.initial_time)
-            and steps a |VectorArray| of solution snapshots with len(time_instances) == len(steps), such that steps[k]
-            is the solution at time instance time_points[k], for 0 <= k < self.steps; and interpolation is a function
-            t -> U(t) which returns a |VectorArray| of length 1, containing the solution U(t) at time instance t, for
-            self.initial_time <= t <= time_points[-1].
-        """
-        pass
-
-    def step(self, t_n, data, mu=None):
-        """Computes the next requested solution snapshot.
-
-        Returns (t_next, U_next), such that t_next can be used in loops and U_next can be appended to the soliution
-        trajectory returned by :meth:`bootstrap`.
-
-        Behaviour depends on self.num_values:
-        - If self.num_values is provided, performs as many actual steps (by calling self._step) as required to obtain
-          an interpolation of the solution, U(t_next) at the next required interpolation point t_next >= t_n, and
-          returns (t_next, U(t_next).
-        - If self.num_values is not provided, performs a single step (by calling self._step) starting from t_n, to
-          compute (t_{n + 1}, U(t_{n + 1})).
-
-        Note that the determination of the required step length, dt = t_{n + 1} - t_n, depends on the time stepper
-        and is carried out in :meth:_step. The actually stepped time instances {t_n}_{n <= 0} can be found in
-        data['time_points'].
-
-        Parameters
-        ----------
-        t_n
-            Current time as basis for further computation, i.e. the time instance corresponding to the last computed
-            solution snapshot U(t_n), which is contained in data['_previous_steps'][-1].
-        data
-            Dictionary containing cached data pre-computed in :meth:bootstrap as well as the required last
-            solution snapshots in data['_previous_steps'] of length self.steps.
-        mu
-            |Parameter values| for which `operator` and `rhs` are to be evaluated. The current time (as determined
-            by the time stepper) is to be added to `mu` with key `t`.
-
-        Returns
-        -------
-        t_next
-            The next time instance determined by the time stepper (either the next computed one or the next
-            interpolation point).
-        U_next
-            A |VectorArray| of length 1 holding the value of the solution at t_next (either the result of
-            :meth:`self._step` or an interpolation).
-        data
-            A dictionary containing information required in :meth:`step` (like previously computed steps), as well
-            as cached data required by the time stepper (such as pre-assembled operators).
-        """
-        assert data['mu'] == mu
-
-        def step_and_cache(t, logging_prefix=''):
-            if not self.logging_disabled:
-                self.logger.debug(f'{logging_prefix}t={t}: stepping (mu={mu}) ...')
-            _t, _U, _interpolate = self._step(t, data, mu)
-            data['time_points'] += [_t,]
-            if self.steps == 1:
-                data['_previous_steps'] = _U
-            else:
-                data['_previous_steps'] = data['_previous_steps'][1:].copy()
-                data['_previous_steps'].append(_U)
-            data['_previous_interpolation'] = _interpolate
-            return _t, _U, _interpolate
-
-        if not self.num_values:
-            # the trajectory is requested as is
-            if '_next_requested' in data:
-                # - special case: initial values
-                if self.steps == 1:
-                    data.pop('_next_requested')
-                    t = data['time_points'][-1]
-                    U = data['_previous_steps'][-1].copy()
-                    return t, U
-                else:
-                    step = data['_next_requested']
-                    t = data['time_points'][step]
-                    U = data['_previous_steps'][step]
-                    if step == self.steps - 1:
-                        data.pop('_next_requested')
-                    else:
-                        data['_next_requested'] += 1
-            else:
-                # - the usual case, perform a step
-                t_np1, U_np1, _ = step_and_cache(t_n)
-                return t_np1, U_np1
-        else:
-            # and interpolation of the trajectory is requested
-            # if not self.logging_disabled:
-                # self.logger.debug(f't={t_n}: stepping for {mu}:')
-            if not data['_next_requested'] > data['time_points'][-1]:
-                if not self.logging_disabled:
-                    self.logger.debug(
-                            f't={t_n}: existing data suffices for t={data["_next_requested"]}, interpolating ...')
-                # the computed data still suffices
-                # - compute the interpolation at the next requested point
-                t_np1 = data['_next_requested']
-                U_np1 = data['_previous_interpolation'](t_np1)
-                # - increment the next requested point
-                data['_next_requested'] += self._save_every
-                return t_np1, U_np1
-            else:
-                if not self.logging_disabled:
-                    self.logger.debug(f't={t_n}: data missing for t={data["_next_requested"]}, stepping:')
-                # we do not have enough data
-                # - check if t_n is artificial from the last interpolation
-                if data['time_points'][-1] > t_n:
-                    if self.steps > 1:
-                        raise RuntimeError('Not implemented for multi-step method yet!')
-                    t_n = data['time_points'][-1]
-                    if not self.logging_disabled:
-                        self.logger.debug(f'  moving forward to already computed t={t_n} ...')
-                # - take enough actual steps
-                while t_n < data['_next_requested']:
-                    t_n, _, _ = step_and_cache(t_n, '  ')
-                # - compute the interpolation at the next requested point
-                # if not self.logging_disabled:
-                    # self.logger.debug(f'  interpolating ...')
-                t_np1 = data['_next_requested']
-                U_np1 = data['_previous_interpolation'](t_np1)
-                # - increment the next requested point
-                data['_next_requested'] += self._save_every
-                return t_np1, U_np1
-
-    @abstractmethod
-    def _step(self, t_n, data, mu=None):
-        """Called in :meth:`step` to perform the actual next step of the time evolution.
-
-        Parameters
-        ----------
-        t_n
-            Current time as basis for further computation, i.e. the time instance corresponding to the last computed
-            solution snapshot U(t_n), which is contained in data['_previous_steps'][-1].
-        data
-            Dictionary containing cached data pre-computed in :meth:`bootstrap` as well as the required last
-            solution snapshots in data['_previous_steps'] of length self.steps.
-        mu
-            |Parameter values| for which `operator` and `rhs` are to be evaluated. The current time (as determined
-            by the time stepper) is to be added to `mu` with key `t`.
-
-        Returns
-        -------
-        t_np1
-            The next time instance t_{n + 1} = t_n + dt, where dt has to be determined by the implementor.
-        U_np1
-            A |VectorArray| of length 1 containing U(t_{n + 1}).
-        interpolation
-            A function t -> U(t) which returns a |VectorArray| of length 1, containing the solution U(t) at time
-            instance t, for t_n <= t <= t_np1.
-        """
-        pass
-
-    def solve(self, initial_data, operator, rhs=None, mass=None, mu=None):
+    def solve(self, t0, t1, U0, A, F=None, M=None, mu=None, iter=False, return_times=False):
         """Apply time-stepper to the equation ::
 
             M * d_t u + A(u, mu, t) = F(mu, t),
@@ -364,33 +65,299 @@ class TimeStepper(ImmutableObject):
 
         Parameters
         ----------
-        initial_data
-            The solution vector at `self.initial_time`.
-        operator
+        t0
+            The time at which to begin time-stepping.
+        t1
+            The time until which to perform time-stepping.
+        U0
+            The solution vector at `t0`.
+        A
             The |Operator| A.
-        rhs
+        F
             The right-hand side F (either |VectorArray| of length 1 or |Operator| with
             `source.dim == 1`). If `None`, zero right-hand side is assumed.
-        mass
+        M
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
             |Parameter values| for which `operator` and `rhs` are evaluated. The current
             time is added to `mu` with key `t`.
+        iter
+            Determines the return data, see below.
+        return_times
+            Determines the return data, see below.
 
         Returns
         -------
-        |VectorArray| containing the solution trajectory. Of length self.num_values if num_values was provided on
-        construction, else of unknown length.
+        U
+            If `iter == False` and `return_times == False` (the default), where `U` is |VectorArray| containing the
+            solution trajectory.
+        (U, t)
+            If `iter == False` and `return_times == True`, where `t` is a list of time points with `U`.
+        iterator
+            If `iter == True`, an iterator yielding either `U_n` (if `return_times == False`) or `(U_n, t_n)` in each
+            step.
         """
 
-        t, U, data = self.bootstrap(
-                initial_data=initial_data, operator=operator, rhs=rhs, mass=mass, mu=mu, reserve=True)
+        # all checks are delegated to TimeStepperIterator
+        iterator = self.IteratorType(self, t0, t1, U0, A, F=F, M=M, mu=mu, iter=iter, return_times=return_times)
+        if iter:
+            return iterator
+        elif return_times:
+            U = A.source.empty(reserve=self.num_values or 0)
+            t = []
+            for U_n, t_n in iterator:
+                U.append(U_n)
+                t.append(t_n)
+            return U, t
+        else:
+            U = A.source.empty(reserve=self.num_values or 0)
+            for U_n in iterator:
+                U.append(U_n)
+            return U
 
-        while not (t > self.end_time or np.allclose(t, self.end_time)):
-            t, U_t = self.step(t, data, mu=mu)
-            U.append(U_t)
 
-        return U
+class TimeStepperIterator(BasicObject):
+    """Base class to derive time-stepper iterators from.
+
+    See :meth:`TimeStepper.solve` for a documentation of the init parameters except `stepper`.
+
+    Note: derived classes usually only have to implement :meth:`_step`, and optionally :meth:`_interpolate` if none of
+          the provided interpolations are suitable. Using the interpolation from this base class requires the
+          implementor to store certain data in each step (see :meth:`_interpolate`).
+
+    Parameters
+    ----------
+    stepper
+        The associated :class:`TimeStepper`.
+    """
+
+    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
+        # check input
+        assert isinstance(stepper, TimeStepper)
+
+        assert isinstance(t0, Number)
+        assert isinstance(t1, Number)
+        assert t1 > t0
+
+        assert isinstance(A, Operator)
+        assert A.source == A.range
+
+        F = F or ZeroOperator(A.source, NumpyVectorSpace(1))
+        assert isinstance(F, (Operator, VectorArray))
+        if isinstance(F, Operator):
+            assert F.source.dim == 1
+            assert F.range == A.range
+        else:
+            assert A in A.range
+            assert len(F) == 1
+            F = VectorArrayOperator(F)
+
+        M = M or IdentityOperator(A.source)
+        assert isinstance(M, Operator)
+        assert A.source == M.source == M.range
+
+        if isinstance(U0, Operator):
+            assert U0.source.dim == 1
+            assert U0.range == A.source
+        else:
+            assert U0 in A.source and len(U0) == 1
+            U0 = VectorOperator(U0)
+
+        self.__auto_init(locals())
+
+        self.t = t0
+        self.mu = mu or Mu()
+        self.U0 = U0.as_vector(self.mu.with_(t=t0))
+
+        # prepare interpolation
+        if stepper.num_values:
+            self._save_dt = (t1 - t0) / (stepper.num_values - 1)
+            self._last_stepped_point = t0 - 1
+            self._next_interpolation_point = t0
+
+    @abstractmethod
+    def _step(self):
+        """Called in :meth:`_interpolated_step` to compute the next step of the time evolution.
+
+        The iterator is assumed to be in the n-th time-step, `self.t == t_n`, the current state of the solution is
+        often available as `self.U_n` (depending on the interpolation and the choice of the implementor).
+
+        Returns
+        -------
+        U_np1
+            A |VectorArray| of length 1 containing U(t_{n + 1}).
+        t_np1
+            The next time instance t_{n + 1} = t_n + dt, where dt has to be determined by the implementor.
+        """
+        pass
+
+    def _interpolate(self, t):
+        """Called in :meth:`_interpolated_step` to compute an interpolated value of the solution.
+
+        If not overridden in derived classes, requires the following data to be present after a call to :meth:`_step`:
+        - P0: self.t_n, self.t_np1, self.U_n
+        - P1: self.t_n, self.t_np1, self.U_n, self.U_np1
+
+        Parameters
+        ----------
+        t
+            The interpolation point within the latest computed step interval.
+
+        Returns
+        -------
+        U
+            A |VectorArray| of length 1 containing U(t).
+        """
+        t_n, t_np1 = self.t_n, self.t_np1
+        assert floatcmp.almost_less(t_n, t)
+        assert floatcmp.almost_less(t, t_np1)
+        if self.stepper.interpolation == 'P0':
+            # return previous value, old default in pyMOR
+            return self.U_n.copy()
+        elif self.stepper.interpolation == 'P1':
+            # compute P1-Lagrange interpolation
+            U_n, U_np1 = self.U_n, self.U_np1
+            dt = t_np1 - t_n
+            return (t_np1 - t)/dt * U_n + (t - t_n)/dt * U_np1
+        else:
+            raise NotImplementedError(f'{self.interpolation}-interpolation not available!')
+
+    def _interpolated_step(self):
+        """
+        Returns `(U_next, t_next)` (if `return_times == True`, otherwise `U_next`), behaviour depends on `num_values`:
+        - If `num_values` is provided, performs as many actual steps (by calling :meth:`_step`) as required to obtain
+          an interpolation of the solution, U(t_next) at the next required interpolation point t_next >= t_n, and
+          returns (U(t_next), t_next).
+        - If `num_values` is not provided, performs a single step (by calling :meth:`_step`) starting from t_n, to
+          compute (U(t_{n + 1}), t_{n + 1}).
+        """
+        if self.t > self.t1 or floatcmp.float_cmp(self.t, self.t1):
+            # this is the end
+            raise StopIteration
+        elif self.stepper.num_values:
+            # an interpolation of the trajectory is requested
+            if self._last_stepped_point < self.t0:
+                # this is the start, take a step to have data and interpolation available next time, but return U0
+                _, self.t = self._step()
+                self._last_stepped_point = self.t
+                self._next_interpolation_point += self._save_dt
+                if self.return_times:
+                    return self.U0, self.t0
+                else:
+                    return self.U0
+            elif self._last_stepped_point > self._next_interpolation_point:
+                # we have enough data, simply interpolate
+                if not self.logging_disabled:
+                    self.logger.debug(f't={self._next_interpolation_point}: interpolating ...')
+                t_next = self._next_interpolation_point
+                U_next = self._interpolate(t_next)
+                self._next_interpolation_point += self._save_dt
+                if self.return_times:
+                    return U_next, t_next
+                else:
+                    return U_next
+            else:
+                # we do not have enough data, take enough actual steps
+                while self.t < self._next_interpolation_point:
+                    _, self.t = self._step()
+                    self._last_stepped_point = self.t
+                # compute the interpolation at the next requested point
+                if not self.logging_disabled:
+                    self.logger.debug(f't={self._next_interpolation_point}: interpolating ...')
+                t_next = self._next_interpolation_point
+                U_next = self._interpolate(t_next)
+                self._next_interpolation_point += self._save_dt
+                if self.return_times:
+                    return U_next, t_next
+                else:
+                    return U_next
+        else:
+            # the trajectory is requested as is
+            U, self.t = self._step()
+            if self.return_times:
+                return U, t
+            else:
+                return U
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self._interpolated_step()
+
+
+class SingleStepTimeStepperIterator(TimeStepperIterator):
+    """Base class for iterators of single-step methods.
+
+    See :meth:`TimeStepperIterator` for a documentation of the init parameters.
+
+    Note: derived classes only have to implement :meth:`_step_function`, and optionally :meth:`_interpolate`
+    """
+
+    @abstractmethod
+    def _step_function(self, U_n, t_n):
+        pass
+
+    def _step(self):
+        if not hasattr(self, 'U_n'):
+            if not self.logging_disabled:
+                self.logger.debug(f't={self.t}: returning initial data (mu={self.mu}) ...')
+            self.t_n = self.t0
+            self.U_n = self.U0.copy()
+            return self.U_n, self.t_n
+        elif not hasattr(self, 'U_np1'):
+            # this is the first step
+            if not self.logging_disabled:
+                self.logger.debug(f't={self.t}: stepping (mu={self.mu}) ...')
+            self.U_np1, self.t_np1 = self._step_function(self.U_n, self.t_n)
+            return self.U_np1, self.t_np1
+        else:
+            # this is a usual step
+            self.t_n = self.t_np1
+            self.U_n = self.U_np1.copy()
+            if not self.logging_disabled:
+                self.logger.debug(f't={self.t}: stepping (mu={self.mu}) ...')
+            self.U_np1, self.t_np1 = self._step_function(self.U_n, self.t_n)
+            return self.U_np1, self.t_np1
+
+
+class ImplicitEulerIterator(SingleStepTimeStepperIterator):
+
+    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
+        super().__init__(stepper, t0, t1, U0, A, F, M, mu, iter, return_times)
+        self.__auto_init(locals())
+        self.dt = dt = (t1 - t0) / stepper.nt
+        # use the ones from base, these are checked and converted in super().__init__()
+        A, F, M, mu = self.A, self.F, self.M, self.mu
+
+        # prepare the step function U_np1 = (M + dt A)^{-1}(M U_n + dt F)
+        M_dt_A = (M + A * dt).with_(
+                solver_options=A.solver_options if stepper.solver_options == 'operator' else \
+                               M.solver_options if stepper.solver_options == 'mass' else \
+                               stepper.solver_options)
+        if not M_dt_A.parametric or 't' not in M_dt_A.parameters:
+            M_dt_A = M_dt_A.assemble(mu)
+
+        if isinstance(F, ZeroOperator):
+            def step_function(U_n, t_n):
+                t_np1 = t_n + dt
+                mu_t = mu.with_(t=t_np1)
+                return M_dt_A.apply_inverse(M.apply(U_n, mu=mu_t), mu=mu_t, initial_guess=U_n), t_np1
+        else:
+            dt_F = F * dt
+            if not dt_F.parametric or 't' not in dt_F.parameters:
+                dt_F = dt_F.assemble(mu)
+            def step_function(U_n, t_n):
+                t_np1 = t_n + dt
+                mu_t = mu.with_(t=t_np1)
+                return (
+                    M_dt_A.apply_inverse(M.apply(U_n, mu=mu_t) + dt_F.as_vector(mu_t), mu=mu_t, initial_guess=U_n),
+                    t_np1)
+
+        self.step_function = step_function
+
+    def _step_function(self, U_n, t_n):
+        return self.step_function(U_n, t_n)
 
 
 class ImplicitEulerTimeStepper(TimeStepper):
@@ -401,87 +368,81 @@ class ImplicitEulerTimeStepper(TimeStepper):
         M * d_t u + A(u, mu, t) = F(mu, t),
                      u(mu, t_0) = u_0(mu),
 
-    by an implicit Euler time integration.
+    by an implicit Euler time integration, implemented in :class:`ImplicitEulerIterator`.
 
     Parameters
     ----------
     nt
         The number of time-steps the time-stepper will perform.
-    initial_time
-        The time at which to begin time-stepping.
-    end_time
-        The time until which to perform time-stepping.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
         calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
         returned, using an appropriate interpolation of the respective time stepper.
     solver_options
-        The |solver_options| used to invert `M + dt*A`.
-        The special values `'mass'` and `'operator'` are
-        recognized, in which case the solver_options of
-        M (resp. A) are used.
-    interpolation_order
-        Polynomial order (in time) of the interpolation, if num_values is specified: either 0 or 1.
+        The |solver_options| used to invert `M + dt*A`. The special values `'mass'` and `'operator'` are recognized,
+        in which case the solver_options of M (resp. A) are used.
     """
 
-    steps = 1
+    IteratorType = ImplicitEulerIterator
 
-    def __init__(self, nt, initial_time, end_time, num_values=None, solver_options='operator', interpolation_order=1):
-        super().__init__(initial_time=initial_time, end_time=end_time, num_values=num_values)
+    def __init__(self, nt, num_values=None, solver_options='operator', interpolation='P1'):
+        super().__init__(num_values, interpolation)
 
         assert isinstance(nt, Number)
         assert nt > 0
-        assert interpolation_order == 0 or interpolation_order == 1
-        self.dt = (self.end_time - self.initial_time) / nt
+
         self.__auto_init(locals())
 
 
-    def _bootstrap(self, initial_data, operator, rhs, mass, mu):
-        if mu:
-            mu = mu.with_(t=self.initial_time)
-        else:
-            mu = Mu({'t': self.initial_time})
-        data = {'_mass': mass}
-        # prepare lhs
-        M_dt_A = (mass + operator * self.dt).with_(
-                solver_options=operator.solver_options if self.solver_options == 'operator' else \
-                               mass.solver_options if self.solver_options == 'mass' else \
-                               self.solver_options)
-        if not M_dt_A.parametric or 't' not in M_dt_A.parameters:
-            M_dt_A = M_dt_A.assemble(mu)
-        data['_M_dt_A'] = M_dt_A
-        # prepare rhs
-        if not isinstance(rhs, ZeroOperator):
-            dt_F = rhs * self.dt
-            if not dt_F.parametric or 't' not in dt_F.parameters:
-                dt_F = dt_F.assemble(mu)
-            data['_dt_F'] = dt_F
-        return initial_data.as_range_array(mu), data
+class ExplicitEulerIterator(SingleStepTimeStepperIterator):
 
-    def _step(self, t_n, data, mu=None):
-        U_n = data['_previous_steps'][-1]
-        t_np1 = t_n + self.dt
-        if mu:
-            mu = mu.with_(t=t_np1)
-        else:
-            mu = Mu({'t': t_np1})
-        rhs = data['_mass'].apply(U_n)
-        if '_dt_F' in data:
-            rhs += data['_dt_F'].as_vector(mu)
-        U_np1 = data['_M_dt_A'].apply_inverse(rhs, mu=mu, initial_guess=U_n)
+    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
+        super().__init__(stepper, t0, t1, U0, A, F, M, mu, iter, return_times)
+        self.__auto_init(locals())
+        self.dt = dt = (t1 - t0) / stepper.nt
+        # use the ones from base, these are checked and converted in super().__init__()
+        A, F, M, mu = self.A, self.F, self.M, self.mu
 
-        def interpolate(t):
-            assert floatcmp.almost_less(t_n, t)
-            assert floatcmp.almost_less(t, t_np1)
-            if self.interpolation_order == 0:
-                # return previous value, old default in pyMOR
-                return U_n
+        # prepare the step function U_np1 = M^{-1}(M U_n + dt F - dt A U_n)
+        if not isinstance(M, IdentityOperator) and (not M.parametric or 't' not in M.parameters):
+            M = M.assemble(mu)
+        if not A.parametric or 't' not in A.parameters:
+            A = A.assemble(mu)
+
+        if isinstance(F, ZeroOperator):
+            if isinstance(M, IdentityOperator):
+                def step_function(U_n, t_n):
+                    t_np1 = t_n + dt
+                    mu_t = mu.with_(t=t_np1)
+                    return U_n - dt*A.apply(U_n, mu=mu_t), t_np1
             else:
-                # compute P1-Lagrange interpolation
-                dt = t_np1 - t_n
-                return (t_np1 - t)/dt * U_n + (t - t_n)/dt * U_np1
+                def step_function(U_n, t_n):
+                    t_np1 = t_n + dt
+                    mu_t = mu.with_(t=t_np1)
+                    return (
+                        M.apply_inverse(M.apply(U_n, mu=mu_t) - dt*A.apply(U_n, mu=mu_t), mu=mu_t, initial_guess=U_n),
+                        t_np1)
+        else:
+            if not F.parametric or 't' not in F.parameters:
+                F = F.assemble(mu)
+            if isinstance(M, IdentityOperator):
+                def step_function(U_n, t_n):
+                    t_np1 = t_n + dt
+                    mu_t = mu.with_(t=t_np1)
+                    return U_n + dt*(F.as_vector(mu_t) - A.apply(U_n, mu=mu_t)), t_np1
+            else:
+                def step_function(U_n, t_n):
+                    t_np1 = t_n + dt
+                    mu_t = mu.with_(t=t_np1)
+                    return (
+                        M.apply_inverse(M.apply(U_n, mu=mu_t) + dt(F.as_vector(mu_t) - A.apply(U_n, mu=mu_t)),
+                                        mu=mu_t, initial_guess=U_n),
+                        t_np1)
 
-        return t_np1, U_np1, interpolate
+        self.step_function = step_function
+
+    def _step_function(self, U_n, t_n):
+        return self.step_function(U_n, t_n)
 
 
 class ExplicitEulerTimeStepper(TimeStepper):
@@ -489,110 +450,88 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M * d_t u + A(u, mu, t) = F(mu, t).
+        M * d_t u + A(u, mu, t) = F(mu, t),
                      u(mu, t_0) = u_0(mu),
 
-    by an explicit Euler time integration.
+    by an explicit Euler time integration, implemented in :class:`ExplicitEulerIterator`.
 
     Parameters
     ----------
     nt
         The number of time-steps the time-stepper will perform.
-    initial_time
-        The time at which to begin time-stepping.
-    end_time
-        The time until which to perform time-stepping.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
         calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
         returned, using an appropriate interpolation of the respective time stepper.
-    solver_options
-        The |solver_options| used to invert `M + dt*A`.
-        The special values `'mass'` and `'operator'` are
-        recognized, in which case the solver_options of
-        M (resp. A) are used.
-    interpolation_order
-        Polynomial order (in time) of the interpolation, if num_values is specified: either 0 or 1.
     """
 
-    # Felix: To better express the math, I would like to simply write
-    #   U_np1 = M.apply_inverse(F.as_vector(mu)*self.dt + M.apply(U_n) - A.apply(U_n, mu=mu)*self.dt)
-    # in _step, using the original M, A and F in _bootstrap. But testing a 1d linear advection upwind
-    # FV FOM with 256 spatial DoFs and 1e4 timesteps on my Thinkpad X390 (performance CPU governor, disabled turbo
-    # boost) gave an increase of
-    #   49.69282579421997s -> 50.267810344696045s
-    # and testing a resulting 10-dimensional POD-based ROM gave an increase of:
-    #   3.0758347511291504s -> 3.794224977493286
-    # Due to the latter, using the less readable code can still be justified.
+    IteratorType = ExplicitEulerIterator
 
-    steps = 1
-
-    def __init__(self, nt, initial_time, end_time, num_values=None, solver_options='operator', interpolation_order=1):
-        super().__init__(initial_time=initial_time, end_time=end_time, num_values=num_values)
+    def __init__(self, nt, num_values=None, interpolation='P1'):
+        super().__init__(num_values, interpolation)
 
         assert isinstance(nt, Number)
         assert nt > 0
-        assert interpolation_order == 0 or interpolation_order == 1
-        self.dt = (self.end_time - self.initial_time) / nt
+
         self.__auto_init(locals())
 
-    def _bootstrap(self, initial_data, operator, rhs, mass, mu):
-        if mu:
-            mu = mu.with_(t=self.initial_time)
-        else:
-            mu = Mu({'t': self.initial_time})
-        data = {}
-        # prepare mass
-        if isinstance(mass, IdentityOperator):
-            mass = None
-        data['_mass'] = mass
-        # prepare operator
-        if not (operator.parametric and 't' in operator.parameters):
-            operator = operator.assemble(mu)
-        data['_operator'] = operator
-        # prepare rhs
-        if isinstance(rhs, ZeroOperator):
-            rhs = None
-        elif not (rhs.parametric and 't' in rhs.parameters):
-            rhs = rhs.as_vector(mu)
-        data['_rhs'] = rhs
-        return initial_data.as_range_array(mu), data
 
-    def _step(self, t_n, data, mu=None):
-        # extract data
-        U_n = data['_previous_steps'][-1]
-        t_np1 = t_n + self.dt
-        if mu:
-            mu = mu.with_(t=t_n)
-        else:
-            mu = Mu({'t': t_n})
-        M, A, F = data['_mass'], data['_operator'], data['_rhs']
-        # the actual step
-        if M:
-            U_np1 = M.apply(U_n)
-        else:
-            U_np1 = U_n.copy()
-        if isinstance(F, Operator):
-            F = F.as_vector(mu)
-        if F:
-            U_np1.axpy(self.dt, F - A.apply(U_n, mu=mu))
-        else:
-            U_np1.axpy(-self.dt, A.apply(U_n, mu=mu))
-        if M:
-            U_np1 = M.apply_inverse(U_np1)
+class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
 
-        def interpolate(t):
-            assert floatcmp.almost_less(t_n, t)
-            assert floatcmp.almost_less(t, t_np1)
-            if self.interpolation_order == 0:
-                # return previous value, old default in pyMOR
-                return U_n
+    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
+        super().__init__(stepper, t0, t1, U0, A, F, M, mu, iter, return_times)
+        self.__auto_init(locals())
+        self.dt = dt = (t1 - t0) / stepper.nt
+        # use the ones from base, these are checked and converted in super().__init__()
+        A, F, M, mu = self.A, self.F, self.M, self.mu
+
+        # prepare the function f in d_t y = f(t, y)
+        if not isinstance(M, IdentityOperator) and (not M.parametric or 't' not in M.parameters):
+            M = M.assemble(mu)
+        if not A.parametric or 't' not in A.parameters:
+            A = A.assemble(mu)
+
+        if isinstance(F, ZeroOperator):
+            if isinstance(M, IdentityOperator):
+                def f(t, y):
+                    mu_t = mu.with_(t=t)
+                    return -1*A.apply(y, mu=mu_t)
             else:
-                # compute P1-Lagrange interpolation
-                dt = t_np1 - t_n
-                return (t_np1 - t)/dt * U_n + (t - t_n)/dt * U_np1
+                def f(t, y):
+                    mu_t = mu.with_(t=t)
+                    return M.apply_inverse(-1*A.apply(y, mu=mu_t), mu=mu_t, initial_guess=y)
+        else:
+            if not F.parametric or 't' not in F.parameters:
+                F = F.assemble(mu)
+            if isinstance(M, IdentityOperator):
+                def f(t, y):
+                    mu_t = mu.with_(t=t)
+                    return F.as_vector(mu=mu_t) - A.apply(y, mu=mu_t)
+            else:
+                def f(t, y):
+                    mu_t = mu.with_(t=t) or Mu({'t': t})
+                    return M.apply_inverse(F.as_vector(mu=mu_t) - A.apply(y, mu=mu_t), mu=mu_t, initial_guess=y)
 
-        return t_np1, U_np1, interpolate
+        self.f = f
+
+    def _step_function(self, U_n, t_n):
+        c, A, b = self.stepper.butcher_array
+        # compute stages
+        s = len(c)
+        stages = U_n.space.empty(reserve=s)
+        for j in range(s):
+            t_n_j = t_n + self.dt*c[j]
+            U_n_j = U_n.copy()
+            for l in range(j):
+                U_n_j.axpy(self.dt*A[j][l], stages[l])
+            U_n_j = self.f(t_n_j, U_n_j)
+            stages.append(U_n_j, remove_from_other=True)
+        # compute step
+        U_np1 = U_n.copy()
+        for j in range(s):
+            U_np1.axpy(self.dt*b[j], stages[j])
+
+        return U_np1, t_n + self.dt
 
 
 class ExplicitRungeKuttaTimeStepper(TimeStepper):
@@ -603,7 +542,7 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
         M * d_t u + A(u, mu, t) = F(mu, t).
                      u(mu, t_0) = u_0(mu),
 
-    by a Runge-Kutta method.
+    by a Runge-Kutta method, implemented in :class:`ExplicitRungeKuttaIterator`.
 
     Parameters
     ----------
@@ -611,141 +550,52 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
         Either a string identifying the method or a tuple (c, A, b) of butcher arrays.
     nt
         The number of time-steps the time-stepper will perform.
-    initial_time
-        The time at which to begin time-stepping.
-    end_time
-        The time until which to perform time-stepping.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
         calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
         returned, using an appropriate interpolation of the respective time stepper.
     """
 
-    # TODO: add Hermite interpolation
+    IteratorType = ExplicitRungeKuttaIterator
 
-    steps = 1
-    _methods = {'explicit_euler': (np.array([0,]), np.array([[0,],]), np.array([1,])),
-                'RK1':            (np.array([0,]), np.array([[0,],]), np.array([1,])),
-                'heun2':          (np.array([0, 1]), np.array([[0, 0], [1, 0]]), np.array([1/2, 1/2])),
-                'midpoint' :      (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
-                'ralston' :       (np.array([0, 2/3]), np.array([[0, 0], [2/3, 0]]), np.array([1/4, 3/4])),
-                'RK2' :           (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
-                'simpson' :       (np.array([0, 1/2, 1]),
-                                   np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
-                                   np.array([1/6, 4/6, 1/6])),
-                'heun3' :         (np.array([0, 1/3, 2/3]),
-                                   np.array([[0, 0, 0], [1/3, 0, 0], [0, 2/3, 0]]),
-                                   np.array([1/4, 0, 3/4])),
-                'RK3' :           (np.array([0, 1/2, 1]),
-                                   np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
-                                   np.array([1/6, 4/6, 1/6])),
-                '3/8' :           (np.array([0, 1/3, 2/3, 1]),
-                                   np.array([[0, 0, 0, 0], [1/3, 0, 0, 0], [-1/3, 1, 0, 0], [1, -1, 1, 0]]),
-                                   np.array([1/8, 3/8, 3/8, 1/8])),
-                'RK4' :           (np.array([0, 1/2, 1/2, 1]),
-                                   np.array([[0, 0, 0, 0], [1/2, 0, 0, 0], [0, 1/2, 0, 0], [0, 0, 1, 0]]),
-                                   np.array([1/6, 1/3, 1/3, 1/6])),
-                }
+    available_RK_methods = {
+            'explicit_euler': (np.array([0,]), np.array([[0,],]), np.array([1,])),
+            'RK1':            (np.array([0,]), np.array([[0,],]), np.array([1,])),
+            'heun2':          (np.array([0, 1]), np.array([[0, 0], [1, 0]]), np.array([1/2, 1/2])),
+            'midpoint' :      (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
+            'ralston' :       (np.array([0, 2/3]), np.array([[0, 0], [2/3, 0]]), np.array([1/4, 3/4])),
+            'RK2' :           (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
+            'simpson' :       (np.array([0, 1/2, 1]),
+                               np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
+                               np.array([1/6, 4/6, 1/6])),
+            'heun3' :         (np.array([0, 1/3, 2/3]),
+                               np.array([[0, 0, 0], [1/3, 0, 0], [0, 2/3, 0]]),
+                               np.array([1/4, 0, 3/4])),
+            'RK3' :           (np.array([0, 1/2, 1]),
+                               np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
+                               np.array([1/6, 4/6, 1/6])),
+            '3/8' :           (np.array([0, 1/3, 2/3, 1]),
+                               np.array([[0, 0, 0, 0], [1/3, 0, 0, 0], [-1/3, 1, 0, 0], [1, -1, 1, 0]]),
+                               np.array([1/8, 3/8, 3/8, 1/8])),
+            'RK4' :           (np.array([0, 1/2, 1/2, 1]),
+                               np.array([[0, 0, 0, 0], [1/2, 0, 0, 0], [0, 1/2, 0, 0], [0, 0, 1, 0]]),
+                               np.array([1/6, 1/3, 1/3, 1/6])),
+            }
 
-    def __init__(self, method, nt, initial_time, end_time, num_values=None):
-        super().__init__(initial_time=initial_time, end_time=end_time, num_values=num_values)
+    def __init__(self, method, nt, num_values=None, interpolation='P1'):
+        super().__init__(num_values, interpolation)
 
         assert isinstance(method, (tuple, str))
         if isinstance(method, str):
-            assert method in self._methods.keys()
-            self._c, self._A, self._b = self._methods[method]
+            assert method in self.available_RK_methods.keys()
+            self.butcher_array = (self.available_RK_methods[method])
         else:
             raise RuntimeError('Arbitrary butcher arrays not implemented yet!')
 
         assert isinstance(nt, Number)
         assert nt > 0
-        self.dt = (self.end_time - self.initial_time) / nt
+
         self.__auto_init(locals())
-
-
-    def _bootstrap(self, initial_data, operator, rhs, mass, mu):
-        # prepare operator
-        if not (operator.parametric and 't' in operator.parameters):
-            operator = operator.assemble(mu=mu)
-        # prepare the func f in d_t y = f(t, y)
-        if isinstance(rhs, ZeroOperator):
-            if isinstance(mass, IdentityOperator):
-                def func(t, y):
-                    mu_t = mu.with_(t=t) or Mu({'t': t})
-                    f_y = operator.apply(y, mu=mu_t)
-                    f_y *= -1
-                    return f_y
-            else:
-                def func(t, y):
-                    mu_t = mu.with_(t=t) or Mu({'t': t})
-                    f_y = operator.apply(y, mu=mu_t)
-                    f_y *= -1
-                    return mass.apply_inverse(f_y)
-        elif not (rhs.parametric and 't' in rhs.parameters):
-            rhs = rhs.as_vector(mu=mu)
-            if isinstance(mass, IdentityOperator):
-                def func(t, y):
-                    mu_t = mu.with_(t=t) or Mu({'t': t})
-                    f_y = operator.apply(y, mu=mu_t)
-                    f_y *= -1
-                    f_y += rhs
-                    return f_y
-            else:
-                def func(t, y):
-                    mu_t = mu.with_(t=t) or Mu({'t': t})
-                    f_y = operator.apply(y, mu=mu_t)
-                    f_y *= -1
-                    f_y += rhs
-                    return mass.apply_inverse(f_y)
-        else:
-            if isinstance(mass, IdentityOperator):
-                def func(t, y):
-                    mu_t = mu.with_(t=t) or Mu({'t': t})
-                    f_y = operator.apply(y, mu=mu_t)
-                    f_y *= -1
-                    f_y += rhs.as_vector(mu=mu_t)
-                    return f_y
-            else:
-                def func(t, y):
-                    mu_t = mu.with_(t=t) or Mu({'t': t})
-                    f_y = operator.apply(y, mu=mu_t)
-                    f_y *= -1
-                    f_y += rhs.as_vector(mu=mu_t)
-                    return mass.apply_inverse(f_y)
-        data = {'_func': func}
-        return initial_data.as_range_array(mu=mu.with_(t=self.initial_time) or Mu({'t': initial_time})), data
-
-    def _step(self, t_n, data, mu=None):
-        mu = mu.with_(t=t_n) or Mu({'t': t_n})
-        # extract data
-        f = data['_func']
-        U_n = data['_previous_steps'][-1]
-        t_np1 = t_n + self.dt
-        # get method
-        c, A, b = self._c, self._A, self._b
-        # compute stages
-        s = len(c)
-        stages = U_n.space.empty(reserve=s)
-        for j in range(s):
-            t_n_j = t_n + self.dt*c[j]
-            U_n_j = U_n.copy()
-            for l in range(j):
-                U_n_j.axpy(self.dt*A[j][l], stages[l])
-            U_n_j = f(t_n_j, U_n_j)
-            stages.append(U_n_j, remove_from_other=True)
-        # compute step
-        U_np1 = U_n.copy()
-        for j in range(s):
-            U_np1.axpy(self.dt*b[j], stages[j])
-
-        def interpolate(t):
-            assert floatcmp.almost_less(t_n, t)
-            assert floatcmp.almost_less(t, t_np1)
-            # compute P1-Lagrange interpolation
-            dt = t_np1 - t_n
-            return (t_np1 - t)/dt * U_n + (t - t_n)/dt * U_np1
-
-        return t_np1, U_np1, interpolate
 
 
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
