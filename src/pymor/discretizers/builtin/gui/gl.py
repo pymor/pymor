@@ -20,9 +20,8 @@ from pymor.core.config import config
 
 if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
     import OpenGL.GL as gl
-    from qtpy.QtWidgets import QSizePolicy
+    from qtpy.QtWidgets import QSizePolicy, QOpenGLWidget
     from qtpy.QtGui import QPainter, QFontMetrics
-    from qtpy.QtOpenGL import QGLWidget
     from ctypes import c_void_p
 
     from pymor.core.defaults import defaults
@@ -106,7 +105,7 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
         gl.glBindTexture(gl.GL_TEXTURE_1D, 0)
         return colormap_id
 
-    class GLPatchWidget(QGLWidget):
+    class GLPatchWidget(QOpenGLWidget):
 
         def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=([0, 0], [1, 1]), codim=2):
             assert grid.reference_element in (triangle, square)
@@ -245,12 +244,11 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             self.update_vbo = True
             self.update()
 
-    class ColorBarWidget(QGLWidget):
+    class ColorBarWidget(QOpenGLWidget):
 
         def __init__(self, parent, U=None, vmin=None, vmax=None):
             super().__init__(parent)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding))
-            self.setAutoFillBackground(False)
             self.set(U, vmin, vmax)
 
         def resizeGL(self, w, h):
@@ -289,7 +287,8 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             self.update()
 
         def paintEvent(self, event):
-            self.makeCurrent()
+            p = QPainter(self)
+            p.beginNativePainting()
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
             gl.glUseProgram(self.shaders_program)
             gl.glUniform1i(self.colormap_location, 0)
@@ -306,7 +305,7 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
                 gl.glVertex(-0.5, (bar_height*y + bar_start), y)
                 gl.glVertex(0.5, (bar_height*y + bar_start), y)
             gl.glEnd()
-            p = QPainter(self)
+            p.endNativePainting()
             p.drawText((self.width() - self.vmax_width)/2, self.text_ascent, self.vmax_str)
             p.drawText((self.width() - self.vmin_width)/2, self.height() - self.text_height + self.text_ascent,
                        self.vmin_str)
