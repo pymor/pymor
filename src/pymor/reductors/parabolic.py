@@ -4,11 +4,12 @@
 
 import numpy as np
 
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.base import ImmutableObject
+from pymor.operators.constructions import IdentityOperator, LincombOperator
+from pymor.parameters.functionals import ParameterFunctional, ConstantParameterFunctional
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.reductors.residual import ResidualReductor, ImplicitEulerResidualReductor
-from pymor.operators.constructions import IdentityOperator
-from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 
 
 class ParabolicRBReductor(InstationaryRBReductor):
@@ -83,10 +84,26 @@ class ParabolicRBReductor(InstationaryRBReductor):
         residual = self.residual_reductor.reduce()
         initial_residual = self.initial_residual_reductor.reduce()
 
-        error_estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
-                                               initial_residual, self.initial_residual_reductor.residual_range_dims,
-                                               self.coercivity_estimator)
-        return error_estimator
+        # optional output estimate
+        output_estimator_matrix = output_functional_coeffs = None
+        if hasattr(self.fom, 'output_functional') and self.fom.output_functional \
+                and self.fom.output_functional.linear and self.fom.output_functional.range.dim == 1:
+            # compute gramian of the riesz representatives
+            output_func = self.fom.output_functional
+            if not isinstance(output_func, LincombOperator):
+                output_func = LincombOperator([output_func,], [1,])
+            product = self.products['RB']
+            riesz_representatives = [product.apply_inverse(func.as_vector()) for func in output_func.operators]
+            output_estimator_matrix = np.array(
+                    [[product.apply2(rr, ss)[0][0] for rr in riesz_representatives] for ss in riesz_representatives])
+            del riesz_representatives
+            # wrap coefficient functionals if required
+            output_functional_coeffs = [c if isinstance(c, ParameterFunctional) else ConstantParameterFunctional(c)
+                                        for c in output_func.coefficients]
+
+        return ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims, initial_residual,
+                                    self.initial_residual_reductor.residual_range_dims, self.coercivity_estimator,
+                                    output_estimator_matrix, output_functional_coeffs)
 
     def assemble_error_estimator_for_subbasis(self, dims):
         return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
@@ -99,7 +116,7 @@ class ParabolicRBEstimator(ImmutableObject):
     """
 
     def __init__(self, residual, residual_range_dims, initial_residual, initial_residual_range_dims,
-                 coercivity_estimator):
+                 coercivity_estimator, output_estimator_matrix=None, output_functional_coeffs=None):
         self.__auto_init(locals())
 
     def estimate_error(self, U, mu, m, return_error_sequence=False):
@@ -120,6 +137,15 @@ class ParabolicRBEstimator(ImmutableObject):
         est = np.sqrt(np.cumsum(est))
 
         return est if return_error_sequence else est[-1]
+
+    def estimate_output_error(self, U, mu, m, return_error_sequence=False):
+        if not self.output_estimator_matrix or not self.output_functional_coeffs:
+            raise NotImplemented
+        estimate = self.estimate_error(U, mu, m, return_error_sequence=return_error_sequence)
+        # scale with dual norm of the output functional
+        coeff_vals = np.array([c.evaluate(mu) for c in self.output_functional_coeffs])
+        estimate *= np.sqrt(coeff_vals.T@(self.output_estimator_matrix@coeff_vals))
+        return estimate
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims and self.initial_residual_range_dims:
