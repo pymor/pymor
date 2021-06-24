@@ -102,6 +102,9 @@ class MPIVectorArray(VectorArray):
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
 
+    def __getstate__(self):
+        raise NotImplementedError
+
     @property
     def real(self):
         real_id = mpi.call(_MPIVectorArray_real, self.obj_id)
