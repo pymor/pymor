@@ -14,7 +14,7 @@ if config.HAVE_DUNEGDT:
             RobinBoundary,
             Walker,
             )
-    from dune.xt.functions import GridFunction as GF
+    from dune.xt.functions import divergence, GridFunction as GF
     from dune.xt.la import Istl
     from dune.gdt import (
             ContinuousLagrangeSpace,
@@ -53,11 +53,13 @@ if config.HAVE_DUNEGDT:
     from pymor.discretizers.dunegdt.domaindiscretizers.default import discretize_domain_default
     from pymor.models.basic import InstationaryModel, StationaryModel
     from pymor.operators.constructions import ConstantOperator, LincombOperator, VectorArrayOperator
+    from pymor.tools.floatcmp import float_cmp
 
 
     def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
                                  grid_type=None, grid=None, boundary_info=None,
-                                 order=1, data_approximation_order=2, la_backend=Istl()):
+                                 order=1, data_approximation_order=2, la_backend=Istl(),
+                                 advection_in_divergence_form=True, mu_energy_product=None):
         """Discretizes a |StationaryProblem| with dune-gdt using continuous Lagrange finite elements.
 
         Note: all data functions are replaced by their respective non-conforming interpolations. This allows to simply
@@ -93,6 +95,9 @@ if config.HAVE_DUNEGDT:
             Polynomial order (on each grid element) for the interpolation of the data functions.
         la_backend
             Tag to determine which linear algebra backend from dune-xt is used.
+        advection_in_divergence_form
+            If true, treats linear advection as advertised in StationaryProblem (i.e. :math:`∇ ⋅ (v u)`), else as in
+            :math:`v ⋅∇ u` (where :math:`v` denotes the vector field).
 
         Returns
         -------
@@ -179,6 +184,10 @@ if config.HAVE_DUNEGDT:
         constrained_lhs_coeffs = []
         unconstrained_lhs_ops = []
         unconstrained_lhs_coeffs = []
+        if mu_energy_product:
+            mu_energy_product = p.parameters.parse(mu_energy_product)
+            energy_product_ops = []
+            energy_product_coeffs = []
         rhs_ops = []
         rhs_coeffs = []
 
@@ -192,24 +201,9 @@ if config.HAVE_DUNEGDT:
             diffusion_funcs, diffusion_coeffs = interpolate(p.diffusion)
             constrained_lhs_ops += [make_diffusion_operator(func) for func in diffusion_funcs]
             constrained_lhs_coeffs += list(diffusion_coeffs)
-
-        # advection part
-        if p.advection:
-            def make_advection_operator(func):
-                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, func)))
-
-                if p.diffusion:
-                    # enforce total flux = Neumann, instead of only diffusive flux = Neumann
-                    op += (LocalIntersectionIntegralBilinearForm(
-                             LocalIntersectionNormalComponentProductIntegrand(GF(grid, func))), {},
-                           ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
-
-                return op
-
-            advection_funcs, advection_coeffs = interpolate(p.advection)
-            constrained_lhs_ops += [make_advection_operator(func) for func in advection_funcs]
-            constrained_lhs_coeffs += list(advection_coeffs)
+            if mu_energy_product:
+                energy_product_ops += [make_diffusion_operator(func) for func in diffusion_funcs]
+                energy_product_coeffs += list(diffusion_coeffs)
 
         # reaction part
         def make_weighted_l2_operator(func):
@@ -221,6 +215,31 @@ if config.HAVE_DUNEGDT:
             reaction_funcs, reaction_coeffs = interpolate(p.reaction)
             constrained_lhs_ops += [make_weighted_l2_operator(func) for func in reaction_funcs]
             constrained_lhs_coeffs += list(reaction_coeffs)
+            if mu_energy_product:
+                energy_product_ops += [make_weighted_l2_operator(func) for func in reaction_funcs]
+                energy_product_coeffs += list(reaction_coeffs)
+
+        # advection part
+        if p.advection:
+            def make_advection_operator(func):
+                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+                op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, func),
+                                                                                     advection_in_divergence_form))
+
+                if p.diffusion and advection_in_divergence_form: # to ensure Neumann boundary values
+                    op += (LocalIntersectionIntegralBilinearForm(
+                             LocalIntersectionNormalComponentProductIntegrand(GF(grid, func))), {},
+                           ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
+
+                return op
+
+            advection_funcs, advection_coeffs = interpolate(p.advection)
+            constrained_lhs_ops += [make_advection_operator(func) for func in advection_funcs]
+            constrained_lhs_coeffs += list(advection_coeffs)
+
+            if mu_energy_product:
+                energy_product_ops += [make_weighted_l2_operator(divergence(func)) for func in advection_funcs]
+                energy_product_coeffs += [-0.5*coeff for coeff in advection_coeffs]
 
         # robin boundaries
         if p.robin_data:
@@ -263,7 +282,7 @@ if config.HAVE_DUNEGDT:
             rhs_ops += [make_l2_functional(func) for func in source_funcs]
             rhs_coeffs += list(source_coeffs)
 
-        # neumann boundaries
+        # Neumann boundaries
         if p.neumann_data:
             def make_l2_neumann_boundary_functional(func):
                 op = VectorFunctional(grid, space, la_backend)
@@ -316,6 +335,9 @@ if config.HAVE_DUNEGDT:
             walker.append(op)
         walker.append(l2_product)
         walker.append(h1_semi_product)
+        if mu_energy_product:
+            for op in energy_product_ops:
+                walker.append(op)
         for op in outputs:
             walker.append(op)
         walker.walk(thread_parallel=False) # support not stable/enabled yet
@@ -327,20 +349,25 @@ if config.HAVE_DUNEGDT:
         if p.dirichlet_data:
             # we first require an interpolation of first order
             dirichlet_data = interpolate_single(p.dirichlet_data, pol_order=1)
-            # secondly, we restrict this interpolation to the Dirichlet boundary
+            # second, we restrict this interpolation to the Dirichlet boundary
             dirichlet_data = boundary_interpolation(GF(grid, dirichlet_data), space, boundary_info, DirichletBoundary())
+            # third, we only do something if dirichlet_data != 0
+            trivial_dirichlet_data = float_cmp(dirichlet_data.dofs.vector.sup_norm(), 0.)
+            if not trivial_dirichlet_data:
+                for op, coeff in zip(constrained_lhs_ops, constrained_lhs_coeffs):
+                    rhs_ops += [op.apply(dirichlet_data.dofs.vector),]
+                    rhs_coeffs += [-1*coeff]
 
-            for op, coeff in zip(constrained_lhs_ops, constrained_lhs_coeffs):
-                rhs_ops += [op.apply(dirichlet_data.dofs.vector),]
-                rhs_coeffs += [-1*coeff]
-
-        # prepare additional products`
+        # prepare additional products
         l2_0_product = MatrixOperator(grid, space, space, l2_product.matrix.copy()) # using operators here just for
         h1_0_semi_product = MatrixOperator(grid, space, space, h1_semi_product.matrix.copy()) # unified handling below
 
         # apply the Dirichlet constraints
         for op in constrained_lhs_ops:
             dirichlet_constraints.apply(op.matrix, only_clear=True, ensure_symmetry=True)
+        if mu_energy_product:
+            for op in energy_product_ops:
+                dirichlet_constraints.apply(op.matrix, ensure_symmetry=True)
         for vec in rhs_ops:
             dirichlet_constraints.apply(vec) # sets to zero
         dirichlet_constraints.apply(l2_0_product.matrix, ensure_symmetry=True)
@@ -352,13 +379,22 @@ if config.HAVE_DUNEGDT:
         lhs_ops = [op] + constrained_lhs_ops + unconstrained_lhs_ops
         lhs_coeffs = [1.] + constrained_lhs_coeffs + unconstrained_lhs_coeffs
 
-        # wrap everything as pyMOR operators
+        # wrap everything as pyMOR operators:
+        # - lhs
         lhs_ops = [DuneXTMatrixOperator(op.matrix) for op in lhs_ops]
         L = LincombOperator(operators=lhs_ops, coefficients=lhs_coeffs, name='ellipticOperator')
 
-        rhs_ops = [VectorArrayOperator(lhs_ops[0].range.make_array([DuneXTVector(vec)])) for vec in rhs_ops]
-        F = LincombOperator(operators=rhs_ops, coefficients=rhs_coeffs, name='rhsOperator')
+        # - rhs, clean up beforehand
+        rhs_ops_ = []
+        rhs_coeffs_ = []
+        for vec, coeff in zip(rhs_ops, rhs_coeffs):
+            if not float_cmp(vec.sup_norm(), 0.):
+                rhs_ops_ += [VectorArrayOperator(lhs_ops[0].range.make_array([DuneXTVector(vec)])),]
+                rhs_coeffs_ += [coeff,]
+        F = LincombOperator(operators=rhs_ops_, coefficients=rhs_coeffs_, name='rhsOperator')
+        del rhs_ops, rhs_coeffs
 
+        # - products
         products = {'h1': (DuneXTMatrixOperator(l2_product.matrix)
                            + DuneXTMatrixOperator(h1_semi_product.matrix)).assemble(),
                     'h1_semi': DuneXTMatrixOperator(h1_semi_product.matrix),
@@ -368,13 +404,26 @@ if config.HAVE_DUNEGDT:
                     'h1_0_semi': DuneXTMatrixOperator(h1_0_semi_product.matrix),
                     'l2_0': DuneXTMatrixOperator(l2_0_product.matrix)}
 
-        outputs = [VectorArrayOperator(lhs_ops[0].source.make_array([DuneXTVector(op.vector)]), adjoint=True) for op in outputs]
-        if p.dirichlet_data:
-            dirichlet_data = lhs_ops[0].source.make_array([DuneXTVector(dirichlet_data.dofs.vector),])
-            # add Dirichlet shift
-            outputs = [func + ConstantOperator(value=func.apply(dirichlet_data), source=func.source) for func in outputs]
-        else:
+        if mu_energy_product:
+            energy_product_ops = [DuneXTMatrixOperator(op.matrix) for op in energy_product_ops]
+            energy_product = LincombOperator(operators=energy_product_ops, coefficients=energy_product_coeffs)
+            products['energy'] = energy_product.assemble(mu_energy_product)
+
+        # - outputs, shift if required
+        outputs = [VectorArrayOperator(lhs_ops[0].source.make_array([DuneXTVector(op.vector)]), adjoint=True)
+                   for op in outputs]
+        if trivial_dirichlet_data:
             dirichlet_data = lhs_ops[0].source.zeros(1)
+        else:
+            dirichlet_data = lhs_ops[0].source.make_array([DuneXTVector(dirichlet_data.dofs.vector),])
+            shifted_outputs = []
+            for func in outputs:
+                output_of_dirichlet_data = func.apply(dirichlet_data)
+                if np.all(float_cmp(output_of_dirichlet_data.to_numpy(), 0.)):
+                    shifted_outputs += [func,]
+                else:
+                    shifted_outputs += [func + ConstantOperator(value=output_of_dirichlet_data, source=func.source),]
+            outputs = shifted_outputs
 
         if len(outputs) == 0:
             output_functional = None
@@ -385,21 +434,21 @@ if config.HAVE_DUNEGDT:
             output_functional = BlockColumnOperator(outputs)
 
         # visualizer
-        class ShiftedVisualizer(ImmutableObject):
-            def __init__(self, visualizer, shift):
-                self.__auto_init(locals())
-
-            def visualize(self, U, m, **kwargs):
-                return self.visualizer.visualize(U + self.shift, m, **kwargs)
-
-
         if d == 1:
-            # unshifted_visualizer = DuneGDT1dMatplotlibVisualizer(space)
+            # unshifted_visualizer = DuneGDT1dMatplotlibVisualizer(space) # only for stationary problems!
             unshifted_visualizer = DuneGDT1dasNumpyVisualizer(space, grid)
         else:
             unshifted_visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
 
-        visualizer = ShiftedVisualizer(unshifted_visualizer, dirichlet_data)
+        if not trivial_dirichlet_data:
+            class ShiftedVisualizer(ImmutableObject):
+                def __init__(self, visualizer, shift):
+                    self.__auto_init(locals())
+
+                def visualize(self, U, m, **kwargs):
+                    return self.visualizer.visualize(U + self.shift, m, **kwargs)
+
+            visualizer = ShiftedVisualizer(unshifted_visualizer, dirichlet_data)
 
         m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
                              name=f'{p.name}_CG')
@@ -416,7 +465,8 @@ if config.HAVE_DUNEGDT:
 
 def discretize_instationary_cg(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                                grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
-                               order=1, data_approximation_order=2, la_backend=Istl()):
+                               order=1, data_approximation_order=2, la_backend=Istl(),
+                               advection_in_divergence_form=False, mu_energy_product=None):
     """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
     using finite elements.
 
@@ -475,7 +525,9 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
     m, data = discretize_stationary_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
                                        grid_type=grid_type, grid=grid, boundary_info=boundary_info,
                                        order=order, data_approximation_order=data_approximation_order,
-                                       la_backend=la_backend)
+                                       la_backend=la_backend,
+                                       advection_in_divergence_form=advection_in_divergence_form,
+                                       mu_energy_product=mu_energy_product)
 
     # interpolate initial data
     df = DiscreteFunction(data['space'], la_backend)
