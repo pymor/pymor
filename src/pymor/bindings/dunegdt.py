@@ -95,6 +95,9 @@ if config.HAVE_DUNEGDT:
         def __neg__(self):
             return self * (-1)
 
+        def to_numpy(self, ensure_copy=False):
+            return np.array(self.impl, copy=ensure_copy)
+
 
     class DuneXTVectorSpace(ListVectorSpace):
 
