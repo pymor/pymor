@@ -178,6 +178,9 @@ class InstationaryModel(Model):
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
         to be used by :meth:`~pymor.models.interface.Model.solve`.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
     output_functional
         |Operator| mapping a given solution to the model output. In many applications,
         this will be a |Functional|, i.e. an |Operator| mapping to scalars.
@@ -200,10 +203,15 @@ class InstationaryModel(Model):
         visualizer's `visualize` method.
     name
         Name of the model.
+    assemble_temporal_norms
+        If True, provides L^2- and L^\infty-Bochner-norms for the solution
+        and (if a scalar output is present) temporal L^2- and L^\infty-norms
+        for the output.
     """
 
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None,
-                 output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
+                 output_functional=None, products=None, error_estimator=None, visualizer=None, name=None,
+                 assemble_temporal_norms=True):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -229,6 +237,54 @@ class InstationaryModel(Model):
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
         if output_functional is not None:
             self.dim_output = output_functional.range.dim
+
+        if assemble_temporal_norms:
+            # assemble temporal L^2 matrix, TODO: determine temporal polynomial order from time_stepper
+            from pymor.discretizers.builtin.cg import L2ProductP1
+            from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo
+            from pymor.discretizers.builtin.grids.oned import OnedGrid
+
+            assert time_stepper.num_values or time_stepper.nt
+            temporal_grid = OnedGrid(
+                    domain=(time_stepper.initial_time, time_stepper.end_time),
+                    num_intervals=(time_stepper.num_values -1 ) if time_stepper.num_values else time_stepper.nt)
+            temporal_l2_product = L2ProductP1(temporal_grid, EmptyBoundaryInfo(temporal_grid))
+            temporal_l2_product = temporal_l2_product.assemble().matrix
+
+            # define base Bochner norms
+            def bochner_sup_norm(spatial_norm, U, mu=None):
+                assert len(U) == temporal_l2_product.shape[0], \
+                    f'Given VectorArray (len={len(U)}) does not match TimeStepper ({temporal_l2_product.shape[0]} values)!'
+                spatial_norms = spatial_norm(U, mu=mu)
+                return np.linalg.norm(spatial_norms, ord=np.inf)
+
+            def bochner_l2_norm(spatial_norm, U, mu=None):
+                assert len(U) == temporal_l2_product.shape[0], \
+                    f'Given VectorArray (len={len(U)}) does not match TimeStepper ({temporal_l2_product.shape[0]} values)!'
+                spatial_norms = spatial_norm(U, mu=mu).reshape(-1, 1)
+                return (spatial_norms.T @ (temporal_l2_product @ spatial_norms))[0][0]
+
+            # build full Bochner norms
+            for kk in self.products.keys():
+                setattr(self, f'bochner_sup_{kk}_norm',
+                        lambda U, mu=None: bochner_sup_norm(getattr(self, f'{kk}_norm'), U, mu))
+                setattr(self, f'bochner_l2_{kk}_norm',
+                        lambda U, mu=None: bochner_l2_norm(getattr(self, f'{kk}_norm'), U, mu))
+
+            # build output norms, if applicable
+            if output_functional is not None and self.dim_output == 1:
+
+                def output_sup_norm(output):
+                    assert len(output) == self.dim_otput
+                    return np.linalg.norm(output._array, ord=np.inf)
+
+                def output_l2_norm(output):
+                    assert len(output) == self.dim_otput
+                    output = output.reshape(-1, 1)
+                    return (output.T @ (temporal_l2_product @ output))[0][0]
+
+                self.output_sup_norm = output_sup_norm
+                self.output_l2_norm = output_l2_norm
 
     def __str__(self):
         return (
