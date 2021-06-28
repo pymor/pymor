@@ -5,8 +5,10 @@
 import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
+from pymor.core.base import BasicObject
 from pymor.models.interface import Model
 from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator
+from pymor.parameters.base import Mu
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -202,6 +204,8 @@ class InstationaryModel(Model):
         Name of the model.
     """
 
+    _compute_allowed_kwargs = frozenset(('iter',))
+
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None,
                  output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
 
@@ -243,7 +247,38 @@ class InstationaryModel(Model):
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
+    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
+                 solution_error_estimate=False, output_error_estimate=False,
+                 output_d_mu_return_array=False, mu=None, **kwargs):
+
+        # make sure no unknown kwargs are passed
+        assert kwargs.keys() <= self._compute_allowed_kwargs
+
+        # delegate back to base, if no iterator is requested ...
+        if not ('iter' in kwargs and kwargs['iter'] == True):
+            return {}
+
+        # extend InstationaryModelComputeIterator to support these also, if required
+        assert not solution_d_mu
+        assert not output_d_mu
+        assert not solution_error_estimate
+        assert not output_error_estimate
+
+        # parse parameter values
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+
+        data = {}
+        if solution:
+            data['solution'] = InstationaryModelComputeIterator(self, mu, solution=True, output=False)
+        if output:
+            assert self.output_functional
+            data['output'] = InstationaryModelComputeIterator(self, mu, solution=False, output=True)
+        return data
+
     def _compute_solution(self, mu=None, **kwargs):
+        # TODO: merge with _compute?
         return self.time_stepper.solve(
                 t0=0., t1=self.T, U0=self.initial_data, A=self.operator, F=self.rhs, M=self.mass, mu=mu,
                 iter=False, return_times=False)
@@ -272,3 +307,30 @@ class InstationaryModel(Model):
 
         from pymor.models.iosys import LTIModel
         return LTIModel(A, B, C, E=E, visualizer=self.visualizer)
+
+
+class InstationaryModelComputeIterator(BasicObject):
+
+    def __init__(self, m, mu, solution, output):
+        assert isinstance(m, InstationaryModel)
+        assert solution or output
+        self.__auto_init(locals())
+        self.time_stepper_iter = m.time_stepper.solve(
+                t0=0., t1=m.T, U0=m.initial_data, A=m.operator, F=m.rhs, M=m.mass, mu=mu,
+                iter=True, return_times=True)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        U_next, t_next = next(self.time_stepper_iter)
+        if not self.output:
+            return U_next
+        else:
+            mu_t = self.mu.with_(t=t_next)
+            s_next = self.m.output_functional.apply(U_next, mu=mu_t)
+            if self.solution:
+                return U_next, s_next
+            else:
+                return s_next
+
