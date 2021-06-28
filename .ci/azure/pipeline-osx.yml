@@ -25,7 +25,8 @@ jobs:
   - bash: |
       set -x -e
       conda config --add channels conda-forge
-      conda update -y --all
+      conda config --set channel_priority strict
+      #conda update -y --all
       conda install -y --only-deps pymor
       # these ones are not in the 2020.1 conda build yet
       conda install -y pyevtk mpi4py slycot pytorch pyqt codecov qtpy
