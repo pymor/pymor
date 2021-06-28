@@ -186,7 +186,14 @@ class DiskRegion(CacheRegion):
         if has_key:
             getLogger('pymor.core.cache.DiskRegion').warning('Key already present in cache region, ignoring.')
             return
-        self._cache.set(key, value)
+        try:
+            self._cache.set(key, value)
+        except NotImplementedError:
+            if isinstance(value, tuple):
+                getLogger('pymor.core.cache.DiskRegion').warning(
+                    ('Disk-based caching of {} is not supported.').format(type(value[0])))
+        except TypeError as te:
+            getLogger('pymor.core.cache.DiskRegion').warning(('Disk-based caching ignored: {}.').format(te))
 
     def clear(self):
         self._cache.clear()
