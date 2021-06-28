@@ -17,7 +17,7 @@ from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
 from pymor.vectorarrays.block import BlockVectorArray
-from pymor.vectorarrays.constructions import DivergenceFreeVectorArray
+from pymor.vectorarrays.constructions import LerayProjectorSpace
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -1377,22 +1377,20 @@ class LerayProjectedOperator(CacheableObject, Operator):
     can be defined. This operator represents a projected operator of the type
     `P op P^T` if `projection_space` is `None`. If `projection_space == 'range'`
     or `projection_space == 'source'` this operator represents `P op` or `op P^T`,
-    respectively. Additionally, the source and/or range space of this operator
-    is a |DivergenceFreeSubSpace|.
+    respectively.
     """
 
     cache_region = 'memory'
 
     def __init__(self, operator, div_op, mass_op, projection_space=None, solver_options=None, name=None):
-        from pymor.vectorarrays.constructions import DivergenceFreeSubSpace
         if projection_space is None:
-            self.source = DivergenceFreeSubSpace(mass_op, div_op, trans=True)
-            self.range = DivergenceFreeSubSpace(mass_op, div_op, trans=False)
+            self.source = LerayProjectorSpace(mass_op, div_op, range_space=False)
+            self.range = LerayProjectorSpace(mass_op, div_op)
         elif projection_space == 'range':
             self.source = operator.source
-            self.range = DivergenceFreeSubSpace(mass_op, div_op, trans=False)
+            self.range = LerayProjectorSpace(mass_op, div_op)
         elif projection_space == 'source':
-            self.source = DivergenceFreeSubSpace(mass_op, div_op, trans=True)
+            self.source = LerayProjectorSpace(mass_op, div_op, range_space=False)
             self.range = operator.range
         else:
             raise ValueError('Unkown projection space.')
@@ -1404,28 +1402,27 @@ class LerayProjectedOperator(CacheableObject, Operator):
         self.projection_space = projection_space
 
         from pymor.operators.block import BlockOperator
-        if self.projection_space is None:
+        if self.source == self.range:
             self.block_operator = BlockOperator([
                 [operator, div_op],
                 [div_op.H, None]
             ])
-        self.__auto_init(locals())
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if self.projection_space is None and V in self.range:
             rhs = BlockVectorArray([V._va, self.div_op.source.zeros(len(V))])
             sps_sol = self.block_operator.apply_inverse(rhs, mu=mu, initial_guess=initial_guess,
                                                         least_squares=least_squares).block(0)
-            return DivergenceFreeVectorArray(sps_sol, self.source)
+            return self.source.make_array(sps_sol, is_projected=True)
         else:
             raise NotImplementedError
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        if self.projection_space is None and U in self.range:
+        if self.projection_space is None and U in self.source.trans_projector():
             rhs = BlockVectorArray([U._va, self.div_op.source.zeros(len(U))])
             sps_sol = self.block_operator.apply_inverse_adjoint(rhs, mu=mu, initial_guess=initial_guess,
                                                                 least_squares=least_squares).block(0)
-            return DivergenceFreeVectorArray(sps_sol, self.source)
+            return self.range.trans_projector().make_array(sps_sol, is_projected=True)
         else:
             raise NotImplementedError
 
@@ -1435,10 +1432,10 @@ class LerayProjectedOperator(CacheableObject, Operator):
                 raise NotImplementedError
             else:
                 if self.operator == self.mass_op or self.operator.H == self.mass_op:
-                    return DivergenceFreeVectorArray(self.operator.apply(U.get_va(), mu=mu), self.range)
+                    return self.range.make_array(self.operator.apply(U.get_va(), mu=mu), is_projected=True)
                 else:
-                    return DivergenceFreeVectorArray(self.operator.apply(U.get_va(), mu=mu),
-                                                     self.range, is_projected=False)
+                    return self.range.make_array(self.operator.apply(U.get_va(), mu=mu),
+                                                 self.range, is_projected=False)
         elif self.projection_space == 'source':
             if U not in self.source:
                 raise NotImplementedError
@@ -1448,7 +1445,7 @@ class LerayProjectedOperator(CacheableObject, Operator):
             if U not in self.operator.source:
                 raise NotImplementedError
             else:
-                return DivergenceFreeVectorArray(self.operator.apply(U, mu=mu), self.range, is_projected=False)
+                return self.range.make_array(self.operator.apply(U, mu=mu), is_projected=False)
 
     def apply_adjoint(self, V, mu=None):
         if self.projection_space is None:
@@ -1456,10 +1453,11 @@ class LerayProjectedOperator(CacheableObject, Operator):
                 raise NotImplementedError
             else:
                 if self.operator == self.mass_op or self.operator.H == self.mass_op:
-                    return DivergenceFreeVectorArray(self.operator.apply_adjoint(V.get_va(), mu=mu), self.range)
+                    return self.source.trans_projector().make_array(self.operator.apply_adjoint(V.get_va(), mu=mu),
+                                                                    is_projected=True)
                 else:
-                    return DivergenceFreeVectorArray(self.operator.apply_adjoint(V.get_va(), mu=mu),
-                                                     self.range, is_projected=False)
+                    return self.source.trans_projector().make_array(self.operator.apply_adjoint(V.get_va(), mu=mu),
+                                                                    is_projected=False)
         elif self.projection_space == 'range':
             if V not in self.range:
                 raise NotImplementedError
@@ -1469,12 +1467,12 @@ class LerayProjectedOperator(CacheableObject, Operator):
             if V not in self.operator.range:
                 raise NotImplementedError
             else:
-                return DivergenceFreeVectorArray(self.operator.apply_adjoint(V, mu=mu),
-                                                 self.source.trans_projector(), is_projected=False)
+                return self.source.trans_projector().make_array(self.operator.apply_adjoint(V, mu=mu),
+                                                                is_projected=False)
 
     def apply2(self, V, U, mu=None):
         if self.projection_space is None:
-            if V in self.range and U in self.range:
+            if V in self.range.trans_projector() and U in self.source:
                 return self.operator.apply2(V.get_va(), U.get_va(), mu=mu)
             else:
                 raise NotImplementedError
@@ -1483,13 +1481,15 @@ class LerayProjectedOperator(CacheableObject, Operator):
 
     @cached
     def as_range_array(self, mu=None):
+        "Assume this operator's range is projected."
         ra = self.operator.as_range_array(mu=mu)
-        return self.range.project_onto_subspace(ra)
+        return self.range.apply_projector(ra)
 
     @cached
     def as_source_array(self, mu=None):
+        "Assume this operator's source is projected."
         sa = self.operator.as_source_array(mu=mu)
-        return self.source.project_onto_subspace(sa)
+        return self.source.apply_projector(sa)
 
     def assemble(self, mu=None):
         operator = self.operator.assemble(mu)
@@ -1498,4 +1498,17 @@ class LerayProjectedOperator(CacheableObject, Operator):
         if operator == self.operator and div_op == self.div_op and mass_op == self.mass_op:
             return self
         else:
-            return self.__class__(operator, div_op, mass_op, projection_space=self.projection_space)
+            return self.__class__(operator, div_op, mass_op)
+
+    def project_onto_subspace(self, V, trans=False):
+        from pymor.operators.block import BlockOperator
+        sps = BlockOperator([
+            [self.mass_op, self.div_op],
+            [self.div_op.H, None]
+        ])
+        if trans:
+            rhs = BlockVectorArray([self.mass_op.apply_adjoint(V), self.div_op.source.zeros(len(V))])
+            return sps.apply_inverse_adjoint(rhs).block(0)
+        else:
+            rhs = BlockVectorArray([V, self.div_op.source.zeros(len(V))])
+            return self.mass_op.apply(sps.apply_inverse(rhs).block(0))

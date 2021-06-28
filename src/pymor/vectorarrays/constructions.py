@@ -2,6 +2,8 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.core.base import abstractmethod
+
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.vectorarrays.block import BlockVectorArray
 from pymor.vectorarrays.interface import VectorArray
@@ -17,26 +19,25 @@ def cat_arrays(vector_arrays):
     return cated_arrays
 
 
-class DivergenceFreeVectorArray(VectorArray):
+class ProjectedVectorArray(VectorArray):
+    """|VectorArray| class for vectors from the range of a projector.
 
-    def __init__(self, va, space, is_projected=True):
-        """|VectorArray| class for divergence free vectors.
+    The `is_projected` attribute indicates wether the projector has already been
+    applied.
+    """
 
-        Class for |VectorArray|s from a |DivergenceFreeVectorSpace|. The parameter
-        `is_projected` indicates wether the projection `P V` or `P^T V` has already
-        been performed.
-        """
-        assert isinstance(space, DivergenceFreeSubSpace)
+    def __init__(self, va, space, is_projected):
+        assert isinstance(space, ProjectorSpace)
         self._va = va
         self.space = space
         self.is_projected = is_projected
 
     def get_va(self):
-        """Get the |VectorArray| in coordinate space representation."""
+        """Get the |VectorArray| as an object from the super space."""
         if self.is_projected:
             return self._va
         else:
-            self._va = self.space.project_onto_subspace(self._va)._va
+            self._va = self.space.apply_projector(self._va)._va
             self.is_projected = True
             return self._va
 
@@ -112,7 +113,7 @@ class DivergenceFreeVectorArray(VectorArray):
         return self.get_va()._norm2()
 
     def dofs(self, dof_indices):
-        return self.get_va().dofs(dof_indices)
+        raise NotImplementedError
 
     def amax(self):
         return self.get_va().amax()
@@ -129,67 +130,119 @@ class DivergenceFreeVectorArray(VectorArray):
         return type(self)(self._va.conj(), self.space, is_projected=self.is_projected)
 
 
-class DivergenceFreeSubSpace(VectorSpace):
-    """|VectorSpace| containing discrete divergence free velocities.
+class ProjectorSpace(VectorSpace):
+    """|VectorSpace| containing vectors from the range of a projector."""
 
-    Based on linear |Operator|s :math:`E` and :math:`G` the projector
-
-    .. math::
-        P = I - G (G^T E^{-1} G)^{-1} G^T E^{-1}
-
-    can be defined. If `trans==True` this |VectorSpace| represents
-    the subspace of E.source where for all vectors :math:`V` it holds
-
-    .. math::
-        P^T V = V.
-
-    If `trans==False` it holds
-
-    .. math::
-        P V = V.
-    """
-
-    def __init__(self, E, G, trans, id=None):
-        self.E = E
-        self.G = G
-        self.trans = trans
-        self.coordinate_space = E.source
-        self.dim = E.source.dim
+    def __init__(self, super_space, dim, id=None):
+        self.super_space = super_space
+        self.dim = dim
         self.id = id
 
-    def trans_projector(self):
-        return type(self)(self.E, self.G, not self.trans, self.id)
-
     def __eq__(self, other):
-        # this condition ignores self.trans, but leads to desired behaviour
-        return type(other) is type(self) and self.E == other.E \
-            and self.G == other.G  # and self.trans == other.trans
+        return type(other) is type(self) and self.super_space == other.super_space \
+            and self.dim == other.dim
 
     def zeros(self, count=1, reserve=0):
-        return DivergenceFreeVectorArray(self.coordinate_space.zeros(count, reserve), self)
+        return self.make_array(self.super_space.zeros(count, reserve), True)
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
-        coordinate_random = self.coordinate_space.random(count, distribution, random_state, seed, reserve, **kwargs)
-        return DivergenceFreeVectorArray(coordinate_random, self, is_projected=False)
+        super_random = self.super_space.random(count, distribution, random_state, seed, reserve, **kwargs)
+        return self.make_array(super_random, is_projected=False)
 
-    def make_array(*args, **kwargs):
-        raise NotImplementedError
+    @abstractmethod
+    def make_array(self, super_va, is_projected):
+        pass
 
     def from_numpy(self, V, ensure_copy=False):
-        from pymor.vectorarrays.numpy import NumpyVectorArray
-        return DivergenceFreeVectorArray(NumpyVectorArray(V, self.coordinate_space), self)
+        return self.make_array(self.super_space.from_numpy(V), is_projected=False)
 
-    def project_onto_subspace(self, V):
-        assert V in self.coordinate_space
+    @abstractmethod
+    def apply_projector(self, V):
+        pass
+
+
+class LerayProjectedVectorArray(ProjectedVectorArray):
+
+    def __init__(self, va, space, is_projected):
+        """|VectorArray| class for vectors from |LerayProjectorRangeSpace|s."""
+        assert isinstance(space, LerayProjectorSpace)
+        super().__init__(va, space, is_projected)
+
+
+class LerayProjectorSpace(ProjectorSpace):
+    """|VectorSpace| containing vectors from the range of a discrete Leray Projector.
+
+    Based on linear |Operator|s :math:`E`, :math:`G` and :math:`J` the projectors
+
+    .. math::
+        P = I - E^{-1} G (J E^{-1} G)^{-1} J
+
+    and
+
+    .. math::
+        Q = I - G (J E^{-1} G)^{-1} J E^{-1}
+
+    can be defined. This |VectorSpace| represents the subspace of E.source
+    where for all vectors :math:`V` it holds
+
+    .. math::
+        P V = V
+
+    if `self.trans == False` and `self.range_space == True`,
+
+    .. math::
+        P^T V = V
+
+    if `self.trans == True` and `self.range_space == True`,
+
+    .. math::
+        Q V = V
+
+    if `self.trans == False` and `self.range_space == False` or
+
+    .. math::
+        Q^T V = V
+
+    if `self.trans == True` and `self.range_space == False`.
+    """
+
+    def __init__(self, E, G, range_space=True, trans=False, id=None):
+        self.E = E
+        self.G = G
+        self.range_space = range_space
+        self.trans = trans
+        dim = E.source.dim - G.source.dim if not trans else E.source.dim - G.range.dim
+        super().__init__(E.source, dim, id=id)
+
+    def __eq__(self, other):
+        return type(other) is type(self) and self.E == other.E and self.G == other.G \
+            and self.trans == other.trans and self.range_space == other.range_space
+
+    def make_array(self, super_va, is_projected):
+        return LerayProjectedVectorArray(super_va, self, is_projected)
+
+    def apply_projector(self, V):
+        assert V in self.super_space
         from pymor.operators.block import BlockOperator
-        sps = BlockOperator([
-            [self.E, self.G],
-            [self.G.H, None]
-        ])
-        if self.trans:
-            rhs = BlockVectorArray([self.E.apply_adjoint(V), self.G.source.zeros(len(V))])
-            Vp = sps.apply_inverse_adjoint(rhs).block(0)
+        if self.range_space:
+            sps = BlockOperator([
+                [self.E, self.G],
+                [self.G.H, None]
+            ])
         else:
+            # this has to be changed as soon as G is different from J^T
+            sps = BlockOperator([
+                [self.E, self.G],
+                [self.G.H, None]
+            ])
+        if not self.trans:
             rhs = BlockVectorArray([V, self.G.source.zeros(len(V))])
             Vp = self.E.apply(sps.apply_inverse(rhs).block(0))
-        return DivergenceFreeVectorArray(Vp, self)
+        else:
+            rhs = BlockVectorArray([self.E.apply_adjoint(V), self.G.source.zeros(len(V))])
+            Vp = sps.apply_inverse_adjoint(rhs).block(0)
+        return self.make_array(Vp, is_projected=True)
+
+    def trans_projector(self):
+        """Return the |LerayProjectorSpace| w.r.t. the transposed projector."""
+        return LerayProjectorSpace(self.E, self.G, not self.trans)

@@ -2457,9 +2457,9 @@ class StokesDescriptorModel(InputStateOutputModel):
         D = D or ZeroOperator(C.range, B.source)
         assert D.linear and D.source == B.source and D.range == C.range
 
-        from pymor.vectorarrays.constructions import DivergenceFreeSubSpace
+        from pymor.vectorarrays.block import BlockVectorSpace
 
-        super().__init__(B.source.dim, DivergenceFreeSubSpace(E, G, True), C.range.dim, cont_time=True,
+        super().__init__(B.source.dim, BlockVectorSpace((G.range, G.source)), C.range.dim, cont_time=True,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
@@ -2494,60 +2494,12 @@ class StokesDescriptorModel(InputStateOutputModel):
 
         from pymor.operators.constructions import LerayProjectedOperator
         Aproj = LerayProjectedOperator(self.A, self.G, self.E)
-        Bproj = LerayProjectedOperator(self.B, self.G, self.E, projection_space='range')
-        Cproj = LerayProjectedOperator(self.C, self.G, self.E, projection_space='source')
+        Bproj = LerayProjectedOperator(self.B, self.G, self.E)
+        Cproj = LerayProjectedOperator(self.C, self.G, self.E)
         Eproj = LerayProjectedOperator(self.E, self.G, self.E)
 
         return LTIModel(Aproj, Bproj, Cproj, D=self.D, E=Eproj, cont_time=True, solver_options=solver_options,
                         error_estimator=error_estimator, visualizer=visualizer, name=name)
 
     def eval_tf(self, s, mu=None):
-        r"""Evaluate the transfer function.
-
-        The transfer function at :math:`s` is
-
-        .. math::
-            C(\mu) (s E(\mu) - A(\mu))^{-1} B(\mu) + D(\mu).
-
-        .. note::
-            Assumes that either the number of inputs or the number of outputs is much smaller than
-            the order of the system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.output_dim, self.input_dim)`.
-        """
-        from pymor.vectorarrays.constructions import DivergenceFreeVectorArray
-
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        A = self.A
-        B = self.B
-        C = self.C
-        D = self.D
-        E = self.E
-
-        sEmA = s * E - A
-        if self.input_dim <= self.output_dim:
-            tfs = C.apply(sEmA.apply_inverse(DivergenceFreeVectorArray(B.operator.as_range_array(),
-                                             self.B.range, is_projected=False), mu=mu),
-                          mu=mu).to_numpy().T
-        else:
-            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(DivergenceFreeVectorArray(
-                                                             C.operator.as_source_array(),
-                                                             self.C.source, is_projected=False),
-                                                             mu=mu),
-                                  mu=mu).to_numpy().conj()
-        if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense', mu=mu)
-        return tfs
+        raise NotImplementedError
