@@ -65,9 +65,13 @@ jobs:
       # this allows azure-specific defaults
       cp .ci/azure/pymor_defaults.py_win pymor_defaults.py
       # async + converage data in sqlite -> errors
-      python -m pytest -k hapod --junitxml=test_results.xml --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
-      python -m pytest -k "not hapod" --cov --cov-config=setup.cfg --cov-context=test --junitxml=test_results.xml --hypothesis-profile $(PYMOR_HYPOTHESIS_PROFILE)
+      # ignore random interpreter error and rely on pytest exit instead
+      python .ci/azure/run_tests.py -k hapod || echo "ignoring python exit code"
+      # cat equivalent will fail if tests did not succeed
+      type pytest.azure.success || exit 127
 
+      python .ci/azure/run_tests.py -k "not hapod" --cov --cov-config=setup.cfg --cov-context=test || echo "ignoring python exit code"
+      type pytest.azure.success || exit 127
   - script: |
       choco install codecov
       coverage xml
