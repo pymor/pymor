@@ -388,7 +388,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                                    solver_options=solver_options)
 
     def __getstate__(self):
-        if hasattr(self.matrix, 'factorization'):  # remove unplicklable SuperLU factorization
+        if hasattr(self.matrix, 'factorization'):  # remove unpicklable SuperLU factorization
             del self.matrix.factorization
         return self.__dict__
 
