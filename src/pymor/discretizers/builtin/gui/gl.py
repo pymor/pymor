@@ -286,7 +286,7 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
             self.setMinimumSize(max(self.vmin_width, self.vmax_width) + 20, 300)
             self.update()
 
-        def paintEvent(self, event):
+        def paintGL(self):
             p = QPainter(self)
             p.beginNativePainting()
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
