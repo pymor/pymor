@@ -278,9 +278,8 @@ class Model(CacheableObject, ParametricObject):
                 *, mu=None, input=None, **kwargs):
         """Compute the solution of the model and associated quantities.
 
-        This methods computes the output of the model it's internal state
-        and various associated quantities for given |parameter values|
-        `mu`.
+        This methods computes the output of the model, its internal state,
+        and various associated quantities for given |parameter values| `mu`.
 
         .. note::
 
