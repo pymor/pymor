@@ -2,7 +2,7 @@ jobs:
 - job: 'OSX_CI'
   pool:
     vmImage: macOS-10.15
-  timeoutInMinutes: 45
+  timeoutInMinutes: 65
   variables:
       PYMOR_HYPOTHESIS_PROFILE: ci
   strategy:
