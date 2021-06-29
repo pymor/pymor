@@ -348,7 +348,7 @@ def test_restricted(operator_with_arrays):
             return
         op_U = rop.range.make_array(op.apply(U, mu=mu).dofs(dofs))
         rop_U = rop.apply(rop.source.make_array(U.dofs(source_dofs)), mu=mu)
-        assert_all_almost_equal(op_U, rop_U)
+        assert_all_almost_equal(op_U, rop_U, rtol=1e-13)
 
 
 def test_restricted_jacobian(operator_with_arrays):
@@ -369,7 +369,7 @@ def test_restricted_jacobian(operator_with_arrays):
         rop_U = rop.jacobian(r_apply_to, mu=mu).apply(r_apply_to)
         assert len(rop_U) == len(op_U)
         assert len(r_apply_to) == len(apply_to)
-        assert_all_almost_equal(op_U, rop_U)
+        assert_all_almost_equal(op_U, rop_U, rtol=1e-13)
 
 
 def test_InverseOperator(operator_with_arrays):
