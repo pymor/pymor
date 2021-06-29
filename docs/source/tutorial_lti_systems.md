@@ -142,6 +142,32 @@ print(fom)
 which gives the dimensions of the underlying system more directly,
 together with some of its properties.
 
+## Time-domain simulation
+
+The `solve` and `output` methods can be used to respectively compute the
+solution and output trajectories.
+For this, it is necessary to set the final time and the time-stepper.
+This could have been done in the `from_matrices` call.
+Instead of creating a new model using `from_matrices`,
+we can redefine `fom` using its `with_` method.
+
+```{code-cell}
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+fom = fom.with_(T=10, time_stepper=ImplicitEulerTimeStepper(100))
+```
+
+With this done, we can compute the output for some given input and plot it.
+
+```{code-cell}
+u = lambda t: np.array([[np.sin(t)], [np.sin(2 * t)]])
+Y = fom.output(input=u)
+fig, ax = plt.subplots()
+ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), Y)
+ax.set_xlabel('$t$')
+ax.set_ylabel('$y(t)$')
+_ = ax.set_title('Output')
+```
+
 ## Transfer function evaluation
 
 The transfer function {math}`H` is the function such that
