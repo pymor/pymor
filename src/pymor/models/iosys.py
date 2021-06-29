@@ -209,7 +209,8 @@ class LTIModel(Model):
         return string
 
     @classmethod
-    def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0, presets=None,
+    def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0,
+                      T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
                       state_id='STATE', solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices.
@@ -229,6 +230,17 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        T
+            The final time T.
+        initial_data
+            The initial data `x_0` as a |NumPy array|. If `None`, it is assumed
+            to be zero.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
             See :meth:`~pymor.models.iosys.LTIModel.__init__`.
@@ -256,8 +268,9 @@ class LTIModel(Model):
         assert isinstance(A, (np.ndarray, sps.spmatrix))
         assert isinstance(B, (np.ndarray, sps.spmatrix))
         assert isinstance(C, (np.ndarray, sps.spmatrix))
-        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
-        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
+        assert isinstance(D, (np.ndarray, sps.spmatrix, type(None)))
+        assert isinstance(E, (np.ndarray, sps.spmatrix, type(None)))
+        assert isinstance(initial_data, (np.ndarray, type(None)))
 
         A = NumpyMatrixOperator(A, source_id=state_id, range_id=state_id)
         B = NumpyMatrixOperator(B, range_id=state_id)
@@ -266,10 +279,12 @@ class LTIModel(Model):
             D = NumpyMatrixOperator(D)
         if E is not None:
             E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
+        if initial_data is not None:
+            initial_data = A.source.from_numpy(initial_data)
 
-        return cls(A, B, C, D, E, sampling_time=sampling_time, presets=presets,
-                   solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
-                   name=name)
+        return cls(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
+                   time_stepper=time_stepper, num_values=num_values, presets=presets,
+                   solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
     def to_matrices(self):
         """Return operators as matrices.
@@ -295,9 +310,9 @@ class LTIModel(Model):
         return A, B, C, D, E
 
     @classmethod
-    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0, presets=None,
-                   state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
-                   name=None):
+    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0,
+                   T=None, initial_data_file=None, time_stepper=None, num_values=None, presets=None,
+                   state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -315,6 +330,17 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        T
+            The final time T.
+        initial_data_file
+            `None` or the name of the file (with extension) containing the
+            initial data.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
             See :meth:`~pymor.models.iosys.LTIModel.__init__`.
@@ -346,10 +372,12 @@ class LTIModel(Model):
         C = load_matrix(C_file)
         D = load_matrix(D_file) if D_file is not None else None
         E = load_matrix(E_file) if E_file is not None else None
+        initial_data = load_matrix(initial_data_file) if initial_data_file is not None else None
 
-        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, presets=presets,
-                                 state_id=state_id, solver_options=solver_options,
-                                 error_estimator=error_estimator, visualizer=visualizer, name=name)
+        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
+                                 time_stepper=time_stepper, num_values=num_values, presets=presets, state_id=state_id,
+                                 solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
+                                 name=name)
 
     def to_files(self, A_file, B_file, C_file, D_file=None, E_file=None):
         """Write operators to files as matrices.
@@ -382,9 +410,8 @@ class LTIModel(Model):
             save_matrix(file, mat)
 
     @classmethod
-    def from_mat_file(cls, file_name, sampling_time=0, presets=None,
-                      state_id='STATE', solver_options=None, error_estimator=None,
-                      visualizer=None, name=None):
+    def from_mat_file(cls, file_name, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
+                      state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
         Supports the format used in the `SLICOT benchmark collection
@@ -398,6 +425,14 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        T
+            The final time T.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
             See :meth:`~pymor.models.iosys.LTIModel.__init__`.
@@ -441,9 +476,10 @@ class LTIModel(Model):
             if mat is not None and np.issubdtype(mat.dtype, np.integer):
                 matrices[i] = mat.astype(np.float_)
 
-        return cls.from_matrices(*matrices, sampling_time=sampling_time, presets=presets,
-                                 state_id=state_id, solver_options=solver_options,
-                                 error_estimator=error_estimator, visualizer=visualizer, name=name)
+        return cls.from_matrices(*matrices, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
+                                 num_values=num_values, presets=presets, state_id=state_id,
+                                 solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
+                                 name=name)
 
     def to_mat_file(self, file_name):
         """Save operators as matrices to .mat file.
@@ -463,9 +499,8 @@ class LTIModel(Model):
         spio.savemat(file_name, mat_dict)
 
     @classmethod
-    def from_abcde_files(cls, files_basename, sampling_time=0, presets=None,
-                         state_id='STATE', solver_options=None, error_estimator=None,
-                         visualizer=None, name=None):
+    def from_abcde_files(cls, files_basename, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
+                         state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in .[ABCDE] files.
 
         Parameters
@@ -475,6 +510,14 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        T
+            The final time T.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
             See :meth:`~pymor.models.iosys.LTIModel.__init__`.
@@ -508,9 +551,10 @@ class LTIModel(Model):
         D = load_matrix(files_basename + '.D') if os.path.isfile(files_basename + '.D') else None
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
-        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, presets=presets,
-                                 state_id=state_id, solver_options=solver_options,
-                                 error_estimator=error_estimator, visualizer=visualizer, name=name)
+        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
+                                 num_values=num_values, presets=presets, state_id=state_id,
+                                 solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
+                                 name=name)
 
     def to_abcde_files(self, files_basename):
         """Save operators as matrices to .[ABCDE] files in Matrix Market format.
