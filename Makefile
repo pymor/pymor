@@ -21,7 +21,7 @@ CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
   	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
 	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose -f .binder/docker-compose.yml -p pymor
-NB_DIR=notebooks
+NB_DIR=docs/source
 NB_USER:=${USER}
 ifeq ($(PYMOR_SUDO), 1)
 	COMPOSE_SUDO:=sudo -E

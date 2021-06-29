@@ -83,6 +83,8 @@ class MPLPlotBase:
             self._out = widgets.Output()
             with self._out:
                 plt.show()
+            # avoids figure double display
+            plt.close()
             # IPython display system checks for presence and calls this func
             self._ipython_display_ = self._out._ipython_display_
 

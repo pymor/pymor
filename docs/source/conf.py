@@ -35,19 +35,48 @@ extensions = ['sphinx.ext.autodoc',
               'pymordocstring',
               'try_on_binder',
               'jupyter_sphinx',
+              'myst_nb',
               'sphinx.ext.mathjax',
               'sphinx_qt_documentation',
               'autoapi.extension',
               'autoapi_pymor',
               'sphinxcontrib.bibtex',
               ]
+# this enables:
+# - https://myst-parser.readthedocs.io/en/latest/using/syntax-optional.html#direct-latex-math
+# - https://myst-parser.readthedocs.io/en/latest/using/syntax-optional.html#definition-lists
+# - https://myst-parser.readthedocs.io/en/latest/using/syntax-optional.html#substitutions-with-jinja2
+myst_enable_extensions = [
+    "dollarmath",
+    "amsmath",
+    "deflist",
+    "html_image",
+    "colon_fence",
+    "smartquotes",
+    "replacements",
+    "substitution",
+]
+myst_url_schemes = ("http", "https", "mailto")
+# auto genereated link anchors
+myst_heading_anchors = 2
+import substitutions # noqa
+myst_substitutions = substitutions.myst_substitutions
+jupyter_execute_notebooks = "cache"
+execution_timeout = 120
+# print tracebacks to stdout
+execution_show_tb = True
 
 bibtex_bibfiles = ['bibliography.bib']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.ipynb': 'myst-nb',
+    '.md': 'myst-nb',
+}
+
 
 # The master toctree document.
 master_doc = 'index'
@@ -60,7 +89,6 @@ copyright = '2013-2021 pyMOR developers and contributors'
 # other places throughout the built documents.
 # imports have to be delayed until after sys.path modification
 import pymor  # noqa
-import substitutions # noqa
 import autoapi_pymor # noqa
 version = pymor.__version__
 rst_epilog = substitutions.substitutions
