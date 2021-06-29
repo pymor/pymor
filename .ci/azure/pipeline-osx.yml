@@ -52,11 +52,10 @@ jobs:
       # ignore random interpreter error and rely on pytest exit instead
       python .ci/azure/run_tests.py -sv --cov --cov-config=setup.cfg --cov-context=test  || echo "ignoring python exit code"
       cat pytest.azure.success || exit 127
-
-      coverage xml
     displayName: py.test
 
   - script: |
+      coverage xml
       codecov --file coverage.xml
     displayName: 'Upload to codecov.io'
   - publish: src/pymortests/testdata/check_results/

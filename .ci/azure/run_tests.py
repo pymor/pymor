@@ -19,6 +19,6 @@ if __name__ == '__main__':
 
     profile = os.environ.get("PYMOR_HYPOTHESIS_PROFILE", "ci")
     args = ["--junitxml=test_results.xml", f"--hypothesis-profile={profile}"] + sys.argv[1:]
-    success = pytest.main(args) == pytest.ExitCode.OK
-    with open(result_file_fn, 'wt') as result_file:
-        result_file.write(f'{success}')
+    if pytest.main(args) == pytest.ExitCode.OK:
+        with open(result_file_fn, 'wt') as result_file:
+            result_file.write('True')
