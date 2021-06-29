@@ -220,8 +220,8 @@ In words, if the input is a pure exponential,
 the frequency is preserved in the output,
 the amplitude is multiplied by the amplitude of the transfer function, and
 the phase is shifted by the argument of the transfer function.
-In particular, if the input is sinusiodal, i.e., {math}`\xi = 0`,
-then the output is also sinusiodal.
+In particular, if the input is sinusoidal, i.e., {math}`\xi = 0`,
+then the output is also sinusoidal.
 
 It is of interest to plot the transfer function over the imaginary axis to
 visualize how the LTI system responds to each frequency in the input.
