@@ -21,10 +21,11 @@ from pymor.models.transforms import BilinearTransformation, MoebiusTransformatio
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import (IdentityOperator, InverseOperator, LincombOperator, LowRankOperator,
-                                           ZeroOperator)
-from pymor.operators.numpy import NumpyMatrixOperator
+                                           VectorOperator, ZeroOperator)
+from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 from pymor.parameters.base import Parameters, Mu
 from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('value')
@@ -70,6 +71,21 @@ class LTIModel(Model):
     sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
+    T
+        The final time T.
+    initial_data
+        The initial data `x_0`. Either a |VectorArray| of length 1 or
+        (for the |Parameter|-dependent case) a vector-like |Operator|
+        (i.e. a linear |Operator| with `source.dim == 1`) which
+        applied to `NumpyVectorArray(np.array([1]))` will yield the
+        initial data for given |parameter values|. If `None`, it is
+        assumed to be zero.
+    time_stepper
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+        to be used by :meth:`~pymor.models.interface.Model.solve`.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
     presets
         A `dict` of preset attributes or `None`. The dict must only contain keys that correspond to
         attributes of |LTIModel| such as `poles`, `c_lrcf`, `o_lrcf`, `c_dense`, `o_dense`, `hsv`,
@@ -112,7 +128,8 @@ class LTIModel(Model):
         The transfer function.
     """
 
-    def __init__(self, A, B, C, D=None, E=None, sampling_time=0, presets=None,
+    def __init__(self, A, B, C, D=None, E=None, sampling_time=0,
+                 T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
 
         assert A.linear
@@ -134,6 +151,15 @@ class LTIModel(Model):
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
+
+        if initial_data is None:
+            initial_data = A.source.zeros(1)
+        if isinstance(initial_data, VectorArray):
+            assert initial_data in A.source
+            assert len(initial_data) == 1
+            initial_data = VectorOperator(initial_data, name='initial_data')
+        assert initial_data.source.is_scalar
+        assert initial_data.range == A.source
 
         assert presets is None or presets.keys() <= {'poles', 'c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'hsv',
                                                      'h2_norm', 'hinf_norm', 'l2_norm', 'linf_norm', 'fpeak'}
@@ -504,6 +530,42 @@ class LTIModel(Model):
             _mmwrite(Path(files_basename + '.D'), D)
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
+
+    _compute_allowed_kwargs = frozenset({'input'})
+
+    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
+                 solution_error_estimate=False, output_error_estimate=False,
+                 output_d_mu_return_array=False, mu=None, input=None, **kwargs):
+        if not solution and not output:
+            return {}
+
+        # solution computation
+        mu = mu.with_(t=0.)
+        X0 = self.initial_data.as_range_array(mu)
+        if input is None:
+            rhs = None
+        else:
+            input_op = NumpyGenericOperator(lambda U, mu: U @ input(mu['t'][0]).T,
+                                            dim_range=self.dim_input,
+                                            parameters={'t': 1},
+                                            linear=True)
+            rhs = self.B @ input_op
+        X = self.time_stepper.solve(operator=-self.A,
+                                    rhs=rhs,
+                                    initial_data=X0,
+                                    mass=None if isinstance(self.E, IdentityOperator) else self.E,
+                                    initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
+        data = {'solution': X}
+
+        # output computation
+        if output:
+            Cx = self.C.apply(X, mu=mu).to_numpy()
+            if input is None or isinstance(self.D, ZeroOperator):
+                data['output'] = Cx
+            else:
+                raise NotImplementedError
+
+        return data
 
     def __add__(self, other):
         """Add an |LTIModel|."""
