@@ -6,6 +6,7 @@ import itertools
 import os
 import tempfile
 from math import exp, factorial, pi, sin
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -218,12 +219,15 @@ def test_save_load_matrix(ext):
 
 
 def test_cwd_ctx_manager():
-    original_cwd = os.getcwd()
-    target = tempfile.gettempdir()
+    def _cwd():
+        return Path(os.getcwd()).resolve()
+
+    original_cwd = _cwd()
+    target = Path(tempfile.gettempdir()).resolve()
     with change_to_directory(target) as result:
         assert result is None
-        assert os.getcwd() == target
-    assert os.getcwd() == original_cwd
+        assert _cwd() == target
+    assert _cwd() == original_cwd
 
 
 if __name__ == "__main__":
