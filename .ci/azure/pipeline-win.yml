@@ -62,6 +62,9 @@ jobs:
   - script: |
       call activate myEnvironment
       set PYTHONPATH=%PYTHONPATH%;%cd%\src
+      set QT_VERBOSE=1
+      set QT_DEBUG_PLUGINS=1
+      set QT_API=pyside2
 
       # this allows azure-specific defaults
       cp .ci/azure/pymor_defaults.py_win pymor_defaults.py
