@@ -672,7 +672,7 @@ print_source(reductor.reconstruct)
 ```
 
 Download the code:
-{jupyter-download:script}`tutorial_projection`
-{jupyter-download:notebook}`tutorial_projection`
+{download}`tutorial_projection.md`
+{nb-download}`tutorial_projection.ipynb`
 
 

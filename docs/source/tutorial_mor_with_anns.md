@@ -296,7 +296,7 @@ be applied to {{ Models }} originating from external solvers, without requiring 
 {{ Operators }} internal to the solver.
 
 Download the code:
-{jupyter-download:script}`tutorial_mor_with_anns`
-{jupyter-download:notebook}`tutorial_mor_with_anns`
+{download}`tutorial_mor_with_anns.md`
+{nb-download}`tutorial_mor_with_anns.ipynb`
 
 

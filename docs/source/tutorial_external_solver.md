@@ -435,7 +435,7 @@ fom.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))
 ```
 
 You can download this demonstration plus the wrapper definitions as a
-notebook {jupyter-download:notebook}`tutorial_external_solver` or
-as a plain Python script {jupyter-download:script}`tutorial_external_solver`.
+notebook {nb-download}`tutorial_external_solver.ipynb` or
+as Markdown text {download}`tutorial_external_solver.md`.
 
 

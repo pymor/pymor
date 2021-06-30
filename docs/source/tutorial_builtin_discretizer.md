@@ -519,7 +519,7 @@ appears which ensures correct enforcement of Dirichlet boundary values
 for all possible parameter value combinations.
 
 Download the code:
-{jupyter-download:script}`tutorial_builtin_discretizer`
-{jupyter-download:notebook}`tutorial_builtin_discretizer`
+{download}`tutorial_builtin_discretizer.md`
+{nb-download}`tutorial_builtin_discretizer.ipynb`
 
 

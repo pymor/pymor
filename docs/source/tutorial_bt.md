@@ -265,7 +265,7 @@ print(f'Relative Hankel error: {err.hankel_norm() / fom.hankel_norm():.3e}')
 ```
 
 Download the code:
-{jupyter-download:script}`tutorial_bt`,
-{jupyter-download:notebook}`tutorial_bt`.
+{download}`tutorial_bt.md`,
+{nb-download}`tutorial_bt.ipynb`.
 
 
