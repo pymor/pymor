@@ -10,7 +10,6 @@ ipyparallel>=6.2.5
 ipython>=5.0
 ipywidgets
 jupyter_contrib_nbextensions
-jupyter_sphinx
 matplotlib
 meshio==4.2.0
 mpi4py>=3.0.3;python_version >= "3.9"
