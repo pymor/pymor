@@ -299,7 +299,7 @@ fom.visualize((U, U_red, ERR),
 We can nicely observe that, as expected, the error is maximized along the
 jumps of the diffusion coefficient.
 
-Download the code: {jupyter-download:script}`getting_started` {jupyter-download:notebook}`getting_started`
+Download the code: {download}`getting_started.md` {nb-download}`getting_started.ipynb`
 
 ## Learning more
 

@@ -804,5 +804,5 @@ a certain degree, whereas the weak-greedy algorithm could select the snapshots f
 
 
 Download the code:
-{jupyter-download:script}`tutorial_basis_generation`
-{jupyter-download:notebook}`tutorial_basis_generation`
+{download}`tutorial_basis_generation.md`
+{nb-download}`tutorial_basis_generation.ipynb`

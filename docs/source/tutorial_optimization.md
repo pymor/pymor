@@ -843,5 +843,5 @@ PDE-constrained optimization problems we refer to
 implementation is available as supplementary material.
 
 Download the code:
-{jupyter-download:script}`tutorial_optimization`
-{jupyter-download:notebook}`tutorial_optimization`
+{download}`tutorial_optimization.md`
+{nb-download}`tutorial_optimization.ipynb`

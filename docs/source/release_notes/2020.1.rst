@@ -156,7 +156,7 @@ matplotlib based. This new module improves interactive performance for visualiza
 with a large number of degrees of freedom by utilizing the user's graphics card via the browser's WebGL API.
 The old behaviour can be reactivated using
 
-.. jupyter-execute::
+.. code-block::
 
     from pymor.basic import *
     set_defaults({'pymor.discretizers.builtin.gui.jupyter.get_visualizer.backend': 'MPL'})

@@ -496,6 +496,6 @@ fom.hankel_norm()
 ```
 
 Download the code:
-{jupyter-download:script}`tutorial_lti_systems`,
-{jupyter-download:notebook}`tutorial_lti_systems`.
+{download}`tutorial_lti_systems.md`,
+{nb-download}`tutorial_lti_systems.ipynb`.
 
