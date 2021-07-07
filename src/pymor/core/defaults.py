@@ -368,6 +368,12 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
         raise KeyError(f'Error loading defaults from file. Key {e} does not correspond to a default')
 
 
+def _set_defaults(defaults):
+    from pymor.tools import mpi
+    if not mpi.rank0:
+        set_defaults(defaults)
+
+
 def set_defaults(defaults):
     """Set |default| values.
 
@@ -382,10 +388,40 @@ def set_defaults(defaults):
         Dictionary of default values. Keys are the full paths of the default
         values (see :func:`defaults`).
     """
+    from pymor.tools import mpi
+    if mpi._event_loop_running and mpi.rank0:
+        mpi.call(_set_defaults, defaults)
     try:
         _default_container.update(defaults, type='user')
     except KeyError as e:
         raise KeyError(f'Error setting defaults. Key {e} does not correspond to a default')
+
+
+def get_defaults(user=True, file=True, code=True):
+    """Get |default| values.
+
+    Returns all |default| values as a dict. The parameters can be set to filter by type.
+
+    Parameters
+    ----------
+    user
+        If `True`, returned dict contains defaults that have been set by the user
+        with :func:`set_defaults`.
+    file
+        If `True`, returned dict contains defaults that have been loaded from file.
+    code
+        If `True`, returned dict contains unmodified default values.
+    """
+    defaults = {}
+    for k in _default_container.keys():
+        v, t = _default_container.get(k)
+        if t == 'user' and user:
+            defaults[k] = v
+        if t == 'file' and file:
+            defaults[k] = v
+        if t == 'code' and code:
+            defaults[k] = v
+    return defaults
 
 
 def defaults_changes():
