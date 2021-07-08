@@ -93,7 +93,7 @@ class TimeStepper(ImmutableObject):
             If `iter == False` and `return_times == False` (the default), where `U` is |VectorArray| containing the
             solution trajectory.
         (U, t)
-            If `iter == False` and `return_times == True`, where `t` is a list of time points with `U`.
+            If `iter == False` and `return_times == True`, where `t` is a list of time points corresponding to `U`.
         iterator
             If `iter == True`, an iterator yielding either `U_n` (if `return_times == False`) or `(U_n, t_n)` in each
             step.
@@ -617,4 +617,3 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     time_stepper = ExplicitEulerTimeStepper(
             nt=nt, initial_time=t0, end_time=t1, num_values=num_values, interpolation_order=0)
     return time_stepper.solve(mu=mu)
-
