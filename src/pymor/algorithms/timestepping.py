@@ -107,7 +107,7 @@ class TimeStepper(ImmutableObject):
             U = A.source.empty(reserve=self.num_values or 0)
             t = []
             for U_n, t_n in iterator:
-                U.append(U_n)
+                U.append(U_n, remove_from_other=True)
                 t.append(t_n)
             return U, t
         else:
