@@ -90,7 +90,7 @@ class TimeStepper(ImmutableObject):
         Returns
         -------
         U
-            If `iter == False` and `return_times == False` (the default), where `U` is |VectorArray| containing the
+            If `iter == False` and `return_times == False` (the default), where `U` is a |VectorArray| containing the
             solution trajectory.
         (U, t)
             If `iter == False` and `return_times == True`, where `t` is a list of time points corresponding to `U`.
