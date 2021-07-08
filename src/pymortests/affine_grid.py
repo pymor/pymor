@@ -214,7 +214,7 @@ def test_unit_outer_normals_normal(grid):
     A, _ = g.embeddings(1)
     SEE = A[SE, ...]
     UON = g.unit_outer_normals()
-    np.testing.assert_allclose(np.sum(SEE * UON[..., np.newaxis], axis=-2), 0)
+    np.testing.assert_allclose(np.sum(SEE * UON[..., np.newaxis], axis=-2), 0, atol=1e7)
 
 
 @settings(deadline=None)

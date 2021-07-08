@@ -9,7 +9,7 @@ import pytest
 from hypothesis import given, settings
 
 from pymor.core.exceptions import QtMissing
-from pymortests.fixtures.grid import hy_grids_with_visualize, hy_grid
+from pymortests.fixtures.grid import hy_grids_with_visualize, hy_grid, hy_grid_and_dim_range_product
 from pymortests.pickling import assert_picklable_without_dumps_function
 
 
@@ -163,6 +163,7 @@ def test_superentities_entry_value_range(grid):
             np.testing.assert_array_less(-2, g.superentities(e, s))
 
 
+@settings(deadline=None)
 @given(hy_grid)
 def test_superentities_entry_values_unique(grid):
     g = grid
@@ -289,91 +290,74 @@ def test_neighbours_wrong_arguments(grid):
         g.neighbours(-1, 0, g.dim)
 
 
-# TODO product -> strategy
+@given(hy_grid_and_dim_range_product())
+def test_neighbours_shape(grid_and_dims):
+    g, e, n = grid_and_dims
+    for s in range(max(e, n), g.dim + 1):
+        assert g.neighbours(e, n, s).ndim == 2
+        assert g.neighbours(e, n, s).shape[0] == g.size(e)
+
+
+@given(hy_grid_and_dim_range_product())
+def test_neighbours_dtype(grid_and_dims):
+    g, e, n = grid_and_dims
+    for s in range(max(e, n), g.dim + 1):
+        assert g.neighbours(e, n, s).dtype == np.dtype('int32')
+
+
+@given(hy_grid_and_dim_range_product())
+def test_neighbours_entry_value_range(grid_and_dims):
+    g, e, n = grid_and_dims
+    for s in range(max(e, n), g.dim + 1):
+        np.testing.assert_array_less(g.neighbours(e, n, s), g.size(n))
+        np.testing.assert_array_less(-2, g.neighbours(e, n, s))
+
+
 @settings(deadline=None)
-@given(hy_grid)
-def test_neighbours_shape(grid):
-    g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
-        for s in range(max(e, n), g.dim + 1):
-            assert g.neighbours(e, n, s).ndim == 2
-            assert g.neighbours(e, n, s).shape[0] == g.size(e)
+@given(hy_grid_and_dim_range_product())
+def test_neighbours_entry_values_unique(grid_and_dims):
+    g, e, n = grid_and_dims
+    for s in range(max(e, n), g.dim + 1):
+        for S in g.neighbours(e, n, s):
+            S = S[S >= 0]
+            assert S.size == np.unique(S).size
 
 
-# TODO product -> strategy
-@settings(deadline=None)
-@given(hy_grid)
-def test_neighbours_dtype(grid):
-    g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
-        for s in range(max(e, n), g.dim + 1):
-            assert g.neighbours(e, n, s).dtype == np.dtype('int32')
+@given(hy_grid_and_dim_range_product())
+def test_neighbours_each_entry_neighbour(grid_and_dims):
+    g, e, n = grid_and_dims
+    for s in range(max(e, n), g.dim + 1):
+        N = g.neighbours(e, n, s)
+        ESE = g.subentities(e, s)
+        NSE = g.subentities(n, s)
+        for index, neigh in np.ndenumerate(N):
+            if neigh > -1:
+                inter = set(ESE[index[0]]).intersection(set(NSE[neigh]))
+                if -1 in inter:
+                    assert len(inter) > 1
+                else:
+                    assert len(inter) > 0
 
 
-# TODO product -> strategy
-@settings(deadline=None)
-@given(hy_grid)
-def test_neighbours_entry_value_range(grid):
-    g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
-        for s in range(max(e, n), g.dim + 1):
-            np.testing.assert_array_less(g.neighbours(e, n, s), g.size(n))
-            np.testing.assert_array_less(-2, g.neighbours(e, n, s))
-
-
-# TODO product -> strategy
-@settings(deadline=None)
-@given(hy_grid)
-def test_neighbours_entry_values_unique(grid):
-    g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
-        for s in range(max(e, n), g.dim + 1):
-            for S in g.neighbours(e, n, s):
-                S = S[S >= 0]
-                assert S.size == np.unique(S).size
-
-
-# TODO product -> strategy
-@settings(deadline=None)
-@given(hy_grid)
-def test_neighbours_each_entry_neighbour(grid):
-    g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
-        for s in range(max(e, n), g.dim + 1):
-            N = g.neighbours(e, n, s)
-            ESE = g.subentities(e, s)
-            NSE = g.subentities(n, s)
-            for index, neigh in np.ndenumerate(N):
-                if neigh > -1:
-                    inter = set(ESE[index[0]]).intersection(set(NSE[neigh]))
-                    if -1 in inter:
-                        assert len(inter) > 1
-                    else:
-                        assert len(inter) > 0
-
-
-# TODO product -> strategy
-@settings(deadline=None)
-@given(hy_grid)
-def test_neighbours_each_neighbour_has_entry(grid):
-    g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
-        for s in range(max(e, n), g.dim + 1):
-            N = g.neighbours(e, n, s)
-            SUE = g.superentities(s, e)
-            SUN = g.superentities(s, n)
-            if e != n:
-                for si in range(SUE.shape[0]):
-                    for ei, ni in product(SUE[si], SUN[si]):
-                        if ei != -1 and ni != -1:
-                            assert ni in N[ei],\
-                                f'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
-            else:
-                for si in range(SUE.shape[0]):
-                    for ei, ni in product(SUE[si], SUN[si]):
-                        if ei != ni and ei != -1 and ni != -1:
-                            assert ni in N[ei],\
-                                f'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
+@given(hy_grid_and_dim_range_product())
+def test_neighbours_each_neighbour_has_entry(grid_and_dims):
+    g, e, n = grid_and_dims
+    for s in range(max(e, n), g.dim + 1):
+        N = g.neighbours(e, n, s)
+        SUE = g.superentities(s, e)
+        SUN = g.superentities(s, n)
+        if e != n:
+            for si in range(SUE.shape[0]):
+                for ei, ni in product(SUE[si], SUN[si]):
+                    if ei != -1 and ni != -1:
+                        assert ni in N[ei],\
+                            f'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
+        else:
+            for si in range(SUE.shape[0]):
+                for ei, ni in product(SUE[si], SUN[si]):
+                    if ei != ni and ei != -1 and ni != -1:
+                        assert ni in N[ei],\
+                            f'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
 
 
 @settings(deadline=None)

@@ -7,6 +7,7 @@ import numpy as np
 from pymor.analyticalproblems.domaindescriptions import KNOWN_BOUNDARY_TYPES
 from pymor.core.base import abstractmethod
 from pymor.core.cache import CacheableObject, cached
+from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.inverse import inv_transposed_two_by_two
 from pymor.discretizers.builtin.relations import inverse_relation
 
@@ -141,6 +142,10 @@ class Grid(CacheableObject):
     """
 
     cache_region = 'memory'
+
+    # if relative difference between domain points gets too large
+    # reference mapping etc numerics fail due to limited precision
+    MAX_DOMAIN_WIDTH = 1e12
 
     @abstractmethod
     def size(self, codim):
@@ -492,6 +497,16 @@ class Grid(CacheableObject):
             bbox[0, dim] = np.min(centers[:, dim])
             bbox[1, dim] = np.max(centers[:, dim])
         return bbox
+
+    @classmethod
+    def _check_domain(cls, domain):
+        ll, rr = np.array(domain[0]), np.array(domain[1])
+        too_large = np.linalg.norm(ll - rr) > cls.MAX_DOMAIN_WIDTH
+        if too_large:
+            logger = getLogger('pymor.discretizers.builtin.grid')
+            logger.warning(f'Domain {domain} for {cls} exceeds width limit. Results may be inaccurate')
+            return False
+        return True
 
 
 class GridWithOrthogonalCenters(Grid):
