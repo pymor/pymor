@@ -18,7 +18,8 @@ jupytext>=1.14.4
 lxml
 matplotlib
 meshio>=4.4
-mpi4py>=3.0.3;python_version >= "3.9"
+mpi4py>3.0.3;python_version >= "3.10"
+mpi4py>=3.0.3;python_version == "3.9"
 mpi4py>=3.0;python_version < "3.9"
 myst-nb>=0.16
 nbresuse

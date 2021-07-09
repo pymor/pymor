@@ -97,7 +97,8 @@ ci_requires = ['check-manifest==0.49',
 
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
-                                    'mpi4py>=3.0.3;python_version >= "3.9"',
+                                    'mpi4py>=3.0.3;python_version == "3.9"',
+                                    'mpi4py>3.0.3;python_version >= "3.10"',
                                     'mpi4py>=3.0;python_version < "3.9"'])
 
 
