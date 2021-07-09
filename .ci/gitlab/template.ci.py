@@ -180,7 +180,7 @@ ci setup:
 #****** test stage
 
 {%- for script, py, para in matrix %}
-{{script}} {{py[0]}} {{py[2]}}:
+{{script}} {{py[0]}} {{py[2:]}}:
     extends: .pytest
     {{ never_on_schedule_rule() }}
     variables:
@@ -212,7 +212,7 @@ ci setup:
 {%- endfor %}
 
 {%- for py in pythons %}
-ci_weekly {{py[0]}} {{py[2]}}:
+ci_weekly {{py[0]}} {{py[2:]}}:
     extends: .pytest
     timeout: 5h
     variables:
@@ -237,7 +237,7 @@ submit coverage:
             - reports/
     dependencies:
     {%- for script, py, para in matrix if script in ['tutorials', 'vanilla', 'oldest', 'numpy_git', 'mpi'] %}
-        - {{script}} {{py[0]}} {{py[2]}}
+        - {{script}} {{py[0]}} {{py[2:]}}
     {%- endfor %}
 
 coverage html:
@@ -255,14 +255,14 @@ coverage html:
         - coverage html --directory coverage_html
 
 {%- for py in pythons %}
-submit ci_weekly {{py[0]}} {{py[2]}}:
+submit ci_weekly {{py[0]}} {{py[2:]}}:
     extends: .submit
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     dependencies:
-        - ci_weekly {{py[0]}} {{py[2]}}
-    needs: ["ci_weekly {{py[0]}} {{py[2]}}"]
+        - ci_weekly {{py[0]}} {{py[2:]}}
+    needs: ["ci_weekly {{py[0]}} {{py[2:]}}"]
 {%- endfor %}
 
 
@@ -358,7 +358,7 @@ from wheel {{loop.index}}/{{loop.length}}:
 {% endfor %}
 
 {%- for py in pythons %}
-docs build {{py[0]}} {{py[2]}}:
+docs build {{py[0]}} {{py[2:]}}:
     extends: .test_base
     tags: [mike]
     rules:
@@ -409,7 +409,7 @@ docs:
 
 
 tpl = jinja2.Template(tpl)
-pythons = ['3.8', '3.9']
+pythons = [f'3.{i}' for i in range(8, 11)]
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [
