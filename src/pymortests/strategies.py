@@ -337,36 +337,36 @@ def st_valid_inds_of_different_length(draw, v1, v2):
 
 
 @hyst.composite
+def st_valid_inds_of_same_or_different_length(draw, v1, v2):
+    return draw(st_valid_inds_of_same_length(v1, v2) | st_valid_inds_of_different_length(v1, v2))
+
+
+@hyst.composite
 def same_and_different_length(draw, array_strategy):
     v = draw(array_strategy)
     if isinstance(v, list):
-        # TODO this should use the st_valid_inds forms directly instead
-        return v, draw(hyst.one_of(hyst.sampled_from(list(valid_inds_of_same_length(*v, random_module=False))),
-                                   hyst.sampled_from(list(valid_inds_of_different_length(*v, random_module=False)))))
-    return v, draw(hyst.one_of(hyst.sampled_from(list(valid_inds_of_same_length(v, v, random_module=False))),
-                               hyst.sampled_from(list(valid_inds_of_different_length(v, v, random_module=False)))))
+        return v, draw(st_valid_inds_of_same_or_different_length(*v))
+    return v, draw(st_valid_inds_of_same_or_different_length(v, v))
 
 
 @hyst.composite
 def pairs_same_length(draw, array_strategy):
     v = draw(array_strategy)
     if isinstance(v, list):
-        # TODO this should use the st_valid_inds forms directly instead
-        return v, draw(hyst.sampled_from(list(valid_inds_of_same_length(*v, random_module=False))))
-    return v, draw(hyst.sampled_from(list(valid_inds_of_same_length(v, v, random_module=False))))
+        return v, draw(st_valid_inds_of_same_length(*v))
+    return v, draw(st_valid_inds_of_same_length(v, v))
 
 
 @hyst.composite
 def pairs_diff_length(draw, array_strategy):
     v = draw(array_strategy)
-    # TODO this should use the st_valid_inds forms directly instead
     if isinstance(v, list):
-        ind_list = list(valid_inds_of_different_length(*v, random_module=False))
+        ind_list = draw(st_valid_inds_of_different_length(*v))
     else:
-        ind_list = list(valid_inds_of_different_length(v, v, random_module=False))
+        ind_list = draw(st_valid_inds_of_different_length(v, v))
     # the consuming tests do not work for None as index
     assume(len(ind_list))
-    return v, draw(hyst.sampled_from(ind_list))
+    return v, ind_list
 
 
 @hyst.composite
@@ -376,7 +376,7 @@ def pairs_both_lengths(draw, array_strategy):
 
 @hyst.composite
 def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
-    """
+    """Strategy to generate linear independent |VectorArray| inputs for test functions
 
     Parameters
     ----------
