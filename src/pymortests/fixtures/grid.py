@@ -59,10 +59,9 @@ def hy_oned_grid(draw):
     return OnedGrid(num_intervals=num_intervals, domain=domain, identify_left_right=identify_left_right)
 
 
-# TODO re-use other grid strategies
 @hyst.composite
 def hy_subgrid(draw):
-    grid = draw(hyst.sampled_from([RectGrid((1, 1)), TriaGrid((1, 1)), RectGrid((8, 8)), TriaGrid((24, 24))]))
+    grid = draw(hy_rect_grid() | hy_tria_grid())
     neq = draw(hyst.sampled_from([0, 2, 4]))
     if neq == 0:
         return SubGrid(grid, np.arange(grid.size(0), dtype=np.int32))
