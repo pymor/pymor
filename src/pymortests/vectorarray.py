@@ -294,33 +294,34 @@ def test_copy_repeated_index(vector_array):
             pass
 
 
-@pyst.given_vector_arrays(count=2)
-# TODO replace indices loop
-@settings(deadline=None)
-def test_append(vector_arrays):
-    v1, v2 = vector_arrays
+@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_both_lengths)
+def test_append(vectors_and_indices):
+    vectors, indices = vectors_and_indices
+    # TODO: removing slicing assumptions
+    assume_old_slicing(indices)
+    v1, v2 = vectors
+    _, ind = indices
     len_v1 = len(v1)
-    for ind in pyst.valid_inds(v2, random_module=False):
-        c1, c2 = v1.copy(), v2.copy()
-        c1.append(c2[ind])
-        len_ind = v2.len_ind(ind)
-        ind_complement_ = ind_complement(v2, ind)
-        assert len(c1) == len_v1 + len_ind
-        assert np.all(almost_equal(c1[len_v1:len(c1)], c2[ind]))
-        try:
-            assert np.allclose(c1.to_numpy(), np.vstack((v1.to_numpy(), indexed(v2.to_numpy(), ind))))
-        except NotImplementedError:
-            pass
-        c1.append(c2[ind], remove_from_other=True)
-        assert len(c2) == len(ind_complement_)
-        assert c2.space == c1.space
-        assert len(c1) == len_v1 + 2 * len_ind
-        assert np.all(almost_equal(c1[len_v1:len_v1 + len_ind], c1[len_v1 + len_ind:len(c1)]))
-        assert np.all(almost_equal(c2, v2[ind_complement_]))
-        try:
-            assert np.allclose(c2.to_numpy(), indexed(v2.to_numpy(), ind_complement_))
-        except NotImplementedError:
-            pass
+    c1, c2 = v1.copy(), v2.copy()
+    c1.append(c2[ind])
+    len_ind = v2.len_ind(ind)
+    ind_complement_ = ind_complement(v2, ind)
+    assert len(c1) == len_v1 + len_ind
+    assert np.all(almost_equal(c1[len_v1:len(c1)], c2[ind]))
+    try:
+        assert np.allclose(c1.to_numpy(), np.vstack((v1.to_numpy(), indexed(v2.to_numpy(), ind))))
+    except NotImplementedError:
+        pass
+    c1.append(c2[ind], remove_from_other=True)
+    assert len(c2) == len(ind_complement_)
+    assert c2.space == c1.space
+    assert len(c1) == len_v1 + 2 * len_ind
+    assert np.all(almost_equal(c1[len_v1:len_v1 + len_ind], c1[len_v1 + len_ind:len(c1)]))
+    assert np.all(almost_equal(c2, v2[ind_complement_]))
+    try:
+        assert np.allclose(c2.to_numpy(), indexed(v2.to_numpy(), ind_complement_))
+    except NotImplementedError:
+        pass
 
 
 @pyst.given_vector_arrays()
@@ -391,25 +392,52 @@ def test_scla(vectors_and_indices):
             pass
 
 
-@pyst.given_vector_arrays(count=2, random=hyst.random_module())
-# TODO replace indices loop
-@settings(deadline=None)
-def test_axpy(vector_arrays, random):
-    v1, v2 = vector_arrays
+@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length)
+def test_axpy(vectors_and_indices):
+    vectors, indices = vectors_and_indices
+    # TODO: removing slicing assumptions
+    assume_old_slicing(indices)
 
-    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
-        if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
-            with pytest.raises(Exception):
-                c1, c2 = v1.copy(), v2.copy()
-                c1[ind1].axpy(0., c2[ind2])
-            continue
+    v1, v2 = vectors
+    ind1, ind2 = indices
 
-        ind1_complement = ind_complement(v1, ind1)
+    if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
+        with pytest.raises(Exception):
+            c1, c2 = v1.copy(), v2.copy()
+            c1[ind1].axpy(0., c2[ind2])
+        return
+
+    ind1_complement = ind_complement(v1, ind1)
+    c1, c2 = v1.copy(), v2.copy()
+    c1[ind1].axpy(0., c2[ind2])
+    assert len(c1) == len(v1)
+    assert np.all(almost_equal(c1, v1))
+    assert np.all(almost_equal(c2, v2))
+
+    for a in (1., 1.4, np.random.random(v1.len_ind(ind1))):
         c1, c2 = v1.copy(), v2.copy()
-        c1[ind1].axpy(0., c2[ind2])
+        c1[ind1].axpy(a, c2[ind2])
+        assert len(c1) == len(v1)
+        assert np.all(almost_equal(c1[ind1_complement], v1[ind1_complement]))
+        assert np.all(almost_equal(c2, v2))
+        assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * (1. + 1e-10))
+        assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
+        try:
+            x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
+            if isinstance(ind1, Number):
+                x[[ind1]] += indexed(v2.to_numpy(), ind2) * a
+            else:
+                if isinstance(a, np.ndarray):
+                    aa = a[:, np.newaxis]
+                else:
+                    aa = a
+                x[ind1] += indexed(v2.to_numpy(), ind2) * aa
+            assert np.allclose(c1.to_numpy(), x)
+        except NotImplementedError:
+            pass
+        c1[ind1].axpy(-a, c2[ind2])
         assert len(c1) == len(v1)
         assert np.all(almost_equal(c1, v1))
-        assert np.all(almost_equal(c2, v2))
 
         for a in (1., 1.4, np.random.random(v1.len_ind(ind1))):
             c1, c2 = v1.copy(), v2.copy()
@@ -492,10 +520,11 @@ def test_axpy_one_x(vector_arrays, random):
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length, random=hyst.random_module())
-# TODO replace indices loop
-@settings(deadline=None)
+# TODO replace scaling loop
 def test_axpy_self(vectors_and_indices, random):
     v, (ind1, ind2) = vectors_and_indices
+    # TODO: removing slicing assumptions
+    assume_old_slicing((ind1, ind2))
 
     if v.len_ind(ind1) != v.len_ind_unique(ind1):
         with pytest.raises(Exception):
@@ -565,6 +594,9 @@ def test_pairwise_inner(vector_arrays):
 @pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length)
 def test_pairwise_inner_self(vectors_and_indices):
     v, (ind1, ind2) = vectors_and_indices
+    # TODO: removing slicing assumptions
+    assume_old_slicing((ind1, ind2))
+
     r = v[ind1].pairwise_inner(v[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind1),)
@@ -587,7 +619,7 @@ def test_inner(vectors_and_indices):
     v1, v2 = vectors
     ind1, ind2 = indices
 
-    # TODO
+    # TODO: removing slicing assumptions
     assume_old_slicing(indices)
 
     r = v1[ind1].inner(v2[ind2])
@@ -616,6 +648,9 @@ def assume_old_slicing(indices):
 @pyst.given_vector_arrays(index_strategy=pyst.pairs_both_lengths)
 def test_inner_self(vectors_and_indices):
     v, (ind1, ind2) = vectors_and_indices
+    # TODO: removing slicing assumptions
+    assume_old_slicing((ind1, ind2))
+
     r = v[ind1].inner(v[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
@@ -809,7 +844,6 @@ def test_amax(vectors_and_indices):
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-@settings(deadline=None)
 def test_gramian(vectors_and_indices):
     v, ind = vectors_and_indices
     assert np.allclose(v[ind].gramian(), v[ind].inner(v[ind]))
