@@ -244,10 +244,31 @@ def valid_inds(v, length=None, random_module=None):
         yield []
 
 
+# TODO: remove old assumptions on slice values
+def _filtered_slices(length):
+    def _filter(sl):
+        return sl.step is None or sl.step > 0
+    return hyst.slices(length).filter(_filter)
+
+
 @hyst.composite
-def valid_indices(draw, array_strategy):
+def valid_indices(draw, array_strategy, length=None):
     v = draw(array_strategy)
-    return v, draw(hyst.sampled_from(list(valid_inds(v))))
+    ints = hyst.integers(min_value=-len(v), max_value=max(len(v)-1, 0))
+    indices = hyst.nothing()
+    if length is None:
+        indices = indices | hyst.just([]) | hyst.lists(ints, max_size=2*len(v)) | _filtered_slices(len(v))
+    if len(v) > 0:
+        inds = [-len(v), 0, len(v) - 1]
+        if len(v) == length:
+            inds.append(slice(None))
+        indices = indices | hyst.lists(ints, max_size=length)
+    else:
+        inds = []
+        if len(v) == 0:
+            inds.append(slice(0, 0))
+    indices = indices | hyst.sampled_from(inds)
+    return v, draw(indices)
 
 
 # TODO match st_valid_inds_of_same_length results to this
@@ -285,11 +306,11 @@ def st_valid_inds_of_same_length(draw, v1, v2):
     # TODO we should include integer arrays here by chaining
     # `| hynp.integer_array_indices(shape=(LEN_X,))`
     if len1 == len2:
-        slice1 = hyst.slices(len1)
+        slice1 = _filtered_slices(len1)
         ret = ret | hyst.tuples(hyst.shared(slice1, key="st_valid_inds_of_same_length"),
                                 hyst.shared(slice1, key="st_valid_inds_of_same_length"))
     if len1 > 0 and len2 > 0:
-        slice2 = hyst.slices(min(len1, len2))
+        slice2 = _filtered_slices(min(len1, len2))
         ret = ret | hyst.tuples(hyst.shared(slice2, key="st_valid_inds_of_same_length_uneven"),
                                 hyst.shared(slice2, key="st_valid_inds_of_same_length_uneven"))
     return draw(ret)
@@ -338,8 +359,8 @@ def st_valid_inds_of_different_length(draw, v1, v2):
 
     len1, len2 = len(v1), len(v2)
     # TODO we should include integer arrays here
-    val1 = hyst.slices(len1)  # | hynp.integer_array_indices(shape=(len1,))
-    val2 = hyst.slices(len2)  # | hynp.integer_array_indices(shape=(len1,))
+    val1 = _filtered_slices(len1)  # | hynp.integer_array_indices(shape=(len1,))
+    val2 = _filtered_slices(len2)  # | hynp.integer_array_indices(shape=(len1,))
     ret = hyst.tuples(val1, val2).filter(_filter)
     return draw(ret)
 

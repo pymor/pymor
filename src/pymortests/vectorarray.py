@@ -297,8 +297,6 @@ def test_copy_repeated_index(vector_array):
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_both_lengths)
 def test_append(vectors_and_indices):
     vectors, indices = vectors_and_indices
-    # TODO: removing slicing assumptions
-    assume_old_slicing(indices)
     v1, v2 = vectors
     _, ind = indices
     len_v1 = len(v1)
@@ -395,8 +393,6 @@ def test_scla(vectors_and_indices):
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length)
 def test_axpy(vectors_and_indices):
     vectors, indices = vectors_and_indices
-    # TODO: removing slicing assumptions
-    assume_old_slicing(indices)
 
     v1, v2 = vectors
     ind1, ind2 = indices
@@ -467,7 +463,6 @@ def test_axpy(vectors_and_indices):
 
 @pyst.given_vector_arrays(count=2, random=hyst.random_module())
 # TODO replace indices loop
-@settings(deadline=None)
 def test_axpy_one_x(vector_arrays, random):
     v1, v2 = vector_arrays
     for ind1, ind2 in product(pyst.valid_inds(v1, random_module=False), pyst.valid_inds(v2, 1, random_module=False)):
@@ -523,9 +518,6 @@ def test_axpy_one_x(vector_arrays, random):
 # TODO replace scaling loop
 def test_axpy_self(vectors_and_indices, random):
     v, (ind1, ind2) = vectors_and_indices
-    # TODO: removing slicing assumptions
-    assume_old_slicing((ind1, ind2))
-
     if v.len_ind(ind1) != v.len_ind_unique(ind1):
         with pytest.raises(Exception):
             c, = v.copy()
@@ -594,9 +586,6 @@ def test_pairwise_inner(vector_arrays):
 @pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length)
 def test_pairwise_inner_self(vectors_and_indices):
     v, (ind1, ind2) = vectors_and_indices
-    # TODO: removing slicing assumptions
-    assume_old_slicing((ind1, ind2))
-
     r = v[ind1].pairwise_inner(v[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind1),)
@@ -618,10 +607,6 @@ def test_inner(vectors_and_indices):
     vectors, indices = vectors_and_indices
     v1, v2 = vectors
     ind1, ind2 = indices
-
-    # TODO: removing slicing assumptions
-    assume_old_slicing(indices)
-
     r = v1[ind1].inner(v2[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
@@ -634,23 +619,10 @@ def test_inner(vectors_and_indices):
         pass
 
 
-def assume_old_slicing(indices):
-    # TODO old data input did not have None as X in slices, only slice(None)
-    for ind in indices:
-        if ind is slice(None):
-            continue
-        if isinstance(ind, slice):
-            for p in ('step', 'start', 'stop'):
-                assume(getattr(ind, p) is not None)
-
-
 @settings(deadline=None)
 @pyst.given_vector_arrays(index_strategy=pyst.pairs_both_lengths)
 def test_inner_self(vectors_and_indices):
     v, (ind1, ind2) = vectors_and_indices
-    # TODO: removing slicing assumptions
-    assume_old_slicing((ind1, ind2))
-
     r = v[ind1].inner(v[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
