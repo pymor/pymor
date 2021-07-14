@@ -306,13 +306,16 @@ def st_valid_inds_of_same_length(draw, v1, v2):
     # TODO we should include integer arrays here by chaining
     # `| hynp.integer_array_indices(shape=(LEN_X,))`
     if len1 == len2:
-        slice1 = _filtered_slices(len1)
-        ret = ret | hyst.tuples(hyst.shared(slice1, key="st_valid_inds_of_same_length"),
-                                hyst.shared(slice1, key="st_valid_inds_of_same_length"))
+        ints = hyst.integers(min_value=-len1, max_value=max(len1 - 1, 0))
+        slicer = _filtered_slices(len1) | hyst.lists(ints, max_size=len1)
+        ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length"),
+                                hyst.shared(slicer, key="st_valid_inds_of_same_length"))
     if len1 > 0 and len2 > 0:
-        slice2 = _filtered_slices(min(len1, len2))
-        ret = ret | hyst.tuples(hyst.shared(slice2, key="st_valid_inds_of_same_length_uneven"),
-                                hyst.shared(slice2, key="st_valid_inds_of_same_length_uneven"))
+        mlen = min(len1, len2)
+        ints = hyst.integers(min_value=-mlen, max_value=max(mlen - 1, 0))
+        slicer = _filtered_slices(mlen) | ints | hyst.lists(ints, max_size=mlen)
+        ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"),
+                                hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"))
     return draw(ret)
 
 

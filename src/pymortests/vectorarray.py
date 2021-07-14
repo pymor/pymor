@@ -2,7 +2,6 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from itertools import product
 from numbers import Number
 
 import pytest
@@ -393,7 +392,6 @@ def test_scla(vectors_and_indices):
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length)
 def test_axpy(vectors_and_indices):
     vectors, indices = vectors_and_indices
-
     v1, v2 = vectors
     ind1, ind2 = indices
 
@@ -402,7 +400,9 @@ def test_axpy(vectors_and_indices):
             c1, c2 = v1.copy(), v2.copy()
             c1[ind1].axpy(0., c2[ind2])
         return
-
+    # ind2 is used for axpy args
+    len_ind2 = v2.len_ind(ind2)
+    assume(len_ind2 == 1 or len_ind2 == v1.len_ind(ind1))
     ind1_complement = ind_complement(v1, ind1)
     c1, c2 = v1.copy(), v2.copy()
     c1[ind1].axpy(0., c2[ind2])
@@ -461,11 +461,12 @@ def test_axpy(vectors_and_indices):
             assert np.all(almost_equal(c1, v1))
 
 
-@pyst.given_vector_arrays(count=2, random=hyst.random_module())
-# TODO replace indices loop
-def test_axpy_one_x(vector_arrays, random):
-    v1, v2 = vector_arrays
-    for ind1, ind2 in product(pyst.valid_inds(v1, random_module=False), pyst.valid_inds(v2, 1, random_module=False)):
+@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length, random=hyst.random_module())
+def test_axpy_one_x(vectors_and_indices, random):
+    vectors, indices = vectors_and_indices
+    v1, v2 = vectors
+    ind1, _ = indices
+    for ind2 in pyst.valid_inds(v2, 1, random_module=False):
         assert v1.check_ind(ind1)
         assert v2.check_ind(ind2)
         if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
@@ -514,9 +515,9 @@ def test_axpy_one_x(vector_arrays, random):
             assert np.all(almost_equal(c1, v1))
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length, random=hyst.random_module())
+@pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length)
 # TODO replace scaling loop
-def test_axpy_self(vectors_and_indices, random):
+def test_axpy_self(vectors_and_indices):
     v, (ind1, ind2) = vectors_and_indices
     if v.len_ind(ind1) != v.len_ind_unique(ind1):
         with pytest.raises(Exception):
