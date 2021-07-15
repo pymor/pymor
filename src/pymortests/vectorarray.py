@@ -386,8 +386,9 @@ def test_scla(vectors_and_indices):
             pass
 
 
-@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length)
-def test_axpy(vectors_and_indices):
+@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length,
+                          scalar=hyst.floats(min_value=1, max_value=pyst.MAX_VECTORARRAY_LENGTH))
+def test_axpy(vectors_and_indices, scalar):
     (v1, v2), (ind1, ind2) = vectors_and_indices
     if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
         with pytest.raises(Exception):
@@ -404,59 +405,35 @@ def test_axpy(vectors_and_indices):
     assert np.all(almost_equal(c1, v1))
     assert np.all(almost_equal(c2, v2))
 
-    for a in (1., 1.4, np.random.random(v1.len_ind(ind1))):
-        c1, c2 = v1.copy(), v2.copy()
-        c1[ind1].axpy(a, c2[ind2])
-        assert len(c1) == len(v1)
-        assert np.all(almost_equal(c1[ind1_complement], v1[ind1_complement]))
-        assert np.all(almost_equal(c2, v2))
-        assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * (1. + 1e-10))
-        assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
-        try:
-            x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
-            if isinstance(ind1, Number):
-                x[[ind1]] += indexed(v2.to_numpy(), ind2) * a
+    a = scalar
+    c1, c2 = v1.copy(), v2.copy()
+    c1[ind1].axpy(a, c2[ind2])
+    assert len(c1) == len(v1)
+    assert np.all(almost_equal(c1[ind1_complement], v1[ind1_complement]))
+    assert np.all(almost_equal(c2, v2))
+    assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * (1. + 1e-10))
+    assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
+    try:
+        x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
+        if isinstance(ind1, Number):
+            x[[ind1]] += indexed(v2.to_numpy(), ind2) * a
+        else:
+            if isinstance(a, np.ndarray):
+                aa = a[:, np.newaxis]
             else:
-                if isinstance(a, np.ndarray):
-                    aa = a[:, np.newaxis]
-                else:
-                    aa = a
-                x[ind1] += indexed(v2.to_numpy(), ind2) * aa
-            assert np.allclose(c1.to_numpy(), x)
-        except NotImplementedError:
-            pass
-        c1[ind1].axpy(-a, c2[ind2])
-        assert len(c1) == len(v1)
-        assert np.all(almost_equal(c1, v1))
-
-        for a in (1., 1.4, np.random.random(v1.len_ind(ind1))):
-            c1, c2 = v1.copy(), v2.copy()
-            c1[ind1].axpy(a, c2[ind2])
-            assert len(c1) == len(v1)
-            assert np.all(almost_equal(c1[ind1_complement], v1[ind1_complement]))
-            assert np.all(almost_equal(c2, v2))
-            assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * (1. + 1e-10))
-            assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
-            try:
-                x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
-                if isinstance(ind1, Number):
-                    x[[ind1]] += indexed(v2.to_numpy(), ind2) * a
-                else:
-                    if isinstance(a, np.ndarray):
-                        aa = a[:, np.newaxis]
-                    else:
-                        aa = a
-                    x[ind1] += indexed(v2.to_numpy(), ind2) * aa
-                assert np.allclose(c1.to_numpy(), x)
-            except NotImplementedError:
-                pass
-            c1[ind1].axpy(-a, c2[ind2])
-            assert len(c1) == len(v1)
-            assert np.all(almost_equal(c1, v1))
+                aa = a
+            x[ind1] += indexed(v2.to_numpy(), ind2) * aa
+        assert np.allclose(c1.to_numpy(), x)
+    except NotImplementedError:
+        pass
+    c1[ind1].axpy(-a, c2[ind2])
+    assert len(c1) == len(v1)
+    assert np.all(almost_equal(c1, v1))
 
 
-@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length, random=hyst.random_module())
-def test_axpy_one_x(vectors_and_indices, random):
+@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length,
+                          scalar=hyst.floats(min_value=1, max_value=pyst.MAX_VECTORARRAY_LENGTH))
+def test_axpy_one_x(vectors_and_indices, scalar):
     (v1, v2), (ind1, _) = vectors_and_indices
     for ind2 in pyst.valid_inds(v2, 1, random_module=False):
         assert v1.check_ind(ind1)
@@ -479,37 +456,37 @@ def test_axpy_one_x(vectors_and_indices, random):
         assert np.all(almost_equal(c1, v1))
         assert np.all(almost_equal(c2, v2))
 
-        for a in (1., 1.4, np.random.random(v1.len_ind(ind1))):
-            c1, c2 = v1.copy(), v2.copy()
-            c1[ind1].axpy(a, c2[ind2])
-            assert len(c1) == len(v1)
-            assert np.all(almost_equal(c1[ind1_complement], v1[ind1_complement]))
-            assert np.all(almost_equal(c2, v2))
-            # for the openstack CI machines this could be 1 + 1e-10
-            rtol_factor = 1. + 147e-9
-            assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * rtol_factor)
-            assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
-            try:
-                x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
-                if isinstance(ind1, Number):
-                    x[[ind1]] += indexed(v2.to_numpy(), ind2) * a
+        a = scalar
+        c1, c2 = v1.copy(), v2.copy()
+        c1[ind1].axpy(a, c2[ind2])
+        assert len(c1) == len(v1)
+        assert np.all(almost_equal(c1[ind1_complement], v1[ind1_complement]))
+        assert np.all(almost_equal(c2, v2))
+        # for the openstack CI machines this could be 1 + 1e-10
+        rtol_factor = 1. + 147e-9
+        assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * rtol_factor)
+        assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
+        try:
+            x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
+            if isinstance(ind1, Number):
+                x[[ind1]] += indexed(v2.to_numpy(), ind2) * a
+            else:
+                if isinstance(a, np.ndarray):
+                    aa = a[:, np.newaxis]
                 else:
-                    if isinstance(a, np.ndarray):
-                        aa = a[:, np.newaxis]
-                    else:
-                        aa = a
-                    x[ind1] += indexed(v2.to_numpy(), ind2) * aa
-                assert np.allclose(c1.to_numpy(), x)
-            except NotImplementedError:
-                pass
-            c1[ind1].axpy(-a, c2[ind2])
-            assert len(c1) == len(v1)
-            assert np.all(almost_equal(c1, v1))
+                    aa = a
+                x[ind1] += indexed(v2.to_numpy(), ind2) * aa
+            assert np.allclose(c1.to_numpy(), x)
+        except NotImplementedError:
+            pass
+        c1[ind1].axpy(-a, c2[ind2])
+        assert len(c1) == len(v1)
+        assert np.all(almost_equal(c1, v1))
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length)
-# TODO replace scaling loop
-def test_axpy_self(vectors_and_indices):
+@pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length,
+                          scalar=hyst.floats(min_value=1, max_value=pyst.MAX_VECTORARRAY_LENGTH))
+def test_axpy_self(vectors_and_indices, scalar):
     v, (ind1, ind2) = vectors_and_indices
     if v.len_ind(ind1) != v.len_ind_unique(ind1):
         with pytest.raises(Exception):
@@ -524,29 +501,28 @@ def test_axpy_self(vectors_and_indices):
     lp.axpy(0., rr)
     assert len(c) == len(v)
     assert np.all(almost_equal(c, v))
-
-    for a in (1., 1.4, np.random.random(v.len_ind(ind1))):
-        c = v.copy()
-        c[ind1].axpy(a, c[ind2])
-        assert len(c) == len(v)
-        assert np.all(almost_equal(c[ind1_complement], v[ind1_complement]))
-        assert np.all(c[ind1].sup_norm() <= v[ind1].sup_norm() + abs(a) * v[ind2].sup_norm() * (1. + 1e-10))
-        try:
-            x = v.to_numpy(True).astype(complex)  # ensure that inplace addition works
-            if isinstance(ind1, Number):
-                x[[ind1]] += indexed(v.to_numpy(), ind2) * a
+    a = scalar
+    c = v.copy()
+    c[ind1].axpy(a, c[ind2])
+    assert len(c) == len(v)
+    assert np.all(almost_equal(c[ind1_complement], v[ind1_complement]))
+    assert np.all(c[ind1].sup_norm() <= v[ind1].sup_norm() + abs(a) * v[ind2].sup_norm() * (1. + 1e-10))
+    try:
+        x = v.to_numpy(True).astype(complex)  # ensure that inplace addition works
+        if isinstance(ind1, Number):
+            x[[ind1]] += indexed(v.to_numpy(), ind2) * a
+        else:
+            if isinstance(a, np.ndarray):
+                aa = a[:, np.newaxis]
             else:
-                if isinstance(a, np.ndarray):
-                    aa = a[:, np.newaxis]
-                else:
-                    aa = a
-                x[ind1] += indexed(v.to_numpy(), ind2) * aa
-            assert np.allclose(c.to_numpy(), x)
-        except NotImplementedError:
-            pass
-        c[ind1].axpy(-a, v[ind2])
-        assert len(c) == len(v)
-        assert np.all(almost_equal(c, v))
+                aa = a
+            x[ind1] += indexed(v.to_numpy(), ind2) * aa
+        assert np.allclose(c.to_numpy(), x)
+    except NotImplementedError:
+        pass
+    c[ind1].axpy(-a, v[ind2])
+    assert len(c) == len(v)
+    assert np.all(almost_equal(c, v))
 
     ind = ind1
     if v.len_ind(ind) != v.len_ind_unique(ind):
