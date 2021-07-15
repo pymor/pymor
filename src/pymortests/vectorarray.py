@@ -161,16 +161,14 @@ def test_random_uniform(vector_array, realizations, low, high):
     assert np.allclose((v - vv).sup_norm(), 0.)
 
 
-@settings(deadline=None)
 @pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=30),
                           loc=hyst.floats(allow_infinity=False, allow_nan=False),
                           scale=hyst.floats(allow_infinity=False, allow_nan=False))
-# TODO the first call to this test is magnitudes slower than the next
 def test_random_normal(vector_array, realizations, loc, scale):
     with pytest.raises(Exception):
         vector_array.random(-1)
     c = realizations
-    if c > 0 and scale < 0:
+    if c > 0 > scale:
         with pytest.raises(ValueError):
             vector_array.random(c, 'normal', loc=loc, scale=scale)
         return
