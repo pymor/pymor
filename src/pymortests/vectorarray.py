@@ -449,8 +449,6 @@ def test_axpy_one_x(vectors_and_indices, scalar):
 
         gc = c1[ind1]
         gv = c2[ind2]
-        # TODO this was somehow hardcoded in the old fixture, makes the test extremely slow
-        assume(len(gc) == 0 or len(gv) > 0)
         gc.axpy(0., gv)
         assert len(c1) == len(v1)
         assert np.all(almost_equal(c1, v1))
