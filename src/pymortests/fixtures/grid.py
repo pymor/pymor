@@ -86,3 +86,10 @@ def hy_grid_and_dim_range_product(draw):
     grid = draw(hy_grid)
     dim = hyst.integers(min_value=0, max_value=grid.dim)
     return grid, draw(dim), draw(dim)
+
+
+@hyst.composite
+def hy_grid_and_dim_range_product_and_s(draw):
+    g, e, n = draw(hy_grid_and_dim_range_product())
+    s = hyst.integers(min_value=max(e, n), max_value=g.dim)
+    return g, e, n, draw(s)
