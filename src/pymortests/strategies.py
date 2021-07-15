@@ -418,6 +418,16 @@ def pairs_both_lengths(draw, array_strategy):
 
 
 @hyst.composite
+def invalid_indices(draw, array_strategy):
+    length = 42
+    v = draw(array_strategy)
+    assert not isinstance(v, list)
+    invalid_inds = (None, len(v), [len(v)], -len(v) - 1, [-len(v) - 1], [0, len(v)],
+                    [-len(v) - 1] + [0, ] * (length - 1), list(range(length - 1)) + [len(v)])
+    return v, draw(hyst.sampled_from(invalid_inds))
+
+
+@hyst.composite
 def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     """Strategy to generate linear independent |VectorArray| inputs for test functions
 
@@ -463,17 +473,3 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
 def equal_tuples(draw, strategy, count):
     val = draw(strategy)
     return draw(hyst.tuples(*[hyst.just(val) for _ in range(count)]))
-
-
-def invalid_inds(v, length=None):
-    yield None
-    if length is None:
-        yield len(v)
-        yield [len(v)]
-        yield -len(v)-1
-        yield [-len(v)-1]
-        yield [0, len(v)]
-        length = 42
-    if length > 0:
-        yield [-len(v)-1] + [0, ] * (length - 1)
-        yield list(range(length - 1)) + [len(v)]

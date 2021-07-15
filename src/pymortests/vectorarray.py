@@ -15,7 +15,6 @@ from pymor.tools import floatcmp
 from pymor.tools.floatcmp import float_cmp
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
-from pymortests.strategies import invalid_inds
 
 
 def ind_complement(v, ind):
@@ -996,12 +995,11 @@ def test_isub_incompatible(vector_arrays):
 ####################################################################################################
 
 
-@pyst.given_vector_arrays()
-def test_wrong_ind_raises_exception(vector_array):
-    # TODO index input as hypothesis strategy
-    for ind in invalid_inds(vector_array):
-        with pytest.raises(Exception):
-            vector_array[ind]
+@pyst.given_vector_arrays(index_strategy=pyst.invalid_indices)
+def test_wrong_ind_raises_exception(vectors_and_indices):
+    vector_array, ind = vectors_and_indices
+    with pytest.raises(Exception):
+        vector_array[ind]
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
