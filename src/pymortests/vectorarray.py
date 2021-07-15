@@ -869,16 +869,14 @@ def test_neg(vector_array):
     assert np.all(almost_equal(vector_array, cc))
 
 
-@pyst.given_vector_arrays()
-# TODO split and replace count loop
-@settings(deadline=None)
-def test_mul(vector_array):
+@pyst.given_vector_arrays(index_strategy=pyst.st_scaling_value)
+def test_mul(vectors_and_indices):
+    vector_array, a = vectors_and_indices
     c = vector_array.copy()
-    for a in (-1, -3, 0, 1, 23, np.arange(len(vector_array))):
-        cc = vector_array.copy()
-        cc.scal(a)
-        assert np.all(almost_equal((vector_array * a), cc))
-        assert np.all(almost_equal(vector_array, c))
+    cc = vector_array.copy()
+    cc.scal(a)
+    assert np.all(almost_equal((vector_array * a), cc))
+    assert np.all(almost_equal(vector_array, c))
 
 
 @pyst.given_vector_arrays()
@@ -887,28 +885,28 @@ def test_mul_wrong_factor(vector_array):
         _ = vector_array * vector_array
 
 
-@pyst.given_vector_arrays()
-# TODO split and replace count loop
-@settings(deadline=None)
-def test_rmul(vector_array):
+@pyst.given_vector_arrays(index_strategy=pyst.st_scaling_value)
+def test_rmul(vectors_and_indices):
+    vector_array, a = vectors_and_indices
     c = vector_array.copy()
-    for a in (-1, -3, 0, 1, 23):
-        cc = vector_array.copy()
-        cc.scal(a)
-        assert np.all(almost_equal((a * vector_array), cc))
-        assert np.all(almost_equal(vector_array, c))
+    cc = vector_array.copy()
+    cc.scal(a)
+    alpha = a * vector_array
+    # the scaling_value strategy also draws ndarrays, for which alpha here will be an ndarray,
+    # which in turn will fail the axpy hidden in the almost_equal check
+    assume(not isinstance(alpha, np.ndarray))
+    assert np.all(almost_equal(alpha, cc))
+    assert np.all(almost_equal(vector_array, c))
 
 
-@pyst.given_vector_arrays()
-# TODO split and replace count loop
-@settings(deadline=None)
-def test_imul(vector_array):
-    for a in (-1, -3, 0, 1, 23, np.arange(len(vector_array))):
-        c = vector_array.copy()
-        cc = vector_array.copy()
-        c.scal(a)
-        cc *= a
-        assert np.all(almost_equal(c, cc))
+@pyst.given_vector_arrays(index_strategy=pyst.st_scaling_value)
+def test_imul(vectors_and_indices):
+    vector_array, a = vectors_and_indices
+    c = vector_array.copy()
+    cc = vector_array.copy()
+    c.scal(a)
+    cc *= a
+    assert np.all(almost_equal(c, cc))
 
 
 @pyst.given_vector_arrays()
@@ -1025,16 +1023,14 @@ def test_scal_wrong_coefficients(vectors_and_indices):
             v[ind].scal(alpha)
 
 
-@pyst.given_vector_arrays(count=2, random=hyst.random_module())
-def test_axpy_wrong_coefficients(vector_arrays, random):
-    v1, v2 = vector_arrays
-    # TODO data input from hypothesis strategy
-    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
-        for alpha in ([np.array([]), np.eye(v1.len_ind(ind1)), np.random.random(v1.len_ind(ind1) + 1)]
-                      if v1.len_ind(ind1) > 0 else
-                      [np.random.random(1)]):
-            with pytest.raises(Exception):
-                v1[ind1].axpy(alpha, v2[ind2])
+@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length)
+def test_axpy_wrong_coefficients(vectors_and_indices):
+    (v1, v2), (ind1, ind2) = vectors_and_indices
+    for alpha in ([np.array([]), np.eye(v1.len_ind(ind1)), np.random.random(v1.len_ind(ind1) + 1)]
+                  if v1.len_ind(ind1) > 0 else
+                  [np.random.random(1)]):
+        with pytest.raises(Exception):
+            v1[ind1].axpy(alpha, v2[ind2])
 
 
 @pyst.given_vector_arrays(which='picklable')

@@ -319,6 +319,17 @@ def st_valid_inds_of_same_length(draw, v1, v2):
     return draw(ret)
 
 
+@hyst.composite
+def st_scaling_value(draw, v1, v2=None):
+    v1 = draw(v1)
+    ints = hyst.integers(min_value=-1, max_value=23)
+    r1 = draw(ints | hyst.just(np.arange(len(v1))))
+    if v2:
+        v2 = draw(v2)
+        return v1, v2, r1, draw(ints | hyst.just(np.arange(len(v2))))
+    return v1, r1
+
+
 # TODO match st_valid_inds_of_different_length results to this
 def valid_inds_of_different_length(v1, v2, random_module):
     # note this potentially yields no result at all for dual 0 length inputs
