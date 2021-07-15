@@ -295,9 +295,7 @@ def test_copy_repeated_index(vector_array):
 
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_both_lengths)
 def test_append(vectors_and_indices):
-    vectors, indices = vectors_and_indices
-    v1, v2 = vectors
-    _, ind = indices
+    (v1, v2), (_, ind) = vectors_and_indices
     len_v1 = len(v1)
     c1, c2 = v1.copy(), v2.copy()
     c1.append(c2[ind])
@@ -391,10 +389,7 @@ def test_scla(vectors_and_indices):
 
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length)
 def test_axpy(vectors_and_indices):
-    vectors, indices = vectors_and_indices
-    v1, v2 = vectors
-    ind1, ind2 = indices
-
+    (v1, v2), (ind1, ind2) = vectors_and_indices
     if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
         with pytest.raises(Exception):
             c1, c2 = v1.copy(), v2.copy()
@@ -463,9 +458,7 @@ def test_axpy(vectors_and_indices):
 
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length, random=hyst.random_module())
 def test_axpy_one_x(vectors_and_indices, random):
-    vectors, indices = vectors_and_indices
-    v1, v2 = vectors
-    ind1, _ = indices
+    (v1, v2), (ind1, _) = vectors_and_indices
     for ind2 in pyst.valid_inds(v2, 1, random_module=False):
         assert v1.check_ind(ind1)
         assert v2.check_ind(ind2)
@@ -605,9 +598,7 @@ def test_pairwise_inner_self(vectors_and_indices):
 @settings(deadline=None, print_blob=True)
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_both_lengths)
 def test_inner(vectors_and_indices):
-    vectors, indices = vectors_and_indices
-    v1, v2 = vectors
-    ind1, ind2 = indices
+    (v1, v2), (ind1, ind2) = vectors_and_indices
     r = v1[ind1].inner(v2[ind2])
     assert isinstance(r, np.ndarray)
     assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
