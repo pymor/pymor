@@ -214,7 +214,8 @@ def test_save_load_matrix(ext):
         assert np.all(A == B)
         path2 = os.path.join(tmpdirname, 'matrix2' + ext)
         save_matrix(path2, A, key)
-        if ext != '.mtz.gz':
+        # .mat save a timestamp, so full file cmp os too flaky
+        if ext not in ('.mtz.gz', '.mat'):
             assert filecmp.cmp(path, path2)
 
 
