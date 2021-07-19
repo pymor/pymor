@@ -113,7 +113,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     while True:
         if max_interpolation_dofs is not None and len(interpolation_dofs) >= max_interpolation_dofs:
             logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
-            logger.info(f'Final maximum interpolation error with'
+            logger.info(f'Final maximum interpolation error with '
                         f'{len(interpolation_dofs)} interpolation DOFs: {max_err}')
             break
 
