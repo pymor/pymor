@@ -126,7 +126,7 @@ class Parameters(SortedFrozenDict):
             return Mu({})
 
         elif isinstance(mu, Mu):
-            mu == self or fail(self.why_incompatible(mu))
+            mu.parameters == self or fail(self.why_incompatible(mu))
             set(mu) == set(self) or fail(f'additional parameters {set(mu) - set(self)}')
             return mu
 

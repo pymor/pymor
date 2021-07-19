@@ -375,7 +375,8 @@ docs:
     dependencies: ["docs build 3 7", "binder base image"]
     before_script:
         - apk --update add make python3 bash
-        - pip3 install jinja2 pathlib jupyter-repo2docker six
+        # chardet is a workaround for https://github.com/jupyterhub/repo2docker/issues/1063
+        - pip3 install jinja2 pathlib jupyter-repo2docker six chardet
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
     rules:
