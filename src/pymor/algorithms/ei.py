@@ -43,7 +43,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         A |VectorArray| of vectors to interpolate.
     error_norm
         Norm w.r.t. which to calculate the interpolation error. If `None`, the Euclidean norm
-        is used.
+        is used. If `'sup'`, the sup-norm of the dofs is used.
     atol
         Stop the greedy search if the largest approximation error is below this threshold.
     rtol
@@ -79,6 +79,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
             :interpolation_matrix:  The interpolation matrix, i.e., the evaluation of
                                     `collateral_basis` at `interpolation_dofs`.
     """
+    assert not isinstance(error_norm, str) or error_norm == 'sup'
     if pool:  # dispatch to parallel implemenation
         assert isinstance(U, (VectorArray, RemoteObject))
         with RemoteObjectManager() as rom:
@@ -104,7 +105,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     ERR = U
 
-    errs = ERR.norm() if error_norm is None else error_norm(ERR)
+    errs = ERR.norm() if error_norm is None else ERR.sup_norm() if error_norm == 'sup' else error_norm(ERR)
     max_err_ind = np.argmax(errs)
     initial_max_err = max_err = errs[max_err_ind]
 
@@ -147,7 +148,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         new_dof_values = U.dofs([new_dof])
         U.axpy(-new_dof_values[:, 0], new_vec)
         K -= (K[max_err_ind] / new_dof_value) * new_dof_values
-        errs = ERR.norm() if error_norm is None else error_norm(ERR)
+        errs = ERR.norm() if error_norm is None else ERR.sup_norm() if error_norm == 'sup' else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
 
@@ -466,7 +467,7 @@ def _parallel_ei_greedy_initialize(U=None, error_norm=None, copy=None, data=None
         U = U.copy()
     data['U'] = U
     data['error_norm'] = error_norm
-    errs = U.norm() if error_norm is None else error_norm(U)
+    errs = U.norm() if error_norm is None else U.sup_norm() if error_norm == 'sup' else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
     return errs[max_err_ind], len(U)
 
@@ -482,7 +483,7 @@ def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
     new_dof_values = U.dofs([new_dof])[:, 0]
     U.axpy(-new_dof_values, new_vec)
 
-    errs = U.norm() if error_norm is None else error_norm(U)
+    errs = U.norm() if error_norm is None else U.sup_norm() if error_norm == 'sup' else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
     return errs[max_err_ind], new_dof_values
 
