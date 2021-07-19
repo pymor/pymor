@@ -18,11 +18,13 @@ from scipy.linalg import solve
 
 from pymor.core.logger import getLogger
 from pymor.algorithms.pod import pod as pod_alg
+from pymor.analyticalproblems.functions import Function, EmpiricalInterpolatedFunction
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject
 from pymor.parallel.manager import RemoteObjectManager
 from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None,
@@ -358,6 +360,69 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
 
     data.update({'dofs': dofs, 'basis': basis})
     return eim, data
+
+
+def interpolate_function(function, parameter_sample, evaluation_points,
+                         atol=None, rtol=None, max_interpolation_dofs=None):
+    """Parameter separable approximation of a |Function| using Empiricial Interpolation.
+
+    This method computes a parameter separated |LincombFunction| approximating
+    the input |Function| using Empirical Interpolation :cite`BMNP04`.
+    The actual EI Greedy algorithm is contained in :func:`ei_greedy`. This function
+    acts as a convenience wrapper, which computes the training data and
+    constructs an :class:`~pymor.analyticalproblems.functions.EmpiricalInterpolatedFunction`
+    from the data returned by :func:`ei_greedy`.
+
+    .. note::
+        If possible, choose `evaluation_points` identical to the coordinates at which
+        the interpolated function is going to be evaluated. Otherwise `function` will
+        have to be re-evaluated at all new evaluation points for all |parameter values|
+        given by `parameter_sample`.
+
+
+    Parameters
+    ----------
+    function
+        The function to interpolate.
+    parameter_sample
+        A list of |Parameters| for which `function` is evaluate to generate the
+        training data.
+    evaluation_points
+        |NumPy array| of coordinates at which `function` should be evaluated to
+        generate the training data.
+    atol
+        See :func:`ei_greedy`.
+    rtol
+        See :func:`ei_greedy`.
+    max_interpolation_dofs
+        See :func:`ei_greedy`.
+
+    Returns
+    -------
+    ei_function
+        The :class:`~pymor.analyticalproblems.functions.EmpiricalInterpolatedFunction` giving
+        the parameter separable approximation of `function`.
+    data
+        `dict` of additional data as returned by :func:`ei_greedy`.
+    """
+    assert isinstance(function, Function)
+    assert isinstance(evaluation_points, np.ndarray) and evaluation_points.ndim == 2 and \
+        evaluation_points.shape[1] == function.dim_domain
+
+    snapshot_data = NumpyVectorSpace.from_numpy(
+        np.array([function(evaluation_points, mu=mu) for mu in parameter_sample])
+    )
+
+    dofs, basis, ei_data = ei_greedy(snapshot_data, error_norm='sup',
+                                     atol=atol, rtol=rtol, max_interpolation_dofs=max_interpolation_dofs)
+
+    ei_function = EmpiricalInterpolatedFunction(
+        function, evaluation_points[dofs], ei_data['interpolation_matrix'], True,
+        parameter_sample, ei_data['coefficients'],
+        evaluation_points=evaluation_points, basis_evaluations=basis.to_numpy()
+    )
+
+    return ei_function, ei_data
 
 
 def _interpolate_operators_build_evaluations(mu, fom=None, operators=None, evaluations=None):
