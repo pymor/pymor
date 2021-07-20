@@ -385,7 +385,7 @@ def interpolate_function(function, parameter_sample, evaluation_points,
     function
         The function to interpolate.
     parameter_sample
-        A list of |Parameters| for which `function` is evaluate to generate the
+        A list of |Parameters| for which `function` is evaluated to generate the
         training data.
     evaluation_points
         |NumPy array| of coordinates at which `function` should be evaluated to
