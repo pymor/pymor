@@ -9,6 +9,7 @@ import pytest
 from hypothesis import given, settings
 
 from pymor.core.exceptions import QtMissing
+from pymortests.base import might_exceed_deadline
 from pymortests.fixtures.grid import hy_grids_with_visualize, hy_grid, hy_grid_and_dim_range_product, \
     hy_grid_and_dim_range_product_and_s
 from pymortests.pickling import assert_picklable_without_dumps_function
@@ -268,6 +269,7 @@ def test_neighbours_wrong_arguments(grid_and_dims):
 
 
 @given(hy_grid_and_dim_range_product_and_s())
+@might_exceed_deadline
 def test_neighbours_shape(grid_and_dims):
     g, e, n, s = grid_and_dims
     assert g.neighbours(e, n, s).ndim == 2
@@ -296,6 +298,7 @@ def test_neighbours_entry_values_unique(grid_and_dims):
 
 
 @given(hy_grid_and_dim_range_product_and_s())
+@might_exceed_deadline
 def test_neighbours_each_entry_neighbour(grid_and_dims):
     g, e, n, s = grid_and_dims
     N = g.neighbours(e, n, s)

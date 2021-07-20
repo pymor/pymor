@@ -8,7 +8,7 @@ from hypothesis import given, settings
 
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymor.tools.floatcmp import almost_less
-from pymortests.base import runmodule
+from pymortests.base import runmodule, might_exceed_deadline
 from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
@@ -130,6 +130,7 @@ def test_integration_elements_shape(grid):
 
 
 @given(hy_grid)
+@might_exceed_deadline
 def test_integration_elements_values(grid):
     g = grid
     for d in range(g.dim - 1):
