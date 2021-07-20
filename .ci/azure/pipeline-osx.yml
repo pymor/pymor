@@ -45,6 +45,7 @@ jobs:
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
       python setup.py build_ext -i
       export QT_API=pyside2
+      export PYMOR_ALLOW_DEADLINE_EXCESS=1
 
       # this allows azure-specific defaults
       cp .ci/azure/pymor_defaults.py_osx pymor_defaults.py

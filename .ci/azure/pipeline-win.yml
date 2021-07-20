@@ -61,6 +61,7 @@ jobs:
       call activate myEnvironment
       set PYTHONPATH=%PYTHONPATH%;%cd%\src
       set QT_API=pyside2
+      set PYMOR_ALLOW_DEADLINE_EXCESS=1
 
       # this allows azure-specific defaults
       cp .ci/azure/pymor_defaults.py_win pymor_defaults.py
