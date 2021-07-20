@@ -454,19 +454,20 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         if self._last_evaluation_points is not None:
             self._last_evaluation_points.flags.writeable = False
             self._last_basis_evaluations.flags.writeable = False
-        self._last_mu = None
+        self._last_mu = 'NONE'
 
     def _update_coefficients(self, mu):
-        if mu is not self._last_mu:
-            assert self.parameters.assert_compatible(mu)
-            self._last_mu = mu
-            fx = self.function.evaluate(self.interpolation_points, mu=mu)
-            if self.triangular:
-                self._last_interpolation_coefficients = solve_triangular(
-                    self.interpolation_matrix, fx, lower=True, unit_diagonal=True
-                )
-            else:
-                self._last_interpolation_coefficients = solve(self.interpolation_matrix, fx)
+        if mu is self._last_mu:
+            return
+        assert self.parameters.assert_compatible(mu)
+        self._last_mu = mu
+        fx = self.function.evaluate(self.interpolation_points, mu=mu)
+        if self.triangular:
+            self._last_interpolation_coefficients = solve_triangular(
+                self.interpolation_matrix, fx, lower=True, unit_diagonal=True
+            )
+        else:
+            self._last_interpolation_coefficients = solve(self.interpolation_matrix, fx)
 
     def _update_evaluation_points(self, x):
         if self._last_evaluation_points is not None and np.all(x == self._last_evaluation_points):
@@ -477,12 +478,6 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         self._last_evaluation_points = x
         snapshot_evaluations = np.array([self.function.evaluate(x, mu=mu) for mu in self.snapshot_mus])
         self._last_basis_evaluations = self.snapshot_coefficients @ snapshot_evaluations.T
-
-    def evaluate(self, x, mu=None):
-        self._update_evaluation_points(x)
-        basis_evaluations = self._last_basis_evaluations
-        interpolation_coefficients = self._evaluate_coefficients(mu)
-        return basis_evaluations.T @ interpolation_coefficients
 
 
 class EmpiricalInterpolatedFunctionFunctional(ParameterFunctional):
