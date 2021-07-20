@@ -7,6 +7,7 @@ import os
 import sys
 from pprint import pformat
 
+import hypothesis
 import numpy as np
 from pickle import dump, load
 from pkg_resources import resource_filename, resource_stream
@@ -74,3 +75,9 @@ def assert_all_almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol
     too_large_relative_errors = dict((i, relative_error(u, v, product=product))
                                      for i, (u, v, f) in enumerate(zip(U, V, cmp_array)) if not f)
     assert np.all(cmp_array), f'Relative errors for not-equal elements:{pformat(too_large_relative_errors)}'
+
+
+def might_exceed_deadline(function):
+    if os.environ.get('PYMOR_ALLOW_DEADLINE_EXCESS', False):
+        return hypothesis.settings(deadline=None)(function)
+    return function
