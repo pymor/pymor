@@ -426,7 +426,7 @@ def test_axpy(vectors_and_indices, scalar):
         pass
     c1[ind1].axpy(-a, c2[ind2])
     assert len(c1) == len(v1)
-    assert np.all(almost_equal(c1, v1))
+    assert np.all(almost_equal(c1, v1, atol=1e-13, rtol=1e-13))
 
 
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length,
@@ -477,7 +477,7 @@ def test_axpy_one_x(vectors_and_indices, scalar):
             pass
         c1[ind1].axpy(-a, c2[ind2])
         assert len(c1) == len(v1)
-        assert np.all(almost_equal(c1, v1))
+        assert np.all(almost_equal(c1, v1, atol=1e-13, rtol=1e-13))
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length,
