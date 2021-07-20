@@ -246,8 +246,6 @@ class BlockDiagonalOperator(BlockOperator):
         return self.source.make_array(U_blocks)
 
     def apply2(self, V, U, mu=None):
-        assert U in self.source
-        assert V in self.range
         return sum([self.blocks[i, i].apply2(V.block(i), U.block(i), mu=mu) for i in range(self.num_range_blocks)])
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):

@@ -2481,7 +2481,9 @@ class StokesDescriptorModel(InputStateOutputModel):
             y(t)
             & =
                 C P^T x(t)
-                + D u(t).
+                + D u(t),
+
+        where it holds :math:`P^T x(t) = x(t)`.
 
         Parameters
         ----------
@@ -2494,8 +2496,8 @@ class StokesDescriptorModel(InputStateOutputModel):
 
         from pymor.operators.constructions import LerayProjectedOperator
         Aproj = LerayProjectedOperator(self.A, self.G, self.E)
-        Bproj = LerayProjectedOperator(self.B, self.G, self.E)
-        Cproj = LerayProjectedOperator(self.C, self.G, self.E)
+        Bproj = LerayProjectedOperator(self.B, self.G, self.E, projection_space='range')
+        Cproj = LerayProjectedOperator(self.C, self.G, self.E, projection_space='source')
         Eproj = LerayProjectedOperator(self.E, self.G, self.E)
 
         return LTIModel(Aproj, Bproj, Cproj, D=self.D, E=Eproj, cont_time=True, solver_options=solver_options,
