@@ -54,16 +54,12 @@ jobs:
       python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_VERSION))"
       python setup.py build_ext -i
       pip install pytest-azurepipelines pytest-datadir
-      set QT_VERBOSE=1
-      set QT_DEBUG_PLUGINS=1
     displayName: 'Sanity Checks'
 
 
   - script: |
       call activate myEnvironment
       set PYTHONPATH=%PYTHONPATH%;%cd%\src
-      set QT_VERBOSE=1
-      set QT_DEBUG_PLUGINS=1
       set QT_API=pyside2
 
       # this allows azure-specific defaults
