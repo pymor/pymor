@@ -11,7 +11,8 @@ from hypothesis import given, settings
 from pymor.core.exceptions import QtMissing
 from pymortests.base import might_exceed_deadline
 from pymortests.fixtures.grid import hy_grids_with_visualize, hy_grid, hy_grid_and_dim_range_product, \
-    hy_grid_and_dim_range_product_and_s
+    hy_grid_and_dim_range_product_and_s_max_en, hy_grid_and_dim_range_product_and_s, \
+    hy_grid_and_dim_range_product_and_s_to_e
 from pymortests.pickling import assert_picklable_without_dumps_function
 
 
@@ -60,36 +61,32 @@ def test_subentities_wrong_arguments(grid_and_dims):
         g.subentities(-1, 0)
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s())
 def test_subentities_shape(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e, g.dim + 1):
-        assert g.subentities(e, s).ndim == 2
-        assert g.subentities(e, s).shape[0] == g.size(e)
+    g, e, _, s = grid_and_dims
+    assert g.subentities(e, s).ndim == 2
+    assert g.subentities(e, s).shape[0] == g.size(e)
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s())
 def test_subentities_dtype(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e, g.dim + 1):
-        assert g.subentities(e, s).dtype == np.dtype('int32')
+    g, e, _, s = grid_and_dims
+    assert g.subentities(e, s).dtype == np.dtype('int32')
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s())
 def test_subentities_entry_value_range(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e, g.dim + 1):
-        np.testing.assert_array_less(g.subentities(e, s), g.size(s))
-        np.testing.assert_array_less(-2, g.subentities(e, s))
+    g, e, _, s = grid_and_dims
+    np.testing.assert_array_less(g.subentities(e, s), g.size(s))
+    np.testing.assert_array_less(-2, g.subentities(e, s))
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s())
 def test_subentities_entry_values_unique(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e, g.dim + 1):
-        for S in g.subentities(e, s):
-            S = S[S >= 0]
-            assert S.size == np.unique(S).size
+    g, e, _, s = grid_and_dims
+    for S in g.subentities(e, s):
+        S = S[S >= 0]
+        assert S.size == np.unique(S).size
 
 
 @given(hy_grid_and_dim_range_product())
@@ -128,51 +125,46 @@ def test_superentities_wrong_arguments(grid_and_dims):
         g.superentities(-1, -2)
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentities_shape(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        assert g.superentities(e, s).ndim == 2
-        assert g.superentities(e, s).shape[0] == g.size(e)
-        assert g.superentities(e, s).shape[1] > 0
+    g, e, _, s = grid_and_dims
+    assert g.superentities(e, s).ndim == 2
+    assert g.superentities(e, s).shape[0] == g.size(e)
+    assert g.superentities(e, s).shape[1] > 0
     assert g.superentities(1, 0).shape[1] <= 2
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentities_dtype(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        assert g.superentities(e, s).dtype == np.dtype('int32')
+    g, e, _, s = grid_and_dims
+    assert g.superentities(e, s).dtype == np.dtype('int32')
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentities_entry_value_range(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        np.testing.assert_array_less(g.superentities(e, s), g.size(s))
-        np.testing.assert_array_less(-2, g.superentities(e, s))
+    g, e, _, s = grid_and_dims
+    np.testing.assert_array_less(g.superentities(e, s), g.size(s))
+    np.testing.assert_array_less(-2, g.superentities(e, s))
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentities_entry_values_unique(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        for S in g.superentities(e, s):
-            S = S[S >= 0]
-            assert S.size == np.unique(S).size
+    g, e, _, s = grid_and_dims
+    for S in g.superentities(e, s):
+        S = S[S >= 0]
+        assert S.size == np.unique(S).size
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentities_entries_sorted(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        for S in g.superentities(e, s):
-            i = 0
-            while (i + 1 < len(S)) and (S[i] < S[i + 1]):
-                i += 1
-            assert (i + 1 == len(S)) or (S[i + 1] == -1)
-            if i + 1 < len(S):
-                np.testing.assert_array_equal(S[i + 1:], -1)
+    g, e, _, s = grid_and_dims
+    for S in g.superentities(e, s):
+        i = 0
+        while (i + 1 < len(S)) and (S[i] < S[i + 1]):
+            i += 1
+        assert (i + 1 == len(S)) or (S[i + 1] == -1)
+        if i + 1 < len(S):
+            np.testing.assert_array_equal(S[i + 1:], -1)
 
 
 @given(hy_grid_and_dim_range_product())
@@ -182,28 +174,26 @@ def test_superentities_codim_d_codim_d(grid_and_dims):
     np.testing.assert_array_equal(g.superentities(e, e).ravel(), np.arange(g.size(e)))
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentities_each_entry_superentity(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        SE = g.superentities(e, s)
-        SUBE = g.subentities(s, e)
-        for i in range(SE.shape[0]):
-            for se in SE[i]:
-                if se != -1:
-                    assert i in SUBE[se]
+    g, e, _, s = grid_and_dims
+    SE = g.superentities(e, s)
+    SUBE = g.subentities(s, e)
+    for i in range(SE.shape[0]):
+        for se in SE[i]:
+            if se != -1:
+                assert i in SUBE[se]
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentities_each_superentity_has_entry(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        SE = g.superentities(e, s)
-        SUBE = g.subentities(s, e)
-        for i in range(SUBE.shape[0]):
-            for se in SUBE[i]:
-                if se != -1:
-                    assert i in SE[se]
+    g, e, _, s = grid_and_dims
+    SE = g.superentities(e, s)
+    SUBE = g.subentities(s, e)
+    for i in range(SUBE.shape[0]):
+        for se in SUBE[i]:
+            if se != -1:
+                assert i in SE[se]
 
 
 @given(hy_grid_and_dim_range_product())
@@ -221,30 +211,27 @@ def test_superentity_indices_wrong_arguments(grid_and_dims):
         g.superentity_indices(-1, -2)
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentity_indices_shape(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        assert g.superentity_indices(e, s).shape == g.superentities(e, s).shape
+    g, e, _, s = grid_and_dims
+    assert g.superentity_indices(e, s).shape == g.superentities(e, s).shape
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentity_indices_dtype(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        assert g.superentity_indices(e, s).dtype == np.dtype('int32')
+    g, e, _, s = grid_and_dims
+    assert g.superentity_indices(e, s).dtype == np.dtype('int32')
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_to_e())
 def test_superentity_indices_valid_entries(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e):
-        SE = g.superentities(e, s)
-        SEI = g.superentity_indices(e, s)
-        SUBE = g.subentities(s, e)
-        for index, superentity in np.ndenumerate(SE):
-            if superentity > -1:
-                assert SUBE[superentity, SEI[index]] == index[0]
+    g, e, _, s = grid_and_dims
+    SE = g.superentities(e, s)
+    SEI = g.superentity_indices(e, s)
+    SUBE = g.subentities(s, e)
+    for index, superentity in np.ndenumerate(SE):
+        if superentity > -1:
+            assert SUBE[superentity, SEI[index]] == index[0]
 
 
 @given(hy_grid_and_dim_range_product())
@@ -268,7 +255,7 @@ def test_neighbours_wrong_arguments(grid_and_dims):
         g.neighbours(-1, 0, g.dim)
 
 
-@given(hy_grid_and_dim_range_product_and_s())
+@given(hy_grid_and_dim_range_product_and_s_max_en())
 @might_exceed_deadline
 def test_neighbours_shape(grid_and_dims):
     g, e, n, s = grid_and_dims
@@ -276,20 +263,21 @@ def test_neighbours_shape(grid_and_dims):
     assert g.neighbours(e, n, s).shape[0] == g.size(e)
 
 
-@given(hy_grid_and_dim_range_product_and_s())
+@given(hy_grid_and_dim_range_product_and_s_max_en())
+@might_exceed_deadline
 def test_neighbours_dtype(grid_and_dims):
     g, e, n, s = grid_and_dims
     assert g.neighbours(e, n, s).dtype == np.dtype('int32')
 
 
-@given(hy_grid_and_dim_range_product_and_s())
+@given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_entry_value_range(grid_and_dims):
     g, e, n, s = grid_and_dims
     np.testing.assert_array_less(g.neighbours(e, n, s), g.size(n))
     np.testing.assert_array_less(-2, g.neighbours(e, n, s))
 
 
-@given(hy_grid_and_dim_range_product_and_s())
+@given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_entry_values_unique(grid_and_dims):
     g, e, n, s = grid_and_dims
     for S in g.neighbours(e, n, s):
@@ -297,7 +285,7 @@ def test_neighbours_entry_values_unique(grid_and_dims):
         assert S.size == np.unique(S).size
 
 
-@given(hy_grid_and_dim_range_product_and_s())
+@given(hy_grid_and_dim_range_product_and_s_max_en())
 @might_exceed_deadline
 def test_neighbours_each_entry_neighbour(grid_and_dims):
     g, e, n, s = grid_and_dims
@@ -313,7 +301,7 @@ def test_neighbours_each_entry_neighbour(grid_and_dims):
                 assert len(inter) > 0
 
 
-@given(hy_grid_and_dim_range_product_and_s())
+@given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_each_neighbour_has_entry(grid_and_dims):
     g, e, n, s = grid_and_dims
     N = g.neighbours(e, n, s)
@@ -333,14 +321,13 @@ def test_neighbours_each_neighbour_has_entry(grid_and_dims):
                         f'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
 
 
-@given(hy_grid_and_dim_range_product())
+@given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_not_neighbour_of_itself(grid_and_dims):
-    g, e, _ = grid_and_dims
-    for s in range(e, g.dim + 1):
-        N = g.neighbours(e, e, s)
-        for ei, E in enumerate(N):
-            assert ei not in E,\
-                f'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'
+    g, e, _, s = grid_and_dims
+    N = g.neighbours(e, e, s)
+    for ei, E in enumerate(N):
+        assert ei not in E,\
+            f'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'
 
 
 @given(hy_grid)
