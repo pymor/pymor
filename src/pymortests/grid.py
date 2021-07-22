@@ -265,6 +265,7 @@ def test_neighbours_shape(grid_and_dims):
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 @might_exceed_deadline
+@settings(deadline=2000)
 def test_neighbours_dtype(grid_and_dims):
     g, e, n, s = grid_and_dims
     assert g.neighbours(e, n, s).dtype == np.dtype('int32')
@@ -287,6 +288,7 @@ def test_neighbours_entry_values_unique(grid_and_dims):
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 @might_exceed_deadline
+@settings(deadline=2000)
 def test_neighbours_each_entry_neighbour(grid_and_dims):
     g, e, n, s = grid_and_dims
     N = g.neighbours(e, n, s)
@@ -302,6 +304,8 @@ def test_neighbours_each_entry_neighbour(grid_and_dims):
 
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
+@might_exceed_deadline
+@settings(deadline=4000)
 def test_neighbours_each_neighbour_has_entry(grid_and_dims):
     g, e, n, s = grid_and_dims
     N = g.neighbours(e, n, s)
@@ -322,6 +326,8 @@ def test_neighbours_each_neighbour_has_entry(grid_and_dims):
 
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
+@might_exceed_deadline
+@settings(deadline=2000)
 def test_neighbours_not_neighbour_of_itself(grid_and_dims):
     g, e, _, s = grid_and_dims
     N = g.neighbours(e, e, s)
