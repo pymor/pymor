@@ -5,9 +5,10 @@
 from numbers import Number
 
 import numpy as np
+from scipy.linalg import solve, solve_triangular
 
 from pymor.core.base import abstractmethod
-from pymor.parameters.base import ParametricObject
+from pymor.parameters.base import ParametricObject, Mu
 from pymor.parameters.functionals import ParameterFunctional, ExpressionParameterFunctional
 
 
@@ -380,3 +381,125 @@ class BitmapFunction(Function):
              * ((self.range[1] - self.range[0]) / 255.)
              + self.range[0])
         return F
+
+
+class EmpiricalInterpolatedFunction(LincombFunction):
+    """Empirically interpolated |Function|.
+
+    Instantiated by :func:`~pymor.algorithm.ei.interpolate_function`.
+
+    Parameters
+    ----------
+    function
+        The |Function| to interpolate.
+    interpolation_points
+        |NumPy array| containing the coordinates at which the function
+        is interpolated. Typically `X[dofs]` where `X` is the array of
+        evaluation points used for snapshot data generation and `dofs`
+        is returned by :func:`~pymor.algorithm.ei.ei_greedy`.
+    interpolation_matrix
+        The interpolation matrix corresponding to the selected interpolation
+        basis vectors and `interpolation_points` as returned by
+        :func:`pymor.algorithms.ei.ei_greedy`.
+    triangular
+        Whether or not `interpolation_matrix` is lower triangular with unit
+        diagonal.
+    snapshot_mus
+        List of |parameter values| for which the snapshot data for
+        :func:`pymor.algorithms.ei.ei_greedy` has been computed.
+    snapshot_coefficients
+        Matrix of linear coefficients s.t. the i-th interpolation basis vector
+        is given by a linear combination of the functions corresponding to
+        `snapshot_mus` with the i-th row of `snapshot_coefficients` as
+        coefficients. Returned by :func:`~pymor.algorithm.ei.ei_greedy` as
+        `data['coefficients']`.
+    evaluation_points
+        Optional |NumPy array| of coordinates at which the function has been
+        evaluated to obtain the snapshot data. If the same evaluation points
+        are used to evaluate :class:`EmpiricalInterpolatedFunction`, then
+        re-evaluation of the snapshot data at the evaluation points can be
+        avoided, when this argument is specified together with `basis_evaluations`.
+    basis_evaluations
+        Optional |Numpy array| of evaluations of the interpolation basis at
+        `evaluation_points`. Corresponds to the `basis` return value of
+        :func:`~pymor.algorithms.ei.ei_greedy`.
+    """
+
+    def __init__(self, function, interpolation_points, interpolation_matrix, triangular,
+                 snapshot_mus, snapshot_coefficients,
+                 evaluation_points=None, basis_evaluations=None,
+                 name=None):
+
+        assert isinstance(function, Function)
+        if len(function.shape_range) > 0:
+            raise NotImplementedError
+        assert isinstance(interpolation_points, np.ndarray) and interpolation_points.ndim == 2 and \
+            interpolation_points.shape[1] == function.dim_domain
+        assert isinstance(interpolation_matrix, np.ndarray) and \
+            interpolation_matrix.shape == (len(interpolation_points),) * 2
+        assert all(isinstance(mu, Mu) for mu in snapshot_mus)
+        assert isinstance(snapshot_coefficients, np.ndarray) and \
+            snapshot_coefficients.shape == (len(interpolation_points), len(snapshot_mus))
+        assert (evaluation_points is None) == (basis_evaluations is None)
+        assert evaluation_points is None or isinstance(evaluation_points, np.ndarray) and \
+            evaluation_points.ndim == 2 and evaluation_points.shape[1] == function.dim_domain
+        assert basis_evaluations is None or isinstance(basis_evaluations, np.ndarray) and \
+            basis_evaluations.shape == (len(interpolation_points), len(evaluation_points)) + function.shape_range
+
+        self.__auto_init(locals())
+        functions = [EmpiricalInterpolatedFunctionBasisFunction(self, i) for i in range(len(interpolation_points))]
+        coefficients = [EmpiricalInterpolatedFunctionFunctional(self, i) for i in range(len(interpolation_points))]
+        super().__init__(functions, coefficients)
+        self._last_evaluation_points, self._last_basis_evaluations = evaluation_points, basis_evaluations
+        if self._last_evaluation_points is not None:
+            self._last_evaluation_points.flags.writeable = False
+            self._last_basis_evaluations.flags.writeable = False
+        self._last_mu = 'NONE'
+
+    def _update_coefficients(self, mu):
+        if mu is self._last_mu:
+            return
+        assert self.parameters.assert_compatible(mu)
+        self._last_mu = mu
+        fx = self.function.evaluate(self.interpolation_points, mu=mu)
+        if self.triangular:
+            self._last_interpolation_coefficients = solve_triangular(
+                self.interpolation_matrix, fx, lower=True, unit_diagonal=True
+            )
+        else:
+            self._last_interpolation_coefficients = solve(self.interpolation_matrix, fx)
+
+    def _update_evaluation_points(self, x):
+        if self._last_evaluation_points is not None and np.all(x == self._last_evaluation_points):
+            return
+        if self._last_evaluation_points is not None:
+            self.logger.info('Evaluating function snapshots for new evaluation points.')
+        x.flags.writeable = False
+        self._last_evaluation_points = x
+        snapshot_evaluations = np.array([self.function.evaluate(x, mu=mu) for mu in self.snapshot_mus])
+        self._last_basis_evaluations = self.snapshot_coefficients @ snapshot_evaluations.T
+
+
+class EmpiricalInterpolatedFunctionFunctional(ParameterFunctional):
+
+    def __init__(self, interpolated_function, index):
+        self.__auto_init(locals())
+        # we explicitly have to set the parameters since interpolation_points isn't initialized yet
+        self.parameters = interpolated_function.function.parameters
+
+    def evaluate(self, mu=None):
+        self.interpolated_function._update_coefficients(mu)
+        return self.interpolated_function._last_interpolation_coefficients[self.index]
+
+
+class EmpiricalInterpolatedFunctionBasisFunction(Function):
+
+    def __init__(self, interpolated_function, index):
+        self.__auto_init(locals())
+        self.dim_domain = interpolated_function.function.dim_domain
+        self.shape_range = interpolated_function.function.shape_range
+        self.parameters = {}
+
+    def evaluate(self, x, mu=None):
+        self.interpolated_function._update_evaluation_points(x)
+        return self.interpolated_function._last_basis_evaluations[self.index].copy()

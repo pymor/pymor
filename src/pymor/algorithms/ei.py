@@ -18,15 +18,17 @@ from scipy.linalg import solve
 
 from pymor.core.logger import getLogger
 from pymor.algorithms.pod import pod as pod_alg
+from pymor.analyticalproblems.functions import Function, EmpiricalInterpolatedFunction
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject
 from pymor.parallel.manager import RemoteObjectManager
 from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None,
-              copy=True, pool=dummy_pool):
+              nodal_basis=False, copy=True, pool=dummy_pool):
     """Generate data for empirical interpolation using EI-Greedy algorithm.
 
     Given a |VectorArray| `U`, this method generates a collateral basis and
@@ -43,7 +45,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         A |VectorArray| of vectors to interpolate.
     error_norm
         Norm w.r.t. which to calculate the interpolation error. If `None`, the Euclidean norm
-        is used.
+        is used. If `'sup'`, the sup-norm of the dofs is used.
     atol
         Stop the greedy search if the largest approximation error is below this threshold.
     rtol
@@ -51,6 +53,10 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     max_interpolation_dofs
         Stop the greedy search if the number of interpolation DOF (= dimension of the collateral
         basis) reaches this value.
+    nodal_basis
+        If `True`, a nodal interpolation basis is constructed. Note that nodal bases are
+        not hierarchical. Their construction involves the inversion of the associated
+        interpolation matrix, which might lead to decreased numerical accuracy.
     copy
         If `False`, `U` will be modified during executing of the algorithm.
     pool
@@ -70,7 +76,12 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
             :triangularity_errors:  Sequence of maximum absolute values of interoplation
                                     matrix coefficients in the upper triangle (should
                                     be near zero).
+            :coefficients:          |NumPy array| of coefficients such that `collateral_basis`
+                                    is given by `U.lincomb(coefficients)`.
+            :interpolation_matrix:  The interpolation matrix, i.e., the evaluation of
+                                    `collateral_basis` at `interpolation_dofs`.
     """
+    assert not isinstance(error_norm, str) or error_norm == 'sup'
     if pool:  # dispatch to parallel implemenation
         assert isinstance(U, (VectorArray, RemoteObject))
         with RemoteObjectManager() as rom:
@@ -86,6 +97,8 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     collateral_basis = U.empty()
+    K = np.eye(len(U))  # matrix s.t. U = U_initial.lincomb(K)
+    coefficients = np.zeros((0, len(U)))
     max_errs = []
     triangularity_errs = []
 
@@ -94,7 +107,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     ERR = U
 
-    errs = ERR.norm() if error_norm is None else error_norm(ERR)
+    errs = ERR.norm() if error_norm is None else ERR.sup_norm() if error_norm == 'sup' else error_norm(ERR)
     max_err_ind = np.argmax(errs)
     initial_max_err = max_err = errs[max_err_ind]
 
@@ -102,7 +115,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     while True:
         if max_interpolation_dofs is not None and len(interpolation_dofs) >= max_interpolation_dofs:
             logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
-            logger.info(f'Final maximum interpolation error with'
+            logger.info(f'Final maximum interpolation error with '
                         f'{len(interpolation_dofs)} interpolation DOFs: {max_err}')
             break
 
@@ -130,12 +143,14 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         new_vec *= 1 / new_dof_value
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
         collateral_basis.append(new_vec)
+        coefficients = np.vstack([coefficients, K[max_err_ind] / new_dof_value])
         max_errs.append(max_err)
 
         # update U and ERR
         new_dof_values = U.dofs([new_dof])
         U.axpy(-new_dof_values[:, 0], new_vec)
-        errs = ERR.norm() if error_norm is None else error_norm(ERR)
+        K -= (K[max_err_ind] / new_dof_value) * new_dof_values
+        errs = ERR.norm() if error_norm is None else ERR.sup_norm() if error_norm == 'sup' else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
 
@@ -147,7 +162,15 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     if len(triangularity_errs) > 0:
         logger.info(f'Interpolation matrix is not lower triangular with maximum error of {triangularity_errs[-1]}')
 
-    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
+    if nodal_basis:
+        logger.info('Building nodal basis.')
+        inv_interpolation_matrix = np.linalg.inv(interpolation_matrix)
+        collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
+        coefficients = inv_interpolation_matrix.T @ coefficients
+        interpolation_matrix = np.eye(len(collateral_basis))
+
+    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
+            'coefficients': coefficients, 'interpolation_matrix': interpolation_matrix}
 
     return interpolation_dofs, collateral_basis, data
 
@@ -339,13 +362,77 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
     return eim, data
 
 
+def interpolate_function(function, parameter_sample, evaluation_points,
+                         atol=None, rtol=None, max_interpolation_dofs=None):
+    """Parameter separable approximation of a |Function| using Empiricial Interpolation.
+
+    This method computes a parameter separated |LincombFunction| approximating
+    the input |Function| using Empirical Interpolation :cite`BMNP04`.
+    The actual EI Greedy algorithm is contained in :func:`ei_greedy`. This function
+    acts as a convenience wrapper, which computes the training data and
+    constructs an :class:`~pymor.analyticalproblems.functions.EmpiricalInterpolatedFunction`
+    from the data returned by :func:`ei_greedy`.
+
+    .. note::
+        If possible, choose `evaluation_points` identical to the coordinates at which
+        the interpolated function is going to be evaluated. Otherwise `function` will
+        have to be re-evaluated at all new evaluation points for all |parameter values|
+        given by `parameter_sample`.
+
+
+    Parameters
+    ----------
+    function
+        The function to interpolate.
+    parameter_sample
+        A list of |Parameters| for which `function` is evaluated to generate the
+        training data.
+    evaluation_points
+        |NumPy array| of coordinates at which `function` should be evaluated to
+        generate the training data.
+    atol
+        See :func:`ei_greedy`.
+    rtol
+        See :func:`ei_greedy`.
+    max_interpolation_dofs
+        See :func:`ei_greedy`.
+
+    Returns
+    -------
+    ei_function
+        The :class:`~pymor.analyticalproblems.functions.EmpiricalInterpolatedFunction` giving
+        the parameter separable approximation of `function`.
+    data
+        `dict` of additional data as returned by :func:`ei_greedy`.
+    """
+    assert isinstance(function, Function)
+    assert isinstance(evaluation_points, np.ndarray) and evaluation_points.ndim == 2 and \
+        evaluation_points.shape[1] == function.dim_domain
+
+    snapshot_data = NumpyVectorSpace.from_numpy(
+        np.array([function(evaluation_points, mu=mu) for mu in parameter_sample])
+    )
+
+    dofs, basis, ei_data = ei_greedy(snapshot_data, error_norm='sup',
+                                     atol=atol, rtol=rtol, max_interpolation_dofs=max_interpolation_dofs)
+
+    ei_function = EmpiricalInterpolatedFunction(
+        function, evaluation_points[dofs], ei_data['interpolation_matrix'], True,
+        parameter_sample, ei_data['coefficients'],
+        evaluation_points=evaluation_points, basis_evaluations=basis.to_numpy()
+    )
+
+    return ei_function, ei_data
+
+
 def _interpolate_operators_build_evaluations(mu, fom=None, operators=None, evaluations=None):
     U = fom.solve(mu)
     for op in operators:
         evaluations.append(op.apply(U, mu=mu))
 
 
-def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None, copy=True):
+def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None,
+                        nodal_basis=False, copy=True):
 
     assert isinstance(U, RemoteObject)
 
@@ -359,8 +446,13 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
     triangularity_errs = []
 
     with pool.push({}) as distributed_data:
-        errs = pool.apply(_parallel_ei_greedy_initialize,
-                          U=U, error_norm=error_norm, copy=copy, data=distributed_data)
+        errs, snapshot_counts = zip(
+            *pool.apply(_parallel_ei_greedy_initialize, U=U, error_norm=error_norm, copy=copy, data=distributed_data)
+        )
+        snapshot_count = sum(snapshot_counts)
+        cum_snapshot_counts = np.hstack(([0], np.cumsum(snapshot_counts)))
+        K = np.eye(snapshot_count)  # matrix s.t. U = U_initial.lincomb(K)
+        coefficients = np.zeros((0, snapshot_count))
         max_err_ind = np.argmax(errs)
         initial_max_err = max_err = errs[max_err_ind]
 
@@ -384,7 +476,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
                 break
 
             # compute new interpolation dof and collateral basis vector
-            new_vec = pool.apply_only(_parallel_ei_greedy_get_vector, max_err_ind, data=distributed_data)
+            new_vec, local_ind = pool.apply_only(_parallel_ei_greedy_get_vector, max_err_ind, data=distributed_data)
             new_dof = new_vec.amax()[0][0]
             if new_dof in interpolation_dofs:
                 logger.info(f'DOF {new_dof} selected twice for interpolation! Stopping extension loop.')
@@ -397,9 +489,15 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             new_vec *= 1 / new_dof_value
             interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
             collateral_basis.append(new_vec)
+            global_max_err_ind = cum_snapshot_counts[max_err_ind] + local_ind
+            coefficients = np.vstack([coefficients, K[global_max_err_ind] / new_dof_value])
             max_errs.append(max_err)
 
-            errs = pool.apply(_parallel_ei_greedy_update, new_vec=new_vec, new_dof=new_dof, data=distributed_data)
+            errs, new_dof_values = zip(
+                *pool.apply(_parallel_ei_greedy_update, new_vec=new_vec, new_dof=new_dof, data=distributed_data)
+            )
+            new_dof_values = np.hstack(new_dof_values)
+            K -= (K[global_max_err_ind] / new_dof_value) * new_dof_values[:, np.newaxis]
             max_err_ind = np.argmax(errs)
             max_err = errs[max_err_ind]
 
@@ -412,7 +510,15 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
         logger.info(f'Interpolation matrix is not lower triangular with maximum error of {triangularity_errs[-1]}')
         logger.info('')
 
-    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
+    if nodal_basis:
+        logger.info('Building nodal basis.')
+        inv_interpolation_matrix = np.linalg.inv(interpolation_matrix)
+        collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
+        coefficients = inv_interpolation_matrix.T @ coefficients
+        interpolation_matrix = np.eye(len(collateral_basis))
+
+    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
+            'coefficients': coefficients, 'interpolation_matrix': interpolation_matrix}
 
     return interpolation_dofs, collateral_basis, data
 
@@ -426,25 +532,25 @@ def _parallel_ei_greedy_initialize(U=None, error_norm=None, copy=None, data=None
         U = U.copy()
     data['U'] = U
     data['error_norm'] = error_norm
-    errs = U.norm() if error_norm is None else error_norm(U)
+    errs = U.norm() if error_norm is None else U.sup_norm() if error_norm == 'sup' else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
-    return errs[max_err_ind]
+    return errs[max_err_ind], len(U)
 
 
 def _parallel_ei_greedy_get_vector(data=None):
-    return data['U'][data['max_err_ind']].copy()
+    return data['U'][data['max_err_ind']].copy(), data['max_err_ind']
 
 
 def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
     U = data['U']
     error_norm = data['error_norm']
 
-    new_dof_values = U.dofs([new_dof])
-    U.axpy(-new_dof_values[:, 0], new_vec)
+    new_dof_values = U.dofs([new_dof])[:, 0]
+    U.axpy(-new_dof_values, new_vec)
 
-    errs = U.norm() if error_norm is None else error_norm(U)
+    errs = U.norm() if error_norm is None else U.sup_norm() if error_norm == 'sup' else error_norm(U)
     data['max_err_ind'] = max_err_ind = np.argmax(errs)
-    return errs[max_err_ind]
+    return errs[max_err_ind], new_dof_values
 
 
 def _identity(x):
