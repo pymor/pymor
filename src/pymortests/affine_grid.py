@@ -129,8 +129,8 @@ def test_integration_elements_shape(grid):
         assert g.integration_elements(d).shape == (g.size(d),)
 
 
+@might_exceed_deadline()
 @given(hy_grid)
-@might_exceed_deadline
 def test_integration_elements_values(grid):
     g = grid
     for d in range(g.dim - 1):
