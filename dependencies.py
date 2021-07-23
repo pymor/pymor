@@ -44,7 +44,7 @@ install_suggests = {
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
     'matplotlib': 'needed for error plots in demo scipts',
     'gmsh': 'this downloads the proper Gmsh binary',
-    'meshio==4.2.0': 'needed to import Gmsh grids',
+    'meshio>=4.4': 'needed to import Gmsh grids and output vtk files',
     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
     'pyevtk>=1.1': 'writing vtk output',
     'sympy': 'symbolic mathematics',
