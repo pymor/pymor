@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from .matrices import load_matrix, save_matrix
 from pymor.core.config import config
 
-if config.HAVE_MESHIO and config.HAVE_PYEVTK:
+if config.HAVE_VTKIO:
     from .vtk import read_vtkfile
 else:
     def read_vtkfile(*args):

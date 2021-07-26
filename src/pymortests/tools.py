@@ -122,6 +122,7 @@ def test_almost_less():
                almost_less(0., inf, rtol, atol), msg
 
 
+@pytest.mark.skipif(not config.config.HAVE_VTKIO, reason='VTKIO support libraries missing')
 @given(hy_rect_or_tria_grid)
 def test_vtkio(grid):
     steps = 4
@@ -131,8 +132,6 @@ def test_vtkio(grid):
             if codim == 1:
                 with pytest.raises(NotImplementedError):
                     write_vtk(grid, data, out_name, codim=codim)
-                continue
-            if not config.config.HAVE_MESHIO:
                 continue
             fn = write_vtk(grid, data, out_name, codim=codim)
             meshes = read_vtkfile(fn)

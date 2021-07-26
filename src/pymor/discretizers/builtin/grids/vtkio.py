@@ -57,8 +57,8 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     -------
     full filename of saved file
     """
-    if not config.HAVE_PYEVTK or not config.HAVE_MESHIO:
-        raise ImportError('pyevtk and meshio needed for vtk output')
+    if not config.HAVE_VTKIO:
+        raise ImportError('pyevtk, meshio, lxml and xmljson needed for vtk output')
     if grid.dim != 2:
         raise NotImplementedError
     if codim not in (0, 2):
