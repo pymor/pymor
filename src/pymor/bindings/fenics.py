@@ -200,7 +200,7 @@ if config.HAVE_FENICS:
                 raise NotImplementedError
             r = (self.range.real_zero_vector() if initial_guess is None else
                  initial_guess.copy(deep=True))
-            options = self.solver_options.get('inverse') if self.solver_options else None
+            options = self.solver_options.get('inverse_adjoint') if self.solver_options else None
             if not hasattr(self, '_matrix_transpose'):
                 self._matrix_transpose = self.matrix.copy()
                 mat = df.as_backend_type(self.matrix).mat()
