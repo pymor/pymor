@@ -10,6 +10,13 @@ from contextlib import contextmanager
 from .matrices import load_matrix, save_matrix
 from pymor.core.config import config
 
+if config.HAVE_MESHIO and config.HAVE_PYEVTK:
+    from .vtk import read_vtkfile
+else:
+    def read_vtkfile(*args):
+        raise NotImplementedError("VTK I/O needs meshio and pyevtk packages installed")
+
+
 @contextmanager
 def SafeTemporaryFileName(name=None, parent_dir=None):
     """Cross~platform safe equivalent of re-opening a NamedTemporaryFile.

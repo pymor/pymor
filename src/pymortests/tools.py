@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 from hypothesis import given
 
+from pymor.core import config
 from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
@@ -19,7 +20,7 @@ from pymor.tools import formatsrc, timing
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
-from pymor.tools.io import SafeTemporaryFileName, change_to_directory
+from pymor.tools.io import SafeTemporaryFileName, change_to_directory, read_vtkfile
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
@@ -124,15 +125,18 @@ def test_almost_less():
 @given(hy_rect_or_tria_grid)
 def test_vtkio(grid):
     steps = 4
-    for dim in range(1, 2):
-        for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.zeros((steps, grid.size(c))))
-                                      for c in range(grid.dim+1))):
-            with SafeTemporaryFileName('wb') as out_name:
-                if codim == 1:
-                    with pytest.raises(NotImplementedError):
-                        write_vtk(grid, data, out_name, codim=codim)
-                else:
+    for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.zeros((steps, grid.size(c))))
+                                  for c in range(grid.dim+1))):
+        with SafeTemporaryFileName('wb') as out_name:
+            if codim == 1:
+                with pytest.raises(NotImplementedError):
                     write_vtk(grid, data, out_name, codim=codim)
+                continue
+            if not config.config.HAVE_MESHIO:
+                continue
+            fn = write_vtk(grid, data, out_name, codim=codim)
+            meshes = read_vtkfile(fn)
+            assert meshes
 
 
 def testTimingContext():
