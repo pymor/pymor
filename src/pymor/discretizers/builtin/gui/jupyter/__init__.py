@@ -20,13 +20,17 @@ from pymor.core.config import config
 # and we have to make sure we do not setup two redirects
 _extension_loaded = False
 
+
 @defaults('backend')
 def get_visualizer(backend='py3js'):
-    if backend not in ('py3js', 'MPL'):
+    if backend not in ('py3js', 'pyvista', 'MPL'):
         raise ValueError
     if backend == 'py3js' and config.HAVE_PYTHREEJS:
         from pymor.discretizers.builtin.gui.jupyter.threejs import visualize_py3js
         return visualize_py3js
+    elif backend == 'pyvista' and config.HAVE_PYVISTA:
+        from pymor.discretizers.builtin.gui.jupyter.vista import visualize_vista_vectorarray
+        return visualize_vista_vectorarray
     else:
         return visualize_patch
 
