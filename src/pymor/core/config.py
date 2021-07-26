@@ -9,12 +9,16 @@ import warnings
 
 
 def _can_import(module):
-    try:
-        import_module(module)
-        return True
-    except ImportError:
-        pass
-    return False
+    def _can_import_single(m):
+        try:
+            import_module(m)
+            return True
+        except ImportError:
+            pass
+        return False
+    if not isinstance(module, (list, tuple)):
+        module = [module]
+    return all((_can_import_single(m) for m in module))
 
 
 def _get_fenics_version():
