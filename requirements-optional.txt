@@ -8,11 +8,13 @@ diskcache
 dune-gdt>=2021.1.3
 dune-xt>=2021.1.3
 gmsh
+ipygany
 ipyparallel>=6.2.5
 ipython>=5.0
 ipywidgets
 jupyter_client>=7.0.6
 jupyter_contrib_nbextensions
+k3d
 lxml
 matplotlib
 meshio>=4.4
@@ -32,6 +34,8 @@ pyopengl
 pytest>=4.4
 python-slugify
 pythreejs
+pyvista
+pyvistaqt
 qtpy
 scipy>=1.1;python_version < "3.8"
 scipy>=1.3.3;python_version == "3.8"
