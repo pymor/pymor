@@ -8,11 +8,13 @@ diskcache
 dune-gdt>=2021.1.3; platform_system=="Linux" and platform_machine=="x86_64"
 dune-xt>=2021.1.3; platform_system=="Linux" and platform_machine=="x86_64"
 gmsh
+ipygany
 ipyparallel>=6.2.5
 ipython>=5.0
 ipywidgets<8,>7
 jupyter_client>=7.0.6
 jupyter_contrib_nbextensions
+k3d
 lxml
 matplotlib
 meshio>=4.4
@@ -31,6 +33,8 @@ pyopengl
 pytest==7.1.2
 python-slugify
 pythreejs
+pyvista
+pyvistaqt
 qtpy>2.0
 scipy>=1.3.3;python_version == "3.8"
 scipy>=1.3;python_version < "3.8"
