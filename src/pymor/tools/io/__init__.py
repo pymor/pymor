@@ -9,6 +9,7 @@ from contextlib import contextmanager
 
 from .matrices import load_matrix, save_matrix
 from pymor.core.config import config
+from ..deprecated import Deprecated
 
 if config.HAVE_VTKIO:
     from .vtk import read_vtkfile
@@ -17,8 +18,13 @@ else:
         raise NotImplementedError("VTK I/O needs meshio and pyevtk packages installed")
 
 
-@contextmanager
+@Deprecated('safe_temporary_filename')
 def SafeTemporaryFileName(name=None, parent_dir=None):
+    return safe_temporary_filename(name=name, parent_dir=parent_dir)
+
+
+@contextmanager
+def safe_temporary_filename(name=None, parent_dir=None):
     """Cross~platform safe equivalent of re-opening a NamedTemporaryFile.
 
     Creates an automatically cleaned up temporary directory with a single file therein.

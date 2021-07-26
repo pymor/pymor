@@ -20,7 +20,7 @@ from pymor.tools import formatsrc, timing
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
-from pymor.tools.io import SafeTemporaryFileName, change_to_directory, read_vtkfile
+from pymor.tools.io import safe_temporary_filename, change_to_directory, read_vtkfile
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
@@ -128,7 +128,7 @@ def test_vtkio(grid):
     steps = 4
     for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.zeros((steps, grid.size(c))))
                                   for c in range(grid.dim+1))):
-        with SafeTemporaryFileName('wb') as out_name:
+        with safe_temporary_filename('wb') as out_name:
             if codim == 1:
                 with pytest.raises(NotImplementedError):
                     write_vtk(grid, data, out_name, codim=codim)
@@ -232,6 +232,13 @@ def test_cwd_ctx_manager():
         assert result is None
         assert _cwd() == target
     assert _cwd() == original_cwd
+
+
+def test_deprecated_tmp():
+    """This test should be removed alongside SafeTemporaryFileName after the next release"""
+    from pymor.tools.io import SafeTemporaryFileName
+    with SafeTemporaryFileName() as fn:
+        open(fn, 'wt').write('foo')
 
 
 if __name__ == "__main__":
