@@ -10,6 +10,7 @@ ipyparallel>=6.2.5
 ipython>=5.0
 ipywidgets
 jupyter_contrib_nbextensions
+lxml
 matplotlib
 meshio>=4.4
 mpi4py>=3.0.3;python_version >= "3.9"
@@ -21,7 +22,7 @@ numpy>=1.17.5;python_version == "3.8"
 numpy>=1.19.4;python_version >= "3.9"
 packaging
 pillow
-pyevtk>=1.1
+pyevtk
 pygments
 pymess
 pyopengl
@@ -45,3 +46,4 @@ sympy
 torch
 typer
 wheel
+xmljson
