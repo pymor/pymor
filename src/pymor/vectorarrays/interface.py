@@ -11,58 +11,18 @@ from pymor.core.defaults import defaults
 from pymor.tools.random import get_random_state
 
 
-class VectorArray(BasicObject):
-    """Interface for vector arrays.
+class AbstractVectorArray(BasicObject):
+    """Interface for abstract vector arrays.
 
-    A vector array should be thought of as a list of (possibly high-dimensional) vectors.
-    While the vectors themselves will be inaccessible in general (e.g. because they are
-    managed by an external PDE solver code), operations on the vectors like addition can
-    be performed via this interface.
-
-    It is assumed that the number of vectors is small enough such that scalar data
-    associated to each vector can be handled on the Python side. As such, methods like
-    :meth:`~VectorArray.norm` or :meth:`~VectorArray.gramian` will
-    always return |NumPy arrays|.
-
-    An implementation of the `VectorArray` via |NumPy arrays| is given by
-    |NumpyVectorArray|.  In general, it is the implementors decision how memory is
-    allocated internally (e.g.  continuous block of memory vs. list of pointers to the
-    individual vectors.) Thus, no general assumptions can be made on the costs of operations
-    like appending to or removing vectors from the array. As a hint for 'continuous block
-    of memory' implementations, :meth:`~VectorSpace.zeros` provides a `reserve`
-    keyword argument which allows to specify to what size the array is assumed to grow.
-
-    As with |Numpy array|, |VectorArrays| can be indexed with numbers, slices and
-    lists or one-dimensional |NumPy arrays|. Indexing will always return a new
-    |VectorArray| which acts as a view into the original data. Thus, if the indexed
-    array is modified via :meth:`~VectorArray.scal` or :meth:`~VectorArray.axpy`,
-    the vectors in the original array will be changed. Indices may be negative, in
-    which case the vector is selected by counting from the end of the array. Moreover
-    indices can be repeated, in which case the corresponding vector is selected several
-    times. The resulting view will be immutable, however.
-
-    .. note::
-        It is disallowed to append vectors to a |VectorArray| view or to remove
-        vectors from it. Removing vectors from an array with existing views
-        will lead to undefined behavior of these views. As such, it is generally
-        advisable to make a :meth:`~VectorArray.copy` of a view for long
-        term storage. Since :meth:`~VectorArray.copy` has copy-on-write
-        semantics, this will usually cause little overhead.
-
-    Attributes
-    ----------
-    dim
-        The dimension of the vectors in the array.
-    is_view
-        `True` if the array is a view obtained by indexing another array.
-    space
-        The |VectorSpace| the array belongs to.
+    Abstract vector arrays behave almost identically to vector arrays. The key difference
+    between the classes is that each entry of a |VectorArray| represents a DOF, whereas
+    the entries of |AbstractVectorArrays| should generally not be interpreted as DOFs.
     """
 
     is_view = False
 
     def zeros(self, count=1, reserve=0):
-        """Create a |VectorArray| of null vectors of the same |VectorSpace|.
+        """Create an |AbstractVectorArray| of null vectors of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(count, reserve)`.
 
@@ -75,12 +35,12 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors with each DOF set to zero.
+        An |AbstractVectorArray| containing `count` vectors with each entry set to zero.
         """
         return self.space.zeros(count, reserve=reserve)
 
     def ones(self, count=1, reserve=0):
-        """Create a |VectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
+        """Create an |AbstractVectorArray| of vectors of all-one vectors of the same |VectorSpace|.
 
         This is a shorthand for `self.space.full(1., count, reserve)`.
 
@@ -93,19 +53,19 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors with each DOF set to one.
+        An |AbstractVectorArray| containing `count` vectors with each entry set to one.
         """
         return self.space.full(1., count, reserve)
 
     def full(self, value, count=1, reserve=0):
-        """Create a |VectorArray| of vectors with all DOFs set to the same value.
+        """Create an |AbstractVectorArray| of vectors with all entries set to the same value.
 
         This is a shorthand for `self.space.full(value, count, reserve)`.
 
         Parameters
         ----------
         value
-            The value each DOF should be set to.
+            The value each entry should be set to.
         count
             The number of vectors.
         reserve
@@ -113,12 +73,12 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors with each DOF set to `value`.
+        An |AbstractVectorArray| containing `count` vectors with each entry set to `value`.
         """
         return self.space.full(value, count, reserve=reserve)
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
-        """Create a |VectorArray| of vectors with random entries.
+        """Create an |AbstractVectorArray| of vectors with random entries.
 
         This is a shorthand for
         `self.space.random(count, distribution, radom_state, seed, **kwargs)`.
@@ -160,7 +120,7 @@ class VectorArray(BasicObject):
         return self.space.random(count, distribution, random_state, seed, **kwargs)
 
     def empty(self, reserve=0):
-        """Create an empty |VectorArray| of the same |VectorSpace|.
+        """Create an empty |AbstractVectorArray| of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(0, reserve)`.
 
@@ -171,7 +131,7 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        An empty |VectorArray|.
+        An empty |AbstractVectorArray|.
         """
         return self.space.zeros(0, reserve=reserve)
 
@@ -186,7 +146,7 @@ class VectorArray(BasicObject):
 
     @abstractmethod
     def __getitem__(self, ind):
-        """Return a |VectorArray| view onto a subset of the vectors in the array."""
+        """Return an |AbstractVectorArray| view onto a subset of the vectors in the array."""
         pass
 
     @abstractmethod
@@ -201,7 +161,7 @@ class VectorArray(BasicObject):
         ----------
         ensure_copy
             If `False`, modifying the returned |NumPy array| might alter the original
-            |VectorArray|. If `True` always a copy of the array data is made.
+            |AbstractVectorArray|. If `True` always a copy of the array data is made.
         """
         raise NotImplementedError
 
@@ -212,7 +172,7 @@ class VectorArray(BasicObject):
         Parameters
         ----------
         other
-            A |VectorArray| containing the vectors to be appended.
+            An |AbstractVectorArray| containing the vectors to be appended.
         remove_from_other
             If `True`, the appended vectors are removed from `other`.
             For list-like implementations this can be used to prevent
@@ -224,7 +184,7 @@ class VectorArray(BasicObject):
     def copy(self, deep=False):
         """Returns a copy of the array.
 
-        All |VectorArray| implementations in pyMOR have copy-on-write semantics:
+        All |AbstractVectorArray| implementations in pyMOR have copy-on-write semantics:
         if not specified otherwise by setting `deep` to `True`, the returned
         copy will hold a handle to the same array data as the original array,
         and a deep copy of the data will only be performed when one of the arrays
@@ -240,7 +200,7 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        A copy of the |VectorArray|.
+        A copy of the |AbstractVectorArray|.
         """
         pass
 
@@ -287,24 +247,21 @@ class VectorArray(BasicObject):
             The scalar coefficient or one-dimensional |NumPy array| of coefficients with which
             the vectors in `x` are multiplied.
         x
-            A |VectorArray| containing the x-summands.
+            An |AbstractVectorArray| containing the x-summands.
         """
         pass
 
     def inner(self, other, product=None):
-        """Returns the inner products between |VectorArray| elements.
+        """Returns the inner products between |AbstractVectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
-        the :meth:`dofs` of `self` and `other` are returned, i.e. ::
+        the vectors of `self` and `other` are returned, i.e. it holds::
 
-            U.inner(V)
+            U.inner(V) = result
 
-        is equivalent to::
+        such that::
 
-            U.dofs(np.arange(U.dim)) @ V.dofs(np.arange(V.dim)).T
-
-        (Note, that :meth:`dofs` is only intended to be called for a
-        small number of DOF indices.)
+            result[i, j] = ( U[i], V[j] ).
 
         If a `product` |Operator| is specified, this |Operator| is
         used to compute the inner products using
@@ -328,7 +285,7 @@ class VectorArray(BasicObject):
         Parameters
         ----------
         other
-            A |VectorArray| containing the second factors.
+            An |AbstractVectorArray| containing the second factors.
         product
             If not `None` an |Operator| representing the inner product
             bilinear form.
@@ -345,19 +302,16 @@ class VectorArray(BasicObject):
             raise NotImplementedError
 
     def pairwise_inner(self, other, product=None):
-        """Returns the pairwise inner products between |VectorArray| elements.
+        """Returns the pairwise inner products between |AbstractVectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
-        the :meth:`dofs` of `self` and `other` are returned, i.e. ::
+        the vectors of `self` and `other` are returned, i.e. it holds::
 
-            U.pairwise_inner(V)
+            U.pairwise_inner(V) = result
 
-        is equivalent to::
+        such that::
 
-            np.sum(U.dofs(np.arange(U.dim)) * V.dofs(np.arange(V.dim)), axis=-1)
-
-        (Note, that :meth:`dofs` is only intended to be called for a
-        small number of DOF indices.)
+            result[i] = ( U[i], V[i] )
 
         If a `product` |Operator| is specified, this |Operator| is
         used to compute the inner products using
@@ -382,7 +336,7 @@ class VectorArray(BasicObject):
         Parameters
         ----------
         other
-            A |VectorArray| containing the second factors.
+            An |AbstractVectorArray| containing the second factors.
         product
             If not `None` an |Operator| representing the inner product
             bilinear form.
@@ -412,7 +366,7 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        A |VectorArray| `result` such that:
+        An |AbstractVectorArray| `result` such that:
 
             result[i] = ∑ self[j] * coefficients[i,j]
 
@@ -426,7 +380,7 @@ class VectorArray(BasicObject):
     def norm(self, product=None, tol=None, raise_complex=None):
         """Norm with respect to a given inner product.
 
-        If `product` is `None`, the Euclidean norms of the :meth:`dofs`
+        If `product` is `None`, the Euclidean norms of the vectors
         of the array are returned, i.e. ::
 
             U.norm()
@@ -468,7 +422,7 @@ class VectorArray(BasicObject):
     def norm2(self, product=None, tol=1e-10, raise_complex=True):
         """Squared norm with respect to a given inner product.
 
-        If `product` is `None`, the Euclidean norms of the :meth:`dofs`
+        If `product` is `None`, the Euclidean norms of the vectors
         of the array are returned, i.e. ::
 
             U.norm()
@@ -533,33 +487,16 @@ class VectorArray(BasicObject):
             return max_val
 
     @abstractmethod
-    def dofs(self, dof_indices):
-        """Extract DOFs of the vectors contained in the array.
-
-        Parameters
-        ----------
-        dof_indices
-            List or 1D |NumPy array| of indices of the DOFs that are to be returned.
-
-        Returns
-        -------
-        A |NumPy array| `result` such that `result[i, j]` is the `dof_indices[j]`-th
-        DOF of the `i`-th vector of the array.
-        """
-        pass
-
-    @abstractmethod
     def amax(self):
-        """The maximum absolute value of the DOFs contained in the array.
+        """The maximum absolute value of the vectors contained in the array.
 
         Returns
         -------
         max_ind
-            |NumPy array| containing for each vector a DOF index at which the maximum is
+            |NumPy array| containing for each vector an index at which the maximum is
             attained.
         max_val
-            |NumPy array| containing for each vector the maximum absolute value of its
-            DOFs.
+            |NumPy array| containing for each vector the maximum absolute value of its entry.
         """
         pass
 
@@ -704,12 +641,77 @@ class VectorArray(BasicObject):
                 return [ind[ind_ind]]
 
 
+class VectorArray(AbstractVectorArray):
+    """Interface for vector arrays.
+
+    A vector array should be thought of as a list of (possibly high-dimensional) vectors.
+    While the vectors themselves will be inaccessible in general (e.g. because they are
+    managed by an external PDE solver code), operations on the vectors like addition can
+    be performed via this interface.
+
+    It is assumed that the number of vectors is small enough such that scalar data
+    associated to each vector can be handled on the Python side. As such, methods like
+    :meth:`~VectorArray.norm` or :meth:`~VectorArray.gramian` will
+    always return |NumPy arrays|.
+
+    An implementation of the `VectorArray` via |NumPy arrays| is given by
+    |NumpyVectorArray|.  In general, it is the implementors decision how memory is
+    allocated internally (e.g.  continuous block of memory vs. list of pointers to the
+    individual vectors.) Thus, no general assumptions can be made on the costs of operations
+    like appending to or removing vectors from the array. As a hint for 'continuous block
+    of memory' implementations, :meth:`~VectorSpace.zeros` provides a `reserve`
+    keyword argument which allows to specify to what size the array is assumed to grow.
+
+    As with |Numpy array|, |VectorArrays| can be indexed with numbers, slices and
+    lists or one-dimensional |NumPy arrays|. Indexing will always return a new
+    |VectorArray| which acts as a view into the original data. Thus, if the indexed
+    array is modified via :meth:`~VectorArray.scal` or :meth:`~VectorArray.axpy`,
+    the vectors in the original array will be changed. Indices may be negative, in
+    which case the vector is selected by counting from the end of the array. Moreover
+    indices can be repeated, in which case the corresponding vector is selected several
+    times. The resulting view will be immutable, however.
+
+    .. note::
+        It is disallowed to append vectors to a |VectorArray| view or to remove
+        vectors from it. Removing vectors from an array with existing views
+        will lead to undefined behavior of these views. As such, it is generally
+        advisable to make a :meth:`~VectorArray.copy` of a view for long
+        term storage. Since :meth:`~VectorArray.copy` has copy-on-write
+        semantics, this will usually cause little overhead.
+
+    Attributes
+    ----------
+    dim
+        The dimension of the vectors in the array.
+    is_view
+        `True` if the array is a view obtained by indexing another array.
+    space
+        The |VectorSpace| the array belongs to.
+    """
+
+    @abstractmethod
+    def dofs(self, dof_indices):
+        """Extract DOFs of the vectors contained in the array.
+
+        Parameters
+        ----------
+        dof_indices
+            List or 1D |NumPy array| of indices of the DOFs that are to be returned.
+
+        Returns
+        -------
+        A |NumPy array| `result` such that `result[i, j]` is the `dof_indices[j]`-th
+        DOF of the `i`-th vector of the array.
+        """
+        pass
+
+
 class VectorSpace(ImmutableObject):
     """Class describing a vector space.
 
-    Vector spaces act as factories for |VectorArrays| of vectors
-    contained in them. As such, they hold all data necessary to
-    create |VectorArrays| of a given type (e.g. the dimension of
+    Vector spaces act as factories for |VectorArrays| (or |AbstractVectorArrays|)
+    of vectors contained in them. As such, they hold all data necessary
+    to create |VectorArrays| of a given type (e.g. the dimension of
     the vectors, or a socket for communication with an external
     PDE solver).
 
@@ -781,7 +783,7 @@ class VectorSpace(ImmutableObject):
         pass
 
     def ones(self, count=1, reserve=0):
-        """Create a |VectorArray| of vectors with all DOFs set to one.
+        """Create a |VectorArray| of vectors with all entries set to one.
 
         This is a shorthand for `self.full(1., count, reserve)`.
 
@@ -794,17 +796,17 @@ class VectorSpace(ImmutableObject):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors with each DOF set to one.
+        A |VectorArray| containing `count` vectors with each entry set to one.
         """
         return self.full(1., count, reserve)
 
     def full(self, value, count=1, reserve=0):
-        """Create a |VectorArray| of vectors with all DOFs set to the same value.
+        """Create a |VectorArray| of vectors with all entries set to the same value.
 
         Parameters
         ----------
         value
-            The value each DOF should be set to.
+            The value each entry should be set to.
         count
             The number of vectors.
         reserve
@@ -812,7 +814,7 @@ class VectorSpace(ImmutableObject):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors with each DOF set to `value`.
+        A |VectorArray| containing `count` vectors with each entry set to `value`.
         """
         return self.from_numpy(np.full((count, self.dim), value))
 

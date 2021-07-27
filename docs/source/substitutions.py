@@ -80,6 +80,8 @@ common = '''
 .. |TriaGrid| replace:: :class:`~pymor.discretizers.builtin.grids.tria.TriaGrid`
 .. |GmshGrid| replace:: :class:`~pymor.discretizers.builtin.grids.gmsh.GmshGrid`
 
+.. |AbstractVectorArrays| replace:: :class:`AbstractVectorArrays <pymor.vectorarrays.interface.AbstractVectorArray>`
+.. |AbstractVectorArray| replace:: :class:`AbstractVectorArray <pymor.vectorarrays.interface.AbstractVectorArray>`
 .. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
 .. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`
 .. |ListVectorArray| replace:: :class:`~pymor.vectorarrays.list.ListVectorArray`
