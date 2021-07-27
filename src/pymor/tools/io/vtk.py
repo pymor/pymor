@@ -85,13 +85,16 @@ def read_vtkfile(filename, metadata_key='timestep'):
 
 def write_vtk_collection(filename_base, meshes, metadata=None):
     """Output grid-associated data in vtk format
+
     filename_base
         common component for output files in collection
+    meshes
+        Sequence of meshio.Mesh objects
     metadata
-        dict of { key1: sequence1, key2: sequence2 } where sequence must be of len(data) or len == 1
-        currently supported keys are "timestep", "name", "group" nad "part"
+        dict of { key1: sequence1, key2: sequence2 } where sequence must be of len(meshes) or len == 1
+        currently supported keys are "timestep", "name", "group" and "part"
         used to describe datapoints in Vtk collection file
-        defaults to { 'timestep': list(range(len(data))) }
+        defaults to { 'timestep': list(range(len(meshes))) }
 
     Returns
     -------
