@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 from hypothesis import given
 
-from pymor.core import config
+from pymor.core.config import config
 from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
@@ -122,7 +122,7 @@ def test_almost_less():
                almost_less(0., inf, rtol, atol), msg
 
 
-@pytest.mark.skipif(not config.config.HAVE_VTKIO, reason='VTKIO support libraries missing')
+@pytest.mark.skipif(not config.HAVE_VTKIO, reason='VTKIO support libraries missing')
 @given(hy_rect_or_tria_grid)
 def test_vtkio(grid):
     steps = 4

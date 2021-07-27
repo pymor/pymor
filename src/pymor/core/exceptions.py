@@ -84,3 +84,8 @@ class NoMatchingRuleError(NotImplementedError):
         super().__init__(f'No rule could be applied to {obj}')
         self.obj = obj
 
+
+class IOLibsMissing(ImportError):
+    def __init__(self, msg=None):
+        msg = msg or 'meshio, pyevtk, xmljson and lxml are needed for full file I/O functionality'
+        super().__init__(msg)
