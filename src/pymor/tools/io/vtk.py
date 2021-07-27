@@ -10,6 +10,8 @@ from collections import OrderedDict
 from xmljson import BadgerFish
 from lxml import etree
 
+from pymor.core.config import config
+
 
 def _read_collection(xml, metadata_key):
     collection = xml['VTKFile']['Collection']
@@ -78,3 +80,40 @@ def read_vtkfile(filename, metadata_key='timestep'):
         with change_to_directory(path.parent):
             return _read_collection(xml, metadata_key=metadata_key)
     return [(None, _read_single(filename, vtk_type))]
+
+
+def write_vtk_collection(filename_base, meshes, metadata=None):
+    """Output grid-associated data in vtk format
+    filename_base
+        common component for output files in collection
+    metadata
+        dict of { key1: sequence1, key2: sequence2 } where sequence must be of len(data) or len == 1
+        currently supported keys are "timestep", "name", "group" nad "part"
+        used to describe datapoints in Vtk collection file
+        defaults to { 'timestep': list(range(len(data))) }
+
+    Returns
+    -------
+    full filename of saved file
+    """
+    if not config.HAVE_VTKIO:
+        raise ImportError('pyevtk, meshio, lxml and xmljson needed for vtk output')
+    from pyevtk.vtk import VtkGroup
+
+    fn_tpl = '{}_{:08d}.vtu'
+    metadata = metadata or {'timestep': list(range(len(meshes)))}
+
+    def _meta(key, i):
+        if key in metadata.keys():
+            return metadata[key][0] if len(metadata[key]) == 1 else metadata[key][i]
+        # carry over defaults from pyevtk to not break backwards compat
+        return {'timestep': 0, 'group': '', 'name': '', 'part': '0'}[key]
+
+    group = VtkGroup(filename_base)
+    for i, mesh in enumerate(meshes):
+        fn = fn_tpl.format(filename_base, i)
+        mesh.write(fn)
+        group.addFile(filepath=fn, sim_time=_meta('timestep', i), group=_meta('group', i), name=_meta('name', i),
+                      part=_meta('part', i))
+    group.save()
+    return f'{filename_base}.pvd'

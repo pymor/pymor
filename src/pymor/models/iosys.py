@@ -684,7 +684,7 @@ class LTIModel(InputStateOutputModel):
             The basename of files containing the operators.
         """
         from pathlib import Path
-        from pymor.tools.io import _mmwrite
+        from pymor.tools.io.matrices import _mmwrite
         A, B, C, D, E = self.to_matrices()
         _mmwrite(Path(files_basename + '.A'), A)
         _mmwrite(Path(files_basename + '.B'), B)

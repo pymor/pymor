@@ -12,7 +12,7 @@ from pymor.core.config import config
 from ..deprecated import Deprecated
 
 if config.HAVE_VTKIO:
-    from .vtk import read_vtkfile
+    from .vtk import read_vtkfile, write_vtk_collection
 else:
     def read_vtkfile(*args):
         raise NotImplementedError("VTK I/O needs meshio and pyevtk packages installed")

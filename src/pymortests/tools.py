@@ -129,10 +129,6 @@ def test_vtkio(grid):
     for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
                                   for c in range(grid.dim+1))):
         with safe_temporary_filename('wb') as out_name:
-            if codim == 1:
-                with pytest.raises(NotImplementedError):
-                    write_vtk(grid, data, out_name, codim=codim)
-                continue
             fn = write_vtk(grid, data, out_name, codim=codim)
             meshes = read_vtkfile(fn)
             assert len(meshes) == len(data)
