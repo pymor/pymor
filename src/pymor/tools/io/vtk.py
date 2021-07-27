@@ -19,9 +19,10 @@ def _read_collection(xml, metadata_key):
     return data
 
 
-def _read_single(filename, vtk_type=None):
+def _read_single(filename):
     mesh = meshio.read(filename)
     assert len(mesh.points)
+    return mesh
 
 
 def _get_collection_data(filename):

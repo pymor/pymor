@@ -126,7 +126,7 @@ def test_almost_less():
 @given(hy_rect_or_tria_grid)
 def test_vtkio(grid):
     steps = 4
-    for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.zeros((steps, grid.size(c))))
+    for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
                                   for c in range(grid.dim+1))):
         with safe_temporary_filename('wb') as out_name:
             if codim == 1:
@@ -135,7 +135,8 @@ def test_vtkio(grid):
                 continue
             fn = write_vtk(grid, data, out_name, codim=codim)
             meshes = read_vtkfile(fn)
-            assert meshes
+            assert len(meshes) == len(data)
+            assert all((a is not None and b is not None for a, b in meshes))
 
 
 def testTimingContext():
