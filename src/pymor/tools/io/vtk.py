@@ -41,8 +41,8 @@ def _get_vtk_type(path):
     We use the incremental event emitting parser here since we can expect to encounter appended
     binary data in the xml which lxml cannot parse.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
         path
             vtk file to peek into
 
