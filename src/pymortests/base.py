@@ -88,7 +88,7 @@ def might_exceed_deadline(deadline=-1):
                 dl = None
             elif dl == -1:
                 dl = hypothesis.settings.default.deadline.total_seconds() * 1e3
-            assert dl > 1 or dl is None
+            assert dl is None or dl > 1
             return hypothesis.settings(deadline=dl)(func)(*args, **kwargs)
         return _inner_wrapper
     return _outer_wrapper
