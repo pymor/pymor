@@ -603,6 +603,48 @@ class FenicsVisualizer(ImmutableObject):
             If `True`, block execution until the plot window is closed.
         """
         if filename:
+                self._write_file(U, block, filename, legend)
+        else:
+                self._show_mpl(U, block, legend, separate_colorbars, title)
+        def _show_mpl(self, U, block, legend, separate_colorbars, title):
+            from matplotlib import pyplot as plt
+            assert U in self.space and len(U) == 1 \
+                or (isinstance(U, tuple) and all(u in self.space for u in U) and all(len(u) == 1 for u in U))
+            if not isinstance(U, tuple):
+                U = (U,)
+            if isinstance(legend, str):
+                legend = (legend,)
+            assert legend is None or len(legend) == len(U)
+            if not separate_colorbars:
+                vmin = np.inf
+                vmax = -np.inf
+                for u in U:
+                    vec = u.vectors[0].real_part.impl
+                    vmin = min(vmin, vec.min())
+                    vmax = max(vmax, vec.max())
+            for i, u in enumerate(U):
+                if u.vectors[0].imag_part is not None:
+                    raise NotImplementedError
+                function = df.Function(self.space.V)
+                function.vector()[:] = u.vectors[0].real_part.impl
+                if legend:
+                    tit = title + ' -- ' if title else ''
+                    tit += legend[i]
+                else:
+                    tit = title
+                plt.figure()
+                if separate_colorbars:
+                    p = df.plot(function, title=tit)
+                else:
+                    p = df.plot(function, title=tit,
+                            range_min=vmin, range_max=vmax)
+                plt.colorbar(p)
+            if getattr(sys, '_called_from_test', False):
+                plt.show(block=False)
+            else:
+                plt.show(block=block)
+
+        def _write_file(self, U, block, filename, legend):
             assert not isinstance(U, tuple)
             assert U in self.space
             if block:
@@ -626,53 +668,14 @@ class FenicsVisualizer(ImmutableObject):
                 function = coarse_function
             if legend:
                 function.rename(legend, legend)
-            for u in U.vectors:
+            for u in U._list:
                 if u.imag_part is not None:
                     raise NotImplementedError
                 coarse_function.vector()[:] = u.real_part.impl
                 if self.mesh_refinements:
                     function.vector()[:] = df.interpolate(coarse_function, V_fine).vector()
                 f.write(function)
-        else:
-            from matplotlib import pyplot as plt
 
-            assert U in self.space and len(U) == 1 \
-                or (isinstance(U, tuple) and all(u in self.space for u in U) and all(len(u) == 1 for u in U))
-            if not isinstance(U, tuple):
-                U = (U,)
-            if isinstance(legend, str):
-                legend = (legend,)
-            assert legend is None or len(legend) == len(U)
-
-            if not separate_colorbars:
-                vmin = np.inf
-                vmax = -np.inf
-                for u in U:
-                    vec = u.vectors[0].real_part.impl
-                    vmin = min(vmin, vec.min())
-                    vmax = max(vmax, vec.max())
-
-            for i, u in enumerate(U):
-                if u.vectors[0].imag_part is not None:
-                    raise NotImplementedError
-                function = df.Function(self.space.V)
-                function.vector()[:] = u.vectors[0].real_part.impl
-                if legend:
-                    tit = title + ' -- ' if title else ''
-                    tit += legend[i]
-                else:
-                    tit = title
-                plt.figure()
-                if separate_colorbars:
-                    p = df.plot(function, title=tit)
-                else:
-                    p = df.plot(function, title=tit,
-                                range_min=vmin, range_max=vmax)
-                plt.colorbar(p)
-            if getattr(sys, '_called_from_test', False):
-                plt.show(block=False)
-            else:
-                plt.show(block=block)
 
 
 # adapted from dolfin.mesh.ale.init_parent_edge_indices
