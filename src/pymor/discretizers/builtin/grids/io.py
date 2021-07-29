@@ -38,7 +38,7 @@ def to_meshio(grid, data, codim=2):
     elif ref is referenceelements.square:
         cells = [("quad", subentities), ]
     else:
-        raise NotImplementedError("Meshio conversion only available for grids with triangle or rectangle reference elements")
+        raise NotImplementedError("Meshio conversion restricted to grid with triangle or rectangle reference elements")
 
     meshes = []
     for i in range(len(data)):

@@ -10,7 +10,6 @@ if config.HAVE_VTKIO:
     from pymor.discretizers.builtin.grids.io import to_meshio
     from pymor.tools.io.vtk import write_vtk_collection
 
-
     def write_vtk(grid, data, filename_base, codim=2, metadata=None):
         """Convenience function around write_vtk_collection(to_meshio(...))"""
         return write_vtk_collection(meshes=to_meshio(grid, data, codim=codim),
