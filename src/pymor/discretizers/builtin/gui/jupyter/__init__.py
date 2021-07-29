@@ -30,8 +30,8 @@ def get_visualizer(backend='pyvista'):
         from pymor.discretizers.builtin.gui.jupyter.threejs import visualize_py3js
         return visualize_py3js
     elif backend == 'pyvista' and config.HAVE_PYVISTA:
-        from pymor.discretizers.builtin.gui.jupyter.vista import visualize_vista_vectorarray
-        return visualize_vista_vectorarray
+        from pymor.discretizers.builtin.gui.jupyter.vista import visualize_vista
+        return visualize_vista
     if backend != 'MPL':
         msg = f'Selected {backend} as visualizer not available. Falling back to matplotlib'
         getLogger('pymor.discretizers.builtin.gui.jupyter').warning(msg=msg)
