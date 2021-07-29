@@ -133,12 +133,23 @@ def test_integration_elements_shape(grid):
 @given(hy_grid)
 def test_integration_elements_values(grid):
     g = grid
+    atol, rtol = 1e-05, 1e-08  # these are the actual defaults
+    # "badly" shaped domains produce excessive errors
+    bbox = g.bounding_box()
+    if g.dim == 2:
+        min_l = min(abs(bbox[0][0] - bbox[1][0]), abs(bbox[0][0] - bbox[0][1]))
+        max_l = max(abs(bbox[0][0] - bbox[1][0]), abs(bbox[0][0] - bbox[0][1]))
+        if max_l / min_l > 100:
+            rtol *= max_l / min_l / 10
+            atol *= max_l / min_l / 10
     for d in range(g.dim - 1):
         IE = g.integration_elements(d)
         A, _ = g.embeddings(d)
         for e in range(g.size(d)):
-            np.testing.assert_allclose(IE[e], np.sqrt(np.linalg.det(np.dot(A[e].T, A[e]))))
-    np.testing.assert_allclose(g.integration_elements(g.dim), 1)
+            np.testing.assert_allclose(IE[e], np.sqrt(np.linalg.det(np.dot(A[e].T, A[e]))),
+                                       atol=atol, rtol=rtol)
+    np.testing.assert_allclose(g.integration_elements(g.dim), 1,
+                               atol=atol, rtol=rtol)
 
 
 @given(hy_grid)

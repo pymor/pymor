@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import assume, settings
+from hypothesis import assume, settings, HealthCheck
 from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal
@@ -16,7 +16,7 @@ from pymortests.strategies import given_vector_arrays
 methods = ['method_of_snapshots', 'qr_svd']
 
 
-@settings(deadline=None)
+@settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])
 @given_vector_arrays(method=sampled_from(methods))
 def test_pod(vector_array, method):
     A = vector_array
