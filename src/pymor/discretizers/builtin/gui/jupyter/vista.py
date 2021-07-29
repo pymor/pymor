@@ -60,6 +60,13 @@ def visualize_vista(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     assert isinstance(U, VectorArray) \
            or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
                and all(len(u) == len(U[0]) for u in U))
+    meshes = to_meshio(grid, U)
+    return visualize_vista_mesh(meshes, bounding_box, codim, title, legend, separate_colorbars, rescale_colorbars,
+                                columns, color_map)
+
+
+def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
+                    separate_colorbars=False, rescale_colorbars=False, columns=2, color_map='viridis'):
     from pyvista.utilities.fileio import from_meshio
     render_size = (300, 300)
     my_theme = pv.themes.DocumentTheme()
@@ -71,10 +78,8 @@ def visualize_vista(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     my_theme.jupyter_backend = 'ipygany'
     my_theme.title = title
     my_theme.axes.show = False
-
     # apply it globally
     pv.global_theme.load_theme(my_theme)
-    meshes = to_meshio(grid, U)
-    grid = from_meshio(mesh=meshes[0])
 
+    grid = from_meshio(mesh=meshes[0])
     return grid.plot(cpos="xy")
