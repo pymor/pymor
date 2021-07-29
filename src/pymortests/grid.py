@@ -270,6 +270,7 @@ def test_neighbours_dtype(grid_and_dims):
     assert g.neighbours(e, n, s).dtype == np.dtype('int32')
 
 
+@might_exceed_deadline(2000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_entry_value_range(grid_and_dims):
     g, e, n, s = grid_and_dims
@@ -277,6 +278,7 @@ def test_neighbours_entry_value_range(grid_and_dims):
     np.testing.assert_array_less(-2, g.neighbours(e, n, s))
 
 
+@might_exceed_deadline(2000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_entry_values_unique(grid_and_dims):
     g, e, n, s = grid_and_dims
@@ -411,6 +413,7 @@ def test_boundaries_dtype(grid):
         assert g.boundaries(d).dtype == np.dtype('int32')
 
 
+@might_exceed_deadline(2000)
 @given(hy_grid)
 def test_boundaries_entry_value_range(grid):
     g = grid
