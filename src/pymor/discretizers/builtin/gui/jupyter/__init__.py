@@ -13,6 +13,7 @@ inside the given notebook.
 import IPython
 
 from pymor.core.defaults import defaults
+from pymor.core.logger import getLogger
 from pymor.core.config import config
 
 # AFAICT there is no robust way to query for loaded extensions
@@ -21,7 +22,7 @@ _extension_loaded = False
 
 
 @defaults('backend')
-def get_visualizer(backend='py3js'):
+def get_visualizer(backend='pyvista'):
     if backend not in ('py3js', 'pyvista', 'MPL'):
         raise ValueError
     if backend == 'py3js' and config.HAVE_PYTHREEJS:
@@ -30,9 +31,11 @@ def get_visualizer(backend='py3js'):
     elif backend == 'pyvista' and config.HAVE_PYVISTA:
         from pymor.discretizers.builtin.gui.jupyter.vista import visualize_vista_vectorarray
         return visualize_vista_vectorarray
-    else:
-        from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_patch
-        return visualize_patch
+    if backend != 'MPL':
+        msg = f'Selected {backend} as visualizer not available. Falling back to matplotlib'
+        getLogger('pymor.discretizers.builtin.gui.jupyter').warning(msg=msg)
+    from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_patch
+    return visualize_patch
 
 
 def progress_bar(sequence, every=None, size=None, name='Parameters'):
