@@ -1,6 +1,7 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+import functools
 
 from hypothesis import strategies as hyst
 from hypothesis import assume, given
@@ -27,8 +28,8 @@ if config.HAVE_NGSOLVE:
 
 
 # hypothesis will gladly fill all our RAM with vector arrays if it's not restricted.
-MAX_LENGTH = 102
-hy_lengths = hyst.integers(min_value=0, max_value=MAX_LENGTH)
+MAX_VECTORARRAY_LENGTH = 102
+hy_lengths = hyst.integers(min_value=0, max_value=MAX_VECTORARRAY_LENGTH)
 # this is a legacy restriction, some tests will not work as expected when this is changed/unset
 MAX_ARRAY_ELEMENT_ABSVALUE = 1
 hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False,
@@ -188,6 +189,7 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
         if count > 1, this switch toggles generation of vector_arrays with compatible `dim`,
         `length` and `dtype`
     """
+    @functools.wraps(given)
     def inner_backend_decorator(func):
         try:
             use_imps = {'all': _picklable_vector_space_types  + _other_vector_space_types,
@@ -242,10 +244,31 @@ def valid_inds(v, length=None, random_module=None):
         yield []
 
 
+# TODO: remove old assumptions on slice values
+def _filtered_slices(length):
+    def _filter(sl):
+        return sl.step is None or sl.step > 0
+    return hyst.slices(length).filter(_filter)
+
+
 @hyst.composite
-def valid_indices(draw, array_strategy):
+def valid_indices(draw, array_strategy, length=None):
     v = draw(array_strategy)
-    return v, draw(hyst.sampled_from(list(valid_inds(v))))
+    ints = hyst.integers(min_value=-len(v), max_value=max(len(v)-1, 0))
+    indices = hyst.nothing()
+    if length is None:
+        indices = indices | hyst.just([]) | hyst.lists(ints, max_size=2*len(v)) | _filtered_slices(len(v))
+    if len(v) > 0:
+        inds = [-len(v), 0, len(v) - 1]
+        if len(v) == length:
+            inds.append(slice(None))
+        indices = indices | hyst.lists(ints, max_size=length)
+    else:
+        inds = []
+        if len(v) == 0:
+            inds.append(slice(0, 0))
+    indices = indices | hyst.sampled_from(inds)
+    return v, draw(indices)
 
 
 # TODO match st_valid_inds_of_same_length results to this
@@ -282,14 +305,29 @@ def st_valid_inds_of_same_length(draw, v1, v2):
     ret = hyst.just(([], []))
     # TODO we should include integer arrays here by chaining
     # `| hynp.integer_array_indices(shape=(LEN_X,))`
-    val1 = hynp.basic_indices(shape=(len1,), allow_ellipsis=False)
     if len1 == len2:
-        ret = ret | hyst.tuples(hyst.shared(val1, key="st_valid_inds_of_same_length"),
-                                hyst.shared(val1, key="st_valid_inds_of_same_length"))
+        ints = hyst.integers(min_value=-len1, max_value=max(len1 - 1, 0))
+        slicer = _filtered_slices(len1) | hyst.lists(ints, max_size=len1)
+        ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length"),
+                                hyst.shared(slicer, key="st_valid_inds_of_same_length"))
     if len1 > 0 and len2 > 0:
-        val2 = hynp.basic_indices(shape=(len2,), allow_ellipsis=False)
-        ret = ret | hyst.tuples(val1, val2)
+        mlen = min(len1, len2)
+        ints = hyst.integers(min_value=-mlen, max_value=max(mlen - 1, 0))
+        slicer = _filtered_slices(mlen) | ints | hyst.lists(ints, max_size=mlen)
+        ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"),
+                                hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"))
     return draw(ret)
+
+
+@hyst.composite
+def st_scaling_value(draw, v1, v2=None):
+    v1 = draw(v1)
+    ints = hyst.integers(min_value=-1, max_value=23)
+    r1 = draw(ints | hyst.just(np.arange(len(v1))))
+    if v2:
+        v2 = draw(v2)
+        return v1, v2, r1, draw(ints | hyst.just(np.arange(len(v2))))
+    return v1, r1
 
 
 # TODO match st_valid_inds_of_different_length results to this
@@ -324,49 +362,54 @@ def valid_inds_of_different_length(v1, v2, random_module):
 
 @hyst.composite
 def st_valid_inds_of_different_length(draw, v1, v2):
+    def _filter(x):
+        a, b = x
+        a_type, b_type = type(a), type(b)
+        if a_type != b_type:
+            return True  # tuple + scalar index
+        if a_type == tuple:
+            return len(a) != len(b)
+        return False  # both scalars => not of different length
+
     len1, len2 = len(v1), len(v2)
-    ret = nothing()
     # TODO we should include integer arrays here
-    val = hynp.basic_indices(shape=(len1,), allow_ellipsis=False)  # | hynp.integer_array_indices(shape=(len1,))
-    if len1 != len2:
-        ret = ret | hyst.just((slice(None), slice(None))) \
-            | hyst.tuples(hyst.shared(val, key="indfl"), hyst.shared(val, key="indfl"))
-    if len1 > 0 and len2 > 0:
-        ret = ret | hyst.tuples(val, val).filter(lambda x: len(x[0]) != len(x[1]))
+    val1 = _filtered_slices(len1)  # | hynp.integer_array_indices(shape=(len1,))
+    val2 = _filtered_slices(len2)  # | hynp.integer_array_indices(shape=(len1,))
+    ret = hyst.tuples(val1, val2).filter(_filter)
     return draw(ret)
+
+
+@hyst.composite
+def st_valid_inds_of_same_or_different_length(draw, v1, v2):
+    return draw(st_valid_inds_of_same_length(v1, v2) | st_valid_inds_of_different_length(v1, v2))
 
 
 @hyst.composite
 def same_and_different_length(draw, array_strategy):
     v = draw(array_strategy)
     if isinstance(v, list):
-        # TODO this should use the st_valid_inds forms directly instead
-        return v, draw(hyst.one_of(hyst.sampled_from(list(valid_inds_of_same_length(*v, random_module=False))),
-                                   hyst.sampled_from(list(valid_inds_of_different_length(*v, random_module=False)))))
-    return v, draw(hyst.one_of(hyst.sampled_from(list(valid_inds_of_same_length(v, v, random_module=False))),
-                               hyst.sampled_from(list(valid_inds_of_different_length(v, v, random_module=False)))))
+        return v, draw(st_valid_inds_of_same_or_different_length(*v))
+    return v, draw(st_valid_inds_of_same_or_different_length(v, v))
 
 
 @hyst.composite
 def pairs_same_length(draw, array_strategy):
     v = draw(array_strategy)
     if isinstance(v, list):
-        # TODO this should use the st_valid_inds forms directly instead
-        return v, draw(hyst.sampled_from(list(valid_inds_of_same_length(*v, random_module=False))))
-    return v, draw(hyst.sampled_from(list(valid_inds_of_same_length(v, v, random_module=False))))
+        return v, draw(st_valid_inds_of_same_length(*v))
+    return v, draw(st_valid_inds_of_same_length(v, v))
 
 
 @hyst.composite
 def pairs_diff_length(draw, array_strategy):
     v = draw(array_strategy)
-    # TODO this should use the st_valid_inds forms directly instead
     if isinstance(v, list):
-        ind_list = list(valid_inds_of_different_length(*v, random_module=False))
+        ind_list = draw(st_valid_inds_of_different_length(*v))
     else:
-        ind_list = list(valid_inds_of_different_length(v, v, random_module=False))
+        ind_list = draw(st_valid_inds_of_different_length(v, v))
     # the consuming tests do not work for None as index
     assume(len(ind_list))
-    return v, draw(hyst.sampled_from(ind_list))
+    return v, ind_list
 
 
 @hyst.composite
@@ -375,8 +418,18 @@ def pairs_both_lengths(draw, array_strategy):
 
 
 @hyst.composite
+def invalid_indices(draw, array_strategy):
+    length = 42
+    v = draw(array_strategy)
+    assert not isinstance(v, list)
+    invalid_inds = (None, len(v), [len(v)], -len(v) - 1, [-len(v) - 1], [0, len(v)],
+                    [-len(v) - 1] + [0, ] * (length - 1), list(range(length - 1)) + [len(v)])
+    return v, draw(hyst.sampled_from(invalid_inds))
+
+
+@hyst.composite
 def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
-    """
+    """Strategy to generate linear independent |VectorArray| inputs for test functions
 
     Parameters
     ----------
@@ -420,17 +473,3 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
 def equal_tuples(draw, strategy, count):
     val = draw(strategy)
     return draw(hyst.tuples(*[hyst.just(val) for _ in range(count)]))
-
-
-def invalid_inds(v, length=None):
-    yield None
-    if length is None:
-        yield len(v)
-        yield [len(v)]
-        yield -len(v)-1
-        yield [-len(v)-1]
-        yield [0, len(v)]
-        length = 42
-    if length > 0:
-        yield [-len(v)-1] + [0, ] * (length - 1)
-        yield list(range(length - 1)) + [len(v)]

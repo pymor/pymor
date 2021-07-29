@@ -212,7 +212,7 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             lines = ()
             centers = grid.centers(1)
             if grid.identify_left_right:
-                centers = np.concatenate((centers, [[grid.domain[1]]]), axis=0)
+                centers = np.concatenate((centers, [grid.domain[1]]), axis=0)
                 self.periodic = True
             else:
                 self.periodic = False
