@@ -2,9 +2,11 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.config import config
-config.require('FENICS')
+from pymor.core.config import config, is_jupyter
+from pymor.discretizers.builtin.gui.jupyter.vista import visualize_vista_mesh
+from pymor.tools.io import safe_temporary_filename
 
+config.require('FENICS')
 
 import dolfin as df
 import ufl
@@ -604,8 +606,21 @@ class FenicsVisualizer(ImmutableObject):
         """
         if filename:
                 self._write_file(U, block, filename, legend)
+            elif is_jupyter():
+                fn = 'vista.xdmf'
+                try:
+                    import meshio
+                    with safe_temporary_filename(name=fn) as sfn:
+                        self._write_file(U, block=False, filename=sfn, legend=legend)
+                        mesh = meshio.read(sfn)
+                    return visualize_vista_mesh([mesh], separate_colorbars=separate_colorbars, title=title,
+                                                legend=legend)
+                except ImportError as ie:
+                    self.logger.warning(f'Jupyter Visualization failed due to missing libraries:\n{ie}')
+                    return self._show_mpl(U, block, legend, separate_colorbars, title)
         else:
-                self._show_mpl(U, block, legend, separate_colorbars, title)
+                return self._show_mpl(U, block, legend, separate_colorbars, title)
+
         def _show_mpl(self, U, block, legend, separate_colorbars, title):
             from matplotlib import pyplot as plt
             assert U in self.space and len(U) == 1 \
@@ -649,14 +664,17 @@ class FenicsVisualizer(ImmutableObject):
             assert U in self.space
             if block:
                 self.logger.warning('visualize with filename!=None, block=True will not block')
-            supported = (".x3d", ".xml", ".pvd", ".raw")
+            supported = (".xdmf", ".x3d", ".xml", ".pvd", ".raw")
             suffix = Path(filename).suffix
             if suffix not in supported:
                 msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
                        + f'defaulting to .pvd (possible choices: {supported})')
                 self.logger.warning(msg)
                 filename = f'{filename}.pvd'
-            f = df.File(str(filename))
+            if filename.endswith('.xdmf'):
+                f = df.cpp.io.XDMFFile(str(filename))
+            else:
+                f = df.File(str(filename))
             coarse_function = df.Function(self.space.V)
             if self.mesh_refinements:
                 mesh = self.space.V.mesh()
