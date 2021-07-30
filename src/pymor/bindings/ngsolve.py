@@ -3,9 +3,9 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 from pathlib import Path
 
-from pymor.core.config import config
+from pymor.core.config import config, is_jupyter
 from pymor.core.defaults import defaults
-from pymor.tools.io import change_to_directory
+from pymor.tools.io import change_to_directory, safe_temporary_filename
 
 if config.HAVE_NGSOLVE:
     import ngsolve as ngs
@@ -167,7 +167,7 @@ if config.HAVE_NGSOLVE:
             self.__auto_init(locals())
             self.space = NGSolveVectorSpace(fespace)
 
-        def visualize(self, U, legend=None, separate_colorbars=True, filename=None, block=True):
+        def visualize(self, U, title='', legend=None, separate_colorbars=True, filename=None, block=True):
             """Visualize the provided data."""
             if isinstance(U, VectorArray):
                 U = (U,)
@@ -184,20 +184,36 @@ if config.HAVE_NGSOLVE:
             legend = [l.replace(' ', '_') for l in legend]  # NGSolve GUI will fail otherwise
 
             if filename:
-                # ngsolve unconditionally appends ".vtk"
-                filename = Path(filename).resolve()
-                if filename.suffix == '.vtk':
-                    filename = filename.parent / filename.stem
-                else:
-                    self.logger.warning(f'NGSolve set VTKOutput filename to {filename}.vtk')
-                coeffs = [u._list[0].real_part.impl for u in U]
-                # ngsolve cannot handle full paths for filenames
-                with change_to_directory(filename.parent):
-                    vtk = ngs.VTKOutput(ma=self.mesh, coefs=coeffs, names=legend, filename=str(filename), subdivision=0)
-                    vtk.Do()
+                self._write_file(U, filename, legend)
+            elif is_jupyter():
+                fn = 'ngsolve.vtk'
+                try:
+                    import meshio
+                    from pymor.discretizers.builtin.gui.jupyter.vista import visualize_vista_mesh
+                    with safe_temporary_filename(name=fn) as sfn:
+                        self._write_file(U, filename=sfn, legend=legend)
+                        mesh = meshio.read(sfn)
+                    return visualize_vista_mesh([mesh], separate_colorbars=separate_colorbars, title=title,
+                                                legend=legend)
+                except ImportError as ie:
+                    self.logger.warning(f'Jupyter Visualization failed due to missing libraries:\n{ie}')
+                    return self._show_mpl(U, block, legend, separate_colorbars, title)
             else:
                 if not separate_colorbars:
                     raise NotImplementedError
 
                 for u, name in zip(U, legend):
                     ngs.Draw(u._list[0].real_part.impl, self.mesh, name=name)
+
+        def _write_file(self, U, filename, legend):
+            # ngsolve unconditionnaly appends ".vtk"
+            filename = Path(filename).resolve()
+            if filename.suffix == '.vtk':
+                filename = filename.parent / filename.stem
+            else:
+                self.logger.warning(f'NGSolve set VTKOutput filename to {filename}.vtk')
+            coeffs = [u._list[0].real_part.impl for u in U]
+            # ngsolve cannot handle full paths for filenames
+            with change_to_directory(filename.parent):
+                vtk = ngs.VTKOutput(ma=self.mesh, coefs=coeffs, names=legend, filename=str(filename), subdivision=0)
+                vtk.Do()
