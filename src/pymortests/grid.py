@@ -287,7 +287,7 @@ def test_neighbours_entry_values_unique(grid_and_dims):
         assert S.size == np.unique(S).size
 
 
-@might_exceed_deadline(2000)
+@might_exceed_deadline(5000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_each_entry_neighbour(grid_and_dims):
     g, e, n, s = grid_and_dims
