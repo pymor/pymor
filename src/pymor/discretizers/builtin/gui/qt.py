@@ -10,6 +10,7 @@ toolkit for the GUI.
 """
 
 import math as m
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 import subprocess
 import sys
@@ -19,10 +20,11 @@ import numpy as np
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.core.exceptions import QtMissing
+from pymor.core.exceptions import QtMissing, IOLibsMissing
 from pymor.core.pickle import dump
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
+from pymor.discretizers.builtin.gui.jupyter.vista import PyVistaPatchWidget
 from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -243,7 +245,7 @@ _qt_windows = set()
 
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, backend='gl', block=False, columns=2):
+                    separate_colorbars=False, rescale_colorbars=False, backend='pyvista', block=False, columns=2):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -282,7 +284,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     if not config.HAVE_QT:
         raise QtMissing()
 
-    assert backend in {'gl', 'matplotlib'}
+    assert backend in {'pyvista', 'matplotlib'}
 
     if not block:
         if background_visualization_method() == 'pymor-vis':
@@ -296,14 +298,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             subprocess.Popen(['python', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
-    if backend == 'gl':
-        if not config.HAVE_GL:
+    if backend == 'pyvista':
+        if not config.HAVE_PYVISTA:
             logger = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
-            logger.warning('import of PyOpenGL failed, falling back to matplotlib; rendering will be slow')
-            backend = 'matplotlib'
-        elif not config.HAVE_QTOPENGL:
-            logger = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
-            logger.warning('import of Qt.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
+            logger.warning('import of PyVista failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
         if backend == 'matplotlib' and not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
@@ -326,15 +324,15 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
-            if backend == 'gl':
-                widget = GLPatchWidget
+            if not separate_colorbars and len(U) > 1:
+                l = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
+                l.warning('separate_colorbars=False not supported for matplotlib backend')
+            if backend == 'pyvista':
+                widget = PyVistaPatchWidget
                 cbar_widget = ColorBarWidget
             else:
                 widget = MatplotlibPatchWidget
                 cbar_widget = None
-                if not separate_colorbars and len(U) > 1:
-                    l = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
-                    l.warning('separate_colorbars=False not supported for matplotlib backend')
                 separate_colorbars = True
 
             class PlotWidget(QWidget):
@@ -414,12 +412,12 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             self.codim = codim
 
         def save(self):
-            if not config.HAVE_PYEVTK:
-                msg = QMessageBox(QMessageBox.Critical, 'Error', 'VTK output disabled. Please install pyvtk.')
+            if not config.HAVE_VTKIO:
+                msg = QMessageBox(QMessageBox.Critical, 'Error', str(IOLibsMissing()))
                 msg.exec_()
                 return
-            filename = QFileDialog.getSaveFileName(self, 'Save as vtk file')[0]
-            base_name = filename.split('.vtu')[0].split('.vtk')[0].split('.pvd')[0]
+            filename = Path(QFileDialog.getSaveFileName(self, 'Save as vtk file')[0])
+            base_name = filename.stem
             if base_name:
                 if len(self.U) == 1:
                     write_vtk(self.grid, NumpyVectorSpace.make_array(self.U[0]), base_name, codim=self.codim)
