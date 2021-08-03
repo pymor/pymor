@@ -11,6 +11,7 @@ import OpenGL
 from typer import Argument, Option, run
 
 from pymor.core.config import is_windows_platform
+from pymor.discretizers.builtin.gui.jupyter.vista import PyVistaPatchWidget
 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchWidget
 
 OpenGL.ERROR_ON_COPY = True
@@ -24,7 +25,6 @@ except ImportError:
 from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.discretizers.builtin import discretize_stationary_cg
-from pymor.discretizers.builtin.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymor.tools.typer import Choices
 
@@ -94,7 +94,7 @@ class SimPanel(QtWidgets.QWidget):
             self.solution = MatplotlibPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
             box.addWidget(self.solution, 2)
         else:
-            self.solution = GLPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+            self.solution = PyVistaPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
             self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
             box.addWidget(self.solution, 2)
             box.addWidget(self.bar, 2)
@@ -110,7 +110,7 @@ class SimPanel(QtWidgets.QWidget):
         U = self.sim.solve(mu)
         print(f'Simtime {time.perf_counter()-tic}')
         tic = time.perf_counter()
-        self.solution.set(U.to_numpy().ravel())
+        self.solution.set(U)
         self.param_panel.enable(True)
         print(f'Drawtime {time.perf_counter()-tic}')
 
