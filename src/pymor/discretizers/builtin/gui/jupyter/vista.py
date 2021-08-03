@@ -146,7 +146,7 @@ class PyVistaPatchWidget(QtInteractor):
         self.setMinimumSize(300, 300)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.scalar_name = 'Data'
-        self.mesh = to_meshio(grid, data=None, scalar_name=self.scalar_name)[0]
+        self.mesh = to_meshio(grid, data=None, scalar_name=self.scalar_name, codim=codim)[0]
         self.add_mesh(self.mesh)
         self.view_xy()
         self.grid = grid
@@ -159,12 +159,13 @@ class PyVistaPatchWidget(QtInteractor):
         self.vmin = self.vmin if vmin is None else vmin
         self.vmax = self.vmax if vmax is None else vmax
 
+        mesh = to_meshio(self.grid, U)[0]
         if self.codim == 2:
             arrays = self.mesh.point_arrays
-            arrays[self.scalar_name] = to_meshio(self.grid, U)[0].point_data[self.scalar_name]
+            arrays[self.scalar_name] = mesh.point_data[self.scalar_name]
         else:
             arrays = self.mesh.cell_arrays
-            arrays[self.scalar_name] = to_meshio(self.grid, U)[0].cell_data[self.scalar_name]
+            arrays[self.scalar_name] = mesh.cell_data[self.scalar_name]
 
         _normalize(arrays[self.scalar_name], vmin, vmax)
         self.render()
