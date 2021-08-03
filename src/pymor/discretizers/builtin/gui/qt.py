@@ -23,7 +23,6 @@ from pymor.core.logger import getLogger
 from pymor.core.exceptions import QtMissing, IOLibsMissing
 from pymor.core.pickle import dump
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
-from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
 from pymor.discretizers.builtin.gui.jupyter.vista import PyVistaPatchWidget
 from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.vectorarrays.interface import VectorArray
@@ -329,7 +328,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 l.warning('separate_colorbars=False not supported for matplotlib backend')
             if backend == 'pyvista':
                 widget = PyVistaPatchWidget
-                cbar_widget = ColorBarWidget
+                cbar_widget = None
             else:
                 widget = MatplotlibPatchWidget
                 cbar_widget = None
