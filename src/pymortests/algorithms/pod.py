@@ -16,12 +16,14 @@ from pymortests.strategies import given_vector_arrays
 methods = ['method_of_snapshots', 'qr_svd']
 
 
-@settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])
+@settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much,
+          HealthCheck.too_slow, HealthCheck.data_too_large])
 @given_vector_arrays(method=sampled_from(methods))
 def test_pod(vector_array, method):
     A = vector_array
     # TODO assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
+    # assumptions also necessitate the health check exemptions
     assume(len(A) > 1 or A.dim > 1)
     assume(not contains_zero_vector(A, rtol=1e-13, atol=1e-13))
 

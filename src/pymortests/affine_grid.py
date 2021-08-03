@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, settings
+from hypothesis import given, settings, reproduce_failure
 
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymor.tools.floatcmp import almost_less
@@ -23,6 +23,24 @@ def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
 
 
 np.testing.assert_allclose = monkey_allclose
+
+
+def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
+    # "badly" shaped domains produce excessive errors
+    bbox = g.bounding_box()
+    if g.dim == 2:
+        lower_left = bbox[0]
+        upper_left = np.array([bbox[0][0], bbox[1][1]])
+        lower_right = np.array([bbox[0][0], bbox[1][0]])
+        h = np.linalg.norm(upper_left - lower_left)
+        w = np.linalg.norm(lower_right - lower_left)
+        min_l = min(w, h)
+        max_l = max(w, h)
+        quot = max_l / min_l
+        if quot > 100:
+            rtol *= quot / 10
+            atol *= quot / 10
+    return atol, rtol
 
 
 @given(hy_grid)
@@ -133,15 +151,7 @@ def test_integration_elements_shape(grid):
 @given(hy_grid)
 def test_integration_elements_values(grid):
     g = grid
-    atol, rtol = 1e-05, 1e-08  # these are the actual defaults
-    # "badly" shaped domains produce excessive errors
-    bbox = g.bounding_box()
-    if g.dim == 2:
-        min_l = min(abs(bbox[0][0] - bbox[1][0]), abs(bbox[0][0] - bbox[0][1]))
-        max_l = max(abs(bbox[0][0] - bbox[1][0]), abs(bbox[0][0] - bbox[0][1]))
-        if max_l / min_l > 100:
-            rtol *= max_l / min_l / 10
-            atol *= max_l / min_l / 10
+    atol, rtol = _scale_tols_if_domain_bad(g)
     for d in range(g.dim - 1):
         IE = g.integration_elements(d)
         A, _ = g.embeddings(d)
@@ -349,8 +359,9 @@ def test_bounding_box(grid):
     # compare with tolerance is necessary with very large domain boundaries values
     # where the relative error in the centers computation introduces enough error to fail the test
     # otherwise
-    assert np.all(almost_less(bbox[0], g.centers(g.dim), rtol=1e-15, atol=0))
-    assert np.all(almost_less(g.centers(g.dim), bbox[1], rtol=1e-15, atol=0))
+    rtol, atol = _scale_tols_if_domain_bad(g, rtol=1e-12, atol=1e-12)
+    assert np.all(almost_less(bbox[0], g.centers(g.dim), rtol=rtol, atol=atol))
+    assert np.all(almost_less(g.centers(g.dim), bbox[1], rtol=rtol, atol=atol))
 
 
 @settings(deadline=None)
