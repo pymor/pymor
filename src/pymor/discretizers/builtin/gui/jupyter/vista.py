@@ -26,8 +26,7 @@ def _normalize(u, vmin=None, vmax=None):
 
 def visualize_vista(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2, color_map='viridis'):
-    """Generate a pyvista Plot and associated controls for scalar data associated to a
-    two-dimensional |Grid|.
+    """Generate a pyvista Plot and associated controls for grid-based data
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
     be attached to the faces or vertices of the grid.
@@ -63,7 +62,7 @@ def visualize_vista(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     assert isinstance(U, VectorArray) \
            or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
                and all(len(u) == len(U[0]) for u in U))
-    meshes = to_meshio(grid, U)
+    meshes = to_meshio(grid, data=U, codim=codim)
     return visualize_vista_mesh(meshes, bounding_box, codim, title, legend, separate_colorbars, rescale_colorbars,
                                 columns, color_map)
 
@@ -89,7 +88,8 @@ class _JupyterMultiPlotter:
     def show(self, **kwargs):
         return self._plotter.show(**kwargs)
 
-    def close(self): pass
+    def close(self):
+        pass
 
     def __setitem__(self, idx, plotter):
         raise NotImplementedError
@@ -102,7 +102,7 @@ class _JupyterMultiPlotter:
 
 
 def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, columns=2, color_map='viridis'):
+                         separate_colorbars=False, rescale_colorbars=False, columns=2, color_map='viridis'):
     from pyvista.utilities.fileio import from_meshio
     from pyvistaqt import MultiPlotter
 
@@ -125,11 +125,14 @@ def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=N
         MultiPlotterType = MultiPlotter
     if isinstance(meshes, tuple):
         rows = ceil(len(meshes)/2)
-        plotter = MultiPlotterType(nrows=rows, ncols=columns)
+        plotter = MultiPlotterType(nrows=rows, ncols=columns, window_size=render_size)
         for meshlist, ind in zip(meshes, np.unravel_index(list(range(len(meshes))), shape=(rows, columns))):
             plotter[ind].add_mesh(from_meshio(meshlist[0]), show_edges=True)
     else:
         plotter = pv.Plotter()
         plotter.add_mesh(from_meshio(mesh=meshes[0]))
 
+    plotter.camera_position = 'xy'
     return plotter.show()
+
+
