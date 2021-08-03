@@ -1,16 +1,15 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
-from math import ceil
 
+from math import ceil
 import numpy as np
-from ipywidgets import IntSlider, interact, widgets, Play, Layout, Label
 import pyvista as pv
-from pyvista.utilities.fileio import from_meshio
-from matplotlib.cm import get_cmap
+from pyvistaqt import QtInteractor
 
 from pymor.core.config import is_jupyter
 from pymor.discretizers.builtin.grids.io import to_meshio
+from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.vectorarrays.interface import VectorArray
 
 
@@ -136,3 +135,36 @@ def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=N
     return plotter.show()
 
 
+class PyVistaPatchWidget(QtInteractor):
+
+    def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=([0, 0], [1, 1]), codim=2):
+        from qtpy.QtWidgets import QSizePolicy
+        assert grid.reference_element in (triangle, square)
+        assert grid.dim == 2
+        assert codim in (0, 2)
+        super().__init__(parent)
+        self.setMinimumSize(300, 300)
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+        self.scalar_name = 'Data'
+        self.mesh = to_meshio(grid, data=None, scalar_name=self.scalar_name)[0]
+        self.add_mesh(self.mesh)
+        self.view_xy()
+        self.grid = grid
+        self.reference_element = grid.reference_element
+        self.vmin = vmin
+        self.vmax = vmax
+        self.codim = codim
+
+    def set(self, U, vmin=None, vmax=None):
+        self.vmin = self.vmin if vmin is None else vmin
+        self.vmax = self.vmax if vmax is None else vmax
+
+        if self.codim == 2:
+            arrays = self.mesh.point_arrays
+            arrays[self.scalar_name] = to_meshio(self.grid, U)[0].point_data[self.scalar_name]
+        else:
+            arrays = self.mesh.cell_arrays
+            arrays[self.scalar_name] = to_meshio(self.grid, U)[0].cell_data[self.scalar_name]
+
+        _normalize(arrays[self.scalar_name], vmin, vmax)
+        self.render()
