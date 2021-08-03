@@ -1,12 +1,15 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+from math import ceil
+
 import numpy as np
 from ipywidgets import IntSlider, interact, widgets, Play, Layout, Label
 import pyvista as pv
 from pyvista.utilities.fileio import from_meshio
 from matplotlib.cm import get_cmap
 
+from pymor.core.config import is_jupyter
 from pymor.discretizers.builtin.grids.io import to_meshio
 from pymor.vectorarrays.interface import VectorArray
 
@@ -65,10 +68,46 @@ def visualize_vista(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                 columns, color_map)
 
 
+class _JupyterMultiPlotter:
+    """Jupyter Analog for the pyvistqt.plotting.MultiPlotter
+
+    We do not actually have multiple Plotters here, but fake the same interface with
+    a single instance using the plotter's subplot mechanism
+    """
+
+    def __init__(
+        self,
+        nrows: int = 1,
+        ncols: int = 1,
+        **kwargs
+    ):
+        self._nrows = nrows
+        self._ncols = ncols
+        self._plotter = pv.Plotter(shape=(nrows, ncols), notebook=True, **kwargs)
+        self._meshes = [None] * (self._nrows * self._ncols)
+
+    def show(self, **kwargs):
+        return self._plotter.show(**kwargs)
+
+    def close(self): pass
+
+    def __setitem__(self, idx, plotter):
+        raise NotImplementedError
+
+    def __getitem__(self, idx):
+        row, col = idx
+        print(f'SUbplot {idx}')
+        self._plotter.subplot(row, col)
+        return self._plotter
+
+
 def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2, color_map='viridis'):
     from pyvista.utilities.fileio import from_meshio
+    from pyvistaqt import MultiPlotter
+
     render_size = (300, 300)
+    # themes are loadable from json files, would make for a nice customization point for users
     my_theme = pv.themes.DocumentTheme()
     my_theme.cmap = color_map
     my_theme.cpos = 'xy'
@@ -80,6 +119,17 @@ def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=N
     my_theme.axes.show = False
     # apply it globally
     pv.global_theme.load_theme(my_theme)
+    if is_jupyter():
+        MultiPlotterType = _JupyterMultiPlotter
+    else:
+        MultiPlotterType = MultiPlotter
+    if isinstance(meshes, tuple):
+        rows = ceil(len(meshes)/2)
+        plotter = MultiPlotterType(nrows=rows, ncols=columns)
+        for meshlist, ind in zip(meshes, np.unravel_index(list(range(len(meshes))), shape=(rows, columns))):
+            plotter[ind].add_mesh(from_meshio(meshlist[0]), show_edges=True)
+    else:
+        plotter = pv.Plotter()
+        plotter.add_mesh(from_meshio(mesh=meshes[0]))
 
-    grid = from_meshio(mesh=meshes[0])
-    return grid.plot(cpos="xy")
+    return plotter.show()

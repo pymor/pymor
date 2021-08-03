@@ -22,11 +22,15 @@ def to_meshio(grid, data, codim=2):
 
     Returns
     -------
-    list of meshio.Mesh objects
+    list of meshio.Mesh objects if data is a |VectorArray|
+    tuple of list of meshio.Mesh objects if data is a tuple of |VectorArray|
     """
     if not config.HAVE_MESHIO:
         raise ImportError('Missing meshio')
     import meshio
+
+    if isinstance(data, tuple):
+        return tuple(to_meshio(grid, d) for d in data)
 
     subentities, coordinates, entity_map = flatten_grid(grid)
     data = data.to_numpy() if codim == 0 else data.to_numpy()[:, entity_map].copy()
