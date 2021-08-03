@@ -339,7 +339,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 l.warning('separate_colorbars=False not supported for matplotlib backend')
             if backend == 'pyvista':
                 widget = PyVistaPatchWidget
-                cbar_widget = ColorBarWidget
+                cbar_widget = None
             else:
                 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchWidget
                 widget = MatplotlibPatchWidget
