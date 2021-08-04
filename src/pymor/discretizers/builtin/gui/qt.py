@@ -23,6 +23,7 @@ from pymor.core.logger import getLogger
 from pymor.core.exceptions import QtMissing, IOLibsMissing
 from pymor.core.pickle import dump
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
+from pymor.discretizers.builtin.gui import vmin_vmax_vectorarray
 from pymor.discretizers.builtin.gui.jupyter.vista import PyVistaPatchWidget
 from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.vectorarrays.interface import VectorArray
@@ -83,7 +84,6 @@ def _launch_qt_app(main_window_factory, block):
         global _qt_app
         _qt_app = app                 # deleting the app ref somehow closes the window
         _qt_windows.add(main_window)  # need to keep ref to keep window alive
-
 
 
 if config.HAVE_QT:
@@ -318,8 +318,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             assert isinstance(U, VectorArray) \
                 or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
                     and all(len(u) == len(U[0]) for u in U))
-            U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-                tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
@@ -337,21 +335,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             class PlotWidget(QWidget):
                 def __init__(self):
                     super().__init__()
-                    if separate_colorbars:
-                        if rescale_colorbars:
-                            self.vmins = tuple(np.min(u[0]) for u in U)
-                            self.vmaxs = tuple(np.max(u[0]) for u in U)
-                        else:
-                            self.vmins = tuple(np.min(u) for u in U)
-                            self.vmaxs = tuple(np.max(u) for u in U)
-                    else:
-                        if rescale_colorbars:
-                            self.vmins = (min(np.min(u[0]) for u in U),) * len(U)
-                            self.vmaxs = (max(np.max(u[0]) for u in U),) * len(U)
-                        else:
-                            self.vmins = (min(np.min(u) for u in U),) * len(U)
-                            self.vmaxs = (max(np.max(u) for u in U),) * len(U)
-
+                    self.vmins, self.vmaxs = vmin_vmax_vectorarray(U, separate_colorbars=separate_colorbars,
+                                                                   rescale_colorbars=rescale_colorbars)
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
                     self.colorbarwidgets = [cbar_widget(self, vmin=vmin, vmax=vmax) if cbar_widget else None
@@ -385,8 +370,9 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                 plot_layout.addLayout(hlayout, int(i/columns), (i % columns), 1, 1)
                     layout.addLayout(plot_layout)
                     if not separate_colorbars:
-                        layout.addWidget(self.colorbarwidgets[0])
-                        for w in self.colorbarwidgets[1:]:
+                        if self.colorbarwidgets[0] is not None:
+                            layout.addWidget(self.colorbarwidgets[0])
+                        for w in (w for w in self.colorbarwidgets[1:] if w is not None):
                             w.setVisible(False)
                     self.setLayout(layout)
                     self.plots = plots
