@@ -6,6 +6,7 @@ from ipywidgets import widgets
 import matplotlib.pyplot as plt
 
 from pymor.core.config import config
+from pymor.discretizers.builtin.gui import vmin_vmax_numpy
 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes, Matplotlib1DAxes
 from pymor.vectorarrays.interface import VectorArray
 
@@ -126,21 +127,8 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
     class Plot(MPLPlotBase):
 
         def _set_limits(self, np_U):
-            if separate_colorbars:
-                # todo rescaling not set up
-                if rescale_colorbars:
-                    self.vmins = tuple(np.min(u[0]) for u in np_U)
-                    self.vmaxs = tuple(np.max(u[0]) for u in np_U)
-                else:
-                    self.vmins = tuple(np.min(u) for u in np_U)
-                    self.vmaxs = tuple(np.max(u) for u in np_U)
-            else:
-                if rescale_colorbars:
-                    self.vmins = (min(np.min(u[0]) for u in np_U),) * len(np_U)
-                    self.vmaxs = (max(np.max(u[0]) for u in np_U),) * len(np_U)
-                else:
-                    self.vmins = (min(np.min(u) for u in np_U),) * len(np_U)
-                    self.vmaxs = (max(np.max(u) for u in np_U),) * len(np_U)
+            self.vmins, self.vmaxs = vmin_vmax_numpy(np_U, separate_colorbars=separate_colorbars,
+                                                     rescale_colorbars=rescale_colorbars)
 
         def __init__(self):
             super(Plot, self).__init__(U, grid, codim, legend, bounding_box=bounding_box, columns=columns,
