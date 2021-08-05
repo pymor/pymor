@@ -231,7 +231,10 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
                 if legend and separate_plots:
                     axes.legend([legend[i]])
             if not separate_plots:
-                pad = (max(vmax) - min(vmin)) * 0.1
+                if max(vmax) == min(vmin):
+                    pad = 0.5
+                else:
+                    pad = (max(vmax) - min(vmin)) * 0.1
                 axes.set_ylim(min(vmin) - pad, max(vmax) + pad)
                 if legend:
                     axes.legend(legend)
