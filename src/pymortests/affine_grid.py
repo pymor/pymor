@@ -29,9 +29,9 @@ def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
     # "badly" shaped domains produce excessive errors
     bbox = g.bounding_box()
     if g.dim == 2:
-        lower_left = bbox[0]
-        upper_left = np.array([bbox[0][0], bbox[1][1]])
-        lower_right = np.array([bbox[0][0], bbox[1][0]])
+        lower_left, upper_right = bbox[0], bbox[1]
+        upper_left = np.array([lower_left[0], upper_right[1]])
+        lower_right = np.array([lower_left[1], upper_right[0]])
         h = np.linalg.norm(upper_left - lower_left)
         w = np.linalg.norm(lower_right - lower_left)
         min_l = min(w, h)
@@ -40,6 +40,8 @@ def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
         if quot > 100:
             rtol *= quot / 10
             atol *= quot / 10
+    assert np.isfinite(atol)
+    assert np.isfinite(rtol)
     return atol, rtol
 
 
