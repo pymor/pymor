@@ -1,1 +1,2 @@
 src/pymor/version.py export-subst
+.ci/gitlab/ci.yml merge=ci_template

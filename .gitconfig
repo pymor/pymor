@@ -1,0 +1,6 @@
+[merge "ci_template"]
+        name = Resolve env conflict, regen template
+        driver = "bash -l -c'\n\
+    git mergetool .env\n\
+    make docker_template || ./.ci/gitlab/template.ci.py\n\
+    git add .env .ci/gitlab/ci.yml'"

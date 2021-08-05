@@ -26,5 +26,6 @@ include CITATION.cff
 include src/pymor/tools/LICENSE-MIT
 
 prune .binder
+prune .gitconfig
 prune .ci
 prune logo
