@@ -963,7 +963,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     F, F_coefficients = [], []
 
     if p.rhs is not None or p.neumann_data is not None:
-        F += [L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)]
+        F += [L2Functional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)]
         F_coefficients += [1.]
 
     # diffusion part
@@ -972,8 +972,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
               for i, df in enumerate(p.diffusion.functions)]
         L_coefficients += p.diffusion.coefficients
         if p.dirichlet_data is not None:
-            F += [L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
-                                      diffusion_function=df, name=f'dirichlet_{i}')
+            F += [L2Functional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
+                               diffusion_function=df, name=f'dirichlet_{i}')
                   for i, df in enumerate(p.diffusion.functions)]
             F_coefficients += p.diffusion.coefficients
 
@@ -981,8 +981,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
         L += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion, name='diffusion')]
         L_coefficients += [1.]
         if p.dirichlet_data is not None:
-            F += [L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
-                                      diffusion_function=p.diffusion, name='dirichlet')]
+            F += [L2Functional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
+                               diffusion_function=p.diffusion, name='dirichlet')]
             F_coefficients += [1.]
 
     # advection part
