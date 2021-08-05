@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, settings, reproduce_failure
+from hypothesis import given, settings
 
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymor.tools.floatcmp import almost_less
@@ -124,11 +124,12 @@ def test_jacobian_inverse_transposed_shape(grid):
 @given(hy_grid)
 def test_jacobian_inverse_transposed_values(grid):
     g = grid
+    atol, rtol = _scale_tols_if_domain_bad(g)
     for d in range(g.dim):
         JIT = g.jacobian_inverse_transposed(d)
         A, _ = g.embeddings(d)
         for e in range(g.size(d)):
-            np.testing.assert_allclose(JIT[e], np.linalg.pinv(A[e]).T)
+            np.testing.assert_allclose(JIT[e], np.linalg.pinv(A[e]).T, atol=atol, rtol=rtol)
 
 
 @given(hy_grid)
