@@ -434,9 +434,7 @@ def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_l
 
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
                                                            dirichlet_data=None, solver_options=None, name=None):
-    """Instantiate a :class:`NonlinearAdvectionOperator` using
-    :class:`SimplifiedEngquistOsherFlux`.
-    """
+    """Create a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
@@ -705,7 +703,7 @@ def L2ProductFunctional(*args, **kwargs):
 
 
 class BoundaryL2Functional(NumpyMatrixBasedOperator):
-    """Finite volume functional representing the inner product with an L2-|Function| on the boundary.
+    """FV functional representing the inner product with an L2-|Function| on the boundary.
 
     Parameters
     ----------
@@ -1094,8 +1092,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
                                num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                                grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
                                preassemble=True):
-    """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
-    using the finite volume method.
+    """FV Discretization of an |InstationaryProblem| with a |StationaryProblem| as stationary part
 
     Parameters
     ----------
