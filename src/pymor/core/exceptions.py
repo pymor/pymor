@@ -85,10 +85,7 @@ class NoMatchingRuleError(NotImplementedError):
         self.obj = obj
 
 
-class CythonExtensionNotBuiltError(ImportError):
-
-    def __init__(self):
-        super().__init__('''
-    Cython extension module 'pymor.discretizers.builtin.grids._unstructured' has not been built.
-    Please run 'python setup.py build_ext --inplace' in the root
-    directory of the pyMOR repository.''')
+class IOLibsMissing(ImportError):
+    def __init__(self, msg=None):
+        msg = msg or 'meshio, pyevtk, xmljson and lxml are needed for full file I/O functionality'
+        super().__init__(msg)

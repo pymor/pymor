@@ -43,10 +43,7 @@ install_suggests = {
     'ipython>=5.0': 'an enhanced interactive python shell',
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
     'matplotlib': 'needed for error plots in demo scipts',
-    'gmsh': 'this downloads the proper Gmsh binary',
-    'meshio==4.2.0': 'needed to import Gmsh grids',
     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
-    'pyevtk>=1.1': 'writing vtk output',
     'sympy': 'symbolic mathematics',
     'pygments': 'highlighting code',
     'pythreejs': 'threejs bindings for python notebook  visualization',
@@ -58,6 +55,8 @@ install_suggests = {
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
 }
+io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
+install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
 doc_requires = ['sphinx>=3.4', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb'] + install_requires
@@ -124,6 +123,7 @@ def extras():
         'full': list(_candidates(blocklist=['slycot', 'pymess', 'nbresuse', 'pytest-memprof'])),
         'ci':  ci_requires,
         'docs': doc_requires,
+        'io': io_requires,
     }
 
 

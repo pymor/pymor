@@ -9,12 +9,16 @@ import warnings
 
 
 def _can_import(module):
-    try:
-        import_module(module)
-        return True
-    except ImportError:
-        pass
-    return False
+    def _can_import_single(m):
+        try:
+            import_module(m)
+            return True
+        except ImportError:
+            pass
+        return False
+    if not isinstance(module, (list, tuple)):
+        module = [module]
+    return all((_can_import_single(m) for m in module))
 
 
 def _get_fenics_version():
@@ -98,7 +102,8 @@ _PACKAGES = {
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYTHON': _get_ipython_version,
     'MATPLOTLIB': _get_matplotib_version,
-    'MESHIO': lambda: import_module('meshio').__version__,
+    'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
+    'MESHIO': lambda: _can_import('meshio'),
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: bool(import_module('ngsolve')),
@@ -107,7 +112,6 @@ _PACKAGES = {
     'PYMESS': lambda: bool(import_module('pymess')),
     'PYTEST': lambda: import_module('pytest').__version__,
     'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
-    'PYEVTK': lambda: _can_import('pyevtk'),
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(import_module('qtpy.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
