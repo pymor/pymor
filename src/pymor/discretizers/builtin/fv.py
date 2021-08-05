@@ -1187,7 +1187,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     rhs = None if isinstance(m.rhs, ZeroOperator) else m.rhs
 
-    m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=None, initial_data=I, T=p.T,
+    m = InstationaryModel(operator=m.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
                           products=m.products,
                           output_functional=m.output_functional,
                           time_stepper=time_stepper,
