@@ -58,7 +58,7 @@ def assert_is_equal(first, second):
         assert type(first) == type(second)
 
         if isinstance(first, np.ndarray):
-            if first.dtype == np.object:
+            if first.dtype == object:
                 assert first.shape == second.shape
                 [_assert_is_equal(f, s) for f, s in zip(first.ravel(), second.ravel())]
             else:

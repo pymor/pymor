@@ -306,8 +306,8 @@ if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
                 gl.glVertex(0.5, (bar_height*y + bar_start), y)
             gl.glEnd()
             p.endNativePainting()
-            p.drawText((self.width() - self.vmax_width)/2, self.text_ascent, self.vmax_str)
-            p.drawText((self.width() - self.vmin_width)/2, self.height() - self.text_height + self.text_ascent,
+            p.drawText(round((self.width() - self.vmax_width)/2), self.text_ascent, self.vmax_str)
+            p.drawText(round((self.width() - self.vmin_width)/2), self.height() - self.text_height + self.text_ascent,
                        self.vmin_str)
             p.end()
 
