@@ -323,28 +323,24 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
             if not separate_colorbars and len(U) > 1:
                 l = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
-                l.warning('separate_colorbars=False not supported for matplotlib backend')
+                l.warning('separate_colorbars=False not supported')
             if backend == 'pyvista':
                 widget = PyVistaPatchWidget
-                cbar_widget = None
             else:
                 widget = MatplotlibPatchWidget
-                cbar_widget = None
                 separate_colorbars = True
 
-            class PlotWidget(QWidget):
+            class PlotPanel(QWidget):
                 def __init__(self):
                     super().__init__()
                     self.vmins, self.vmaxs = vmin_vmax_vectorarray(U, separate_colorbars=separate_colorbars,
                                                                    rescale_colorbars=rescale_colorbars)
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
-                    self.colorbarwidgets = [cbar_widget(self, vmin=vmin, vmax=vmax) if cbar_widget else None
-                                            for vmin, vmax in zip(self.vmins, self.vmaxs)]
                     plots = [widget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
                              for vmin, vmax in zip(self.vmins, self.vmaxs)]
                     if legend:
-                        for i, plot, colorbar, l in zip(range(len(plots)), plots, self.colorbarwidgets, legend):
+                        for i, plot, l in zip(range(len(plots)), plots, legend):
                             subplot_layout = QVBoxLayout()
                             caption = QLabel(l)
                             caption.setAlignment(Qt.AlignHCenter)
@@ -354,26 +350,17 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             else:
                                 hlayout = QHBoxLayout()
                                 hlayout.addWidget(plot)
-                                if colorbar:
-                                    hlayout.addWidget(colorbar)
                                 subplot_layout.addLayout(hlayout)
                             plot_layout.addLayout(subplot_layout, int(i/columns), (i % columns), 1, 1)
                     else:
-                        for i, plot, colorbar in zip(range(len(plots)), plots, self.colorbarwidgets):
+                        for i, plot in zip(range(len(plots)), plots):
                             if not separate_colorbars or backend == 'matplotlib':
                                 plot_layout.addWidget(plot, int(i/columns), (i % columns), 1, 1)
                             else:
                                 hlayout = QHBoxLayout()
                                 hlayout.addWidget(plot)
-                                if colorbar:
-                                    hlayout.addWidget(colorbar)
                                 plot_layout.addLayout(hlayout, int(i/columns), (i % columns), 1, 1)
                     layout.addLayout(plot_layout)
-                    if not separate_colorbars:
-                        if self.colorbarwidgets[0] is not None:
-                            layout.addWidget(self.colorbarwidgets[0])
-                        for w in (w for w in self.colorbarwidgets[1:] if w is not None):
-                            w.setVisible(False)
                     self.setLayout(layout)
                     self.plots = plots
 
@@ -386,13 +373,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             self.vmins = (min(np.min(u[ind]) for u in U),) * len(U)
                             self.vmaxs = (max(np.max(u[ind]) for u in U),) * len(U)
 
-                    for u, plot, colorbar, vmin, vmax in zip(U, self.plots, self.colorbarwidgets, self.vmins,
-                                                             self.vmaxs):
+                    for u, plot, vmin, vmax in zip(U, self.plots, self.vmins, self.vmaxs):
                         plot.set(u[ind], vmin=vmin, vmax=vmax)
-                        if colorbar:
-                            colorbar.set(vmin=vmin, vmax=vmax)
 
-            super().__init__(U, PlotWidget(), title=title, length=len(U[0]))
+            super().__init__(U, PlotPanel(), title=title, length=len(U[0]))
             self.grid = grid
             self.codim = codim
 

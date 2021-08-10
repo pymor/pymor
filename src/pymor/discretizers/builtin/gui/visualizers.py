@@ -42,7 +42,7 @@ class PatchVisualizer(ImmutableObject):
             bounding_box = grid.bounding_box()
         self.__auto_init(locals())
 
-    def visualize(self, U, title=None, legend=None, separate_colorbars=False,
+    def visualize(self, U, title=None, legend=None, separate_colorbars=True,
                   rescale_colorbars=False, block=None, filename=None, columns=2):
         """Visualize the provided data.
 
