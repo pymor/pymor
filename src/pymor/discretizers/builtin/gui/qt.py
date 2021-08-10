@@ -405,10 +405,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             base_name = filename.stem
             if base_name:
                 if len(self.U) == 1:
-                    write_vtk(self.grid, NumpyVectorSpace.make_array(self.U[0]), base_name, codim=self.codim)
+                    write_vtk(self.grid, self.U[0], base_name, codim=self.codim)
                 else:
                     for i, u in enumerate(self.U):
-                        write_vtk(self.grid, NumpyVectorSpace.make_array(u), f'{base_name}-{i}',
+                        write_vtk(self.grid, u, f'{base_name}-{i}',
                                   codim=self.codim)
 
     _launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,
