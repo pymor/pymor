@@ -7,25 +7,35 @@ import numpy as np
 from pymor.vectorarrays.interface import VectorArray
 
 
-def vmin_vmax_numpy(U, separate_colorbars, rescale_colorbars):
-    if separate_colorbars:
-        if rescale_colorbars:
-            vmins = tuple(np.min(u[0]) for u in U)
-            vmaxs = tuple(np.max(u[0]) for u in U)
-        else:
-            vmins = tuple(np.min(u) for u in U)
-            vmaxs = tuple(np.max(u) for u in U)
-    else:
-        if rescale_colorbars:
-            vmins = (min(np.min(u[0]) for u in U),) * len(U)
-            vmaxs = (max(np.max(u[0]) for u in U),) * len(U)
-        else:
-            vmins = (min(np.min(u) for u in U),) * len(U)
-            vmaxs = (max(np.max(u) for u in U),) * len(U)
-    return vmins, vmaxs
+def vmin_vmax_vectorarray(array_tuple, separate_colorbars, rescale_colorbars):
+    """
+    Parameters
+    ----------
+    separate_colorbars
+        iff True, min/max are taken per element of the U tuple
 
+    rescale_colorbars
+        iff False, min/max are the same for all indices for all elements of the U tuple
+    """
+    assert isinstance(array_tuple, tuple)
+    limits = {}
+    ind_count = len(array_tuple[0])
+    tuple_size = len(array_tuple)
+    mins, maxs = [None] * ind_count, [None] * ind_count
+    for ind in range(ind_count):
+        mins[ind] = tuple(np.min(U[ind].to_numpy()) for U in array_tuple)
+        maxs[ind] = tuple(np.max(U[ind].to_numpy()) for U in array_tuple)
 
-def vmin_vmax_vectorarray(U, separate_colorbars, rescale_colorbars):
-    Unp = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
-    return vmin_vmax_numpy(Unp, separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars)
+    for ind in range(ind_count):
+        if rescale_colorbars:
+            if separate_colorbars:
+                limits[ind] = mins[ind], maxs[ind]
+            else:
+                limits[ind] = (min(mins),) * tuple_size, (max(maxs),) * tuple_size
+        else:
+            if separate_colorbars:
+                limits[ind] = mins[0], maxs[0]
+            else:
+                limits[ind] = ((min(np.min(U[0]) for U in array_tuple),) * tuple_size,
+                               (max(np.max(U[0]) for U in array_tuple),) * tuple_size)
+    return limits
