@@ -10,6 +10,7 @@ from hypothesis import assume, settings
 from hypothesis import strategies as hyst
 
 from pymor.algorithms.basic import almost_equal
+from pymor.discretizers.builtin.gui import vmin_vmax_vectorarray
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.tools import floatcmp
 from pymor.tools.floatcmp import float_cmp
@@ -997,3 +998,19 @@ def test_axpy_wrong_coefficients(vectors_and_indices):
 @pyst.given_vector_arrays(which='picklable')
 def test_pickle(vector_array):
     assert_picklable_without_dumps_function(vector_array)
+
+
+@pyst.given_vector_arrays(count=2, compatible=True)
+@pytest.mark.parametrize('rescale_colorbars', [True, False])
+@pytest.mark.parametrize('separate_colorbars', [True, False])
+def test_vmin_vmax_vectorarray(vector_arrays, separate_colorbars, rescale_colorbars):
+    vector_arrays = tuple(vector_arrays)
+    limits = vmin_vmax_vectorarray(vector_arrays, separate_colorbars=separate_colorbars,
+                                   rescale_colorbars=rescale_colorbars)
+    for l in limits.values():
+        assert isinstance(l, tuple)
+        assert len(l) == 2
+        assert isinstance(l[0], tuple)
+        assert isinstance(l[1], tuple)
+        assert all(isinstance(t, float) for t in l[0])
+        assert all(isinstance(t, float) for t in l[1])
