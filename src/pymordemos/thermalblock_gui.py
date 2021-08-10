@@ -95,7 +95,6 @@ class SimPanel(QtWidgets.QWidget):
             box.addWidget(self.solution, 2)
         else:
             self.solution = PyVistaPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
-            self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
             box.addWidget(self.solution, 2)
             box.addWidget(self.bar, 2)
         self.param_panel = ParamRuler(self, sim)
