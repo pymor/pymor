@@ -8,6 +8,7 @@ import os
 from uuid import uuid4
 from datetime import datetime, timedelta
 import numpy as np
+import pytest
 
 from pymor.core import cache
 from pymor.models.basic import StationaryModel
@@ -60,21 +61,21 @@ class IWillBeCopied(cache.CacheableObject):
         return id(self)
 
 
-def test_runtime():
-    for Class in [IamMemoryCached, IamDiskCached]:
-        r = Class()
-        val = 'koko'
-        int0 = datetime.now()
-        r.me_takey_long_time(val)
-        int1 = datetime.now()
-        r.me_takey_long_time(val)
-        int2 = datetime.now()
-        assert int0 < int1 <= int2
-        delta1 = int1 - int0
-        delta2 = int2 - int1
-        assert delta1 >= SLEEP_DELTA, r
-        assert delta2 < delta1, r
-        assert delta2 < 0.5 * SLEEP_DELTA, r
+@pytest.mark.parametrize('class_type', [IamMemoryCached, IamDiskCached])
+def test_runtime(class_type):
+    r = class_type()
+    val = 'koko'
+    int0 = datetime.now()
+    r.me_takey_long_time(val)
+    int1 = datetime.now()
+    r.me_takey_long_time(val)
+    int2 = datetime.now()
+    assert int0 < int1 <= int2
+    delta1 = int1 - int0
+    delta2 = int2 - int1
+    assert delta1 >= SLEEP_DELTA, r
+    assert delta2 < delta1, r
+    assert delta2 < 0.5 * SLEEP_DELTA, r
 
 
 @contextlib.contextmanager
