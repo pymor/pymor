@@ -14,6 +14,7 @@ import logging
 import os
 import time
 from contextlib import contextmanager
+from functools import lru_cache
 from types import MethodType
 
 from pymor.core.defaults import defaults
@@ -189,6 +190,12 @@ def default_handler(filename=''):
 def getLogger(module, level=None, filename=''):
     """Get the logger of the respective module for pyMOR's logging facility.
 
+    In addition to the logging methods inherited from :class:`~logging.Logger`
+    all returned loggers get a block, info2, info3 method for the
+    respective new levels. Plus all warnings methods get a `XXX_once` method
+    that caches the msg and only emits the log entry the first time (per logger
+    instance, not globally).
+
     Parameters
     ----------
     module
@@ -205,6 +212,9 @@ def getLogger(module, level=None, filename=''):
     logger.block = MethodType(_block, logger)
     logger.info2 = MethodType(_info2, logger)
     logger.info3 = MethodType(_info3, logger)
+    for level_function in ('info', 'warn', 'error', 'fatal', 'debug', 'block', 'info2', 'info3', 'warning'):
+        # add a method that is wrapped in a cache, so calls with same args aren't executed again
+        setattr(logger, f'{level_function}_once', lru_cache(None)(getattr(logger, level_function)))
     logger.handlers = default_handler(filename)
     logger.propagate = False
     if level:
