@@ -1,7 +1,7 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
-
+import contextlib
 import tempfile
 import time
 import os
@@ -13,7 +13,6 @@ from pymor.core import cache
 from pymor.models.basic import StationaryModel
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import runmodule
-from pymor.core.config import is_windows_platform
 
 
 SLEEP_DELTA = timedelta(milliseconds=200)
@@ -78,20 +77,32 @@ def test_runtime():
         assert delta2 < 0.5 * SLEEP_DELTA, r
 
 
+@contextlib.contextmanager
+def _close_cache(backend):
+    """This avoids the tmp dir trying to rm still open files with the disk backend"""
+    yield
+    try:
+        backend._cache.close()
+    except AttributeError:
+        pass
+
+
 def test_region_api():
+    key = 'mykey'
     with tempfile.TemporaryDirectory() as tmpdir:
-        backends = [cache.MemoryRegion(100)]
-        # this specific backend test is currently broken on windows
-        if not is_windows_platform():
-            backends.append(cache.DiskRegion(path=os.path.join(tmpdir, str(uuid4())),
-                                             max_size=1024 ** 2, persistent=False))
+        backends = [cache.MemoryRegion(100),
+                    cache.DiskRegion(path=os.path.join(tmpdir, str(uuid4())),
+                                     max_size=1024 ** 2, persistent=False)]
         for backend in backends:
-            assert backend.get('mykey') == (False, None)
-            backend.set('mykey', 1)
-            assert backend.get('mykey') == (True, 1)
-            # second set is ignored
-            backend.set('mykey', 2)
-            assert backend.get('mykey') == (True, 1)
+            with _close_cache(backend):
+                assert backend.get(key) == (False, None)
+                backend.set(key, 1)
+                assert backend.get(key) == (True, 1)
+                # second set is ignored
+                backend.set(key, 2)
+                assert backend.get(key) == (True, 1)
+                backend.clear()
+                assert backend.get(key) == (False, None)
 
 
 def test_memory_region_safety():
