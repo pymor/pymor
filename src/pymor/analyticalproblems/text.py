@@ -1,6 +1,7 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+import warnings
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
@@ -12,19 +13,10 @@ from pymor.parameters.functionals import ProjectionParameterFunctional
 @defaults('font_name')
 def text_problem(text='pyMOR', font_name=None):
     import numpy as np
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageDraw
     from tempfile import NamedTemporaryFile
 
-    font_list = [font_name] if font_name else ['DejaVuSansMono.ttf', 'VeraMono.ttf', 'UbuntuMono-R.ttf', 'Arial.ttf']
-    font = None
-    for filename in font_list:
-        try:
-            font = ImageFont.truetype(filename, 64)  # load some font from file of given size
-        except (OSError, IOError):
-            pass
-    if font is None:
-        raise ValueError('Could not load TrueType font')
-
+    font = _get_font(font_name)
     size = font.getsize(text)  # compute width and height of rendered text
     size = (size[0] + 20, size[1] + 20)  # add a border of 10 pixels around the text
 
@@ -64,3 +56,16 @@ def text_problem(text='pyMOR', font_name=None):
         diffusion=diffusion,
         parameter_ranges=(0.1, 1.)
     )
+
+
+def _get_font(font_name):
+    from PIL import ImageFont
+    font_list = [font_name] if font_name else ['DejaVuSansMono.ttf', 'VeraMono.ttf', 'UbuntuMono-R.ttf', 'Arial.ttf']
+    for filename in font_list:
+        try:
+            return ImageFont.truetype(filename, 64)  # load some font from file of given size
+        except (OSError, IOError):
+            pass
+    warnings.warn(f'Falling back to pillow default font. Could not load any of {font_list}',
+                  ResourceWarning, stacklevel=1)
+    return ImageFont.load_default()
