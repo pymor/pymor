@@ -78,10 +78,8 @@ THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 5, 5]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 5, 5]),
     ('thermalblock_simple', ['ngsolve', 'pod', 2, 5, 5]),
+    ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
-# Font file loading currently does not work on windows
-if not is_windows_platform():
-    THERMALBLOCK_SIMPLE_ARGS += (('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),)
 
 if is_macos_platform():
     # thermalblock_gui requires OpenGL which somehow fails on macos
