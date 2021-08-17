@@ -81,13 +81,9 @@ THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
 
-if is_macos_platform():
-    # thermalblock_gui requires OpenGL which somehow fails on macos
-    THERMALBLOCK_GUI_ARGS = tuple()
-else:
-    THERMALBLOCK_GUI_ARGS = (
-        ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
-    )
+THERMALBLOCK_GUI_ARGS = (
+    ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
+)
 
 BURGERS_EI_ARGS = (
     ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err', '--plot-err', '--plot-solutions']),
