@@ -1,4 +1,4 @@
-ARG BASE=pymor/jupyter_py3.9:latest
+ARG BASE=zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.9:latest
 FROM ${BASE}
 MAINTAINER rene.fritze@wwu.de
 
