@@ -212,7 +212,7 @@ def getLogger(module, level=None, filename=''):
     logger.block = MethodType(_block, logger)
     logger.info2 = MethodType(_info2, logger)
     logger.info3 = MethodType(_info3, logger)
-    for level_function in ('info', 'warn', 'error', 'fatal', 'debug', 'block', 'info2', 'info3', 'warning'):
+    for level_function in ('info', 'error', 'fatal', 'debug', 'block', 'info2', 'info3', 'warning'):
         # add a method that is wrapped in a cache, so calls with same args aren't executed again
         setattr(logger, f'{level_function}_once', lru_cache(None)(getattr(logger, level_function)))
     logger.handlers = default_handler(filename)
