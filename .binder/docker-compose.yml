@@ -22,7 +22,7 @@ services:
         context: ../
         dockerfile: .binder/Dockerfile
         args:
-            BASE: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
+            BASE: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
             NB_USER: "${NB_USER}"
             NB_UID: 1000
@@ -45,7 +45,7 @@ services:
         bash -c "jupyter notebook --ip 0.0.0.0 --no-browser --notebook-dir=$${NB_DIR} --NotebookApp.disable_check_xsrf=True"
 
   pytest:
-    image: pymor/testing_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
     depends_on:
       - pypi_mirror
     environment:
@@ -63,7 +63,7 @@ services:
     command: "/pymor/.ci/gitlab/test_${PYMOR_TEST_SCRIPT}.bash"
 
   pypi_mirror:
-    image: pymor/pypi-mirror_${PYPI_MIRROR}_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
+    image: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_${PYPI_MIRROR}_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
     restart: "no"
 
   install_check:
@@ -82,7 +82,7 @@ services:
     command: /bin/bash
 
   pymor__devpi:
-    image: pymor/devpi:1
+    image: zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
     restart: "no"
 
   docs:

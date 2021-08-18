@@ -1,6 +1,6 @@
 ARG CI_IMAGE_TAG
 
-FROM pymor/jupyter_py3.8:${CI_IMAGE_TAG}
+FROM zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.8:${CI_IMAGE_TAG}
 MAINTAINER rene.fritze@wwu.de
 
 COPY . /tmp/pymor
