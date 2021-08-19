@@ -8,13 +8,13 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction, BitmapFunction
 from pymor.core.defaults import defaults
 from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.tools.io import safe_temporary_filename
 
 
 @defaults('font_name')
 def text_problem(text='pyMOR', font_name=None):
     import numpy as np
     from PIL import Image, ImageDraw
-    from tempfile import NamedTemporaryFile
 
     font = _get_font(font_name)
     size = font.getsize(text)  # compute width and height of rendered text
@@ -35,9 +35,9 @@ def text_problem(text='pyMOR', font_name=None):
 
         # open a new temporary file
         # after leaving this 'with' block, the temporary file is automatically deleted
-        with NamedTemporaryFile(suffix='.png') as f:
+        with safe_temporary_filename(name='letter_bitmap.png') as f:
             img.save(f, format='png')
-            return BitmapFunction(f.name, bounding_box=[(0, 0), size], range=[0., 1.])
+            return BitmapFunction(f, bounding_box=[(0, 0), size], range=[0., 1.])
 
     # create BitmapFunctions for each character
     dfs = [make_bitmap_function(n) for n in range(len(text))]
