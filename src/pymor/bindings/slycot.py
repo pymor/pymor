@@ -102,7 +102,7 @@ if config.HAVE_SLYCOT:
         B
             The matrix B as a 2D |NumPy array|.
         trans
-            Whether the first operator in the Lyapunov equation is
+            Whether the first matrix in the Lyapunov equation is
             transposed.
         options
             The solver options to use (see
@@ -164,7 +164,7 @@ if config.HAVE_SLYCOT:
         R
             The matrix R as a 2D |NumPy array| or `None`.
         trans
-            Whether the first operator in the Riccati equation is
+            Whether the first matrix in the Riccati equation is
             transposed.
         options
             The solver options to use (see
