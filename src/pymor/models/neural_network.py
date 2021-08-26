@@ -2,10 +2,20 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+"""Remark on the documentation:
+
+Due to an issue in autoapi, the classes `NeuralNetworkStatefreeOutputModel`,
+`NeuralNetworkInstationaryModel`, `NeuralNetworkInstationaryStatefreeOutputModel`
+and `FullyConnectedNN` do not appear in the documentation,
+see https://github.com/pymor/pymor/issues/1343.
+"""
+
 from pymor.core.config import config
 
 
 if config.HAVE_TORCH:
+    import numpy as np
+
     import torch
     import torch.nn as nn
 
@@ -75,6 +85,47 @@ if config.HAVE_TORCH:
             U = self.solution_space.make_array(U)
 
             return U
+
+    class NeuralNetworkStatefreeOutputModel(Model):
+        """Class for models of the output of stationary problems that use ANNs.
+
+        This class implements a |Model| that uses a neural network for solving for the output
+        quantity.
+
+        Parameters
+        ----------
+        neural_network
+            The neural network that approximates the mapping from parameter space
+            to output space. Should be an instance of
+            :class:`~pymor.models.neural_network.FullyConnectedNN` with input size that
+            matches the (total) number of parameters and output size equal to the
+            dimension of the output space.
+        parameters
+            |Parameters| of the reduced order model (the same as used in the full-order
+            model).
+        error_estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate_error(U, mu, m)` method. If `error_estimator` is
+            not `None`, an `estimate_error(U, mu)` method is added to the
+            model which will call `error_estimator.estimate_error(U, mu, self)`.
+        name
+            Name of the model.
+        """
+
+        def __init__(self, neural_network, parameters={}, error_estimator=None, name=None):
+
+            super().__init__(error_estimator=error_estimator, name=name)
+
+            self.__auto_init(locals())
+
+        def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
+                     solution_error_estimate=False, output_error_estimate=False,
+                     output_d_mu_return_array=False, mu=None, **kwargs):
+            if output:
+                converted_input = torch.from_numpy(mu.to_numpy()).double()
+                output = self.neural_network(converted_input).data.numpy()
+                return {'output': output, 'solution': None}
+            return {}
 
     class NeuralNetworkInstationaryModel(Model):
         """Class for models of instationary problems that use artificial neural networks.
@@ -150,6 +201,66 @@ if config.HAVE_TORCH:
                 t += dt
 
             return U
+
+    class NeuralNetworkInstationaryStatefreeOutputModel(Model):
+        """Class for models of the output of instationary problems that use ANNs.
+
+        This class implements a |Model| that uses a neural network for solving for the output
+        quantity in the instationary case.
+
+        Parameters
+        ----------
+        T
+            The final time T.
+        nt
+            The number of time steps.
+        neural_network
+            The neural network that approximates the mapping from parameter space
+            to output space. Should be an instance of
+            :class:`~pymor.models.neural_network.FullyConnectedNN` with input size that
+            matches the (total) number of parameters and output size equal to the
+            dimension of the output space.
+        parameters
+            |Parameters| of the reduced order model (the same as used in the full-order
+            model).
+        error_estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate_error(U, mu, m)` method. If `error_estimator` is
+            not `None`, an `estimate_error(U, mu)` method is added to the
+            model which will call `error_estimator.estimate_error(U, mu, self)`.
+        name
+            Name of the model.
+        """
+
+        def __init__(self, T, nt, neural_network, parameters={}, error_estimator=None, name=None):
+
+            super().__init__(error_estimator=error_estimator, name=name)
+
+            self.__auto_init(locals())
+
+        def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
+                     solution_error_estimate=False, output_error_estimate=False,
+                     output_d_mu_return_array=False, mu=None, **kwargs):
+
+            if output:
+                outputs = []
+                dt = self.T / (self.nt - 1)
+                t = 0.
+
+                # iterate over time steps
+                for i in range(self.nt):
+                    mu = mu.with_(t=t)
+                    # convert the parameter `mu` into a form that is usable in PyTorch
+                    converted_input = torch.from_numpy(mu.to_numpy()).double()
+                    # obtain approximate output quantity by forward pass of the parameter values
+                    # through the neural network
+                    result_neural_network = self.neural_network(converted_input).data.numpy()
+                    # append approximate output to list of outputs
+                    outputs.append(result_neural_network)
+                    t += dt
+
+                return {'output': np.array(outputs), 'solution': None}
+            return {}
 
     class FullyConnectedNN(nn.Module, BasicObject):
         """Class for neural networks with fully connected layers.
